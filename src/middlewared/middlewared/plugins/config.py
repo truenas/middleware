@@ -14,13 +14,11 @@ from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.db import FREENAS_DATABASE
 from middlewared.utils.python import get_middlewared_dir
-from middlewared.plugins.gluster_linux.utils import GlusterConfig
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
     'admin_authorized_keys': '/home/admin/.ssh/authorized_keys',
     'root_authorized_keys': '/root/.ssh/authorized_keys',
-    GlusterConfig.ARCNAME.value: GlusterConfig.WORKDIR.value
 }
 NEED_UPDATE_SENTINEL = '/data/need-update'
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
@@ -52,10 +50,6 @@ class ConfigService(Service):
                     files['admin_authorized_keys'] = CONFIG_FILES['admin_authorized_keys']
                 if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['root_authorized_keys']):
                     files['root_authorized_keys'] = CONFIG_FILES['root_authorized_keys']
-                if options[GlusterConfig.ARCNAME.value]:
-                    arcname = GlusterConfig.ARCNAME.value
-                    files[arcname] = CONFIG_FILES[arcname]
-
                 for arcname, path in files.items():
                     tar.add(path, arcname=arcname)
 
@@ -67,7 +61,6 @@ class ConfigService(Service):
         Bool('secretseed', default=False),
         Bool('pool_keys', default=False),
         Bool('root_authorized_keys', default=False),
-        Bool('gluster_config', default=False),
     ))
     @returns()
     @job(pipes=["output"])
@@ -79,7 +72,6 @@ class ConfigService(Service):
         `secretseed` bool: When true, include password secret seed.
         `pool_keys` bool: IGNORED and DEPRECATED as it does not apply on SCALE systems.
         `root_authorized_keys` bool: When true, include "/root/.ssh/authorized_keys" file for the root user.
-        `gluster_config` bool: When true, include the directory that stores the gluster configuration files.
 
         If none of these options are set, the tar file is not generated and the database file is returned.
         """
@@ -170,9 +162,6 @@ class ConfigService(Service):
                     shutil.move(abspath, ROOT_KEYS_UPLOADED)
                     send_to_remote.append(ROOT_KEYS_UPLOADED)
 
-                if i.name == GlusterConfig.ARCNAME.value:
-                    self.middleware.call_sync('gluster.backup.restore', abspath)
-
         # Create this file so on reboot, system will migrate the provided
         # database which will catch the scenario if the database is from
         # an older version
@@ -252,10 +241,6 @@ class ConfigService(Service):
 
         if job.credentials.is_user_session and 'SYS_ADMIN' not in job.credentials.user['account_attributes']:
             raise CallError('Configuration reset is limited to local SYS_ADMIN account ("root" or "admin")')
-
-        job.set_progress(5, 'Removing cluster information (if any)')
-        cjob = self.middleware.call_sync('ctdb.shared.volume.teardown', True)
-        cjob.wait_sync()
 
         job.set_progress(15, 'Replacing database file')
         shutil.copy('/data/factory-v1.db', FREENAS_DATABASE)

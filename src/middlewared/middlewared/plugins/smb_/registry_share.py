@@ -47,14 +47,6 @@ class SharingSMBService(Service):
         ]:
             raise CallError(f'Action [{action}] is not permitted.', errno.EPERM)
 
-        ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
-        if ha_mode == SMBHAMODE.CLUSTERED:
-            ctdb_healthy = await self.middleware.call('ctdb.general.healthy')
-            if not ctdb_healthy:
-                raise CallError(
-                    "Registry calls not permitted when ctdb unhealthy.", errno.ENXIO
-                )
-
         share = kwargs.get('share')
         args = kwargs.get('args', [])
         jsoncmd = kwargs.get('jsoncmd', False)
@@ -236,65 +228,6 @@ class SharingSMBService(Service):
             await self.reg_delparm(del_payload)
 
         return
-
-    @private
-    @filterable
-    def reg_query(self, filters, options):
-        """
-        Filterable method for querying SMB shares from the registry
-        config. Can be reverted back to registry / smb.conf without
-        loss of information. This is necessary to provide consistent
-        API for viewing samba's current running configuration, which
-        is of particular importance with clustered registry shares.
-        """
-        try:
-            reg_shares = self.middleware.call_sync('sharing.smb.reg_list')
-        except CallError:
-            return []
-
-        rv = []
-        for idx, s in enumerate(reg_shares['sections']):
-            if not s['is_share']:
-                continue
-
-            is_home = s['service'] == "HOMES"
-            s["parameters"]["name"] = "HOMES_SHARE" if is_home else s['service']
-            s["parameters"]["home"] = is_home
-            parsed_conf = self.smbconf_to_share(s['parameters'])
-
-            entry = {"id": idx + 1}
-            entry.update(parsed_conf)
-            rv.append(entry)
-
-        return filter_list(rv, filters, options)
-
-    @private
-    def smbconf_to_share(self, data):
-        """
-        Wrapper to convert registry share into approximation of
-        normal API return for sharing.smb.query.
-        Disabled and locked shares are not in samba's running
-        configuration in registry.tdb and so we assume that this
-        is not the case.
-        """
-        ret = {}
-        conf_in = data.copy()
-        # TO_DO - need to validate whether VFS objects have been manually overridden by
-        # auxiliary parameters or CLI changes (e.g. "net conf setparm").
-        try:
-            conf_in['vfs objects']["parsed"] = data["vfs objects"]["parsed"].split()
-        except KeyError:
-            conf_in["vfs objects"] = {"raw": "", "parsed": []}
-
-        ss = ShareSchema(self.middleware)
-        ss.convert_registry_to_schema(conf_in, ret)
-        conf_in.pop("vfs objects", [])
-        ret.update({
-            "home": conf_in.pop("home", False),
-            "name": conf_in.pop("name"),
-        })
-
-        return ret
 
     @private
     def create_domain_paths(self, path):

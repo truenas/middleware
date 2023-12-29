@@ -161,11 +161,8 @@ class DirectoryServices(Service):
 
         `HEALTHY` Directory Service is enabled, and last status check has passed.
         """
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        svc = 'clustercache' if ha_mode == 'CLUSTERED' else 'cache'
-
         try:
-            return await self.middleware.call(f'{svc}.get', 'DS_STATE')
+            return await self.middleware.call('cache.get', 'DS_STATE')
         except KeyError:
             ds_state = {}
             for srv in DSType:
@@ -184,15 +181,8 @@ class DirectoryServices(Service):
                 except Exception:
                     ds_state[srv.value] = DSStatus.FAULTED.name
 
-            await self.middleware.call(f'{svc}.put', 'DS_STATE', ds_state, 60)
+            await self.middleware.call('cache.put', 'DS_STATE', ds_state, 60)
             return ds_state
-
-        except CallError as e:
-            if e.errno is not errno.ENXIO:
-                raise
-
-            self.logger.debug("Unable to determine directory services state while cluster is unhealthy")
-            return {"activedirectory": "DISABLED", "ldap": "DISABLED"}
 
     @private
     async def set_state(self, new):
@@ -201,18 +191,15 @@ class DirectoryServices(Service):
             'ldap': DSStatus.DISABLED.name,
         }
 
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        svc = 'clustercache' if ha_mode == 'CLUSTERED' else 'cache'
-
         try:
-            old_state = await self.middleware.call(f'{svc}.get', 'DS_STATE')
+            old_state = await self.middleware.call('cache.get', 'DS_STATE')
             ds_state.update(old_state)
         except KeyError:
             self.logger.trace("No previous DS_STATE exists. Lazy initializing for %s", new)
 
         ds_state.update(new)
         self.middleware.send_event('directoryservices.status', 'CHANGED', fields=ds_state)
-        return await self.middleware.call(f'{svc}.put', 'DS_STATE', ds_state)
+        return await self.middleware.call('cache.put', 'DS_STATE', ds_state)
 
     @accepts()
     @job()
@@ -300,10 +287,7 @@ class DirectoryServices(Service):
         Writes the current secrets database to the freenas config file.
         """
         ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
-        if ha_mode == "CLUSTERED":
-            return
-
-        elif ha_mode == "UNIFIED":
+        if ha_mode == "UNIFIED":
             failover_status = self.middleware.call_sync("failover.status")
             if failover_status != "MASTER":
                 self.logger.debug("Current failover status [%s]. Skipping secrets backup.",
@@ -336,10 +320,6 @@ class DirectoryServices(Service):
         automates this backup, but care should be taken before manually invoking restores.
         """
         ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
-
-        if ha_mode == "CLUSTERED":
-            return True
-
         if ha_mode == "UNIFIED":
             failover_status = self.middleware.call_sync("failover.status")
             if failover_status != "MASTER":
@@ -378,12 +358,6 @@ class DirectoryServices(Service):
         on it. It's better to just do a quick lookup of the
         single value.
         """
-        ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
-        if ha_mode == 'CLUSTERED':
-            # with clustered server we don't want misbehaving node to
-            # potentially muck around with clustered secrets.
-            return True
-
         with DirectorySecrets(logger=self.logger, ha_mode=ha_mode) as s:
             rv = s.has_domain(domain)
 
@@ -405,9 +379,6 @@ class DirectoryServices(Service):
         we have in our database.
         """
         ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
-        if ha_mode == 'CLUSTERED':
-            return
-
         smb_config = self.middleware.call_sync('smb.config')
         if domain is None:
             domain = smb_config['workgroup']

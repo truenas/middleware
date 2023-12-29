@@ -12,7 +12,7 @@ from middlewared.plugins.kerberos import krb5ccache
 from middlewared.schema import (
     accepts, Bool, Dict, Int, IPAddr, LDAP_DN, List, NetbiosName, Patch, Ref, returns, Str
 )
-from middlewared.service import job, private, TDBWrapConfigService, ValidationError, ValidationErrors
+from middlewared.service import job, private, ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -84,26 +84,7 @@ class ActiveDirectoryModel(sa.Model):
     ad_createcomputer = sa.Column(sa.String(255))
 
 
-class ActiveDirectoryService(TDBWrapConfigService):
-    tdb_defaults = {
-        "id": 1,
-        "domainname": "",
-        "bindname": "",
-        "verbose_logging": False,
-        "allow_trusted_doms": False,
-        "use_default_domain": False,
-        "allow_dns_updates": True,
-        "kerberos_principal": "",
-        "kerberos_realm": None,
-        "createcomputer": "",
-        "site": "",
-        "timeout": 60,
-        "dns_timeout": 10,
-        "nss_info": None,
-        "disable_freenas_cache": False,
-        "restrict_pam": False,
-        "enable": False,
-    }
+class ActiveDirectoryService(ConfigService):
 
     class Config:
         service = "activedirectory"
@@ -264,14 +245,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if not new["enable"]:
             return
 
-        if (ha_mode := await self.middleware.call('smb.get_smb_ha_mode')) == 'CLUSTERED':
-            if not await self.middleware.call('ctdb.general.ips'):
-                verrors.add(
-                    'activedirectory_update.enable',
-                    'At least one public IP address must be configured prior to joining '
-                    'Active Directory.'
-                )
-
         ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
         if ldap_enabled:
             verrors.add(
@@ -302,6 +275,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             )
 
         if new['allow_dns_updates']:
+            ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
             smb = await self.middleware.call('smb.config')
             addresses = await self.middleware.call(
                 'activedirectory.get_ipaddresses', new, smb, ha_mode
@@ -449,7 +423,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         machine account is generated. It is used for all future
         LDAP / AD interaction and the user-provided credentials are removed.
         """
-        await self.middleware.call("smb.cluster_check")
         verrors = ValidationErrors()
         old = await self.config()
         new = old.copy()
@@ -596,7 +569,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                     method, f'Failed to validate bind credentials: {msg}'
                 )
 
-        elif not new['enable'] and new['bindpw']:
+        elif not new['enable'] and new.get('bindpw'):
             raise ValidationError(
                 'activedirectory.bindpw',
                 'The Active Directory bind password is only used when enabling the active '
@@ -605,8 +578,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             )
 
         new = await self.ad_compress(new)
-        ret = await super().do_update(new)
-
+        await self.middleware.call('datastore.update', self._config.datastore, new['id'], new, {'prefix': 'ad_'})
         diff = await self.diff_conf_and_registry(new)
         await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
 
@@ -636,8 +608,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         elif new['enable'] and old['enable']:
             await self.middleware.call('service.restart', 'idmap')
 
-        ret.update({'job_id': job})
-        return ret
+        return await self.config() | {'job_id': job}
 
     @private
     async def diff_conf_and_registry(self, data):
@@ -750,7 +721,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         Start AD service. In 'UNIFIED' HA configuration, only start AD service
         on active storage controller.
         """
-        await self.middleware.call("smb.cluster_check")
         ad = await self.config()
         smb = await self.middleware.call('smb.config')
         workgroup = smb['workgroup']
@@ -770,7 +740,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if ad['verbose_logging']:
             self.logger.debug('Starting Active Directory service for [%s]', ad['domainname'])
 
-        await super().do_update({'enable': True})
+        await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'enable': True}, {'prefix': 'ad_'})
         await self.synchronize()
         await self.middleware.call('etc.generate', 'hostname')
 
@@ -780,17 +750,21 @@ class ActiveDirectoryService(TDBWrapConfigService):
         """
         job.set_progress(5, 'Configuring Kerberos Settings.')
         if not ad['kerberos_realm']:
-            realms = await self.middleware.call('kerberos.realm.query', [('realm', '=', ad['domainname'])])
-
-            if realms:
-                realm_id = realms[0]['id']
-            else:
+            try:
+                realm_id = (await self.middleware.call(
+                    'kerberos.realm.query',
+                    [('realm', '=', ad['domainname'])],
+                    {'get': True}
+                ))['id']
+            except MatchNotFound:
                 realm_id = await self.middleware.call(
-                    'kerberos.realm.direct_create',
-                    {'realm': ad['domainname'].upper(), 'kdc': '', 'admin_server': '', 'kpasswd_server': ''}
+                    'datastore.insert', 'directoryservice.kerberosrealm',
+                    {'krb_realm': ad['domainname'].upper()}
                 )
 
-            await self.direct_update({"kerberos_realm": realm_id})
+            await self.middleware.call('datastore.update', self._config.datastore, ad['id'],
+                {"kerberos_realm": realm_id}, {'prefix': 'ad_'}
+            )
             ad = await self.config()
 
         if not await self.middleware.call('kerberos._klist_test'):
@@ -812,7 +786,9 @@ class ActiveDirectoryService(TDBWrapConfigService):
         job.set_progress(30, 'Detecting Active Directory NetBIOS Domain Name.')
         if workgroup != dc_info['Pre-Win2k Domain']:
             self.logger.debug('Updating SMB workgroup to %s', dc_info['Pre-Win2k Domain'])
-            await self.middleware.call('smb.direct_update', {'workgroup': dc_info['Pre-Win2k Domain']})
+            await self.middleware.call('datastore.update', 'services.cifs', smb['id'], {
+                'cifs_srv_workgroup': dc_info['Pre-Win2k Domain']
+            })
 
         await self.middleware.call('smb.initialize_globals')
 
@@ -842,9 +818,12 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 await self._net_ads_leave({'username': ad['bindname']})
                 raise
 
-            ad = await self.direct_update({
-                'kerberos_principal': f'{ad["netbiosname"].upper()}$@{ad["domainname"]}'
-            })
+            machine_acct = f'{ad["netbiosname"].upper()}$@{ad["domainname"]}'
+            await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {
+                'kerberos_principal': machine_acct
+            }, {'prefix': 'ad_'})
+
+            ad = await self.config()
 
             job.set_progress(75, 'Performing kinit using new computer account.')
 
@@ -860,7 +839,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
                 'conf': {
                     'domainname': ad['domainname'],
-                    'kerberos_principal': ad['kerberos_principal'],
+                    'kerberos_principal': machine_acct,
                 }
             })
             await self.middleware.run_in_thread(os.unlink, '/etc/krb5.conf')
@@ -877,7 +856,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
             await self.middleware.call('service.update', 'cifs', {'enable': True})
             await self.set_idmap(ad['allow_trusted_doms'], ad['domainname'])
             await self.middleware.call('activedirectory.set_ntp_servers')
-
             ret = neterr.JOINED
 
         await self.middleware.call('idmap.synchronize')
@@ -895,12 +873,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
             await self.set_state(DSStatus['FAULTED'].name)
             self.logger.warning('Server is joined to domain [%s], but is in a faulted state.', ad['domainname'])
 
-        if smb_ha_mode == 'CLUSTERED':
-            job.set_progress(95, 'Propagating activedirectory service reload to cluster members')
-            cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'START')
-            await cl_reload.wait()
-            await self.middleware.call('service.restart', 'cifs')
-
         job.set_progress(100, f'Active Directory start completed with status [{ret.name}]')
         await self.middleware.call('service.reload', 'idmap')
 
@@ -917,8 +889,11 @@ class ActiveDirectoryService(TDBWrapConfigService):
     @job(lock="AD_start_stop")
     async def stop(self, job):
         job.set_progress(0, 'Preparing to stop Active Directory service')
-        await self.middleware.call("smb.cluster_check")
-        await self.direct_update({"enable": False})
+        config = await self.config()
+        await self.middleware.call(
+           'datastore.update', self._config.datastore,
+           config['id'], {'ad_enable': False}
+        )
 
         await self.set_state(DSStatus['LEAVING'].name)
         job.set_progress(5, 'Stopping Active Directory monitor')
@@ -935,28 +910,10 @@ class ActiveDirectoryService(TDBWrapConfigService):
         job.set_progress(60, 'clearing caches.')
         await self.middleware.call('service.stop', 'dscache')
         smb_ha_mode = await self.middleware.call('smb.reset_smb_ha_mode')
-        if smb_ha_mode == 'CLUSTERED':
-            job.set_progress(70, 'Propagating changes to cluster.')
-            cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'STOP')
-            await cl_reload.wait()
-
         await self.middleware.call('smb.initialize_globals')
         await self.middleware.call('service.start', 'cifs')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(100, 'Active Directory stop completed.')
-
-    @private
-    async def cluster_reload(self, action):
-        await self.middleware.call('etc.generate', 'hostname')
-        await self.middleware.call('etc.generate', 'pam')
-        await self.middleware.call('service.restart', 'idmap')
-        await self.middleware.call('service.restart', 'cifs')
-        verb = "start" if action == 'START' else "stop"
-        await self.middleware.call(f'kerberos.{verb}')
-        await self.middleware.call(f'service.{verb}', 'dscache')
-        if action == 'LEAVE':
-            with contextlib.suppress(FileNotFoundError):
-                os.unlink('/etc/krb5.keytab')
 
     @private
     async def validate_credentials(self, ad=None, kdc=None):
@@ -968,9 +925,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             # Short-circuit credential validation if we have a valid tgt
             return
 
-        if ad is None:
-            ad = await self.middleware.call('activedirectory.config')
-
+        ad = ad or await self.config()
         payload = {
             'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
             'conf': {
@@ -1240,15 +1195,19 @@ class ActiveDirectoryService(TDBWrapConfigService):
             [('name', '=', 'AD_MACHINE_ACCOUNT')]
         )
         if krb_princ:
-            await self.middleware.call('kerberos.keytab.direct_delete', krb_princ[0]['id'])
+            await self.middleware.call(
+                'datastore.delete', 'directoryservice.kerberoskeytab', krb_princ[0]['id']
+            )
 
         if ad['kerberos_realm']:
             try:
-                await self.middleware.call('kerberos.realm.direct_delete', ad['kerberos_realm'])
+                await self.middleware.call(
+                    'datastore.delete', 'directoryservice.kerberosrealm', ad['kerberos_realm']
+                )
             except MatchNotFound:
                 pass
 
-        if left_successfully and smb_ha_mode != 'CLUSTERED':
+        if left_successfully:
             try:
                 pdir = await self.middleware.call("smb.getparm", "private directory", "GLOBAL")
                 ts = time.time()
@@ -1266,7 +1225,10 @@ class ActiveDirectoryService(TDBWrapConfigService):
             'kerberos_principal': '',
             'domainname': '',
         }
-        new = await self.middleware.call('activedirectory.direct_update', payload)
+        await self.middleware.call(
+            'datastore.update', self._config.datastore,
+            ad['id'], payload, {'prefix': 'ad_'}
+        )
         await self.set_state(DSStatus['DISABLED'].name)
 
         job.set_progress(40, 'Flushing caches.')
@@ -1282,16 +1244,11 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         job.set_progress(60, 'Regenerating configuration.')
         await self.middleware.call('etc.generate', 'pam')
-        await self.synchronize(new)
+        await self.synchronize()
         await self.middleware.call('idmap.synchronize')
 
         job.set_progress(60, 'Restarting services.')
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('service.restart', 'idmap')
-        if smb_ha_mode == 'CLUSTERED':
-            job.set_progress(80, 'Propagating changes to other cluster nodes.')
-            cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'LEAVE')
-            await cl_reload.wait()
-
         job.set_progress(100, 'Successfully left activedirectory domain.')
         return

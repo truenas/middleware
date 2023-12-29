@@ -7,7 +7,7 @@ import struct
 
 from urllib.parse import urlparse
 from middlewared.schema import accepts, returns, Bool, Dict, Int, List, Str, Ref, LDAP_DN
-from middlewared.service import job, private, TDBWrapConfigService, Service, ValidationErrors
+from middlewared.service import job, private, ConfigService, Service, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.directoryservices import DSStatus, SSL
@@ -252,29 +252,7 @@ class LDAPModel(sa.Model):
     ldap_server_type = sa.Column(sa.String(256), nullable=True)
 
 
-class LDAPService(TDBWrapConfigService):
-    tdb_defaults = {
-        "id": 1,
-        "hostname": [],
-        "basedn": "",
-        "binddn": "",
-        "bindpw": "",
-        "anonbind": False,
-        "ssl": "OFF",
-        "timeout": 10,
-        "dns_timeout": 10,
-        "has_samba_schema": False,
-        "auxiliary_parameters": "",
-        "schema": "RFC2307",
-        "enable": False,
-        "kerberos_principal": "",
-        "validate_certificates": True,
-        "disable_freenas_cache": False,
-        "certificate": None,
-        "kerberos_realm": None,
-        "cert_name": None,
-        "uri_list": []
-    }
+class LDAPService(ConfigService):
 
     class Config:
         service = "ldap"
@@ -299,7 +277,7 @@ class LDAPService(TDBWrapConfigService):
         Int('kerberos_realm', null=True),
         Str('kerberos_principal'),
         Bool('has_samba_schema', default=False),
-        Str('auxiliary_parameters', default=False, max_length=None),
+        Str('auxiliary_parameters', max_length=None),
         Ref('nss_info_ldap', 'schema'),
         Bool('enable'),
         constants.LDAP_SEARCH_BASES_SCHEMA,
@@ -497,9 +475,6 @@ class LDAPService(TDBWrapConfigService):
     @private
     async def common_validate(self, new, old, verrors):
         ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        if ha_mode == "CLUSTERED" and new["has_samba_schema"]:
-            verrors.add("ldap_upate", "Legacy LDAP SMB support has been deprecated for Clustered TrueNAS.")
-
         if not new["enable"]:
             return
 
@@ -781,7 +756,6 @@ class LDAPService(TDBWrapConfigService):
         is default if TrueNAS is unable to determine LDAP server type via
         information in the LDAP root DSE.
         """
-        await self.middleware.call("smb.cluster_check")
         verrors = ValidationErrors()
         must_reload = False
         old = await self.config()
@@ -811,7 +785,8 @@ class LDAPService(TDBWrapConfigService):
                 verrors.check()
 
         await self.ldap_compress(new)
-        out = await super().do_update(new)
+        await self.middleware.call('datastore.update', self._config.datastore, new['id'], new, {'prefix': 'ldap_'})
+        out = await self.config()
         job = None
 
         if must_reload:
@@ -925,7 +900,10 @@ class LDAPService(TDBWrapConfigService):
         try:
             verrors.check()
         except ValidationErrors:
-            await super().do_update({"enable": False})
+            await self.middleware.call(
+                'datastore.update', self._config.datastore, 1,
+                {'enable': False}, {'prefix': 'ldap_'}
+            )
             raise CallError('Automatically disabling LDAP service due to invalid configuration.',
                             errno.EINVAL)
 
@@ -999,7 +977,13 @@ class LDAPService(TDBWrapConfigService):
             raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
 
         job.set_progress(0, 'Preparing to configure LDAP directory service.')
-        ldap = await self.direct_update({"enable": True})
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, 1,
+            {'enable': True}, {'prefix': 'ldap_'}
+        )
+
+        ldap = await self.config()
+
         if ldap['kerberos_realm']:
             job.set_progress(5, 'Starting kerberos')
             await self.middleware.call('kerberos.start')
@@ -1035,12 +1019,6 @@ class LDAPService(TDBWrapConfigService):
         await cache_job.wait()
         await self.middleware.call('directoryservices.restart_dependent_services')
 
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        if ha_mode == 'CLUSTERED':
-            job.set_progress(90, 'Reloading LDAP service on other cluster nodes')
-            cl_job = await self.middleware.call('clusterjob.submit', 'ldap.cluster_reload', 'START')
-            await cl_job.wait(raise_error=True)
-
         job.set_progress(100, 'LDAP directory service started.')
 
     @private
@@ -1051,7 +1029,10 @@ class LDAPService(TDBWrapConfigService):
             raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
 
         job.set_progress(0, 'Preparing to stop LDAP directory service.')
-        await self.direct_update({"enable": False})
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, 1,
+            {'enable': False}, {'prefix': 'ldap_'}
+        )
 
         await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
         await self.set_state(DSStatus['LEAVING'])
@@ -1075,22 +1056,7 @@ class LDAPService(TDBWrapConfigService):
         job.set_progress(80, 'Stopping nslcd service.')
         await self.middleware.call('service.stop', 'nslcd')
         await self.set_state(DSStatus['DISABLED'])
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        if ha_mode == 'CLUSTERED':
-            job.set_progress(90, 'Reloading LDAP service on other cluster nodes')
-            cl_job = await self.middleware.call('clusterjob.submit', 'ldap.cluster_reload', 'STOP')
-            await cl_job.wait(raise_error=True)
-
         job.set_progress(100, 'LDAP directory service stopped.')
-
-    @private
-    async def cluster_reload(self, action):
-        await self.middleware.call('etc.generate', 'rc')
-        await self.middleware.call('etc.generate', 'ldap')
-        await self.middleware.call('etc.generate', 'pam')
-        await self.middleware.call(f'service.{action.lower()}', 'nslcd')
-        await self._service_change('cifs', 'restart')
-        await self.middleware.call(f'service.{action.lower()}', 'dscache')
 
     @private
     @job(lock='fill_ldap_cache')

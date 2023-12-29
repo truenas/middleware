@@ -103,8 +103,7 @@ class PoolService(Service):
         """
         Returns all available datasets, except the following:
             1. system datasets
-            2. glusterfs datasets
-            3. application(s) internal datasets
+            2. application(s) internal datasets
 
         .. examples(websocket)::
 

@@ -52,11 +52,7 @@ class GlobalSchema(RegistrySchema):
 
         ds_state = data_in.pop('ds_state')
         if ds_state['ldap'] in ['LEAVING', 'DISABLED']:
-            if data_in['clustered']:
-                passdb_backend = 'tdbsam'
-            else:
-                passdb_backend = 'tdbsam:/var/run/samba-cache/private/passdb.tdb'
-
+            passdb_backend = 'tdbsam:/var/run/samba-cache/private/passdb.tdb'
             data_out.update({
                 'passdb backend': {'parsed': passdb_backend},
             })

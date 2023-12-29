@@ -17,57 +17,20 @@ FRUIT_CATIA_MAPS = [
 
 
 class ShareSchema(RegistrySchema):
-    def convert_registry_to_schema(self, data_in, data_out):
-        """
-        This converts existing smb.conf shares into schema used
-        by middleware. It is only used in clustered configuration.
-        """
-        data_aux = {}
-        super().convert_registry_to_schema(data_in, data_out)
-        for k, v in data_in.items():
-            if type(v) != dict:
-                continue
-
-            if k in ['vfs objects', 'ea support']:
-                continue
-
-            data_aux[k] = v['raw']
-
-        if data_aux and data_out['purpose'] not in ['NO_SHARE', 'DEFAULT_SHARE']:
-            preset = self.middleware.call_sync('sharing.smb.presets')
-            purpose = preset[data_out['purpose']]
-            preset_aux = self.middleware.call_sync('sharing.smb.auxsmbconf_dict', purpose['params']['auxsmbconf'])
-            for k, v in preset_aux.items():
-                if data_aux[k] == v:
-                    data_aux.pop(k)
-
-        data_out['auxsmbconf'] = '\n'.join([f'{k}={v}' if v is not None else k for k, v in data_aux.items()])
-        data_out['locked'] = False
-
-        return
-
     def convert_schema_to_registry(self, data_in, data_out):
         """
         Convert middleware schema SMB shares to an SMB service definition
         """
-        def order_vfs_objects(vfs_objects, is_clustered, fruit_enabled, purpose):
+        def order_vfs_objects(vfs_objects, fruit_enabled, purpose):
             vfs_objects_special = ('truenas_audit', 'catia', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
                                    'acl_xattr', 'ixnas', 'winmsa', 'recycle', 'crossrename',
-                                   'zfs_core', 'aio_fbsd', 'io_uring', 'glusterfs')
+                                   'zfs_core', 'aio_fbsd', 'io_uring')
 
             invalid_vfs_objects = ['noacl']
-            cluster_safe_objects = ['catia', 'fruit', 'streams_xattr', 'acl_xattr', 'recycle', 'glusterfs', 'io_ring']
-
             vfs_objects_ordered = []
 
             if fruit_enabled and 'fruit' not in vfs_objects:
                 vfs_objects.append('fruit')
-
-            if is_clustered:
-                for obj in vfs_objects.copy():
-                    if obj in cluster_safe_objects:
-                        continue
-                    vfs_objects.remove(obj)
 
             if 'fruit' in vfs_objects:
                 if 'streams_xattr' not in vfs_objects:
@@ -91,17 +54,15 @@ class ShareSchema(RegistrySchema):
 
             return vfs_objects_ordered
 
-        data_out['vfs objects'] = {"parsed": ["io_uring"]}
-        data_out['ea support'] = {"parsed": False}
-        data_in['fruit_enabled'] = self.middleware.call_sync("smb.config")['aapl_extensions']
-        is_clustered = bool(data_in['cluster_volname'])
+        data_out['vfs objects'] = {'parsed': ['zfs_core', 'io_uring']}
+        data_out['ea support'] = {'parsed': False}
+        data_in['fruit_enabled'] = self.middleware.call_sync('smb.config')['aapl_extensions']
         self.middleware.call_sync('sharing.smb.apply_presets', data_in)
 
         super().convert_schema_to_registry(data_in, data_out)
 
         ordered_vfs_objects = order_vfs_objects(
             data_out['vfs objects']['parsed'],
-            is_clustered,
             data_in['fruit_enabled'],
             data_in['purpose'],
         )
@@ -134,7 +95,7 @@ class ShareSchema(RegistrySchema):
                     vfsobjects = val.strip().split()
                     if data_in['shadowcopy']:
                         vfsobjects.append('shadow_copy_zfs')
-                    data_out['vfs objects'] = {"parsed": order_vfs_objects(vfsobjects, is_clustered, data_in['fruit_enabled'], None)}
+                    data_out['vfs objects'] = {"parsed": order_vfs_objects(vfsobjects, data_in['fruit_enabled'], None)}
                 else:
                     data_out[auxparam.strip()] = {"raw": val.strip()}
 
@@ -157,12 +118,8 @@ class ShareSchema(RegistrySchema):
         return
 
     def path_local_get(entry, conf):
-        path = conf.get('path', {"raw": ""})
-        glusterfs_volume = conf.get('glusterfs:volume', {"raw": ""})
-        if not glusterfs_volume['raw']:
-            return str(path['raw'])
-
-        return f'CLUSTER:{glusterfs_volume["raw"]}{path["raw"]}'
+        path = conf.get('path', {'raw': ""})
+        return str(path['raw'])
 
     def path_local_set(entry, val, data_in, data_out):
         return
@@ -311,10 +268,6 @@ class ShareSchema(RegistrySchema):
         if loc == FSLocation.EXTERNAL:
             return
 
-        elif data_in['cluster_volname']:
-            data_out['vfs objects']['parsed'].append("acl_xattr")
-            return
-
         try:
             acltype = entry.middleware.call_sync('filesystem.path_get_acltype', data_in['path'])
         except FileNotFoundError:
@@ -370,38 +323,12 @@ class ShareSchema(RegistrySchema):
             return
 
         data_out['vfs objects']['parsed'].append("streams_xattr")
-        if not data_in.get("cluster_volname"):
-            data_out['smbd max xattr size'] = {"parsed": 2097152}
+        data_out['smbd max xattr size'] = {"parsed": 2097152}
 
         if data_in['fruit_enabled']:
             data_out["fruit:metadata"] = {"parsed": "stream"}
             data_out["fruit:resource"] = {"parsed": "stream"}
 
-        return
-
-    def cluster_get(entry, conf):
-        val = conf.pop(entry.smbconf, entry.default)
-        if type(val) != dict:
-            return val
-
-        if not val['parsed']:
-            return ''
-
-        conf.pop("glusterfs:logfile", "")
-        return val['parsed']
-
-    def cluster_set(entry, val, data_in, data_out):
-        """
-        Add glusterfs to vfs objects, set cluster volname, and
-        set logging path.
-        """
-        if not val:
-            data_out['vfs objects']['parsed'].append("zfs_core")
-            return
-
-        data_out['vfs objects']['parsed'].append("glusterfs")
-        data_out[entry.smbconf] = {"parsed": val}
-        data_out["glusterfs:logfile"] = {"parsed": f'/var/log/samba4/glusterfs-{val}.log'}
         return
 
     def mangling_get(entry, conf):
@@ -524,8 +451,6 @@ class ShareSchema(RegistrySchema):
                smbconf_parser=streams_get, schema_parser=streams_set),
         RegObj("afp", "tn:afp", False,
                smbconf_parser=afp_get, schema_parser=afp_set),
-        RegObj("cluster_volname", "glusterfs:volume", "",
-               smbconf_parser=cluster_get, schema_parser=cluster_set),
         RegObj("audit", None, None,
                smbconf_parser=audit_get, schema_parser=audit_set),
     ]

@@ -84,7 +84,7 @@ class SMBService(Service):
         return pdbentries
 
     @private
-    async def update_passdb_user(self, user, clustered=False):
+    async def update_passdb_user(self, user):
         if user['smbhash'] == user['pdb']:
             return
 
@@ -100,11 +100,8 @@ class SMBService(Service):
         if user['pdb'] is None:
             cmd = [SMBCmd.PDBEDIT.value, '-d', '0', '-a', username]
 
-            # If we're clustered, next_rid will be -1 and we _must_ use passdb rid counter
-            # this is because database ids can't be relied on to be consistent cluster-wide
-            if not clustered:
-                next_rid = await self.middleware.call('smb.get_next_rid', 'USER', user.get('id'))
-                cmd.extend(['-U', str(next_rid)])
+            next_rid = await self.middleware.call('smb.get_next_rid', 'USER', user.get('id'))
+            cmd.extend(['-U', str(next_rid)])
 
             cmd.append('-t')
 
@@ -182,35 +179,7 @@ class SMBService(Service):
             self.logger.warning("Samba gencache flush failed with error: %s", net.stderr.decode())
 
     @private
-    async def set_cluster_lock_wait(self):
-        """
-        Set cluster-wide PASS_DB lock with 5 minute timeout.
-        In theory this should give us plenty of time to finish passdb operations.
-        Other nodes will block waiting for this to be released. Trying once per
-        minute to synchronize passdb.
-        """
-        pnn = await self.middleware.call('ctdb.general.pnn')
-
-        while True:
-            try:
-                lock = await self.middleware.call('clustercache.get', 'PASSDB_LOCK')
-                if lock["node"] == pnn:
-                    return
-            except KeyError:
-                pass
-
-            try:
-                await self.middleware.call(
-                    'clustercache.put', "PASSDB_LOCK",
-                    {"node": pnn}, 300, {"flag": "CREATE"}
-                )
-                return
-            except KeyError:
-                self.logger.debug("waiting for clustered PASSDB_LOCK")
-                await asyncio.sleep(60)
-
-    @private
-    async def passdb_sync_impl(self, conf_users, clustered=False):
+    async def passdb_sync_impl(self, conf_users):
         server_name = (await self.middleware.call('smb.config'))['netbiosname_local']
         try:
             invalid_entries = await self.passdb_list_full([['Domain', 'C!=', server_name]])
@@ -229,17 +198,16 @@ class SMBService(Service):
         for u in conf_users:
             pdb_entry = pdb_users.pop(u['username'], None)
             u.update({"pdb": pdb_entry})
-            await self.middleware.call('smb.update_passdb_user', u, clustered)
+            await self.middleware.call('smb.update_passdb_user', u)
 
         for entry in pdb_users.keys():
             self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry)
             try:
                 await self.remove_passdb_user(entry)
             except Exception:
-                if not clustered:
-                    self.logger.warning("Failed to remove passdb user. This may indicate a corrupted passdb. Regenerating.", exc_info=True)
-                    await self.passdb_reinit(conf_users)
-                    break
+                self.logger.warning("Failed to remove passdb user. This may indicate a corrupted passdb. Regenerating.", exc_info=True)
+                await self.passdb_reinit(conf_users)
+                break
 
     @private
     @job(lock="passdb_sync")
@@ -266,14 +234,5 @@ class SMBService(Service):
                 "This may indicate system dataset setup failure."
             )
 
-        if ha_mode == 'CLUSTERED':
-            await self.set_cluster_lock_wait()
-            try:
-                conf_users = await self.middleware.call('cluster.accounts.user.query')
-                await self.passdb_sync_impl(conf_users, True)
-            finally:
-                await self.middleware.call("clustercache.pop", "PASSDB_LOCK")
-            return
-
         conf_users = await self.middleware.call('user.query', [("smb", "=", True)])
-        await self.passdb_sync_impl(conf_users, False)
+        await self.passdb_sync_impl(conf_users)
