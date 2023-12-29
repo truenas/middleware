@@ -263,7 +263,7 @@ class LDAPService(ConfigService):
 
     ENTRY = Dict(
         'ldap_update',
-        List('hostname'),
+        List('hostname', default=None),
         LDAP_DN('basedn'),
         LDAP_DN('binddn'),
         Str('bindpw', private=True),
