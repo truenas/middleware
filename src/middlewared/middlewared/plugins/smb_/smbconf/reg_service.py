@@ -24,7 +24,7 @@ class ShareSchema(RegistrySchema):
         def order_vfs_objects(vfs_objects, fruit_enabled, purpose):
             vfs_objects_special = ('truenas_audit', 'catia', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
                                    'acl_xattr', 'ixnas', 'winmsa', 'recycle', 'crossrename',
-                                   'zfs_core', 'aio_fbsd', 'io_uring', 'glusterfs')
+                                   'zfs_core', 'aio_fbsd', 'io_uring')
 
             invalid_vfs_objects = ['noacl']
             vfs_objects_ordered = []
@@ -118,12 +118,8 @@ class ShareSchema(RegistrySchema):
         return
 
     def path_local_get(entry, conf):
-        path = conf.get('path', {"raw": ""})
-        glusterfs_volume = conf.get('glusterfs:volume', {"raw": ""})
-        if not glusterfs_volume['raw']:
-            return str(path['raw'])
-
-        return f'CLUSTER:{glusterfs_volume["raw"]}{path["raw"]}'
+        path = conf.get('path', {'raw': ""})
+        return str(path['raw'])
 
     def path_local_set(entry, val, data_in, data_out):
         return

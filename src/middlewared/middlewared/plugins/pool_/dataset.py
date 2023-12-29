@@ -165,7 +165,6 @@ class PoolDatasetService(CRUDService):
         return [
             ['pool', '!=', await self.middleware.call('boot.pool_name')],
             ['id', 'rnin', '/.system'],
-            ['id', 'rnin', '/.glusterfs'],
             ['id', 'rnin', '/ix-applications/'],
         ]
 

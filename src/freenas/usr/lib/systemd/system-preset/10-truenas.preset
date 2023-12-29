@@ -29,7 +29,6 @@ disable nut.target
 disable wsdd.service
 disable libvirtd.service
 disable winbind.service
-disable glusterd*
 disable kubelet*
 disable nvidia-*
 disable libvirt*
