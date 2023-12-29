@@ -263,8 +263,8 @@ class LDAPService(ConfigService):
 
     ENTRY = Dict(
         'ldap_update',
-        List('hostname', required=True),
-        LDAP_DN('basedn', required=True),
+        List('hostname', default=None),
+        LDAP_DN('basedn'),
         LDAP_DN('binddn'),
         Str('bindpw', private=True),
         Bool('anonbind', default=False),
@@ -474,7 +474,6 @@ class LDAPService(ConfigService):
 
     @private
     async def common_validate(self, new, old, verrors):
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         if not new["enable"]:
             return
 
@@ -762,6 +761,9 @@ class LDAPService(ConfigService):
         new = old.copy()
         new_search_bases = data.pop(constants.LDAP_SEARCH_BASES_SCHEMA_NAME, {})
         new_attributes = data.pop(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME, {})
+        if data['hostname'] is None:
+            del(data['hostname'])
+
         new.update(data)
         new[constants.LDAP_SEARCH_BASES_SCHEMA_NAME] | new_search_bases
 
