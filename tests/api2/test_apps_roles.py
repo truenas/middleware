@@ -12,13 +12,19 @@ from middlewared.test.integration.utils import call
 
 @contextlib.contextmanager
 def official_chart_release():
+    release_name = 'tftpd-hpa'
     payload = {
         'catalog': 'TRUENAS',
         'item': 'tftpd-hpa',
-        'release_name': 'tftpd-hpa',
+        'release_name': release_name,
         'train': 'community',
     }
     chart_release = call('chart.release.create', payload, job=True)
+    timeout = 60
+    while timeout >= 0 and call('chart.release.get_instance', release_name)['status'] != 'ACTIVE':
+        sleep(10)
+        timeout -= 10
+
     try:
         yield chart_release
     finally:
@@ -46,7 +52,6 @@ def test_catalog_read_and_write_role(request, role, endpoint, payload, job, shou
     with unprivileged_user_client(roles=[role]) as c:
         if should_work:
             c.call(endpoint, *payload, job=job)
-
         else:
             with pytest.raises(ClientException) as ve:
                 c.call(endpoint, *payload, job=job)
@@ -85,7 +90,6 @@ def test_apps_read_and_write_roles_with_params(request, role, endpoint, job, sho
     depends(request, ['setup_kubernetes'], scope='session')
     with official_chart_release() as chart_release:
         with unprivileged_user_client(roles=[role]) as c:
-            sleep(8)  # for chart to get deployed and be in ACTIVE state
             if should_work:
                 if expected_error:
                     with pytest.raises(Exception) as ve:
