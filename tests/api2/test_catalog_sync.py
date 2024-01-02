@@ -1,42 +1,29 @@
-import pytest
-
 import contextlib
 import os
+import pytest
 
-import shutil
-
-from middlewared.client.client import ValidationErrors, ClientException
-from middlewared.test.integration.assets.pool import another_pool
+from middlewared.client.client import ClientException, ValidationErrors
 from middlewared.test.integration.assets.catalog import catalog
-from middlewared.test.integration.utils import call
-
-from middlewared.utils import MIDDLEWARE_RUN_DIR
+from middlewared.test.integration.assets.pool import another_pool
+from middlewared.test.integration.utils import call, ssh
 
 from auto_config import pool_name
 
 
+MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 TEST_CATALOG_NAME = 'TEST_CATALOG'
 TEST_SECOND_CATALOG_NAME = 'TEST_SECOND_CATALOG'
 CATALOG_SYNC_TMP_PATH = os.path.join(MIDDLEWARE_RUN_DIR, 'ix-applications', 'catalogs')
 
 
 @contextlib.contextmanager
-def unconfigured_kubernetes():
+def unconfigured_kubernetes(k3s_pool):
     call('kubernetes.update', {'pool': None}, job=True)
-    shutil.rmtree(CATALOG_SYNC_TMP_PATH, ignore_errors=True)
+    ssh(f'rm -rf {CATALOG_SYNC_TMP_PATH}')
     try:
         yield call('kubernetes.config')
     finally:
-        call('kubernetes.update', {'pool': None}, job=True)
-
-
-@contextlib.contextmanager
-def configured_kubernetes(pool_info):
-    call('kubernetes.update', {'pool': pool_info['name']}, job=True)
-    try:
-        yield call('kubernetes.config')
-    finally:
-        call('kubernetes.update', {'pool': None}, job=True)
+        call('kubernetes.update', {'pool': k3s_pool['name']}, job=True)
 
 
 @pytest.fixture(scope='module')
@@ -56,8 +43,8 @@ def kubernetes_pool():
                 call('kubernetes.update', {'pool': pool_name}, job=True)
 
 
-def test_create_new_catalog_with_unconfigured_pool():
-    with unconfigured_kubernetes():
+def test_create_new_catalog_with_unconfigured_pool(kubernetes_pool):
+    with unconfigured_kubernetes(kubernetes_pool):
         with pytest.raises(ValidationErrors) as ve:
             with catalog({
                 'force': True,
@@ -71,22 +58,23 @@ def test_create_new_catalog_with_unconfigured_pool():
         assert ve.value.errors[0].attribute == 'catalog_create.label'
 
 
-def test_create_new_catalog_with_configured_pool(kubernetes_pool):
-    with configured_kubernetes(kubernetes_pool):
-        with catalog({
-            'force': True,
-            'preferred_trains': ['tests'],
-            'label': TEST_CATALOG_NAME,
-            'repository': 'https://github.com/truenas/charts.git',
-            'branch': 'acl-tests'
-        }) as catalog_obj:
-            assert os.path.exists(catalog_obj['location'])
+def test_create_new_catalog_with_configured_pool():
+    with catalog({
+        'force': True,
+        'preferred_trains': ['tests'],
+        'label': TEST_CATALOG_NAME,
+        'repository': 'https://github.com/truenas/charts.git',
+        'branch': 'acl-tests'
+    }) as catalog_obj:
+        assert ssh(f'[ -d {catalog_obj["location"]} ] && exit 0 || exit 1', check=False) is True
 
 
-def test_catalog_sync_with_unconfigured_pool():
-    with unconfigured_kubernetes():
+def test_catalog_sync_with_unconfigured_pool(kubernetes_pool):
+    with unconfigured_kubernetes(kubernetes_pool):
         call('catalog.sync_all', job=True)
-        assert os.listdir(CATALOG_SYNC_TMP_PATH) == ['github_com_truenas_charts_git_master']
+        assert ssh(
+            f'ls {CATALOG_SYNC_TMP_PATH}', complete_response=True
+        ).strip() == 'github_com_truenas_charts_git_master'
         with pytest.raises(ClientException) as ve:
             call('catalog.sync', TEST_SECOND_CATALOG_NAME, job=True)
 
@@ -95,8 +83,8 @@ def test_catalog_sync_with_unconfigured_pool():
 
 
 def test_catalog_sync_with_configured_pool(kubernetes_pool):
-    with configured_kubernetes(kubernetes_pool) as k3s_config:
-        call('catalog.sync_all', job=True)
-        assert set(os.listdir(f'/mnt/{k3s_config["dataset"]}/catalogs')) == {'github_com_truenas_charts_git_master',
-                                                                             'github_com_truenas_charts_git_test'}
-        assert call('catalog.sync', TEST_SECOND_CATALOG_NAME, job=True) is None
+    call('catalog.sync_all', job=True)
+    assert set(
+        ssh(f'ls /mnt/{kubernetes_pool["name"]}/ix-applications/catalogs', complete_response=True).strip().split()
+    ) == {'github_com_truenas_charts_git_master', 'github_com_truenas_charts_git_test'}
+    assert call('catalog.sync', TEST_SECOND_CATALOG_NAME, job=True) is None
