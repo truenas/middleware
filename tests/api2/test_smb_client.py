@@ -42,6 +42,9 @@ PERSISTENT_ACL = [
     }
 ]
 
+TMP_SMB_USER_PASSWORD = 'Abcd1234$'
+
+
 @pytest.fixture(scope='module')
 def setup_smb_tests(request):
     with dataset('smbclient-testing', data={'share_type': 'SMB'}) as ds:
@@ -49,7 +52,7 @@ def setup_smb_tests(request):
             'username': 'smbuser',
             'full_name': 'smbuser',
             'group_create': True,
-            'password': 'Abcd1234$'
+            'password': TMP_SMB_USER_PASSWORD
         }) as u:
             with smb_share(os.path.join('/mnt', ds), 'client_share') as s:
                 try:
