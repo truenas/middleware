@@ -1,4 +1,6 @@
 import enum
+from middlewared.auth import (RootTcpSocketSessionManagerCredentials,
+                              TrueNasNodeSessionManagerCredentials)
 from middlewared.role import ROLES
 
 
@@ -26,6 +28,15 @@ def privilege_has_webui_access(privilege: dict) -> bool:
 def credential_has_full_admin(credential: object) -> bool:
     if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege']['roles']:
         return True
+
+    if isinstance(credential, (
+        RootTcpSocketSessionManagerCredentials,
+        TrueNasNodeSessionManagerCredentials
+    )):
+        return True
+
+    if credential.allowlist is None:
+        return False
 
     return credential.allowlist.full_admin
 

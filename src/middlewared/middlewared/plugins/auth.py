@@ -177,7 +177,8 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         self.is_user_session = root_credentials.is_user_session
         if self.is_user_session:
             self.user = root_credentials.user
-            self.allowlist = root_credentials.allowlist
+
+        self.allowlist = root_credentials.allowlist
 
     def is_valid(self):
         return self.token.is_valid()
