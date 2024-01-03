@@ -21,7 +21,9 @@ class CatalogService(Service):
         catalogs = await self.middleware.call(
             'catalog.query', [
                 ['id', '=', OFFICIAL_LABEL]
-            ] if await self.middleware.call('catalog.cannot_be_added') else []
+            ] if await self.middleware.call('catalog.cannot_be_added') or not await self.middleware.call(
+                'catalog.dataset_mounted'
+            ) else []
         )
         catalog_len = len(catalogs)
         for index, catalog in enumerate(catalogs):
