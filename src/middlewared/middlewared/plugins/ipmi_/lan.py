@@ -2,7 +2,7 @@ from subprocess import run, DEVNULL
 from functools import cache
 
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Password, returns, Str
-from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
+from middlewared.service import CallError, CRUDService, filterable, ValidationError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import Netmask, PasswordComplexity, Range
 
@@ -133,6 +133,7 @@ class IPMILanService(CRUDService):
             ]),
             Bool('dhcp'),
             Int('vlan', validators=[Range(0, 4094)], null=True),
+            Bool('apply_remote', default=False),
             register=True
         )
     )
@@ -146,6 +147,8 @@ class IPMILanService(CRUDService):
         `password` is a password to be assigned to channel number `id`
         `dhcp` is a boolean. If False, `ipaddress`, `netmask` and `gateway` must be set.
         `vlan` is an integer representing the vlan tag number.
+        `apply_remote` is a boolean. If True and this is an HA licensed system, will apply
+            the configuration to the remote controller.
         """
         verrors = ValidationErrors()
         if not self.middleware.call_sync('ipmi.is_loaded'):
@@ -158,4 +161,15 @@ class IPMILanService(CRUDService):
                     verrors.add(f'ipmi_update.{k}', 'This field is required when dhcp is false.')
         verrors.check()
 
-        return apply_config(id_, data)
+        # It's _very_ important to pop this key so that
+        # we don't have a situation where we send the same
+        # data across to the other side which turns around
+        # and sends it back to us causing a loop
+        apply_remote = data.pop('apply_remote')
+        if not apply_remote:
+            return apply_config(id_, data)
+        elif self.middleware.call_sync('failover.licensed'):
+            try:
+                return self.middleware.call_sync('failover.call_remote', 'ipmi.lan.update', [id_, data])
+            except Exception as e:
+                raise ValidationError('ipmi_lan.update', f'Failed to apply IPMI config on remote controller: {e}')
