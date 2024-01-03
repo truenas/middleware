@@ -29,6 +29,7 @@ class Job(SDObject):
 class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     systemd_unit = NotImplemented
     systemd_async_start = False
+    systemd_unit_timeout = 5
 
     async def systemd_extra_units(self):
         return []
@@ -71,8 +72,8 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     def _get_systemd_unit_name(self):
         return f"{self.systemd_unit}.service".encode()
 
-    async def _unit_action(self, action, wait=True, timeout=5):
-        return await self.middleware.run_in_thread(self._unit_action_sync, action, wait, timeout)
+    async def _unit_action(self, action, wait=True):
+        return await self.middleware.run_in_thread(self._unit_action_sync, action, wait, self.systemd_unit_timeout)
 
     def _unit_action_sync(self, action, wait, timeout):
         unit = self._get_systemd_unit()

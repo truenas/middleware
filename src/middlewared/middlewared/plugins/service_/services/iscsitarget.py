@@ -6,6 +6,7 @@ from .base import SimpleService
 class ISCSITargetService(SimpleService):
     name = "iscsitarget"
     reloadable = True
+    systemd_unit_timeout = 30
 
     etc = ["scst", "scst_targets"]
 
