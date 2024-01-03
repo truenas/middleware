@@ -25,6 +25,46 @@ def lan_channels():
     return channels
 
 
+def apply_config(channel, data):
+    base_cmd = ['ipmitool', 'lan', 'set', channel]
+
+    rc = 0
+    options = {'stdout': DEVNULL, 'stderr': DEVNULL}
+    if data.get('dhcp'):
+        rc |= run(base_cmd + ['dhcp'], **options).returncode
+    else:
+        rc |= run(base_cmd + ['ipsrc', 'static'], **options).returncode
+        rc |= run(base_cmd + ['ipaddr', data['ipaddress']], **options).returncode
+        rc |= run(base_cmd + ['netmask', data['netmask']], **options).returncode
+        rc |= run(base_cmd + ['defgw', 'ipaddr', data['gateway']], **options).returncode
+
+    rc |= run(base_cmd + ['vlan', 'id', f'{data.get("vlan", "off")}'], **options).returncode
+
+    rc |= run(base_cmd + ['access', 'on'], **options).returncode
+    rc |= run(base_cmd + ['auth', 'USER', 'MD2,MD5'], **options).returncode
+    rc |= run(base_cmd + ['auth', 'OPERATOR', 'MD2,MD5'], **options).returncode
+    rc |= run(base_cmd + ['auth', 'ADMIN', 'MD2,MD5'], **options).returncode
+    rc |= run(base_cmd + ['auth', 'CALLBACK', 'MD2,MD5'], **options).returncode
+
+    # Apparently tickling these ARP options can "fail" on certain hardware
+    # which isn't fatal so we ignore returncode in this instance. See #15578.
+    run(base_cmd + ['arp', 'respond', 'on'], **options)
+    run(base_cmd + ['arp', 'generate', 'on'], **options)
+
+    if passwd := data.get('password'):
+        cp = run(['ipmitool', 'user', 'set', 'password', '2', passwd], capture_output=True)
+        if cp.returncode != 0:
+            err = '\n'.join(cp.stderr.decode().split('\n'))
+            raise CallError(f'Failed setting password: {err!r}')
+
+    cp = run(['ipmitool', 'user', 'enable', '2'], capture_output=True)
+    if cp.returncode != 0:
+        err = '\n'.join(cp.stderr.decode().split('\n'))
+        raise CallError(f'Failed enabling user: {err!r}')
+
+    return rc
+
+
 class IPMILanService(CRUDService):
 
     class Config:
@@ -118,42 +158,4 @@ class IPMILanService(CRUDService):
                     verrors.add(f'ipmi_update.{k}', 'This field is required when dhcp is false.')
         verrors.check()
 
-        def get_cmd(cmds):
-            nonlocal id_
-            return ['ipmitool', 'lan', 'set', f'{id_}'] + cmds
-
-        rc = 0
-        options = {'stdout': DEVNULL, 'stderr': DEVNULL}
-        if data.get('dhcp'):
-            rc |= run(get_cmd(['dhcp']), **options).returncode
-        else:
-            rc |= run(get_cmd(['ipsrc', 'static']), **options).returncode
-            rc |= run(get_cmd(['ipaddr', data['ipaddress']]), **options).returncode
-            rc |= run(get_cmd(['netmask', data['netmask']]), **options).returncode
-            rc |= run(get_cmd(['defgw', 'ipaddr', data['gateway']]), **options).returncode
-
-        rc |= run(get_cmd(['vlan', 'id', f'{data.get("vlan", "off")}']), **options).returncode
-
-        rc |= run(get_cmd(['access', 'on']), **options).returncode
-        rc |= run(get_cmd(['auth', 'USER', 'MD2,MD5']), **options).returncode
-        rc |= run(get_cmd(['auth', 'OPERATOR', 'MD2,MD5']), **options).returncode
-        rc |= run(get_cmd(['auth', 'ADMIN', 'MD2,MD5']), **options).returncode
-        rc |= run(get_cmd(['auth', 'CALLBACK', 'MD2,MD5']), **options).returncode
-
-        # Apparently tickling these ARP options can "fail" on certain hardware
-        # which isn't fatal so we ignore returncode in this instance. See #15578.
-        run(get_cmd(['arp', 'respond', 'on']), **options)
-        run(get_cmd(['arp', 'generate', 'on']), **options)
-
-        if passwd := data.get('password'):
-            cp = run(['ipmitool', 'user', 'set', 'password', '2', passwd], capture_output=True)
-            if cp.returncode != 0:
-                err = '\n'.join(cp.stderr.decode().split('\n'))
-                raise CallError(f'Failed setting password: {err!r}')
-
-        cp = run(['ipmitool', 'user', 'enable', '2'], capture_output=True)
-        if cp.returncode != 0:
-            err = '\n'.join(cp.stderr.decode().split('\n'))
-            raise CallError(f'Failed enabling user: {err!r}')
-
-        return rc
+        return apply_config(id_, data)
