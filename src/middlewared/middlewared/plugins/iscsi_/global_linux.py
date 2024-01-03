@@ -39,6 +39,8 @@ class ISCSIGlobalService(Service):
         base_path = '/sys/kernel/scst_tgt/targets/iscsi'
         for target_dir in glob.glob(f'{base_path}/{global_info["basename"]}*'):
             target = target_dir.rsplit('/', 1)[-1]
+            if target.startswith(f'{global_info["basename"]}:HA:'):
+                continue
             for session in os.listdir(os.path.join(target_dir, 'sessions')):
                 session_dir = os.path.join(target_dir, 'sessions', session)
                 ip_file = glob.glob(f'{session_dir}/*/ip')
