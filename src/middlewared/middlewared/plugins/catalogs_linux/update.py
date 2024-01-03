@@ -196,12 +196,11 @@ class CatalogService(CRUDService):
     @private
     async def dataset_mounted(self):
         if k8s_dataset := (await self.middleware.call('kubernetes.config'))['dataset']:
-            if catalog_ds := await self.middleware.call(
+            return bool(await self.middleware.call(
                 'filesystem.mount_info', [
                     ['mount_source', '=', os.path.join(k8s_dataset, 'catalogs')], ['fs_type', '=', 'zfs'],
                 ],
-            ):
-                return catalog_ds[0]['mountpoint']
+            ))
 
         return False
 
