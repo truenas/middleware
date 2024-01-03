@@ -1299,7 +1299,6 @@ class SharingSMBService(SharingService):
             'ctdb socket',
             'socket options',
             'include',
-            'interfaces',
             'wide links',
             'insecure wide links'
         ]
