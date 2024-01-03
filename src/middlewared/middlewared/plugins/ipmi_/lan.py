@@ -71,7 +71,7 @@ class IPMILanService(CRUDService):
         namespace = 'ipmi.lan'
         cli_namespace = 'network.ipmi'
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['IPMI_READ'])
     @returns(List('lan_channels', items=[Int('lan_channel')]))
     def channels(self):
         """Return a list of available IPMI channels."""
@@ -83,7 +83,7 @@ class IPMILanService(CRUDService):
 
         return channels
 
-    @filterable
+    @filterable(roles=['IPMI_READ'])
     def query(self, filters, options):
         """Query available IPMI Channels with `query-filters` and `query-options`."""
         result = []
@@ -135,7 +135,8 @@ class IPMILanService(CRUDService):
             Int('vlan', validators=[Range(0, 4094)], null=True),
             Bool('apply_remote', default=False),
             register=True
-        )
+        ),
+        roles=['IPMI_WRITE'],
     )
     def do_update(self, id_, data):
         """
