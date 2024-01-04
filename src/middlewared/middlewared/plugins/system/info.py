@@ -99,7 +99,7 @@ class SystemService(Service):
     async def hostname(self):
         return socket.gethostname()
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     @returns(Str('system_host_identifier'))
     def host_id(self):
         """
