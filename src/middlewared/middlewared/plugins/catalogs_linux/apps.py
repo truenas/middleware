@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Datetime, Dict, List, Ref, returns, Str
 from middlewared.service import filterable, filterable_returns, Service
 from middlewared.utils import filter_list
 
@@ -27,6 +27,8 @@ class AppService(Service):
         'available_apps',
         Bool('healthy', required=True),
         Bool('installed', required=True),
+        Bool('recommended', required=True),
+        Datetime('last_update', required=True),
         List('categories', required=True),
         List('maintainers', required=True),
         List('tags', required=True),
@@ -39,9 +41,9 @@ class AppService(Service):
         Str('location', required=True),
         Str('healthy_error', required=True, null=True),
         Str('home', required=True),
-        Str('last_update', required=True),
         Str('latest_version', required=True),
         Str('latest_app_version', required=True),
+        Str('latest_human_version', required=True),
         Str('icon_url', required=True),
         Str('train', required=True),
         Str('catalog', required=True),
