@@ -199,6 +199,7 @@ class SupportService(ConfigService):
         Str('category'),
         Bool('attach_debug', default=False),
         Password('token'),
+        Str('type', enum=['BUG', 'FEATURE']),
         Str('criticality'),
         Str('environment', max_length=None),
         Str('phone'),
@@ -221,7 +222,7 @@ class SupportService(ConfigService):
         For TrueNAS SCALE it will be created on JIRA and for TrueNAS SCALE Enterprise on Salesforce.
 
         For SCALE `criticality`, `environment`, `phone`, `name` and `email` attributes are not required.
-        For SCALE Enterprise `token` attribute is not required.
+        For SCALE Enterprise `token` and `type` attributes are not required.
         """
 
         await self.middleware.call('network.general.will_perform_activity', 'support')
@@ -231,7 +232,7 @@ class SupportService(ConfigService):
         sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
 
         if sw_name == 'freenas':
-            required_attrs = ('token',)
+            required_attrs = ('type', 'token')
         else:
             required_attrs = ('category', 'phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
@@ -247,6 +248,10 @@ class SupportService(ConfigService):
 
         data['version'] = f'{PRODUCT}-{await self.middleware.call("system.version_short")}'
         debug = data.pop('attach_debug')
+
+        type_ = data.get('type')
+        if type_:
+            data['type'] = type_.lower()
 
         job.set_progress(20, 'Submitting ticket')
 
