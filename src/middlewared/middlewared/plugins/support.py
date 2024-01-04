@@ -169,7 +169,7 @@ class SupportService(ConfigService):
 
         return data
 
-    @accepts(Password('token'), Str('query'))
+    @accepts(Password('token'), Str('query'), roles=['SUPPORT_READ'])
     @returns(List('similar_issues', items=[Dict(
         'similar_issue',
         Str('url'),
