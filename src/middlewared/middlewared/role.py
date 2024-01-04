@@ -11,7 +11,6 @@ class Role:
         receive permissions granted by all the included roles.
     :ivar full_admin: if `True` then this role will allow calling all methods.
     """
-
     includes: [str] = field(default_factory=list)
     full_admin: bool = False
     builtin: bool = True
@@ -29,6 +28,9 @@ ROLES = {
 
     'KMIP_READ': Role(),
     'KMIP_WRITE': Role(includes=['KMIP_READ']),
+
+    'IPMI_READ': Role(),
+    'IPMI_WRITE': Role(includes=['IPMI_READ']),
 
     'FILESYSTEM_ATTRS_READ': Role(),
     'FILESYSTEM_ATTRS_WRITE': Role(includes=['FILESYSTEM_ATTRS_READ']),
@@ -53,6 +55,7 @@ ROLES = {
                                'DATASET_READ',
                                'ENCLOSURE_READ',
                                'FAILOVER_READ',
+                               'IPMI_READ',
                                'KMIP_READ',
                                'FILESYSTEM_ATTRS_READ',
                                'NETWORK_GENERAL_READ',

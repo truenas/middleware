@@ -2,7 +2,7 @@ from subprocess import run, DEVNULL
 from functools import cache
 
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Password, returns, Str
-from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
+from middlewared.service import CallError, CRUDService, filterable, ValidationError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import Netmask, PasswordComplexity, Range
 
@@ -25,13 +25,53 @@ def lan_channels():
     return channels
 
 
+def apply_config(channel, data):
+    base_cmd = ['ipmitool', 'lan', 'set', channel]
+
+    rc = 0
+    options = {'stdout': DEVNULL, 'stderr': DEVNULL}
+    if data.get('dhcp'):
+        rc |= run(base_cmd + ['dhcp'], **options).returncode
+    else:
+        rc |= run(base_cmd + ['ipsrc', 'static'], **options).returncode
+        rc |= run(base_cmd + ['ipaddr', data['ipaddress']], **options).returncode
+        rc |= run(base_cmd + ['netmask', data['netmask']], **options).returncode
+        rc |= run(base_cmd + ['defgw', 'ipaddr', data['gateway']], **options).returncode
+
+    rc |= run(base_cmd + ['vlan', 'id', f'{data.get("vlan", "off")}'], **options).returncode
+
+    rc |= run(base_cmd + ['access', 'on'], **options).returncode
+    rc |= run(base_cmd + ['auth', 'USER', 'MD2,MD5'], **options).returncode
+    rc |= run(base_cmd + ['auth', 'OPERATOR', 'MD2,MD5'], **options).returncode
+    rc |= run(base_cmd + ['auth', 'ADMIN', 'MD2,MD5'], **options).returncode
+    rc |= run(base_cmd + ['auth', 'CALLBACK', 'MD2,MD5'], **options).returncode
+
+    # Apparently tickling these ARP options can "fail" on certain hardware
+    # which isn't fatal so we ignore returncode in this instance. See #15578.
+    run(base_cmd + ['arp', 'respond', 'on'], **options)
+    run(base_cmd + ['arp', 'generate', 'on'], **options)
+
+    if passwd := data.get('password'):
+        cp = run(['ipmitool', 'user', 'set', 'password', '2', passwd], capture_output=True)
+        if cp.returncode != 0:
+            err = '\n'.join(cp.stderr.decode().split('\n'))
+            raise CallError(f'Failed setting password: {err!r}')
+
+    cp = run(['ipmitool', 'user', 'enable', '2'], capture_output=True)
+    if cp.returncode != 0:
+        err = '\n'.join(cp.stderr.decode().split('\n'))
+        raise CallError(f'Failed enabling user: {err!r}')
+
+    return rc
+
+
 class IPMILanService(CRUDService):
 
     class Config:
         namespace = 'ipmi.lan'
         cli_namespace = 'network.ipmi'
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['IPMI_READ'])
     @returns(List('lan_channels', items=[Int('lan_channel')]))
     def channels(self):
         """Return a list of available IPMI channels."""
@@ -43,7 +83,7 @@ class IPMILanService(CRUDService):
 
         return channels
 
-    @filterable
+    @filterable(roles=['IPMI_READ'])
     def query(self, filters, options):
         """Query available IPMI Channels with `query-filters` and `query-options`."""
         result = []
@@ -93,8 +133,10 @@ class IPMILanService(CRUDService):
             ]),
             Bool('dhcp'),
             Int('vlan', validators=[Range(0, 4094)], null=True),
+            Bool('apply_remote', default=False),
             register=True
-        )
+        ),
+        roles=['IPMI_WRITE'],
     )
     def do_update(self, id_, data):
         """
@@ -106,54 +148,30 @@ class IPMILanService(CRUDService):
         `password` is a password to be assigned to channel number `id`
         `dhcp` is a boolean. If False, `ipaddress`, `netmask` and `gateway` must be set.
         `vlan` is an integer representing the vlan tag number.
+        `apply_remote` is a boolean. If True and this is an HA licensed system, will apply
+            the configuration to the remote controller.
         """
         verrors = ValidationErrors()
+        schema = 'ipmi.lan.update'
         if not self.middleware.call_sync('ipmi.is_loaded'):
-            verrors.add('ipmi.update', '/dev/ipmi0 could not be found')
+            verrors.add(schema, '/dev/ipmi0 could not be found')
         elif id_ not in self.channels():
-            verrors.add('ipmi.update', f'IPMI channel number {id_!r} not found')
+            verrors.add(schema, f'IPMI channel number {id_!r} not found')
         elif not data.get('dhcp'):
             for k in ['ipaddress', 'netmask', 'gateway']:
                 if not data.get(k):
-                    verrors.add(f'ipmi_update.{k}', 'This field is required when dhcp is false.')
+                    verrors.add(schema, f'{k} field is required when dhcp is false.')
         verrors.check()
 
-        def get_cmd(cmds):
-            nonlocal id_
-            return ['ipmitool', 'lan', 'set', f'{id_}'] + cmds
-
-        rc = 0
-        options = {'stdout': DEVNULL, 'stderr': DEVNULL}
-        if data.get('dhcp'):
-            rc |= run(get_cmd(['dhcp']), **options).returncode
-        else:
-            rc |= run(get_cmd(['ipsrc', 'static']), **options).returncode
-            rc |= run(get_cmd(['ipaddr', data['ipaddress']]), **options).returncode
-            rc |= run(get_cmd(['netmask', data['netmask']]), **options).returncode
-            rc |= run(get_cmd(['defgw', 'ipaddr', data['gateway']]), **options).returncode
-
-        rc |= run(get_cmd(['vlan', 'id', f'{data.get("vlan", "off")}']), **options).returncode
-
-        rc |= run(get_cmd(['access', 'on']), **options).returncode
-        rc |= run(get_cmd(['auth', 'USER', 'MD2,MD5']), **options).returncode
-        rc |= run(get_cmd(['auth', 'OPERATOR', 'MD2,MD5']), **options).returncode
-        rc |= run(get_cmd(['auth', 'ADMIN', 'MD2,MD5']), **options).returncode
-        rc |= run(get_cmd(['auth', 'CALLBACK', 'MD2,MD5']), **options).returncode
-
-        # Apparently tickling these ARP options can "fail" on certain hardware
-        # which isn't fatal so we ignore returncode in this instance. See #15578.
-        run(get_cmd(['arp', 'respond', 'on']), **options)
-        run(get_cmd(['arp', 'generate', 'on']), **options)
-
-        if passwd := data.get('password'):
-            cp = run(['ipmitool', 'user', 'set', 'password', '2', passwd], capture_output=True)
-            if cp.returncode != 0:
-                err = '\n'.join(cp.stderr.decode().split('\n'))
-                raise CallError(f'Failed setting password: {err!r}')
-
-        cp = run(['ipmitool', 'user', 'enable', '2'], capture_output=True)
-        if cp.returncode != 0:
-            err = '\n'.join(cp.stderr.decode().split('\n'))
-            raise CallError(f'Failed enabling user: {err!r}')
-
-        return rc
+        # It's _very_ important to pop this key so that
+        # we don't have a situation where we send the same
+        # data across to the other side which turns around
+        # and sends it back to us causing a loop
+        apply_remote = data.pop('apply_remote')
+        if not apply_remote:
+            return apply_config(id_, data)
+        elif self.middleware.call_sync('failover.licensed'):
+            try:
+                return self.middleware.call_sync('failover.call_remote', 'ipmi.lan.update', [id_, data])
+            except Exception as e:
+                raise ValidationError(schema, f'Failed to apply IPMI config on remote controller: {e}')
