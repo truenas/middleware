@@ -66,14 +66,14 @@ def test_create_new_catalog_with_configured_pool():
         'repository': 'https://github.com/truenas/charts.git',
         'branch': 'acl-tests'
     }) as catalog_obj:
-        assert ssh(f'[ -d {catalog_obj["location"]} ] && exit 0 || exit 1', check=False) is True
+        assert ssh(f'[ -d {catalog_obj["location"]} ] && echo 0 || echo 1').strip() == '0'
 
 
 def test_catalog_sync_with_unconfigured_pool(kubernetes_pool):
     with unconfigured_kubernetes(kubernetes_pool):
         call('catalog.sync_all', job=True)
         assert ssh(
-            f'ls {CATALOG_SYNC_TMP_PATH}', complete_response=True
+            f'ls {CATALOG_SYNC_TMP_PATH}'
         ).strip() == 'github_com_truenas_charts_git_master'
         with pytest.raises(ClientException) as ve:
             call('catalog.sync', TEST_SECOND_CATALOG_NAME, job=True)
@@ -85,6 +85,6 @@ def test_catalog_sync_with_unconfigured_pool(kubernetes_pool):
 def test_catalog_sync_with_configured_pool(kubernetes_pool):
     call('catalog.sync_all', job=True)
     assert set(
-        ssh(f'ls /mnt/{kubernetes_pool["name"]}/ix-applications/catalogs', complete_response=True).strip().split()
+        ssh(f'ls /mnt/{kubernetes_pool["name"]}/ix-applications/catalogs').strip().split()
     ) == {'github_com_truenas_charts_git_master', 'github_com_truenas_charts_git_test'}
     assert call('catalog.sync', TEST_SECOND_CATALOG_NAME, job=True) is None
