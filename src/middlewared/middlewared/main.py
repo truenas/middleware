@@ -966,22 +966,29 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self.role_manager.register_method(f'{service._config.namespace}.query', ['READONLY'])
 
             if service._config.role_prefix:
-                self.role_manager.add_roles(f'{service._config.namespace}.config',
-                                            [f'{service._config.role_prefix}_READ'])
-                self.role_manager.add_roles(f'{service._config.namespace}.get_instance',
-                                            [f'{service._config.role_prefix}_READ'])
-                self.role_manager.add_roles(f'{service._config.namespace}.query',
-                                            [f'{service._config.role_prefix}_READ'])
-                self.role_manager.register_method(f'{service._config.namespace}.create',
-                                                  [f'{service._config.role_prefix}_WRITE'])
-                self.role_manager.register_method(f'{service._config.namespace}.update',
-                                                  [f'{service._config.role_prefix}_WRITE'])
+                self.role_manager.add_roles(
+                    f'{service._config.namespace}.config', [f'{service._config.role_prefix}_READ']
+                )
+                self.role_manager.add_roles(
+                    f'{service._config.namespace}.get_instance', [f'{service._config.role_prefix}_READ']
+                )
+                self.role_manager.add_roles(
+                    f'{service._config.namespace}.query', [f'{service._config.role_prefix}_READ']
+                )
+                self.role_manager.register_method(
+                    f'{service._config.namespace}.create', [f'{service._config.role_prefix}_WRITE']
+                )
+                self.role_manager.register_method(
+                    f'{service._config.namespace}.update', [f'{service._config.role_prefix}_WRITE']
+                )
                 if service._config.role_separate_delete:
-                    self.role_manager.register_method(f'{service._config.namespace}.delete',
-                                                      [f'{service._config.role_prefix}_DELETE'])
+                    self.role_manager.register_method(
+                        f'{service._config.namespace}.delete', [f'{service._config.role_prefix}_DELETE']
+                    )
                 else:
-                    self.role_manager.register_method(f'{service._config.namespace}.delete',
-                                                      [f'{service._config.role_prefix}_WRITE'])
+                    self.role_manager.register_method(
+                        f'{service._config.namespace}.delete', [f'{service._config.role_prefix}_WRITE']
+                    )
 
             for method_name in dir(service):
                 roles = getattr(getattr(service, method_name), 'roles', None) or []
