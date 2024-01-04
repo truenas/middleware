@@ -365,13 +365,15 @@ class Job:
         throttle progress reporting if you are receiving it from an external source (e.g. network response reading
         progress).
 
-        :param percent: Job progress [0-100]
+        :param percent: Job progress [0-100]. It will be rounded down to an integer as precision is not required here,
+            and also to avoid sending extra events when progress is changed from, e.g. 73.11 to 73.64
         :param description: Human-readable description of what the job is currently doing.
         :param extra: Extra data (any type) that can be used by specific job progress bar in the UI.
         """
         changed = False
         if percent is not None:
             assert isinstance(percent, (int, float))
+            percent = int(percent)
             if self.progress['percent'] != percent:
                 self.progress['percent'] = percent
                 changed = True
