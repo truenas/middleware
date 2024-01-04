@@ -188,7 +188,7 @@ class TrueNASService(Service):
             "support_end_date": license_['contract_end'].isoformat(),
         }
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     @returns(Bool('is_production_system'))
     async def is_production(self):
         """
