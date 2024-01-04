@@ -152,14 +152,15 @@ class IPMILanService(CRUDService):
             the configuration to the remote controller.
         """
         verrors = ValidationErrors()
+        schema = 'ipmi.lan.update'
         if not self.middleware.call_sync('ipmi.is_loaded'):
-            verrors.add('ipmi.update', '/dev/ipmi0 could not be found')
+            verrors.add(schema, '/dev/ipmi0 could not be found')
         elif id_ not in self.channels():
-            verrors.add('ipmi.update', f'IPMI channel number {id_!r} not found')
+            verrors.add(schema, f'IPMI channel number {id_!r} not found')
         elif not data.get('dhcp'):
             for k in ['ipaddress', 'netmask', 'gateway']:
                 if not data.get(k):
-                    verrors.add(f'ipmi_update.{k}', 'This field is required when dhcp is false.')
+                    verrors.add(schema, f'{k} field is required when dhcp is false.')
         verrors.check()
 
         # It's _very_ important to pop this key so that
@@ -173,4 +174,4 @@ class IPMILanService(CRUDService):
             try:
                 return self.middleware.call_sync('failover.call_remote', 'ipmi.lan.update', [id_, data])
             except Exception as e:
-                raise ValidationError('ipmi_lan.update', f'Failed to apply IPMI config on remote controller: {e}')
+                raise ValidationError(schema, f'Failed to apply IPMI config on remote controller: {e}')
