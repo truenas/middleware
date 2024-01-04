@@ -37,10 +37,10 @@ def test_ui_crypto_domain_names_readonly_role(role, valid_role):
 
     with unprivileged_user_client(roles=[role]) as c:
         if valid_role:
-            c.call('webui.crypto.get_domain_names', default_certificate['id'])
+            c.call('webui.crypto.get_certificate_domain_names', default_certificate['id'])
         else:
             with pytest.raises(ClientException) as ve:
-                c.call('webui.crypto.get_domain_names', default_certificate['id'])
+                c.call('webui.crypto.get_certificate_domain_names', default_certificate['id'])
 
             assert ve.value.errno == errno.EACCES
             assert ve.value.error == 'Not authorized'
