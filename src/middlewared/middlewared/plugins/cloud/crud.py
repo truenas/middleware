@@ -62,13 +62,20 @@ class CloudTaskServiceMixin:
         attributes_verrors = validate_schema(schema, data["attributes"])
 
         if not attributes_verrors:
-            await provider.pre_save_task(data, credentials, verrors)
+            await provider.validate_task_basic(data, credentials, verrors)
 
         verrors.add_child(f"{name}.attributes", attributes_verrors)
 
     @private
     async def _validate(self, verrors, name, data):
         await self._basic_validate(verrors, name, data)
+
+        if not verrors:
+            credentials = await self._get_credentials(data["credentials"])
+
+            provider = REMOTES[credentials["provider"]]
+
+            await provider.validate_task_full(data, credentials, verrors)
 
         for i, (limit1, limit2) in enumerate(zip(data["bwlimit"], data["bwlimit"][1:])):
             if limit1["time"] >= limit2["time"]:

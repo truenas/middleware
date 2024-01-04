@@ -55,7 +55,7 @@ class S3RcloneRemote(BaseRcloneRemote):
         )
         return client
 
-    async def pre_save_task(self, task, credentials, verrors):
+    async def validate_task_basic(self, task, credentials, verrors):
         if task["attributes"]["encryption"] not in (None, "", "AES256"):
             verrors.add("encryption", 'Encryption should be null or "AES256"')
 
