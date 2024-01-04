@@ -31,7 +31,7 @@ class IpmiSelService(Service):
         namespace = 'ipmi.sel'
         cli_namespace = 'service.ipmi.sel'
 
-    @filterable
+    @filterable(roles=['IPMI_READ'])
     @filterable_returns(Dict('ipmi_elist', additional_attrs=True))
     @job(lock=SEL_LOCK, lock_queue_size=1, transient=True)
     def elist(self, job, filters, options):
@@ -56,7 +56,7 @@ class IpmiSelService(Service):
         job.set_progress(100, 'Parsing extended event log complete')
         return filter_list(rv, filters, options)
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['IPMI_READ'])
     @returns(Dict('ipmi_sel_info', additional_attrs=True))
     @job(lock=SEL_LOCK, lock_queue_size=1, transient=True)
     def info(self, job):
@@ -74,7 +74,7 @@ class IpmiSelService(Service):
         job.set_progress(100, 'Parsing general extended event log complete')
         return rv
 
-    @accepts()
+    @accepts(roles=['IPMI_WRITE'])
     @returns()
     @job(lock=SEL_LOCK, lock_queue_size=1)
     def clear(self, job):

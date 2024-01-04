@@ -66,7 +66,7 @@ class IpmiSensorsService(Service):
 
         return rv, reread
 
-    @filterable
+    @filterable(roles=['IPMI_READ'])
     @filterable_returns(List('sensors', items=[Dict('sensor', additional_attrs=True)]))
     def query(self, filters, options):
         sensors, reread = self.query_impl()
