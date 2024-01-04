@@ -5,7 +5,7 @@ import requests
 import shutil
 import tarfile
 
-from middlewared.schema import accepts, Dict, returns
+from middlewared.schema import accepts, returns
 from middlewared.service import CallError, job, private, Service
 
 from ixdiagnose.config import conf
@@ -19,7 +19,7 @@ class SystemService(Service):
 
     @private
     @job(lock='system.debug_generate')
-    def debug_generate(self, job, options):
+    def debug_generate(self, job):
         """
         Generate system debug file.
 
@@ -50,7 +50,6 @@ class SystemService(Service):
             'debug_path': os.path.join(execution_dir, 'debug'),
             'clean_debug_path': True,
             'compressed_path': dump,
-            'extra': options['extra'],
         })
 
         def progress_callback(percent, desc):
@@ -63,27 +62,16 @@ class SystemService(Service):
         except Exception as e:
             raise CallError(f'Failed to generate debug: {e!r}')
 
-    @accepts(
-        Dict(
-            'debug_options',
-            Dict('extra', additional_attrs=True)
-        ),
-    )
+    @accepts()
     @returns()
     @job(lock='system.debug', pipes=['output'])
-    def debug(self, job, options):
+    def debug(self, job):
         """
         Download a debug file.
-
-        `extra` is an array of extra files that will be added to the debug:
-        {
-            "directory/file name 1": "file 1 contents",
-            "directory/file name 2": "file 2 contents",
-        }
         """
         job.set_progress(0, 'Generating debug file')
         debug_job = self.middleware.call_sync(
-            'system.debug_generate', options,
+            'system.debug_generate',
             job_on_progress_cb=lambda encoded: job.set_progress(int(encoded['progress']['percent'] * 0.9),
                                                                 encoded['progress']['description'])
         )
@@ -92,7 +80,7 @@ class SystemService(Service):
         if self.middleware.call_sync('failover.licensed'):
             try:
                 standby_debug = self.middleware.call_sync(
-                    'failover.call_remote', 'system.debug_generate', [options], {'job': True}
+                    'failover.call_remote', 'system.debug_generate', [], {'job': True}
                 )
             except Exception:
                 self.logger.warn('Failed to get debug from standby node', exc_info=True)

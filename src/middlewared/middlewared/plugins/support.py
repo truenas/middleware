@@ -198,7 +198,6 @@ class SupportService(ConfigService):
         Str('body', required=True, max_length=None),
         Str('category'),
         Bool('attach_debug', default=False),
-        Dict('debug_extra', additional_attrs=True),
         Password('token'),
         Str('criticality'),
         Str('environment', max_length=None),
@@ -223,12 +222,6 @@ class SupportService(ConfigService):
 
         For SCALE `criticality`, `environment`, `phone`, `name` and `email` attributes are not required.
         For SCALE Enterprise `token` attribute is not required.
-
-        `debug_extra` is an array of extra files that will be added to the debug:
-        {
-            "directory/file name 1": "file 1 contents",
-            "directory/file name 2": "file 2 contents",
-        }
         """
 
         await self.middleware.call('network.general.will_perform_activity', 'support')
@@ -254,7 +247,6 @@ class SupportService(ConfigService):
 
         data['version'] = f'{PRODUCT}-{await self.middleware.call("system.version_short")}'
         debug = data.pop('attach_debug')
-        debug_extra = data.pop('debug_extra', {})
 
         job.set_progress(20, 'Submitting ticket')
 
@@ -276,7 +268,7 @@ class SupportService(ConfigService):
             job.set_progress(60, 'Generating debug file')
 
             debug_job = await self.middleware.call(
-                'system.debug', {'extra': debug_extra}, pipes=Pipes(output=self.middleware.pipe()),
+                'system.debug', pipes=Pipes(output=self.middleware.pipe()),
             )
 
             if await self.middleware.call('failover.licensed'):
