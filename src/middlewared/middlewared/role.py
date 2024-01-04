@@ -174,8 +174,8 @@ ROLES = {
     'CATALOG_WRITE': Role(includes=['CATALOG_READ']),
     'KUBERNETES_READ': Role(includes=['CONTAINER_READ']),
     'KUBERNETES_WRITE': Role(includes=['CONTAINER_WRITE', 'KUBERNETES_READ']),
-    'APPS_READ': Role(includes=['CATALOG_READ']),
-    'APPS_WRITE': Role(includes=['CATALOG_WRITE', 'APPS_READ']),
+    'APPS_READ': Role(includes=['CATALOG_READ', 'CONTAINER_READ']),
+    'APPS_WRITE': Role(includes=['CATALOG_WRITE', 'APPS_READ', 'CONTAINER_WRITE']),
 }
 
 
