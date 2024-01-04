@@ -183,6 +183,12 @@ class RoleManager:
         self.methods[method_name] = []
         self.add_roles(method_name, roles)
 
+    def safely_register_method(self, method_name, roles):
+        if method_name in self.methods:
+            self.add_roles(method_name, roles)
+        else:
+            self.register_method(method_name, roles)
+
     def add_roles(self, method_name, roles):
         if method_name not in self.methods:
             raise ValueError(f"Method {method_name!r} is not registered in this role manager")
