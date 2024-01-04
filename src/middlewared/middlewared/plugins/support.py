@@ -169,11 +169,34 @@ class SupportService(ConfigService):
 
         return data
 
+    @accepts(Password('token'), Str('query'), roles=['SUPPORT_READ'])
+    @returns(List('similar_issues', items=[Dict(
+        'similar_issue',
+        Str('url'),
+        Str('summary'),
+        additional_attrs=True,
+    )]))
+    async def similar_issues(self, token, query):
+        await self.middleware.call('network.general.will_perform_activity', 'support')
+
+        data = await post(
+            f'https://{ADDRESS}/freenas/api/v1.0/similar_issues',
+            data=json.dumps({
+                'token': token,
+                'query': query,
+            }),
+        )
+
+        if 'error' in data:
+            raise CallError(data['message'], errno.EINVAL)
+
+        return data
+
     @accepts(Dict(
         'new_ticket',
         Str('title', required=True, max_length=None),
         Str('body', required=True, max_length=None),
-        Str('category', required=True),
+        Str('category'),
         Bool('attach_debug', default=False),
         Password('token'),
         Str('type', enum=['BUG', 'FEATURE']),
@@ -211,7 +234,7 @@ class SupportService(ConfigService):
         if sw_name == 'freenas':
             required_attrs = ('type', 'token')
         else:
-            required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
+            required_attrs = ('category', 'phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
             license_ = await self.middleware.call('system.license')
             if license_:
