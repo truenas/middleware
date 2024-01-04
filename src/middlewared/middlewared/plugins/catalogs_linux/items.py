@@ -159,7 +159,7 @@ class CatalogService(Service):
         for train in data:
             for item in data[train]:
                 data[train][item].update({
-                    **{k: v for k, v in get_item_details_base().items() if k not in data[train][item]},
+                    **{k: v for k, v in get_item_details_base(False).items() if k not in data[train][item]},
                     'location': os.path.join(catalog['location'], train, item),
                 })
                 if data[train][item]['last_update']:
