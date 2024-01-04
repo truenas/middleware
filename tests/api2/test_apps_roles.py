@@ -11,7 +11,7 @@ from middlewared.test.integration.utils import call
 
 
 @contextlib.contextmanager
-def official_chart_release():
+def official_chart_release(wait_for_active_status=False):
     release_name = 'tftpd-hpa'
     payload = {
         'catalog': 'TRUENAS',
@@ -20,15 +20,22 @@ def official_chart_release():
         'train': 'community',
     }
     chart_release = call('chart.release.create', payload, job=True)
-    timeout = 60
-    while timeout >= 0 and call('chart.release.get_instance', release_name)['status'] != 'ACTIVE':
-        sleep(10)
-        timeout -= 10
+    if wait_for_active_status:
+        timeout = 60
+        while timeout >= 0 and call('chart.release.get_instance', release_name)['status'] != 'ACTIVE':
+            sleep(10)
+            timeout -= 10
 
     try:
         yield chart_release
     finally:
         call('chart.release.delete', 'tftpd-hpa', job=True)
+
+
+def test_app_readonly_role(request):
+    depends(request, ['setup_kubernetes'], scope='session')
+    with unprivileged_user_client(['READONLY']) as c:
+        c.call('app.categories')
 
 
 @pytest.mark.parametrize('role,endpoint,payload,job,should_work', [
@@ -77,18 +84,20 @@ def test_apps_read_and_write_roles(request, role, endpoint, job, should_work):
                 assert ve.value.errno == errno.EACCES
 
 
-@pytest.mark.parametrize('role,endpoint,job,should_work,expected_error', [
-    ('APPS_READ', 'chart.release.pod_status', False, True, False),
-    ('APPS_WRITE', 'chart.release.pod_status', False, True, False),
-    ('APPS_READ', 'chart.release.upgrade_summary', False, True, True),
-    ('APPS_READ', 'chart.release.redeploy', True, False, False),
-    ('APPS_WRITE', 'chart.release.redeploy', True, True, False),
-    ('APPS_READ', 'chart.release.upgrade', True, False, False),
-    ('APPS_WRITE', 'chart.release.upgrade', True, True, True),
+@pytest.mark.parametrize('role,endpoint,job,should_work,expected_error,wait_for_active_status', [
+    ('APPS_READ', 'chart.release.pod_status', False, True, False, False),
+    ('APPS_WRITE', 'chart.release.pod_status', False, True, False, False),
+    ('APPS_READ', 'chart.release.upgrade_summary', False, True, True, False),
+    ('APPS_READ', 'chart.release.redeploy', True, False, False, True),
+    ('APPS_WRITE', 'chart.release.redeploy', True, True, False, True),
+    ('APPS_READ', 'chart.release.upgrade', True, False, False, False),
+    ('APPS_WRITE', 'chart.release.upgrade', True, True, True, False),
 ])
-def test_apps_read_and_write_roles_with_params(request, role, endpoint, job, should_work, expected_error):
+def test_apps_read_and_write_roles_with_params(
+    request, role, endpoint, job, should_work, expected_error, wait_for_active_status,
+):
     depends(request, ['setup_kubernetes'], scope='session')
-    with official_chart_release() as chart_release:
+    with official_chart_release(wait_for_active_status) as chart_release:
         with unprivileged_user_client(roles=[role]) as c:
             if should_work:
                 if expected_error:
