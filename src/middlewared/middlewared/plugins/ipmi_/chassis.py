@@ -10,7 +10,7 @@ class IpmiChassisService(Service):
         namespace = 'ipmi.chassis'
         cli_namespace = 'service.ipmi.chassis'
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['IPMI_READ'])
     @returns(Dict('chassis_info', additional_attrs=True))
     def info(self):
         """Return looks like:
@@ -40,7 +40,7 @@ class IpmiChassisService(Service):
 
         return rv
 
-    @accepts(Str('verb', default='ON', enum=['ON', 'OFF']))
+    @accepts(Str('verb', default='ON', enum=['ON', 'OFF']), roles=['IPMI_WRITE'])
     @returns()
     def identify(self, verb):
         """
