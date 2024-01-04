@@ -48,18 +48,8 @@ class VMService(Service):
         """
         return {r: r for r in DISPLAY.RESOLUTION_ENUM}
 
-    @accepts(Int('id'), roles=['READONLY', 'VM_READ'])
-    @returns(List(
-        'vmdevice', items=[
-        Dict(
-            'vmdevice',
-            Int('id'),
-            Str('dtype'),
-            DISPLAY.schema,
-            Int('order'),
-            Int('vm'),
-        ),
-    ]))
+    @accepts(Int('id'), roles=['VM_READ'])
+    @returns(List(items=[Ref('vm_device_entry')]))
     async def get_display_devices(self, id_):
         """
         Get the display devices from a given guest. If a display device has password configured,
@@ -78,7 +68,7 @@ class VMService(Service):
             'options',
             Str('protocol', default='HTTP', enum=['HTTP', 'HTTPS']),
         ),
-        roles=['READONLY', 'VM_READ']
+        roles=['VM_READ']
     )
     @returns(Dict(
         'display_devices_uri',
