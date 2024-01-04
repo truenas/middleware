@@ -52,7 +52,7 @@ class VMDeviceService(Service):
             'device': None,
         }
 
-    @accepts(Str('device', empty=False))
+    @accepts(Str('device', empty=False), roles=['VM_DEVICE_READ'])
     @returns(Dict(
         Dict(
             'capability',
@@ -99,7 +99,7 @@ class VMDeviceService(Service):
             'error': None,
         }
 
-    @accepts()
+    @accepts(roles=['VM_DEVICE_READ'])
     @returns(List(items=[Ref('usb_passthrough_device')]))
     async def usb_passthrough_choices(self):
         """

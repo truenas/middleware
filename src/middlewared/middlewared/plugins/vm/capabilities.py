@@ -27,7 +27,7 @@ class VMService(Service, LibvirtConnectionMixin):
 
         self.CAPABILITIES = supported_archs
 
-    @accepts()
+    @accepts(roles=['VM_READ'])
     @returns(Dict(
         additional_attrs=True,
         example={

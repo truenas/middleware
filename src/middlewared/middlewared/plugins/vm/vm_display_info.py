@@ -9,7 +9,7 @@ from .utils import NGINX_PREFIX
 
 class VMService(Service):
 
-    @accepts()
+    @accepts(roles=['VM_READ'])
     @returns(Dict(
         'available_display_port',
         Int('port', required=True, description='Available server port'),
@@ -48,7 +48,7 @@ class VMService(Service):
         """
         return {r: r for r in DISPLAY.RESOLUTION_ENUM}
 
-    @accepts(Int('id'))
+    @accepts(Int('id'), roles=['READONLY', 'VM_READ'])
     @returns(List(items=[Ref('vm_device_entry')]))
     async def get_display_devices(self, id_):
         """
@@ -67,7 +67,8 @@ class VMService(Service):
         Dict(
             'options',
             Str('protocol', default='HTTP', enum=['HTTP', 'HTTPS']),
-        )
+        ),
+        roles=['READONLY', 'VM_READ']
     )
     @returns(Dict(
         'display_devices_uri',

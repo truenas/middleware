@@ -20,7 +20,7 @@ class VMService(Service, LibvirtConnectionMixin):
 
     CPU_MODEL_CHOICES = {}
 
-    @accepts()
+    @accepts(roles=['VM_READ'])
     @returns(Bool())
     def supports_virtualization(self):
         """
@@ -41,7 +41,7 @@ class VMService(Service, LibvirtConnectionMixin):
 
         return can_run_vms
 
-    @accepts()
+    @accepts(roles=['READONLY', 'VM_READ'])
     @returns(Dict(
         Bool('supported', required=True),
         Str('error', null=True, required=True),
@@ -55,7 +55,7 @@ class VMService(Service, LibvirtConnectionMixin):
             'error': None if self._is_kvm_supported() else 'Your CPU does not support KVM extensions',
         }
 
-    @accepts()
+    @accepts(roles=['READONLY', 'VM_READ'])
     @returns(Int())
     async def maximum_supported_vcpus(self):
         """
@@ -63,7 +63,7 @@ class VMService(Service, LibvirtConnectionMixin):
         """
         return 255
 
-    @accepts()
+    @accepts(roles=['VM_READ'])
     @returns(Dict(
         'cpu_flags',
         Bool('intel_vmx', required=True),
@@ -115,7 +115,7 @@ class VMService(Service, LibvirtConnectionMixin):
         vm = await self.middleware.call('vm.get_instance', id_)
         return f'{vm["id"]}_{vm["name"]}'
 
-    @accepts()
+    @accepts(roles=['VM_READ'])
     @returns(Dict(
         additional_attrs=True,
         example={
