@@ -1000,7 +1000,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                         roles.append(f'{service._config.role_prefix}_READ')
 
                 if roles:
-                    self.role_manager.register_method(f'{service._config.namespace}.{method_name}', roles)
+                    self.role_manager.safely_register_method(f'{service._config.namespace}.{method_name}', roles)
 
         return setup_funcs
 
