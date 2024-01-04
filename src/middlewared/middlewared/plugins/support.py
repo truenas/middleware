@@ -59,6 +59,7 @@ class SupportService(ConfigService):
     class Config:
         datastore = 'system.support'
         cli_namespace = 'system.support'
+        role_prefix = 'SUPPORT'
 
     ENTRY = Dict(
         'support_entry',
@@ -100,7 +101,7 @@ class SupportService(ConfigService):
 
         return await self.config()
 
-    @accepts()
+    @accepts(roles=['SUPPORT_READ'])
     @returns(Bool('proactive_support_is_available'))
     async def is_available(self):
         """
@@ -116,7 +117,7 @@ class SupportService(ConfigService):
 
         return license_['contract_type'] in ['SILVER', 'GOLD']
 
-    @accepts()
+    @accepts(roles=['SUPPORT_READ'])
     @returns(Bool('proactive_support_is_available_and_enabled'))
     async def is_available_and_enabled(self):
         """
@@ -125,7 +126,7 @@ class SupportService(ConfigService):
 
         return await self.is_available() and (await self.config())['enabled']
 
-    @accepts()
+    @accepts(roles=['SUPPORT_READ'])
     @returns(List('support_fields', items=[List('support_field', items=[Str('field')])]))
     async def fields(self):
         """
@@ -142,7 +143,7 @@ class SupportService(ConfigService):
             ['secondary_phone', 'Secondary Contact Phone'],
         ]
 
-    @accepts(Password('token', default=''))
+    @accepts(Password('token', default=''), roles=['SUPPORT_READ'])
     @returns(Dict(additional_attrs=True, example={'API': '11008', 'WebUI': '10004'}))
     async def fetch_categories(self, token):
         """
@@ -205,7 +206,7 @@ class SupportService(ConfigService):
         Str('name'),
         Str('email', validators=[Email()]),
         List('cc', items=[Str('email', validators=[Email()])])
-    ))
+    ), roles=['SUPPORT_WRITE', 'READONLY'])
     @returns(Dict(
         'new_ticket_response',
         Int('ticket', null=True),
@@ -345,7 +346,7 @@ class SupportService(ConfigService):
         Int('ticket', required=True),
         Str('filename', required=True, max_length=None),
         Password('token'),
-    ))
+    ), roles=['SUPPORT_WRITE', 'READONLY'])
     @returns()
     @job(pipes=["input"])
     def attach_ticket(self, job, data):
@@ -381,7 +382,7 @@ class SupportService(ConfigService):
         if data['error']:
             raise CallError(data['message'], errno.EINVAL)
 
-    @accepts()
+    @accepts(roles=['SUPPORT_READ'])
     @returns(Int())
     async def attach_ticket_max_size(self):
         """

@@ -7,7 +7,7 @@ import shutil
 import time
 import yaml
 
-from middlewared.schema import Dict, Bool, returns, Str
+from middlewared.schema import returns, Str
 from middlewared.service import accepts, CallError, job, Service
 from middlewared.plugins.kubernetes_linux.yaml import SerializedDatesFullLoader
 
@@ -19,14 +19,10 @@ class KubernetesService(Service):
 
     @accepts(
         Str('backup_name'),
-        Dict(
-            'options',
-            Bool('wait_for_csi', default=True),
-        )
     )
     @returns()
     @job(lock='kubernetes_restore_backup')
-    def restore_backup(self, job, backup_name, options):
+    def restore_backup(self, job, backup_name):
         """
         Restore `backup_name` chart releases backup.
 
@@ -47,7 +43,6 @@ class KubernetesService(Service):
         self.middleware.call_sync('datastore.update', 'services.kubernetes', db_config['id'], {'cni_config': {}})
 
         k8s_config = self.middleware.call_sync('kubernetes.config')
-        k8s_pool = k8s_config['pool']
         catalog_sync_jobs = self.middleware.call_sync('core.get_jobs', [
             ['OR', [
                 ['method', '=', 'catalog.sync'], ['method', '=', 'catalog.sync_all'],
@@ -105,11 +100,7 @@ class KubernetesService(Service):
 
         while True:
             config = self.middleware.call_sync('k8s.node.config')
-            if (
-                config['node_configured'] and not config['spec'].get('taints') and (
-                    not options['wait_for_csi'] or self.middleware.call_sync('k8s.csi.config')['csi_ready']
-                )
-            ):
+            if config['node_configured'] and not config['spec'].get('taints'):
                 break
 
             time.sleep(5)
@@ -125,7 +116,7 @@ class KubernetesService(Service):
 
         releases = os.listdir(backup_dir)
         len_releases = len(releases)
-        restored_chart_releases = collections.defaultdict(lambda: {'pv_info': {}})
+        restored_chart_releases = collections.defaultdict(lambda: {'replica_counts': {}})
 
         for index, release_name in enumerate(releases):
             job.set_progress(
@@ -170,92 +161,13 @@ class KubernetesService(Service):
             with open(os.path.join(r_backup_dir, 'workloads_replica_counts.json'), 'r') as f:
                 restored_chart_releases[release_name]['replica_counts'] = json.loads(f.read())
 
-            pv_info_path = os.path.join(r_backup_dir, 'pv_info.json')
-            if os.path.exists(pv_info_path):
-                with open(pv_info_path, 'r') as f:
-                    restored_chart_releases[release_name]['pv_info'] = json.loads(f.read())
-
         # Now helm will recognise the releases as valid, however we don't have any actual k8s deployed resource
         # That will be adjusted with updating chart releases with their existing values and helm will see that
         # k8s resources don't exist and will create them for us
         job.set_progress(92, 'Creating kubernetes resources')
         update_jobs = []
-        datasets = set(
-            d['id'] for d in self.middleware.call_sync(
-                'zfs.dataset.query', [['id', '^', f'{os.path.join(k8s_config["dataset"], "releases")}/']], {
-                    'extra': {'retrieve_properties': False}
-                }
-            )
-        )
         chart_releases_mapping = {c['name']: c for c in self.middleware.call_sync('chart.release.query')}
         for chart_release in restored_chart_releases:
-            # Before we have resources created for the chart releases, we will restore PVs if possible and then
-            # restore the chart release, so if there is any PVC expecting a PV, it will be able to claim it as soon
-            # as it is created. If this is not done in this order, PVC will request a new dataset and we will lose
-            # the mapping with the old dataset.
-            self.middleware.call_sync(
-                'chart.release.recreate_storage_class',
-                chart_release, os.path.join(k8s_config['dataset'], 'releases', chart_release, 'volumes')
-            )
-            failed_pv_restores = []
-            for pvc, pv in restored_chart_releases[chart_release]['pv_info'].items():
-                pv['dataset'] = RE_POOL.sub(f'{k8s_pool}\\1', pv['dataset'])
-                if pv['dataset'] not in datasets:
-                    failed_pv_restores.append(f'Unable to locate PV dataset {pv["dataset"]!r} for {pvc!r} PVC.')
-                    continue
-
-                zv_details = pv['zv_details']
-                try:
-                    self.middleware.call_sync('k8s.zv.create', {
-                        'metadata': {
-                            'name': zv_details['metadata']['name'],
-                        },
-                        'spec': {
-                            'capacity': zv_details['spec']['capacity'],
-                            'poolName': RE_POOL.sub(f'{k8s_pool}\\1', zv_details['spec']['poolName']),
-                        },
-                    })
-                except Exception as e:
-                    failed_pv_restores.append(f'Unable to create ZFS Volume for {pvc!r} PVC: {e}')
-                    continue
-
-                # We need to safely access claim_ref volume attribute keys as with k8s client api re-write
-                # camel casing which was done by kubernetes asyncio package is not happening anymore
-                pv_spec = pv['pv_details']['spec']
-                claim_ref = pv_spec.get('claim_ref') or pv_spec['claimRef']
-                pv_volume_attrs = pv_spec['csi'].get('volume_attributes') or pv_spec['csi']['volumeAttributes']
-                try:
-                    self.middleware.call_sync('k8s.pv.create', {
-                        'metadata': {
-                            'name': pv['name'],
-                        },
-                        'spec': {
-                            'capacity': {
-                                'storage': pv_spec['capacity']['storage'],
-                            },
-                            'claimRef': {
-                                'name': claim_ref['name'],
-                                'namespace': claim_ref['namespace'],
-                            },
-                            'csi': {
-                                'volumeAttributes': {
-                                    'openebs.io/poolname': RE_POOL.sub(
-                                        f'{k8s_pool}\\1', pv_volume_attrs['openebs.io/poolname']
-                                    )
-                                },
-                                'volumeHandle': pv_spec['csi'].get('volume_handle') or pv_spec['csi']['volumeHandle'],
-                            },
-                            'storageClassName': pv_spec.get('storage_class_name') or pv_spec['storageClassName'],
-                        },
-                    })
-                except Exception as e:
-                    failed_pv_restores.append(f'Unable to create PV for {pvc!r} PVC: {e}')
-
-            if failed_pv_restores:
-                self.logger.error(
-                    'Failed to restore PVC(s) for %r chart release:\n%s', chart_release, '\n'.join(failed_pv_restores)
-                )
-
             release = chart_releases_mapping[chart_release]
             chart_path = os.path.join(release['path'], 'charts', release['chart_metadata']['version'])
             # We will create any relevant crds now if applicable

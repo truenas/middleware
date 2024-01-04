@@ -68,10 +68,15 @@ class Service(SimpleService):
                 cpu_data[chip_name] = cpu_d
         except sensors.SensorsError as error:
             self.error(error)
-            return None
+
+        try:
+            cpu_temps = cpu_temperatures(cpu_data)
+        except Exception as error:
+            self.error(error)
+            cpu_temps = {}
 
         data = {}
-        for core, temp in cpu_temperatures(cpu_data).items():
+        for core, temp in cpu_temps.items():
             data[str(core)] = temp
 
         return data or {str(i): 0 for i in range(cpu_info()['core_count'])}

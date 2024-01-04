@@ -134,17 +134,8 @@ class RcloneConfig:
 async def rclone(middleware, job, cloud_sync, dry_run):
     await middleware.call("network.general.will_perform_activity", "cloud_sync")
 
-    if await middleware.call("filesystem.is_cluster_path", cloud_sync["path"]):
-        path = await middleware.call("filesystem.resolve_cluster_path", cloud_sync["path"])
-        await check_local_path(
-            middleware,
-            path,
-            check_mountpoint=False,
-            error_text_path=cloud_sync["path"],
-        )
-    else:
-        path = cloud_sync["path"]
-        await check_local_path(middleware, path)
+    path = cloud_sync["path"]
+    await check_local_path(middleware, path)
 
     # Use a temporary file to store rclone file
     async with RcloneConfig(cloud_sync) as config:
@@ -575,6 +566,12 @@ class CredentialsService(CRUDService):
 
         role_prefix = "CLOUD_SYNC"
 
+    ENTRY = Patch(
+        "cloud_sync_credentials_create",
+        "cloud_sync_credentials_entry",
+        ("add", Int("id")),
+    )
+
     @accepts(Dict(
         "cloud_sync_credentials_verify",
         Str("provider", required=True),
@@ -602,7 +599,7 @@ class CredentialsService(CRUDService):
         "cloud_sync_credentials_create",
         Str("name", required=True),
         Str("provider", required=True),
-        Dict("attributes", additional_attrs=True, required=True),
+        Dict("attributes", additional_attrs=True, required=True, private=True),
         register=True,
     ))
     async def do_create(self, data):
@@ -712,6 +709,15 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         datastore_extend_context = "cloudsync.extend_context"
         cli_namespace = "task.cloud_sync"
         role_prefix = "CLOUD_SYNC"
+
+    ENTRY = Patch(
+        'cloud_sync_create',
+        'cloud_sync_entry',
+        ('add', Int('id')),
+        ("replace", Dict("credentials", additional_attrs=True, private_keys=["attributes"])),
+        ("add", Dict("job", null=True)),
+        ("add", Bool("locked")),
+    )
 
     @private
     async def extend_context(self, rows, extra):

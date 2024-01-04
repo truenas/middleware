@@ -3,7 +3,7 @@ import datetime
 import isodate
 from sqlalchemy import (
     Table, Column as _Column, ForeignKey, Index,
-    Boolean, CHAR, DateTime, Integer, SmallInteger, String, Text,
+    Boolean, CHAR, DateTime, Integer, SmallInteger, String, Text, UniqueConstraint
 )  # noqa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship  # noqa

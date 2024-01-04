@@ -42,10 +42,8 @@ def test_002_firstboot_checks(ws_client):
     expected_ds = [
         'boot-pool/.system',
         'boot-pool/.system/cores',
-        'boot-pool/.system/ctdb_shared_vol',
         'boot-pool/.system/samba4',
         'boot-pool/.system/webui',
-        'boot-pool/.system/glusterd',
         'boot-pool/grub'
     ]
     # first make sure our expected datasets actually exist

@@ -32,7 +32,7 @@ class StorageDevice(Device):
         return create_element(
             'disk', type=self.TYPE, device='disk', attribute_dict={
                 'children': [
-                    create_element('driver', name='qemu', type='raw', cache='none', io=iotype.lower()),
+                    create_element('driver', name='qemu', type='raw', cache='none', io=iotype.lower(), discard='unmap'),
                     self.create_source_element(),
                     create_element(
                         'target', bus='sata' if not virtio else 'virtio',

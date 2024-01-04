@@ -1,10 +1,15 @@
 import enum
 import errno
 
+from middlewared.plugins.account import unixhash_is_valid
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, SID, Str, Patch
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils.privilege import privilege_has_webui_access, privileges_group_mapping
+from middlewared.utils.privilege import (
+    LocalAdminGroups,
+    privilege_has_webui_access,
+    privileges_group_mapping
+)
 import middlewared.sqlalchemy as sa
 
 
@@ -125,11 +130,25 @@ class PrivilegeService(CRUDService):
             builtin_privilege = BuiltinPrivileges(new["builtin_name"])
 
             if builtin_privilege == BuiltinPrivileges.LOCAL_ADMINISTRATOR:
+                if LocalAdminGroups.BUILTIN_ADMINISTRATORS not in new["local_groups"]:
+                    verrors.add(
+                        "privilege_update.local_groups",
+                        f"The group {LocalAdminGroups.BUILTIN_ADMINISTRATORS.name.lower()} must be "
+                        "among grantees of the \"Local Administrator\" privilege."
+                    )
+
                 if not await self.middleware.call("group.has_password_enabled_user", new["local_groups"]):
                     verrors.add(
                         "privilege_update.local_groups",
                         "None of the members of these groups has password login enabled. At least one grantee of "
                         "the \"Local Administrator\" privilege must have password login enabled."
+                    )
+            elif builtin_privilege == BuiltinPrivileges.READONLY:
+                if new["web_shell"]:
+                    verrors.add(
+                        "privilege_update.web_shell",
+                        "Web shell access may not be enabled for the built-in group for "
+                        "read-only administrators."
                     )
 
         verrors.check()
@@ -355,6 +374,7 @@ class PrivilegeService(CRUDService):
             for item in privilege['allowlist']:
                 if item == {'method': '*', 'resource': '*'} and 'FULL_ADMIN' not in compose['roles']:
                     compose['roles'] |= self.middleware.role_manager.roles_for_role('FULL_ADMIN')
+                    compose['webui_access'] = True
 
                 compose['allowlist'].append(item)
 
@@ -369,6 +389,7 @@ class PrivilegeService(CRUDService):
             'roles': {'FULL_ADMIN'},
             'allowlist': [{'method': '*', 'resource': '*'}],
             'web_shell': True,
+            'webui_access': True,
         }
 
     previous_always_has_root_password_enabled_value = None
@@ -385,7 +406,7 @@ class PrivilegeService(CRUDService):
             [['username', '=', 'root']],
             {'get': True},
         )
-        users = await self.local_administrators([root_user['id']], groups)
+        users = await self.local_administrators([root_user['id']], users, groups)
         if not users:
             value = True
         else:
@@ -401,8 +422,10 @@ class PrivilegeService(CRUDService):
         return value
 
     @private
-    async def local_administrators(self, exclude_user_ids=None, groups=None):
+    async def local_administrators(self, exclude_user_ids=None, users=None, groups=None):
         exclude_user_ids = exclude_user_ids or []
+        if users is None:
+            users = await self.middleware.call('user.query')
         if groups is None:
             groups = await self.middleware.call('group.query')
 
@@ -412,12 +435,24 @@ class PrivilegeService(CRUDService):
             [['builtin_name', '=', BuiltinPrivileges.LOCAL_ADMINISTRATOR.value]],
             {'get': True},
         )
-        return await self.middleware.call(
+        local_administrators = await self.middleware.call(
             'group.get_password_enabled_users',
             local_administrator_privilege['local_groups'],
             exclude_user_ids,
             groups,
         )
+        if not local_administrators:
+            root_user = filter_list(
+                users,
+                [['username', '=', 'root']],
+                {'get': True},
+            )
+            if root_user['id'] not in exclude_user_ids:
+                if unixhash_is_valid(root_user['unixhash']):
+                    # This can only be if `always_has_root_password_enabled` is `True`
+                    local_administrators = [root_user]
+
+        return local_administrators
 
 
 async def setup(middleware):

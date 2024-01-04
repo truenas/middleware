@@ -18,8 +18,18 @@ class Role:
 
 
 ROLES = {
+    'ACCOUNT_READ': Role(),
+    'ACCOUNT_WRITE': Role(includes=['ACCOUNT_READ']),
+
+    'FAILOVER_READ': Role(),
+    'FAILOVER_WRITE': Role(includes=['FAILOVER_READ']),
+
     'AUTH_SESSIONS_READ': Role(),
     'AUTH_SESSIONS_WRITE': Role(includes=['AUTH_SESSIONS_READ']),
+
+    'KMIP_READ': Role(),
+    'KMIP_WRITE': Role(includes=['KMIP_READ']),
+
     'FILESYSTEM_ATTRS_READ': Role(),
     'FILESYSTEM_ATTRS_WRITE': Role(includes=['FILESYSTEM_ATTRS_READ']),
     'FILESYSTEM_DATA_READ': Role(),
@@ -27,12 +37,23 @@ ROLES = {
     'FILESYSTEM_FULL_CONTROL': Role(includes=['FILESYSTEM_ATTRS_WRITE',
                                               'FILESYSTEM_DATA_WRITE']),
     'REPORTING_READ': Role(),
+    'REPORTING_WRITE': Role(includes=['REPORTING_READ']),
+
+    'SUPPORT_READ': Role(),
+    'SUPPORT_WRITE': Role(includes=['SUPPORT_READ']),
+
+    'SYSTEM_AUDIT_READ': Role(),
+    'SYSTEM_AUDIT_WRITE': Role(),
 
     'FULL_ADMIN': Role(full_admin=True, builtin=False),
     'READONLY': Role(includes=['ALERT_LIST_READ',
+                               'ACCOUNT_READ',
                                'AUTH_SESSIONS_READ',
                                'CLOUD_SYNC_READ',
                                'DATASET_READ',
+                               'ENCLOSURE_READ',
+                               'FAILOVER_READ',
+                               'KMIP_READ',
                                'FILESYSTEM_ATTRS_READ',
                                'NETWORK_GENERAL_READ',
                                'SHARING_READ',
@@ -40,7 +61,10 @@ ROLES = {
                                'REPORTING_READ',
                                'REPLICATION_TASK_CONFIG_READ',
                                'REPLICATION_TASK_READ',
-                               'SNAPSHOT_TASK_READ'],
+                               'SERVICE_READ',
+                               'SNAPSHOT_TASK_READ',
+                               'SUPPORT_READ',
+                               'SYSTEM_AUDIT_READ'],
                      builtin=False),
 
     # Alert roles
@@ -49,10 +73,21 @@ ROLES = {
     'CLOUD_SYNC_READ': Role(),
     'CLOUD_SYNC_WRITE': Role(includes=['CLOUD_SYNC_READ']),
 
+    'SERVICE_READ': Role(),
+    'SERVICE_WRITE': Role(),
+
+    # for webui.enclosure.** namespace
+    'ENCLOSURE_READ': Role(),
+    'ENCLOSURE_WRITE': Role(includes=['ENCLOSURE_READ']),
+
     # Network roles
     'NETWORK_GENERAL_READ': Role(),
     'NETWORK_INTERFACE_READ': Role(),
     'NETWORK_INTERFACE_WRITE': Role(includes=['NETWORK_INTERFACE_READ']),
+
+    # JBOF roles
+    'JBOF_READ': Role(),
+    'JBOF_WRITE': Role(includes=['JBOF_READ']),
 
     # iSCSI roles
     'SHARING_ISCSI_AUTH_READ': Role(),
@@ -123,9 +158,11 @@ ROLES = {
                                           'SNAPSHOT_WRITE'],
                                 builtin=False),
 
-    'SHARING_MANAGER': Role(includes=['DATASET_WRITE',
+    'SHARING_MANAGER': Role(includes=['READONLY',
+                                      'DATASET_WRITE',
                                       'SHARING_WRITE',
-                                      'FILESYSTEM_ATTRS_WRITE'],
+                                      'FILESYSTEM_ATTRS_WRITE',
+                                      'SERVICE_READ'],
                             builtin=False)
 }
 

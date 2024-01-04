@@ -31,7 +31,7 @@ class IPMILanService(CRUDService):
         namespace = 'ipmi.lan'
         cli_namespace = 'network.ipmi'
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     @returns(List('lan_channels', items=[Int('lan_channel')]))
     def channels(self):
         """Return a list of available IPMI channels."""

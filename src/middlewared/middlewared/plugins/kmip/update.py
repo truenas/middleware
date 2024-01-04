@@ -1,3 +1,8 @@
+# Copyright (c) - iXsystems Inc.
+#
+# Licensed under the terms of the TrueNAS Enterprise License Agreement
+# See the file LICENSE.IX for complete terms and conditions
+
 import middlewared.sqlalchemy as sa
 
 from middlewared.async_validators import validate_port
@@ -27,6 +32,7 @@ class KMIPService(ConfigService):
         datastore = 'system_kmip'
         datastore_extend = 'kmip.kmip_extend'
         cli_namespace = 'system.kmip'
+        role_prefix = 'KMIP'
 
     ENTRY = Dict(
         'kmip_entry',
@@ -47,7 +53,7 @@ class KMIPService(ConfigService):
             data[k] = data[k]['id']
         return data
 
-    @accepts()
+    @accepts(roles=['KMIP_READ'])
     @returns(Dict(*[Str(i, enum=[i]) for i in SUPPORTED_SSL_VERSIONS]))
     async def ssl_version_choices(self):
         """

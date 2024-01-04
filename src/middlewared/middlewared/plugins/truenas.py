@@ -80,7 +80,7 @@ class TrueNASService(Service):
         dmi = await self.middleware.call('system.dmidecode_info')
         return get_chassis_hardware(dmi)
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     @returns(Str('eula', max_length=None, null=True))
     @cli_private
     def get_eula(self):
@@ -92,7 +92,7 @@ class TrueNASService(Service):
         with open(EULA_FILE, 'r', encoding='utf8') as f:
             return f.read()
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     @returns(Bool('system_eula_accepted'))
     @cli_private
     async def is_eula_accepted(self):

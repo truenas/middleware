@@ -10,7 +10,7 @@ class IpmiMcService(Service):
         namespace = 'ipmi.mc'
         cli_namespace = 'service.ipmi.mc'
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     @returns(Dict('mc_info', additional_attrs=True))
     def info(self):
         """Return looks like:

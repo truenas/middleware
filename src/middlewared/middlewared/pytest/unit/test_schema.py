@@ -7,7 +7,6 @@ from middlewared.schema import (
     accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, URI,
     Password, UnixPerm, UUID, LocalUsername, NetbiosName, NetbiosDomain
 )
-from middlewared.plugins.cluster_linux.management import GlusterVolname, MAX_VOLNAME_LENGTH
 from middlewared.validators import QueryFilters, QueryOptions
 
 
@@ -845,25 +844,6 @@ def test__localusername_schema(value, expected_to_fail):
         return data
 
     validate_simple(user, value, expected_to_fail)
-
-
-@pytest.mark.parametrize('value,expected_to_fail', [
-    ('', True),
-    (f'{"a" * (MAX_VOLNAME_LENGTH + 1)}', True),
-    ('bad name', True),
-    ('a$a', True),
-    ('a!', True),
-    ('a', False),
-    ('a_A', False),
-    ('A-a', False),
-    ('A1', False),
-])
-def test__glustervolname_schema(value, expected_to_fail):
-    @accepts(GlusterVolname('volume', required=True))
-    def gvol(self, data):
-        return data
-
-    validate_simple(gvol, value, expected_to_fail)
 
 
 @pytest.mark.parametrize('value,expected_to_fail', [

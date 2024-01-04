@@ -1,17 +1,18 @@
 <%
     config = render_ctx["nfs.config"]
+
+    # Fail-safe setting is two nfsd
+    num_nfsd = config['servers'] if config['servers'] > 0 else 2
+
+    # man page for mountd says "The default is 1 thread, which is probably enough.",
+    # but mount storms at restart benefit from additional mountd.  As such, we recommend
+    # the number of mountd be 1/4 the number of nfsd.
+    num_mountd = max(int(num_nfsd / 4), 1)
 %>
 [nfsd]
 syslog = 1
 vers2 = n
-% if config['servers']:
-threads = ${config['servers']}
-% endif
-% if config['udp']:
-udp = y
-% else:
-udp = n
-% endif
+threads = ${num_nfsd}
 % if "NFSV3" in config["protocols"]:
 vers3 = y
 % else:
@@ -27,9 +28,7 @@ host = ${','.join(config['bindip'])}
 % endif
 
 [mountd]
-% if config['servers']:
-threads = ${config['servers']}
-% endif
+threads = ${num_mountd}
 % if config['mountd_port']:
 port = ${config['mountd_port']}
 % endif

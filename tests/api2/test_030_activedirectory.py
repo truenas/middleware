@@ -13,9 +13,11 @@ from auto_config import pool_name, ip, user, password, ha
 from functions import GET, POST, PUT, DELETE, SSH_TEST, cmd_test, make_ws_request, wait_on_job
 from protocols import smb_connection, smb_share
 
+from middlewared.service_exception import ValidationErrors, ValidationError
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.assets.product import product_type
 
 if ha and "hostname_virtual" in os.environ:
     hostname = os.environ["hostname_virtual"]
@@ -76,7 +78,7 @@ def cleanup_reverse_zone():
         'msg': 'method',
         'method': 'activedirectory.ipaddresses_to_register',
         'params': [
-            {'hostname': f'{hostname}.{AD_DOMAIN}.', 'clustered': False, 'bindip': []},
+            {'hostname': f'{hostname}.{AD_DOMAIN}.', 'bindip': []},
             False
         ],
     })
@@ -109,6 +111,12 @@ def cleanup_reverse_zone():
         })
 
     remove_dns_entries(payload)
+
+
+@pytest.fixture(scope="function")
+def set_product_type(request):
+    with product_type():
+        yield
 
 
 @pytest.fixture(scope="module")
@@ -186,11 +194,31 @@ def test_06_get_activedirectory_started_before_starting_activedirectory(request)
 @pytest.mark.dependency(name="ad_works")
 def test_07_enable_leave_activedirectory(request):
     global domain_users_id
+
+    with pytest.raises(ValidationErrors):
+        # At this point we are not enterprise licensed
+        call("system.general.update", {"ds_auth": True})
+
     with active_directory(AD_DOMAIN, ADUSERNAME, ADPASSWORD,
         netbiosname=hostname,
         createcomputer=AD_COMPUTER_OU,
         dns_timeout=15
     ) as ad:
+        # We should be able to change some parameters when joined to AD
+        call('activedirectory.update', {'domainname': AD_DOMAIN, 'verbose_logging': True})
+
+        # Changing kerberos realm should raise ValidationError
+        with pytest.raises(ValidationErrors) as ve:
+            call('activedirectory.update', {'domainname': AD_DOMAIN, 'kerberos_realm': None})
+
+        assert ve.value.errors[0].errmsg.startswith('Kerberos realm may not be altered')
+
+        # This should be caught by our catchall
+        with pytest.raises(ValidationError) as ve:
+            call('activedirectory.update', {'domainname': AD_DOMAIN, 'createcomputer': ''})
+
+        assert ve.value.errmsg.startswith('Parameter may not be changed')
+
         # Verify that we're not leaking passwords into middleware log
         cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
         results = SSH_TEST(cmd, user, password, ip)
@@ -396,7 +424,7 @@ def test_08_activedirectory_smb_ops(request):
             assert acl['trivial'] is False, str(acl)
 
 
-def test_10_account_privilege_authentication(request):
+def test_10_account_privilege_authentication(request, set_product_type):
     depends(request, ["ad_works"], scope="session")
 
     with active_directory(AD_DOMAIN, ADUSERNAME, ADPASSWORD,
@@ -417,6 +445,10 @@ def test_10_account_privilege_authentication(request):
             }):
                 with client(auth=(f"limiteduser@{AD_DOMAIN}", ADPASSWORD)) as c:
                     methods = c.call("core.get_methods")
+                    me = c.call("auth.me")
+
+                    assert 'DIRECTORY_SERVICE' in me['account_attributes']
+                    assert 'ACTIVE_DIRECTORY' in me['account_attributes']
 
                 assert "system.info" in methods
                 assert "pool.create" not in methods

@@ -74,11 +74,18 @@ class EtcService(Service):
         'truenas_nvdimm': [
             {'type': 'py', 'path': 'truenas_nvdimm', 'checkpoint': 'post_init'},
         ],
+        'shadow': {
+            'ctx': [
+                {'method': 'user.query'},
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'shadow', 'group': 'shadow', 'mode': 0o0640},
+            ]
+        },
         'user': {
             'ctx': [
                 {'method': 'user.query'},
                 {'method': 'group.query'},
-                {'method': 'cluster.utils.is_clustered'}
             ],
             'entries': [
                 {'type': 'mako', 'path': 'group'},
@@ -192,15 +199,6 @@ class EtcService(Service):
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf', 'checkpoint': 'interface_sync'}
         ],
-        'glusterd': [
-            {
-                'type': 'mako',
-                'path': 'glusterfs/glusterd.vol',
-                'local_path': 'glusterd.conf',
-                'user': 'root', 'group': 'root', 'mode': 0o644,
-                'checkpoint': 'pool_import',
-            },
-        ],
         'keepalived': [
             {
                 'type': 'mako',
@@ -235,14 +233,6 @@ class EtcService(Service):
         ],
         'smb': [
             {'type': 'mako', 'path': 'local/smb4.conf'},
-        ],
-        'ctdb': [
-            {
-                'type': 'mako',
-                'path': 'ctdb/ctdb.conf',
-                'checkpoint': 'pool_import',
-                'local_path': 'ctdb.conf',
-            },
         ],
         'snmpd': [
             {'type': 'mako', 'path': 'snmp/snmpd.conf', 'local_path': 'local/snmpd.conf'},

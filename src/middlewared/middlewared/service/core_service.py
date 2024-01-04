@@ -135,6 +135,15 @@ class CoreService(Service):
                 'frames': frames,
             }
 
+    def _job_by_app_and_id(self, app, job_id):
+        if app is None:
+            try:
+                return self.middleware.jobs[job_id]
+            except KeyError:
+                raise CallError('Job does not exist', errno.ENOENT)
+        else:
+            return self.__job_by_credential_and_id(app.authenticated_credentials, job_id)
+
     def __job_by_credential_and_id(self, credential, job_id):
         if not credential_is_limited_to_own_jobs(credential):
             return self.middleware.jobs[job_id]
@@ -208,6 +217,23 @@ class CoreService(Service):
         return jobs
 
     @no_authz_required
+    @accepts(Int('id'), Str('filename'), Bool('buffered', default=False))
+    @pass_app(rest=True)
+    async def job_download_logs(self, app, id_, filename, buffered):
+        """
+        Download logs of the job `id`.
+
+        Please see `core.download` method documentation for explanation on `filename` and `buffered` arguments,
+        and return value.
+        """
+        job = self._job_by_app_and_id(app, id_)
+
+        if job.logs_path is None:
+            raise CallError('This job has no logs')
+
+        return (await self._download(app, 'filesystem.get', [job.logs_path], filename, buffered))[1]
+
+    @no_authz_required
     @accepts(Int('id'))
     @job()
     async def job_wait(self, job, id_):
@@ -253,11 +279,7 @@ class CoreService(Service):
     @accepts(Int('id'))
     @pass_app(rest=True)
     def job_abort(self, app, id_):
-        if app is None:
-            job = self.middleware.jobs[id_]
-        else:
-            job = self.__job_by_credential_and_id(app.authenticated_credentials, id_)
-
+        job = self._job_by_app_and_id(app, id_)
         return job.abort()
 
     def _should_list_service(self, name, service, target):
@@ -543,11 +565,19 @@ class CoreService(Service):
         """
         return 'pong'
 
-    def _ping_host(self, host, timeout):
-        return run(['ping', '-4', '-w', f'{timeout}', host]).returncode == 0
-
-    def _ping6_host(self, host, timeout):
-        return run(['ping6', '-w', f'{timeout}', host]).returncode == 0
+    def _ping_host(self, version, host, timeout, count=None, interface=None, interval=None):
+        if version == 4:
+            command = ['ping', '-4', '-w', f'{timeout}']
+        elif version == 6:
+            command = ['ping6', '-w', f'{timeout}']
+        if count:
+            command.extend(['-c', str(count)])
+        if interface:
+            command.extend(['-I', interface])
+        if interval:
+            command.extend(['-i', interval])
+        command.append(host)
+        return run(command).returncode == 0
 
     @accepts(
         Dict(
@@ -555,6 +585,9 @@ class CoreService(Service):
             Str('type', enum=['ICMP', 'ICMPV4', 'ICMPV6'], default='ICMP'),
             Str('hostname', required=True),
             Int('timeout', validators=[Range(min_=1, max_=60)], default=4),
+            Int('count', default=None),
+            Str('interface', default=None),
+            Str('interval', default=None),
         ),
     )
     def ping_remote(self, options):
@@ -601,13 +634,41 @@ class CoreService(Service):
         verrors.check()
 
         ping_host = False
-        if addr.version == 4:
-            ping_host = self._ping_host(ip, options['timeout'])
-        elif addr.version == 6:
-            ping_host = self._ping6_host(ip, options['timeout'])
+        if addr.version in [4, 6]:
+            ping_host = self._ping_host(addr.version, ip, options['timeout'], options.get('count'), options.get('interface'), options.get('interval'))
 
         return ping_host
 
+    @accepts(
+        Dict(
+            'options',
+            Str('ip', default=None),
+            Str('interface', default=None),
+        ),
+    )
+    def arp(self, options):
+        arp_command = ['arp', '-n']
+        if interface := options.get('interface'):
+            arp_command.extend(['-i', interface])
+        rv = run(arp_command, capture_output=True)
+        search_ip = options.get('ip')
+        result = {}
+        for line in rv.stdout.decode().strip().splitlines():
+            sline = line.split()
+            try:
+                line_ip = str(ipaddress.ip_address(sline[0]))
+            except ValueError:
+                continue
+            if sline[1] != 'ether':
+                continue
+            if search_ip:
+                if line_ip == search_ip:
+                    result[line_ip] = sline[2]
+            else:
+                result[line_ip] = sline[2]
+        return result
+
+    @no_authz_required
     @accepts(
         Str('method'),
         List('args'),
@@ -625,7 +686,14 @@ class CoreService(Service):
 
         Returns the job id and the URL for download.
         """
-        job = await self.middleware.call(method, *args, pipes=Pipes(output=self.middleware.pipe(buffered)))
+        if app is not None:
+            if not app.authenticated_credentials.authorize('CALL', method):
+                raise CallError('Not authorized', errno.EACCES)
+
+        return await self._download(app, method, args, filename, buffered)
+
+    async def _download(self, app, method, args, filename, buffered):
+        job = await self.middleware.call(method, *args, app=app, pipes=Pipes(output=self.middleware.pipe(buffered)))
         token = await self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id}, app=app)
         self.middleware.fileapp.register_job(job.id, buffered)
         return job.id, f'/_download/{job.id}?auth_token={token}'

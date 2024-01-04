@@ -37,7 +37,7 @@ class SMBService(Service):
             Str('restrict_user', default=''),
             Str('restrict_session', default=''),
             Bool('resolve_uids', default=True),
-        ), roles=['SHARING_SMB_WRITE']
+        ), roles=['SHARING_SMB_WRITE', 'READONLY']
     )
     def status(self, info_level, filters, options, status_options):
         """

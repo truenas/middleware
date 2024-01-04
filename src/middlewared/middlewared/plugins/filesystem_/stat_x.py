@@ -13,6 +13,19 @@ class ATFlags(IntFlag):
     VALID_FLAGS = 0x1100
 
 
+class StatxAttr(IntFlag):
+    # uapi/linux/stat.h
+    COMPRESSED = 0x00000004
+    IMMUTABLE = 0x00000010
+    APPEND = 0x00000020
+    NODUMP = 0x00000040
+    ENCRYPTED = 0x00000800
+    AUTOMOUNT = 0x00001000
+    MOUNT_ROOT = 0x00002000
+    VERIFY = 0x00100000
+    DAX = 0x00200000
+
+
 class Mask(ctypes.c_uint):
     TYPE = 0x00000001  # stx_mode & S_IFMT
     MODE = 0x00000002  # stx_mode & ~S_IFMT

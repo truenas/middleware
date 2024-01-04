@@ -135,7 +135,6 @@ class SMBService(Service):
         """
         to_set = {}
         ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        data['clustered'] = (ha_mode == 'CLUSTERED')
         data['ds_state'] = await self.middleware.call('directoryservices.get_state')
         data['shares'] = await self.middleware.call(
             'sharing.smb.query',

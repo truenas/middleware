@@ -1,10 +1,13 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, returns, Str, LocalUsername
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, no_auth_required, pass_app, private, filterable, job
+    CallError, CRUDService, ValidationErrors, no_auth_required, no_authz_required, pass_app, private, filterable, job
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
-from middlewared.utils.privilege import privileges_group_mapping
+from middlewared.utils.privilege import (
+    credential_has_full_admin,
+    privileges_group_mapping
+)
 from middlewared.validators import Email, Range
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.smb import SMBBuiltin
@@ -81,6 +84,10 @@ def crypted_password(cleartext):
     ))
 
 
+def unixhash_is_valid(unixhash):
+    return unixhash not in ("x", "*")
+
+
 def nt_password(cleartext):
     nthash = hashlib.new('md4', cleartext.encode('utf-16le')).digest()
     return binascii.hexlify(nthash).decode().upper()
@@ -154,6 +161,7 @@ class UserService(CRUDService):
         datastore_extend_context = 'user.user_extend_context'
         datastore_prefix = 'bsdusr_'
         cli_namespace = 'account.user'
+        role_prefix = 'ACCOUNT'
 
     # FIXME: Please see if dscache can potentially alter result(s) format, without ad, it doesn't seem to
     ENTRY = Patch(
@@ -168,6 +176,7 @@ class UserService(CRUDService):
         ('add', Bool('builtin')),
         ('add', Bool('id_type_both')),
         ('add', Bool('local')),
+        ('add', Bool('immutable')),
         ('add', Bool('twofactor_auth_configured')),
         ('add', Str('unixhash', private=True)),
         ('add', Str('smbhash', private=True)),
@@ -296,11 +305,16 @@ class UserService(CRUDService):
 
         username_sid = {}
         if 'SMB' in additional_information:
-            for u in await self.middleware.call("smb.passdb_list", True):
-                username_sid.update({u['Unix username']: {
-                    'nt_name': u['NT username'],
-                    'sid': u['User SID'],
-                }})
+            try:
+                for u in await self.middleware.call("smb.passdb_list", True):
+                    username_sid.update({u['Unix username']: {
+                        'nt_name': u['NT username'],
+                        'sid': u['User SID'],
+                    }})
+            except Exception:
+                # Failure to retrieve passdb list often means that system dataset is
+                # broken
+                self.logger.error('Failed to retrieve passdb information', exc_info=True)
 
         if dssearch:
             ds_state = await self.middleware.call('directoryservices.get_state')
@@ -680,15 +694,19 @@ class UserService(CRUDService):
             ('attr', {'update': True}),
             ('rm', {'name': 'group_create'}),
         ),
+        audit='Update user',
+        audit_callback=True,
     )
     @returns(Int('primary_key'))
     @pass_app()
-    def do_update(self, app, pk, data):
+    def do_update(self, app, audit_callback, pk, data):
         """
         Update attributes of an existing user.
         """
 
         user = self.middleware.call_sync('user.get_instance', pk)
+        audit_callback(user['username'])
+
         if app and app.authenticated_credentials.is_user_session:
             same_user_logged_in = user['username'] == (self.middleware.call_sync('auth.me', app=app))['pw_name']
         else:
@@ -1017,7 +1035,7 @@ class UserService(CRUDService):
         Int('uid', default=None),
         Bool('get_groups', default=False),
         Bool('sid_info', default=False),
-    ))
+    ), roles=['ACCOUNT_READ'])
     @returns(Dict(
         'user_information',
         Str('pw_name'),
@@ -1052,11 +1070,12 @@ class UserService(CRUDService):
         if not data['username'] and data['uid'] is None:
             verrors.add('get_user_obj.username', 'Either "username" or "uid" must be specified')
         verrors.check()
+
         return await self.middleware.call(
             'dscache.get_uncached_user', data['username'], data['uid'], data['get_groups'], data['sid_info']
         )
 
-    @accepts()
+    @accepts(roles=['ACCOUNT_READ'])
     @returns(Int('next_available_uid'))
     async def get_next_uid(self):
         """
@@ -1216,21 +1235,6 @@ class UserService(CRUDService):
             {'prefix': 'bsdusr_'}
         )
 
-        if await self.middleware.call('cluster.utils.is_clustered'):
-            if data.get('smb') is True:
-                verrors.add(
-                    f'{schema}.smb',
-                    'Local non-clustered SMB users may not be created on clustered TrueNAS'
-                )
-
-            if 'username' in data and (await self.middleware.call('cluster.accounts.user.query', [
-                ['username', 'C=', data['username']]
-            ])):
-                verrors.add(
-                    f'{schema}.username',
-                    'Username is already in use by a clustered user.'
-                )
-
         if data.get('uid') is not None:
             try:
                 existing_user = await self.middleware.call(
@@ -1266,9 +1270,18 @@ class UserService(CRUDService):
                     )
 
         if combined['smb'] and not await self.middleware.call('smb.is_configured'):
-            verrors.add(
-                f'{schema}.smb', 'SMB users may not be configured while SMB service backend is unitialized.'
-            )
+            if (await self.middleware.call('systemdataset.sysdataset_path')) is None:
+                verrors.add(
+                    f'{schema}.smb',
+                    'System dataset is not mounted at expected path. This may indicate '
+                    'an underlying issue with the pool hosting the system dataset. '
+                    'SMB users may not be configured until this configuration issue is addressed.'
+                )
+            else:
+                verrors.add(
+                    f'{schema}.smb',
+                    'SMB users may not be configured while SMB service backend is unitialized.'
+                )
 
         if combined['smb'] and combined['password_disabled']:
             verrors.add(
@@ -1357,7 +1370,8 @@ class UserService(CRUDService):
         else:
             data['unixhash'] = '*'
             data['smbhash'] = '*'
-        return password
+
+        return data
 
     def __set_groups(self, pk, groups):
 
@@ -1445,6 +1459,115 @@ class UserService(CRUDService):
             os.fchown(f.fileno(), user['uid'], gid)
             f.write(f'{pubkey}\n')
 
+    @no_authz_required
+    @accepts(Dict(
+        'set_password_data',
+        Str('username', required=True),
+        Password('old_password', default=None),
+        Password('new_password', required=True),
+    ))
+    @pass_app(require=True)
+    async def set_password(self, app, data):
+        """
+        Set the password of the specified `username` to the `new_password`
+        specified in payload.
+
+        ValidationErrors will be raised in the following situations:
+        * username does not exist
+        * account is not local to the NAS (Active Directory, LDAP, etc)
+        * account has password authentication disabled
+        * account is locked
+
+        NOTE: when authenticated session has less than FULL_ADMIN role,
+        password changes will be rejected if the payload does not match the
+        currently-authenticated user.
+
+        API keys granting access to this endpoint will be able to reset
+        the password of any user.
+        """
+
+        verrors = ValidationErrors()
+        is_full_admin = credential_has_full_admin(app.authenticated_credentials)
+        authenticated_user = None
+
+        if app.authenticated_credentials.is_user_session:
+            authenticated_user = app.authenticated_credentials.user['username']
+
+        username = data['username']
+        password = data['new_password']
+
+        if not is_full_admin and authenticated_user != username:
+            raise CallError(
+                f'{username}: currently authenticated credential may not reset '
+                'password for this user.',
+                errno.EPERM
+            )
+
+        entry = await self.middleware.call(
+            'user.query',
+            [['username', '=', username]],
+            {'extra': {'additional_information': ['DS']}}
+        )
+        if not entry:
+            # This only happens if authenticated user has FULL_ADMIN privileges
+            # and so we're not concerned about letting admin know that username is
+            # bad.
+            verrors.add(
+                'user.set_password.username',
+                f'{username}: user does not exist.'
+            )
+        else:
+            entry = entry[0]
+            if not entry['local']:
+                # We don't allow resetting passwords on remote directory service.
+                verrors.add(
+                    'user.set_password.username',
+                    f'{username}: user is not local to the TrueNAS server.'
+                )
+
+        if data['old_password'] is None and not is_full_admin:
+            verrors.add(
+                'user.set_password.old_password',
+                'FULL_ADMIN role is required in order to bypass check for current password.'
+            )
+
+        if data['old_password'] is not None and not await self.middleware.call(
+            'auth.libpam_authenticate',
+            username, data['old_password']
+        ):
+            verrors.add(
+                'user.set_password.old_password',
+                f'{username}: failed to validate password.'
+            )
+
+        verrors.check()
+
+        if entry['password_disabled']:
+            verrors.add(
+                'user.set_password.username',
+                f'{username}: password authentication disabled for user'
+            )
+
+        if entry['locked']:
+            verrors.add(
+                'user.set_password.username',
+                f'{username}: user account is locked.'
+            )
+
+        verrors.check()
+
+        entry = self.__set_password(entry | {'password': password})
+
+        await self.middleware.call('datastore.update', 'account.bsdusers', entry['id'], {
+            'bsdusr_unixhash': entry['unixhash'],
+            'bsdusr_smbhash': entry['smbhash'],
+        })
+        await self.middleware.call('etc.generate', 'shadow')
+
+        if entry['smb']:
+            passdb_sync = await self.middleware.call('smb.synchronize_passdb')
+            await passdb_sync.wait()
+
 
 class GroupModel(sa.Model):
     __tablename__ = 'account_bsdgroups'
@@ -1474,6 +1597,7 @@ class GroupService(CRUDService):
         datastore_extend = 'group.group_extend'
         datastore_extend_context = 'group.group_extend_context'
         cli_namespace = 'account.group'
+        role_prefix = 'ACCOUNT'
 
     ENTRY = Patch(
         'group_create', 'group_entry',
@@ -1594,7 +1718,16 @@ class GroupService(CRUDService):
                 ds_groups = await self.middleware.call('dscache.query', 'GROUPS', filters, options)
 
         if 'SMB' in additional_information:
-            smb_groupmap = await self.middleware.call("smb.groupmap_list")
+            try:
+                smb_groupmap = await self.middleware.call("smb.groupmap_list")
+            except Exception:
+                # If system dataset has failed to properly initialize / is broken
+                # then looking up groupmaps will fail.
+                self.logger.error('Failed to retrieve SMB groupmap.', exc_info=True)
+                smb_groupmap = {
+                    'local': {},
+                    'local_builtins': {}
+                }
 
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
@@ -1790,7 +1923,7 @@ class GroupService(CRUDService):
 
         return pk
 
-    @accepts()
+    @accepts(roles=['ACCOUNT_READ'])
     @returns(Int('next_available_gid'))
     async def get_next_gid(self):
         """
@@ -1814,7 +1947,7 @@ class GroupService(CRUDService):
         'get_group_obj',
         Str('groupname', default=None),
         Int('gid', default=None)
-    ))
+    ), roles=['ACCOUNT_READ'])
     @returns(Dict(
         'group_info',
         Str('gr_name'),
@@ -1835,21 +1968,6 @@ class GroupService(CRUDService):
     async def __common_validation(self, verrors, data, schema, pk=None):
 
         exclude_filter = [('id', '!=', pk)] if pk else []
-
-        if await self.middleware.call('cluster.utils.is_clustered'):
-            if data.get('smb') is True:
-                verrors.add(
-                    f'{schema}.smb',
-                    'Local SMB groups may not be created on clustered TrueNAS'
-                )
-
-            if 'name' in data and (await self.middleware.call('cluster.accounts.group.query', [
-                ['group', 'C=', data['name']]
-            ])):
-                verrors.add(
-                    f'{schema}.name',
-                    'Name is already in use by a clustered group.'
-                )
 
         if data.get('smb') and not await self.middleware.call('smb.is_configured'):
             verrors.add(

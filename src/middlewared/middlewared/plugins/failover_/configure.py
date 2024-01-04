@@ -1,3 +1,8 @@
+# Copyright (c) - iXsystems Inc.
+#
+# Licensed under the terms of the TrueNAS Enterprise License Agreement
+# See the file LICENSE.IX for complete terms and conditions
+
 from middlewared.service import Service
 
 HA_LICENSE_CACHE_KEY = 'LICENSED_FOR_HA'

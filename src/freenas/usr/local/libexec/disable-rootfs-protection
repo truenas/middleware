@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
+import argparse
 import json
 import os
 import stat
 import sys
+from middlewared.client import Client
 from pathlib import Path
 from subprocess import run
 
@@ -11,6 +13,10 @@ from subprocess import run
 TO_CHMOD = ['apt', 'dpkg']
 EXECUTE_BITS = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 PKG_MGMT_DISABLED_PATH = '/usr/local/bin/pkg_mgmt_disabled'
+FORCE_COMMENT = (
+    'Force disable rootfs protection on enterprise-licensed hardware. This is '
+    'a developer option that will result in an unsupported configuration.'
+)
 
 
 def set_readwrite(entry):
@@ -55,8 +61,35 @@ def chmod_files():
             p.chmod(new_mode)
 
 
+def process_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--force',
+        action=argparse.BooleanOptionalAction,
+        help=FORCE_COMMENT,
+    )
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
     datasets = []
+    args = process_args()
+
+    rv = run(['zfs', 'get', '-o', 'value', '-H', 'truenas:developer', '/'], capture_output=True)
+
+    # If we're already in developer-mode, skip license check
+    # This is to allow workflow for developer working on HA platform to
+    # run this script then run install-dev-tools to get full development
+    # environment.
+    if rv.stdout.decode().strip() != 'on' and not args.force:
+        with Client() as c:
+            if c.call('system.product_type') == 'SCALE_ENTERPRISE':
+                print((
+                  'Root filesystem protections may not be administratively disabled '
+                  'on Enterprise-licensed TrueNAS products. Circumventing this '
+                  'restriction is considered an unsupported configuration.'
+                ))
+                sys.exit(1)
     try:
         # The following file is created during TrueNAS installation
         # and contains dataset configuration and guid details

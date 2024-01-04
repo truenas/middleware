@@ -141,17 +141,21 @@ class OROperator:
         cp.register = False
         return cp
 
-    def dump(self, value):
+    def dump(self, value, fallback=True):
         value = copy.deepcopy(value)
 
+        errors = []
         for schema in self.schemas:
             try:
                 schema.clean(copy.deepcopy(value))
-            except (Error, ValidationErrors):
-                pass
+            except (Error, ValidationErrors) as e:
+                errors.append(e)
             else:
                 value = schema.dump(value)
                 break
+        else:
+            if not fallback:
+                raise RuntimeError(f"OROperator failed to dump all schemas: {errors!r}")
 
         return value
 

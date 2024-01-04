@@ -1,8 +1,13 @@
+# Copyright (c) - iXsystems Inc.
+#
+# Licensed under the terms of the TrueNAS Enterprise License Agreement
+# See the file LICENSE.IX for complete terms and conditions
+
 import logging
 
 from middlewared.utils.scsi_generic import inquiry
 
-from .constants import MINI_MODEL_BASE
+from .constants import MINI_MODEL_BASE, MINIR_MODEL_BASE
 from .element_types import ELEMENT_TYPES, ELEMENT_DESC
 from .enums import ControllerModels, ElementDescriptorsToIgnore, ElementStatusesToIgnore, JbodModels
 from .sysfs_disks import map_disks_to_enclosure_slots
@@ -40,6 +45,11 @@ class Enclosure:
             'bsg': self.bsg,  # the path for which this maps to a bsg device (/dev/bsg/0:0:0:0)
             'sg': self.sg,  # the scsi generic device (/dev/sg0)
             'pci': self.pci,  # the pci info (0:0:0:0)
+            'rackmount': self.rackmount,  # requested by UI team
+            'top_loaded': self.top_loaded,  # requested by UI team
+            'front_slots': self.front_slots,  # requested by UI team
+            'rear_slots': self.rear_slots,  # requested by UI team
+            'internal_slots': self.internal_slots,  # requested by UI team
             'elements': self.elements  # dictionary with all element types and their relevant information
         }
 
@@ -341,6 +351,18 @@ class Enclosure:
         return all((self.controller, self.model[0] == 'R'))
 
     @property
+    def is_r10(self):
+        """Determine if the enclosure device is a r10 controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_rseries,
+            (self.model == ControllerModels.R10.value),
+        ))
+
+    @property
     def is_r20_series(self):
         """Determine if the enclosure device is a r20-series controller.
 
@@ -354,6 +376,30 @@ class Enclosure:
                 ControllerModels.R20A.value,
                 ControllerModels.R20B.value,
             ))
+        ))
+
+    @property
+    def is_r30(self):
+        """Determine if the enclosure device is a r30 controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_rseries,
+            (self.model == ControllerModels.R30.value),
+        ))
+
+    @property
+    def is_r40(self):
+        """Determine if the enclosure device is a r40 controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_rseries,
+            (self.model == ControllerModels.R40.value),
         ))
 
     @property
@@ -424,6 +470,27 @@ class Enclosure:
         ))
 
     @property
+    def is_mini_r(self):
+        """Determine if the enclosure device is a mini-r-series controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((self.is_mini, self.model.startswith(MINIR_MODEL_BASE)))
+
+    @property
+    def is_12_bay_jbod(self):
+        """Determine if the enclosure device is a 12 bay JBOD.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_jbod,
+            (self.model == JbodModels.ES12.value),
+        ))
+
+    @property
     def is_24_bay_jbod(self):
         """Determine if the enclosure device is a 24 bay JBOD.
 
@@ -452,3 +519,111 @@ class Enclosure:
                 JbodModels.ES60G2.value,
             )
         ))
+
+    @property
+    def is_102_bay_jbod(self):
+        """Determine if the enclosure device is a 102 bay JBOD.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_jbod,
+            self.model in (
+                JbodModels.ES102.value,
+                JbodModels.ES102G2.value,
+            )
+        ))
+
+    @property
+    def rackmount(self):
+        """Determine if the enclosure device is a rack mountable unit.
+
+        Args:
+        Returns: bool
+        """
+        return any((
+            self.is_jbod,
+            self.is_mini_r,
+            self.is_rseries,
+            self.is_fseries,
+            self.is_hseries,
+            self.is_mseries,
+            self.is_xseries,
+        ))
+
+    @property
+    def top_loaded(self):
+        """Determine if the enclosure device has its disk slots loaded
+        from the top.
+
+        Args:
+        Returns: bool
+        """
+        return any((
+            self.is_r40,
+            self.is_r50_series,
+            self.is_60_bay_jbod,
+            self.is_102_bay_jbod
+        ))
+
+    @property
+    def front_slots(self):
+        """Determine the total number of front drive bays.
+
+        NOTE: The `front_slots` phrase is used all the same to
+        represent the drive bay slots for our platforms that are
+        "top loaded".
+
+        Args:
+        Returns: int
+        """
+        if not self.model:
+            return 0
+        elif any((self.is_xseries, self.is_r30, self.is_12_bay_jbod)):
+            return 12
+        elif self.is_r20_series:
+            return 14
+        elif any((self.is_hseries, self.is_r10)):
+            return 16
+        elif any((self.is_fseries, self.is_mseries, self.is_24_bay_jbod)):
+            return 24
+        elif any((self.is_r40, self.is_r50_series)):
+            return 48
+        elif self.is_60_bay_jbod:
+            return 60
+        elif self.is_102_bay_jbod:
+            return 102
+        else:
+            return 0
+
+    @property
+    def rear_slots(self):
+        """Determine the total number of rear drive bays.
+
+        Args:
+        Returns: int
+        """
+        if not self.model:
+            return 0
+        elif self.model == ControllerModels.R50B.value:
+            return 2
+        elif self.model == ControllerModels.R50.value:
+            return 3
+        elif self.model in (
+            ControllerModels.M50.value,
+            ControllerModels.M60.value,
+            ControllerModels.R50BM.value,
+        ):
+            return 4
+        else:
+            return 0
+
+    @property
+    def internal_slots(self):
+        """Determine the total number of internal drive bays.
+
+        Args:
+        Returns: int
+        """
+        return 4 if self.is_r30 else 0

@@ -77,12 +77,6 @@ class KubernetesService(Service):
                     'chart.release.get_replica_count_for_resources', chart_release['resources'],
                 )))
 
-            with open(os.path.join(chart_release_backup_path, 'pv_info.json'), 'w') as f:
-                # We will store information which maps the pv dataset to a pvc
-                f.write(json.dumps(
-                    self.middleware.call_sync('chart.release.retrieve_pv_pvc_mapping_internal', chart_release),
-                ))
-
         job.set_progress(95, 'Taking snapshot of ix-applications')
 
         self.middleware.call_sync(

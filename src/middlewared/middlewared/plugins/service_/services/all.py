@@ -16,9 +16,6 @@ from .truecommand import TruecommandService
 from .ups import UPSService
 from .wsd import WSDService
 from .keepalived import KeepalivedService
-from .glusterd import GlusterdService
-from .glustereventsd import GlusterEventsdService
-from .ctdb import CtdbService
 from .idmap import IdmapService
 from .openipmi import OpenIpmiService
 
@@ -68,9 +65,6 @@ all_services = [
     IdmapService,
     OpenIpmiService,
     KeepalivedService,
-    GlusterdService,
-    GlusterEventsdService,
-    CtdbService,
     KubernetesService,
     KubeRouterService,
     OpenVmToolsService,

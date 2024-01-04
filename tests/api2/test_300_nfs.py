@@ -18,9 +18,12 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
 from functions import make_ws_request
 from auto_config import pool_name, ha, hostname, password, user
-from protocols import SSH_NFS
+from protocols import SSH_NFS, nfs_share
+from middlewared.service_exception import ValidationErrors, ValidationError
+from middlewared.test.integration.assets.account import user as create_user
+from middlewared.test.integration.assets.account import group as create_group
 from middlewared.test.integration.assets.filesystem import directory
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, ssh, mock
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -137,7 +140,7 @@ def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=None):
         assert res['result'] == test_res[do_what], f"Expected {test_res[do_what]} for NFS started result, but found {res['result']}"
 
 
-def confirm_nfsd_processes(expected=16):
+def confirm_nfsd_processes(expected):
     '''
     Confirm the expected number of nfsd processes are running
     '''
@@ -145,14 +148,16 @@ def confirm_nfsd_processes(expected=16):
     assert int(result['stdout']) == expected, result
 
 
-def confirm_mountd_processes(expected=16):
+def confirm_mountd_processes(expected):
     '''
     Confirm the expected number of mountd processes are running
     '''
     rx_mountd = r"rpc\.mountd"
     result = SSH_TEST(f"ps -ef | grep '{rx_mountd}' | wc -l", user, password, ip)
-    # We subtract one to account for the rpc.mountd thread manager
-    assert int(result['stdout']) - 1 == expected
+
+    # If there is more than one, we subtract one to account for the rpc.mountd thread manager
+    num_detected = int(result['stdout'])
+    assert (num_detected - 1 if num_detected > 1 else num_detected) == expected
 
 
 def confirm_rpc_processes(expected=['idmapd', 'bind', 'statd']):
@@ -207,7 +212,7 @@ def save_nfs_config():
     but it also might require refactoring of the tests.
     This is called at the start of test_01_creating_the_nfs_server.
     '''
-    exclude = ['id', 'v4_krb_enabled', 'v4_owner_major']
+    exclude = ['id', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd']
     get_conf_cmd = {'msg': 'method', 'method': 'nfs.config', 'params': []}
     res = make_ws_request(ip, get_conf_cmd)
     assert res.get('error') is None, res
@@ -220,7 +225,7 @@ def restore_nfs_config():
     Restore the NFS configuration to the settings saved by save_nfs_config.
     This should be called _before_ NFS is shutdown to ensure the NFS conf file in /etc
     matches the DB settings.
-    This is called at the start of test_50_stoping_nfs_service.
+    This is called at the start of stopping_nfs_service.
     '''
     set_conf_cmd = {'msg': 'method', 'method': 'nfs.update', 'params': [NFS_CONFIG.default_nfs_config]}
     res = make_ws_request(ip, set_conf_cmd)
@@ -262,22 +267,6 @@ def nfs_dataset(name, options=None, acl=None, mode=None):
 
 
 @contextlib.contextmanager
-def nfs_share(path, options=None):
-    results = POST("/sharing/nfs/", {
-        "path": path,
-        **(options or {}),
-    })
-    assert results.status_code == 200, results.text
-    id = results.json()["id"]
-
-    try:
-        yield id
-    finally:
-        result = DELETE(f"/sharing/nfs/id/{id}/")
-        assert result.status_code == 200, result.text
-
-
-@contextlib.contextmanager
 def nfs_config(options=None):
     '''
     Use this to restore settings when changed within a test function.
@@ -287,7 +276,7 @@ def nfs_config(options=None):
     '''
     try:
         nfs_db_conf = call("nfs.config")
-        excl = ['id', 'v4_krb_enabled', 'v4_owner_major']
+        excl = ['id', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd']
         [nfs_db_conf.pop(key) for key in excl]
         yield copy(nfs_db_conf)
     finally:
@@ -303,7 +292,6 @@ def test_01_creating_the_nfs_server():
         "servers": 10,
         "mountd_port": 618,
         "allow_nonroot": False,
-        "udp": False,
         "rpcstatd_port": 871,
         "rpclockd_port": 32803,
         "protocols": ["NFSV3", "NFSV4"]
@@ -392,23 +380,66 @@ def test_11_perform_server_side_copy(request):
         n.server_side_copy('ssc1', 'ssc2')
 
 
-def test_19_updating_the_nfs_service(request):
+@pytest.mark.parametrize('nfsd,cores,expected', [
+    (50, 1, {'nfsd': 50, 'mountd': 12, 'managed': False}),   # User specifies number of nfsd, expect: 50 nfsd, 12 mountd
+    (None, 12, {'nfsd': 12, 'mountd': 3, 'managed': True}),  # Dynamic, expect 12 nfsd and 3 mountd
+    (None, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),    # Dynamic, expect 4 nfsd and 1 mountd
+    (None, 2, {'nfsd': 2, 'mountd': 1, 'managed': True}),    # Dynamic, expect 2 nfsd and 1 mountd
+    (None, 1, {'nfsd': 1, 'mountd': 1, 'managed': True}),    # Dynamic, expect 1 nfsd and 1 mountd
+    (0, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),       # Should be trapped by validator: Illegal input
+    (257, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),     # Should be trapped by validator: Illegal input
+    (None, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),  # Dynamic, max nfsd via calculation is 32
+    (-1, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),    # -1 is a flag to set bindip and confirm 'managed' stays True
+])
+def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
     """
     This test verifies that service can be updated in general,
     and also that the 'servers' key can be altered.
     Latter goal is achieved by reading the nfs config file
     and verifying that the value here was set correctly.
+
+    Update:
+    The default setting for 'servers' is None. This specifies that we dynamically
+    determine the number of nfsd to start based on the capabilities of the system.
+    In this state, we choose one nfsd for each CPU core.
+    The user can override the dynamic calculation by specifying a
+    number greater than zero.
+
+    The number of mountd will be 1/4 the number of nfsd.
     """
-    results = PUT("/nfs/", {"servers": "50"})
-    assert results.status_code == 200, results.text
+    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
 
-    s = parse_server_config()
-    assert int(s['nfsd']['threads']) == 50, str(s)
-    assert int(s['mountd']['threads']) == 50, str(s)
+    with mock("system.cpu_info", return_value={"core_count": cores}):
 
-    confirm_nfsd_processes(50)
-    confirm_mountd_processes(50)
-    confirm_rpc_processes()
+        # Use 0 as 'null' flag
+        if nfsd is None or nfsd in range(1, 257):
+            call("nfs.update", {"servers": nfsd})
+
+            s = parse_server_config()
+            assert int(s['nfsd']['threads']) == expected['nfsd'], str(s)
+            assert int(s['mountd']['threads']) == expected['mountd'], str(s)
+
+            confirm_nfsd_processes(expected['nfsd'])
+            confirm_mountd_processes(expected['mountd'])
+            confirm_rpc_processes()
+
+            # In all passing cases, the 'servers' field represents the number of expected nfsd
+            nfs_conf = call("nfs.config")
+            assert nfs_conf['servers'] == expected['nfsd']
+            assert nfs_conf['managed_nfsd'] == expected['managed']
+        else:
+            if nfsd == -1:
+                # We know apriori that the current state is managed_nfsd == True
+                with nfs_config():
+                    # Test making change to non-'server' setting does not change managed_nfsd
+                    call("nfs.update", {"bindip": [ip]})
+                    assert call("nfs.config")['managed_nfsd'] == expected['managed']
+            else:
+                with pytest.raises(ValidationErrors) as ve:
+                    assert call("nfs.config")['managed_nfsd'] == expected['managed']
+                    call("nfs.update", {"servers": nfsd})
+
+                assert ve.value.errors == [ValidationError('nfs_update.servers', 'Should be between 1 and 256', 22)]
 
 
 def test_20_update_nfs_share(request):
@@ -629,12 +660,11 @@ def test_34_check_nfs_share_maproot(request):
         *(sec=sys,rw,anonuid=65534,anongid=65534,subtree_check)
     """
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
-    payload = {
+
+    call('sharing.nfs.update', nfsid, {
         'maproot_user': 'nobody',
         'maproot_group': 'nogroup'
-    }
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
-    assert results.status_code == 200, results.text
+    })
 
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
@@ -645,14 +675,12 @@ def test_34_check_nfs_share_maproot(request):
 
     """
     setting maproot_user and maproot_group to root should
-    cause us to append "not_root_squash" to options.
+    cause us to append "no_root_squash" to options.
     """
-    payload = {
+    call('sharing.nfs.update', nfsid, {
         'maproot_user': 'root',
         'maproot_group': 'root'
-    }
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
-    assert results.status_code == 200, results.text
+    })
 
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
@@ -676,12 +704,10 @@ def test_34_check_nfs_share_maproot(request):
             assert 'no_root_squash' not in params, str(parsed)
             assert not any(filter(lambda x: x.startswith('anon'), params)), str(parsed)
 
-    payload = {
+    call('sharing.nfs.update', nfsid, {
         'maproot_user': '',
         'maproot_group': ''
-    }
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
-    assert results.status_code == 200, results.text
+    })
 
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
@@ -700,12 +726,11 @@ def test_35_check_nfs_share_mapall(request):
         *(sec=sys,rw,all_squash,anonuid=65534,anongid=65534,subtree_check)
     """
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
-    payload = {
+
+    call('sharing.nfs.update', nfsid, {
         'mapall_user': 'nobody',
         'mapall_group': 'nogroup'
-    }
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
-    assert results.status_code == 200, results.text
+    })
 
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
@@ -715,12 +740,10 @@ def test_35_check_nfs_share_mapall(request):
     assert 'anongid=65534' in params, str(parsed)
     assert 'all_squash' in params, str(parsed)
 
-    payload = {
+    call('sharing.nfs.update', nfsid, {
         'mapall_user': '',
         'mapall_group': ''
-    }
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
-    assert results.status_code == 200, results.text
+    })
 
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
@@ -884,31 +907,89 @@ def test_38_check_nfs_allow_nonroot_behavior(request):
     we append "insecure" to each exports line.
     Since this is a global option, it triggers an nfsd restart
     even though it's not technically required.
+    Linux will, by default, mount using a priviledged port (1..1023)
+    MacOS NFS mounts do not follow this 'standard' behavior.
+
+    Four conditions to test:
+        server:  secure       (e.g. allow_nonroot is False)
+            client: resvport   -> expect to pass.
+            client: noresvport -> expect to fail.
+        server: insecure    (e.g. allow_nonroot is True)
+            client: resvport   -> expect to pass.
+            client: noresvport -> expect to pass
 
     Sample:
     "/mnt/dozer/NFSV4"\
         *(sec=sys,rw,insecure,no_subtree_check)
     """
 
+    def get_client_nfs_port():
+        '''
+        Output from netstat -nt looks like:
+            tcp        0      0 127.0.0.1:50664         127.0.0.1:6000          ESTABLISHED
+        The client port is the number after the ':' in the 5th column
+        '''
+        rv = (None, None)
+        res = ssh("netstat -nt")
+        for line in str(res).splitlines():
+            # The server will listen on port 2049
+            if f"{ip}:2049" == line.split()[3]:
+                rv = (line, line.split()[4].split(':')[1])
+        return rv
+
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
+
     # Verify that NFS server configuration is as expected
-    results = GET("/nfs")
-    assert results.status_code == 200, results.text
-    assert results.json()['allow_nonroot'] is False, results.text
+    with nfs_config() as nfs_conf_orig:
 
-    parsed = parse_exports()
-    assert len(parsed) == 1, str(parsed)
-    assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
+        # --- Test: allow_nonroot is False
+        assert nfs_conf_orig['allow_nonroot'] is False, nfs_conf_orig
 
-    results = PUT("/nfs/", {"allow_nonroot": True})
-    assert results.status_code == 200, results.text
+        # Confirm setting in /etc/exports
+        parsed = parse_exports()
+        assert len(parsed) == 1, str(parsed)
+        assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-    parsed = parse_exports()
-    assert len(parsed) == 1, str(parsed)
-    assert 'insecure' in parsed[0]['opts'][0]['parameters'], str(parsed)
+        # Confirm we allow mounts from 'root' ports
+        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+            client_port = get_client_nfs_port()
+            assert client_port[1] is not None, f"Failed to get client port: f{client_port[0]}"
+            assert int(client_port[1]) < 1024, \
+                f"client_port is not in 'root' range: {client_port[1]}\n{client_port[0]}"
 
-    results = PUT("/nfs/", {"allow_nonroot": False})
-    assert results.status_code == 200, results.text
+        # Confirm we block mounts from 'non-root' ports
+        with pytest.raises(RuntimeError) as re:
+            with SSH_NFS(ip, NFS_PATH, vers=4, options=['noresvport'],
+                         user=user, password=password, ip=ip):
+                pass
+            # We should not get to this assert
+            assert False, "Unexpected success with mount"
+        assert 'Operation not permitted' in str(re), re
 
+        # --- Test: allow_nonroot is True
+        new_nfs_conf = call('nfs.update', {"allow_nonroot": True})
+        assert new_nfs_conf['allow_nonroot'] is True, new_nfs_conf
+
+        parsed = parse_exports()
+        assert len(parsed) == 1, str(parsed)
+        assert 'insecure' in parsed[0]['opts'][0]['parameters'], str(parsed)
+
+        # Confirm we allow mounts from 'root' ports
+        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+            client_port = get_client_nfs_port()
+            assert client_port[1] is not None, "Failed to get client port"
+            assert int(client_port[1]) < 1024, \
+                f"client_port is not in 'root' range: {client_port[1]}\n{client_port[0]}"
+
+        # Confirm we allow mounts from 'non-root' ports
+        with SSH_NFS(ip, NFS_PATH, vers=4, options=['noresvport'],
+                     user=user, password=password, ip=ip):
+            client_port = get_client_nfs_port()
+            assert client_port[1] is not None, "Failed to get client port"
+            assert int(client_port[1]) >= 1024, \
+                f"client_port is not in 'non-root' range: {client_port[1]}\n{client_port[0]}"
+
+    # Confirm setting was returned to original state
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
     assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
@@ -1003,42 +1084,17 @@ def test_39_check_nfs_service_protocols_parameter(request):
 
 def test_40_check_nfs_service_udp_parameter(request):
     """
-    This test verifies that toggling the `udp` option generates expected changes
-    in nfs kernel server config.
+    This test verifies the udp config is NOT in the DB and
+    that it is NOT in the etc file.
     """
-    with nfs_config():
-        get_payload = {'msg': 'method', 'method': 'nfs.config', 'params': []}
-        set_payload = {'msg': 'method', 'method': 'nfs.update', 'params': []}
+    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
 
-        # Initial state should be disabled:
-        #    DB == False, conf == 'n'
-        res = make_ws_request(ip, get_payload)
-        assert res['result']['udp'] is False, res
-        s = parse_server_config()
-        assert s['nfsd']["udp"] == 'n', str(s)
+    # The 'udp' setting should have been removed
+    nfs_conf = call('nfs.config')
+    assert nfs_conf.get('udp') is None, nfs_conf
 
-        # Multiple restarts cause systemd failures.  Reset the systemd counters.
-        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
-
-        # Confirm we can enable:
-        #    DB == True, conf =='y', rpc will indicate supported
-        set_payload['params'] = [{'udp': True}]
-        res = make_ws_request(ip, set_payload)
-        assert res['result']['udp'] is True, res
-        s = parse_server_config()
-        assert s['nfsd']["udp"] == 'y', str(s)
-        res = SSH_TEST(f"rpcinfo -T udp {ip} mount", user, password, ip)
-        assert "ready and waiting" in res['output'], res
-
-        # Confirm we can disable:
-        #    DB == False, conf =='n', rpc will indicate not supported
-        set_payload['params'] = [{'udp': False}]
-        res = make_ws_request(ip, set_payload)
-        assert res['result']['udp'] is False, res
-        s = parse_server_config()
-        assert s['nfsd']["udp"] == 'n', str(s)
-        res = SSH_TEST(f"rpcinfo -T udp {ip} mount", user, password, ip)
-        assert "Program not registered" in res['stderr']
+    s = parse_server_config()
+    assert s.get('nfsd', {}).get('udp') is None, s
 
 
 def test_41_check_nfs_service_ports(request):
@@ -1301,6 +1357,10 @@ def test_48_syslog_filters(request):
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     with nfs_config():
 
+        # The effect is much more clear if there are many mountd.
+        # We can force this by configuring many nfsd
+        call("nfs.update", {"servers": 24})
+
         # Confirm default setting: mountd logging enabled
         call("nfs.update", {"mountd_log": True})
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
@@ -1317,7 +1377,7 @@ def test_48_syslog_filters(request):
 
             assert found, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
 
-	# NOTE: Additional mountd messages will get logged on unmount at the exit of the 'with'
+        # NOTE: Additional mountd messages will get logged on unmount at the exit of the 'with'
 
         # Disable mountd logging
         call("nfs.update", {"mountd_log": False})
@@ -1333,7 +1393,110 @@ def test_48_syslog_filters(request):
         assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
 
 
-def test_50_stoping_nfs_service(request):
+@pytest.mark.parametrize('type,data', [
+    ('InvalidAssignment', [
+        {'maproot_user': 'baduser'}, 'maproot_user', 'User not found: baduser'
+    ]),
+    ('InvalidAssignment', [
+        {'maproot_group': 'badgroup'}, 'maproot_user', 'This field is required when map group is specified'
+    ]),
+    ('InvalidAssignment', [
+        {'mapall_user': 'baduser'}, 'mapall_user', 'User not found: baduser'
+    ]),
+    ('InvalidAssignment', [
+        {'mapall_group': 'badgroup'}, 'mapall_user', 'This field is required when map group is specified'
+    ]),
+    ('MissingUser', [
+        'maproot_user', 'missinguser'
+    ]),
+    ('MissingUser', [
+        'mapall_user', 'missinguser'
+    ]),
+    ('MissingGroup', [
+        'maproot_group', 'missingroup'
+    ]),
+    ('MissingGroup', [
+        'mapall_group', 'missingroup'
+    ]),
+])
+def test_50_nfs_invalid_user_group_mapping(request, type, data):
+    '''
+    Verify we properly trap and handle invalid user and group mapping
+    Two conditions:
+        1) Catch invalid assignments
+        2) Catch invalid settings at NFS start
+    '''
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
+
+    ''' Local helper routine '''
+    def run_missing_usrgrp_test(usrgrp, tmp_path, share, usrgrpInst):
+        parsed = parse_exports()
+        assert len(parsed) == 2, str(parsed)
+        this_share = [entry for entry in parsed if entry['path'] == f'{tmp_path}']
+        assert len(this_share) == 1, f"Did not find share {tmp_path}.\nexports = {parsed}"
+
+        # Remove the user/group and restart nfs
+        call(f'{usrgrp}.delete', usrgrpInst['id'])
+        call('service.restart', 'nfs')
+
+        # An alert should be generated
+        alerts = call('alert.list')
+        this_alert = [entry for entry in alerts if entry['klass'] == "NFSexportMappingInvalidNames"]
+        assert len(this_alert) == 1, f"Did not find alert for 'NFSexportMappingInvalidNames'.\n{alerts}"
+
+        # The NFS export should have been removed
+        parsed = parse_exports()
+        assert len(parsed) == 1, str(parsed)
+        this_share = [entry for entry in parsed if entry['path'] == f'{tmp_path}']
+        assert len(this_share) == 0, f"Unexpectedly found share {tmp_path}.\nexports = {parsed}"
+
+        # Modify share to map with a built-in user or group and restart NFS
+        call('sharing.nfs.update', share, {data[0]: "ftp"})
+        call('service.restart', 'nfs')
+
+        # The alert should be cleared
+        alerts = call('alert.list')
+        this_alert = [entry for entry in alerts if entry['key'] == "NFSexportMappingInvalidNames"]
+        assert len(this_alert) == 0, f"Unexpectedly found alert 'NFSexportMappingInvalidNames'.\n{alerts}"
+
+        # Share should have been restored
+        parsed = parse_exports()
+        assert len(parsed) == 2, str(parsed)
+        this_share = [entry for entry in parsed if entry['path'] == f'{tmp_path}']
+        assert len(this_share) == 1, f"Did not find share {tmp_path}.\nexports = {parsed}"
+
+    ''' Test Processing '''
+    with directory(f'{NFS_PATH}/sub1') as tmp_path:
+
+        if type == 'InvalidAssignment':
+            payload = {'path': tmp_path} | data[0]
+            with pytest.raises(ValidationErrors) as ve:
+                call("sharing.nfs.create", payload)
+            assert ve.value.errors == [ValidationError('sharingnfs_create.' + f'{data[1]}', data[2], 22)]
+
+        elif type == 'MissingUser':
+            usrname = data[1]
+            testkey, testval = data[0].split('_')
+
+            usr_payload = {'username': usrname, 'full_name': usrname,
+                           'group_create': True, 'password': 'abadpassword'}
+            mapping = {data[0]: usrname}
+            with create_user(usr_payload) as usrInst:
+                with nfs_share(tmp_path, mapping) as share:
+                    run_missing_usrgrp_test(testval, tmp_path, share, usrInst)
+
+        elif type == 'MissingGroup':
+            # Use a built-in user for the group test
+            grpname = data[1]
+            testkey, testval = data[0].split('_')
+
+            mapping = {f"{testkey}_user": 'ftp', data[0]: grpname}
+            with create_group({'name': grpname}) as grpInst:
+                with nfs_share(tmp_path, mapping) as share:
+                    run_missing_usrgrp_test(testval, tmp_path, share, grpInst)
+
+
+def test_70_stopping_nfs_service(request):
     # Restore original settings before we stop
     restore_nfs_config()
     payload = {"service": "nfs"}
@@ -1342,12 +1505,12 @@ def test_50_stoping_nfs_service(request):
     sleep(1)
 
 
-def test_51_checking_to_see_if_nfs_service_is_stop(request):
+def test_71_checking_to_see_if_nfs_service_is_stop(request):
     results = GET("/service?service=nfs")
     assert results.json()[0]["state"] == "STOPPED", results.text
 
 
-def test_52_check_adjusting_threadpool_mode(request):
+def test_72_check_adjusting_threadpool_mode(request):
     """
     Verify that NFS thread pool configuration can be adjusted
     through private API endpoints.
@@ -1367,23 +1530,23 @@ def test_52_check_adjusting_threadpool_mode(request):
         assert res['result'] == m, res
 
 
-def test_54_disable_nfs_service_at_boot(request):
+def test_74_disable_nfs_service_at_boot(request):
     results = PUT("/service/id/nfs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_55_checking_nfs_disable_at_boot(request):
+def test_75_checking_nfs_disable_at_boot(request):
     results = GET("/service?service=nfs")
     assert results.json()[0]['enable'] is False, results.text
 
 
-def test_56_destroying_smb_dataset(request):
+def test_76_destroying_smb_dataset(request):
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.parametrize('exports', ['missing', 'empty'])
-def test_60_start_nfs_service_with_missing_or_empty_exports(request, exports):
+def test_80_start_nfs_service_with_missing_or_empty_exports(request, exports):
     '''
     NAS-123498: Eliminate conditions on exports for service start
     The goal is to make the NFS server behavior similar to the other protocols
@@ -1394,26 +1557,27 @@ def test_60_start_nfs_service_with_missing_or_empty_exports(request, exports):
         results = SSH_TEST("rm -f /etc/exports", user, password, ip)
     assert results['result'] is True
 
-    # Start NFS
-    payload = {'msg': 'method', 'method': 'service.start', 'params': ['nfs']}
-    res = make_ws_request(ip, payload)
-    assert res['result'] is True, f"Expected start success: {res}"
-    sleep(1)
-    confirm_nfsd_processes(16)
+    with nfs_config() as nfs_conf:
+        # Start NFS
+        payload = {'msg': 'method', 'method': 'service.start', 'params': ['nfs']}
+        res = make_ws_request(ip, payload)
+        assert res['result'] is True, f"Expected start success: {res}"
+        sleep(1)
+        confirm_nfsd_processes(nfs_conf['servers'])
 
-    # Return NFS to stopped condition
-    payload = {"service": "nfs"}
-    results = POST("/service/stop/", payload)
-    assert results.status_code == 200, results.text
-    sleep(1)
+        # Return NFS to stopped condition
+        payload = {"service": "nfs"}
+        results = POST("/service/stop/", payload)
+        assert results.status_code == 200, results.text
+        sleep(1)
 
-    # Confirm stopped
-    results = GET("/service?service=nfs")
-    assert results.json()[0]["state"] == "STOPPED", results.text
+        # Confirm stopped
+        results = GET("/service?service=nfs")
+        assert results.json()[0]["state"] == "STOPPED", results.text
 
 
 @pytest.mark.parametrize('expect_NFS_start', [False, True])
-def test_62_files_in_exportsd(request, expect_NFS_start):
+def test_82_files_in_exportsd(request, expect_NFS_start):
     '''
     Any files in /etc/exports.d are potentially dangerous, especially zfs.exports.
     We implemented protections against rogue exports files.

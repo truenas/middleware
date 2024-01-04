@@ -21,6 +21,11 @@
             "bsg": "/dev/bsg/8:0:0:0",
             "sg": "/dev/sg0",
             "pci": "8:0:0:0",
+            "rackmount": false,
+            "top_loaded": false,
+            "front_slots": 10,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "2": {
@@ -154,6 +159,11 @@
             "bsg": "/dev/bsg/16:0:0:0",
             "sg": "/dev/sg1",
             "pci": "16:0:0:0",
+            "rackmount": false,
+            "top_loaded": false,
+            "front_slots": 10,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "10": {

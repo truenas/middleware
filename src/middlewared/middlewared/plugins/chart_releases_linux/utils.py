@@ -24,7 +24,6 @@ class Resources(enum.Enum):
     CRONJOB = 'cronjobs'
     DEPLOYMENT = 'deployments'
     JOB = 'jobs'
-    PERSISTENT_VOLUME_CLAIM = 'persistent_volume_claims'
     POD = 'pods'
     STATEFULSET = 'statefulsets'
 
@@ -38,7 +37,7 @@ def get_action_context(release_name):
         'isUpdate': False,
         'isUpgrade': False,
         'isStopped': False,
-        'storageClassName': get_storage_class_name(release_name),
+        'storageClassName': get_storage_class_name(release_name),  # TODO: Remove this usage in next major release
         'upgradeMetadata': {},
         'hasSMBCSI': True,
         'hasNFSCSI': True,
@@ -129,6 +128,10 @@ def get_network_attachment_definition_name(release, count):
 
 def normalized_port_value(protocol: str, port: int) -> str:
     return '' if ((protocol == 'http' and port == 80) or (protocol == 'https' and port == 443)) else f':{port}'
+
+
+def get_non_existent_host_paths(paths: list) -> list:
+    return [path for path in paths if not os.path.exists(path)]
 
 
 SCALEABLE_RESOURCES = [

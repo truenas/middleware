@@ -27,7 +27,9 @@ def upgrade():
     sqlite_autoincrement=True
     )
     op.execute("INSERT INTO network_interface_link_address (interface, link_address, link_address_b) "
-               "SELECT int_interface, int_link_address, int_link_address_b FROM network_interfaces")
+               "SELECT int_interface, int_link_address, int_link_address_b FROM network_interfaces "
+               "WHERE NOT (int_interface LIKE 'bond%' OR int_interface LIKE 'br%' "
+               "OR int_interface LIKE 'lagg%' OR int_interface LIKE 'vlan%')")
     with op.batch_alter_table('network_interfaces', schema=None) as batch_op:
         batch_op.drop_column('int_link_address')
         batch_op.drop_column('int_link_address_b')

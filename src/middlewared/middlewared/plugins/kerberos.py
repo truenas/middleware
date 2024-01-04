@@ -10,7 +10,7 @@ import contextlib
 import time
 from middlewared.plugins.idmap import DSType
 from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Password, Ref, Datetime, Bool
-from middlewared.service import CallError, TDBWrapConfigService, TDBWrapCRUDService, job, periodic, private, ValidationErrors
+from middlewared.service import CallError, ConfigService, CRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, run, Popen
 
@@ -123,12 +123,7 @@ class KerberosModel(sa.Model):
     ks_libdefaults_aux = sa.Column(sa.Text())
 
 
-class KerberosService(TDBWrapConfigService):
-    tdb_defaults = {
-        "id": 1,
-        "appdefaults_aux": "",
-        "libdefaults_aux": ""
-    }
+class KerberosService(ConfigService):
 
     class Config:
         service = "kerberos"
@@ -163,7 +158,10 @@ class KerberosService(TDBWrapConfigService):
         )
         verrors.check()
 
-        await super().do_update(data)
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, old['id'], new,
+            {'prefix': self._config.datastore_prefix}
+        )
 
         await self.middleware.call('etc.generate', 'kerberos')
         return await self.config()
@@ -750,7 +748,7 @@ class KerberosRealmModel(sa.Model):
     )
 
 
-class KerberosRealmService(TDBWrapCRUDService):
+class KerberosRealmService(CRUDService):
     class Config:
         datastore = 'directoryservice.kerberosrealm'
         datastore_prefix = 'krb_'
@@ -807,7 +805,10 @@ class KerberosRealmService(TDBWrapCRUDService):
         verrors.check()
 
         data = await self.kerberos_compress(data)
-        id_ = await super().do_create(data)
+        id_ = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix}
+        )
         await self.middleware.call('etc.generate', 'kerberos')
         await self.middleware.call('service.restart', 'cron')
         return await self.get_instance(id_)
@@ -831,7 +832,10 @@ class KerberosRealmService(TDBWrapCRUDService):
         new.update(data)
 
         data = await self.kerberos_compress(new)
-        await super().do_update(id_, new)
+        id_ = await self.middleware.call(
+            'datastore.update', self._config.datastore, id_, new,
+            {'prefix': self._config.datastore_prefix}
+        )
 
         await self.middleware.call('etc.generate', 'kerberos')
         return await self.get_instance(id_)
@@ -841,7 +845,7 @@ class KerberosRealmService(TDBWrapCRUDService):
         """
         Delete a kerberos realm by ID.
         """
-        await super().do_delete(id_)
+        await self.middleware.call('datastore.delete', self._config.datastore, id_)
         await self.middleware.call('etc.generate', 'kerberos')
 
     @private
@@ -862,7 +866,7 @@ class KerberosKeytabModel(sa.Model):
     keytab_name = sa.Column(sa.String(120), unique=True)
 
 
-class KerberosKeytabService(TDBWrapCRUDService):
+class KerberosKeytabService(CRUDService):
     class Config:
         datastore = 'directoryservice.kerberoskeytab'
         datastore_prefix = 'keytab_'
@@ -896,7 +900,10 @@ class KerberosKeytabService(TDBWrapCRUDService):
 
         verrors.check()
 
-        id_ = await super().do_create(data)
+        id_ = await self.middleware.call(
+            'datastore.insert', self._config.datastore, data,
+            {'prefix': self._config.datastore_prefix}
+        )
         await self.middleware.call('etc.generate', 'kerberos')
 
         return await self.get_instance(id_)
@@ -922,7 +929,10 @@ class KerberosKeytabService(TDBWrapCRUDService):
 
         verrors.check()
 
-        await super().do_update(id_, new)
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, id_, new,
+            {'prefix': self._config.datastore_prefix}
+        )
         await self.middleware.call('etc.generate', 'kerberos')
 
         return await self.get_instance(id_)
@@ -941,9 +951,7 @@ class KerberosKeytabService(TDBWrapCRUDService):
                     'the Active Directory service is enabled.'
                 )
 
-        await super().do_delete(id_)
-        if os.path.exists(keytab['SYSTEM'].value):
-            os.remove(keytab['SYSTEM'].value)
+        await self.middleware.call('datastore.delete', self._config.datastore, id_)
         await self.middleware.call('etc.generate', 'kerberos')
         await self._cleanup_kerberos_principals()
         await self.middleware.call('kerberos.stop')
@@ -1199,17 +1207,18 @@ class KerberosKeytabService(TDBWrapCRUDService):
         entry = await self.query([('name', '=', 'AD_MACHINE_ACCOUNT')])
         if not entry:
             await self.middleware.call(
-                'kerberos.keytab.direct_create',
-                {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file}
+                'datastore.insert', self._config.datastore,
+                {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file},
+                {'prefix': self._config.datastore_prefix}
             )
         else:
-            id_ = entry[0]['id']
-            updated_entry = {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file}
-            await self.middleware.call('kerberos.keytab.direct_update', id_, updated_entry)
+            await self.middleware.call(
+                'datastore.update', self._config.datastore, entry[0]['id'],
+                {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file},
+                {'prefix': self._config.datastore_prefix}
+            )
 
-        sambakt = await self.query([('name', '=', 'AD_MACHINE_ACCOUNT')])
-        if sambakt:
-            return sambakt[0]['id']
+        return True
 
     @periodic(3600)
     @private
@@ -1225,9 +1234,6 @@ class KerberosKeytabService(TDBWrapCRUDService):
         old_mtime = 0
         ad_state = await self.middleware.call('activedirectory.get_state')
         if ad_state == 'DISABLED' or not os.path.exists(keytab['SYSTEM'].value):
-            return
-
-        if (await self.middleware.call("smb.get_smb_ha_mode")) == "CLUSTERED":
             return
 
         if await self.middleware.call('cache.has_key', 'KEYTAB_MTIME'):

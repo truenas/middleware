@@ -54,21 +54,7 @@ class SharingTaskService(CRUDService):
 
     @private
     async def validate_cluster_path(self, verrors, name, volname, path):
-        if volname not in await self.middleware.call('gluster.volume.list'):
-            verrors.add(name, f'{volname}: cluster volume does not exist.')
-            return
-
-        try:
-            await self.middleware.call('filesystem.stat', f'CLUSTER:{volname}{path}')
-        except CallError as e:
-            if e.errno is errno.ENXIO:
-                verrors.add(name, f'{volname}: cluster volume is not mounted.')
-            elif e.errno is errno.ENOENT:
-                # this is not treated as fatal error in `check_path_resides_within_volume`
-                # but the design decision may need further review
-                pass
-            else:
-                raise
+        verrors.add(name, 'cluster volume is not mounted.')
 
     @private
     async def validate_external_path(self, verrors, name, path):
@@ -90,13 +76,7 @@ class SharingTaskService(CRUDService):
             verrors.add(name, f'{loc.name}: path type is not allowed.')
 
         elif loc is FSLocation.CLUSTER:
-            try:
-                volname, volpath = strip_location_prefix(path).split('/', 1)
-            except ValueError:
-                verrors.add(name, f'{path}: path within cluster volume must be specified.')
-            else:
-                volpath = os.path.join('/', volpath)
-                await self.validate_cluster_path(verrors, name, volname, volpath)
+            verrors.add(name, f'{path}: path within cluster volume must be specified.')
 
         elif loc is FSLocation.EXTERNAL:
             await self.validate_external_path(verrors, name, strip_location_prefix(path))
@@ -161,17 +141,21 @@ class SharingTaskService(CRUDService):
         )
 
     @pass_app(rest=True)
-    async def update(self, app, id_, data):
-        rv = await super().update(app, id_, data)
+    async def update(self, app, audit_callback, id_, data):
+        rv = await super().update(app, audit_callback, id_, data)
         if not rv[self.enabled_field] or not rv[self.locked_field]:
             await self.remove_locked_alert(rv['id'])
         return rv
 
+    update.audit_callback = True
+
     @pass_app(rest=True)
-    async def delete(self, app, id_, *args):
-        rv = await super().delete(app, id_, *args)
+    async def delete(self, app, audit_callback, id_, *args):
+        rv = await super().delete(app, audit_callback, id_, *args)
         await self.remove_locked_alert(id_)
         return rv
+
+    delete.audit_callback = True
 
 
 class SharingService(SharingTaskService):

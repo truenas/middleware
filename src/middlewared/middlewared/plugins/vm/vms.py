@@ -60,7 +60,7 @@ class VMModel(sa.Model):
 
 @functools.cache
 def ovmf_options():
-    return [path for path in os.listdir('/usr/share/OVMF') if re.findall(r'^OVMF_CODE[^\.]*.fd', path)]
+    return [path for path in os.listdir('/usr/share/OVMF') if re.findall(r'^OVMF_CODE.*.fd', path)]
 
 
 class VMService(CRUDService, VMSupervisorMixin):

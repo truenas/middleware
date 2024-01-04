@@ -21,7 +21,7 @@ class BootService(Service):
     async def pool_name(self):
         return BOOT_POOL_NAME
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     @returns(Patch(
         'pool_entry', 'get_state',
         ('rm', {'name': 'id'}),
@@ -34,7 +34,7 @@ class BootService(Service):
         # WebUI expects same data as `pool.pool_extend`
         return await self.middleware.call('pool.pool_normalize_info', BOOT_POOL_NAME)
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     @returns(List('disks', items=[Str('disk')]))
     async def get_disks(self):
         """
@@ -193,7 +193,7 @@ class BootService(Service):
         )
         return interval
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     @returns(Int('interval'))
     async def get_scrub_interval(self):
         """
@@ -318,10 +318,9 @@ async def setup(middleware):
 
             compatibility = pools[i]
             if compatibility != 'grub2':
-                middleware.logger.info(f'Boot pool {BOOT_POOL_NAME!r} has {compatibility=!r}, upgrading it')
+                middleware.logger.info(f'Boot pool {BOOT_POOL_NAME!r} has {compatibility=!r}, setting it to grub2')
                 try:
                     await run('zpool', 'set', 'compatibility=grub2', BOOT_POOL_NAME)
-                    await run('zpool', 'upgrade', BOOT_POOL_NAME)
                 except Exception as e:
                     middleware.logger.error(f'Error setting boot pool compatibility: {e!r}')
 

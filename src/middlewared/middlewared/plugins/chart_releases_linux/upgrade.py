@@ -58,7 +58,7 @@ class ChartReleaseService(Service):
         Str('release_name'),
         Dict(
             'upgrade_options',
-            Dict('values', additional_attrs=True),
+            Dict('values', additional_attrs=True, private=True),
             Str('item_version', default='latest'),
         )
     )
@@ -360,7 +360,7 @@ class ChartReleaseService(Service):
         }
         for application in await self.middleware.call('chart.release.query', chart_releases_filters):
             if application['container_images_update_available']:
-                await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', application)
+                await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', {'name': application['id']})
                 continue
 
             app_id = f'{application["catalog"]}_{application["catalog_train"]}_{application["chart_metadata"]["name"]}'
@@ -381,7 +381,7 @@ class ChartReleaseService(Service):
             return
 
         if parse_version(latest_version) > parse_version(application['chart_metadata']['version']):
-            await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', application)
+            await self.middleware.call('alert.oneshot_create', 'ChartReleaseUpdate', {'name': application['id']})
         else:
             await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', application['id'])
 

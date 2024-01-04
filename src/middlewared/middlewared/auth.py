@@ -5,6 +5,7 @@ from middlewared.utils.allowlist import Allowlist
 
 class SessionManagerCredentials:
     is_user_session = False
+    allowlist = None
 
     @classmethod
     def class_name(cls):

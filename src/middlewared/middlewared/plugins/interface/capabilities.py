@@ -27,7 +27,7 @@ class InterfaceCapabilitiesService(Service):
             )
         verrors.check()
 
-    @accepts(Str('name', required=True))
+    @accepts(Str('name', required=True), roles=['NETWORK_INTERFACE_READ'])
     @returns(Dict(
         'capabilties',
         List('enabled', items=[Str('capability')], required=True),
@@ -49,7 +49,7 @@ class InterfaceCapabilitiesService(Service):
         Str('name', required=True),
         List('capabilties', required=True),
         Str('action', enum=['ENABLE', 'DISABLE'], required=True),
-    ))
+    ), roles=['NETWORK_INTERFACE_WRITE'])
     @returns(List('capabilities', items=[Str('capability')], required=True))
     def set(self, data):
         """

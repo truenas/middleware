@@ -31,7 +31,6 @@ class CRUDServiceMetabase(ServiceBase):
                 ('SharingTaskService', ('CRUDService',)),
                 ('SharingService', ('SharingTaskService',)),
                 ('TaskPathService', ('SharingTaskService',)),
-                ('TDBWrapCRUDService', ('CRUDService',)),
             )
         ):
             return klass
@@ -69,6 +68,8 @@ class CRUDServiceMetabase(ServiceBase):
             result_entry,
             name='query_result',
         ))(query_method)
+
+        klass.get_instance = returns(Ref(entry_key))(klass.get_instance)
 
         for m_name in filter(lambda m: hasattr(klass, m), ('do_create', 'do_update')):
             for d_name, decorator in filter(
@@ -166,28 +167,34 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             )
 
     @pass_app(rest=True)
-    async def create(self, app, data):
+    async def create(self, app, audit_callback, data):
         return await self.middleware._call(
             f'{self._config.namespace}.create', self, await self._get_crud_wrapper_func(
                 self.do_create, 'create', 'ADDED',
-            ), [data], app=app,
+            ), [data], app=app, audit_callback=audit_callback,
         )
 
+    create.audit_callback = True
+
     @pass_app(rest=True)
-    async def update(self, app, id_, data):
+    async def update(self, app, audit_callback, id_, data):
         return await self.middleware._call(
             f'{self._config.namespace}.update', self, await self._get_crud_wrapper_func(
                 self.do_update, 'update', 'CHANGED', id_,
-            ), [id_, data], app=app,
+            ), [id_, data], app=app, audit_callback=audit_callback,
         )
 
+    update.audit_callback = True
+
     @pass_app(rest=True)
-    async def delete(self, app, id_, *args):
+    async def delete(self, app, audit_callback, id_, *args):
         return await self.middleware._call(
             f'{self._config.namespace}.delete', self, await self._get_crud_wrapper_func(
                 self.do_delete, 'delete', 'REMOVED', id_,
-            ), [id_] + list(args), app=app,
+            ), [id_] + list(args), app=app, audit_callback=audit_callback,
         )
+
+    delete.audit_callback = True
 
     async def _get_crud_wrapper_func(self, func, action, event_type, oid=None):
         if asyncio.iscoroutinefunction(func):

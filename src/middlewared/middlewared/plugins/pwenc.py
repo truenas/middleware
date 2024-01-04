@@ -7,8 +7,6 @@ from contextlib import contextmanager
 from Cryptodome.Cipher import AES
 from Cryptodome.Util import Counter
 
-from middlewared.plugins.cluster_linux.utils import CTDBConfig
-from middlewared.plugins.gluster_linux.utils import GlusterConfig
 from middlewared.service import Service
 from middlewared.utils.path import pathref_open
 
@@ -16,8 +14,6 @@ PWENC_BLOCK_SIZE = 32
 PWENC_FILE_SECRET = os.environ.get('FREENAS_PWENC_SECRET', '/data/pwenc_secret')
 PWENC_PADDING = b'{'
 PWENC_CHECK = 'Donuts!'
-
-CTDB_VOL_INFO_FILE = CTDBConfig.CTDB_VOL_INFO_FILE.value
 
 
 class PWEncService(Service):
@@ -108,67 +104,31 @@ class PWEncService(Service):
         return decrypt(encrypted, _raise)
 
 
-class CLPWEncService(PWEncService):
-
-    class Config:
-        private = True
-
-    secret = None
-    secret_path = GlusterConfig.SECRETS_FILE.value
-    lock = threading.RLock()
-
-    def _write_secret(self, secret, reset_passwords):
-        raise NotImplementedError
-
-    def generate_secret(self, reset_passwords=True):
-        # secret is derived from our pre-shared localevent secret
-        raise NotImplementedError
-
-    def _reset_passwords(self):
-        raise NotImplementedError
-
-    def _read_secret(self):
-        with open(self.secret_path, 'r', opener=self._secret_opener) as f:
-            self.secret = bytes.fromhex(f.read())
-
-    def encrypt(self, data):
-        return encrypt(data, True)
-
-    def decrypt(self, encrypted, _raise=False):
-        return decrypt(encrypted, _raise, True)
-
-
 async def setup(middleware):
     if not await middleware.call('pwenc.check'):
         middleware.logger.debug('Generating new pwenc secret')
         await middleware.call('pwenc.generate_secret')
 
 
-def encrypt(data, cluster=False):
+def encrypt(data):
     data = data.encode('utf8')
 
     def pad(x):
         return x + (PWENC_BLOCK_SIZE - len(x) % PWENC_BLOCK_SIZE) * PWENC_PADDING
 
     nonce = os.urandom(8)
-    if cluster:
-        enc_service = CLPWEncService
-    else:
-        enc_service = PWEncService
+    enc_service = PWEncService
 
     cipher = AES.new(enc_service.get_secret(), AES.MODE_CTR, counter=Counter.new(64, prefix=nonce))
     encoded = base64.b64encode(nonce + cipher.encrypt(pad(data)))
     return encoded.decode()
 
 
-def decrypt(encrypted, _raise=False, cluster=False):
+def decrypt(encrypted, _raise=False):
     if not encrypted:
         return ''
 
-    if cluster:
-        enc_service = CLPWEncService
-    else:
-        enc_service = PWEncService
+    enc_service = PWEncService
 
     try:
         encrypted = base64.b64decode(encrypted)

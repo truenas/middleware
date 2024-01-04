@@ -237,6 +237,7 @@ TARGET_DRIVER iscsi {
     # target level which we are moving forward with right now. Also for mutual-chap, we can only set
     # one user which the initiator can authenticate on it's end. So if any group in the target
     # desires mutual chap, we take the first one and use it's peer credentials
+    alias = target.get('alias')
     mutual_chap = None
     chap_users = set()
     initiator_portal_access = set()
@@ -261,11 +262,10 @@ TARGET_DRIVER iscsi {
             else:
                 # In an ALUA config, we may have selected the int_vip.  If so just use
                 # the IP pertainng to this node.
-                rawaddr = addr['ip']
-                if alua_enabled and rawaddr in failover_virtual_aliases and rawaddr in listen_ip_choices and '/' in listen_ip_choices[rawaddr]:
-                    pair = listen_ip_choices[rawaddr].split('/')
-                    rawaddr = pair[0] if node == 'A' else pair[1]
-                address = (f'[{rawaddr}]' if ':' in rawaddr else rawaddr)
+                address = addr['ip']
+                if alua_enabled and address in failover_virtual_aliases and address in listen_ip_choices and '/' in listen_ip_choices[address]:
+                    pair = listen_ip_choices[address].split('/')
+                    address = pair[0] if node == 'A' else pair[1]
 
             group_initiators = initiators[group['initiator']]['initiators'] if group['initiator'] else []
             if not has_per_host_access:
@@ -306,6 +306,12 @@ TARGET_DRIVER iscsi {
 %   else:
 ## If no associated targets then disable
         enabled 0
+%   endif
+##
+## alias
+##
+%   if alias:
+        alias "${alias}"
 %   endif
 %   for chap_auth in chap_users:
         IncomingUser "${chap_auth}"

@@ -87,9 +87,7 @@ class CloudTaskServiceMixin:
             await self.validate_path_field(data, name, verrors)
 
         if data["snapshot"]:
-            if await self.middleware.call("filesystem.is_cluster_path", data["path"]):
-                verrors.add(f"{name}.snapshot", "This option can not be used for cluster paths")
-            elif await self.middleware.call("pool.dataset.query",
+            if await self.middleware.call("pool.dataset.query",
                                             [["name", "^", os.path.relpath(data["path"], "/mnt") + "/"],
                                              ["type", "=", "FILESYSTEM"]]):
                 verrors.add(f"{name}.snapshot", "This option is only available for datasets that have no further "

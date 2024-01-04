@@ -20,53 +20,91 @@ from .utils.nginx import get_remote_addr_port
 from .utils.origin import TCPIPOrigin
 
 
-async def authenticate(middleware, request, method, resource):
+def parse_credentials(request):
     auth = request.headers.get('Authorization')
     if auth is None:
         qs = urllib.parse.parse_qs(request.query_string)
         if 'auth_token' in qs:
-            token = qs.get('auth_token')[0]
+            return {
+                'credentials': 'TOKEN',
+                'credentials_data': {
+                    'token': qs.get('auth_token')[0],
+                },
+            }
         else:
             return None
     elif auth.startswith('Token '):
         token = auth.split(' ', 1)[1]
-    else:
-        token = None
+        return {
+            'credentials': 'TOKEN',
+            'credentials_data': {
+                'token': token,
+            },
+        }
 
-    if token is not None:
-        origin = TCPIPOrigin(*await middleware.run_in_thread(get_remote_addr_port, request))
-        token = await middleware.call('auth.get_token_for_action', token, origin, method, resource)
-        if token is None:
-            raise web.HTTPForbidden()
-
-        return token
-    elif auth.startswith('Basic '):
-        twofactor_auth = await middleware.call('auth.twofactor.config')
-        if twofactor_auth['enabled']:
-            raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
-
+    if auth.startswith('Basic '):
         try:
             username, password = base64.b64decode(auth[6:]).decode('utf-8').split(':', 1)
         except UnicodeDecodeError:
             raise web.HTTPBadRequest()
         except binascii.Error:
-            raise web.HTTPUnauthorized()
+            raise web.HTTPBadRequest()
 
-        user = await middleware.call('auth.authenticate', username, password)
-        if user is None:
-            raise web.HTTPUnauthorized()
-
-        return LoginPasswordSessionManagerCredentials(user)
+        return {
+            'credentials': 'LOGIN_PASSWORD',
+            'credentials_data': {
+                'username': username,
+                'password': password,
+            },
+        }
     elif auth.startswith('Bearer '):
         key = auth.split(' ', 1)[1]
 
-        api_key = await middleware.call('api_key.authenticate', key)
+        return {
+            'credentials': 'API_KEY',
+            'credentials_data': {
+                'api_key': key,
+            }
+        }
+
+
+async def authenticate(middleware, request, credentials, method, resource):
+    if credentials['credentials'] == 'TOKEN':
+        origin = TCPIPOrigin(*await middleware.run_in_thread(get_remote_addr_port, request))
+        token = await middleware.call('auth.get_token_for_action', credentials['credentials_data']['token'],
+                                      origin, method, resource)
+        if token is None:
+            raise web.HTTPForbidden(text='Invalid token')
+
+        return token
+    elif credentials['credentials'] == 'LOGIN_PASSWORD':
+        twofactor_auth = await middleware.call('auth.twofactor.config')
+        if twofactor_auth['enabled']:
+            raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
+
+        user = await middleware.call('auth.authenticate',
+                                     credentials['credentials_data']['username'],
+                                     credentials['credentials_data']['password'])
+        if user is None:
+            raise web.HTTPUnauthorized(text='Bad username or password')
+
+        return LoginPasswordSessionManagerCredentials(user)
+    elif credentials['credentials'] == 'API_KEY':
+        api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'])
         if api_key is None:
-            raise web.HTTPUnauthorized()
+            raise web.HTTPUnauthorized(text='Invalid API key')
 
         return ApiKeySessionManagerCredentials(api_key)
     else:
-        return None
+        raise web.HTTPUnauthorized()
+
+
+def create_application(request, credentials=None):
+    return Application(
+        request.headers.get('X-Real-Remote-Addr'),
+        request.headers.get('X-Real-Remote-Port'),
+        credentials,
+    )
 
 
 def normalize_query_parameter(value):
@@ -77,10 +115,10 @@ def normalize_query_parameter(value):
 
 
 class Application:
-
     def __init__(self, host, remote_port, authenticated_credentials):
         self.host = host
         self.remote_port = remote_port
+        self.origin = TCPIPOrigin(self.host, self.remote_port)
         self.websocket = False
         self.rest = True
         self.authenticated = authenticated_credentials is not None
@@ -511,14 +549,39 @@ class Resource(object):
                     resource = info["formatter"][len("/api/v2.0"):]
                 else:
                     resource = None
-                authenticated_credentials = await authenticate(self.middleware, req, method.upper(), resource)
-                if not self.rest._methods[getattr(self, method)]['no_auth_required']:
+
+                app = create_application(req)
+                auth_required = not self.rest._methods[getattr(self, method)]['no_auth_required']
+                credentials = parse_credentials(req)
+                if credentials is None:
+                    if auth_required:
+                        raise web.HTTPUnauthorized()
+
+                    authenticated_credentials = None
+                else:
+                    try:
+                        authenticated_credentials = await authenticate(self.middleware, req, credentials,
+                                                                       method.upper(), resource)
+                    except web.HTTPException as e:
+                        credentials['credentials_data'].pop('password', None)
+                        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                            'credentials': credentials,
+                            'error': e.text,
+                        }, False)
+                        raise
+                    app = create_application(req, authenticated_credentials)
+                    credentials['credentials_data'].pop('password', None)
+                    await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                        'credentials': credentials,
+                        'error': None,
+                    }, True)
+                if auth_required:
                     if authenticated_credentials is None:
                         raise web.HTTPUnauthorized()
-                    if not authenticated_credentials.authorize(method.upper(), resource):
-                        raise web.HTTPForbidden()
                 kwargs.update(dict(req.match_info))
-                return await do(method, req, resp, authenticated_credentials, *args, **kwargs)
+                return await do(method, req, resp, app,
+                                not auth_required or authenticated_credentials.authorize(method.upper(), resource),
+                                *args, **kwargs)
 
             return on_method
         return object.__getattribute__(self, attr)
@@ -606,19 +669,14 @@ class Resource(object):
 
         return body, error
 
-    async def do(self, http_method, req, resp, authenticated_credentials, **kwargs):
+    async def do(self, http_method, req, resp, app, authorized, **kwargs):
         assert http_method in ('delete', 'get', 'post', 'put')
 
         methodname = getattr(self, http_method)
         method = self.rest._methods[methodname]
 
         method_kwargs = {}
-        if method.get('pass_application'):
-            method_kwargs['app'] = Application(
-                req.headers.get('X-Real-Remote-Addr'),
-                req.headers.get('X-Real-Remote-Port'),
-                authenticated_credentials,
-            )
+        method_kwargs['app'] = app
 
         has_request_body = False
         request_body = None
@@ -778,10 +836,23 @@ class Resource(object):
         must be the item id (from url param)
         """
         if method.get('item_method') is True:
-            method_args.insert(0, kwargs['id_'])
+            id_ = kwargs['id_']
+            try:
+                id_ = int(id_)
+            except ValueError:
+                pass
+            method_args.insert(0, id_)
 
         try:
-            result = await self.middleware.call(methodname, *method_args, **method_kwargs)
+            serviceobj, methodobj = self.middleware._method_lookup(methodname)
+            if authorized:
+                result = await self.middleware.call_with_audit(methodname, serviceobj, methodobj, method_args,
+                                                               **method_kwargs)
+            else:
+                await self.middleware.log_audit_message_for_method(methodname, methodobj, method_args, app,
+                                                                   True, False, False)
+                resp.set_status(403)
+                return resp
             if upload_pipe:
                 await self.middleware.run_in_thread(copy_multipart_to_pipe, self.middleware.loop, filepart, upload_pipe)
             if method['downloadable'] and download_pipe is None:

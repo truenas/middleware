@@ -22,6 +22,7 @@ NULLS_FIRST = 'nulls_first:'
 NULLS_LAST = 'nulls_last:'
 REVERSE_CHAR = '-'
 MAX_FILTERS_DEPTH = 3
+TIMESTAMP_DESIGNATOR = '.$date'
 
 logger = logging.getLogger(__name__)
 
@@ -211,7 +212,7 @@ class filters(object):
         '!$': op_notendswith,
     }
 
-    def validate_filters(self, filters, recursion_depth=0):
+    def validate_filters(self, filters, recursion_depth=0, value_maps=None):
         """
         This method gets called when `query-filters` gets validated in
         the accepts() decorator of public API endpoints. It is generally
@@ -233,9 +234,9 @@ class filters(object):
 
                 for branch in value:
                     if isinstance(branch[0], list):
-                        self.validate_filters(branch, recursion_depth + 1)
+                        self.validate_filters(branch, recursion_depth + 1, value_maps)
                     else:
-                        self.validate_filters([branch], recursion_depth + 1)
+                        self.validate_filters([branch], recursion_depth + 1, value_maps)
 
                 continue
 
@@ -250,6 +251,24 @@ class filters(object):
 
             if op not in self.opmap:
                 raise ValueError('Invalid operation: {}'.format(f[1]))
+
+            # special handling for datetime objects
+            for operand in (f[0], f[2]):
+                if not isinstance(operand, str) or not operand.endswith(TIMESTAMP_DESIGNATOR):
+                    continue
+
+                if op not in ['=', '!=', '>', '>=', '<', '<=']:
+                    raise ValueError(f'{op}: invalid timestamp operation.')
+
+                other = f[2] if operand == f[0] else f[0]
+                # At this point we're just validating that it's an ISO8601 string.
+                try:
+                    ts = datetime.fromisoformat(other)
+                except (TypeError, ValueError):
+                    raise ValueError(f'{other}: must be an ISO-8601 formatted timestamp string')
+
+                if value_maps is not None:
+                    value_maps[other] = ts
 
     def validate_select(self, select):
         for s in select:
@@ -335,13 +354,16 @@ class filters(object):
 
         return getattr
 
-    def eval_filter(self, list_item, the_filter, getter):
+    def eval_filter(self, list_item, the_filter, getter, value_maps):
         """
         `the_filter` in this case will be a single condition of either the form
         [<a>, <opcode>, <b>] or ["OR", [<condition>, <condition>, ...]
 
         This allows us to do a simple check of list length to determine whether
         we have a conjunction or disjunction.
+
+        value_maps is dict supplied in which to store operands that need to
+        be converted into a different type.
 
         Recursion depth is checked when validate_filters is called above.
         """
@@ -355,11 +377,11 @@ class filters(object):
                     # True in order for branch to be True.
                     hit = True
                     for i in branch:
-                        if not self.eval_filter(list_item, i, getter):
+                        if not self.eval_filter(list_item, i, getter, value_maps):
                             hit = False
                             break
                 else:
-                    hit = self.eval_filter(list_item, branch, getter)
+                    hit = self.eval_filter(list_item, branch, getter, value_maps)
 
                 if hit is True:
                     return True
@@ -368,16 +390,30 @@ class filters(object):
             return False
 
         # Normal condition check
-        return self.filterop(list_item, the_filter, getter)
+        if not value_maps:
+            return self.filterop(list_item, the_filter, getter)
 
-    def do_filters(self, _list, filters, select, shortcircuit):
+        if (operand_1 := value_maps.get(the_filter[0])):
+            operand_2.rstrip(TIMESTAMP_DESIGNATOR)
+        else:
+            operand_1 = the_filter[0]
+
+        if (operand_2 := value_maps.get(the_filter[2])):
+            operand_1.rstrip(TIMESTAMP_DESIGNATOR)
+        else:
+            operand_2 = the_filter[2]
+
+        return self.filterop(list_item, (operand_1, the_filter[1], operand_2), getter)
+
+
+    def do_filters(self, _list, filters, select, shortcircuit, value_maps):
         rv = []
 
         getter = self.getter_fn(_list)
         for i in _list:
             valid = True
             for f in filters:
-                if not self.eval_filter(i, f, getter):
+                if not self.eval_filter(i, f, getter, value_maps):
                     valid = False
                     break
 
@@ -479,8 +515,9 @@ class filters(object):
 
         do_shortcircuit = options.get('get') and not order_by
         if filters:
-            self.validate_filters(filters)
-            rv = self.do_filters(_list, filters, select, do_shortcircuit)
+            maps = {}
+            self.validate_filters(filters, value_maps=maps)
+            rv = self.do_filters(_list, filters, select, do_shortcircuit, value_maps=maps)
             if do_shortcircuit:
                 return self.do_get(rv)
 

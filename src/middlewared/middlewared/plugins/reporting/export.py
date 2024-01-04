@@ -22,6 +22,7 @@ class ReportingExportsService(CRUDService):
         namespace = 'reporting.exporters'
         datastore = 'reporting.exporters'
         cli_namespace = 'reporting.exporters'
+        role_prefix = 'REPORTING'
 
     ENTRY = Dict(
         'reporting_exporter_entry',
@@ -128,7 +129,7 @@ class ReportingExportsService(CRUDService):
         await self.middleware.call('service.restart', 'netdata')
         return True
 
-    @accepts()
+    @accepts(roles=['REPORTING_READ'])
     @returns(List(
         title='Reporting Exporter Schemas',
         items=[Dict(

@@ -1,5 +1,6 @@
 import subprocess
 import shutil
+import textwrap
 import typing
 
 from middlewared.service import CallError
@@ -20,24 +21,27 @@ def clone_repository(
 
     cp = subprocess.run(['git', 'clone'] + args + [repository_uri, destination], capture_output=True)
     if cp.returncode:
+        error_message = textwrap.shorten(cp.stderr.decode(), width=50, placeholder='...')
         raise CallError(
-            f'Failed to clone {repository_uri!r} repository at {destination!r} destination: {cp.stderr.decode()}'
+            f'Failed to clone {repository_uri!r} repository at {destination!r} destination: {error_message}'
         )
 
 
 def checkout_repository(destination: str, branch: str) -> None:
     cp = subprocess.run(['git', '-C', destination, 'checkout', branch], capture_output=True)
     if cp.returncode:
+        error_message = textwrap.shorten(cp.stderr.decode(), width=50, placeholder='...')
         raise CallError(
-            f'Failed to checkout {branch!r} branch for {destination!r} repository: {cp.stderr.decode()}'
+            f'Failed to checkout {branch!r} branch for {destination!r} repository: {error_message}'
         )
 
 
 def update_repo(destination: str, branch: str) -> None:
     cp = subprocess.run(['git', '-C', destination, 'pull', 'origin', branch], capture_output=True)
     if cp.returncode:
+        error_message = textwrap.shorten(cp.stderr.decode(), width=50, placeholder='...')
         raise CallError(
-            f'Failed to update {destination!r} repository: {cp.stderr.decode()}'
+            f'Failed to update {destination!r} repository: {error_message}'
         )
 
 

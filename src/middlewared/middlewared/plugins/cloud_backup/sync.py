@@ -21,52 +21,43 @@ async def restic(middleware, job, cloud_backup, dry_run):
     stdin = None
     cmd = None
     try:
-        if await middleware.call("filesystem.is_cluster_path", cloud_backup["path"]):
-            local_path = await middleware.call("filesystem.resolve_cluster_path", cloud_backup["path"])
-            await check_local_path(
-                middleware,
-                local_path,
-                check_mountpoint=False,
-                error_text_path=cloud_backup["path"],
-            )
-        else:
-            local_path = cloud_backup["path"]
-            if local_path.startswith("/dev/zvol"):
-                await middleware.call("cloud_backup.validate_zvol", local_path)
+        local_path = cloud_backup["path"]
+        if local_path.startswith("/dev/zvol"):
+            await middleware.call("cloud_backup.validate_zvol", local_path)
 
-                name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-                snapshot = (await middleware.call("zfs.snapshot.create", {
-                    "dataset": zvol_path_to_name(local_path),
-                    "name": name,
-                    "suspend_vms": True,
-                    "vmware_sync": True,
-                }))["name"]
+            name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+            snapshot = (await middleware.call("zfs.snapshot.create", {
+                "dataset": zvol_path_to_name(local_path),
+                "name": name,
+                "suspend_vms": True,
+                "vmware_sync": True,
+            }))["name"]
 
-                clone = zvol_path_to_name(local_path) + f"-{name}"
+            clone = zvol_path_to_name(local_path) + f"-{name}"
+            try:
+                await middleware.call("zfs.snapshot.clone", {
+                    "snapshot": snapshot,
+                    "dataset_dst": clone,
+                })
+            except Exception:
+                clone = None
+                raise
+
+            # zvol device might take a while to appear
+            for i in itertools.count():
                 try:
-                    await middleware.call("zfs.snapshot.clone", {
-                        "snapshot": snapshot,
-                        "dataset_dst": clone,
-                    })
-                except Exception:
-                    clone = None
-                    raise
+                    stdin = await middleware.run_in_thread(open, zvol_name_to_path(clone), "rb")
+                except FileNotFoundError:
+                    if i >= 5:
+                        raise
 
-                # zvol device might take a while to appear
-                for i in itertools.count():
-                    try:
-                        stdin = await middleware.run_in_thread(open, zvol_name_to_path(clone), "rb")
-                    except FileNotFoundError:
-                        if i >= 5:
-                            raise
+                    await asyncio.sleep(1)
+                else:
+                    break
 
-                        await asyncio.sleep(1)
-                    else:
-                        break
-
-                cmd = ["--stdin", "--stdin-filename", "volume"]
-            else:
-                await check_local_path(middleware, local_path)
+            cmd = ["--stdin", "--stdin-filename", "volume"]
+        else:
+            await check_local_path(middleware, local_path)
 
         if cmd is None:
             cmd = [local_path]

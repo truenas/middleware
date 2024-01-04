@@ -425,9 +425,6 @@ class SMBService(Service):
         if await self.middleware.call('ldap.get_state') != "DISABLED":
             return
 
-        if (await self.middleware.call('smb.get_smb_ha_mode')) == 'CLUSTERED':
-            return
-
         if not bypass_sentinel_check and not await self.middleware.call('smb.is_configured'):
             raise CallError(
                 "SMB server configuration is not complete. "

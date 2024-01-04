@@ -74,3 +74,8 @@ def test_write_role_can_write(ds, role):
         c.call("nfs.get_nfs4_clients")
         # Multiple layers of dependencies to mock up this as a successful write
         # c.call("nfs.add_principal", {"username": ADUSERNAME, "password": ADPASSWORD})
+
+        c.call("service.start", "nfs")
+        c.call("service.restart", "nfs")
+        c.call("service.reload", "nfs")
+        c.call("service.stop", "nfs")
