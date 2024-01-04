@@ -1,4 +1,5 @@
 <%
+    import itertools
     import os
 
     from collections import defaultdict
@@ -133,7 +134,7 @@
     hosts_iqns = middleware.call_sync('iscsi.host.get_hosts_iqns')
 
     if alua_enabled and failover_status == "BACKUP":
-        cml = calc_copy_manager_luns(logged_in_targets.values(), True)
+        cml = calc_copy_manager_luns(list(itertools.chain.from_iterable(logged_in_targets.values())), True)
     else:
         cml = calc_copy_manager_luns(all_extent_names)
 %>\
@@ -152,15 +153,18 @@ cluster_name HA
 % if is_ha:
 HANDLER dev_disk {
 %     if alua_enabled and failover_status == "BACKUP":
-%         for name, value in logged_in_targets.items():
-%             if value:
-        DEVICE ${value} {
+%         for name, devices in logged_in_targets.items():
+%             if devices:
+%                 for device in devices:
+
+        DEVICE ${device} {
 ## Sanity check to ensure the MASTER target is in cluster_mode, if so then so are we
 ## Note we use a similar check to determine whether the target will be enabled.
 %                 if name in cluster_mode_targets:
             cluster_mode 1
 %                 endif
         }
+%                 endfor
 %             endif
 %         endfor
 %     endif
@@ -327,10 +331,12 @@ TARGET_DRIVER iscsi {
 ##
 %   if alua_enabled and failover_status == "BACKUP":
 <%
-    DEVICE = logged_in_targets.get(target['name'], None)
+    devices = logged_in_targets.get(target['name'], None)
 %>\
-%       if DEVICE:
-            LUN 0 ${DEVICE}
+%       if devices:
+%           for device in devices:
+            LUN ${device.split(':')[-1]} ${device}
+%           endfor
 %       endif
 %   else:
 ${retrieve_luns(target['id'], ' ' * 4)}\
@@ -413,9 +419,11 @@ DEVICE_GROUP targets {
 ##
 %     if failover_status == "BACKUP":
 DEVICE_GROUP targets {
-%         for name, value in logged_in_targets.items():
-%             if value:
-        DEVICE ${value}
+%         for name, devices in logged_in_targets.items():
+%             if devices:
+%                 for device in devices:
+        DEVICE ${device}
+%                 endfor
 %             endif
 %         endfor
 
