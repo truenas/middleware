@@ -1459,7 +1459,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             success = True
 
             if app.authenticated_credentials:
-                if not credential_has_full_admin(app.authenticated_credentials):
+                if not (
+                    credential_has_full_admin(app.authenticated_credentials) or
+                    (
+                        serviceobj._config.role_prefix and
+                        app.authenticated_credentials.has_role(f'{serviceobj._config.role_prefix}_WRITE')
+                    )
+                ):
                     if hasattr(methodobj, "returns") and methodobj.returns:
                         schema = methodobj.returns[0]
                         if isinstance(schema, OROperator):

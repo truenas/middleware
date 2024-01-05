@@ -172,3 +172,10 @@ def test_config(readonly_client, service, redacted_fields):
 
     for k in redacted_fields:
         assert result[k] == REDACTED
+
+
+def test_fields_are_visible_if_has_write_access():
+    with unprivileged_user_client(["ACCOUNT_WRITE"]) as c:
+        result = c.call(f"user.get_instance", 1)
+
+    assert result["unixhash"] != REDACTED
