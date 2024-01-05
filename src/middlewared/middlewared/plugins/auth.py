@@ -186,6 +186,9 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
     def authorize(self, method, resource):
         return self.token.parent_credentials.authorize(method, resource)
 
+    def has_role(self, role):
+        return self.token.parent_credentials.has_role(role)
+
     def notify_used(self):
         self.token.notify_used()
 

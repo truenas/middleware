@@ -25,7 +25,7 @@ class SessionManagerCredentials:
         return True
 
     def has_role(self, role):
-        return True
+        return False
 
     def notify_used(self):
         pass
