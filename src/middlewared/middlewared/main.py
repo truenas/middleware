@@ -1459,7 +1459,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             success = True
 
             if app.authenticated_credentials:
-                if not (
+                if app.authenticated_credentials.is_user_session and not (
                     credential_has_full_admin(app.authenticated_credentials) or
                     (
                         serviceobj._config.role_prefix and

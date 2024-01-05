@@ -3,12 +3,13 @@ import contextlib
 import pytest
 
 from middlewared.test.integration.assets.account import unprivileged_user_client
+from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.assets.cloud_backup import task as cloud_backup_task
 from middlewared.test.integration.assets.cloud_sync import local_ftp_credential, local_ftp_task
 from middlewared.test.integration.assets.datastore import row
 from middlewared.test.integration.assets.keychain import ssh_keypair
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, client
 
 REDACTED = "********"
 
@@ -176,6 +177,15 @@ def test_config(readonly_client, service, redacted_fields):
 
 def test_fields_are_visible_if_has_write_access():
     with unprivileged_user_client(["ACCOUNT_WRITE"]) as c:
-        result = c.call(f"user.get_instance", 1)
+        result = c.call("user.get_instance", 1)
+
+    assert result["unixhash"] != REDACTED
+
+
+def test_fields_are_visible_for_api_key():
+    with api_key([{"method": "CALL", "resource": "user.get_instance"}]) as key:
+        with client(auth=None) as c:
+            assert c.call("auth.login_with_api_key", key)
+            result = c.call("user.get_instance", 1)
 
     assert result["unixhash"] != REDACTED
