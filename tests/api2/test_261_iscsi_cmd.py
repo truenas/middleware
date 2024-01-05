@@ -78,6 +78,7 @@ class CheckType(enum.Enum):
 # Some constants
 MB = 1024 * 1024
 MB_100 = 100 * MB
+MB_200 = 200 * MB
 MB_256 = 256 * MB
 MB_512 = 512 * MB
 PR_KEY1 = 0xABCDEFAABBCCDDEE
@@ -357,6 +358,24 @@ def configured_target_to_file_extent(config, target_name, pool_name, dataset_nam
 
 
 @contextlib.contextmanager
+def add_file_extent_target_lun(config, lun, filesize=MB_512, extent_name=None):
+    name = config['target']['name']
+    target_id = config['target']['id']
+    dataset_name = f"iscsids{name}"
+    lun_file_name = f'{name}_lun{lun}'
+    if not extent_name:
+        extent_name = lun_file_name
+    with file_extent(pool_name, dataset_name, lun_file_name, filesize=filesize, extent_name=extent_name) as extent_config:
+        extent_id = extent_config['id']
+        with target_extent_associate(target_id, extent_id, lun):
+            newconfig = config.copy()
+            newconfig.update({
+                f'extent_lun{lun}': extent_config,
+            })
+            yield newconfig
+
+
+@contextlib.contextmanager
 def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, extent_name='zvol_extent', volsize=MB_512):
     portal_id = config['portal']['id']
     with target(target_name, [{'portal': portal_id}], alias) as target_config:
@@ -376,16 +395,38 @@ def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, exte
 
 
 @contextlib.contextmanager
-def configured_target(config, name, extent_type):
+def add_zvol_extent_target_lun(config, lun, volsize=MB_512, extent_name=None):
+    name = config['target']['name']
+    zvol_name = f"ds{name}"
+    zvol = f'{pool_name}/{zvol_name}_lun{lun}'
+    target_id = config['target']['id']
+    lun_file_name = f'{name}_lun{lun}'
+    if not extent_name:
+        extent_name = lun_file_name
+        with zvol_dataset(zvol, volsize) as dataset_config:
+            with zvol_extent(zvol, extent_name=extent_name) as extent_config:
+                extent_id = extent_config['id']
+                with target_extent_associate(target_id, extent_id, lun) as associate_config:
+                    newconfig = config.copy()
+                    newconfig.update({
+                        f'dataset_lun{lun}': dataset_config,
+                        f'associate_lun{lun}': associate_config,
+                        f'extent_lun{lun}': extent_config,
+                    })
+                    yield newconfig
+
+
+@contextlib.contextmanager
+def configured_target(config, name, extent_type, alias=None, extent_size=MB_512):
     assert extent_type in ["FILE", "VOLUME"]
     if extent_type == "FILE":
         ds_name = f"iscsids{name}"
-        with configured_target_to_file_extent(config, name, pool_name, ds_name, file_name, extent_name=name) as newconfig:
+        with configured_target_to_file_extent(config, name, pool_name, ds_name, file_name, alias, extent_size, name) as newconfig:
             yield newconfig
     elif extent_type == "VOLUME":
         zvol_name = f"ds{name}"
         zvol = f'{pool_name}/{zvol_name}'
-        with configured_target_to_zvol_extent(config, name, zvol, extent_name=name) as newconfig:
+        with configured_target_to_zvol_extent(config, name, zvol, alias, name, extent_size) as newconfig:
             yield newconfig
 
 
@@ -1456,7 +1497,7 @@ def test_15_test_isns(request):
 
 
 class TestFixtureInitiatorName:
-    """Fixture for test_15_invalid_initiator_name"""
+    """Fixture for test_16_invalid_initiator_name"""
 
     iqn = f'{basename}:{target_name}'
 
@@ -2631,6 +2672,39 @@ def test_30_target_without_active_extent(request):
                     with iscsi_scsi_connection(ip, iqn2) as s2:
                         TUR(s2)
                 assert 'Unable to connect to' in str(ve), ve
+
+
+def test_32_multi_lun_targets(request):
+    """Validate that we can create and access multi-LUN targets."""
+    depends(request, ["iscsi_cmd_00"], scope="session")
+
+    name1 = f"{target_name}x1"
+    name2 = f"{target_name}x2"
+    iqn1 = f'{basename}:{name1}'
+    iqn2 = f'{basename}:{name2}'
+
+    def test_target_sizes(ipaddr):
+        with iscsi_scsi_connection(ipaddr, iqn1, 0) as s:
+            _verify_capacity(s, MB_100)
+        with iscsi_scsi_connection(ipaddr, iqn1, 1) as s:
+            _verify_capacity(s, MB_200)
+        with iscsi_scsi_connection(ipaddr, iqn2, 0) as s:
+            _verify_capacity(s, MB_256)
+        with iscsi_scsi_connection(ipaddr, iqn2, 1) as s:
+            _verify_capacity(s, MB_512)
+
+    with initiator_portal() as config:
+        with configured_target(config, name1, 'FILE', extent_size=MB_100) as config1:
+            with add_file_extent_target_lun(config1, 1, MB_200):
+                with configured_target(config, name2, 'VOLUME', extent_size=MB_256) as config1:
+                    with add_zvol_extent_target_lun(config1, 1, volsize=MB_512):
+                        # Check that we can connect to each LUN and that it has the expected capacity
+                        test_target_sizes(ip)
+                        if ha:
+                            # Only perform this section on a HA system
+                            with alua_enabled():
+                                test_target_sizes(controller1_ip)
+                                test_target_sizes(controller2_ip)
 
 
 def test_99_teardown(request):
