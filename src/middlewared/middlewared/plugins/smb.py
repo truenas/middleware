@@ -440,7 +440,6 @@ class SMBService(SystemServiceService):
             grp_job = await self.middleware.call("smb.synchronize_group_mappings")
             await pdb_job.wait()
             await grp_job.wait()
-            await self.middleware.call("admonitor.start")
 
         """
         The following steps ensure that we cleanly import our SMB shares
