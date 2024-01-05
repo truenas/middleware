@@ -8,23 +8,19 @@ import pwd
 import shutil
 import socket
 import subprocess
-import threading
 import tdb
 import time
 
 from dns import resolver
 from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
+from middlewared.service import job, private, ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, run
 from middlewared.plugins.directoryservices import DSStatus
 from middlewared.plugins.idmap import DSType
 from middlewared.plugins.kerberos import krb5ccache
-import middlewared.utils.osc as osc
-
-from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
 
 
 class neterr(enum.Enum):
@@ -843,7 +839,7 @@ class ActiveDirectoryService(ConfigService):
                 # This is not a line we're interested in
                 return
 
-            if type(out[key]) == list:
+            if type(out[key]) is list:
                 out[key].append(value.strip())
             elif out[key] == -1:
                 out[key] = int(value.strip())
