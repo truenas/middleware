@@ -444,15 +444,14 @@ class iSCSITargetService(CRUDService):
     @private
     def logged_in_iqns(self):
         """
-        :return: dict keyed by iqn, with the unsurfaced disk name as the value
+        :return: dict keyed by iqn, with list of the unsurfaced disk names as the value
         """
-        results = {}
+        results = defaultdict(list)
         p = pathlib.Path('/sys/devices/platform')
         for targetname in p.glob('host*/session*/iscsi_session/session*/targetname'):
             iqn = targetname.read_text().strip()
             for disk in targetname.parent.glob('device/target*/*/scsi_disk'):
-                results[iqn] = disk.parent.name
-                break
+                results[iqn].append(disk.parent.name)
         return results
 
     @private
@@ -476,7 +475,7 @@ class iSCSITargetService(CRUDService):
         When called on a HA BACKUP node will attempt to login to all internal HA targets,
         used in ALUA.
 
-        :return: dict keyed by target name, with the unsurfaced disk name or None as the value
+        :return: dict keyed by target name, with list of the unsurfaced disk names or None as the value
         """
         targets = await self.middleware.call('iscsi.target.query')
         global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
