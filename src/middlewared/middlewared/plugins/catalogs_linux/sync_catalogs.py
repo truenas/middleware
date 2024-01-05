@@ -1,7 +1,7 @@
 import os
 
 from middlewared.schema import accepts, Str, returns
-from middlewared.service import job, private, Service
+from middlewared.service import CallError, job, private, Service
 
 from .update import OFFICIAL_LABEL
 from .utils import pull_clone_repository
@@ -18,7 +18,13 @@ class CatalogService(Service):
         """
         Refresh all available catalogs from upstream.
         """
-        catalogs = await self.middleware.call('catalog.query')
+        catalogs = await self.middleware.call(
+            'catalog.query', [
+                ['id', '=', OFFICIAL_LABEL]
+            ] if await self.middleware.call('catalog.cannot_be_added') or not await self.middleware.call(
+                'catalog.dataset_mounted'
+            ) else []
+        )
         catalog_len = len(catalogs)
         for index, catalog in enumerate(catalogs):
             job.set_progress((index / catalog_len) * 100, f'Syncing {catalog["id"]} catalog')
@@ -42,6 +48,15 @@ class CatalogService(Service):
         """
         try:
             catalog = await self.middleware.call('catalog.get_instance', catalog_label)
+            if catalog_label != OFFICIAL_LABEL and (
+                await self.middleware.call('catalog.cannot_be_added') or not await self.middleware.call(
+                    'catalog.dataset_mounted'
+                )
+            ):
+                raise CallError(
+                    'Cannot sync non-official catalogs when apps are not configured or catalog dataset is not mounted'
+                )
+
             job.set_progress(5, 'Updating catalog repository')
             await self.middleware.call('catalog.update_git_repository', catalog)
             job.set_progress(15, 'Reading catalog information')
