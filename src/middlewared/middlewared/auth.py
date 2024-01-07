@@ -59,12 +59,8 @@ class UnixSocketSessionManagerCredentials(UserSessionManagerCredentials):
     pass
 
 
-class RootTcpSocketSessionManagerCredentials(SessionManagerCredentials):
-    def __init__(self):
-        self.is_user_session = True
-
-    def authorize(self, method, resource):
-        return True
+class RootTcpSocketSessionManagerCredentials(UserSessionManagerCredentials):
+    pass
 
 
 class LoginPasswordSessionManagerCredentials(UserSessionManagerCredentials):

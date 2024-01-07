@@ -685,7 +685,8 @@ async def check_permission(middleware, app):
                 pass
             else:
                 if euid == 0:
-                    await AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials())
+                    user = await middleware.call('auth.authenticate_root')
+                    await AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials(user))
                     return
 
 
