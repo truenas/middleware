@@ -1,10 +1,13 @@
 import asyncio
 
 
-async def asyncio_map(func, arguments, limit=None):
-    semaphore = None
-    if limit is not None:
-        semaphore = asyncio.BoundedSemaphore(limit)
+async def asyncio_map(func, arguments, limit=None, *, semaphore=None):
+    if limit is not None and semaphore is not None:
+        raise ValueError("`limit` and `semaphore` can not be specified simultaneously")
+
+    if limit is not None or semaphore is not None:
+        if semaphore is None:
+            semaphore = asyncio.BoundedSemaphore(limit)
 
         real_func = func
 

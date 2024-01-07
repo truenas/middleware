@@ -71,6 +71,8 @@ class DiskService(Service):
     async def reset_temperature_cache(self):
         self.cache = {}
 
+    temperatures_semaphore = asyncio.BoundedSemaphore(8)
+
     @accepts(
         List('names', items=[Str('name')]),
         Dict(
@@ -116,7 +118,7 @@ class DiskService(Service):
             except asyncio.TimeoutError:
                 return None
 
-        return dict(zip(names, await asyncio_map(temperature, names, 8)))
+        return dict(zip(names, await asyncio_map(temperature, names, semaphore=self.temperatures_semaphore)))
 
     @accepts(List('names', items=[Str('name')]), Int('days', default=7), roles=['REPORTING_READ'])
     @returns(Dict('temperatures', additional_attrs=True))
