@@ -1,6 +1,7 @@
 import enum
 from middlewared.utils.privilege import credential_has_full_admin
 
+
 class ServiceWriteRole(enum.Enum):
     CIFS = 'SHARING_SMB_WRITE'
     NFS = 'SHARING_NFS_WRITE'

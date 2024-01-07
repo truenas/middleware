@@ -20,6 +20,7 @@ from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.nginx import get_remote_addr_port
 from .utils.origin import UnixSocketOrigin, TCPIPOrigin
 from .utils.plugins import LoadPluginsMixin
+from .utils.privilege import credential_has_full_admin
 from .utils.profile import profile_wrap
 from .utils.service.call import ServiceCallMixin
 from .utils.syslog import syslog_message
@@ -1465,7 +1466,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             success = True
 
             if app.authenticated_credentials:
-                if app.authenticated_credentials.has_role("READONLY"):
+                if app.authenticated_credentials.is_user_session and not (
+                    credential_has_full_admin(app.authenticated_credentials) or
+                    (
+                        serviceobj._config.role_prefix and
+                        app.authenticated_credentials.has_role(f'{serviceobj._config.role_prefix}_WRITE')
+                    )
+                ):
                     if hasattr(methodobj, "returns") and methodobj.returns:
                         schema = methodobj.returns[0]
                         if isinstance(schema, OROperator):

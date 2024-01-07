@@ -22,10 +22,10 @@ class SessionManagerCredentials:
         return True
 
     def authorize(self, method, resource):
-        return True
+        return False
 
     def has_role(self, role):
-        return True
+        return False
 
     def notify_used(self):
         pass
@@ -59,7 +59,7 @@ class UnixSocketSessionManagerCredentials(UserSessionManagerCredentials):
     pass
 
 
-class RootTcpSocketSessionManagerCredentials(SessionManagerCredentials):
+class RootTcpSocketSessionManagerCredentials(UserSessionManagerCredentials):
     pass
 
 
@@ -84,7 +84,8 @@ class ApiKeySessionManagerCredentials(SessionManagerCredentials):
 
 
 class TrueNasNodeSessionManagerCredentials(SessionManagerCredentials):
-    pass
+    def authorize(self, method, resource):
+        return True
 
 
 def is_ha_connection(remote_addr, remote_port):
