@@ -1535,9 +1535,7 @@ def test_52_manage_gids(request, state, expected):
     with nfs_config():
 
         if state is not None:
-            nfs_db = call("nfs.update", {"userd_manage_gids": state})
-        else:
-            nfs_db = call("nfs.config")
+            call("nfs.update", {"userd_manage_gids": state})
 
         s = parse_server_config()
         assert s['mountd']['manage-gids'] == expected, str(s)
