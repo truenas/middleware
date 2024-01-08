@@ -734,9 +734,9 @@ class FailoverEventsService(Service):
 
         # If ALUA is configured reload the iscsitarget service (to regen config) and then start SCST
         if self.run_call('iscsi.global.alua_enabled'):
-            if not self.run_call('service.reload', 'iscsitarget'):
+            if not self.run_call('service.reload', 'iscsitarget', self.HA_PROPAGATE):
                 timeout = 5
-                while not self.run_call('service.start', 'iscsitarget') and timeout > 0:
+                while not self.run_call('service.start', 'iscsitarget', self.HA_PROPAGATE) and timeout > 0:
                     logger.warning('Waiting one second to allow iscsitarget to start')
                     sleep(1)
                     timeout -= 1
