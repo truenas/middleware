@@ -51,6 +51,7 @@ ROLES = {
     'READONLY': Role(includes=[
         'ALERT_LIST_READ',
         'ACCOUNT_READ',
+        'APPS_READ',
         'AUTH_SESSIONS_READ',
         'CATALOG_READ',
         'CLOUD_SYNC_READ',
