@@ -4,7 +4,6 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from middlewared.service import Service
-from middlewared.plugins.interface.netif import netif
 
 
 class DetectVirtualIpStates(Service):
@@ -14,31 +13,45 @@ class DetectVirtualIpStates(Service):
         namespace = 'failover.vip'
 
     async def check_failover_group(self, ifname, groups):
-
         """
         Check the other members (if any) in failover group for `ifname`
         """
+        failover_grp_ifaces = list()
+        for grp, names in groups.items():
+            if ifname in names:
+                # get the list of interfaces that are in the same
+                # failover group as `ifname`.
+                failover_grp_ifaces = names
 
-        masters, backups = [], []
+                # we remove `ifname` since we only care about the other
+                # interfaces in this failover group
+                failover_grp_ifaces.remove(ifname)
 
-        # get failover group id for `iface`
-        group_id = [group for group, names in groups.items() if ifname in names][0]
+                # An interface can only ever be in a single failover
+                # group so we can break the loop early here
+                break
 
-        # get all interfaces in `group_id`
-        ids = [names for group, names in groups.items() if group == group_id][0]
-
-        # need to remove the passed in `ifname` from the list
-        ids.remove(ifname)
-
-        # we can have more than one interface in the failover
-        # group so check the state of the interface
-        for i in ids:
-            iface = netif.get_interface(i)
-            for j in iface.vrrp_config:
-                if j['state'] == 'MASTER':
-                    masters.append(i)
+        masters, backups = list(), list()
+        for i in await self.middleware.call('interface.query', [['id', 'in', failover_grp_ifaces]]):
+            # We're checking any other interface that is in the same
+            # failover group as `ifname`. For example, customers often
+            # configure multiple physical interfaces for iSCSI MPIO.
+            # Since they are using MPIO, each interface serves as a
+            # discreet path to their data. However, if 1 of the 4
+            # interfaces go down then we don't need to failover since
+            # 3 other paths are up (That's the point of MPIO). In this
+            # scenario, the customer will have to put all 4 of the
+            # physical interfaces in the _same_ failover group.
+            for vrrp_info in i['state'].get('vrrp_config', []):
+                # `vrrp_config` should never be NoneType here but this
+                # is a critical call path for processing a failover
+                # event so we access it safely. There are other layers
+                # of checks and balances that happen in the failover
+                # event logic.
+                if vrrp_info['state'] == 'MASTER':
+                    masters.append(i['id'])
                 else:
-                    backups.append(i)
+                    backups.append(i['id'])
 
         return masters, backups
 
