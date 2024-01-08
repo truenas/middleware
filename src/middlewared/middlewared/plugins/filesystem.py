@@ -38,7 +38,7 @@ class FilesystemService(Service):
         stx_attrs = self.stat(path)['attributes']
         return 'IMMUTABLE' in stx_attrs
 
-    @accepts(Bool('set_flag'), Str('path'))
+    @accepts(Bool('set_flag'), Str('path'), roles=['FILESYSTEM_ATTRS_WRITE'])
     @returns()
     def set_immutable(self, set_flag, path):
         """
@@ -62,7 +62,7 @@ class FilesystemService(Service):
             Bool('sparse'),
             register=True
         ),
-    ))
+    ), roles=['FILESYSTEM_ATTRS_WRITE'])
     @returns()
     def set_dosmode(self, data):
         return dosmode.set_dosflags(data['path'], data['dosmode'])
@@ -106,7 +106,7 @@ class FilesystemService(Service):
         lambda mkdir_path: [{
             'path': mkdir_path
         }]
-    )])
+    )], roles=['FILESYSTEM_DATA_WRITE'])
     @returns(Ref('path_entry'))
     def mkdir(self, data):
         """
