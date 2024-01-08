@@ -65,6 +65,10 @@ def parse_exports():
 
 
 def parse_server_config(fname="local.conf"):
+    '''
+    Debian will read to /etc/default/nfs-common and then /etc/nfs.conf
+    All TrueNAS NFS settings are in /etc/nfs.conf.d/local.conf as overrides
+    '''
     results = SSH_TEST(f"cat /etc/nfs.conf.d/{fname}", user, password, ip)
     assert results['result'] is True, f"rc={results['returncode']}, {results['output']}, {results['stderr']}"
     conf = results['stdout'].splitlines()
@@ -85,6 +89,10 @@ def parse_server_config(fname="local.conf"):
 
 
 def parse_rpcbind_config():
+    '''
+    In Debian 12 (Bookwork) rpcbind uses /etc/default/rpcbind.
+    Look for /etc/rpcbind.conf in future releases.
+    '''
     results = SSH_TEST("cat /etc/default/rpcbind", user, password, ip)
     assert results['result'] is True, f"rc={results['returncode']}, {results['output']}, {results['stderr']}"
     conf = results['stdout'].splitlines()
@@ -1494,6 +1502,43 @@ def test_50_nfs_invalid_user_group_mapping(request, type, data):
             with create_group({'name': grpname}) as grpInst:
                 with nfs_share(tmp_path, mapping) as share:
                     run_missing_usrgrp_test(testval, tmp_path, share, grpInst)
+
+
+@pytest.mark.parametrize('state,expected', [
+    (None, 'n'),   # Test default state
+    (True, 'y'),
+    (False, 'n')
+])
+def test_52_manage_gids(request, state, expected):
+    '''
+    The nfsd_manage_gids setting is called "Support > 16 groups" in the webui.
+    It is that and, to a greater extent, defines the GIDs that are used for permissions.
+
+    If NOT enabled, then the expectation is that the groups to which the user belongs
+    are defined on the _client_ and NOT the server.  It also means groups to which the user
+    belongs are passed in on the NFS commands from the client.  The file object GID is
+    checked against the passed in list of GIDs.  This is also where the 16 group
+    limitation is enforced.  The NFS protocol allows passing up to 16 groups per user.
+
+    If nfsd_manage_gids is enabled, the groups to which the user belong are defined
+    on the server.  In this condition, the server confirms the user is a member of
+    the file object GID.
+
+    NAS-126067:  Debian changed the 'default' setting to manage_gids in /etc/nfs.conf
+    from undefined to "manage_gids = y".
+
+    TEST:   Confirm manage_gids is set in /etc/nfs.conf.d/local/conf for
+            both the enable and disable states
+
+    TODO: Add client-side and server-side test from client when available
+    '''
+    with nfs_config():
+
+        if state is not None:
+            call("nfs.update", {"userd_manage_gids": state})
+
+        s = parse_server_config()
+        assert s['mountd']['manage-gids'] == expected, str(s)
 
 
 def test_70_stopping_nfs_service(request):

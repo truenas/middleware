@@ -8,6 +8,7 @@
     # but mount storms at restart benefit from additional mountd.  As such, we recommend
     # the number of mountd be 1/4 the number of nfsd.
     num_mountd = max(int(num_nfsd / 4), 1)
+    manage_gids = 'y' if config["userd_manage_gids"] else 'n'
 %>
 [nfsd]
 syslog = 1
@@ -32,9 +33,7 @@ threads = ${num_mountd}
 % if config['mountd_port']:
 port = ${config['mountd_port']}
 % endif
-% if config['userd_manage_gids']:
-manage-gids = ${config['userd_manage_gids']}
-% endif
+manage-gids = ${manage_gids}
 
 [statd]
 % if config['rpcstatd_port']:
