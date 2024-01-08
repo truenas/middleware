@@ -16,7 +16,7 @@ class DetectVirtualIpStates(Service):
             if ifname in names:
                 # get the list of interfaces that are in the same
                 # failover group as `ifname`.
-                failover_grp_ifaces = names
+                failover_grp_ifaces = names[:]
 
                 # we remove `ifname` since we only care about the other
                 # interfaces in this failover group
