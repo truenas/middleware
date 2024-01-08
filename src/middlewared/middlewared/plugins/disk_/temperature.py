@@ -89,7 +89,7 @@ class DiskService(Service):
             if not any(s.startswith('/dev/arcmsr') for s in smartctl_args):
                 try:
                     temperature = await self.middleware.run_in_thread(lambda: cam.CamDevice(name).get_temperature())
-                    if temperature is not None:
+                    if temperature is not None and temperature != 255:
                         return temperature
                 except Exception:
                     pass
