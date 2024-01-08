@@ -806,8 +806,6 @@ def test_064_destroying_smb_dataset(request):
     'local.loadparm',
     'local.charset',
     'local.string_case_handle',
-    'local.compression',
-    'local.event',
     'local.event_aio',
     'local.tevent_req',
     'local.util_str_escape',

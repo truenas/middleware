@@ -8,23 +8,19 @@ import pwd
 import shutil
 import socket
 import subprocess
-import threading
 import tdb
 import time
 
 from dns import resolver
 from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import job, private, ConfigService, Service, ValidationError, ValidationErrors
+from middlewared.service import job, private, ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, run
 from middlewared.plugins.directoryservices import DSStatus
 from middlewared.plugins.idmap import DSType
 from middlewared.plugins.kerberos import krb5ccache
-import middlewared.utils.osc as osc
-
-from samba.dcerpc.messaging import MSG_WINBIND_ONLINE
 
 
 class neterr(enum.Enum):
@@ -741,7 +737,6 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'nss')
         if ret == neterr.JOINED:
             await self.set_state(DSStatus['HEALTHY'])
-            await self.middleware.call('admonitor.start')
             await self.middleware.call('activedirectory.get_cache')
             if ad['verbose_logging']:
                 self.logger.debug('Successfully started AD service for [%s].', ad['domainname'])
@@ -764,7 +759,6 @@ class ActiveDirectoryService(ConfigService):
         ad = await self.config()
         await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'ad_enable': False})
         await self.set_state(DSStatus['LEAVING'])
-        await self.middleware.call('admonitor.stop')
         await self.middleware.call('etc.generate', 'hostname')
         await self.middleware.call('kerberos.stop')
         await self.middleware.call('etc.generate', 'smb')
@@ -845,7 +839,7 @@ class ActiveDirectoryService(ConfigService):
                 # This is not a line we're interested in
                 return
 
-            if type(out[key]) == list:
+            if type(out[key]) is list:
                 out[key].append(value.strip())
             elif out[key] == -1:
                 out[key] = int(value.strip())
@@ -1543,145 +1537,3 @@ class ActiveDirectoryService(ConfigService):
             self.logger.debug('cache fill is in progress.')
             return {'users': {}, 'groups': {}}
         return await self.middleware.call('cache.get', 'AD_cache')
-
-
-class WBStatusThread(threading.Thread):
-    def __init__(self, **kwargs):
-        super(WBStatusThread, self).__init__()
-        self.setDaemon(True)
-        self.middleware = kwargs.get('middleware')
-        self.logger = self.middleware.logger
-        self.finished = threading.Event()
-        self.state = MSG_WINBIND_ONLINE
-
-    def parse_msg(self, data):
-        if data == str(DSStatus.LEAVING.value):
-            return
-
-        try:
-            m = json.loads(data)
-        except json.decoder.JSONDecodeError:
-            self.logger.debug("Unable to decode winbind status message: "
-                              "%s", data)
-            return
-
-        new_state = self.state
-
-        if not self.middleware.call_sync('activedirectory.config')['enable']:
-            self.logger.debug('Ignoring winbind message for disabled AD service: [%s]', m)
-            return
-
-        try:
-            new_state = DSStatus(m['winbind_message']).value
-        except Exception as e:
-            self.logger.debug('Received invalid winbind status message [%s]: %s', m, e)
-            return
-
-        if m['domain_name_netbios'] != self.middleware.call_sync('smb.config')['workgroup']:
-            self.logger.debug(
-                'Domain [%s] changed state to %s',
-                m['domain_name_netbios'],
-                DSStatus(m['winbind_message']).name
-            )
-            return
-
-        if self.state != new_state:
-            self.logger.debug(
-                'State of domain [%s] transistioned to [%s]',
-                m['forest_name'], DSStatus(m['winbind_message'])
-            )
-            self.middleware.call_sync('activedirectory.set_state', DSStatus(m['winbind_message']))
-            if new_state == DSStatus.FAULTED.value:
-                self.middleware.call_sync(
-                    "alert.oneshot_create",
-                    "ActiveDirectoryDomainOffline",
-                    {"domain": m["domain_name_netbios"]}
-                )
-            else:
-                self.middleware.call_sync(
-                    "alert.oneshot_delete",
-                    "ActiveDirectoryDomainOffline",
-                    {"domain": m["domain_name_netbios"]}
-                )
-
-        self.state = new_state
-
-    def read_messages(self):
-        while not self.finished.is_set():
-            with open(f'{SMBPath.RUNDIR.platform()}/.wb_fifo') as f:
-                data = f.read()
-                for msg in data.splitlines():
-                    self.parse_msg(msg)
-
-        self.logger.debug('exiting winbind messaging thread')
-
-    def run(self):
-        osc.set_thread_name('ad_monitor_thread')
-        try:
-            self.read_messages()
-        except Exception as e:
-            self.logger.debug('Failed to run monitor thread %s', e, exc_info=True)
-
-    def setup(self):
-        if not os.path.exists(f'{SMBPath.RUNDIR.platform()}/.wb_fifo'):
-            os.mkfifo(f'{SMBPath.RUNDIR.platform()}/.wb_fifo')
-
-    def cancel(self):
-        """
-        Write to named pipe to unblock open() in thread and exit cleanly.
-        """
-        self.finished.set()
-        with open(f'{SMBPath.RUNDIR.platform()}/.wb_fifo', 'w') as f:
-            f.write(str(DSStatus.LEAVING.value))
-
-
-class ADMonitorService(Service):
-    class Config:
-        private = True
-
-    def __init__(self, *args, **kwargs):
-        super(ADMonitorService, self).__init__(*args, **kwargs)
-        self.thread = None
-        self.initialized = False
-        self.lock = threading.Lock()
-
-    def start(self):
-        if not self.middleware.call_sync('activedirectory.config')['enable']:
-            self.logger.trace('Active directory is disabled. Exiting AD monitoring.')
-            return
-
-        with self.lock:
-            if self.initialized:
-                return
-
-            thread = WBStatusThread(
-                middleware=self.middleware,
-            )
-            thread.setup()
-            self.thread = thread
-            thread.start()
-            self.initialized = True
-
-    def stop(self):
-        thread = self.thread
-        if thread is None:
-            return
-
-        thread.cancel()
-        self.thread = None
-
-        with self.lock:
-            self.initialized = False
-
-    def restart(self):
-        self.stop()
-        self.start()
-
-
-async def setup(middleware):
-    """
-    During initial boot let smb_configure script start monitoring once samba's
-    rundir is created.
-    """
-    if await middleware.call('system.ready'):
-        await middleware.call('admonitor.start')
