@@ -308,22 +308,27 @@ class FailoverEventsService(Service):
         elif event == 'BACKUP':
             return self.run_call('failover.events.vrrp_backup', fobj, ifname, event)
 
-    def fenced_start_loop(self, force=False, timeout=10):
-
+    def fenced_start_loop(self, max_retries=3):
         # When active node is rebooted administratively from shell, the
         # fenced process will continue running on the node until systemd
         # finishes terminating services and actually reboots. Hence, we may
-        # need towait a little while for fenced on other node to go away.
-        # fenced_err == 2 means that remote fenced is still running
-        while timeout:
-            fenced_error = self.run_call('failover.fenced.start', force)
+        # need to retry a few times before fenced goes away on the remote
+        # node. NOTE: fenced waits for ~11 or so seconds to see if the
+        # reservation keys change.
+        total_time_waited = 0
+        for i in range(1, max_retries + 1):
+            start = time.time()
+            fenced_error = self.run_call('failover.fenced.start')
             if fenced_error != 2:
                 break
-
-            logger.warning('Fenced is running on remote node waiting %d more seconds.',
-                           timeout)
-            timeout -= 1
-            sleep(1)
+            else:
+                total_time_waited += int(time.time() - start)
+                retrying = ', retrying.' if i < max_retries else ''
+                logger.warning(
+                    'Fenced is running on remote node after waiting %d seconds%s',
+                    total_time_waited,
+                    retrying
+                )
 
         return fenced_error
 
@@ -347,7 +352,7 @@ class FailoverEventsService(Service):
             self.run_call('failover.fenced.stop')
 
             logger.warning('Forcefully starting fenced')
-            fenced_error = self.fenced_start_loop(force=True)
+            fenced_error = self.run_call('failover.fenced.start', True)
         else:
             # if we're here then we need to check a couple things before we start fenced
             # and start the process of becoming master
