@@ -272,9 +272,7 @@ async def _start_stop_vrrp_threads(middleware):
             await middleware.run_in_thread(VrrpObjs.event_thread.shutdown)
             VrrpObjs.event_thread = None
 
-        if VrrpObjs.event_queue is not None:
-            VrrpObjs.event_queue.clear()
-            VrrpObjs.event_queue = None
+        VrrpObjs.event_queue.clear()
     else:
         # if this is a system that is being licensed for HA for the
         # first time (without being rebooted) then we need to make
