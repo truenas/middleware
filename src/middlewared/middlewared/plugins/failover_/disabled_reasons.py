@@ -2,11 +2,31 @@
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
+from enum import Enum
 
 from middlewared.schema import accepts, returns, List, Str
 from middlewared.service import Service, pass_app, no_auth_required, private
 from middlewared.plugins.interface.netif import netif
 from middlewared.utils.zfs import query_imported_fast_impl
+
+
+class DisabledReasonsEnum(str, Enum):
+    NO_CRITICAL_INTERFACES = 'No network interfaces are marked critical for failover.'
+    MISMATCH_DISKS = 'The quantity of disks do not match between the nodes.'
+    MISMATCH_VERSIONS = 'TrueNAS software versions do not match between storage controllers.'
+    DISAGREE_VIP = 'Nodes Virtual IP states do not agree.'
+    NO_LICENSE = 'Other node has no license.'
+    NO_FAILOVER = 'Administratively Disabled.'
+    NO_PONG = 'Unable to contact remote node via the heartbeat interface.'
+    NO_VOLUME = 'No zpools have been configured.'
+    NO_VIP = 'No interfaces have been configured with a Virtual IP.'
+    NO_SYSTEM_READY = 'Other node has not finished booting.'
+    NO_FENCED = 'Fenced is not running.'
+    REM_FAILOVER_ONGOING = 'Other node is currently processing a failover event.'
+    LOC_FAILOVER_ONGOING = 'This node is currently processing a failover event.'
+    HEALTHY = 'Failover is healthy.'
+    NO_HEARTBEAT_IFACE = 'Local heartbeat interface does not exist.'
+    NO_CARRIER_ON_HEARTBEAT = 'Local heartbeat interface is down.'
 
 
 class FailoverDisabledReasonsService(Service):
@@ -22,24 +42,8 @@ class FailoverDisabledReasonsService(Service):
     @returns(List('reasons', items=[Str('reason')]))
     @pass_app()
     def reasons(self, app):
-        """
-        Returns a list of reasons why failover is not enabled/functional.
-
-        NO_VOLUME - There are no pools configured.
-        NO_VIP - There are no interfaces configured with Virtual IP.
-        NO_SYSTEM_READY - Other storage controller has not finished booting.
-        NO_PONG - Other storage controller is not communicable.
-        NO_FAILOVER - Failover is administratively disabled.
-        NO_LICENSE - Other storage controller has no license.
-        DISAGREE_VIP - Nodes Virtual IP states do not agree.
-        MISMATCH_DISKS - The storage controllers do not have the same quantity of disks.
-        MISMATCH_VERSIONS - TrueNAS software versions do not match between storage controllers.
-        NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
-        NO_FENCED - Zpools are imported but fenced isn't running.
-        LOC_FAILOVER_ONGOING - This node is currently processing a failover event.
-        REM_FAILOVER_ONGOING - Other node is currently processing a failover event.
-        NO_HEARTBEAT_IFACE - Local heartbeat interface does not exist.
-        NO_CARRIER_ON_HEARTBEAT - Local heartbeat interface is down.
+        """Returns a list of reasons why failover is not enabled/functional.
+        See `DisabledReasonsEnum` for the reasons and their explanation.
         """
         reasons = self.middleware.call_sync('failover.disabled.get_reasons', app)
         if reasons != FailoverDisabledReasonsService.LAST_DISABLED_REASONS:
@@ -62,21 +66,21 @@ class FailoverDisabledReasonsService(Service):
         try:
             iface = netif.list_interfaces()[heartbeat_iface_name]
             if iface.link_state != 'LINK_STATE_UP':
-                reasons.add('NO_CARRIER_ON_HEARTBEAT')
+                reasons.add(DisabledReasonsEnum.NO_CARRIER_ON_HEARTBEAT.name)
         except KeyError:
             # saw this on an internal m50 because the systemd-modules-load.service
             # timed out and was subsequently killed so the ntb kernel module didn't
             # get loaded
-            reasons.add('NO_HEARTBEAT_IFACE')
+            reasons.add(DisabledReasonsEnum.NO_HEARTBEAT_IFACE.name)
 
     @private
     def get_local_reasons(self, app, ifaces, reasons):
         """This method checks the local node to try and determine its failover status."""
         if self.middleware.call_sync('failover.config')['disabled']:
-            reasons.add('NO_FAILOVER')
+            reasons.add(DisabledReasonsEnum.NO_FAILOVER.name)
 
         if self.middleware.call_sync('failover.in_progress'):
-            reasons.add('LOC_FAILOVER_ONGOING')
+            reasons.add(DisabledReasonsEnum.LOC_FAILOVER_ONGOING.name)
             # no reason to check anything else since failover
             # is happening on this system
             return
@@ -98,9 +102,9 @@ class FailoverDisabledReasonsService(Service):
                 master = True
 
         if not crit_iface:
-            reasons.add('NO_CRITICAL_INTERFACES')
+            reasons.add(DisabledReasonsEnum.NO_CRITICAL_INTERFACES.name)
         elif not vip:
-            reasons.add('NO_VIP')
+            reasons.add(DisabledReasonsEnum.NO_VIP.name)
         elif master:
             fenced_running = self.middleware.call_sync('failover.fenced.run_info')['running']
             num_of_zpools_imported = len(query_imported_fast_impl())
@@ -108,10 +112,10 @@ class FailoverDisabledReasonsService(Service):
                 # boot pool is returned by default which is why we check > 1
                 if not fenced_running:
                     # zpool(s) imported but fenced isn't running which is bad
-                    reasons.add('NO_FENCED')
+                    reasons.add(DisabledReasonsEnum.NO_FENCED.name)
             else:
                 # we've got interfaces marked as master but we have no zpool(s) imported
-                reasons.add('NO_VOLUME')
+                reasons.add(DisabledReasonsEnum.NO_VOLUME.name)
 
     @private
     def get_remote_reasons(self, app, ifaces, reasons):
@@ -128,29 +132,29 @@ class FailoverDisabledReasonsService(Service):
                 # on failover events because it delays the process of restarting services in a timely
                 # manner. To work around this, we place a `timeout` of 5 seconds on the system.ready
                 # call. This essentially bypasses the TCP timeout window.
-                reasons.add('NO_SYSTEM_READY')
+                reasons.add(DisabledReasonsEnum.NO_SYSTEM_READY.name)
 
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
-                reasons.add('NO_LICENSE')
+                reasons.add(DisabledReasonsEnum.NO_LICENSE.name)
 
             lsw = self.middleware.call_sync('system.version')
             rsw = self.middleware.call_sync('failover.call_remote', 'system.version')
             if lsw != rsw:
-                reasons.add('MISMATCH_VERSIONS')
+                reasons.add(DisabledReasonsEnum.MISMATCH_VERSIONS.name)
 
             if self.middleware.call_sync('failover.call_remote', 'failover.in_progress'):
-                reasons.add('REM_FAILOVER_ONGOING')
+                reasons.add(DisabledReasonsEnum.REM_FAILOVER_ONGOING.name)
 
             local = self.middleware.call_sync('failover.vip.get_states', ifaces)
             remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
             if self.middleware.call_sync('failover.vip.check_states', local, remote):
-                reasons.add('DISAGREE_VIP')
+                reasons.add(DisabledReasonsEnum.DISAGREE_VIP.name)
 
             mismatch_disks = self.middleware.call_sync('failover.mismatch_disks')
             if mismatch_disks['missing_local'] or mismatch_disks['missing_remote']:
-                reasons.add('MISMATCH_DISKS')
+                reasons.add(DisabledReasonsEnum.MISMATCH_DISKS.name)
         except Exception:
-            reasons.add('NO_PONG')
+            reasons.add(DisabledReasonsEnum.NO_PONG.name)
 
     @private
     def get_reasons(self, app):
