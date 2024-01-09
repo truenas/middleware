@@ -20,7 +20,6 @@ class DisabledReasonsEnum(str, Enum):
     NO_FENCED = 'Fenced is not running.'
     REM_FAILOVER_ONGOING = 'Other node is currently processing a failover event.'
     LOC_FAILOVER_ONGOING = 'This node is currently processing a failover event.'
-    HEALTHY = 'Failover is healthy.'
     NO_HEARTBEAT_IFACE = 'Local heartbeat interface does not exist.'
     NO_CARRIER_ON_HEARTBEAT = 'Local heartbeat interface is down.'
 
