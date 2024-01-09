@@ -6,9 +6,12 @@ import enum
 import errno
 
 from middlewared.client import Client, ClientException
+from middlewared.plugins.failover_.disabled_reasons import DisabledReasonsEnum
 
 BASE_NODE = 'Node status: '
 BASE_FAILOVER = 'Failover status: '
+HEALTHY = 'Failover is healthy.'
+UNKNOWN = 'UNKNOWN'
 
 
 class StatusEnum(enum.Enum):
@@ -19,25 +22,6 @@ class StatusEnum(enum.Enum):
     IMPORTING = BASE_NODE + 'Becoming active node'
     ERROR = BASE_NODE + 'Faulted'
     UNKNOWN = BASE_NODE + 'Unknown'
-
-
-class DisabledEnum(enum.Enum):
-    NO_CRITICAL_INTERFACES = 'No network interfaces are marked critical for failover.'
-    MISMATCH_DISKS = 'The quantity of disks do not match between the nodes.'
-    MISMATCH_VERSIONS = 'TrueNAS software versions do not match between storage controllers.'
-    DISAGREE_VIP = 'Nodes Virtual IP states do not agree.'
-    NO_LICENSE = 'Other node has no license.'
-    NO_FAILOVER = 'Administratively Disabled.'
-    NO_PONG = 'Unable to contact remote node via the heartbeat interface.'
-    NO_VOLUME = 'No zpools have been configured.'
-    NO_VIP = 'No interfaces have been configured with a Virtual IP.'
-    NO_SYSTEM_READY = 'Other node has not finished booting.'
-    NO_FENCED = 'Fenced is not running.'
-    REM_FAILOVER_ONGOING = 'Other node is currently processing a failover event.'
-    HEALTHY = 'Failover is healthy.'
-    NO_HEARTBEAT_IFACE = 'Local heartbeat interface does not exist.'
-    NO_CARRIER_ON_HEARTBEAT = 'Local heartbeat interface is down.'
-    UNKNOWN = 'UNKNOWN'
 
 
 def get_client():
@@ -93,13 +77,23 @@ def handle_status_command(client, status):
     # print failover disabled reason(s) (if any)
     reasons = client.call('failover.disabled.reasons')
     if not reasons:
-        print(BASE_FAILOVER + DisabledEnum.HEALTHY.value)
+        print(BASE_FAILOVER + HEALTHY)
     elif len(reasons) == 1:
-        print(BASE_FAILOVER + getattr(DisabledEnum, reasons[0], DisabledEnum.UNKNOWN).value)
+        try:
+            reason = DisabledReasonsEnum[reasons[0]].value
+        except KeyError:
+            reason = UNKNOWN
+
+        print(BASE_FAILOVER + reason)
     else:
         print(BASE_FAILOVER)
         for idx, reason in enumerate(reasons, start=1):
-            print(f'    {idx}: {getattr(DisabledEnum, reason, DisabledEnum.UNKNOWN).value}')
+            try:
+                reason = DisabledReasonsEnum[reason].value
+            except KeyError:
+                reason = UNKNOWN
+
+            print(f'    {idx}: {reason}')
 
     # end this section with a newline
     print()
