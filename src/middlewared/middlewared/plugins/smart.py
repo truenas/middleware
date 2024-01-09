@@ -522,8 +522,9 @@ class SMARTTestService(CRUDService):
             Str('description', required=True),
             Str('status', required=True),
             Str('status_verbose', required=True),
-            Float('remaining', required=True),
-            Int('lifetime', required=True),
+            Int('segment_number', null=True),
+            Float('remaining'),
+            Int('lifetime', null=True, required=True),
             Str('lba_of_first_error', null=True, required=True),
         )]),
         Dict(
@@ -531,6 +532,7 @@ class SMARTTestService(CRUDService):
             Int('progress', required=True),
             null=True,
         ),
+        additional_attrs=True,
     ))
     async def results(self, filters, options):
         """
