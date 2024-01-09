@@ -1259,6 +1259,7 @@ def test_52_manage_gids(request, state, expected):
     with nfs_config():
 
         if state is not None:
+            sleep(3)  # In Cobia: Prevent restarting NFS too quickly.
             call("nfs.update", {"userd_manage_gids": state})
 
         s = parse_server_config()
