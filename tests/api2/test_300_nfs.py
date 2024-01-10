@@ -1371,17 +1371,22 @@ def test_48_syslog_filters(request):
 
         # Confirm default setting: mountd logging enabled
         call("nfs.update", {"mountd_log": True})
+
+        # Add dummy entries to avoid false positives
+        for i in range(10):
+            ssh(f'logger "====== {i}: NFS test_48_syslog_filters (with) ======"')
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
-            num_tries = 5
+            num_tries = 10
             found = False
             res = ""
             while not found and num_tries > 0:
-                res = ssh("tail -5 /var/log/syslog")
+                numlines = 3 * (10 - num_tries) + 5
+                res = ssh(f"tail -{numlines} /var/log/syslog")
                 if "rpc.mountd" in res:
                     found = True
                     break
                 num_tries -= 1
-                sleep(1)
+                sleep(10 - num_tries)
 
             assert found, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
 
@@ -1389,15 +1394,19 @@ def test_48_syslog_filters(request):
 
         # Disable mountd logging
         call("nfs.update", {"mountd_log": False})
+
+        # Add dummy entries to avoid false positives
+        for i in range(10):
+            ssh(f'logger "====== {i}: NFS test_48_syslog_filters (without) ======"')
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
             # wait a few seconds to make sure syslog has a chance to flush log messages
-            sleep(3)
-            res = ssh("tail -5 /var/log/syslog")
+            sleep(4)
+            res = ssh("tail -10 /var/log/syslog")
             assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
 
         # Get a second chance to catch mountd messages on the umount.  They should not be present.
-        sleep(3)
-        res = ssh("tail -5 /var/log/syslog")
+        sleep(4)
+        res = ssh("tail -10 /var/log/syslog")
         assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
 
 
