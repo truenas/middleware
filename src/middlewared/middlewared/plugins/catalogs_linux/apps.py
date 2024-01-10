@@ -8,7 +8,7 @@ class AppService(Service):
     class Config:
         cli_namespace = 'app'
 
-    @filterable(roles=['APPS_READ'])
+    @filterable(roles=['CATALOG_READ'])
     @filterable_returns(Ref('available_apps'))
     async def latest(self, filters, options):
         """
@@ -22,7 +22,7 @@ class AppService(Service):
             ), filters, options
         )
 
-    @filterable(roles=['APPS_READ'])
+    @filterable(roles=['CATALOG_READ'])
     @filterable_returns(Dict(
         'available_apps',
         Bool('healthy', required=True),
@@ -77,7 +77,7 @@ class AppService(Service):
 
         return filter_list(results, filters, options)
 
-    @accepts(roles=['APPS_READ'])
+    @accepts(roles=['CATALOG_READ'])
     @returns(List(items=[Str('category')]))
     async def categories(self):
         """
@@ -85,7 +85,7 @@ class AppService(Service):
         """
         return sorted(list(await self.middleware.call('catalog.retrieve_mapped_categories')))
 
-    @accepts(Str('app_name'), Str('catalog'), Str('train'), roles=['APPS_READ'])
+    @accepts(Str('app_name'), Str('catalog'), Str('train'), roles=['CATALOG_READ'])
     @returns(List(items=[Ref('available_apps')]))
     def similar(self, app_name, catalog, train):
         """
