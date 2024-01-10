@@ -23,7 +23,8 @@ class ChartReleaseService(Service):
             Bool('recreate_resources', default=False),
             Bool('rollback_snapshot', default=True),
             Str('item_version', required=True),
-        )
+        ),
+        roles=['APPS_WRITE'],
     )
     @returns(Ref('chart_release_entry'))
     @job(lock=lambda args: f'chart_release_rollback_{args[0]}')

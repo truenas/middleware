@@ -11,7 +11,7 @@ class ContainerImagesService(Service):
         namespace_alias = 'docker.images'
         cli_namespace = 'app.docker.image'
 
-    @accepts(List('image_tags', empty=False, items=[Str('image_tag')]))
+    @accepts(List('image_tags', empty=False, items=[Str('image_tag')]), roles=['APPS_READ'])
     @returns(List())
     async def get_chart_releases_consuming_image(self, image_tags):
         """

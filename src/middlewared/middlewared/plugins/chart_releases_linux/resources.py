@@ -73,7 +73,8 @@ class ChartReleaseService(Service):
             Int('tail_lines', default=500, validators=[Range(min_=1)], null=True),
             Str('pod_name', required=True, empty=False),
             Str('container_name', required=True, empty=False),
-        )
+        ),
+        roles=['APPS_READ'],
     )
     @returns()
     @job(lock='chart_release_logs', pipes=['output'])
@@ -108,7 +109,7 @@ class ChartReleaseService(Service):
         """
         return await self.middleware.call('interface.choices')
 
-    @accepts()
+    @accepts(roles=['APPS_READ'])
     @returns(List(items=[Int('used_port')]))
     async def used_ports(self):
         """
@@ -141,7 +142,7 @@ class ChartReleaseService(Service):
             'certificateauthority.query', [['revoked', '=', False], ['parsed', '=', True]], {'select': ['name', 'id']}
         )
 
-    @accepts(Str('release_name'))
+    @accepts(Str('release_name'), roles=['APPS_READ'])
     @returns(Dict(
         Int('available', required=True),
         Int('desired', required=True),

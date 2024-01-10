@@ -11,7 +11,7 @@ class CatalogService(Service):
 
     SYNCED = False
 
-    @accepts()
+    @accepts(roles=['CATALOG_WRITE'])
     @returns()
     @job(lock='sync_catalogs')
     async def sync_all(self, job):
@@ -39,7 +39,7 @@ class CatalogService(Service):
 
         self.SYNCED = True
 
-    @accepts(Str('label', required=True))
+    @accepts(Str('label', required=True), roles=['CATALOG_WRITE'])
     @returns()
     @job(lock=lambda args: f'{args[0]}_catalog_sync')
     async def sync(self, job, catalog_label):

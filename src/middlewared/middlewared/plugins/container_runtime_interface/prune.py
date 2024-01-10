@@ -9,10 +9,13 @@ class ContainerService(Service):
     class Config:
         cli_namespace = 'app.container.config'
 
-    @accepts(Dict(
-        'prune_options',
-        Bool('remove_unused_images', default=False),
-    ))
+    @accepts(
+        Dict(
+            'prune_options',
+            Bool('remove_unused_images', default=False),
+        ),
+        roles=['APPS_WRITE'],
+    )
     @returns(Dict(
         'pruned_resources',
         Dict('images', additional_attrs=True),

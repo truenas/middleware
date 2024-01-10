@@ -11,7 +11,7 @@ from .validate_utils import check_errors
 
 class CatalogService(Service):
 
-    @accepts(Str('label'))
+    @accepts(Str('label'), roles=['CATALOG_WRITE'])
     @returns()
     @job(lock=lambda args: f'catalog_validate_{args[0]}')
     async def validate(self, job, label):

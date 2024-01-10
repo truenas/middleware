@@ -12,7 +12,7 @@ class ChartReleaseService(Service):
     class Config:
         namespace = 'chart.release'
 
-    @accepts(Str('chart_release_name'))
+    @accepts(Str('chart_release_name'), roles=['APPS_READ'])
     @returns(Dict(example={'minio2': ['minio/minio:RELEASE.2022-03-05T06-32-39Z']}))
     async def get_chart_releases_using_chart_release_images(self, chart_release_name):
         """

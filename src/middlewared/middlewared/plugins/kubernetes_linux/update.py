@@ -38,6 +38,7 @@ class KubernetesService(ConfigService):
         datastore = 'services.kubernetes'
         datastore_extend = 'kubernetes.k8s_extend'
         cli_namespace = 'app.kubernetes'
+        role_prefix = 'KUBERNETES'
 
     ENTRY = Dict(
         'kubernetes_entry',
@@ -539,7 +540,7 @@ class KubernetesService(ConfigService):
     async def pool_configured(self):
         return bool((await self.middleware.call('kubernetes.config'))['dataset'])
 
-    @accepts()
+    @accepts(roles=['KUBERNETES_READ'])
     @returns(Str('kubernetes_node_ip', null=True))
     async def node_ip(self):
         """

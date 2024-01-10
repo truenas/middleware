@@ -48,27 +48,7 @@ ROLES = {
     'SYSTEM_AUDIT_WRITE': Role(),
 
     'FULL_ADMIN': Role(full_admin=True, builtin=False),
-    'READONLY': Role(includes=['ALERT_LIST_READ',
-                               'ACCOUNT_READ',
-                               'AUTH_SESSIONS_READ',
-                               'CLOUD_SYNC_READ',
-                               'DATASET_READ',
-                               'ENCLOSURE_READ',
-                               'FAILOVER_READ',
-                               'IPMI_READ',
-                               'KMIP_READ',
-                               'FILESYSTEM_ATTRS_READ',
-                               'NETWORK_GENERAL_READ',
-                               'SHARING_READ',
-                               'KEYCHAIN_CREDENTIAL_READ',
-                               'REPORTING_READ',
-                               'REPLICATION_TASK_CONFIG_READ',
-                               'REPLICATION_TASK_READ',
-                               'SERVICE_READ',
-                               'SNAPSHOT_TASK_READ',
-                               'SUPPORT_READ',
-                               'SYSTEM_AUDIT_READ'],
-                     builtin=False),
+
 
     # Alert roles
     'ALERT_LIST_READ': Role(),
@@ -166,8 +146,18 @@ ROLES = {
                                       'SHARING_WRITE',
                                       'FILESYSTEM_ATTRS_WRITE',
                                       'SERVICE_READ'],
-                            builtin=False)
+                            builtin=False),
+    # Apps roles
+    'CONTAINER_READ': Role(),
+    'CONTAINER_WRITE': Role(includes=['CONTAINER_READ']),
+    'CATALOG_READ': Role(),
+    'CATALOG_WRITE': Role(includes=['CATALOG_READ']),
+    'KUBERNETES_READ': Role(includes=['CONTAINER_READ']),
+    'KUBERNETES_WRITE': Role(includes=['CONTAINER_WRITE', 'KUBERNETES_READ']),
+    'APPS_READ': Role(includes=['CATALOG_READ', 'CONTAINER_READ']),
+    'APPS_WRITE': Role(includes=['CATALOG_WRITE', 'APPS_READ', 'CONTAINER_WRITE']),
 }
+ROLES['READONLY'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
 
 
 class RoleManager:

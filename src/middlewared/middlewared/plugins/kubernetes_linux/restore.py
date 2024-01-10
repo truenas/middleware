@@ -19,6 +19,7 @@ class KubernetesService(Service):
 
     @accepts(
         Str('backup_name'),
+        roles=['KUBERNETES_WRITE'],
     )
     @returns()
     @job(lock='kubernetes_restore_backup')

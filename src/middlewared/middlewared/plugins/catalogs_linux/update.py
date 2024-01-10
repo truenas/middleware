@@ -36,6 +36,7 @@ class CatalogService(CRUDService):
         datastore_primary_key = 'label'
         datastore_primary_key_type = 'string'
         cli_namespace = 'app.catalog'
+        role_prefix = 'CATALOG'
 
     ENTRY = Dict(
         'catalog_entry',

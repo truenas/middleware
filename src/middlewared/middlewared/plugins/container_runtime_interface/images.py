@@ -18,6 +18,7 @@ class ContainerImagesService(CRUDService):
         namespace = 'container.image'
         namespace_alias = 'docker.images'
         cli_namespace = 'app.docker.image'
+        role_prefix = 'APPS'
 
     ENTRY = Dict(
         'container_image_entry',
@@ -90,7 +91,8 @@ class ContainerImagesService(CRUDService):
             ),
             Str('from_image', required=True),
             Str('tag', default=None, null=True),
-        )
+        ),
+        roles=['APPS_WRITE'],
     )
     @returns()
     @job()
@@ -114,7 +116,7 @@ class ContainerImagesService(CRUDService):
         self.middleware.call_sync('container.image.clear_update_flag_for_tag', f'{data["from_image"]}:{data["tag"]}')
         job.set_progress(100, 'Image pull complete')
 
-    @accepts(Str('id'))
+    @accepts(Str('id'), roles=['APPS_WRITE'])
     @returns()
     def do_delete(self, id_):
         """

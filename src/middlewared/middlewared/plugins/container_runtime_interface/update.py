@@ -16,6 +16,7 @@ class ContainerService(ConfigService):
     class Config:
         datastore = 'services.container'
         cli_namespace = 'app.container.config'
+        role_prefix = 'CONTAINER'
 
     ENTRY = Dict(
         'container_entry',
