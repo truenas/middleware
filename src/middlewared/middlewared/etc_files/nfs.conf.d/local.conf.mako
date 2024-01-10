@@ -1,5 +1,6 @@
 <%
     config = render_ctx["nfs.config"]
+    manage_gids = 'y' if config["userd_manage_gids"] else 'n'
 %>
 [nfsd]
 syslog = 1
@@ -33,9 +34,7 @@ threads = ${config['servers']}
 % if config['mountd_port']:
 port = ${config['mountd_port']}
 % endif
-% if config['userd_manage_gids']:
-manage-gids = ${config['userd_manage_gids']}
-% endif
+manage-gids = ${manage_gids}
 
 [statd]
 % if config['rpcstatd_port']:

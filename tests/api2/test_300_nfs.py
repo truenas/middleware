@@ -18,6 +18,7 @@ from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
 from functions import make_ws_request
 from auto_config import pool_name, ha, hostname, password, user
 from protocols import SSH_NFS
+from middlewared.test.integration.utils import call
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -1211,7 +1212,61 @@ def test_45_check_setting_runtime_debug(request):
         assert res['result'] == disabled, res
 
 
-def test_50_stoping_nfs_service(request):
+def test_46_set_bind_ip():
+    '''
+    This test requires a static IP address
+    '''
+    res = GET("/nfs/bindip_choices")
+    assert res.status_code == 200, res.text
+    assert ip in res.json(), res.text
+
+    res = PUT("/nfs/", {"bindip": [ip]})
+    assert res.status_code == 200, res.text
+
+    # reset to default
+    res = PUT("/nfs/", {"bindip": []})
+    assert res.status_code == 200, res.text
+
+
+@pytest.mark.parametrize('state,expected', [
+    (None, 'n'),   # Test default state
+    (True, 'y'),
+    (False, 'n')
+])
+def test_52_manage_gids(request, state, expected):
+    '''
+    The nfsd_manage_gids setting is called "Support > 16 groups" in the webui.
+    It is that and, to a greater extent, defines the GIDs that are used for permissions.
+
+    If NOT enabled, then the expectation is that the groups to which the user belongs
+    are defined on the _client_ and NOT the server.  It also means groups to which the user
+    belongs are passed in on the NFS commands from the client.  The file object GID is
+    checked against the passed in list of GIDs.  This is also where the 16 group
+    limitation is enforced.  The NFS protocol allows passing up to 16 groups per user.
+
+    If nfsd_manage_gids is enabled, the groups to which the user belong are defined
+    on the server.  In this condition, the server confirms the user is a member of
+    the file object GID.
+
+    NAS-126067:  Debian changed the 'default' setting to manage_gids in /etc/nfs.conf
+    from undefined to "manage_gids = y".
+
+    TEST:   Confirm manage_gids is set in /etc/nfs.conf.d/local/conf for
+            both the enable and disable states
+
+    TODO: Add client-side and server-side test from client when available
+    '''
+    with nfs_config():
+
+        if state is not None:
+            sleep(3)  # In Cobia: Prevent restarting NFS too quickly.
+            call("nfs.update", {"userd_manage_gids": state})
+
+        s = parse_server_config()
+        assert s['mountd']['manage-gids'] == expected, str(s)
+
+
+def test_70_stoping_nfs_service(request):
     # Restore original settings before we stop
     restore_nfs_config()
     payload = {"service": "nfs"}
@@ -1220,12 +1275,12 @@ def test_50_stoping_nfs_service(request):
     sleep(1)
 
 
-def test_51_checking_to_see_if_nfs_service_is_stop(request):
+def test_71_checking_to_see_if_nfs_service_is_stop(request):
     results = GET("/service?service=nfs")
     assert results.json()[0]["state"] == "STOPPED", results.text
 
 
-def test_52_check_adjusting_threadpool_mode(request):
+def test_72_check_adjusting_threadpool_mode(request):
     """
     Verify that NFS thread pool configuration can be adjusted
     through private API endpoints.
@@ -1245,39 +1300,23 @@ def test_52_check_adjusting_threadpool_mode(request):
         assert res['result'] == m, res
 
 
-def test_53_set_bind_ip():
-    '''
-    This test requires a static IP address
-    '''
-    res = GET("/nfs/bindip_choices")
-    assert res.status_code == 200, res.text
-    assert ip in res.json(), res.text
-
-    res = PUT("/nfs/", {"bindip": [ip]})
-    assert res.status_code == 200, res.text
-
-    # reset to default
-    res = PUT("/nfs/", {"bindip": []})
-    assert res.status_code == 200, res.text
-
-
-def test_54_disable_nfs_service_at_boot(request):
+def test_74_disable_nfs_service_at_boot(request):
     results = PUT("/service/id/nfs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_55_checking_nfs_disable_at_boot(request):
+def test_75_checking_nfs_disable_at_boot(request):
     results = GET("/service?service=nfs")
     assert results.json()[0]['enable'] is False, results.text
 
 
-def test_56_destroying_smb_dataset(request):
+def test_76_destroying_smb_dataset(request):
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.parametrize('exports', ['missing', 'empty'])
-def test_60_start_nfs_service_with_missing_or_empty_exports(request, exports):
+def test_80_start_nfs_service_with_missing_or_empty_exports(request, exports):
     '''
     NAS-123498: Eliminate conditions on exports for service start
     The goal is to make the NFS server behavior similar to the other protocols
@@ -1307,7 +1346,7 @@ def test_60_start_nfs_service_with_missing_or_empty_exports(request, exports):
 
 
 @pytest.mark.parametrize('expect_NFS_start', [False, True])
-def test_62_files_in_exportsd(request, expect_NFS_start):
+def test_82_files_in_exportsd(request, expect_NFS_start):
     '''
     Any files in /etc/exports.d are potentially dangerous, especially zfs.exports.
     We implemented protections against rogue exports files.
