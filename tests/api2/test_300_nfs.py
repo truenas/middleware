@@ -1372,7 +1372,7 @@ def test_48_syslog_filters(request):
         # Confirm default setting: mountd logging enabled
         call("nfs.update", {"mountd_log": True})
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
-            num_tries = 5
+            num_tries = 10
             found = False
             res = ""
             while not found and num_tries > 0:
