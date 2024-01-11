@@ -9,7 +9,7 @@ from middlewared.test.integration.assets.cloud_sync import local_ftp_credential,
 from middlewared.test.integration.assets.datastore import row
 from middlewared.test.integration.assets.keychain import ssh_keypair
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils import call, client, mock
 
 REDACTED = "********"
 
@@ -189,3 +189,21 @@ def test_fields_are_visible_for_api_key():
             result = c.call("user.get_instance", 1)
 
     assert result["unixhash"] != REDACTED
+
+
+def test_vm_display_device(readonly_client):
+    with mock("vm.device.query", return_value=[
+        {
+            "id": 1,
+            "dtype": "DISPLAY",
+            "vm": 1,
+            "attributes": {
+                "bind": "127.0.0.1",
+                "port": 1,
+                "web_port": 1,
+                "password": "pass",
+            }
+        }
+    ]):
+        result = readonly_client.call("vm.get_display_devices", 1)
+        assert result[0]["attributes"]["password"] == REDACTED

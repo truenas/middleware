@@ -2,6 +2,7 @@ import errno
 import pytest
 
 from middlewared.client import ClientException
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client
 
 
@@ -10,7 +11,7 @@ from middlewared.test.integration.assets.account import unprivileged_user_client
     ('vm.maximum_supported_vcpus', False),
     ('vm.get_display_devices', True),
     ('vm.get_display_web_uri', True),
-    ('vm.get_available_memory', True),
+    ('vm.get_available_memory', False),
     ('vm.bootloader_options', False),
 ])
 def test_vm_readonly_role(method, expected_error):
@@ -18,7 +19,7 @@ def test_vm_readonly_role(method, expected_error):
         if expected_error:
             with pytest.raises(Exception) as ve:
                 c.call(method)
-            assert ve.value.errno != errno.EACCES
+            assert isinstance(ve.value, ValidationErrors) or ve.value.errno != errno.EACCES
         else:
             assert c.call(method) is not None
 
@@ -26,6 +27,7 @@ def test_vm_readonly_role(method, expected_error):
 @pytest.mark.parametrize('role, method, valid_role', [
     ('VM_READ', 'vm.supports_virtualization', True),
     ('VM_WRITE', 'vm.supports_virtualization', True),
+    ('VM_READ', 'vm.guest_architecture_and_machine_choices', True),
     ('VM_READ', 'vm.virtualization_details', True),
     ('VM_WRITE', 'vm.virtualization_details', True),
     ('VM_READ', 'vm.maximum_supported_vcpus', True),
@@ -35,7 +37,6 @@ def test_vm_readonly_role(method, expected_error):
     ('VM_READ', 'vm.cpu_model_choices', True),
     ('VM_WRITE', 'vm.cpu_model_choices', True),
     ('VM_READ', 'vm.port_wizard', True),
-    ('VM_READ', 'vm.get_display_devices', True),
     ('VM_READ', 'vm.bootloader_options', True),
 ])
 def test_vm_read_write_roles(role, method, valid_role):
@@ -50,7 +51,6 @@ def test_vm_read_write_roles(role, method, valid_role):
 
 
 @pytest.mark.parametrize('role, method, valid_role', [
-    ('VM_READ', 'vm.guest_architecture_and_machine_choices', True),
     ('VM_WRITE', 'vm.clone', True),
     ('VM_READ', 'vm.get_memory_usage', True),
     ('VM_WRITE', 'vm.get_memory_usage', True),
@@ -65,6 +65,7 @@ def test_vm_read_write_roles(role, method, valid_role):
     ('VM_READ', 'vm.resume', False),
     ('VM_WRITE', 'vm.resume', True),
     ('VM_READ', 'vm.get_vm_memory_info', True),
+    ('VM_READ', 'vm.get_display_devices', True),
     ('VM_READ', 'vm.status', True),
     ('VM_READ', 'vm.log_file_path', True),
 ])
@@ -73,7 +74,7 @@ def test_vm_read_write_roles_requiring_virtualization(role, method, valid_role):
         if valid_role:
             with pytest.raises(Exception) as ve:
                 c.call(method)
-            assert ve.value.errno != errno.EACCES
+            assert isinstance(ve.value, (ValidationErrors, IndexError)) or ve.value.errno != errno.EACCES
         else:
             with pytest.raises(ClientException) as ve:
                 c.call(method)
@@ -107,7 +108,7 @@ def test_vm_device_read_write_roles_requiring_virtualization(role, method, valid
         if valid_role:
             with pytest.raises(Exception) as ve:
                 c.call(method)
-            assert ve.value.errno != errno.EACCES
+            assert isinstance(ve.value, ValidationErrors) or ve.value.errno != errno.EACCES
         else:
             with pytest.raises(ClientException) as ve:
                 c.call(method)
