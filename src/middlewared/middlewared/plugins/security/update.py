@@ -1,7 +1,7 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
-from middlewared.service import ConfigService, private, ValidationError
+from middlewared.service import ConfigService, ValidationError
 
 
 class SystemSecurityModel(sa.Model):
@@ -63,8 +63,3 @@ class SystemSecurityService(ConfigService):
             await self.middleware.call('etc.generate', 'fips')
 
         return await self.config()
-
-    @private
-    def fips_enabled(self):
-        # TODO: remove this method from this CRUD file
-        return self.middleware.call_sync('system.security.info.fips_enabled')
