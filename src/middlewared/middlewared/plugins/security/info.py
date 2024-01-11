@@ -19,6 +19,9 @@ class SystemSecurityInfoService(Service):
         mode made be toggled on this system"""
         # being able to toggle fips mode is hinged on whether
         # or not this is an iX licensed piece of hardware
+        # we also (at time of writing) don't put a specific
+        # feature flag in the license so we don't need to decode
+        # it, just need to check its existence
         return os.path.exists(LICENSE_FILE)
 
     @accepts(roles=['READONLY'])
