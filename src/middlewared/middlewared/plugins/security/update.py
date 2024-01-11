@@ -1,9 +1,7 @@
-import subprocess
-
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
-from middlewared.service import CallError, ConfigService, private, ValidationErrors
+from middlewared.service import ConfigService, private, ValidationError
 
 
 class SystemSecurityModel(sa.Model):
@@ -39,23 +37,18 @@ class SystemSecurityService(ConfigService):
 
         `enable_fips` when set, enables FIPS mode.
         """
-        old = await self.config()
-        new = old.copy()
-        new.update(data)
-
-        if new == old:
-            return new
-
-        verrors = ValidationErrors()
-
-        if new['enable_fips'] and not await self.middleware.call('system.license'):
-            verrors.add(
+        if not await self.middleware.call('system.security.info.fips_available'):
+            raise ValidationError(
                 'system_security_update.enable_fips',
                 'This feature can only be enabled on licensed iX enterprise systems. '
                 'Please contact iX sales for more information.'
             )
 
-        verrors.check()
+        old = await self.config()
+        new = old.copy()
+        new.update(data)
+        if new == old:
+            return new
 
         await self.middleware.call(
             'datastore.update',
@@ -73,8 +66,5 @@ class SystemSecurityService(ConfigService):
 
     @private
     def fips_enabled(self):
-        cp = subprocess.run(['openssl', 'list', '-providers'], capture_output=True)
-        if cp.returncode:
-            raise CallError(f'Failed to determine if fips is enabled: {cp.stderr.decode()}')
-
-        return b'OpenSSL FIPS Provider' in cp.stdout
+        # TODO: remove this method from this CRUD file
+        return self.middleware.call_sync('system.security.info.fips_enabled')
