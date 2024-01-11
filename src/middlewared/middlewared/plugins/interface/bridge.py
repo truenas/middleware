@@ -52,6 +52,7 @@ class InterfaceService(Service):
 
         for member in db_members:
             parent_interfaces.append(member)
+            iface.disable_learning(member)
 
         if iface.stp != bridge['stp']:
             verb = 'off' if not bridge['stp'] else 'on'
