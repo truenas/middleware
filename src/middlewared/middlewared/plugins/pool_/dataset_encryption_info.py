@@ -32,7 +32,6 @@ class PoolDatasetService(Service):
                 await self.middleware.call('cache.put', 'zfs_locked_datasets', locked_datasets, 20)
             return locked_datasets
 
-
     @accepts(
         Str('id'),
         Dict(
@@ -304,7 +303,7 @@ class PoolDatasetService(Service):
             )
         ))
 
-    @accepts(Str('id'))
+    @accepts(Str('id'), roles=['DATASET_WRITE', 'REPLICATION_TASK_WRITE'])
     @returns()
     @job(lock='dataset_export_keys', pipes=['output'])
     def export_keys(self, job, id_):
@@ -322,7 +321,7 @@ class PoolDatasetService(Service):
         with BytesIO(json.dumps(datasets).encode()) as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
-    @accepts(Int('id'))
+    @accepts(Int('id'), roles=['DATASET_WRITE', 'REPLICATION_TASK_WRITE'])
     @returns()
     @job(pipes=['output'])
     def export_keys_for_replication(self, job, task_id):
