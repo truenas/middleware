@@ -24,6 +24,8 @@ from middlewared.service import accepts, job, private, SharingService
 from middlewared.service import ConfigService, ValidationErrors, filterable
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
+from middlewared.plugins.tdb.utils import TDBError
+from middlewared.plugins.idmap_.utils import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, osc, Popen, run, MIDDLEWARE_RUN_DIR
 from middlewared.utils.osc import getmnttree
@@ -836,7 +838,7 @@ class SMBService(ConfigService):
             new_sid = await self.middleware.call("smb.get_system_sid")
             await self.middleware.call("smb.set_database_sid", new_sid)
             new_config["cifs_SID"] = new_sid
-            await self.middleware.call('idmap.flush_gencache')
+            await self.middleware.call('idmap.gencache.flush')
             await self.middleware.call("smb.synchronize_group_mappings")
             srv = (await self.middleware.call("network.configuration.config"))["service_announcement"]
             await self.middleware.call("network.configuration.toggle_announcement", srv)
@@ -1190,6 +1192,10 @@ class SharingSMBService(SharingService):
             await self.toggle_share(share_name, False)
             try:
                 await self.middleware.call('smb.sharesec.remove', share_name)
+            except RuntimeError as e:
+                # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
+                if e.args[0] != TDBError.NOEXIST:
+                    self.logger.warning('%s: Failed to remove share ACL', share_name, exc_info=True)
             except Exception:
                 self.logger.debug('Failed to delete share ACL for [%s].', share_name, exc_info=True)
 
@@ -1726,6 +1732,9 @@ class SharingSMBService(SharingService):
         verrors = ValidationErrors()
 
         normalized_acl = []
+        idmaps = await self.middleware.call('idmap.convert_unixids', [
+            entry['ae_who_id'] for entry in data['share_acl'] if entry.get('ae_who_id')
+        ])
         for idx, entry in enumerate(data['share_acl']):
             sid = None
 
@@ -1743,15 +1752,30 @@ class SharingSMBService(SharingService):
                 continue
 
             if normalized_entry['ae_who_sid']:
-                normalized_acl.append(normalized_entry)
+                if normalized_entry['ae_who_sid'].startswith((SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX)):
+                    verrors.add(
+                        f'sharing_smb_setacl.share_acl.{idx}.sid',
+                        'SID entries for SMB Share ACLs may not be specially-encoded Unix User IDs or Groups.'
+                    )
+                else:
+                    normalized_acl.append(normalized_entry)
                 continue
 
-            if not (sid := await self.middleware.call('idmap.unixid_to_sid', entry['ae_who_id'])):
+            idmap_entry = idmaps['mapped'].get(f'{IDType[entry["ae_who_id"]["id_type"]].wbc_str()}:{entry["ae_who_id"]["id"]}')
+            if not idmap_entry:
                 verrors.add(
                     f'sharing_smb_setacl.share_acl.{idx}.ae_who_id',
-                    'User or group does not exist.'
+                    'User or group does must exist and be an SMB account.'
                 )
                 continue
+
+            sid = idmap_entry['sid']
+            if sid.startswith((SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX)):
+                verrors.add(
+                    f'sharing_smb_setacl.share_acl.{idx}.ae_who_id',
+                    'User or group must be explicitly configured as an SMB '
+                    'account in order to be used in an SMB share ACL.'
+                )
 
             normalized_entry['ae_who_sid'] = sid
             normalized_acl.append(normalized_entry)
@@ -1773,7 +1797,12 @@ class SharingSMBService(SharingService):
 
         verrors.check()
         if not normalized_acl:
-            await self.middleware.call('smb.sharesec.remove', data['share_name'])
+            try:
+                await self.middleware.call('smb.sharesec.remove', data['share_name'])
+            except RuntimeError as e:
+                # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
+                if e.args[0] != TDBError.NOEXIST:
+                    raise
         else:
             await self.middleware.call('smb.sharesec.setacl', {
                 'share_name': data['share_name'],
@@ -1829,14 +1858,14 @@ class SharingSMBService(SharingService):
                 continue
 
             entry['ae_who_id'] = {
-                'id_type': unix_entry['type'],
+                'id_type': unix_entry['id_type'],
                 'id': unix_entry['id']
             }
 
             entry['ae_who_str'] = await self.middleware.call(
                 'idmap.id_to_name',
                 unix_entry['id'],
-                unix_entry['type']
+                unix_entry['id_type']
             )
 
         return acl

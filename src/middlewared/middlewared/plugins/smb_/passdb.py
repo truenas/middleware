@@ -1,5 +1,5 @@
 from middlewared.service import filterable, Service, job, private
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import Popen, run, filter_list
 from middlewared.plugins.smb import SMBCmd, SMBPath
 
@@ -120,6 +120,16 @@ class SMBService(Service):
                 disableacct = await run([SMBCmd.SMBPASSWD.value, '-d', username], check=False)
                 if disableacct.returncode != 0:
                     raise CallError(f'Failed to disable {username}: {disableacct.stderr.decode()}')
+
+            # Remove any potential negative cache entries
+            try:
+                await self.middleware.call('idmap.gencache.del_idmap_cache_entry', {
+                    'entry_type': 'UID2SID',
+                    'entry': user['uid']
+                })
+            except MatchNotFound:
+                pass
+
             return
 
         """

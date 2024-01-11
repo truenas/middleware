@@ -198,6 +198,20 @@ class TDBService(Service, TDBMixin, SchemaMixin):
             self._wipe(tdb_handle)
 
     @accepts(Dict(
+        'tdb-flush',
+        Str('name', required=True),
+        Ref('tdb-options'),
+    ))
+    def flush(self, data):
+        def remove_entries(tdb_key, tdb_data, state):
+            self._rem(tdb_handle, tdb_key)
+            return True
+
+        with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
+            if not self._traverse(tdb_handle, remove_entries, {}):
+                self._wipe(tdb_handle)
+
+    @accepts(Dict(
         'tdb-config-config',
         Str('name', required=True),
         Ref('tdb-options'),

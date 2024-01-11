@@ -210,13 +210,18 @@ class ACLTemplateService(CRUDService):
             return
 
         # If user has explicitly chosen to not include local builtin_users, don't add domain variant
+        domain_users_sid = domain_info['sid'] + '-513'
+        domain_admins_sid = domain_info['sid'] + '-512'
+        idmaps = await self.middleware.call('idmap.convert_sids', [
+            domain_users_sid, domain_admins_sid
+        ])
         has_bu = bool([x['id'] for x in data['acl'] if x['id'] == bu_id])
         if has_bu:
-            du = await self.middleware.call('idmap.sid_to_unixid', domain_info['sid'] + '-513')
+            du = idmaps['mapped'][domain_users_sid]
         else:
             du = {'id': -1}
 
-        da = await self.middleware.call('idmap.sid_to_unixid', domain_info['sid'] + '-512')
+        da = idmaps['mapped'][domain_admins_sid]
         if du is None:
             self.logger.warning(
                 "Failed to resolve the Domain Users group to a Unix ID. This most likely "

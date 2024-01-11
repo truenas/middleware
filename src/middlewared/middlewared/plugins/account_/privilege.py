@@ -1,5 +1,6 @@
 import enum
 import errno
+import wbclient
 
 from middlewared.plugins.account import unixhash_is_valid
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, SID, Str, Patch
@@ -242,13 +243,23 @@ class PrivilegeService(CRUDService):
         will not be available is if this is not active directory.
         """
         result = []
+
+        if (sids_to_check := [entry for entry in ds_groups if wbclient.sid_is_valid(entry)]):
+            try:
+                mapped_sids = (await self.middleware.call('idmap.convert_sids', sids_to_check))['mapped']
+            except Exception:
+                self.logger.warning('Failed to generate privileges for domain groups', exc_info=True)
+                return result
+        else:
+            mapped_sids = {}
+
         for xid in ds_groups:
             if isinstance(xid, int):
                 if (group := groups['by_gid'].get(xid)) is None:
                     gid = xid
             else:
                 if (group := groups['by_sid'].get(xid)) is None:
-                    unixid = await self.middleware.call('idmap.sid_to_unixid', xid)
+                    unixid = mapped_sids.get(xid)
                     if unixid is None or unixid['id_type'] == 'USER':
                         gid = -1
                     else:

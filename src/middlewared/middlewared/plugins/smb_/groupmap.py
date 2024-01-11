@@ -496,6 +496,7 @@ class SMBService(Service):
                 'name': f'{SMBPath.CACHE_DIR.platform()}/winbindd_cache.tdb',
                 'tdb-options': {'data_type': 'STRING', 'backend': 'CUSTOM'}
             })
-            flush = await run([SMBCmd.NET.value, 'cache', 'flush'], check=False)
-            if flush.returncode != 0:
-                self.logger.debug('Attempt to flush cache failed: %s', flush.stderr.decode().strip())
+            try:
+                await self.middleware.call('idmap.gencache.flush')
+            except Exception:
+                self.logger.warning('Failed to flush caches after groupmap changes.', exc_info=True)

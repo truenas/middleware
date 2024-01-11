@@ -2,6 +2,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, 
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, no_auth_required, no_authz_required, pass_app, private, filterable, job
 )
+from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.utils.privilege import (
@@ -978,7 +979,13 @@ class UserService(CRUDService):
         self.middleware.call_sync('datastore.delete', 'account.bsdusers', pk)
         self.middleware.call_sync('service.reload', 'ssh')
         self.middleware.call_sync('service.reload', 'user')
-        self.middleware.call_sync('idmap.flush_gencache')
+        try:
+            self.middleware.call_sync('idmap.gencache.del_idmap_cache_entry', {
+                'entry_type': 'UID2SID',
+                'entry': user['uid']
+            })
+        except MatchNotFound:
+            pass
 
         return pk
 
@@ -1919,7 +1926,13 @@ class GroupService(CRUDService):
             await gm_job.wait()
 
         await self.middleware.call('service.reload', 'user')
-        await self.middleware.call('idmap.flush_gencache')
+        try:
+            await self.middleware.call('idmap.gencache.del_idmap_cache_entry', {
+                'entry_type': 'GID2SID',
+                'entry': group['gid']
+            })
+        except MatchNotFound:
+            pass
 
         return pk
 

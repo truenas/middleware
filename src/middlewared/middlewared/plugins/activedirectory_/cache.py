@@ -1,7 +1,12 @@
 import grp
 import pwd
 
-from middlewared.plugins.idmap_.utils import WBClient
+from middlewared.plugins.idmap_.utils import (
+    IDType,
+    SID_LOCAL_USER_PREFIX,
+    SID_LOCAL_GROUP_PREFIX,
+    WBClient,
+)
 from middlewared.service import Service, private, job
 from middlewared.service_exception import CallError
 from time import sleep
@@ -31,7 +36,7 @@ class ActiveDirectoryService(Service):
             entries = WBClient().groups()
 
         for i in entries:
-            entry = {"id": -1, "sid": None, "nss": None}
+            entry = {"id": -1, "sid": None, "nss": None, "id_type": entry_type}
             if entry_type == 'USER':
                 try:
                     entry["nss"] = pwd.getpwnam(i)
@@ -46,18 +51,31 @@ class ActiveDirectoryService(Service):
                     continue
                 entry["id"] = entry["nss"].gr_gid
 
-            entry['sid'] = self.middleware.call_sync('idmap.unixid_to_sid', {
-                'id_type': entry_type,
-                'id': entry['id'],
-            })
+            ret.append(entry)
 
-            if entry['sid'].startswith('S-1-22'):
-                self.logger.warning('%s [%s] collides with local user or group. '
-                                    'Omitting from cache', entry_type, i)
+        idmaps = self.middleware.call_sync('idmap.convert_unixids', ret)
+        to_remove = []
+
+        for idx, entry in enumerate(ret):
+            unixkey = f'{IDType[entry["id_type"]].wbc_str()}:{entry["id"]}'
+            if unixkey not in idmaps['mapped']:
+                self.logger.warning('%s: failed to lookup SID', unixkey)
+                to_remove.append(idx)
                 continue
 
+            sid = idmaps['mapped'][unixkey]['sid']
+            if sid.startswith((SID_LOCAL_GROUP_PREFIX, SID_LOCAL_USER_PREFIX)):
+                self.logger.warning('%s [%d] collides with local user or group. '
+                                    'Omitting from cache', entry['id_type'], entry['id'])
+                to_remove.append(idx)
+                continue
+
+            entry['sid'] = sid
             entry['domain_info'] = dom_by_sid[entry['sid'].rsplit('-', 1)[0]]
-            ret.append(entry)
+
+        to_remove.reverse()
+        for idx in to_remove:
+            ret.pop(idx)
 
         return ret
 

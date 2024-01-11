@@ -589,12 +589,12 @@ class ActiveDirectoryService(ConfigService):
                 try:
                     await self.middleware.call(
                         'network.configuration.update',
-                        {'domain': ret['domainname']}
+                        {'domain': new['domainname']}
                     )
                 except CallError:
                     self.logger.warning(
                         'Failed to update domain name in network configuration '
-                        'to match active directory value of %s', ret['domainname'], exc_info=True
+                        'to match active directory value of %s', new['domainname'], exc_info=True
                     )
 
             if not await self.middleware.call('kerberos._klist_test'):
@@ -1125,9 +1125,7 @@ class ActiveDirectoryService(ConfigService):
     async def cache_flush_retry(self, cmd, retry=True):
         rv = await run(cmd, check=False)
         if rv.returncode != 0 and retry:
-            cache_flush = await run(['net', 'cache', 'flush'], check=False)
-            if cache_flush.returncode != 0:
-                raise CallError(f'Attempt to flush cache failed with error: {cache_flush.stderr.decode().strip()}')
+            await self.middleware.call('idmap.gencache.flush')
             return await self.cache_flush_retry(cmd, False)
 
         return rv
@@ -1232,9 +1230,10 @@ class ActiveDirectoryService(ConfigService):
         await self.set_state(DSStatus['DISABLED'].name)
 
         job.set_progress(40, 'Flushing caches.')
-        flush = await run([SMBCmd.NET.value, "cache", "flush"], check=False)
-        if flush.returncode != 0:
-            self.logger.warning("Failed to flush samba's general cache after leaving Active Directory.")
+        try:
+            await self.middleware.call('idmap.gencache.flush')
+        except Exception:
+            self.logger.warning("Failed to flush cache after leaving Active Directory.", exc_info=True)
 
         with contextlib.suppress(FileNotFoundError):
             os.unlink('/etc/krb5.keytab')
