@@ -14,4 +14,4 @@ def test_fips(flag):
         pytest.skip('FIPS test can only be run on licensed hardware')
 
     call('system.security.update', {'enable_fips': flag})
-    assert call('system.security.fips_enabled') is flag
+    assert call('system.security.info.fips_enabled') is flag

@@ -292,12 +292,18 @@ class SystemAdvancedService(ConfigService):
 
         return await self.config()
 
+    @accepts(roles=['READONLY'])
+    @returns(Bool('sed_global_password_is_set'))
+    async def sed_global_password_is_set(self):
+        """Returns a boolean identifying whether or not a global
+        SED password has been set"""
+        return bool(await self.sed_global_password())
+
     @accepts()
     @returns(Password('sed_global_password'))
     async def sed_global_password(self):
-        """
-        Returns configured global SED password.
-        """
+        """Returns configured global SED password in clear-text if one
+        is configured, otherwise an empty string"""
         passwd = (await self.middleware.call(
             'datastore.config', 'system.advanced', {'prefix': self._config.datastore_prefix}
         ))['sed_passwd']
