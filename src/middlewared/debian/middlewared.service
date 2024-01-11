@@ -13,6 +13,7 @@ Type=notify
 ExecStart=/usr/bin/middlewared --log-handler=file
 TimeoutStartSec=240
 Restart=always
+Environment="REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt"
 # SIGTERM will only happen if systemd kills process that timed out booting (it is the only case in which we don't
 # want to restart middleware infinitely as it will cause boot process to hang).
 # If user accidentally (or intentionally) kills middleware with SIGTERM, we'll see successful exit because we catch
