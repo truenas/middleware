@@ -1,9 +1,7 @@
-import os
 from subprocess import run
 
 from middlewared.schema import accepts, returns, Bool
 from middlewared.service import CallError, Service
-from middlewared.plugins.system.product import LICENSE_FILE
 
 
 class SystemSecurityInfoService(Service):
@@ -19,10 +17,7 @@ class SystemSecurityInfoService(Service):
         mode made be toggled on this system"""
         # being able to toggle fips mode is hinged on whether
         # or not this is an iX licensed piece of hardware
-        # we also (at time of writing) don't put a specific
-        # feature flag in the license so we don't need to decode
-        # it, just need to check its existence
-        return os.path.exists(LICENSE_FILE)
+        return bool(self.middleware.call_sync('system.license'))
 
     @accepts(roles=['READONLY'])
     @returns(Bool('fips_available'))
