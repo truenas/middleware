@@ -1189,7 +1189,7 @@ class SharingSMBService(SharingService):
         if share_name in share_list:
             await self.toggle_share(share_name, False)
             try:
-                await self.middleware.call('smb.sharesec._delete', share_name)
+                await self.middleware.call('smb.sharesec.remove', share_name)
             except Exception:
                 self.logger.debug('Failed to delete share ACL for [%s].', share_name, exc_info=True)
 
@@ -1773,7 +1773,7 @@ class SharingSMBService(SharingService):
 
         verrors.check()
         if not normalized_acl:
-            await self.middleware.call('smb.sharesec._delete', data['share_name'])
+            await self.middleware.call('smb.sharesec.remove', data['share_name'])
         else:
             await self.middleware.call('smb.sharesec.setacl', {
                 'share_name': data['share_name'],
@@ -1803,9 +1803,7 @@ class SharingSMBService(SharingService):
 
         verrors.check()
 
-        acl = await self.middleware.call(
-            'smb.sharesec.getacl', data['share_name'], {'resolve_sids': False}
-        )
+        acl = await self.middleware.call('smb.sharesec.getacl', data['share_name'])
         sids = set([x['ae_who_sid'] for x in acl['share_acl'] if x['ae_who_sid'] != 'S-1-1-0'])
         if sids:
             try:
