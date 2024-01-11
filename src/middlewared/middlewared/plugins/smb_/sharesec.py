@@ -86,7 +86,7 @@ class ShareSec(CRUDService):
         val = await self.fetch(src)
         await self.store(dst, val)
 
-    async def parse_share_sd(self, sd, options=None):
+    async def parse_share_sd(self, sd):
         """
         Parses security descriptor text returned from 'sharesec'.
         Optionally will resolve the SIDs in the SD to names.
@@ -96,8 +96,6 @@ class ShareSec(CRUDService):
         if len(sd) == 0:
             return {}
         parsed_share_sd = {'share_name': None, 'share_acl': []}
-        if options is None:
-            options = {'resolve_sids': True}
 
         sd_lines = sd.splitlines()
         # Share name is always enclosed in brackets. Remove them.
@@ -105,37 +103,13 @@ class ShareSec(CRUDService):
 
         # ACL entries begin at line 5 in the Security Descriptor
         for i in sd_lines[5:]:
-            acl_entry = {}
             m = RE_SHAREACLENTRY.match(i)
             if m is None:
-                self.logger.debug(f'{i} did not match regex')
+                self.logger.warning('%s: share contains unparseable entry: %s',
+                                    parsed_sd['share_name'], i)
                 continue
 
-            acl_entry.update(m.groupdict())
-            if wb_is_running and (options.get('resolve_sids', True)) is True:
-                try:
-                    who = await self.middleware.call('idmap.sid_to_name', acl_entry['ae_who_sid'])
-                    if '\\' in who['name']:
-                        domain, name = who['name'].split('\\')
-                    else:
-                        domain = who['name']
-                        name = None
-
-                    acl_entry['ae_who_name'] = {'domain': None, 'name': None, 'sidtype': SIDType.NONE}
-                    acl_entry['ae_who_name']['domain'] = domain
-                    acl_entry['ae_who_name']['name'] = name
-                    acl_entry['ae_who_name']['sidtype'] = SIDType(who['type']).name
-                except CallError as e:
-                    if e.errno == errno.ENOTCONN:
-                        wb_is_running = False
-
-                    self.logger.debug('%s: failed to resolve SID to name: %s', acl_entry['ae_who_sid'], e)
-
-                except MatchNotFound:
-                    self.logger.warning('Foreign SID: %r in share ACL that cannot be resolved to name.',
-                                        acl_entry['ae_who_sid'])
-
-            parsed_share_sd['share_acl'].append(acl_entry)
+            parsed_share_sd['share_acl'].append(m.groupdict())
 
         return parsed_share_sd
 
@@ -156,44 +130,8 @@ class ShareSec(CRUDService):
             raise CallError(f'sharesec {action} failed with error: {sharesec.stderr.decode()}')
         return sharesec.stdout.decode()
 
-    async def _delete(self, share):
-        """
-        Delete stored SD for share. This should be performed when share is
-        deleted.
-        If share_info.tdb lacks an entry for the share, sharesec --delete
-        will return -1 and NT_STATUS_NOT_FOUND. In this case, exception should not
-        be raised.
-        """
-        try:
-            await self._sharesec(action='--delete', share=share)
-        except Exception as e:
-            if 'NT_STATUS_NOT_FOUND' not in str(e):
-                raise CallError(e)
-
-    async def _view_all(self, options=None):
-        """
-        Return Security Descriptor for all shares.
-        """
-        share_sd_list = []
-        idx = 1
-        share_entries = (await self._sharesec(action='--view-all')).split('\n\n')
-        for share in share_entries:
-            parsed_sd = await self.parse_share_sd(share, options)
-            if parsed_sd:
-                parsed_sd.update({'id': idx})
-                idx = idx + 1
-                share_sd_list.append(parsed_sd)
-
-        return share_sd_list
-
-    @accepts(
-        Str('share_name'),
-        Dict(
-            'options',
-            Bool('resolve_sids', default=True)
-        )
-    )
-    async def getacl(self, share_name, options):
+    @accepts(Str('share_name'))
+    async def getacl(self, share_name):
         """
         View the ACL information for `share_name`. The share ACL is distinct from filesystem
         ACLs which can be viewed by calling `filesystem.getacl`. `ae_who_name` will appear
@@ -217,7 +155,7 @@ class ShareSec(CRUDService):
 
         sharesec = await self._sharesec(action='--view', share=share_name)
         share_sd = f'[{share_name.upper()}]\n{sharesec}'
-        return await self.parse_share_sd(share_sd, options)
+        return await self.parse_share_sd(share_sd)
 
     async def _ae_to_string(self, ae):
         """
@@ -341,124 +279,3 @@ class ShareSec(CRUDService):
                     s['id'],
                     {'cifs_share_acl': share_acl[0]['val']}
                 )
-
-    @filterable
-    async def query(self, filters, options):
-        """
-        Use query-filters to search the SMB share ACLs present on server.
-        """
-        share_acls = await self._view_all({'resolve_sids': True})
-        return filter_list(share_acls, filters, options)
-
-    @accepts(Dict(
-        'smbsharesec_create',
-        Str('share_name', required=True),
-        List(
-            'share_acl',
-            items=[
-                Dict(
-                    'aclentry',
-                    SID('ae_who_sid', default=None),
-                    Dict(
-                        'ae_who_name',
-                        Str('domain', default=''),
-                        Str('name', default=''),
-                        default=None
-                    ),
-                    Str('ae_perm', enum=['FULL', 'CHANGE', 'READ']),
-                    Str('ae_type', enum=['ALLOWED', 'DENIED'])
-                )
-            ],
-            default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}])
-    ))
-    async def do_create(self, data):
-        """
-        Update the ACL on a given SMB share. Will write changes to both
-        /var/db/system/samba4/share_info.tdb and the configuration file.
-        Since an SMB share will _always_ have an ACL present, there is little
-        distinction between the `create` and `update` methods apart from arguments.
-
-        `share_name` - name of SMB share.
-
-        `share_acl` a list of ACL entries (dictionaries) with the following keys:
-
-        `ae_who_sid` who the ACL entry applies to expressed as a Windows SID
-
-        `ae_who_name` who the ACL entry applies to expressed as a name. `ae_who_name` is
-        a dictionary containing the following keys: `domain` that the user is a member of,
-        `name` username in the domain. The domain for local users is the netbios name of
-        the FreeNAS server.
-
-        `ae_perm` string representation of the permissions granted to the user or group.
-        `FULL` grants read, write, execute, delete, write acl, and change owner.
-        `CHANGE` grants read, write, execute, and delete.
-        `READ` grants read and execute.
-
-        `ae_type` can be ALLOWED or DENIED.
-        """
-        await self.setacl(data)
-
-    @accepts(
-        Int('id', required=True),
-        Dict(
-            'smbsharesec_update',
-            List(
-                'share_acl',
-                items=[
-                    Dict(
-                        'aclentry',
-                        SID('ae_who_sid', default=None),
-                        Dict(
-                            'ae_who_name',
-                            Str('domain', default=''),
-                            Str('name', default=''),
-                            default=None
-                        ),
-                        Str('ae_perm', enum=['FULL', 'CHANGE', 'READ']),
-                        Str('ae_type', enum=['ALLOWED', 'DENIED']))
-                ],
-                default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}]
-            )
-        )
-    )
-    async def do_update(self, id_, data):
-        """
-        Update the ACL on the share specified by the numerical index `id`. Will write changes
-        to both /var/db/system/samba4/share_info.tdb and the configuration file.
-        """
-        old_acl = await self.get_instance(id_)
-        await self.setacl({"share_name": old_acl["share_name"], "share_acl": data["share_acl"]})
-        return await self.getacl(old_acl["share_name"])
-
-    @accepts(Str('id_or_name', required=True))
-    async def do_delete(self, id_or_name):
-        """
-        Replace share ACL for the specified SMB share with the samba default ACL of S-1-1-0/FULL
-        (Everyone - Full Control). In this case, access will be fully determined
-        by the underlying filesystem ACLs and smb4.conf parameters governing access control
-        and permissions.
-        Share can be deleted by name or numerical by numerical index.
-        """
-        new_acl = {'share_acl': [
-            {'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}
-        ]}
-        if not id_or_name.isdigit():
-            old_acl = await self.getacl(id_or_name)
-            new_acl.update({'share_name': id_or_name})
-        else:
-            old_acl = await self.get_instance(int(id_or_name))
-            new_acl.update({'share_name': old_acl['share_name']})
-
-        await self.setacl(new_acl)
-
-        try:
-            # remove in-tdb backup of this ACL
-            await self.middleware.call('tdb.fetch', {
-                'name': f'{SYSDATASET_PATH}/samba4/share_info.tdb',
-                'key': f'SECDESC/#{new_acl["share_name"]}',
-                'tdb-options': self.tdb_options
-            })
-        except MatchNotFound:
-            pass
-
-        return old_acl
