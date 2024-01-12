@@ -169,20 +169,19 @@ class SupportService(ConfigService):
 
         return data
 
-    @accepts(Password('token'), Str('query'), roles=['SUPPORT_READ'])
+    @accepts(Str('query'), roles=['SUPPORT_READ'])
     @returns(List('similar_issues', items=[Dict(
         'similar_issue',
         Str('url'),
         Str('summary'),
         additional_attrs=True,
     )]))
-    async def similar_issues(self, token, query):
+    async def similar_issues(self, query):
         await self.middleware.call('network.general.will_perform_activity', 'support')
 
         data = await post(
             f'https://{ADDRESS}/freenas/api/v1.0/similar_issues',
             data=json.dumps({
-                'token': token,
                 'query': query,
             }),
         )
