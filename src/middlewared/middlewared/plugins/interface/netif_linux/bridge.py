@@ -18,8 +18,8 @@ class BridgeMixin:
     def add_member(self, name):
         run(["ip", "link", "set", name, "master", self.name])
 
-    def disable_learning(self, name):
-        run(["bridge", "link", "set", "dev", name, "learning", "off"])
+    def set_learning(self, name, enable):
+        run(["bridge", "link", "set", "dev", name, "learning", "on" if enable else "off"])
 
     def delete_member(self, name):
         run(["ip", "link", "set", name, "nomaster"])
