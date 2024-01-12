@@ -166,6 +166,7 @@ async def zfs_events(middleware, data):
     ):
         pool_name = data.get('pool')
         pool_guid = data.get('guid')
+        await middleware.call('pool.reset_query_cache')
         if await middleware.call('system.ready'):
             # Swap must be configured only on disks being used by some pool,
             # for this reason we must react to certain types of ZFS events to keep
