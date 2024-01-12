@@ -23,6 +23,15 @@ class VolumeStatusAlertSource(AlertSource):
             return
 
         alerts = []
+        for pool in await self.middleware.call("boot.query_cached"):
+            if not pool["healthy"]:
+                alerts.append(Alert(
+                    BootPoolStatusAlertClass,
+                    {
+                        "status": pool["status"],
+                        "status_detail": pool["status_detail"],
+                    },
+                ))
         for pool in await self.middleware.call("pool.query_cached"):
             if not pool["healthy"] or (pool["warning"] and pool["status_code"] != "FEAT_DISABLED"):
                 bad_vdevs = []
