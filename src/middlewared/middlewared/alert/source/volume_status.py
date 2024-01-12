@@ -23,7 +23,7 @@ class VolumeStatusAlertSource(AlertSource):
             return
 
         alerts = []
-        for pool in await self.middleware.call("pool.query"):
+        for pool in await self.middleware.call("pool.query_cached"):
             if not pool["healthy"] or (pool["warning"] and pool["status_code"] != "FEAT_DISABLED"):
                 bad_vdevs = []
                 if pool["topology"]:
