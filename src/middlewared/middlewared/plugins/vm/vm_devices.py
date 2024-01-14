@@ -5,12 +5,12 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.vm.devices.storage_devices import IOTYPE_CHOICES
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, OROperator, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, private
 from middlewared.utils import run
 from middlewared.async_validators import check_path_resides_within_volume
 
-from .devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY, USB
+from .devices import DEVICES
 from .utils import ACTIVE_STATES
 
 
@@ -29,19 +29,11 @@ class VMDeviceModel(sa.Model):
 
 class VMDeviceService(CRUDService):
 
-    DEVICES = {
-        'CDROM': CDROM,
-        'RAW': RAW,
-        'DISK': DISK,
-        'NIC': NIC,
-        'PCI': PCI,
-        'DISPLAY': DISPLAY,
-        'USB': USB,
-    }
-
     ENTRY = Patch(
         'vmdevice_create', 'vm_device_entry',
         ('add', Int('id')),
+        ('rm', {'name': 'attributes'}),
+        ('add', OROperator(*[device.schema for device in DEVICES.values()], name='attributes')),
     )
 
     class Config:
@@ -296,7 +288,7 @@ class VMDeviceService(CRUDService):
     @private
     async def validate_device(self, device, old=None, update=True):
         vm_instance = await self.middleware.call('vm.get_instance', device['vm'])
-        device_obj = self.DEVICES[device['dtype']](device, self.middleware)
+        device_obj = DEVICES[device['dtype']](device, self.middleware)
         await self.middleware.run_in_thread(device_obj.validate, device, old, vm_instance, update)
 
         return device
