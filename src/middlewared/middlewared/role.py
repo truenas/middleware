@@ -166,18 +166,14 @@ class RoleManager:
         self.methods = {}
         self.allowlists_for_roles = defaultdict(list)
 
-    def register_method(self, method_name, roles):
+    def register_method(self, method_name, roles, *, exist_ok=False):
         if method_name in self.methods:
-            raise ValueError(f"Method {method_name!r} is already registered in this role manager")
-
-        self.methods[method_name] = []
-        self.add_roles(method_name, roles)
-
-    def safely_register_method(self, method_name, roles):
-        if method_name in self.methods:
-            self.add_roles(method_name, roles)
+            if not exist_ok:
+                raise ValueError(f"Method {method_name!r} is already registered in this role manager")
         else:
-            self.register_method(method_name, roles)
+            self.methods[method_name] = []
+
+        self.add_roles(method_name, roles)
 
     def add_roles(self, method_name, roles):
         if method_name not in self.methods:
