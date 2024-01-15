@@ -37,7 +37,7 @@ class VMService(Service):
 
         return memory_allocation
 
-    @accepts(Bool('overcommit', default=False))
+    @accepts(Bool('overcommit', default=False), roles=['READONLY', 'VM_READ'])
     @returns(Int('available_memory'))
     async def get_available_memory(self, overcommit):
         """
@@ -90,7 +90,7 @@ class VMService(Service):
 
         return max(0, total_free - vms_memory_used - swap_used)
 
-    @accepts(Int('vm_id'))
+    @accepts(Int('vm_id'), roles=['VM_READ'])
     @returns(Dict(
         Int('minimum_memory_requested', description='Minimum memory requested by the VM'),
         Int('total_memory_requested', description='Maximum / total memory requested by the VM'),

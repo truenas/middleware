@@ -12,7 +12,11 @@ class VMService(Service, VMSupervisorMixin):
             raise CallError('Requested action cannot be performed as system is not licensed to use VMs')
 
     @item_method
-    @accepts(Int('id'), Dict('options', Bool('overcommit', default=False)))
+    @accepts(
+        Int('id'),
+        Dict('options', Bool('overcommit', default=False)),
+        roles=['VM_WRITE']
+    )
     @returns()
     async def start(self, id_, options):
         """
@@ -67,6 +71,7 @@ class VMService(Service, VMSupervisorMixin):
             Bool('force', default=False),
             Bool('force_after_timeout', default=False),
         ),
+        roles=['VM_WRITE']
     )
     @returns()
     @job(lock=lambda args: f'stop_vm_{args[0]}')
@@ -93,7 +98,7 @@ class VMService(Service, VMSupervisorMixin):
             self._poweroff(vm_data['name'])
 
     @item_method
-    @accepts(Int('id'))
+    @accepts(Int('id'), roles=['VM_WRITE'])
     @returns()
     def poweroff(self, id_):
         """
@@ -105,7 +110,7 @@ class VMService(Service, VMSupervisorMixin):
         self._poweroff(vm_data['name'])
 
     @item_method
-    @accepts(Int('id'))
+    @accepts(Int('id'), roles=['VM_WRITE'])
     @returns()
     @job(lock=lambda args: f'restart_vm_{args[0]}')
     def restart(self, job, id_):
@@ -122,7 +127,7 @@ class VMService(Service, VMSupervisorMixin):
         self.middleware.call_sync('vm.start', id_, {'overcommit': True})
 
     @item_method
-    @accepts(Int('id'))
+    @accepts(Int('id'), roles=['VM_WRITE'])
     @returns()
     def suspend(self, id_):
         """
@@ -134,7 +139,7 @@ class VMService(Service, VMSupervisorMixin):
         self._suspend(vm['name'])
 
     @item_method
-    @accepts(Int('id'))
+    @accepts(Int('id'), roles=['VM_WRITE'])
     @returns()
     def resume(self, id_):
         """

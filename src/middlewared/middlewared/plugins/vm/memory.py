@@ -55,7 +55,7 @@ class VMService(Service, VMSupervisorMixin):
                     f'Not giving back memory to ARC because new arc_max ({new_arc_max}) <= arc_min ({arc_min})'
                 )
 
-    @accepts(Int('vm_id'))
+    @accepts(Int('vm_id'), roles=['VM_READ'])
     @returns(Int('memory_usage', description='Memory usage of a VM in bytes'))
     def get_memory_usage(self, vm_id):
         return self.get_memory_usage_internal(self.middleware.call_sync('vm.get_instance', vm_id))

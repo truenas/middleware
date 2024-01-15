@@ -71,6 +71,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         datastore_extend = 'vm.extend_vm'
         datastore_extend_context = 'vm.extend_context'
         cli_namespace = 'service.vm'
+        role_prefix = 'VM'
 
     ENTRY = Patch(
         'vm_create',
@@ -86,7 +87,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         ('add', Int('id')),
     )
 
-    @accepts()
+    @accepts(roles=['VM_READ'])
     @returns(Dict(additional_attrs=True))
     def bootloader_ovmf_choices(self):
         """
@@ -106,7 +107,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             'status': status,
         }
 
-    @accepts()
+    @accepts(roles=['READONLY', 'VM_READ'])
     @returns(Dict(
         *[Str(k, enum=[v]) for k, v in BOOT_LOADER_OPTIONS.items()],
     ))
@@ -443,7 +444,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             return result
 
     @item_method
-    @accepts(Int('id'))
+    @accepts(Int('id'), roles=['VM_READ'])
     @returns(Dict(
         'vm_status',
         Str('state', required=True),
@@ -477,7 +478,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             'domain_state': 'ERROR',
         }
 
-    @accepts(Int('id'))
+    @accepts(Int('id'), roles=['VM_READ'])
     @returns(Str(null=True))
     def log_file_path(self, vm_id):
         """

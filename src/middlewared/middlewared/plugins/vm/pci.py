@@ -21,7 +21,7 @@ class VMDeviceService(Service):
     class Config:
         namespace = 'vm.device'
 
-    @accepts()
+    @accepts(roles=['VM_DEVICE_READ'])
     @returns(Bool())
     def iommu_enabled(self):
         """Returns "true" if iommu is enabled, "false" otherwise"""
@@ -135,7 +135,7 @@ class VMDeviceService(Service):
             result[key] = self.get_pci_device_details(i, iommu_info)
         return result
 
-    @accepts(Str('device'))
+    @accepts(Str('device'), roles=['VM_DEVICE_READ'])
     @returns(Dict(
         'passthrough_device',
         Dict(
@@ -181,7 +181,7 @@ class VMDeviceService(Service):
                 'error': 'Device not found',
             }
 
-    @accepts()
+    @accepts(roles=['VM_DEVICE_READ'])
     @returns(List(items=[Ref('passthrough_device')], register=True))
     def passthrough_device_choices(self):
         """Available choices for PCI passthru devices"""

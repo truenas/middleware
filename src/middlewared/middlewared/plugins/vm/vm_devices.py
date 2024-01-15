@@ -49,6 +49,7 @@ class VMDeviceService(CRUDService):
         datastore = 'vm.device'
         datastore_extend = 'vm.device.extend_device'
         cli_namespace = 'service.vm.device'
+        role_prefix = 'VM_DEVICE'
 
     @accepts()
     @returns(Dict(additional_attrs=True, example={'vms/test 1': '/dev/zvol/vms/test+1'}))
@@ -93,7 +94,7 @@ class VMDeviceService(CRUDService):
                 device['order'] = 1002
         return device
 
-    @accepts()
+    @accepts(roles=['VM_DEVICE_READ'])
     @returns(Dict(additional_attrs=True))
     def nic_attach_choices(self):
         """
@@ -101,7 +102,7 @@ class VMDeviceService(CRUDService):
         """
         return self.middleware.call_sync('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})
 
-    @accepts()
+    @accepts(roles=['VM_DEVICE_READ'])
     @returns(Dict(additional_attrs=True))
     async def bind_choices(self):
         """

@@ -69,7 +69,11 @@ class VMService(Service):
         return clone_dst
 
     @item_method
-    @accepts(Int('id'), Str('name', default=None))
+    @accepts(
+        Int('id'),
+        Str('name', default=None),
+        roles=['VM_WRITE']
+    )
     @returns(Bool())
     async def clone(self, id_, name):
         """
