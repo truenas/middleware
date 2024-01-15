@@ -219,18 +219,6 @@ def test_fields_are_visible_for_api_key():
 
 
 def test_vm_display_device(readonly_client):
-    with mock("vm.device.query", return_value=[
-        {
-            "id": 1,
-            "dtype": "DISPLAY",
-            "vm": 1,
-            "attributes": {
-                "bind": "127.0.0.1",
-                "port": 1,
-                "web_port": 1,
-                "password": "pass",
-            }
-        }
-    ]):
-        result = readonly_client.call("vm.get_display_devices", 1)
+    with vm_device():
+        result = readonly_client.call("vm.get_display_devices", 5)
         assert result[0]["attributes"]["password"] == REDACTED
