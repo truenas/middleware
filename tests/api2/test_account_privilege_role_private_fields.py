@@ -97,6 +97,32 @@ def idmap():
 
 
 @contextlib.contextmanager
+def vm_device():
+    with row(
+        "vm.vm",
+        {
+            "id": 5,
+            "name": "",
+            "memory": 225
+        }):
+        with row(
+            "vm.device",
+            {
+                "id": 7,
+                "dtype": "DISPLAY",
+                "vm": 5,
+                "attributes": {
+                    "bind": "127.0.0.1",
+                    "port": 1,
+                    "web_port": 1,
+                    "password": "pass",
+                }
+            }
+        ) as id:
+            yield id
+
+
+@contextlib.contextmanager
 def iscsi_auth():
     auth = call("iscsi.auth.create", {
         "tag": 1,
@@ -140,6 +166,7 @@ def vmware():
     ("keychaincredential", keychaincredential, {}, ["attributes"]),
     ("user", 1, {}, ["unixhash", "smbhash"]),
     ("vmware", vmware, {}, ["password"]),
+    ("vm.device", vm_device, {}, ["attributes.password"]),
 ))
 def test_crud(readonly_client, how, service, id, options, redacted_fields):
     identifier = "id" if service != "disk" else "identifier"
