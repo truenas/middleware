@@ -804,19 +804,19 @@ def test_59_create_user_ro_dataset(request):
 
 @pytest.mark.parametrize('payload', [
     {'group': 1},
-    {'home': '/mnt/tank/foo', 'home_create': True},
+    {'home': '/mnt/tank', 'home_create': True},
     {'uid': 777777},
     {'smb': True},
     {'username': 'glusterd_bad'},
 ])
 def test_60_immutable_user_validation(payload, request):
     # Glusterd happens to be an immutable 
-    user_req = GET('/user?username=gluster')
-    assert user_req.status_code == 200, results.text
-    userid = user_req.json()[0]['id']
+    user_req = call('user.query', [['username', '=', 'news']], {'get': True})
 
-    results = PUT(f"/user/id/{user_id}", payload)
-    assert results.status_code == 422, results.text
+    with pytest.raises(ValidationErrors) as ve:
+        call('user.update', user_req['id'], payload)
+
+    assert ve.value.errors[0].errmsg == 'This attribute cannot be changed'
 
 
 @contextmanager
