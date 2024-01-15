@@ -1,8 +1,10 @@
 import contextlib
+import errno
 import time
 
+from middlewared.client import ValidationErrors
 from middlewared.service_exception import InstanceNotFound
-from middlewared.test.integration.utils import call, pool
+from middlewared.test.integration.utils import call, fail, pool
 
 
 mirror_topology = (2, lambda disks: {
@@ -40,13 +42,19 @@ def another_pool(data=None, topology=None):
     if len(unused) < topology[0]:
         raise RuntimeError(f"At least {topology[0]} unused disks required to test this pool topology")
 
-    pool = call("pool.create", {
-        "name": "test",
-        "encryption": False,
-        "allow_duplicate_serials": True,
-        "topology": topology[1]([d["devname"] for d in unused]),
-        **data,
-    }, job=True)
+    try:
+        pool = call("pool.create", {
+            "name": "test",
+            "encryption": False,
+            "allow_duplicate_serials": True,
+            "topology": topology[1]([d["devname"] for d in unused]),
+            **data,
+        }, job=True)
+    except ValidationErrors as e:
+        if any(error.attribute == "pool_create.name" and error.errcode == errno.EEXIST for error in e.errors):
+            fail("Previous `another_pool` fixture failed to teardown. Aborting tests.")
+
+        raise
 
     try:
         yield pool
