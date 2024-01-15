@@ -12,6 +12,7 @@ import os
 import psutil
 import re
 import secrets
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -43,7 +44,6 @@ logger = logging.getLogger(__name__)
 GELI_KEYPATH = '/data/geli'
 
 RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
-RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
 ZFS_CHECKSUM_CHOICES = [
     'ON', 'OFF', 'FLETCHER2', 'FLETCHER4', 'SHA256', 'SHA512', 'SKEIN',
 ]
@@ -4300,16 +4300,16 @@ class PoolScrubService(CRUDService):
         if pool['scan']['state'] == 'SCANNING':
             return False
 
-        history = (await run('zpool', 'history', name, encoding='utf-8')).stdout
-        for match in reversed(list(RE_HISTORY_ZPOOL_SCRUB.finditer(history))):
+        last_scrubs = (await run('sh', '-c', f'zpool history {shlex.quote(name)} | grep "zpool scrub"', encoding='utf-8')).stdout
+        for match in reversed(list(RE_HISTORY_ZPOOL_SCRUB.finditer(last_scrubs))):
             last_scrub = datetime.strptime(match.group(1), '%Y-%m-%d.%H:%M:%S')
             break
         else:
             # creation time of the pool if no scrub was done
-            for match in RE_HISTORY_ZPOOL_CREATE.finditer(history):
-                last_scrub = datetime.strptime(match.group(1), '%Y-%m-%d.%H:%M:%S')
-                break
-            else:
+            creation = (await run('zfs', 'get', '-Hpo', 'value', 'creation', name, encoding='utf-8')).stdout
+            try:
+                last_scrub = datetime.fromtimestamp(int(creation))
+            except ValueError:
                 logger.warning("Could not find last scrub of pool %r", name)
                 last_scrub = datetime.min
 
