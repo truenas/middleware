@@ -167,3 +167,16 @@ def test_foreign_job_access():
             sleep(2)
             result = unprivileged.call("core.get_jobs", [["id", "=", wait_job_id]], {"get": True})
             assert result["state"] == "SUCCESS"
+
+
+def test_can_not_subscribe_to_event():
+    with unprivileged_user_client() as unprivileged:
+        with pytest.raises(ValueError) as ve:
+            unprivileged.subscribe("alert.list", lambda *args, **kwargs: None)
+
+        assert ve.value.args[0]["errname"] == "EACCES"
+
+
+def test_can_subscribe_to_event():
+    with unprivileged_user_client(["READONLY"]) as unprivileged:
+        unprivileged.subscribe("alert.list", lambda *args, **kwargs: None)

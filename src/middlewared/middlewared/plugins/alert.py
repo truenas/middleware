@@ -1241,7 +1241,7 @@ async def _event_system(middleware, event_type, args):
 
 
 async def setup(middleware):
-    middleware.event_register("alert.list", "Sent on alert changes.")
+    middleware.event_register("alert.list", "Sent on alert changes.", roles=["ALERT_LIST_READ"])
 
     await middleware.call("alert.load")
     await middleware.call("alert.initialize")

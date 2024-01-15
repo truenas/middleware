@@ -127,6 +127,8 @@ ROLES = {
     'SNAPSHOT_TASK_READ': Role(),
     'SNAPSHOT_TASK_WRITE': Role(includes=['SNAPSHOT_TASK_READ']),
 
+    'POOL_SCRUB_READ': Role(),
+    'POOL_SCRUB_WRITE': Role(includes=['POOL_SCRUB_READ']),
     'DATASET_READ': Role(),
     'DATASET_WRITE': Role(includes=['DATASET_READ']),
     'DATASET_DELETE': Role(),
@@ -160,51 +162,38 @@ ROLES = {
 ROLES['READONLY'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
 
 
-class RoleManager:
-    def __init__(self, roles):
+class ResourceManager:
+    def __init__(self, resource_title, resource_method, roles):
+        self.resource_title = resource_title
+        self.resource_method = resource_method
         self.roles = roles
-        self.methods = {}
+        self.resources = {}
         self.allowlists_for_roles = defaultdict(list)
 
-    def register_method(self, method_name, roles, *, exist_ok=False):
-        if method_name in self.methods:
+    def register_resource(self, resource_name, roles, exist_ok):
+        if resource_name in self.resources:
             if not exist_ok:
-                raise ValueError(f"Method {method_name!r} is already registered in this role manager")
+                raise ValueError(f"{self.resource_title} {resource_name!r} is already registered in this role manager")
         else:
-            self.methods[method_name] = []
+            self.resources[resource_name] = []
 
-        self.add_roles(method_name, roles)
+        self.add_roles_to_resource(resource_name, roles)
 
-    def add_roles(self, method_name, roles):
-        if method_name not in self.methods:
-            raise ValueError(f"Method {method_name!r} is not registered in this role manager")
+    def add_roles_to_resource(self, resource_name, roles):
+        if resource_name not in self.resources:
+            raise ValueError(f"{self.resource_title} {resource_name!r} is not registered in this role manager")
 
         for role in roles:
             if role not in self.roles:
                 raise ValueError(f"Invalid role {role!r}")
 
-        self.methods[method_name] += roles
+        self.resources[resource_name] += roles
 
         for role in roles:
-            self.allowlists_for_roles[role].append({"method": "CALL", "resource": method_name})
+            self.allowlists_for_roles[role].append({"method": self.resource_method, "resource": resource_name})
 
-    def roles_for_role(self, role):
-        if role not in self.roles:
-            return set()
-
-        return set.union({role}, *[self.roles_for_role(included_role) for included_role in self.roles[role].includes])
-
-    def allowlist_for_role(self, role):
-        if role in self.roles and self.roles[role].full_admin:
-            return [{"method": "CALL", "resource": "*"}]
-
-        return sum([
-            self.allowlists_for_roles[role]
-            for role in self.roles_for_role(role)
-        ], [])
-
-    def roles_for_method(self, method_name):
-        roles = set(self.methods.get(method_name, []))
+    def roles_for_resource(self, resource_name):
+        roles = set(self.resources.get(resource_name, []))
 
         changed = True
         while changed:
@@ -217,3 +206,40 @@ class RoleManager:
                             changed = True
 
         return sorted(roles)
+
+
+class RoleManager:
+    def __init__(self, roles):
+        self.roles = roles
+        self.methods = ResourceManager("Method", "CALL", self.roles)
+        self.events = ResourceManager("Event", "SUBSCRIBE", self.roles)
+
+    def register_method(self, method_name, roles, *, exist_ok=False):
+        self.methods.register_resource(method_name, roles, exist_ok)
+
+    def add_roles_to_method(self, method_name, roles):
+        self.methods.add_roles_to_resource(method_name, roles)
+
+    def register_event(self, event_name, roles, *, exist_ok=False):
+        self.events.register_resource(event_name, roles, exist_ok)
+
+    def roles_for_role(self, role):
+        if role not in self.roles:
+            return set()
+
+        return set.union({role}, *[self.roles_for_role(included_role) for included_role in self.roles[role].includes])
+
+    def allowlist_for_role(self, role):
+        if role in self.roles and self.roles[role].full_admin:
+            return [{"method": "CALL", "resource": "*"}, {"method": "SUBSCRIBE", "resource": "*"}]
+
+        return sum([
+            self.methods.allowlists_for_roles[role] + self.events.allowlists_for_roles[role]
+            for role in self.roles_for_role(role)
+        ], [])
+
+    def roles_for_method(self, method_name):
+        return self.methods.roles_for_resource(method_name)
+
+    def roles_for_event(self, event_name):
+        return self.events.roles_for_resource(event_name)
