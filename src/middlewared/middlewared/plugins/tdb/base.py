@@ -4,7 +4,6 @@ from middlewared.schema import accepts, Bool, Dict, Ref, List, Str, Int
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import filter_list
 from .connection import TDBMixin
-from .schema import SchemaMixin
 from .wrapper import TDBPath
 
 import ctdb
@@ -17,7 +16,7 @@ from base64 import b64encode, b64decode
 from contextlib import contextmanager
 
 
-class TDBService(Service, TDBMixin, SchemaMixin):
+class TDBService(Service, TDBMixin):
 
     handles = {}
 
@@ -26,13 +25,6 @@ class TDBService(Service, TDBMixin, SchemaMixin):
 
     @private
     def validate_tdb_options(self, name, options, skip_health_check):
-        if options['service_version']['major'] > 0 or options['service_version']['minor'] > 0:
-            if options['tdb_type'] == 'BASIC':
-                raise CallError(
-                    f"{name}: BASIC tdb types do not support versioning",
-                    errno.EINVAL
-                )
-
         if not options['cluster'] or skip_health_check:
             return
 
@@ -88,15 +80,16 @@ class TDBService(Service, TDBMixin, SchemaMixin):
         Dict(
             'tdb-options',
             Str('backend', enum=['PERSISTENT', 'VOLATILE', 'CUSTOM'], default='PERSISTENT'),
-            Str('tdb_type', enum=['BASIC', 'CRUD', 'CONFIG'], default='BASIC'),
             Str('data_type', enum=['JSON', 'STRING', 'BYTES'], default='JSON'),
             Bool('cluster', default=False),
             Int('read_backoff', default=0),
-            Dict('service_version', Int('major', default=0), Int('minor', default=0)),
             register=True
         )
     ))
     def store(self, data):
+        """
+        Store the `value` as `key`.
+        """
         if data['tdb-options']['data_type'] == 'JSON':
             tdb_val = json.dumps(data['value'])
         elif data['tdb-options']['data_type'] == 'STRING':
@@ -114,6 +107,9 @@ class TDBService(Service, TDBMixin, SchemaMixin):
         Ref('tdb-options'),
     ))
     def fetch(self, data):
+        """
+        Fetch the entry specified by `key`.
+        """
         with self.get_connection(data['name'], data['tdb-options'], True) as tdb_handle:
             tdb_val = self._get(tdb_handle, data['key'])
 
@@ -136,6 +132,9 @@ class TDBService(Service, TDBMixin, SchemaMixin):
         Ref('tdb-options'),
     ))
     def remove(self, data):
+        """
+        Remove the entry specified by `key`.
+        """
         with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
             self._rem(tdb_handle, data['key'])
 
@@ -146,6 +145,9 @@ class TDBService(Service, TDBMixin, SchemaMixin):
         Ref('tdb-options'),
     ))
     def entries(self, data):
+        """
+        query all entries in tdb file based on specified query-filters and query-options
+        """
         def append_entries(tdb_key, tdb_data, state):
             if tdb_data is None:
                 return True
@@ -177,6 +179,9 @@ class TDBService(Service, TDBMixin, SchemaMixin):
         Ref('tdb-options'),
     ))
     def batch_ops(self, data):
+        """
+        Perform a grouping of tdb operations under a transaction lock.
+        """
         try:
             with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
                 data = self._batch_ops(tdb_handle, data['ops'])
@@ -194,6 +199,9 @@ class TDBService(Service, TDBMixin, SchemaMixin):
         Ref('tdb-options'),
     ))
     def wipe(self, data):
+        """
+        Perform a tdb_wipe_all() operation on the specified tdb file.
+        """
         with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
             self._wipe(tdb_handle)
 
@@ -203,86 +211,15 @@ class TDBService(Service, TDBMixin, SchemaMixin):
         Ref('tdb-options'),
     ))
     def flush(self, data):
+        """
+        Traverse the tdb file and delete all entries.
+        """
         def remove_entries(tdb_key, tdb_data, state):
             self._rem(tdb_handle, tdb_key)
             return True
 
         with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
-            if not self._traverse(tdb_handle, remove_entries, {}):
-                self._wipe(tdb_handle)
-
-    @accepts(Dict(
-        'tdb-config-config',
-        Str('name', required=True),
-        Ref('tdb-options'),
-    ))
-    def config(self, data):
-        with self.get_connection(data['name'], data['tdb-options'], True) as tdb_handle:
-            data = self._config_config(tdb_handle)
-
-        return data
-
-    @accepts(Dict(
-        'tdb-config-update',
-        Str('name', required=True),
-        Dict('payload', additional_attrs=True),
-        Ref('tdb-options'),
-    ))
-    def config_update(self, data):
-        with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
-            self._config_update(tdb_handle, data['payload'])
-
-        return
-
-    @accepts(Dict(
-        'tdb-crud-create',
-        Str('name', required=True),
-        Dict('payload', additional_attrs=True),
-        Ref('tdb-options'),
-    ))
-    def create(self, data):
-        with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
-            id_ = self._create(tdb_handle, data['payload'])
-
-        return id_
-
-    @accepts(Dict(
-        'tdb-crud-query',
-        Str('name', required=True),
-        Ref('query-filters'),
-        Ref('query-options'),
-        Ref('tdb-options'),
-    ))
-    def query(self, data):
-        with self.get_connection(data['name'], data['tdb-options'], True) as tdb_handle:
-            data = self._query(tdb_handle, data['query-filters'], data['query-options'])
-
-        return data
-
-    @accepts(Dict(
-        'tdb-crud-update',
-        Str('name', required=True),
-        Int('id', required=True),
-        Dict('payload', additional_attrs=True),
-        Ref('tdb-options'),
-    ))
-    def update(self, data):
-        with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
-            id_ = self._update(tdb_handle, data['id'], data['payload'])
-
-        return id_
-
-    @accepts(Dict(
-        'tdb-crud-delete',
-        Str('name', required=True),
-        Int('id', required=True),
-        Ref('tdb-options'),
-    ))
-    def delete(self, data):
-        with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
-            self._delete(tdb_handle, data['id'])
-
-        return
+            self._traverse(tdb_handle, remove_entries, {})
 
     @accepts(Dict(
         'tdb-health',
@@ -292,14 +229,6 @@ class TDBService(Service, TDBMixin, SchemaMixin):
     def health(self, data):
         with self.get_connection(data['name'], data['tdb-options'], True) as tdb_handle:
             return tdb_handle.health()
-
-    @accepts(Dict(
-        'tdb-upgrade',
-        Str('name', required=True),
-        Ref('tdb-options'),
-    ))
-    def apply_upgrades(self, data):
-        raise NotImplementedError
 
     @accepts()
     def show_handles(self):

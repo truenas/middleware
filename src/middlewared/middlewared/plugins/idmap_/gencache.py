@@ -1,10 +1,6 @@
 import enum
-import errno
-import os
-import re
 import wbclient
 
-from base64 import b64encode, b64decode
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
 from middlewared.plugins.tdb.utils import TDBError
@@ -86,14 +82,26 @@ class Gencache(Service):
         try:
             return await self.__remove(key)
         except RuntimeError as e:
-            if len(e.args) == 0 or e.args[0] != TDBError.NOEXIST:
+            if len(e.args) == 0:
                 raise e from None
 
-            raise MatchNotFound(key) from None
+            match e.args[0]:
+                case TDBError.CORRUPT:
+                    await self.wipe()
+                    raise e from None
+                case TDBError.NOEXIST:
+                    raise MatchNotFound(key) from None
+                case _:
+                    raise e from None
 
     async def flush(self):
+        """
+        Perform equivalent of `net cache flush`.
+        """
         try:
             await self.__flush()
-        except Exception:
-            self.logger.error('Failed to flush gencache. Proceeding to wipe', exc_info=True)
+        except RuntimeError as e:
+            if len(e.args) == 0 or e.args[0] != TDBError.CORRUPT:
+                raise e from None
+
             await self.__wipe()
