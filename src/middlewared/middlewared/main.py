@@ -994,6 +994,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             for method_name in dir(service):
                 roles = getattr(getattr(service, method_name), 'roles', None) or []
 
+                if method_name in ['do_create', 'do_update', 'do_delete']:
+                    method_name = method_name.removeprefix('do_')
+
                 if method_name.endswith('_choices'):
                     roles.append('READONLY')
 

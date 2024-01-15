@@ -58,6 +58,11 @@ def test_can_not_delete_with_write_role_with_separate_delete():
                 assert ve.value.errno == errno.EACCES
 
 
+def test_works_for_redefined_crud_method():
+    with unprivileged_user_client(["SHARING_MANAGER"]) as c:
+        c.call("service.update", "cifs", {"enable": False})
+
+
 def test_full_admin_role():
     with unprivileged_user_client(["FULL_ADMIN"]) as c:
         c.call("system.general.config")

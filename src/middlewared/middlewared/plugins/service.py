@@ -124,8 +124,7 @@ class ServiceService(CRUDService):
         """
         Update service entry of `id_or_name`.
 
-        Currently it only accepts `enable` option which means whether the
-        service should start on boot.
+        Currently, it only accepts `enable` option which means whether the service should start on boot.
 
         """
         if not id_or_name.isdigit():
