@@ -1564,7 +1564,7 @@ class SharingSMBService(SharingService):
             )
 
     @private
-    @accepts(Dict('share_validate_payload', Str('name')), roles=['READONLY'])
+    @accepts(Dict('share_validate_payload', Str('name')), roles=['READONLY_ADMIN'])
     async def share_precheck(self, data):
         verrors = ValidationErrors()
         ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']

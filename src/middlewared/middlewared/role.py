@@ -147,7 +147,7 @@ ROLES = {
                                           'SNAPSHOT_WRITE'],
                                 builtin=False),
 
-    'SHARING_MANAGER': Role(includes=['READONLY',
+    'SHARING_MANAGER': Role(includes=['READONLY_ADMIN',
                                       'DATASET_WRITE',
                                       'SHARING_WRITE',
                                       'FILESYSTEM_ATTRS_WRITE',
@@ -163,7 +163,7 @@ ROLES = {
     'APPS_READ': Role(includes=['CATALOG_READ', 'CONTAINER_READ']),
     'APPS_WRITE': Role(includes=['CATALOG_WRITE', 'APPS_READ', 'CONTAINER_WRITE']),
 }
-ROLES['READONLY'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
+ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
 
 
 class RoleManager:

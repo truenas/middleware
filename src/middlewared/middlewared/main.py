@@ -962,9 +962,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         )
 
         for namespace, service in self.get_services().items():
-            self.role_manager.register_method(f'{service._config.namespace}.config', ['READONLY'])
-            self.role_manager.register_method(f'{service._config.namespace}.get_instance', ['READONLY'])
-            self.role_manager.register_method(f'{service._config.namespace}.query', ['READONLY'])
+            self.role_manager.register_method(f'{service._config.namespace}.config', ['READONLY_ADMIN'])
+            self.role_manager.register_method(f'{service._config.namespace}.get_instance', ['READONLY_ADMIN'])
+            self.role_manager.register_method(f'{service._config.namespace}.query', ['READONLY_ADMIN'])
 
             if service._config.role_prefix:
                 self.role_manager.add_roles(
@@ -998,7 +998,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     method_name = method_name.removeprefix('do_')
 
                 if method_name.endswith('_choices'):
-                    roles.append('READONLY')
+                    roles.append('READONLY_ADMIN')
 
                     if service._config.role_prefix:
                         roles.append(f'{service._config.role_prefix}_READ')

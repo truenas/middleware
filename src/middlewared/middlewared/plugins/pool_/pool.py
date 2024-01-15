@@ -726,7 +726,7 @@ class PoolService(CRUDService):
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 
-    @accepts(Str('pool_name'), roles=['READONLY'])
+    @accepts(Str('pool_name'), roles=['READONLY_ADMIN'])
     @returns()
     def validate_name(self, pool_name):
         """

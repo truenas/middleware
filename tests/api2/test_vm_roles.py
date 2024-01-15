@@ -15,7 +15,7 @@ from middlewared.test.integration.assets.account import unprivileged_user_client
     ('vm.bootloader_options', False),
 ])
 def test_vm_readonly_role(method, expected_error):
-    with unprivileged_user_client(roles=['READONLY']) as c:
+    with unprivileged_user_client(roles=['READONLY_ADMIN']) as c:
         if expected_error:
             with pytest.raises(Exception) as ve:
                 c.call(method)

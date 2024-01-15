@@ -100,12 +100,12 @@ def test_read_role_can_call_method(role, method, params):
     ("core.get_jobs", []),
 ])
 def test_readonly_can_call_method(method, params):
-    with unprivileged_user_client(["READONLY"]) as c:
+    with unprivileged_user_client(["READONLY_ADMIN"]) as c:
         c.call(method, *params)
 
 
 def test_readonly_can_not_call_method():
-    with unprivileged_user_client(["READONLY"]) as c:
+    with unprivileged_user_client(["READONLY_ADMIN"]) as c:
         with pytest.raises(ClientException) as ve:
             c.call("user.create")
 
@@ -119,7 +119,7 @@ def test_readonly_can_not_call_method():
 
 
 def test_limited_user_can_set_own_attributes():
-    with unprivileged_user_client(["READONLY"]) as c:
+    with unprivileged_user_client(["READONLY_ADMIN"]) as c:
         c.call("auth.set_attribute", "foo", "bar")
         attrs = c.call("auth.me")["attributes"]
         assert "foo" in attrs
@@ -127,7 +127,7 @@ def test_limited_user_can_set_own_attributes():
 
 
 def test_limited_user_auth_token_behavior():
-    with unprivileged_user_client(["READONLY"]) as c:
+    with unprivileged_user_client(["READONLY_ADMIN"]) as c:
         auth_token = c.call("auth.generate_token")
 
         with client(auth=None) as c2:
@@ -152,7 +152,7 @@ def test_sharing_manager_jobs():
 
 
 def test_foreign_job_access():
-    with unprivileged_user_client(["READONLY"]) as unprivileged:
+    with unprivileged_user_client(["READONLY_ADMIN"]) as unprivileged:
         with client() as c:
             job = c.call("core.job_test")
 

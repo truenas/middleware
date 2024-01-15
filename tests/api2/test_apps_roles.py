@@ -34,7 +34,7 @@ def official_chart_release(wait_for_active_status=False):
 
 def test_app_readonly_role(request):
     depends(request, ['setup_kubernetes'], scope='session')
-    with unprivileged_user_client(['READONLY']) as c:
+    with unprivileged_user_client(['READONLY_ADMIN']) as c:
         c.call('app.categories')
 
 

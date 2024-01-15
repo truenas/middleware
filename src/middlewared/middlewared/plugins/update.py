@@ -75,7 +75,7 @@ class UpdateService(Service):
     class Config:
         cli_namespace = 'system.update'
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['READONLY_ADMIN'])
     async def get_auto_download(self):
         """
         Returns if update auto-download is enabled.
@@ -91,7 +91,7 @@ class UpdateService(Service):
         await self.middleware.call('datastore.update', 'system.update', config['id'], {'upd_autocheck': autocheck})
         await self.middleware.call('service.restart', 'cron')
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['READONLY_ADMIN'])
     def get_trains(self):
         """
         Returns available trains dict and the currently configured train as well as the
@@ -174,7 +174,7 @@ class UpdateService(Service):
         'update-check-available',
         Str('train', required=False),
         required=False,
-    ), roles=['READONLY'])
+    ), roles=['READONLY_ADMIN'])
     def check_available(self, attrs):
         """
         Checks if there is an update available from update server.
@@ -232,7 +232,7 @@ class UpdateService(Service):
 
         return self.middleware.call_sync('update.check_train', train)
 
-    @accepts(Str('path', null=True, default=None), roles=['READONLY'])
+    @accepts(Str('path', null=True, default=None), roles=['READONLY_ADMIN'])
     async def get_pending(self, path):
         """
         Gets a list of packages already downloaded and ready to be applied.

@@ -13,7 +13,7 @@ class DNSAuthenticatorService(Service):
         super(DNSAuthenticatorService, self).__init__(*args, **kwargs)
         self.schemas = self.get_authenticator_schemas()
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['READONLY_ADMIN'])
     @returns(List(
         title='Authenticator Schemas',
         items=[Dict(

@@ -140,7 +140,7 @@ def test_restricted_user_2fa_secret_renewal():
         privilege_name='TEST_2FA_PRIVILEGE',
         allowlist=[],
         web_shell=False,
-        roles=['READONLY']
+        roles=['READONLY_ADMIN']
     ) as acct:
         with enabled_twofactor_auth():
             with client(auth=(acct.username, acct.password)) as c:

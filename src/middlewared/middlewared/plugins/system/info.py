@@ -99,7 +99,7 @@ class SystemService(Service):
     async def hostname(self):
         return socket.gethostname()
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['READONLY_ADMIN'])
     @returns(Str('system_host_identifier'))
     def host_id(self):
         """
@@ -129,7 +129,7 @@ class SystemService(Service):
         buildtime = sw_buildtime()
         return datetime.fromtimestamp(int(buildtime)) if buildtime else buildtime
 
-    @accepts(roles=['SHARING_MANAGER', 'READONLY'])
+    @accepts(roles=['SHARING_MANAGER', 'READONLY_ADMIN'])
     @returns(Dict(
         'system_info',
         Str('version', required=True, title='TrueNAS Version'),

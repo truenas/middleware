@@ -205,7 +205,7 @@ class SupportService(ConfigService):
         Str('name'),
         Str('email', validators=[Email()]),
         List('cc', items=[Str('email', validators=[Email()])])
-    ), roles=['SUPPORT_WRITE', 'READONLY'])
+    ), roles=['SUPPORT_WRITE', 'READONLY_ADMIN'])
     @returns(Dict(
         'new_ticket_response',
         Int('ticket', null=True),
@@ -342,7 +342,7 @@ class SupportService(ConfigService):
         Int('ticket', required=True),
         Str('filename', required=True, max_length=None),
         Password('token'),
-    ), roles=['SUPPORT_WRITE', 'READONLY'])
+    ), roles=['SUPPORT_WRITE', 'READONLY_ADMIN'])
     @returns()
     @job(pipes=["input"])
     def attach_ticket(self, job, data):

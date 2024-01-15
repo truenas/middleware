@@ -39,7 +39,7 @@ class WebUIMainDashboardService(Service):
             'datetime': datetime.fromtimestamp(time(), timezone.utc),
         }
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['READONLY_ADMIN'])
     def sys_info(self):
         """This endpoint was designed to be exclusively
         consumed by the webUI team. This is what makes
