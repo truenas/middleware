@@ -59,7 +59,7 @@ def test_can_not_delete_with_write_role_with_separate_delete():
 
 
 def test_works_for_redefined_crud_method():
-    with unprivileged_user_client(["SHARING_MANAGER"]) as c:
+    with unprivileged_user_client(["SHARING_ADMIN"]) as c:
         c.call("service.update", "cifs", {"enable": False})
 
 
@@ -137,7 +137,7 @@ def test_limited_user_auth_token_behavior():
 
 
 def test_sharing_manager_jobs():
-    with unprivileged_user_client(["SHARING_MANAGER"]) as c:
+    with unprivileged_user_client(["SHARING_ADMIN"]) as c:
         auth_token = c.call("auth.generate_token")
         jid = c.call("core.job_test", {"sleep": 1})
 

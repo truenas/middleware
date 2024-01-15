@@ -13,7 +13,7 @@ from middlewared.plugins.service_.utils import app_has_write_privilege_for_servi
 
 @pytest.mark.parametrize('privilege,expected', [
     ({'roles': ['READONLY_ADMIN'], 'allowlist': []}, True),
-    ({'roles': ['SHARING_MANAGER'], 'allowlist': []}, True),
+    ({'roles': ['SHARING_ADMIN'], 'allowlist': []}, True),
     ({'roles': ['FULL_ADMIN'], 'allowlist': []}, True),
     ({'roles': ['SHARING_SMB_READ'], 'allowlist': []}, False),
 ])

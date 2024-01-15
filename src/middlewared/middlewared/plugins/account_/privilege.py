@@ -16,7 +16,7 @@ import middlewared.sqlalchemy as sa
 class BuiltinPrivileges(enum.Enum):
     LOCAL_ADMINISTRATOR = "LOCAL_ADMINISTRATOR"
     READONLY = "READONLY_ADMIN"
-    SHARING_MANAGER = "SHARING_MANAGER"
+    SHARING_ADMIN = "SHARING_ADMIN"
 
 
 class PrivilegeModel(sa.Model):
