@@ -59,7 +59,8 @@ class VMService(Service):
                 Int('order'),
                 Int('vm'),
             ),
-        ]))
+        ]
+    ))
     async def get_display_devices(self, id_):
         """
         Get the display devices from a given guest. If a display device has password configured,

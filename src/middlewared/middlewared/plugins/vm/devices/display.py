@@ -3,7 +3,7 @@ import subprocess
 
 from urllib.parse import urlencode, quote_plus
 
-from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
+from middlewared.schema import Bool, Dict, Int, Password, Str, ValidationErrors
 from middlewared.validators import Range
 
 from .device import Device
@@ -25,7 +25,7 @@ class DISPLAY(Device):
         Int('web_port', default=None, null=True, validators=[Range(min_=5900, max_=65535)]),
         Str('bind', default='127.0.0.1'),
         Bool('wait', default=False),
-        Str('password', private=True, required=True, null=False, empty=False),
+        Password('password', required=True, null=False, empty=False),
         Bool('web', default=True),
         Str('type', default='SPICE', enum=['SPICE']),
     )
