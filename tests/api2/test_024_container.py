@@ -5,7 +5,7 @@ import os
 import pytest
 import sys
 import time
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, fail
 from pytest_dependency import depends
 # from pytest_dependency import depends
 apifolder = os.getcwd()
@@ -68,8 +68,21 @@ if not ha:
         depends(request, ['setup_kubernetes'], scope='session')
         with chart_release("prune-test2", {"image": {"repository": "nginx"}}) as chart_release_data:
             container_images = chart_release_data["resources"]["container_images"]
+            container_id = chart_release_data['resources']['pods'][0]['status'][
+                'containerStatuses'
+            ][0]['containerID'].replace('containerd://', '')
             before_deletion_images = get_num_of_images(container_images)
             assert before_deletion_images != 0
+
+        timeout = 60
+        while True:
+            if container_id not in [container['id'] for container in call('docker.container.query')]:
+                break
+
+            time.sleep(10)
+            timeout -= 10
+            if timeout <= 0:
+                fail(f'{container_id!r} container was not deleted in 60 seconds')
 
         call("container.prune", {"remove_unused_images": True}, job=True)
         assert get_num_of_images(container_images) == 0
