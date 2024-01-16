@@ -26,7 +26,7 @@ def test_restricted_user_set_password():
         privilege_name='TEST_PASSWD_RESET_PRIVILEGE',
         allowlist=[],
         web_shell=False,
-        roles=['READONLY']
+        roles=['READONLY_ADMIN']
     ) as acct:
         with client(auth=(acct.username, acct.password)) as c:
             # Password reset using existing password and current user should work

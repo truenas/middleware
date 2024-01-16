@@ -21,7 +21,7 @@ class BootService(Service):
     async def pool_name(self):
         return BOOT_POOL_NAME
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['READONLY_ADMIN'])
     @returns(Patch(
         'pool_entry', 'get_state',
         ('rm', {'name': 'id'}),
@@ -34,7 +34,7 @@ class BootService(Service):
         # WebUI expects same data as `pool.pool_extend`
         return await self.middleware.call('pool.pool_normalize_info', BOOT_POOL_NAME)
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['READONLY_ADMIN'])
     @returns(List('disks', items=[Str('disk')]))
     async def get_disks(self):
         """
@@ -193,7 +193,7 @@ class BootService(Service):
         )
         return interval
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['READONLY_ADMIN'])
     @returns(Int('interval'))
     async def get_scrub_interval(self):
         """

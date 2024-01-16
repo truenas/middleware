@@ -15,8 +15,8 @@ import middlewared.sqlalchemy as sa
 
 class BuiltinPrivileges(enum.Enum):
     LOCAL_ADMINISTRATOR = "LOCAL_ADMINISTRATOR"
-    READONLY = "READONLY"
-    SHARING_MANAGER = "SHARING_MANAGER"
+    READONLY_ADMINISTRATOR = "READONLY_ADMINISTRATOR"
+    SHARING_ADMINISTRATOR = "SHARING_ADMINISTRATOR"
 
 
 class PrivilegeModel(sa.Model):
@@ -143,7 +143,7 @@ class PrivilegeService(CRUDService):
                         "None of the members of these groups has password login enabled. At least one grantee of "
                         "the \"Local Administrator\" privilege must have password login enabled."
                     )
-            elif builtin_privilege == BuiltinPrivileges.READONLY:
+            elif builtin_privilege == BuiltinPrivileges.READONLY_ADMINISTRATOR:
                 if new["web_shell"]:
                     verrors.add(
                         "privilege_update.web_shell",

@@ -7,7 +7,7 @@ class DeviceService(Service):
     class Config:
         cli_namespace = 'system.device'
 
-    @accepts(Str('type', enum=['SERIAL', 'DISK', 'GPU']), roles=['READONLY'])
+    @accepts(Str('type', enum=['SERIAL', 'DISK', 'GPU']), roles=['READONLY_ADMIN'])
     @returns(OROperator(
         List('serial_info', items=[Dict(
             'serial_info',

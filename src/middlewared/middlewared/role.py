@@ -142,19 +142,19 @@ ROLES = {
     'SNAPSHOT_WRITE': Role(includes=['SNAPSHOT_READ']),
     'SNAPSHOT_DELETE': Role(),
 
-    'REPLICATION_MANAGER': Role(includes=['KEYCHAIN_CREDENTIAL_WRITE',
-                                          'REPLICATION_TASK_CONFIG_WRITE',
-                                          'REPLICATION_TASK_WRITE',
-                                          'SNAPSHOT_TASK_WRITE',
-                                          'SNAPSHOT_WRITE'],
-                                builtin=False),
+    'REPLICATION_ADMIN': Role(includes=['KEYCHAIN_CREDENTIAL_WRITE',
+                                        'REPLICATION_TASK_CONFIG_WRITE',
+                                        'REPLICATION_TASK_WRITE',
+                                        'SNAPSHOT_TASK_WRITE',
+                                        'SNAPSHOT_WRITE'],
+                              builtin=False),
 
-    'SHARING_MANAGER': Role(includes=['READONLY',
-                                      'DATASET_WRITE',
-                                      'SHARING_WRITE',
-                                      'FILESYSTEM_ATTRS_WRITE',
-                                      'SERVICE_READ'],
-                            builtin=False),
+    'SHARING_ADMIN': Role(includes=['READONLY_ADMIN',
+                                    'DATASET_WRITE',
+                                    'SHARING_WRITE',
+                                    'FILESYSTEM_ATTRS_WRITE',
+                                    'SERVICE_READ'],
+                          builtin=False),
     # Apps roles
     'CONTAINER_READ': Role(),
     'CONTAINER_WRITE': Role(includes=['CONTAINER_READ']),
@@ -165,7 +165,7 @@ ROLES = {
     'APPS_READ': Role(includes=['CATALOG_READ', 'CONTAINER_READ']),
     'APPS_WRITE': Role(includes=['CATALOG_WRITE', 'APPS_READ', 'CONTAINER_WRITE']),
 }
-ROLES['READONLY'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
+ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
 
 
 class ResourceManager:

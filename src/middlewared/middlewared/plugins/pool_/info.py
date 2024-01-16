@@ -37,7 +37,7 @@ class PoolService(Service):
         return found
 
     @item_method
-    @accepts(Int('id'), roles=['READONLY'])
+    @accepts(Int('id'), roles=['READONLY_ADMIN'])
     @returns(List(items=[Dict(
         'attachment',
         Str('type', required=True),
@@ -55,7 +55,7 @@ class PoolService(Service):
         return await self.middleware.call('pool.dataset.attachments_with_path', pool['path'])
 
     @item_method
-    @accepts(Int('id'), roles=['READONLY'])
+    @accepts(Int('id'), roles=['READONLY_ADMIN'])
     @returns(List(items=[Dict(
         'process',
         Int('pid', required=True),
@@ -81,7 +81,7 @@ class PoolService(Service):
         return processes
 
     @item_method
-    @accepts(Int('id', required=False, default=None, null=True), roles=['READONLY'])
+    @accepts(Int('id', required=False, default=None, null=True), roles=['READONLY_ADMIN'])
     @returns(List('pool_disks', items=[Str('disk')]))
     async def get_disks(self, oid):
         """
@@ -139,7 +139,7 @@ class PoolService(Service):
             )
         ]
 
-    @accepts(Int('id', required=True), roles=['READONLY'])
+    @accepts(Int('id', required=True), roles=['READONLY_ADMIN'])
     @returns(Bool('pool_is_upgraded'))
     @item_method
     async def is_upgraded(self, oid):

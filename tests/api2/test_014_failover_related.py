@@ -29,7 +29,7 @@ def readonly_admin():
         privilege_name='FAILOVER_PRIV',
         allowlist=[],
         web_shell=False,
-        roles=['READONLY']
+        roles=['READONLY_ADMIN']
     ) as acct:
         yield acct
 

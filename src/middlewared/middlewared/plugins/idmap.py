@@ -454,7 +454,7 @@ class IdmapDomainService(CRUDService):
 
         return False
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['READONLY_ADMIN'])
     async def backend_options(self):
         """
         This returns full information about idmap backend options. Not all

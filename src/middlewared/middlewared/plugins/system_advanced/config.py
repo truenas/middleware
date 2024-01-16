@@ -292,7 +292,7 @@ class SystemAdvancedService(ConfigService):
 
         return await self.config()
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['READONLY_ADMIN'])
     @returns(Bool('sed_global_password_is_set'))
     async def sed_global_password_is_set(self):
         """Returns a boolean identifying whether or not a global

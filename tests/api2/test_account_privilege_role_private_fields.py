@@ -16,7 +16,7 @@ REDACTED = "********"
 
 @pytest.fixture(scope="module")
 def readonly_client():
-    with unprivileged_user_client(["READONLY"]) as c:
+    with unprivileged_user_client(["READONLY_ADMIN"]) as c:
         yield c
 
 

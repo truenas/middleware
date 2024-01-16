@@ -7,8 +7,8 @@ from middlewared.test.integration.utils import call
 
 
 @pytest.mark.parametrize('role,endpoint,valid_role', (
-    ('READONLY', 'webui.crypto.certificate_profiles', True),
-    ('READONLY', 'webui.crypto.certificateauthority_profiles', True),
+    ('READONLY_ADMIN', 'webui.crypto.certificate_profiles', True),
+    ('READONLY_ADMIN', 'webui.crypto.certificateauthority_profiles', True),
     ('NETWORK_INTERFACE_WRITE', 'webui.crypto.certificate_profiles', False),
     ('NETWORK_INTERFACE_WRITE', 'webui.crypto.certificateauthority_profiles', False),
 ))
@@ -25,7 +25,7 @@ def test_ui_crypto_profiles_readonly_role(role, endpoint, valid_role):
 
 
 @pytest.mark.parametrize('role,valid_role', (
-    ('READONLY', True),
+    ('READONLY_ADMIN', True),
     ('NETWORK_INTERFACE_WRITE', False),
 ))
 def test_ui_crypto_domain_names_readonly_role(role, valid_role):

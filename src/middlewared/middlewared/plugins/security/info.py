@@ -10,7 +10,7 @@ class SystemSecurityInfoService(Service):
         namespace = 'system.security.info'
         cli_namespace = 'system.security.info'
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['READONLY_ADMIN'])
     @returns(Bool('fips_available'))
     def fips_available(self):
         """Returns a boolean identifying whether or not FIPS
@@ -19,7 +19,7 @@ class SystemSecurityInfoService(Service):
         # or not this is an iX licensed piece of hardware
         return bool(self.middleware.call_sync('system.license'))
 
-    @accepts(roles=['READONLY'])
+    @accepts(roles=['READONLY_ADMIN'])
     @returns(Bool('fips_available'))
     def fips_enabled(self):
         """Returns a boolean identifying whether or not FIPS
