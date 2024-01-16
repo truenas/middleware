@@ -44,7 +44,7 @@ class AppService(Service):
         Str('latest_version', required=True),
         Str('latest_app_version', required=True),
         Str('latest_human_version', required=True),
-        Str('icon_url', required=True),
+        Str('icon_url', null=True, required=True),
         Str('train', required=True),
         Str('catalog', required=True),
         register=True
