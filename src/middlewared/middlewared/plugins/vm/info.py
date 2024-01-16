@@ -41,7 +41,7 @@ class VMService(Service, LibvirtConnectionMixin):
 
         return can_run_vms
 
-    @accepts(roles=['READONLY', 'VM_READ'])
+    @accepts(roles=['VM_READ'])
     @returns(Dict(
         Bool('supported', required=True),
         Str('error', null=True, required=True),
@@ -55,7 +55,7 @@ class VMService(Service, LibvirtConnectionMixin):
             'error': None if self._is_kvm_supported() else 'Your CPU does not support KVM extensions',
         }
 
-    @accepts(roles=['READONLY', 'VM_READ'])
+    @accepts(roles=['VM_READ'])
     @returns(Int())
     async def maximum_supported_vcpus(self):
         """

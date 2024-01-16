@@ -107,7 +107,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             'status': status,
         }
 
-    @accepts(roles=['READONLY', 'VM_READ'])
+    @accepts(roles=['VM_READ'])
     @returns(Dict(
         *[Str(k, enum=[v]) for k, v in BOOT_LOADER_OPTIONS.items()],
     ))

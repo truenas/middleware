@@ -37,7 +37,7 @@ class VMService(Service):
 
         return memory_allocation
 
-    @accepts(Bool('overcommit', default=False), roles=['READONLY', 'VM_READ'])
+    @accepts(Bool('overcommit', default=False), roles=['VM_READ'])
     @returns(Int('available_memory'))
     async def get_available_memory(self, overcommit):
         """

@@ -5,4 +5,11 @@ from .storage_devices import DISK, RAW
 from .display import DISPLAY
 from .usb import USB
 
-__all__ = ['CDROM', 'DISK', 'NIC', 'PCI', 'RAW', 'DISPLAY', 'USB']
+__all__ = ['CDROM', 'DEVICES', 'DISK', 'NIC', 'PCI', 'RAW', 'DISPLAY', 'USB']
+
+
+DEVICES = {
+    device_class.__name__: device_class for device_class in (
+        CDROM, DISK, NIC, PCI, RAW, DISPLAY, USB
+    )
+}
