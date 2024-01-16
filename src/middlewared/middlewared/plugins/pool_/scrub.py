@@ -41,6 +41,7 @@ class PoolScrubService(CRUDService):
         datastore_prefix = 'scrub_'
         namespace = 'pool.scrub'
         cli_namespace = 'storage.scrub'
+        role_prefix = 'POOL_SCRUB'
 
     ENTRY = Dict(
         'pool_scrub_entry',

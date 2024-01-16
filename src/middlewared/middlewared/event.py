@@ -7,21 +7,23 @@ from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
 from middlewared.settings import conf
 
 
-class Events(object):
-
-    def __init__(self):
+class Events:
+    def __init__(self, role_manager):
+        self.role_manager = role_manager
         self._events = {}
         self.__events_private = set()
 
-    def register(self, name, description, private, returns, no_auth_required, no_authz_required):
+    def register(self, name, description, private, returns, no_auth_required, no_authz_required, roles):
         if name in self._events:
             raise ValueError(f'Event {name!r} already registered.')
+        self.role_manager.register_event(name, roles)
         self._events[name] = {
             'description': description,
             'accepts': [],
             'returns': [returns] if returns else [Any(name, null=True)],
             'no_auth_required': no_auth_required,
             'no_authz_required': no_authz_required,
+            'roles': self.role_manager.roles_for_event(name),
         }
         if private:
             self.__events_private.add(name)

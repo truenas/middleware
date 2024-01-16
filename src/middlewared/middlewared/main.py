@@ -910,7 +910,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         multiprocessing.set_start_method('spawn')  # Spawn new processes for ProcessPool instead of forking
         self.__init_procpool()
         self.__wsclients = {}
-        self.events = Events()
+        self.role_manager = RoleManager(ROLES)
+        self.events = Events(self.role_manager)
         self.event_source_manager = EventSourceManager(self)
         self.__event_subs = defaultdict(list)
         self.__hooks = defaultdict(list)
@@ -922,7 +923,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.jobs = JobsQueue(self)
         self.mocks = defaultdict(list)
         self.tasks = set()
-        self.role_manager = RoleManager(ROLES)
 
     def create_task(self, coro, *, name=None):
         task = self.loop.create_task(coro, name=name)
@@ -967,13 +967,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self.role_manager.register_method(f'{service._config.namespace}.query', ['READONLY'])
 
             if service._config.role_prefix:
-                self.role_manager.add_roles(
+                self.role_manager.add_roles_to_method(
                     f'{service._config.namespace}.config', [f'{service._config.role_prefix}_READ']
                 )
-                self.role_manager.add_roles(
+                self.role_manager.add_roles_to_method(
                     f'{service._config.namespace}.get_instance', [f'{service._config.role_prefix}_READ']
                 )
-                self.role_manager.add_roles(
+                self.role_manager.add_roles_to_method(
                     f'{service._config.namespace}.query', [f'{service._config.role_prefix}_READ']
                 )
                 self.role_manager.register_method(
@@ -1004,7 +1004,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                         roles.append(f'{service._config.role_prefix}_READ')
 
                 if roles:
-                    self.role_manager.safely_register_method(f'{service._config.namespace}.{method_name}', roles)
+                    self.role_manager.register_method(f'{service._config.namespace}.{method_name}', roles,
+                                                      exist_ok=True)
 
         return setup_funcs
 
@@ -1650,12 +1651,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__event_subs[name].append(handler)
 
     def event_register(self, name, description, *, private=False, returns=None, no_auth_required=False,
-                       no_authz_required=False):
+                       no_authz_required=False, roles=None):
         """
-        All events middleware can send should be registered so they are properly documented
+        All events middleware can send should be registered, so they are properly documented
         and can be browsed in documentation page without source code inspection.
         """
-        self.events.register(name, description, private, returns, no_auth_required, no_authz_required)
+        roles = roles or []
+        self.events.register(name, description, private, returns, no_auth_required, no_authz_required, roles)
 
     def send_event(self, name, event_type, **kwargs):
         should_send_event = kwargs.pop('should_send_event', None)

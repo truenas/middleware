@@ -225,7 +225,7 @@ async def zfs_events(middleware, data):
 
 
 async def setup(middleware):
-    middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.')
+    middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.', roles=['POOL_SCRUB_READ'])
     middleware.register_hook('zfs.pool.events', zfs_events, sync=False)
 
     # middleware does not receive `sysevent.fs.zfs.pool_import` or `sysevent.fs.zfs.config_sync` events on the boot pool
