@@ -4,7 +4,7 @@ import time
 from pytest_dependency import depends
 from functions import GET, PUT, wait_on_job
 from auto_config import ha, pool_name, interface, ip
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, fail
 
 
 # Read all the test below only on non-HA
@@ -62,6 +62,8 @@ if not ha:
 
     def test_07_kubernetes_pods_stats(request):
         depends(request, ['setup_kubernetes'])
+        last_update = None
+        timeout = 150
         while True:
             time.sleep(5)
             kube_system_pods = call(
@@ -69,10 +71,20 @@ if not ha:
                     ['metadata.namespace', '=', 'kube-system']
                 ], {'select': ['metadata.name', 'status.phase']}
             )
-            if len([pod for pod in kube_system_pods if pod['status']['phase'] == 'Running']) >= 3:
+            k3s_metrics = call('netdata.get_all_metrics').get('k3s_stats.k3s_stats', {})
+            if len([pod for pod in kube_system_pods if pod['status']['phase'] == 'Running']) >= 3 and k3s_metrics:
                 # The 3 number here is to ensure that by the time we try to retrieve stats, some pods are running
                 # and netdata is able to collect some data
-                break
+                if not last_update:
+                    last_update = k3s_metrics['last_updated']
+
+                if last_update and last_update != k3s_metrics['last_updated']:
+                    break
+
+            if timeout <= 0:
+                fail('Time to setup kubernetes exceeded 150 seconds')
+
+            timeout -= 5
 
         stats = call('chart.release.stats_internal', kube_system_pods)
         assert any(
