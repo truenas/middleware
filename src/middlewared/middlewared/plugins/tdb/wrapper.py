@@ -8,6 +8,9 @@ from subprocess import run
 from middlewared.service_exception import CallError
 
 FD_CLOSED = -1
+# Robust mutex support was added to libtdb after py-tdb was written and flags
+# weren't updated. See lib/tdb/include/tdb.h
+MUTEX_LOCKING = 4096
 
 
 class TDBPath(enum.Enum):
@@ -130,9 +133,17 @@ class TDBWrap(object):
     def __init__(self, name, options, logger):
         self.name = str(name)
         tdb_type = options.get('backend', 'PERSISTENT')
-        tdb_flags = tdb.DEFAULT
-        open_flags = os.O_CREAT | os.O_RDWR
-        open_mode = 0o600
+
+        match os.path.basename(name):
+            case 'gencache.tdb':
+                # See gencache_init() in source3/lib/gencache.c in Samba
+                tdb_flags = tdb.INCOMPATIBLE_HASH | tdb.NOSYNC | MUTEX_LOCKING
+                open_mode = 0o644
+                open_flags = os.O_CREAT | os.O_RDWR
+            case _:
+                tdb_flags = tdb.DEFAULT
+                open_flags = os.O_CREAT | os.O_RDWR
+                open_mode = 0o600
 
         if tdb_type != 'CUSTOM':
             name = f'{TDBPath[tdb_type].value}/{name}.tdb'

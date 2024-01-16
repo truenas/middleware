@@ -204,6 +204,9 @@ class SMBService(Service):
     @private
     async def smb_to_nfsv4(self, sd, ignore_errors=False):
         acl_out = {"uid": None, "gid": None, "acl": []}
+        idmaps = await self.middleware.call('idmap.convert_sids', [
+            entry['trustee']['sid'] for entry in sd['dacl']
+        ])
         for x in sd['dacl']:
             entry = {'tag': None, 'id': None, 'type': None, 'perms': {}, 'flags': {}}
             entry['perms'] = ACLPerms.convert('SMB', x['access_mask']['special'])
@@ -214,8 +217,7 @@ class SMBService(Service):
                 aclp = ACLPrincipal.from_sid(x['trustee']['sid'])
                 entry['tag'] = aclp.to_nfsv4()
             else:
-                trustee = await self.middleware.call('idmap.sid_to_unixid',
-                                                     x['trustee']['sid'])
+                trustee = idmaps['mapped'].get(x['trustee']['sid'])
                 if trustee is None:
                     if not ignore_errors:
                         raise CallError(f"Failed to convert SID [{x['trustee']['sid']}] "
@@ -240,12 +242,13 @@ class SMBService(Service):
             out['sid'] = aclp.to_sid()
             out['name'] = aclp.to_smb()
         else:
-            out['sid'] = await self.middleware.call('idmap.unixid_to_sid', {"id": unixid, "id_type": id_type})
-            if out['sid'] is not None:
-                try:
-                    out['name'] = (await self.middleware.call('idmap.sid_to_name', out['sid']))['name']
-                except CallError:
-                    out['name'] = None
+            idmaps = await self.middleware.call('idmap.convert_unixids', [{
+                'id_type': id_type, 'id': unixid
+            }])
+            key = f'{"UID" if id_type == "USER" else "GID"}:{id}'
+            if (entry := idmaps['mapped'].get(key)):
+                out['sid'] = entry['sid']
+                out['name'] = entry['name']
 
         return out
 

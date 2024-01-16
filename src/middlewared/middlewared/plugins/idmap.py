@@ -8,15 +8,14 @@ from middlewared.schema import accepts, Bool, Dict, Int, Password, Patch, Ref, S
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors, filterable
 from middlewared.service_exception import MatchNotFound
 from middlewared.plugins.directoryservices import SSL
-from middlewared.plugins.idmap_.utils import IDType, TRUENAS_IDMAP_MAX, WBClient, WBCErr
+from middlewared.plugins.idmap_.utils import (
+    IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX, TRUENAS_IDMAP_MAX, WBClient, WBCErr
+)
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.validators import Range
 from middlewared.plugins.smb import SMBPath
 
-
-SID_LOCAL_USER_PREFIX = "S-1-22-1-"
-SID_LOCAL_GROUP_PREFIX = "S-1-22-2-"
 
 """
 See MS-DTYP 2.4.2.4
@@ -410,12 +409,6 @@ class IdmapDomainService(CRUDService):
 
         return (hash_ % max_slices) * range_size + range_size
 
-    @private
-    async def flush_gencache(self):
-        gencache_flush = await run(['net', 'cache', 'flush'], check=False)
-        if gencache_flush.returncode != 0:
-            raise CallError(f'Attempt to flush gencache failed with error: {gencache_flush.stderr.decode().strip()}')
-
     @accepts()
     @job(lock='clear_idmap_cache', lock_queue_size=1)
     async def clear_idmap_cache(self, job):
@@ -438,7 +431,7 @@ class IdmapDomainService(CRUDService):
         except Exception:
             self.logger.debug("Failed to remove winbindd_cache.tdb.", exc_info=True)
 
-        await self.flush_gencache()
+        await self.middleware.call('idmap.gencache.flush')
 
         await self.middleware.call('service.start', 'idmap')
         if smb_started:
@@ -946,7 +939,6 @@ class IdmapDomainService(CRUDService):
         try:
             client = self.__wbclient_ctx()
             entry = client.name_to_uidgid_entry(name)
-
         except wbclient.WBCError as e:
             raise CallError(str(e), WBCErr[e.error_code], e.error_code)
 
@@ -971,17 +963,46 @@ class IdmapDomainService(CRUDService):
 
         try:
             client = self.__wbclient_ctx()
-            results = client.sids_to_users_and_groups(sidlist)
         except wbclient.WBCError as e:
             raise CallError(str(e), WBCErr[e.error_code], e.error_code)
 
-        mapped = {sid: {
-            'type': IDType.parse_wbc_id_type(entry.id_type),
-            'id': entry.id,
-            'name': f'{entry.domain}{client.ctx.separator.decode()}{entry.name}',
-        } for sid, entry in results['mapped'].items()}
+        mapped = {}
+        unmapped = {}
+        to_check = []
 
-        return {'mapped': mapped, 'unmapped': results['unmapped']}
+        for sid in sidlist:
+            try:
+                entry = self.__unixsid_to_name(sid, client.ctx.separator.decode())
+            except KeyError:
+                # This is a Unix Sid, but account doesn't exist
+                unmapped.update({sid: sid})
+                continue
+
+            if entry:
+                mapped.update({sid: {
+                    'id_type': IDType.parse_wbc_id_type(entry['id_type']),
+                    'id': entry['id'],
+                    'name': entry['name']
+                }})
+                continue
+
+            to_check.append(sid)
+
+        if to_check:
+            try:
+                results = client.sids_to_users_and_groups(to_check)
+            except wbclient.WBCError as e:
+                raise CallError(str(e), WBCErr[e.error_code], e.error_code)
+
+            mapped |= {sid: {
+                'id_type': IDType.parse_wbc_id_type(entry.id_type),
+                'id': entry.id,
+                'name': f'{entry.domain}{client.ctx.separator.decode()}{entry.name}',
+            } for sid, entry in results['mapped'].items()}
+
+            unmapped |= results['unmapped']
+
+        return {'mapped': mapped, 'unmapped': unmapped}
 
     @private
     def convert_unixids(self, id_list):
@@ -992,6 +1013,11 @@ class IdmapDomainService(CRUDService):
         method of batch conversion.
         """
         payload = []
+        output = {'mapped': {}, 'unmapped': {}}
+
+        if not id_list:
+            return output
+
         for entry in id_list:
             unixid = entry.get("id")
             id_ = IDType[entry.get("id_type", "GROUP")]
@@ -1006,24 +1032,52 @@ class IdmapDomainService(CRUDService):
         except wbclient.WBCError as e:
             raise CallError(str(e), WBCErr[e.error_code], e.error_code)
 
-        mapped = {unixid: {
-            'type': entry.sid_type['parsed'][4:],
+        output['mapped'] = {unixid: {
+            'id_type': entry.sid_type['parsed'][4:],
             'id': entry.id,
             'sid': entry.sid,
             'name': f'{entry.domain}{client.ctx.separator.decode()}{entry.name}',
         } for unixid, entry in results['mapped'].items()}
 
-        unmapped = {unixid: {
+        output['unmapped'] = {unixid: {
             'id_type': 'GROUP' if unixid.startswith('GID') else 'USER',
             'id': entry.id,
         } for unixid, entry in results['unmapped'].items()}
 
-        return {'mapped': mapped, 'unmapped': unmapped}
+        return output
+
+    def __unixsid_to_name(self, sid, separator='\\'):
+        if not sid.startswith((SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX)):
+            return None
+
+        if sid.startswith(SID_LOCAL_USER_PREFIX):
+            uid = int(sid[len(SID_LOCAL_USER_PREFIX):])
+            u = self.middleware.call_sync('user.get_user_obj', {'uid': uid})
+            return {
+                'name': f'Unix User{separator}{u["pw_name"]}',
+                'id': uid,
+                'id_type': IDType.USER.wbc_const()
+            }
+
+        gid = int(sid[len(SID_LOCAL_GROUP_PREFIX):])
+        g = self.middleware.call('group.get_group_obj', {'gid': gid})
+        return {
+            'name': f'Unix Group{separator}{g["gr_name"]}',
+            'id': gid,
+            'id_type': IDType.GROUP.wbc_const()
+        }
 
     @private
     def sid_to_name(self, sid):
         try:
             client = self.__wbclient_ctx()
+        except wbclient.WBCError as e:
+            raise CallError(str(e), WBCErr[e.error_code], e.error_code)
+
+        if (entry := self.__unixsid_to_name, sid, client.ctx.separator.decode()):
+            return entry
+
+        try:
             entry = client.sid_to_uidgid_entry(sid)
         except wbclient.WBCError as e:
             raise CallError(str(e), WBCErr[e.error_code], e.error_code)
@@ -1032,22 +1086,6 @@ class IdmapDomainService(CRUDService):
             'name': f'{entry.domain}{client.ctx.separator.decode()}{entry.name}',
             'type': entry.sid_type['raw']
         }
-
-    @private
-    def sid_to_unixid(self, sid_str):
-        if sid_str.startswith(SID_LOCAL_USER_PREFIX):
-            return {"id_type": "USER", "id": int(sid_str.strip(SID_LOCAL_USER_PREFIX))}
-
-        elif sid_str.startswith(SID_LOCAL_GROUP_PREFIX):
-            return {"id_type": "GROUP", "id": int(sid_str.strip(SID_LOCAL_GROUP_PREFIX))}
-
-        try:
-            client = self.__wbclient_ctx()
-            entry = client.sid_to_uidgid_entry(sid_str)
-        except MatchNotFound:
-            return None
-
-        return self._pyuidgid_to_dict(entry)
 
     @private
     @filterable
@@ -1108,38 +1146,6 @@ class IdmapDomainService(CRUDService):
         return name
 
     @private
-    def unixid_to_sid(self, data):
-        """
-        Samba generates SIDs for local accounts that lack explicit mapping in
-        passdb.tdb or group_mapping.tdb with a prefix of S-1-22-1 (users) and
-        S-1-22-2 (groups). This is not returned by wbinfo, but for consistency
-        with what appears when viewed over SMB protocol we'll do the same here.
-        """
-        unixid = data.get("id")
-        id_ = IDType[data.get("id_type", "GROUP")]
-        payload = {
-            'id_type': id_.wbc_str(),
-            'id': unixid
-        }
-        try:
-            client = self.__wbclient_ctx()
-            entry = client.uidgid_to_sid(payload)
-        except MatchNotFound:
-            is_local = self.middleware.call_sync(
-                f'{"user" if id_ == IDType.USER else "group"}.query',
-                [("uid" if id_ == IDType.USER else "gid", '=', unixid)],
-                {"count": True}
-            )
-            if is_local:
-                return f'S-1-22-{1 if id_ == IDType.USER else 2}-{unixid}'
-
-            return None
-        except wbclient.WBCError as e:
-            raise CallError(str(e), WBCErr[e.error_code], e.error_code)
-
-        return self._pyuidgid_to_dict(entry)['sid']
-
-    @private
     async def get_idmap_info(self, ds, id_):
         low_range = None
         id_type_both = False
@@ -1160,14 +1166,13 @@ class IdmapDomainService(CRUDService):
         return (low_range, id_type_both)
 
     @private
-    async def synthetic_user(self, ds, passwd):
+    async def synthetic_user(self, ds, passwd, sid):
         idmap_info = await self.get_idmap_info(ds, passwd['pw_uid'])
         if idmap_info[0] is None:
             # ID doesn't match one of our configured idmap ranges.
             # This means it's probably local
             return None
 
-        sid = await self.middleware.run_in_thread(self.unixid_to_sid, {"id": passwd['pw_uid'], "id_type": "USER"})
         rid = int(sid.rsplit('-', 1)[1])
         return {
             'id': 100000 + idmap_info[0] + rid,
@@ -1190,17 +1195,17 @@ class IdmapDomainService(CRUDService):
             'sshpubkey': None,
             'local': False,
             'id_type_both': idmap_info[1],
+            'sid': sid
         }
 
     @private
-    async def synthetic_group(self, ds, grp):
+    async def synthetic_group(self, ds, grp, sid):
         idmap_info = await self.get_idmap_info(ds, grp['gr_gid'])
         if idmap_info[0] is None:
             # ID doesn't match one of our configured idmap ranges.
             # This means it's probably local
             return None
 
-        sid = await self.middleware.run_in_thread(self.unixid_to_sid, {"id": grp['gr_gid'], "id_type": "GROUP"})
         rid = int(sid.rsplit('-', 1)[1])
         return {
             'id': 100000 + idmap_info[0] + rid,
@@ -1213,6 +1218,7 @@ class IdmapDomainService(CRUDService):
             'users': [],
             'local': False,
             'id_type_both': idmap_info[1],
+            'sid': sid
         }
 
     @private

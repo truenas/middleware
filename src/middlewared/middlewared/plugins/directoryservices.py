@@ -459,10 +459,10 @@ class DirectoryServices(Service):
         if ldap_enabled and ldap_conf['kerberos_realm']:
             is_kerberized = True
 
-        gencache_flush = await run([SMBCmd.NET.value, 'cache', 'flush'], check=False)
-        if gencache_flush.returncode != 0:
-            self.logger.warning("Failed to clear the SMB gencache after re-initializing "
-                                "directory services: [%s]", gencache_flush.stderr.decode())
+        try:
+            await self.middleware.call('idmap.gencache.flush')
+        except Exception:
+            self.logger.warning('Cache flush failed', exc_info=True)
 
         if is_kerberized:
             try:

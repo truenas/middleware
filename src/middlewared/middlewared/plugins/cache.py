@@ -2,7 +2,7 @@ from middlewared.schema import Any, Str, Ref, Int, Dict, Bool, accepts
 from middlewared.service import Service, private, job, filterable
 from middlewared.utils import filter_list
 from middlewared.service_exception import CallError, MatchNotFound
-from middlewared.plugins.idmap import SID_LOCAL_USER_PREFIX
+from middlewared.plugins.idmap_.utils import SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 
 from collections import namedtuple
 import errno
@@ -160,21 +160,26 @@ class DSCache(Service):
                 if data['idtype'] == 'USER':
                     pwdobj = await self.middleware.call('dscache.get_uncached_user',
                                                         who_str, who_id, False, True)
-                    entry = await self.middleware.call('idmap.synthetic_user',
-                                                       ds.lower(), pwdobj)
-                    if entry is None:
+                    if pwdobj['sid_info'] is None:
+                        # This indicates that idmapping is significantly broken
                         return None
 
-                    entry['sid'] = pwdobj['sid_info']['sid']
+                    entry = await self.middleware.call('idmap.synthetic_user',
+                                                       ds.lower(), pwdobj, pwdobj['sid_info']['sid'])
+                    if entry is None:
+                        return None
                 else:
                     grpobj = await self.middleware.call('dscache.get_uncached_group',
                                                         who_str, who_id, True)
-                    entry = await self.middleware.call('idmap.synthetic_group',
-                                                       ds.lower(), grpobj)
-                    if entry is None:
+
+                    if grpobj['sid_info'] is None:
+                        # This indicates that idmapping is significantly broken
                         return None
 
-                    entry['sid'] = grpobj['sid_info']['sid']
+                    entry = await self.middleware.call('idmap.synthetic_group',
+                                                       ds.lower(), grpobj, grpobj['sid_info']['sid'])
+                    if entry is None:
+                        return None
 
                 await self.insert(ds, data['idtype'], entry)
                 entry['nt_name'] = entry[name_key]
@@ -246,10 +251,13 @@ class DSCache(Service):
 
         if sid_info:
             try:
-                sid = self.middleware.call_sync('idmap.unixid_to_sid', {
+                if (idmap := self.middleware.call_sync('idmap.convert_unixids', [{
                     'id_type': 'USER',
-                    'id': user_obj['pw_uid'],
-                })
+                    'id': u.pw_uid,
+                }])['mapped']):
+                    sid = idmap[f'UID:{u.pw_uid}']['sid']
+                else:
+                    sid = SID_LOCAL_USER_PREFIX + str(u.pw_uid)
             except CallError as e:
                 # ENOENT means no winbindd entry for user
                 # ENOTCONN means winbindd is stopped / can't be started
@@ -294,10 +302,13 @@ class DSCache(Service):
 
         if sid_info:
             try:
-                sid = self.middleware.call_sync('idmap.unixid_to_sid', {
+                if (idmap := self.middleware.call_sync('idmap.convert_unixids', [{
                     'id_type': 'GROUP',
-                    'id': grp_obj['gr_gid'],
-                })
+                    'id': g.gr_gid,
+                }])['mapped']):
+                    sid = idmap[f'GID:{g.gr_gid}']['sid']
+                else:
+                    sid = SID_LOCAL_GROUP_PREFIX + str(g.gr_gid)
             except CallError as e:
                 if e.errno not in (errno.ENOENT, errno.ENOTCONN):
                     self.logger.error('Failed to retrieve SID for gid: %d', grp.gr_gid, exc_info=True)
