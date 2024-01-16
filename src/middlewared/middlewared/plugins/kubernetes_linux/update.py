@@ -363,7 +363,8 @@ class KubernetesService(ConfigService):
         ):
             verrors.add(
                 f'{schema}.pool',
-                f'Root dataset is used by {", ".join([attachment["service"] for attachment in attachments])!r} services'
+                'This pool cannot be used as the root dataset is '
+                f'used by {", ".join([attachment["service"] for attachment in attachments])!r} services'
             )
 
         verrors.check()
