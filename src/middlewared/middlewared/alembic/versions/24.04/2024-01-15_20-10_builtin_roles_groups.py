@@ -29,12 +29,12 @@ def upgrade():
                  "1, 1, '[]', '[]')")
 
     op.execute(
-        "UPDATE account_privilege SET builtin_name = 'READONLY_ADMININSTATOR', name = 'Read-Only Administator', "
+        "UPDATE account_privilege SET builtin_name = 'READONLY_ADMINISTRATOR', name = 'Read-Only Administrator', "
         "local_groups = '[951]', roles = '[\"READONLY_ADMIN\"]' "
         "WHERE builtin_name = 'READONLY'"
     )
     op.execute(
-        "UPDATE account_privilege SET builtin_name = 'SHARING_ADMINISTRATOR', name = 'Sharing Administator', "
+        "UPDATE account_privilege SET builtin_name = 'SHARING_ADMINISTRATOR', name = 'Sharing Administrator', "
         "local_groups = '[952]', roles = '[\"SHARING_ADMIN\"]' "
         "WHERE builtin_name = 'SHARING_MANAGER'"
     )
