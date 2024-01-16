@@ -101,10 +101,11 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         results = []
         options = options or {}
         check_parent = options.get('check_parent', False)
+        exact_match = options.get('exact_match', False)
         for resource in await self.middleware.call(
             f'{self.namespace}.query', await self.get_query_filters(enabled, options)
         ):
-            if await self.is_child_of_path(resource, path, check_parent):
+            if await self.is_child_of_path(resource, path, check_parent, exact_match):
                 results.append(resource)
         return results
 
@@ -138,10 +139,10 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     async def remove_alert(self, attachment):
         await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
 
-    async def is_child_of_path(self, resource, path, check_parent):
+    async def is_child_of_path(self, resource, path, check_parent, exact_match):
         share_path = await self.service_class.get_path_field(self.service_class, resource)
-        if share_path == path:
-            return True
+        if exact_match or share_path == path:
+            return share_path == path
 
         # What this is essentially doing is testing if resource in question is a child of queried path
         # and not vice versa. While this is desirable in most cases, there are cases we also want to see
