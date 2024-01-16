@@ -6,7 +6,7 @@ import time
 from middlewared.client.client import ClientException, ValidationErrors
 from middlewared.test.integration.assets.catalog import catalog
 from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, fail, ssh
 
 from auto_config import pool_name
 
@@ -46,8 +46,10 @@ def kubernetes_pool():
                         ['metadata.namespace', '=', 'kube-system']
                     ], {'select': ['metadata.name', 'status.phase']}
                 )
-                if len([pod for pod in kube_system_pods if pod['status']['phase'] == 'Running']) >= 3 or timeout <= 0:
+                if len([pod for pod in kube_system_pods if pod['status']['phase'] == 'Running']) >= 3:
                     break
+                elif timeout <= 0:
+                    fail('Time to setup kubernetes exceeded 150 seconds')
                 timeout -= 5
             try:
                 yield k3s_pool
