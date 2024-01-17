@@ -244,7 +244,7 @@ class PrivilegeService(CRUDService):
         """
         result = []
 
-        if (sids_to_check := [entry for entry in ds_groups if wbclient.sid_is_valid(entry)]):
+        if (sids_to_check := [entry for entry in ds_groups if wbclient.sid_is_valid(str(entry))]):
             try:
                 mapped_sids = (await self.middleware.call('idmap.convert_sids', sids_to_check))['mapped']
             except Exception:

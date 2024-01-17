@@ -1060,7 +1060,7 @@ class IdmapDomainService(CRUDService):
             }
 
         gid = int(sid[len(SID_LOCAL_GROUP_PREFIX):])
-        g = self.middleware.call('group.get_group_obj', {'gid': gid})
+        g = self.middleware.call_sync('group.get_group_obj', {'gid': gid})
         return {
             'name': f'Unix Group{separator}{g["gr_name"]}',
             'id': gid,
