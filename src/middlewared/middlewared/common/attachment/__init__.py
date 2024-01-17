@@ -140,10 +140,6 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
 
     async def is_child_of_path(self, resource, path, check_parent, exact_match):
-        share_path = await self.service_class.get_path_field(self.service_class, resource)
-        if exact_match or share_path == path:
-            return share_path == path
-
         # What this is essentially doing is testing if resource in question is a child of queried path
         # and not vice versa. While this is desirable in most cases, there are cases we also want to see
         # if path is a child of the resource in question. In that case we want the following:
@@ -151,6 +147,19 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         # 2) When configured path itself is specified we return true
         # 3) When path is child of configured path, we return true as the path
         #    is being consumed by service in question
+        #
+        # In most cases we want to cater to above child cases with resource path and the path specified
+        # but there can also be cases when we just want to be sure if the resource path and the path to check
+        # are equal and for that case `exact_match` is used where we do not try to see if one is the child of
+        # another or vice versa. We just check if they are equal.
+        #
+        # `check_parent` flag when set can be used to check for the case when share path is the parent
+        # of the path to check.
+
+        share_path = await self.service_class.get_path_field(self.service_class, resource)
+        if exact_match or share_path == path:
+            return share_path == path
+
         is_child = await self.middleware.call('filesystem.is_child', share_path, path)
         if not is_child and check_parent:
             return await self.middleware.call('filesystem.is_child', path, share_path)
