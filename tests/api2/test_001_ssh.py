@@ -7,7 +7,7 @@ import pytest
 
 from functions import if_key_listed, SSH_TEST
 from auto_config import ip, sshKey, user, password
-from middlewared.test.integration.utils import fail
+from middlewared.test.integration.utils import call, fail
 from middlewared.test.integration.utils.client import client
 
 
@@ -101,3 +101,19 @@ def test_006_setup_and_login_using_root_ssh_key(ip_to_use):
     assert if_key_listed() is True  # horrible function name
     results = SSH_TEST('ls -la', user, None, ip_to_use)
     assert results['result'] is True, results['output']
+
+
+@pytest.mark.parametrize('account', [
+    {'type': 'GROUP', 'gid': 544, 'name': 'builtin_administrators'},
+    {'type': 'GROUP', 'gid': 545, 'name': 'builtin_users'},
+    {'type': 'GROUP', 'gid': 951, 'name': 'truenas_readonly_administrators'},
+    {'type': 'GROUP', 'gid': 952, 'name': 'truenas_sharing_administrators'},
+])
+def test_007_check_local_accounts(account):
+    entry = call('group.query', [['gid', '=', account['gid']]])
+    if not entry:
+        fail(f'{account["gid"]}: entry does not exist in db')
+
+    entry = entry[0]
+    if entry['group'] != account['name']:
+        fail(f'Group has unexpected name: {account["name"]} -> {entry["group"]}')
