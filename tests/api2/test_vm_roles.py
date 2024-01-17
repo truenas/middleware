@@ -27,7 +27,6 @@ def test_vm_readonly_role(method, expected_error):
 @pytest.mark.parametrize('role, method, valid_role', [
     ('VM_READ', 'vm.supports_virtualization', True),
     ('VM_WRITE', 'vm.supports_virtualization', True),
-    ('VM_READ', 'vm.guest_architecture_and_machine_choices', True),
     ('VM_READ', 'vm.virtualization_details', True),
     ('VM_WRITE', 'vm.virtualization_details', True),
     ('VM_READ', 'vm.maximum_supported_vcpus', True),
@@ -54,6 +53,7 @@ def test_vm_read_write_roles(role, method, valid_role):
     ('VM_WRITE', 'vm.clone', True),
     ('VM_READ', 'vm.get_memory_usage', True),
     ('VM_WRITE', 'vm.get_memory_usage', True),
+    ('VM_READ', 'vm.guest_architecture_and_machine_choices', True),
     ('VM_READ', 'vm.start', False),
     ('VM_WRITE', 'vm.start', True),
     ('VM_READ', 'vm.stop', False),
@@ -85,7 +85,6 @@ def test_vm_read_write_roles_requiring_virtualization(role, method, valid_role):
 @pytest.mark.parametrize('role, method, valid_role', [
     ('VM_DEVICE_READ', 'vm.device.iommu_enabled', True),
     ('VM_DEVICE_READ', 'vm.device.passthrough_device_choices', True),
-    ('VM_DEVICE_READ', 'vm.device.usb_passthrough_choices', True),
     ('VM_DEVICE_READ', 'vm.device.nic_attach_choices', True),
 ])
 def test_vm_device_read_write_roles(role, method, valid_role):
@@ -102,6 +101,7 @@ def test_vm_device_read_write_roles(role, method, valid_role):
 @pytest.mark.parametrize('role, method, valid_role', [
     ('VM_DEVICE_READ', 'vm.device.passthrough_device', True),
     ('VM_DEVICE_WRITE', 'vm.device.passthrough_device', True),
+    ('VM_DEVICE_READ', 'vm.device.usb_passthrough_choices', True),
 ])
 def test_vm_device_read_write_roles_requiring_virtualization(role, method, valid_role):
     with unprivileged_user_client(roles=[role]) as c:
