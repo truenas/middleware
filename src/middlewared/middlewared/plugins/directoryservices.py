@@ -494,6 +494,16 @@ class DirectoryServices(Service):
             wait_id = self.middleware.call_sync('core.job_wait', config_in_progress[0]['id'])
             wait_id.wait_sync()
 
+        if not self.middleware.call_sync('smb.is_configured'):
+            raise CallError('Skipping directory service setup due to SMB service being unconfigured')
+
+
+        failover_status = self.middleware.call_sync('failover.status')
+        if failover_status not in ('SINGLE', 'MASTER'):
+            self.logger.debug('%s: skipping directory service setup due to failover status', failover_status)
+            job.set_progress(100, f'{failover_status}: skipping directory service setup due to failover status')
+            return
+
         ldap_enabled = self.middleware.call_sync('ldap.config')['enable']
         ad_enabled = self.middleware.call_sync('activedirectory.config')['enable']
         if not ldap_enabled and not ad_enabled:
