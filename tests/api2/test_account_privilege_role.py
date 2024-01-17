@@ -183,5 +183,5 @@ def test_can_not_subscribe_to_event():
 
 
 def test_can_subscribe_to_event():
-    with unprivileged_user_client(["READONLY"]) as unprivileged:
+    with unprivileged_user_client(["READONLY_ADMIN"]) as unprivileged:
         unprivileged.subscribe("alert.list", lambda *args, **kwargs: None)
