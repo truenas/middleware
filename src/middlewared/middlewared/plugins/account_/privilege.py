@@ -194,10 +194,20 @@ class PrivilegeService(CRUDService):
         groups = await self._groups()
         for i, local_group_id in enumerate(data["local_groups"]):
             if not self._local_groups(groups, [local_group_id], include_nonexistent=False):
-                verrors.add(f"{schema_name}.local_groups.{i}", "This local group does not exist")
+                verrors.add(
+                    f"{schema_name}.local_groups.{i}",
+                    f"{local_group_id}: local group does not exist. "
+                    "This error may be addressed by either re-creating the missing group "
+                    "with the specified group id or removing this entry from the privilege."
+                )
         for i, ds_group_id in enumerate(data["ds_groups"]):
             if not await self._ds_groups(groups, [ds_group_id], include_nonexistent=False):
-                verrors.add(f"{schema_name}.ds_groups.{i}", "This Directory Service group does not exist")
+                verrors.add(
+                    f"{schema_name}.ds_groups.{i}",
+                    f"{ds_group_id}: directory Service group does not exist. "
+                    "If the directory service state is healthy, then this error may be "
+                    "addressed by removing this entry from the privilege."
+                )
 
         for i, role in enumerate(data["roles"]):
             if role not in self.middleware.role_manager.roles:
