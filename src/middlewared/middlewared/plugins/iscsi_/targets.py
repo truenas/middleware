@@ -597,7 +597,7 @@ class iSCSITargetService(CRUDService):
         Returns a list of target names that are currently in cluster_mode on this controller.
         """
         targets = await self.middleware.call('iscsi.target.query')
-        extents = await self.middleware.call('iscsi.extent.query', [['enabled', '=', True]])
+        extents = {extent['id']: extent for extent in await self.middleware.call('iscsi.extent.query', [['enabled', '=', True]])}
         assoc = await self.middleware.call('iscsi.targetextent.query')
 
         # Generate a dict, keyed by target ID whose value is a set of associated extent names
