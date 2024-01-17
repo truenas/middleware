@@ -175,10 +175,7 @@ async def zfs_events(middleware, data):
             middleware.create_task(middleware.call('disk.swaps_configure'))
 
         if pool_name:
-            if pool_name == await middleware.call('boot.pool_name'):
-                await middleware.call('boot.reset_query_cache')
-            else:
-                await middleware.call('pool.reset_query_cache')
+            await middleware.call('cache.pop', 'VolumeStatusAlerts')
 
             args = await pool_alerts_args(middleware, pool_name)
             if event_id.endswith('pool_import'):
