@@ -1,7 +1,7 @@
+from datetime import datetime
 import asyncio
 import re
-
-from datetime import datetime
+import shlex
 
 import middlewared.sqlalchemy as sa
 
@@ -11,7 +11,7 @@ from middlewared.utils import run
 from middlewared.validators import Range
 
 
-RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+(py-libzfs: )?zpool scrub', re.MULTILINE)
+RE_HISTORY_ZPOOL_SCRUB_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+(py-libzfs: )?zpool (scrub|create)', re.MULTILINE)
 
 
 class ScrubError(CallError):
@@ -280,14 +280,19 @@ class PoolScrubService(CRUDService):
         if pool['scan']['state'] == 'SCANNING':
             return False
 
-        history = (await run('zpool', 'history', name, encoding='utf-8')).stdout
-
-        last_scrub = None
-        for match in reversed(list(RE_HISTORY_ZPOOL_SCRUB.finditer(history))):
+        last_scrubs = (await run(
+            'sh', '-c', f'zpool history {shlex.quote(name)} | grep -E "zpool (scrub|create)"',
+            encoding='utf-8',
+            errors='ignore',
+        )).stdout
+        for match in reversed(list(RE_HISTORY_ZPOOL_SCRUB_CREATE.finditer(last_scrubs))):
             last_scrub = datetime.strptime(match.group(1), '%Y-%m-%d.%H:%M:%S')
             break
+        else:
+            self.logger.warning("Could not find last scrub of pool %r", name)
+            last_scrub = datetime.min
 
-        if last_scrub and ((datetime.now() - last_scrub).total_seconds() < (threshold - 1) * 86400):
+        if (datetime.now() - last_scrub).total_seconds() < (threshold - 1) * 86400:
             self.logger.debug('Pool %r last scrub %r', name, last_scrub)
             return False
 
