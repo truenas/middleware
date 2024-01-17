@@ -2,6 +2,8 @@ import enum
 import errno
 import ipaddress
 import itertools
+import os.path
+import pathlib
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
@@ -773,6 +775,11 @@ class SharingNFSService(SharingService):
             )
 
         tgt_realpath = tgt_stat['realpath']
+        k8s_dataset = (await self.middleware.call('kubernetes.config'))['dataset']
+        if k8s_dataset and pathlib.Path(tgt_realpath) in pathlib.Path(os.path.join('/mnt', k8s_dataset)).parents:
+            verrors.add(f"{schema_name}.path", "NFS shares containing the apps dataset are not permitted")
+            return
+
         for share in other_shares:
             try:
                 shr_realpath = (await self.middleware.call('filesystem.stat', share['path']))['realpath']

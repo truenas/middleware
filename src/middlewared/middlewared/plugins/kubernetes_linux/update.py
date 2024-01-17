@@ -8,6 +8,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.common.listen import ConfigServiceListenSingleDelegate
 from middlewared.schema import Bool, Dict, Int, IPAddr, Patch, returns, Str
 from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
+from middlewared.utils import filter_list
 
 from .utils import applications_ds_name, Status
 
@@ -352,6 +353,19 @@ class KubernetesService(ConfigService):
         force = data.pop('force', False)
         if data['pool'] and not verrors:
             await self.middleware.call('kubernetes.check_config_on_apps_dataset', data['pool'], verrors, force, schema)
+
+        if data['pool'] and (
+            attachments := filter_list(
+                await self.middleware.call('pool.dataset.attachments_with_path', f'/mnt/{data["pool"]}', False, True), [
+                    ['service', 'in', ['cifs', 'iscsitarget', 'nfs']]
+                ]
+            )
+        ):
+            verrors.add(
+                f'{schema}.pool',
+                'This pool cannot be used as the root dataset is '
+                f'used by {", ".join([attachment["service"] for attachment in attachments])!r} services'
+            )
 
         verrors.check()
 
