@@ -131,16 +131,16 @@ def test_audit_export(request):
 def test_audit_export_nonroot(request):
     depends(request, ["AUDIT_OPS_PERFORMED"], scope="session")
 
-    with unprivileged_user_client(roles=['SYSTEM_AUDIT_READ']]) as c:
+    with unprivileged_user_client(roles=['SYSTEM_AUDIT_READ', 'FILESYSTEM_ATTRS_READ']) as c:
         me = c.call('auth.me')
         username = me['pw_name']
 
-        report_path = call('audit.export', {'export_format': backend}, job=True)
+        report_path = c.call('audit.export', {'export_format': backend}, job=True)
         assert report_path.startswith(f'/audit/reports/{username}/')
-        st = call('filesystem.stat', report_path)
+        st = c.call('filesystem.stat', report_path)
         assert st['size'] != 0, str(st)
 
-        job_id, path = call("core.download", "audit.download_report", [{
+        job_id, path = c.call("core.download", "audit.download_report", [{
             "report_name": os.path.basename(report_path)
         }], f"report.{backend.lower()}")
         r = requests.get(f"{url()}{path}")
