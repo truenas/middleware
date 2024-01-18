@@ -1,5 +1,5 @@
 from auto_config import ip
-from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.assets.account import user, unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, url
@@ -126,3 +126,24 @@ def test_audit_export(request):
         r = requests.get(f"{url()}{path}")
         r.raise_for_status()
         assert len(r.content) == st['size']
+
+
+def test_audit_export_nonroot(request):
+    depends(request, ["AUDIT_OPS_PERFORMED"], scope="session")
+
+    with unprivileged_user_client(roles=['SYSTEM_AUDIT_READ', 'FILESYSTEM_ATTRS_READ']) as c:
+        me = c.call('auth.me')
+        username = me['pw_name']
+
+        for backend in ['CSV', 'JSON', 'YAML']:
+            report_path = c.call('audit.export', {'export_format': backend}, job=True)
+            assert report_path.startswith(f'/audit/reports/{username}/')
+            st = c.call('filesystem.stat', report_path)
+            assert st['size'] != 0, str(st)
+
+            job_id, path = c.call("core.download", "audit.download_report", [{
+                "report_name": os.path.basename(report_path)
+            }], f"report.{backend.lower()}")
+            r = requests.get(f"{url()}{path}")
+            r.raise_for_status()
+            assert len(r.content) == st['size']
