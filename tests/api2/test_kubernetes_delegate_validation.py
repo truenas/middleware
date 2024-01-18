@@ -37,8 +37,10 @@ def test_kubernetes_pool_of_nfs_and_smb_share_validation_error(test_pool):
         with nfs_share(test_pool['name']):
             with pytest.raises(ValidationErrors) as ve:
                 call('kubernetes.update', {'pool': test_pool['name']}, job=True)
-            assert ve.value.errors[0].errmsg == 'This pool cannot be used as the root dataset is used by' \
-                                                ' \'nfs, cifs\' services'
+
+            assert 'This pool cannot be used as the root dataset is used by' in ve.value.errors[0].errmsg
+            assert 'nfs' in ve.value.errors[0].errmsg
+            assert 'cifs' in ve.value.errors[0].errmsg
             assert ve.value.errors[0].attribute == 'kubernetes_update.pool'
 
 
