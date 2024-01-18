@@ -365,7 +365,7 @@ class FailoverEventsService(Service):
             #   TODO: Not sure how keepalived and laggs operate so need to test this
             #           (maybe the event only gets triggered if the lagg goes down)
             #
-            status = self.run_call(
+            _, backups = self.run_call(
                 'failover.vip.check_failover_group', ifname, fobj['groups']
             )
 
@@ -373,11 +373,11 @@ class FailoverEventsService(Service):
             # in a failover group. And in that failover group, there were other
             # interfaces that were still in the BACKUP state which means the
             # other node has them as MASTER so ignore the event.
-            if len(status[1]):
+            if backups:
                 logger.warning(
                     'Received MASTER event for "%s", but other '
-                    'interfaces "%r" are still working on the '
-                    'MASTER node. Ignoring event.', ifname, status[0],
+                    'interfaces %s are still working on the '
+                    'MASTER node. Ignoring event.', ifname, ', '.join(backups),
                 )
 
                 job.set_progress(None, description='IGNORED')
