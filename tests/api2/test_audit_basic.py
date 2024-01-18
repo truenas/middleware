@@ -2,13 +2,14 @@ from auto_config import ip
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, url
 from protocols import smb_connection
 from pytest_dependency import depends
 from time import sleep
 
 import os
 import pytest
+import requests
 import secrets
 import string
 
@@ -118,3 +119,10 @@ def test_audit_export(request):
         assert report_path.startswith('/audit/reports/root/')
         st = call('filesystem.stat', report_path)
         assert st['size'] != 0, str(st)
+
+        job_id, path = call("core.download", "audit.download_report", [{
+            "report_name": os.path.basename(report_path)
+        }], f"report.{backend.lower()}")
+        r = requests.get(f"{url()}{path}")
+        r.raise_for_status()
+        assert len(r.content) == st['size']

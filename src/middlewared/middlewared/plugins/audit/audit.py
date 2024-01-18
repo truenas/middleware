@@ -3,6 +3,7 @@ import errno
 import json
 import middlewared.sqlalchemy as sa
 import os
+import shutil
 import time
 import uuid
 import yaml
@@ -274,6 +275,36 @@ class AuditService(ConfigService):
 
         job.set_progress(100, f'Audit report completed and available at {destination}')
         return os.path.join(target_dir, destination)
+
+    @accepts(Dict(
+        'audit_download',
+        Str('report_name', required=True),
+    ), roles=['SYSTEM_AUDIT_READ'])
+    @returns()
+    @job(pipes=["output"])
+    def download_report(self, job, data):
+        """
+        Download the audit report with the specified name from the server.
+        Note that users will only be able to download reports that they personally
+        generated.
+        """
+        if job.credentials:
+            username = job.credentials.user['username']
+        else:
+            username = 'root'
+
+        target = os.path.join(AUDIT_REPORTS_DIR, username, data['report_name'])
+        if not os.path.exists(target):
+            raise CallError(
+                f'{target}: audit report does not exist in the report directory of '
+                f'user ({username}).'
+            )
+
+        if not os.path.isfile(target):
+            raise CallError(f'{target}: unexpected file type.')
+
+        with open(target, 'rb') as f:
+            shutil.copyfileobj(f, job.pipes.output.w)
 
     @private
     def __process_reports_entry(self, entry, cutoff):
