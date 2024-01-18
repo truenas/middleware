@@ -135,14 +135,15 @@ def test_audit_export_nonroot(request):
         me = c.call('auth.me')
         username = me['pw_name']
 
-        report_path = c.call('audit.export', {'export_format': backend}, job=True)
-        assert report_path.startswith(f'/audit/reports/{username}/')
-        st = c.call('filesystem.stat', report_path)
-        assert st['size'] != 0, str(st)
+        for backend in ['CSV', 'JSON', 'YAML']:
+            report_path = c.call('audit.export', {'export_format': backend}, job=True)
+            assert report_path.startswith(f'/audit/reports/{username}/')
+            st = c.call('filesystem.stat', report_path)
+            assert st['size'] != 0, str(st)
 
-        job_id, path = c.call("core.download", "audit.download_report", [{
-            "report_name": os.path.basename(report_path)
-        }], f"report.{backend.lower()}")
-        r = requests.get(f"{url()}{path}")
-        r.raise_for_status()
-        assert len(r.content) == st['size']
+            job_id, path = c.call("core.download", "audit.download_report", [{
+                "report_name": os.path.basename(report_path)
+            }], f"report.{backend.lower()}")
+            r = requests.get(f"{url()}{path}")
+            r.raise_for_status()
+            assert len(r.content) == st['size']
