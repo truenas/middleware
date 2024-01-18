@@ -5,9 +5,10 @@ Revises: 434ea5397cd3
 Create Date: 2020-05-18 14:29:59.887895+00:00
 
 """
+import platform
+
 from alembic import op
 import subprocess as subp
-from middlewared.utils import osc
 
 
 # revision identifiers, used by Alembic.
@@ -84,7 +85,7 @@ def upgrade():
     #   1. this is a freeBSD system
     #   2. kern.ipc.nmbclusters is a "sysctl" type entry in the db
     #        AND is < the current OS value
-    if osc.IS_FREEBSD:
+    if platform.system().upper() == 'FREEBSD':
 
         db_value = get_db_sysctl_value()
         os_value = get_os_sysctl_value()

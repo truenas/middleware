@@ -2,7 +2,7 @@ import contextlib
 import json
 import time
 
-from middlewared.test.integration.utils import call, run_on_runner, RunOnRunnerException, IS_LINUX
+from middlewared.test.integration.utils import call, run_on_runner, RunOnRunnerException
 
 
 @contextlib.contextmanager
@@ -66,10 +66,7 @@ def iscsi_target(data):
 
 
 def target_login_test(portal_ip, target_name):
-    if IS_LINUX:
-        return target_login_test_linux(portal_ip, target_name)
-    else:
-        return target_login_test_freebsd(portal_ip, target_name)
+    return target_login_test_linux(portal_ip, target_name)
 
 
 def target_login_test_linux(portal_ip, target_name):

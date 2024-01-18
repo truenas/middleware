@@ -4,7 +4,6 @@ import psutil
 
 from middlewared.event import EventSource
 from middlewared.service import CallError
-from middlewared.utils import osc
 
 
 class ProcessesEventSource(EventSource):
@@ -52,8 +51,6 @@ class ProcessesEventSource(EventSource):
                     "num_threads": process.num_threads(),
                     "pid": process.pid,
                 }
-                if osc.IS_FREEBSD:
-                    row["jid"] = process.jid()
 
                 result.append(row)
 

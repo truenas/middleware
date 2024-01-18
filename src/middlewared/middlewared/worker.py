@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-from middlewared.client import Client
-
 import asyncio
 import inspect
 import os
 import setproctitle
 
+from middlewared.client import Client
+from middlewared.utils.prctl import die_with_parent
+
 from . import logger
 from .common.environ import environ_update
 from .utils import MIDDLEWARE_RUN_DIR
 from .utils.plugins import LoadPluginsMixin
-import middlewared.utils.osc as osc
 from .utils.service.call import MethodNotFoundError, ServiceCallMixin
+
 
 MIDDLEWARE = None
 
@@ -133,6 +134,6 @@ def worker_init(debug_level, log_handler):
     MIDDLEWARE._load_plugins()
     os.environ['MIDDLEWARED_LOADING'] = 'False'
     setproctitle.setproctitle('middlewared (worker)')
-    osc.die_with_parent()
+    die_with_parent()
     logger.setup_logging('worker', debug_level, log_handler)
     receive_events()

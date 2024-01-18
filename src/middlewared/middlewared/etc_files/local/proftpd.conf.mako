@@ -36,18 +36,14 @@ AllowForeignAddress ${'on' if ftp['fxp'] else 'off'}
 % if ftp['masqaddress']:
     MasqueradeAddress ${ftp['masqaddress']}
 % endif
-% if IS_LINUX:
 LoadModule mod_ident.c
-% endif
 IdentLookups ${'on' if ftp['ident'] else 'off'}
 UseReverseDNS ${'on' if ftp['reversedns'] else 'off'}
 % if ftp['passiveportsmin']:
     PassivePorts  ${ftp['passiveportsmin']} ${ftp['passiveportsmax']}
 % endif
 
-% if IS_LINUX:
 AuthOrder mod_auth_unix.c
-% endif
 % if ftp['onlyanonymous']:
     % if ftp['anonpath'] and os.path.isdir(ftp['anonpath']):
         <Anonymous ${ftp['anonpath']}>

@@ -5,7 +5,7 @@ import pathlib
 from middlewared.schema import accepts, Bool, Dict, returns, Str
 from middlewared.service import CallError, Service, private
 
-from middlewared.utils.osc import run_with_user_context
+from middlewared.utils.user_context import run_with_user_context
 
 
 def check_access(path: str, check_perms: dict) -> bool:

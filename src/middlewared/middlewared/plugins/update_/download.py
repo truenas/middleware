@@ -9,7 +9,6 @@ import requests
 import requests.exceptions
 
 from middlewared.service import CallError, private, Service
-from middlewared.utils import osc
 from middlewared.utils.size import format_size
 
 from .utils import DOWNLOAD_UPDATE_FILE, scale_update_server
@@ -25,14 +24,9 @@ class UpdateService(Service):
             dst = os.path.join(location, DOWNLOAD_UPDATE_FILE)
             if os.path.exists(dst):
                 job.set_progress(0, "Verifying existing update")
-                if osc.IS_FREEBSD:
-                    checksum = subprocess.run(
-                        ["sha256", dst], stdout=subprocess.PIPE, encoding="utf-8"
-                    ).stdout.split()[-1]
-                else:
-                    checksum = subprocess.run(
-                        ["sha256sum", dst], stdout=subprocess.PIPE, encoding="utf-8"
-                    ).stdout.split()[0]
+                checksum = subprocess.run(
+                    ["sha256sum", dst], stdout=subprocess.PIPE, encoding="utf-8"
+                ).stdout.split()[0]
                 if checksum == train_check["checksum"]:
                     return True
 

@@ -34,3 +34,7 @@ def set_name(name):
 def set_pdeath_sig(sig=signal.SIGKILL):
     with load_libc() as libc:
         libc.prctl(Prctl.SET_PDEATHSIG.value, signal.Signals(sig).value, 0, 0, 0)
+
+
+def die_with_parent():
+    set_pdeath_sig()

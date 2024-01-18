@@ -46,8 +46,8 @@ from middlewared.client import Client, ClientException
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, Service
 from middlewared.utils.cgroups import move_to_root_cgroups
+from middlewared.utils.prctl import die_with_parent
 from middlewared.utils.size import format_size
-import middlewared.utils.osc as osc
 from middlewared.utils.string import make_sentence
 from middlewared.utils.threading import start_daemon_thread
 
@@ -147,7 +147,7 @@ class ZettareplProcess:
     def __call__(self):
         try:
             setproctitle.setproctitle('middlewared (zettarepl)')
-            osc.die_with_parent()
+            die_with_parent()
             move_to_root_cgroups(os.getpid())
             if logging.getLevelName(self.debug_level) == logging.TRACE:
                 # If we want TRACE then we want all debug from zettarepl

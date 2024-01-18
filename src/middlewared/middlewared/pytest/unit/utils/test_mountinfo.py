@@ -1,5 +1,5 @@
 import pytest
-from middlewared.utils.osc.linux.mount import __parse_to_dev, __parse_to_mnt_id, __create_tree
+from middlewared.utils.mount import __parse_to_dev, __parse_to_mnt_id, __create_tree
 
 
 fake_mntinfo = r"""21 26 0:19 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - sysfs sysfs rw

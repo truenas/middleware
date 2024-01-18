@@ -66,9 +66,6 @@ ClientAliveCountMax 3
 ClientAliveInterval 15
 % endif
 ## Scale doesnt have HPN patches yet
-% if 'NONE' in ssh_config['weak_ciphers'] and IS_FREEBSD:
-NoneEnabled yes
-% endif
 % if 'VersionAddendum' not in ssh_config['options']:
 VersionAddendum none
 % endif

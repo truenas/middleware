@@ -1,11 +1,10 @@
-# -*- coding=utf-8 -*-
 import logging
 import os
 import resource
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["close_fds"]
+__all__ = ['close_fds']
 
 
 def close_fds(low_fd, max_fd=None):
