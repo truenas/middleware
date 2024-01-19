@@ -15,7 +15,7 @@ class GraphMeta(type):
         reg = RE_GRAPH_PLUGIN.search(name)
         if reg and not hasattr(klass, 'plugin'):
             klass.plugin = reg.group('name').lower()
-        elif name != 'GraphBase' and not hasattr(klass, 'plugin'):
+        elif not name.endswith('Base') and not hasattr(klass, 'plugin'):
             raise ValueError(f'Could not determine plugin name for {name!r}')
 
         if reg and not hasattr(klass, 'name'):
@@ -23,7 +23,7 @@ class GraphMeta(type):
             GRAPH_PLUGINS[klass.name] = klass
         elif hasattr(klass, 'name'):
             GRAPH_PLUGINS[klass.name] = klass
-        elif name != 'GraphBase':
+        elif not name.endswith('Base'):
             raise ValueError(f'Could not determine class name for {name!r}')
         return klass
 
