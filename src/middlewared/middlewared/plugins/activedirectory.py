@@ -869,6 +869,20 @@ class ActiveDirectoryService(TDBWrapConfigService):
             await self.middleware.call('activedirectory.set_ntp_servers')
 
             ret = neterr.JOINED
+        elif ret == neterr.JOINED:
+            if not ad['kerberos_principal']:
+                await self.middleware.call(
+                    'datastore.update', self._config.datastore, ad['id'],
+                    {'enable': False},
+                    {'prefix': 'ad_'}
+                )
+                self.logger.warning('Disabling active directory service due to missing kerberos principal.')
+                await self.set_state(DSStatus['DISABLED'].name)
+                raise CallError(
+                    'TrueNAS server is joined to activedirectory (possibly through '
+                    'commands issued outside of public APIs) while lacking a configured kerberos '
+                    'principal, which is required maintain a stable domain connection. Disabling service.'
+                )
 
         await self.middleware.call('idmap.synchronize')
         await self.middleware.call('service.reload', 'idmap')
