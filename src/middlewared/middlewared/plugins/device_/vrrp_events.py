@@ -74,8 +74,12 @@ class VrrpEventThread(Thread):
             LOGGER.error('Failed parsing vrrp message', exc_info=True)
             return
         else:
-            if event not in ('MASTER', 'BACKUP'):
+            if event not in ('MASTER', 'BACKUP', 'FAULT'):
                 return
+
+            if event == 'FAULT':
+                # when a FAULT message is sent when iface goes down
+                event = 'BACKUP'
 
         return {'ifname': ifname, 'event': event, 'time': msg['time']}
 
