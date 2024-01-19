@@ -568,7 +568,7 @@ class SystemDatasetService(ConfigService):
         error = f'Unable to umount {mp}: {stderr}'
         if 'target is busy' in stderr:
             processes = self.middleware.call_sync('pool.dataset.processes_using_paths', [mp], True)
-            error += f'\nThe following processes are using {mountpoint!r}: ' + json.dumps(processes, indent=2)
+            error += f'\nThe following processes are using {mp!r}: ' + json.dumps(processes, indent=2)
 
         raise CallError(error) from None
 
