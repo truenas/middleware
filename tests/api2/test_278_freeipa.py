@@ -7,7 +7,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST
-from assets.REST.directory_services import ldap
+from middlewared.test.integration.assets.directory_service import ldap
 from middlewared.test.integration.utils import call
 from auto_config import ha, user, password
 

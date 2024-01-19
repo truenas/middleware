@@ -8,10 +8,10 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, wait_on_job
-from assets.REST.directory_services import active_directory, override_nameservers
 from auto_config import ip, hostname, password, user
 from pytest_dependency import depends
 from middlewared.test.integration.assets.account import user as create_user
+from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import call
 
 try:
@@ -33,16 +33,6 @@ def do_ad_connection(request):
         createcomputer=AD_COMPUTER_OU,
     ) as ad:
         yield (request, ad)
-
-
-@pytest.fixture(scope="module")
-def set_ad_nameserver(request):
-    with override_nameservers(ADNameServer) as ns:
-        yield (request, ns)
-
-
-def test_01_set_nameserver_for_ad(set_ad_nameserver):
-    assert set_ad_nameserver[1]['nameserver1'] == ADNameServer
 
 
 @pytest.mark.dependency(name="AD_IS_HEALTHY")

@@ -332,11 +332,9 @@ class ActiveDirectoryService(ConfigService):
                     )
 
     @accepts(Ref('activedirectory_update'))
-    @returns(Patch(
-        'activedirectory_update', 'activedirectory_returns',
-        ('add', Int('job_id'))
-    ))
-    async def do_update(self, data):
+    @returns(Ref('activedirectory_update'))
+    @job(lock="AD_start_stop")
+    async def do_update(self, job, data):
         """
         Update active directory configuration.
         `domainname` full DNS domain name of the Active Directory domain.
@@ -577,12 +575,11 @@ class ActiveDirectoryService(ConfigService):
                 'is only valid when enabling the service.'
             )
 
-        new = await self.ad_compress(new)
-        await self.middleware.call('datastore.update', self._config.datastore, new['id'], new, {'prefix': 'ad_'})
-        diff = await self.diff_conf_and_registry(new)
+        config = await self.ad_compress(new)
+        await self.middleware.call('datastore.update', self._config.datastore, new['id'], config, {'prefix': 'ad_'})
+        diff = await self.diff_conf_and_registry(config)
         await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
 
-        job = None
         if not old['enable'] and new['enable']:
             ngc = await self.middleware.call('network.configuration.config')
             if not ngc['domain'] or ngc['domain'] == 'local':
@@ -600,15 +597,22 @@ class ActiveDirectoryService(ConfigService):
             if not await self.middleware.call('kerberos._klist_test'):
                 await self.middleware.call('kerberos.start')
 
-            job = (await self.middleware.call('activedirectory.start')).id
+            try:
+                await self.__start(job, new)
+            except Exception:
+                self.logger.error('Failed to start active directory service. Disabling.')
+                await self.middleware.call(
+                    'datastore.update', self._config.datastore, new['id'],
+                    {'enable': False}, {'prefix': 'ad_'}
+                )
 
         elif not new['enable'] and old['enable']:
-            job = (await self.middleware.call('activedirectory.stop')).id
+            await self.__stop(job, new)
 
         elif new['enable'] and old['enable']:
             await self.middleware.call('service.restart', 'idmap')
 
-        return await self.config() | {'job_id': job}
+        return await self.config()
 
     @private
     async def diff_conf_and_registry(self, data):
@@ -714,14 +718,11 @@ class ActiveDirectoryService(ConfigService):
         if not await self.middleware.call('kerberos.keytab.store_samba_keytab'):
             raise CallError("Failed to store machine account keytab")
 
-    @private
-    @job(lock="AD_start_stop")
-    async def start(self, job):
+    async def __start(self, job, ad):
         """
         Start AD service. In 'UNIFIED' HA configuration, only start AD service
         on active storage controller.
         """
-        ad = await self.config()
         smb = await self.middleware.call('smb.config')
         workgroup = smb['workgroup']
         smb_ha_mode = await self.middleware.call('smb.reset_smb_ha_mode')
@@ -899,11 +900,8 @@ class ActiveDirectoryService(ConfigService):
 
         return ret.name
 
-    @private
-    @job(lock="AD_start_stop")
-    async def stop(self, job):
+    async def __stop(self, job, config):
         job.set_progress(0, 'Preparing to stop Active Directory service')
-        config = await self.config()
         await self.middleware.call(
            'datastore.update', self._config.datastore,
            config['id'], {'ad_enable': False}
@@ -943,8 +941,8 @@ class ActiveDirectoryService(ConfigService):
         payload = {
             'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
             'conf': {
-                'bindname': ad['bindname'],
-                'bindpw': ad['bindpw'],
+                'bindname': ad.get('bindname', ''),
+                'bindpw': ad.get('bindpw', ''),
                 'domainname': ad['domainname'],
                 'kerberos_principal': ad['kerberos_principal'],
             }

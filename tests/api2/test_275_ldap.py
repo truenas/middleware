@@ -16,19 +16,15 @@ from functions import (
     cmd_test,
     wait_on_job
 )
-from assets.REST.directory_services import ldap
 from auto_config import pool_name, ip, user, password
 
+from middlewared.test.integration.assets.directory_service import ldap
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client
 
 try:
     from config import (
-        LDAPBASEDN,
-        LDAPBINDDN,
-        LDAPBINDPASSWORD,
-        LDAPHOSTNAME,
         LDAPUSER,
         LDAPPASSWORD
     )
@@ -45,9 +41,7 @@ VOL_GROUP = "root"
 
 @pytest.fixture(scope="module")
 def do_ldap_connection(request):
-    with ldap(LDAPBASEDN, LDAPBINDDN, LDAPBINDPASSWORD, LDAPHOSTNAME,
-        has_samba_schema=True,
-    ) as ldap_conn:
+    with ldap(has_samba_schema=True) as ldap_conn:
         with product_type():
             yield (request, ldap_conn)
 
@@ -256,7 +250,7 @@ def test_22_set_has_samba_schema_to_false(request):
     results = PUT("/ldap/", payload)
     assert results.status_code == 200, results.text
 
-    job_id = results.json()['job_id']
+    job_id = results.json()
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
@@ -295,7 +289,7 @@ def test_26_set_has_samba_schema_true_and_ssl_START_TLS(request):
     results = PUT("/ldap/", payload)
     assert results.status_code == 200, results.text
 
-    job_id = results.json()['job_id']
+    job_id = results.json()
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
@@ -350,7 +344,7 @@ def test_33_set_has_samba_schema_to_false(request):
     results = PUT("/ldap/", payload)
     assert results.status_code == 200, results.text
 
-    job_id = results.json()['job_id']
+    job_id = results.json()
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 

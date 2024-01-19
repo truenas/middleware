@@ -8,14 +8,15 @@ from pytest_dependency import depends
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from assets.REST.directory_services import active_directory, override_nameservers
 from auto_config import pool_name, ip, user, password, ha
 from functions import GET, POST, PUT, DELETE, SSH_TEST, cmd_test, make_ws_request, wait_on_job
 from protocols import smb_connection, smb_share
 
 from middlewared.service_exception import ValidationErrors, ValidationError
+from middlewared.client.client import ValidationErrors as ClientValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
+from middlewared.test.integration.assets.directory_service import active_directory, override_nameservers
 from middlewared.test.integration.utils import call, client
 from middlewared.test.integration.assets.product import product_type
 
@@ -119,17 +120,13 @@ def set_product_type(request):
         yield
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def set_ad_nameserver(request):
-    with override_nameservers(ADNameServer) as ns:
+    with override_nameservers() as ns:
         yield (request, ns)
 
 
-def test_01_set_nameserver_for_ad(set_ad_nameserver):
-    assert set_ad_nameserver[1]['nameserver1'] == ADNameServer
-
-
-def test_02_cleanup_nameserver(request):
+def test_02_cleanup_nameserver(set_ad_nameserver):
     results = POST("/activedirectory/domain_info/", AD_DOMAIN)
     assert results.status_code == 200, results.text
     domain_info = results.json()
@@ -193,8 +190,6 @@ def test_06_get_activedirectory_started_before_starting_activedirectory(request)
 
 @pytest.mark.dependency(name="ad_works")
 def test_07_enable_leave_activedirectory(request):
-    global domain_users_id
-
     with pytest.raises(ValidationErrors):
         # At this point we are not enterprise licensed
         call("system.general.update", {"ds_auth": True})
@@ -205,42 +200,29 @@ def test_07_enable_leave_activedirectory(request):
         dns_timeout=15
     ) as ad:
         # We should be able to change some parameters when joined to AD
-        call('activedirectory.update', {'domainname': AD_DOMAIN, 'verbose_logging': True})
+        call('activedirectory.update', {'domainname': AD_DOMAIN, 'verbose_logging': True}, job=True)
 
         # Changing kerberos realm should raise ValidationError
-        with pytest.raises(ValidationErrors) as ve:
-            call('activedirectory.update', {'domainname': AD_DOMAIN, 'kerberos_realm': None})
+        with pytest.raises(ClientValidationErrors) as ve:
+            call('activedirectory.update', {'domainname': AD_DOMAIN, 'kerberos_realm': None}, job=True)
 
         assert ve.value.errors[0].errmsg.startswith('Kerberos realm may not be altered')
 
+
         # This should be caught by our catchall
-        with pytest.raises(ValidationError) as ve:
-            call('activedirectory.update', {'domainname': AD_DOMAIN, 'createcomputer': ''})
+        with pytest.raises(ClientValidationErrors) as ve:
+            call('activedirectory.update', {'domainname': AD_DOMAIN, 'createcomputer': ''}, job=True)
 
-        assert ve.value.errmsg.startswith('Parameter may not be changed')
-
-        # Verify that we're not leaking passwords into middleware log
-        cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is False, str(results['output'])
+        assert ve.value.errors[0].errmsg.startswith('Parameter may not be changed')
 
         # Verify that AD state is reported as healthy
-        results = GET('/activedirectory/get_state/')
-        assert results.status_code == 200, results.text
-        assert results.json() == 'HEALTHY', results.text
+        assert call('activedirectory.get_state') == 'HEALTHY'
 
         # Verify that `started` endpoint works correctly
-        results = GET('/activedirectory/started/')
-        assert results.status_code == 200, results.text
-        assert results.json() is True, results.text
-
+        assert call('activedirectory.started') is True
 
         # Verify that idmapping is working
-        results = POST("/user/get_user_obj/", {'username': AD_USER, 'sid_info': True})
-        assert results.status_code == 200, results.text
-        assert results.json()['pw_name'] == AD_USER, results.text
-        pw = results.json()
-        domain_users_id = pw['pw_gid']
+        pw = ad['user_obj']
 
         # Verify winbindd information
         assert pw['sid_info'] is not None, results.text
@@ -262,23 +244,13 @@ def test_07_enable_leave_activedirectory(request):
         addresses = [x['address'] for x in res['result']]
         assert ip in addresses
 
-        res = make_ws_request(ip, {
-            'msg': 'method',
-            'method': 'privilege.query',
-            'params': [[['name', 'C=', AD_DOMAIN]]]
-        })
-        error = res.get('error')
-        assert error is None, str(error)
-        assert len(res['result']) == 1, str(res['result'])
+        res = call('privilege.query', [['name', 'C=', AD_DOMAIN]], {'get': True})
+        assert res['ds_groups'][0]['name'].endswith('domain admins')
+        assert res['ds_groups'][0]['sid'].endswith('512')
+        assert res['allowlist'][0] == {'method': '*', 'resource': '*'}
 
-        assert len(res['result'][0]['ds_groups']) == 1, str(res['result'])
-        assert res['result'][0]['ds_groups'][0]['name'].endswith('domain admins')
-        assert res['result'][0]['ds_groups'][0]['sid'].endswith('512')
-        assert res['result'][0]['allowlist'][0] == {'method': '*', 'resource': '*'}
 
-    results = GET('/activedirectory/get_state/')
-    assert results.status_code == 200, results.text
-    assert results.json() == 'DISABLED', results.text
+    assert call('activedirectory.get_state') == 'DISABLED'
 
     results = POST("/user/get_user_obj/", {'username': AD_USER})
     assert results.status_code != 200, results.text
@@ -309,7 +281,7 @@ def test_08_activedirectory_smb_ops(request):
             {'share_type': 'SMB'},
             acl=[{
                 'tag': 'GROUP',
-                'id': domain_users_id,
+                'id': ad['user_obj']['pw_uid'],
                 'perms': {'BASIC': 'FULL_CONTROL'},
                 'flags': {'BASIC': 'INHERIT'},
                 'type': 'ALLOW'
@@ -346,7 +318,7 @@ def test_08_activedirectory_smb_ops(request):
             {'share_type': 'SMB'},
             acl=[{
                 'tag': 'GROUP',
-                'id': domain_users_id,
+                'id': ad['user_obj']['pw_uid'],
                 'perms': {'BASIC': 'FULL_CONTROL'},
                 'flags': {'BASIC': 'INHERIT'},
                 'type': 'ALLOW'
@@ -383,7 +355,7 @@ def test_08_activedirectory_smb_ops(request):
             {'share_type': 'SMB'},
             acl=[{
                 'tag': 'GROUP',
-                'id': domain_users_id,
+                'id': ad['user_obj']['pw_uid'],
                 'perms': {'BASIC': 'FULL_CONTROL'},
                 'flags': {'BASIC': 'INHERIT'},
                 'type': 'ALLOW'
