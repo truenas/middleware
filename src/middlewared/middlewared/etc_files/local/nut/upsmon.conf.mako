@@ -12,7 +12,7 @@
 	ident = ups_config['complete_identifier']
 	xseries = (middleware.call_sync('truenas.get_chassis_hardware')).startswith('TRUENAS-X')
 	if not ups_config['shutdowncmd'] and not xseries:
-            shutdown_cmd = f'/sbin/shutdown -{"P"} now'
+            shutdown_cmd = '/sbin/shutdown -P now'
 	else:
             shutdown_cmd = ups_config['shutdowncmd'] or ''
 %>\
