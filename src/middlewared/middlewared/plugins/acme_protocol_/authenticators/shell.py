@@ -13,7 +13,7 @@ import logging
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Dict, Str, File, Int
 from middlewared.service import CallError, skip_arg, ValidationErrors
-from middlewared.utils.osc.linux.user_context import run_command_with_user_context
+from middlewared.utils.user_context import run_command_with_user_context
 
 from .base import Authenticator
 

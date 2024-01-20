@@ -4,7 +4,7 @@ import os
 
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import CallError, Service
-from middlewared.utils.osc import getmntinfo
+from middlewared.utils.mount import getmntinfo
 from middlewared.utils.path import is_child
 
 

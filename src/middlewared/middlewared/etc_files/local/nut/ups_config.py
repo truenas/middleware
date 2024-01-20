@@ -1,16 +1,10 @@
 import os
 import shutil
 
-from middlewared.utils import osc
 
-if osc.IS_LINUX:
-    UPS_CONFPATH = '/etc/nut'
-    UPS_USER = 'nut'
-    UPS_VARPATH = '/var/run/nut'
-else:
-    UPS_CONFPATH = '/usr/local/etc/nut'
-    UPS_USER = 'uucp'
-    UPS_VARPATH = '/var/db/nut'
+UPS_CONFPATH = '/etc/nut'
+UPS_USER = 'nut'
+UPS_VARPATH = '/var/run/nut'
 
 
 def generate_ups_config(middleware):

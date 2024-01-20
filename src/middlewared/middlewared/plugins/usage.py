@@ -9,7 +9,7 @@ from datetime import datetime
 import aiohttp
 
 from middlewared.service import Service
-from middlewared.utils.osc import getmntinfo
+from middlewared.utils.mount import getmntinfo
 
 USAGE_URL = 'https://usage.truenas.com/submit'
 

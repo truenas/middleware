@@ -43,7 +43,7 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
-from middlewared.utils.osc import run_command_with_user_context
+from middlewared.utils.user_context import run_command_with_user_context
 from middlewared.utils.service.task_state import TaskStateMixin
 
 

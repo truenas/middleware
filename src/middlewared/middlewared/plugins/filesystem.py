@@ -18,7 +18,7 @@ from middlewared.plugins.filesystem_ import chflags, dosmode, stat_x
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str, UnixPerm
 from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
 from middlewared.utils import filter_list
-from middlewared.utils.osc import getmntinfo
+from middlewared.utils.mount import getmntinfo
 from middlewared.utils.path import FSLocation, path_location, strip_location_prefix, is_child_realpath
 from middlewared.plugins.filesystem_.acl_base import ACLType
 from middlewared.plugins.zfs_.utils import ZFSCTL

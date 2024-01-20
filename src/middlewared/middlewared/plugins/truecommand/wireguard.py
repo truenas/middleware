@@ -5,7 +5,7 @@ import time
 
 from middlewared.schema import Bool, Dict, IPAddr, returns, Str
 from middlewared.service import accepts, CallError, no_auth_required, periodic, pass_app, private, Service, throttle
-from middlewared.utils import osc, Popen, run
+from middlewared.utils import Popen, run
 
 from .enums import Status
 from .utils import WIREGUARD_INTERFACE_NAME
@@ -93,12 +93,9 @@ class TruecommandService(Service):
                     # new IP. So if we have a correct handshake, we should ping the TC IP to see if it's
                     # still reachable
                     config = await self.middleware.call('datastore.config', 'system.truecommand')
-                    cp = await run(
-                        [
-                            'ping', '-t' if osc.IS_FREEBSD else '-w', '5', '-q',
-                            str(config['remote_address'].split('/', 1)[0])
-                        ], check=False
-                    )
+                    cp = await run([
+                        'ping', '-w', '5', '-q', str(config['remote_address'].split('/', 1)[0])
+                    ], check=False)
                     if cp.returncode:
                         # We have return code of 0 if we heard at least one response from the host
                         health_error = True

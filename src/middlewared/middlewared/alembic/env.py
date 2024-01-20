@@ -1,7 +1,6 @@
 import contextlib
 from logging.config import fileConfig
 import os
-import sys
 
 from alembic import context
 from alembic.operations import ops
@@ -11,14 +10,9 @@ from sqlalchemy import engine_from_config, ForeignKeyConstraint, pool
 
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.sqlalchemy import JSON, Model
-from middlewared.utils import osc
 from middlewared.utils.plugins import load_modules
 from middlewared.utils.python import get_middlewared_dir
 
-# freenasOS
-if osc.IS_FREEBSD:
-    if '/usr/local/lib' not in sys.path:
-        sys.path.append('/usr/local/lib')
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

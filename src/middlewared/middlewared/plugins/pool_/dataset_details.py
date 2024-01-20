@@ -4,7 +4,7 @@ import pathlib
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
 from middlewared.service import Service, private
 from middlewared.schema import accepts, List, returns
-from middlewared.utils.osc.linux.mount import getmntinfo
+from middlewared.utils.mount import getmntinfo
 
 
 class PoolDatasetService(Service):

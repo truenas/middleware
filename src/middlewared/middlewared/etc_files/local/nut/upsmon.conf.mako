@@ -12,12 +12,12 @@
 	ident = ups_config['complete_identifier']
 	xseries = (middleware.call_sync('truenas.get_chassis_hardware')).startswith('TRUENAS-X')
 	if not ups_config['shutdowncmd'] and not xseries:
-            shutdown_cmd = f'/sbin/shutdown -{"P" if IS_LINUX else "p" } now'
+            shutdown_cmd = '/sbin/shutdown -P now'
 	else:
             shutdown_cmd = ups_config['shutdowncmd'] or ''
 %>\
 MONITOR ${ident} 1 ${user} ${ups_config['monpwd']} ${ups_config['mode']}
-NOTIFYCMD ${"/usr/sbin/upssched" if IS_LINUX else "/usr/local/sbin/upssched"}
+NOTIFYCMD ${"/usr/sbin/upssched"}
 NOTIFYFLAG ONBATT SYSLOG+EXEC
 NOTIFYFLAG LOWBATT SYSLOG+EXEC
 NOTIFYFLAG ONLINE SYSLOG+EXEC

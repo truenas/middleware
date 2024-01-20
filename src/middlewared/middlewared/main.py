@@ -14,11 +14,12 @@ from .service_exception import (
     adapt_exception, CallError, CallException, ErrnoMixin, MatchNotFound, ValidationError, ValidationErrors,
     get_errname,
 )
-from .utils import MIDDLEWARE_RUN_DIR, osc, sw_version
+from .utils import MIDDLEWARE_RUN_DIR, sw_version
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.nginx import get_remote_addr_port
 from .utils.origin import UnixSocketOrigin, TCPIPOrigin
+from .utils.os import close_fds
 from .utils.plugins import LoadPluginsMixin
 from .utils.privilege import credential_has_full_admin
 from .utils.profile import profile_wrap
@@ -628,7 +629,7 @@ class ShellWorkerThread(threading.Thread):
     def run(self):
         self.shell_pid, master_fd = os.forkpty()
         if self.shell_pid == 0:
-            osc.close_fds(3)
+            close_fds(3)
 
             os.chdir('/root')
             env = {
@@ -636,9 +637,8 @@ class ShellWorkerThread(threading.Thread):
                 'HOME': '/root',
                 'LANG': 'en_US.UTF-8',
                 'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin',
+                'LC_ALL': 'C.UTF-8',
             }
-            if osc.IS_LINUX:
-                env['LC_ALL'] = 'C.UTF-8'
             os.execve(self.command[0], self.command, env)
 
         # Terminal baudrate affects input queue size

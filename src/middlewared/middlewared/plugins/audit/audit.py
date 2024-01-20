@@ -28,8 +28,8 @@ from middlewared.schema import (
 from middlewared.service import filterable, filterable_returns, job, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
+from middlewared.utils.mount import getmntinfo
 from middlewared.utils.functools import cache
-from middlewared.utils.osc import getmntinfo
 from middlewared.validators import Range
 
 

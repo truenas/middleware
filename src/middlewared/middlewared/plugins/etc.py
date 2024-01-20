@@ -6,7 +6,6 @@ import stat
 
 from mako import exceptions
 from middlewared.service import CallError, Service
-from middlewared.utils import osc
 from middlewared.utils.io import write_if_changed
 from middlewared.utils.mako import get_template
 
@@ -34,8 +33,6 @@ class MakoRenderer(object):
                     middleware=self.service.middleware,
                     service=self.service,
                     FileShouldNotExist=FileShouldNotExist,
-                    IS_FREEBSD=osc.IS_FREEBSD,
-                    IS_LINUX=osc.IS_LINUX,
                     render_ctx=ctx
                 )
 
@@ -103,7 +100,7 @@ class EtcService(Service):
         ],
         'fstab': [
             {'type': 'mako', 'path': 'fstab'},
-            {'type': 'py', 'path': 'fstab_configure', 'checkpoint_linux': 'post_init'}
+            {'type': 'py', 'path': 'fstab_configure', 'checkpoint': 'post_init'}
         ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
@@ -387,15 +384,8 @@ class EtcService(Service):
                 if renderer is None:
                     raise ValueError(f'Unknown type: {entry["type"]}')
 
-                if 'platform' in entry and entry['platform'].upper() != osc.SYSTEM:
-                    continue
-
                 if checkpoint:
-                    checkpoint_system = f'checkpoint_{osc.SYSTEM.lower()}'
-                    if checkpoint_system in entry:
-                        entry_checkpoint = entry[checkpoint_system]
-                    else:
-                        entry_checkpoint = entry.get('checkpoint', 'initial')
+                    entry_checkpoint = entry.get('checkpoint', 'initial')
                     if entry_checkpoint != checkpoint:
                         continue
 

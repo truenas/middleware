@@ -27,8 +27,8 @@ from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 from middlewared.plugins.tdb.utils import TDBError
 from middlewared.plugins.idmap_.utils import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list, osc, Popen, run, MIDDLEWARE_RUN_DIR
-from middlewared.utils.osc import getmnttree
+from middlewared.utils import filter_list, Popen, run, MIDDLEWARE_RUN_DIR
+from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 
 NETIF_COMPLETE_SENTINEL = f"{MIDDLEWARE_RUN_DIR}/ix-netif-complete"
@@ -148,7 +148,7 @@ class SMBSharePreset(enum.Enum):
     PRIVATE_DATASETS = {"verbose_name": "Private SMB Datasets and Shares", "params": {
         'path_suffix': '%U',
         'auxsmbconf': '\n'.join([
-            'ixnas:zfs_auto_homedir=true' if osc.IS_FREEBSD else 'zfs_core:zfs_auto_create=true'
+            'zfs_core:zfs_auto_create=true'
         ])
     }, "cluster": False}
     WORM_DROPBOX = {"verbose_name": "SMB WORM. Files become readonly via SMB after 5 minutes", "params": {

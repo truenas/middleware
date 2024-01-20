@@ -1,10 +1,4 @@
 #!/bin/sh
 
-. /usr/local/share/system_info
 
-if is_linux; then
-	prefix="/usr"
-else
-	prefix="/usr/local"
-fi
-exec "$prefix"/bin/sqlite3 -cmd ".timeout 60000" "$@"
+exec /usr/bin/sqlite3 -cmd ".timeout 60000" "$@"

@@ -1,4 +1,3 @@
-# -*- coding=utf-8 -*-
 import concurrent.futures
 import functools
 import logging
