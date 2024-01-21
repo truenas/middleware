@@ -3,6 +3,7 @@ import contextlib
 import pytest
 
 from middlewared.client.client import ClientException, ValidationErrors
+from middlewared.service_exception import ValidationErrors as ValidationErrorsServiceException
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.crypto import (
     certificate_signing_request, get_cert_params, root_certificate_authority,
@@ -42,6 +43,23 @@ def create_signing_csr(client, root_ca_id, csr_id):
         call('certificate.delete', cert['id'], job=True)
 
 
+def common_checks(method, role, valid_role, valid_role_exception=True, method_args=None, method_kwargs=None):
+    method_args = method_args or []
+    method_kwargs = method_kwargs or {}
+    with unprivileged_user_client(roles=[role]) as client:
+        if valid_role:
+            if valid_role_exception:
+                with pytest.raises((ValidationErrors, ValidationErrorsServiceException)):
+                    client.call(method, *method_args, **method_kwargs)
+            else:
+                assert client.call(method, *method_args, **method_kwargs) is not None
+        else:
+            with pytest.raises(ClientException) as ve:
+                client.call(method, *method_args, **method_kwargs)
+            assert ve.value.errno == errno.EACCES
+            assert ve.value.error == 'Not authorized'
+
+
 @pytest.mark.parametrize('method, role, valid_role', (
     ('certificate.profiles', 'CERTIFICATE_READ', True),
     ('certificateauthority.profiles', 'CERTIFICATEAUTHORITY_READ', True),
@@ -49,15 +67,7 @@ def create_signing_csr(client, root_ca_id, csr_id):
     ('certificateauthority.profiles', 'CERTIFICATE_READ', False),
 ))
 def test_profiles_read_roles(method, role, valid_role):
-    with unprivileged_user_client(roles=[role]) as c:
-        if valid_role:
-            assert c.call(method) is not None
-        else:
-            with pytest.raises(ClientException) as ve:
-                c.call(method)
-
-            assert ve.value.errno == errno.EACCES
-            assert ve.value.error == 'Not authorized'
+    common_checks(method, role, valid_role, valid_role_exception=False)
 
 
 @pytest.mark.parametrize('role, valid_role', (
@@ -65,16 +75,7 @@ def test_profiles_read_roles(method, role, valid_role):
     ('CERTIFICATEAUTHORITY_READ', False),
 ))
 def test_certificate_authority_create_role(role, valid_role):
-    with unprivileged_user_client(roles=[role]) as c:
-        if valid_role:
-            with create_certificate_authority(c, TEST_CERTIFICATE_AUTHORITY) as crt:
-                assert crt is not None
-        else:
-            with pytest.raises(ClientException) as ve:
-                with create_certificate_authority(c, TEST_CERTIFICATE_AUTHORITY):
-                    pass
-            assert ve.value.errno == errno.EACCES
-            assert ve.value.error == 'Not authorized'
+    common_checks('certificateauthority.create', role, valid_role, method_args=[{}])
 
 
 @pytest.mark.parametrize('role, valid_role', (
@@ -82,15 +83,7 @@ def test_certificate_authority_create_role(role, valid_role):
     ('CERTIFICATE_READ', False),
 ))
 def test_certificate_create_role(role, valid_role):
-    with unprivileged_user_client(roles=[role]) as client:
-        if valid_role:
-            with pytest.raises(ValidationErrors):
-                client.call('certificate.create', {}, job=True)
-        else:
-            with pytest.raises(ClientException) as ve:
-                client.call('certificate.create', {}, job=True)
-            assert ve.value.errno == errno.EACCES
-            assert ve.value.error == 'Not authorized'
+    common_checks('certificate.create', role, valid_role, method_args=[{}], method_kwargs={'job': True})
 
 
 @pytest.mark.parametrize('role, valid_role', (
