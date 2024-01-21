@@ -94,7 +94,7 @@ for key, schema in filter(lambda v: 'cert_extensions' in v[1], CSR_PROFILES.item
 
 class CertificateService(Service):
 
-    @accepts()
+    @accepts(roles=['CERTIFICATE_READ'])
     @returns(Dict(
         'certificate_profiles',
         *[Dict(profile, additional_attrs=True) for profile in CERTIFICATE_PROFILES]
@@ -106,7 +106,7 @@ class CertificateService(Service):
         """
         return CERTIFICATE_PROFILES
 
-    @accepts()
+    @accepts(roles=['CERTIFICATE_READ'])
     @returns(Dict(
         *[Dict(profile, additional_attrs=True) for profile in CSR_PROFILES],
         example=CSR_PROFILES,
