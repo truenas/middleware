@@ -2,7 +2,7 @@ import errno
 import contextlib
 import pytest
 
-from middlewared.client import ClientException
+from middlewared.client.client import ClientException, ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.crypto import (
     certificate_signing_request, get_cert_params, root_certificate_authority,
@@ -27,20 +27,6 @@ def create_certificate_authority(client, name):
         yield ca
     finally:
         client.call('certificateauthority.delete', ca['id'])
-
-
-@contextlib.contextmanager
-def create_certificate(client, name):
-    crt = client.call('certificate.create', {
-        **get_cert_params(),
-        'name': name,
-        'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-    }, job=True)
-
-    try:
-        yield crt
-    finally:
-        client.call('certificate.delete', crt, job=True)
 
 
 @contextlib.contextmanager
@@ -96,14 +82,13 @@ def test_certificate_authority_create_role(role, valid_role):
     ('CERTIFICATE_READ', False),
 ))
 def test_certificate_create_role(role, valid_role):
-    with unprivileged_user_client(roles=[role]) as c:
+    with unprivileged_user_client(roles=[role]) as client:
         if valid_role:
-            with create_certificate(c, TEST_CERTIFICATE) as crt:
-                assert crt is not None
+            with pytest.raises(ValidationErrors):
+                client.call('certificate.create', {}, job=True)
         else:
             with pytest.raises(ClientException) as ve:
-                with create_certificate(c, TEST_CERTIFICATE):
-                    pass
+                client.call('certificate.create', {}, job=True)
             assert ve.value.errno == errno.EACCES
             assert ve.value.error == 'Not authorized'
 
