@@ -678,7 +678,8 @@ class LDAPService(ConfigService):
         return constants.SERVER_TYPE_GENERIC
 
     @accepts(Ref('ldap_update'))
-    async def do_update(self, data):
+    @job(lock="ldap_start_stop")
+    async def do_update(self, job, data):
         """
         `hostname` list of ip addresses or hostnames of LDAP servers with
         which to communicate in order of preference. Failover only occurs
@@ -788,17 +789,14 @@ class LDAPService(ConfigService):
 
         await self.ldap_compress(new)
         await self.middleware.call('datastore.update', self._config.datastore, new['id'], new, {'prefix': 'ldap_'})
-        out = await self.config()
-        job = None
 
         if must_reload:
             if new['enable']:
-                job = (await self.middleware.call('ldap.start')).id
+                await self.__start(job)
             else:
-                job = (await self.middleware.call('ldap.stop')).id
+                await self.__stop(job)
 
-        out.update({"job_id": job})
-        return out
+        return await self.config()
 
     @private
     def port_is_listening(self, host, port, timeout=1):
@@ -967,8 +965,7 @@ class LDAPService(ConfigService):
         return (await self.middleware.call('directoryservices.get_state'))['ldap']
 
     @private
-    @job(lock="ldap_start_stop")
-    async def start(self, job):
+    async def __start(self, job):
         """
         Refuse to start service if the service is alreading in process of starting or stopping.
         If state is 'HEALTHY' or 'FAULTED', then stop the service first before restarting it to ensure
@@ -979,11 +976,6 @@ class LDAPService(ConfigService):
             raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
 
         job.set_progress(0, 'Preparing to configure LDAP directory service.')
-        await self.middleware.call(
-            'datastore.update', self._config.datastore, 1,
-            {'enable': True}, {'prefix': 'ldap_'}
-        )
-
         ldap = await self.config()
 
         if ldap['kerberos_realm']:
@@ -1024,18 +1016,12 @@ class LDAPService(ConfigService):
         job.set_progress(100, 'LDAP directory service started.')
 
     @private
-    @job(lock="ldap_start_stop")
-    async def stop(self, job):
+    async def __stop(self, job):
         ldap_state = await self.middleware.call('ldap.get_state')
         if ldap_state in ['LEAVING', 'JOINING']:
             raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
 
         job.set_progress(0, 'Preparing to stop LDAP directory service.')
-        await self.middleware.call(
-            'datastore.update', self._config.datastore, 1,
-            {'enable': False}, {'prefix': 'ldap_'}
-        )
-
         await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
         await self.set_state(DSStatus['LEAVING'])
         job.set_progress(10, 'Rewriting configuration files.')

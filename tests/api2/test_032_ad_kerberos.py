@@ -8,7 +8,6 @@ from middlewared.test.integration.assets.pool import dataset
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from assets.REST.directory_services import active_directory
 from functions import make_ws_request
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import pool_name, ip, hostname, password, user
@@ -17,6 +16,7 @@ from contextlib import contextmanager
 from base64 import b64decode
 from protocols import nfs_share
 from pytest_dependency import depends
+from middlewared.test.integration.assets.directory_service import active_directory
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer, AD_COMPUTER_OU
@@ -41,14 +41,6 @@ pam = {
     ticket_lifetime = 36000
 }
 """
-
-WORKGROUP = None
-nameserver1 = None
-nameserver2 = None
-
-job_id = None
-dom_id = None
-job_status = None
 
 
 def get_export_sec(exports_config):
@@ -148,38 +140,7 @@ def do_ad_connection(request):
         yield (request, ad)
 
 
-@pytest.fixture(scope="module")
-def set_ad_nameserver(request):
-    results = GET("/network/configuration/")
-    assert results.status_code == 200, results.text
-    nameserver1 = results.json()['nameserver1']
-    nameserver2 = results.json()['nameserver2']
-    nameserver3 = results.json()['nameserver3']
-
-    try:
-        results = PUT("/network/configuration/", {
-            'nameserver1': ADNameServer,
-            'nameserver2': '',
-            'nameserver3': ''
-        })
-        assert results.status_code == 200, results.text
-        yield results.json()
-    finally:
-        results = PUT("/network/configuration/", {
-            'nameserver1': nameserver1,
-            'nameserver2': nameserver2,
-            'nameserver3': nameserver3,
-        })
-        assert results.status_code == 200, results.text
-
-
-@pytest.mark.dependency(name="SET_DNS")
-def test_01_set_nameserver_for_ad(set_ad_nameserver):
-    assert set_ad_nameserver['nameserver1'] == ADNameServer
-
-
 def test_02_kerberos_keytab_and_realm(do_ad_connection):
-    depends(do_ad_connection[0], ["SET_DNS"])
     def krb5conf_parser(krb5conf_lines, idx, entry, state):
         if entry.lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][0]}":
             assert krb5conf_lines[idx + 1].lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][1]}"
@@ -308,7 +269,6 @@ def test_02_kerberos_keytab_and_realm(do_ad_connection):
 
 
 def test_03_kerberos_krbconf(do_ad_connection):
-    depends(do_ad_connection[0], ["SET_DNS"])
     def parser_1(unused, idx, sec, state):
         if not sec.startswith("appdefaults"):
             return
@@ -390,8 +350,6 @@ def test_03_kerberos_krbconf(do_ad_connection):
 
 
 def test_04_kerberos_nfs4(do_ad_connection):
-    depends(do_ad_connection[0], ["SET_DNS"])
-
     res = make_ws_request(ip, {
         'msg': 'method',
         'method': 'kerberos.keytab.has_nfs_principal',

@@ -19,7 +19,6 @@ from .keepalived import KeepalivedService
 from .idmap import IdmapService
 from .openipmi import OpenIpmiService
 
-from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.libvirtd import LibvirtdService, LibvirtGuestService
 from .pseudo.misc import (
     CronService,
@@ -58,10 +57,7 @@ all_services = [
     SSHService,
     UPSService,
     WSDService,
-    ActiveDirectoryService,
-    LdapService,
     NetdataService,
-    NisService,
     IdmapService,
     OpenIpmiService,
     KeepalivedService,

@@ -10,7 +10,7 @@ from middlewared.test.integration.utils import call
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
-from assets.REST.directory_services import active_directory, ldap, override_nameservers
+from middlewared.test.integration.assets.directory_service import active_directory, ldap
 from auto_config import ip, hostname, password, pool_name, user, ha
 from functions import GET, POST, PUT, SSH_TEST, make_ws_request, wait_on_job
 from protocols import nfs_share, SSH_NFS
@@ -89,7 +89,7 @@ def do_ad_connection(request):
 def stop_activedirectory(request):
     results = PUT("/activedirectory/", {"enable": False})
     assert results.status_code == 200, results.text
-    job_id = results.json()['job_id']
+    job_id = results.json()
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
     try:
@@ -97,7 +97,7 @@ def stop_activedirectory(request):
     finally:
         results = PUT("/activedirectory/", {"enable": True})
         assert results.status_code == 200, results.text
-        job_id = results.json()['job_id']
+        job_id = results.json()
         job_status = wait_on_job(job_id, 180)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
@@ -200,16 +200,6 @@ def setup_nfs_share(request):
             'security': ['KRB5', 'KRB5I', 'KRB5P'],
         }) as share:
             yield (request, {'share': share, 'uid': target_uid})
-
-
-@pytest.fixture(scope="module")
-def set_ad_nameserver(request):
-    with override_nameservers(ADNameServer) as ns:
-        yield (request, ns)
-
-
-def test_01_set_nameserver_for_ad(set_ad_nameserver):
-    assert set_ad_nameserver[1]['nameserver1'] == ADNameServer
 
 
 @pytest.mark.dependency(name="AD_CONFIGURED")
