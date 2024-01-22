@@ -187,11 +187,12 @@ class InterfaceRenamer:
                 await self.middleware.call(
                     "datastore.delete", "network.lagginterfacemembers", lagg_member["id"],
                 )
-            for lagg_member in lagg_members:
+            for order, lagg_member in enumerate(lagg_members):
                 if "delete" not in lagg_member:
                     await self.middleware.call("datastore.insert", "network.lagginterfacemembers", {
                         "interfacegroup": lagg_member["interfacegroup"]["id"],
                         "physnic": lagg_member["physnic"],
+                        "ordernum": order,
                     }, {"prefix": "lagg_"})
 
 
