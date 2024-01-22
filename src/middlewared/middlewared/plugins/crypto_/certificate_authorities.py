@@ -36,6 +36,7 @@ class CertificateAuthorityService(CRUDService):
         datastore_extend_context = 'certificateauthority.cert_extend_context'
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate.authority'
+        role_prefix = 'CERTIFICATE_AUTHORITY'
 
     ENTRY = get_ca_result_entry()
 
@@ -204,7 +205,7 @@ class CertificateAuthorityService(CRUDService):
             ('rm', {'name': 'dns_mapping'}),
             ('add', Bool('add_to_trusted_store', default=False)),
             register=True
-        )
+        ),
     )
     async def do_create(self, data):
         """
@@ -392,7 +393,7 @@ class CertificateAuthorityService(CRUDService):
             Int('csr_cert_id'),
             Str('create_type', enum=['CA_SIGN_CSR']),
             Str('name'),
-        )
+        ),
     )
     async def do_update(self, id_, data):
         """

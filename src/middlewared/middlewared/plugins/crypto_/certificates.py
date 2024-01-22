@@ -47,6 +47,7 @@ class CertificateService(CRUDService):
         datastore_extend_context = 'certificate.cert_extend_context'
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate'
+        role_prefix = 'CERTIFICATE'
 
     ENTRY = CERT_ENTRY
 
@@ -199,7 +200,7 @@ class CertificateService(CRUDService):
             List('san', items=[Str('san')]),
             Ref('cert_extensions'),
             register=True
-        )
+        ),
     )
     @job(lock='cert_create')
     async def do_create(self, job, data):
@@ -554,7 +555,7 @@ class CertificateService(CRUDService):
             Bool('revoked'),
             Int('renew_days', validators=[Range(min_=1, max_=30)]),
             Str('name'),
-        )
+        ),
     )
     @job(lock='cert_update')
     async def do_update(self, job, id_, data):
@@ -665,7 +666,7 @@ class CertificateService(CRUDService):
 
     @accepts(
         Int('id'),
-        Bool('force', default=False)
+        Bool('force', default=False),
     )
     @job(lock='cert_delete')
     def do_delete(self, job, id_, force):
