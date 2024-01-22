@@ -36,7 +36,7 @@ class CertificateAuthorityService(CRUDService):
         datastore_extend_context = 'certificateauthority.cert_extend_context'
         datastore_prefix = 'cert_'
         cli_namespace = 'system.certificate.authority'
-        role_prefix = 'CERTIFICATEAUTHORITY'
+        role_prefix = 'CERTIFICATE_AUTHORITY'
 
     ENTRY = get_ca_result_entry()
 
