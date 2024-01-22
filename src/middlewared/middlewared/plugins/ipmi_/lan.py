@@ -154,6 +154,7 @@ class IPMILanService(CRUDService):
     )
     def query(self, data):
         """Query available IPMI Channels with `query-filters` and `query-options`."""
+        result = []
         if not data['ipmi_options']['query_remote']:
             result = self.query_impl()
         elif self.middleware.call_sync('failover.licensed'):
