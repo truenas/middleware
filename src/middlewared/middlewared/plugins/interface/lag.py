@@ -34,7 +34,7 @@ class InterfaceService(Service):
             info['protocol'] = protocol
 
         if protocol.name == 'FAILOVER':
-            db_primary = [i['lagg_physnic'] for i in members if i['lagg_ordernum'] == 0][0]
+            db_primary = [i['lagg_physnic'] for i in members][0]
             curr_primary = iface.primary_interface
             if curr_primary != db_primary:
                 info['primary_interface'] = db_primary
