@@ -25,8 +25,8 @@ def common_checks(method, role, valid_role, valid_role_exception=True, method_ar
 
 @pytest.mark.parametrize('method, role, valid_role', (
     ('certificate.profiles', 'CERTIFICATE_READ', True),
-    ('certificateauthority.profiles', 'CERTIFICATEAUTHORITY_READ', True),
-    ('certificate.profiles', 'CERTIFICATEAUTHORITY_READ', False),
+    ('certificateauthority.profiles', 'CERTIFICATE_AUTHORITY_READ', True),
+    ('certificate.profiles', 'CERTIFICATE_AUTHORITY_READ', False),
     ('certificateauthority.profiles', 'CERTIFICATE_READ', False),
 ))
 def test_profiles_read_roles(method, role, valid_role):
@@ -34,8 +34,8 @@ def test_profiles_read_roles(method, role, valid_role):
 
 
 @pytest.mark.parametrize('role, valid_role', (
-    ('CERTIFICATEAUTHORITY_WRITE', True),
-    ('CERTIFICATEAUTHORITY_READ', False),
+    ('CERTIFICATE_AUTHORITY_WRITE', True),
+    ('CERTIFICATE_AUTHORITY_READ', False),
 ))
 def test_certificate_authority_create_role(role, valid_role):
     common_checks('certificateauthority.create', role, valid_role, method_args=[{}])
@@ -50,8 +50,8 @@ def test_certificate_create_role(role, valid_role):
 
 
 @pytest.mark.parametrize('role, valid_role', (
-    ('CERTIFICATEAUTHORITY_WRITE', True),
-    ('CERTIFICATEAUTHORITY_READ', False),
+    ('CERTIFICATE_AUTHORITY_WRITE', True),
+    ('CERTIFICATE_AUTHORITY_READ', False),
 ))
 def test_signing_csr_role(role, valid_role):
     common_checks('certificateauthority.ca_sign_csr', role, valid_role, method_args=[{
