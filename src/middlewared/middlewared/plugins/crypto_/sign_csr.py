@@ -17,7 +17,8 @@ class CertificateAuthorityService(Service):
             Str('name', required=True),
             Ref('cert_extensions'),
             register=True
-        )
+        ),
+        roles=['CERTIFICATE_AUTHORITY_WRITE'],
     )
     @returns(Ref('certificate_entry'))
     async def ca_sign_csr(self, data):

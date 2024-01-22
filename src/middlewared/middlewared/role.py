@@ -78,6 +78,12 @@ ROLES = {
     'JBOF_READ': Role(),
     'JBOF_WRITE': Role(includes=['JBOF_READ']),
 
+    # Crypto roles
+    'CERTIFICATE_READ': Role(),
+    'CERTIFICATE_WRITE': Role(includes=['CERTIFICATE_READ']),
+    'CERTIFICATE_AUTHORITY_READ': Role(),
+    'CERTIFICATE_AUTHORITY_WRITE': Role(includes=['CERTIFICATE_AUTHORITY_READ']),
+
     # iSCSI roles
     'SHARING_ISCSI_AUTH_READ': Role(),
     'SHARING_ISCSI_AUTH_WRITE': Role(includes=['SHARING_ISCSI_AUTH_READ']),

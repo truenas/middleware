@@ -36,7 +36,7 @@ class CertificateAuthorityService(Service):
         }
     }
 
-    @accepts()
+    @accepts(roles=['CERTIFICATE_AUTHORITY_READ'])
     @returns(Dict(
         'certificate_authority_profiles',
         *[Dict(profile, additional_attrs=True) for profile in PROFILES]
