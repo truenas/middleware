@@ -12,7 +12,7 @@ class ActiveDirectoryDomainBindAlertClass(AlertClass):
     category = AlertCategory.DIRECTORY_SERVICE
     level = AlertLevel.WARNING
     title = "Active Directory Bind Is Not Healthy"
-    text = "Attempt to connect to netlogon share failed with error: %(wberr)s."
+    text = "Attempt to connect to domain controller failed: %(wberr)s."
 
 
 class ActiveDirectoryDomainHealthAlertClass(AlertClass):
@@ -57,11 +57,24 @@ class ActiveDirectoryDomainBindAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self):
-        if (await self.middleware.call('activedirectory.get_state')) == 'DISABLED':
+        if not (await self.middleware.call('activedirectory.config'))['enable']:
             return
 
         try:
             await self.middleware.call("activedirectory.started")
+        except CallError as e:
+            if e.errno == errno.EINVAL:
+                # ValidationErrors text is crammed into e.extra
+                errmsg = f'Configuration validation failed: {e.extra}'
+            else:
+                errmsg = str(e.errmsg)
+
+            await self.middleware.call("activedirectory.set_state", DSStatus['DISABLED'].name)
+            return Alert(
+                ActiveDirectoryDomainBindAlertClass,
+                {'wberr': errmsg},
+                key=None
+            )
         except Exception as e:
             await self.middleware.call("activedirectory.set_state", DSStatus['FAULTED'].name)
             return Alert(
