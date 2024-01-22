@@ -37,12 +37,12 @@ class DetectVirtualIpStates(Service):
             # 3 other paths are up (That's the point of MPIO). In this
             # scenario, the customer will have to put all 4 of the
             # physical interfaces in the _same_ failover group.
-            for vrrp_info in i['state'].get('vrrp_config', []):
-                # `vrrp_config` should never be NoneType here but this
-                # is a critical call path for processing a failover
-                # event so we access it safely. There are other layers
-                # of checks and balances that happen in the failover
-                # event logic.
+            for vrrp_info in (i['state'].get('vrrp_config') or []):
+                # `vrrp_config` can be NoneType when a bond interface
+                # has been configured that has no config on it. The
+                # reason why a bond will have no config is when it's
+                # used as a parent interface to host vlan interfaces.
+                # In this scenario, vrrp_config is expected to be None.
                 if vrrp_info['state'] == 'MASTER':
                     masters.append(i['id'])
                 else:
