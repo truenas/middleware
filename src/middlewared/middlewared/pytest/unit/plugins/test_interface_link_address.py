@@ -3,11 +3,10 @@ import logging
 from unittest.mock import ANY, AsyncMock
 
 import pytest
-import sqlalchemy as sa
 
 from middlewared.plugins.interface.link_address import InterfaceService, setup as link_address_setup
 from middlewared.pytest.unit.plugins.test_datastore import Model, datastore_test
-from middlewared.sqlalchemy import JSON
+import middlewared.sqlalchemy as sa
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +16,7 @@ class NetworkBridgeModel(Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)  # noqa
     interface_id = sa.Column(sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'))
-    members = sa.Column(JSON(list), default=[])
+    members = sa.Column(sa.JSON(list), default=[])
 
 
 class NetworkInterfaceModel(Model):
@@ -48,6 +47,7 @@ class NetworkLaggInterfaceMemberModel(Model):
     __tablename__ = 'network_lagginterfacemembers'
 
     id = sa.Column(sa.Integer, primary_key=True)  # noqa
+    lagg_ordernum = sa.Column(sa.Integer())
     lagg_interfacegroup_id = sa.Column(sa.ForeignKey('network_lagginterface.id', ondelete='CASCADE'), index=True)
     lagg_physnic = sa.Column(sa.String(120), unique=True)
 
@@ -173,10 +173,11 @@ async def test__interface_link_address_setup(before, after):
                 "interface": interface_id[interface],
             }, {"prefix": "lagg_"})
 
-            for member in members:
+            for order, member in enumerate(members):
                 await ds.insert("network.lagginterfacemembers", {
                     "interfacegroup": lagg_id,
                     "physnic": member,
+                    "ordernum": order,
                 }, {"prefix": "lagg_"})
 
         for vint, pint in before.get("vlan", {}).items():
@@ -245,12 +246,15 @@ async def test__interface_link_address_setup(before, after):
             members = after["lagg"].get(lagg["interface"]["int_interface"])
 
             assert await ds.query(
-                "network.lagginterfacemembers", [["interfacegroup", "=", lagg["id"]]], {"prefix": "lagg_"}
+                "network.lagginterfacemembers",
+                [["interfacegroup", "=", lagg["id"]]],
+                {"prefix": "lagg_", "order_by": ["ordernum"]}
             ) == [
                 {
                     "id": ANY,
                     "interfacegroup": ANY,
                     "physnic": member,
+                    "ordernum": ANY,
                 }
                 for member in members
             ]
