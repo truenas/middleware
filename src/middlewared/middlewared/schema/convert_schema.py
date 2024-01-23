@@ -1,6 +1,7 @@
 from .adaptable_schemas import Bool
 from .dict_schema import Dict
 from .integer_schema import Int
+from .list_schema import List
 from .string_schema import Str
 
 

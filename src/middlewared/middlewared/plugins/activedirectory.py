@@ -182,9 +182,14 @@ class ActiveDirectoryService(ConfigService):
         foreign entries.
         kinit will fail if domain name is lower-case.
         """
-        for key in ['netbiosname', 'netbiosname_b', 'netbiosalias', 'bindpw']:
-            if key in ad:
-                ad.pop(key)
+        for key in [
+            'netbiosname',
+            'netbiosname_b',
+            'netbiosalias',
+            'bindpw',
+            'addresses_to_register',
+        ]:
+            ad.pop(key, None)
 
         if ad.get('nss_info'):
             ad['nss_info'] = ad['nss_info'].upper()
@@ -331,18 +336,17 @@ class ActiveDirectoryService(ConfigService):
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
 
-    @accepts(Ref('activedirectory_update'))
     @accepts(Patch(
         'activedirectory_config', 'activedirectory_update',
         ('add', {
             'name': 'addresses_to_register',
             'type': 'list',
             'kwargs': {
-                'items': [IPAddr('address')]
-                'default': ['*'],
+                'items': [IPAddr('address')],
+                'default': ['0.0.0.0', '::'],
             }
         })
-    )
+    ))
     @returns(Ref('activedirectory_config'))
     @job(lock="AD_start_stop")
     async def do_update(self, job, data):
