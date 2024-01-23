@@ -857,6 +857,7 @@ class ActiveDirectoryService(ConfigService):
             await self.middleware.call('service.update', 'cifs', {'enable': True})
             await self.set_idmap(ad['allow_trusted_doms'], ad['domainname'])
             await self.middleware.call('activedirectory.set_ntp_servers')
+            await self.middleware.call("directoryservices.secrets.backup")
             ret = neterr.JOINED
         elif ret == neterr.JOINED:
             if not ad['kerberos_principal']:
@@ -1222,7 +1223,7 @@ class ActiveDirectoryService(ConfigService):
                 pdir = await self.middleware.call("smb.getparm", "private directory", "GLOBAL")
                 ts = time.time()
                 os.rename(f"{pdir}/secrets.tdb", f"{pdir}/secrets.tdb.bak.{int(ts)}")
-                await self.middleware.call("directoryservices.backup_secrets")
+                await self.middleware.call("directoryservices.secrets.backup")
             except Exception:
                 self.logger.debug("Failed to remove stale secrets file.", exc_info=True)
 

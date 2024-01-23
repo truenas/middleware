@@ -27,6 +27,7 @@ class TDBWrap(object):
     last_read = 0
     full_path = None
     opath_fd = FD_CLOSED
+    keys_null_terminated = False
 
     def close(self):
         if self.opath_fd == FD_CLOSED and self.hdl is None:
@@ -55,7 +56,7 @@ class TDBWrap(object):
 
     def get(self, key):
         tdb_key = key.encode()
-        if self.options['data_type'] == 'BYTES':
+        if self.keys_null_terminated:
             tdb_key += b"\x00"
 
         tdb_val = self.hdl.get(tdb_key)
@@ -70,7 +71,9 @@ class TDBWrap(object):
     def store(self, key, val):
         tdb_key = key.encode()
         if self.options['data_type'] == 'BYTES':
-            tdb_key += b"\x00"
+            if self.keys_null_terminated:
+                tdb_key += b"\x00"
+
             tdb_val = val
         else:
             tdb_val = val.encode()
@@ -79,7 +82,7 @@ class TDBWrap(object):
 
     def delete(self, key):
         tdb_key = key.encode()
-        if self.options['data_type'] == 'BYTES':
+        if self.keys_null_terminated:
             tdb_key += b"\x00"
 
         self.hdl.delete(tdb_key)
@@ -91,7 +94,7 @@ class TDBWrap(object):
         ok = True
         for i in self.hdl.keys():
             tdb_key = i.decode()
-            if self.options['data_type'] == 'BYTES':
+            if self.keys_null_terminated:
                 tdb_key = tdb_key[:-1]
 
             tdb_val = self.get(tdb_key)
@@ -138,10 +141,17 @@ class TDBWrap(object):
             case 'gencache.tdb':
                 # See gencache_init() in source3/lib/gencache.c in Samba
                 tdb_flags = tdb.INCOMPATIBLE_HASH | tdb.NOSYNC | MUTEX_LOCKING
+                self.keys_null_terminated = True
                 open_mode = 0o644
                 open_flags = os.O_CREAT | os.O_RDWR
+            case 'secrets.tdb':
+                tdb_flags = tdb.DEFAULT
+                open_flags = os.O_RDWR
+                open_mode = 0o600
             case _:
                 tdb_flags = tdb.DEFAULT
+                # Typically tdb files will have NULL-terminated keys
+                self.keys_null_terminated = options['data_type'] == 'BYTES'
                 open_flags = os.O_CREAT | os.O_RDWR
                 open_mode = 0o600
 
