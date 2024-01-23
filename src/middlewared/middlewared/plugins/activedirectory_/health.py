@@ -16,6 +16,7 @@ class ActiveDirectoryService(Service):
 
     class Config:
         service = "activedirectory"
+        datastore = "directoryservice.activedirectory"
 
     @private
     def winbind_status(self, check_trust=False):
@@ -173,13 +174,13 @@ class ActiveDirectoryService(Service):
 
         try:
             verrors.check()
-        except ValidationErrors:
+        except ValidationErrors as ve:
             await self.middleware.call(
-                'datstore.update', self._config.datastore, config['id'],
+                'datastore.update', self._config.datastore, config['id'],
                 {"enable": False}, {'prefix': 'ad_'}
             )
-            raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
-                            errno.EINVAL)
+            raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration',
+                            errno.EINVAL, ', '.join([err[1] for err in ve]))
 
         """
         Verify winbindd netlogon connection.
