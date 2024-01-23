@@ -196,7 +196,7 @@ async def test__interface_link_address_setup(before, after):
             {
                 "name": name,
                 "state": {
-                    "link_address": link_address,
+                    "hardware_link_address": link_address,
                 }
             }
             for name, link_address in (
