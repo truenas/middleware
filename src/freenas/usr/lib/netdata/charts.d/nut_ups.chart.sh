@@ -1,7 +1,7 @@
 . /usr/lib/netdata/charts.d/nut.chart.sh
 
 nut_get_all() {
-  run -t $nut_timeout upsc -l || echo "dummy-ups"
+  run -t $nut_timeout upsc -l || echo "ix-dummy-ups"
 }
 
 nut_ups_check() {

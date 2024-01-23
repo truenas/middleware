@@ -273,9 +273,7 @@ class UPSBase(GraphBase):
         self, query_params: dict, identifiers: list, aggregate: bool = True
     ) -> typing.List[dict]:
         self.UPS_IDENTIFIER = (await self.middleware.call('ups.config'))['identifier']
-        if await self.middleware.call('service.started', 'ups'):
-            return await super().export_multiple_identifiers(query_params, identifiers, aggregate)
-        return []
+        return await super().export_multiple_identifiers(query_params, identifiers, aggregate)
 
 
 class UPSChargePlugin(UPSBase):
