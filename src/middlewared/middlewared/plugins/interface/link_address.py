@@ -41,14 +41,15 @@ class InterfaceService(Service):
 
             for real_interface in real_interfaces:
                 name = real_interfaces.get_name(real_interface)
-                await self.__handle_interface(db_interfaces, name, local_key, real_interface["state"]["link_address"])
+                await self.__handle_interface(db_interfaces, name, local_key,
+                                              real_interface["state"]["hardware_link_address"])
                 if real_interfaces_remote is not None:
                     real_interface_remote = real_interfaces_remote.by_name.get(name)
                     if real_interface_remote is None:
                         self.middleware.logger.warning(f"Interface {name!r} is only present on the local system")
                     else:
                         await self.__handle_interface(db_interfaces, name, remote_key,
-                                                      real_interface_remote["state"]["link_address"])
+                                                      real_interface_remote["state"]["hardware_link_address"])
         except Exception:
             self.middleware.logger.error("Unhandled exception while persisting network interfaces link addresses",
                                          exc_info=True)
@@ -97,7 +98,7 @@ class DatabaseInterfaceCollection(InterfaceCollection):
 class RealInterfaceCollection(InterfaceCollection):
     @property
     def by_link_address(self):
-        return {i["state"]["link_address"]: i for i in self.interfaces}
+        return {i["state"]["hardware_link_address"]: i for i in self.interfaces}
 
     def get_name(self, i):
         return i["name"]

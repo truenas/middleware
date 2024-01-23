@@ -131,6 +131,8 @@ class InterfaceService(CRUDService):
             List('supported_media', required=True),
             List('media_options', required=True, null=True),
             Str('link_address', required=True),
+            Str('permanent_link_address', required=True, null=True),
+            Str('hardware_link_address', required=True),
             Int('rx_queues', required=True),
             Int('tx_queues', required=True),
             List('aliases', required=True, items=[Dict(
@@ -216,6 +218,8 @@ class InterfaceService(CRUDService):
                 'description': config['int_name'],
                 'aliases': [],
                 'link_address': '',
+                'permanent_link_address': None,
+                'hardware_link_address': '',
                 'cloned': True,
                 'mtu': 1500,
                 'flags': [],
@@ -1255,10 +1259,10 @@ class InterfaceService(CRUDService):
                     )
 
             if iface['type'] == 'PHYSICAL':
-                link_address_update = {'link_address': iface['state']['link_address']}
+                link_address_update = {'link_address': iface['state']['hardware_link_address']}
                 if await self.middleware.call('system.is_enterprise_ix_hardware'):
                     if await self.middleware.call('failover.node') == 'B':
-                        link_address_update = {'link_address_b': iface['state']['link_address']}
+                        link_address_update = {'link_address_b': iface['state']['hardware_link_address']}
                 link_address_row = await self.middleware.call(
                     'datastore.query', 'network.interface_link_address', [['interface', '=', new['name']]],
                 )
