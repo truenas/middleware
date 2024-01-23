@@ -5,6 +5,8 @@
     from collections import defaultdict
     from pathlib import Path
 
+    from middlewared.service import CallError
+
     global_config = middleware.call_sync('iscsi.global.config')
 
     def existing_copy_manager_luns():
@@ -35,6 +37,21 @@
                     start_count += 1
                 cml[start_count] = device
         return cml
+
+    targets = middleware.call_sync('iscsi.target.query')
+    extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]], {'extra': {'use_cached_locked_datasets': False}})}
+    portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
+    initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
+    authenticators = defaultdict(list)
+    for auth in middleware.call_sync('iscsi.auth.query'):
+        authenticators[auth['tag']].append(auth)
+
+    associated_targets = defaultdict(list)
+    for a_tgt in filter(
+        lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
+        middleware.call_sync('iscsi.targetextent.query')
+    ):
+        associated_targets[a_tgt['target']].append(a_tgt)
 
     # There are several changes that must occur if ALUA is enabled,
     # and these are different depending on whether this is the
@@ -67,6 +84,8 @@
                 if 'address' in addr:
                     failover_virtual_aliases.append(addr['address'])
 
+    cluster_mode_targets = []
+    cluster_mode_luns = {}
     if failover_status == "MASTER":
         middleware.call_sync("iscsi.target.logout_ha_targets")
         local_ip = middleware.call_sync("failover.local_ip")
@@ -74,27 +93,23 @@
     elif failover_status == "BACKUP":
         if alua_enabled:
             logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
-            cluster_mode_targets = middleware.call_sync('failover.call_remote', 'iscsi.target.cluster_mode_targets')
+            try:
+                (cluster_mode_targets, cluster_mode_luns) = middleware.call_sync('failover.call_remote', 'iscsi.target.cluster_mode_targets_luns')
+            except CallError as e:
+                if e.errno != CallError.ENOMETHOD:
+                    raise
+                # We may have upgraded one node, but not yet the other
+                middleware.logger.warning('Failed to configure remote cluster_mode_targets_luns')
         else:
             middleware.call_sync("iscsi.target.logout_ha_targets")
+            targets = []
+            extents = {}
+            portals = {}
+            initiators = {}
+            associated_targets = defaultdict(list)
 
     nodes = {"A" : {"other" : "B", "group_id" : 101},
              "B" : {"other" : "A", "group_id" : 102}}
-
-    targets = middleware.call_sync('iscsi.target.query')
-    extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]], {'extra': {'use_cached_locked_datasets': False}})}
-    portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
-    initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
-    authenticators = defaultdict(list)
-    for auth in middleware.call_sync('iscsi.auth.query'):
-        authenticators[auth['tag']].append(auth)
-
-    associated_targets = defaultdict(list)
-    for a_tgt in filter(
-        lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
-        middleware.call_sync('iscsi.targetextent.query')
-    ):
-        associated_targets[a_tgt['target']].append(a_tgt)
 
     # Let's map extents to respective ios
     all_extent_names = []
@@ -158,10 +173,12 @@ HANDLER dev_disk {
 %                 for device in devices:
 
         DEVICE ${device} {
-## Sanity check to ensure the MASTER target is in cluster_mode, if so then so are we
+## Sanity check to ensure the MASTER target LUN is in cluster_mode, if so then so are we
 ## Note we use a similar check to determine whether the target will be enabled.
-%                 if name in cluster_mode_targets:
+%                 if name in cluster_mode_luns and int(device.split(':')[-1]) in cluster_mode_luns[name]:
             cluster_mode 1
+%                 else:
+            cluster_mode 0
 %                 endif
         }
 %                 endfor
