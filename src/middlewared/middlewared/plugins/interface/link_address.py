@@ -41,14 +41,15 @@ class InterfaceService(Service):
 
             for real_interface in real_interfaces:
                 name = real_interfaces.get_name(real_interface)
-                await self.__handle_interface(db_interfaces, name, local_key, real_interface["state"]["link_address"])
+                await self.__handle_interface(db_interfaces, name, local_key,
+                                              real_interface["state"]["hardware_link_address"])
                 if real_interfaces_remote is not None:
                     real_interface_remote = real_interfaces_remote.by_name.get(name)
                     if real_interface_remote is None:
                         self.middleware.logger.warning(f"Interface {name!r} is only present on the local system")
                     else:
                         await self.__handle_interface(db_interfaces, name, remote_key,
-                                                      real_interface_remote["state"]["link_address"])
+                                                      real_interface_remote["state"]["hardware_link_address"])
         except Exception:
             self.middleware.logger.error("Unhandled exception while persisting network interfaces link addresses",
                                          exc_info=True)
@@ -97,7 +98,7 @@ class DatabaseInterfaceCollection(InterfaceCollection):
 class RealInterfaceCollection(InterfaceCollection):
     @property
     def by_link_address(self):
-        return {i["state"]["link_address"]: i for i in self.interfaces}
+        return {i["state"]["hardware_link_address"]: i for i in self.interfaces}
 
     def get_name(self, i):
         return i["name"]
@@ -142,13 +143,7 @@ class InterfaceRenamer:
                     "datastore.update", "network.bridge", bridge["id"], {"members": bridge["members"]},
                 )
 
-        for lagg_member in await self.middleware.call("datastore.query", "network.lagginterfacemembers"):
-            if new_name := self.mapping.get(lagg_member["lagg_physnic"]):
-                self.middleware.logger.info("Changing LAGG member %r physical NIC from %r to %r", lagg_member["id"],
-                                            lagg_member["lagg_physnic"], new_name)
-                await self.middleware.call(
-                    "datastore.update", "network.lagginterfacemembers", lagg_member["id"], {"lagg_physnic": new_name},
-                )
+        await self._commit_laggs()
 
         for vlan in await self.middleware.call("datastore.query", "network.vlan"):
             if new_name := self.mapping.get(vlan["vlan_pint"]):
@@ -163,6 +158,43 @@ class InterfaceRenamer:
                 await self.middleware.call("datastore.update", "vm.device", vm_device["id"], {
                     "attributes": {**vm_device["attributes"], "nic_attach": new_name},
                 })
+
+    async def _commit_laggs(self):
+        lagg_members = await self.middleware.call("datastore.query", "network.lagginterfacemembers", [],
+                                                  {"prefix": "lagg_"})
+        lagg_members_changed = False
+        for lagg_member in lagg_members:
+            if new_name := self.mapping.get(lagg_member["physnic"]):
+                self.middleware.logger.info("Changing LAGG member %r physical NIC from %r to %r", lagg_member["id"],
+                                            lagg_member["physnic"], new_name)
+                lagg_member["physnic"] = new_name
+                lagg_member.pop("delete", None)
+                lagg_members_changed = True
+
+                for other_lagg_member in lagg_members:
+                    if other_lagg_member["id"] != lagg_member["id"]:
+                        if other_lagg_member["physnic"] == new_name:
+                            other_lagg_member["delete"] = True
+
+        for lagg_member in lagg_members:
+            if lagg_member.get("delete"):
+                self.middleware.logger.info(
+                    "Deleting LAGG member %r as it uses physical NIC which is now also used in another LAGG member",
+                    lagg_member["physnic"],
+                )
+
+        if lagg_members_changed:
+            for lagg_member in lagg_members:
+                await self.middleware.call(
+                    "datastore.delete", "network.lagginterfacemembers", lagg_member["id"],
+                )
+            for order, lagg_member in enumerate(lagg_members):
+                if "delete" not in lagg_member:
+                    await self.middleware.call("datastore.insert", "network.lagginterfacemembers", {
+                        "interfacegroup": lagg_member["interfacegroup"]["id"],
+                        "physnic": lagg_member["physnic"],
+                        "ordernum": order,
+                    }, {"prefix": "lagg_"})
 
 
 async def setup(middleware):
