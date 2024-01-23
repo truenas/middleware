@@ -134,7 +134,7 @@
     hosts_iqns = middleware.call_sync('iscsi.host.get_hosts_iqns')
 
     if alua_enabled and failover_status == "BACKUP":
-        cml = calc_copy_manager_luns(list(itertools.chain.from_iterable(logged_in_targets.values())), True)
+        cml = calc_copy_manager_luns(list(itertools.chain.from_iterable([x for x in logged_in_targets.values() if x is not None])), True)
     else:
         cml = calc_copy_manager_luns(all_extent_names)
 %>\
