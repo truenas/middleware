@@ -94,7 +94,7 @@ class ActiveDirectoryService(ConfigService):
         cli_namespace = "directory_service.activedirectory"
 
     ENTRY = Dict(
-        'activedirectory_update',
+        'activedirectory_config',
         Str('domainname', required=True),
         Str('bindname'),
         Str('bindpw', private=True),
@@ -332,7 +332,18 @@ class ActiveDirectoryService(ConfigService):
                     )
 
     @accepts(Ref('activedirectory_update'))
-    @returns(Ref('activedirectory_update'))
+    @accepts(Patch(
+        'activedirectory_config', 'activedirectory_update',
+        ('add', {
+            'name': 'addresses_to_register',
+            'type': 'list',
+            'kwargs': {
+                'items': [IPAddr('address')]
+                'default': ['*'],
+            }
+        })
+    )
+    @returns(Ref('activedirectory_config'))
     @job(lock="AD_start_stop")
     async def do_update(self, job, data):
         """

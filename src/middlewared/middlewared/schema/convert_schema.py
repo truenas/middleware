@@ -15,4 +15,6 @@ def convert_schema(spec):
         return Bool(name, **spec)
     elif t == 'dict':
         return Dict(name, *spec.get('args', []), **spec.get('kwargs', {}))
+    elif t == 'list':
+        return List(name, *spec.get('args', []), **spec.get('kwargs', {}))
     raise ValueError(f'Unknown type: {t}')
