@@ -12,7 +12,7 @@ from .ethernet_settings import EthernetHardwareSettings
 __all__ = ["Interface", "CLONED_PREFIXES"]
 
 # Keep this as an immutable type since this
-# is used all over the place and we don't want
+# is used all over the place, and we don't want
 # the contents to change
 CLONED_PREFIXES = ("br", "vlan", "bond")
 
@@ -25,6 +25,7 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
         self._nd6_flags = dev.get_attr('IFLA_AF_SPEC').get_attr('AF_INET6').get_attr('IFLA_INET6_FLAGS') or 0
         self._link_state = f'LINK_STATE_{dev.get_attr("IFLA_OPERSTATE")}'
         self._link_address = dev.get_attr('IFLA_ADDRESS')
+        self._permanent_link_address = dev.get_attr('IFLA_PERM_ADDRESS')
         self._cloned = any((
             (self.name.startswith(CLONED_PREFIXES)),
             (self.name.startswith(INTERNAL_INTERFACES))
@@ -95,6 +96,10 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
         return self._link_address
 
     @property
+    def permanent_link_address(self):
+        return self._permanent_link_address
+
+    @property
     def rx_queues(self):
         return self._rxq
 
@@ -120,6 +125,8 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
             'supported_media': [],
             'media_options': None,
             'link_address': self.link_address or '',
+            'permanent_link_address': self.permanent_link_address,
+            'hardware_link_address': self.permanent_link_address or self.link_address or '',
             'aliases': [i.asdict(stats=address_stats) for i in self.addresses],
             'vrrp_config': vrrp_config,
             'rx_queues': self.rx_queues,
