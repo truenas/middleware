@@ -4,9 +4,6 @@ __all__ = ['VrrpMixin']
 
 class VrrpMixin:
 
-    def __init__(self):
-        self.data = None
-
     @property
     def vrrp_config(self):
 
