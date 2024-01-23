@@ -27,7 +27,6 @@ class SystemGeneralModel(sa.Model):
     stg_guiconsolemsg = sa.Column(sa.Boolean(), default=True)
     stg_language = sa.Column(sa.String(120), default='en')
     stg_kbdmap = sa.Column(sa.String(120), default='us')
-    stg_birthday = sa.Column(sa.DateTime(), nullable=True)
     stg_timezone = sa.Column(sa.String(120), default='America/Los_Angeles')
     stg_wizardshown = sa.Column(sa.Boolean(), default=False)
     stg_pwenc_check = sa.Column(sa.String(100))
@@ -67,7 +66,6 @@ class SystemGeneralService(ConfigService):
         Str('language', empty=False, required=True),
         Str('timezone', empty=False, required=True),
         Bool('usage_collection', null=True, required=True),
-        Datetime('birthday', required=True),
         Bool('wizardshown', required=True),
         Bool('usage_collection_is_set', required=True),
         Bool('ds_auth', required=True),
