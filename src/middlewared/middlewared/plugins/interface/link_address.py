@@ -48,8 +48,12 @@ class InterfaceService(Service):
                     if real_interface_remote is None:
                         self.middleware.logger.warning(f"Interface {name!r} is only present on the local system")
                     else:
-                        await self.__handle_interface(db_interfaces, name, remote_key,
-                                                      real_interface_remote["state"]["hardware_link_address"])
+                        try:
+                            remote_hardware_link_address = real_interface_remote["state"]["hardware_link_address"]
+                        except KeyError:
+                            pass
+                        else:
+                            await self.__handle_interface(db_interfaces, name, remote_key, remote_hardware_link_address)
         except Exception:
             self.middleware.logger.error("Unhandled exception while persisting network interfaces link addresses",
                                          exc_info=True)
