@@ -30,24 +30,10 @@ class SystemService(Service):
         'physmem_size': None,
     }
 
-    BIRTHDAY_DATE = {
-        'date': None,
-    }
-
     HOST_ID = None
 
     class Config:
         cli_namespace = 'system'
-
-    @private
-    async def birthday(self):
-
-        if self.BIRTHDAY_DATE['date'] is None:
-            birth = (await self.middleware.call('datastore.config', 'system.settings'))['stg_birthday']
-            if birth != datetime(1970, 1, 1):
-                self.BIRTHDAY_DATE['date'] = birth
-
-        return self.BIRTHDAY_DATE
 
     @private
     async def mem_info(self):
@@ -148,7 +134,6 @@ class SystemService(Service):
         Dict('license', additional_attrs=True, null=True),  # TODO: Fill this in please
         Datetime('boottime', required=True),
         Datetime('datetime', required=True),
-        Datetime('birthday', required=True, null=True),
         Str('timezone', required=True),
         Str('system_manufacturer', required=True, null=True),
         Bool('ecc_memory', required=True),
@@ -161,7 +146,6 @@ class SystemService(Service):
         dmidecode = await self.middleware.call('system.dmidecode_info')
         cpu_info = await self.middleware.call('system.cpu_info')
         mem_info = await self.middleware.call('system.mem_info')
-        birthday = await self.middleware.call('system.birthday')
         timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
 
         return {
@@ -181,7 +165,6 @@ class SystemService(Service):
             'license': await self.middleware.call('system.license'),
             'boottime': time_info['boot_time'],
             'datetime': time_info['datetime'],
-            'birthday': birthday['date'],
             'timezone': timezone_setting,
             'system_manufacturer': dmidecode['system-manufacturer'] if dmidecode['system-manufacturer'] else None,
             'ecc_memory': dmidecode['ecc-memory'],

@@ -85,29 +85,8 @@ class SystemService(Service):
         await Popen(['/sbin/poweroff'])
 
 
-async def _update_birthday(middleware):
-    while True:
-        birthday = await middleware.call('system.get_synced_clock_time')
-        if birthday:
-            middleware.logger.debug('Updating birthday data')
-            # update db with new birthday
-            settings = await middleware.call('datastore.config', 'system.settings')
-            await middleware.call(
-                'datastore.update', 'system.settings', settings['id'], {'stg_birthday': birthday}, {'ha_sync': False}
-            )
-            break
-        else:
-            await asyncio.sleep(300)
-
-
 async def _event_system_ready(middleware, event_type, args):
     lifecycle_conf.SYSTEM_READY = True
-
-    # Check if birthday is already set
-    birthday = await middleware.call('system.birthday')
-    if birthday is None:
-        # try to set birthday in background
-        middleware.create_task(_update_birthday(middleware))
 
     if (await middleware.call('system.advanced.config'))['kdump_enabled']:
         cp = await run(['kdump-config', 'status'], check=False)
