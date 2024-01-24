@@ -20,8 +20,8 @@ class DiskService(Service):
                 disks = await self.middleware.call("disk.query", [["name", "!=", None]])
 
                 devices = await self.middleware.call("device.get_disks")
-                is_ix_hardware = await self.middleware.call("truenas.is_ix_hardware")
-                context = SMARTCTX(devices=devices, enterprise_hardware=is_ix_hardware)
+                hardware = await self.middleware.call("truenas.is_ix_hardware")
+                context = SMARTCTX(devices=devices, enterprise_hardware=hardware)
                 self.smartctl_args_for_disk = dict(zip(
                     [disk["name"] for disk in disks],
                     await asyncio_map(
@@ -56,8 +56,8 @@ class DiskService(Service):
                 smartctl_args = await self.middleware.call('disk.smartctl_args', disk)
             else:
                 devices = await self.middleware.call('device.get_disks')
-                is_ix_hardware = await self.middleware.call('truenas.is_ix_hardware')
-                context = SMARTCTX(devices=devices, enterprise_hardware=is_ix_hardware)
+                hardware = await self.middleware.call('truenas.is_ix_hardware')
+                context = SMARTCTX(devices=devices, enterprise_hardware=hardware)
                 if disks := await self.middleware.call('disk.query', [['name', '=', disk]]):
                     smartoptions = disks[0]['smartoptions']
                 else:
