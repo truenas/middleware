@@ -151,8 +151,8 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         # for filters for performance reasons.
         if not options['force_sql_filters'] and options['extend']:
             datastore_options = options.copy()
-            datastore_options.pop('count', None)
-            datastore_options.pop('get', None)
+            for option in ['count', 'get', 'limit', 'offset', 'select']:
+                datastore_options.pop(option, None)
             result = await self.middleware.call(
                 'datastore.query', self._config.datastore, [], datastore_options
             )
