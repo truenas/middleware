@@ -140,7 +140,7 @@ class DiskService(CRUDService):
 
         disk['supports_smart'] = None
         if context['supports_smart']:
-            if await self.middleware.call('system.is_enterprise_ix_hardware'):
+            if await self.middleware.call('truenas.is_ix_hardware'):
                 disk['supports_smart'] = True
             else:
                 disk['supports_smart'] = disk['name'].startswith('nvme') or bool(RE_SMART_AVAILABLE.search(
