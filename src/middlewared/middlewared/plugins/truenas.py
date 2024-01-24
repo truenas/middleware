@@ -10,7 +10,6 @@ import middlewared.sqlalchemy as sa
 
 EULA_FILE = '/usr/local/share/truenas/eula.html'
 EULA_PENDING_PATH = "/data/truenas-eula-pending"
-
 user_attrs = [
     Str('first_name'),
     Str('last_name'),
@@ -39,6 +38,7 @@ PLATFORM_PREFIXES = (
     'TRUENAS-R',  # freenas certified replacement
     'FREENAS-MINI',  # minis tagged with legacy information
 )
+TRUENAS_UNKNOWN = 'TRUENAS-UNKNOWN'
 
 
 def get_chassis_hardware(dmi):
@@ -51,7 +51,7 @@ def get_chassis_hardware(dmi):
         # last resort
         return 'TRUENAS-X'
 
-    return 'TRUENAS-UNKNOWN'
+    return TRUENAS_UNKNOWN
 
 
 class TruenasCustomerInformationModel(sa.Model):
@@ -79,6 +79,13 @@ class TrueNASService(Service):
         """
         dmi = await self.middleware.call('system.dmidecode_info')
         return get_chassis_hardware(dmi)
+
+    @accepts(roles=['READONLY_ADMIN'])
+    @returns(Bool('is_ix_hardware'))
+    async def is_ix_hardware(self):
+        """Return a boolean value on whether or not this is hardware
+        that iXsystems sells."""
+        return await self.get_chassis_hardware() != TRUENAS_UNKNOWN
 
     @accepts(roles=['READONLY_ADMIN'])
     @returns(Str('eula', max_length=None, null=True))
