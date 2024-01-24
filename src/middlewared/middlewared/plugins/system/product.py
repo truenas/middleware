@@ -240,11 +240,6 @@ class SystemService(Service):
             return True
         return False
 
-    @private
-    async def is_ix_hardware(self):
-        product = (await self.middleware.call('system.dmidecode_info'))['system-product-name']
-        return product is not None and product.startswith(('FREENAS-', 'TRUENAS-'))
-
 
 async def hook_license_update(middleware, prev_product_type, *args, **kwargs):
     if prev_product_type != 'ENTERPRISE' and await middleware.call('system.product_type') == 'ENTERPRISE':
