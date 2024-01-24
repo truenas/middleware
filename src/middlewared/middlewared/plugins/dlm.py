@@ -18,6 +18,8 @@ class DistributedLockManagerService(Service):
         private = True
         namespace = 'dlm'
 
+    resetting = False
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # The nodeID, peernodeID & nodes will be initialized by setup_nodes
@@ -212,6 +214,11 @@ class DistributedLockManagerService(Service):
     async def leave_lockspace(self, lockspace_name):
         self.logger.info('Leaving lockspace %s', lockspace_name)
         await self.middleware.call('dlm.create')
+        if DistributedLockManagerService.resetting:
+            await self.middleware.call('dlm.kernel.lockspace_stop', lockspace_name)
+            await self.middleware.call('dlm.kernel.lockspace_leave', lockspace_name)
+            await self.middleware.call('dlm.kernel.set_sysfs_event_done', lockspace_name, 0)
+            return
         try:
 
             nodeIDs = set(await self.middleware.call('dlm.lockspace_members', lockspace_name))
@@ -271,6 +278,46 @@ class DistributedLockManagerService(Service):
         Handle a node HA remote node going down.
         """
         self.logger.info('Remote node %s down', self.peernodeID)
+
+    @private
+    async def local_remove_peer(self, lockspace_name):
+        await self.middleware.call('dlm.kernel.lockspace_stop', lockspace_name)
+        await self.middleware.call('dlm.kernel.lockspace_remove_node', lockspace_name, self.peernodeID)
+        await self.middleware.call('dlm.kernel.lockspace_start', lockspace_name)
+
+    @private
+    async def lockspaces(self):
+        await self.middleware.call('dlm.create')
+        return list(await self.middleware.call('dlm.kernel.node_lockspaces', self.nodeID))
+
+    @private
+    async def peer_lockspaces(self):
+        await self.middleware.call('dlm.create')
+        return list(await self.middleware.call('dlm.kernel.node_lockspaces', self.peernodeID))
+
+    @private
+    async def eject_peer(self):
+        await self.middleware.call('dlm.create')
+        lockspace_names = await self.middleware.call('dlm.peer_lockspaces')
+        if lockspace_names:
+            self.logger.info('Ejecting peer from %d lockspaces', len(lockspace_names))
+            await asyncio.gather(*[self.local_remove_peer(lockspace_name) for lockspace_name in lockspace_names])
+
+    @private
+    async def local_reset(self, disable_iscsi=True):
+        # First turn off all access to targets from outside.
+        if disable_iscsi:
+            await self.middleware.call('iscsi.scst.disable')
+
+        # Locally eject the peer.  Will prevent remote comms below.
+        await self.eject_peer()
+
+        # Finally turn off cluster mode locally on all extents
+        try:
+            DistributedLockManagerService.resetting = True
+            await self.middleware.call('iscsi.scst.set_all_cluster_mode', 0)
+        finally:
+            DistributedLockManagerService.resetting = False
 
 
 async def udev_dlm_hook(middleware, data):
