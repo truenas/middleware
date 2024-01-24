@@ -18,10 +18,6 @@ from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 LICENSE_FILE = '/data/license'
 
 
-def is_enterprise_ix_hardware(chassis_hardware):
-    return chassis_hardware != 'TRUENAS-UNKNOWN'
-
-
 class SystemService(Service):
 
     PRODUCT_TYPE = None
@@ -248,10 +244,6 @@ class SystemService(Service):
     async def is_ix_hardware(self):
         product = (await self.middleware.call('system.dmidecode_info'))['system-product-name']
         return product is not None and product.startswith(('FREENAS-', 'TRUENAS-'))
-
-    @private
-    async def is_enterprise_ix_hardware(self):
-        return is_enterprise_ix_hardware(await self.middleware.call('truenas.get_chassis_hardware'))
 
 
 async def hook_license_update(middleware, prev_product_type, *args, **kwargs):
