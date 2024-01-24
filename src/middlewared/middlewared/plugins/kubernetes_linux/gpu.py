@@ -142,7 +142,7 @@ GPU_CONFIGMAPS = {
 sharing:
   timeSlicing:
     renameByDefault: false
-    failRequestsGreaterThanOne: true
+    failRequestsGreaterThanOne: false
     resources:
     - name: nvidia.com/gpu
       replicas: 5
