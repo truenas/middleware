@@ -124,7 +124,7 @@ class IPMILanService(CRUDService):
             'ipmi_lan_query',
             Ref('query-filters'),
             Ref('query-options'),
-            Dict('ipmi_options', Bool('query_remote', default=False)),
+            Dict('ipmi-options', Bool('query-remote', default=False)),
             register=True,
         ),
         roles=['IPMI_READ'],
@@ -155,7 +155,7 @@ class IPMILanService(CRUDService):
     def query(self, data):
         """Query available IPMI Channels with `query-filters` and `query-options`."""
         result = []
-        if not data['ipmi_options']['query_remote']:
+        if not data['ipmi-options']['query-remote']:
             result = self.query_impl()
         elif self.middleware.call_sync('failover.licensed'):
             try:
@@ -170,7 +170,7 @@ class IPMILanService(CRUDService):
                 # an empty list
                 result = []
 
-        return filter_list(result, data['query_filters'], data['query_options'])
+        return filter_list(result, data['query-filters'], data['query-options'])
 
     @accepts(
         Int('channel'),
