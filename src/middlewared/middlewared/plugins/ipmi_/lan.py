@@ -1,8 +1,8 @@
 from subprocess import run, DEVNULL
 from functools import cache
 
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Password, returns, Str
-from middlewared.service import CallError, CRUDService, filterable, ValidationError, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Password, Ref, returns, Str
+from middlewared.service import private, CallError, filterable_returns, CRUDService, ValidationError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import Netmask, PasswordComplexity, Range
 
@@ -83,9 +83,8 @@ class IPMILanService(CRUDService):
 
         return channels
 
-    @filterable(roles=['IPMI_READ'])
-    def query(self, filters, options):
-        """Query available IPMI Channels with `query-filters` and `query-options`."""
+    @private
+    def query_impl(self):
         result = []
         for channel in self.channels():
             section = 'Lan_Conf' if channel == 1 else f'Lan_Conf_Channel_{channel}'
@@ -118,7 +117,60 @@ class IPMILanService(CRUDService):
 
             result.append(data)
 
-        return filter_list(result, filters, options)
+        return result
+
+    @accepts(
+        Dict(
+            'ipmi_lan_query',
+            Ref('query-filters'),
+            Ref('query-options'),
+            Dict('ipmi-options', Bool('query-remote', default=False)),
+            register=True,
+        ),
+        roles=['IPMI_READ'],
+    )
+    @filterable_returns(
+        List(
+            'channels',
+            items=[
+                Dict(
+                    'channel',
+                    Int('channel'),
+                    Int('id'),
+                    Str('ip_address_source'),
+                    Str('ip_address'),
+                    Str('mac_address'),
+                    Str('subnet_mask'),
+                    Str('default_gateway_ip_address'),
+                    Str('default_gateway_mac_address'),
+                    Str('backup_gateway_ip_address'),
+                    Str('backup_gateway_mac_address'),
+                    Int('vlan_id'),
+                    Bool('vlan_id_enable'),
+                    Int('vlan_priority'),
+                )
+            ],
+        )
+    )
+    def query(self, data):
+        """Query available IPMI Channels with `query-filters` and `query-options`."""
+        result = []
+        if not data['ipmi-options']['query-remote']:
+            result = self.query_impl()
+        elif self.middleware.call_sync('failover.licensed'):
+            try:
+                result = self.middleware.call_sync(
+                    'failover.call_remote', 'ipmi.lan.query_impl'
+                )
+            except Exception:
+                # could be ENOMETHOD on upgrade or could be that
+                # remote node isn't connected/functioning etc OR
+                # could be that we're not on an HA system. In
+                # either of the scenarios, we just need to return
+                # an empty list
+                result = []
+
+        return filter_list(result, data['query-filters'], data['query-options'])
 
     @accepts(
         Int('channel'),
