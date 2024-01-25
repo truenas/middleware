@@ -28,3 +28,4 @@ class UPSService(SimpleService):
         await self._unit_action("Stop")
         await self._systemd_unit("nut-driver-enumerator", "stop")
         await self._systemd_unit("nut-server", "stop")
+        await self._systemd_unit("nut-driver.target", "stop")
