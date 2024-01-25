@@ -121,6 +121,21 @@ class Match:
         return Match(self.pattern, self.flags, self.explanation)
 
 
+class NotMatch:
+    def __init__(self, pattern, flags=0, explanation=None):
+        self.pattern = pattern
+        self.flags = flags
+        self.explanation = explanation
+        self.regex = re.compile(pattern, flags)
+
+    def __call__(self, value):
+        if value is not None and self.regex.match(value):
+            raise ValueError(self.explanation or f"Value matches {self.pattern!r} pattern")
+
+    def __deepcopy__(self, memo):
+        return NotMatch(self.pattern, self.flags, self.explanation)
+
+
 class Hostname(Match):
     def __init__(self, explanation=None):
         super().__init__(

@@ -7,7 +7,7 @@ import socket
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, Str
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.validators import Range
+from middlewared.validators import Range, NotMatch
 from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
@@ -271,7 +271,12 @@ class SharingNFSService(SharingService):
         List("paths", items=[Dir("path")], empty=False),
         Str("comment", default=""),
         List("networks", items=[IPAddr("network", network=True)], default=[]),
-        List("hosts", items=[Str("host")], default=[]),
+        List(
+            "hosts", items=[Str("host", validators=[NotMatch(
+                r'.*[\s"/]', explanation='Name cannot contain spaces, quotes or CIDR formatting')]
+            )],
+            unique=True
+        ),
         Bool("alldirs", default=False),
         Bool("ro", default=False),
         Bool("quiet", default=False),
