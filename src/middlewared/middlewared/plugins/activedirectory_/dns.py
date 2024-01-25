@@ -228,7 +228,8 @@ class ActiveDirectoryService(Service):
                     raise CallError(
                         f'{name}: Nameserver {entry["nameserver"]} failed to resolve SRV '
                         f'record for domain {domain}. This may indicate a DNS misconfiguration '
-                        'on the TrueNAS server.',
+                        'on the TrueNAS server. NOTE: When configuring with Active Directory, all '
+                        'registered nameservers must be nameservers for the Active Directory domain.',
                         errno.EINVAL
                     )
                 except Exception as e:
