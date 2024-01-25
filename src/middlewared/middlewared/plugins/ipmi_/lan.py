@@ -67,6 +67,23 @@ def apply_config(channel, data):
 
 class IPMILanService(CRUDService):
 
+    ENTRY = Dict(
+        'ipmi_channel',
+        Int('channel'),
+        Int('id'),
+        Str('ip_address_source'),
+        Str('ip_address'),
+        Str('mac_address'),
+        Str('subnet_mask'),
+        Str('default_gateway_ip_address'),
+        Str('default_gateway_mac_address'),
+        Str('backup_gateway_ip_address'),
+        Str('backup_gateway_mac_address'),
+        Int('vlan_id'),
+        Bool('vlan_id_enable'),
+        Int('vlan_priority'),
+    )
+
     class Config:
         namespace = 'ipmi.lan'
         cli_namespace = 'network.ipmi'
@@ -128,29 +145,6 @@ class IPMILanService(CRUDService):
             register=True,
         ),
         roles=['IPMI_READ'],
-    )
-    @filterable_returns(
-        List(
-            'channels',
-            items=[
-                Dict(
-                    'channel',
-                    Int('channel'),
-                    Int('id'),
-                    Str('ip_address_source'),
-                    Str('ip_address'),
-                    Str('mac_address'),
-                    Str('subnet_mask'),
-                    Str('default_gateway_ip_address'),
-                    Str('default_gateway_mac_address'),
-                    Str('backup_gateway_ip_address'),
-                    Str('backup_gateway_mac_address'),
-                    Int('vlan_id'),
-                    Bool('vlan_id_enable'),
-                    Int('vlan_priority'),
-                )
-            ],
-        )
     )
     def query(self, data):
         """Query available IPMI Channels with `query-filters` and `query-options`."""
