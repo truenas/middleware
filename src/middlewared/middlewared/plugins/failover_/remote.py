@@ -37,22 +37,23 @@ class RemoteClient(object):
         self._on_connect_callbacks = []
         self._on_disconnect_callbacks = []
         self._remote_os_version = None
+        self.refused = False
 
     def run(self):
         set_thread_name('ha_connection')
         retry = 5
-        refused = False
+        self.refused = False
         while True:
             try:
                 self.connect_and_wait()
-                refused = False
+                self.refused = False
             except ConnectionRefusedError:
-                if not refused:
+                if not self.refused:
                     logger.error(f'Persistent connection refused, retrying every {retry} seconds')
-                refused = True
+                self.refused = True
             except Exception:
                 logger.error('Remote connection failed', exc_info=True)
-                refused = False
+                self.refused = False
             time.sleep(retry)
 
     def connect_and_wait(self):
@@ -106,6 +107,9 @@ class RemoteClient(object):
                 cb(self.middleware)
             except Exception:
                 logger.error('Failed to run on_connect for remote client', exc_info=True)
+
+        if self.refused:
+            logger.info('Persistent connection reestablished')
 
     def register_disconnect(self, cb):
         """
