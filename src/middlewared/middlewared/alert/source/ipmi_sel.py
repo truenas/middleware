@@ -162,6 +162,14 @@ class IPMISELAlertSource(AlertSource):
 
         alerts = []
         alerts.extend(await self.produce_sel_elist_alerts())
+
+        platform = await self.middleware.call('truenas.get_chassis_hardware')
+        if platform.startswith(('TRUENAS-F', 'TRUENAS-H', 'TRUENAS-R30'))
+            # the f, h and r30 platforms use a FIFO for sel so it will
+            # never "run out of space" since the newest log overwrites
+            # the oldest log
+            return alerts
+
         if (low_space_alert := await self.produce_sel_low_space_alert()) is not None:
             alerts.append(low_space_alert)
 
