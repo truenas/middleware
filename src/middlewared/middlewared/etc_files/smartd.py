@@ -90,7 +90,7 @@ async def render(service, middleware):
         Cron.convert_db_format_to_schedule(disk, "smarttest_schedule", "smarttest_")
 
     devices = await middleware.call("device.get_disks")
-    hardware = await middleware.call("system.is_enterprise_ix_hardware")
+    hardware = await middleware.call("truenas.is_ix_hardware")
     context = SMARTCTX(devices=devices, enterprise_hardware=hardware)
     annotated = dict(filter(None, await asyncio_map(
         lambda disk: annotate_disk_for_smart(context, disk["disk_name"], disk["disk_smartoptions"]),

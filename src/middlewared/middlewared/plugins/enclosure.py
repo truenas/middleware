@@ -14,6 +14,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
 from middlewared.plugins.enclosure_.r30_drive_identify import set_slot_status as r30_set_slot_status
 from middlewared.plugins.enclosure_.fseries_drive_identify import set_slot_status as fseries_set_slot_status
+from middlewared.plugins.truenas import TRUENAS_UNKNOWN
 
 
 logger = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ class EnclosureService(CRUDService):
     @filterable
     def query(self, filters, options):
         enclosures = []
-        if self.middleware.call_sync('truenas.get_chassis_hardware') == 'TRUENAS-UNKNOWN':
+        if self.middleware.call_sync('truenas.get_chassis_hardware') == TRUENAS_UNKNOWN:
             # this feature is only available on hardware that ix sells
             return enclosures
 

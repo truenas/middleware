@@ -8,6 +8,7 @@ from middlewared.schema import accepts, Dict, Str, Int
 from middlewared.service import Service, filterable
 from middlewared.service_exception import MatchNotFound, ValidationError
 from middlewared.utils import filter_list
+from middlewared.plugins.truenas import TRUENAS_UNKNOWN
 
 from .map2 import combine_enclosures
 from .nvme2 import map_nvme
@@ -122,7 +123,7 @@ class Enclosure2Service(Service):
     @filterable
     def query(self, filters, options):
         enclosures = []
-        if self.middleware.call_sync('truenas.get_chassis_hardware') == 'TRUENAS-UNKNOWN':
+        if self.middleware.call_sync('truenas.get_chassis_hardware') == TRUENAS_UNKNOWN:
             # this feature is only available on hardware that ix sells
             return enclosures
 
