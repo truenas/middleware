@@ -296,7 +296,8 @@ TARGET_DRIVER iscsi {
 %>\
 %   if target['id'] in associated_targets:
 ##
-## For ALUA rel_tgt_id is tied to controller, if not ALUA don't bother writing it
+## For ALUA rel_tgt_id is tied to controller, if not ALUA write it anyway
+## to avoid it changing when ALUA is toggled.
 ##
 %       if alua_enabled:
 %           if node == "A":
@@ -305,6 +306,8 @@ TARGET_DRIVER iscsi {
 %           if node == "B":
         rel_tgt_id ${idx + 32000}
 %           endif
+%       else:
+        rel_tgt_id ${idx}
 %       endif
 ##
 ## For ALUA target is enabled if MASTER, disabled for BACKUP
