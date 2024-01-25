@@ -1,5 +1,5 @@
 import copy
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
@@ -93,16 +93,16 @@ INTERFACES_WITH_BRIDGE = INTERFACES + [
 ]
 
 
-def mock_datastore_query_side_effect(klass):
-    return klass(
+def mock_datastore_query_side_effect():
+    return Mock(
         side_effect=lambda method, *args: {
-            'network.interfaces': AsyncMock(return_value=[]),
-            'network.alias': AsyncMock(return_value=[]),
-            'network.bridge': AsyncMock(return_value=[]),
-            'network.lagginterface': AsyncMock(return_value=[]),
-            'network.vlan': AsyncMock(return_value=[]),
-            'network.lagginterfacemembers': AsyncMock(return_value=[]),
-            'network.globalconfiguration': AsyncMock(return_value={'gc_ipv4gateway': ''}),
+            'network.interfaces': Mock(return_value=[]),
+            'network.alias': Mock(return_value=[]),
+            'network.bridge': Mock(return_value=[]),
+            'network.lagginterface': Mock(return_value=[]),
+            'network.vlan': Mock(return_value=[]),
+            'network.lagginterfacemembers': Mock(return_value=[]),
+            'network.globalconfiguration': Mock(return_value={'gc_ipv4gateway': ''}),
         }[method](*args)
     )
 
@@ -111,11 +111,11 @@ def mock_datastore_query_side_effect(klass):
 async def test__interfaces_service__create_bridge_invalid_ports():
 
     m = Middleware()
-    m['interface.query'] = AsyncMock(return_value=INTERFACES)
-    m['datastore.query'] = AsyncMock(return_value=[])
+    m['interface.query'] = Mock(return_value=INTERFACES)
+    m['datastore.query'] = Mock(return_value=[])
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_create({
@@ -129,11 +129,11 @@ async def test__interfaces_service__create_bridge_invalid_ports():
 async def test__interfaces_service__create_bridge_invalid_ports_used():
 
     m = Middleware()
-    m['interface.query'] = AsyncMock(return_value=INTERFACES_WITH_BRIDGE)
-    m['datastore.query'] = AsyncMock(return_value=[])
+    m['interface.query'] = Mock(return_value=INTERFACES_WITH_BRIDGE)
+    m['datastore.query'] = Mock(return_value=[])
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_create({
@@ -147,12 +147,12 @@ async def test__interfaces_service__create_bridge_invalid_ports_used():
 async def test__interfaces_service__create_lagg_invalid_ports():
 
     m = Middleware()
-    m['interface.query'] = AsyncMock(return_value=INTERFACES)
-    m['interface.lag_supported_protocols'] = AsyncMock(return_value=['LACP'])
-    m['datastore.query'] = AsyncMock(return_value=[])
+    m['interface.query'] = Mock(return_value=INTERFACES)
+    m['interface.lag_supported_protocols'] = Mock(return_value=['LACP'])
+    m['datastore.query'] = Mock(return_value=[])
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_create({
@@ -167,12 +167,12 @@ async def test__interfaces_service__create_lagg_invalid_ports():
 async def test__interfaces_service__create_lagg_invalid_ports_cloned():
 
     m = Middleware()
-    m['interface.query'] = AsyncMock(return_value=INTERFACES_WITH_VLAN)
-    m['interface.lag_supported_protocols'] = AsyncMock(return_value=['LACP'])
-    m['datastore.query'] = mock_datastore_query_side_effect(AsyncMock)
+    m['interface.query'] = Mock(return_value=INTERFACES_WITH_VLAN)
+    m['interface.lag_supported_protocols'] = Mock(return_value=['LACP'])
+    m['datastore.query'] = mock_datastore_query_side_effect()
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_create({
@@ -187,12 +187,12 @@ async def test__interfaces_service__create_lagg_invalid_ports_cloned():
 async def test__interfaces_service__create_lagg_invalid_ports_used():
 
     m = Middleware()
-    m['interface.query'] = AsyncMock(return_value=INTERFACES_WITH_LAG)
-    m['interface.lag_supported_protocols'] = AsyncMock(return_value=['LACP'])
-    m['datastore.query'] = AsyncMock(return_value=[])
+    m['interface.query'] = Mock(return_value=INTERFACES_WITH_LAG)
+    m['interface.lag_supported_protocols'] = Mock(return_value=['LACP'])
+    m['datastore.query'] = Mock(return_value=[])
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_create({
@@ -207,14 +207,14 @@ async def test__interfaces_service__create_lagg_invalid_ports_used():
 async def test__interfaces_service__create_lagg():
 
     m = Middleware()
-    m['interface.query'] = AsyncMock(return_value=INTERFACES)
-    m['interface.lag_supported_protocols'] = AsyncMock(return_value=['LACP'])
-    m['interface.validate_name'] = AsyncMock()
-    m['datastore.query'] = mock_datastore_query_side_effect(Mock)
-    m['datastore.insert'] = AsyncMock(return_value=5)
+    m['interface.query'] = Mock(return_value=INTERFACES)
+    m['interface.lag_supported_protocols'] = Mock(return_value=['LACP'])
+    m['interface.validate_name'] = Mock()
+    m['datastore.query'] = mock_datastore_query_side_effect()
+    m['datastore.insert'] = Mock(return_value=5)
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     await create_service(m, InterfaceService).do_create({
         'name': 'bond0',
@@ -235,10 +235,10 @@ async def test__interfaces_service__lagg_update_members_invalid(attr_val):
 
     m = Middleware()
     m['interface.query'] = m._query_filter(INTERFACES_WITH_LAG)
-    m['datastore.query'] = AsyncMock(return_value=[])
+    m['datastore.query'] = Mock(return_value=[])
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_update('em0', {
@@ -251,12 +251,12 @@ async def test__interfaces_service__lagg_update_members_invalid(attr_val):
 async def test__interfaces_service__create_vlan_invalid_parent():
 
     m = Middleware()
-    m['interface.query'] = AsyncMock(return_value=INTERFACES)
-    m['interface.validate_name'] = AsyncMock()
-    m['datastore.query'] = AsyncMock(return_value=[])
+    m['interface.query'] = Mock(return_value=INTERFACES)
+    m['interface.validate_name'] = Mock()
+    m['datastore.query'] = Mock(return_value=[])
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_create({
@@ -272,11 +272,11 @@ async def test__interfaces_service__create_vlan_invalid_parent():
 async def test__interfaces_service__create_vlan_invalid_parent_used():
 
     m = Middleware()
-    m['interface.query'] = AsyncMock(return_value=INTERFACES_WITH_LAG)
-    m['datastore.query'] = AsyncMock(return_value=[])
+    m['interface.query'] = Mock(return_value=INTERFACES_WITH_LAG)
+    m['datastore.query'] = Mock(return_value=[])
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_create({
@@ -291,13 +291,13 @@ async def test__interfaces_service__create_vlan_invalid_parent_used():
 async def test__interfaces_service__create_vlan():
 
     m = Middleware()
-    m['interface.query'] = AsyncMock(return_value=INTERFACES)
-    m['interface.validate_name'] = AsyncMock()
-    m['datastore.query'] = mock_datastore_query_side_effect(Mock)
-    m['datastore.insert'] = AsyncMock(return_value=5)
+    m['interface.query'] = Mock(return_value=INTERFACES)
+    m['interface.validate_name'] = Mock()
+    m['datastore.query'] = mock_datastore_query_side_effect()
+    m['datastore.insert'] = Mock(return_value=5)
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     await create_service(m, InterfaceService).do_create({
         'name': 'vlan0',
@@ -312,11 +312,11 @@ async def test__interfaces_service__update_vlan_mtu_bigger_parent():
 
     m = Middleware()
     m['interface.query'] = m._query_filter(INTERFACES_WITH_VLAN)
-    m['interface.validate_name'] = AsyncMock()
-    m['datastore.query'] = AsyncMock(return_value=[])
+    m['interface.validate_name'] = Mock()
+    m['datastore.query'] = Mock(return_value=[])
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_update(INTERFACES_WITH_VLAN[-1]['id'], {
@@ -332,13 +332,13 @@ async def test__interfaces_service__update_two_dhcp():
     interfaces_with_one_dhcp[0]['ipv4_dhcp'] = True
 
     m = Middleware()
-    m['interface.query'] = AsyncMock(return_value=interfaces_with_one_dhcp)
-    m['datastore.query'] = AsyncMock(return_value=[
+    m['interface.query'] = Mock(return_value=interfaces_with_one_dhcp)
+    m['datastore.query'] = Mock(return_value=[
         {'int_interface': interfaces_with_one_dhcp[0]['name'], 'int_dhcp': True, 'int_ipv6auto': False}
     ])
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     update_interface = interfaces_with_one_dhcp[1]
 
@@ -360,12 +360,12 @@ async def test__interfaces_service__update_two_same_network():
     ]
 
     m = Middleware()
-    m['interface.query'] = AsyncMock(return_value=interfaces_one_network)
-    m['datastore.query'] = AsyncMock(return_value=[])
-    m['datastore.insert'] = AsyncMock(return_value=5)
+    m['interface.query'] = Mock(return_value=interfaces_one_network)
+    m['datastore.query'] = Mock(return_value=[])
+    m['datastore.insert'] = Mock(return_value=5)
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     update_interface = interfaces_one_network[1]
 
@@ -382,13 +382,13 @@ async def test__interfaces_service__update_two_same_network():
 async def test__interfaces_service__update_mtu_options():
 
     m = Middleware()
-    m['interface.query'] = AsyncMock(return_value=INTERFACES)
-    m['interface.validate_name'] = AsyncMock()
-    m['datastore.query'] = AsyncMock(return_value=[])
-    m['datastore.insert'] = AsyncMock(return_value=5)
+    m['interface.query'] = Mock(return_value=INTERFACES)
+    m['interface.validate_name'] = Mock()
+    m['datastore.query'] = Mock(return_value=[])
+    m['datastore.insert'] = Mock(return_value=5)
     m['kubernetes.config'] = Mock(return_value={'dataset': None, 'node_ip': '0.0.0.0'})
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
-    m['network.common.check_failover_disabled'] = AsyncMock()
+    m['network.common.check_failover_disabled'] = Mock()
 
     update_interface = INTERFACES[1]
 
