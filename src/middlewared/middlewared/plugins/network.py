@@ -1595,6 +1595,7 @@ class InterfaceService(CRUDService):
         """
         exclude = {}
         include = {}
+        configured_ifaces = await self.middleware.call('interface.query_names_only')
         for interface in await self.middleware.call('interface.query'):
             if interface['type'] == 'LINK_AGGREGATION':
                 if id_ and id_ == interface['id']:
@@ -1616,6 +1617,12 @@ class InterfaceService(CRUDService):
                 exclude.update({interface['id']: interface['id']})
                 # exclude interfaces that are already part of a bridge interface
                 exclude.update({i: i for i in interface['bridge_members']})
+            elif interface['id'] in configured_ifaces:
+                # only remaining type of interface is PHYSICAL but if this is
+                # an interface that has already been configured then we obviously
+                # don't want to allow it to be added to a bond (user will need
+                # to wipe the config of said interface before it can be added)
+                exclude.update({interface['id']: interface['id']})
 
             # add the interface to inclusion list and it will be discarded
             # if it was also added to the exclusion list
