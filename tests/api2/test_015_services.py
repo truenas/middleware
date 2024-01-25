@@ -75,3 +75,6 @@ def test_non_silent_service_start_failure():
     # the error messages will differ slightly (different PID for upsmon) but the number
     # of lines should be the same
     assert len_lines1 == len_lines2
+
+    # Stop the service to avoid syslog spam
+    call('service.stop', 'ups')
