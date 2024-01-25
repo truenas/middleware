@@ -940,7 +940,7 @@ class InterfaceService(CRUDService):
                     verrors.add(_schema, f'Interface {member} is currently in use by {bridge_used[member]}.')
                 elif member in vlan_used:
                     verrors.add(_schema, f'Interface {member} is currently in use by {vlan_used[member]}.')
-                elif member in ds_ifaces:
+                elif member in ds_ifaces_set:
                     verrors.add(_schema, f'Interface {member} is currently in use')
         elif itype == 'VLAN':
             if 'name' in data:
