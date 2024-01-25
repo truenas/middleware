@@ -938,6 +938,7 @@ class InterfaceService(CRUDService):
             lag_ports = data.get('lag_ports')
             if not lag_ports:
                 verrors.add(f'{schema_name}.lag_ports', 'This field cannot be empty.')
+            ds_ifaces_set = {i['int_interface'] for i in ds_ifaces}
             for i, member in enumerate(lag_ports):
                 _schema = f'{schema_name}.lag_ports.{i}'
                 if member not in ifaces:
@@ -948,6 +949,8 @@ class InterfaceService(CRUDService):
                     verrors.add(_schema, f'Interface {member} is currently in use by {bridge_used[member]}.')
                 elif member in vlan_used:
                     verrors.add(_schema, f'Interface {member} is currently in use by {vlan_used[member]}.')
+                elif member in ds_ifaces:
+                    verrors.add(_schema, f'Interface {member} is currently in use')
         elif itype == 'VLAN':
             if 'name' in data:
                 try:
