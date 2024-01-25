@@ -447,7 +447,7 @@ class CoreService(Service):
                     )
 
                 if filterable_schema := getattr(method, '_filterable_schema', None):
-                    # filterable_schema is OROperator here and we just want it's specific schema
+                    # filterable_schema is OROperator here, and we just want it's specific schema
                     filterable_schema = self.get_json_schema([filterable_schema.schemas[1]], None)[0]
                 elif attr == 'query':
                     if isinstance(svc, CompoundService):
