@@ -5,7 +5,7 @@ import os
 import pytest
 import sys
 import time
-from middlewared.test.integration.utils import call, fail
+from middlewared.test.integration.utils import call
 from pytest_dependency import depends
 # from pytest_dependency import depends
 apifolder = os.getcwd()
@@ -49,6 +49,19 @@ if not ha:
         finally:
             call("chart.release.delete", app_name, job=True)
 
+
+    def wait_for_containerd(container_id):
+        timeout = 60
+        while True:
+            if container_id not in [container['id'] for container in call('docker.container.query')]:
+                break
+
+            time.sleep(10)
+            timeout -= 10
+            if timeout <= 0:
+                pytest.fail(f'{container_id!r} container was not deleted in 60 seconds')
+
+
     def get_num_of_images(images_tags):
         return call(
             "container.image.query", [["OR", [["repo_tags", "rin", tag] for tag in images_tags]]], {"count": True}
@@ -63,6 +76,11 @@ if not ha:
         with chart_release("prune-test1", {"image": {"repository": "nginx"}}) as chart_release_data:
             call("container.prune", {"remove_unused_images": True}, job=True)
             assert_images_exist_for_chart_release(chart_release_data)
+            container_id = chart_release_data['resources']['pods'][0]['status'][
+                'containerStatuses'
+            ][0]['containerID'].replace('containerd://', '')
+
+        wait_for_containerd(container_id)
 
     def test_pruning_for_deleted_chart_release_images(request):
         depends(request, ['setup_kubernetes'], scope='session')
@@ -74,16 +92,7 @@ if not ha:
             before_deletion_images = get_num_of_images(container_images)
             assert before_deletion_images != 0
 
-        timeout = 60
-        while True:
-            if container_id not in [container['id'] for container in call('docker.container.query')]:
-                break
-
-            time.sleep(10)
-            timeout -= 10
-            if timeout <= 0:
-                fail(f'{container_id!r} container was not deleted in 60 seconds')
-
+        wait_for_containerd(container_id)
         call("container.prune", {"remove_unused_images": True}, job=True)
         assert get_num_of_images(container_images) == 0
 

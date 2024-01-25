@@ -4,7 +4,7 @@ import time
 from pytest_dependency import depends
 from functions import GET, PUT, wait_on_job
 from auto_config import ha, pool_name, interface, ip
-from middlewared.test.integration.utils import call, fail
+from middlewared.test.integration.utils import call
 
 
 # Read all the test below only on non-HA
@@ -82,7 +82,7 @@ if not ha:
                     break
 
             if timeout <= 0:
-                fail('Time to setup kubernetes exceeded 150 seconds')
+                pytest.fail('Time to setup kubernetes exceeded 150 seconds')
 
             timeout -= 5
 
