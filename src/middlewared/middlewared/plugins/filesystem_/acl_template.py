@@ -318,7 +318,7 @@ class ACLTemplateService(CRUDService):
                 await self.append_builtins(t)
 
             if data['format-options']['resolve_names']:
-                st = await self.middleware.run_in_thread(os.stat, path)
+                st = await self.middleware.run_in_thread(os.stat, data['path'])
                 await self.resolve_names(st.st_uid, st.st_gid, t)
 
             if data['format-options']['canonicalize'] and t['acltype'] == ACLType.NFS4.name:
