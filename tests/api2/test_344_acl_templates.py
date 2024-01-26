@@ -46,6 +46,20 @@ def test_02_check_builtin_types_by_path(request, acltype):
         assert entry['builtin'], results.text
         assert entry['acltype'] == expected_acltype, results.text
 
+    payload['format-options'] = {
+        'resolve_names': True,
+        'ensure_builtins': True
+    }
+
+    results = POST('/filesystem/acltemplate/by_path', payload)
+    assert results.status_code == 200, results.text
+    for entry in results.json():
+        for ace in entry['acl']:
+            if ace['tag'] not in ('USER_OBJ', 'GROUP_OBJ', 'USER', 'GROUP'):
+                continue
+
+            assert ace.get('who') is not None, results.text
+
 
 @pytest.mark.dependency(name="NEW_ACLTEMPLATES_CREATED")
 @pytest.mark.parametrize('acltype', ['NFS4', 'POSIX'])
