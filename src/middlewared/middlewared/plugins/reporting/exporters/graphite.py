@@ -12,7 +12,7 @@ class GraphiteExporter(Export):
         Str('destination_ip', required=True),
         Int('destination_port', required=True, validators=[Port()]),
         Str('prefix', default='scale'),
-        Str('hostname', required=True),
+        Str('namespace', required=True),
         Int('update_every', validators=[Range(min_=1)], default=1),
         Int('buffer_on_failures', validators=[Range(min_=1)], default=10),
         Bool('send_names_instead_of_ids', default=True),

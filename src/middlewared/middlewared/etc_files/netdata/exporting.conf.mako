@@ -6,7 +6,7 @@
     enabled = ${"yes" if graphite_conf['enabled'] else "no"}
     destination = ${graphite_conf['attributes']['destination_ip']}:${graphite_conf['attributes']['destination_port']}
     prefix = ${graphite_conf['attributes']['prefix']}
-    hostname = ${graphite_conf['attributes']['hostname']}
+    hostname = ${graphite_conf['attributes']['namespace']}
     send configured labels = no
     update every = ${graphite_conf['attributes']['update_every']}
     buffer on failures = ${graphite_conf['attributes']['buffer_on_failures']}
