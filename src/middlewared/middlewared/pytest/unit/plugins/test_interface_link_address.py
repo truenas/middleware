@@ -101,6 +101,21 @@ class VMDeviceModel(Model):
             "lagg": {"bond0": ["eth1"], "bond1": ["eth0"]},
         },
     ),
+    # Multiple LAGGs
+    (
+        {
+            "hw": {"eth0": "00:00:00:00:00:00", "eth1": "00:00:00:00:00:01",
+                   "eth2": "00:00:00:00:00:02", "eth3": "00:00:00:00:00:03"},
+            "interface": {"eth0": 0, "eth1": 1, "eth2": 2, "eth3": 3, "bond0": 10, "bond1": 11},
+            "lagg": {"bond0": ["eth0", "eth1"], "bond1": ["eth2", "eth3"]},
+        },
+        {
+            "hw": {"enp131s0": "00:00:00:00:00:00", "enp131s1": "00:00:00:00:00:01",
+                   "enp131s2": "00:00:00:00:00:02", "enp131s3": "00:00:00:00:00:03"},
+            "interface": {"enp131s0": 0, "enp131s1": 1, "enp131s2": 2, "enp131s3": 3, "bond0": 10, "bond1": 11},
+            "lagg": {"bond0": ["enp131s0", "enp131s1"], "bond1": ["enp131s2", "enp131s3"]},
+        },
+    ),
     # Interface gone
     (
         {
@@ -139,6 +154,18 @@ class VMDeviceModel(Model):
             "lagg": {"bond0": ["eth0", "eth1"]},
             "vlan": {"vlan0": "eth1"},
             "vm": ["eth1"],
+        },
+    ),
+    # Duplicate addresses
+    (
+        {
+            "hw": {"eth0": "08:00:27:1e:9f:d3", "eth1": "08:00:27:1e:9f:d3"},
+            "interface": {"eth0": 0, "eth1": 1},
+        },
+        {
+            "interface.query": {"eth0": "08:00:27:1e:9f:d3", "eth1": "08:00:27:1e:9f:d3"},
+            "hw": {"eth0": "08:00:27:1e:9f:d3", "eth1": "08:00:27:1e:9f:d3"},
+            "interface": {"eth0": 0, "eth1": 1},
         },
     ),
 ])
