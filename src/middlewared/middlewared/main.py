@@ -1132,7 +1132,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 return
             try:
                 self.__console_io = open('/dev/console', 'w')
-            except Exception:
+            except Exception as e:
+                self.logger.debug('Failed to open console: %r', e)
                 self.console_error_counter += 1
                 return
             try:
@@ -1163,17 +1164,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     f'\r{prefix}{text}{blank}{newline}'
                 )
             self.__console_io.flush()
-            return writes
-        except OSError:
+            # be sure and reset error counter after we successfully log
+            # to the console
+            self.console_error_counter = 0
+        except Exception as e:
+            self.logger.debug('Failed to write to console: %r', e)
             self.console_error_counter += 1
-            self.logger.debug('Failed to write to console', exc_info=True)
-        except Exception:
-            self.console_error_counter += 1
-            pass
-
-        # be sure and reset error counter after we successfully log
-        # to the console
-        self.console_error_counter = 0
 
     def __notify_startup_progress(self):
         systemd_notify(f'EXTEND_TIMEOUT_USEC={SYSTEMD_EXTEND_USECS}')
