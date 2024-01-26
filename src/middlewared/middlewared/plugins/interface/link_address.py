@@ -100,9 +100,16 @@ class DatabaseInterfaceCollection(InterfaceCollection):
 
 
 class RealInterfaceCollection(InterfaceCollection):
-    @property
-    def by_link_address(self):
-        return {i["state"]["hardware_link_address"]: i for i in self.interfaces}
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.by_link_address = {}
+        for i in self.interfaces:
+            link_address = i["state"]["hardware_link_address"]
+            if link_address in self.by_link_address:
+                raise ValueError(f"Interfaces {self.by_link_address[link_address]['name']!r} and {i['name']!r} have "
+                                 f"the same hardware link address {link_address!r}")
+            self.by_link_address[link_address] = i
 
     def get_name(self, i):
         return i["name"]
