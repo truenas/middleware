@@ -172,10 +172,10 @@ class ActiveDirectoryService(Service):
 
         try:
             verrors.check()
-        except ValidationErrors:
+        except ValidationErrors as ve:
             await self.middleware.call('activedirectory.direct_update', {"enable": False})
-            raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
-                            errno.EINVAL)
+            raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration',
+                            errno.EINVAL, ', '.join([err[1] for err in ve]))
 
         """
         Verify winbindd netlogon connection.
