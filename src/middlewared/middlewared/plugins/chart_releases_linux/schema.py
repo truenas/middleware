@@ -14,6 +14,8 @@ mapping = {
     'int': Int,
     'boolean': Bool,
     'path': Path,
+    # to support large text / toml data of upto 1MiB
+    'text': lambda *args, **kwargs: Str(*args, **kwargs, max_length=1024 * 1024),
     'hostpath': HostPath,
     'hostpathdirectory': Dir,
     'hostpathfile': File,
