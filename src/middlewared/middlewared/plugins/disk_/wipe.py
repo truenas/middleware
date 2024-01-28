@@ -10,15 +10,16 @@ CHUNK = 1048576  # 1MB binary
 class DiskService(Service):
 
     @private
-    def _wipe(self, data):
-        disk_path = f'/dev/{data["dev"]}'
+    @job()
+    def wipe_impl(self, job, dev, mode):
+        disk_path = f'/dev/{dev}'
         with open(os.open(disk_path, os.O_WRONLY | os.O_EXCL), 'wb') as f:
             size = os.lseek(f.fileno(), 0, os.SEEK_END)
             if size == 0:
                 # no size means nothing else will work
-                self.logger.error('Unable to determine size of "%s"', data['dev'])
+                self.logger.error('Unable to determine size of "%s"', dev)
                 return
-            elif size < 33554432 and data['mode'] == 'QUICK':
+            elif size < 33554432 and mode == 'QUICK':
                 # we wipe the first and last 33554432 bytes (32MB) of the
                 # device when it's the "QUICK" mode so if the device is smaller
                 # than that, ignore it.
@@ -29,28 +30,32 @@ class DiskService(Service):
 
             # no reason to write more than 1MB at a time
             # or kernel will break them into smaller chunks
-            if data['mode'] in ('QUICK', 'FULL'):
+            if mode in ('QUICK', 'FULL'):
                 to_write = bytearray(CHUNK).zfill(0)
             else:
                 to_write = bytearray(os.urandom(CHUNK))
 
-            if data['mode'] == 'QUICK':
+            if mode == 'QUICK':
                 _32 = 32
                 for i in range(_32):
                     # wipe first 32MB
                     os.write(f.fileno(), to_write)
+                    # we * 50 since we write a total of 64MB
+                    # so this will be 50% of the total
+                    job.set_progress(round(((i / _32) * 50), 2))
 
                 # seek to 32MB before end of drive
                 os.lseek(f.fileno(), (size - (CHUNK * _32)), os.SEEK_SET)
-                for i in range(_32):
+                _64 = _32 * 2
+                for i in range(_32, _64):  # this is done to have accurate reporting
                     # wipe last 32MB
                     os.write(f.fileno(), to_write)
+                    job.set_progress(round(((i / _64) * 100), 2))
             else:
                 iterations = (size // CHUNK)
-                length = len(str(iterations))
                 for i in range(iterations):
                     os.write(f.fileno(), to_write)
-                    data['job'].set_progress(float(f'{i / iterations:.{length}f}') * 100)
+                    job.set_progress(round(((i / iterations) * 100), 2))
 
         with open(disk_path, 'wb'):
             # we overwrote partiton label information by the time
@@ -80,6 +85,7 @@ class DiskService(Service):
           - FULL_RANDOM: write whole disk with random bytes
         """
         await self.middleware.call('disk.swaps_remove_disks', [dev], options)
-        await self.middleware.run_in_thread(self._wipe, {'job': job, 'dev': dev, 'mode': mode})
+        wipe_job = await self.middleware.call('disk.wipe_impl', dev, mode)
+        await job.wrap(wipe_job)
         if sync:
             await self.middleware.call('disk.sync', dev)
