@@ -260,6 +260,8 @@ def os_xml(vm_data):
             create_element(
                 'loader', attribute_dict={'text': f'/usr/share/OVMF/{vm_data["bootloader_ovmf"]}'},
                 readonly='yes', type='pflash',
-            )
+            ),
         )
+    if vm_data['nvram_location']:
+        children.append(create_element('nvram', attribute_dict={'text': vm_data['nvram_location']}))
     return create_element('os', attribute_dict={'children': children})

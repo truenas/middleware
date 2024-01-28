@@ -43,6 +43,9 @@ class VMService(Service, VMSupervisorMixin):
         if vm['bootloader'] not in await self.middleware.call('vm.bootloader_options'):
             raise CallError(f'"{vm["bootloader"]}" is not supported on this platform.')
 
+        if vm['bootloader'] == 'UEFI' and not vm['nvram_location']:
+            raise CallError('UEFI VMs require a NVRAM file to be set before they can be started')
+
         if await self.middleware.call('system.is_ha_capable'):
             for device in vm['devices']:
                 if device['dtype'] in ('PCI', 'USB'):

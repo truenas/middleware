@@ -9,12 +9,12 @@ import uuid
 import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Path, returns, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range, UUID
 from middlewared.plugins.vm.numeric_set import parse_numeric_set, NumericSet
 
-from .utils import ACTIVE_STATES
+from .utils import ACTIVE_STATES, LIBVIRT_USER
 from .vm_supervisor import VMSupervisorMixin
 
 
@@ -56,6 +56,7 @@ class VMModel(sa.Model):
     command_line_args = sa.Column(sa.Text(), default='', nullable=False)
     bootloader_ovmf = sa.Column(sa.String(1024), default='OVMF_CODE.fd')
     trusted_platform_module = sa.Column(sa.Boolean(), default=False)
+    nvram_location = sa.Column(sa.Text(), default=None, nullable=True)
 
 
 @functools.cache
@@ -158,6 +159,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Str('arch_type', null=True, default=None),
         Str('machine_type', null=True, default=None),
         Str('uuid', null=True, default=None, validators=[UUID()]),
+        Path('nvram_location', null=True, default=None),
         register=True,
     ))
     async def do_create(self, data):
@@ -194,6 +196,9 @@ class VMService(CRUDService, VMSupervisorMixin):
         `suspend_on_snapshot` is a boolean attribute which when enabled will automatically pause/suspend VMs when
         a snapshot is being taken for periodic snapshot tasks. For manual snapshots, if user has specified vms to
         be paused, they will be in that case.
+
+        `nvram_location` is a path field which holds NVRAM file used by guest to boot in UEFI mode. This is a required
+        field when guest is to be booted with UEFI.
         """
         async with LIBVIRT_LOCK:
             await self.middleware.run_in_thread(self._check_setup_connection)
@@ -214,6 +219,24 @@ class VMService(CRUDService, VMSupervisorMixin):
             verrors.add(
                 f'{schema_name}.bootloader_ovmf',
                 'Invalid bootloader ovmf choice specified'
+            )
+
+        if data['bootloader'] == 'UEFI' and not data['nvram_location']:
+            verrors.add(
+                f'{schema_name}.nvram_location',
+                'NVRAM location must be specified when booting with UEFI'
+            )
+
+        if data['nvram_location'] and await self.middleware.run_in_thread(
+            os.path.exists, data['nvram_location']
+        ) and not await self.middleware.call(
+            'filesystem.can_access_as_user', LIBVIRT_USER, data['nvram_location'], {'read': True, 'write': True}
+        ):
+            # It is fine if the file does not exist as libvirt will create it
+            # However we do want to ensure that if it does exist, libvirt user is able to read/write to it
+            verrors.add(
+                f'{schema_name}.nvram_location',
+                'Libvirt user is not able to read the specified NVRAM file'
             )
 
         if not data.get('uuid'):

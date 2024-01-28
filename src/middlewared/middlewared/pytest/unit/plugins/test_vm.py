@@ -57,6 +57,7 @@ async def test_vm_creation_for_licensed_and_unlicensed_systems(license_active):
         'machine_type': None,
         'uuid': '64e31dd7-8c76-4dca-8b4b-0126b8853c5b',
         'command_line_args': '',
+        'nvram_location': '/mnt/pool/test_vm_VARS.fd',
     }
 
     m['vm.bootloader_ovmf_choices'] = lambda *args: {'OVMF_CODE.fd': 'OVMF_CODE.fd'}
