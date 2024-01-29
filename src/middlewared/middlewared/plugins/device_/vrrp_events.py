@@ -78,7 +78,7 @@ class VrrpEventThread(Thread):
                 return
 
             if event == 'FAULT':
-                # when a FAULT message is sent when iface goes down
+                # a FAULT message is sent when iface goes down
                 event = 'BACKUP'
 
         return {'ifname': ifname, 'event': event, 'time': msg['time']}
@@ -105,7 +105,7 @@ class VrrpEventThread(Thread):
             if self.pause_event.is_set():
                 # A BACKUP event has to migrate all the VIPs
                 # off of the controller and the only way to
-                # do that is to restart the vrrp service.
+                # (quickly) do that is to restart the vrrp service.
                 # However, restarting the VRRP service triggers
                 # more BACKUP events for the other interfaces
                 # so we will pause this thread while we become
@@ -123,7 +123,7 @@ class VrrpEventThread(Thread):
                 continue
 
             if this_event is None:
-                # an event that we ignore (i.e. STOP/FAULT events)
+                # an event that we ignore
                 self.event_queue.pop()
                 continue
             elif last_event is None:
