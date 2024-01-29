@@ -289,18 +289,35 @@ class PoolDatasetService(CRUDService):
 
         dataset_pool_is_draid = await self.middleware.call('pool.is_draid_pool', parent['pool'])
         if data['type'] == 'FILESYSTEM':
-            if data.get('acltype', 'INHERIT') != 'INHERIT' or data.get('aclmode', 'INHERIT') != 'INHERIT':
-                to_check = data.copy()
-                check_ds = cur_dataset if mode == 'UPDATE' else parent
-                if data.get('aclmode', 'INHERIT') == 'INHERIT':
-                    to_check['aclmode'] = check_ds['aclmode']['value']
+            to_check = {'acltype': None, 'aclmode': None}
 
-                if data.get('acltype', 'INHERIT') == 'INHERIT':
-                    to_check['acltype'] = check_ds['acltype']['value']
+            # Prevent users from setting incorrect combinations of aclmode and acltype parameters
+            # The final value to be set may have one of several different possible origins
+            # 1. The parameter may be provided in `data` (explicit creation or update)
+            # 2. The parameter may be original value stored in dataset and not touched by update payload
+            # 3. The parameter may be omitted from payload (data) in creation (defaulted to INHERIT)
+            #
+            # If result of 1-3 above for aclmode is INHERIT, then value will be retrieved from parent
+            #
+            # The configuration options we want to avoid are:
+            # NFSV4 + DISCARD (this will result in ACL being stripped on chmod operation)
+            #
+            # POSIX / OFF + non-DISCARD (this will potentially prevent ZFS_ACL_TRIVAL ZFS pflag from being
+            # set and may result in spurious permissions errors.
+            for key in ('acltype', 'aclmode'):
+                match (val := data.get(key) or (cur_dataset[key]['value'] if cur_dataset else 'INHERIT')):
+                    case 'INHERIT':
+                        to_check[key] = parent[key]['value']
+                    case 'NFSV4' | 'POSIX' | 'OFF' | 'PASSTHROUGH' | 'RESTRICTED' | 'DISCARD':
+                        to_check[key] = data[key]
+                    case _:
+                        raise CallError(f'{val}: unexpected value for {key}')
 
-                acltype = to_check.get('acltype', 'POSIX')
-                if acltype in ['POSIX', 'OFF'] and to_check.get('aclmode', 'DISCARD') != 'DISCARD':
-                    verrors.add(f'{schema}.aclmode', 'Must be set to DISCARD when acltype is POSIX or OFF')
+            if to_check['acltype'] in ('POSIX', 'OFF') and to_check['aclmode'] != 'DISCARD':
+                verrors.add(f'{schema}.aclmode', 'Must be set to DISCARD when acltype is POSIX or OFF')
+
+            elif to_check['acltype'] == 'NFSV4' and to_check['aclmode'] == 'DISCARD':
+                verrors.add(f'{schema}.aclmode', 'DISCARD aclmode may not be set for NFSv4 acl type')
 
             for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
                 if i in data:
