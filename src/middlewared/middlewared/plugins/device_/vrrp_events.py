@@ -39,7 +39,7 @@ class VrrpThreadService(Service):
             VrrpObjs.event_thread.unpause()
 
     def set_non_crit_ifaces(self):
-        if VrrpObjs.event_thread is not None and VrrpObjs.event_thread.is_alive():
+        if VrrpObjs.event_thread is not None:
             VrrpObjs.event_thread.non_crit_ifaces = set(
                 i['int_interface'] for i in self.middleware.call_sync(
                     'datastore.query', 'network.interfaces'
