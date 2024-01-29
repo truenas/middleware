@@ -18,7 +18,7 @@ class VrrpObjs:
     fifo_thread = None
     event_thread = None
     event_queue = deque(maxlen=1)
-    non_crit_ifaces = tuple()
+    non_crit_ifaces = set()
 
 
 class VrrpThreadService(Service):
@@ -40,7 +40,7 @@ class VrrpThreadService(Service):
 
     def set_non_crit_ifaces(self):
         if VrrpObjs.event_thread is not None and VrrpObjs.event_thread.is_alive():
-            VrrpObjs.event_thread.non_crit_ifaces = tuple(
+            VrrpObjs.event_thread.non_crit_ifaces = set(
                 i['int_interface'] for i in self.middleware.call_sync(
                     'datastore.query', 'network.interfaces'
                 ) if not i['int_critical']
@@ -53,7 +53,7 @@ class VrrpEventThread(Thread):
         super(VrrpEventThread, self).__init__()
         self.middleware = kwargs.get('middleware')
         self.event_queue = VrrpObjs.event_queue
-        self.non_crit_ifaces = VrrpObjs.non_crit_ifaces
+        self.non_crit_ifaces = kwargs.get('non_crit_ifaces') or VrrpObjs.non_crit_ifaces
         self.shutdown_event = Event()
         self.pause_event = Event()
         self.grace_period = 0.5
@@ -300,10 +300,13 @@ async def _start_stop_vrrp_threads(middleware):
             VrrpObjs.fifo_thread = VrrpFifoThread(middleware=middleware)
             VrrpObjs.fifo_thread.start()
 
+        nci = set(
+            i['int_interface'] for i in await middleware.call('datastore.query', 'network.interfaces')
+            if not i['int_critical']
+        )
         if VrrpObjs.event_thread is None or not VrrpObjs.event_thread.is_alive():
-            VrrpObjs.event_thread = VrrpEventThread(middleware=middleware, timeout=timeout)
+            VrrpObjs.event_thread = VrrpEventThread(middleware=middleware, timeout=timeout, non_crit_ifaces=nci)
             VrrpObjs.event_thread.start()
-            await middleware.call('vrrpthread.set_non_crit_ifaces')
 
 
 async def _post_license_update(middleware, *args, **kwargs):
