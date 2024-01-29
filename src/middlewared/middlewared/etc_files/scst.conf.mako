@@ -71,7 +71,9 @@
     # - Write a DEVICE_GROUP section with two TARGET_GROUPs
     # - TARGET GROUPs and rel_tgt_id are tied to the controller,
     #   *not* to whether it is currently the MASTER or BACKUP
-    #
+    # - clustered_extents is used to prevent cluster_mode from being
+    #   enabled on entents at startup.  We will have to explicitly
+    #   write 1 to cluster_mode elsewhere.
     is_ha = middleware.call_sync('failover.licensed')
     alua_enabled = middleware.call_sync("iscsi.global.alua_enabled")
     failover_status = middleware.call_sync("failover.status")
@@ -86,20 +88,29 @@
 
     cluster_mode_targets = []
     cluster_mode_luns = {}
+    clustered_extents = set()
+    all_cluster_mode = False
     if failover_status == "MASTER":
-        middleware.call_sync("iscsi.target.logout_ha_targets")
         local_ip = middleware.call_sync("failover.local_ip")
         dlm_ready = middleware.call_sync("dlm.node_ready")
+        if alua_enabled:
+            clustered_extents = set(middleware.call_sync("iscsi.target.clustered_extents"))
+            cluster_mode_targets = middleware.call_sync("iscsi.target.cluster_mode_targets")
     elif failover_status == "BACKUP":
         if alua_enabled:
-            logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
-            try:
-                (cluster_mode_targets, cluster_mode_luns) = middleware.call_sync('failover.call_remote', 'iscsi.target.cluster_mode_targets_luns')
-            except CallError as e:
-                if e.errno != CallError.ENOMETHOD:
-                    raise
-                # We may have upgraded one node, but not yet the other
-                middleware.logger.warning('Failed to configure remote cluster_mode_targets_luns')
+            if middleware.call_sync("iscsi.alua.standby_write_empty_config"):
+                logged_in_targets = {}
+            else:
+                logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
+                try:
+                    (cluster_mode_targets, cluster_mode_luns) = middleware.call_sync('failover.call_remote', 'iscsi.target.cluster_mode_targets_luns')
+                except CallError as e:
+                    if e.errno != CallError.ENOMETHOD:
+                        raise
+                    # We may have upgraded one node, but not yet the other
+                    middleware.logger.warning('Failed to configure remote cluster_mode_targets_luns')
+                clustered_extents = set(middleware.call_sync("iscsi.target.clustered_extents"))
+                all_cluster_mode = middleware.call_sync("iscsi.alua.all_cluster_mode")
         else:
             middleware.call_sync("iscsi.target.logout_ha_targets")
             targets = []
@@ -130,6 +141,8 @@
             extents_io_key = 'vdisk_fileio'
 
         if not os.path.exists(extent['extent_path']):
+            if alua_enabled and failover_status == "BACKUP":
+                continue
             middleware.logger.debug(
                 'Skipping generation of extent %r as the underlying resource does not exist', extent['name']
             )
@@ -152,6 +165,19 @@
         cml = calc_copy_manager_luns(list(itertools.chain.from_iterable([x for x in logged_in_targets.values() if x is not None])), True)
     else:
         cml = calc_copy_manager_luns(all_extent_names)
+
+    def set_standby_lun_to_cluster_mode(device, targetname):
+        if all_cluster_mode or device in clustered_extents:
+            if targetname in cluster_mode_luns and int(device.split(':')[-1]) in cluster_mode_luns[targetname]:
+                return True
+        return False
+
+    def set_standy_target_to_enabled(targetname):
+        devices = logged_in_targets.get(targetname, [])
+        if devices:
+            if set(devices).issubset(clustered_extents):
+                return True
+        return False
 %>\
 ##
 ## If we are on a HA system then write out a cluster name, we'll hard-code
@@ -173,9 +199,11 @@ HANDLER dev_disk {
 %                 for device in devices:
 
         DEVICE ${device} {
-## Sanity check to ensure the MASTER target LUN is in cluster_mode, if so then so are we
+## We will only enter cluster_mode here if two conditions are satisfied:
+## 1. We are already in cluster_mode or all_cluster_mode is True, AND
+## 2. The corresponding LUN on the MASTER is in cluster_mode
 ## Note we use a similar check to determine whether the target will be enabled.
-%                 if name in cluster_mode_luns and int(device.split(':')[-1]) in cluster_mode_luns[name]:
+%                 if set_standby_lun_to_cluster_mode(device, name):
             cluster_mode 1
 %                 else:
             cluster_mode 0
@@ -227,7 +255,11 @@ HANDLER ${handler} {
         t10_vend_id ${extent['vendor']}
         t10_dev_id ${extent['t10_dev_id']}
 %       if failover_status == "MASTER" and alua_enabled and dlm_ready:
+%       if extent['name'] in clustered_extents:
         cluster_mode 1
+%       else:
+        cluster_mode 0
+%       endif
 %       endif
     }
 
@@ -315,7 +347,7 @@ TARGET_DRIVER iscsi {
 %       if alua_enabled:
 %           if failover_status == "MASTER":
         enabled 1
-%           elif failover_status == "BACKUP" and target['name'] in cluster_mode_targets:
+%           elif failover_status == "BACKUP" and set_standy_target_to_enabled(target['name']):
         enabled 1
 %           else:
         enabled 0
