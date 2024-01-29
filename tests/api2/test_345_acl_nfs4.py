@@ -172,7 +172,7 @@ TEST_INFO = {}
 
 @pytest.fixture(scope='module')
 def initialize_for_acl_tests(request):
-    with make_dataset(ACLTEST_DATASET_NAME, data={'acltype': 'NFSV4'}) as ds:
+    with make_dataset(ACLTEST_DATASET_NAME, data={'acltype': 'NFSV4', 'aclmode': 'RESTRICTED'}) as ds:
         with create_user({
             'username': ACL_USER,
             'full_name': ACL_USER,
