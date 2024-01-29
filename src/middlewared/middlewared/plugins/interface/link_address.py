@@ -7,6 +7,17 @@ RE_FREEBSD_BRIDGE = re.compile(r"bridge([0-9]+)$")
 RE_FREEBSD_LAGG = re.compile(r"lagg([0-9]+)$")
 
 
+class DuplicateHardwareInterfaceLinkAddresses(Exception):
+    def __init__(self, name1, name2, link_address):
+        self.name1 = name1
+        self.name2 = name2
+        self.link_address = link_address
+        super().__init__(name1, name2, link_address)
+
+    def __str__(self):
+        return f"Interfaces {self.name1!r} and {self.name2!r} have the same hardware link address {self.link_address!r}"
+
+
 class InterfaceService(Service):
 
     class Config:
@@ -54,6 +65,8 @@ class InterfaceService(Service):
                             pass
                         else:
                             await self.__handle_interface(db_interfaces, name, remote_key, remote_hardware_link_address)
+        except DuplicateHardwareInterfaceLinkAddresses as e:
+            self.middleware.logger.error(f"Not persisting network interfaces link addresses: {e}")
         except Exception:
             self.middleware.logger.error("Unhandled exception while persisting network interfaces link addresses",
                                          exc_info=True)
@@ -107,8 +120,8 @@ class RealInterfaceCollection(InterfaceCollection):
         for i in self.interfaces:
             link_address = i["state"]["hardware_link_address"]
             if link_address in self.by_link_address:
-                raise ValueError(f"Interfaces {self.by_link_address[link_address]['name']!r} and {i['name']!r} have "
-                                 f"the same hardware link address {link_address!r}")
+                raise DuplicateHardwareInterfaceLinkAddresses(self.by_link_address[link_address]["name"], i["name"],
+                                                              link_address)
             self.by_link_address[link_address] = i
 
     def get_name(self, i):
@@ -250,6 +263,8 @@ async def setup(middleware):
                 interface_renamer.rename(db_interface["interface"], real_interface_by_link_address["name"])
 
         await interface_renamer.commit()
+    except DuplicateHardwareInterfaceLinkAddresses as e:
+        middleware.logger.error(f"Not migrating network interfaces: {e}")
     except Exception:
         middleware.logger.error("Unhandled exception while migrating network interfaces", exc_info=True)
 
