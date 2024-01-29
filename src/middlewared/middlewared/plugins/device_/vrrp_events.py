@@ -18,6 +18,7 @@ class VrrpObjs:
     fifo_thread = None
     event_thread = None
     event_queue = deque(maxlen=1)
+    non_crit_ifaces = set()
 
 
 class VrrpThreadService(Service):
@@ -37,6 +38,14 @@ class VrrpThreadService(Service):
         if VrrpObjs.event_thread is not None and VrrpObjs.event_thread.is_alive():
             VrrpObjs.event_thread.unpause()
 
+    def set_non_crit_ifaces(self):
+        if VrrpObjs.event_thread is not None:
+            VrrpObjs.event_thread.non_crit_ifaces = set(
+                i['int_interface'] for i in self.middleware.call_sync(
+                    'datastore.query', 'network.interfaces'
+                ) if not i['int_critical']
+            )
+
 
 class VrrpEventThread(Thread):
 
@@ -44,6 +53,7 @@ class VrrpEventThread(Thread):
         super(VrrpEventThread, self).__init__()
         self.middleware = kwargs.get('middleware')
         self.event_queue = VrrpObjs.event_queue
+        self.non_crit_ifaces = kwargs.get('non_crit_ifaces') or VrrpObjs.non_crit_ifaces
         self.shutdown_event = Event()
         self.pause_event = Event()
         self.grace_period = 0.5
@@ -78,7 +88,7 @@ class VrrpEventThread(Thread):
                 return
 
             if event == 'FAULT':
-                # when a FAULT message is sent when iface goes down
+                # a FAULT message is sent when iface goes down
                 event = 'BACKUP'
 
         return {'ifname': ifname, 'event': event, 'time': msg['time']}
@@ -105,7 +115,7 @@ class VrrpEventThread(Thread):
             if self.pause_event.is_set():
                 # A BACKUP event has to migrate all the VIPs
                 # off of the controller and the only way to
-                # do that is to restart the vrrp service.
+                # (quickly) do that is to restart the vrrp service.
                 # However, restarting the VRRP service triggers
                 # more BACKUP events for the other interfaces
                 # so we will pause this thread while we become
@@ -123,7 +133,11 @@ class VrrpEventThread(Thread):
                 continue
 
             if this_event is None:
-                # an event that we ignore (i.e. STOP/FAULT events)
+                # an event that we ignore
+                self.event_queue.pop()
+                continue
+            elif this_event['ifname'] in self.non_crit_ifaces:
+                LOGGER.debug('Received an event (%r) for a non-critical interface, ignoring.', this_event)
                 self.event_queue.pop()
                 continue
             elif last_event is None:
@@ -286,8 +300,12 @@ async def _start_stop_vrrp_threads(middleware):
             VrrpObjs.fifo_thread = VrrpFifoThread(middleware=middleware)
             VrrpObjs.fifo_thread.start()
 
+        nci = set(
+            i['int_interface'] for i in await middleware.call('datastore.query', 'network.interfaces')
+            if not i['int_critical']
+        )
         if VrrpObjs.event_thread is None or not VrrpObjs.event_thread.is_alive():
-            VrrpObjs.event_thread = VrrpEventThread(middleware=middleware, timeout=timeout)
+            VrrpObjs.event_thread = VrrpEventThread(middleware=middleware, timeout=timeout, non_crit_ifaces=nci)
             VrrpObjs.event_thread.start()
 
 

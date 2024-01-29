@@ -1652,6 +1652,11 @@ class InterfaceService(CRUDService):
         Sync interfaces configured in database to the OS.
         """
         await self.middleware.call_hook('interface.pre_sync')
+        # The VRRP event thread just reads directly from the database
+        # so there is no reason to actually configure the interfaces
+        # on the OS first. We can update the thread since the db has
+        # already been updated by the time this is called.
+        await self.middleware.call('vrrpthread.set_non_crit_ifaces')
 
         interfaces = [i['int_interface'] for i in (await self.middleware.call('datastore.query', 'network.interfaces'))]
         cloned_interfaces = []
