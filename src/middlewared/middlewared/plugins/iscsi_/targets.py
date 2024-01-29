@@ -526,6 +526,12 @@ class iSCSITargetService(CRUDService):
             # Regen existing as it should have now changed
             existing = await self.middleware.call('iscsi.target.logged_in_iqns')
 
+            # This below one does NOT have the desired impact, despite the output from 'iscsiadm -m node -o show'
+            # cmd = ['iscsiadm', '-m', 'node', '-o', 'update', '-n', 'node.session.timeo.replacement_timeout', '-v', '10']
+            # await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+            # So instead do this.
+            await self.middleware.call('iscsi.target.set_ha_targets_sys', f'{global_basename}:HA:', 'recovery_tmo', '10\n')
+
         # Now calculate the result to hand back.
         result = {}
         for name, iqn in iqns.items():
@@ -678,3 +684,10 @@ class iSCSITargetService(CRUDService):
         for bad_extent in bad_extents:
             del targets[assoc[bad_extent]]
         return list(targets.values())
+
+    @private
+    def set_ha_targets_sys(self, iqn_prefix, param, text):
+        sys_platform = pathlib.Path('/sys/devices/platform')
+        for targetname in sys_platform.glob('host*/session*/iscsi_session/session*/targetname'):
+            if targetname.read_text().startswith(iqn_prefix):
+                targetname.parent.joinpath(param).write_text(text)
