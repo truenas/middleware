@@ -193,8 +193,8 @@ class SupportService(ConfigService):
 
     @accepts(Dict(
         'new_ticket',
-        Str('title', required=True, max_length=None),
-        Str('body', required=True, max_length=None),
+        Str('title', required=True, max_length=200),
+        Str('body', required=True, max_length=20000),
         Str('category'),
         Bool('attach_debug', default=False),
         Password('token'),
