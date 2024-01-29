@@ -13,6 +13,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import CallError, private, SharingService, ValidationErrors
 from middlewared.utils.size import format_size
 from middlewared.validators import Range
+from collections import defaultdict
 
 from .utils import MAX_EXTENT_NAME_LEN
 
@@ -459,3 +460,47 @@ class iSCSITargetExtentService(SharingService):
                 return e
 
         return True
+
+    @private
+    async def logged_in_extents(self):
+        """
+        Obtain the unsurfaced disk names for all extents currently logged into on
+        a HA STANDBY controller.
+
+        :return: dict keyed by extent name, with unsurfaced disk name as the value
+        """
+        result = {}
+
+        # First check if *anything* is logged in.
+        iqns = await self.middleware.call('iscsi.target.logged_in_iqns')
+        if not iqns:
+            return result
+
+        target_to_id = {t['name']: t['id'] for t in await self.middleware.call('iscsi.target.query', [], {'select': ['id', 'name']})}
+        extents = {e['id']: e for e in await self.middleware.call('iscsi.extent.query', [], {'select': ['id', 'name', 'locked']})}
+        assoc = await self.middleware.call('iscsi.targetextent.query')
+        # Generate a dict, keyed by target ID whose value is a set of (lunID, extent name) tuples
+        target_luns = defaultdict(set)
+        for a_tgt in filter(
+            lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
+            assoc
+        ):
+            target_id = a_tgt['target']
+            extent_name = extents[a_tgt['extent']]['name']
+            target_luns[target_id].add((a_tgt['lunid'], extent_name))
+
+        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+        ha_basename = f'{global_basename}:HA:'
+
+        for iqn in iqns:
+            if not iqn.startswith(ha_basename):
+                continue
+            target_name = iqn.split(':')[-1]
+            target_id = target_to_id[target_name]
+            for ctl in iqns[iqn]:
+                lun = int(ctl.split(':')[-1])
+                for (l, extent_name) in target_luns[target_id]:
+                    if l == lun:
+                        result[extent_name] = ctl
+                        break
+        return result
