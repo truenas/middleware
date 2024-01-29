@@ -62,7 +62,7 @@ class SystemService(Service):
         except Exception as e:
             raise CallError(f'Failed to generate debug: {e!r}')
 
-    @accepts()
+    @accepts(roles=['READONLY_ADMIN'])
     @returns()
     @job(lock='system.debug', pipes=['output'])
     def debug(self, job):
