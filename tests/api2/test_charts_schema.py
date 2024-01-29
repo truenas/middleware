@@ -49,5 +49,5 @@ def test_text_schema_max_length(request):
                 'values': {'testtext': secrets.token_hex(2 * 1024 * 1024 // 2)},
             }):
                 assert ve.value.errors[0].errmsg == (
-                    'values.testtext: Value greater than 1048576 not allowed'
+                    'values.testtext: The value may not be longer than 1048576 characters'
                 )

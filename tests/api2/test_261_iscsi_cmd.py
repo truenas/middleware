@@ -1293,7 +1293,7 @@ def test_13_test_target_name(request, extent_type):
                 iqn = f'{basename}:{name65}'
                 target_test_readwrite16(ip, iqn)
         assert "iscsi_extent_create.name" in str(ve), ve
-        assert "Value greater than 64 not allowed" in str(ve), ve
+        assert "The value may not be longer than 64 characters" in str(ve), ve
 
 
 @pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
