@@ -69,7 +69,7 @@ class Str(EnumMixin, Attribute):
         verrors = ValidationErrors()
 
         if value and len(str(value)) > self.max_length:
-            verrors.add(self.name, f'Value greater than {self.max_length} not allowed')
+            verrors.add(self.name, f'The value may not be longer than {self.max_length} characters')
 
         verrors.check()
 
