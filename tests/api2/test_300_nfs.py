@@ -193,6 +193,16 @@ def confirm_nfs_version(expected=[]):
         assert v in results['stdout'].strip().split()[1], results
 
 
+def confirm_rpc_port(rpc_name, port_num):
+    '''
+    Confirm the expected port for the requested rpc process
+    rpc_name = ('mountd', 'status', 'nlockmgr')
+    '''
+    line = ssh(f"rpcinfo -p | grep {rpc_name} | grep tcp")
+    # example:    '100005    3   tcp    618  mountd'
+    assert int(line.split()[3]) == port_num, str(line)
+
+
 def reset_svcs(svcs_to_reset):
     '''
     Systemd services can get disabled if they restart too
@@ -1108,18 +1118,19 @@ def test_40_check_nfs_service_udp_parameter(request):
 def test_41_check_nfs_service_ports(request):
     """
     This test verifies that the custom ports we specified in
-    earlier NFS tests are set in the relevant files.
+    earlier NFS tests are set in the relevant files and are active.
     """
+    with nfs_config() as config_db:
+        # Compare DB with setting in /etc/nfs.conf.d/local.conf
+        s = parse_server_config()
+        assert int(s['mountd']['port']) == config_db["mountd_port"], str(s)
+        assert int(s['statd']['port']) == config_db["rpcstatd_port"], str(s)
+        assert int(s['lockd']['port']) == config_db["rpclockd_port"], str(s)
 
-    results = GET("/nfs")
-    assert results.status_code == 200, results.text
-    config = results.json()
-
-    s = parse_server_config()
-    assert int(s['mountd']['port']) == config["mountd_port"], str(s)
-
-    assert int(s['statd']['port']) == config["rpcstatd_port"], str(s)
-    assert int(s['lockd']['port']) == config["rpclockd_port"], str(s)
+        # Confirm port settings are active
+        confirm_rpc_port('mountd', config_db["mountd_port"])
+        confirm_rpc_port('status', config_db["rpcstatd_port"])
+        confirm_rpc_port('nlockmgr', config_db["rpclockd_port"])
 
 
 def test_42_check_nfs_client_status(request):
