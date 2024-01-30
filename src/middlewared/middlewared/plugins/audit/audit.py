@@ -23,7 +23,7 @@ from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
 from middlewared.client import ejson
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.schema import (
-    accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, UUID
+    accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str, UUID
 )
 from middlewared.service import filterable, filterable_returns, job, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors
@@ -132,7 +132,7 @@ class AuditService(ConfigService):
         'audit_entry',
         UUID('audit_id'),
         Int('message_timestamp'),
-        Dict('timestamp', additional_attrs=True),
+        Datetime('timestamp'),
         Str('address'),
         Str('username'),
         UUID('session'),
