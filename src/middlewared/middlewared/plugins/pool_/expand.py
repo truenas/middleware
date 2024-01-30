@@ -1,7 +1,7 @@
 import logging
 import os
 
-from middlewared.service import item_method, job, Service
+from middlewared.service import item_method, job, private, Service
 from middlewared.schema import accepts, Int, returns
 from middlewared.utils import run
 
@@ -57,11 +57,11 @@ class PoolService(Service):
                 continue
 
             for guid, part_data in c_vdevs:
-                await self._resize_disk(part_data)
+                await self.expand_partition(part_data)
                 vdevs.append(guid)
 
         # spare/cache devices cannot be expanded
-        # We resize them anyways, for cache devices, whenever we are going to import the pool
+        # We resize them anyway, for cache devices, whenever we are going to import the pool
         # next, it will register the new capacity. For spares, whenever that spare is going to
         # be used, it will register the new capacity as desired.
         for topology_type in filter(
@@ -73,10 +73,12 @@ class PoolService(Service):
                 ):
                     await self.middleware.call('zfs.pool.online', pool['name'], c_vd['guid'], True)
 
-    async def _resize_disk(self, part_data):
+    @private
+    async def expand_partition(self, part_data):
         partition_number = part_data['partition_number']
+        start = part_data['start_sector']
         await run(
-            'sgdisk', '-d', str(partition_number), '-n', f'{partition_number}:0:0', '-t',
+            'sgdisk', '-d', str(partition_number), '-n', f'{partition_number}:{start}:0', '-t',
             f'{partition_number}:BF01', '-u', f'{partition_number}:{part_data["partition_uuid"]}',
             os.path.join('/dev', part_data['disk'])
         )

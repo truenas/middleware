@@ -60,7 +60,7 @@ class DiskService(Service):
         disks = []
         for disk in data:
             if disk['name'] in disks:
-                verrors.add('disk.resize', 'Disk {disk["name"]!r} specified more than once.')
+                verrors.add('disk.resize', f'Disk {disk["name"]!r} specified more than once.')
             else:
                 disks.append(disk['name'])
 
