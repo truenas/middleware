@@ -405,6 +405,11 @@ class ServiceService(CRUDService):
                 if await service.identify(procname):
                     return service_name
 
+    @private
+    async def get_unit_state(self, service):
+        service_object = await self.middleware.call('service.object', service)
+        return await service_object.get_unit_state()
+
     @accepts(Int("pid"), Int("timeout", default=10))
     @returns(Bool(
         "process_terminated_nicely",
