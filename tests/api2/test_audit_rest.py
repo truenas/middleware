@@ -2,6 +2,7 @@
 import io
 import json
 import os
+import pytest
 import sys
 from unittest.mock import ANY
 
@@ -13,6 +14,7 @@ from middlewared.test.integration.utils.audit import expect_audit_log
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+pytestmark = pytest.mark.audit
 from functions import POST
 
 

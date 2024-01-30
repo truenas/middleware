@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import pytest
 import sys
 
 from middlewared.test.integration.assets.pool import dataset, snapshot
@@ -8,6 +9,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import hostname, ip, pool_name
 from functions import DELETE, GET, POST, PUT, wait_on_job
+
+pytestmark = pytest.mark.zfs
 
 
 def _verify_snapshot_keys_present(snap, expected, unexpected):

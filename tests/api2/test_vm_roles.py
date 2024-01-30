@@ -2,6 +2,8 @@ import pytest
 
 from middlewared.test.integration.assets.roles import common_checks
 
+pytestmark = [pytest.mark.vm, pytest.mark.slow]
+
 
 @pytest.mark.parametrize('method, expected_error', [
     ('vm.virtualization_details', False),

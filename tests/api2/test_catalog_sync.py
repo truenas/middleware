@@ -12,6 +12,7 @@ MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 TEST_CATALOG_NAME = 'TEST_CATALOG'
 TEST_SECOND_CATALOG_NAME = 'TEST_SECOND_CATALOG'
 CATALOG_SYNC_TMP_PATH = os.path.join(MIDDLEWARE_RUN_DIR, 'ix-applications', 'catalogs')
+pytestmark = pytest.mark.apps
 
 
 @contextlib.contextmanager

@@ -12,6 +12,7 @@ from functions import POST, PUT, SSH_TEST, GET, DELETE
 from auto_config import user, password, ip
 
 TESTFILE = '/tmp/.testFileCreatedViaCronjob'
+pytestmark = pytest.mark.cron
 
 
 @pytest.fixture(scope='module')

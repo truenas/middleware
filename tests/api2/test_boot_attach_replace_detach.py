@@ -3,6 +3,9 @@ import pytest
 from middlewared.test.integration.utils import call
 from auto_config import ha
 
+pytestmark = pytest.mark.boot
+
+
 if not ha:
     # the HA VMs only have 1 extra disk at time
     # of writing this. QE is aware and is working

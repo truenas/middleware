@@ -10,6 +10,8 @@ from auto_config import ip, sshKey, user, password
 from middlewared.test.integration.utils import call, fail
 from middlewared.test.integration.utils.client import client
 
+pytestmark = pytest.mark.base
+
 
 @pytest.fixture(scope='module')
 def ip_to_use():

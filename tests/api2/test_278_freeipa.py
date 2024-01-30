@@ -24,6 +24,7 @@ try:
         FREEIPA_BINDPW,
         FREEIPA_HOSTNAME,
     )
+    pytestmark = pytest.mark.ds
 except ImportError:
     Reason = 'FREEIPA* variable are not setup in config.py'
     pytestmark = pytest.mark.skipif(True, reason=Reason)

@@ -7,6 +7,8 @@ from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import group, root_with_password_disabled
 from middlewared.test.integration.utils import call, client, mock
 
+pytestmark = pytest.mark.rbac
+
 
 def test_change_local_administrator_groups_to_invalid():
     operator = call("group.query", [["group", "=", "operator"]], {"get": True})

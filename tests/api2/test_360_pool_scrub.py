@@ -9,6 +9,8 @@ sys.path.append(apifolder)
 from functions import GET, PUT, POST, DELETE
 from auto_config import pool_name
 
+pytestmark = pytest.mark.zfs
+
 
 def test_01_create_scrub_for_same_pool(request):
     global pool_id

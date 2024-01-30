@@ -3,6 +3,8 @@ import pytest
 from middlewared.test.integration.assets.pool import another_pool, pool
 from middlewared.test.integration.utils import call, ssh
 
+pytestmark = pytest.mark.zfs
+
 
 @pytest.fixture(scope="module")
 def outdated_pool():

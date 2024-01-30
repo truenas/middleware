@@ -26,6 +26,8 @@ from functions import DELETE, GET, POST, PUT, SSH_TEST
 from protocols import (initiator_name_supported, iscsi_scsi_connection,
                        isns_connection)
 
+pytestmark = pytest.mark.iscsi
+
 if ha and "virtual_ip" in os.environ:
     from auto_config import password, user
     ip = os.environ["virtual_ip"]

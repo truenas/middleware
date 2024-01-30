@@ -29,6 +29,8 @@ if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
 else:
     from auto_config import ip
+
+pytestmark = pytest.mark.nfs
 MOUNTPOINT = f"/tmp/nfs-{hostname}"
 dataset = f"{pool_name}/nfs"
 dataset_url = dataset.replace('/', '%2F')

@@ -6,6 +6,8 @@ import pytest
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call
 
+pytestmark = pytest.mark.disk
+
 
 @contextlib.contextmanager
 def smart_test(data):

@@ -12,6 +12,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, DELETE, GET, PUT, wait_on_job
 
+pytestmark = pytest.mark.boot
+
 
 def test_01_get_the_activated_bootenv():
     global active_be_id

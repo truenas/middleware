@@ -4,6 +4,8 @@ from middlewared.test.integration.assets.cloud_sync import local_ftp_task
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
 
+pytestmark = pytest.mark.zfs
+
 
 @pytest.fixture(scope="module")
 def cloud_sync_fixture():

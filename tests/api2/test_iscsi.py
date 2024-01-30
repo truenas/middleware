@@ -5,6 +5,8 @@ from middlewared.test.integration.assets.iscsi import iscsi_extent
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 
+pytestmark = pytest.mark.iscsi
+
 
 def test__iscsi_extent__disk_choices(request):
     with dataset("test zvol", {"type": "VOLUME", "volsize": 1048576}) as ds:

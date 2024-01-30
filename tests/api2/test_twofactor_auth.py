@@ -25,6 +25,7 @@ USERS_2FA_CONF = {
     TEST_USERNAME: {'interval': 30, 'otp_digits': 6},
     TEST_USERNAME_2: {'interval': 40, 'otp_digits': 7}
 }
+pytestmark = pytest.mark.accounts
 
 
 @contextlib.contextmanager

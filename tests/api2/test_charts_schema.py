@@ -8,6 +8,8 @@ from middlewared.client.client import ValidationErrors
 from middlewared.test.integration.assets.apps import chart_release
 from middlewared.test.integration.assets.catalog import catalog
 
+pytestmark = pytest.mark.apps
+
 
 def test_text_schema(request):
     depends(request, ['setup_kubernetes'], scope='session')

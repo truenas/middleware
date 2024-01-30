@@ -1,8 +1,11 @@
 import contextlib
+import pytest
 import time
 
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
+
+pytestmark = [pytest.mark.alerts, pytest.mark.zfs]
 
 
 def assert_has_outdated_pool_alert(pool_name, has):

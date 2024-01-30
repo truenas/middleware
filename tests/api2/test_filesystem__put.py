@@ -1,5 +1,6 @@
 import json
 import os
+import pytest
 import sys
 import tempfile
 
@@ -8,6 +9,7 @@ sys.path.append(apifolder)
 from functions import wait_on_job, POST
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
+pytestmark = pytest.mark.fs
 
 
 def upload_file(file_path, file_path_on_tn):

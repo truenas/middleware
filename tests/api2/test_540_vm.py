@@ -14,6 +14,7 @@ from functions import GET, POST, PUT, DELETE, wait_on_job
 from auto_config import ha
 
 support_virtualization = GET('/vm/supports_virtualization/', controller_a=ha).json()
+pytestmark = pytest.mark.vm
 
 bootloader = {'UEFI': 'UEFI', 'UEFI_CSM': 'Legacy BIOS'}
 

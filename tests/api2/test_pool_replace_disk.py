@@ -6,6 +6,8 @@ from middlewared.test.integration.utils import call
 from auto_config import ha
 pytestmark = [
     pytest.mark.skipif(ha, reason='Skipping for HA testing'),
+    pytest.mark.disk,
+    pytest.mark.zfs
 ]
 
 

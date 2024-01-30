@@ -12,6 +12,7 @@ from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password
 from pytest_dependency import depends
 
+pytestmark = [pytest.mark.fs, pytest.mark.slow]
 MODE_DATASET = f'{pool_name}/modetest'
 dataset_url = MODE_DATASET.replace('/', '%2F')
 

@@ -8,6 +8,7 @@ from middlewared.test.integration.utils import call, client
 
 LOCAL_USER_SID_PREFIX = 'S-1-22-1-'
 LOCAL_GROUP_SID_PREFIX = 'S-1-22-2-'
+pytestmark = pytest.mark.accounts
 
 def test_uid_idmapping():
     with user({

@@ -15,7 +15,7 @@ from middlewared.test.integration.assets.catalog import catalog
 from middlewared.test.integration.assets.kubernetes import backup
 from middlewared.test.integration.utils import file_exists_and_perms_check
 
-
+pytestmark = [pytest.mark.apps, pytest.mark.slow]
 backup_release_name = 'backupsyncthing'
 
 # Read all the test below only on non-HA

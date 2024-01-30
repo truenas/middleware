@@ -9,6 +9,8 @@ from pytest_dependency import depends
 from auto_config import ha, interface, hostname, domain, ip
 from middlewared.test.integration.utils.client import client
 
+pytestmark = pytest.mark.base
+
 
 @pytest.fixture(scope='module')
 def ip_to_use():

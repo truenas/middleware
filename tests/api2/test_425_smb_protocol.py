@@ -29,6 +29,7 @@ SMB_NAME = "SMBPROTO"
 SMB_USER = "smbuser"
 SMB_PWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
 TEST_DATA = {}
+pytestmark = pytest.mark.smb
 
 
 class DOSmode(enum.Enum):

@@ -9,6 +9,7 @@ from auto_config import ha
 
 pytestmark = [
     pytest.mark.skipif(ha, reason='Skipping for HA testing due to less disks'),
+    pytest.mark.zfs
 ]
 
 

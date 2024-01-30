@@ -12,6 +12,8 @@ from functions import POST
 from auto_config import ha
 global all_results
 all_results = {}
+pytestmark = pytest.mark.disk
+
 disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
 
 

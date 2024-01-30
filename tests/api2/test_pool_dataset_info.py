@@ -1,5 +1,8 @@
+import pytest
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.assets.pool import pool
+
+pytestmark = pytest.mark.zfs
 
 
 def test_recommended_zvol_blocksize():

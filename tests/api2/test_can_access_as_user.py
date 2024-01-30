@@ -8,6 +8,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+pytestmark = pytest.mark.rbac
 
 
 @contextlib.contextmanager

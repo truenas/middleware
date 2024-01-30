@@ -10,6 +10,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET
 
+pytestmark = pytest.mark.certs
+
 
 def test_01_get_certificateauthority_query():
     results = GET('/certificateauthority/')

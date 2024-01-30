@@ -5,6 +5,8 @@ from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
 
+pytestmark = pytest.mark.rbac
+
 
 def test_works():
     user = call("auth.me")

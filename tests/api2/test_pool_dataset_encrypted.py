@@ -8,6 +8,7 @@ from middlewared.test.integration.utils import call
 
 
 PASSPHRASE = "12345678"
+pytestmark = pytest.mark.zfs
 
 
 def encryption_props():

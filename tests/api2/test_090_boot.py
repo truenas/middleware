@@ -12,6 +12,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET
 
+pytestmark = pytest.mark.boot
+
 
 @pytest.mark.dependency(name='BOOT_DISKS')
 def test_01_get_boot_disks():

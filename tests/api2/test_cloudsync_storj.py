@@ -11,6 +11,7 @@ from middlewared.test.integration.assets.pool import dataset
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+pytestmark = pytest.mark.cloudsync
 
 try:
     from config import (

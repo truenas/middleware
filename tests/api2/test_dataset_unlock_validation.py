@@ -7,6 +7,7 @@ from middlewared.client.client import ValidationErrors
 
 
 PASSPHRASE = '12345678'
+pytestmark = pytest.mark.zfs
 
 
 def encryption_props():

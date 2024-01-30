@@ -9,6 +9,7 @@ sys.path.append(apifolder)
 from functions import POST, GET, PUT, DELETE
 from auto_config import pool_name
 
+pytestmark = pytest.mark.fs
 
 @pytest.mark.dependency(name="ACLTEMPLATE_DATASETS_CREATED")
 @pytest.mark.parametrize('acltype', ['NFSV4', 'POSIX'])

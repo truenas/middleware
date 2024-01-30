@@ -24,6 +24,7 @@ group = 'root'
 path = '/etc'
 path_list = ['default', 'kernel', 'zfs', 'ssh']
 random_path = ['/boot/grub', '/root', '/bin', '/usr/bin']
+pytestmark = pytest.mark.fs
 
 
 def test_01_get_filesystem_listdir():

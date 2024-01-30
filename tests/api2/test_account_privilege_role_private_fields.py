@@ -12,6 +12,7 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, client, mock
 
 REDACTED = "********"
+pytestmark = pytest.mark.rbac
 
 
 @pytest.fixture(scope="module")

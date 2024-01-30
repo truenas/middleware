@@ -2,6 +2,8 @@ import pytest
 
 from middlewared.test.integration.assets.roles import common_checks
 
+pytestmark = [pytest.mark.rbac, pytest.mark.smb]
+
 
 @pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_SMB_READ"])
 def test_read_role_can_read(role):

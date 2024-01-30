@@ -10,6 +10,8 @@ import os
 import sys
 sys.path.append(os.getcwd())
 
+pytestmark = pytest.mark.zfs
+
 
 @pytest.mark.parametrize("datasets,file_open_path,arg_path", [
     # A file on a dataset

@@ -21,6 +21,7 @@ AUDIT_WAIT = 10
 SMB_NAME = "TestCifsSMB"
 SHAREUSER = 'smbuser420'
 PASSWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
+pytestmark = pytest.mark.smb
 
 
 @pytest.fixture(scope='module')

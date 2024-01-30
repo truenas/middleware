@@ -11,6 +11,8 @@ from middlewared.test.integration.utils.audit import expect_audit_method_calls
 sys.path.append(os.getcwd())
 from functions import PUT
 
+pytestmark = pytest.mark.audit
+
 
 @pytest.mark.parametrize("api", ["ws", "rest"])
 def test_update_account_audit(api):

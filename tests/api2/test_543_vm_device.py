@@ -21,6 +21,7 @@ CDROM_DATASET = f'{pool_name}/cdrom'
 CDROM_DATASET_URL = CDROM_DATASET.replace('/', '%2F')
 CDROM_DATASET_PATH = f'/mnt/{CDROM_DATASET}'
 DEVICE = {'disk_id': 'DISK', 'display_id': 'DISPLAY', 'cdrom_id': 'CDROM'}
+pytestmark = pytest.mark.vm
 
 
 @pytest.fixture(scope='module')

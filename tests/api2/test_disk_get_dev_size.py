@@ -4,6 +4,8 @@ import pytest
 
 from middlewared.test.integration.utils import call, ssh
 
+pytestmark = pytest.mark.disk
+
 
 @pytest.fixture(scope="session")
 def blockdevices():

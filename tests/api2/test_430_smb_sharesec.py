@@ -27,6 +27,7 @@ Users = {
     "name": "Users",
     "sidtype": "ALIAS"
 }
+pytestmark = pytest.mark.smb
 
 
 @pytest.fixture(scope="module")

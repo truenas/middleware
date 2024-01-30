@@ -5,6 +5,8 @@ import pytest
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.assets.pool import another_pool
 
+pytestmark = pytest.mark.disk
+
 
 def test_disk_wipe_exported_zpool_in_disk_get_unused():
     with another_pool() as tmp_pool:

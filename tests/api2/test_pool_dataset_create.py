@@ -3,6 +3,8 @@ import pytest
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 
+pytestmark = pytest.mark.zfs
+
 
 @pytest.mark.parametrize("child", ["a/b", "a/b/c"])
 def test_pool_dataset_create_ancestors(child):

@@ -33,6 +33,8 @@ if ha and "virtual_ip" in os.environ:
 else:
     from auto_config import ip
 
+pytestmark = pytest.mark.ftp
+
 FTP_DEFAULT = {}
 DB_DFLT = {}
 INIT_DIRS_AND_FILES = {

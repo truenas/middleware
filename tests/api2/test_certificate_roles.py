@@ -2,6 +2,8 @@ import pytest
 
 from middlewared.test.integration.assets.roles import common_checks
 
+pytestmark = pytest.mark.rbac
+
 
 @pytest.mark.parametrize('method, role, valid_role', (
     ('certificate.profiles', 'CERTIFICATE_READ', True),

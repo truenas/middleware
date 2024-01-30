@@ -22,6 +22,7 @@ dataset = f'{encrypted_pool_name}/encrypted'
 dataset_url = dataset.replace('/', '%2F')
 child_dataset = f'{dataset}/child'
 child_dataset_url = child_dataset.replace('/', '%2F')
+pytestmark = pytest.mark.zfs
 
 
 @pytest.mark.dependency(name="CREATED_POOL")

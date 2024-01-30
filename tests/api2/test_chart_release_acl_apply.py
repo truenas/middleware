@@ -12,6 +12,7 @@ from middlewared.test.integration.assets.catalog import catalog
 
 USER_ID = 568
 TEST_DIR = 'test_dir_for_acl'
+pytestmark = pytest.mark.apps
 
 
 def path_exists(path: str) -> bool:

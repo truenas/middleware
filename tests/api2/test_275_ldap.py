@@ -28,6 +28,7 @@ try:
         LDAPUSER,
         LDAPPASSWORD
     )
+    pytestmark = pytest.mark.ds
 except ImportError:
     Reason = 'LDAP* variable are not setup in config.py'
     pytestmark = pytest.mark.skipif(True, reason=Reason)

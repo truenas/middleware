@@ -13,6 +13,7 @@ from auto_config import ha
 RunTest = True
 TestName = "get disk information"
 DISK_ID = None
+pytestmark = pytest.mark.disk
 
 disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
 

@@ -11,6 +11,7 @@ from functions import GET, POST, SSH_TEST
 from auto_config import ip, password, user, pool_name
 from middlewared.test.integration.utils import call
 
+pytestmark = pytest.mark.alerts
 
 
 def test_01_get_alert_list():

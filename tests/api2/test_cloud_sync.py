@@ -13,6 +13,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import ha
+pytestmark = pytest.mark.cloudsync
 
 
 def test_include(request):

@@ -2,6 +2,8 @@ import pytest
 
 from middlewared.test.integration.assets.roles import common_checks
 
+pytestmark = [pytest.mark.iscsi, pytest.mark.rbac]
+
 
 @pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_GLOBAL_READ"])
 def test_read_role_can_read(role):

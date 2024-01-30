@@ -11,6 +11,7 @@ from functions import DELETE, POST, PUT, GET
 from auto_config import interface
 
 Reason = "VM detected no real ATA disk"
+pytestmark = pytest.mark.disk
 
 not_real = (
     interface == "vtnet0"

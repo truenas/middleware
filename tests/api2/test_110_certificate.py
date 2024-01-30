@@ -20,6 +20,7 @@ try:
         LDAPBINDPASSWORD,
         LDAPHOSTNAME,
     )
+    pytestmark = pytest.mark.certs
 except ImportError:
     Reason = 'LDAP* variable are not setup in config.py'
     # comment pytestmark for development testing with --dev-test

@@ -10,6 +10,7 @@ sys.path.append(apifolder)
 
 
 PASSPHRASE = '12345678'
+pytestmark = pytest.mark.zfs
 
 
 def encryption_props():

@@ -37,6 +37,7 @@ Mandatory option
     --interface <interface>     - The interface that TrueNAS is run one
 
 Optional option
+    --markers "smb or nfs"      - Markers to run
     --test <test name>          - Test name (Network, ALL)
     --tests <test1>[,test2,...] - List of tests to be supplied to pytest
     --vm-name <VM_NAME>         - Name the the Bhyve VM
@@ -66,6 +67,7 @@ option_list = [
     "isns_ip=",
     "pool=",
     "tests=",
+    "markers=",
 ]
 
 # look if all the argument are there.
@@ -85,6 +87,7 @@ debug_mode = False
 verbose = 0
 exitfirst = ''
 returncode = False
+markers = []
 callargs = []
 tests = []
 for output, arg in myopts:
@@ -123,6 +126,8 @@ for output, arg in myopts:
         callargs.append('-s')
     elif output == '--tests':
         tests.extend(arg.split(','))
+    elif output == '--markers':
+        markers.extend(['-m', f'base or {arg}'])
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -194,7 +199,7 @@ pytest_command = [
     sys.executable,
     '-m',
     'pytest'
-] + callargs + [
+] + callargs + markers + [
     "-o", "junit_family=xunit2",
     '--timeout=300',
     "--junitxml",

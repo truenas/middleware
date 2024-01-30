@@ -8,6 +8,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+pytestmark = pytest.mark.fs
 
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5)

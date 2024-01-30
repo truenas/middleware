@@ -11,6 +11,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+pytestmark = pytest.mark.cloudsync
 
 
 def test_rclone_config_writer_bool(request):

@@ -1,4 +1,7 @@
+import pytest
 from middlewared.test.integration.utils import call
+
+pytestmark = pytest.mark.zfs
 
 
 def test_pool_resilver_update():

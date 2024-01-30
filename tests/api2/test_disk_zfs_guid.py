@@ -1,3 +1,4 @@
+import pytest
 from datetime import datetime
 
 from middlewared.test.integration.utils import call
@@ -29,6 +30,7 @@ DISK_TEMPLATE = {
     "disk_zfs_guid": None,
     "disk_bus": "ATA"
 }
+pytestmark = pytest.mark.disk
 
 
 def test_does_not_set_zfs_guid_for_expired_disk():
