@@ -1,7 +1,7 @@
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, returns, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, filterable, item_method, job
+    CallError, CRUDService, ValidationErrors, filterable, item_method, job, private
 )
 from middlewared.utils import filter_list, Popen, run
 
@@ -274,3 +274,21 @@ class BootEnvService(CRUDService):
         except subprocess.CalledProcessError as cpe:
             raise CallError(f'Failed to delete boot environment: {cpe.stdout}')
         return True
+
+    @private
+    async def promote_current_be_datasets(self):
+        boot_pool = await self.middleware.call("boot.pool_name")
+        be = (await self.middleware.call("bootenv.query", [["activated", "=", True]], {"get": True}))["name"]
+        for dataset in await self.middleware.call("zfs.dataset.query", [["id", "^", f"{boot_pool}/ROOT/{be}/"]]):
+            if origin := dataset["properties"]["origin"]["value"]:
+                self.middleware.logger.info(f"Promoting dataset {dataset['name']} as it is a clone of {origin}")
+                await self.middleware.call("pool.dataset.promote", dataset["name"])
+
+
+async def setup(middleware):
+    # Installer clones `/var/log` dataset of the previous install to avoid copying logs. When booting, we must promote
+    # the clone to be an independent dataset so that the origin dataset becomes deletable.
+    try:
+        await middleware.call("bootenv.promote_current_be_datasets")
+    except Exception:
+        middleware.logger.error("Unhandled exception promoting active BE datasets", exc_info=True)
