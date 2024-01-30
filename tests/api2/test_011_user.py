@@ -330,7 +330,8 @@ def test_30_creating_home_dataset(request):
     payload = {
         "name": dataset,
         "share_type": "SMB",
-        "acltype": "NFSV4"
+        "acltype": "NFSV4",
+        "aclmode": "RESTRICTED"
     }
     results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
