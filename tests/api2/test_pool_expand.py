@@ -30,3 +30,17 @@ def test_expand_pool():
         assert call("pool.get_instance", pool["id"])["size"] > 2147483648 * 2
         # Ensure that data was not destroyed
         assert ssh(f"ls /mnt/{pool['name']}") == "test\n"
+
+
+def test_expand_partition_keeps_initial_offset():
+    disk = call("disk.get_unused")[0]["name"]
+
+    call("disk.wipe", disk, "QUICK", job=True)
+    ssh(f"sgdisk -n 0:8192:1GiB /dev/{disk}")
+    partition = call("disk.list_partitions", disk)[0]
+
+    call("pool.expand_partition", partition)
+
+    expanded_partition = call("disk.list_partitions", disk)[0]
+    assert expanded_partition["size"] > partition["size"]
+    assert expanded_partition["start"] == partition["start"]
