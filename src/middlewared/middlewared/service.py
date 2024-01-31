@@ -27,6 +27,7 @@ from middlewared.utils.type import copy_function_metadata
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.validators import Range, IpAddress
 
+PAGINATION_OPTS = ('count', 'get', 'limit', 'offset')
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 get_or_insert_lock = asyncio.Lock()
 LOCKS = defaultdict(asyncio.Lock)
@@ -478,8 +479,8 @@ class CRUDService(ServiceChangeMixin, Service):
         # for filters for performance reasons.
         if not options['force_sql_filters'] and options['extend']:
             datastore_options = options.copy()
-            datastore_options.pop('count', None)
-            datastore_options.pop('get', None)
+            for option in PAGINATION_OPTS:
+                datastore_options.pop(option, None)
             result = await self.middleware.call(
                 'datastore.query', self._config.datastore, [], datastore_options
             )
