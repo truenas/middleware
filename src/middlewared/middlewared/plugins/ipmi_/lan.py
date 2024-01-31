@@ -26,7 +26,7 @@ def lan_channels():
 
 
 def apply_config(channel, data):
-    base_cmd = ['ipmitool', 'lan', 'set', channel]
+    base_cmd = ['ipmitool', 'lan', 'set', str(channel)]
 
     rc = 0
     options = {'stdout': DEVNULL, 'stderr': DEVNULL}
