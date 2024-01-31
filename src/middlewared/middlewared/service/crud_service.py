@@ -13,6 +13,9 @@ from .service import Service
 from .service_mixin import ServiceChangeMixin
 
 
+PAGINATION_OPTS = ('count', 'get', 'limit', 'offset', 'select')
+
+
 def get_datastore_primary_key_schema(klass):
     return convert_schema({
         'type': klass._config.datastore_primary_key_type,
@@ -152,9 +155,8 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         # for filters for performance reasons.
         if not options['force_sql_filters'] and options['extend']:
             datastore_options = options.copy()
-            datastore_options.pop('count', None)
-            datastore_options.pop('get', None)
-            datastore_options.pop('select', None)
+            for option in PAGINATION_OPTS:
+                datastore_options.pop(option, None)
             result = await self.middleware.call(
                 'datastore.query', self._config.datastore, [], datastore_options
             )
