@@ -231,11 +231,13 @@ TARGET_DRIVER copy_manager {
 }
 % endif
 ##
-## Do NOT write "HANDLER vdisk_fileio" and "HANDLER vdisk_blockio" sections if
-## we are BACKUP node.
-% if failover_status != "BACKUP":
+
 % for handler in extents_io:
 HANDLER ${handler} {
+## Do NOT write *contents* of "HANDLER vdisk_fileio" and "HANDLER vdisk_blockio" sections if
+## we are BACKUP node.  However, we still want to write the empty sections so that we will
+## load the handlers on scst startup.  This will facilitate a fast BACKUP -> MASTER reload on failover.
+% if failover_status != "BACKUP":
 %   for extent in extents_io[handler]:
     DEVICE ${extent['name']} {
         filename ${extent['extent_path']}
@@ -264,9 +266,9 @@ HANDLER ${handler} {
     }
 
 %   endfor
+% endif
 }
 % endfor
-% endif
 
 TARGET_DRIVER iscsi {
     enabled 1
