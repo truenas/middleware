@@ -34,6 +34,18 @@ dataset = f"{pool_name}/nfs"
 dataset_url = dataset.replace('/', '%2F')
 NFS_PATH = "/mnt/" + dataset
 
+# Supported configuration files
+conf_file = {
+    "nfs": {
+        "pname": "/etc/nfs.conf.d/local.conf",
+        "sections": {'nfsd': {}, 'mountd': {}, 'statd': {}, 'lockd': {}}
+    },
+    "idmapd": {
+        "pname": "/etc/idmapd.conf",
+        "sections": {"General": {}, "Mapping": {}, "Translation": {}}
+    }
+}
+
 
 def parse_exports():
     results = SSH_TEST("cat /etc/exports", user, password, ip)
@@ -64,15 +76,21 @@ def parse_exports():
     return rv
 
 
-def parse_server_config(fname="local.conf"):
+def parse_server_config(conf_type="nfs"):
     '''
+    Parse known 'ini' style conf files.  See definition of conf_file above.
+
     Debian will read to /etc/default/nfs-common and then /etc/nfs.conf
     All TrueNAS NFS settings are in /etc/nfs.conf.d/local.conf as overrides
     '''
-    results = SSH_TEST(f"cat /etc/nfs.conf.d/{fname}", user, password, ip)
-    assert results['result'] is True, f"rc={results['returncode']}, {results['output']}, {results['stderr']}"
-    conf = results['stdout'].splitlines()
-    rv = {'nfsd': {}, 'mountd': {}, 'statd': {}, 'lockd': {}}
+    assert conf_type in conf_file.keys(), f"{conf_type} is not a supported conf type"
+    pathname = conf_file[conf_type]['pname']
+    rv = conf_file[conf_type]['sections']
+    expected_sections = rv.keys()
+
+    # Read the file and parse it
+    res = ssh(f"cat {pathname}")
+    conf = res.splitlines()
     section = ''
 
     for line in conf:
@@ -80,6 +98,7 @@ def parse_server_config(fname="local.conf"):
             continue
         if line.startswith("["):
             section = line.split('[')[1].split(']')[0]
+            assert section in expected_sections, f"Unexpected section found: {section}"
             continue
 
         k, v = line.split(" = ", 1)
@@ -1560,6 +1579,30 @@ def test_52_manage_gids(request, state, expected):
 
         s = parse_server_config()
         assert s['mountd']['manage-gids'] == expected, str(s)
+
+
+def test_54_v4_domain(request):
+    '''
+    The v4_domain configuration item maps to the 'Domain' setting in
+    the [General] section of /etc/idmapd.conf.
+    It is described as:
+        The local NFSv4 domain name. An NFSv4 domain is a namespace
+        with a unique username<->UID and groupname<->GID mapping.
+        (Default: Host's fully-qualified DNS domain name)
+    '''
+    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
+
+    with nfs_config() as nfs_db:
+        # By default, v4_domain is not set
+        assert nfs_db['v4_domain'] == "", f"Expected zero-len string, but found {nfs_db['v4_domain']}"
+        s = parse_server_config("idmapd")
+        assert s['General'].get('Domain') is None, f"'Domain' was not expected to be set: {s}"
+
+        # Make a setting change and confirm
+        db = call('nfs.update', {"v4_domain": "ixsystems.com"})
+        assert db['v4_domain'] == 'ixsystems.com', f"v4_domain failed to be updated in nfs DB: {db}"
+        s = parse_server_config("idmapd")
+        assert s['General'].get('Domain') == 'ixsystems.com', f"'Domain' failed to be updated in idmapd.conf: {s}"
 
 
 def test_70_stopping_nfs_service(request):
