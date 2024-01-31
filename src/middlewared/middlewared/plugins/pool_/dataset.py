@@ -309,7 +309,7 @@ class PoolDatasetService(CRUDService):
                     case 'INHERIT':
                         to_check[key] = parent[key]['value']
                     case 'NFSV4' | 'POSIX' | 'OFF' | 'PASSTHROUGH' | 'RESTRICTED' | 'DISCARD':
-                        to_check[key] = data[key]
+                        to_check[key] = val
                     case _:
                         raise CallError(f'{val}: unexpected value for {key}')
 
