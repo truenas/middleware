@@ -245,6 +245,11 @@ class ActiveDirectoryService(ConfigService):
         if not new["enable"]:
             return
 
+        if not await self.middleware.call('pool.query', [], {'count': True}):
+            verrors.add(
+                "activedirectory_update.enable",
+                "Active Directory service may not be enabled before data pool is created."
+            )
         ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
         if ldap_enabled:
             verrors.add(
