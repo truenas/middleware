@@ -26,7 +26,7 @@ def test_certificate_authority_create_role(role, valid_role):
     ('CERTIFICATE_READ', False),
 ))
 def test_certificate_create_role(role, valid_role):
-    common_checks('certificate.create', role, valid_role, method_args=[{}], method_kwargs={'job': True})
+    common_checks('certificate.create', role, valid_role, method_args=[], method_kwargs={'job': True})
 
 
 @pytest.mark.parametrize('role, valid_role', (
