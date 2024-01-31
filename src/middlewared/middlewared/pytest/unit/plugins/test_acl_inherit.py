@@ -1,7 +1,7 @@
 import pytest
 
 from copy import deepcopy
-from middlewared.plugins.filesystem_.acl_base import ACLType
+from middlewared.plugins.filesystem_.utils import ACLType
 
 
 NFS4_ACL = {'acl': [

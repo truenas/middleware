@@ -6,15 +6,19 @@ import stat as pystat
 from pathlib import Path
 
 from middlewared.plugins.chart_releases_linux.utils import is_ix_volume_path
-from middlewared.service import private, CallError, ValidationErrors, Service
+from middlewared.schema import Bool, Dict, Int, List, Str, Ref, UnixPerm, OROperator
+from middlewared.service import accepts, private, returns, job, CallError, ValidationErrors, Service
 from middlewared.utils.path import FSLocation, path_location
-from .acl_base import ACLBase, ACLType
+from middlewared.validators import Range
+from .utils import ACLType
 
 
-class FilesystemService(Service, ACLBase):
+class FilesystemService(Service):
 
-    @private
-    def acltool(self, path, action, uid, gid, options):
+    class Config:
+        cli_private = True
+
+    def __acltool(self, path, action, uid, gid, options):
 
         flags = "-r"
         flags += "x" if options.get('traverse') else ""
@@ -122,7 +126,36 @@ class FilesystemService(Service, ACLBase):
 
             raise
 
+    @accepts(
+        Dict(
+            'filesystem_ownership',
+            Str('path', required=True),
+            Int('uid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
+            Int('gid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
+            Dict(
+                'options',
+                Bool('recursive', default=False),
+                Bool('traverse', default=False)
+            )
+        ),
+        roles=['FILESYSTEM_ATTRS_WRITE']
+    )
+    @returns()
+    @job(lock="perm_change")
     def chown(self, job, data):
+        """
+        Change owner or group of file at `path`.
+
+        `uid` and `gid` specify new owner of the file. If either
+        key is absent or None, then existing value on the file is not
+        changed.
+
+        `recursive` performs action recursively, but does
+        not traverse filesystem mount points.
+
+        If `traverse` and `recursive` are specified, then the chown
+        operation will traverse filesystem mount points.
+        """
         job.set_progress(0, 'Preparing to change owner.')
         verrors = ValidationErrors()
 
@@ -144,7 +177,7 @@ class FilesystemService(Service, ACLBase):
 
         job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
         options['posixacl'] = True
-        self.acltool(data['path'], 'chown', uid, gid, options)
+        self.__acltool(data['path'], 'chown', uid, gid, options)
         job.set_progress(100, 'Finished changing owner.')
 
     @private
@@ -169,7 +202,50 @@ class FilesystemService(Service, ACLBase):
 
             os.removexattr(path, xat)
 
+    @accepts(
+        Dict(
+            'filesystem_permission',
+            Str('path', required=True),
+            UnixPerm('mode', null=True),
+            Int('uid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
+            Int('gid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
+            Dict(
+                'options',
+                Bool('stripacl', default=False),
+                Bool('recursive', default=False),
+                Bool('traverse', default=False),
+            )
+        ),
+        roles=['FILESYSTEM_ATTRS_WRITE']
+    )
+    @returns()
+    @job(lock="perm_change")
     def setperm(self, job, data):
+        """
+        Set unix permissions on given `path`.
+
+        If `mode` is specified then the mode will be applied to the
+        path and files and subdirectories depending on which `options` are
+        selected. Mode should be formatted as string representation of octal
+        permissions bits.
+
+        `uid` the desired UID of the file user. If set to None (the default), then user is not changed.
+
+        `gid` the desired GID of the file group. If set to None (the default), then group is not changed.
+
+        `stripacl` setperm will fail if an extended ACL is present on `path`,
+        unless `stripacl` is set to True.
+
+        `recursive` remove ACLs recursively, but do not traverse dataset
+        boundaries.
+
+        `traverse` remove ACLs from child datasets.
+
+        If no `mode` is set, and `stripacl` is True, then non-trivial ACLs
+        will be converted to trivial ACLs. An ACL is trivial if it can be
+        expressed as a file mode without losing any access rules.
+
+        """
         job.set_progress(0, 'Preparing to set permissions.')
         options = data['options']
         mode = data.get('mode', None)
@@ -219,14 +295,33 @@ class FilesystemService(Service, ACLBase):
         job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
         options['posixacl'] = not is_nfs4acl
         options['do_chmod'] = True
-        self.acltool(data['path'], action, uid, gid, options)
+        self.__acltool(data['path'], action, uid, gid, options)
         job.set_progress(100, 'Finished setting permissions.')
 
+    @accepts(Str('path', required=False, default=''))
+    @returns(List('acl_choices', items=[Str("choice")]))
     async def default_acl_choices(self, path):
+        """
+        `DEPRECATED`
+        Returns list of names of ACL templates. Wrapper around
+        filesystem.acltemplate.query.
+        """
         acl_templates = await self.middleware.call('filesystem.acltemplate.by_path', {"path": path})
         return [x['name'] for x in acl_templates]
 
+    @accepts(
+        Str('acl_type', default='POSIX_OPEN'),
+        Str('share_type', default='NONE', enum=['NONE', 'SMB', 'NFS']),
+    )
+    @returns(OROperator(Ref('nfs4_acl'), Ref('posix1e_acl'), name='acl'))
     async def get_default_acl(self, acl_type, share_type):
+        """
+        `DEPRECATED`
+        Returns a default ACL depending on the usage specified by `acl_type`.
+        If an admin group is defined, then an entry granting it full control will
+        be placed at the top of the ACL. Optionally may pass `share_type` to argument
+        to get share-specific template ACL.
+        """
         filters = [("name", "=", acl_type)]
         options = {"ensure_builtins": share_type == "SMB"}
         return (await self.middleware.call("filesystem.acltemplate.by_path", {
@@ -369,7 +464,56 @@ class FilesystemService(Service, ACLBase):
             'trivial': True,
         }
 
+    @accepts(
+        Str('path'),
+        Bool('simplified', default=True),
+        Bool('resolve_ids', default=False),
+        roles=['FILESYSTEM_ATTRS_READ']
+    )
+    @returns(Dict(
+        'truenas_acl',
+        Str('path'),
+        Bool('trivial'),
+        Str('acltype', enum=[x.name for x in ACLType], null=True),
+        OROperator(
+            Ref('nfs4_acl'),
+            Ref('posix1e_acl'),
+            name='acl'
+        )
+    ))
     def getacl(self, path, simplified, resolve_ids):
+        """
+        Return ACL of a given path. This may return a POSIX1e ACL or a NFSv4 ACL. The acl type is indicated
+        by the `acltype` key.
+
+        `simplified` - effect of this depends on ACL type on underlying filesystem. In the case of
+        NFSv4 ACLs simplified permissions and flags are returned for ACL entries where applicable.
+        NFSv4 errata below. In the case of POSIX1E ACls, this setting has no impact on returned ACL.
+
+        `resolve_ids` - adds additional `who` key to each ACL entry, that converts the numeric id to
+        a user name or group name. In the case of owner@ and group@ (NFSv4) or USER_OBJ and GROUP_OBJ
+        (POSIX1E), st_uid or st_gid will be converted from stat() return for file. In the case of
+        MASK (POSIX1E), OTHER (POSIX1E), everyone@ (NFSv4), key `who` will be included, but set to null.
+        In case of failure to resolve the id to a name, `who` will be set to null. This option should
+        only be used if resolving ids to names is required.
+
+        Errata about ACLType NFSv4:
+
+        `simplified` returns a shortened form of the ACL permset and flags where applicable. If permissions
+        have been simplified, then the `perms` object will contain only a single `BASIC` key with a string
+        describing the underlying permissions set.
+
+        `TRAVERSE` sufficient rights to traverse a directory, but not read contents.
+
+        `READ` sufficient rights to traverse a directory, and read file contents.
+
+        `MODIFIY` sufficient rights to traverse, read, write, and modify a file.
+
+        `FULL_CONTROL` all permissions.
+
+        If the permisssions do not fit within one of the pre-defined simplified permissions types, then
+        the full ACL entry will be returned.
+        """
         if path_location(path) is FSLocation.EXTERNAL:
             raise CallError(f'{path} is external to TrueNAS', errno.EXDEV)
 
@@ -467,8 +611,8 @@ class FilesystemService(Service, ACLBase):
             job.set_progress(100, 'Finished setting NFSv4 ACL.')
             return
 
-        self.acltool(path, 'clone' if not do_strip else 'strip',
-                     uid, gid, options)
+        self.__acltool(path, 'clone' if not do_strip else 'strip',
+                       uid, gid, options)
 
         job.set_progress(100, 'Finished setting NFSv4 ACL.')
 
@@ -646,12 +790,94 @@ class FilesystemService(Service, ACLBase):
             return
 
         options['posixacl'] = True
-        self.acltool(data['path'],
-                     'clone' if not do_strip else 'strip',
-                     uid, gid, options)
+        self.__acltool(data['path'],
+                       'clone' if not do_strip else 'strip',
+                       uid, gid, options)
 
         job.set_progress(100, 'Finished setting POSIX1e ACL.')
 
+    @accepts(
+        Dict(
+            'filesystem_acl',
+            Str('path', required=True),
+            Int('uid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
+            Int('gid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
+            OROperator(
+                List(
+                    'nfs4_acl',
+                    items=[Dict(
+                        'nfs4_ace',
+                        Str('tag', enum=['owner@', 'group@', 'everyone@', 'USER', 'GROUP']),
+                        Int('id', null=True, validators=[Range(min_=-1, max_=2147483647)]),
+                        Str('type', enum=['ALLOW', 'DENY']),
+                        Dict(
+                            'perms',
+                            Bool('READ_DATA'),
+                            Bool('WRITE_DATA'),
+                            Bool('APPEND_DATA'),
+                            Bool('READ_NAMED_ATTRS'),
+                            Bool('WRITE_NAMED_ATTRS'),
+                            Bool('EXECUTE'),
+                            Bool('DELETE_CHILD'),
+                            Bool('READ_ATTRIBUTES'),
+                            Bool('WRITE_ATTRIBUTES'),
+                            Bool('DELETE'),
+                            Bool('READ_ACL'),
+                            Bool('WRITE_ACL'),
+                            Bool('WRITE_OWNER'),
+                            Bool('SYNCHRONIZE'),
+                            Str('BASIC', enum=['FULL_CONTROL', 'MODIFY', 'READ', 'TRAVERSE']),
+                        ),
+                        Dict(
+                            'flags',
+                            Bool('FILE_INHERIT'),
+                            Bool('DIRECTORY_INHERIT'),
+                            Bool('NO_PROPAGATE_INHERIT'),
+                            Bool('INHERIT_ONLY'),
+                            Bool('INHERITED'),
+                            Str('BASIC', enum=['INHERIT', 'NOINHERIT']),
+                        ),
+                        register=True
+                    )],
+                    register=True
+                ),
+                List(
+                    'posix1e_acl',
+                    items=[Dict(
+                        'posix1e_ace',
+                        Bool('default', default=False),
+                        Str('tag', enum=['USER_OBJ', 'GROUP_OBJ', 'USER', 'GROUP', 'OTHER', 'MASK']),
+                        Int('id', default=-1, validators=[Range(min_=-1, max_=2147483647)]),
+                        Dict(
+                            'perms',
+                            Bool('READ', default=False),
+                            Bool('WRITE', default=False),
+                            Bool('EXECUTE', default=False),
+                        ),
+                        register=True
+                    )],
+                    register=True
+                ),
+                name='dacl',
+            ),
+            Dict(
+                'nfs41_flags',
+                Bool('autoinherit', default=False),
+                Bool('protected', default=False),
+                Bool('defaulted', default=False),
+            ),
+            Str('acltype', enum=[x.name for x in ACLType], null=True),
+            Dict(
+                'options',
+                Bool('stripacl', default=False),
+                Bool('recursive', default=False),
+                Bool('traverse', default=False),
+                Bool('canonicalize', default=True)
+            )
+        ), roles=['FILESYSTEM_ATTRS_WRITE']
+    )
+    @returns()
+    @job(lock="perm_change")
     def setacl(self, job, data):
         verrors = ValidationErrors()
         data['loc'] = self._common_perm_path_validate("filesystem.setacl", data, verrors)
@@ -822,7 +1048,36 @@ class FilesystemService(Service, ACLBase):
 
         return changed
 
+    @private
+    @accepts(Dict(
+        'add_to_acl',
+        Str('path', required=True),
+        List('entries', required=True, items=[Dict(
+            'simplified_acl_entry',
+            Str('id_type', enum=['USER', 'GROUP'], required=True),
+            Int('id', required=True),
+            Str('access', enum=['READ', 'MODIFY', 'FULL_CONTROL'], required=True)
+        )]),
+        Dict(
+            'options',
+            Bool('force', default=False),
+        )
+    ), roles=['FILESYSTEM_ATTRS_WRITE'])
+    @job()
     def add_to_acl(self, job, data):
+        """
+        Simplified ACL maintenance API for charts users to grant either read or
+        modify access to particulr IDs on a given path. This call overwrites
+        any existing ACL on the given path.
+
+        `id_type` specifies whether the extra entry will be a user or group
+        `id` specifies the numeric id of the user / group for which access is
+        being granted.
+        `access` specifies the simplified access mask to be granted to the user.
+        For NFSv4 ACLs `READ` means the READ set, and `MODIFY` means the MODIFY
+        set. For POSIX1E `READ` means read and execute, `MODIFY` means read, write,
+        execute.
+        """
         init_path = data['path']
         verrors = ValidationErrors()
         self._common_perm_path_validate('filesystem.add_to_acl', data, verrors)
@@ -858,7 +1113,21 @@ class FilesystemService(Service, ACLBase):
 
         return job.wrap_sync(setacl_job)
 
+    @private
+    @accepts(Dict(
+        'calculate_inherited_acl',
+        Str('path', required=True),
+        Dict(
+            'options',
+            Bool('directory', default=True)
+        )
+    ))
     def get_inherited_acl(self, data):
+        """
+        Generate an inherited ACL based on given `path`
+        Supports `directory` `option` that allows specifying whether the generated
+        ACL is for a file or a directory.
+        """
         init_path = data['path']
         verrors = ValidationErrors()
         self._common_perm_path_validate('filesystem.add_to_acl', data, verrors)
