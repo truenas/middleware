@@ -1,71 +1,38 @@
-import contextlib
-import errno
 import pytest
 
-from pytest_dependency import depends
-from time import sleep
-
-from middlewared.client import ClientException
-from middlewared.test.integration.assets.account import unprivileged_user_client
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.assets.roles import common_checks
 
 
-@contextlib.contextmanager
-def official_chart_release(wait_for_active_status=False):
-    release_name = 'tftpd-hpa'
-    payload = {
-        'catalog': 'TRUENAS',
-        'item': 'tftpd-hpa',
-        'release_name': release_name,
-        'train': 'community',
-    }
-    chart_release = call('chart.release.create', payload, job=True)
-    if wait_for_active_status:
-        timeout = 60
-        while timeout >= 0 and call('chart.release.get_instance', release_name)['status'] != 'ACTIVE':
-            sleep(10)
-            timeout -= 10
-
-    try:
-        yield chart_release
-    finally:
-        call('chart.release.delete', 'tftpd-hpa', job=True)
+def test_app_readonly_role():
+    common_checks('app.categories', 'READONLY_ADMIN', True, valid_role_exception=False)
 
 
-def test_app_readonly_role(request):
-    depends(request, ['setup_kubernetes'], scope='session')
-    with unprivileged_user_client(['READONLY_ADMIN']) as c:
-        c.call('app.categories')
-
-
-@pytest.mark.parametrize('role,endpoint,payload,job,should_work', [
-    ('CATALOG_READ', 'app.latest', [], False, True),
-    ('CATALOG_READ', 'app.available', [], False, True),
-    ('CATALOG_READ', 'app.categories', [], False, True),
-    ('APPS_READ', 'app.latest', [], False, True),
-    ('APPS_READ', 'app.available', [], False, True),
-    ('APPS_READ', 'app.categories', [], False, True),
-    ('CATALOG_READ', 'app.similar', ['searxng', 'TRUENAS', 'community'], False, True),
-    ('CATALOG_WRITE', 'app.similar', ['searxng', 'TRUENAS', 'community'], False, True),
-    ('CATALOG_READ', 'catalog.sync_all', [], True, False),
-    ('CATALOG_READ', 'catalog.sync', ['TRUENAS'], True, False),
-    ('CATALOG_READ', 'catalog.validate', ['TRUENAS'], True, False),
-    ('CATALOG_WRITE', 'catalog.sync_all', [], True, True),
-    ('CATALOG_WRITE', 'catalog.sync', ['TRUENAS'], True, True),
-    ('CATALOG_WRITE', 'catalog.validate', ['TRUENAS'], True, True),
-    ('CATALOG_READ', 'catalog.get_item_details', ['searxng', {'catalog': 'TRUENAS', 'train': 'community'}], False, True),
-    ('CATALOG_READ', 'catalog.items', ['TRUENAS'], False, True),
-    ('CATALOG_WRITE', 'catalog.items', ['TRUENAS'], False, True),
+@pytest.mark.parametrize('role,endpoint,payload,job,should_work,valid_role_exception,is_return_type_none', [
+    ('CATALOG_READ', 'app.latest', [], False, True, False, False),
+    ('CATALOG_READ', 'app.available', [], False, True, False, False),
+    ('CATALOG_READ', 'app.categories', [], False, True, False, False),
+    ('APPS_READ', 'app.latest', [], False, True, False, False),
+    ('APPS_READ', 'app.available', [], False, True, False, False),
+    ('APPS_READ', 'app.categories', [], False, True, False, False),
+    ('CATALOG_READ', 'app.similar', [], False, True, True, False),
+    ('CATALOG_WRITE', 'app.similar', [], False, True, True, False),
+    ('CATALOG_READ', 'catalog.sync_all', [], True, False, False, True),
+    ('CATALOG_READ', 'catalog.sync', [], True, False, True, True),
+    ('CATALOG_READ', 'catalog.validate', [], True, True, True, False),
+    ('CATALOG_WRITE', 'catalog.sync_all', [], True, True, False, True),
+    ('CATALOG_WRITE', 'catalog.sync', [], True, True, True, True),
+    ('CATALOG_WRITE', 'catalog.validate', [], True, True, True, False),
+    ('CATALOG_READ', 'catalog.get_item_details', [], False, True, True, False),
+    ('CATALOG_READ', 'catalog.items', [], False, True, True, False),
+    ('CATALOG_WRITE', 'catalog.items', [], False, True, True, False),
 ])
-def test_catalog_read_and_write_role(request, role, endpoint, payload, job, should_work):
-    depends(request, ['setup_kubernetes'], scope='session')
-    with unprivileged_user_client(roles=[role]) as c:
-        if should_work:
-            c.call(endpoint, *payload, job=job)
-        else:
-            with pytest.raises(ClientException) as ve:
-                c.call(endpoint, *payload, job=job)
-            assert ve.value.errno == errno.EACCES
+def test_catalog_read_and_write_role(
+    role, endpoint, payload, job, should_work, valid_role_exception, is_return_type_none
+):
+    common_checks(
+        endpoint, role, should_work, is_return_type_none=is_return_type_none,
+        valid_role_exception=valid_role_exception, method_args=payload, method_kwargs={'job': job}
+    )
 
 
 @pytest.mark.parametrize('role,endpoint,job,should_work', [
@@ -75,45 +42,21 @@ def test_catalog_read_and_write_role(request, role, endpoint, payload, job, shou
     ('APPS_READ', 'container.prune', True, False),
     ('APPS_WRITE', 'container.prune', True, True),
 ])
-def test_apps_read_and_write_roles(request, role, endpoint, job, should_work):
-    depends(request, ['setup_kubernetes'], scope='session')
-    with official_chart_release():
-        with unprivileged_user_client(roles=[role]) as c:
-            if should_work:
-                c.call(endpoint, job=job)
-            else:
-                with pytest.raises(ClientException) as ve:
-                    c.call(endpoint, job=job)
-                assert ve.value.errno == errno.EACCES
+def test_apps_read_and_write_roles(role, endpoint, job, should_work):
+    common_checks(endpoint, role, should_work, method_kwargs={'job': job})
 
 
-@pytest.mark.parametrize('role,endpoint,job,should_work,expected_error,wait_for_active_status', [
-    ('APPS_READ', 'chart.release.pod_status', False, True, False, False),
-    ('APPS_WRITE', 'chart.release.pod_status', False, True, False, False),
-    ('APPS_READ', 'chart.release.upgrade_summary', False, True, True, False),
-    ('APPS_READ', 'chart.release.redeploy', True, False, False, True),
-    ('APPS_WRITE', 'chart.release.redeploy', True, True, False, True),
-    ('APPS_READ', 'chart.release.upgrade', True, False, False, False),
-    ('APPS_WRITE', 'chart.release.upgrade', True, True, True, False),
+@pytest.mark.parametrize('role,endpoint,job,should_work', [
+    ('APPS_READ', 'chart.release.pod_status', False, True),
+    ('APPS_WRITE', 'chart.release.pod_status', False, True),
+    ('APPS_READ', 'chart.release.upgrade_summary', False, True),
+    ('APPS_READ', 'chart.release.redeploy', True, False),
+    ('APPS_WRITE', 'chart.release.redeploy', True, True),
+    ('APPS_READ', 'chart.release.upgrade', True, False),
+    ('APPS_WRITE', 'chart.release.upgrade', True, True),
 ])
-def test_apps_read_and_write_roles_with_params(
-    request, role, endpoint, job, should_work, expected_error, wait_for_active_status,
-):
-    depends(request, ['setup_kubernetes'], scope='session')
-    with official_chart_release(wait_for_active_status) as chart_release:
-        with unprivileged_user_client(roles=[role]) as c:
-            if should_work:
-                if expected_error:
-                    with pytest.raises(Exception) as ve:
-                        c.call(endpoint, chart_release['name'], job=job)
-                    assert ve.value.errno != errno.EACCES
-                else:
-                    c.call(endpoint, chart_release['name'], job=job)
-
-            else:
-                with pytest.raises(ClientException) as ve:
-                    c.call(endpoint, chart_release['name'], job=job)
-                assert ve.value.errno == errno.EACCES
+def test_apps_read_and_write_roles_with_params(role, endpoint, job, should_work):
+    common_checks(endpoint, role, should_work, method_kwargs={'job': job})
 
 
 @pytest.mark.parametrize('role,endpoint,job,should_work', [
@@ -126,12 +69,5 @@ def test_apps_read_and_write_roles_with_params(
     ('KUBERNETES_READ', 'kubernetes.events', False, True),
     ('KUBERNETES_WRITE', 'kubernetes.events', False, True),
 ])
-def test_kubernetes_read_and_write_roles(request, role, endpoint, job, should_work):
-    depends(request, ['setup_kubernetes'], scope='session')
-    with unprivileged_user_client(roles=[role]) as c:
-        if should_work:
-            c.call(endpoint, job=job)
-        else:
-            with pytest.raises(ClientException) as ve:
-                c.call(endpoint, job=job)
-            assert ve.value.errno == errno.EACCES
+def test_kubernetes_read_and_write_roles(role, endpoint, job, should_work):
+    common_checks(endpoint, role, should_work, method_kwargs={'job': job})

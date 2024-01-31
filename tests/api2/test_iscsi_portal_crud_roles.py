@@ -1,51 +1,22 @@
-import errno
-
 import pytest
 
-from middlewared.client import ClientException
-from middlewared.test.integration.assets.iscsi import iscsi_portal
-from middlewared.test.integration.assets.account import unprivileged_user_client
-
-
-@pytest.fixture(scope="module")
-def portal():
-    with iscsi_portal({"listen": [{"ip": "::"}], "comment": "IPv6"}) as result:
-        yield result
+from middlewared.test.integration.assets.roles import common_checks
 
 
 @pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_PORTAL_READ"])
 def test_read_role_can_read(role):
-    with unprivileged_user_client(roles=[role]) as c:
-        c.call("iscsi.portal.query")
+    common_checks("iscsi.portal.query", role, True, valid_role_exception=False)
 
 
 @pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_PORTAL_READ"])
-def test_read_role_cant_write(portal, role):
-    with unprivileged_user_client(roles=[role]) as c:
-        with pytest.raises(ClientException) as ve:
-            c.call("iscsi.portal.create", {
-                "listen": [{"ip": "0.0.0.0"}],
-                "comment": "IPv4",
-            })
-        assert ve.value.errno == errno.EACCES
-
-        with pytest.raises(ClientException) as ve:
-            c.call("iscsi.portal.update", portal['id'], {})
-        assert ve.value.errno == errno.EACCES
-
-        with pytest.raises(ClientException) as ve:
-            c.call("iscsi.portal.delete", portal['id'])
-        assert ve.value.errno == errno.EACCES
+def test_read_role_cant_write(role):
+    common_checks("iscsi.portal.create", role, False)
+    common_checks("iscsi.portal.update", role, False)
+    common_checks("iscsi.portal.delete", role, False)
 
 
 @pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_ISCSI_WRITE", "SHARING_ISCSI_PORTAL_WRITE"])
 def test_write_role_can_write(role):
-    with unprivileged_user_client(roles=[role]) as c:
-        item = c.call("iscsi.portal.create", {
-            "listen": [{"ip": "0.0.0.0"}],
-            "comment": "IPv4",
-        })
-        try:
-            c.call("iscsi.portal.update", item["id"], {})
-        finally:
-            c.call("iscsi.portal.delete", item["id"])
+    common_checks("iscsi.portal.create", role, True)
+    common_checks("iscsi.portal.update", role, True)
+    common_checks("iscsi.portal.delete", role, True)

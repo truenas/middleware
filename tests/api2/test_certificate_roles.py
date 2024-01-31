@@ -1,26 +1,6 @@
-import errno
 import pytest
 
-from middlewared.client.client import ClientException, ValidationErrors
-from middlewared.service_exception import ValidationErrors as ValidationErrorsServiceException
-from middlewared.test.integration.assets.account import unprivileged_user_client
-
-
-def common_checks(method, role, valid_role, valid_role_exception=True, method_args=None, method_kwargs=None):
-    method_args = method_args or []
-    method_kwargs = method_kwargs or {}
-    with unprivileged_user_client(roles=[role]) as client:
-        if valid_role:
-            if valid_role_exception:
-                with pytest.raises((ValidationErrors, ValidationErrorsServiceException)):
-                    client.call(method, *method_args, **method_kwargs)
-            else:
-                assert client.call(method, *method_args, **method_kwargs) is not None
-        else:
-            with pytest.raises(ClientException) as ve:
-                client.call(method, *method_args, **method_kwargs)
-            assert ve.value.errno == errno.EACCES
-            assert ve.value.error == 'Not authorized'
+from middlewared.test.integration.assets.roles import common_checks
 
 
 @pytest.mark.parametrize('method, role, valid_role', (
