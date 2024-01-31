@@ -13,8 +13,11 @@ def common_checks(
     with unprivileged_user_client(roles=[role]) as client:
         if valid_role:
             if valid_role_exception:
-                with pytest.raises(Exception):
+                with pytest.raises(Exception) as exc_info:
                     client.call(method, *method_args, **method_kwargs)
+
+                assert not isinstance(exc_info.value, ClientException)
+
             elif is_return_type_none:
                 assert client.call(method, *method_args, **method_kwargs) is None
             else:
