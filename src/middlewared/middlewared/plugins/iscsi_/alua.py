@@ -1,7 +1,6 @@
 import asyncio
 import itertools
 
-from middlewared.schema import returns
 from middlewared.service import Service, job
 
 CHUNK_SIZE = 20
@@ -39,6 +38,9 @@ class iSCSITargetAluaService(Service):
         super().__init__(middleware)
         self.enabled = set()
         self.standby_starting = False
+
+        self.active_elected_job = None
+        self.activate_extents_job = None
 
         # scst.conf.mako will check the below value to determine whether it
         # should write cluster_mode = 1, even if then value in /sys is zero
@@ -84,25 +86,110 @@ class iSCSITargetAluaService(Service):
             self._standby_write_empty_config = value
         return self._standby_write_empty_config
 
-    @returns()
     @job(lock='active_elected', transient=True, lock_queue_size=1)
     async def active_elected(self, job):
+        self.active_elected_job = job
         self.standby_starting = False
         job.set_progress(0, 'Start ACTIVE node ALUA reset on election')
         self.logger.debug('Start ACTIVE node ALUA reset on election')
         if await self.middleware.call('iscsi.global.alua_enabled'):
             if await self.middleware.call('failover.status') == 'MASTER':
-                await self.middleware.call('dlm.local_reset', False)
-                job.set_progress(50, 'ACTIVE node ALUA local reset done')
+                # Just do the bare minimum here.
+                try:
+                    await self.middleware.call('dlm.eject_peer')
+                except Exception as e:
+                    self.logger.warning('active_elected job: %r', e)
 
-                await self.middleware.call('iscsi.target.logout_ha_targets')
                 job.set_progress(100, 'ACTIVE node ALUA reset completed')
                 self.logger.debug('ACTIVE node ALUA reset completed')
                 return
         job.set_progress(100, 'ACTIVE node ALUA reset NOOP')
         self.logger.debug('ACTIVE node ALUA reset NOOP')
 
-    @returns()
+    @job(lock='activate_extents', transient=True, lock_queue_size=1)
+    async def activate_extents(self, job):
+        self.activate_extents_job = job
+        job.set_progress(0, 'Start activate_extents')
+
+        if self.active_elected_job:
+            self.logger.debug('Waiting for active_elected to complete')
+            await self.active_elected_job.wait()
+            self.logger.debug('Waited for active_elected to complete')
+            self.active_elected_job = None
+
+        job.set_progress(10, 'Previous job completed')
+
+        # First get all the currently active extents
+        extents = await self.middleware.call('iscsi.extent.query',
+                                             [['enabled', '=', True], ['locked', '=', False]],
+                                             {'select': ['name', 'id', 'type', 'path', 'disk']})
+
+        # Calculate what we want to do
+        todo = []
+        for extent in extents:
+            if extent['type'] == 'DISK':
+                path = f'/dev/{extent["disk"]}'
+            else:
+                path = extent['path']
+            todo.append([extent['name'], extent['type'], path])
+
+        job.set_progress(20, 'Read to activate')
+
+        if todo:
+            self.logger.debug('Activating extents')
+            retries = 10
+            while todo and retries:
+                do_again = []
+                for item in todo:
+                    # Mark them active
+                    # self.logger.debug(f'Activating extent {item}')
+                    if not self.middleware.call('iscsi.scst.activate_extent', *item):
+                        self.logger.debug(f'Cannot Activate extent {item}')
+                        do_again.append(item)
+                if not do_again:
+                    break
+                await asyncio.sleep(1)
+                retries -= 1
+                todo = do_again
+            self.logger.debug('Activated extents')
+            await asyncio.sleep(2)
+        else:
+            self.logger.debug('No extent to activate')
+
+        job.set_progress(100, 'All extents activated')
+
+    async def failover_to_master(self):
+        self.logger.debug('Failover starting')
+        iqn_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+
+        # extents: dict[id] : {id, name, type}
+        extents = {ext['id']: ext for ext in await self.middleware.call('iscsi.extent.query',
+                                                                        [['enabled', '=', True], ['locked', '=', False]],
+                                                                        {'select': ['name', 'id', 'type']})}
+
+        # targets: dict[id]: name
+        targets = {t['id']: t['name'] for t in await self.middleware.call('iscsi.target.query', [], {'select': ['id', 'name']})}
+
+        assocs = await self.middleware.call('iscsi.targetextent.query')
+
+        if self.activate_extents_job:
+            self.logger.debug('Waiting for activate to complete')
+            await self.activate_extents_job.wait()
+            self.logger.debug('Waited for activate to complete')
+            self.activate_extents_job = None
+
+        self.logger.debug('Updating LUNs')
+        await self.middleware.call('iscsi.scst.suspend', 10)
+        for assoc in assocs:
+            extent_id = assoc['extent']
+            if extent_id in extents:
+                target_id = assoc['target']
+                if target_id in targets:
+                    iqn = f'{iqn_basename}:{targets[target_id]}'
+                    await self.middleware.call('iscsi.scst.replace_lun', iqn, extents[extent_id]['name'], assoc['lunid'])
+        self.logger.debug('Updated LUNs')
+        await self.middleware.call('iscsi.scst.suspend', -1)
+
     @job(lock='standby_after_start', transient=True, lock_queue_size=1)
     async def standby_after_start(self, job):
         job.set_progress(0, 'ALUA starting on STANDBY')
@@ -110,6 +197,9 @@ class iSCSITargetAluaService(Service):
         self.standby_starting = True
         self.enabled = set()
         self._standby_write_empty_config = False
+
+        local_requires_reload = False
+        remote_requires_reload = False
 
         # First we ensure we're not joined to any lockspaces.  Zero things
         await self.middleware.call('dlm.local_reset')
@@ -144,17 +234,16 @@ class iSCSITargetAluaService(Service):
         else:
             job.set_progress(15, 'Reset remote lockspaces')
 
-        # We are the STANDBY node.  Tell the ACTIVE it can logout any HA targets it had left over
-        # We set a low number of retries as it doesn't really matter if these are in place.  This is
-        # just tidy up.
-        max_retries = 5
-        while self.standby_starting and max_retries:
+        # We are the STANDBY node.  Tell the ACTIVE it can logout any HA targets it had left over.
+        while self.standby_starting:
             try:
-                max_retries -= 1
                 iqns = await self.middleware.call('failover.call_remote', 'iscsi.target.logged_in_iqns')
                 if not iqns:
                     break
                 await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_targets')
+                # If we have logged out targets on the ACTIVE node, then we will want to regenerate
+                # the scst.conf (to remove any left-over dev_disk)
+                remote_requires_reload = True
                 await asyncio.sleep(1)
             except Exception:
                 await asyncio.sleep(RETRY_SECONDS)
@@ -232,8 +321,6 @@ class iSCSITargetAluaService(Service):
                 self.logger.warning('Failed to login and surface HA targets: %r', e, exc_info=True)
 
         # Now that the ground is cleared, start enabling cluster_mode on extents
-        local_requires_reload = False
-        remote_requires_reload = False
         while self.standby_starting:
             try:
                 # We'll refetch the extents each time round the loop in case more have been added
