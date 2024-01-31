@@ -7,6 +7,7 @@ from middlewared.service import Service, job
 CHUNK_SIZE = 20
 RETRY_SECONDS = 5
 HA_TARGET_SETTLE_SECONDS = 10
+GET_UNIT_STATE_SECONDS = 2
 
 
 class iSCSITargetAluaService(Service):
@@ -164,9 +165,25 @@ class iSCSITargetAluaService(Service):
             job.set_progress(20, 'Logged out HA targets (remote node)')
 
         # We may want to ensure that the iSCSI service on the remote node is fully
-        # up.  Since we have switched it systemd_async_start asking get_state
+        # up.  Since we have switched it systemd_async_start asking get_unit_state
+        while self.standby_starting:
+            try:
+                state = await self.middleware.call('failover.call_remote', 'service.get_unit_state', ['iscsitarget'])
+                if state == 'active':
+                    break
+                await asyncio.sleep(GET_UNIT_STATE_SECONDS)
+            except Exception as e:
+                # This is a fail-safe exception catch.  Should never occur.
+                self.logger.warning('standby_start job: %r', e, exc_info=True)
+                await asyncio.sleep(RETRY_SECONDS)
+        if not self.standby_starting:
+            job.set_progress(22, 'Abandoned job.')
+            return
+        else:
+            job.set_progress(22, 'Remote iscsitarget is active')
 
         # Next login the HA targets.
+        reload_remote_retries = 5
         while self.standby_starting:
             try:
                 while self.standby_starting:
@@ -176,8 +193,19 @@ class iSCSITargetAluaService(Service):
                         after_iqns = await self.middleware.call('iscsi.target.logged_in_iqns')
                         if before_iqns != after_iqns:
                             await asyncio.sleep(HA_TARGET_SETTLE_SECONDS)
+                        active_targets = await self.middleware.call('iscsi.target.active_targets')
+                        if len(active_targets) != len(after_iqns):
+                            job.set_progress(23, 'Detected missing HA targets')
+                            if reload_remote_retries > 0:
+                                await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE])
+                                reload_remote_retries -= 1
+                            await asyncio.sleep(HA_TARGET_SETTLE_SECONDS)
+                            continue
                         break
                     except Exception:
+                        if reload_remote_retries > 0:
+                            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE])
+                            reload_remote_retries -= 1
                         await asyncio.sleep(RETRY_SECONDS)
                 if not self.standby_starting:
                     job.set_progress(25, 'Abandoned job.')
