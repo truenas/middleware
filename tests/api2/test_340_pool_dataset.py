@@ -46,7 +46,8 @@ def test_02_create_dataset(request):
     result = POST(
         '/pool/dataset/', {
             'name': dataset,
-            "acltype": "NFSV4"
+            "acltype": "NFSV4",
+            "aclmode": "PASSTHROUGH"
         }
     )
     assert result.status_code == 200, result.text
