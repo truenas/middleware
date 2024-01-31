@@ -1,7 +1,9 @@
+import asyncio
+import threading
 import os
 
 from middlewared.schema import accepts, Bool, Ref, Str, returns
-from middlewared.service import job, private, Service
+from middlewared.service import job, Service
 
 
 CHUNK = 1048576  # 1MB binary
@@ -9,9 +11,7 @@ CHUNK = 1048576  # 1MB binary
 
 class DiskService(Service):
 
-    @private
-    @job()
-    def wipe_impl(self, job, dev, mode):
+    def _wipe_impl(self, job, dev, mode, event):
         disk_path = f'/dev/{dev}'
         with open(os.open(disk_path, os.O_WRONLY | os.O_EXCL), 'wb') as f:
             size = os.lseek(f.fileno(), 0, os.SEEK_END)
@@ -40,6 +40,8 @@ class DiskService(Service):
                 for i in range(_32):
                     # wipe first 32MB
                     os.write(f.fileno(), to_write)
+                    if event.is_set():
+                        return
                     # we * 50 since we write a total of 64MB
                     # so this will be 50% of the total
                     job.set_progress(round(((i / _32) * 50), 2))
@@ -50,17 +52,21 @@ class DiskService(Service):
                 for i in range(_32, _64):  # this is done to have accurate reporting
                     # wipe last 32MB
                     os.write(f.fileno(), to_write)
+                    if event.is_set():
+                        return
                     job.set_progress(round(((i / _64) * 100), 2))
             else:
                 iterations = (size // CHUNK)
                 for i in range(iterations):
                     os.write(f.fileno(), to_write)
+                    if event.is_set():
+                        return
                     job.set_progress(round(((i / iterations) * 100), 2))
 
         with open(disk_path, 'wb'):
-            # we overwrote partiton label information by the time
-            # we get here so we need to close device and re-open
-            # it in write mode to trigger a udev to rescan the
+            # we overwrote partition label information by the time
+            # we get here, so we need to close device and re-open
+            # it in write mode to trigger udev to rescan the
             # device for new information
             pass
 
@@ -85,7 +91,11 @@ class DiskService(Service):
           - FULL_RANDOM: write whole disk with random bytes
         """
         await self.middleware.call('disk.swaps_remove_disks', [dev], options)
-        wipe_job = await self.middleware.call('disk.wipe_impl', dev, mode)
-        await job.wrap(wipe_job)
+        event = threading.Event()
+        try:
+            await self.middleware.run_in_thread(self._wipe_impl, job, dev, mode, event)
+        except asyncio.CancelledError:
+            event.set()
+            raise
         if sync:
             await self.middleware.call('disk.sync', dev)
