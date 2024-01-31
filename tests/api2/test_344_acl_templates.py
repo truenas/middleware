@@ -21,7 +21,8 @@ def test_01_create_test_datasets(request, acltype):
     result = POST(
         '/pool/dataset/', {
             'name': f'{pool_name}/acltemplate_{acltype.lower()}',
-            'acltype': acltype
+            'acltype': acltype,
+            'aclmode': 'DISCARD' if acltype == 'POSIX' else 'PASSTHROUGH'
         }
     )
 
