@@ -122,11 +122,17 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
     def __init__(self, middleware):
         super().__init__(middleware)
         if self._config.event_register:
+            if self._config.role_prefix:
+                roles = [f'{self._config.role_prefix}_READ']
+            else:
+                roles = None
+
             self.middleware.event_register(
                 f'{self._config.namespace}.query',
                 f'Sent on {self._config.namespace} changes.',
                 private=self._config.private,
                 returns=Ref(self.ENTRY.name),
+                roles=roles,
             )
 
     @private
