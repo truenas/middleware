@@ -1,74 +1,35 @@
-import errno
-
 import pytest
 
-from middlewared.client import ClientException
-from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.assets.account import unprivileged_user_client
-
-
-@pytest.fixture(scope="module")
-def ds():
-    with dataset("smb_crud_test") as ds:
-        yield ds
-
-
-@pytest.fixture(scope="module")
-def share():
-    with dataset("smb_crud_test2") as ds:
-        with smb_share(f"/mnt/{ds}", "test2") as share:
-            yield share
+from middlewared.test.integration.assets.roles import common_checks
 
 
 @pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_SMB_READ"])
 def test_read_role_can_read(role):
-    with unprivileged_user_client(roles=[role]) as c:
-        c.call("sharing.smb.query")
+    common_checks("sharing.smb.query", role, True, valid_role_exception=False)
 
 
 @pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_SMB_READ"])
-def test_read_role_cant_write(ds, share, role):
-    with unprivileged_user_client(roles=[role]) as c:
-        with pytest.raises(ClientException) as ve:
-            c.call("sharing.smb.create", {"path": f"/mnt/{ds}"})
-        assert ve.value.errno == errno.EACCES
+def test_read_role_cant_write(role):
+    common_checks("sharing.smb.create", role, False)
+    common_checks("sharing.smb.update", role, False)
+    common_checks("sharing.smb.delete", role, False)
 
-        with pytest.raises(ClientException) as ve:
-            c.call("sharing.smb.update", share["id"], {})
-        assert ve.value.errno == errno.EACCES
-
-        with pytest.raises(ClientException) as ve:
-            c.call("sharing.smb.delete", share["id"])
-        assert ve.value.errno == errno.EACCES
-
-        # READ access should allow reading ACL
-        c.call("sharing.smb.getacl", {"share_name": share["name"]})
-
-        with pytest.raises(ClientException) as ve:
-            c.call("sharing.smb.setacl", {"share_name": share["name"]})
-        assert ve.value.errno == errno.EACCES
-
-        # Gathering session info should be more administrative-level op
-        with pytest.raises(ClientException) as ve:
-            c.call("smb.status")
-        assert ve.value.errno == errno.EACCES
+    common_checks("sharing.smb.getacl", role, True)
+    common_checks("sharing.smb.setacl", role, False)
+    common_checks("smb.status", role, False)
 
 
 @pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_SMB_WRITE"])
-def test_write_role_can_write(ds, role):
-    with unprivileged_user_client(roles=[role]) as c:
-        share = c.call("sharing.smb.create", {"path": f"/mnt/{ds}", "name": "test"})
+def test_write_role_can_write(role):
+    common_checks("sharing.smb.create", role, True)
+    common_checks("sharing.smb.update", role, True)
+    common_checks("sharing.smb.delete", role, True)
 
-        c.call("sharing.smb.update", share["id"], {})
+    common_checks("sharing.smb.getacl", role, True)
+    common_checks("sharing.smb.setacl", role, True)
+    common_checks("smb.status", role, True, valid_role_exception=False)
 
-        # READ access should allow reading ACL
-        c.call("sharing.smb.getacl", {"share_name": share["name"]})
-        c.call("sharing.smb.setacl", {"share_name": share["name"]})
-        c.call("sharing.smb.delete", share["id"])
-        c.call("smb.status")
-
-        c.call("service.start", "cifs")
-        c.call("service.restart", "cifs")
-        c.call("service.reload", "cifs")
-        c.call("service.stop", "cifs")
+    common_checks("service.start", role, True, method_args=["cifs"], valid_role_exception=False)
+    common_checks("service.restart", role, True, method_args=["cifs"], valid_role_exception=False)
+    common_checks("service.reload", role, True, method_args=["cifs"], valid_role_exception=False)
+    common_checks("service.stop", role, True, method_args=["cifs"], valid_role_exception=False)
