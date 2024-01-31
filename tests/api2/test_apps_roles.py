@@ -18,7 +18,7 @@ def test_app_readonly_role():
     ('CATALOG_WRITE', 'app.similar', [], False, True, True, False),
     ('CATALOG_READ', 'catalog.sync_all', [], True, False, False, True),
     ('CATALOG_READ', 'catalog.sync', [], True, False, True, True),
-    ('CATALOG_READ', 'catalog.validate', [], True, True, True, False),
+    ('CATALOG_READ', 'catalog.validate', [], True, False, True, False),
     ('CATALOG_WRITE', 'catalog.sync_all', [], True, True, False, True),
     ('CATALOG_WRITE', 'catalog.sync', [], True, True, True, True),
     ('CATALOG_WRITE', 'catalog.validate', [], True, True, True, False),
@@ -43,7 +43,7 @@ def test_catalog_read_and_write_role(
     ('APPS_WRITE', 'container.prune', True, True),
 ])
 def test_apps_read_and_write_roles(role, endpoint, job, should_work):
-    common_checks(endpoint, role, should_work, method_kwargs={'job': job})
+    common_checks(endpoint, role, should_work, valid_role_exception=False, method_kwargs={'job': job})
 
 
 @pytest.mark.parametrize('role,endpoint,job,should_work', [
@@ -70,4 +70,4 @@ def test_apps_read_and_write_roles_with_params(role, endpoint, job, should_work)
     ('KUBERNETES_WRITE', 'kubernetes.events', False, True),
 ])
 def test_kubernetes_read_and_write_roles(role, endpoint, job, should_work):
-    common_checks(endpoint, role, should_work, method_kwargs={'job': job})
+    common_checks(endpoint, role, should_work, valid_role_exception=False, method_kwargs={'job': job})
