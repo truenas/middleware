@@ -49,3 +49,15 @@ class ISCSITargetService(SimpleService):
         return (await run(
             ["scstadmin", "-noprompt", "-force", "-config", "/etc/scst.conf"], check=False
         )).returncode == 0
+
+    async def failover(self):
+        if await self.middleware.call('iscsi.global.alua_enabled'):
+            if await self.middleware.call('iscsi.scst.is_kernel_module_loaded'):
+                if await self.middleware.call("failover.status") == "MASTER":
+                    try:
+                        return await self.middleware.call("iscsi.alua.failover_to_master")
+                    except Exception as e:
+                        self.logger.warning('Failover exception: %r', e, exc_info=True)
+                        # Fall through
+        # Fallback to doing a regular restart
+        return await self.middleware.call('service.restart', self.name, {'ha_propagate': False})
