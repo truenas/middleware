@@ -265,25 +265,38 @@ class DiskTempPlugin(GraphBase):
         return f'smart_log_smart.disktemp.{self.disk_mapping[identifier]}'
 
 
-class UPSChargePlugin(GraphBase):
+class UPSBase(GraphBase):
+
+    UPS_IDENTIFIER = None
+
+    async def export_multiple_identifiers(
+        self, query_params: dict, identifiers: list, aggregate: bool = True
+    ) -> typing.List[dict]:
+        self.UPS_IDENTIFIER = (await self.middleware.call('ups.config'))['identifier']
+        return await super().export_multiple_identifiers(query_params, identifiers, aggregate)
+
+
+class UPSChargePlugin(UPSBase):
 
     title = 'UPS Charging'
     vertical_label = 'Percentage'
+    uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return 'nut_ups.charge'
+        return f'nut_{self.UPS_IDENTIFIER}.charge'
 
 
-class UPSRuntimePlugin(GraphBase):
+class UPSRuntimePlugin(UPSBase):
 
     title = 'UPS Runtime'
     vertical_label = 'Seconds'
+    uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return 'nut_ups.runtime'
+        return f'nut_{self.UPS_IDENTIFIER}.runtime'
 
 
-class UPSVoltagePlugin(GraphBase):
+class UPSVoltagePlugin(UPSBase):
 
     title = 'UPS Voltage'
     vertical_label = 'Volts'
@@ -298,41 +311,45 @@ class UPSVoltagePlugin(GraphBase):
         return list(self.IDENTIFIER_MAPPING.keys())
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return f'nut_ups.{self.IDENTIFIER_MAPPING[identifier]}'
+        return f'nut_{self.UPS_IDENTIFIER}.{self.IDENTIFIER_MAPPING[identifier]}'
 
 
-class UPSCurrentPlugin(GraphBase):
+class UPSCurrentPlugin(UPSBase):
 
     title = 'UPS Input Current'
     vertical_label = 'Ampere'
+    uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return 'nut_ups.input_current'
+        return f'nut_{self.UPS_IDENTIFIER}.input_current'
 
 
-class UPSFrequencyPlugin(GraphBase):
+class UPSFrequencyPlugin(UPSBase):
 
     title = 'UPS Input Frequency'
     vertical_label = 'Hz'
+    uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return 'nut_ups.input_frequency'
+        return f'nut_{self.UPS_IDENTIFIER}.input_frequency'
 
 
-class UPSLoadPlugin(GraphBase):
+class UPSLoadPlugin(UPSBase):
 
     title = 'UPS Input Load'
     vertical_label = 'Percentage'
+    uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return 'nut_ups.load'
+        return f'nut_{self.UPS_IDENTIFIER}.load'
 
 
-class UPSTemperaturePlugin(GraphBase):
+class UPSTemperaturePlugin(UPSBase):
 
     title = 'UPS Temperature'
     vertical_label = 'Temperature'
     skip_zero_values_in_aggregation = True
+    uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return 'nut_ups.temp'
+        return f'nut_{self.UPS_IDENTIFIER}.temp'
