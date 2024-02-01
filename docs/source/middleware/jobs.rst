@@ -7,6 +7,9 @@ Jobs
 Jobs are middleware methods that might run for a long amount of time. This implies a certain infrastructure: we can
 obtain a list of currently running jobs, jobs can report their completion progress...
 
+NOTE: Credentials without full administrative privileges are only able to view and interact with jobs that are started
+by the same credentials. This limitation also applies to events that are sent to subscribors of `core.get_jobs`.
+
 Defining a job method
 *********************
 
