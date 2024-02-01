@@ -235,6 +235,7 @@ class FilesystemService(Service):
         Path('realpath', required=True),
         Str('type', required=True, enum=['DIRECTORY', 'FILE', 'SYMLINK', 'OTHER']),
         Int('size', required=True, null=True),
+        Int('allocation_size', required=True, null=True),
         Int('mode', required=True, null=True),
         Bool('acl', required=True, null=True),
         Int('uid', required=True, null=True),
@@ -254,9 +255,10 @@ class FilesystemService(Service):
           realpath(str): absolute real path of the entry (if SYMLINK)
           type(str): DIRECTORY | FILE | SYMLINK | OTHER
           size(int): size of the entry
+          allocation_size(int): on-disk size of entry
           mode(int): file mode/permission
           uid(int): user id of entry owner
-          gid(int): group id of entry onwer
+          gid(int): group id of entry owner
           acl(bool): extended ACL is present on file
           is_mountpoint(bool): path is a mountpoint
           is_ctldir(bool): path is within special .zfs directory
@@ -322,6 +324,7 @@ class FilesystemService(Service):
                 'realpath': realpath,
                 'type': etype,
                 'size': stat.stx_size,
+                'allocation_size': stat.stx_blocks * 512,
                 'mode': stat.stx_mode,
                 'acl': False if self.acl_is_trivial(realpath) else True,
                 'uid': stat.stx_uid,
@@ -340,6 +343,7 @@ class FilesystemService(Service):
         'path_stats',
         Str('realpath', required=True),
         Int('size', required=True),
+        Int('allocation_size', required=True),
         Int('mode', required=True),
         Int('uid', required=True),
         Int('gid', required=True),
@@ -359,7 +363,51 @@ class FilesystemService(Service):
     ))
     def stat(self, _path):
         """
-        Return the filesystem stat(2) for a given `path`.
+        Return filesystem information for a given path.
+
+        `realpath(str)`: absolute real path of the entry (if SYMLINK)
+
+        `type(str)`: DIRECTORY | FILE | SYMLINK | OTHER
+
+        `size(int)`: size of the entry
+
+        `allocation_size(int)`: on-disk size of entry
+
+        `mode(int)`: file mode/permission
+
+        `uid(int)`: user id of file owner
+
+        `gid(int)`: group id of file owner
+
+        `atime(float)`: timestamp for when file was last accessed.
+        NOTE: this timestamp may be changed from userspace.
+
+        `mtime(float)`: timestamp for when file data was last modified
+        NOTE: this timestamp may be changed from userspace.
+
+        `ctime(float)`: timestamp for when file was last changed.
+
+        `btime(float)`: timestamp for when file was initially created.
+        NOTE: depending on platform this may be changed from userspace.
+
+        `dev(int)`: device id of the device containing the file. In the
+        context of the TrueNAS API, this is sufficient to uniquely identify
+        a given dataset.
+
+        `inode(int)`: inode number of the file. This number uniquely identifies
+        the file on the given device, but once a file is deleted its inode number
+        may be reused.
+
+        `nlink(int)`: number of hard lnks to the file.
+
+        `acl(bool)`: extended ACL is present on file
+
+        `is_mountpoint(bool)`: path is a mountpoint
+
+        `is_ctldir(bool)`: path is within special .zfs directory
+
+        `attributes(list)`: list of statx file attributes that apply to the
+        file. See statx(2) manpage for more details.
         """
         if path_location(_path) is FSLocation.EXTERNAL:
             raise CallError(f'{_path} is external to TrueNAS', errno.EXDEV)
@@ -378,6 +426,7 @@ class FilesystemService(Service):
             'realpath': realpath,
             'type': st['etype'],
             'size': st['st'].stx_size,
+            'allocation_size': st['st'].stx_blocks * 512,
             'mode': st['st'].stx_mode,
             'uid': st['st'].stx_uid,
             'gid': st['st'].stx_gid,
