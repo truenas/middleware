@@ -1062,7 +1062,7 @@ class PoolService(CRUDService):
                                 devname = d['name']
                             disk_path = os.path.join('/dev', devname)
                             if await self.middleware.run_in_thread(os.path.exists, disk_path):
-                                yield d['devname']
+                                yield devname
 
     @item_method
     @accepts(Int('id'), Dict(
