@@ -148,7 +148,7 @@ class ActiveDirectoryService(Service):
         # TODO: evaluate  UAC to determine account status
         self.machine_account_status(dc)
 
-    @accepts()
+    @accepts(roles=['DIRECTORY_SERVICE_READ'])
     @returns(Bool('started'))
     async def started(self):
         """

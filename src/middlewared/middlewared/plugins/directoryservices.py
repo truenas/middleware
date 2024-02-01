@@ -198,7 +198,7 @@ class DirectoryServices(Service):
             self.logger.trace("No previous DS_STATE exists. Lazy initializing for %s", new)
 
         ds_state.update(new)
-        self.middleware.send_event('directoryservices.status', 'CHANGED', fields=ds_state)
+        self.middleware.send_event('directoryservices.status', 'CHANGED', fields=ds_state, roles=['DIRECTORY_SERVICE_READ'])
         return await self.middleware.call('cache.put', 'DS_STATE', ds_state)
 
     @accepts()

@@ -229,6 +229,7 @@ class IdmapDomainService(CRUDService):
         namespace = 'idmap'
         datastore_extend = 'idmap.idmap_extend'
         cli_namespace = 'directory_service.idmap'
+        role_prefix = 'DIRECTORY_SERVICE'
 
 
     def __wbclient_ctx(self, retry=True):
@@ -409,7 +410,7 @@ class IdmapDomainService(CRUDService):
 
         return (hash_ % max_slices) * range_size + range_size
 
-    @accepts()
+    @accepts(roles=['DIRECTORY_SERVICE_WRITE'])
     @job(lock='clear_idmap_cache', lock_queue_size=1)
     async def clear_idmap_cache(self, job):
         """
@@ -447,7 +448,7 @@ class IdmapDomainService(CRUDService):
 
         return False
 
-    @accepts(roles=['READONLY_ADMIN'])
+    @accepts(roles=['DIRECTORY_SERVICE_READ'])
     async def backend_options(self):
         """
         This returns full information about idmap backend options. Not all
@@ -457,6 +458,7 @@ class IdmapDomainService(CRUDService):
 
     @accepts(
         Str('idmap_backend', enum=[x.name for x in IdmapBackend]),
+        roles=['DIRECTORY_SERVICE_READ']
     )
     async def options_choices(self, backend):
         """
@@ -464,7 +466,7 @@ class IdmapDomainService(CRUDService):
         """
         return IdmapBackend[backend].supported_keys()
 
-    @accepts()
+    @accepts(roles=['DIRECTORY_SERVICE_READ'])
     async def backend_choices(self):
         """
         Returns array of valid idmap backend choices per directory service.
