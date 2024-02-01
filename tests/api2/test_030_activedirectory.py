@@ -1,4 +1,5 @@
 import ipaddress
+import errno
 import os
 import sys
 from time import sleep
@@ -8,16 +9,16 @@ from pytest_dependency import depends
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import pool_name, ip, user, password, ha
-from functions import GET, POST, PUT, DELETE, SSH_TEST, cmd_test, make_ws_request, wait_on_job
+from auto_config import ip, ha
+from functions import GET, POST, make_ws_request
 from protocols import smb_connection, smb_share
 
-from middlewared.service_exception import ValidationErrors, ValidationError
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.client.client import ValidationErrors as ClientValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.assets.directory_service import active_directory, override_nameservers
-from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils import call, ssh, client
 from middlewared.test.integration.assets.product import product_type
 
 if ha and "hostname_virtual" in os.environ:
@@ -26,7 +27,7 @@ else:
     from auto_config import hostname
 
 try:
-    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer, AD_COMPUTER_OU
+    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME
     AD_USER = fr"AD02\{ADUSERNAME.lower()}"
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
@@ -194,12 +195,25 @@ def test_07_enable_leave_activedirectory(request):
         # At this point we are not enterprise licensed
         call("system.general.update", {"ds_auth": True})
 
-    with active_directory(AD_DOMAIN, ADUSERNAME, ADPASSWORD,
-        netbiosname=hostname,
-        createcomputer=AD_COMPUTER_OU,
-        dns_timeout=15
-    ) as ad:
-        # We should be able to change some parameters when joined to AD
+    short_name = None
+
+    with active_directory(dns_timeout=15) as ad:
+        short_name = ad['dc_info']['Pre-Win2k Domain']
+
+        # Make sure we can read our secrets.tdb file
+        secrets_has_domain = call('directoryservices.secrets.has_domain', short_name)
+        assert secrets_has_domain is True
+
+        # Check that our database has backup of this info written to it.
+        db_secrets = call('directoryservices.secrets.get_db_secrets')[f'{hostname.upper()}$']
+        assert f'SECRETS/MACHINE_PASSWORD/{short_name}' in db_secrets
+
+        # Last password change should be populated
+        passwd_change = call('directoryservices.get_last_password_change')
+        assert passwd_change['dbconfig'] is not None
+        assert passwd_change['secrets'] is not None
+
+        # We should be able tZZo change some parameters when joined to AD
         call('activedirectory.update', {'domainname': AD_DOMAIN, 'verbose_logging': True}, job=True)
 
         # Changing kerberos realm should raise ValidationError
@@ -207,7 +221,6 @@ def test_07_enable_leave_activedirectory(request):
             call('activedirectory.update', {'domainname': AD_DOMAIN, 'kerberos_realm': None}, job=True)
 
         assert ve.value.errors[0].errmsg.startswith('Kerberos realm may not be altered')
-
 
         # This should be caught by our catchall
         with pytest.raises(ClientValidationErrors) as ve:
@@ -225,12 +238,12 @@ def test_07_enable_leave_activedirectory(request):
         pw = ad['user_obj']
 
         # Verify winbindd information
-        assert pw['sid_info'] is not None, results.text
-        assert not pw['sid_info']['sid'].startswith('S-1-22-1-'), results.text
-        assert pw['sid_info']['domain_information']['domain'] != 'LOCAL', results.text
-        assert pw['sid_info']['domain_information']['domain_sid'] is not None, results.text
-        assert pw['sid_info']['domain_information']['online'], results.text
-        assert pw['sid_info']['domain_information']['activedirectory'], results.text
+        assert pw['sid_info'] is not None, str(ad)
+        assert not pw['sid_info']['sid'].startswith('S-1-22-1-'), str(ad)
+        assert pw['sid_info']['domain_information']['domain'] != 'LOCAL', str(ad)
+        assert pw['sid_info']['domain_information']['domain_sid'] is not None, str(ad)
+        assert pw['sid_info']['domain_information']['online'], str(ad)
+        assert pw['sid_info']['domain_information']['activedirectory'], str(ad)
 
         res = make_ws_request(ip, {
             'msg': 'method',
@@ -249,8 +262,10 @@ def test_07_enable_leave_activedirectory(request):
         assert res['ds_groups'][0]['sid'].endswith('512')
         assert res['allowlist'][0] == {'method': '*', 'resource': '*'}
 
-
     assert call('activedirectory.get_state') == 'DISABLED'
+
+    secrets_has_domain = call('directoryservices.secrets.has_domain', short_name)
+    assert secrets_has_domain is False
 
     results = POST("/user/get_user_obj/", {'username': AD_USER})
     assert results.status_code != 200, results.text
@@ -271,11 +286,15 @@ def test_07_enable_leave_activedirectory(request):
 
 def test_08_activedirectory_smb_ops(request):
     depends(request, ["ad_works"], scope="session")
-    with active_directory(AD_DOMAIN, ADUSERNAME, ADPASSWORD,
-        netbiosname=hostname,
-        createcomputer=AD_COMPUTER_OU,
-        dns_timeout=15
-    ) as ad:
+    with active_directory(dns_timeout=15) as ad:
+        short_name = ad['dc_info']['Pre-Win2k Domain']
+        machine_password_key = f'SECRETS/MACHINE_PASSWORD/{short_name}'
+        running_pwd = call('directoryservices.secrets.dump')[machine_password_key]
+        db_pwd = call('directoryservices.secrets.get_db_secrets')[f'{hostname.upper()}$'][machine_password_key]
+
+        # We've joined and left AD already. Verify secrets still getting backed up correctly.
+        assert running_pwd == db_pwd
+
         with dataset(
             "ad_smb",
             {'share_type': 'SMB'},
@@ -290,7 +309,7 @@ def test_08_activedirectory_smb_ops(request):
             results = POST("/service/restart/", {"service": "cifs"})
             assert results.status_code == 200, results.text
 
-            with smb_share(f'/mnt/{ds}', {'name': SMB_NAME}) as share:
+            with smb_share(f'/mnt/{ds}', {'name': SMB_NAME}):
                 with smb_connection(
                     host=ip,
                     share=SMB_NAME,
@@ -399,11 +418,7 @@ def test_08_activedirectory_smb_ops(request):
 def test_10_account_privilege_authentication(request, set_product_type):
     depends(request, ["ad_works"], scope="session")
 
-    with active_directory(AD_DOMAIN, ADUSERNAME, ADPASSWORD,
-        netbiosname=hostname,
-        createcomputer=AD_COMPUTER_OU,
-        dns_timeout=15
-    ):
+    with active_directory(dns_timeout=15):
         call("system.general.update", {"ds_auth": True})
         try:
             # RID 513 is constant for "Domain Users"
@@ -441,3 +456,22 @@ def test_10_account_privilege_authentication(request, set_product_type):
 
         finally:
             call("system.general.update", {"ds_auth": False})
+
+
+def test_11_secrets_restore(request):
+    depends(request, ["ad_works"], scope="session")
+
+    with active_directory():
+        assert call('activedirectory.started') is True
+        ssh('rm /var/db/system/samba4/private/secrets.tdb')
+        call('service.restart', 'idmap')
+
+        with pytest.raises(CallError) as ce:
+            call('activedirectory.started')
+
+        # WBC_ERR_WINBIND_NOT_AVAILABLE gets converted to ENOTCONN
+        assert 'WBC_ERR_WINBIND_NOT_AVAILABLE' in ce.value.errmsg
+
+        call('directoryservices.secrets.restore')
+        call('service.restart', 'idmap')
+        call('activedirectory.started')

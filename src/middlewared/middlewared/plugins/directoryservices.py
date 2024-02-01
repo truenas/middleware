@@ -1,16 +1,13 @@
 import enum
-import json
 import os
 import struct
-import tdb
 import errno
 
-from base64 import b64encode, b64decode
+from base64 import b64decode
 from middlewared.schema import accepts, Dict, List, OROperator, Ref, returns, Str
 from middlewared.service import no_authz_required, Service, private, job
 from middlewared.plugins.smb import SMBCmd, SMBPath
-from middlewared.service_exception import CallError
-from middlewared.utils import run
+from middlewared.service_exception import CallError, MatchNotFound
 
 DEFAULT_AD_CONF = {
     "id": 1,
@@ -57,83 +54,6 @@ class NSS_Info(enum.Enum):
     RFC2307 = ('RFC2307', [DSType.AD, DSType.LDAP])
     RFC2307BIS = ('RFC2307BIS', [DSType.LDAP])
     TEMPLATE = ('TEMPLATE', [DSType.AD])
-
-
-class DirectorySecrets(object):
-    def __init__(self, **kwargs):
-        self.flags = kwargs.get('flags', 0)
-        self.logger = kwargs.get('logger')
-        self.ha_mode = kwargs.get('ha_mode')
-        self.tdb = None
-        self.is_open = False
-
-    def open_tdb(self):
-        secret_path = f'{SMBPath.PRIVATEDIR.platform()}/secrets.tdb'
-
-        if os.path.isfile(secret_path):
-            self.tdb = tdb.open(secret_path, self.flags)
-        else:
-            self.tdb = tdb.Tdb(secret_path, 0, tdb.DEFAULT, os.O_CREAT | os.O_RDWR)
-        self.is_open = True
-
-    def has_domain(self, domain):
-        return True if self.tdb.get(f"SECRETS/MACHINE_PASSWORD/{domain.upper()}".encode()) else False
-
-    def last_password_change(self, domain):
-        bytes_passwd_chng = self.tdb.get(f"SECRETS/MACHINE_LAST_CHANGE_TIME/{domain.upper()}".encode())
-        if not bytes_passwd_chng:
-            self.logger.warning("Failed to retrieve last password change time for domain "
-                                "[%s] from domain secrets. Directory service functionality "
-                                "may be impacted.", domain)
-            return None
-
-        passwd_chg_ts = struct.unpack("<L", bytes_passwd_chng)[0]
-        return passwd_chg_ts
-
-    def set_ldap_secret(self, domain, secret):
-        self.tdb.transaction_start()
-        tdb_key = f'SECRETS/GENERIC/IDMAP_LDAP_{domain.upper()}/{secret}'.encode()
-        tdb_data = secret.encode() + b"\x00"
-        try:
-            self.tdb.store(tdb_key, tdb_data)
-        except Exception as e:
-            self.tdb.transaction_cancel()
-            raise CallError(f"Failed to ldap secrets: {e}")
-
-        self.tdb.transaction_commit()
-
-    def dump(self):
-        ret = {}
-        self.tdb.read_lock_all()
-        for entry in self.tdb:
-            ret.update({entry.decode(): (b64encode(self.tdb.get(entry))).decode()})
-
-        self.tdb.read_unlock_all()
-        return ret
-
-    def restore(self, secrets):
-        self.tdb.transaction_start()
-        for k, v in secrets.items():
-            tdb_key = k.encode()
-            tdb_data = b64decode(v)
-            try:
-                self.tdb.store(tdb_key, tdb_data)
-            except Exception:
-                self.logger.warning("Failed to store tdb data. "
-                                    "Cancelling transaction.",
-                                    exc_info=True)
-                self.tdb.transaction_cancel()
-                return
-
-        self.tdb.transaction_commit()
-
-    def __enter__(self):
-        self.open_tdb()
-        return self
-
-    def __exit__(self, typ, value, traceback):
-        if self.is_open:
-            self.tdb.close()
 
 
 class DirectoryServices(Service):
@@ -264,129 +184,25 @@ class DirectoryServices(Service):
         return ret
 
     @private
-    def get_db_secrets(self):
-        rv = {}
-        db = self.middleware.call_sync('datastore.query',
-                                       'services.cifs', [],
-                                       {'prefix': 'cifs_srv_', 'get': True})
-
-        rv.update({"id": db['id']})
-        if db['secrets'] is None:
-            return rv
-
-        try:
-            rv.update(json.loads(db['secrets']))
-        except json.decoder.JSONDecodeError:
-            self.logger.warning("Stored secrets are not valid JSON "
-                                "a new backup of secrets should be generated.")
-        return rv
-
-    @private
-    def backup_secrets(self):
-        """
-        Writes the current secrets database to the freenas config file.
-        """
-        ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
-        if ha_mode == "UNIFIED":
-            failover_status = self.middleware.call_sync("failover.status")
-            if failover_status != "MASTER":
-                self.logger.debug("Current failover status [%s]. Skipping secrets backup.",
-                                  failover_status)
-                return
-
-        netbios_name = self.middleware.call_sync('smb.config')['netbiosname']
-        db_secrets = self.get_db_secrets()
-        id_ = db_secrets.pop('id')
-
-        with DirectorySecrets(logger=self.logger, ha_mode=ha_mode) as s:
-            secrets = s.dump()
-
-        if not secrets:
-            self.logger.warning("Unable to parse secrets")
-            return
-
-        db_secrets.update({f"{netbios_name.upper()}$": secrets})
-        self.middleware.call_sync('datastore.update',
-                                  'services.cifs', id_,
-                                  {'secrets': json.dumps(db_secrets)},
-                                  {'prefix': 'cifs_srv_'})
-
-    @private
-    def restore_secrets(self, netbios_name=None):
-        """
-        Restores secrets from a backup copy in the TrueNAS config file. This should
-        be used with caution because winbindd will automatically update machine account
-        passwords at configurable intervals. There is a periodic TrueNAS check that
-        automates this backup, but care should be taken before manually invoking restores.
-        """
-        ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
-        if ha_mode == "UNIFIED":
-            failover_status = self.middleware.call_sync("failover.status")
-            if failover_status != "MASTER":
-                self.logger.debug("Current failover status [%s]. Skipping secrets backup.",
-                                  failover_status)
-                return
-
-        if netbios_name is None:
-            netbios_name = self.middleware.call_sync('smb.config')['netbiosname']
-
-        db_secrets = self.get_db_secrets()
-
-        server_secrets = db_secrets.get(f"{netbios_name.upper()}$")
-        if server_secrets is None:
-            self.logger.warning("Unable to find stored secrets for [%s]. "
-                                "Directory service functionality may be impacted.",
-                                netbios_name)
-            return False
-
-        with DirectorySecrets(logger=self.logger, ha_mode=ha_mode) as s:
-            try:
-                s.restore(server_secrets)
-            except Exception:
-                self.logger.warning("Failed to restore secrets for [%s]. "
-                                    "Directory service functionality may be impacted.",
-                                    netbios_name, exc_info=True)
-                return False
-
-        return True
-
-    @private
-    def secrets_has_domain(self, domain):
-        """
-        Simple check to see whether a particular domain is in the
-        secrets file. Traversing a tdb file can set a tdb chainlock
-        on it. It's better to just do a quick lookup of the
-        single value.
-        """
-        with DirectorySecrets(logger=self.logger, ha_mode=ha_mode) as s:
-            rv = s.has_domain(domain)
-
-        return rv
-
-    @private
-    def set_ldap_secret(self, domain, secret):
-        ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
-        with DirectorySecrets(logger=self.logger, ha_mode=ha_mode) as s:
-            rv = s.set_ldap_secret(domain, secret)
-
-        return rv
-
-    @private
-    def get_last_password_change(self, domain=None):
+    async def get_last_password_change(self, domain=None):
         """
         Returns unix timestamp of last password change according to
         the secrets.tdb (our current running configuration), and what
         we have in our database.
         """
-        ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
-        smb_config = self.middleware.call_sync('smb.config')
+        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+        smb_config = await self.middleware.call('smb.config')
         if domain is None:
             domain = smb_config['workgroup']
 
-        with DirectorySecrets(logger=self.logger, ha_mode=ha_mode) as s:
-            passwd_ts = s.last_password_change(domain)
+        try:
+            passwd_ts = await self.middleware.call(
+                'directoryservices.secrets.last_password_change', domain
+            )
+        except MatchNotFound:
+            passwd_ts = None
 
-        db_secrets = self.get_db_secrets()
+        db_secrets = await self.middleware.call('directoryservices.secrets.get_db_secrets')
         server_secrets = db_secrets.get(f"{smb_config['netbiosname_local'].upper()}$")
         if server_secrets is None:
             return {"dbconfig": None, "secrets": passwd_ts}
@@ -398,21 +214,6 @@ class DirectoryServices(Service):
             stored_ts = None
 
         return {"dbconfig": stored_ts, "secrets": passwd_ts}
-
-    @private
-    def available_secrets(self):
-        """
-        Entries in the secrets backup are keyed according to machine account name,
-        which in this case is the netbios name of server followed by a dollar sign ($).
-        These are possible values to add as an argument to 'restore_secrets' so that
-        the secrets.tdb can be restored to what it was prior to a netbios name change.
-        This functionality is intended more as a support tool than for general-purpose
-        use in case user has become somewhat inventive with troubleshooting steps
-        and changing server names.
-        """
-        db_secrets = self.get_db_secrets()
-        db_secrets.pop('id')
-        return list(db_secrets.keys())
 
     @private
     async def initialize(self, data=None):
@@ -441,13 +242,12 @@ class DirectoryServices(Service):
 
         health_check = 'activedirectory.started' if ad_enabled else 'ldap.started'
 
-        has_secrets = await self.middleware.call("directoryservices.secrets_has_domain", workgroup)
-
+        has_secrets = await self.middleware.call('directoryservices.secrets.has_domain', workgroup)
         if ad_enabled and not has_secrets:
             self.logger.warning("Domain secrets database does not exist. "
                                 "Attempting to restore.")
 
-            if not await self.middleware.call("directoryservices.restore_secrets"):
+            if not await self.middleware.call("directoryservices.secrets.restore"):
                 self.logger.warning("Failed to restore domain secrets database. "
                                     "Re-joining AD domain may be required.")
 

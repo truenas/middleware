@@ -14,7 +14,7 @@ from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import ip, hostname, password, user
 from base64 import b64decode
 from middlewared.test.integration.assets.directory_service import active_directory
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 from pytest_dependency import depends
 from time import sleep
 
@@ -265,16 +265,22 @@ def test_08_test_backend_options(request, backend):
         directory. To check this, force a secrets db dump, check
         for keys, then decode secret.
         """
-        cmd = 'midclt call directoryservices.get_db_secrets'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
-        sec = json.loads(results['stdout'].strip())
-        sec_key = f"SECRETS/GENERIC/IDMAP_LDAP_{WORKGROUP}/{secret}"
-        assert sec_key in sec[f'{hostname.upper()}$'], results['output']
-        if sec_key in sec[f'{hostname.upper()}$']:
-            stored_sec = sec[f'{hostname.upper()}$'][sec_key]
-            decoded_sec = b64decode(stored_sec).rstrip(b'\x00').decode()
-            assert secret == decoded_sec, stored_sec
+        idmap_secret = call('directoryservices.secrets.get_ldap_idmap_secret', WORKGROUP, LDAPBINDDN)
+        db_secrets = call('directoryservices.secrets.get_db_secrets')[f'{hostname.upper()}$']
+
+        # Check that our secret is written and stored in secrets backup correctly
+        assert idmap_secret == db_secrets[f"SECRETS/GENERIC/IDMAP_LDAP_{WORKGROUP}/{LDAPBINDDN}"]
+        decoded_sec = b64decode(idmap_secret).rstrip(b'\x00').decode()
+        assert secret == decoded_sec, idmap_secret
+
+        # Use net command via samba to rewrite secret and make sure it is same
+        ssh(f"net idmap set secret {WORKGROUP} '{secret}'")
+        new_idmap_secret = call('directoryservices.secrets.get_ldap_idmap_secret', WORKGROUP, LDAPBINDDN)
+        assert idmap_secret == new_idmap_secret
+
+        secrets_dump = call('directoryservices.secrets.dump')
+        assert secrets_dump == db_secrets
+
 
     # reset idmap backend to RID to ensure that winbindd is running
     payload = {
