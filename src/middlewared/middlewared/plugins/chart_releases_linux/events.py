@@ -177,6 +177,6 @@ async def chart_release_event(middleware, event_type, args):
 async def setup(middleware):
     middleware.event_subscribe('kubernetes.events', chart_release_event)
     middleware.event_register('chart.release.events', 'Application deployment events')
-    middleware.register_event_source('chart.release.statistics', ChartReleaseStatsEventSource)
+    middleware.register_event_source('chart.release.statistics', ChartReleaseStatsEventSource, roles=['APPS_READ'])
     if await middleware.call('kubernetes.validate_k8s_setup', False):
         middleware.create_task(middleware.call('chart.release.refresh_events_state'))

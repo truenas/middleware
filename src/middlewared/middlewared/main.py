@@ -1306,8 +1306,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if not hook['inline']:
                 raise RuntimeError('Only inline hooks can be called with call_hook_inline')
 
-    def register_event_source(self, name, event_source):
-        self.event_source_manager.register(name, event_source)
+    def register_event_source(self, name, event_source, roles=None):
+        roles = roles or []
+        self.event_source_manager.register(name, event_source, roles)
 
     async def run_in_executor(self, pool, method, *args, **kwargs):
         """

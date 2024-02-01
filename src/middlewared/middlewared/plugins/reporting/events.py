@@ -99,4 +99,4 @@ class RealtimeEventSource(EventSource):
 
 
 def setup(middleware):
-    middleware.register_event_source('reporting.realtime', RealtimeEventSource)
+    middleware.register_event_source('reporting.realtime', RealtimeEventSource, roles=['REPORTING_READ'])
