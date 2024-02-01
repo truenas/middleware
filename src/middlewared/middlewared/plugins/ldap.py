@@ -260,6 +260,7 @@ class LDAPService(ConfigService):
         datastore_extend = "ldap.ldap_extend"
         datastore_prefix = "ldap_"
         cli_namespace = "directory_service.ldap"
+        role_prefix = "DIRECTORY_SERVICE"
 
     ENTRY = Dict(
         'ldap_update',
@@ -432,7 +433,7 @@ class LDAPService(ConfigService):
 
         return data
 
-    @accepts()
+    @accepts(roles=['DIRECTORY_SERVICE_READ'])
     @returns(List('schema_choices', items=[Ref('nss_info_ldap')]))
     async def schema_choices(self):
         """
@@ -440,7 +441,7 @@ class LDAPService(ConfigService):
         """
         return await self.middleware.call('directoryservices.nss_info_choices', 'LDAP')
 
-    @accepts()
+    @accepts(roles=['DIRECTORY_SERVICE_READ'])
     @returns(List('ssl_choices', items=[Ref('ldap_ssl_choice', 'ssl')]))
     async def ssl_choices(self):
         """
@@ -955,7 +956,7 @@ class LDAPService(ConfigService):
     async def set_state(self, state):
         return await self.middleware.call('directoryservices.set_state', {'ldap': state.name})
 
-    @accepts()
+    @accepts(roles=['DIRECTORY_SERVICE_READ'])
     @returns(Ref('directoryservice_state'))
     async def get_state(self):
         """
