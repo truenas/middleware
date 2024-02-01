@@ -61,7 +61,7 @@ def job(
     description=None, abortable=False
 ):
     """
-    Flag method as a long running job. This must be the first decorator to be applied (meaning that it must be specified
+    Flag method as a long-running job. This must be the first decorator to be applied (meaning that it must be specified
     the last).
 
     Methods wrapped with this decorator must accept :class:`middlewared.job.Job` object as their first argument.
@@ -87,7 +87,7 @@ def job(
         Default value is `None` meaning that no locking is used.
 
     :param lock_queue_size: How many jobs with this lock can be in the `WAITING` state. For example, there is no sense
-        to queue the same cloud sync or pool scrub twice so we specify `lock_queue_size=1`. The first called cloud sync
+        to queue the same cloud sync or pool scrub twice, so we specify `lock_queue_size=1`. The first called cloud sync
         will run normally; then, if we call a second cloudsync with the same id while the first is still running, it
         will be queued; and then, if we call a third cloudsync, it won't be queued anymore.
 
@@ -97,7 +97,7 @@ def job(
         Default value is `None` meaning that lock queue is infinite.
 
     :param logs: If `True` then `job.logs_fd` object will be available. It is an unbuffered file opened in binary mode;
-        the job can write it's logs there and they will be available in the `/var/log/jobs/{id}.log` file. By default
+        the job can write its logs there, and they will be available in the `/var/log/jobs/{id}.log` file. By default,
         no such file is opened.
 
     :param process: If `True` then the job body is called in a separate process. By default, job body is executed in the
@@ -112,12 +112,12 @@ def job(
 
     :param check_pipes: If `True`, then the job will check that all its specified pipes are opened (it's the caller's
         responsibility to open the pipes). If `False`, then the job must explicitly run `job.check_pipe("input")`
-        before accessing the pipe. This is useful when a job might or might need a pipe depending on its call arguemnts.
+        before accessing the pipe. This is useful when a job might or might need a pipe depending on its call arguments.
         By default, all pipes are checked.
 
-    :param transient: If `True` then `"core.get_jobs"` ADDED or CHANGED event won't be sent for this job and it will
+    :param transient: If `True` then `"core.get_jobs"` ADDED or CHANGED event won't be sent for this job, and it will
         be removed from `core.get_jobs` upon completion. This is useful for periodic service jobs that we don't want
-        to see in task manager UI. By default the job is not transient.
+        to see in task manager UI. By default, the job is not transient.
 
     :param description: A callable that will return the job's human-readable description (that will appear in the task
         manager UI) based on its passed arguments. For example:

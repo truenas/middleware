@@ -252,7 +252,7 @@ class JobsDeque(object):
 
 class Job:
     """
-    Represents a long running call, methods marked with @job decorator.
+    Represents a long-running call, methods marked with @job decorator.
 
     :ivar pipes: :class:`middlewared.pipe.Pipes` object containing job's opened pipes.
 
@@ -262,7 +262,7 @@ class Job:
     pipes: Pipes
     logs_fd: None
 
-    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb, credentials):
+    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb, app):
         self._finished = asyncio.Event()
         self.middleware = middleware
         self.method_name = method_name
@@ -272,7 +272,7 @@ class Job:
         self.options = options
         self.pipes = pipes or Pipes(input_=None, output=None)
         self.on_progress_cb = on_progress_cb
-        self.credentials = credentials
+        self.app = app
 
         self.id = None
         self.lock = None
@@ -308,6 +308,13 @@ class Job:
                 self.description = self.options["description"](*args)
             except Exception:
                 logger.error("Error setting job description", exc_info=True)
+
+    @property
+    def credentials(self):
+        if self.app is None:
+            return None
+
+        return self.app.authenticated_credentials
 
     def check_pipe(self, pipe):
         """
@@ -494,12 +501,16 @@ class Job:
         if self.options.get('process'):
             rv = await self.middleware._call_worker(self.method_name, *self.args, job={'id': self.id})
         else:
+            prepend = []
+            if hasattr(self.method, '_pass_app'):
+                prepend.append(self.app)
+            prepend.append(self)
             # Make sure args are not altered during job run
-            args = copy.deepcopy(self.args)
+            args = prepend + copy.deepcopy(self.args)
             if asyncio.iscoroutinefunction(self.method):
-                rv = await self.method(*([self] + args))
+                rv = await self.method(*args)
             else:
-                rv = await self.middleware.run_in_thread(self.method, *([self] + args))
+                rv = await self.middleware.run_in_thread(self.method, *args)
         self.set_result(rv)
         self.set_state('SUCCESS')
         if self.progress['percent'] != 100:
