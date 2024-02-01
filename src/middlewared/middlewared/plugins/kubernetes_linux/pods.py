@@ -106,4 +106,5 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
 
 
 def setup(middleware):
-    middleware.register_event_source('kubernetes.pod_log_follow', KubernetesPodLogsFollowTailEventSource)
+    middleware.register_event_source('kubernetes.pod_log_follow', KubernetesPodLogsFollowTailEventSource,
+                                     roles=['APPS_READ'])
