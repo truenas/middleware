@@ -7,6 +7,9 @@ User Roles
 Middleware user role is a string (e.g. `REPLICATION_TASK_READ`) that, being listed in one of the user's privileges,
 allows them to execute specific middleware methods.
 
+NOTE: sensitive fields are redacted in output of middleware methods when the user lacks full administrator and also
+lacks the WRITE role corresponding with `role_prefix` specified in the middleware plugin class configuration.
+
 Defining a role
 ***************
 
@@ -62,6 +65,23 @@ Roles for an arbitrary method can be specified using `roles` parameter of the `@
 
 When multiple roles are specified, each of them will have access to the decorated method (without requiring others).
 
+@filterable decorator
+=====================
+
+Roles for methods that are decorated with `@filterable` may be specified using the `roles` parameter:
+
+.. code-block:: python
+   @filterable(roles=['REPORTING_READ'])
+
+Subscribable event roles
+========================
+
+Roles for subscribable events may be specified using the `roles` parameter when `event_register` is called:
+
+.. code-block:: python
+   middleware.event_register("alert.list", "Sent on alert changes.", roles=["ALERT_LIST_READ"])
+
+
 Additional checks
 *****************
 
@@ -70,3 +90,10 @@ app.authenticated_credentials.has_role
 
 `app.authenticated_credentials.has_role` method can be used to check if the authenticated user has a specific role.
 Please note that in order for `app` object to be available, the method must use `@pass_app` decorator.
+
+middleware jobs
+===============
+
+`job.credentials` contains the authenticated credentials for the user and may be used for additional checks within
+the job. Credentials will be set to None for internal jobs. In this case the credential should be treated as
+full admin.
