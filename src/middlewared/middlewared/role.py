@@ -26,6 +26,9 @@ ROLES = {
     'AUTH_SESSIONS_READ': Role(),
     'AUTH_SESSIONS_WRITE': Role(includes=['AUTH_SESSIONS_READ']),
 
+    'DIRECTORY_SERVICE_READ': Role(),
+    'DIRECTORY_SERVICE_WRITE': Role(includes=['DIRECTORY_SERVICE_READ']),
+
     'KMIP_READ': Role(),
     'KMIP_WRITE': Role(includes=['KMIP_READ']),
 

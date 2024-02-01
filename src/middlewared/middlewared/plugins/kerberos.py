@@ -130,6 +130,7 @@ class KerberosService(ConfigService):
         datastore = 'directoryservice.kerberossettings'
         datastore_prefix = "ks_"
         cli_namespace = "directory_service.kerberos.settings"
+        role_prefix = 'DIRECTORY_SERVICE'
 
     @accepts(Dict(
         'kerberos_settings_update',
@@ -755,6 +756,7 @@ class KerberosRealmService(CRUDService):
         datastore_extend = 'kerberos.realm.kerberos_extend'
         namespace = 'kerberos.realm'
         cli_namespace = 'directory_service.kerberos.realm'
+        role_prefix = 'DIRECTORY_SERVICE'
 
     @private
     async def kerberos_extend(self, data):
@@ -872,6 +874,7 @@ class KerberosKeytabService(CRUDService):
         datastore_prefix = 'keytab_'
         namespace = 'kerberos.keytab'
         cli_namespace = 'directory_service.kerberos.keytab'
+        role_prefix = 'DIRECTORY_SERVICE'
 
     ENTRY = Patch(
         'kerberos_keytab_create', 'kerberos_keytab_entry',
@@ -1061,7 +1064,7 @@ class KerberosKeytabService(CRUDService):
 
         return keytab_entries
 
-    @accepts()
+    @accepts(roles=['DIRECTORY_SERVICE_READ'])
     @returns(List(
         'system-keytab',
         items=[

@@ -92,6 +92,7 @@ class ActiveDirectoryService(ConfigService):
         datastore_extend = "activedirectory.ad_extend"
         datastore_prefix = "ad_"
         cli_namespace = "directory_service.activedirectory"
+        role_prefix = "DIRECTORY_SERVICE"
 
     ENTRY = Dict(
         'activedirectory_update',
@@ -647,7 +648,7 @@ class ActiveDirectoryService(ConfigService):
     async def set_state(self, state):
         return await self.middleware.call('directoryservices.set_state', {'activedirectory': state})
 
-    @accepts()
+    @accepts(roles=['DIRECTORY_SERVICE_READ'])
     @returns(Str('directoryservice_state', enum=[x.name for x in DSStatus], register=True))
     async def get_state(self):
         """
@@ -1056,7 +1057,7 @@ class ActiveDirectoryService(ConfigService):
 
         return True
 
-    @accepts(Str('domain', default=''))
+    @accepts(Str('domain', default=''), roles=['DIRECTORY_SERVICE_READ'])
     @returns(Dict(
         IPAddr('LDAP server'),
         Str('LDAP server name'),
@@ -1160,7 +1161,7 @@ class ActiveDirectoryService(ConfigService):
         out = json.loads(lookup.stdout.decode())
         return out
 
-    @accepts(Ref('kerberos_username_password'))
+    @accepts(Ref('kerberos_username_password'), roles=['DIRECTORY_SERVICE_WRITE'])
     @returns()
     @job(lock="AD_start_stop")
     async def leave(self, job, data):
