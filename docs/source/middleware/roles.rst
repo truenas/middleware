@@ -71,6 +71,7 @@ When multiple roles are specified, each of them will have access to the decorate
 Roles for methods that are decorated with `@filterable` may be specified using the `roles` parameter:
 
 .. code-block:: python
+
    @filterable(roles=['REPORTING_READ'])
 
 Subscribable event roles
@@ -79,6 +80,7 @@ Subscribable event roles
 Roles for subscribable events may be specified using the `roles` parameter when `event_register` is called:
 
 .. code-block:: python
+
    middleware.event_register("alert.list", "Sent on alert changes.", roles=["ALERT_LIST_READ"])
 
 
