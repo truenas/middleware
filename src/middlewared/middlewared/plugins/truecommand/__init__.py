@@ -10,7 +10,11 @@ async def _event_system_ready(middleware, event_type, args):
 
 async def setup(middleware):
     await middleware.call('truecommand.config')
-    middleware.event_register('truecommand.config', 'Sent on TrueCommand configuration changes.')
+    middleware.event_register(
+        'truecommand.config',
+        'Sent on TrueCommand configuration changes.',
+        roles=['READONLY_ADMIN']
+    )
 
     status = Status((await middleware.call('datastore.config', 'system.truecommand'))['api_key_state'])
     if status == Status.CONNECTED:
