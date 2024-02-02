@@ -10,6 +10,7 @@ from middlewared.validators import IpAddress
 
 async def check_path_resides_within_volume(verrors, middleware, name, path):
 
+    errors_len = len(verrors.errors)
     # we need to make sure the sharing service is configured within the zpool
     def get_file_info(path):
         """
@@ -65,6 +66,8 @@ async def check_path_resides_within_volume(verrors, middleware, name, path):
                     break
         if in_use:
             verrors.add(name, f'A path being used by {svc_name} is not allowed')
+
+    return len(verrors.errors) == errors_len
 
 
 async def resolve_hostname(middleware, verrors, name, hostname):

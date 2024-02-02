@@ -8,12 +8,13 @@ import uuid
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Path, returns, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range, UUID
-from middlewared.plugins.vm.numeric_set import parse_numeric_set, NumericSet
 
+from .numeric_set import NumericSet, parse_numeric_set
 from .utils import ACTIVE_STATES, LIBVIRT_USER
 from .vm_supervisor import VMSupervisorMixin
 
@@ -227,17 +228,24 @@ class VMService(CRUDService, VMSupervisorMixin):
                 'NVRAM location must be specified when booting with UEFI'
             )
 
-        if data['nvram_location'] and await self.middleware.run_in_thread(
-            os.path.exists, data['nvram_location']
-        ) and not await self.middleware.call(
-            'filesystem.can_access_as_user', LIBVIRT_USER, data['nvram_location'], {'read': True, 'write': True}
+        if data['nvram_location'] and await check_path_resides_within_volume(
+            verrors, self.middleware, f'{schema_name}.nvram_location', data['nvram_location']
         ):
-            # It is fine if the file does not exist as libvirt will create it
-            # However we do want to ensure that if it does exist, libvirt user is able to read/write to it
-            verrors.add(
-                f'{schema_name}.nvram_location',
-                'Libvirt user is not able to read the specified NVRAM file'
-            )
+            path_to_check = data['nvram_location']
+            while True:
+                if await self.middleware.run_in_thread(os.path.exists(path_to_check)):
+                    break
+                path_to_check = os.path.dirname(path_to_check)
+
+            if not await self.middleware.call(
+                'filesystem.can_access_as_user', LIBVIRT_USER, path_to_check, {'read': True, 'write': True}
+            ):
+                # It is fine if the file does not exist as libvirt will create it
+                # However we do want to ensure that if it does exist, libvirt user is able to read/write to it
+                verrors.add(
+                    f'{schema_name}.nvram_location',
+                    f'Libvirt user is not able to read/write the specified NVRAM file location ({path_to_check!r})'
+                )
 
         if not data.get('uuid'):
             data['uuid'] = str(uuid.uuid4())
