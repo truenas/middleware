@@ -25,7 +25,7 @@ class DatastoreService(Service):
     async def register_event(self, options):
         self.events[options["datastore"]].append(options)
 
-        self.middleware.event_register(f"{options['plugin']}.query", options["description"])
+        self.middleware.event_register(f"{options['plugin']}.query", options["description"], roles=["READONLY_ADMIN"])
 
     async def send_insert_events(self, datastore, row):
         for options in self.events[datastore]:
