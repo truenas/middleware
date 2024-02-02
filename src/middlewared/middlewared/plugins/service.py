@@ -410,6 +410,11 @@ class ServiceService(CRUDService):
         service_object = await self.middleware.call('service.object', service)
         return await service_object.get_unit_state()
 
+    @private
+    async def failover(self, service):
+        service_object = await self.middleware.call('service.object', service)
+        return await service_object.failover()
+
     @accepts(Int("pid"), Int("timeout", default=10))
     @returns(Bool(
         "process_terminated_nicely",

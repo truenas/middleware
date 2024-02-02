@@ -15,6 +15,9 @@ class ServiceInterface:
     async def get_unit_state(self):
         raise NotImplementedError
 
+    async def failover(self):
+        raise NotImplementedError
+
     async def check_configuration(self):
         pass
 
