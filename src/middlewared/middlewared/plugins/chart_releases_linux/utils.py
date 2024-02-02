@@ -5,7 +5,7 @@ import os
 from middlewared.plugins.container_runtime_interface.utils import normalize_reference
 from middlewared.plugins.kubernetes_linux.utils import NVIDIA_RUNTIME_CLASS_NAME
 from middlewared.service import CallError
-from middlewared.utils import run as _run
+from middlewared.utils import run as _run, sw_version
 
 
 CHART_NAMESPACE_PREFIX = 'ix-'
@@ -43,6 +43,7 @@ def get_action_context(release_name):
         'hasNFSCSI': True,
         'smbProvisioner': 'smb.csi.k8s.io',
         'nfsProvisioner': 'nfs.csi.k8s.io',
+        'scaleVersion': sw_version(),
     })
 
 
