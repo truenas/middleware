@@ -756,9 +756,11 @@ class CoreService(Service):
     def threads_stacks(self):
         return get_threads_stacks()
 
-    @accepts(Str("method"), List("params"), Str("description", null=True, default=None))
+    @no_authz_required
+    @accepts(Str("method"), List("params", items=[List("params")]), Str("description", null=True, default=None))
     @job(lock=lambda args: f"bulk:{args[0]}")
-    async def bulk(self, job, method, params, description):
+    @pass_app()
+    async def bulk(self, app, job, method, params, description):
         """
         Will sequentially call `method` with arguments from the `params` list. For example, running
 
@@ -781,6 +783,20 @@ class CoreService(Service):
 
         `description` contains format string for job progress (e.g. "Deleting snapshot {0[dataset]}@{0[name]}")
         """
+        serviceobj, methodobj = self.middleware._method_lookup(method)
+
+        if params:
+            if mock := self.middleware._mock_method(method, params[0]):
+                methodobj = mock
+
+        if app is not None:
+            if not app.authenticated_credentials.authorize("CALL", method):
+                await self.middleware.log_audit_message_for_method(
+                    method, methodobj, params[0] if params else [], app, True, False, False,
+                )
+
+                raise CallError("Not authorized", errno.EPERM)
+
         statuses = []
         if not params:
             return statuses
@@ -793,7 +809,7 @@ class CoreService(Service):
             job.set_progress(100 * i / len(params), progress_description)
 
             try:
-                msg = await self.middleware.call(method, *p)
+                msg = await self.middleware.call_with_audit(method, serviceobj, methodobj, p, app=app)
                 status = {"result": msg, "error": None}
 
                 if isinstance(msg, Job):
