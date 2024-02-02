@@ -83,6 +83,8 @@ Roles for subscribable events may be specified using the `roles` parameter when 
 
    middleware.event_register("alert.list", "Sent on alert changes.", roles=["ALERT_LIST_READ"])
 
+`SERVICE_READ` roles will have access to the corresponding `service.query` event. `READONLY_ADMIN` will have access to
+all `service.query` events for all CRUD services.
 
 Additional checks
 *****************
