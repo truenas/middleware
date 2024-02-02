@@ -125,7 +125,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             if self._config.role_prefix:
                 roles = [f'{self._config.role_prefix}_READ']
             else:
-                roles = None
+                roles = ['READONLY_ADMIN']
 
             self.middleware.event_register(
                 f'{self._config.namespace}.query',
