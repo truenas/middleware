@@ -15,7 +15,10 @@ class ServiceInterface:
     async def get_unit_state(self):
         raise NotImplementedError
 
-    async def failover(self):
+    async def become_active(self):
+        raise NotImplementedError
+
+    async def become_standby(self):
         raise NotImplementedError
 
     async def check_configuration(self):

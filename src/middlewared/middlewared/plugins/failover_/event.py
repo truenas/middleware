@@ -56,9 +56,9 @@ class FailoverEventsService(Service):
     # before the other services during a failover event
     CRITICAL_SERVICES = ['iscsitarget', 'cifs', 'nfs']
 
-    # Any members of the FAILOVER_SERVICES set will be have
-    # failover rather than restart called.
-    FAILOVER_SERVICES = ['iscsitarget']
+    # list of services that use service.become_active instead of
+    # service.restart during a failover on the MASTER node.
+    BECOME_ACTIVE_SERVICES = ['iscsitarget']
 
     # option to be given when changing the state of a service
     # during a failover event, we do not want to replicate
@@ -77,10 +77,10 @@ class FailoverEventsService(Service):
             timeout=timeout,
         )
 
-    async def failover_service(self, service, timeout):
-        logger.info('Failover %s', service)
+    async def become_active_service(self, service, timeout):
+        logger.info('Become active %s', service)
         return await asyncio.wait_for(
-            self.middleware.create_task(self.middleware.call('service.failover', service)),
+            self.middleware.create_task(self.middleware.call('service.become_active', service)),
             timeout=timeout,
         )
 
@@ -107,7 +107,7 @@ class FailoverEventsService(Service):
             to_restart = [i for i in to_restart if i not in self.CRITICAL_SERVICES]
 
         exceptions = await asyncio.gather(
-            *[self.failover_service(svc, data['timeout']) if svc in self.FAILOVER_SERVICES else self.restart_service(svc, data['timeout']) for svc in to_restart],
+            *[self.become_active_service(svc, data['timeout']) if svc in self.BECOME_ACTIVE_SERVICES else self.restart_service(svc, data['timeout']) for svc in to_restart],
             return_exceptions=True
         )
         for svc, exc in zip(to_restart, exceptions):

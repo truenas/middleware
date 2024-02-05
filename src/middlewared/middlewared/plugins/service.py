@@ -411,9 +411,18 @@ class ServiceService(CRUDService):
         return await service_object.get_unit_state()
 
     @private
-    async def failover(self, service):
+    async def become_active(self, service):
+        """During a HA failover event certain services may support this method being called
+        when the node is becoming the new ACTIVE node"""
         service_object = await self.middleware.call('service.object', service)
-        return await service_object.failover()
+        return await service_object.become_active()
+
+    @private
+    async def become_standby(self, service):
+        """During a HA failover event certain services may support this method being called
+        when the node is becoming the new STANDBY node"""
+        service_object = await self.middleware.call('service.object', service)
+        return await service_object.become_standby()
 
     @accepts(Int("pid"), Int("timeout", default=10))
     @returns(Bool(

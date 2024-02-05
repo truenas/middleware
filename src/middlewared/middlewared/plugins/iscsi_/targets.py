@@ -675,10 +675,11 @@ class iSCSITargetService(CRUDService):
         """
         Returns the names of all targets whose extents are neither disabled nor locked.
         """
-        bad_extents = [extent['id'] for extent in await self.middleware.call('iscsi.extent.query',
-                                                                             [['OR',
-                                                                               [['enabled', '=', False],
-                                                                                ['locked', '=', True]]]])]
+        filters = [['OR', [['enabled', '=', False], ['locked', '=', True]]]]
+        bad_extents = []
+        for extent in await self.middleware.call('iscsi.extent.query', filters):
+            bad_extents.append(extent['id'])
+
         targets = {t['id']: t['name'] for t in await self.middleware.call('iscsi.target.query', [], {'select': ['id', 'name']})}
         assoc = {a_tgt['extent']: a_tgt['target'] for a_tgt in await self.middleware.call('iscsi.targetextent.query')}
         for bad_extent in bad_extents:
