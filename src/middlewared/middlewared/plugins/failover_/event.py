@@ -518,6 +518,8 @@ class FailoverEventsService(Service):
                 logger.error(f'Error unlocking ZFS encrypted datasets: {unlock_job.error}')
             elif unlock_job.result['failed']:
                 logger.error('Failed to unlock %s ZFS encrypted dataset(s)', ','.join(unlock_job.result['failed']))
+            else:
+                logger.info('Successfully completed unlock for %r', vol['name'])
 
         # if we fail to import all zpools then alert the user because nothing
         # is going to work at this point
