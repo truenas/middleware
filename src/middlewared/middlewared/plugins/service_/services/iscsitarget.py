@@ -57,7 +57,7 @@ class ISCSITargetService(SimpleService):
         if await self.middleware.call('iscsi.global.alua_enabled'):
             if await self.middleware.call('iscsi.scst.is_kernel_module_loaded'):
                 try:
-                    return await self.middleware.call("iscsi.alua.failover_to_master")
+                    return await self.middleware.call("iscsi.alua.become_active")
                 except Exception:
                     self.logger.warning('Failover exception', exc_info=True)
                     # Fall through
