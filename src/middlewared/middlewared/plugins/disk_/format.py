@@ -26,14 +26,15 @@ class DiskService(Service):
         leave_free_space = parted.sizeToSectors(swap_size_gb, 'GiB', device.sectorSize)
         if data_size is not None:
             min_data_size = parted.sizeToSectors(data_size, 'B', device.sectorSize)
-            # Can be increased within the alignment threshold
-            max_data_size = parted.sizeToSectors(data_size, 'B', device.sectorSize) + device.optimumAlignment.grainSize
         else:
             min_data_size = parted.sizeToSectors(1, 'GiB', device.sectorSize)
-            # Try to give free space for _approximately_ the requested swap size
-            max_data_size = parted.sizeToSectors(dd['size'], 'B', device.sectorSize) - leave_free_space
-            if max_data_size <= 0:
-                raise CallError(f'Disk {disk!r} must be larger than {swap_size_gb} GiB')
+
+        # Try to give free space for _approximately_ the requested swap size
+        max_data_size = parted.sizeToSectors(dd['size'], 'B', device.sectorSize) - leave_free_space
+        if max_data_size <= 0:
+            raise CallError(f'Disk {disk!r} must be larger than {swap_size_gb} GiB')
+        if max_data_size <= min_data_size:
+            max_data_size = min_data_size + device.optimumAlignment.grainSize
 
         data_geometry = self._get_largest_free_space_region(parted_disk)
         # Place the partition at the end of the disk so the swap is created at the beginning
