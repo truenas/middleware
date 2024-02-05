@@ -806,6 +806,16 @@ class Test37WithFixture:
         In each directory, create subdirs: subdir1, subdir2, subdir3
         """
 
+        # Characteristics of expected error messages
+        err_strs = [
+            ["Another share", "everybody"],
+            ["exported to everybody", "another share"],
+            ["Another share", "same path"],
+            ["This or another", "overlaps"],
+            ["Another NFS share already exports"],
+            ["Symbolic links"]
+        ]
+
         vol0 = f'/mnt/{pool_name}/VOL0'
         with nfs_dataset('VOL0'):
             # Top level shared to narrow host
@@ -833,7 +843,7 @@ class Test37WithFixture:
                             )
                             assert results['result'] is True
 
-                    yield vol0
+                    yield vol0, err_strs
                 finally:
                     # Remove the created dirs
                     for dir in dirs:
@@ -849,32 +859,34 @@ class Test37WithFixture:
                             assert result.status_code == 200, result.text
 
     # Parameters for test_37
-    # Directory (dataset share VOL0), isHost, HostOrNet, ExpectedToPass
+    # Directory (dataset share VOL0), isHost, HostOrNet, ExpectedToPass, ErrFormat
     dirs_to_export = [
-        ("everybody_1", True, ["*"], True),                    # 0: Host - Test NAS-120957
-        ("everybody_2", True, ["*"], True),                    # 1: Host - Test NAS-120957, allow non-related paths to same hosts
-        ("everybody_2", False, ["192.168.1.0/22"], False),     # 2: Network - Already exported to everybody in test 1
-        ("limited_1", True, ["127.0.0.1"], True),              # 3: Host - Test NAS-123042, allow export of subdirs
-        ("limited_2", True, ["127.0.0.1"], True),              # 4: Host - Test NAS-120957, NAS-123042
-        ("limited_2", True, ["*"], False),                     # 5: Host - Test NAS-123042, export collision, same path, different entry
-        ("dir_1", True, ["*.example.com"], True),              # 6: Host - Setup for test 7: Host with wildcard
-        ("dir_1", True, ["*.example.com"], False),             # 7: Host - Already exported in test 6
-        ("dir_1/subdir1", True, ["192.168.0.0"], True),        # 8: Host - Setup for test 9: Host as IP address
-        ("dir_1/subdir1", True, ["192.168.0.0"], False),       # 9: Host - Alread exported in test 8
-        ("dir_1/subdir2", False, ["2001:0db8:85a3:0000:0000:8a2e::/96"], True),       # 10: Network - Setup for test 11: IPv6 network range
-        ("dir_1/subdir2", True, ["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], False),  # 11: Host - IPv6 network overlap
-        ("dir_1/subdir3", True, ["192.168.27.211"], True),     # 12: Host - Test NAS-124269, setup for test 13
-        ("dir_1/subdir3", False, ["192.168.24.0/22"], False),  # 13: Network - Test NAS-124269, trap network overlap
-        ("limited_2/subdir2", True, ["127.0.0.1"], True),      # 14: Host - Test NAS-123042, allow export of subdirs
-        ("limited_1/subdir2", True, ["*"], True),              # 15: Host - Test NAS-123042, everybody
-        ("dir_2/subdir2", False, ["192.168.1.0/24"], True),    # 16: Network - Setup for test 17: Wide network range
-        ("dir_2/subdir2", False, ["192.168.1.0/32"], False),   # 17: Network - Test NAS-123042 - export collision, overlaping networks
-        ("limited_1/subdir3", True, ["192.168.1.0", "*.ixsystems.com"], True),  # 18: Host - Test NAS-123042
-        ("dir_1/symlink2subdir3", True, ["192.168.0.0"], False),                # 19: Host - Block exporting symlinks
+        ("everybody_1", True, ["*"], True, None),                    # 0: Host - Test NAS-120957
+        ("everybody_2", True, ["*"], True, None),                    # 1: Host - Test NAS-120957, allow non-related paths to same hosts
+        ("everybody_2", False, ["192.168.1.0/22"], False, 2),        # 2: Network - Already exported to everybody in test 1
+        ("limited_1", True, ["127.0.0.1"], True, None),              # 3: Host - Test NAS-123042, allow export of subdirs
+        ("limited_2", True, ["127.0.0.1"], True, None),              # 4: Host - Test NAS-120957, NAS-123042
+        ("limited_2", True, ["127.0.0.1"], False, 3),                # 4: Host - Test NAS-127220, exact repeat to host
+        ("limited_2", True, ["*"], False, 1),                        # 5: Host - Test NAS-123042, export collision, same path, different entry
+        ("dir_1", True, ["*.example.com"], True, None),              # 6: Host - Setup for test 7: Host with wildcard
+        ("dir_1", True, ["*.example.com"], False, 2),                # 7: Host - Already exported in test 6
+        ("dir_1/subdir1", True, ["192.168.0.0"], True, None),        # 8: Host - Setup for test 9: Host as IP address
+        ("dir_1/subdir1", True, ["192.168.0.0"], False, 3),          # 9: Host - Alread exported in test 8
+        ("dir_1/subdir2", False, ["2001:0db8:85a3:0000:0000:8a2e::/96"], True, None),    # 10: Network - Setup for test 11: IPv6 network range
+        ("dir_1/subdir2", True, ["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], False, 3),  # 11: Host - IPv6 network overlap
+        ("dir_1/subdir3", True, ["192.168.27.211"], True, None),     # 12: Host - Test NAS-124269, setup for test 13
+        ("dir_1/subdir3", False, ["192.168.24.0/22"], False, 3),     # 13: Network - Test NAS-124269, trap network overlap
+        ("limited_2/subdir2", True, ["127.0.0.1"], True, None),      # 14: Host - Test NAS-123042, allow export of subdirs
+        ("limited_1/subdir2", True, ["*"], True, None),              # 15: Host - Test NAS-123042, everybody
+        ("limited_1/subdir2", True, ["*"], False, 4),                # 16: Host - Test NAS-127220, exact repeat to everybody
+        ("dir_2/subdir2", False, ["192.168.1.0/24"], True, None),    # 17: Network - Setup for test 17: Wide network range
+        ("dir_2/subdir2", False, ["192.168.1.0/32"], False, 3),      # 18: Network - Test NAS-123042 - export collision, overlaping networks
+        ("limited_1/subdir3", True, ["192.168.1.0", "*.ixsystems.com"], True, None),  # 19: Host - Test NAS-123042
+        ("dir_1/symlink2subdir3", True, ["192.168.0.0"], False, 5),  # 20: Host - Block exporting symlinks
     ]
 
-    @pytest.mark.parametrize("dirname,isHost,HostOrNet,ExpectedToPass", dirs_to_export)
-    def test_37_check_nfsdir_subtree_share(self, request, dataset_and_dirs, dirname, isHost, HostOrNet, ExpectedToPass):
+    @pytest.mark.parametrize("dirname,isHost,HostOrNet,ExpectedToPass, ErrFormat", dirs_to_export)
+    def test_37_check_nfsdir_subtree_share(self, request, dataset_and_dirs, dirname, isHost, HostOrNet, ExpectedToPass, ErrFormat):
         """
         Sharing subtrees to the same host can cause problems for
         NFSv3.  This check makes sure a share creation follows
@@ -896,17 +908,22 @@ class Test37WithFixture:
             marketing(ro)
         """
 
-        vol = dataset_and_dirs
+        vol, err_strs = dataset_and_dirs
         dirpath = f'{vol}/{dirname}'
         if isHost:
             payload = {"path": dirpath, "hosts": HostOrNet}
         else:
             payload = {"path": dirpath, "networks": HostOrNet}
-        results = POST("/sharing/nfs/", payload)
+
         if ExpectedToPass:
-            assert results.status_code == 200, results.text
+            call("sharing.nfs.create", payload)
         else:
-            assert results.status_code != 200, results.text
+            with pytest.raises(ValidationErrors) as ve:
+                call("sharing.nfs.create", payload)
+            errStr = str(ve.value.errors[0])
+            # Confirm we have the expected error message format
+            for this_substr in err_strs[ErrFormat]:
+                assert this_substr in errStr
 
 
 def test_38_check_nfs_allow_nonroot_behavior(request):
