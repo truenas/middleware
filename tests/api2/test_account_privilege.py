@@ -24,6 +24,13 @@ def test_change_local_administrator_allowlist():
     assert ve.value.errors[0].attribute == "privilege_update.allowlist"
 
 
+def test_change_local_administrator_roles():
+    with pytest.raises(ValidationErrors) as ve:
+        call("privilege.update", 1, {"roles": ['READONLY_ADMIN']})
+
+    assert ve.value.errors[0].attribute == "privilege_update.roles"
+
+
 def test_delete_local_administrator():
     with pytest.raises(CallError) as ve:
         call("privilege.delete", 1)
