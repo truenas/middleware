@@ -15,22 +15,21 @@ from middlewared.plugins.smb import SMBBuiltin
 from middlewared.plugins.idmap_.utils import TRUENAS_IDMAP_DEFAULT_LOW
 
 import binascii
-import crypt
 import errno
 import glob
 import hashlib
 import json
 import os
-import random
 import shlex
 import shutil
-import string
 import stat
 import subprocess
 import time
 import warnings
 from pathlib import Path
 from contextlib import suppress
+
+from passlib.hash import sha512_crypt
 
 ADMIN_UID = 950  # When googled, does not conflict with anything
 ADMIN_GID = 950
@@ -78,11 +77,9 @@ def pw_checkname(verrors, attribute, name):
 
 def crypted_password(cleartext):
     """
-    Generates an unix hash from `cleartext`.
+    Generates a unix hash from `cleartext`.
     """
-    return crypt.crypt(cleartext, '$6$' + ''.join([
-        random.choice(string.ascii_letters + string.digits) for _ in range(16)]
-    ))
+    return sha512_crypt.hash(cleartext)
 
 
 def unixhash_is_valid(unixhash):

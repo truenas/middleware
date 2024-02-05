@@ -1,10 +1,8 @@
-import crypt
-import hmac
-
 import pam
+from passlib.hash import sha512_crypt
 
 from middlewared.plugins.account import unixhash_is_valid
-from middlewared.service import CallError, Service, pass_app, private
+from middlewared.service import Service, private
 
 
 class AuthService(Service):
@@ -53,20 +51,11 @@ class AuthService(Service):
         return await self.authenticate_user({'username': username}, user_info)
 
     @private
-    @pass_app()
-    def check_unixhash(self, app, password, unixhash):
-        # This method is vulnerable to timing attacks and so should not
-        # be exposed to external API consumers in any way.
-        #
-        # FIXME: remove pass_app() and replace with some other decorator
-        # to flag as internal once functionality added.
-        if app is not None:
-            raise CallError("This method may not be called externally")
-
+    def check_unixhash(self, password, unixhash):
         if not unixhash_is_valid(unixhash):
             return False
 
-        return hmac.compare_digest(crypt.crypt(password, unixhash), unixhash)
+        return sha512_crypt.verify(password, unixhash)
 
     @private
     def libpam_authenticate(self, username, password):
@@ -119,7 +108,6 @@ class AuthService(Service):
 
         # Two-factor authentication token is keyed by SID for activedirectory
         # users.
-        twofactor_id = user_info['id'] if user_info['local'] else user['sid_info']['sid']
         twofactor_enabled = bool((await self.middleware.call(
             'auth.twofactor.get_user_config',
             twofactor_id, user_info['local']
