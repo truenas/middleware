@@ -49,21 +49,17 @@ class iSCSITargetService(Service):
             await asyncio.gather(*[self.middleware.call('iscsi.scst.path_write', path, text) for path in paths])
 
     def disable(self):
-        p = pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH)
-        p.write_text('0\n')
+        pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).write_text('0\n')
 
     def enable(self):
-        p = pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH)
-        p.write_text('1\n')
+        pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).write_text('1\n')
 
     def suspend(self, value):
-        p = pathlib.Path(SCST_SUSPEND)
-        p.write_text(f'{value}\n')
+        pathlib.Path(SCST_SUSPEND).write_text(f'{value}\n')
 
     def enabled(self):
-        p = pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH)
         try:
-            return p.read_text().strip() == '1'
+            return pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).read_text().strip() == '1'
         except FileNotFoundError:
             return False
 
@@ -71,25 +67,19 @@ class iSCSITargetService(Service):
         return pathlib.Path(SCST_BASE).exists()
 
     def activate_extent(self, extent_name, extenttype, path):
-        p = pathlib.Path(path)
-        if p.exists():
+        if pathlib.Path(path).exists():
             if extenttype == 'DISK':
-                p = pathlib.Path(f'/sys/kernel/scst_tgt/handlers/vdisk_blockio/{extent_name}/active')
+                p = pathlib.Path(f'{SCST_BASE}/handlers/vdisk_blockio/{extent_name}/active')
             else:
-                p = pathlib.Path(f'/sys/kernel/scst_tgt/handlers/vdisk_fileio/{extent_name}/active')
-            p.write_text('1\n')
-            return True
+                p = pathlib.Path(f'{SCST_BASE}/handlers/vdisk_fileio/{extent_name}/active')
+            try:
+                p.write_text('1\n')
+            except FileNotFoundError:
+                return False
+            else:
+                return True
         else:
             return False
 
-    def activate_extents(self, extents):
-        for extent in extents:
-            if extent['type'] == 'DISK':
-                p = pathlib.Path(f'/sys/kernel/scst_tgt/handlers/vdisk_blockio/{extent["name"]}/active')
-            else:
-                p = pathlib.Path(f'/sys/kernel/scst_tgt/handlers/vdisk_fileio/{extent["name"]}/active')
-            p.write_text('1\n')
-
     def replace_lun(self, iqn, extent, lun):
-        p = pathlib.Path(f'/sys/kernel/scst_tgt/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt')
-        p.write_text(f'replace {extent} {lun}\n')
+        pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt').write_text(f'replace {extent} {lun}\n')
