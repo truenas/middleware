@@ -7,6 +7,8 @@ SCST_BASE = '/sys/kernel/scst_tgt'
 SCST_TARGETS_ISCSI_ENABLED_PATH = '/sys/kernel/scst_tgt/targets/iscsi/enabled'
 SCST_DEVICES = '/sys/kernel/scst_tgt/devices'
 SCST_SUSPEND = '/sys/kernel/scst_tgt/suspend'
+SCST_CONTROLLER_A_TARGET_GROUPS_STATE = '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_A/state'
+SCST_CONTROLLER_B_TARGET_GROUPS_STATE = '/sys/kernel/scst_tgt/device_groups/targets/target_groups/controller_B/state'
 
 
 class iSCSITargetService(Service):
@@ -83,3 +85,12 @@ class iSCSITargetService(Service):
 
     def replace_lun(self, iqn, extent, lun):
         pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt').write_text(f'replace {extent} {lun}\n')
+
+    def set_node_optimized(self, node):
+        """Update which node is reported as being the active/optimized path."""
+        if node == 'A':
+            pathlib.Path(SCST_CONTROLLER_B_TARGET_GROUPS_STATE).write_text("nonoptimized\n")
+            pathlib.Path(SCST_CONTROLLER_A_TARGET_GROUPS_STATE).write_text("active\n")
+        else:
+            pathlib.Path(SCST_CONTROLLER_A_TARGET_GROUPS_STATE).write_text("nonoptimized\n")
+            pathlib.Path(SCST_CONTROLLER_B_TARGET_GROUPS_STATE).write_text("active\n")
