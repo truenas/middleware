@@ -106,7 +106,7 @@
                     (cluster_mode_targets, cluster_mode_luns) = middleware.call_sync('failover.call_remote', 'iscsi.target.cluster_mode_targets_luns')
                 except CallError as e:
                     if e.errno != CallError.ENOMETHOD:
-                        raise
+                        raise FileShouldNotExist
                     # We may have upgraded one node, but not yet the other
                     middleware.logger.warning('Failed to configure remote cluster_mode_targets_luns')
                 clustered_extents = set(middleware.call_sync("iscsi.target.clustered_extents"))
