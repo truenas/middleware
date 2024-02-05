@@ -124,7 +124,7 @@ class PrivilegeService(CRUDService):
         verrors = ValidationErrors()
 
         if new["builtin_name"]:
-            for k in ["name", "allowlist"]:
+            for k in ["name", "allowlist", "roles"]:
                 if new[k] != old[k]:
                     verrors.add(f"privilege_update.{k}", "This field is read-only for built-in privileges")
 
