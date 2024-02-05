@@ -281,22 +281,27 @@ class DistributedLockManagerService(Service):
 
     @private
     async def local_remove_peer(self, lockspace_name):
+        """Remove the peer node from the specified lockspace without communicating with it."""
         await self.middleware.call('dlm.kernel.lockspace_stop', lockspace_name)
         await self.middleware.call('dlm.kernel.lockspace_remove_node', lockspace_name, self.peernodeID)
         await self.middleware.call('dlm.kernel.lockspace_start', lockspace_name)
 
     @private
     async def lockspaces(self):
+        """Return a list of lockspaces to which we are currently joined."""
         await self.middleware.call('dlm.create')
         return list(await self.middleware.call('dlm.kernel.node_lockspaces', self.nodeID))
 
     @private
     async def peer_lockspaces(self):
+        """Return a list of lockspaces to which we are currently joined, and which also
+        contain the PEER node"""
         await self.middleware.call('dlm.create')
         return list(await self.middleware.call('dlm.kernel.node_lockspaces', self.peernodeID))
 
     @private
     async def eject_peer(self):
+        """Locally remove the PEER node from all of the lockspaces to which we are both joined."""
         await self.middleware.call('dlm.create')
         lockspace_names = await self.middleware.call('dlm.peer_lockspaces')
         if lockspace_names:
@@ -305,6 +310,8 @@ class DistributedLockManagerService(Service):
 
     @private
     async def local_reset(self, disable_iscsi=True):
+        """Locally remove the PEER node from all lockspaces and reset cluster_mode to
+        zero, WITHOUT talking to the peer node."""
         # First turn off all access to targets from outside.
         if disable_iscsi:
             await self.middleware.call('iscsi.scst.disable')

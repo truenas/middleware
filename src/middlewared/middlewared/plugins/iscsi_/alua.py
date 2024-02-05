@@ -7,6 +7,8 @@ CHUNK_SIZE = 20
 RETRY_SECONDS = 5
 HA_TARGET_SETTLE_SECONDS = 10
 GET_UNIT_STATE_SECONDS = 2
+RELOAD_REMOTE_RETRIES = 5
+STANDBY_ENABLE_DEVICES_RETRIES = 10
 
 
 class iSCSITargetAluaService(Service):
@@ -30,7 +32,7 @@ class iSCSITargetAluaService(Service):
         private = True
         namespace = 'iscsi.alua'
 
-    # See HA_PROPAGATE in event.py.  Not only required when running command
+    # See HA_PROPAGATE in event.py.  Only required when running command
     # on MASTER, and don't want it to propagate.
     HA_PROPAGATE = {'ha_propagate': False}
 
@@ -142,7 +144,6 @@ class iSCSITargetAluaService(Service):
                 do_again = []
                 for item in todo:
                     # Mark them active
-                    # self.logger.debug(f'Activating extent {item}')
                     if not self.middleware.call('iscsi.scst.activate_extent', *item):
                         self.logger.debug(f'Cannot Activate extent {item}')
                         do_again.append(item)
@@ -158,8 +159,8 @@ class iSCSITargetAluaService(Service):
 
         job.set_progress(100, 'All extents activated')
 
-    async def failover_to_master(self):
-        self.logger.debug('Failover starting')
+    async def become_active(self):
+        self.logger.debug('Becoming active upon failover event starting')
         iqn_basename = (await self.middleware.call('iscsi.global.config'))['basename']
 
         # extents: dict[id] : {id, name, type}
@@ -272,7 +273,7 @@ class iSCSITargetAluaService(Service):
             job.set_progress(22, 'Remote iscsitarget is active')
 
         # Next login the HA targets.
-        reload_remote_retries = 5
+        reload_remote_retries = RELOAD_REMOTE_RETRIES
         while self.standby_starting:
             try:
                 while self.standby_starting:
@@ -317,8 +318,8 @@ class iSCSITargetAluaService(Service):
                 await self.middleware.call('iscsi.target.logout_ha_targets')
                 await self.middleware.call('service.reload', 'iscsitarget')
                 job.set_progress(20, 'Logged out HA targets (local node)')
-            except Exception as e:
-                self.logger.warning('Failed to login and surface HA targets: %r', e, exc_info=True)
+            except Exception:
+                self.logger.warning('Failed to login and surface HA targets', exc_info=True)
 
         # Now that the ground is cleared, start enabling cluster_mode on extents
         while self.standby_starting:
@@ -346,7 +347,7 @@ class iSCSITargetAluaService(Service):
 
                     # Enable on STANDBY.  If we fail here, we'll still go back around the main loop.
                     ok = False
-                    enable_retries = 10
+                    enable_retries = STANDBY_ENABLE_DEVICES_RETRIES
                     while not ok and enable_retries:
                         ok = await self.middleware.call('iscsi.alua.standby_enable_devices', list(to_enable))
                         if not ok:
@@ -364,9 +365,9 @@ class iSCSITargetAluaService(Service):
                     self.logger.info('Set cluster_mode on for %r extents', len(self.enabled))
                 else:
                     break
-            except Exception as e:
+            except Exception:
                 # This is a fail-safe exception catch.  Should never occur.
-                self.logger.warning('standby_start job: %r', e, exc_info=True)
+                self.logger.warning('standby_start job', exc_info=True)
                 await asyncio.sleep(RETRY_SECONDS)
 
         if not self.standby_starting:
