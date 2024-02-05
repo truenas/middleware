@@ -162,6 +162,7 @@ class iSCSITargetAluaService(Service):
     async def become_active(self):
         self.logger.debug('Becoming active upon failover event starting')
         iqn_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+        thisnode = await self.middleware.call('failover.node')
 
         # extents: dict[id] : {id, name, type}
         extents = {ext['id']: ext for ext in await self.middleware.call('iscsi.extent.query',
@@ -189,6 +190,8 @@ class iSCSITargetAluaService(Service):
                     iqn = f'{iqn_basename}:{targets[target_id]}'
                     await self.middleware.call('iscsi.scst.replace_lun', iqn, extents[extent_id]['name'], assoc['lunid'])
         self.logger.debug('Updated LUNs')
+        await self.middleware.call('iscsi.scst.set_node_optimized', thisnode)
+        self.logger.debug('Switched optimized node')
         await self.middleware.call('iscsi.scst.suspend', -1)
 
     @job(lock='standby_after_start', transient=True, lock_queue_size=1)
