@@ -5,10 +5,12 @@ from middlewared.service import Service, job
 
 CHUNK_SIZE = 20
 RETRY_SECONDS = 5
+SLOW_RETRY_SECONDS = 30
 HA_TARGET_SETTLE_SECONDS = 10
 GET_UNIT_STATE_SECONDS = 2
-RELOAD_REMOTE_RETRIES = 5
+RELOAD_REMOTE_QUICK_RETRIES = 10
 STANDBY_ENABLE_DEVICES_RETRIES = 10
+REMOTE_RELOAD_LONG_DELAY_SECS = 300
 
 
 class iSCSITargetAluaService(Service):
@@ -276,7 +278,7 @@ class iSCSITargetAluaService(Service):
             job.set_progress(22, 'Remote iscsitarget is active')
 
         # Next login the HA targets.
-        reload_remote_retries = RELOAD_REMOTE_RETRIES
+        reload_remote_quick_retries = RELOAD_REMOTE_QUICK_RETRIES
         while self.standby_starting:
             try:
                 while self.standby_starting:
@@ -286,19 +288,23 @@ class iSCSITargetAluaService(Service):
                         after_iqns = await self.middleware.call('iscsi.target.logged_in_iqns')
                         if before_iqns != after_iqns:
                             await asyncio.sleep(HA_TARGET_SETTLE_SECONDS)
-                        active_targets = await self.middleware.call('iscsi.target.active_targets')
-                        if len(active_targets) != len(after_iqns):
-                            job.set_progress(23, 'Detected missing HA targets')
-                            if reload_remote_retries > 0:
-                                await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE])
-                                reload_remote_retries -= 1
-                            await asyncio.sleep(HA_TARGET_SETTLE_SECONDS)
-                            continue
-                        break
-                    except Exception:
-                        if reload_remote_retries > 0:
+                        active_iqns = await self.middleware.call('iscsi.target.active_ha_iqns')
+                        after_iqns_set = set(after_iqns.keys())
+                        active_iqns_set = set(active_iqns.values())
+                        if active_iqns_set.issubset(after_iqns_set):
+                            break
+                        job.set_progress(23, f'Detected {len(active_iqns_set - after_iqns_set)} missing HA targets')
+                        if reload_remote_quick_retries > 0:
                             await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE])
-                            reload_remote_retries -= 1
+                            reload_remote_quick_retries -= 1
+                            await asyncio.sleep(HA_TARGET_SETTLE_SECONDS)
+                        else:
+                            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE])
+                            await asyncio.sleep(REMOTE_RELOAD_LONG_DELAY_SECS)
+                    except Exception:
+                        if reload_remote_quick_retries > 0:
+                            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE])
+                            reload_remote_quick_retries -= 1
                         await asyncio.sleep(RETRY_SECONDS)
                 if not self.standby_starting:
                     job.set_progress(25, 'Abandoned job.')
@@ -328,7 +334,7 @@ class iSCSITargetAluaService(Service):
         while self.standby_starting:
             try:
                 # We'll refetch the extents each time round the loop in case more have been added
-                extents = set(extent['name'] for extent in await self.middleware.call('iscsi.extent.query', [], {'select': ['name']}))
+                extents = set((await self.middleware.call('iscsi.extent.logged_in_extents')).keys())
 
                 # Choose the next batch of extents to enable.
                 to_enable = set(itertools.islice(extents - self.enabled, CHUNK_SIZE))
@@ -357,15 +363,18 @@ class iSCSITargetAluaService(Service):
                             await asyncio.sleep(1)
                         enable_retries -= 1
                     if not ok:
+                        # This shouldn't ever occur.
                         self.logger.error('Failed to enable cluster mode on devices: %r', to_enable)
+                        progress = 30 + (70 * (len(self.enabled) / len(extents)))
+                        job.set_progress(progress, 'Failed to enable cluster mode on devices.  Retrying.')
+                        await asyncio.sleep(SLOW_RETRY_SECONDS)
                     else:
                         local_requires_reload = True
-
-                    # Update progress
-                    self.enabled.update(to_enable)
-                    progress = 20 + (80 * (len(self.enabled) / len(extents)))
-                    job.set_progress(progress, f'Enabled {len(self.enabled)} extents')
-                    self.logger.info('Set cluster_mode on for %r extents', len(self.enabled))
+                        # Update progress
+                        self.enabled.update(to_enable)
+                        progress = 30 + (70 * (len(self.enabled) / len(extents)))
+                        job.set_progress(progress, f'Enabled {len(self.enabled)} extents')
+                        self.logger.info('Set cluster_mode on for %r extents', len(self.enabled))
                 else:
                     break
             except Exception:
