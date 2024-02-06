@@ -33,7 +33,7 @@ class ChartReleaseService(CRUDService):
         'chart_release_entry',
         Str('name', required=True),
         Dict('info', additional_attrs=True),
-        Dict('config', additional_attrs=True),
+        Dict('config', additional_attrs=True, private=True),
         List('hooks'),
         Int('version', required=True, description='Version of chart release'),
         Str('namespace', required=True),
