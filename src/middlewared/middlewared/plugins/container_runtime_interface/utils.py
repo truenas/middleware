@@ -1,9 +1,10 @@
 import re
+
 from collections import defaultdict
 from typing import Dict, List, Union
 
-import aiohttp
 from middlewared.service import CallError
+
 
 # Default values
 DEFAULT_DOCKER_REGISTRY = 'registry-1.docker.io'
