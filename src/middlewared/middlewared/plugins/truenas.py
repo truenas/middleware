@@ -5,7 +5,7 @@ import os
 
 from middlewared.schema import accepts, Bool, Dict, Patch, returns, Str
 from middlewared.service import cli_private, job, private, Service
-from middlewared.utils.functools import cache
+from middlewared.utils.functools_ import cache
 import middlewared.sqlalchemy as sa
 
 EULA_FILE = '/usr/local/share/truenas/eula.html'

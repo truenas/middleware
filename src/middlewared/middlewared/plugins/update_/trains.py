@@ -4,7 +4,7 @@ from aiohttp import ClientResponseError, ClientSession, ClientTimeout
 
 from middlewared.service import CallError, private, Service
 from middlewared.utils.network import INTERNET_TIMEOUT
-from middlewared.utils.functools import cache
+from middlewared.utils.functools_ import cache
 from .utils import can_update, scale_update_server, SCALE_MANIFEST_FILE
 
 

@@ -3,7 +3,7 @@ from pathlib import Path
 from middlewared.service import Service
 from middlewared.service_exception import ValidationError
 from middlewared.schema import accepts, returns, Dict, Str
-from middlewared.utils.functools import cache
+from middlewared.utils.functools_ import cache
 
 
 class HardwareCpuService(Service):

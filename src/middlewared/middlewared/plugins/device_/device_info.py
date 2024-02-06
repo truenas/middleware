@@ -7,7 +7,7 @@ import libsgio
 from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 from middlewared.schema import Dict, returns
 from middlewared.service import Service, accepts, private
-from middlewared.utils.functools import cache
+from middlewared.utils.functools_ import cache
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils.serial import serial_port_choices
 
