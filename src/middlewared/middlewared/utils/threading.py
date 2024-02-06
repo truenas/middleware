@@ -8,7 +8,7 @@ from .prctl import set_name
 
 logger = logging.getLogger(__name__)
 counter = count(1)
-__all__ = ["set_thread_name", "start_daemon_thread", "IoThreadPoolExecutor"]
+__all__ = ["set_thread_name", "start_daemon_thread", "IoThreadPoolExecutor", "io_thread_pool_executor"]
 
 
 def set_thread_name(name):
@@ -50,3 +50,6 @@ def worker(fut, fn, args, kwargs):
         fut.set_result(fn(*args, **kwargs))
     except Exception as e:
         fut.set_exception(e)
+
+
+io_thread_pool_executor = IoThreadPoolExecutor()

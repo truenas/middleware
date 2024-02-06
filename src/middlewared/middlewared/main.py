@@ -25,7 +25,7 @@ from .utils.privilege import credential_has_full_admin
 from .utils.profile import profile_wrap
 from .utils.service.call import ServiceCallMixin
 from .utils.syslog import syslog_message
-from .utils.threading import set_thread_name, IoThreadPoolExecutor
+from .utils.threading import set_thread_name, IoThreadPoolExecutor, io_thread_pool_executor
 from .utils.type import copy_function_metadata
 from .webui_auth import addr_in_allowlist, WebUIAuth
 from .worker import main_worker, worker_init
@@ -50,7 +50,6 @@ import fcntl
 import functools
 import inspect
 import itertools
-import logging
 import multiprocessing
 import os
 import pickle
@@ -906,7 +905,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.app = None
         self.loop = None
         self.__thread_id = threading.get_ident()
-        self.thread_pool_executor = IoThreadPoolExecutor()
         multiprocessing.set_start_method('spawn')  # Spawn new processes for ProcessPool instead of forking
         self.__init_procpool()
         self.__wsclients = {}
@@ -1321,7 +1319,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
 
     async def run_in_thread(self, method, *args, **kwargs):
-        return await self.run_in_executor(self.thread_pool_executor, method, *args, **kwargs)
+        return await self.run_in_executor(io_thread_pool_executor, method, *args, **kwargs)
 
     def __init_procpool(self):
         self.__procpool = concurrent.futures.ProcessPoolExecutor(
@@ -1400,7 +1398,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         elif serviceobj._config.thread_pool:
             executor = serviceobj._config.thread_pool
         else:
-            executor = self.thread_pool_executor
+            executor = io_thread_pool_executor
 
         return PreparedCall(args=args, executor=executor)
 
