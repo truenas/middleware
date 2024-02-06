@@ -103,12 +103,14 @@
             else:
                 logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
                 try:
-                    (cluster_mode_targets, cluster_mode_luns) = middleware.call_sync('failover.call_remote', 'iscsi.target.cluster_mode_targets_luns')
-                except CallError as e:
-                    if e.errno != CallError.ENOMETHOD:
-                        raise FileShouldNotExist
-                    # We may have upgraded one node, but not yet the other
-                    middleware.logger.warning('Failed to configure remote cluster_mode_targets_luns')
+                    _cmt_cml = middleware.call_sync(
+                        'failover.call_remote', 'iscsi.target.cluster_mode_targets_luns', [], {'raise_connect_error': False}
+                    )
+                except Exception:
+                    middleware.logger.warning('Unhandled error contacting remote node', exc_info=True)
+                else:
+                    if _cmt_cml is not None:
+                        cluster_mode_targets, cluster_mode_luns = _cmt_cml
                 clustered_extents = set(middleware.call_sync("iscsi.target.clustered_extents"))
                 all_cluster_mode = middleware.call_sync("iscsi.alua.all_cluster_mode")
         else:
