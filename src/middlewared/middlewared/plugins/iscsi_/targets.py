@@ -610,10 +610,10 @@ class iSCSITargetService(CRUDService):
         cl_extents = set(await self.middleware.call('iscsi.target.clustered_extents'))
 
         # Now iterate over all the targets and return a list of those whose extents are all
-        # in cluster mode.
+        # in cluster mode.  Exclude targets with no extents.
         result = []
         for target in targets:
-            if target_extents[target['id']].issubset(cl_extents):
+            if target_extents[target['id']] and target_extents[target['id']].issubset(cl_extents):
                 result.append(target['name'])
 
         return result
@@ -649,8 +649,8 @@ class iSCSITargetService(CRUDService):
         cluster_mode_luns = defaultdict(list)
 
         for target in targets:
-            # Find targets whose extents are all in cluster mode
-            if target_extents[target['id']].issubset(cl_extents):
+            # Find targets whose extents are all in cluster mode.  Exclude targets with no extents.
+            if target_extents[target['id']] and target_extents[target['id']].issubset(cl_extents):
                 cluster_mode_targets.append(target['name'])
 
             for (lunid, extent_name) in target_luns.get(target['id'], {}):
