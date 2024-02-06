@@ -6,9 +6,7 @@ import os
 import re
 from pathlib import Path
 import stat
-import subprocess
 import unicodedata
-import uuid
 
 from copy import deepcopy
 from samba import param
@@ -27,7 +25,7 @@ from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 from middlewared.plugins.tdb.utils import TDBError
 from middlewared.plugins.idmap_.utils import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list, Popen, run, MIDDLEWARE_RUN_DIR
+from middlewared.utils import filter_list, run, MIDDLEWARE_RUN_DIR
 from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 
@@ -279,11 +277,8 @@ class SMBService(ConfigService):
             except LookupError:
                 return False
 
-        proc = await Popen(
-            ['/usr/bin/iconv', '-l'],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        output = (await proc.communicate())[0].decode()
+        proc = await run(['/usr/bin/iconv', '-l'], check=False)
+        output = proc.stdout.decode()
 
         encodings = set()
         for line in output.splitlines():
