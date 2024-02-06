@@ -265,9 +265,12 @@ class CatalogService(CRUDService):
         if not data.pop('force'):
             job.set_progress(40, f'Validating {data["label"]!r} catalog')
             # We will validate the catalog now to ensure it's valid wrt contents / format
+            k8s_dataset = (await self.middleware.call('kubernetes.config'))['dataset']
             path = os.path.join(
-                TMP_IX_APPS_DIR, 'validate_catalogs', convert_repository_to_path(data['repository'], data['branch'])
+                '/mnt', k8s_dataset, 'catalogs/validate_catalogs',
+                convert_repository_to_path(data['repository'], data['branch'])
             )
+            await self.middleware.run_in_thread(shutil.rmtree, path, ignore_errors=True)
             try:
                 await self.middleware.call('catalog.update_git_repository', {**data, 'location': path})
                 await self.middleware.call('catalog.validate_catalog_from_path', path)
