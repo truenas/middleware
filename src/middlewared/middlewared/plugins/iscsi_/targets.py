@@ -480,13 +480,8 @@ class iSCSITargetService(CRUDService):
 
         :return: dict keyed by target name, with list of the unsurfaced disk names or None as the value
         """
-        targets = await self.middleware.call('iscsi.target.query')
+        iqns = await self.middleware.call('iscsi.target.active_ha_iqns')
         global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
-
-        iqns = {}
-        for target in targets:
-            name = target['name']
-            iqns[name] = f'{global_basename}:HA:{name}'
 
         # Check what's already logged in
         existing = await self.middleware.call('iscsi.target.logged_in_iqns')
@@ -554,13 +549,7 @@ class iSCSITargetService(CRUDService):
         When called on a HA BACKUP node will attempt to login to all internal HA targets,
         used in ALUA.
         """
-        targets = await self.middleware.call('iscsi.target.query')
-        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
-
-        iqns = {}
-        for target in targets:
-            name = target['name']
-            iqns[name] = f'{global_basename}:HA:{name}'
+        iqns = await self.middleware.call('iscsi.target.active_ha_iqns')
 
         # Check what's already logged in
         existing = await self.middleware.call('iscsi.target.logged_in_iqns')
@@ -673,7 +662,8 @@ class iSCSITargetService(CRUDService):
     @private
     async def active_targets(self):
         """
-        Returns the names of all targets whose extents are neither disabled nor locked.
+        Returns the names of all targets whose extents are neither disabled nor locked,
+        and which have at least one extent configured.
         """
         filters = [['OR', [['enabled', '=', False], ['locked', '=', True]]]]
         bad_extents = []
@@ -684,7 +674,28 @@ class iSCSITargetService(CRUDService):
         assoc = {a_tgt['extent']: a_tgt['target'] for a_tgt in await self.middleware.call('iscsi.targetextent.query')}
         for bad_extent in bad_extents:
             del targets[assoc[bad_extent]]
+
+        # Also discount targets that do not have any extents
+        targets_with_extents = assoc.values()
+        for target_id in list(targets.keys()):
+            if target_id not in targets_with_extents:
+                del targets[target_id]
+
         return list(targets.values())
+
+    @private
+    async def active_ha_iqns(self):
+        """Return a dict keyed by target name with a value of the corresponding HA IQN for all
+        targets that are deemed to be active_targets (i.e. no disabled of locked extents, and
+        at least one extent configured)."""
+        targets = await self.middleware.call('iscsi.target.active_targets')
+        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+
+        iqns = {}
+        for name in targets:
+            iqns[name] = f'{global_basename}:HA:{name}'
+
+        return iqns
 
     @private
     def set_ha_targets_sys(self, iqn_prefix, param, text):
