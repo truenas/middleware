@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import yaml
 
-from middlewared.plugins.container_runtime_interface.utils import check_containerd_connection
+from middlewared.plugins.container_runtime_interface.containerd_utils import check_containerd_connection
 from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, ConfigService
 

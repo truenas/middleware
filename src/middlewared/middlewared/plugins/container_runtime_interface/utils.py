@@ -1,12 +1,9 @@
-import contextlib
 import re
 
 from collections import defaultdict
 from typing import Dict, List, Union
 
 from middlewared.service import CallError
-
-from .client import ContainerdClient
 
 
 # Default values
@@ -105,11 +102,3 @@ def normalize_docker_limits_header(headers: dict) -> dict:
         'remaining_time_limit_in_secs': int(remaining_time_limit),
         'error': None,
     }
-
-
-def check_containerd_connection() -> bool:
-    with contextlib.suppress(Exception):
-        with ContainerdClient('image') as client:
-            client.get_image('alpine')
-            return True
-    return False
