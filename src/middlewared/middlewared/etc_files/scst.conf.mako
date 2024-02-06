@@ -101,7 +101,11 @@
             if middleware.call_sync("iscsi.alua.standby_write_empty_config"):
                 logged_in_targets = {}
             else:
-                logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
+                try:
+                    logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
+                except Exception:
+                    middleware.logger.warning('Failed to login HA targets', exc_info=True)
+                    logged_in_targets = {}
                 try:
                     _cmt_cml = middleware.call_sync(
                         'failover.call_remote', 'iscsi.target.cluster_mode_targets_luns', [], {'raise_connect_error': False}
