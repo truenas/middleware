@@ -1,9 +1,11 @@
 import asyncio
+import errno
 import functools
 import logging
 import operator
 import re
 import subprocess
+import time
 import json
 from datetime import datetime
 
@@ -51,6 +53,9 @@ def Popen(args, **kwargs):
         return asyncio.create_subprocess_exec(*args, **kwargs)
 
 
+currently_running_subprocesses = set()
+
+
 async def run(*args, **kwargs):
     if isinstance(args[0], list):
         args = tuple(args[0])
@@ -60,10 +65,22 @@ async def run(*args, **kwargs):
     kwargs.setdefault('check', True)
     if 'encoding' in kwargs:
         kwargs.setdefault('errors', 'strict')
+    kwargs.setdefault('close_fds', True)
     kwargs['preexec_fn'] = die_with_parent
 
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(io_thread_pool_executor, functools.partial(subprocess.run, args, **kwargs))
+    subprocess_identifier = f"{time.monotonic()}: {args!r}"
+    try:
+        currently_running_subprocesses.add(subprocess_identifier)
+        try:
+            return await loop.run_in_executor(io_thread_pool_executor, functools.partial(subprocess.run, args, **kwargs))
+        finally:
+            currently_running_subprocesses.discard(subprocess_identifier)
+    except OSError as e:
+        if e.errno == errno.EMFILE:
+            logger.warning("Currently running async subprocesses: %r", currently_running_subprocesses)
+
+        raise
 
 
 def partition(s):
