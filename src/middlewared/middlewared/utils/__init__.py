@@ -1,15 +1,15 @@
 import asyncio
+import functools
 import logging
 import operator
 import re
-import signal
 import subprocess
 import json
-from datetime import datetime, timedelta
-from functools import wraps, cache
-from threading import Lock
+from datetime import datetime
 
 from middlewared.service_exception import MatchNotFound
+from .prctl import die_with_parent
+from .threading import io_thread_pool_executor
 
 MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
@@ -54,31 +54,16 @@ def Popen(args, **kwargs):
 async def run(*args, **kwargs):
     if isinstance(args[0], list):
         args = tuple(args[0])
+
     kwargs.setdefault('stdout', subprocess.PIPE)
     kwargs.setdefault('stderr', subprocess.PIPE)
-    check = kwargs.pop('check', True)
-    encoding = kwargs.pop('encoding', None)
-    errors = kwargs.pop('errors', None) or 'strict'
-    input_ = kwargs.pop('input', None)
-    if input_ is not None:
-        kwargs['stdin'] = subprocess.PIPE
-    abort_signal = kwargs.pop('abort_signal', signal.SIGKILL)
-    proc = await asyncio.create_subprocess_exec(*args, **kwargs)
-    try:
-        stdout, stderr = await proc.communicate(input_)
-    except asyncio.CancelledError:
-        if abort_signal is not None:
-            proc.send_signal(abort_signal)
-        raise
-    if encoding:
-        if stdout is not None:
-            stdout = stdout.decode(encoding, errors)
-        if stderr is not None:
-            stderr = stderr.decode(encoding, errors)
-    cp = subprocess.CompletedProcess(args, proc.returncode, stdout=stdout, stderr=stderr)
-    if check:
-        cp.check_returncode()
-    return cp
+    kwargs.setdefault('check', True)
+    if 'encoding' in kwargs:
+        kwargs.setdefault('errors', 'strict')
+    kwargs['preexec_fn'] = die_with_parent
+
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(io_thread_pool_executor, functools.partial(subprocess.run, args, **kwargs))
 
 
 def partition(s):
@@ -566,7 +551,7 @@ def filter_getattrs(filters):
     return attrs
 
 
-@cache
+@functools.cache
 def sw_info():
     """Returns the various software information from the manifest file."""
     with open(MANIFEST_FILE) as f:
@@ -609,36 +594,3 @@ class Nid(object):
         num = self._id
         self._id += 1
         return num
-
-
-class cache_with_autorefresh(object):
-    """
-    A decorator which caches the result of a function (with no arguments as yet)
-    and returns the cache untill the autorefresh timeout is hit, upon which it
-    call the function again and caches the result for future calls.
-    """
-
-    def __init__(self, seconds=0, minutes=0, hours=0):
-        self.refresh_period = timedelta(
-            seconds=seconds, minutes=minutes, hours=hours
-        )
-        self.cached_return = None
-        self.first = True
-        self.time_of_last_call = datetime.min
-        self.lock = Lock()
-
-    def __call__(self, fn):
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            now = datetime.now()
-            time_since_last_call = now - self.time_of_last_call
-
-            with self.lock:
-                if time_since_last_call > self.refresh_period or self.first:
-                    self.first = False
-                    self.time_of_last_call = now
-                    self.cached_return = fn(*args, **kwargs)
-
-            return self.cached_return
-
-        return wrapper
