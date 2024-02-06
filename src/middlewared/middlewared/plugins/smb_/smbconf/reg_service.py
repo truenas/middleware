@@ -67,6 +67,7 @@ class ShareSchema(RegistrySchema):
             data_in['purpose'],
         )
         data_out['vfs objects']['parsed'] = ordered_vfs_objects
+        data_out['io_uring:iosqe_async_read'] = {'parsed': True}
 
         """
         Some presets contain values that users can override via aux
