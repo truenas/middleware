@@ -580,7 +580,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                     remote = f'"{rsync["user"]}"@{rsync["remotehost"]}'
 
             if rsync['mode'] == 'MODULE':
-                module_args = [path, f'{remote}::"{rsync["remotemodule"]}"']
+                module_args = [path, f'rsync://{remote}/"{rsync["remotemodule"]}"']
                 if rsync['direction'] != 'PUSH':
                     module_args.reverse()
                 line += module_args
