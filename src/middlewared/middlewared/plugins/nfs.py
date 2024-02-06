@@ -716,7 +716,7 @@ class SharingNFSService(SharingService):
             if host in used_hosts:
                 verrors.add(
                     f"{schema_name}.hosts",
-                    f"ERROR - Another NFS share already exports {data['path']} for {host}"
+                    f"ERROR - Another NFS share already exports {data['path']} for {str(host)}"
                 )
                 continue
 
@@ -811,7 +811,8 @@ class SharingNFSService(SharingService):
                     elif commonNetworks:
                         desc = other_share_desc
                         reason = str(commonNetworks)
-                    elif this_share_everybody:
+                    elif this_share_everybody and not other_share_everybody:
+                        # Already trapped the 'everyone' exact match condition in the host check
                         desc = this_share_desc
                         all_hosts = set(datahosts) | set(sharehosts)
                         all_networks = set(data["networks"]) | set(share["networks"])
