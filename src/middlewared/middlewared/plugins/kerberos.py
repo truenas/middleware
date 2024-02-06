@@ -12,7 +12,7 @@ from middlewared.plugins.idmap import DSType
 from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Password, Ref, Datetime, Bool
 from middlewared.service import CallError, ConfigService, CRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, run, Popen
+from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, run
 
 
 KRB_TKT_CHECK_INTERVAL = 1800
@@ -473,13 +473,10 @@ class KerberosService(ConfigService):
             return
 
         cmd.append(creds['username'])
-        kinit = await Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
-        )
+        kinit = await run(cmd, input=creds['password'].encode(), check=False)
 
-        output = await kinit.communicate(input=creds['password'].encode())
         if kinit.returncode != 0:
-            raise CallError(f"kinit with password failed: {output[1].decode()}")
+            raise CallError(f"kinit with password failed: {kinit.stdout.decode()}")
 
         if ccache == krb5ccache.USER:
             await self.middleware.run_in_thread(os.chown, ccache_path, ccache_uid, -1)
@@ -1108,15 +1105,10 @@ class KerberosKeytabService(CRUDService):
         with contextlib.suppress(OSError):
             os.remove(keytab['SAMBA'].value)
 
-        kt_copy = await Popen(['ktutil'],
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE,
-                              stdin=subprocess.PIPE)
-        output = await kt_copy.communicate(
-            f'rkt {keytab.SYSTEM.value}\nwkt {keytab.SAMBA.value}\nq\n'.encode()
-        )
-        if output[1]:
-            raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {output[1].decode()}")
+        kt_copy = await run(['ktutil'], input=f'rkt {keytab.SYSTEM.value}\nwkt {keytab.SAMBA.value}\nq\n'.encode(),
+                            check=False)
+        if kt_copy.stderr:
+            raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {kt_copy.stderr.decode()}")
 
     @private
     async def _prune_keytab_principals(self, to_delete=[]):
@@ -1128,15 +1120,9 @@ class KerberosKeytabService(CRUDService):
         rkt = f"rkt {keytab.SAMBA.value}"
         wkt = "wkt /var/db/system/samba4/samba_mit.keytab"
         delents = "\n".join(f"delent {x['slot']}" for x in reversed(to_delete))
-        ktutil_remove = await Popen(['ktutil'],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    stdin=subprocess.PIPE)
-        output = await ktutil_remove.communicate(
-            f'{rkt}\n{delents}\n{wkt}\nq\n'.encode()
-        )
-        if output[1]:
-            raise CallError(output[1].decode())
+        ktutil_remove = await run(['ktutil'], input=f'{rkt}\n{delents}\n{wkt}\nq\n'.encode(), check=False)
+        if ktutil_remove.stderr:
+            raise CallError(ktutil_remove.stderr.decode())
 
         with contextlib.suppress(OSError):
             os.remove(keytab.SAMBA.value)
