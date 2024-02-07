@@ -1467,7 +1467,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                                       audit_callback=audit_callback_messages.append, **kwargs)
             success = True
 
-            if app.authenticated_credentials:
+            if app and app.authenticated_credentials:
                 if app.authenticated_credentials.is_user_session and not (
                     credential_has_full_admin(app.authenticated_credentials) or
                     (
