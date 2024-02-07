@@ -11,6 +11,7 @@ sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password
 from pytest_dependency import depends
+from middlewared.test.integration.utils import call, ssh
 
 MODE_DATASET = f'{pool_name}/modetest'
 dataset_url = MODE_DATASET.replace('/', '%2F')
@@ -41,6 +42,8 @@ MODE = {**OWNER_BITS, **GROUP_BITS, **OTHER_BITS}
 MODE_USER = "modetesting"
 MODE_GROUP = "modetestgrp"
 MODE_PWD = "modetesting"
+
+NOBODY_ID = 65534
 
 
 def test_01_check_dataset_endpoint():
@@ -73,18 +76,12 @@ def test_04_verify_setting_mode_bits_nonrecursive(request, mode_bit):
     """
     depends(request, ["IS_TRIVIAL"])
     new_mode = f"{MODE[mode_bit]:03o}"
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': [],
-            'mode': new_mode,
-            'group': 'nogroup',
-            'user': 'nobody'
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    call('filesystem.setperm', {
+        'path': f'/mnt/{MODE_DATASET}',
+        'mode': new_mode,
+        'uid': NOBODY_ID,
+        'gid': NOBODY_ID
+    }, job=True)
 
     results = POST('/filesystem/stat/', f'/mnt/{MODE_DATASET}')
     assert results.status_code == 200, results.text
@@ -124,20 +121,16 @@ def test_06_verify_setting_mode_bits_recursive_no_traverse(request, mode_bit):
     to files and subdirectories.
     """
     depends(request, ["RECURSIVE_PREPARED"])
+
     new_mode = f"{MODE[mode_bit]:03o}"
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': [],
-            'mode': new_mode,
-            'group': 'nogroup',
-            'user': 'nobody',
-            'options': {'recursive': True}
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    call('filesystem.setperm', {
+        'path': f'/mnt/{MODE_DATASET}',
+        'mode': new_mode,
+        'uid': NOBODY_ID,
+        'gid': NOBODY_ID
+        'options': {'recursive': True}
+    }, job=True)
+
 
     results = POST('/filesystem/stat/', f'/mnt/{MODE_DATASET}')
     assert results.status_code == 200, results.text
@@ -167,19 +160,14 @@ def test_07_verify_mode_not_set_on_child_dataset(request):
 
 def test_08_verify_traverse_to_child_dataset(request):
     depends(request, ["RECURSIVE_PREPARED"])
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': [],
-            'mode': 777,
-            'group': 'nogroup',
-            'user': 'nobody',
-            'options': {'recursive': True, 'traverse': True}
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+    call('filesystem.setperm', {
+        'path': f'/mnt/{MODE_DATASET}',
+        'mode': new_mode,
+        'uid': NOBODY_ID,
+        'gid': NOBODY_ID
+        'options': {'recursive': True, 'traverse': True}
+    }, job=True)
 
     results = POST('/filesystem/stat/', f'/mnt/{MODE_SUBDATASET}')
     assert results.status_code == 200, results.text
@@ -362,21 +350,12 @@ def test_11_test_directory_owner_bits_function_allow(mode_bit, request):
     if new_mode == stat.S_IWUSR:
         new_mode |= stat.S_IXUSR
 
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': [],
-            'mode': f'{new_mode:03o}',
-            'group': 'nogroup',
-            'user': MODE_USER
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-    if job_status['state'] != 'SUCCESS':
-        return
+    call('filesystem.setperm', {
+        'path': f'/mnt/{MODE_DATASET}',
+        'mode': new_mode,
+        'uid': modeuser_id,
+        'gid': NOBODY_ID
+    }, job=True)
 
     dir_mode_check(mode_bit)
 
@@ -393,21 +372,12 @@ def test_12_test_directory_group_bits_function_allow(mode_bit, request):
     if new_mode == stat.S_IWGRP:
         new_mode |= stat.S_IXGRP
 
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': [],
-            'mode': f'{new_mode:03o}',
-            'group': MODE_GROUP,
-            'user': 'root'
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-    if job_status['state'] != 'SUCCESS':
-        return
+    call('filesystem.setperm', {
+        'path': f'/mnt/{MODE_DATASET}',
+        'mode': new_mode,
+        'uid': 0,
+        'gid': groupid
+    }, job=True)
 
     dir_mode_check(mode_bit)
 
@@ -424,21 +394,12 @@ def test_13_test_directory_other_bits_function_allow(mode_bit, request):
     if new_mode == stat.S_IWOTH:
         new_mode |= stat.S_IXOTH
 
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': [],
-            'mode': f'{new_mode:03o}',
-            'group': 'root',
-            'user': 'root'
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-    if job_status['state'] != 'SUCCESS':
-        return
+    call('filesystem.setperm', {
+        'path': f'/mnt/{MODE_DATASET}',
+        'mode': new_mode,
+        'uid': 0,
+        'gid': 0
+    }, job=True)
 
     dir_mode_check(mode_bit)
 

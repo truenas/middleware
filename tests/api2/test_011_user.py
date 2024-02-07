@@ -336,15 +336,10 @@ def test_30_creating_home_dataset(request):
     results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
 
-    results = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': home_acl,
-        }
-    )
-    assert results.status_code == 200, results.text
-    perm_job = results.json()
-    job_status = wait_on_job(perm_job, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    call('filesystem.setacl', {
+        'path': f'/mnt/{dataset}',
+        'acl': home_acl
+    }, job=True)
 
 
 @pytest.mark.dependency(name="USER_CREATED")

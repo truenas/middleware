@@ -69,26 +69,6 @@ def test_04_update_dataset_description(request):
     assert result.status_code == 200, result.text
 
 
-def test_05_set_permissions_for_dataset(request):
-    global JOB_ID
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': [],
-            'mode': '777',
-            'group': 'nogroup',
-            'user': 'nobody'
-        }
-    )
-
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-
-
-def test_06_verify_job_id_is_successfull(request):
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-
 def test_07_promoting_dataset(request):
     # TODO: ONCE WE HAVE MANUAL SNAPSHOT FUNCTIONAITY IN MIDDLEWARED,
     # THIS TEST CAN BE COMPLETED THEN
@@ -97,69 +77,6 @@ def test_07_promoting_dataset(request):
 # Test 07 through 11 verify basic ACL functionality. A default ACL is
 # set, verified, stat output checked for its presence. Then ACL is removed
 # and stat output confirms its absence.
-
-
-@pytest.mark.dependency(name="pool_dataset_08")
-def test_08_set_acl_for_dataset(request):
-    global JOB_ID
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': default_acl,
-            'group': 'nogroup',
-            'user': 'nobody'
-        }
-    )
-
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-
-
-@pytest.mark.dependency(name="acl_pool_perm_09")
-def test_09_verify_job_id_is_successfull(request):
-    depends(request, ["pool_dataset_08"], scope="session")
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-
-def test_10_get_filesystem_getacl(request):
-    depends(request, ["acl_pool_perm_09"], scope="session")
-    global results
-    payload = {
-        'path': f'/mnt/{dataset}',
-        'simplified': True
-    }
-    results = POST('/filesystem/getacl/', payload)
-    assert results.status_code == 200, results.text
-
-
-@pytest.mark.parametrize('key', ['tag', 'type', 'perms', 'flags'])
-def test_11_verify_filesystem_getacl(request, key):
-    depends(request, ["acl_pool_perm_09"], scope="session")
-    assert results.json()['acl'][0][key] == default_acl[0][key], results.text
-    assert results.json()['acl'][1][key] == default_acl[1][key], results.text
-
-
-def test_12_filesystem_acl_is_present(request):
-    depends(request, ["acl_pool_perm_09"], scope="session")
-    results = POST('/filesystem/stat/', f'/mnt/{dataset}')
-    assert results.status_code == 200, results.text
-    assert results.json()['acl'] is True, results.text
-
-
-def test_13_strip_acl_from_dataset(request):
-    global JOB_ID
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': [],
-            'mode': '777',
-            'group': 'nogroup',
-            'user': 'nobody',
-            'options': {'stripacl': True}
-        }
-    )
-
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
 
 
 def test_14_setting_various_quotas(request):

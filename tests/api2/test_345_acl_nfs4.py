@@ -29,6 +29,7 @@ subdataset_url = ACLTEST_SUBDATASET.replace('/', '%2F')
 getfaclcmd = "nfs4xdr_getfacl"
 setfaclcmd = "nfs4xdr_setfacl"
 group0 = "root"
+NOBODY_ID = 65534
 
 ACL_USER = 'acluser'
 ACL_PWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
@@ -197,10 +198,11 @@ def test_02_create_dataset(initialize_for_acl_tests):
 
 def test_04_basic_set_acl_for_dataset(request):
     depends(request, ["HAS_NFS4_ACLS"])
-    call('pool.dataset.permission', TEST_INFO['dataset'], {
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
         'acl': default_acl,
-        'group': group,
-        'user': 'nobody'
+        'uid': NOBODY_ID,
+        'gid': NOBODY_ID
     }, job=True)
 
     acl_result = call('filesystem.getacl', TEST_INFO['dataset_path'],  True)

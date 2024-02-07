@@ -344,24 +344,7 @@ def test_02_creating_dataset_nfs(request):
     results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
 
-
-def test_03_changing_dataset_permissions_of_nfs_dataset(request):
-    depends(request, ["NFS_DATASET_CREATED"], scope="session")
-    payload = {
-        "acl": [],
-        "mode": "777",
-        "user": "root",
-        "group": 'root'
-    }
-    results = POST(f"/pool/dataset/id/{dataset_url}/permission/", payload)
-    assert results.status_code == 200, results.text
-    global job_id
-    job_id = results.json()
-
-
-def test_04_verify_the_job_id_is_successfull(request):
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    call('filesystem.setperm', {'path': f'/mnt/{dataset}', 'mode': '777'}, job=True)
 
 
 @pytest.mark.dependency(name='NFSID_SHARE_CREATED')
