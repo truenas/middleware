@@ -501,3 +501,18 @@ class iSCSITargetExtentService(SharingService):
                         result[extent_name] = ctl
                         break
         return result
+
+    @private
+    async def active_extents(self):
+        """
+        Returns the names of all extents who are neither disabled nor locked, and which are
+        associated with a target.
+        """
+        filters = [['enabled', '=', True], ['locked', '=', False]]
+        extents = await self.middleware.call('iscsi.extent.query', filters, {'select': ['id', 'name']})
+        assoc = [a_tgt['extent'] for a_tgt in await self.middleware.call('iscsi.targetextent.query')]
+        result = []
+        for extent in extents:
+            if extent['id'] in assoc:
+                result.append(extent['name'])
+        return result
