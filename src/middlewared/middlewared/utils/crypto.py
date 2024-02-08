@@ -1,4 +1,4 @@
-from secrets import choice, token_urlsafe, token_hex
+from secrets import choice, compare_digest, token_urlsafe, token_hex
 from string import ascii_letters, digits, punctuation
 
 from cryptit import cryptit
@@ -34,9 +34,9 @@ def generate_token(size, url_safe=False):
 
 
 def sha512_crypt(word):
-    """Encrypt `word` using SHA512 algorithm with rounds
-    set to 656,000 with a 16 char pseudo-random cryptographically
-    secure salt.
+    """Generate a hash using the modular crypt format of `word`
+    using SHA512 algorithm with rounds set to 656,000 with a
+    16-char pseudo-random cryptographically secure salt.
     """
     sha512_prefix = '$6'
     rounds = 656_000
@@ -45,3 +45,10 @@ def sha512_crypt(word):
     settings = f'{sha512_prefix}$rounds={rounds}${salt}'
     # note this is thread-safe and releases GIL
     return cryptit(word, settings)
+
+
+def check_unixhash(passwd, unixhash):
+    """Verify that the hash produced by `passwd` matches the
+    given `unixhash`.
+    """
+    return compare_digest(cryptit(passwd, unixhash), unixhash)
