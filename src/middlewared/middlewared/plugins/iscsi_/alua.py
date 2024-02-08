@@ -146,13 +146,13 @@ class iSCSITargetAluaService(Service):
         job.set_progress(20, 'Read to activate')
 
         if todo:
-            self.logger.debug('Activating extents')
+            self.logger.debug(f'Activating {len(todo)} extents')
             retries = 10
             while todo and retries:
                 do_again = []
                 for item in todo:
                     # Mark them active
-                    if not self.middleware.call('iscsi.scst.activate_extent', *item):
+                    if not await self.middleware.call('iscsi.scst.activate_extent', *item):
                         self.logger.debug(f'Cannot Activate extent {item}')
                         do_again.append(item)
                 if not do_again:
