@@ -13,6 +13,12 @@ STANDBY_ENABLE_DEVICES_RETRIES = 10
 REMOTE_RELOAD_LONG_DELAY_SECS = 300
 
 
+def chunker(it, size):
+    iterator = iter(it)
+    while chunk := list(itertools.islice(iterator, size)):
+        yield chunk
+
+
 class iSCSITargetAluaService(Service):
     """
     Support iSCSI ALUA configuration.
@@ -46,13 +52,12 @@ class iSCSITargetAluaService(Service):
         self.active_elected_job = None
         self.activate_extents_job = None
 
-        # scst.conf.mako will check the below value to determine whether it
-        # should write cluster_mode = 1, even if then value in /sys is zero
-        # (i.e. extent not listed in iscsi.target.clustered_extents)
-        self._all_cluster_mode = False
-
-        # Likewise
-        self._standby_write_empty_config = True
+        # standby_write_empty_config will be used to control whether the
+        # STANDBY node initially writes a minimal scst.conf
+        # We initialize it to None here, as we could just be restarting
+        # middleware, then in the getter it will query the state of
+        # the iscsitarget to decide what the initial value should be
+        self._standby_write_empty_config = None
 
     async def before_start(self):
         if await self.middleware.call('iscsi.global.alua_enabled'):
@@ -66,7 +71,6 @@ class iSCSITargetAluaService(Service):
                 await self.middleware.call('iscsi.alua.standby_after_start')
 
     async def before_stop(self):
-        self._all_cluster_mode = False
         self.standby_starting = False
 
     async def standby_enable_devices(self, devices):
@@ -82,12 +86,14 @@ class iSCSITargetAluaService(Service):
         else:
             return False
 
-    def all_cluster_mode(self):
-        return self._all_cluster_mode
-
     async def standby_write_empty_config(self, value=None):
         if value is not None:
             self._standby_write_empty_config = value
+        if self._standby_write_empty_config is None:
+            if await self.middleware.call('service.get_unit_state', 'iscsitarget') == 'active':
+                self._standby_write_empty_config = False
+            else:
+                self._standby_write_empty_config = True
         return self._standby_write_empty_config
 
     @job(lock='active_elected', transient=True, lock_queue_size=1)
@@ -324,6 +330,7 @@ class iSCSITargetAluaService(Service):
                     break
 
                 self.logger.debug('Detected missing cluster_mode.  Retrying.')
+                self._standby_write_empty_config = False
                 await self.middleware.call('iscsi.target.logout_ha_targets')
                 await self.middleware.call('service.reload', 'iscsitarget')
                 job.set_progress(20, 'Logged out HA targets (local node)')
@@ -399,5 +406,132 @@ class iSCSITargetAluaService(Service):
 
         job.set_progress(100, 'All targets in cluster_mode')
         self.standby_starting = False
-        self._all_cluster_mode = True
         self.logger.debug('ALUA started on STANDBY')
+
+    @job(lock='standby_reload', transient=True)
+    async def standby_reload(self, job):
+        await asyncio.sleep(30)
+        await self.middleware.call('service.reload', 'iscsitarget')
+
+    @job(lock='standby_fix_cluster_mode', transient=True)
+    async def standby_fix_cluster_mode(self, job, devices):
+        job.set_progress(0, 'Fixing cluster_mode')
+        logged_in_extents = await self.middleware.call('iscsi.extent.logged_in_extents')
+        device_to_srcextent = {v: k for k, v in logged_in_extents.items()}
+        pruned_devices = [device for device in devices if device in device_to_srcextent]
+        need_to_reload = False
+        for chunk in chunker(pruned_devices, 10):
+            # First wait to ensure cluster_mode paths are present (10 x 0.2 = 2 secs)
+            retries = 10
+            while retries:
+                present = await self.middleware.call('iscsi.scst.check_cluster_mode_paths_present', chunk)
+                if present:
+                    break
+                await asyncio.sleep(0.2)
+                retries -= 1
+            if not retries:
+                self.logger.warning(f'Timed out waiting for cluster_mode to surface for some of {chunk}')
+            # Next ensure cluster_mode is enabled on the ACTIVE node
+            try:
+                rextents = [device_to_srcextent[device] for device in chunk]
+                lextents = chunk
+            except KeyError:
+                # Things may have been logged out since we requested last checked
+                logged_in_extents = await self.middleware.call('iscsi.extent.logged_in_extents')
+                device_to_srcextent = {v: k for k, v in logged_in_extents.items()}
+                rextents = []
+                lextents = []
+                for device in chunk:
+                    if device in device_to_srcextent:
+                        rextents.append(device_to_srcextent[device])
+                        lextents.append(device)
+
+            if rextents:
+                self.logger.debug(f'Setting cluster_mode on ACTIVE node for {rextents}')
+                await self.middleware.call('failover.call_remote', 'iscsi.scst.set_devices_cluster_mode', [rextents, 1])
+
+                # Then ensure cluster_mode is enabled on the STANDBY node
+                self.logger.debug(f'Setting cluster_mode on STANDBY node for {lextents}')
+                await self.middleware.call('iscsi.scst.set_devices_cluster_mode', lextents, 1)
+                need_to_reload = True
+        if need_to_reload:
+            job.set_progress(90, 'Fixed cluster_mode')
+            await asyncio.sleep(1)
+            # Now that we have enabled cluster_mode, need to reload iscsitarget so that
+            # it will now offer the targets to the world.
+            await self.middleware.call('service.reload', 'iscsitarget')
+            job.set_progress(100, 'Reloaded iscsitarget service')
+        else:
+            job.set_progress(100, 'Fixed cluster_mode')
+        self.logger.debug(f'Fixed cluster_mode for {len(devices)} extents')
+
+    async def wait_cluster_mode(self, target_id, extent_id):
+        """After we add a target/extent mapping we wish to wait for the ALUA state to settle."""
+        self.logger.debug(f'Wait for extent with ID {extent_id}')
+        retries = 30
+        while retries:
+            # Do some basic checks each time round the loop to ensure we're still valid.
+            if not await self.middleware.call("iscsi.global.alua_enabled"):
+                return
+            if not await self.middleware.call('failover.remote_connected'):
+                return
+            if await self.middleware.call('service.get_unit_state', 'iscsitarget') not in ['active', 'activating']:
+                return
+
+            # We can only deal with active targets.  Otherwise we cannot login to the HA target from the STANDBY node.
+            targetname = (await self.middleware.call('iscsi.target.query', [['id', '=', target_id]], {'select': ['name']}))[0]['name']
+            active_targets = await self.middleware.call('iscsi.target.active_targets')
+            if targetname not in active_targets:
+                self.logger.debug(f'Target {targetname} is not active (in an ALUA sense)')
+                return
+
+            retries -= 1
+
+            # The locked and enabled are already handled by active_targets check
+            lextent = (await self.middleware.call('iscsi.extent.query', [['id', '=', extent_id]], {'select': ['name']}))[0]['name']
+
+            # Check to see if the extent is available on the remote node yet
+            logged_in_extents = await self.middleware.call('failover.call_remote', 'iscsi.extent.logged_in_extents')
+            if lextent not in logged_in_extents:
+                self.logger.debug(f'Sleep while we wait for {lextent} to get logged in')
+                await asyncio.sleep(1)
+                continue
+
+            rextent = logged_in_extents[lextent]
+
+            # Have the dev_handlers surfaced cluster_mode yet:
+            # - local
+            if not await self.middleware.call('iscsi.scst.check_cluster_mode_paths_present', [lextent]):
+                self.logger.debug(f'Sleep while we wait for {lextent} cluster_mode to surface')
+                await asyncio.sleep(1)
+                continue
+            # - remote
+            if not await self.middleware.call('failover.call_remote', 'iscsi.scst.check_cluster_mode_paths_present', [[rextent]]):
+                self.logger.debug(f'Sleep while we wait for {rextent} cluster_mode to surface')
+                await asyncio.sleep(1)
+                continue
+
+            # OK, now check whether we've made it into cluster mode yet
+            # - local
+            if await self.middleware.call('iscsi.scst.get_cluster_mode', lextent) != "1":
+                self.logger.debug(f'Sleep while we wait for {lextent} to enter cluster_mode')
+                await asyncio.sleep(1)
+                continue
+            # - remote
+            if await self.middleware.call('failover.call_remote', 'iscsi.scst.get_cluster_mode', [rextent]) != "1":
+                self.logger.debug(f'Sleep while we wait for {rextent} to enter cluster_mode')
+                await asyncio.sleep(1)
+                continue
+
+            # If we get here, we're good to go!
+            self.logger.debug(f'Completed wait for {lextent}/{rextent} to enter cluster_mode')
+            return
+
+    async def removed_target_extent(self, target_id, extent_id):
+        targetname = (await self.middleware.call('iscsi.target.query', [['id', '=', target_id]], {'select': ['name']}))[0]['name']
+        # If we have removed a LUN from a target, it'd be nice to think that we could just do one of the following
+        # - for i in /sys/class/scsi_device/*/device/rescan ; do echo 1 > $i ; done
+        # - iscsiadm -m node -R
+        # etc, but (currently) these don't work.  Therefore we'll use a sledgehammer
+        await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_target', [targetname])
+        await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])

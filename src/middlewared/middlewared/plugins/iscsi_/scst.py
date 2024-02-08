@@ -44,6 +44,12 @@ class iSCSITargetService(Service):
                 return False
         return True
 
+    def get_cluster_mode(self, device):
+        try:
+            return pathlib.Path(f'{SCST_DEVICES}/{device}/cluster_mode').read_text().splitlines()[0]
+        except Exception:
+            return "UNKNOWN"
+
     async def set_devices_cluster_mode(self, devices, value):
         text = f'{int(value)}\n'
         paths = [f'{SCST_DEVICES}/{device}/cluster_mode' for device in devices]
