@@ -1,10 +1,8 @@
-import crypt
-import hmac
-
 import pam
 
 from middlewared.plugins.account import unixhash_is_valid
-from middlewared.service import CallError, Service, pass_app, private
+from middlewared.service import Service, private
+from middlewared.utils.crypto import check_unixhash
 
 
 class AuthService(Service):
@@ -39,7 +37,7 @@ class AuthService(Service):
         if username == 'root' and await self.middleware.call('privilege.always_has_root_password_enabled'):
             if not unixhash_is_valid(unixhash):
                 await self.middleware.call('auth.libpam_authenticate', username, password)
-            elif await self.middleware.call('auth.check_unixhash', password, unixhash):
+            elif await self.middleware.run_in_thread(check_unixhash, password, unixhash):
                 pam_resp = {'code': pam.PAM_SUCCESS, 'reason': ''}
             else:
                 await self.middleware.call('auth.libpam_authenticate', username, password)
@@ -51,22 +49,6 @@ class AuthService(Service):
             return None
 
         return await self.authenticate_user({'username': username}, user_info)
-
-    @private
-    @pass_app()
-    def check_unixhash(self, app, password, unixhash):
-        # This method is vulnerable to timing attacks and so should not
-        # be exposed to external API consumers in any way.
-        #
-        # FIXME: remove pass_app() and replace with some other decorator
-        # to flag as internal once functionality added.
-        if app is not None:
-            raise CallError("This method may not be called externally")
-
-        if not unixhash_is_valid(unixhash):
-            return False
-
-        return hmac.compare_digest(crypt.crypt(password, unixhash), unixhash)
 
     @private
     def libpam_authenticate(self, username, password):
@@ -119,7 +101,6 @@ class AuthService(Service):
 
         # Two-factor authentication token is keyed by SID for activedirectory
         # users.
-        twofactor_id = user_info['id'] if user_info['local'] else user['sid_info']['sid']
         twofactor_enabled = bool((await self.middleware.call(
             'auth.twofactor.get_user_config',
             twofactor_id, user_info['local']

@@ -1,3 +1,18 @@
+import binascii
+import errno
+import glob
+import hashlib
+import json
+import os
+import shlex
+import shutil
+import stat
+import subprocess
+import time
+import warnings
+from pathlib import Path
+from contextlib import suppress
+
 from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, returns, Str, LocalUsername
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, no_auth_required, no_authz_required, pass_app, private, filterable, job
@@ -5,32 +20,12 @@ from middlewared.service import (
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
-from middlewared.utils.privilege import (
-    credential_has_full_admin,
-    privileges_group_mapping
-)
+from middlewared.utils.crypto import sha512_crypt
+from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
 from middlewared.validators import Email, Range
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.smb import SMBBuiltin
 from middlewared.plugins.idmap_.utils import TRUENAS_IDMAP_DEFAULT_LOW
-
-import binascii
-import crypt
-import errno
-import glob
-import hashlib
-import json
-import os
-import random
-import shlex
-import shutil
-import string
-import stat
-import subprocess
-import time
-import warnings
-from pathlib import Path
-from contextlib import suppress
 
 ADMIN_UID = 950  # When googled, does not conflict with anything
 ADMIN_GID = 950
@@ -76,13 +71,11 @@ def pw_checkname(verrors, attribute, name):
         )
 
 
-def crypted_password(cleartext):
-    """
-    Generates an unix hash from `cleartext`.
-    """
-    return crypt.crypt(cleartext, '$6$' + ''.join([
-        random.choice(string.ascii_letters + string.digits) for _ in range(16)]
-    ))
+def crypted_password(cleartext, algo='SHA512'):
+    if algo == 'SHA512':
+        return sha512_crypt(cleartext)
+    else:
+        raise ValueError(f'{algo} is unsupported')
 
 
 def unixhash_is_valid(unixhash):
