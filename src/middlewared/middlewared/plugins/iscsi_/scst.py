@@ -82,10 +82,10 @@ class iSCSITargetService(Service):
                 p = pathlib.Path(f'{SCST_BASE}/handlers/vdisk_fileio/{extent_name}/active')
             try:
                 p.write_text('1\n')
-            except FileNotFoundError:
-                return False
-            else:
                 return True
+            except Exception:
+                # Return False on ANY exception
+                return False
         else:
             return False
 
