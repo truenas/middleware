@@ -1,6 +1,7 @@
 <%
     import itertools
     import os
+    import time
 
     from collections import defaultdict
     from pathlib import Path
@@ -86,14 +87,17 @@
                 if 'address' in addr:
                     failover_virtual_aliases.append(addr['address'])
 
+    standby_node_requires_reload = False
+    fix_cluster_mode = []
     cluster_mode_targets = []
     cluster_mode_luns = {}
     clustered_extents = set()
-    all_cluster_mode = False
+    active_extents = []
     if failover_status == "MASTER":
         local_ip = middleware.call_sync("failover.local_ip")
         dlm_ready = middleware.call_sync("dlm.node_ready")
         if alua_enabled:
+            active_extents = middleware.call_sync("iscsi.extent.active_extents")
             clustered_extents = set(middleware.call_sync("iscsi.target.clustered_extents"))
             cluster_mode_targets = middleware.call_sync("iscsi.target.cluster_mode_targets")
     elif failover_status == "BACKUP":
@@ -102,21 +106,27 @@
                 logged_in_targets = {}
             else:
                 try:
-                    logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
+                    try:
+                        logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
+                    except Exception:
+                        # We might just experience a race, so attempt a quick retry
+                        time.sleep(1)
+                        logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
                 except Exception:
                     middleware.logger.warning('Failed to login HA targets', exc_info=True)
                     logged_in_targets = {}
+                    standby_node_requires_reload = True
                 try:
                     _cmt_cml = middleware.call_sync(
                         'failover.call_remote', 'iscsi.target.cluster_mode_targets_luns', [], {'raise_connect_error': False}
                     )
                 except Exception:
                     middleware.logger.warning('Unhandled error contacting remote node', exc_info=True)
+                    standby_node_requires_reload = True
                 else:
                     if _cmt_cml is not None:
                         cluster_mode_targets, cluster_mode_luns = _cmt_cml
                 clustered_extents = set(middleware.call_sync("iscsi.target.clustered_extents"))
-                all_cluster_mode = middleware.call_sync("iscsi.alua.all_cluster_mode")
         else:
             middleware.call_sync("iscsi.target.logout_ha_targets")
             targets = []
@@ -170,8 +180,13 @@
     else:
         cml = calc_copy_manager_luns(all_extent_names)
 
+    def set_active_lun_to_cluster_mode(extentname):
+        if extentname in active_extents and extentname in clustered_extents:
+            return True
+        return False
+
     def set_standby_lun_to_cluster_mode(device, targetname):
-        if all_cluster_mode or device in clustered_extents:
+        if device in clustered_extents:
             if targetname in cluster_mode_luns and int(device.split(':')[-1]) in cluster_mode_luns[targetname]:
                 return True
         return False
@@ -204,12 +219,15 @@ HANDLER dev_disk {
 
         DEVICE ${device} {
 ## We will only enter cluster_mode here if two conditions are satisfied:
-## 1. We are already in cluster_mode or all_cluster_mode is True, AND
+## 1. We are already in cluster_mode, AND
 ## 2. The corresponding LUN on the MASTER is in cluster_mode
 ## Note we use a similar check to determine whether the target will be enabled.
 %                 if set_standby_lun_to_cluster_mode(device, name):
             cluster_mode 1
 %                 else:
+<%
+    fix_cluster_mode.append(device)
+%>\
             cluster_mode 0
 %                 endif
         }
@@ -257,7 +275,7 @@ HANDLER ${handler} {
         t10_vend_id ${extent['vendor']}
         t10_dev_id ${extent['t10_dev_id']}
 %       if failover_status == "MASTER" and alua_enabled and dlm_ready:
-%       if extent['name'] in clustered_extents:
+%       if set_active_lun_to_cluster_mode(extent['name']):
         cluster_mode 1
 %       else:
         cluster_mode 0
@@ -329,7 +347,7 @@ TARGET_DRIVER iscsi {
             for initiator in group_initiators:
                 initiator_portal_access.add(f'{initiator}\#{address}')
 %>\
-%   if target['id'] in associated_targets:
+%   if associated_targets.get(target['id']):
 ##
 ## For ALUA rel_tgt_id is tied to controller, if not ALUA write it anyway
 ## to avoid it changing when ALUA is toggled.
@@ -407,7 +425,12 @@ ${retrieve_luns(target['id'], ' ' * 4)}\
 %       if node == "B":
         rel_tgt_id ${idx}
 %       endif
+## Mimic the enabled behavior of the base target.  Only enable if have associated extents
+%   if associated_targets.get(target['id']):
         enabled 1
+%   else:
+        enabled 0
+%   endif
         forward_dst 1
         aen_disabled 1
         forwarding 1
@@ -505,3 +528,9 @@ DEVICE_GROUP targets {
 }
 %     endif
 % endif
+<%
+    if standby_node_requires_reload:
+        middleware.call_sync('iscsi.alua.standby_reload')
+    elif fix_cluster_mode:
+        middleware.call_sync('iscsi.alua.standby_fix_cluster_mode', fix_cluster_mode)
+%>\
