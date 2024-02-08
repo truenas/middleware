@@ -1,12 +1,7 @@
-#!/usr/bin/env python3
-
-# Author: Eric Turgeon
-# License: BSD
-
-import pytest
 import sys
 import os
 from time import sleep
+from unittest.mock import ANY
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -18,6 +13,13 @@ def test_01_get_the_activated_bootenv():
     results = GET('/bootenv/?activated=True')
     assert results.status_code == 200, results.text
     active_be_id = results.json()[0]['id']
+
+
+def test_02_create_be_duplicate_name():
+    payload = {"name": active_be_id, "source": active_be_id}
+    results = POST("/bootenv/", payload)
+    assert results.status_code == 422, results.text
+    assert results.json() == {"bootenv_create.name": ANY}
 
 
 def test_02_creating_a_new_boot_environment_from_the_active_boot_environment():

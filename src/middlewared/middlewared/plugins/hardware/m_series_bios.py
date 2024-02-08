@@ -1,7 +1,7 @@
 import datetime
 
 from middlewared.service import Service
-from middlewared.utils.functools import cache
+from middlewared.utils.functools_ import cache
 
 
 class MseriesBiosService(Service):

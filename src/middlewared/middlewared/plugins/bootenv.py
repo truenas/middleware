@@ -247,12 +247,11 @@ class BootEnvService(CRUDService):
         return data['name']
 
     async def _clean_be_name(self, verrors, schema, name):
-        beadm_names = (await (await Popen(
-            f"{self.BE_TOOL} list -H | awk '{{print ${1}}}'",
-            shell=True,
+        beadm_names = (await run(
+            ["sh", "-c", f"{self.BE_TOOL} list -H | awk '{{print ${1}}}'"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-        )).communicate())[0].decode().split('\n')
+        )).stdout.decode().split('\n')
         if name in filter(None, beadm_names):
             verrors.add(f'{schema}.name', f'The name "{name}" already exists', errno.EEXIST)
 

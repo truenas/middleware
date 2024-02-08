@@ -1,12 +1,10 @@
 from middlewared.service import filterable, Service, job, private
 from middlewared.service_exception import CallError, MatchNotFound
-from middlewared.utils import Popen, run, filter_list
+from middlewared.utils import run, filter_list
 from middlewared.plugins.smb import SMBCmd, SMBPath
 
 import os
-import subprocess
 import time
-import asyncio
 
 
 class SMBService(Service):
@@ -105,14 +103,15 @@ class SMBService(Service):
 
             cmd.append('-t')
 
-            pdbcreate = await Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE
+            pdbcreate = await run(
+                cmd, input=" \n \n".encode(), check=False,
             )
-            out, err = await pdbcreate.communicate(input=" \n \n".encode())
             if pdbcreate.returncode != 0:
-                raise CallError(f'{username}: failed to create passdb user: {err.decode()}')
+                raise CallError(f'{username}: failed to create passdb user: {pdbcreate.stderr.decode()}')
 
-            setntpass = await run([SMBCmd.PDBEDIT.value, '-d', '0', '--set-nt-hash', smbpasswd_string[3], username], check=False)
+            setntpass = await run(
+                [SMBCmd.PDBEDIT.value, '-d', '0', '--set-nt-hash', smbpasswd_string[3], username], check=False,
+            )
             if setntpass.returncode != 0:
                 raise CallError(f'Failed to set NT password for {username}: {setntpass.stderr.decode()}')
 

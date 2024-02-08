@@ -5,7 +5,7 @@ from pathlib import Path
 from middlewared.schema import Dict, List, Ref, Str, accepts, returns
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
-from middlewared.utils.functools import cache
+from middlewared.utils.functools_ import cache
 from middlewared.plugins.rdma.interface import RDMAInterfaceService  # noqa (just import to start the service)
 
 PRODUCT_NAME_PREFIX = 'Product Name: '

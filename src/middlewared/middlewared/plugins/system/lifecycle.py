@@ -64,7 +64,7 @@ class SystemService(Service):
         if delay:
             await asyncio.sleep(delay)
 
-        await Popen(['/sbin/shutdown', '-r', 'now'])
+        await run(['/sbin/shutdown', '-r', 'now'])
 
     @accepts(Dict('system-shutdown', Int('delay', required=False), required=False))
     @returns()
@@ -82,7 +82,7 @@ class SystemService(Service):
         if delay:
             await asyncio.sleep(delay)
 
-        await Popen(['/sbin/poweroff'])
+        await run(['/sbin/poweroff'])
 
 
 async def _event_system_ready(middleware, event_type, args):

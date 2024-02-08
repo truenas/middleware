@@ -29,7 +29,7 @@ from middlewared.service import filterable, filterable_returns, job, private, Co
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
-from middlewared.utils.functools import cache
+from middlewared.utils.functools_ import cache
 from middlewared.validators import Range
 
 

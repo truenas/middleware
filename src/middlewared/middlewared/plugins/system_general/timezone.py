@@ -2,7 +2,7 @@ from subprocess import run
 
 from middlewared.schema import accepts, Dict, returns
 from middlewared.service import Service
-from middlewared.utils.functools import cache
+from middlewared.utils.functools_ import cache
 
 
 class SystemGeneralService(Service):

@@ -22,20 +22,18 @@ class TruecommandService(Service):
 
     @private
     async def generate_wg_keys(self):
-        cp = await Popen(['wg', 'genkey'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        private_key, stderr = await cp.communicate()
+        cp = await run(['wg', 'genkey'], check=False)
+        private_key = cp.stdout
         if cp.returncode:
             raise CallError(
-                f'Failed to generate key for wireguard with exit code ({cp.returncode}): {stderr.decode()}'
+                f'Failed to generate key for wireguard with exit code ({cp.returncode}): {cp.stderr.decode()}'
             )
 
-        cp = await Popen(
-            ['wg', 'pubkey'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        public_key, stderr = await cp.communicate(input=private_key)
+        cp = await run(['wg', 'pubkey'], input=private_key, check=False)
+        public_key = cp.stdout
         if cp.returncode:
             raise CallError(
-                f'Failed to generate public key for wireguard with exit code ({cp.returncode}): {stderr.decode()}'
+                f'Failed to generate public key for wireguard with exit code ({cp.returncode}): {cp.stderr.decode()}'
             )
 
         return {'wg_public_key': public_key.decode().strip(), 'wg_private_key': private_key.decode().strip()}

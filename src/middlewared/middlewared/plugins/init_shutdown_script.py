@@ -7,7 +7,7 @@ from middlewared.schema import Bool, Dict, Int, Patch, Str, ValidationErrors, ac
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen
+from middlewared.utils import run
 from middlewared.validators import Range
 
 
@@ -149,16 +149,9 @@ class InitShutdownScriptService(CRUDService):
             return
 
         try:
-            proc = await Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                shell=True,
-                close_fds=True
-            )
-            stdout, stderr = await proc.communicate()
+            proc = await run(['sh', '-c', cmd], stderr=subprocess.STDOUT, check=False)
             if proc.returncode:
-                self.logger.debug('Failed to execute %r with error %r', cmd, stdout.decode())
+                self.logger.debug('Failed to execute %r with error %r', cmd, proc.stdout.decode())
         except Exception:
             self.logger.debug('Unexpected failure executing %r', cmd, exc_info=True)
 
