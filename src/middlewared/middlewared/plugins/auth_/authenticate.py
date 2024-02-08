@@ -101,7 +101,6 @@ class AuthService(Service):
 
         # Two-factor authentication token is keyed by SID for activedirectory
         # users.
-        twofactor_id = user_info['id'] if user_info['local'] else user['sid_info']['sid']
         twofactor_enabled = bool((await self.middleware.call(
             'auth.twofactor.get_user_config',
             twofactor_id, user_info['local']
