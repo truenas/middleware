@@ -8,7 +8,7 @@ from pytest_dependency import depends
 
 from auto_config import ha, ip, pool_name
 from middlewared.client.client import ValidationErrors
-from middlewared.test.integration.assets.directory_service import active_directory
+# from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import fail
 from middlewared.test.integration.utils.client import client
 
@@ -43,6 +43,8 @@ def test_001_check_sysdataset_exists_on_boot_pool(ws_client):
     assert bp_basename == sysds['basename']
 
 
+"""
+# TODO: refactor and backport the active_directory test asset
 def test_activedirectory_requires_pool(request):
     depends(request, ['SYSDS'])
     with pytest.raises(ValidationErrors) as ve:
@@ -50,6 +52,7 @@ def test_activedirectory_requires_pool(request):
             pass
 
     assert ve.value.errors[0].errmsg.startswith('Active Directory service may not be enabled before data pool is created')
+"""
 
 
 def test_002_create_permanent_zpool(request, ws_client):
