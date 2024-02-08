@@ -56,6 +56,7 @@ class iSCSITargetToExtentService(CRUDService):
         await self._service_change('iscsitarget', 'reload')
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
             await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
+            await self.middleware.call('iscsi.alua.wait_cluster_mode', data['target'], data['extent'])
 
         return await self.get_instance(data['id'])
 
@@ -115,6 +116,8 @@ class iSCSITargetToExtentService(CRUDService):
         )
 
         await self._service_change('iscsitarget', 'reload')
+        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+            await self.middleware.call('iscsi.alua.removed_target_extent', associated_target['target'], associated_target['extent'])
 
         return result
 
