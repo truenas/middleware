@@ -535,3 +535,49 @@ class iSCSITargetAluaService(Service):
         # etc, but (currently) these don't work.  Therefore we'll use a sledgehammer
         await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_target', [targetname])
         await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
+
+    async def has_active_jobs(self):
+        """Return whether any ALUA jobs are running or queued."""
+        filter = [['OR', [["method", "=", "iscsi.alua.active_elected"],
+                          ["method", "=", "iscsi.alua.activate_extents"],
+                          ["method", "=", "iscsi.alua.standby_after_start"],
+                          ["method", "=", "iscsi.alua.standby_reload"],
+                          ["method", "=", "iscsi.alua.standby_fix_cluster_mode"],
+                          ]
+                   ]]
+        for _job in await self.middleware.call('core.get_jobs', filter):
+            if progress := _job.get('progress'):
+                if progress.get('percent') != 100:
+                    return True
+        return False
+
+    async def settled(self):
+        """Check whether the ALUA state is settled"""
+        if not await self.middleware.call("iscsi.global.alua_enabled"):
+            return True
+
+        # Check local: running & no active ALUA jobs
+        if (await self.middleware.call("service.get_unit_state", 'iscsitarget')) != 'active':
+            return False
+        if await self.middleware.call('iscsi.alua.has_active_jobs'):
+            return False
+
+        # Check remote: running & no active ALUA jobs
+        try:
+            if (await self.middleware.call('failover.call_remote', 'service.get_unit_state', ['iscsitarget'])) != 'active':
+                return False
+            if await self.middleware.call('failover.call_remote', 'iscsi.alua.has_active_jobs'):
+                return False
+        except Exception:
+            # If we fail to communicate with the other node, then we cannot be said to be settled.
+            return False
+        return True
+
+    async def wait_for_alua_settled(self, sleep_interval=1, retries=10):
+        while retries > 0:
+            if await self.middleware.call('iscsi.alua.settled'):
+                return
+            # self.logger.debug('Waiting for ALUA settle')
+            await asyncio.sleep(sleep_interval)
+            retries -= 1
+        self.logger.warning('Gave up waiting for ALUA to settle')
