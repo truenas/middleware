@@ -47,13 +47,6 @@
     for auth in middleware.call_sync('iscsi.auth.query'):
         authenticators[auth['tag']].append(auth)
 
-    associated_targets = defaultdict(list)
-    for a_tgt in filter(
-        lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
-        middleware.call_sync('iscsi.targetextent.query')
-    ):
-        associated_targets[a_tgt['target']].append(a_tgt)
-
     # There are several changes that must occur if ALUA is enabled,
     # and these are different depending on whether this is the
     # MASTER node, or BACKUP node.
@@ -133,13 +126,13 @@
             extents = {}
             portals = {}
             initiators = {}
-            associated_targets = defaultdict(list)
 
     nodes = {"A" : {"other" : "B", "group_id" : 101},
              "B" : {"other" : "A", "group_id" : 102}}
 
     # Let's map extents to respective ios
     all_extent_names = []
+    missing_extents = []
     extents_io = {'vdisk_fileio': [], 'vdisk_blockio': []}
     for extent in extents.values():
         if extent['locked']:
@@ -156,11 +149,14 @@
             extent['extent_path'] = extent['path']
             extents_io_key = 'vdisk_fileio'
 
-        if not alua_enabled and not os.path.exists(extent['extent_path']):
-            middleware.logger.debug(
-                'Skipping generation of extent %r as the underlying resource does not exist', extent['name']
-            )
-            continue
+        if not os.path.exists(extent['extent_path']):
+            # We're going to permit the extent if ALUA is enabled and we're the BACKUP node
+            if not alua_enabled or failover_status != "BACKUP":
+                middleware.logger.debug(
+                    'Skipping generation of extent %r as the underlying resource does not exist', extent['name']
+                )
+                missing_extents.append(extent['id'])
+                continue
 
         extent['name'] = extent['name'].replace('.', '_')  # CORE ctl device names are incompatible with SCALE SCST
         extents_io[extents_io_key].append(extent)
@@ -169,6 +165,23 @@
         extent['t10_dev_id'] = extent['serial']
         if not extent['xen']:
             extent['t10_dev_id'] = extent['serial'].ljust(31 - len(extent['serial']), ' ')
+
+    associated_targets = defaultdict(list)
+    # On ALUA BACKUP node (only) we will include associated_targets even if underlying device is missing
+    if failover_status == 'BACKUP':
+        if alua_enabled:
+            for a_tgt in filter(
+                lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
+                middleware.call_sync('iscsi.targetextent.query')
+            ):
+                associated_targets[a_tgt['target']].append(a_tgt)
+        # If ALUA not enabled then keep associated_targets as empty
+    else:
+        for a_tgt in filter(
+            lambda a: a['extent'] in extents and not extents[a['extent']]['locked'] and a['extent'] not in missing_extents,
+            middleware.call_sync('iscsi.targetextent.query')
+        ):
+            associated_targets[a_tgt['target']].append(a_tgt)
 
     # FIXME: SSD is not being reflected in the initiator, please look into it
 
@@ -533,4 +546,4 @@ DEVICE_GROUP targets {
         middleware.call_sync('iscsi.alua.standby_reload')
     elif fix_cluster_mode:
         middleware.call_sync('iscsi.alua.standby_fix_cluster_mode', fix_cluster_mode)
-%>\
+%>
