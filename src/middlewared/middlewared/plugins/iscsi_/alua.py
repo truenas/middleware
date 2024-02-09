@@ -408,13 +408,13 @@ class iSCSITargetAluaService(Service):
         self.standby_starting = False
         self.logger.debug('ALUA started on STANDBY')
 
-    @job(lock='standby_reload', transient=True)
-    async def standby_reload(self, job):
+    @job(lock='standby_delayed_reload', transient=True)
+    async def standby_delayed_reload(self, job):
         await asyncio.sleep(30)
         # Verify again that we are ALUA STANDBY
         if await self.middleware.call('iscsi.global.alua_enabled'):
             if await self.middleware.call('failover.status') == 'BACKUP':
-                await self.middleware.call('service.reload', 'iscsitarget')
+                await self.middleware.call('service.reload', 'iscsitarget', {'ha_propagate': False})
 
     @job(lock='standby_fix_cluster_mode', transient=True)
     async def standby_fix_cluster_mode(self, job, devices):
@@ -547,7 +547,7 @@ class iSCSITargetAluaService(Service):
                     'iscsi.alua.active_elected',
                     'iscsi.alua.activate_extents',
                     'iscsi.alua.standby_after_start',
-                    'iscsi.alua.standby_reload',
+                    'iscsi.alua.standby_delayed_reload',
                     'iscsi.alua.standby_fix_cluster_mode',
                 ]),
                 ('state', '=', 'RUNNING'),

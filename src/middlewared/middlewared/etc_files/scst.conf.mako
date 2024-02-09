@@ -550,7 +550,7 @@ DEVICE_GROUP targets {
 % endif
 <%
     if standby_node_requires_reload:
-        middleware.call_sync('iscsi.alua.standby_reload')
+        middleware.call_sync('iscsi.alua.standby_delayed_reload')
     elif fix_cluster_mode:
         middleware.call_sync('iscsi.alua.standby_fix_cluster_mode', fix_cluster_mode)
 %>
