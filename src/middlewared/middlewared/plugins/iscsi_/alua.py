@@ -411,7 +411,10 @@ class iSCSITargetAluaService(Service):
     @job(lock='standby_reload', transient=True)
     async def standby_reload(self, job):
         await asyncio.sleep(30)
-        await self.middleware.call('service.reload', 'iscsitarget')
+        # Verify again that we are ALUA STANDBY
+        if await self.middleware.call('iscsi.global.alua_enabled'):
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                await self.middleware.call('service.reload', 'iscsitarget')
 
     @job(lock='standby_fix_cluster_mode', transient=True)
     async def standby_fix_cluster_mode(self, job, devices):
@@ -538,18 +541,19 @@ class iSCSITargetAluaService(Service):
 
     async def has_active_jobs(self):
         """Return whether any ALUA jobs are running or queued."""
-        filter = [['OR', [["method", "=", "iscsi.alua.active_elected"],
-                          ["method", "=", "iscsi.alua.activate_extents"],
-                          ["method", "=", "iscsi.alua.standby_after_start"],
-                          ["method", "=", "iscsi.alua.standby_reload"],
-                          ["method", "=", "iscsi.alua.standby_fix_cluster_mode"],
-                          ]
-                   ]]
-        for _job in await self.middleware.call('core.get_jobs', filter):
-            if progress := _job.get('progress'):
-                if progress.get('percent') != 100:
-                    return True
-        return False
+        running_jobs = await self.middleware.call(
+            'core.get_jobs', [
+                ('method', 'in', [
+                    'iscsi.alua.active_elected',
+                    'iscsi.alua.activate_extents',
+                    'iscsi.alua.standby_after_start',
+                    'iscsi.alua.standby_reload',
+                    'iscsi.alua.standby_fix_cluster_mode',
+                ]),
+                ('state', '=', 'RUNNING'),
+            ]
+        )
+        return bool(running_jobs)
 
     async def settled(self):
         """Check whether the ALUA state is settled"""
