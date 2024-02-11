@@ -1,6 +1,7 @@
 import os
 
 from middlewared.schema import Dict, Str
+from middlewared.service import CallError
 from middlewared.validators import Match
 
 from .device import Device
@@ -66,14 +67,22 @@ class CDROM(Device):
                     is_valid = True
                 else:
                     os.chown(path, libvirt_user['pw_uid'], libvirt_user['pw_gid'])
-            if not is_valid and not self.middleware.call_sync(
-                'filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}
-            ):
-                verrors.add(
-                    'attributes.path',
-                    f'{LIBVIRT_USER!r} user cannot read from {path!r} path. Please ensure correct '
-                    'permissions are specified.'
-                )
+            if not is_valid:
+                try:
+                    self.middleware.call_sync(
+                        'filesystem.check_path_execute', path, 'USER', libvirt_user['pw_uid'], False
+                    )
+                except CallError as e:
+                    verrors.add('attributes.path', e.errmsg)
+
+                if not self.middleware.call_sync(
+                    'filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}
+                ):
+                    verrors.add(
+                        'attributes.path',
+                        f'{LIBVIRT_USER!r} user cannot read from {path!r} path. Please ensure correct '
+                        'permissions are specified.'
+                    )
                 # Now that we know libvirt user would not be able to read the file in any case,
                 # let's rollback the chown change we did
                 os.chown(path, current_owner.st_uid, current_owner.st_gid)
