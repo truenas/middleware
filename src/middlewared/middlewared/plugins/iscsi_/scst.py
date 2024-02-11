@@ -89,6 +89,9 @@ class iSCSITargetService(Service):
         else:
             return False
 
+    def delete_lun(self, iqn, lun):
+        pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt').write_text(f'del {lun}\n')
+
     def replace_lun(self, iqn, extent, lun):
         pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt').write_text(f'replace {extent} {lun}\n')
 

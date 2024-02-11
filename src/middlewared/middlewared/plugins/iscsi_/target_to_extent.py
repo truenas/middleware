@@ -52,7 +52,7 @@ class iSCSITargetToExtentService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self._service_change('iscsitarget', 'reload')
+        await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
             await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
             await self.middleware.call('iscsi.alua.wait_cluster_mode', data['target'], data['extent'])
@@ -115,10 +115,17 @@ class iSCSITargetToExtentService(CRUDService):
             'datastore.delete', self._config.datastore, id
         )
 
-        await self._service_change('iscsitarget', 'reload')
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
-            await self.middleware.call('iscsi.alua.removed_target_extent', associated_target['target'], associated_target['extent'])
+            target_name = (await self.middleware.call('iscsi.target.query',
+                                                      [['id', '=', associated_target['target']]],
+                                                      {'select': ['name'], 'get': True}))['name']
+            extent_name = (await self.middleware.call('iscsi.extent.query',
+                                                      [['id', '=', associated_target['extent']]],
+                                                      {'select': ['name'], 'get': True}))['name']
+            # iscsi.alua.removed_target_extent includes a local service reload
+            await self.middleware.call('failover.call_remote', 'iscsi.alua.removed_target_extent', [target_name, associated_target['lunid'], extent_name])
             await self.middleware.call('iscsi.alua.wait_for_alua_settled')
+        await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
         return result
 

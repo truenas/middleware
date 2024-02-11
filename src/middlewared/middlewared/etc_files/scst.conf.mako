@@ -98,14 +98,16 @@
             if middleware.call_sync("iscsi.alua.standby_write_empty_config"):
                 logged_in_targets = {}
             else:
-                try:
+                retries = 5
+                while retries:
                     try:
                         logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
+                        break
                     except Exception:
                         # We might just experience a race, so attempt a quick retry
                         time.sleep(1)
-                        logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
-                except Exception:
+                    retries -= 1
+                if not retries:
                     middleware.logger.warning('Failed to login HA targets', exc_info=True)
                     logged_in_targets = {}
                     standby_node_requires_reload = True

@@ -208,7 +208,6 @@ class iSCSITargetAluaService(Service):
         self.logger.debug('ALUA starting on STANDBY')
         self.standby_starting = True
         self.enabled = set()
-        self._standby_write_empty_config = False
 
         local_requires_reload = False
         remote_requires_reload = False
@@ -282,6 +281,13 @@ class iSCSITargetAluaService(Service):
             return
         else:
             job.set_progress(22, 'Remote iscsitarget is active')
+
+        # Reload on ACTIVE node.  This will ensure the HA targets are available
+        if self.standby_starting:
+            try:
+                await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget', self.HA_PROPAGATE])
+            except Exception:
+                self.logger.warning('Failed to reload ACTIVE iscsitarget', exc_info=True)
 
         # Next login the HA targets.
         reload_remote_quick_retries = RELOAD_REMOTE_QUICK_RETRIES
@@ -392,6 +398,9 @@ class iSCSITargetAluaService(Service):
         if not self.standby_starting:
             job.set_progress(100, 'Abandoned job.')
             return
+
+        # No point trying to write a full config until we have HA targets
+        self._standby_write_empty_config = False
 
         if remote_requires_reload:
             try:
@@ -530,14 +539,28 @@ class iSCSITargetAluaService(Service):
             self.logger.debug(f'Completed wait for {lextent}/{rextent} to enter cluster_mode')
             return
 
-    async def removed_target_extent(self, target_id, extent_id):
-        targetname = (await self.middleware.call('iscsi.target.query', [['id', '=', target_id]], {'select': ['name']}))[0]['name']
-        # If we have removed a LUN from a target, it'd be nice to think that we could just do one of the following
-        # - for i in /sys/class/scsi_device/*/device/rescan ; do echo 1 > $i ; done
-        # - iscsiadm -m node -R
-        # etc, but (currently) these don't work.  Therefore we'll use a sledgehammer
-        await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_target', [targetname])
-        await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
+    async def removed_target_extent(self, target_name, lun, extent_name):
+        """This is called on the STANDBY node to remove an extent from a target."""
+        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call("failover.status") == 'BACKUP':
+            try:
+                # First we will remove the LUN from the target.
+                global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+                iqn = f'{global_basename}:{target_name}'
+                await self.middleware.call('iscsi.scst.delete_lun', iqn, lun)
+
+                # Next we will disable cluster_mode for the extent
+                ha_iqn = f'{global_basename}:HA:{target_name}'
+                device = await self.middleware.call('iscsi.extent.logged_in_extent', ha_iqn, lun)
+                if device:
+                    await self.middleware.call('iscsi.scst.set_devices_cluster_mode', [device], 0)
+
+                # If we have removed a LUN from a target, it'd be nice to think that we could just do one of the following
+                # - for i in /sys/class/scsi_device/*/device/rescan ; do echo 1 > $i ; done
+                # - iscsiadm -m node -R
+                # etc, but (currently) these don't work.  Therefore we'll use a sledgehammer
+                await self.middleware.call('iscsi.target.logout_ha_target', target_name)
+            finally:
+                await self.middleware.call('service.reload', 'iscsitarget')
 
     async def has_active_jobs(self):
         """Return whether any ALUA jobs are running or queued."""
@@ -550,7 +573,7 @@ class iSCSITargetAluaService(Service):
                     'iscsi.alua.standby_delayed_reload',
                     'iscsi.alua.standby_fix_cluster_mode',
                 ]),
-                ('state', '=', 'RUNNING'),
+                ('state', 'in', ['RUNNING', 'WAITING']),
             ]
         )
         return bool(running_jobs)
