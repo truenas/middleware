@@ -176,6 +176,7 @@ class InterfaceService(CRUDService):
         Str('lag_protocol'),
         List('lag_ports', items=[Str('lag_port')]),
         List('bridge_members', items=[Str('member')]),  # FIXME: Please document fields for HA Hardware
+        Bool('enable_learning'),
         additional_attrs=True,
     )
 
@@ -304,9 +305,11 @@ class InterfaceService(CRUDService):
         if itype == InterfaceType.BRIDGE:
             filters = [('interface', '=', config['id'])]
             if br := self.middleware.call_sync('datastore.query', 'network.bridge', filters):
-                iface.update({'bridge_members': br[0]['members'], 'stp': br[0]['stp']})
+                iface.update({
+                    'bridge_members': br[0]['members'], 'stp': br[0]['stp'], 'enable_learning': br[0]['enable_learning']
+                })
             else:
-                iface.update({'bridge_members': [], 'stp': True})
+                iface.update({'bridge_members': [], 'stp': True, 'enable_learning': True})
 
         elif itype == InterfaceType.LINK_AGGREGATION:
             lag = self.middleware.call_sync(
@@ -714,6 +717,7 @@ class InterfaceService(CRUDService):
             )
         ]),
         List('bridge_members'),
+        Bool('enable_learning', default=True),
         Bool('stp', default=True),
         Str('lag_protocol', enum=['LACP', 'FAILOVER', 'LOADBALANCE', 'ROUNDROBIN', 'NONE']),
         Str('xmit_hash_policy', enum=[i.value for i in XmitHashChoices], default=None, null=True),
@@ -791,7 +795,8 @@ class InterfaceService(CRUDService):
             async for interface_id in self.__create_interface_datastore(data, {'interface': name}):
                 if data['type'] == 'BRIDGE':
                     await self.middleware.call('datastore.insert', 'network.bridge', {
-                        'interface': interface_id, 'members': data['bridge_members'], 'stp': data['stp']
+                        'interface': interface_id, 'members': data['bridge_members'], 'stp': data['stp'],
+                        'enable_learning': data['enable_learning']
                     })
                 elif data['type'] == 'LINK_AGGREGATION':
                     lagports_ids = []
@@ -1296,10 +1301,8 @@ class InterfaceService(CRUDService):
 
             if iface['type'] == 'BRIDGE':
                 options = {}
-                if 'bridge_members' in data:
-                    options['members'] = data['bridge_members']
-                if 'stp' in data:
-                    options['stp'] = data['stp']
+                for key in filter(lambda k: k in data, ('bridge_members', 'stp', 'enable_learning')):
+                    options[key] = data[key]
                 if options:
                     filters = [('interface', '=', config['id'])]
                     await self.middleware.call('datastore.update', 'network.bridge', filters, options)
