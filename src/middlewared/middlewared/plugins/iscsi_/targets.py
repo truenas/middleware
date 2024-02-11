@@ -130,6 +130,7 @@ class iSCSITargetService(CRUDService):
         # Then process the remote (BACKUP) config if we are HA and ALUA is enabled.
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
             await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
+            await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
         return await self.get_instance(pk)
 
@@ -347,6 +348,7 @@ class iSCSITargetService(CRUDService):
             await self.middleware.call('failover.call_remote', 'iscsi.target.remove_target', [target["name"]])
             await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
             await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_target', [target["name"]])
+            await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
         await self.middleware.call('iscsi.target.remove_target', target["name"])
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
