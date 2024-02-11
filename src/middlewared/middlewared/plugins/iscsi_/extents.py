@@ -196,6 +196,8 @@ class iSCSITargetExtentService(SharingService):
             )
         finally:
             await self._service_change('iscsitarget', 'reload')
+            if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+                await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
     @private
     def validate(self, data):
@@ -501,6 +503,19 @@ class iSCSITargetExtentService(SharingService):
                         result[extent_name] = ctl
                         break
         return result
+
+    @private
+    async def logged_in_extent(self, iqn, lun):
+        """Return the device name (e.g. 13:0:0:0) of the logged in IQN/lun"""
+        p = pathlib.Path('/sys/devices/platform')
+        for targetname in p.glob('host*/session*/iscsi_session/session*/targetname'):
+            logged_in_iqn = targetname.read_text().strip()
+            if logged_in_iqn == iqn:
+                for disk in targetname.parent.glob('device/target*/*/scsi_disk'):
+                    device = disk.parent.name
+                    if device.split(':')[-1] == str(lun):
+                        return device
+        return None
 
     @private
     async def active_extents(self):
