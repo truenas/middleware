@@ -35,6 +35,7 @@ class NetworkBridgeModel(sa.Model):
     members = sa.Column(sa.JSON(list), default=[])
     interface_id = sa.Column(sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'))
     stp = sa.Column(sa.Boolean())
+    enable_learning = sa.Column(sa.Boolean(), default=True)
 
 
 class NetworkInterfaceModel(sa.Model):
