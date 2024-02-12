@@ -1,4 +1,11 @@
 #!/bin/bash -ex
+
+
+FORCE_ARG=""
+if [[ "$1" == "--force" ]]; then
+    FORCE_ARG="--force"
+fi
+
 PACKAGES=(
     # need to make things work
     make
@@ -27,11 +34,13 @@ PACKAGES=(
 )
 PIP_PACKAGES=()
 
-if [[ -f /usr/local/libexec/disable-rootfs-protection && -S /var/run/middleware/middlewared.sock ]]; then
-    # Running on SCALE
-    /usr/local/libexec/disable-rootfs-protection
-    if [ $? -ne 0 ]; then
-        return 1
+if [[ -f /usr/local/libexec/disable-rootfs-protection ]]; then
+    if [[ "$FORCE_ARG" == "--force" ]] || [[ -S /var/run/middleware/middlewared.sock ]]; then
+        # Running on SCALE, with force regardless of socket, or without force but socket exists
+        /usr/local/libexec/disable-rootfs-protection $FORCE_ARG
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
     fi
 fi
 
