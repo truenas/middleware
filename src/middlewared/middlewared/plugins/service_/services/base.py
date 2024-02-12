@@ -46,6 +46,14 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
         else:
             return ServiceState(False, [])
 
+    async def get_unit_state(self):
+        return await self.middleware.run_in_thread(self._get_unit_state_sync)
+
+    def _get_unit_state_sync(self):
+        unit = self._get_systemd_unit()
+        state = unit.Unit.ActiveState
+        return state.decode("utf-8")
+
     async def start(self):
         await self._unit_action("Start")
 
