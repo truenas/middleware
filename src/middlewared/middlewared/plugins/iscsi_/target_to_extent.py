@@ -123,8 +123,14 @@ class iSCSITargetToExtentService(CRUDService):
             extent_name = (await self.middleware.call('iscsi.extent.query',
                                                       [['id', '=', associated_target['extent']]],
                                                       {'select': ['name'], 'get': True}))['name']
-            # iscsi.alua.removed_target_extent includes a local service reload
-            await self.middleware.call('failover.call_remote', 'iscsi.alua.removed_target_extent', [target_name, associated_target['lunid'], extent_name])
+            try:
+                # iscsi.alua.removed_target_extent includes a local service reload
+                await self.middleware.call('failover.call_remote', 'iscsi.alua.removed_target_extent', [target_name, associated_target['lunid'], extent_name])
+            except CallError as e:
+                if e.errno != CallError.ENOMETHOD:
+                    self.logger.warning('Failed up update STANDBY node', exc_info=True)
+                    # Better to continue than to raise the exception
+                await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
             await self.middleware.call('iscsi.alua.wait_for_alua_settled')
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
