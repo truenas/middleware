@@ -27,7 +27,7 @@ PACKAGES=(
 )
 PIP_PACKAGES=()
 
-if [ -f /usr/local/libexec/disable-rootfs-protection ]; then
+if [[ -f /usr/local/libexec/disable-rootfs-protection && -S /var/run/middleware/middlewared.sock ]]; then
     # Running on SCALE
     /usr/local/libexec/disable-rootfs-protection
     if [ $? -ne 0 ]; then
