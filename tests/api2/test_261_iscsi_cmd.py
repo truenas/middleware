@@ -326,6 +326,7 @@ def zvol_extent(zvol, extent_name='zvol_extent'):
 
 @contextlib.contextmanager
 def target_extent_associate(target_id, extent_id, lun_id=0):
+    alua_enabled = call('iscsi.global.alua_enabled')
     payload = {
         'target': target_id,
         'lunid': lun_id,
@@ -335,6 +336,9 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     associate_config = results.json()
+    if alua_enabled:
+        # Give a little time for the STANDBY target to surface
+        sleep(2)
 
     try:
         yield associate_config
@@ -342,6 +346,8 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
         results = DELETE(f"/iscsi/targetextent/id/{associate_config['id']}/", True)
         assert results.status_code == 200, results.text
         assert results.json(), results.text
+    if alua_enabled:
+        sleep(2)
 
 
 @contextlib.contextmanager
@@ -462,7 +468,7 @@ def isns_enabled(delay=5):
 
 
 @contextlib.contextmanager
-def alua_enabled(delay=3):
+def alua_enabled(delay=10):
     payload = {'alua': True}
     results = PUT("/iscsi/global", payload)
     assert results.status_code == 200, results.text
@@ -2007,7 +2013,7 @@ def _ha_reboot_master(delay=900):
     if not new_backup:
         raise RuntimeError('Backup controller did not surface.')
 
-    # Finally ensure that a failover is still not in progress
+    # Ensure that a failover is still not in progress
     in_progress = True
     while in_progress:
         try:
@@ -2024,6 +2030,17 @@ def _ha_reboot_master(delay=900):
 
     if in_progress:
         raise RuntimeError('Failover never completed.')
+
+    # Finally check the ALUA status
+    print("Checking ALUA status...")
+    retries = 12
+    while retries:
+        if call('iscsi.alua.settled'):
+            print("ALUA is settled")
+            break
+        retries -= 1
+        print("Waiting for ALUA to settle")
+        sleep(5)
 
 
 @pytest.mark.dependency(name="iscsi_alua_config")

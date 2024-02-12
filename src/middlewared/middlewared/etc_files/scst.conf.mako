@@ -1,9 +1,12 @@
 <%
     import itertools
     import os
+    import time
 
     from collections import defaultdict
     from pathlib import Path
+
+    from middlewared.service import CallError
 
     global_config = middleware.call_sync('iscsi.global.config')
 
@@ -36,6 +39,14 @@
                 cml[start_count] = device
         return cml
 
+    targets = middleware.call_sync('iscsi.target.query')
+    extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]], {'extra': {'use_cached_locked_datasets': False}})}
+    portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
+    initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
+    authenticators = defaultdict(list)
+    for auth in middleware.call_sync('iscsi.auth.query'):
+        authenticators[auth['tag']].append(auth)
+
     # There are several changes that must occur if ALUA is enabled,
     # and these are different depending on whether this is the
     # MASTER node, or BACKUP node.
@@ -54,7 +65,9 @@
     # - Write a DEVICE_GROUP section with two TARGET_GROUPs
     # - TARGET GROUPs and rel_tgt_id are tied to the controller,
     #   *not* to whether it is currently the MASTER or BACKUP
-    #
+    # - clustered_extents is used to prevent cluster_mode from being
+    #   enabled on entents at startup.  We will have to explicitly
+    #   write 1 to cluster_mode elsewhere.
     is_ha = middleware.call_sync('failover.licensed')
     alua_enabled = middleware.call_sync("iscsi.global.alua_enabled")
     failover_status = middleware.call_sync("failover.status")
@@ -67,37 +80,61 @@
                 if 'address' in addr:
                     failover_virtual_aliases.append(addr['address'])
 
+    standby_node_requires_reload = False
+    fix_cluster_mode = []
+    cluster_mode_targets = []
+    cluster_mode_luns = {}
+    clustered_extents = set()
+    active_extents = []
     if failover_status == "MASTER":
-        middleware.call_sync("iscsi.target.logout_ha_targets")
         local_ip = middleware.call_sync("failover.local_ip")
         dlm_ready = middleware.call_sync("dlm.node_ready")
+        if alua_enabled:
+            active_extents = middleware.call_sync("iscsi.extent.active_extents")
+            clustered_extents = set(middleware.call_sync("iscsi.target.clustered_extents"))
+            cluster_mode_targets = middleware.call_sync("iscsi.target.cluster_mode_targets")
     elif failover_status == "BACKUP":
         if alua_enabled:
-            logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
-            cluster_mode_targets = middleware.call_sync('failover.call_remote', 'iscsi.target.cluster_mode_targets')
+            if middleware.call_sync("iscsi.alua.standby_write_empty_config"):
+                logged_in_targets = {}
+            else:
+                retries = 5
+                while retries:
+                    try:
+                        logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
+                        break
+                    except Exception:
+                        # We might just experience a race, so attempt a quick retry
+                        time.sleep(1)
+                    retries -= 1
+                if not retries:
+                    middleware.logger.warning('Failed to login HA targets', exc_info=True)
+                    logged_in_targets = {}
+                    standby_node_requires_reload = True
+                try:
+                    _cmt_cml = middleware.call_sync(
+                        'failover.call_remote', 'iscsi.target.cluster_mode_targets_luns', [], {'raise_connect_error': False}
+                    )
+                except Exception:
+                    middleware.logger.warning('Unhandled error contacting remote node', exc_info=True)
+                    standby_node_requires_reload = True
+                else:
+                    if _cmt_cml is not None:
+                        cluster_mode_targets, cluster_mode_luns = _cmt_cml
+                clustered_extents = set(middleware.call_sync("iscsi.target.clustered_extents"))
         else:
             middleware.call_sync("iscsi.target.logout_ha_targets")
+            targets = []
+            extents = {}
+            portals = {}
+            initiators = {}
 
     nodes = {"A" : {"other" : "B", "group_id" : 101},
              "B" : {"other" : "A", "group_id" : 102}}
 
-    targets = middleware.call_sync('iscsi.target.query')
-    extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]], {'extra': {'use_cached_locked_datasets': False}})}
-    portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
-    initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
-    authenticators = defaultdict(list)
-    for auth in middleware.call_sync('iscsi.auth.query'):
-        authenticators[auth['tag']].append(auth)
-
-    associated_targets = defaultdict(list)
-    for a_tgt in filter(
-        lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
-        middleware.call_sync('iscsi.targetextent.query')
-    ):
-        associated_targets[a_tgt['target']].append(a_tgt)
-
     # Let's map extents to respective ios
     all_extent_names = []
+    missing_extents = []
     extents_io = {'vdisk_fileio': [], 'vdisk_blockio': []}
     for extent in extents.values():
         if extent['locked']:
@@ -115,10 +152,13 @@
             extents_io_key = 'vdisk_fileio'
 
         if not os.path.exists(extent['extent_path']):
-            middleware.logger.debug(
-                'Skipping generation of extent %r as the underlying resource does not exist', extent['name']
-            )
-            continue
+            # We're going to permit the extent if ALUA is enabled and we're the BACKUP node
+            if not alua_enabled or failover_status != "BACKUP":
+                middleware.logger.debug(
+                    'Skipping generation of extent %r as the underlying resource does not exist', extent['name']
+                )
+                missing_extents.append(extent['id'])
+                continue
 
         extent['name'] = extent['name'].replace('.', '_')  # CORE ctl device names are incompatible with SCALE SCST
         extents_io[extents_io_key].append(extent)
@@ -128,15 +168,50 @@
         if not extent['xen']:
             extent['t10_dev_id'] = extent['serial'].ljust(31 - len(extent['serial']), ' ')
 
+    associated_targets = defaultdict(list)
+    # On ALUA BACKUP node (only) we will include associated_targets even if underlying device is missing
+    if failover_status == 'BACKUP':
+        if alua_enabled:
+            for a_tgt in filter(
+                lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
+                middleware.call_sync('iscsi.targetextent.query')
+            ):
+                associated_targets[a_tgt['target']].append(a_tgt)
+        # If ALUA not enabled then keep associated_targets as empty
+    else:
+        for a_tgt in filter(
+            lambda a: a['extent'] in extents and not extents[a['extent']]['locked'] and a['extent'] not in missing_extents,
+            middleware.call_sync('iscsi.targetextent.query')
+        ):
+            associated_targets[a_tgt['target']].append(a_tgt)
+
     # FIXME: SSD is not being reflected in the initiator, please look into it
 
     target_hosts = middleware.call_sync('iscsi.host.get_target_hosts')
     hosts_iqns = middleware.call_sync('iscsi.host.get_hosts_iqns')
 
     if alua_enabled and failover_status == "BACKUP":
-        cml = calc_copy_manager_luns(list(itertools.chain.from_iterable(logged_in_targets.values())), True)
+        cml = calc_copy_manager_luns(list(itertools.chain.from_iterable([x for x in logged_in_targets.values() if x is not None])), True)
     else:
         cml = calc_copy_manager_luns(all_extent_names)
+
+    def set_active_lun_to_cluster_mode(extentname):
+        if extentname in active_extents and extentname in clustered_extents:
+            return True
+        return False
+
+    def set_standby_lun_to_cluster_mode(device, targetname):
+        if device in clustered_extents:
+            if targetname in cluster_mode_luns and int(device.split(':')[-1]) in cluster_mode_luns[targetname]:
+                return True
+        return False
+
+    def set_standy_target_to_enabled(targetname):
+        devices = logged_in_targets.get(targetname, [])
+        if devices:
+            if set(devices).issubset(clustered_extents):
+                return True
+        return False
 %>\
 ##
 ## If we are on a HA system then write out a cluster name, we'll hard-code
@@ -158,10 +233,17 @@ HANDLER dev_disk {
 %                 for device in devices:
 
         DEVICE ${device} {
-## Sanity check to ensure the MASTER target is in cluster_mode, if so then so are we
+## We will only enter cluster_mode here if two conditions are satisfied:
+## 1. We are already in cluster_mode, AND
+## 2. The corresponding LUN on the MASTER is in cluster_mode
 ## Note we use a similar check to determine whether the target will be enabled.
-%                 if name in cluster_mode_targets:
+%                 if set_standby_lun_to_cluster_mode(device, name):
             cluster_mode 1
+%                 else:
+<%
+    fix_cluster_mode.append(device)
+%>\
+            cluster_mode 0
 %                 endif
         }
 %                 endfor
@@ -186,9 +268,7 @@ TARGET_DRIVER copy_manager {
 }
 % endif
 ##
-## Do NOT write "HANDLER vdisk_fileio" and "HANDLER vdisk_blockio" sections if
-## we are BACKUP node.
-% if failover_status != "BACKUP":
+
 % for handler in extents_io:
 HANDLER ${handler} {
 %   for extent in extents_io[handler]:
@@ -210,14 +290,20 @@ HANDLER ${handler} {
         t10_vend_id ${extent['vendor']}
         t10_dev_id ${extent['t10_dev_id']}
 %       if failover_status == "MASTER" and alua_enabled and dlm_ready:
+%       if set_active_lun_to_cluster_mode(extent['name']):
         cluster_mode 1
+%       else:
+        cluster_mode 0
+%       endif
+%       endif
+%       if failover_status == "BACKUP" and alua_enabled:
+        active 0
 %       endif
     }
 
 %   endfor
 }
 % endfor
-% endif
 
 TARGET_DRIVER iscsi {
     enabled 1
@@ -277,9 +363,10 @@ TARGET_DRIVER iscsi {
             for initiator in group_initiators:
                 initiator_portal_access.add(f'{initiator}\#{address}')
 %>\
-%   if target['id'] in associated_targets:
+%   if associated_targets.get(target['id']):
 ##
-## For ALUA rel_tgt_id is tied to controller, if not ALUA don't bother writing it
+## For ALUA rel_tgt_id is tied to controller, if not ALUA write it anyway
+## to avoid it changing when ALUA is toggled.
 ##
 %       if alua_enabled:
 %           if node == "A":
@@ -288,6 +375,8 @@ TARGET_DRIVER iscsi {
 %           if node == "B":
         rel_tgt_id ${idx + 32000}
 %           endif
+%       else:
+        rel_tgt_id ${idx}
 %       endif
 ##
 ## For ALUA target is enabled if MASTER, disabled for BACKUP
@@ -295,7 +384,7 @@ TARGET_DRIVER iscsi {
 %       if alua_enabled:
 %           if failover_status == "MASTER":
         enabled 1
-%           elif failover_status == "BACKUP" and target['name'] in cluster_mode_targets:
+%           elif failover_status == "BACKUP" and set_standy_target_to_enabled(target['name']):
         enabled 1
 %           else:
         enabled 0
@@ -358,7 +447,12 @@ ${retrieve_luns(target['id'], ' ' * 4)}\
 %       if node == "B":
         rel_tgt_id ${idx}
 %       endif
+## Mimic the enabled behavior of the base target.  Only enable if have associated extents
+%   if associated_targets.get(target['id']):
         enabled 1
+%   else:
+        enabled 0
+%   endif
         forward_dst 1
         aen_disabled 1
         forwarding 1
@@ -456,3 +550,9 @@ DEVICE_GROUP targets {
 }
 %     endif
 % endif
+<%
+    if standby_node_requires_reload:
+        middleware.call_sync('iscsi.alua.standby_delayed_reload')
+    elif fix_cluster_mode:
+        middleware.call_sync('iscsi.alua.standby_fix_cluster_mode', fix_cluster_mode)
+%>

@@ -130,6 +130,7 @@ class iSCSITargetService(CRUDService):
         # Then process the remote (BACKUP) config if we are HA and ALUA is enabled.
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
             await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
+            await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
         return await self.get_instance(pk)
 
@@ -347,6 +348,7 @@ class iSCSITargetService(CRUDService):
             await self.middleware.call('failover.call_remote', 'iscsi.target.remove_target', [target["name"]])
             await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
             await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_target', [target["name"]])
+            await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
         await self.middleware.call('iscsi.target.remove_target', target["name"])
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
@@ -480,13 +482,8 @@ class iSCSITargetService(CRUDService):
 
         :return: dict keyed by target name, with list of the unsurfaced disk names or None as the value
         """
-        targets = await self.middleware.call('iscsi.target.query')
+        iqns = await self.middleware.call('iscsi.target.active_ha_iqns')
         global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
-
-        iqns = {}
-        for target in targets:
-            name = target['name']
-            iqns[name] = f'{global_basename}:HA:{name}'
 
         # Check what's already logged in
         existing = await self.middleware.call('iscsi.target.logged_in_iqns')
@@ -526,6 +523,12 @@ class iSCSITargetService(CRUDService):
             # Regen existing as it should have now changed
             existing = await self.middleware.call('iscsi.target.logged_in_iqns')
 
+            # This below one does NOT have the desired impact, despite the output from 'iscsiadm -m node -o show'
+            # cmd = ['iscsiadm', '-m', 'node', '-o', 'update', '-n', 'node.session.timeo.replacement_timeout', '-v', '10']
+            # await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+            # So instead do this.
+            await self.middleware.call('iscsi.target.set_ha_targets_sys', f'{global_basename}:HA:', 'recovery_tmo', '10\n')
+
         # Now calculate the result to hand back.
         result = {}
         for name, iqn in iqns.items():
@@ -548,13 +551,7 @@ class iSCSITargetService(CRUDService):
         When called on a HA BACKUP node will attempt to login to all internal HA targets,
         used in ALUA.
         """
-        targets = await self.middleware.call('iscsi.target.query')
-        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
-
-        iqns = {}
-        for target in targets:
-            name = target['name']
-            iqns[name] = f'{global_basename}:HA:{name}'
+        iqns = await self.middleware.call('iscsi.target.active_ha_iqns')
 
         # Check what's already logged in
         existing = await self.middleware.call('iscsi.target.logged_in_iqns')
@@ -615,10 +612,96 @@ class iSCSITargetService(CRUDService):
         cl_extents = set(await self.middleware.call('iscsi.target.clustered_extents'))
 
         # Now iterate over all the targets and return a list of those whose extents are all
-        # in cluster mode.
+        # in cluster mode.  Exclude targets with no extents.
         result = []
         for target in targets:
-            if target_extents[target['id']].issubset(cl_extents):
+            if target_extents[target['id']] and target_extents[target['id']].issubset(cl_extents):
                 result.append(target['name'])
 
         return result
+
+    @private
+    async def cluster_mode_targets_luns(self):
+        """
+        Returns a tuple containing:
+        - list of target names that are currently in cluster_mode on this controller.
+        - dict keyed by target name, where the value is a list of luns that are currently in cluster_mode on this controller.
+        """
+        targets = await self.middleware.call('iscsi.target.query')
+        extents = {extent['id']: extent for extent in await self.middleware.call('iscsi.extent.query', [['enabled', '=', True]])}
+        assoc = await self.middleware.call('iscsi.targetextent.query')
+
+        # Generate a dict, keyed by target ID whose value is a set of associated extent names
+        target_extents = defaultdict(set)
+        # Also Generate a dict, keyed by target ID whose value is a set of (lunID, extent name) tuples
+        target_luns = defaultdict(set)
+        for a_tgt in filter(
+            lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
+            assoc
+        ):
+            target_id = a_tgt['target']
+            extent_name = extents[a_tgt['extent']]['name']
+            target_extents[target_id].add(extent_name)
+            target_luns[target_id].add((a_tgt['lunid'], extent_name))
+
+        # Check sysfs to see what extents are in cluster mode
+        cl_extents = set(await self.middleware.call('iscsi.target.clustered_extents'))
+
+        cluster_mode_targets = []
+        cluster_mode_luns = defaultdict(list)
+
+        for target in targets:
+            # Find targets whose extents are all in cluster mode.  Exclude targets with no extents.
+            if target_extents[target['id']] and target_extents[target['id']].issubset(cl_extents):
+                cluster_mode_targets.append(target['name'])
+
+            for (lunid, extent_name) in target_luns.get(target['id'], {}):
+                if extent_name in cl_extents:
+                    cluster_mode_luns[target['name']].append(lunid)
+
+        return (cluster_mode_targets, cluster_mode_luns)
+
+    @private
+    async def active_targets(self):
+        """
+        Returns the names of all targets whose extents are neither disabled nor locked,
+        and which have at least one extent configured.
+        """
+        filters = [['OR', [['enabled', '=', False], ['locked', '=', True]]]]
+        bad_extents = []
+        for extent in await self.middleware.call('iscsi.extent.query', filters):
+            bad_extents.append(extent['id'])
+
+        targets = {t['id']: t['name'] for t in await self.middleware.call('iscsi.target.query', [], {'select': ['id', 'name']})}
+        assoc = {a_tgt['extent']: a_tgt['target'] for a_tgt in await self.middleware.call('iscsi.targetextent.query')}
+        for bad_extent in bad_extents:
+            del targets[assoc[bad_extent]]
+
+        # Also discount targets that do not have any extents
+        targets_with_extents = assoc.values()
+        for target_id in list(targets.keys()):
+            if target_id not in targets_with_extents:
+                del targets[target_id]
+
+        return list(targets.values())
+
+    @private
+    async def active_ha_iqns(self):
+        """Return a dict keyed by target name with a value of the corresponding HA IQN for all
+        targets that are deemed to be active_targets (i.e. no disabled of locked extents, and
+        at least one extent configured)."""
+        targets = await self.middleware.call('iscsi.target.active_targets')
+        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+
+        iqns = {}
+        for name in targets:
+            iqns[name] = f'{global_basename}:HA:{name}'
+
+        return iqns
+
+    @private
+    def set_ha_targets_sys(self, iqn_prefix, param, text):
+        sys_platform = pathlib.Path('/sys/devices/platform')
+        for targetname in sys_platform.glob('host*/session*/iscsi_session/session*/targetname'):
+            if targetname.read_text().startswith(iqn_prefix):
+                targetname.parent.joinpath(param).write_text(text)
