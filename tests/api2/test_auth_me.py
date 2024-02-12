@@ -1,6 +1,7 @@
 import pytest
 
 from middlewared.service_exception import CallError
+from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
@@ -91,3 +92,15 @@ def test_distinguishes_attributes():
             assert me['privilege']['webui_access']
 
     assert not call("datastore.query", "account.bsdusers_webui_attribute", [["uid", "=", admin["uid"]]])
+
+
+@pytest.mark.parametrize("role,expected",  [
+    (["READONLY_ADMIN", "FILESYSTEM_ATTRS_WRITE"], True),
+    (["READONLY_ADMIN"], True),
+    (["SHARING_ADMIN"], True),
+    (["FILESYSTEM_ATTRS_WRITE"], False)
+])
+def test_webui_access(role, expected):
+    with unprivileged_user_client(roles=role) as c:
+        me = c.call('auth.me')
+        assert me['privilege']['webui_access'] == expected

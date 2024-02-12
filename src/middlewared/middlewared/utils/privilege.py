@@ -22,7 +22,7 @@ def privilege_has_webui_access(privilege: dict) -> bool:
 
     Returns True if privilege grants webui access and False if it does not.
     """
-    return not any(ROLES[role].builtin for role in privilege['roles'])
+    return any(ROLES[role].builtin is False for role in privilege['roles'])
 
 
 def credential_has_full_admin(credential: object) -> bool:
