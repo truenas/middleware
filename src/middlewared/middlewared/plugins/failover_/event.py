@@ -14,7 +14,6 @@ from middlewared.schema import Dict, Bool, Int
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
-from time import sleep
 
 logger = logging.getLogger('failover')
 
@@ -52,6 +51,10 @@ class FailoverEventsService(Service):
     # before the other services during a failover event
     CRITICAL_SERVICES = ['iscsitarget', 'cifs', 'nfs']
 
+    # list of services that use service.become_active instead of
+    # service.restart during a failover on the MASTER node.
+    BECOME_ACTIVE_SERVICES = ['iscsitarget']
+
     # option to be given when changing the state of a service
     # during a failover event, we do not want to replicate
     # the state of a service to the other controller since
@@ -66,6 +69,13 @@ class FailoverEventsService(Service):
         logger.info('Restarting %s', service)
         return await asyncio.wait_for(
             self.middleware.create_task(self.middleware.call('service.restart', service, self.HA_PROPAGATE)),
+            timeout=timeout,
+        )
+
+    async def become_active_service(self, service, timeout):
+        logger.info('Become active %s', service)
+        return await asyncio.wait_for(
+            self.middleware.create_task(self.middleware.call('service.become_active', service)),
             timeout=timeout,
         )
 
@@ -92,7 +102,7 @@ class FailoverEventsService(Service):
             to_restart = [i for i in to_restart if i not in self.CRITICAL_SERVICES]
 
         exceptions = await asyncio.gather(
-            *[self.restart_service(svc, data['timeout']) for svc in to_restart],
+            *[self.become_active_service(svc, data['timeout']) if svc in self.BECOME_ACTIVE_SERVICES else self.restart_service(svc, data['timeout']) for svc in to_restart],
             return_exceptions=True
         )
         for svc, exc in zip(to_restart, exceptions):
@@ -403,6 +413,16 @@ class FailoverEventsService(Service):
             job.set_progress(None, description='ERROR')
             raise FencedError()
 
+        # fenced is now running, so we *are* the ACTIVE/MASTER node
+
+        # Kick off a job to clean up any left-over ALUA state from when we were STANDBY/BACKUP.
+        if self.run_call('service.started_or_enabled', 'iscsitarget'):
+            handle_alua = self.run_call('iscsi.global.alua_enabled')
+            if handle_alua:
+                self.run_call('iscsi.alua.active_elected')
+        else:
+            handle_alua = False
+
         if not fobj['volumes']:
             # means we received a master event but there are no zpools to import
             # (happens when the box is initially licensed for HA and being setup)
@@ -493,6 +513,8 @@ class FailoverEventsService(Service):
                 logger.error(f'Error unlocking ZFS encrypted datasets: {unlock_job.error}')
             elif unlock_job.result['failed']:
                 logger.error('Failed to unlock %s ZFS encrypted dataset(s)', ','.join(unlock_job.result['failed']))
+            else:
+                logger.info('Successfully completed unlock for %r', vol['name'])
 
         # if we fail to import all zpools then alert the user because nothing
         # is going to work at this point
@@ -519,6 +541,10 @@ class FailoverEventsService(Service):
                 )
 
         logger.info('Volume imports complete.')
+
+        # Now that the volumes have been imported, get a head-start on activating extents.
+        if handle_alua:
+            self.run_call('iscsi.alua.activate_extents')
 
         # need to make sure failover status is updated in the middleware cache
         logger.info('Refreshing failover status')
@@ -732,14 +758,18 @@ class FailoverEventsService(Service):
             logger.info('Restarting SSH')
             self.run_call('service.restart', 'ssh', self.HA_PROPAGATE)
 
-        # If ALUA is configured reload the iscsitarget service (to regen config) and then start SCST
         if self.run_call('iscsi.global.alua_enabled'):
-            if not self.run_call('service.reload', 'iscsitarget', self.HA_PROPAGATE):
-                timeout = 5
-                while not self.run_call('service.start', 'iscsitarget', self.HA_PROPAGATE) and timeout > 0:
-                    logger.warning('Waiting one second to allow iscsitarget to start')
-                    sleep(1)
-                    timeout -= 1
+            if self.run_call('service.started_or_enabled', 'iscsitarget'):
+                logger.info('Starting iSCSI for ALUA')
+                # Rewrite the scst.conf config to a clean slate state
+                self.run_call('iscsi.alua.standby_write_empty_config', True)
+                self.run_call('etc.generate', 'scst')
+
+                # The most likely situation is that scst is not running
+                if self.run_call('iscsi.scst.is_kernel_module_loaded'):
+                    self.run_call('service.restart', 'iscsitarget', self.HA_PROPAGATE)
+                else:
+                    self.run_call('service.start', 'iscsitarget', self.HA_PROPAGATE)
 
         logger.info('Syncing encryption keys from MASTER node (if any)')
         try:

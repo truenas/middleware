@@ -13,6 +13,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import CallError, private, SharingService, ValidationErrors
 from middlewared.utils.size import format_size
 from middlewared.validators import Range
+from collections import defaultdict
 
 from .utils import MAX_EXTENT_NAME_LEN
 
@@ -195,6 +196,8 @@ class iSCSITargetExtentService(SharingService):
             )
         finally:
             await self._service_change('iscsitarget', 'reload')
+            if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+                await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
     @private
     def validate(self, data):
@@ -458,3 +461,73 @@ class iSCSITargetExtentService(SharingService):
                 return e
 
         return True
+
+    @private
+    async def logged_in_extents(self):
+        """
+        Obtain the unsurfaced disk names for all extents currently logged into on
+        a HA STANDBY controller.
+
+        :return: dict keyed by extent name, with unsurfaced disk name as the value
+        """
+        result = {}
+
+        # First check if *anything* is logged in.
+        iqns = await self.middleware.call('iscsi.target.logged_in_iqns')
+        if not iqns:
+            return result
+
+        target_to_id = {t['name']: t['id'] for t in await self.middleware.call('iscsi.target.query', [], {'select': ['id', 'name']})}
+        extents = {e['id']: e for e in await self.middleware.call('iscsi.extent.query', [], {'select': ['id', 'name', 'locked']})}
+        assoc = await self.middleware.call('iscsi.targetextent.query')
+        # Generate a dict, keyed by target ID whose value is a set of (lunID, extent name) tuples
+        target_luns = defaultdict(set)
+        for a_tgt in filter(
+            lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
+            assoc
+        ):
+            target_id = a_tgt['target']
+            extent_name = extents[a_tgt['extent']]['name']
+            target_luns[target_id].add((a_tgt['lunid'], extent_name))
+
+        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+        ha_basename = f'{global_basename}:HA:'
+
+        for iqn in filter(lambda x: x.startswith(ha_basename), iqns):
+            target_name = iqn.split(':')[-1]
+            target_id = target_to_id[target_name]
+            for ctl in iqns[iqn]:
+                lun = int(ctl.split(':')[-1])
+                for (l, extent_name) in target_luns[target_id]:
+                    if l == lun:
+                        result[extent_name] = ctl
+                        break
+        return result
+
+    @private
+    async def logged_in_extent(self, iqn, lun):
+        """Return the device name (e.g. 13:0:0:0) of the logged in IQN/lun"""
+        p = pathlib.Path('/sys/devices/platform')
+        for targetname in p.glob('host*/session*/iscsi_session/session*/targetname'):
+            logged_in_iqn = targetname.read_text().strip()
+            if logged_in_iqn == iqn:
+                for disk in targetname.parent.glob('device/target*/*/scsi_disk'):
+                    device = disk.parent.name
+                    if device.split(':')[-1] == str(lun):
+                        return device
+        return None
+
+    @private
+    async def active_extents(self):
+        """
+        Returns the names of all extents who are neither disabled nor locked, and which are
+        associated with a target.
+        """
+        filters = [['enabled', '=', True], ['locked', '=', False]]
+        extents = await self.middleware.call('iscsi.extent.query', filters, {'select': ['id', 'name']})
+        assoc = [a_tgt['extent'] for a_tgt in await self.middleware.call('iscsi.targetextent.query')]
+        result = []
+        for extent in extents:
+            if extent['id'] in assoc:
+                result.append(extent['name'])
+        return result
