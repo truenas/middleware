@@ -1617,6 +1617,7 @@ class GroupService(CRUDService):
         ('add', Str('nt_name', null=True)),
         ('add', Str('sid', null=True)),
         ('add', List('roles', items=[Str('role')])),
+        register=True
     )
 
     @private

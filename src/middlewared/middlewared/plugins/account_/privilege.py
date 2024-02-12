@@ -49,8 +49,8 @@ class PrivilegeService(CRUDService):
         Int("id"),
         Str("builtin_name", null=True),
         Str("name", required=True, empty=False),
-        List("local_groups", items=[Int("local_group")]),
-        List("ds_groups", items=[Int("ds_group_gid"), SID("ds_group_sid")]),
+        List("local_groups", items=[Ref("group_entry")]),
+        List("ds_groups", items=[Ref("group_entry")]),
         List("allowlist", items=[Ref("allowlist_item")]),
         List("roles", items=[Str("role")]),
         Bool("web_shell", required=True),
@@ -72,6 +72,11 @@ class PrivilegeService(CRUDService):
         "privilege_entry",
         "privilege_create",
         ("rm", {"name": "builtin_name"}),
+        ("rm", {"name": "local_groups"}),
+        ("rm", {"name": "ds_groups"}),
+        ("add", List("local_groups", items=[Int("local_group")])),
+        ("add", List("ds_groups", items=[Int("ds_group_gid"), SID("ds_group_sid")])),
+        register=True
     ))
     async def do_create(self, data):
         """
@@ -100,9 +105,8 @@ class PrivilegeService(CRUDService):
     @accepts(
         Int("id", required=True),
         Patch(
-            "privilege_entry",
+            "privilege_create",
             "privilege_update",
-            ("rm", {"name": "builtin_name"}),
             ("attr", {"update": True}),
         )
     )
