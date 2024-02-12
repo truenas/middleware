@@ -427,6 +427,9 @@ class iSCSITargetAluaService(Service):
 
     @job(lock='standby_fix_cluster_mode', transient=True)
     async def standby_fix_cluster_mode(self, job, devices):
+        if self._standby_write_empty_config is not False:
+            self.logger.debug('Skipping standby_fix_cluster_mode')
+            return
         job.set_progress(0, 'Fixing cluster_mode')
         logged_in_extents = await self.middleware.call('iscsi.extent.logged_in_extents')
         device_to_srcextent = {v: k for k, v in logged_in_extents.items()}
