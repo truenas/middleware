@@ -143,14 +143,13 @@ Javascript:
       ["local_groups.0.name", "=", "myuser"],
     ]
 
-Alternatively, the index may be omitted, which will result in the result returning if any array member has a key matching the
-value.
+Alternatively, an asterisk (`*`) may be substituted for the array index, which match any entry where an array member has a key matching the value. for example, the following query-filters if passed to the `privilege.query` endpoint will return entries where any member of the local groups array has a `name` key with the value of `myuser`.
 
 Javascript:
 
     :::javascript
     [
-      ["local_groups.name", "=", "myuser"],
+      ["local_groups.*.name", "=", "myuser"],
     ]
 
 

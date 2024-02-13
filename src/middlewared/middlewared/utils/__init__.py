@@ -126,7 +126,10 @@ def get(obj, path):
         elif isinstance(cur, (list, tuple)):
             if not left.isdigit():
                 # return all members and the remaining portion of path
-                return FilterGetResult(result=cur, key=left, done=False)
+                if left == '*':
+                    return FilterGetResult(result=cur, key=right, done=False)
+
+                raise ValueError(f'{left}: must be array index or wildcard character')
 
             left = int(left)
             cur = cur[left] if left < len(cur) else None
