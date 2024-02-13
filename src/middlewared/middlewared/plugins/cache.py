@@ -193,7 +193,9 @@ class DSCache(Service):
             entry['sid'] = None
             entry['nt_name'] = None
 
-        entry['roles'] = []
+        if entry is not None:
+            entry['roles'] = []
+
         return entry
 
     @accepts(
