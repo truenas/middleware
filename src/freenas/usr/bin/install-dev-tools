@@ -1,4 +1,14 @@
 #!/bin/bash -ex
+
+FORCE_ARG=""
+if [[ "$1" == "--force" ]]; then
+    FORCE_ARG="--force"
+fi
+
+if [[ ! -S /var/run/middleware/middlewared.sock ]]; then
+    FORCE_ARG="--force"
+fi
+
 PACKAGES=(
     # need to make things work
     make
@@ -29,7 +39,7 @@ PIP_PACKAGES=()
 
 if [ -f /usr/local/libexec/disable-rootfs-protection ]; then
     # Running on SCALE
-    /usr/local/libexec/disable-rootfs-protection
+    /usr/local/libexec/disable-rootfs-protection $FORCE_ARG
     if [ $? -ne 0 ]; then
         return 1
     fi
