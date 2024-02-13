@@ -7,7 +7,7 @@ import re
 import subprocess
 import time
 import json
-from dataclasses import dataclass
+from collections import namedtuple
 from datetime import datetime
 
 from middlewared.service_exception import MatchNotFound
@@ -34,11 +34,7 @@ class UnexpectedFailure(Exception):
     pass
 
 
-@dataclass
-class FilterGetResult:
-    result: object
-    key: str = None
-    done: bool = True
+FilterGetResult = namedtuple('FilterGetResult', 'result,key,done', defaults=(None, True))
 
 
 def bisect(condition, iterable):
@@ -441,7 +437,6 @@ class filters(object):
             operand_2 = the_filter[2]
 
         return self.filterop(list_item, (operand_1, the_filter[1], operand_2), getter)
-
 
     def do_filters(self, _list, filters, select, shortcircuit, value_maps):
         rv = []
