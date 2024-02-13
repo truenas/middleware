@@ -100,19 +100,7 @@ def partition(s):
             return rv + left, right
 
 
-def get(obj, path):
-    """
-    Get a path in obj using dot notation. In case of nested list or tuple, item may be specified by
-    numeric index, otherwise the contents of the array are returned along with the unresolved path
-    component. Returns FilterGetResult type.
-
-    e.g.
-        obj = {'foo': {'bar': '1'}, 'foo.bar': '2', 'foobar': ['first', 'second', 'third']}
-
-        path = 'foo.bar' returns '1'
-        path = 'foo\\.bar' returns '2'
-        path = 'foobar.0' returns 'first'
-    """
+def get_impl(obj, path):
     right = path
     cur = obj
     while right:
@@ -139,6 +127,22 @@ def get_attr(obj, path):
     types.
     """
     return FilterGetResult(getattr(obj, path))
+
+
+def get(obj, path):
+    """
+    Get a path in obj using dot notation. In case of nested list or tuple, item may be specified by
+    numeric index, otherwise the contents of the array are returned along with the unresolved path
+    component.
+
+    e.g.
+        obj = {'foo': {'bar': '1'}, 'foo.bar': '2', 'foobar': ['first', 'second', 'third']}
+
+        path = 'foo.bar' returns '1'
+        path = 'foo\\.bar' returns '2'
+        path = 'foobar.0' returns 'first'
+    """
+    return get_impl(obj, path).result
 
 
 def select_path(obj, path):
@@ -383,7 +387,7 @@ class filters(object):
             return None
 
         if isinstance(_list[0], dict):
-            return get
+            return get_impl
 
         return get_attr
 
