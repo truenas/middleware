@@ -120,7 +120,7 @@ class ChartReleaseService(Service):
         if tag == '$node_ip':
             return node_ip
         elif tag.startswith('$variable-'):
-            return get(release_data['config'], tag[len('$variable-'):])
+            return get(release_data['config'], tag[len('$variable-'):]).result
 
         return tag
 
