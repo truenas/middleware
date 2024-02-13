@@ -523,4 +523,4 @@ def test__filter_list_timestamp():
     assert len(filter_list(SAMPLE_AUDIT, [['timestamp.$date', '<', '2023-12-18T16:15:35Z']])) == 2
 
 def test__filter_list_nested_object_in_list():
-    assert len(filter_list(DATA_WITH_LISTODICTS, [['list.number', '=', 3]])) == 2
+    assert len(filter_list(DATA_WITH_LISTODICTS, [['list.*.number', '=', 3]])) == 2
