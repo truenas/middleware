@@ -515,7 +515,7 @@ class filters(object):
             else:
                 non_nulls.append(entry)
 
-        non_nulls = sorted(non_nulls, key=lambda x: get(x, order).result, reverse=reverse)
+        non_nulls = sorted(non_nulls, key=lambda x: get(x, order), reverse=reverse)
         return (nulls, non_nulls)
 
     def order_no_null(self, _list, order):
@@ -525,7 +525,7 @@ class filters(object):
         else:
             reverse = False
 
-        return sorted(_list, key=lambda x: get(x, order).result, reverse=reverse)
+        return sorted(_list, key=lambda x: get(x, order), reverse=reverse)
 
     def do_order(self, rv, order_by):
         for o in order_by:
