@@ -45,7 +45,7 @@ class Service(SimpleService):
         pod_name = pod_stats['podRef']['name']
         data[self.get_dimension_name(pod_name, StatsTypes.CPU.value)] = int(pod_stats['cpu']['usageNanoCores'])
         data[self.get_dimension_name(pod_name, StatsTypes.MEMORY.value)] = int(pod_stats['memory']['rssBytes'])
-        for interface in pod_stats['network']['interfaces']:
+        for interface in pod_stats.get('network', {'interfaces': []})['interfaces']:
             data[f'{self.get_dimension_name(pod_name, StatsTypes.NETWORK.value)}.incoming'] += int(interface['rxBytes'])
             data[f'{self.get_dimension_name(pod_name, StatsTypes.NETWORK.value)}.outgoing'] += int(interface['txBytes'])
 
