@@ -86,6 +86,40 @@ DATA_WITH_LISTODICTS = [
     }
 ]
 
+DATA_WITH_LISTODICTS_INCONSISTENT = [
+    {
+        'foo': 'foo',
+        'list': [{'number': 1}, 'canary'],
+    },
+    {
+        'foo': 'Foo',
+        'list': [1, {'number': 3}],
+    },
+    {
+        'foo': 'foO_',
+        'list': [{'number': 3}, ('bob', 1)],
+    },
+    {
+        'foo': 'bar',
+        'list': [{'number': 0}],
+    },
+    {
+        'foo': 'bar',
+        'list': 'whointheirrightmindwoulddothis'
+    },
+    {
+        'foo': 'bar',
+    },
+    {
+        'foo': 'bar',
+        'list': None,
+    },
+    {
+        'foo': 'bar',
+        'list': 42,
+    },
+]
+
 DATA_SELECT_COMPLEX = [
     {
         'foo': 'foo',
@@ -523,4 +557,7 @@ def test__filter_list_timestamp():
     assert len(filter_list(SAMPLE_AUDIT, [['timestamp.$date', '<', '2023-12-18T16:15:35Z']])) == 2
 
 def test__filter_list_nested_object_in_list():
+    assert len(filter_list(DATA_WITH_LISTODICTS, [['list.*.number', '=', 3]])) == 2
+
+def test__filter_list_inconsistent_nested_object_in_list():
     assert len(filter_list(DATA_WITH_LISTODICTS, [['list.*.number', '=', 3]])) == 2
