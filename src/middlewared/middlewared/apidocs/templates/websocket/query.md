@@ -132,6 +132,28 @@ Javascript:
     ]
 
 
+When the path to the key contains an array, an array index may be manually specified. For example, the following query-filters
+if passed to the `privilege.query` endpoint will return entries where the first element of the local groups array has a name
+of "myuser".
+
+Javascript:
+
+    :::javascript
+    [
+      ["local_groups.0.name", "=", "myuser"],
+    ]
+
+Alternatively, the index may be omitted, which will result in the result returning if any array member has a key matching the
+value.
+
+Javascript:
+
+    :::javascript
+    [
+      ["local_groups.name", "=", "myuser"],
+    ]
+
+
 ${'####'} Datetime information
 
 Some query results may include datetime information encoded in JSON object via

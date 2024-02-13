@@ -7,6 +7,7 @@ import re
 import subprocess
 import time
 import json
+from dataclasses import dataclass
 from datetime import datetime
 
 from middlewared.service_exception import MatchNotFound
@@ -31,6 +32,13 @@ logger = logging.getLogger(__name__)
 
 class UnexpectedFailure(Exception):
     pass
+
+
+@dataclass
+class FilterGetResult:
+    result: object
+    key: str = None
+    done: bool = True
 
 
 def bisect(condition, iterable):
@@ -98,7 +106,9 @@ def partition(s):
 
 def get(obj, path):
     """
-    Get a path in obj using dot notation
+    Get a path in obj using dot notation. In case of nested list or tuple, item may be specified by
+    numeric index, otherwise the contents of the array are returned along with the unresolved path
+    component. Returns FilterGetResult type.
 
     e.g.
         obj = {'foo': {'bar': '1'}, 'foo.bar': '2', 'foobar': ['first', 'second', 'third']}
@@ -114,9 +124,22 @@ def get(obj, path):
         if isinstance(cur, dict):
             cur = cur.get(left)
         elif isinstance(cur, (list, tuple)):
+            if not left.isdigit():
+                # return all members and the remaining portion of path
+                return FilterGetResult(result=cur, key=left, done=False)
+
             left = int(left)
             cur = cur[left] if left < len(cur) else None
-    return cur
+
+    return FilterGetResult(cur)
+
+
+def get_attr(obj, path):
+    """
+    Simple wrapper around getattr to ensure that internal filtering methods return consistent
+    types.
+    """
+    return FilterGetResult(getattr(obj, path))
 
 
 def select_path(obj, path):
@@ -333,8 +356,17 @@ class filters(object):
 
     def filterop(self, i, f, source_getter):
         name, op, value = f
-        source = source_getter(i, name)
+        data = source_getter(i, name)
 
+        if not data.done:
+            new_filter = [data.key, op, value]
+            for entry in data.result:
+                if self.filterop(entry, new_filter, source_getter):
+                    return True
+
+            return False
+
+        source = data.result
         if op[0] == 'C':
             fn = self.opmap[op[1:]]
             source = casefold(source)
@@ -354,7 +386,7 @@ class filters(object):
         if isinstance(_list[0], dict):
             return get
 
-        return getattr
+        return get_attr
 
     def eval_filter(self, list_item, the_filter, getter, value_maps):
         """
@@ -481,7 +513,7 @@ class filters(object):
             else:
                 non_nulls.append(entry)
 
-        non_nulls = sorted(non_nulls, key=lambda x: get(x, order), reverse=reverse)
+        non_nulls = sorted(non_nulls, key=lambda x: get(x, order).result, reverse=reverse)
         return (nulls, non_nulls)
 
     def order_no_null(self, _list, order):
@@ -491,7 +523,7 @@ class filters(object):
         else:
             reverse = False
 
-        return sorted(_list, key=lambda x: get(x, order), reverse=reverse)
+        return sorted(_list, key=lambda x: get(x, order).result, reverse=reverse)
 
     def do_order(self, rv, order_by):
         for o in order_by:
