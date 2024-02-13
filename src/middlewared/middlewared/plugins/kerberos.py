@@ -844,6 +844,17 @@ class KerberosRealmService(CRUDService):
         """
         Delete a kerberos realm by ID.
         """
+        ldap_realm = (await self.middleware.call('ldap.config'))['kerberos_realm']
+        ad_realm = (await self.middleware.call('activedirectory.config'))['kerberos_realm']
+        verrors = ValidationErrors()
+
+        if id_ == ldap_realm:
+            verrors.add('kerberos_realm_delete.id', 'Kerberos realm is in use by the LDAP service')
+
+        if id_ == ad_realm:
+            verrors.add('kerberos_realm_delete.id', 'Kerberos realm is in use by the Active Directory service')
+
+        verrors.check()
         await self.middleware.call('datastore.delete', self._config.datastore, id_)
         await self.middleware.call('etc.generate', 'kerberos')
 
