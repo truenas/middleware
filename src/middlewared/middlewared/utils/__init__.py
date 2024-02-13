@@ -177,6 +177,9 @@ def casefold(obj):
 
 class filters(object):
     def op_in(x, y):
+        if x is None:
+            return False
+
         return operator.contains(y, x)
 
     def op_rin(x, y):
