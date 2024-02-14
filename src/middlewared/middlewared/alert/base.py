@@ -13,7 +13,7 @@ from middlewared.utils.lang import undefined
 __all__ = ["UnavailableException",
            "AlertClass", "OneShotAlertClass", "SimpleOneShotAlertClass", "DismissableAlertClass",
            "AlertCategory", "AlertLevel", "Alert",
-           "AlertSource", "FilePresenceAlertSource", "ThreadedAlertSource",
+           "AlertSource", "ThreadedAlertSource", "FilePresenceAlertSource",
            "AlertService", "ThreadedAlertService", "ProThreadedAlertService",
            "format_alerts", "ellipsis"]
 
@@ -321,21 +321,21 @@ class AlertSource:
         raise NotImplementedError
 
 
-class FilePresenceAlertSource(AlertSource):
-    path = NotImplemented
-    klass = NotImplemented
-
-    async def check(self):
-        if await self.middleware.run_in_thread(os.path.exists, self.path):
-            return Alert(self.klass)
-
-
 class ThreadedAlertSource(AlertSource):
     async def check(self):
         return await self.middleware.run_in_thread(self.check_sync)
 
     def check_sync(self):
         raise NotImplementedError
+
+
+class FilePresenceAlertSource(ThreadedAlertSource):
+    path = NotImplemented
+    klass = NotImplemented
+
+    def check_sync(self):
+        if os.path.exists(self.path):
+            return Alert(self.klass)
 
 
 class AlertService:
