@@ -39,8 +39,8 @@ class VrrpThreadService(Service):
             VrrpObjs.event_thread.unpause()
 
     def set_non_crit_ifaces(self):
-        if VrrpObjs.event_thread is not None:
-            VrrpObjs.event_thread.non_crit_ifaces = set(
+        if VrrpObjs.fifo_thread is not None:
+            VrrpObjs.fifo_thread.non_crit_ifaces = set(
                 i['int_interface'] for i in self.middleware.call_sync(
                     'datastore.query', 'network.interfaces'
                 ) if not i['int_critical']
@@ -53,7 +53,6 @@ class VrrpEventThread(Thread):
         super(VrrpEventThread, self).__init__()
         self.middleware = kwargs.get('middleware')
         self.event_queue = VrrpObjs.event_queue
-        self.non_crit_ifaces = kwargs.get('non_crit_ifaces') or VrrpObjs.non_crit_ifaces
         self.shutdown_event = Event()
         self.pause_event = Event()
         self.grace_period = 0.5
@@ -65,33 +64,6 @@ class VrrpEventThread(Thread):
 
     def shutdown(self):
         self.shutdown_event.set()
-
-    def format_fifo_msg(self, msg):
-        if any((
-            not isinstance(msg, dict),
-            not msg.get('event'),
-            len(msg['event'].split()) != 4,
-            not msg.get('time'),
-        )):
-            LOGGER.error('Ignoring unexpected VRRP event message: %r', msg)
-            return
-
-        try:
-            info = msg['event'].split()
-            ifname = info[1].split('_')[0].strip('"')  # interface
-            event = info[2]  # the state that is being transititoned to
-        except Exception:
-            LOGGER.error('Failed parsing vrrp message', exc_info=True)
-            return
-        else:
-            if event not in ('MASTER', 'BACKUP', 'FAULT'):
-                return
-
-            if event == 'FAULT':
-                # a FAULT message is sent when iface goes down
-                event = 'BACKUP'
-
-        return {'ifname': ifname, 'event': event, 'time': msg['time']}
 
     def pause(self):
         self.pause_event.set()
@@ -125,22 +97,13 @@ class VrrpEventThread(Thread):
                 sleep(0.2)
 
             try:
-                event = self.event_queue[-1]
-                this_event = self.format_fifo_msg(event)
+                this_event = self.event_queue[-1]
             except IndexError:
                 # loop is started but we've received no events
                 sleep(0.2)
                 continue
 
-            if this_event is None:
-                # an event that we ignore
-                self.event_queue.pop()
-                continue
-            elif this_event['ifname'] in self.non_crit_ifaces:
-                LOGGER.debug('Received an event (%r) for a non-critical interface, ignoring.', this_event)
-                self.event_queue.pop()
-                continue
-            elif last_event is None:
+            if last_event is None:
                 # first event (in the loop) so sleep `max_wait`
                 # before we act upon it
                 last_event = this_event
@@ -219,6 +182,7 @@ class VrrpFifoThread(Thread):
         self._vrrp_file = '/var/run/vrrpd.fifo'
         self.pause_event = Event()
         self.middleware = kwargs.get('middleware')
+        self.non_crit_ifaces = kwargs.get('non_crit_ifaces') or VrrpObjs.non_crit_ifaces
         self.event_queue = VrrpObjs.event_queue
         self.shutdown_line = '--SHUTDOWN--'
 
@@ -240,6 +204,33 @@ class VrrpFifoThread(Thread):
         except Exception:
             raise
 
+    def format_fifo_msg(self, msg):
+        if any((
+            not isinstance(msg, dict),
+            not msg.get('event'),
+            len(msg['event'].split()) != 4,
+            not msg.get('time'),
+        )):
+            LOGGER.error('Ignoring unexpected VRRP event message: %r', msg)
+            return
+
+        try:
+            info = msg['event'].split()
+            ifname = info[1].split('_')[0].strip('"')  # interface
+            event = info[2]  # the state that is being transititoned to
+        except Exception:
+            LOGGER.error('Failed parsing vrrp message', exc_info=True)
+            return
+        else:
+            if event not in ('MASTER', 'BACKUP', 'FAULT'):
+                return
+
+            if event == 'FAULT':
+                # a FAULT message is sent when iface goes down
+                event = 'BACKUP'
+
+        return {'ifname': ifname, 'event': event, 'time': msg['time']}
+
     def run(self):
         set_name('vrrp_fifo_thread')
         try:
@@ -260,8 +251,18 @@ class VrrpFifoThread(Thread):
                         event = line.strip()
                         if event == self.shutdown_line:
                             return
-                        else:
-                            self.event_queue.append({'event': event, 'time': time()})
+
+                        formatted = self.format_fifo_msg({'event': event, 'time': time()})
+                        if not formatted:
+                            continue
+                        elif formatted['ifname'] in self.non_crit_ifaces:
+                            LOGGER.debug(
+                                'Received an event (%r) for a non-critical interface, ignoring.',
+                                formatted
+                            )
+                            continue
+
+                        self.event_queue.append(formatted)
             except Exception:
                 if log_it:
                     LOGGER.warning(
@@ -296,16 +297,16 @@ async def _start_stop_vrrp_threads(middleware):
         # first time (without being rebooted) then we need to make
         # sure we start these threads
         timeout = (await middleware.call('failover.config'))['timeout']
-        if VrrpObjs.fifo_thread is None or not VrrpObjs.fifo_thread.is_alive():
-            VrrpObjs.fifo_thread = VrrpFifoThread(middleware=middleware)
-            VrrpObjs.fifo_thread.start()
-
         nci = set(
             i['int_interface'] for i in await middleware.call('datastore.query', 'network.interfaces')
             if not i['int_critical']
         )
+        if VrrpObjs.fifo_thread is None or not VrrpObjs.fifo_thread.is_alive():
+            VrrpObjs.fifo_thread = VrrpFifoThread(middleware=middleware, non_crit_ifaces=nci)
+            VrrpObjs.fifo_thread.start()
+
         if VrrpObjs.event_thread is None or not VrrpObjs.event_thread.is_alive():
-            VrrpObjs.event_thread = VrrpEventThread(middleware=middleware, timeout=timeout, non_crit_ifaces=nci)
+            VrrpObjs.event_thread = VrrpEventThread(middleware=middleware, timeout=timeout)
             VrrpObjs.event_thread.start()
 
 
