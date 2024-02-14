@@ -199,7 +199,7 @@ class UpdateService(Service):
 
         try:
             applied = self.middleware.call_sync('cache.get', 'update.applied')
-        except Exception:
+        except KeyError:
             applied = False
         if applied is True:
             return {'status': 'REBOOT_REQUIRED'}
