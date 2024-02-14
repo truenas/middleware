@@ -817,7 +817,7 @@ class IdmapDomainService(CRUDService):
             secret = data['options'].pop('ldap_user_dn_password')
 
             await self.middleware.call(
-                'directoryservices.secrets.set_ldap_secret',
+                'directoryservices.secrets.set_ldap_idmap_secret',
                 domain, data['options']['ldap_user_dn'], secret
             )
             await self.middleware.call('directoryservices.secrets.backup')
