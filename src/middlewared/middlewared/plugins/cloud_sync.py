@@ -1119,7 +1119,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         await self.middleware.call("core.job_abort", cloud_sync["job"]["id"])
         return True
 
-    @accepts(roles=["CLOUD_SYNC_WRITE"])
+    @accepts(roles=["CLOUD_SYNC_READ"])
     async def providers(self):
         """
         Returns a list of dictionaries of supported providers for Cloud Sync Tasks.
