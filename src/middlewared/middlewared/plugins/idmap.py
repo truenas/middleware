@@ -512,6 +512,9 @@ class IdmapDomainService(CRUDService):
             if i['name'] == data['name']:
                 verrors.add(f'{schema_name}.name', 'Name must be unique.')
 
+            if data.get('dns_domain_name') and data['dns_domain_name'] == i['dns_domain_name']:
+                verrors.add(f'{schema_name}.dns_domain_name', 'Name must be unique.')
+
             # Do not generate validation errors for overlapping with a disabled DS.
             if not ldap_enabled and i['name'] == 'DS_TYPE_LDAP':
                 continue
