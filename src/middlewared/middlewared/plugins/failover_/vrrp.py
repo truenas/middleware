@@ -23,7 +23,7 @@ class FailoverVrrpService(Service):
             return MASTER_PRIO
 
         master_event = self.middleware.call_sync('core.get_jobs', [
-            ('method', '=', 'failover.events.vrrp_master')
+            ('method', '=', 'failover.events.vrrp_master'),
             ('state', '=', 'RUNNING'),
         ])
         fenced = self.middleware.call_sync('failover.fenced.run_info')
