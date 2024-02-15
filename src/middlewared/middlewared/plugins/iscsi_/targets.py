@@ -574,12 +574,12 @@ class iSCSITargetService(CRUDService):
                 else:
                     self.logger.info('Successfully logged out from %r', iqn)
 
-                if failures:
-                    err = f'Failure logging out from targets: {", ".join(failures)}'
-                    if raise_error:
-                        raise CallError(err)
-                    else:
-                        self.logger.error(err)
+            if failures:
+                err = f'Failure logging out from targets: {", ".join(failures)}'
+                if raise_error:
+                    raise CallError(err)
+                else:
+                    self.logger.error(err)
 
     @private
     def clustered_extents(self):
