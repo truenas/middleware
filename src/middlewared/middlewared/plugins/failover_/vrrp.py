@@ -19,6 +19,9 @@ class FailoverVrrpService(Service):
         """Return the VRRP priority value that should be set
         based on whether or not this controller is the MASTER
         or BACKUP system"""
+        if self.middleware.call_sync('failover.status') == 'MASTER':
+            return MASTER_PRIO
+
         master_event = self.middleware.call_sync('core.get_jobs', [
             ('method', '=', 'failover.events.vrrp_master')
             ('state', '=', 'RUNNING'),
@@ -27,4 +30,5 @@ class FailoverVrrpService(Service):
         if master_event and fenced['running']:
             # a master event is taking place and it started fenced
             return MASTER_PRIO
+
         return BACKUP_PRIO
