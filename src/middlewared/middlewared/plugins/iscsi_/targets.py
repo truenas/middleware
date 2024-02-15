@@ -510,12 +510,12 @@ class iSCSITargetService(CRUDService):
                 else:
                     self.logger.info('Successfully logged into %r', iqn)
 
-                if failures:
-                    err = f'Failure logging in to targets: {", ".join(failures)}'
-                    if raise_error:
-                        raise CallError(err)
-                    else:
-                        self.logger.error(err)
+            if failures:
+                err = f'Failure logging in to targets: {", ".join(failures)}'
+                if raise_error:
+                    raise CallError(err)
+                else:
+                    self.logger.error(err)
 
             # Regen existing as it should have now changed
             existing = await self.middleware.call('iscsi.target.logged_in_iqns')
