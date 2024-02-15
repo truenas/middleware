@@ -11,6 +11,7 @@
     elif not licensed:
 	return
 
+    prio = middleware.call_sync('failover.vrrp.get_priority')
     config = middleware.call_sync('failover.config')
 
     advert_int = .68 # default 2 second timeout
@@ -60,9 +61,9 @@ vrrp_instance ${i['name']} {
     interface ${i['name'].split('_')[0]}
     state BACKUP
     advert_int ${advert_int}
-    nopreempt
+    preempt
     virtual_router_id 20
-    priority 254
+    priority ${prio}
     version 3
     unicast_peer {
     % for j in i['failover_aliases'] if node == 'A' else i['aliases']:

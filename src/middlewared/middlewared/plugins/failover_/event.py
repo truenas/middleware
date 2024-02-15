@@ -107,7 +107,12 @@ class FailoverEventsService(Service):
             to_restart = [i for i in to_restart if i not in self.CRITICAL_SERVICES]
 
         exceptions = await asyncio.gather(
-            *[self.become_active_service(svc, data['timeout']) if svc in self.BECOME_ACTIVE_SERVICES else self.restart_service(svc, data['timeout']) for svc in to_restart],
+            *[
+                self.become_active_service(svc, data['timeout'])
+                if svc in self.BECOME_ACTIVE_SERVICES
+                else self.restart_service(svc, data['timeout'])
+                for svc in to_restart
+            ],
             return_exceptions=True
         )
         for svc, exc in zip(to_restart, exceptions):
@@ -419,6 +424,20 @@ class FailoverEventsService(Service):
             raise FencedError()
 
         # fenced is now running, so we *are* the ACTIVE/MASTER node
+
+        # if 2x interfaces are in the same failover group and 1 of them goes
+        # down, the VIP will float to the other controller. However, a failover
+        # won't happen because the other interface is still UP on the master.
+        # If the down'ed interface comes back online, the VIP needs to float
+        # back to the original master controller. Reloading keepalived service
+        # re-generates the configuration file which ensures the config has the
+        # right priority set.
+        logger.info('Pausing failover event processing')
+        self.run_call('vrrpthread.pause_events')
+        logger.info('Taking ownership of all VIPs')
+        self.run_call('service.reload', 'keepalived', self.HA_PROPAGATE)
+        logger.info('Unpausing failover event processing')
+        self.run_call('vrrpthread.unpause_events')
 
         # Kick off a job to clean up any left-over ALUA state from when we were STANDBY/BACKUP.
         if self.run_call('service.started_or_enabled', 'iscsitarget'):
