@@ -1190,7 +1190,7 @@ class UserService(CRUDService):
                                 errno.EEXIST)
 
         await run('truenas-set-authentication-method.py', check=True, encoding='utf-8', errors='ignore',
-                  input=json.dumps({'username': username, 'password': password}).encode('utf-8'))
+                  input=json.dumps({'username': username, 'password': password}))
         await self.middleware.call('failover.datastore.force_send')
         await self.middleware.call('etc.generate', 'user')
 
