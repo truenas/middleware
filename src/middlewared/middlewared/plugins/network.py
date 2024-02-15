@@ -1301,7 +1301,9 @@ class InterfaceService(CRUDService):
 
             if iface['type'] == 'BRIDGE':
                 options = {}
-                for key in filter(lambda k: k in data, ('bridge_members', 'stp', 'enable_learning')):
+                if 'bridge_members' in data:
+                    options['members'] = data['bridge_members']
+                for key in filter(lambda k: k in data, ('stp', 'enable_learning')):
                     options[key] = data[key]
                 if options:
                     filters = [('interface', '=', config['id'])]
