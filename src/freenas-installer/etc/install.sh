@@ -591,7 +591,7 @@ partition_disks()
     fi
     # Regardless of upgrade/fresh installation, if we are creating a new pool, it's going to be named after value of NEW_BOOT_POOL
     BOOT_POOL=${NEW_BOOT_POOL}
-    zpool create -f -o cachefile=/tmp/zpool.cache -O mountpoint=none -O atime=off -O canmount=off ${BOOT_POOL} ${_mirror} ${_disksparts}
+    zpool create -f -o cachefile=/tmp/zpool.cache -o compatibility=grub2 -O mountpoint=none -O atime=off -O canmount=off ${BOOT_POOL} ${_mirror} ${_disksparts}
     zfs set compression=on ${BOOT_POOL}
     zfs create -o canmount=off ${BOOT_POOL}/ROOT
     zfs create -o mountpoint=legacy ${BOOT_POOL}/ROOT/${BENAME}
