@@ -7,6 +7,7 @@ import re
 import subprocess
 import time
 import json
+from collections import namedtuple
 from datetime import datetime
 
 from middlewared.service_exception import MatchNotFound
@@ -31,6 +32,9 @@ logger = logging.getLogger(__name__)
 
 class UnexpectedFailure(Exception):
     pass
+
+
+FilterGetResult = namedtuple('FilterGetResult', 'result,key,done', defaults=(None, True))
 
 
 def bisect(condition, iterable):
@@ -96,9 +100,40 @@ def partition(s):
             return rv + left, right
 
 
+def get_impl(obj, path):
+    right = path
+    cur = obj
+    while right:
+        left, right = partition(right)
+        if isinstance(cur, dict):
+            cur = cur.get(left)
+        elif isinstance(cur, (list, tuple)):
+            if not left.isdigit():
+                # return all members and the remaining portion of path
+                if left == '*':
+                    return FilterGetResult(result=cur, key=right, done=False)
+
+                raise ValueError(f'{left}: must be array index or wildcard character')
+
+            left = int(left)
+            cur = cur[left] if left < len(cur) else None
+
+    return FilterGetResult(cur)
+
+
+def get_attr(obj, path):
+    """
+    Simple wrapper around getattr to ensure that internal filtering methods return consistent
+    types.
+    """
+    return FilterGetResult(getattr(obj, path))
+
+
 def get(obj, path):
     """
-    Get a path in obj using dot notation
+    Get a path in obj using dot notation. In case of nested list or tuple, item may be specified by
+    numeric index, otherwise the contents of the array are returned along with the unresolved path
+    component.
 
     e.g.
         obj = {'foo': {'bar': '1'}, 'foo.bar': '2', 'foobar': ['first', 'second', 'third']}
@@ -107,16 +142,7 @@ def get(obj, path):
         path = 'foo\\.bar' returns '2'
         path = 'foobar.0' returns 'first'
     """
-    right = path
-    cur = obj
-    while right:
-        left, right = partition(right)
-        if isinstance(cur, dict):
-            cur = cur.get(left)
-        elif isinstance(cur, (list, tuple)):
-            left = int(left)
-            cur = cur[left] if left < len(cur) else None
-    return cur
+    return get_impl(obj, path).result
 
 
 def select_path(obj, path):
@@ -333,8 +359,17 @@ class filters(object):
 
     def filterop(self, i, f, source_getter):
         name, op, value = f
-        source = source_getter(i, name)
+        data = source_getter(i, name)
 
+        if not data.done:
+            new_filter = [data.key, op, value]
+            for entry in data.result:
+                if self.filterop(entry, new_filter, source_getter):
+                    return True
+
+            return False
+
+        source = data.result
         if op[0] == 'C':
             fn = self.opmap[op[1:]]
             source = casefold(source)
@@ -352,9 +387,9 @@ class filters(object):
             return None
 
         if isinstance(_list[0], dict):
-            return get
+            return get_impl
 
-        return getattr
+        return get_attr
 
     def eval_filter(self, list_item, the_filter, getter, value_maps):
         """
@@ -406,7 +441,6 @@ class filters(object):
             operand_2 = the_filter[2]
 
         return self.filterop(list_item, (operand_1, the_filter[1], operand_2), getter)
-
 
     def do_filters(self, _list, filters, select, shortcircuit, value_maps):
         rv = []
