@@ -107,7 +107,12 @@ class FailoverEventsService(Service):
             to_restart = [i for i in to_restart if i not in self.CRITICAL_SERVICES]
 
         exceptions = await asyncio.gather(
-            *[self.become_active_service(svc, data['timeout']) if svc in self.BECOME_ACTIVE_SERVICES else self.restart_service(svc, data['timeout']) for svc in to_restart],
+            *[
+                self.become_active_service(svc, data['timeout'])
+                if svc in self.BECOME_ACTIVE_SERVICES
+                else self.restart_service(svc, data['timeout'])
+                for svc in to_restart
+            ],
             return_exceptions=True
         )
         for svc, exc in zip(to_restart, exceptions):
