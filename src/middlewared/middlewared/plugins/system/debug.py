@@ -122,6 +122,7 @@ class SystemService(Service):
             node = self.middleware.call_sync('failover.node')
 
             tario = io.BytesIO()
+            host_status = self.middleware.call_sync('failover.status')
             with tarfile.open(fileobj=tario, mode='w') as tar:
 
                 if node == 'A':
@@ -131,7 +132,7 @@ class SystemService(Service):
                     my_hostname = network['hostname_b']
                     remote_hostname = network['hostname']
 
-                tar.add(debug_job.result, f'{my_hostname}.txz')
+                tar.add(debug_job.result, f'{my_hostname}{"_active" if host_status == "MASTER" else ""}.txz')
 
                 tarinfo = tarfile.TarInfo(f'{remote_hostname}.txz')
                 tarinfo.size = standby_debug.tell()
