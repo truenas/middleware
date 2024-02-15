@@ -81,6 +81,10 @@ ROLES = {
     'JBOF_READ': Role(),
     'JBOF_WRITE': Role(includes=['JBOF_READ']),
 
+    # Truecommand roles
+    'TRUECOMMAND_READ': Role(),
+    'TRUECOMMAND_WRITE': Role(includes=['TRUECOMMAND_READ']),
+
     # Crypto roles
     'CERTIFICATE_READ': Role(),
     'CERTIFICATE_WRITE': Role(includes=['CERTIFICATE_READ']),
