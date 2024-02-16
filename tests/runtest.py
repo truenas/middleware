@@ -3,7 +3,7 @@
 # Author: Eric Turgeon
 # License: BSD
 
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call as ws_call 
 from subprocess import call
 from sys import argv, exit
 import os
@@ -141,7 +141,7 @@ if not os.path.exists(artifacts):
 os.environ["MIDDLEWARE_TEST_IP"] = ip
 os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
 
-interface = call('interface.query', [], {'get': True})['id']
+interface = ws_call('interface.query', [], {'get': True})['id']
 
 cfg_content = f"""#!{sys.executable}
 
