@@ -141,7 +141,7 @@ if not os.path.exists(artifacts):
 os.environ["MIDDLEWARE_TEST_IP"] = ip
 os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
 
-iface = call('interface.query', [], {'get': True})['id']
+interface = call('interface.query', [], {'get': True})['id']
 
 cfg_content = f"""#!{sys.executable}
 
@@ -168,6 +168,8 @@ isns_ip = "{isns_ip}"
 cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
 cfg_file.close()
+
+print(cfg_content)
 
 from functions import setup_ssh_agent, create_key, add_ssh_key, get_folder
 from functions import SSH_TEST
