@@ -299,6 +299,9 @@ HANDLER ${handler} {
 %       if failover_status == "BACKUP" and alua_enabled:
         active 0
 %       endif
+%       if handler == 'vdisk_blockio':
+        threads_num 32
+%       endif
     }
 
 %   endfor
