@@ -141,7 +141,7 @@ if not os.path.exists(artifacts):
 os.environ["MIDDLEWARE_TEST_IP"] = ip
 os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
 
-interface = ws_call('interface.query', [], {'get': True})['id']
+interface = ws_call('interface.query', [['state.aliases.*.address', '=', ip]], {'get': True})['id']
 
 cfg_content = f"""#!{sys.executable}
 
