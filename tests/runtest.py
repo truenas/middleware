@@ -3,6 +3,7 @@
 # Author: Eric Turgeon
 # License: BSD
 
+from middlewared.test.integration.utils import call as ws_call
 from subprocess import call
 from sys import argv, exit
 import os
@@ -137,6 +138,11 @@ artifacts = f"{workdir}/artifacts/"
 if not os.path.exists(artifacts):
     os.makedirs(artifacts)
 
+os.environ["MIDDLEWARE_TEST_IP"] = ip
+os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
+
+interface = ws_call('interface.query', [['state.aliases.*.address', '=', ip]], {'get': True})['id']
+
 cfg_content = f"""#!{sys.executable}
 
 user = "root"
@@ -162,9 +168,6 @@ isns_ip = "{isns_ip}"
 cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
 cfg_file.close()
-
-os.environ["MIDDLEWARE_TEST_IP"] = ip
-os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
 
 from functions import setup_ssh_agent, create_key, add_ssh_key, get_folder
 from functions import SSH_TEST
