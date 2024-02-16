@@ -21,7 +21,7 @@ from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImpo
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 
 logger = logging.getLogger('failover')
-
+FAILOVER_LOCK_NAME = 'vrrp_event'
 
 # When we get to the point of transitioning to MASTER or BACKUP
 # we wrap the associated methods (`vrrp_master` and `vrrp_backup`)
@@ -350,7 +350,7 @@ class FailoverEventsService(Service):
 
         return fenced_error
 
-    @job(lock='vrrp_master')
+    @job(lock=FAILOVER_LOCK_NAME)
     def vrrp_master(self, job, fobj, ifname, event):
 
         # vrrp does the "election" for us. If we've gotten this far
@@ -667,7 +667,7 @@ class FailoverEventsService(Service):
         )['dataset']:
             self.middleware.create_task(self.middleware.call('kubernetes.start_service'))
 
-    @job(lock='vrrp_backup')
+    @job(lock=FAILOVER_LOCK_NAME)
     def vrrp_backup(self, job, fobj, ifname, event):
 
         # we need to check a couple things before we stop fenced
@@ -712,7 +712,7 @@ class FailoverEventsService(Service):
         logger.info('Pausing failover event processing')
         self.run_call('vrrpthread.pause_events')
         logger.info('Transitioning all VIPs off this node')
-        self.run_call('service.restart', 'keepalived', self.HA_PROPAGATE)
+        self.run_call('service.stop', 'keepalived', self.HA_PROPAGATE)
 
         # ticket 23361 enabled a feature to send email alerts when an unclean reboot occurrs.
         # TrueNAS HA, by design, has a triggered unclean shutdown.
@@ -812,6 +812,8 @@ class FailoverEventsService(Service):
             logger.warning('Unhandled exception persisting network interface link addresses on MASTER node',
                            exc_info=True)
 
+        logger.info('Starting VRRP daemon')
+        self.run_call('service.start', 'keepalived', self.HA_PROPAGATE)
         logger.info('Unpausing failover event processing')
         self.run_call('vrrpthread.unpause_events')
         logger.info('Successfully became the BACKUP node.')
