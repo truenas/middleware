@@ -1,3 +1,4 @@
+import asyncio
 import subprocess
 import time
 
@@ -7,7 +8,7 @@ from middlewared.plugins.jbof.redfish import (InvalidCredentialsError,
 from middlewared.schema import (Dict, Int, IPAddr, Password, Patch, Str,
                                 accepts, returns)
 from middlewared.service import (CallError, CRUDService, ValidationErrors,
-                                 private)
+                                 job, private)
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 from .functions import (decode_static_ip, get_sys_class_nvme_subsystem,
@@ -594,6 +595,118 @@ class JBOFService(CRUDService):
         for interface in interfaces:
             jbof_ip = jbof_static_ip_from_initiator_ip(interface['address'])
             await self.middleware.call('jbof.nvme_connect', jbof_ip)
+
+    @private
+    async def configure_jbof(self, node, shelf_index):
+        """Bring up a particular previously-configured JBOF on this node."""
+        possible_host_ips = []
+        jbof_ips = []
+
+        # Seeing as we're just going to be using possible_host_ips to filter a DB query,
+        # don't bother checking with the JBOF for its shelf_interface_count ... just
+        # assume a ridiculously high number (12) instead, so we interate over [0,1,11]
+        shelf_interface_count = 12
+        for eth_index in range(shelf_interface_count):
+            possible_host_ips.append(initiator_static_ip(shelf_index, eth_index))
+
+        # First bring up the interfaces on this host
+        interfaces = await self.middleware.call('rdma.interface.query', [['address', 'in', possible_host_ips],
+                                                                         ['node', '=', node]])
+        for interface in interfaces:
+            await self.middleware.call('rdma.interface.local_configure_interface',
+                                       interface['ifname'],
+                                       interface['address'],
+                                       interface['prefixlen'],
+                                       interface['mtu'])
+            jbof_ips.append(jbof_static_ip_from_initiator_ip(interface['address']))
+
+        # Next do the NVMe connect
+        # Include some retry code, but expect it won't get used.
+        retries = 5
+        while retries:
+            retries -= 1
+            # Note that we iterate over a COPY of jbof_ips so that we can remove items
+            for jbof_ip in jbof_ips[:]:
+                try:
+                    await self.middleware.call('jbof.nvme_connect', jbof_ip)
+                    jbof_ips.remove(jbof_ip)
+                    self.logger.debug(f'Connected NVMe/RoCE: {jbof_ip}')
+                except CallError:
+                    if retries:
+                        self.logger.info(f'Failed to connect to {jbof_ip}, will retry')
+                        await asyncio.sleep(1)
+                    else:
+                        raise
+            if not jbof_ips:
+                return
+
+    @private
+    @job(lock='configure_job')
+    async def configure_job(self, job, reload_fenced=False):
+        """Bring up any previously configured JBOF NVMe/RoCE configuration.
+
+        Each JBOF will be brought up in parallel.
+
+        Result will be a dict with keys 'failed' (boolean) and 'message' (str).
+        """
+        job.set_progress(0, 'Configure RDMA interfaces')
+        failed = False
+
+        if await self.middleware.call('failover.licensed'):
+            node = await self.middleware.call('failover.node')
+        else:
+            node = ''
+
+        jbofs = await self.middleware.call('jbof.query')
+        if not jbofs:
+            err = 'No JBOFs need to be configured'
+            job.set_progress(100, err)
+            return {'failed': failed, 'message': err}
+
+        # Bring up the JBOFs in parallel.
+        exceptions = await asyncio.gather(
+            *[self.configure_jbof(node, jbof['index']) for jbof in jbofs],
+            return_exceptions=True
+        )
+        failures = []
+        for exc in exceptions:
+            if isinstance(exc, Exception):
+                failures.append(str(exc))
+
+        # Report progress so far.
+        if reload_fenced:
+            percent_available = 90
+        else:
+            percent_available = 100
+        if failures:
+            # We know all_count is > 0 because of the return above.
+            all_count = len(jbofs)
+            fail_count = len(failures)
+            percent = int((percent_available * (all_count - fail_count)) / all_count)
+            err = f'Failure connecting {fail_count} JBOFs: {", ".join(failures)}'
+            self.logger.error(err)
+            job.set_progress(percent, err)
+            failed = True
+        else:
+            percent = percent_available
+            err = 'Completed boot-time bring up of NVMe/RoCE'
+            job.set_progress(percent, err)
+
+        # Reload fenced if requested
+        if reload_fenced and (await self.middleware.call('failover.fenced.run_info'))['running']:
+            try:
+                await self.middleware.call('failover.fenced.signal', {'reload': True})
+                self.logger.debug('Reloaded fenced')
+                job.set_progress(percent + 10, err + ', reloaded fenced')
+            except Exception:
+                self.logger.error('Unhandled exception reloading fenced', exc_info=True)
+                job.set_progress(percent, err + ', failed to reload fenced')
+                failed = True
+        else:
+            job.set_progress(percent + 10, err)
+
+        # This gets returned as the job.result
+        return {'failed': failed, 'message': err}
 
 
 async def setup(middleware):

@@ -152,19 +152,38 @@ class RDMAInterfaceService(CRUDService):
             with NDB(log='off') as ndb:
                 with ndb.interfaces[netdev] as dev:
                     with ndb.begin() as ctx:
-                        for addr in dev.ipaddr:
-                            ctx.push(dev.del_ip(address=addr['address'],
-                                                prefixlen=addr['prefixlen'],
-                                                family=addr['family']))
-                        if mtu:
-                            dev['mtu'] = mtu
+                        # First we will check to see if any change is required
+                        dirty = True
                         if address:
-                            ctx.push(dev.add_ip(address=address, prefixlen=prefixlen).set('state', 'up'))
+                            for addr in dev.ipaddr:
+                                if address == addr['address'] and prefixlen == addr['prefixlen']:
+                                    dirty = False
+                        if mtu and not dirty:
+                            dirty = mtu != dev['mtu']
+
+                        # Now reconfigure if necessary
+                        if dirty:
+                            for addr in dev.ipaddr:
+                                ctx.push(dev.del_ip(address=addr['address'],
+                                                    prefixlen=addr['prefixlen'],
+                                                    family=addr['family']))
+                            if mtu:
+                                dev['mtu'] = mtu
+                            if address:
+                                ctx.push(dev.add_ip(address=address, prefixlen=prefixlen).set('state', 'up'))
+                        else:
+                            # not dirty
+                            if dev['state'] != 'up':
+                                ctx.push(dev.set('state', 'up'))
                         if check:
                             ctx.push(ConnectionChecker(self.middleware,
                                                        ifname,
                                                        check['ping_ip'],
                                                        check.get('ping_mac')))
+            if dirty and not address:
+                with NDB(log='off') as ndb:
+                    with ndb.interfaces[netdev] as dev:
+                        dev.set('state', 'down')
             if check:
                 self.logger.info(f'Validated communication of {netdev} with IP {check["ping_ip"]}')
             return True
