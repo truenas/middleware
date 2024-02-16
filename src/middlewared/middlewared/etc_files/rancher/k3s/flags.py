@@ -30,7 +30,6 @@ def render(service, middleware):
         'audit-log-maxbackup=10',
         'audit-log-maxsize=100',
         'service-account-lookup=true',
-        'feature-gates=MixedProtocolLBService=true',
     ]
     kubelet_args = [
         f'config={KUBELET_CONFIG_PATH}',
