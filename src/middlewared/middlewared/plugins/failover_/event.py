@@ -303,7 +303,10 @@ class FailoverEventsService(Service):
 
             # means all zpools are already imported
             if fobj['volumes'] and event == 'MASTER' and not needs_imported:
-                logger.warning('Received a MASTER event but zpools are already imported, ignoring.')
+                logger.warning(
+                    'Received a MASTER event on %r but zpools are already imported, ignoring.',
+                    ifname
+                )
                 raise IgnoreFailoverEvent()
 
         # if we get here then the last verification step that
@@ -385,8 +388,8 @@ class FailoverEventsService(Service):
             # other node has them as MASTER so ignore the event.
             if backups:
                 logger.warning(
-                    'Received MASTER event for "%s", but other '
-                    'interfaces %s are still working on the '
+                    'Received MASTER event for %r, but other '
+                    'interfaces (%s) are still working on the '
                     'MASTER node. Ignoring event.', ifname, ', '.join(backups),
                 )
 
@@ -673,18 +676,18 @@ class FailoverEventsService(Service):
         #   TODO: Not sure how keepalived and laggs operate so need to test this
         #           (maybe the event only gets triggered if the lagg goes down)
         #
-        status = self.run_call(
+        masters, _ = self.run_call(
             'failover.vip.check_failover_group', ifname, fobj['groups']
         )
 
-        # this means that we received a backup event and the interface was
+        # this means that we received a BACKUP event and the interface was
         # in a failover group. And in that failover group, there were other
         # interfaces that were still in the MASTER state so ignore the event.
-        if len(status[0]):
+        if masters:
             logger.warning(
-                'Received BACKUP event for "%s", but other '
-                'interfaces "%r" are still working. '
-                'Ignoring event.', ifname, status[1],
+                'Received BACKUP event for %r, but other '
+                'interfaces (%s) are still working. '
+                'Ignoring event.', ifname, ', '.join(masters),
             )
 
             job.set_progress(None, description='IGNORED')
