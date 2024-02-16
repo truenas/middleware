@@ -338,6 +338,23 @@ class PoolService(Service):
             # event logic
             return
 
+        if self.middleware.call_sync('truenas.is_ix_hardware'):
+            # Attach NVMe/RoCE - wait up to 10 seconds
+            self.logger.info('Start bring up of NVMe/RoCE')
+            try:
+                jbof_job = self.middleware.call_sync('jbof.configure_job')
+                jbof_job.wait_sync(timeout=10)
+                if jbof_job.error:
+                    self.logger.error(f'Error attaching JBOFs: {jbof_job.error}')
+                elif jbof_job.result['failed']:
+                    self.logger.error(f'Failed to attach JBOFs:{jbof_job.result["message"]}')
+                else:
+                    self.logger.info(jbof_job.result['message'])
+            except TimeoutError:
+                self.logger.error('Timed out attaching JBOFs - will continue in background')
+            except Exception:
+                self.logger.error('Unexpected error', exc_info=True)
+
         set_cachefile_property = True
         dir_name = os.path.dirname(ZPOOL_CACHE_FILE)
         try:
