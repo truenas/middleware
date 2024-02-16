@@ -361,6 +361,23 @@ class FailoverEventsService(Service):
         # in this use case
         job.set_progress(None, description='ELECTING')
 
+        # Attach NVMe/RoCE - wait up to 10 seconds
+        logger.info('Start bring up of NVMe/RoCE')
+        try:
+            # Request fenced_reload just in case the job does not complete in time
+            jbof_job = self.run_call('jbof.configure_job', True)
+            jbof_job.wait_sync(timeout=10)
+            if jbof_job.error:
+                logger.error(f'Error attaching JBOFs: {jbof_job.error}')
+            elif jbof_job.result['failed']:
+                logger.error(f'Failed to attach JBOFs:{jbof_job.result["message"]}')
+            else:
+                logger.info(jbof_job.result['message'])
+        except TimeoutError:
+            logger.error('Timed out attaching JBOFs - will continue in background')
+        except Exception:
+            logger.error('Unexpected error', exc_info=True)
+
         fenced_error = None
         if event == 'forcetakeover':
             # reserve the disks forcefully ignoring if the other node has the disks
@@ -757,6 +774,14 @@ class FailoverEventsService(Service):
         # Pools are now exported and so we can make disks available to other controller
         logger.warning('Stopping fenced')
         self.run_call('failover.fenced.stop')
+
+        # Now that fenced is stopped, attach NVMe/RoCE.
+        logger.info('Start bring up of NVMe/RoCE')
+        try:
+            # Do not need to wait, nor request fenced_reload
+            self.run_call('jbof.configure_job')
+        except Exception:
+            logger.error('Unexpected error', exc_info=True)
 
         # We also remove this file here, because on boot we become BACKUP if the other
         # controller is MASTER. So this means we have no volumes to export which means
