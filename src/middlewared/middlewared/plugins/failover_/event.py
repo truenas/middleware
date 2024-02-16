@@ -21,7 +21,7 @@ from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImpo
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 
 logger = logging.getLogger('failover')
-
+FAILOVER_LOCK_NAME = 'vrrp_event'
 
 # When we get to the point of transitioning to MASTER or BACKUP
 # we wrap the associated methods (`vrrp_master` and `vrrp_backup`)
@@ -350,7 +350,7 @@ class FailoverEventsService(Service):
 
         return fenced_error
 
-    @job(lock='vrrp_master')
+    @job(lock=FAILOVER_LOCK_NAME)
     def vrrp_master(self, job, fobj, ifname, event):
 
         # vrrp does the "election" for us. If we've gotten this far
@@ -667,7 +667,7 @@ class FailoverEventsService(Service):
         )['dataset']:
             self.middleware.create_task(self.middleware.call('kubernetes.start_service'))
 
-    @job(lock='vrrp_backup')
+    @job(lock=FAILOVER_LOCK_NAME)
     def vrrp_backup(self, job, fobj, ifname, event):
 
         # we need to check a couple things before we stop fenced
