@@ -111,6 +111,11 @@ class iSCSITargetExtentService(SharingService):
 
         await self.middleware.call('iscsi.extent.save', data, 'iscsi_extent_create', verrors)
 
+        # This change is being made in conjunction with threads_num being specified in scst.conf
+        if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
+            zvolname = data['path'][5:]
+            await self.middleware.call('zfs.dataset.update', zvolname, {'properties': {'volthreading': {'value': 'off'}}})
+
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, {**data, 'vendor': 'TrueNAS'},
             {'prefix': self._config.datastore_prefix}
@@ -190,6 +195,11 @@ class iSCSITargetExtentService(SharingService):
 
         for target_to_extent in target_to_extents:
             await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'], force)
+
+        # This change is being made in conjunction with threads_num being specified in scst.conf
+        if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
+            zvolname = data['path'][5:]
+            await self.middleware.call('zfs.dataset.update', zvolname, {'properties': {'volthreading': {'value': 'on'}}})
 
         try:
             return await self.middleware.call(
