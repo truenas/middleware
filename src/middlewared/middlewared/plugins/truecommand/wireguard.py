@@ -101,7 +101,7 @@ class TruecommandService(Service):
 
     @no_auth_required
     @throttle(seconds=2, condition=throttle_condition)
-    @accepts(roles=['TRUECOMMAND_READ'])
+    @accepts()
     @returns(Dict(
         'truecommand_connected',
         Bool('connected', required=True),
