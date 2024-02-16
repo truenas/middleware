@@ -712,7 +712,7 @@ class FailoverEventsService(Service):
         logger.info('Pausing failover event processing')
         self.run_call('vrrpthread.pause_events')
         logger.info('Transitioning all VIPs off this node')
-        self.run_call('service.restart', 'keepalived', self.HA_PROPAGATE)
+        self.run_call('service.stop', 'keepalived', self.HA_PROPAGATE)
 
         # ticket 23361 enabled a feature to send email alerts when an unclean reboot occurrs.
         # TrueNAS HA, by design, has a triggered unclean shutdown.
@@ -812,6 +812,8 @@ class FailoverEventsService(Service):
             logger.warning('Unhandled exception persisting network interface link addresses on MASTER node',
                            exc_info=True)
 
+        logger.info('Starting VRRP daemon')
+        self.run_call('service.start', 'keepalived', self.HA_PROPAGATE)
         logger.info('Unpausing failover event processing')
         self.run_call('vrrpthread.unpause_events')
         logger.info('Successfully became the BACKUP node.')
