@@ -34,6 +34,7 @@ class TruecommandService(ConfigService):
         datastore = 'system.truecommand'
         datastore_extend = 'truecommand.tc_extend'
         cli_namespace = 'system.truecommand'
+        role_prefix = 'TRUECOMMAND'
 
     ENTRY = Dict(
         'truecommand_entry',
