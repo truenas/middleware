@@ -8,6 +8,8 @@ import time
 import traceback
 import uuid
 
+import html2text
+
 from middlewared.alert.base import (
     AlertCategory,
     alert_category_names,
@@ -582,7 +584,8 @@ class AlertService(Service):
                     if new_proactive_support_alerts:
                         if await self.middleware.call("support.is_available_and_enabled"):
                             support = await self.middleware.call("support.config")
-                            msg = [f"* {alert.formatted}" for alert in new_proactive_support_alerts]
+                            msg = [f"* {html2text.html2text(alert.formatted)}"
+                                   for alert in new_proactive_support_alerts]
 
                             serial = (await self.middleware.call("system.dmidecode_info"))["system-serial-number"]
 
