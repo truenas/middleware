@@ -176,7 +176,7 @@ class TruecommandService(ConfigService):
                 new
             )
 
-            self.middleware.send_event('truecommand.config', 'CHANGED', fields=(await self.config()))
+            self.middleware.send_event('truecommand.config', 'CHANGED', fields=(await self.event_config()))
 
             # We are going to stop truecommand service with this update anyways as only 2 possible actions
             # can happen on update
@@ -202,7 +202,7 @@ class TruecommandService(ConfigService):
     async def set_status(self, new_status):
         assert new_status in Status.__members__
         self.STATUS = Status(new_status)
-        self.middleware.send_event('truecommand.config', 'CHANGED', fields=(await self.config()))
+        self.middleware.send_event('truecommand.config', 'CHANGED', fields=(await self.event_config()))
 
     @private
     async def dismiss_alerts(self, dismiss_health=False, dismiss_health_only=False):
