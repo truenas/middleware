@@ -118,7 +118,7 @@ class PoolService(Service):
         else:
             pool_name = new_name
 
-        # Let's umount any datasets if root dataset of the new pool is locked and it has unencrypted datasets
+        # Let's umount any datasets if root dataset of the new pool is locked, and it has unencrypted datasets
         # beneath it. This is to prevent the scenario where the root dataset is locked and the child datasets
         # get mounted
         await self.handle_unencrypted_datasets_on_import(pool_name)
@@ -183,13 +183,15 @@ class PoolService(Service):
                     self.logger.warning('Failed to set immutable flag at %r: %r', encrypted_mountpoint, e)
 
         # update db
+        for pool in await self.middleware.call('datastore.query', 'storage.volume', [['vol_name', '=', pool_name]]):
+            await self.middleware.call('datastore.delete', 'storage.volume', pool['id'])
         pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
             'vol_name': pool_name,
             'vol_guid': guid,
         })
         await self.middleware.call('pool.scrub.create', {'pool': pool_id})
 
-        # reenable/restart any services dependent on this zpool
+        # re-enable/restart any services dependent on this pool
         pool = await self.middleware.call('pool.query', [('id', '=', pool_id)], {'get': True})
         key = f'pool:{pool["name"]}:enable_on_import'
         if await self.middleware.call('keyvalue.has_key', key):
