@@ -624,7 +624,7 @@ class IdmapDomainService(CRUDService):
     @accepts(Dict(
         'idmap_domain_create',
         Str('name', required=True),
-        Str('dns_domain_name'),
+        Str('dns_domain_name', null=True),
         Int('range_low', required=True, validators=[Range(min_=1000, max_=TRUENAS_IDMAP_MAX)]),
         Int('range_high', required=True, validators=[Range(min_=1000, max_=TRUENAS_IDMAP_MAX)]),
         Str('idmap_backend', required=True, enum=[x.name for x in IdmapBackend]),
