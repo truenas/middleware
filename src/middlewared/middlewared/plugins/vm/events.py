@@ -30,6 +30,7 @@ class VMService(Service, LibvirtConnectionMixin):
                 if vms := self.middleware.call_sync('vm.query', [['id', '=', int(vm_id)]], {'force_sql_filters': True}):
                     if dom.name() == f'{vms[0]["id"]}_{vms[0]["name"]}':
                         vm = vms[0]
+                        vm.pop('devices', None)
 
             if vm is None:
                 emit_type = 'REMOVED'

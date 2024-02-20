@@ -40,7 +40,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
                     }
                 )
                 self.middleware.send_event(
-                    'truecommand.config', 'CHANGED', fields=(await self.middleware.call('truecommand.config'))
+                    'truecommand.config', 'CHANGED', fields=(await self.middleware.call('truecommand.event_config'))
                 )
                 if status.get('tc_state') == 'running':
                     await self.middleware.call('truecommand.dismiss_alerts')
@@ -82,7 +82,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
                     }
                 )
                 self.middleware.send_event(
-                    'truecommand.config', 'CHANGED', fields=(await self.middleware.call('truecommand.config'))
+                    'truecommand.config', 'CHANGED', fields=(await self.middleware.call('truecommand.event_config'))
                 )
                 await self.middleware.call('truecommand.stop_truecommand_service')
                 break
