@@ -38,9 +38,9 @@ disk = call('disk.get_unused')[0]
 dd = call('device.get_disk', disk['name'])
 
 # Calculate expected values using the 'heuristic'
-alignment_offset = int(ssh('cat /sys/block/sdb/alignment_offset'))
-optimal_io_size = int(ssh('cat /sys/block/sdb/queue/optimal_io_size'))
-minimum_io_size = int(ssh('cat /sys/block/sdb/queue/minimum_io_size'))
+alignment_offset = int(ssh(f"cat /sys/block/{disk['name']}/alignment_offset"))
+optimal_io_size = int(ssh(f"cat /sys/block/{disk['name']}/queue/optimal_io_size"))
+minimum_io_size = int(ssh(f"cat /sys/block/{disk['name']}/queue/minimum_io_size"))
 
 grain_size = 0
 if 0 == optimal_io_size and 0 == alignment_offset:
