@@ -17,6 +17,7 @@ from bases.collection import read_last_line
 ABSOLUTE = 'absolute'
 ATA = 'ata'
 ATTR194 = '194'
+ATTR190 = '190'
 ATTR_TEMPERATURE = 'temperature'
 CSV = '.csv'
 DEF_AGE = 30
@@ -95,6 +96,14 @@ class AtaNormalized(BaseAtaSmartAttribute):
         return self.normalized_value
 
 
+class Ata190(BaseAtaSmartAttribute):
+    def value(self):
+        # logic copied over from upstream
+        # https://github.com/netdata/netdata/blob/c9f92a691c38b7bc4c55804738fb55023597a746/src/collectors
+        # /python.d.plugin/smartd_log/smartd_log.chart.py#L494
+        return 100 - int(self.normalized_value)
+
+
 class Ata194(BaseAtaSmartAttribute):
     # https://github.com/netdata/netdata/issues/3041
     # https://github.com/netdata/netdata/issues/5919
@@ -125,6 +134,8 @@ def ata_attribute_factory(value):
     name = value[0]
     if name == ATTR194:
         return Ata194(*value)
+    elif name == ATTR190:
+        return Ata190(*value)
 
 
 def scsi_attribute_factory(value):
@@ -136,6 +147,17 @@ def attribute_factory(value):
     if name.isdigit():
         return ata_attribute_factory(value)
     return scsi_attribute_factory(value)
+
+
+def get_temperature_attr(all_temp_attr):
+    # This basically returns which attr we are going to use for temperature
+    # We prefer attr 194, then 190, then temperature which is an attr for scsi disks
+    if ATTR194 in all_temp_attr:
+        return all_temp_attr[ATTR194]
+    elif ATTR190 in all_temp_attr:
+        return all_temp_attr[ATTR190]
+    elif ATTR_TEMPERATURE in all_temp_attr:
+        return all_temp_attr[ATTR_TEMPERATURE]
 
 
 def handle_error(*errors):
@@ -197,9 +219,13 @@ class BaseDisk:
     def populate_attrs(self):
         self.attrs = list()
         line = self.log_file.read()
+        all_attrs = {}
         for value in self.parser(line):
-            if attr := attribute_factory(value):
-                self.attrs.append(attr)
+            if (attr := attribute_factory(value)) and attr.name in [ATTR194, ATTR190, ATTR_TEMPERATURE]:
+                all_attrs[attr.name] = attr
+
+        if attr := get_temperature_attr(all_attrs):
+            self.attrs.append(attr)
 
         return len(self.attrs)
 
@@ -325,8 +351,8 @@ class Service(SimpleService):
 
         with contextlib.suppress(FileNotFoundError):
             # log path will not exist in an all flash system
-            for full_name in os.listdir(self.log_path):
-                disk = self.create_disk_from_file(full_name, current_time)
+            for path in Path(self.log_path).iterdir():
+                disk = self.create_disk_from_file(str(path), current_time)
                 if not disk:
                     continue
                 self.disks.append(disk)
@@ -335,13 +361,13 @@ class Service(SimpleService):
             self.disks.append(NVMEDisk(nvme_name, nvme_path))
         return len(self.disks)
 
-    def create_disk_from_file(self, full_name, current_time):
+    def create_disk_from_file(self, path, current_time):
+        full_name = os.path.basename(path)
         if not full_name.endswith(CSV):
             self.debug('skipping {0}: not a csv file'.format(full_name))
             return None
 
-        name = os.path.basename(full_name).split('.')[-3]
-        path = os.path.join(self.log_path, full_name)
+        name = full_name.split('.')[-3]
 
         if name in self.disks:
             self.debug('skipping {0}: already in disks'.format(full_name))
