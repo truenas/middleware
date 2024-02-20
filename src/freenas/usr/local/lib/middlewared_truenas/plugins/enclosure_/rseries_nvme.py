@@ -30,9 +30,9 @@ class EnclosureService(Service):
                 location = sysctl.filter(f'dev.pcib.{m.group(1)}.%location')[0].value
                 if product == 'TRUENAS-R50B':
                     if '_SB_.PC03.BR3A' in location:
-                        slot = 49
-                    elif '_SB_.PC00.RP01' in location:
                         slot = 50
+                    elif '_SB_.PC00.RP01' in location:
+                        slot = 49
                     else:
                         continue
                 elif product == 'TRUENAS-R50':
