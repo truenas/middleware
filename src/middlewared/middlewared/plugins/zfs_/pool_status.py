@@ -29,6 +29,7 @@ class ZPoolService(Service):
 	            #       7008beaf-4fa3-4c43-ba15-f3d5bea3fe0c  REMOVED      0     0     0
 	            #       sda1                                  ONLINE       0     0     0
                 return dev
+            return resolved
         except Exception:
             return path
 
