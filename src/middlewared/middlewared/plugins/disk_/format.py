@@ -6,7 +6,32 @@ from middlewared.service import CallError, private, Service
 class DiskService(Service):
 
     @private
-    def format(self, disk, data_size, swap_size_gb):
+    def format(self, disk, swap_size_gb):
+        """
+        Format a data drive with a maximized data partition
+        Rules:
+            - The min_data_size is 512MiB
+                i.e. the drive must be bigger than 512MiB + 2MiB (partition offsets)
+                NOTE: 512MiB is arbitrary, but allows for very small drives
+            - If swap_size_gb is not None, then
+                * The swap is sized in 1 GiB increments
+                * Drive partitioning will abort if requested swap cannot be accomodated
+                * A swap partition will be created only if the following is true:
+                    swap_size < drive_size - (data_size + partition_gaps)
+                * The data partition will be reduced by swap_size_gb
+            - The drive is left unchanged if the drive cannot be partitioned according to the rules
+
+        The current config default requested swap is 2 GiB
+        A typical drive partition diagram (assuming 1 MiB partition gaps):
+
+        | - unused - | - partition 1 - | - unused -| - partition 2 - | - unused - |
+        |------------|-----------------|-----------|-----------------|------------|
+        | 1 MiB gap  |   2 GiB swap    | 1 MiB gap |   N GiB data    | 1 MiB gap  |
+
+        """
+        if swap_size_gb is not None and (swap_size_gb < 0 or not isinstance(swap_size_gb, int)):
+            raise CallError('Requested swap must be a non-negative integer')
+
         dd = self.middleware.call_sync('device.get_disk', disk)
         if not dd:
             raise CallError(f'Unable to retrieve disk details for {disk!r}')
@@ -14,33 +39,46 @@ class DiskService(Service):
         if dd['dif']:
             raise CallError(f'Disk: {disk!r} is incorrectly formatted with Data Integrity Feature (DIF).')
 
+        # Get drive specs and size in sectors
+        device = parted.getDevice(f'/dev/{disk}')
+        drive_size_s = parted.sizeToSectors(dd['size'], 'B', device.sectorSize)
+
+        # Allocate space for the requested swap size
+        leave_free_space = parted.sizeToSectors(swap_size_gb, 'GiB', device.sectorSize)
+
+        # Minimum data partition size of 512 MiB is arbitrary
+        min_data_size = parted.sizeToSectors(512, 'MiB', device.sectorSize)
+        max_data_size = drive_size_s - leave_free_space
+
+        swap_gap = device.optimumAlignment.grainSize if leave_free_space > 0 else 0
+        partition_gaps = 2 * device.optimumAlignment.grainSize + swap_gap
+
+        # For validation we should also account for the gaps
+        if (max_data_size - partition_gaps) <= 0:
+            emsg = f'Disk {disk!r} capacity is too small. Please use a larger capacity drive' + (
+                ' or reduce swap.' if leave_free_space > 0 else '.'
+            )
+            raise CallError(emsg)
+
+        # At this point, the drive has passed validation.  Proceed with drive clean and partitioning
         job = self.middleware.call_sync('disk.wipe', disk, 'QUICK', False)
         job.wait_sync()
         if job.error:
             raise CallError(f'Failed to wipe disk {disk}: {job.error}')
 
-        device = parted.getDevice(f'/dev/{disk}')
         device.clobber()
         parted_disk = parted.freshDisk(device, 'gpt')
 
-        leave_free_space = parted.sizeToSectors(swap_size_gb, 'GiB', device.sectorSize)
-        if data_size is not None:
-            min_data_size = parted.sizeToSectors(data_size, 'B', device.sectorSize)
-        else:
-            min_data_size = parted.sizeToSectors(1, 'GiB', device.sectorSize)
-
-        # Try to give free space for _approximately_ the requested swap size
-        max_data_size = parted.sizeToSectors(dd['size'], 'B', device.sectorSize) - leave_free_space
-        if max_data_size <= 0:
-            raise CallError(f'Disk {disk!r} must be larger than {swap_size_gb} GiB')
         if max_data_size <= min_data_size:
             max_data_size = min_data_size + device.optimumAlignment.grainSize
 
         data_geometry = self._get_largest_free_space_region(parted_disk)
-        # Place the partition at the end of the disk so the swap is created at the beginning
+
+        # Place the data partition at the end of the disk. The swap is created at the beginning
         start_range = parted.Geometry(
             device,
-            data_geometry.start + leave_free_space + device.optimumAlignment.grainSize,
+            # We need the partition gap _only if_ there is a swap partition
+            data_geometry.start + leave_free_space + device.optimumAlignment.grainSize if leave_free_space > 0 else 0,
             end=data_geometry.end,
         )
         data_constraint = parted.Constraint(
@@ -64,29 +102,13 @@ class DiskService(Service):
 
         try:
             create_data_partition(data_constraint)
-        except parted.PartitionException:
-            if data_size is not None:
-                # Try to create data partition at the end of the disk, leaving `swap_size_gb` request unsatisfied
-                end_range = parted.Geometry(
-                    device,
-                    data_geometry.end - device.optimumAlignment.grainSize,
-                    end=data_geometry.end,
-                )
-                data_constraint = parted.Constraint(
-                    startAlign=device.optimumAlignment,
-                    endAlign=device.optimumAlignment,
-                    startRange=data_geometry,
-                    endRange=end_range,
-                    minSize=min_data_size,
-                    maxSize=max_data_size,
-                )
-                try:
-                    create_data_partition(data_constraint)
-                except parted.PartitionException:
-                    raise CallError(f'Disk {disk!r} must be larger than {data_size} bytes')
-            else:
-                raise CallError(f'Disk {disk!r} must be larger than 1 GiB')
+        except parted.PartitionException as e:
+            emsg = f'Disk {disk!r} capacity might be too small. Try a larger capacity drive' + (
+                ' or reduce swap.' if leave_free_space > 0 else '.'
+            )
+            raise CallError(f"{emsg}: {e}")
 
+        # If requested, add a swap partition
         if swap_size_gb > 0:
             min_swap_size = parted.sizeToSectors(1, 'GiB', device.sectorSize)
             # Select the free space region that we've left previously
@@ -137,6 +159,12 @@ class DiskService(Service):
                 fs=parted.FileSystem(type=partition.fileSystem.type, geometry=geometry),
                 geometry=geometry,
             )
+            # Add a human readable name
+            if partition.fileSystem.type == 'zfs':
+                new_partition.name = 'data'
+            elif 'swap' in partition.fileSystem.type:
+                new_partition.name = 'swap'
+
             parted_disk.addPartition(partition=new_partition, constraint=constraint)
 
         parted_disk.commit()

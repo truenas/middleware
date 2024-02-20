@@ -1,7 +1,5 @@
 import time
 
-import pytest
-
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.assets.pool import another_pool
 

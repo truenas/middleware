@@ -23,7 +23,8 @@ class PoolService(Service):
             swap_size = 0
             if config['create_swap'] and create_swap_partition:
                 swap_size = swapgb
-            await self.middleware.call('disk.format', disk, config.get('size'), swap_size)
+            # Drives are partitioned to maximize the data partition
+            await self.middleware.call('disk.format', disk, swap_size)
             formatted += 1
             job.set_progress(15, f'Formatting disks ({formatted}/{len_disks})')
 
