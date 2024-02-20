@@ -103,6 +103,7 @@ class ChartReleaseService(Service):
                     'available': new_status['available'],
                 }
             })
+            cached_chart_release['data'].pop('config', None)
             self.middleware.send_event(
                 'chart.release.query', 'CHANGED', id=name, fields=cached_chart_release['data']
             )
