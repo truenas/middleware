@@ -5,7 +5,9 @@ import re
 import pathlib
 from collections import OrderedDict
 
+from ixhardware import TRUENAS_UNKNOWN
 from libsg3.ses import EnclosureDevice
+
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CallError, CRUDService, filterable, private
 from middlewared.service_exception import MatchNotFound
@@ -14,8 +16,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
 from middlewared.plugins.enclosure_.r30_drive_identify import set_slot_status as r30_set_slot_status
 from middlewared.plugins.enclosure_.fseries_drive_identify import set_slot_status as fseries_set_slot_status
-from middlewared.plugins.truenas import TRUENAS_UNKNOWN
-
 
 logger = logging.getLogger(__name__)
 

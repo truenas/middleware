@@ -3,12 +3,13 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from ixhardware import TRUENAS_UNKNOWN
 from libsg3.ses import EnclosureDevice
+
 from middlewared.schema import accepts, Dict, Str, Int
 from middlewared.service import Service, filterable
 from middlewared.service_exception import MatchNotFound, ValidationError
 from middlewared.utils import filter_list
-from middlewared.plugins.truenas import TRUENAS_UNKNOWN
 
 from .map2 import combine_enclosures
 from .nvme2 import map_nvme

@@ -8,10 +8,11 @@ import re
 
 from pyudev import Context
 
+from ixhardware import PLATFORM_PREFIXES
 from libsg3.ses import EnclosureDevice
+
 from middlewared.service import Service
 from middlewared.utils.functools_ import cache
-from middlewared.plugins.truenas import PLATFORM_PREFIXES
 
 from .ha_hardware import HA_HARDWARE
 

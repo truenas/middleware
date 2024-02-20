@@ -3,6 +3,8 @@ import errno
 import json
 import os
 
+from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware
+
 from middlewared.schema import accepts, Bool, Dict, Patch, returns, Str
 from middlewared.service import cli_private, job, private, Service
 from middlewared.utils.functools_ import cache
@@ -24,34 +26,6 @@ user_attrs = [
     Str('zip'),
     Str('country'),
 ]
-
-# We tag SMBIOS with relevant strings for each platform
-# before we ship to customer. These are the various prefixes
-# that represent each hardware platform.
-# ('TRUENAS-X10', 'TRUENAS-M50', 'TRUENAS-MINI-X+', 'FREENAS-MINI-X', etc)
-PLATFORM_PREFIXES = (
-    'TRUENAS-Z',  # z-series
-    'TRUENAS-X',  # x-series
-    'TRUENAS-M',  # m-series AND current mini platforms
-    'TRUENAS-F',  # f-series (F60, F100, F130)
-    'TRUENAS-H',  # h-series (H10, H20)
-    'TRUENAS-R',  # freenas certified replacement
-    'FREENAS-MINI',  # minis tagged with legacy information
-)
-TRUENAS_UNKNOWN = 'TRUENAS-UNKNOWN'
-
-
-def get_chassis_hardware(dmi):
-    if dmi['system-product-name'].startswith(PLATFORM_PREFIXES):
-        return dmi['system-product-name']
-
-    if dmi['baseboard-product-name'] == 'iXsystems TrueNAS X10':
-        # could be that production didn't burn in the correct x-series
-        # model information so let's check the motherboard model as a
-        # last resort
-        return 'TRUENAS-X'
-
-    return TRUENAS_UNKNOWN
 
 
 class TruenasCustomerInformationModel(sa.Model):
@@ -77,14 +51,15 @@ class TrueNASService(Service):
         """
         Returns what type of hardware this is, detected from dmidecode.
         """
-        dmi = await self.middleware.call('system.dmidecode_info')
+        dmi = await self.middleware.call('system.dmidecode_info_internal')
         return get_chassis_hardware(dmi)
 
     @accepts(roles=['READONLY_ADMIN'])
     @returns(Bool('is_ix_hardware'))
     async def is_ix_hardware(self):
-        """Return a boolean value on whether or not this is hardware
-        that iXsystems sells."""
+        """
+        Return a boolean value on whether this is hardware that iXsystems sells.
+        """
         return await self.get_chassis_hardware() != TRUENAS_UNKNOWN
 
     @accepts(roles=['READONLY_ADMIN'])
