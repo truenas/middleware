@@ -56,14 +56,15 @@ class WebUIEnclosureService(Service):
 
                     pool_info = None
                     slot_info.update(self.disk_detail_dict())
-                    if slot_info['dev'] and (pool_info := disks_to_pools['disks'].get(slot_info['dev'])):
-                        # map zpool info first
-                        self.map_zpool_info(enc['id'], disk_slot, slot_info['dev'], pool_info)
-
-                        # now map disk details
+                    if slot_info['dev']:
+                        # map disk details
                         # NOTE: some of these fields need to be removed
                         # work with UI to remove unnecessary ones
                         self.map_disk_details(slot_info, disks_in_db)
+
+                        if (pool_info := disks_to_pools['disks'].get(slot_info['dev'])):
+                            # now map zpool info
+                            self.map_zpool_info(enc['id'], disk_slot, slot_info['dev'], pool_info)
 
                     slot_info.update({'pool_info': pool_info})
 
