@@ -42,6 +42,10 @@ DATA_WITH_NULL = [
         'number': 4,
         'list': [4],
     },
+    {
+        'number': 5,
+        'list': [5],
+    },
 ]
 
 DATA_WITH_CASE = [
@@ -422,7 +426,7 @@ def test__filter_list_option_nulls_first():
 
 
 def test__filter_list_option_nulls_last():
-    assert filter_list(DATA_WITH_NULL, [], {'order_by': ['nulls_last:foo']})[-1]['foo'] is None
+    assert filter_list(DATA_WITH_NULL, [], {'order_by': ['nulls_last:foo']})[-1].get('foo') is None
 
 
 def test__filter_list_option_casefold_equals():
@@ -579,3 +583,7 @@ def test__filter_list_inconsistent_nested_object_in_list():
 
 def test__filter_list_deeply_nested_lists():
     assert len(filter_list(DATA_WITH_DEEP_LISTS, [['list.*.list2.*.number', '=', 2]])) == 2
+
+
+def test__filter_list_undefined():
+    assert len(filter_list(DATA_WITH_NULL, [['foo', '=', None]])) == 1

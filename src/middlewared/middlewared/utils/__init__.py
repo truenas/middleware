@@ -11,6 +11,7 @@ from collections import namedtuple
 from datetime import datetime
 
 from middlewared.service_exception import MatchNotFound
+from .lang import undefined
 from .prctl import die_with_parent
 from .threading import io_thread_pool_executor
 
@@ -106,7 +107,7 @@ def get_impl(obj, path):
     while right:
         left, right = partition(right)
         if isinstance(cur, dict):
-            cur = cur.get(left)
+            cur = cur.get(left, undefined)
         elif isinstance(cur, (list, tuple)):
             if not left.isdigit():
                 # return all members and the remaining portion of path
@@ -142,7 +143,8 @@ def get(obj, path):
         path = 'foo\\.bar' returns '2'
         path = 'foobar.0' returns 'first'
     """
-    return get_impl(obj, path).result
+    data = get_impl(obj, path)
+    return data.result if data.result is not undefined else None
 
 
 def select_path(obj, path):
@@ -360,6 +362,9 @@ class filters(object):
     def filterop(self, i, f, source_getter):
         name, op, value = f
         data = source_getter(i, name)
+        if data.result is undefined:
+            # Key / attribute doesn't exist in value
+            return False
 
         if not data.done:
             new_filter = [data.key, op, value]
@@ -510,7 +515,7 @@ class filters(object):
         nulls = []
         non_nulls = []
         for entry in _list:
-            if entry[order] is None:
+            if entry.get(order) is None:
                 nulls.append(entry)
             else:
                 non_nulls.append(entry)
