@@ -335,6 +335,8 @@ class JBOFService(CRUDService):
         if up_before - up_after:
             self.logger.debug('Timed-out waiting for interfaces to come up')
             # Allow this to continue as we still might manage to ping it.
+        else:
+            self.logger.debug('Configured JBOF #%r', shelf_index)
 
     @private
     def unwire_shelf(self, mgmt_ip):
@@ -372,18 +374,20 @@ class JBOFService(CRUDService):
                 return
 
             connected_shelf_ips = []
-            for node in ('A', 'B'):
-                connected_shelf_ips = await self.hardwire_node(node, shelf_index, shelf_ip_to_mac, connected_shelf_ips)
+            results = await asyncio.gather(*[self.hardwire_node(node, shelf_index, shelf_ip_to_mac) for node in ('A', 'B')])
+            for (node, connected_shelf_ips) in zip(('A', 'B'), results):
                 if not connected_shelf_ips:
                     # Failed to connect any IPs => error
                     verrors.add(schema, f'Unable to communicate with the expansion shelf (node {node})')
                     return
+                self.logger.debug('Configured node %r: %r', node, connected_shelf_ips)
         else:
             connected_shelf_ips = await self.hardwire_node('', shelf_index, shelf_ip_to_mac)
             if not connected_shelf_ips:
                 # Failed to connect any IPs => error
                 verrors.add(schema, 'Unable to communicate with the expansion shelf')
                 return
+            self.logger.debug('Configured node: %r', connected_shelf_ips)
 
     @private
     async def hardwire_node(self, node, shelf_index, shelf_ip_to_mac, skip_ips=[]):
@@ -477,10 +481,9 @@ class JBOFService(CRUDService):
                 verrors.add(schema, 'Unable to determine this controllers position in chassis')
                 return
 
-            for node in ('A', 'B'):
-                await self.attach_drives_to_node(node, shelf_index)
+            await asyncio.gather(*[self.attach_drives_to_node(node, shelf_index) for node in ('A', 'B')])
         else:
-            await self.attach_drives_to_node(node, shelf_index)
+            await self.attach_drives_to_node('', shelf_index)
 
     @private
     async def attach_drives_to_node(self, node, shelf_index):
@@ -535,16 +538,21 @@ class JBOFService(CRUDService):
         except FileNotFoundError:
             self.logger.debug('Could not find NVMe subsystems to cleanup')
             return
+        nqns = []
         for subsys in subsystems.values():
             if self._all_subsys_addresses_match_ips(subsys, ips):
-                command = ['nvme', 'disconnect', '-n', subsys['nqn']]
-                ret = subprocess.run(command, capture_output=True)
-                if ret.returncode:
-                    error = ret.stderr.decode() if ret.stderr else ret.stdout.decode()
-                    if not error:
-                        error = 'No error message reported'
-                    self.logger.debug('Failed to execute command: %r with error: %r', " ".join(command), error)
-                    raise CallError(f'Failed disconnect NVMe disks: {error}')
+                nqns.append(subsys['nqn'])
+        if nqns:
+            self.logger.debug('Disconnecting %r NQNs', len(nqns))
+            command = ['nvme', 'disconnect', '-n', ','.join(nqns)]
+            ret = subprocess.run(command, capture_output=True)
+            if ret.returncode:
+                error = ret.stderr.decode() if ret.stderr else ret.stdout.decode()
+                if not error:
+                    error = 'No error message reported'
+                self.logger.debug('Failed to execute command: %r with error: %r', " ".join(command), error)
+                raise CallError(f'Failed disconnect NVMe disks: {error}')
+        self.logger.debug('Disconnected %r NQNs', len(nqns))
 
     @private
     async def shelf_interface_count(self, mgmt_ip):
@@ -568,9 +576,11 @@ class JBOFService(CRUDService):
         # Disconnect NVMe disks
         if await self.middleware.call('failover.licensed'):
             # HA system
-            await self.middleware.call('jbof.nvme_disconnect', possible_shelf_ips)
             try:
-                await self.middleware.call('failover.call_remote', 'jbof.nvme_disconnect', [possible_shelf_ips])
+                await asyncio.gather(
+                    self.middleware.call('jbof.nvme_disconnect', possible_shelf_ips),
+                    self.middleware.call('failover.call_remote', 'jbof.nvme_disconnect', [possible_shelf_ips])
+                )
             except CallError as e:
                 if e.errno != CallError.ENOMETHOD:
                     raise
