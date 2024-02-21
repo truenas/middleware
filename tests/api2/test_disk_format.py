@@ -33,33 +33,39 @@ SWAP_SIZE = (WITH_2GB_SWAP * ONE_GB)
 DATA_TYPE_UUID = "6a898cc3-1dd2-11b2-99a6-080020736631"
 SWAP_TYPE_UUID = "0657fd6d-a4ab-43c4-84e5-0933c84b4f4f"
 
+
 # Currently, we use the same 'unused' disk for all tests
-disk = call('disk.get_unused')[0]
-dd = call('device.get_disk', disk['name'])
+@pytest.fixture(scope='module')
+def unused_disk():
+    disk = call('disk.get_unused')[0]
+    dd = call('device.get_disk', disk['name'])
 
-# Calculate expected values using the 'heuristic'
-alignment_offset = int(ssh(f"cat /sys/block/{disk['name']}/alignment_offset"))
-optimal_io_size = int(ssh(f"cat /sys/block/{disk['name']}/queue/optimal_io_size"))
-minimum_io_size = int(ssh(f"cat /sys/block/{disk['name']}/queue/minimum_io_size"))
+    # Calculate expected values using the 'heuristic'
+    alignment_offset = int(ssh(f"cat /sys/block/{disk['name']}/alignment_offset"))
+    optimal_io_size = int(ssh(f"cat /sys/block/{disk['name']}/queue/optimal_io_size"))
+    minimum_io_size = int(ssh(f"cat /sys/block/{disk['name']}/queue/minimum_io_size"))
 
-grain_size = 0
-if 0 == optimal_io_size and 0 == alignment_offset:
-    if 0 == minimum_io_size % 2:
-        # Alignment value in units of sectors
-        grain_size = ONE_MB / dd['sectorsize']
+    grain_size = 0
+    if 0 == optimal_io_size and 0 == alignment_offset:
+        if 0 == minimum_io_size % 2:
+            # Alignment value in units of sectors
+            grain_size = ONE_MB / dd['sectorsize']
 
-if 0 != optimal_io_size:
-    grain_size = optimal_io_size
+    if 0 != optimal_io_size:
+        grain_size = optimal_io_size
 
-pytestmark = pytest.mark.skipif(grain_size == 0, reason=f"ERROR: Cannot determine alignment value, grain_size={grain_size}")
+    first_sector = alignment_offset if alignment_offset != 0 else grain_size
 
-first_sector = alignment_offset if alignment_offset != 0 else grain_size
+    return (disk, dd, grain_size, first_sector)
 
 
-def test_disk_format_without_swap():
+def test_disk_format_without_swap(unused_disk):
     """
     Generate a single data partition, no swap
     """
+    disk, dd, grain_size, first_sector = unused_disk
+    assert grain_size != 0, 'ERROR: Cannot run this test without a non-zero grain_size'
+
     call('disk.format', disk['name'], NO_SWAP)
 
     partitions = call('disk.list_partitions', disk['name'])
@@ -82,12 +88,14 @@ def test_disk_format_without_swap():
     assert partitions[0]['size'] > disk['size'] * 0.99
 
 
-def test_disk_format_with_swap():
+def test_disk_format_with_swap(unused_disk):
     """
     Generate two partitions:
         1: swap (2 GiB)
         2: data
     """
+    disk, dd, grain_size, first_sector = unused_disk
+    assert grain_size != 0, 'ERROR: Cannot run this test without a non-zero grain_size'
     call('disk.format', disk['name'], WITH_2GB_SWAP)
 
     partitions = call('disk.list_partitions', disk['name'])
@@ -124,10 +132,13 @@ def test_disk_format_with_swap():
 
 
 @pytest.mark.parametrize("swap_val", [-10, 2.5, 1024])
-def test_disk_format_with_invalid_swap(swap_val):
+def test_disk_format_with_invalid_swap(unused_disk, swap_val):
     """
     Confirm we can handle erroneous input
     """
+    assert unused_disk[2] != 0, 'ERROR: Should not run this test without a non-zero grain_size'
+    disk = unused_disk[0]
+
     with pytest.raises(CallError) as e:
         call('disk.format', disk['name'], swap_val)
 
@@ -143,8 +154,12 @@ def test_disk_format_with_invalid_swap(swap_val):
         )
 
 
-def test_disk_format_removes_existing_partition_table():
-    disk = call('disk.get_unused')[0]['name']
+def test_disk_format_removes_existing_partition_table(unused_disk):
+    """
+    Confirm we can repartion
+    """
+    assert unused_disk[2] != 0, 'ERROR: Should not run this test without a non-zero grain_size'
+    disk = unused_disk[0]
 
-    call('disk.format', disk, 2)
-    call('disk.format', disk, 0)
+    call('disk.format', disk['name'], 2)
+    call('disk.format', disk['name'], 0)

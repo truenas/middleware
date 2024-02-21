@@ -25,15 +25,29 @@ class DiskService(Service):
                 # than that, ignore it.
                 return
 
-            # seek back to the beginning of the disk
-            os.lseek(f.fileno(), 0, os.SEEK_SET)
-
             # no reason to write more than 1MB at a time
             # or kernel will break them into smaller chunks
             if mode in ('QUICK', 'FULL'):
                 to_write = bytearray(CHUNK).zfill(0)
             else:
                 to_write = bytearray(os.urandom(CHUNK))
+
+            # The middle partitions often contain old cruft.  Clean those.
+            disk_parts = self.middleware.call_sync('disk.list_partitions', dev)
+            if len(disk_parts) > 1:
+                for partition in disk_parts[1:]:
+                    # Start 2 MiB back from the start and 'clean' 2 MiB past, 4 MiB total
+                    self.logger.info(f"process partition {partition['name']}")  # <---------------- DEBUG
+                    os.lseek(f.fileno(), partition['start'] - (2 * CHUNK), os.SEEK_SET)
+                    for i in range(4):
+                        self.logger.info(f"    clean 1MiB at {f.tell()}")  # <--------------------- DEBUG
+                        os.write(f.fileno(), to_write)
+                        if event.is_set():
+                            return
+                        # This is quick. We can reasonably skip the progress update
+
+            # seek back to the beginning of the disk
+            os.lseek(f.fileno(), 0, os.SEEK_SET)
 
             if mode == 'QUICK':
                 _32 = 32

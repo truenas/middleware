@@ -22,6 +22,43 @@ def test_disk_wipe_exported_zpool_in_disk_get_unused():
         assert disk['exported_zpool'] is None
 
 
+def test_disk_wipe_partition_clean():
+    """
+    Confirm we clean up around the middle partitions
+    """
+    signal_msg = "ix private data"
+    print(f"\nsignal_msg  = '{signal_msg}'")
+
+    disk = call("disk.get_unused")[0]["name"]
+
+    # Create 1 GiB swap and a data partition
+    call('disk.format', disk, 1)
+    parts = call('disk.list_partitions', disk)
+    # This 'assumes' 512 byte sectors
+    seek_blk = parts[1]['start_sector']
+
+    # Write some private data into the start of the data partition
+    cmd = (
+        f"echo '{signal_msg}' > junk;"
+        f"dd if=junk count=1 oseek={seek_blk} of=/dev/{disk};"
+        "rm -f junk"
+    )
+    ssh(cmd)
+
+    # Confirm presence
+    readback_presence = ssh(f"dd if=/dev/{disk} iseek={seek_blk} count=1").splitlines()[0]
+    print(f"start readback  = '{readback_presence}'")
+    assert signal_msg in readback_presence
+
+    # Clean the drive
+    call('disk.wipe', disk, 'QUICK', job=True)
+
+    # Confirm it's now clean
+    readback_clean = ssh(f"dd if=/dev/{disk} iseek={seek_blk} count=1").splitlines()[0]
+    print(f"finish readback = '{readback_clean}'")
+    assert signal_msg not in readback_clean
+
+
 def test_disk_wipe_abort():
     disk = call("disk.get_unused")[0]["name"]
 

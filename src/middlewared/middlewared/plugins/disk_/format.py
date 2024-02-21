@@ -41,6 +41,11 @@ class DiskService(Service):
 
         # Get drive specs and size in sectors
         device = parted.getDevice(f'/dev/{disk}')
+
+        # We rely on a valid 'grainSize', let's make sure before we proceed.
+        if device.optimumAlignment.grainSize <= 0:
+            raise CallError(f'Unable to format {disk!r}: grainSize = {device.optimumAlignment.grainSize}')
+
         drive_size_s = parted.sizeToSectors(dd['size'], 'B', device.sectorSize)
 
         # Allocate space for the requested swap size
