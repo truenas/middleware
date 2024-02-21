@@ -2,15 +2,15 @@
 NVRAM attr in VMs
 
 Revision ID: 5901d065eef9
-Revises: 968d515e63e7
-Create Date: 2024-02-02 21:51:17.935672+00:00
+Revises: 7836261b2f64
+Create Date: 2024-02-22 21:51:17.935672+00:00
 """
 import sqlalchemy as sa
 from alembic import op
 
 
 revision = '5901d065eef9'
-down_revision = '968d515e63e7'
+down_revision = '7836261b2f64'
 branch_labels = None
 depends_on = None
 

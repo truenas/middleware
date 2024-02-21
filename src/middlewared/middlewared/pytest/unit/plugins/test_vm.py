@@ -1,5 +1,7 @@
 import pytest
 
+from unittest.mock import AsyncMock, patch
+
 from middlewared.service_exception import ValidationErrors
 from middlewared.pytest.unit.helpers import load_compound_service
 from middlewared.pytest.unit.middleware import Middleware
@@ -65,7 +67,9 @@ async def test_vm_creation_for_licensed_and_unlicensed_systems(license_active):
     m['vm.query'] = lambda *args: []
 
     verrors = ValidationErrors()
-    await vm_svc.common_validation(verrors, 'vm_create', vm_payload)
+
+    with patch('middlewared.plugins.vm.vms.check_path_resides_within_volume', AsyncMock(return_value=False)):
+        await vm_svc.common_validation(verrors, 'vm_create', vm_payload)
 
     assert [e.errmsg for e in verrors.errors] == (
         [] if license_active else ['System is not licensed to use VMs']
