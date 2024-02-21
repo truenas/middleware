@@ -1,7 +1,5 @@
 import time
 
-import pytest
-
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.assets.pool import another_pool
 
@@ -22,6 +20,44 @@ def test_disk_wipe_exported_zpool_in_disk_get_unused():
     for disk in filter(lambda x: x['name'] in used_disks, call('disk.get_unused')):
         # now disks should no longer show as being part of the exported zpool
         assert disk['exported_zpool'] is None
+
+
+def test_disk_wipe_partition_clean():
+    """
+    Confirm we clean up around the middle partitions
+    """
+    signal_msg = "ix private data"
+
+    disk = call("disk.get_unused")[0]["name"]
+
+    # Create 1 GiB swap and a data partition
+    call('disk.format', disk, 1)
+    parts = call('disk.list_partitions', disk)
+    seek_blk = parts[1]['start_sector']
+    blk_size = int(parts[0]['start'] / parts[0]['start_sector'])
+
+    # Write some private data into the start of the data partition
+    cmd = (
+        f"echo '{signal_msg}' > junk;"
+        f"dd if=junk bs={blk_size} count=1 oseek={seek_blk} of=/dev/{disk};"
+        "rm -f junk"
+    )
+    ssh(cmd)
+
+    # Confirm presence
+    readback_presence = ssh(f"dd if=/dev/{disk} bs={blk_size} iseek={seek_blk} count=1").splitlines()[0]
+    assert signal_msg in readback_presence
+
+    # Clean the drive
+    call('disk.wipe', disk, 'QUICK', job=True)
+
+    # Confirm it's now clean
+    readback_clean = ssh(f"dd if=/dev/{disk} bs={blk_size} iseek={seek_blk} count=1").splitlines()[0]
+    assert signal_msg not in readback_clean
+
+    # Confirm we have no partitions
+    partitions = call('disk.list_partitions', disk)
+    assert len(partitions) == 0
 
 
 def test_disk_wipe_abort():
