@@ -587,3 +587,7 @@ def test__filter_list_deeply_nested_lists():
 
 def test__filter_list_undefined():
     assert len(filter_list(DATA_WITH_NULL, [['foo', '=', None]])) == 1
+
+
+def test__filter_list_invalid_key():
+    assert len(filter_list(DATA_WITH_NULL, [['canary', 'in', 'canary2']])) == 0
