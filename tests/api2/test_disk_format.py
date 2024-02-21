@@ -116,6 +116,9 @@ def test_disk_format_with_swap(unused_disk):
     # Hand wavey swap size test
     assert int(partitions[0]['size'] / (1024 ** 3) + 0.5) == 2
 
+    # The second partition should be data
+    assert partitions[1]['partition_type'] == DATA_TYPE_UUID
+
     # The data partition should start after a 'grain_size' gap
     assert partitions[1]['start_sector'] == partitions[0]['end_sector'] + grain_size
 
@@ -163,4 +166,11 @@ def test_disk_format_removes_existing_partition_table(unused_disk):
     disk = unused_disk[0]
 
     call('disk.format', disk['name'], 2)
+    # We should now have two partitions: swap and data
+    partitions = call('disk.list_partitions', disk['name'])
+    assert len(partitions) == 2
+
     call('disk.format', disk['name'], 0)
+    # We should now have one partition: data
+    partitions = call('disk.list_partitions', disk['name'])
+    assert len(partitions) == 1

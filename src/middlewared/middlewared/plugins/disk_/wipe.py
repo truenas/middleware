@@ -32,22 +32,13 @@ class DiskService(Service):
             else:
                 to_write = bytearray(os.urandom(CHUNK))
 
-            # The middle partitions often contain old cruft.  Clean those.
-            disk_parts = self.middleware.call_sync('disk.list_partitions', dev)
-            if len(disk_parts) > 1:
-                for partition in disk_parts[1:]:
-                    # Start 2 MiB back from the start and 'clean' 2 MiB past, 4 MiB total
-                    os.lseek(f.fileno(), partition['start'] - (2 * CHUNK), os.SEEK_SET)
-                    for i in range(4):
-                        os.write(f.fileno(), to_write)
-                        if event.is_set():
-                            return
-                        # This is quick. We can reasonably skip the progress update
-
             # seek back to the beginning of the disk
             os.lseek(f.fileno(), 0, os.SEEK_SET)
 
             if mode == 'QUICK':
+                # Get partition info before it gets destroyed
+                disk_parts = self.middleware.call_sync('disk.list_partitions', dev)
+
                 _32 = 32
                 for i in range(_32):
                     # wipe first 32MB
@@ -67,6 +58,18 @@ class DiskService(Service):
                     if event.is_set():
                         return
                     job.set_progress(round(((i / _64) * 100), 2))
+
+                # The middle partitions often contain old cruft.  Clean those.
+                if len(disk_parts) > 1:
+                    for partition in disk_parts[1:]:
+                        # Start 2 MiB back from the start and 'clean' 2 MiB past, 4 MiB total
+                        os.lseek(f.fileno(), partition['start'] - (2 * CHUNK), os.SEEK_SET)
+                        for i in range(4):
+                            os.write(f.fileno(), to_write)
+                            if event.is_set():
+                                return
+                            # This is quick. We can reasonably skip the progress update
+
             else:
                 iterations = (size // CHUNK)
                 for i in range(iterations):

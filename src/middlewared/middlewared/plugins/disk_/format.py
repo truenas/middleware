@@ -49,14 +49,16 @@ class DiskService(Service):
         drive_size_s = parted.sizeToSectors(dd['size'], 'B', device.sectorSize)
 
         # Allocate space for the requested swap size
-        leave_free_space = parted.sizeToSectors(swap_size_gb, 'GiB', device.sectorSize)
-
-        # Minimum data partition size of 512 MiB is arbitrary
-        min_data_size = parted.sizeToSectors(512, 'MiB', device.sectorSize)
-        max_data_size = drive_size_s - leave_free_space
+        leave_free_space = 0 if swap_size_gb is None else parted.sizeToSectors(swap_size_gb, 'GiB', device.sectorSize)
 
         swap_gap = device.optimumAlignment.grainSize if leave_free_space > 0 else 0
         partition_gaps = 2 * device.optimumAlignment.grainSize + swap_gap
+
+        # Minimum data partition size of 512 MiB is arbitrary
+        min_data_size = parted.sizeToSectors(512, 'MiB', device.sectorSize)
+        # Here we leave max_data_size possibly oversized to allow for parted
+        # to create the maximal sized partition
+        max_data_size = drive_size_s - leave_free_space
 
         # For validation we should also account for the gaps
         if (max_data_size - partition_gaps) <= 0:
@@ -74,6 +76,7 @@ class DiskService(Service):
         device.clobber()
         parted_disk = parted.freshDisk(device, 'gpt')
 
+        # Sanity: make sure max is larger than min
         if max_data_size <= min_data_size:
             max_data_size = min_data_size + device.optimumAlignment.grainSize
 
@@ -83,7 +86,7 @@ class DiskService(Service):
         start_range = parted.Geometry(
             device,
             # We need the partition gap _only if_ there is a swap partition
-            data_geometry.start + leave_free_space + device.optimumAlignment.grainSize if leave_free_space > 0 else 0,
+            data_geometry.start + leave_free_space + (device.optimumAlignment.grainSize if leave_free_space > 0 else 0),
             end=data_geometry.end,
         )
         data_constraint = parted.Constraint(
