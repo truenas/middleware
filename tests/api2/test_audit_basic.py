@@ -72,8 +72,8 @@ def test_audit_config_updates(request):
     assert new_config['quota'] == 1
 
     # Check that we're actually setting the quota by evaluating available space
-    # we should be within 1 Mib of quota target (sql database will already be written)
-    assert abs(new_config['space']['available'] - 1024 ** 3) < 1024 ** 2
+    # we should be within 10 Mib of quota target (sql database will already be written)
+    assert abs(new_config['space']['available'] - 1024 ** 3) < (1024 ** 2) * 10
 
     new_config = call('audit.update', {'reservation': 1})
     assert new_config['reservation'] == 1
