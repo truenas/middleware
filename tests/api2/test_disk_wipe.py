@@ -27,7 +27,6 @@ def test_disk_wipe_partition_clean():
     Confirm we clean up around the middle partitions
     """
     signal_msg = "ix private data"
-    print(f"\nsignal_msg  = '{signal_msg}'")
 
     disk = call("disk.get_unused")[0]["name"]
 
@@ -47,7 +46,6 @@ def test_disk_wipe_partition_clean():
 
     # Confirm presence
     readback_presence = ssh(f"dd if=/dev/{disk} iseek={seek_blk} count=1").splitlines()[0]
-    print(f"start readback  = '{readback_presence}'")
     assert signal_msg in readback_presence
 
     # Clean the drive
@@ -55,7 +53,6 @@ def test_disk_wipe_partition_clean():
 
     # Confirm it's now clean
     readback_clean = ssh(f"dd if=/dev/{disk} iseek={seek_blk} count=1").splitlines()[0]
-    print(f"finish readback = '{readback_clean}'")
     assert signal_msg not in readback_clean
 
 

@@ -96,6 +96,7 @@ def test_disk_format_with_swap(unused_disk):
     """
     disk, dd, grain_size, first_sector = unused_disk
     assert grain_size != 0, 'ERROR: Cannot run this test without a non-zero grain_size'
+
     call('disk.format', disk['name'], WITH_2GB_SWAP)
 
     partitions = call('disk.list_partitions', disk['name'])

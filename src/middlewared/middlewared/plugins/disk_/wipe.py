@@ -37,10 +37,8 @@ class DiskService(Service):
             if len(disk_parts) > 1:
                 for partition in disk_parts[1:]:
                     # Start 2 MiB back from the start and 'clean' 2 MiB past, 4 MiB total
-                    self.logger.info(f"process partition {partition['name']}")  # <---------------- DEBUG
                     os.lseek(f.fileno(), partition['start'] - (2 * CHUNK), os.SEEK_SET)
                     for i in range(4):
-                        self.logger.info(f"    clean 1MiB at {f.tell()}")  # <--------------------- DEBUG
                         os.write(f.fileno(), to_write)
                         if event.is_set():
                             return
