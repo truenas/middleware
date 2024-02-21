@@ -305,14 +305,6 @@ class ActiveDirectoryService(ConfigService):
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
 
-                if addr.is_global:
-                    verrors.add(
-                        'activedirectory_update.allow_dns_updates',
-                        f'{addr}: automatic DNS update would result in registering a global '
-                        'IP address. Users may disable automatic DNS updates and manually '
-                        'configure DNS A and AAAA records as needed for their domain.'
-                    )
-
                 if addr.is_loopback:
                     verrors.add(
                         'activedirectory_update.allow_dns_updates',
