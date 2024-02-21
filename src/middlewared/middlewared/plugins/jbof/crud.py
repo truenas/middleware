@@ -388,7 +388,6 @@ class JBOFService(CRUDService):
                 verrors.add(schema, 'Unable to communicate with the expansion shelf')
                 return
             self.logger.debug('Configured node: %r', connected_shelf_ips)
-        self.logger.debug('Configured host')
 
     @private
     async def hardwire_node(self, node, shelf_index, shelf_ip_to_mac, skip_ips=[]):
