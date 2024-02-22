@@ -1,15 +1,32 @@
 import asyncio
 import threading
 import os
+from glob import glob
 
 from middlewared.schema import accepts, Bool, Ref, Str, returns
-from middlewared.service import job, Service
+from middlewared.service import job, Service, private
 
 
 CHUNK = 1048576  # 1MB binary
 
 
 class DiskService(Service):
+
+    @private
+    def get_partitions_quick(self, dev_name):
+        """
+        Lightweight function to generate a dictionary of
+        partition start in units of bytes to be used by seek
+        """
+        startsect = {}
+        sectsize = 0
+        with open(f"/sys/block/{dev_name}/queue/logical_block_size", "r") as fd:
+            sectsize = int(fd.read().strip())
+
+        for sdpath in glob(f"/sys/block/{dev_name}/{dev_name}[1-9]"):
+            with open(f"{sdpath}/start", "r") as fd:
+                startsect[int(sdpath[-1])] = int(fd.read().strip()) * sectsize
+        return startsect
 
     def _wipe_impl(self, job, dev, mode, event):
         disk_path = f'/dev/{dev}'
@@ -37,7 +54,7 @@ class DiskService(Service):
 
             if mode == 'QUICK':
                 # Get partition info before it gets destroyed
-                disk_parts = self.middleware.call_sync('disk.list_partitions', dev)
+                disk_parts = self.get_partitions_quick(dev)
 
                 _32 = 32
                 for i in range(_32):
@@ -61,14 +78,15 @@ class DiskService(Service):
 
                 # The middle partitions often contain old cruft.  Clean those.
                 if len(disk_parts) > 1:
-                    for partition in disk_parts[1:]:
-                        # Start 2 MiB back from the start and 'clean' 2 MiB past, 4 MiB total
-                        os.lseek(f.fileno(), partition['start'] - (2 * CHUNK), os.SEEK_SET)
-                        for i in range(4):
-                            os.write(f.fileno(), to_write)
-                            if event.is_set():
-                                return
-                            # This is quick. We can reasonably skip the progress update
+                    for partnum, sector_start in disk_parts.items():
+                        if 1 != partnum:
+                            # Start 2 MiB back from the start and 'clean' 2 MiB past, 4 MiB total
+                            os.lseek(f.fileno(), sector_start - (2 * CHUNK), os.SEEK_SET)
+                            for i in range(4):
+                                os.write(f.fileno(), to_write)
+                                if event.is_set():
+                                    return
+                    # This is quick. We can reasonably skip the progress update
 
             else:
                 iterations = (size // CHUNK)
