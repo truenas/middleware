@@ -61,10 +61,10 @@ class ZPoolService(Service):
                     disk = self.resolve_block_path(i.path, real_paths)
                     final[disk] = {
                         'pool_name': pool_name,
+                        'disk_status': i.status,
                         'disk_read_errors': i.stats.read_errors,
                         'disk_write_errors': i.stats.write_errors,
                         'disk_checksum_errors': i.stats.checksum_errors,
-                        'disk_status': i.status,
                         'vdev_name': member.name,
                         'vdev_type': vdev_type,
                         'vdev_disks': vdev_disks,
