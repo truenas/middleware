@@ -11,7 +11,7 @@ from .constants import MINI_MODEL_BASE, MINIR_MODEL_BASE
 from .element_types import ELEMENT_TYPES, ELEMENT_DESC
 from .enums import ControllerModels, ElementDescriptorsToIgnore, ElementStatusesToIgnore, JbodModels
 from .sysfs_disks import map_disks_to_enclosure_slots
-from .slot_mappings import get_slot_info, SYSFS_SLOT_KEY, MAPPED_SLOT_KEY
+from .slot_mappings import get_slot_info, SYSFS_SLOT_KEY, MAPPED_SLOT_KEY, SUPPORTS_IDENTIFY_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -287,6 +287,9 @@ class Enclosure:
                     # that ends with 002. However, we send a standard enclosure
                     # diagnostics command so all the other elements will return
                     continue
+
+                # does this enclosure slot support identification? (i.e. lighting up LED)
+                parsed[SUPPORTS_IDENTIFY_KEY] = self.disks_map[slot][SUPPORTS_IDENTIFY_KEY]
 
                 mapped_slot = self.disks_map[slot][MAPPED_SLOT_KEY]
                 parsed['original'] = {
