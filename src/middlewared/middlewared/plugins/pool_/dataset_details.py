@@ -198,6 +198,7 @@ class PoolDatasetService(Service):
                     'sync',
                     'compression',
                     'dedup',
+                    'written',
                 ],
                 'snapshots_count': True,
             }
