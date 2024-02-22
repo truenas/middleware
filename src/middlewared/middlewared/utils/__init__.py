@@ -574,10 +574,14 @@ def sw_info():
         version = manifest['version']
         return {
             'stable': 'MASTER' not in manifest['version'],
+            'codename': manifest['codename'],
             'version': version,
             'fullname': f'{BRAND_PRODUCT}-{version}',
             'buildtime': manifest['buildtime'],
         }
+
+def sw_codename():
+    return sw_info()['codename']
 
 
 def sw_buildtime():
