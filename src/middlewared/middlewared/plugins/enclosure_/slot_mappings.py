@@ -3,7 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from .constants import SYSFS_SLOT_KEY, MAPPED_SLOT_KEY
+from .constants import SYSFS_SLOT_KEY, MAPPED_SLOT_KEY, SUPPORTS_IDENTIFY_KEY
 from .enums import ControllerModels, JbodModels
 
 
@@ -38,31 +38,40 @@ def get_nvme_slot_info(model):
                 'DEFAULT': {
                     'id': {
                         'f60_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
+                            for i in range(1, 25)
                         },
                         'f100_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
+                            for i in range(1, 25)
                         },
                         'f130_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
+                            for i in range(1, 25)
                         },
                         'm50_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 5), range(25, 29))
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
+                            for i, j in zip(range(1, 5), range(25, 29))
                         },
                         'm60_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 5), range(25, 29))
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
+                            for i, j in zip(range(1, 5), range(25, 29))
                         },
                         'r30_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 17)
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
+                            for i in range(1, 17)
                         },
                         'r50_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 4), range(25, 28))
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
+                            for i, j in zip(range(1, 4), range(25, 28))
                         },
                         'r50b_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 3), range(25, 27))
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
+                            for i, j in zip(range(1, 3), range(25, 27))
                         },
                         'r50bm_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 5), range(25, 29))
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
+                            for i, j in zip(range(1, 5), range(25, 29))
                         },
                     }
                 }
