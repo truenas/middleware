@@ -31,6 +31,7 @@
                         "value": null,
                         "value_raw": 16777216,
                         "dev": "nvme3n1",
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -45,6 +46,7 @@
                         "value": null,
                         "value_raw": 16777216,
                         "dev": "nvme5n1",
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -59,6 +61,7 @@
                         "value": null,
                         "value_raw": 16777216,
                         "dev": "nvme4n1",
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -73,6 +76,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -87,6 +91,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -101,6 +106,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -115,6 +121,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -129,6 +136,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -143,6 +151,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -157,6 +166,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -171,6 +181,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -185,6 +196,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -199,6 +211,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -213,6 +226,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -227,6 +241,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -241,6 +256,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -255,6 +271,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -269,6 +286,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -283,6 +301,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -297,6 +316,7 @@
                         "value": null,
                         "value_raw": 16777216,
                         "dev": "nvme0n1",
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -311,6 +331,7 @@
                         "value": null,
                         "value_raw": 16777216,
                         "dev": "nvme1n1",
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -325,6 +346,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -339,6 +361,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,
@@ -353,6 +376,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "f60_nvme_enclosure",
                             "enclosure_sg": null,

@@ -27,6 +27,7 @@
                     "value": null,
                     "value_raw": 16777216,
                     "dev": "sdh",
+                    "supports_identify_light": false,
                     "original": {
                         "enclosure_id": "3000000000000002",
                         "enclosure_sg": "/dev/sg1",
@@ -41,6 +42,7 @@
                     "value": null,
                     "value_raw": 16777216,
                     "dev": "sda",
+                    "supports_identify_light": false,
                     "original": {
                         "enclosure_id": "3000000000000001",
                         "enclosure_sg": "/dev/sg0",
@@ -55,6 +57,7 @@
                     "value": null,
                     "value_raw": 16777216,
                     "dev": "sdb",
+                    "supports_identify_light": false,
                     "original": {
                         "enclosure_id": "3000000000000001",
                         "enclosure_sg": "/dev/sg0",
@@ -69,6 +72,7 @@
                     "value": null,
                     "value_raw": 16777216,
                     "dev": "sdd",
+                    "supports_identify_light": false,
                     "original": {
                         "enclosure_id": "3000000000000001",
                         "enclosure_sg": "/dev/sg0",
@@ -83,6 +87,7 @@
                     "value": null,
                     "value_raw": 16777216,
                     "dev": "sdc",
+                    "supports_identify_light": false,
                     "original": {
                         "enclosure_id": "3000000000000001",
                         "enclosure_sg": "/dev/sg0",
@@ -97,6 +102,7 @@
                     "value": null,
                     "value_raw": 16777216,
                     "dev": "sdf",
+                    "supports_identify_light": false,
                     "original": {
                         "enclosure_id": "3000000000000001",
                         "enclosure_sg": "/dev/sg0",
@@ -111,6 +117,7 @@
                     "value": null,
                     "value_raw": 16777216,
                     "dev": "sdi",
+                    "supports_identify_light": false,
                     "original": {
                         "enclosure_id": "3000000000000001",
                         "enclosure_sg": "/dev/sg0",
@@ -125,6 +132,7 @@
                     "value": null,
                     "value_raw": 16777216,
                     "dev": "sde",
+                    "supports_identify_light": false,
                     "original": {
                         "enclosure_id": "3000000000000001",
                         "enclosure_sg": "/dev/sg0",
@@ -139,6 +147,7 @@
                     "value": null,
                     "value_raw": 16777216,
                     "dev": "sdj",
+                    "supports_identify_light": false,
                     "original": {
                         "enclosure_id": "3000000000000001",
                         "enclosure_sg": "/dev/sg0",
@@ -153,6 +162,7 @@
                     "value": null,
                     "value_raw": 16777216,
                     "dev": "sdg",
+                    "supports_identify_light": false,
                     "original": {
                         "enclosure_id": "3000000000000002",
                         "enclosure_sg": "/dev/sg1",
