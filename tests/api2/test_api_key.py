@@ -39,6 +39,17 @@ def test_root_api_key_websocket(request):
         assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         assert 'uptime' in str(results['stdout'])
 
+        with client(auth=None) as c:
+            assert c.call("auth.login_with_api_key", key)
+
+            # root-level API key should be able to start / stop services
+            c.call("service.start", "cifs")
+            c.call("service.stop", "cifs")
+
+            # root-level API key should be able to enable / disable services
+            c.call("service.update", "cifs", {"enable": True})
+            c.call("service.update", "cifs", {"enable": False})
+
 
 def test_allowed_api_key_websocket(request):
     """We should be able to call a method with API key that allows that call using Websocket."""
@@ -75,6 +86,12 @@ def test_denied_api_key_noauthz(request):
             with pytest.raises(Exception):
                 c.call("system.version")
 
+            with pytest.raises(Exception):
+                c.call("service.start", "cifs")
+
+            with pytest.raises(Exception):
+                c.call("service.update", "cifs", {"enable": True})
+
             auth_token = c.call("auth.generate_token")
 
         with client(auth=None) as c:
@@ -85,6 +102,12 @@ def test_denied_api_key_noauthz(request):
 
             with pytest.raises(Exception):
                 c.call("system.version")
+
+            with pytest.raises(Exception):
+                c.call("service.start", "cifs")
+
+            with pytest.raises(Exception):
+                c.call("service.update", "cifs", {"enable": True})
 
 
 def test_api_key_auth_session_list_terminate():
