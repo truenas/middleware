@@ -11,6 +11,7 @@ from middlewared.service import Service, filterable
 from middlewared.service_exception import MatchNotFound, ValidationError
 from middlewared.utils import filter_list
 
+from .constants import SUPPORTS_IDENTIFY_KEY
 from .map2 import combine_enclosures
 from .nvme2 import map_nvme
 from .r30_drive_identify import set_slot_status as r30_set_slot_status
@@ -66,11 +67,13 @@ class Enclosure2Service(Service):
         (i.e. the ES102G2 is a prime example of this (enumerates drives at 1 instead of 0))
         """
         sgdev = origslot = None
+        supports_identify = False
         for encslot, devinfo in filter(lambda x: x[0] == slot, enc_info['elements']['Array Device Slot'].items()):
             sgdev = devinfo['original']['enclosure_sg']
             origslot = devinfo['original']['slot']
+            supports_identify = devinfo[SUPPORTS_IDENTIFY_KEY]
 
-        return sgdev, origslot
+        return sgdev, origslot, supports_identify
 
     @accepts(Dict(
         Str('enclosure_id', required=True),
@@ -103,11 +106,13 @@ class Enclosure2Service(Service):
                 # don't support drive LED identification
                 return
 
-        sgdev, origslot = self.get_original_disk_slot(data['slot'], enc_info)
+        sgdev, origslot, supported = self.get_original_disk_slot(data['slot'], enc_info)
         if sgdev is None:
             raise ValidationError('enclosure2.set_slot_status', 'Unable to find scsi generic device for enclosure')
         elif origslot is None:
-            raise ValidationError('enclosure2.set_slot_status', f'Slot {data["slot"]!r} not found in enclosure')
+            raise ValidationError('enclosure2.set_slot_status', f'Slot {data["slot"]} not found in enclosure')
+        elif not supported:
+            raise ValidationError('enclosure2.set_slot_status', f'Slot {data["slot"]} does not support identification')
 
         if data['status'] == 'CLEAR':
             actions = ('clear=ident', 'clear=fault')
@@ -119,7 +124,7 @@ class Enclosure2Service(Service):
             for action in actions:
                 encdev.set_control(str(origslot), action)
         except OSError:
-            self.logger.warning(f'Failed to {data["status"]} slot {data["slot"]!r} on enclosure {enc_info["id"]}')
+            self.logger.warning(f'Failed to {data["status"]} slot {data["slot"]} on enclosure {enc_info["id"]}')
 
     @filterable
     def query(self, filters, options):
