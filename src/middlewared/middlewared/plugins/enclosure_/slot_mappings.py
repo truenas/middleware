@@ -168,8 +168,8 @@ def get_slot_info(enc):
             {'versions': {
                 'DEFAULT': {
                     'product': {'eDrawer4048S1' : {
-                        1: {'sysfs_slot': 1, 'mapped_slot': 1},
-                        5: {'sysfs_slot': 5, 'mapped_slot': 2},
+                        1: {'sysfs_slot': 1, 'mapped_slot': 1, 'supports_identify_light': True},
+                        5: {'sysfs_slot': 5, 'mapped_slot': 2, 'supports_identify_light': True},
                     }}
                 }
             }}
@@ -208,6 +208,13 @@ def get_slot_info(enc):
                     what physical slot in the enclosure) (i.e. `slot` 0 is physical slot 8, etc)
                 2. take the `EnclosureDevice().status()` output and map the index values to their
                     respective sysfs `slot` files
+
+            The `supports_identify_light` key represents whether or not the enclosure slot can be lit
+            up to "identify" the drive slot. Most often the user doesn't really care about the enclosure
+            slot being lit up, they want to "light up slot with disk sda".
+                NOTE: Knowing whether or not a slot in a particular system can
+                be lit up MUST BE provided by the platform team. It is not something
+                the developer can assume to know.
 
     We use a complex nested dictionary for a couple reasons.
         1. performance is good when accessing the top-level keys
