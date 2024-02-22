@@ -116,6 +116,9 @@ class WebUIEnclosureService(Service):
                         "pool_info": {
                             "pool_name": "test",
                             "disk_status": "ONLINE",
+                            "disk_read_errors": 0,
+                            "disk_write_errors": 0,
+                            "disk_checksum_errors": 0,
                             "vdev_name": "mirror-0",
                             "vdev_type": "data",
                             "vdev_disks": [
