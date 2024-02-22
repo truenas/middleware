@@ -36,9 +36,10 @@ SYSTEM_DATASET_JSON_SCHEMA = {
                 'type': 'object',
                 'properties': {
                     'uid': {'type': 'integer'},
-                    'gid': {'type': 'integer'}
+                    'gid': {'type': 'integer'},
+                    'mode': {'type': 'integer'},
                 },
-                'required': ['uid', 'gid']
+                'required': ['uid', 'gid', 'mode'],
             },
             'mountpoint': {
                 'type': 'string'
@@ -56,7 +57,7 @@ SYSTEM_DATASET_JSON_SCHEMA = {
                 }
             }
         },
-        'required': ['name', 'props'],
+        'required': ['name', 'props', 'chown_config'],
         'additionalProperties': False,
     }
 }
@@ -71,6 +72,12 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'readonly': 'off',
                 'snapdir': 'hidden',
             },
+            'mountpoint': SYSDATASET_PATH,
+            'chown_config': {
+                'uid': 0,
+                'gid': 0,
+                'mode': 0o755,
+            },
         },
         {
             'name': os.path.join(pool_name, '.system/cores'),
@@ -78,6 +85,11 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'mountpoint': 'legacy',
                 'readonly': 'off',
                 'snapdir': 'hidden',
+            },
+            'chown_config': {
+                'uid': 0,
+                'gid': 0,
+                'mode': 0o755,
             },
         },
         {
@@ -87,6 +99,11 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'readonly': 'off',
                 'snapdir': 'hidden',
             },
+            'chown_config': {
+                'uid': 0,
+                'gid': 0,
+                'mode': 0o755,
+            },
         },
         {
             'name': os.path.join(pool_name, f'.system/rrd-{uuid}'),
@@ -94,6 +111,11 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'mountpoint': 'legacy',
                 'readonly': 'off',
                 'snapdir': 'hidden',
+            },
+            'chown_config': {
+                'uid': 0,
+                'gid': 0,
+                'mode': 0o755,
             },
         },
         {
@@ -103,6 +125,11 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'readonly': 'off',
                 'snapdir': 'hidden',
             },
+            'chown_config': {
+                'uid': 0,
+                'gid': 0,
+                'mode': 0o755,
+            },
         },
         {
             'name': os.path.join(pool_name, '.system/webui'),
@@ -111,6 +138,11 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'readonly': 'off',
                 'snapdir': 'hidden',
             },
+            'chown_config': {
+                'uid': 0,
+                'gid': 0,
+                'mode': 0o755,
+            },
         },
         {
             'name': os.path.join(pool_name, '.system/services'),
@@ -118,6 +150,11 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'mountpoint': 'legacy',
                 'readonly': 'off',
                 'snapdir': 'hidden',
+            },
+            'chown_config': {
+                'uid': 0,
+                'gid': 0,
+                'mode': 0o755,
             },
         },
         {
@@ -131,6 +168,7 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
             'chown_config': {
                 'uid': 999,
                 'gid': 997,
+                'mode': 0o755,
             },
             'mountpoint': os.path.join(SYSDATASET_PATH, 'netdata'),
             'create_paths': [

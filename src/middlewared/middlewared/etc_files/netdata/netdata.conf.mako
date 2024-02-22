@@ -1,11 +1,13 @@
 <%
     from middlewared.plugins.reporting.netdata.utils import NETDATA_PORT, NETDATA_UPDATE_EVERY
+
     netdata_cache_dataset = middleware.call_sync('reporting.netdata_storage_location')
-    disk_space = middleware.call_sync('netdata.get_disk_space')
     if not netdata_cache_dataset:
         # Let's exit if netdata storage is not in place
         middleware.logger.error('Netdata configuration file could not be generated')
         raise FileShouldNotExist()
+
+    disk_space = middleware.call_sync('netdata.get_disk_space')
 %>\
 [global]
 	run as user = netdata

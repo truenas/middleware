@@ -1,6 +1,5 @@
 import errno
 import json
-import middlewared.sqlalchemy as sa
 import os
 import shutil
 import subprocess
@@ -9,6 +8,8 @@ import uuid
 
 from contextlib import contextmanager, suppress
 from pathlib import Path
+
+import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
@@ -538,10 +539,9 @@ class SystemDatasetService(ConfigService):
             dataset, name = ds_config['name'], os.path.basename(ds_config['name'])
             if desired_mountpoint := ds_config.get('mountpoint'):
                 mountpoint = desired_mountpoint
-            elif name:
-                mountpoint = f'{path}/{name}'
             else:
-                mountpoint = path
+                mountpoint = f'{path}/{name}'
+
             if os.path.ismount(mountpoint):
                 continue
 
@@ -549,11 +549,15 @@ class SystemDatasetService(ConfigService):
                 os.mkdir(mountpoint)
             subprocess.run(['mount', '-t', 'zfs', dataset, mountpoint], check=True)
 
-            if chown_config := ds_config.get('chown_config'):
-                if os.stat(
-                    mountpoint
-                ).st_uid != chown_config['uid'] or os.stat(mountpoint).st_gid != chown_config['gid']:
-                    os.chown(mountpoint, **chown_config)
+            chown_config = ds_config['chown_config']
+            mode_perms = chown_config.pop('mode')
+            mountpoint_stat = os.stat(mountpoint)
+            if mountpoint_stat.st_uid != chown_config['uid'] or mountpoint_stat.st_gid != chown_config['gid']:
+                os.chown(mountpoint, **chown_config)
+
+            if (mountpoint_stat.st_mode & 0o777) != mode_perms:
+                os.chmod(mountpoint, mode_perms)
+
             mounted = True
 
         if mounted and path == SYSDATASET_PATH:
