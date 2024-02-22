@@ -4181,6 +4181,7 @@
                         "value": null,
                         "value_raw": 285212672,
                         "dev": "sdoo",
+                        "supports_identify_light": true,
                         "original": {
                             "enclosure_id": "5000ccab05113a00",
                             "enclosure_sg": "/dev/sg640",
