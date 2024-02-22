@@ -49,6 +49,9 @@ class ZPoolService(Service):
                 final[disk] = {
                     'pool_name': pool_name,
                     'disk_status': member.status,
+                    'disk_read_errors': member.stats.read_errors,
+                    'disk_write_errors': member.stats.write_errors,
+                    'disk_checksum_errors': member.stats.checksum_errors,
                     'vdev_name': 'stripe',
                     'vdev_type': vdev_type,
                     'vdev_disks': vdev_disks,
@@ -58,6 +61,9 @@ class ZPoolService(Service):
                     disk = self.resolve_block_path(i.path, real_paths)
                     final[disk] = {
                         'pool_name': pool_name,
+                        'disk_read_errors': i.stats.read_errors,
+                        'disk_write_errors': i.stats.write_errors,
+                        'disk_checksum_errors': i.stats.checksum_errors,
                         'disk_status': i.status,
                         'vdev_name': member.name,
                         'vdev_type': vdev_type,
@@ -82,6 +88,9 @@ class ZPoolService(Service):
             'sdko': {
               'pool_name': 'sanity',
               'disk_status': 'ONLINE',
+              'disk_read_errors': 0,
+              'disk_write_errors': 0,
+              'disk_checksum_errors': 0,
               'vdev_name': 'mirror-0',
               'vdev_type': 'data',
               'vdev_disks': [
@@ -92,6 +101,9 @@ class ZPoolService(Service):
             'sdkq': {
               'pool_name': 'sanity',
               'disk_status': 'ONLINE',
+              'disk_read_errors': 0,
+              'disk_write_errors': 0,
+              'disk_checksum_errors': 0,
               'vdev_name': 'mirror-0',
               'vdev_type': 'data',
               'vdev_disks': [
@@ -104,6 +116,9 @@ class ZPoolService(Service):
             'sdko': {
               'pool_name': 'sanity',
               'disk_status': 'ONLINE',
+              'disk_read_errors': 0,
+              'disk_write_errors': 0,
+              'disk_checksum_errors': 0,
               'vdev_name': 'mirror-0',
               'vdev_type': 'data',
               'vdev_disks': [
@@ -114,6 +129,9 @@ class ZPoolService(Service):
             'sdkq': {
               'pool_name': 'sanity',
               'disk_status': 'ONLINE',
+              'disk_read_errors': 0,
+              'disk_write_errors': 0,
+              'disk_checksum_errors': 0,
               'vdev_name': 'mirror-0',
               'vdev_type': 'data',
               'vdev_disks': [
