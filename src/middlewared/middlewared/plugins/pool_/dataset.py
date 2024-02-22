@@ -170,7 +170,8 @@ class PoolDatasetService(CRUDService):
 
     @private
     async def is_internal_dataset(self, dataset):
-        return not bool(filter_list([{'id': dataset}], await self.internal_datasets_filters()))
+        pool = dataset.split('/')[0]
+        return not bool(filter_list([{'id': dataset, 'pool': pool}], await self.internal_datasets_filters()))
 
     @filterable
     def query(self, filters, options):
