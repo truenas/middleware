@@ -101,6 +101,7 @@ class WebUIEnclosureService(Service):
                         "descriptor": "slot00",
                         "status": "OK",
                         "dev": "sda",
+                        "supports_identify_light": true,
                         "name": "sda",
                         "size": 12000138625024,
                         "model": "HUH721212AL4200",

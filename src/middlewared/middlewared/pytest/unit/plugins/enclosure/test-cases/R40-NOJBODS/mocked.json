@@ -68,6 +68,7 @@
                         "value": null,
                         "value_raw": 16777216,
                         "dev": "sda",
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -82,6 +83,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -96,6 +98,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -110,6 +113,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -124,6 +128,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -138,6 +143,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -152,6 +158,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -166,6 +173,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -180,6 +188,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -194,6 +203,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -208,6 +218,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -222,6 +233,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -236,6 +248,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -250,6 +263,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -264,6 +278,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -278,6 +293,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -292,6 +308,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -306,6 +323,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -320,6 +338,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -334,6 +353,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -348,6 +368,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -362,6 +383,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -376,6 +398,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -390,6 +413,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083c3f",
                             "enclosure_sg": "/dev/sg3",
@@ -457,6 +481,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -471,6 +496,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -485,6 +511,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -499,6 +526,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -513,6 +541,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -527,6 +556,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -541,6 +571,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -555,6 +586,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -569,6 +601,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -583,6 +616,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -597,6 +631,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -611,6 +646,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -625,6 +661,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -639,6 +676,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -653,6 +691,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -667,6 +706,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -681,6 +721,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -695,6 +736,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -709,6 +751,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -723,6 +766,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -737,6 +781,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -751,6 +796,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -765,6 +811,7 @@
                         "value": null,
                         "value_raw": 83886080,
                         "dev": null,
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
@@ -779,6 +826,7 @@
                         "value": null,
                         "value_raw": 16777216,
                         "dev": "sdb",
+                        "supports_identify_light": false,
                         "original": {
                             "enclosure_id": "5b0bd6d1a3083d3f",
                             "enclosure_sg": "/dev/sg5",
