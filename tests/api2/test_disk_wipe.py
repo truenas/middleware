@@ -1,3 +1,4 @@
+import pytest
 import time
 
 from middlewared.test.integration.utils import call, ssh
@@ -55,9 +56,37 @@ def test_disk_wipe_partition_clean():
     readback_clean = ssh(f"dd if=/dev/{disk} bs={blk_size} iseek={seek_blk} count=1").splitlines()[0]
     assert signal_msg not in readback_clean
 
-    # Confirm we have no partitions
+    # Confirm we have no partitions from middleware
     partitions = call('disk.list_partitions', disk)
     assert len(partitions) == 0
+
+    # Confirm the kernel partition tables indicate no partitions
+    proc_partitions = str(ssh('cat /proc/partitions'))
+    # If the wipe is truly successful /proc/partitions should have a singular
+    # entry for 'disk' in the table
+    disk_entries = [line for line in proc_partitions.splitlines() if disk in line]
+    assert len(disk_entries) == 1
+
+
+@pytest.mark.parametrize('dev_name', ['BOOT', 'UNUSED', 'bogus', ''])
+def test_disk_get_partitions_quick(dev_name):
+    """
+    dev_name:
+        'BOOT'   - find a proper device that has partitions
+        'UNUSED' - find a proper device that does not have partitons
+    All others are failure tests.  All failures are properly handled
+    and should return an empty dictionary
+    """
+    has_partitions = False
+    if 'BOOT' == dev_name:
+        dev_name = call('boot.get_disks')[0]
+        has_partitions = True
+    elif 'UNUSED' == dev_name:
+        # NOTE: 'unused' disks typically have no partitions
+        dev_name = call('disk.get_unused')[0]['name']
+
+    parts = call('disk.get_partitions_quick', dev_name)
+    assert has_partitions == (len(parts) > 0)
 
 
 def test_disk_wipe_abort():

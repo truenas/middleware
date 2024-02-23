@@ -2,6 +2,7 @@ import asyncio
 import threading
 import os
 from glob import glob
+from time import sleep
 
 from middlewared.schema import accepts, Bool, Ref, Str, returns
 from middlewared.service import job, Service, private
@@ -20,12 +21,19 @@ class DiskService(Service):
         """
         startsect = {}
         sectsize = 0
-        with open(f"/sys/block/{dev_name}/queue/logical_block_size", "r") as fd:
-            sectsize = int(fd.read().strip())
+        lbs_file = f"/sys/block/{dev_name}/queue/logical_block_size"
+        try:
+            with open(lbs_file, "r") as fd:
+                sectsize = int(fd.read().strip())
+        except (FileNotFoundError, ValueError):
+            pass
+        except Exception:
+            self.logger.error('Unexpected failure trying to open %s', lbs_file, exc_info=True)
+        else:
+            for sdpath in glob(f"/sys/block/{dev_name}/{dev_name}[1-9]"):
+                with open(f"{sdpath}/start", "r") as fd:
+                    startsect[int(sdpath[-1])] = int(fd.read().strip()) * sectsize
 
-        for sdpath in glob(f"/sys/block/{dev_name}/{dev_name}[1-9]"):
-            with open(f"{sdpath}/start", "r") as fd:
-                startsect[int(sdpath[-1])] = int(fd.read().strip()) * sectsize
         return startsect
 
     def _wipe_impl(self, job, dev, mode, event):
@@ -96,12 +104,22 @@ class DiskService(Service):
                         return
                     job.set_progress(round(((i / iterations) * 100), 2))
 
-        with open(disk_path, 'wb'):
-            # we overwrote partition label information by the time
-            # we get here, so we need to close device and re-open
-            # it in write mode to trigger udev to rescan the
-            # device for new information
-            pass
+        # The call to update_partition_table_quick can require retries
+        error = {}
+        retries = 4
+        # Unfortunately, without a small initial sleep, the following
+        # retry loop will almost certainly require two iterations.
+        sleep(0.1)
+        while retries > 0:
+            # Use BLKRRPATH ioctl to update the kernel partition table
+            error = self.middleware.call_sync('disk.update_partition_table_quick', disk_path)
+            if not error[disk_path]:
+                break
+            sleep(0.1)
+            retries -= 1
+
+        if error[disk_path]:
+            self.logger.error('Error partition table update "%s": %s', disk_path, error[disk_path])
 
     @accepts(
         Str('dev'),
