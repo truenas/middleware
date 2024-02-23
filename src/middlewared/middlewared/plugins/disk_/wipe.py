@@ -62,7 +62,10 @@ class DiskService(Service):
 
             if mode == 'QUICK':
                 # Get partition info before it gets destroyed
-                disk_parts = self.get_partitions_quick(dev)
+                try:
+                    disk_parts = self.get_partitions_quick(dev)
+                except Exception:
+                    disk_parts = {}
 
                 _32 = 32
                 for i in range(_32):
@@ -87,13 +90,15 @@ class DiskService(Service):
                 # The middle partitions often contain old cruft.  Clean those.
                 if len(disk_parts) > 1:
                     for partnum, sector_start in disk_parts.items():
-                        if 1 != partnum:
-                            # Start 2 MiB back from the start and 'clean' 2 MiB past, 4 MiB total
-                            os.lseek(f.fileno(), sector_start - (2 * CHUNK), os.SEEK_SET)
-                            for i in range(4):
-                                os.write(f.fileno(), to_write)
-                                if event.is_set():
-                                    return
+                        if partnum == 1:
+                            continue
+
+                        # Start 2 MiB back from the start and 'clean' 2 MiB past, 4 MiB total
+                        os.lseek(f.fileno(), sector_start - (2 * CHUNK), os.SEEK_SET)
+                        for i in range(4):
+                            os.write(f.fileno(), to_write)
+                            if event.is_set():
+                                return
                     # This is quick. We can reasonably skip the progress update
 
             else:
