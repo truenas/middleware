@@ -9,6 +9,8 @@ from middlewared.service import job, Service, private
 
 
 CHUNK = 1048576  # 1MB binary
+# Maximum number of attempts to request partition table update
+MAX_NUM_PARTITION_UPDATE_RETRIES = 4
 
 
 class DiskService(Service):
@@ -111,7 +113,7 @@ class DiskService(Service):
 
         # The call to update_partition_table_quick can require retries
         error = {}
-        retries = 4
+        retries = MAX_NUM_PARTITION_UPDATE_RETRIES
         # Unfortunately, without a small initial sleep, the following
         # retry loop will almost certainly require two iterations.
         sleep(0.1)
