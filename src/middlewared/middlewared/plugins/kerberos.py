@@ -468,15 +468,20 @@ class KerberosService(ConfigService):
             cmd.extend(['-k', creds['kerberos_principal']])
             kinit = await run(cmd, check=False)
             if kinit.returncode != 0:
+                errmsg = kinit.stderr.decode()
+                err = errno.EAGAIN if 'Resource temporarily unavailable' in errmsg else errno.EFAULT
+
                 raise CallError(f"kinit with principal [{creds['kerberos_principal']}] "
-                                f"failed: {kinit.stderr.decode()}")
+                                f"failed: {errmsg}", err)
             return
 
         cmd.append(creds['username'])
         kinit = await run(cmd, input=creds['password'].encode(), check=False)
 
         if kinit.returncode != 0:
-            raise CallError(f"kinit with password failed: {kinit.stdout.decode()}")
+            errmsg = kinit.stderr.decode()
+            err = errno.EAGAIN if 'Resource temporarily unavailable' in errmsg else errno.EFAULT
+            raise CallError(f"kinit with password failed: {errmsg}", err)
 
         if ccache == krb5ccache.USER:
             await self.middleware.run_in_thread(os.chown, ccache_path, ccache_uid, -1)
