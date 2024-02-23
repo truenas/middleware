@@ -1,15 +1,42 @@
 import asyncio
 import threading
 import os
+from glob import glob
+from time import sleep
 
 from middlewared.schema import accepts, Bool, Ref, Str, returns
-from middlewared.service import job, Service
+from middlewared.service import job, Service, private
 
 
 CHUNK = 1048576  # 1MB binary
+# Maximum number of attempts to request partition table update
+MAX_NUM_PARTITION_UPDATE_RETRIES = 4
 
 
 class DiskService(Service):
+
+    @private
+    def get_partitions_quick(self, dev_name):
+        """
+        Lightweight function to generate a dictionary of
+        partition start in units of bytes to be used by seek
+        """
+        startsect = {}
+        sectsize = 0
+        lbs_file = f"/sys/block/{dev_name}/queue/logical_block_size"
+        try:
+            with open(lbs_file, "r") as fd:
+                sectsize = int(fd.read().strip())
+        except (FileNotFoundError, ValueError):
+            pass
+        except Exception:
+            self.logger.error('Unexpected failure trying to open %s', lbs_file, exc_info=True)
+        else:
+            for sdpath in glob(f"/sys/block/{dev_name}/{dev_name}[1-9]"):
+                with open(f"{sdpath}/start", "r") as fd:
+                    startsect[int(sdpath[-1])] = int(fd.read().strip()) * sectsize
+
+        return startsect
 
     def _wipe_impl(self, job, dev, mode, event):
         disk_path = f'/dev/{dev}'
@@ -37,7 +64,10 @@ class DiskService(Service):
 
             if mode == 'QUICK':
                 # Get partition info before it gets destroyed
-                disk_parts = self.middleware.call_sync('disk.list_partitions', dev)
+                try:
+                    disk_parts = self.get_partitions_quick(dev)
+                except Exception:
+                    disk_parts = {}
 
                 _32 = 32
                 for i in range(_32):
@@ -61,14 +91,17 @@ class DiskService(Service):
 
                 # The middle partitions often contain old cruft.  Clean those.
                 if len(disk_parts) > 1:
-                    for partition in disk_parts[1:]:
+                    for partnum, sector_start in disk_parts.items():
+                        if partnum == 1:
+                            continue
+
                         # Start 2 MiB back from the start and 'clean' 2 MiB past, 4 MiB total
-                        os.lseek(f.fileno(), partition['start'] - (2 * CHUNK), os.SEEK_SET)
+                        os.lseek(f.fileno(), sector_start - (2 * CHUNK), os.SEEK_SET)
                         for i in range(4):
                             os.write(f.fileno(), to_write)
                             if event.is_set():
                                 return
-                            # This is quick. We can reasonably skip the progress update
+                    # This is quick. We can reasonably skip the progress update
 
             else:
                 iterations = (size // CHUNK)
@@ -78,12 +111,22 @@ class DiskService(Service):
                         return
                     job.set_progress(round(((i / iterations) * 100), 2))
 
-        with open(disk_path, 'wb'):
-            # we overwrote partition label information by the time
-            # we get here, so we need to close device and re-open
-            # it in write mode to trigger udev to rescan the
-            # device for new information
-            pass
+        # The call to update_partition_table_quick can require retries
+        error = {}
+        retries = MAX_NUM_PARTITION_UPDATE_RETRIES
+        # Unfortunately, without a small initial sleep, the following
+        # retry loop will almost certainly require two iterations.
+        sleep(0.1)
+        while retries > 0:
+            # Use BLKRRPATH ioctl to update the kernel partition table
+            error = self.middleware.call_sync('disk.update_partition_table_quick', disk_path)
+            if not error[disk_path]:
+                break
+            sleep(0.1)
+            retries -= 1
+
+        if error[disk_path]:
+            self.logger.error('Error partition table update "%s": %s', disk_path, error[disk_path])
 
     @accepts(
         Str('dev'),

@@ -9,7 +9,7 @@ from middlewared.plugins.device_.device_info import (RE_NVME_PRIV,
                                                      is_iscsi_device)
 from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 from middlewared.schema import List, Str
-from middlewared.service import Service, accepts, job
+from middlewared.service import Service, accepts, job, private
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 def taste_it(disk, errors):
     BLKRRPART = 0x125f  # force reread partition table
 
+    fd = None
     errors[disk] = []
     try:
         fd = os.open(disk, os.O_WRONLY)
@@ -29,7 +30,8 @@ def taste_it(disk, errors):
         except Exception as e:
             errors[disk].append(str(e))
     finally:
-        os.close(fd)
+        if fd is not None:
+            os.close(fd)
 
 
 def retaste_disks_impl(disks: set = None):
@@ -58,6 +60,16 @@ def retaste_disks_impl(disks: set = None):
 
 
 class DiskService(Service):
+
+    @private
+    def update_partition_table_quick(self, devnode):
+        """
+        Call the BLKRRPATH ioctl to update the partition table on a single dev node
+        Used by 'wipe'
+        """
+        errors = {}
+        taste_it(devnode, errors)
+        return errors
 
     @accepts(List('disks', required=False, default=None, items=[Str('name', required=True)]))
     @job(lock='disk_retaste')
