@@ -282,6 +282,11 @@ class ActiveDirectoryService(ConfigService):
 
         if new['allow_dns_updates']:
             ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
+
+            if ha_mode == 'UNIFIED':
+                if await self.middleware.call('failover.status') != 'MASTER':
+                    return
+
             smb = await self.middleware.call('smb.config')
             addresses = await self.middleware.call(
                 'activedirectory.get_ipaddresses', new, smb, ha_mode
