@@ -8,6 +8,7 @@ from subprocess import call
 from sys import argv, exit
 import os
 import getopt
+import socket
 import sys
 import secrets
 import string
@@ -141,7 +142,7 @@ if not os.path.exists(artifacts):
 os.environ["MIDDLEWARE_TEST_IP"] = ip
 os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
 
-interface = ws_call('interface.query', [['state.aliases.*.address', '=', ip]], {'get': True})['id']
+interface = ws_call('interface.query', [['state.aliases.*.address', '=', socket.gethostbyname(ip)]], {'get': True})['id']
 
 cfg_content = f"""#!{sys.executable}
 
