@@ -1,17 +1,16 @@
 import enum
 import json
 import logging
-import requests
-import urllib3
-
 from urllib.parse import urlencode
+
+import requests
+from urllib3.exceptions import InsecureRequestWarning
 
 DEFAULT_REDFISH_TIMEOUT_SECS = 10
 HEADER = {'Content-Type': 'application/json', 'Vary': 'accept'}
 REDFISH_ROOT_PATH = '/redfish/v1'
 ODATA_ID = '@odata.id'
-
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class InvalidCredentialsError(Exception):
@@ -30,31 +29,59 @@ class RedfishClient:
 
     client_cache = {}
 
+    def __init__(
+        self,
+        base_url,
+        username=None,
+        password=None,
+        authtype=AuthMethod.BASIC,
+        default_prefix=REDFISH_ROOT_PATH,
+        verify=False,
+        timeout=DEFAULT_REDFISH_TIMEOUT_SECS
+    ):
+        self.base_url = base_url.rstrip('/')
+        self.username = username
+        self.password = password
+        self.authtype = self.authtype_to_enum(authtype)
+        self.prefix = default_prefix
+        self.verify = verify
+        self.auth = None
+        self.auth_token = None
+        self.session_key = None
+        self.authorization_key = None
+        self.session_location = None
+        self.timeout = timeout
+        self.cache = {}
+        self.root = self.get_root_object()
+        try:
+            self.login_url = self.root['Links']['Sessions']['@odata.id']
+        except KeyError:
+            self.login_url = '/redfish/v1/SessionService/Sessions'
+
+        if username and password:
+            self.login()
+
     @classmethod
     def setup(cls):
         # Silence InsecureRequestWarning: Unverified HTTPS request is being made to host
-        requests.packages.urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
     @classmethod
     def ping(cls, mgmt_ip, timeout=DEFAULT_REDFISH_TIMEOUT_SECS):
-        mgmt_ip = mgmt_ip.rstrip('/')
-        url = f'https://{mgmt_ip}{REDFISH_ROOT_PATH}'
-        r = requests.get(url, verify=False, timeout=timeout)
-        if not r.ok:
-            return None
-        try:
-            return r.json()
-        except requests.exceptions.JSONDecodeError:
-            return None
+        r = requests.get(f'https://{mgmt_ip.rstrip("/")}{REDFISH_ROOT_PATH}', verify=False, timeout=timeout)
+        if r.ok:
+            try:
+                return r.json()
+            except requests.exceptions.JSONDecodeError:
+                pass
 
     @classmethod
     def is_redfish(cls, mgmt_ip, timeout=DEFAULT_REDFISH_TIMEOUT_SECS):
         try:
             data = cls.ping(mgmt_ip, timeout)
-            if data:
-                return "RedfishVersion" in data
+            return data and 'RedfishVersion' in data
         except requests.exceptions.Timeout:
-            logger.debug('Failed to query redfish host %s', mgmt_ip)
+            LOGGER.debug('Timed out querying redfish host %r', mgmt_ip)
         return False
 
     @classmethod
@@ -66,46 +93,13 @@ class RedfishClient:
         try:
             return cls.client_cache[mgmt_ip]
         except KeyError:
-            jbofs = middleware.call_sync('jbof.query',
-                                         [['OR',
-                                           [['mgmt_ip1', '=', mgmt_ip],
-                                            ['mgmt_ip2', '=', mgmt_ip]]]])
-            for jbof in jbofs:
+            for jbof in middleware.call_sync(
+                'jbof.query',
+                [['OR', [['mgmt_ip1', '=', mgmt_ip], ['mgmt_ip2', '=', mgmt_ip]]]]
+            ):
                 redfish = RedfishClient(f'https://{mgmt_ip}', jbof['mgmt_username'], jbof['mgmt_password'])
                 RedfishClient.cache_set(mgmt_ip, redfish)
             return redfish
-
-    def __init__(self,
-                 base_url,
-                 username=None,
-                 password=None,
-                 authtype=AuthMethod.BASIC,
-                 default_prefix=REDFISH_ROOT_PATH,
-                 verify=False,
-                 timeout=DEFAULT_REDFISH_TIMEOUT_SECS):
-        self.base_url = base_url.rstrip('/')
-        self.username = username
-        self.password = password
-        self.authtype = self.authtype_to_enum(authtype)
-        self.prefix = default_prefix
-        self.verify = verify
-
-        self.auth = None
-        self.auth_token = None
-        self.session_key = None
-        self.authorization_key = None
-        self.session_location = None
-        self.timeout = timeout
-        self.cache = {}
-
-        self.root = self.get_root_object()
-        try:
-            self.login_url = self.root['Links']['Sessions']['@odata.id']
-        except KeyError:
-            self.login_url = '/redfish/v1/SessionService/Sessions'
-
-        if username and password:
-            self.login()
 
     @property
     def uuid(self):
@@ -135,12 +129,14 @@ class RedfishClient:
         return self._cached_fetch('managers', '/Managers', use_cached)
 
     def mgmt_ethernet_interfaces(self, iom, use_cached=True):
-        uri = self.managers()[iom] + '/EthernetInterfaces'
+        uri = f'{self.managers()[iom]}/EthernetInterfaces'
         return self._cached_fetch(f'{iom}/mgmt_ethernet_interfaces', uri, use_cached)
 
     def network_device_functions(self, iom, use_cached=True):
-        return self._cached_fetch(f'{iom}/network_device_functions',
-                                  f'/Chassis/{iom}/NetworkAdapters/1/NetworkDeviceFunctions', use_cached)
+        return self._cached_fetch(
+            f'{iom}/network_device_functions',
+            f'/Chassis/{iom}/NetworkAdapters/1/NetworkDeviceFunctions', use_cached
+        )
 
     def fabric_ethernet_interfaces(self, use_cached=True):
         result = []
@@ -160,16 +156,12 @@ class RedfishClient:
             return self.cache[uri]
 
     def get_root_object(self):
-        try:
-            return self.get(self.prefix).json()
-        except Exception as e:
-            logger.debug("Failed to get root object for %r: %s", self.base_url, e, exc_info=True)
-            raise e
+        return self.get(self.prefix).json()
 
     def authtype_to_enum(self, authtype):
-        if authtype in [AuthMethod.BASIC, AuthMethod.BASIC.value]:
+        if authtype in (AuthMethod.BASIC, AuthMethod.BASIC.value):
             return AuthMethod.BASIC
-        elif authtype in [AuthMethod.SESSION, AuthMethod.SESSION.value]:
+        elif authtype in (AuthMethod.SESSION, AuthMethod.SESSION.value):
             return AuthMethod.SESSION
         raise ValueError('Invalid auth method', authtype)
 
@@ -184,10 +176,7 @@ class RedfishClient:
             # No exception thrown ...
             self.auth = (self.username, self.password)
         elif self.authtype == AuthMethod.SESSION:
-            data = {
-                'UserName': self.username,
-                'Password': self.password
-            }
+            data = {'UserName': self.username, 'Password': self.password}
             resp = self.post(self.login_url, data=data)
             self.resp = resp
             if not resp.ok:
@@ -287,23 +276,22 @@ class RedfishClient:
             raise InvalidCredentialsError('HTTP 401 Unauthorized returned: Invalid credentials supplied')
         return r
 
-    def configure_fabric_interface(self,
-                                   uri,
-                                   address,
-                                   subnet_mask,
-                                   dhcp_enabled=False,
-                                   gateway='0.0.0.0',
-                                   mtusize=5000,
-                                   enabled=True):
-        payload = {
-            "DHCPv4": {"DHCPEnabled": dhcp_enabled},
-            'IPv4StaticAddresses': [{'Address': address,
-                                     'Gateway': gateway,
-                                     'SubnetMask': subnet_mask}],
+    def configure_fabric_interface(
+        self,
+        uri,
+        address,
+        subnet_mask,
+        dhcp_enabled=False,
+        gateway='0.0.0.0',
+        mtusize=5000,
+        enabled=True
+    ):
+        return self.post(uri, data={
+            'DHCPv4': {'DHCPEnabled': dhcp_enabled},
+            'IPv4StaticAddresses': [{'Address': address, 'Gateway': gateway, 'SubnetMask': subnet_mask}],
             'MTUSize': mtusize,
             'InterfaceEnabled': enabled,
-        }
-        return self.post(uri, data=payload)
+        })
 
     def link_status(self, uri):
         r = self.get(uri)
