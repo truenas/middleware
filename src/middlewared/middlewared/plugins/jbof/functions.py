@@ -54,38 +54,17 @@ def initiator_ip_from_jbof_static_ip(ip):
 
 def get_sys_class_nvme():
     data = dict()
-    for i in Path('/sys/class/nvme').iterdir():
-        if not i.is_dir():
-            continue
-        data[i.name] = {'nqn': (i / 'subsysnqn').read_text().strip(),
-                        'transport_address': (i / 'address').read_text().strip(),
-                        'transport_protocol': (i / 'transport').read_text().strip(),
-                        'state': (i / 'state').read_text().strip(),
-                        }
-    return data
+    for i in filter(lambda x: x.is_dir(), Path('/sys/class/nvme').iterdir()):
+        data[i.name] = {
+            'model': (i / 'model').read_text().strip(),
+            'serial': (i / 'serial').read_text().strip(),
+            'subsysnqn': (i / 'subsysnqn').read_text().strip(),
+            'transport_address': (i / 'address').read_text().strip(),
+            'transport_protocol': (i / 'transport').read_text().strip(),
+            'state': (i / 'state').read_text().strip(),
+        }
+        if data[i.name]['transport_protocol'] == 'rdma':
+            data[i.name]['hostnqn'] = (i / 'hostnqn').read_text().strip()
+            data[i.name]['transport_address'] = data[i.name]['transport_address'].split('=')[1].split(',')[0].strip()
 
-
-def get_sys_class_nvme_subsystem(expand_nvme=False):
-    data = dict()
-    for i in Path('/sys/class/nvme-subsystem').iterdir():
-        if not i.is_dir():
-            continue
-        data[i.name] = {'nqn': (i / 'subsysnqn').read_text().strip(),
-                        'serial': (i / 'serial').read_text().strip(),
-                        'model': (i / 'model').read_text().strip(),
-                        }
-        if expand_nvme:
-            data[i.name]['nvme'] = {}
-        else:
-            data[i.name]['nvme'] = []
-        for j in i.iterdir():
-            if not j.is_symlink() or not j.name.startswith('nvme'):
-                continue
-            if expand_nvme:
-                data[i.name]['nvme'][j.name] = {'transport_address': (j / 'address').read_text().strip(),
-                                                'transport_protocol': (j / 'transport').read_text().strip(),
-                                                'state': (j / 'state').read_text().strip(),
-                                                }
-            else:
-                data[i.name]['nvme'].append(j.name)
     return data
