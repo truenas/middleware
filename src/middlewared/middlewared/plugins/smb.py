@@ -568,10 +568,11 @@ class SMBService(ConfigService):
         if they are missing from the current running configuration.
         """
         job.set_progress(65, 'Initializing directory services')
-        await self.middleware.call(
+        ds_job = await self.middleware.call(
             "directoryservices.initialize",
             {"activedirectory": ad_enabled, "ldap": ldap_enabled}
         )
+        await ds_job.wait()
 
         job.set_progress(70, 'Checking SMB server status.')
         if await self.middleware.call("service.started_or_enabled", "cifs"):

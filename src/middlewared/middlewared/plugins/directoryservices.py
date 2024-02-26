@@ -1,3 +1,4 @@
+import asyncio
 import enum
 import json
 import os
@@ -399,6 +400,21 @@ class DirectoryServices(Service):
 
         return {"dbconfig": stored_ts, "secrets": passwd_ts}
 
+    async def __kerberos_start_retry(self, retries=10):
+        while retries > 0:
+            try:
+                await self.middleware.call('kerberos.start')
+                break
+            except CallError as e:
+                if e.errno == errno.EAGAIN:
+                    self.logger.debug("Failed to start kerberos. Retrying %d more times.",
+                                      retries)
+                else:
+                    self.logger.warning("Failed to start kerberos. Retrying %d more times.",
+                                        retries, exc_info=True)
+            await asyncio.sleep(1)
+            retries -= 1
+
     @private
     def available_secrets(self):
         """
@@ -415,7 +431,8 @@ class DirectoryServices(Service):
         return list(db_secrets.keys())
 
     @private
-    async def initialize(self, data=None):
+    @job()
+    async def initialize(self, job, data=None):
         """
         Ensure that secrets.tdb at a minimum exists. If it doesn't exist, try to restore
         from a backup stored in our config file. If this fails, try to use what
@@ -465,12 +482,7 @@ class DirectoryServices(Service):
             self.logger.warning('Cache flush failed', exc_info=True)
 
         if is_kerberized:
-            try:
-                await self.middleware.call('kerberos.start')
-            except CallError:
-                self.logger.warning("Failed to start kerberos after directory service "
-                                    "initialization. Services dependent on kerberos may"
-                                    "not work correctly.", exc_info=True)
+            await self.__kerberos_start_retry()
 
         await self.middleware.call(health_check)
 
