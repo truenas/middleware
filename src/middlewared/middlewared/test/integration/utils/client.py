@@ -1,9 +1,11 @@
 # -*- coding=utf-8 -*-
 import contextlib
 import os
+import socket
 
 import requests
 
+from .pytest import fail
 from middlewared.client import Client
 from middlewared.client.utils import undefined
 
@@ -15,12 +17,15 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
     if auth is undefined:
         auth = ("root", password())
 
-    with Client(host_websocket_uri(host_ip), py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions) as c:
-        if auth is not None:
-            logged_in = c.call("auth.login", *auth)
-            if auth_required:
-                assert logged_in
-        yield c
+    try:
+        with Client(host_websocket_uri(host_ip), py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions) as c:
+            if auth is not None:
+                logged_in = c.call("auth.login", *auth)
+                if auth_required:
+                    assert logged_in
+            yield c
+    except socket.timeout:
+        fail('socket timeout')
 
 
 def host():
