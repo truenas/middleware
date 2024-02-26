@@ -3,7 +3,7 @@
 # Author: Eric Turgeon
 # License: BSD
 
-from middlewared.test.integration.utils import call as ws_call
+from middlewared.test.integration.utils import client
 from subprocess import call
 from sys import argv, exit
 import os
@@ -142,7 +142,14 @@ if not os.path.exists(artifacts):
 os.environ["MIDDLEWARE_TEST_IP"] = ip
 os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
 
-interface = ws_call('interface.query', [['state.aliases.*.address', '=', socket.gethostbyname(ip)]], {'get': True})['id']
+ip_to_use = ip if not ha else os.environ['controller1_ip']
+
+with client(host_ip=ip_to_use) as c:
+    interface = c.call(
+        'interface.query',
+        [['state.aliases.*.address', '=', socket.gethostbyname(ip_to_use)]],
+        {'get': True}
+    )['id']
 
 cfg_content = f"""#!{sys.executable}
 
