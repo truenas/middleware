@@ -32,12 +32,29 @@ zvol = f'{pool_name}/{zvol_name}'
 zvol_url = zvol.replace('/', '%2F')
 
 
+def has_session_present(target):
+    results = GET(
+        "/iscsi/global/sessions", payload={
+            'query-filters': [['target', '=', target]],
+        })
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list), results.text
+    return bool(len(results.json()))
+
+
 def waiting_for_iscsi_to_disconnect(base_target, wait):
     timeout = 0
+    # First check that the client no longer sees the target logged in
     while timeout < wait:
         cmd = 'iscsictl -L'
         results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
         if base_target not in results['output']:
+            break
+        timeout += 1
+        sleep(1)
+    # Next check that the SCALE does not see a session to the target
+    while timeout < wait:
+        if not has_session_present(base_target):
             return True
         timeout += 1
         sleep(1)
