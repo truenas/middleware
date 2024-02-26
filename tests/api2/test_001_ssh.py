@@ -109,8 +109,8 @@ def test_006_setup_and_login_using_root_ssh_key(ip_to_use):
     {'type': 'GROUP', 'gid': 951, 'name': 'truenas_readonly_administrators'},
     {'type': 'GROUP', 'gid': 952, 'name': 'truenas_sharing_administrators'},
 ])
-def test_007_check_local_accounts(account):
-    entry = call('group.query', [['gid', '=', account['gid']]])
+def test_007_check_local_accounts(ws_client, account):
+    entry = ws_client.call('group.query', [['gid', '=', account['gid']]])
     if not entry:
         fail(f'{account["gid"]}: entry does not exist in db')
 
