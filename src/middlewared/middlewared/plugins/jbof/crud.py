@@ -11,7 +11,7 @@ from middlewared.service import (CallError, CRUDService, ValidationErrors,
                                  job, private)
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
-from .functions import (decode_static_ip, get_sys_class_nvme_subsystem,
+from .functions import (decode_static_ip, get_sys_class_nvme,
                         initiator_ip_from_jbof_static_ip, initiator_static_ip,
                         jbof_static_ip, jbof_static_ip_from_initiator_ip,
                         static_ip_netmask_int, static_ip_netmask_str,
@@ -374,7 +374,9 @@ class JBOFService(CRUDService):
                 return
 
             connected_shelf_ips = []
-            results = await asyncio.gather(*[self.hardwire_node(node, shelf_index, shelf_ip_to_mac) for node in ('A', 'B')])
+            results = await asyncio.gather(
+                *[self.hardwire_node(node, shelf_index, shelf_ip_to_mac) for node in ('A', 'B')]
+            )
             for (node, connected_shelf_ips) in zip(('A', 'B'), results):
                 if not connected_shelf_ips:
                     # Failed to connect any IPs => error
@@ -519,40 +521,24 @@ class JBOFService(CRUDService):
         return True
 
     @private
-    def _all_subsys_addresses_match_ips(self, subsys, ips):
-        for nvme in subsys['nvme'].values():
-            if nvme['transport_protocol'] != 'rdma':
-                return False
-            address = nvme['transport_address']
-            if address.startswith('traddr='):
-                address = address[7:].split(',')[0]
-            matched = any(ip == address for ip in ips)
-            if not matched:
-                return False
-        return True
-
-    @private
     def nvme_disconnect(self, ips):
-        try:
-            subsystems = get_sys_class_nvme_subsystem(True)
-        except FileNotFoundError:
-            self.logger.debug('Could not find NVMe subsystems to cleanup')
-            return
+        """Iterate through all nvme devices that have a transport protocol
+        of RDMA and disconnect from this host"""
         nqns = []
-        for subsys in subsystems.values():
-            if self._all_subsys_addresses_match_ips(subsys, ips):
-                nqns.append(subsys['nqn'])
-        if nqns:
-            self.logger.debug('Disconnecting %r NQNs', len(nqns))
+        for nvme, info in get_sys_class_nvme().items():
+            if info['transport_protocol'] == 'rdma' and any(ip == info['transport_address'] for ip in ips):
+                nqns.append(info['subsysnqn'])
+
+        len_nqns = len(nqns)
+        if len_nqns > 0:
+            self.logger.debug('Disconnecting %r NQNs', len_nqns)
             command = ['nvme', 'disconnect', '-n', ','.join(nqns)]
             ret = subprocess.run(command, capture_output=True)
             if ret.returncode:
                 error = ret.stderr.decode() if ret.stderr else ret.stdout.decode()
                 if not error:
                     error = 'No error message reported'
-                self.logger.debug('Failed to execute command: %r with error: %r', " ".join(command), error)
                 raise CallError(f'Failed disconnect NVMe disks: {error}')
-        self.logger.debug('Disconnected %r NQNs', len(nqns))
 
     @private
     async def shelf_interface_count(self, mgmt_ip):
