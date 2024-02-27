@@ -117,6 +117,9 @@ def cleanup_reverse_zone():
 
 @pytest.fixture(scope="function")
 def set_product_type(request):
+    if ha:
+        # HA product is already enterprise-licensed
+        yield
     with product_type():
         yield
 
@@ -191,9 +194,10 @@ def test_06_get_activedirectory_started_before_starting_activedirectory(request)
 
 @pytest.mark.dependency(name="ad_works")
 def test_07_enable_leave_activedirectory(request):
-    with pytest.raises(ValidationErrors):
-        # At this point we are not enterprise licensed
-        call("system.general.update", {"ds_auth": True})
+    if not ha:
+        with pytest.raises(ValidationErrors):
+            # At this point we are not enterprise licensed
+            call("system.general.update", {"ds_auth": True})
 
     short_name = None
 
