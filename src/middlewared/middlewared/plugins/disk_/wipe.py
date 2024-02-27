@@ -91,8 +91,10 @@ class DiskService(Service):
 
                 # The middle partitions often contain old cruft.  Clean those.
                 if len(disk_parts) > 1:
-                    for partnum, sector_start in disk_parts.items():
-                        if partnum == 1:
+                    _30MiB = 30 * CHUNK
+                    for sector_start in disk_parts.values():
+                        # Skip any partitions that start under 30 MiB
+                        if sector_start < _30MiB:
                             continue
 
                         # Start 2 MiB back from the start and 'clean' 2 MiB past, 4 MiB total
