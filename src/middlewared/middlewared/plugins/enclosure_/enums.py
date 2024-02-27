@@ -54,3 +54,10 @@ class JbodModels(Enum):
     ES60G2 = 'ES60G2'
     ES102 = 'ES102'
     ES102G2 = 'ES102G2'
+
+
+@unique
+class JbofModels(Enum):
+    # name is the OEM model (VDS2249R2)
+    # while the value (ES24N) is iX's model
+    VDS2249R2 = 'ES24N'
