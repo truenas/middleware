@@ -213,7 +213,7 @@ class PoolService(Service):
         return True
 
     @private
-    def import_on_boot_impl(self, vol_name, vol_guid, set_cachefile=False, mount_datasets=True):
+    def import_impl(self, vol_name, vol_guid, set_cachefile=False, mount_datasets=True, any_host=False):
         cmd = [
             'zpool', 'import',
             vol_guid,  # the GUID of the zpool
@@ -222,6 +222,11 @@ class PoolService(Service):
             '-f',  # force import since hostid can change (upgrade from CORE to SCALE changes it, for example)
             '-o', f'cachefile={ZPOOL_CACHE_FILE}' if set_cachefile else 'cachefile=none',
         ] + (['-N'] if not mount_datasets else [])
+        if not mount_datasets:
+            cmd.append('-N')
+        if any_host:
+            # this should be analogous to what we do in import pool method with any_host parameter
+            cmd.append('-f')
         try:
             self.logger.debug('Importing %r with guid: %r', vol_name, vol_guid)
             cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -241,7 +246,7 @@ class PoolService(Service):
     @private
     def unlock_on_boot_impl(self, vol_name, guid, set_cachefile_property):
         if not self.middleware.call_sync('pool.handle_unencrypted_datasets_on_import', vol_name):
-            self.import_on_boot_impl(vol_name, guid, set_cachefile_property, mount_datasets=False)
+            self.import_impl(vol_name, guid, set_cachefile_property, mount_datasets=False)
 
         zpool_info = self.middleware.call_sync('pool.dataset.get_instance_quick', vol_name, {'encryption': True})
         if not zpool_info:
@@ -389,7 +394,7 @@ class PoolService(Service):
         # all zpools should be offline at this point.
         for i in self.middleware.call_sync('datastore.query', 'storage.volume'):
             name, guid = i['vol_name'], i['vol_guid']
-            if not self.import_on_boot_impl(name, guid, set_cachefile_property):
+            if not self.import_impl(name, guid, set_cachefile_property):
                 continue
 
             self.unlock_on_boot_impl(name, guid, set_cachefile_property)
