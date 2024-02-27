@@ -4,13 +4,14 @@ import functools
 import os
 import re
 import shlex
+import shutil
 import uuid
 
 import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str, ValidationErrors
-from middlewared.service import CallError, CRUDService, item_method, private
+from middlewared.service import CallError, CRUDService, item_method, job, private
 from middlewared.validators import Range, UUID
 from middlewared.plugins.vm.numeric_set import parse_numeric_set, NumericSet
 
@@ -489,3 +490,16 @@ class VMService(CRUDService, VMSupervisorMixin):
         vm = self.middleware.call_sync('vm.get_instance', vm_id)
         path = f'/var/log/libvirt/qemu/{vm["id"]}_{vm["name"]}.log'
         return path if os.path.exists(path) else None
+
+    @accepts(Int('id'), roles=['VM_READ'])
+    @returns()
+    @job(pipes=['output'])
+    def log_file_download(self, job, vm_id):
+        """
+        Retrieve log file contents of `id` VM.
+
+        It will download empty file if log file does not exist.
+        """
+        if path := self.log_file_path(vm_id):
+            with open(path, 'rb') as f:
+                shutil.copyfileobj(f, job.pipes.output.w)
