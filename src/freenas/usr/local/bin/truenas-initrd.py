@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import contextlib
 import json
 import logging
@@ -182,7 +183,11 @@ def update_zfs_module_config(root):
 
 if __name__ == "__main__":
     try:
-        root = sys.argv[1]
+        p = argparse.ArgumentParser()
+        p.add_argument("chroot", nargs=1)
+        p.add_argument("--force", "-f", action="store_true")
+        args = p.parse_args()
+        root = args.chroot[0]
         if root != "/":
             sys.path.insert(0, os.path.join(root, "usr/lib/python3/dist-packages"))
 
@@ -190,8 +195,11 @@ if __name__ == "__main__":
         from middlewared.utils.db import FREENAS_DATABASE, query_config_table, query_table
         from middlewared.utils.gpu import get_gpus
 
-        update_required = update_zfs_default(root) | update_pci_initramfs_config(root) | update_zfs_module_config(root)
-        if update_required:
+        if (
+            update_required := args.force | update_zfs_default(root) | update_pci_initramfs_config(
+                root
+            ) | update_zfs_module_config(root)
+        ):
             subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
     except Exception:
         logger.error("Failed to update initramfs", exc_info=True)
