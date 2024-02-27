@@ -5,6 +5,7 @@ import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, InstanceNotFound, job, private, Service
+from middlewared.utils import run
 
 from .utils import ZPOOL_CACHE_FILE
 
@@ -239,7 +240,7 @@ class PoolService(Service):
 
     @private
     def unlock_on_boot_impl(self, vol_name):
-        zpool_info = self.middleware.call_sync('pool.handle_unencrypted_datasets_on_import', vol_name)
+        zpool_info = self.middleware.call_sync('pool.dataset.get_instance_quick', vol_name, {'encryption': True})
         if not zpool_info:
             self.logger.error(
                 'Unable to retrieve %r root dataset information required for unlocking any relevant encrypted datasets',
@@ -401,23 +402,34 @@ class PoolService(Service):
 
     @private
     async def handle_unencrypted_datasets_on_import(self, pool_name):
+        # If this returns true, it means `pool_name` was not exported which means there is no need to check
+        # for import workflow
+        # If this returns false, it means that `pool_name` was exported and now needs to be imported back without
+        # mounting any unencrypted datasets as root dataset is locked
         try:
             root_ds = await self.middleware.call('pool.dataset.get_instance_quick', pool_name, {
                 'encryption': True,
             })
         except InstanceNotFound:
             # We don't really care about this case, it means that pool did not get imported for some reason
-            return
+            return True
 
         if not root_ds['encrypted']:
-            return root_ds
+            return True
 
         # If root ds is encrypted, at this point we know that root dataset has not been mounted yet and neither
-        # unlocked, so if there are any children it has which were unencrypted - we force umount them
+        # unlocked, so if there are any children it has which were unencrypted - we force umount them by exporting
+        # the pool and then importing it back without mounting any datasets. We had 2 options here essentially:
+        # 1) Umount the unencrypted datasets
+        # 2) Export the pool and import it back with -N option to not mount any datasets
+        # We got with (2), because with (1) unencrypted datasets paths are still leftover. This is not a problem
+        # with (2) approach which is why we have decided to go with it.
         try:
-            await self.middleware.call('zfs.dataset.umount', pool_name, {'force': True})
-            self.logger.debug('Successfully umounted any unencrypted datasets under %r dataset', pool_name)
+            if (cp := await run('zpool', 'export', pool_name, check=False)).returncode:
+                self.logger.error('Failed to export %r pool: %r', pool_name, cp.stderr.decode())
+            else:
+                self.logger.debug('Successfully exported %r pool as root dataset is locked', pool_name)
         except Exception:
             self.logger.error('Failed to umount any unencrypted datasets under %r dataset', pool_name, exc_info=True)
 
-        return root_ds
+        return False
