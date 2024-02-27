@@ -23,8 +23,6 @@ class DiskService(Service):
                 [
                     ['name', '!=', None],
                     ['togglesmart', '=', True],
-                    # Polling for disk temperature does not allow them to go to sleep automatically
-                    ['hddstandby', '=', 'ALWAYS ON'],
                 ]
             )
         ]
