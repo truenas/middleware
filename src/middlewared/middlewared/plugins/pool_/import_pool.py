@@ -222,7 +222,7 @@ class PoolService(Service):
             '-m',  # import pool with missing log device(s)
             '-f',  # force import since hostid can change (upgrade from CORE to SCALE changes it, for example)
             '-o', f'cachefile={ZPOOL_CACHE_FILE}' if set_cachefile else 'cachefile=none',
-        ] + (['-N'] if not mount_datasets else [])
+        ]
         if not mount_datasets:
             cmd.append('-N')
         if any_host:
