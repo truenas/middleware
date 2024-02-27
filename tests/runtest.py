@@ -141,6 +141,7 @@ if not os.path.exists(artifacts):
 
 os.environ["MIDDLEWARE_TEST_IP"] = ip
 os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
+os.environ["SERVER_TYPE"] = "ENTERPRISE_HA" if ha else "STANDARD"
 
 ip_to_use = ip if not ha else os.environ['controller1_ip']
 

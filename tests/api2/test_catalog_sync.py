@@ -13,6 +13,8 @@ TEST_CATALOG_NAME = 'TEST_CATALOG'
 TEST_SECOND_CATALOG_NAME = 'TEST_SECOND_CATALOG'
 CATALOG_SYNC_TMP_PATH = os.path.join(MIDDLEWARE_RUN_DIR, 'ix-applications', 'catalogs')
 
+pytestmark = pytest.mark.skipif(os.environ['SERVER_TYPE'] == 'ENTERPRISE_HA', reason='test disabled for HA platform')
+
 
 @contextlib.contextmanager
 def unconfigured_kubernetes():
