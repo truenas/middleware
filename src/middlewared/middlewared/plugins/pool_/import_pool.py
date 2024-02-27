@@ -239,7 +239,10 @@ class PoolService(Service):
         return True
 
     @private
-    def unlock_on_boot_impl(self, vol_name):
+    def unlock_on_boot_impl(self, vol_name, guid, set_cachefile_property):
+        if not self.middleware.call_sync('pool.handle_unencrypted_datasets_on_import', vol_name):
+            self.import_on_boot_impl(vol_name, guid, set_cachefile_property)
+
         zpool_info = self.middleware.call_sync('pool.dataset.get_instance_quick', vol_name, {'encryption': True})
         if not zpool_info:
             self.logger.error(
@@ -389,7 +392,7 @@ class PoolService(Service):
             if not self.import_on_boot_impl(name, guid, set_cachefile_property):
                 continue
 
-            self.unlock_on_boot_impl(name)
+            self.unlock_on_boot_impl(name, guid, set_cachefile_property)
 
         # no reason to wait on this to complete
         self.middleware.call_sync('disk.swaps_configure', background=True)
