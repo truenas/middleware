@@ -168,7 +168,7 @@ class SystemAdvancedService(ConfigService):
                     f'{schema}.syslog_tls_certificate', False
                 ))
 
-        if data['isolated_gpu_pci_ids']:
+        if data.get('isolated_gpu_pci_ids'):
             verrors = await self.middleware.call(
                 'system.advanced.validate_gpu_pci_ids', data['isolated_gpu_pci_ids'], verrors, schema
             )
@@ -222,6 +222,9 @@ class SystemAdvancedService(ConfigService):
         config_data.pop('consolemsg')
         original_data = deepcopy(config_data)
         config_data.update(data)
+
+        if 'isolated_gpu_pci_ids' not in data:
+            config_data.pop('isolated_gpu_pci_ids')
 
         verrors, config_data = await self.__validate_fields('advanced_settings_update', config_data)
         verrors.check()
@@ -279,7 +282,10 @@ class SystemAdvancedService(ConfigService):
                 await self.middleware.call('etc.generate', 'kdump')
                 generate_grub = True
 
-            if original_data['isolated_gpu_pci_ids'] != config_data['isolated_gpu_pci_ids']:
+            if (
+                'isolated_gpu_pci_ids' in config_data and
+                original_data['isolated_gpu_pci_ids'] != config_data['isolated_gpu_pci_ids']
+            ):
                 await self.middleware.call('boot.update_initramfs')
 
             if original_data['debugkernel'] != config_data['debugkernel']:
