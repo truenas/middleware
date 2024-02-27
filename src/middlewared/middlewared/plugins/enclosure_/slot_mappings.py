@@ -4,7 +4,26 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from .constants import SYSFS_SLOT_KEY, MAPPED_SLOT_KEY, SUPPORTS_IDENTIFY_KEY
-from .enums import ControllerModels, JbodModels
+from .enums import ControllerModels, JbodModels, JbofModels
+
+
+def get_jbof_slot_info(model):
+    """This function returns a dictionary that maps
+    nvme drives that are mounted via NVMe over Fabrics"""
+    if model in (JbofModels.ES24N.value,):
+        return {
+            'any_version': True,
+            'versions': {
+                'DEFAULT': {
+                    'model': {
+                        model: {
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
+                            for i in range(1, 25)
+                        },
+                    }
+                }
+            }
+        }
 
 
 def get_nvme_slot_info(model):
