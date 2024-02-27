@@ -56,7 +56,7 @@ def parse_smartctl_for_temperature_output(stdout: str) -> Optional[int]:
 def get_disks_for_temperature_reading() -> Dict[str, Disk]:
     disks = {}
     for disk in query_table('storage_disk', prefix='disk_'):
-        if disk['serial'] != '' and bool(disk['togglesmart']) and disk['hddstandby'] == 'Always On':
+        if disk['serial'] != '' and bool(disk['togglesmart']):
             disks[disk['serial']] = Disk(id=disk['name'], serial=disk['serial'])
 
     return disks
