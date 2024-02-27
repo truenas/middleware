@@ -217,14 +217,18 @@ class BootService(Service):
         else:
             yield
 
+    @accepts(
+        Bool('force', default=False)
+    )
     @private
-    async def update_initramfs(self):
+    async def update_initramfs(self, force):
         """
         Returns true if initramfs was updated and false otherwise.
         """
         async with self.__toggle_rootfs_readwrite():
             cp = await run(
-                '/usr/local/bin/truenas-initrd.py', '/', encoding='utf8', errors='ignore', check=False
+                '/usr/local/bin/truenas-initrd.py', *['/', '--force'] if force else '/',
+                encoding='utf8', errors='ignore', check=False
             )
             if cp.returncode > 1:
                 raise CallError(f'Failed to update initramfs: {cp.stderr}')
