@@ -165,6 +165,7 @@ cfg_file.close()
 
 os.environ["MIDDLEWARE_TEST_IP"] = ip
 os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
+os.environ["SERVER_TYPE"] = "ENTERPRISE_HA" if ha else "STANDARD"
 
 from functions import setup_ssh_agent, create_key, add_ssh_key, get_folder
 from functions import SSH_TEST
