@@ -1081,7 +1081,7 @@ class KerberosKeytabService(CRUDService):
     @private
     async def _ktutil_list(self, keytab_file=keytab['SYSTEM'].value):
         """
-        async wrapper for validate
+        async wrapper for ktutil_list
         """
         return await asyncio.to_thread(
             self._ktutil_list_impl, keytab_file
