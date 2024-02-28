@@ -19,6 +19,7 @@ class FailoverService(Service):
         """
         Reboot the standby node and wait for it to come back online.
         """
+
         job.set_progress(5, 'Rebooting standby controller')
         await self.middleware.call(
             'failover.call_remote', 'system.reboot',
@@ -51,3 +52,7 @@ class FailoverService(Service):
                 f'Timed out waiting {shutdown_timeout} seconds for the standby controller to reboot',
                 errno.ETIMEDOUT
             )
+
+        # Wait for the standby controller to come back online and report as being ready
+        if not await self.middleware.call('failover.upgrade_waitstandby'):
+            raise CallError('Timed out waiting for the standby controller to upgrade', errno.ETIMEDOUT)
