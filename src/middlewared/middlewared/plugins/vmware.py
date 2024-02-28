@@ -132,6 +132,8 @@ class VMWareService(CRUDService):
             {**new, 'state': {'state': 'PENDING'}},
         )
 
+        self.middleware.call_sync("alert.oneshot_delete", "VMWareLoginFailed", old["hostname"])
+
         return await self.get_instance(id_)
 
     @accepts(
@@ -142,11 +144,15 @@ class VMWareService(CRUDService):
         Delete VMWare snapshot of `id`.
         """
 
+        vmsnapobj = await self.get_instance(id_)
+
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
             id_
         )
+
+        self.middleware.call_sync("alert.oneshot_delete", "VMWareLoginFailed", vmsnapobj["hostname"])
 
         return response
 
