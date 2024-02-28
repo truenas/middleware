@@ -117,7 +117,6 @@ def get_redfish_clients(jbofs):
             rclient = RedfishClient(
                 f'https://{jbof["mgmt_ip1"]}', jbof['mgmt_username'], jbof['mgmt_password']
             )
-            rclient.cache_get(jbof['mgmt_ip1'], jbofs)
             clients[jbof['mgmt_ip1']] = rclient
         except InvalidCredentialsError:
             LOGGER.error('Failed to login to redfish ip %r', jbof['mgmt_ip1'])
