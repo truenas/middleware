@@ -1084,7 +1084,7 @@ class KerberosKeytabService(CRUDService):
         async wrapper for validate
         """
         return await asyncio.to_thread(
-            self._validate_impl, keytab_file
+            self._ktutil_list_impl, keytab_file
         )
 
     @accepts(roles=['DIRECTORY_SERVICE_READ'])
