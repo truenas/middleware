@@ -1046,9 +1046,7 @@ class KerberosKeytabService(CRUDService):
         """
         async wrapper for validate
         """
-        return await asyncio.to_thread(
-            self._validate_impl, data
-        )
+        return await self.middleware.run_in_thread(self._validate_impl, data)
 
     @private
     def _ktutil_list_impl(self, keytab_file=keytab['SYSTEM'].value):
@@ -1083,9 +1081,7 @@ class KerberosKeytabService(CRUDService):
         """
         async wrapper for ktutil_list
         """
-        return await asyncio.to_thread(
-            self._ktutil_list_impl, keytab_file
-        )
+        return await self.middleware.run_in_thread(self._ktutil_list_impl, keytab_file)
 
     @accepts(roles=['DIRECTORY_SERVICE_READ'])
     @returns(List(
