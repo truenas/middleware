@@ -7,8 +7,7 @@ import requests
 from urllib3.exceptions import InsecureRequestWarning
 
 from middlewared.client import Client
-from middlewared.plugins.utils import MIDDLEWARE_RUN_DIR
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
 
 DEFAULT_REDFISH_TIMEOUT_SECS = 10
 HEADER = {'Content-Type': 'application/json', 'Vary': 'accept'}
