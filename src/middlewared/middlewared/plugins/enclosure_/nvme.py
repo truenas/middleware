@@ -8,6 +8,7 @@ from pathlib import Path
 
 from pyudev import Context, Devices, DeviceNotFoundAtPathError
 
+from .jbof_enclosures import map_jbof
 from middlewared.service import Service, private
 
 
@@ -247,3 +248,21 @@ class EnclosureService(Service):
         else:
             # M50/60 and R50BM use same plx nvme bridge
             return self.map_plx_nvme(prod)
+
+    @private
+    def map_jbof(self, jbof_qry=None):
+        if jbof_qry is None:
+            jbof_qry = self.middleware.call_sync('jbof.query')
+
+        results = list()
+        for enc in map_jbof(jbof_qry):
+            id_, model, count = enc["id"], enc["model"], len(enc["elements"]["Array Device Slot"])
+            name = f"{model} JBoF Enclosure"
+            slot_to_nvme = {
+                int(slot): info["dev"] for slot, info in enc["elements"]["Array Device Slot"].items()
+            }
+            for mapped in self.fake_nvme_enclosure(id_, name, model, count, slot_to_nvme):
+                mapped['controller'] = False
+                results.append(mapped)
+
+        return results
