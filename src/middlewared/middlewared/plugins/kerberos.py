@@ -1015,8 +1015,9 @@ class KerberosKeytabService(CRUDService):
         return '\n'.join(ret[3:])
 
     @private
-    async def _validate(self, data):
+    def _validate_impl(self, data):
         """
+        - synchronous validation -
         For now validation is limited to checking if we can resolve the hostnames
         configured for the kdc, admin_server, and kpasswd_server can be resolved
         by DNS, and if the realm can be resolved by DNS.
@@ -1032,13 +1033,20 @@ class KerberosKeytabService(CRUDService):
             f.write(decoded)
 
         try:
-            await self.do_ktutil_list({"kt_name": keytab['TEST'].value})
+            self.middleware.call_sync('kerberos.keytab.do_ktutil_list', {"kt_name": keytab['TEST'].value})
         except CallError as e:
             verrors.add("kerberos.keytab_create", f"Failed to validate keytab: [{e.errmsg}]")
 
         os.unlink(keytab['TEST'].value)
 
         return verrors
+
+    @private
+    async def _validate(self, data):
+        """
+        async wrapper for validate
+        """
+        return await self.middleware.run_in_thread(self._validate_impl, data)
 
     @private
     async def _ktutil_list(self, keytab_file=keytab['SYSTEM'].value):
@@ -1108,7 +1116,7 @@ class KerberosKeytabService(CRUDService):
         ktutil copy returns 1 even if copy succeeds.
         """
         with contextlib.suppress(OSError):
-            os.remove(keytab['SAMBA'].value)
+            await self.middleware.run_in_thread(os.remove, keytab['SAMBA'].value)
 
         kt_copy = await run(['ktutil'], input=f'rkt {keytab.SYSTEM.value}\nwkt {keytab.SAMBA.value}\nq\n'.encode(),
                             check=False)
@@ -1130,9 +1138,9 @@ class KerberosKeytabService(CRUDService):
             raise CallError(ktutil_remove.stderr.decode())
 
         with contextlib.suppress(OSError):
-            os.remove(keytab.SAMBA.value)
+            await self.middleware.run_in_thread(os.remove, keytab.SAMBA.value)
 
-        os.rename("/var/db/system/samba4/samba_mit.keytab", keytab.SAMBA.value)
+        await self.middleware.run_in_thread(os.rename, "/var/db/system/samba4/samba_mit.keytab", keytab.SAMBA.value)
 
     @private
     async def kerberos_principal_choices(self):
@@ -1142,7 +1150,7 @@ class KerberosKeytabService(CRUDService):
 
         Return empty list if system keytab doesn't exist.
         """
-        if not os.path.exists(keytab['SYSTEM'].value):
+        if not await self.middleware.run_in_thread(os.path.exists, keytab['SYSTEM'].value):
             return []
 
         try:
@@ -1182,7 +1190,7 @@ class KerberosKeytabService(CRUDService):
         The current system kerberos keytab and compare with a cached copy before overwriting it when a new
         keytab is generated through middleware 'etc.generate kerberos'.
         """
-        if not os.path.exists(keytab['SYSTEM'].value):
+        if not await self.middleware.run_in_thread(os.path.exists, keytab['SYSTEM'].value):
             return False
 
         encoded_keytab = None
@@ -1227,14 +1235,17 @@ class KerberosKeytabService(CRUDService):
 
         old_mtime = 0
         ad_state = await self.middleware.call('activedirectory.get_state')
-        if ad_state == 'DISABLED' or not os.path.exists(keytab['SYSTEM'].value):
+        if ad_state == 'DISABLED':
+            return
+        ad_keytab_exists = await self.middleware.run_in_thread(os.path.exists, keytab['SYSTEM'].value)
+        if not ad_keytab_exists:
             return
 
         if await self.middleware.call('cache.has_key', 'KEYTAB_MTIME'):
             old_mtime = await self.middleware.call('cache.get', 'KEYTAB_MTIME')
 
-        new_mtime = (os.stat(keytab['SYSTEM'].value)).st_mtime
-        if old_mtime == new_mtime:
+        keytab_stat = await self.middleware.run_in_thread(os.stat, keytab['SYSTEM'].value)
+        if old_mtime == keytab_stat.st_mtime:
             return
 
         ts = await self.middleware.call('directoryservices.get_last_password_change')
@@ -1247,9 +1258,10 @@ class KerberosKeytabService(CRUDService):
 
         await self.middleware.call('directoryservices.secrets.backup')
         await self.store_samba_keytab()
+        updated_keytab_stat = await self.middleware.run_in_thread(os.stat, keytab['SYSTEM'].value)
         self.logger.trace('Updating stored AD machine account kerberos keytab')
         await self.middleware.call(
             'cache.put',
             'KEYTAB_MTIME',
-            (os.stat(keytab['SYSTEM'].value)).st_mtime
+            updated_keytab_stat.st_mtime
         )
