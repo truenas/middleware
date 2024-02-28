@@ -25,8 +25,8 @@ from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.schema import (
     accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str, UUID
 )
-from middlewared.service import filterable, filterable_returns, job, private, ConfigService
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service import filterable, filterable_returns, job, pass_app, private, ConfigService
+from middlewared.service_exception import CallError, MatchNotFound, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.functools_ import cache
@@ -142,7 +142,8 @@ class AuditService(ConfigService):
         Dict('event_data', additional_attrs=True, null=True),
         Bool('success')
     ))
-    async def query(self, data):
+    @pass_app(rest=True)
+    async def query(self, app, data):
         """
         Query contents of audit databases specified by `services`.
 
@@ -201,6 +202,16 @@ class AuditService(ConfigService):
 
         verrors.check()
 
+        results = []
+
+        if app:
+            try:
+                results = await self.middleware.call('audit.cache.fetch', app.session_id, data)
+            except MatchNotFound:
+                results = []
+            else:
+                return filter_list(results, data['query-filters'], data['query-options'])
+
         if sql_filters:
             filters = data['query-filters']
             options = data['query-options']
@@ -213,7 +224,10 @@ class AuditService(ConfigService):
             results.extend(entries)
 
         if sql_filters:
-            return
+            return results
+
+        if app:
+            await self.middleware.call('audit.cache.store', app, data, results)
 
         return filter_list(results, data['query-filters'], data['query-options'])
 

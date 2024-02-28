@@ -1,3 +1,4 @@
+from middlewared.client import ejson as json
 from middlewared.plugins.sysdataset import SYSDATASET_PATH
 from middlewared.service import Service, private
 from middlewared.schema import accepts, Bool, Dict, Ref, List, Str, Int
@@ -8,7 +9,6 @@ from .wrapper import TDBPath
 
 import ctdb
 import errno
-import json
 import os
 import threading
 
@@ -152,6 +152,9 @@ class TDBService(Service, TDBMixin):
             if tdb_data is None:
                 return True
 
+            if state['key_filter'] and not filter_list([{'key': tdb_key}], state['key_filter'], {}):
+                return True
+
             if state['data_type'] == 'JSON':
                 entry = json.loads(tdb_data)
             elif state['data_type'] == 'STRING':
@@ -164,8 +167,13 @@ class TDBService(Service, TDBMixin):
 
         state = {
             'output': [],
-            'data_type': data['tdb-options']['data_type']
+            'data_type': data['tdb-options']['data_type'],
+            'key_filter': None
         }
+
+        if len(data['query-filters']) == 1 and len(data['query-filters'][0]) == 3:
+            if data['query-filters'][0][0] == 'key':
+                state['key_filter'] = data['query-filters']
 
         with self.get_connection(data['name'], data['tdb-options'], True) as tdb_handle:
             self._traverse(tdb_handle, append_entries, state)
