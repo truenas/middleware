@@ -1,13 +1,13 @@
 <%
-	from middlewared.plugins.reporting.netdata.utils import NETDATA_PORT, NETDATA_UPDATE_EVERY
+    from middlewared.plugins.reporting.netdata.utils import NETDATA_PORT, NETDATA_UPDATE_EVERY
 
+    netdata_cache_dataset = middleware.call_sync('reporting.netdata_storage_location')
+    if not netdata_cache_dataset:
+        # Let's exit if netdata storage is not in place
+        middleware.logger.error('Netdata configuration file could not be generated')
+        raise FileShouldNotExist()
 
-	if not middleware.call_sync('reporting.netdata_setup'):
-		# Let's exit if netdata storage is not in place
-		middleware.logger.error('Netdata configuration file could not be generated')
-		raise FileShouldNotExist()
-
-	disk_space = middleware.call_sync('netdata.get_disk_space')
+    disk_space = middleware.call_sync('netdata.get_disk_space')
 %>\
 [global]
 	run as user = netdata
@@ -22,6 +22,10 @@
 	mode = dbengine
 	storage tiers = 1
 	dbengine multihost disk space MB = ${disk_space}
+
+[directories]
+    cache = ${netdata_cache_dataset}
+    home = ${netdata_cache_dataset}
 
 [plugins]
 	proc = yes

@@ -1,22 +1,24 @@
-from contextlib import contextmanager, suppress
 import errno
 import json
 import os
-from pathlib import Path
 import shutil
 import subprocess
 import threading
 import uuid
 
+from contextlib import contextmanager, suppress
+from pathlib import Path
+
+import middlewared.sqlalchemy as sa
+
+from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
+from middlewared.plugins.system_dataset.hierarchy import get_system_dataset_spec
+from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 from middlewared.service_exception import InstanceNotFound
-import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.utils.size import format_size
-from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
-
-SYSDATASET_PATH = '/var/db/system'
 
 
 class SystemDatasetModel(sa.Model):
@@ -472,12 +474,13 @@ class SystemDatasetService(ConfigService):
             pool != boot_pool and
             (await self.middleware.call('pool.dataset.get_instance', pool))['key_format']['value'] == 'PASSPHRASE'
         )
-        datasets = [i[0] for i in self.__get_datasets(pool, uuid)]
+        datasets = {i['name']: i for i in get_system_dataset_spec(pool, uuid)}
         datasets_prop = {
-            i['id']: i['properties'] for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])
+            i['id']: i['properties']
+            for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', list(datasets))])
         }
-        for dataset in datasets:
-            props = {'mountpoint': 'legacy', 'readonly': 'off', 'snapdir': 'hidden'}
+        for dataset, config in datasets.items():
+            props = config['props']
             # Disable encryption for pools with passphrase-encrypted root datasets so that system dataset could be
             # automatically mounted on system boot.
             if root_dataset_is_passphrase_encrypted:
@@ -500,14 +503,30 @@ class SystemDatasetService(ConfigService):
                 except Exception:
                     self.logger.warning("Failed to replace dataset [%s].", dataset, exc_info=True)
             else:
-                update_props_dict = {k: {'value': v} for k, v in props.items()
-                                     if datasets_prop[dataset][k]['value'] != v}
+                update_props_dict = {
+                    k: {'value': v} for k, v in props.items()
+                    if datasets_prop[dataset][k]['value'] != v
+                }
                 if update_props_dict:
                     await self.middleware.call(
                         'zfs.dataset.update',
                         dataset,
                         {'properties': update_props_dict},
                     )
+
+            try:
+                await self.middleware.run_in_thread(self.__create_relevant_paths, config.get('create_paths', []))
+            except Exception:
+                self.logger.error('Failed to create relevant paths for %r', dataset, exc_info=True)
+
+    def __create_relevant_paths(self, create_paths):
+        for create_path_config in create_paths:
+            os.makedirs(create_path_config['path'], exist_ok=True)
+            cpath_stat = os.stat(create_path_config['path'])
+            if all(create_path_config[k] for k in ('uid', 'gid')) and (
+                cpath_stat.st_uid != create_path_config['uid'] or cpath_stat.st_gid != create_path_config['gid']
+            ):
+                os.chown(create_path_config['path'], create_path_config['uid'], create_path_config['gid'])
 
     def __mount(self, pool, uuid, path=SYSDATASET_PATH):
         """
@@ -516,17 +535,29 @@ class SystemDatasetService(ConfigService):
         rundir. The latter occurs when migrating dataset between pools.
         """
         mounted = False
-        for dataset, name in self.__get_datasets(pool, uuid):
-            if name:
-                mountpoint = f'{path}/{name}'
+        for ds_config in get_system_dataset_spec(pool, uuid):
+            dataset, name = ds_config['name'], os.path.basename(ds_config['name'])
+            if desired_mountpoint := ds_config.get('mountpoint'):
+                mountpoint = desired_mountpoint
             else:
-                mountpoint = path
+                mountpoint = f'{path}/{name}'
+
             if os.path.ismount(mountpoint):
                 continue
 
             with suppress(FileExistsError):
                 os.mkdir(mountpoint)
             subprocess.run(['mount', '-t', 'zfs', dataset, mountpoint], check=True)
+
+            chown_config = ds_config['chown_config']
+            mode_perms = chown_config.pop('mode')
+            mountpoint_stat = os.stat(mountpoint)
+            if mountpoint_stat.st_uid != chown_config['uid'] or mountpoint_stat.st_gid != chown_config['gid']:
+                os.chown(mountpoint, **chown_config)
+
+            if (mountpoint_stat.st_mode & 0o777) != mode_perms:
+                os.chmod(mountpoint, mode_perms)
+
             mounted = True
 
         if mounted and path == SYSDATASET_PATH:
@@ -571,16 +602,6 @@ class SystemDatasetService(ConfigService):
             error += f'\nThe following processes are using {mp!r}: ' + json.dumps(processes, indent=2)
 
         raise CallError(error) from None
-
-    def __get_datasets(self, pool, uuid):
-        return [(f'{pool}/.system', '')] + [
-            (f'{pool}/.system/{i}', i) for i in [
-                'cores', 'samba4',
-                f'rrd-{uuid}', f'configs-{uuid}',
-                'webui', 'services',
-                f'netdata-{uuid}',
-            ]
-        ]
 
     @private
     def migrate(self, _from, _to):
