@@ -234,7 +234,7 @@ class JBOFService(CRUDService):
     def ensure_redfish_client_cached(self, mgmt_ip, username=None, password=None):
         """Synchronous function to ensure we have a redfish client in cache."""
         try:
-            RedfishClient.cache_get(self.middleware, mgmt_ip)
+            RedfishClient.cache_get(mgmt_ip)
         except KeyError:
             # This could take a while to login, etc ... hence synchronous wrapper.
             redfish = RedfishClient(f'https://{mgmt_ip}', username, password)
@@ -290,13 +290,13 @@ class JBOFService(CRUDService):
 
     @private
     def fabric_interface_choices(self, mgmt_ip):
-        redfish = RedfishClient.cache_get(self.middleware, mgmt_ip)
+        redfish = RedfishClient.cache_get(mgmt_ip)
         return redfish.fabric_ethernet_interfaces()
 
     @private
     def fabric_interface_macs(self, mgmt_ip):
         """Return a dict keyed by IP address where the value is the corresponding MAC address."""
-        redfish = RedfishClient.cache_get(self.middleware, mgmt_ip)
+        redfish = RedfishClient.cache_get(mgmt_ip)
         macs = {}
         for uri in self.fabric_interface_choices(mgmt_ip):
             netdata = redfish.get_uri(uri)
@@ -306,7 +306,7 @@ class JBOFService(CRUDService):
 
     @private
     def hardwire_shelf(self, mgmt_ip, shelf_index):
-        redfish = RedfishClient.cache_get(self.middleware, mgmt_ip)
+        redfish = RedfishClient.cache_get(mgmt_ip)
         shelf_interfaces = redfish.fabric_ethernet_interfaces()
 
         # Let's record the link status for each interface
@@ -340,7 +340,7 @@ class JBOFService(CRUDService):
 
     @private
     def unwire_shelf(self, mgmt_ip):
-        redfish = RedfishClient.cache_get(self.middleware, mgmt_ip)
+        redfish = RedfishClient.cache_get(mgmt_ip)
         for uri in redfish.fabric_ethernet_interfaces():
             redfish.configure_fabric_interface(uri, '0.0.0.0', '255.255.255.0', True, mtusize=1500)
 
