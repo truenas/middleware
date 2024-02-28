@@ -25,6 +25,10 @@ def to_ignore(enclosure):
         # these are all nvme flash systems and
         # are treated as-is
         return True
+    elif enclosure['model'] in (i.name for i in JbofModels):
+        # these are all nvme flash enclosures and
+        # are treated as-is
+        return True
     else:
         return False
 

@@ -58,6 +58,6 @@ class JbodModels(Enum):
 
 @unique
 class JbofModels(Enum):
-    # name is the OEM model (VDS2249R2)
-    # while the value (ES24N) is iX's model
-    VDS2249R2 = 'ES24N'
+    # name is iX's model (ES24N)
+    # while the value (VDS2249R2) is the OEM's model
+    ES24N = 'VDS2249R2'
