@@ -47,7 +47,7 @@ class AuditCacheService(Service):
         now = time.time()
         if now > ts['timeout']:
             try:
-                await self.remove(uuid)
+                await self.remove(entry_uuid)
             except Exception:
                 self.logger.error('%s: failed to remove expired entry', uuid, exc_info=True)
 
