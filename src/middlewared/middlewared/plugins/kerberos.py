@@ -1055,7 +1055,7 @@ class KerberosKeytabService(CRUDService):
         keytab_entries = []
         try:
             kt_list_output = self.middleware.call_sync(
-                'kerberos.keytab.do_ktutil_list', {"kt_name": keytab['TEST'].value}
+                'kerberos.keytab.do_ktutil_list', {"kt_name": keytab_file}
             )
         except Exception as e:
             self.logger.warning("Failed to list kerberos keytab [%s]: %s",
