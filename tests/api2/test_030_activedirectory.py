@@ -117,9 +117,6 @@ def cleanup_reverse_zone():
 
 @pytest.fixture(scope="function")
 def set_product_type(request):
-    if ha:
-        # HA product is already enterprise-licensed
-        yield
     with product_type():
         yield
 
