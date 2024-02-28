@@ -6,6 +6,10 @@ from urllib.parse import urlencode
 import requests
 from urllib3.exceptions import InsecureRequestWarning
 
+from middlewared.client import Client
+from middlewared.plugins.utils import MIDDLEWARE_RUN_DIR
+from middlewared.utils import filter_list
+
 DEFAULT_REDFISH_TIMEOUT_SECS = 10
 HEADER = {'Content-Type': 'application/json', 'Vary': 'accept'}
 REDFISH_ROOT_PATH = '/redfish/v1'
@@ -89,16 +93,22 @@ class RedfishClient:
         cls.client_cache[key] = value
 
     @classmethod
-    def cache_get(cls, middleware, mgmt_ip):
+    def cache_get(cls, mgmt_ip, jbof_query=None):
         try:
             return cls.client_cache[mgmt_ip]
         except KeyError:
-            for jbof in middleware.call_sync(
-                'jbof.query',
-                [['OR', [['mgmt_ip1', '=', mgmt_ip], ['mgmt_ip2', '=', mgmt_ip]]]]
-            ):
+            redfish, jbofs = None, list()
+            filters, options = [['OR', [['mgmt_ip1', '=', mgmt_ip], ['mgmt_ip2', '=', mgmt_ip]]]], dict()
+            if jbof_query is not None:
+                jbofs = jbof_query
+            else:
+                with Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True) as c:
+                    jbofs = c.call('jbof.query')
+
+            for jbof in filter_list(jbofs, filters, options):
                 redfish = RedfishClient(f'https://{mgmt_ip}', jbof['mgmt_username'], jbof['mgmt_password'])
                 RedfishClient.cache_set(mgmt_ip, redfish)
+
             return redfish
 
     @property
@@ -124,6 +134,9 @@ class RedfishClient:
         if r.ok:
             self.cache[cache_key] = self._members(r.json())
             return self.cache[cache_key]
+
+    def chassis(self, use_cached=True):
+        return self._cached_fetch('chassis', '/Chassis', use_cached)
 
     def managers(self, use_cached=True):
         return self._cached_fetch('managers', '/Managers', use_cached)
