@@ -23,7 +23,6 @@ CSV = '.csv'
 DEF_AGE = 30
 DEF_PATH = '/var/log/smartd'
 DEF_RESCAN_INTERVAL = 60
-UPDATE_INTERVAL = 30
 INCREMENTAL = 'incremental'
 RE_ATA = re.compile(
     r'(\d+);'  # attribute
@@ -284,7 +283,7 @@ class Service(SimpleService):
         self.exclude = configuration.get('exclude_disks', str()).split()
         self.disks = list()
         self.runs = 0
-        self.update_data = UPDATE_INTERVAL
+        self.update_data = self.age
         self.do_force_rescan = False
         # smartd daemon only queries drive temps every 30mins so the files won't be updated
         # but once every 30ish minutes - we should change this if at any point we change smartd interval
@@ -321,14 +320,14 @@ class Service(SimpleService):
                 self.do_force_rescan = True
                 continue
 
-            if self.update_data >= UPDATE_INTERVAL and not disk.populate_attrs():
+            if self.update_data >= self.age and not disk.populate_attrs():
                 disk.alive = False
                 self.do_force_rescan = True
                 continue
 
             data.update(disk.data())
 
-        if not self.do_force_rescan and self.update_data >= UPDATE_INTERVAL:
+        if not self.do_force_rescan and self.update_data >= self.age:
             self.update_data = 0
 
         return data
