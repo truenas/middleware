@@ -126,6 +126,7 @@ class EnclosureService(CRUDService):
                 enclosures.append(enclosure)
 
         enclosures.extend(self.middleware.call_sync("enclosure.map_nvme"))
+        enclosures.extend(self.middleware.call_sync("enclosure.map_jbof"))
         enclosures = self.middleware.call_sync("enclosure.map_enclosures", enclosures)
 
         for number, enclosure in enumerate(enclosures):
