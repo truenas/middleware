@@ -6,7 +6,7 @@
 import logging
 
 from .constants import HEAD_UNIT_DISK_SLOT_START_NUMBER
-from .enums import ControllerModels
+from .enums import ControllerModels, JbofModels
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,10 @@ def to_ignore(enclosure):
         ControllerModels.R30.value,
     )):
         # these are all nvme flash systems and
+        # are treated as-is
+        return True
+    elif enclosure['model'] in (i.name for i in JbofModels):
+        # these are all nvme flash enclosures and
         # are treated as-is
         return True
     else:
