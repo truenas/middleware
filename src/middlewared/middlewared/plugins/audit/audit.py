@@ -222,7 +222,7 @@ class AuditService(ConfigService):
 
         verrors.check()
 
-        if (existing_results := data.get('query-result')):
+        if (existing_results := data.get('result-id')):
             results = await self.middleware.call('audit.cache.fetch', existing_results)
         else:
             results = []
