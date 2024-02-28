@@ -34,7 +34,7 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info):
         'sg': None,
         'bsg': None,
         'name': f'{model} JBoF Enclosure',
-        'controller': True,
+        'controller': False,
         'status': ['OK'],
         'elements': {'Array Device Slot': {}}
     }
@@ -42,6 +42,8 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info):
     if not disks_map:
         fake_enclosure['should_ignore'] = True
         return [fake_enclosure]
+
+    fake_enclosure.update(ui_info)
 
     for slot in range(1, num_of_slots + 1):
         device = mapped.get(slot, None)
@@ -59,7 +61,7 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info):
             status = 'Not installed'
             value_raw = 0x5000000
 
-        mapped_slot = disks_map['versions']['DEFAULT']['id'][model][slot]['mapped_slot']
+        mapped_slot = disks_map['versions']['DEFAULT']['model'][model][slot]['mapped_slot']
         fake_enclosure['elements']['Array Device Slot'][mapped_slot] = {
             'descriptor': f'Disk #{slot}',
             'status': status,
@@ -67,7 +69,7 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info):
             'value_raw': value_raw,
             'dev': device,
             'original': {
-                'enclosure_id': dmi,
+                'enclosure_id': uuid,
                 'enclosure_sg': None,
                 'enclosure_bsg': None,
                 'descriptor': f'slot{slot}',
@@ -80,7 +82,7 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info):
 
 def map_es24n(model, rclient, uri):
     try:
-        all_disks = rclient.get(f'{uri}/Drives?$expand=*')
+        all_disks = rclient.get(f'{uri}/Drives?$expand=*').json()
     except Exception:
         LOGGER.error('Unexpected failure enumerating all disk info', exc_info=True)
         return
@@ -112,7 +114,9 @@ def get_redfish_clients(jbofs):
     clients = dict()
     for jbof in jbofs:
         try:
-            rclient = RedfishClient(f'https://{jbof["mgmt_ip1"]}')
+            rclient = RedfishClient(
+                f'https://{jbof["mgmt_ip1"]}', jbof['mgmt_username'], jbof['mgmt_password']
+            )
             rclient.cache_get(jbof['mgmt_ip1'], jbofs)
             clients[jbof['mgmt_ip1']] = rclient
         except InvalidCredentialsError:
@@ -127,9 +131,11 @@ def get_enclosure_model(rclient):
     model = uri = None
     try:
         chassis = rclient.chassis()
-        if not chassis or not chassis.ok:
-            return model, uri
+    except Exception:
+        LOGGER.error('Unexpected failure enumerating chassis info', exc_info=True)
+        return model, uri
 
+    try:
         for _, uri in chassis.items():
             info = rclient.get(uri)
             if info.ok:
@@ -149,6 +155,6 @@ def map_jbof(jbof_query):
     for mgmt_ip, rclient in filter(lambda x: x[1] is not None, get_redfish_clients(jbof_query).items()):
         model, uri = get_enclosure_model(rclient)
         if model == JbofModels.ES24N.name and (mapped := map_es24n(model, rclient, uri)):
-            result.append(mapped)
+            result.extend(mapped)
 
     return result

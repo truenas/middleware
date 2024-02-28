@@ -10,7 +10,7 @@ from .enums import ControllerModels, JbodModels, JbofModels
 def get_jbof_slot_info(model):
     """This function returns a dictionary that maps
     nvme drives that are mounted via NVMe over Fabrics"""
-    if model in (JbofModels.ES24N.value,):
+    if model == JbofModels.ES24N.name:
         return {
             'any_version': True,
             'versions': {
