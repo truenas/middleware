@@ -1049,12 +1049,10 @@ class KerberosKeytabService(CRUDService):
         return await self.middleware.run_in_thread(self._validate_impl, data)
 
     @private
-    def _ktutil_list_impl(self, keytab_file=keytab['SYSTEM'].value):
+    async def _ktutil_list(self, keytab_file=keytab['SYSTEM'].value):
         keytab_entries = []
         try:
-            kt_list_output = self.middleware.call_sync(
-                'kerberos.keytab.do_ktutil_list', {"kt_name": keytab_file}
-            )
+            kt_list_output = await self.do_ktutil_list({"kt_name": keytab_file})
         except Exception as e:
             self.logger.warning("Failed to list kerberos keytab [%s]: %s",
                                 keytab_file, e)
@@ -1075,13 +1073,6 @@ class KerberosKeytabService(CRUDService):
             })
 
         return keytab_entries
-
-    @private
-    async def _ktutil_list(self, keytab_file=keytab['SYSTEM'].value):
-        """
-        async wrapper for ktutil_list
-        """
-        return await self.middleware.run_in_thread(self._ktutil_list_impl, keytab_file)
 
     @accepts(roles=['DIRECTORY_SERVICE_READ'])
     @returns(List(
