@@ -19,25 +19,38 @@ class AuditCacheService(Service):
         'data_type': 'JSON'
     }
 
-    async def store(self, data, ttl=360):
+    async def store(self, app, data, ttl=360):
         """
         Write timestamp and data entries for UUID under a transaction
         lock in the cache file in /audit directory. Since cache is persistent
         the timeout is based on realtime clock.
+
+        audit.query should be only consumer of this endpoint.
         """
         entry_uuid = str(uuid.uuid4())
         timeout = time.time() + ttl
         await self.middleware.call('tdb.batch_ops', {
             'name': AUDIT_CACHE_FILE,
             'ops': [
-                {'action': 'SET', 'key': f'{entry_uuid}{CACHE_DATA_SUFFIX}', 'val': data},
-                {'action': 'SET', 'key': f'{entry_uuid}{CACHE_TIMESTAMP_SUFFIX}', 'val': {'timeout': timeout}},
+                {
+                    'action': 'SET',
+                    'key': f'{entry_uuid}{CACHE_DATA_SUFFIX}',
+                    'val': data
+                },
+                {
+                    'action': 'SET',
+                    'key': f'{entry_uuid}{CACHE_TIMESTAMP_SUFFIX}',
+                    'val': {'timeout': timeout, 'credential': app.authenticated_credentials.dump()}
+                },
             ],
             'tdb-options': self.tdb_options
         })
         return entry_uuid
 
-    async def fetch(self, entry_uuid):
+    async def fetch(self, app, entry_uuid):
+        """
+        Fetch audit result cache by uuid. This should only be consumed by audit.query.
+        """
         ts = await self.middleware.call('tdb.fetch', {
             'name': AUDIT_CACHE_FILE,
             'key': f'{entry_uuid}{CACHE_TIMESTAMP_SUFFIX}',
@@ -47,7 +60,7 @@ class AuditCacheService(Service):
         now = time.time()
         if now > ts['timeout']:
             try:
-                await self.remove(entry_uuid)
+                await self.__remove(entry_uuid)
             except Exception:
                 self.logger.error('%s: failed to remove expired entry', uuid, exc_info=True)
 
@@ -59,7 +72,7 @@ class AuditCacheService(Service):
             'tdb-options': self.tdb_options
         })
 
-    async def remove(self, entry_uuid):
+    async def __remove(self, entry_uuid):
         """
         Remove entries for UUID under a transaction lock
         """
@@ -86,4 +99,4 @@ class AuditCacheService(Service):
 
         for entry in entries:
             if now > entry['val']['timeout']:
-                await self.remove(entry['key'].strip(CACHE_TIMESTAMP_SUFFIX))
+                await self.__remove(entry['key'].strip(CACHE_TIMESTAMP_SUFFIX))

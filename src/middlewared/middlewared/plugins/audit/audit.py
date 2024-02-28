@@ -25,7 +25,7 @@ from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.schema import (
     accepts, Bool, Datetime, Dict, Int, List, OROperator, Patch, Ref, returns, Str, UUID
 )
-from middlewared.service import filterable, job, private, ConfigService
+from middlewared.service import filterable, job, pass_app, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
@@ -163,7 +163,8 @@ class AuditService(ConfigService):
         ),
         name='audit_query_return'
     ))
-    async def query(self, data):
+    @pass_app(rest=True)
+    async def query(self, app, data):
         """
         Query contents of audit databases specified by `services`.
 
@@ -223,7 +224,7 @@ class AuditService(ConfigService):
         verrors.check()
 
         if (existing_results := data.get('result-id')):
-            results = await self.middleware.call('audit.cache.fetch', existing_results)
+            results = await self.middleware.call('audit.cache.fetch', app, existing_results)
         else:
             results = []
 
@@ -242,7 +243,7 @@ class AuditService(ConfigService):
                 return
 
             if data['cache-results']:
-                entry_uuid = await self.middleware.call('audit.cache.store', results)
+                entry_uuid = await self.middleware.call('audit.cache.store', app, results)
                 return {'count': len(results), 'result-id': entry_uuid}
 
         return filter_list(results, data.get('query-filters', []), data.get('query-options', {}))
