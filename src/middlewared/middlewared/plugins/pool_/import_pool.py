@@ -119,12 +119,6 @@ class PoolService(Service):
         else:
             pool_name = new_name
 
-        # Let's umount any datasets if root dataset of the new pool is locked, and it has unencrypted datasets
-        # beneath it. This is to prevent the scenario where the root dataset is locked and the child datasets
-        # get mounted
-        if not await self.handle_unencrypted_datasets_on_import(pool_name):
-            await self.middleware.call('pool.import_impl', pool_name, guid, True, False, True)
-
         # set acl properties correctly for given top-level dataset's acltype
         ds = await self.middleware.call(
             'pool.dataset.query',
@@ -172,6 +166,12 @@ class PoolService(Service):
             except Exception as e:
                 # Let's not make this fatal
                 self.logger.warning('Failed to inherit mountpoints recursively for %r dataset: %r', child, e)
+
+        # Let's umount any datasets if root dataset of the new pool is locked, and it has unencrypted datasets
+        # beneath it. This is to prevent the scenario where the root dataset is locked and the child datasets
+        # get mounted
+        if not await self.handle_unencrypted_datasets_on_import(pool_name):
+            await self.middleware.call('pool.import_impl', pool_name, guid, True, False, True)
 
         # We want to set immutable flag on all of locked datasets
         for encrypted_ds in await self.middleware.call(
