@@ -6,7 +6,7 @@
 import logging
 
 from .constants import HEAD_UNIT_DISK_SLOT_START_NUMBER
-from .enums import ControllerModels
+from .enums import ControllerModels, JbofModels
 
 logger = logging.getLogger(__name__)
 
