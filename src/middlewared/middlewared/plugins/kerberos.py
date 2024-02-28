@@ -1235,8 +1235,10 @@ class KerberosKeytabService(CRUDService):
 
         old_mtime = 0
         ad_state = await self.middleware.call('activedirectory.get_state')
+        if ad_state == 'DISABLED':
+            return
         ad_keytab_exists = await self.middleware.run_in_thread(os.path.exists, keytab['SYSTEM'].value)
-        if ad_state == 'DISABLED' or not ad_keytab_exists:
+        if not ad_keytab_exists:
             return
 
         if await self.middleware.call('cache.has_key', 'KEYTAB_MTIME'):
