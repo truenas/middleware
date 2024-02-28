@@ -243,7 +243,7 @@ class AuditService(ConfigService):
 
             if data['cache-results']:
                 entry_uuid = await self.middleware.call('audit.cache.store', results)
-                return {'count': len(results), 'results-id': entry_uuid}
+                return {'count': len(results), 'result-id': entry_uuid}
 
         return filter_list(results, data.get('query-filters', []), data.get('query-options', {}))
 
