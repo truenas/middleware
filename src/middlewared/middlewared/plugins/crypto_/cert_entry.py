@@ -9,7 +9,7 @@ CERT_ENTRY = Dict(
     Int('type'),
     Str('name'),
     Str('certificate', null=True, max_length=None),
-    Str('privatekey', null=True, max_length=None),
+    Str('privatekey', null=True, max_length=None, private=True),
     Str('CSR', null=True, max_length=None),
     Str('acme_uri', null=True),
     Dict('domains_authenticators', additional_attrs=True, null=True),
@@ -24,7 +24,11 @@ CERT_ENTRY = Dict(
     Str('cert_type'),
     Bool('revoked'),
     Bool('expired', null=True),
-    OROperator(Str('issuer', null=True), Dict('issuer', additional_attrs=True, null=True), name='issuer'),
+    OROperator(
+        Str('issuer', null=True, private=True),
+        Dict('issuer', additional_attrs=True, null=True, private=True),
+        name='issuer'
+    ),
     List('chain_list', items=[Str('certificate', max_length=None)]),
     Str('country', null=True),
     Str('state', null=True),

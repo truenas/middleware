@@ -48,7 +48,7 @@ class SystemGeneralService(ConfigService):
         'system_general_entry',
         Patch(
             'certificate_entry', 'ui_certificate',
-            ('attr', {'null': True, 'required': True}),
+            ('attr', {'null': True, 'required': True, 'private': True}),
         ),
         Int('ui_httpsport', validators=[Range(min_=1, max_=65535)], required=True),
         Bool('ui_httpsredirect', required=True),
