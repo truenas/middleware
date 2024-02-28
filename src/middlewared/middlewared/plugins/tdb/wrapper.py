@@ -2,9 +2,9 @@ import os
 import tdb
 import ctdb
 import enum
-import json
 import copy
 from subprocess import run
+from middlewared.client import ejson as json
 from middlewared.service_exception import CallError
 
 FD_CLOSED = -1

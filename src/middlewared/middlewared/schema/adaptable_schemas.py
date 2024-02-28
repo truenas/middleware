@@ -125,6 +125,7 @@ class OROperator:
             'anyOf': [i.to_json_schema() for i in self.schemas],
             'nullable': False,
             '_name_': self.name,
+            'title': self.title,
             'description': self.description,
             '_required_': self.required,
         }

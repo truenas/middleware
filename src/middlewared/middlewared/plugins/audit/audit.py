@@ -23,9 +23,9 @@ from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
 from middlewared.client import ejson
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.schema import (
-    accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str, UUID
+    accepts, Bool, Datetime, Dict, Int, List, OROperator, Patch, Ref, returns, Str, UUID
 )
-from middlewared.service import filterable, filterable_returns, job, private, ConfigService
+from middlewared.service import filterable, job, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
@@ -121,26 +121,47 @@ class AuditService(ConfigService):
 
         return data
 
-    @accepts(Dict(
-        'audit_query',
-        List('services', items=[Str('db_name', enum=ALL_AUDITED)], default=ALL_AUDITED),
-        Ref('query-filters'),
-        Ref('query-options'),
-        register=True
+    @accepts(OROperator(
+        Dict(
+            'audit_query_new',
+            List('services', items=[Str('db_name', enum=ALL_AUDITED)], default=ALL_AUDITED),
+            Ref('query-filters'),
+            Ref('query-options'),
+            Bool('cache-results', default=False),
+            register=True
+        ),
+        Dict(
+            'audit_query_cached',
+            UUID('result-id'),
+            Ref('query-options'),
+            register=True
+        ),
+        name='audit_query'
     ))
-    @filterable_returns(Dict(
-        'audit_entry',
-        UUID('audit_id'),
-        Int('message_timestamp'),
-        Datetime('timestamp'),
-        Str('address'),
-        Str('username'),
-        UUID('session'),
-        Str('service', enum=ALL_AUDITED),
-        Dict('service_data', additional_attrs=True, null=True),
-        Str('event'),
-        Dict('event_data', additional_attrs=True, null=True),
-        Bool('success')
+    @returns(OROperator(
+        Int('count'),
+        Dict(
+            'audit_entry',
+            UUID('audit_id'),
+            Int('message_timestamp'),
+            Datetime('timestamp'),
+            Str('address'),
+            Str('username'),
+            UUID('session'),
+            Str('service', enum=ALL_AUDITED),
+            Dict('service_data', additional_attrs=True, null=True),
+            Str('event'),
+            Dict('event_data', additional_attrs=True, null=True),
+            Bool('success'),
+            register=True
+        ),
+        List('entries', items=[Ref('audit_entry')]),
+        Dict(
+            'audit-results-cache',
+            Int('count'),
+            UUID('result-id'),
+        ),
+        name='audit_query_return'
     ))
     async def query(self, data):
         """
@@ -201,25 +222,42 @@ class AuditService(ConfigService):
 
         verrors.check()
 
-        if sql_filters:
-            filters = data['query-filters']
-            options = data['query-options']
+        if (existing_results := data.get('query-result')):
+            results = await self.middleware.call('audit.cache.fetch', existing_results)
         else:
-            filters = []
-            options = {}
+            results = []
 
-        for svc in data['services']:
-            entries = await self.middleware.call('auditbackend.query', svc, filters, options)
-            results.extend(entries)
+            if sql_filters:
+                filters = data['query-filters']
+                options = data['query-options']
+            else:
+                filters = []
+                options = {}
 
-        if sql_filters:
-            return
+            for svc in data['services']:
+                entries = await self.middleware.call('auditbackend.query', svc, filters, options)
+                results.extend(entries)
 
-        return filter_list(results, data['query-filters'], data['query-options'])
+            if sql_filters:
+                return
 
-    @accepts(Patch(
-        'audit_query', 'audit_export',
-        ('add', Str('export_format', enum=['CSV', 'JSON', 'YAML'], default='JSON')),
+            if data['cache-results']:
+                entry_uuid = await self.middleware.call('audit.cache.store', results)
+                return {'count': len(results), 'results-id': entry_uuid}
+
+        return filter_list(results, data.get('query-filters', []), data.get('query-options', {}))
+
+    @accepts(OROperator(
+        Patch(
+            'audit_query_new', 'audit_export_new',
+            ('add', Str('export_format', enum=['CSV', 'JSON', 'YAML'], default='JSON')),
+            ('rm', {'name': 'cache-results'}),
+        ),
+        Patch(
+            'audit_query_cached', 'audit_export_cached',
+            ('add', Str('export_format', enum=['CSV', 'JSON', 'YAML'], default='JSON')),
+        ),
+        name='audit_export'
     ), roles=['SYSTEM_AUDIT_READ'])
     @returns(Str('audit_file_path'))
     @job()
@@ -231,14 +269,15 @@ class AuditService(ConfigService):
         Supported export_formats are CSV, JSON, and YAML. The endpoint returns a
         local filesystem path where the resulting audit report is located.
         """
-        if data['query-options'].get('count') is True:
-            raise CallError('Raw row count may not be exported', errno.EINVAL)
+        if 'query-results' not in data:
+            if data['query-options'].get('count') is True:
+                raise CallError('Raw row count may not be exported', errno.EINVAL)
 
-        if data['query-options'].get('get') is True:
-            raise CallError(
-                'Use of "get" query-option is not supported for export',
-                errno.EINVAL
-            )
+            if data['query-options'].get('get') is True:
+                raise CallError(
+                    'Use of "get" query-option is not supported for export',
+                    errno.EINVAL
+                )
 
         export_format = data.pop('export_format')
         job.set_progress(0, f'Quering data for {export_format} audit report')
