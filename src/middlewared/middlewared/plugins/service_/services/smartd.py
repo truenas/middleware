@@ -13,3 +13,6 @@ class SMARTDService(SimpleService):
 
     systemd_unit = "smartmontools"
     systemd_async_start = True
+
+    async def after_start(self):
+        await self.middleware.call('service.restart', 'netdata')
