@@ -552,7 +552,7 @@ class iSCSITargetExtentService(SharingService):
         filters = [['type', '=', 'DISK']]
         options = {'select': ['path']}
         if pool is not None:
-            filters.append(['path', '^', f'zvol/{pool["name"]}'])
+            filters.append(['path', '^', f'zvol/{pool["name"]}/'])
         zvols = [extent['path'][5:] for extent in await self.middleware.call('iscsi.extent.query', filters, options)]
 
         filters = [['name', 'in', zvols], ['properties.volthreading.value', '=', 'on']]
