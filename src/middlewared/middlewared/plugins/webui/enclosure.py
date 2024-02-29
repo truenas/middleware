@@ -11,22 +11,16 @@ class WebUIEnclosureService(Service):
 
     def disk_detail_dict(self):
         return {
-            'name': None,
             'size': None,
             'model': None,
             'serial': None,
-            'advpowermgmt': None,
-            'togglesmart': None,
-            'smartoptions': None,
-            'transfermode': None,
-            'hddstandby': None,
-            'description': None,
+            'type': None,
             'rotationrate': None,
         }
 
-    def map_disk_details(self, slot_info, disks_in_db):
+    def map_disk_details(self, slot_info, disk_deets):
         for key in self.disk_detail_dict():
-            slot_info[key] = disks_in_db.get(slot_info['dev'], {}).get(key)
+            slot_info[key] = disk_deets.get(slot_info['dev'], {}).get(key)
 
     def map_zpool_info(self, enc_id, disk_slot, dev, pool_info):
         info = {'enclosure_id': enc_id, 'slot': int(disk_slot), 'dev': dev}
@@ -46,7 +40,7 @@ class WebUIEnclosureService(Service):
         disks_to_pools = dict()
         enclosures = self.middleware.call_sync('enclosure2.query')
         if enclosures:
-            disks_in_db = {i['name']: i for i in self.middleware.call_sync('disk.query')}
+            disk_deets = self.middleware.call_sync('device.get_disks')
             disks_to_pools = self.middleware.call_sync('zpool.status', {'real_paths': True})
             for enc in enclosures:
                 for disk_slot, slot_info in enc['elements']['Array Device Slot'].items():
@@ -60,7 +54,7 @@ class WebUIEnclosureService(Service):
                         # map disk details
                         # NOTE: some of these fields need to be removed
                         # work with UI to remove unnecessary ones
-                        self.map_disk_details(slot_info, disks_in_db)
+                        self.map_disk_details(slot_info, disks_deets)
 
                         if (pool_info := disks_to_pools['disks'].get(slot_info['dev'])):
                             # now map zpool info
