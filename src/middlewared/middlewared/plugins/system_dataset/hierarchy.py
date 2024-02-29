@@ -103,7 +103,7 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
             'chown_config': {
                 'uid': 0,
                 'gid': 0,
-                'mode': 0o755,
+                'mode': 0o775,
             },
         },
         {

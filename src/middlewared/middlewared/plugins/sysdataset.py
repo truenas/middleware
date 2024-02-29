@@ -400,7 +400,6 @@ class SystemDatasetService(ConfigService):
 
         corepath = f'{SYSDATASET_PATH}/cores'
         if os.path.exists(corepath):
-            os.chmod(corepath, 0o775)
 
             if self.middleware.call_sync('keyvalue.get', 'run_migration', False):
                 try:
@@ -716,6 +715,10 @@ class SystemDatasetService(ConfigService):
                 restart.reverse()
                 for i in restart:
                     self.middleware.call_sync('service.start', i)
+
+    @private
+    def get_system_dataset_spec(self, pool, uid):
+        return get_system_dataset_spec(pool, uid)
 
 
 async def pool_post_create(middleware, pool):
