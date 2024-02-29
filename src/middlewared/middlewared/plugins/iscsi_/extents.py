@@ -542,3 +542,28 @@ class iSCSITargetExtentService(SharingService):
             if extent['id'] in assoc:
                 result.append(extent['name'])
         return result
+
+    @private
+    async def pool_import(self, pool=None):
+        """
+        On pool import we will ensure that any ZVOLs used as iSCSI extents have the
+        necessary properties set (i.e. turn off volthreading).
+        """
+        filters = [['type', '=', 'DISK']]
+        options = {'select': ['path']}
+        if pool is not None:
+            filters.append(['path', '^', f'zvol/{pool["name"]}'])
+        zvols = [extent['path'][5:] for extent in await self.middleware.call('iscsi.extent.query', filters, options)]
+
+        filters = [['name', 'in', zvols], ['properties.volthreading.value', '=', 'on']]
+        options = {'select': ['name']}
+        for zvol in await self.middleware.call('zfs.dataset.query', filters, options):
+            await self.middleware.call('zfs.dataset.update', zvol['name'], {'properties': {'volthreading': {'value': 'off'}}})
+
+
+async def pool_post_import(middleware, pool):
+    await middleware.call('iscsi.extent.pool_import', pool)
+
+
+async def setup(middleware):
+    middleware.register_hook('pool.post_import', pool_post_import, sync=True)
