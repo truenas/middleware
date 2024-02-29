@@ -19,6 +19,7 @@ class FailoverService(Service):
         """
         Reboot the standby node and wait for it to come back online.
         """
+        remote_boot_id = await self.middleware.call('failover.call_remote', 'system.boot_id')
 
         job.set_progress(5, 'Rebooting standby controller')
         await self.middleware.call(
@@ -56,3 +57,12 @@ class FailoverService(Service):
         # Wait for the standby controller to come back online and report as being ready
         if not await self.middleware.call('failover.upgrade_waitstandby'):
             raise CallError('Timed out waiting for the standby controller to upgrade', errno.ETIMEDOUT)
+
+        # We captured the boot_id of the standby controller before we rebooted it
+        # This variable represents a 1-time unique boot id. It's supposed to be different
+        # every time the system boots up. If this check is True, then it's safe to say
+        # that the remote system never rebooted
+        if remote_boot_id == await self.middleware.call('failover.call_remote', 'system.boot_id'):
+            raise CallError('Standby Controller failed to reboot')
+
+        return True
