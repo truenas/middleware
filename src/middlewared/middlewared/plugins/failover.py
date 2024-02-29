@@ -815,19 +815,13 @@ class FailoverService(ConfigService):
 
             ljob.wait_sync(raise_error=True)
 
-            remote_boot_id = self.middleware.call_sync('failover.call_remote', 'system.boot_id')
-
             # check the remote (standby) controller upgrade job
             if rjob:
                 rjob.result()
-
-            self.middleware.call_sync(
-                'failover.call_remote', 'system.reboot',
-                [{'delay': 5}],
-                {'job': True}
-            )
         except Exception:
             raise
+
+        standby_reboot_job = self.middleware.call_sync('failover.reboot_standby')
 
         # The upgrade procedure will upgrade both systems simultaneously
         # as well as activate the new BEs. The standby controller will be
@@ -852,48 +846,9 @@ class FailoverService(ConfigService):
             raise CallError('Could not find current boot environment.')
         self.middleware.call_sync('bootenv.activate', local_bootenv[0]['id'])
 
-        # SCALE is using systemd and at the time of writing this, the
-        # DefaultTimeoutStopSec setting hasn't been changed and so
-        # defaults to 90 seconds. This means when the system is sent the
-        # shutdown signal, all the associated user-space programs are
-        # asked to be shutdown. If any of those take longer than 90
-        # seconds to respond to SIGTERM then the program is sent SIGKILL.
-        # Finally, if after 90 seconds the standby controller is still
-        # responding to remote requests then play it safe and assume the
-        # reboot failed (this should be rare but my future self will
-        # appreciate the fact I wrote this out because of the inevitable
-        # complexities of gluster/k8s/vms etc etc for which I predict
-        # will exhibit this behavior :P )
         job.set_progress(None, 'Waiting on the Standby Controller to reboot.')
-        try:
-            retry_time = time.monotonic()
-            shutdown_timeout = 90  # seconds
-            while time.monotonic() - retry_time < shutdown_timeout:
-                self.middleware.call_sync(
-                    'failover.call_remote', 'core.ping', [], {'timeout': 5}
-                )
-                time.sleep(5)
-        except CallError:
-            pass
-        else:
-            raise CallError(
-                f'Timed out waiting {shutdown_timeout} seconds for the standby controller to reboot',
-                errno.ETIMEDOUT
-            )
 
-        if not self.upgrade_waitstandby():
-            raise CallError(
-                'Timed out waiting for the standby controller to upgrade.',
-                errno.ETIMEDOUT
-            )
-
-        # we captured the `remote_boot_id` up above earlier in the upgrade process.
-        # This variable represents a 1-time unique boot id. It's supposed to be different
-        # every time the system boots up. If this check is True, then it's safe to say
-        # that the remote system never rebooted, therefore, never completing the upgrade
-        # process....which isn't good.
-        if remote_boot_id == self.middleware.call_sync('failover.call_remote', 'system.boot_id'):
-            raise CallError('Standby Controller failed to reboot.')
+        standby_reboot_job.wait_sync(raise_error=True)
 
         return True
 
