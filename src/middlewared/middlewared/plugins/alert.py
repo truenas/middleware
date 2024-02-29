@@ -5,7 +5,6 @@ import errno
 import os
 import textwrap
 import time
-import traceback
 import uuid
 
 import html2text
@@ -70,7 +69,7 @@ class AlertSourceRunFailedAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
     title = "Alert Check Failed"
-    text = "Failed to check for alert %(source_name)s:\n%(traceback)s"
+    text = "Failed to check for alert %(source_name)s: %(traceback)s"
 
     exclude_from_list = True
 
@@ -79,7 +78,7 @@ class AlertSourceRunFailedOnBackupNodeAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
     title = "Alert Check Failed (Standby Controller)"
-    text = "Failed to check for alert %(source_name)s on standby controller:\n%(traceback)s"
+    text = "Failed to check for alert %(source_name)s on standby controller: %(traceback)s"
 
     exclude_from_list = True
 
@@ -190,6 +189,8 @@ class AlertSerializer:
 
 
 class AlertService(Service):
+    alert_sources_errors = set()
+
     class Config:
         cli_namespace = "system.alert"
 
@@ -710,12 +711,12 @@ class AlertService(Service):
                             raise
                 except ReserveFDException:
                     self.logger.debug('Failed to reserve a privileged port')
-                except Exception:
+                except Exception as e:
                     alerts_b = [
                         Alert(AlertSourceRunFailedOnBackupNodeAlertClass,
                               args={
                                   "source_name": alert_source.name,
-                                  "traceback": traceback.format_exc(),
+                                  "traceback": str(e),
                               },
                               _source=alert_source.name)
                     ]
@@ -812,24 +813,19 @@ class AlertService(Service):
         except UnavailableException:
             raise
         except Exception as e:
-            if isinstance(e, CallError) and e.errno in [errno.ECONNABORTED, errno.ECONNREFUSED, errno.ECONNRESET,
-                                                        errno.EHOSTDOWN, errno.ETIMEDOUT]:
-                alerts = [
-                    Alert(AlertSourceRunFailedAlertClass,
-                          args={
-                              "source_name": alert_source.name,
-                              "traceback": str(e),
-                          })
-                ]
-            else:
-                alerts = [
-                    Alert(AlertSourceRunFailedAlertClass,
-                          args={
-                              "source_name": alert_source.name,
-                              "traceback": traceback.format_exc(),
-                          })
-                ]
+            if source_name not in self.alert_sources_errors:
+                self.logger.error("Error checking for alert %r", alert_source.name, exc_info=True)
+                self.alert_sources_errors.add(source_name)
+
+            alerts = [
+                Alert(AlertSourceRunFailedAlertClass,
+                      args={
+                          "source_name": alert_source.name,
+                          "traceback": str(e),
+                      })
+            ]
         else:
+            self.alert_sources_errors.discard(source_name)
             if not isinstance(alerts, list):
                 alerts = [alerts]
         finally:
