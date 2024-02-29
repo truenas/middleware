@@ -3,6 +3,7 @@ import argparse
 import contextlib
 import json
 import logging
+import psutil
 import os
 import subprocess
 import sys
@@ -11,8 +12,33 @@ import textwrap
 import libzfs
 import pyudev
 
-
 logger = logging.getLogger(__name__)
+
+readonly_state = None
+
+
+def set_readonly(root, readonly):
+    global readonly_state
+
+    if readonly == readonly_state:
+        return
+
+    # Some initramfs scripts use (`dpkg --print-architecture` or similar calls)
+    if readonly:
+        os.chmod(os.path.join(root, "usr/bin/dpkg"), 0o644)
+        os.rename(os.path.join(root, "usr/local/bin/dpkg.bak"), os.path.join(root, "usr/local/bin/dpkg"))
+
+    readonly_value = "on" if readonly else "off"
+    mountpoints = [root, os.path.join(root, "usr")]
+    for partition in psutil.disk_partitions():
+        if partition.mountpoint in mountpoints and partition.fstype == "zfs":
+            subprocess.run(["zfs", "set", f"readonly={readonly_value}", partition.device])
+
+    if not readonly:
+        os.chmod(os.path.join(root, "usr/bin/dpkg"), 0o755)
+        os.rename(os.path.join(root, "usr/local/bin/dpkg"), os.path.join(root, "usr/local/bin/dpkg.bak"))
+
+    readonly_state = readonly
 
 
 def update_zfs_default(root):
@@ -59,8 +85,11 @@ def update_zfs_default(root):
 
     new_config = "\n".join(lines) + "\n"
     if new_config != original_config:
+        set_readonly(root, False)
+
         with open(zfs_config_path, "w") as f:
             f.write(new_config)
+
         return True
 
     return False
@@ -73,6 +102,8 @@ def get_current_gpu_pci_ids(root):
 
 
 def update_pci_module_files(root, config):
+    # This method is (and must be) called when root is writeable
+
     def get_path(p):
         return os.path.join(root, p)
 
@@ -93,6 +124,15 @@ def update_pci_module_files(root, config):
     os.makedirs(get_path("etc/modprobe.d"), exist_ok=True)
 
     if not pci_slots:
+        for path in map(
+            get_path, [
+                "etc/initramfs-tools/modules",
+                "etc/modules",
+            ]
+        ):
+            with open(path, "w"):
+                pass
+
         return
 
     for path in map(get_path, ["etc/initramfs-tools/modules", "etc/modules"]):
@@ -138,6 +178,8 @@ def update_pci_initramfs_config(root):
             original_config = json.loads(f.read())
 
     if initramfs_config != original_config:
+        set_readonly(root, False)
+
         with open(initramfs_config_path, "w") as f:
             f.write(json.dumps(initramfs_config))
 
@@ -170,6 +212,8 @@ def update_zfs_module_config(root):
         existing_config = None
 
     if existing_config != config:
+        set_readonly(root, False)
+
         if config is None:
             os.unlink(config_path)
         else:
@@ -201,11 +245,13 @@ if __name__ == "__main__":
             ) | update_zfs_module_config(root)
         ):
             subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
+            # Root was made writeable if and only if an update was required
+            set_readonly(root, True)
     except Exception:
         logger.error("Failed to update initramfs", exc_info=True)
         exit(2)
 
     # We give out an exit code of 1 when initramfs has been updated as we require a reboot of the system for the
-    # changes to have an effect. This caters to the case of uploading a database. Otherwise we give an exit code
+    # changes to have an effect. This caters to the case of uploading a database. Otherwise, we give an exit code
     # of 0 and in case of erring out
     exit(int(update_required))
