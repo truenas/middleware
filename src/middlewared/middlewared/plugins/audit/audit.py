@@ -227,7 +227,11 @@ class AuditService(ConfigService):
             return results
 
         if app:
-            await self.middleware.call('audit.cache.store', app, data, results)
+            try:
+                await self.middleware.call('audit.cache.store', app, data, results)
+            except Exception:
+                self.logger.debug('Failed to store audit cache', exc_info=True)
+                pass
 
         return filter_list(results, data['query-filters'], data['query-options'])
 
