@@ -1,5 +1,5 @@
 import errno
-
+import os
 import pytest
 
 from middlewared.service_exception import CallError
@@ -62,3 +62,18 @@ def test_lock_passphrase_encrypted_pool_with_system_dataset(passphrase_encrypted
     assert ds["properties"]["mounted"]["value"] == "yes"
 
     call("systemdataset.update", {"pool": pool}, job=True)
+
+
+def test_system_dataset_mountpoints():
+    system_config = call("systemdataset.config")
+    for system_dataset_spec in call(
+        "systemdataset.get_system_dataset_spec", system_config["pool"], system_config["uuid_a"]
+    ):
+        mount_point = system_dataset_spec.get("mountpoint") or os.path.join(
+            system_config["path"], os.path.basename(system_dataset_spec["name"])
+        )
+
+        ds_stats = call("filesystem.stat", mount_point)
+        assert ds_stats["uid"] == system_dataset_spec["chown_config"]["uid"]
+        assert ds_stats["gid"] == system_dataset_spec["chown_config"]["gid"]
+        assert ds_stats["mode"] & 0o777 == system_dataset_spec["chown_config"]["mode"]
