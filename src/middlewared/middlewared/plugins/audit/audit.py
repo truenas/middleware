@@ -17,6 +17,8 @@ from .utils import (
     AUDIT_DEFAULT_FILL_WARNING,
     AUDIT_REPORTS_DIR,
     AUDITED_SERVICES,
+    parse_query_filters,
+    may_use_sql_filters,
 )
 from .schema.middleware import AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS, AUDIT_EVENT_MIDDLEWARE_PARAM_SET
 from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
@@ -184,7 +186,6 @@ class AuditService(ConfigService):
         `success` - boolean value indicating whether the action generating the
         event message succeeded.
         """
-        results = []
         sql_filters = data['query-options']['force_sql_filters']
 
         verrors = ValidationErrors()
@@ -199,21 +200,41 @@ class AuditService(ConfigService):
                         f'{entry}: column does not exist'
                     )
 
+        services_to_check, filters = parse_query_filters(
+            data['services'], data['query-filters'], sql_filters
+        )
+        if not services_to_check:
+            verrors.add(
+                'audit.query.query-filters',
+                'The combination of filters and specified services would result '
+                'in no databases being queries.'
+            )
+
         verrors.check()
 
         if sql_filters:
             filters = data['query-filters']
             options = data['query-options']
         else:
-            filters = []
-            options = {}
+            # Check whether we can pass to SQL backend directly
+            if may_use_sql_filters(services_to_check, data['query-filters'], filters, data['query-options']):
+                options = data['query-options']
+                # set sql_filters so that we don't pass through filter_list
+                sql_filters = True
+            else:
+                options = {}
 
-        for svc in data['services']:
+        if options.get('count'):
+            results = 0
+        else:
+            results = []
+
+        for svc in services_to_check:
             entries = await self.middleware.call('auditbackend.query', svc, filters, options)
-            results.extend(entries)
+            results += entries
 
         if sql_filters:
-            return
+            return results
 
         return filter_list(results, data['query-filters'], data['query-options'])
 

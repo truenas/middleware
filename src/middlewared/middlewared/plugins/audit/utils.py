@@ -2,7 +2,8 @@ import middlewared.sqlalchemy as sa
 import os
 
 from sqlalchemy import Table
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
+from .schema.common import AuditEventParam
 
 AUDIT_DATASET_PATH = '/audit'
 AUDITED_SERVICES = [('MIDDLEWARE', 0.1), ('SMB', 0.1)]
@@ -13,6 +14,16 @@ AUDIT_DEFAULT_QUOTA = 0
 AUDIT_DEFAULT_FILL_CRITICAL = 95
 AUDIT_DEFAULT_FILL_WARNING = 80
 AUDIT_REPORTS_DIR = os.path.join(AUDIT_DATASET_PATH, 'reports')
+SQL_SAFE_FIELDS = (
+    AuditEventParam.AUDIT_ID.value,
+    AuditEventParam.MESSAGE_TIMESTAMP.value,
+    AuditEventParam.ADDRESS.value,
+    AuditEventParam.USERNAME.value,
+    AuditEventParam.SESSION.value,
+    AuditEventParam.SERVICE.value,
+    AuditEventParam.EVENT.value,
+    AuditEventParam.SUCCESS.value,
+)
 
 AuditBase = declarative_base()
 
@@ -53,6 +64,102 @@ def generate_audit_table(svc, vers):
         sa.Column('event_data', sa.JSON(dict), nullable=True),
         sa.Column('success', sa.Boolean())
     )
+
+
+def parse_query_filters(
+    services: list,
+    filters: list,
+    skip_sql_filters: bool
+) -> tuple:
+    """
+    NOTE: this method should only be called by audit.query
+
+    This method tries to optimize audit query based on provided filter.
+    Optimizations are:
+
+    1. limit databases queried
+    2. generate sql filters where appropriate
+
+    returns a tuple of services that should be queried on backend and validated
+    SQL-safe filters.
+
+    We err on side of caution here since we're dealing with audit results.
+    This means that we skip optimized filters if the field is a JSON one, and
+    do not try to pass disjunctions to sqlalchemy. In future if needed we
+    can loosen these restrictions with appropriate levels of testing and
+    validation in auditbackend plugin.
+    """
+    services_to_check = set(services)
+    filters_out = []
+
+    for f in filters:
+        if len(f) != 3:
+            continue
+
+        if f[0] == 'service':
+            # we are potentially limiting which services may be audited
+
+            if isinstance(f[2], str):
+                svcs = set([f[2]])
+            else:
+                svcs = set(f[2])
+
+            match f[1]:
+                case '=' | 'in':
+                    services_to_check = services_to_check & svcs
+                case '!=' | 'nin':
+                    services_to_check = services_to_check - svcs
+                case _:
+                    # Other filters quite unlikely to be used
+                    # by end-users so we'll just skip optimization
+                    # and rely on filter_list later on
+                    pass
+
+            if not services_to_check:
+                # These filters are guaranteed to have no results. Bail
+                # early and let caller handle it.
+                break;
+
+        if skip_sql_filters:
+            # User has manually specified to pass all these filters to datastore
+            continue
+
+        if f[0] not in SQL_SAFE_FIELDS:
+            # Keys that contain JSON data are not currently supported
+            continue
+
+        filters_out.append(f)
+
+    return (services_to_check, filters_out)
+
+
+def may_use_sql_filters(
+    services: list,
+    filters_in: list,
+    filters_for_sql: list,
+    options: dict
+) -> bool:
+    if filters_in != filters_for_sql:
+        # We will need to do additional filtering after retrieval
+        return False
+
+    if (to_investigate := set(options.get('select', [])) - set(SQL_SAFE_FIELDS)):
+        # Field is being selected that may not be safe for SQL select
+        for entry in to_investigate:
+            # Selecting subkey in entry is not currently supported
+            if '.' in entry or isiinstance(entry, tuple):
+                return False
+
+    if len(services) > 1:
+        # When we have more than one database being queried we
+        # often need to pass the aggregated results to filter_list
+        if options.get('offset') or options.get('limit'):
+            # We need to do pagination on total results.
+            return False
+        if options.get('order_by'):
+            return False
+
+    return True
 
 
 AUDIT_TABLES = {svc[0]: generate_audit_table(*svc) for svc in AUDITED_SERVICES}
