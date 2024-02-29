@@ -32,7 +32,14 @@ def set_readonly(root, readonly):
     mountpoints = [root, os.path.join(root, "usr")]
     for partition in psutil.disk_partitions():
         if partition.mountpoint in mountpoints and partition.fstype == "zfs":
-            subprocess.run(["zfs", "set", f"readonly={readonly_value}", partition.device])
+            # Do not change `readonly` property when we're running in the installer, and it was not set yet
+            if (
+                subprocess.run(
+                    ["zfs", "get", "-H", "-o", "source", "readonly", partition.device],
+                    capture_output=True, text=True,
+                ).stdout.strip() == "local"
+            ):
+                subprocess.run(["zfs", "set", f"readonly={readonly_value}", partition.device])
 
     if not readonly:
         os.chmod(os.path.join(root, "usr/bin/dpkg"), 0o755)
