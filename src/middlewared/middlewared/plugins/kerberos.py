@@ -985,14 +985,6 @@ class KerberosKeytabService(CRUDService):
                                           {'name': data['name'], 'file': b64kt.decode()})
 
     @private
-    async def legacy_validate(self, keytab):
-        err = await self._validate({'file': keytab})
-        try:
-            err.check()
-        except Exception as e:
-            raise CallError(e)
-
-    @private
     async def _cleanup_kerberos_principals(self):
         principal_choices = await self.middleware.call('kerberos.keytab.kerberos_principal_choices')
         ad = await self.middleware.call('activedirectory.config')
@@ -1226,26 +1218,18 @@ class KerberosKeytabService(CRUDService):
     @private
     async def check_updated_keytab(self):
         """
-        Check mtime of current kerberos keytab. If it has changed since last check,
-        assume that samba has updated it behind the scenes and that the configuration
-        database needs to be updated to reflect the change.
+        Check whether keytab needs updating. This currently checks for changes
+        to the AD_MACHINE_ACCOUNT keytab due to the possibility that it can be
+        changed by user playing around with `net ads` command from shell.
+
+        When this happens, the last_password_change timestamp is altered in
+        secrets.tdb and so we can base whether to update that keytab entry
+        based on the timestamp rather than trying to evaluate the keytab itself.
         """
         if not await self.middleware.call('system.ready'):
             return
 
-        old_mtime = 0
-        ad_state = await self.middleware.call('activedirectory.get_state')
-        if ad_state == 'DISABLED':
-            return
-        ad_keytab_exists = await self.middleware.run_in_thread(os.path.exists, keytab['SYSTEM'].value)
-        if not ad_keytab_exists:
-            return
-
-        if await self.middleware.call('cache.has_key', 'KEYTAB_MTIME'):
-            old_mtime = await self.middleware.call('cache.get', 'KEYTAB_MTIME')
-
-        keytab_stat = await self.middleware.run_in_thread(os.stat, keytab['SYSTEM'].value)
-        if old_mtime == keytab_stat.st_mtime:
+        if (await self.middleware.call('activedirectory.get_state')) == 'DISABLED':
             return
 
         ts = await self.middleware.call('directoryservices.get_last_password_change')
@@ -1258,10 +1242,3 @@ class KerberosKeytabService(CRUDService):
 
         await self.middleware.call('directoryservices.secrets.backup')
         await self.store_samba_keytab()
-        updated_keytab_stat = await self.middleware.run_in_thread(os.stat, keytab['SYSTEM'].value)
-        self.logger.trace('Updating stored AD machine account kerberos keytab')
-        await self.middleware.call(
-            'cache.put',
-            'KEYTAB_MTIME',
-            updated_keytab_stat.st_mtime
-        )
