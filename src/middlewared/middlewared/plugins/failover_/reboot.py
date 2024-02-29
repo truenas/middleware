@@ -54,6 +54,8 @@ class FailoverService(Service):
                 errno.ETIMEDOUT
             )
 
+        job.set_progress(60, 'Waiting for the Standby Controller to come back online')
+
         # Wait for the standby controller to come back online and report as being ready
         if not await self.middleware.call('failover.upgrade_waitstandby'):
             raise CallError('Timed out waiting for the standby controller to upgrade', errno.ETIMEDOUT)
@@ -65,4 +67,5 @@ class FailoverService(Service):
         if remote_boot_id == await self.middleware.call('failover.call_remote', 'system.boot_id'):
             raise CallError('Standby Controller failed to reboot')
 
+        job.set_progress(100, 'Standby Controller has been rebooted successfully')
         return True
