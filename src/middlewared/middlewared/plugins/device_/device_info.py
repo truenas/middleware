@@ -278,7 +278,7 @@ class DeviceService(Service):
             # 1 = SSD
             return
 
-        return str(rotation_rate)
+        return rotation_rate
 
     @private
     def get_gpus(self):
