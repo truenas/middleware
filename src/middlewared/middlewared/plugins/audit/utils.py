@@ -199,7 +199,10 @@ def validate_audit_query_filters(
         key, op, value = f
 
         if key not in valid_params:
-            verrors.add(schema, f'[{key}] column does not exist.')
+            verrors.add(schema, 
+                f'[{key}] not a valid parameter for an audit entry for the '
+                'specified services.'
+            )
             break
 
 
