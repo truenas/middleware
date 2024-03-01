@@ -176,7 +176,6 @@ def requires_python_filtering(
 
 def validate_audit_query_filters(
     valid_params: set,
-    services: list,
     filters_in: list,
     schema: str,
     verrors: object
@@ -188,7 +187,7 @@ def validate_audit_query_filters(
     Currently we only flag non-existent parameters.
     """
     for f in filters_in:
-        if len(f == 2):
+        if len(f) == 2:
             # Disjunction, call validate each branch separately. Standard
             # query-filters validation has already performed a check on
             # recursion depth check so we don't need to track it here.
