@@ -175,6 +175,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         """
         conn = self.connections[db_name]
         order_by = options.get('order_by', []).copy()
+        from_ = conn.table
 
         if conn.connection is None:
             raise CallError(
@@ -182,17 +183,19 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
             )
 
         if options['count']:
-            qs = select([func.count('ROW_ID')])
+            qs = select([func.count('ROW_ID')]).select_from(from_)
         else:
             columns = list(conn.table.c)
-            from_ = conn.table
             qs = select(columns).select_from(from_)
 
         if filters:
             qs = qs.where(and_(*self._filters_to_queryset(filters, conn.table, None, {})))
 
         if options['count']:
-            return self.__fetchall(conn, qs)[0][0]
+            if not (results := self.__fetchall(conn, qs)):
+                return 0
+
+            return results[0][0]
 
         if order_by:
             for i, order in enumerate(order_by):
