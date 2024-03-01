@@ -3,8 +3,8 @@ import pytest
 from middlewared.utils import filter_list
 from middlewared.plugins.audit.utils import (
     AUDITED_SERVICES,
-    may_use_sql_filters,
     parse_query_filters,
+    requires_python_filtering,
     SQL_SAFE_FIELDS,
 )
 
@@ -80,27 +80,27 @@ def test_query_filters_json():
     assert filters_out == [good_filter]
 
 
-def test_may_use_sql_filters_filter_mismatch():
+def test_requires_python_filtering_filter_mismatch():
     """ test that mismatch between filtersets results in rejection """
     services = [s[0] for s in AUDITED_SERVICES]
-    result = may_use_sql_filters(services, [['event_data.result', '=', 'canary']], [], {})
-    assert result is False
+    result = requires_python_filtering(services, [['event_data.result', '=', 'canary']], [], {})
+    assert result is True
 
 
-def test_may_use_sql_filters_select_subkey():
+def test_requires_python_filtering_select_subkey():
     """ test that selecting for subkey in JSON object results in rejection """
     services = [s[0] for s in AUDITED_SERVICES]
-    result = may_use_sql_filters(services, [], [], {'select': ['event_data.result']})
-    assert result is False
+    result = requires_python_filtering(services, [], [], {'select': ['event_data.result']})
+    assert result is True
 
 
 @pytest.mark.parametrize('services,options,expected', [
-    ([s[0] for s in AUDITED_SERVICES], {'offset': 1}, False),
-    ([s[0] for s in AUDITED_SERVICES], {'limit': 1}, False),
-    (['SMB'], {'offset': 1}, True),
-    (['SMB'], {'limit': 1}, True),
+    ([s[0] for s in AUDITED_SERVICES], {'offset': 1}, True),
+    ([s[0] for s in AUDITED_SERVICES], {'limit': 1}, True),
+    (['SMB'], {'offset': 1}, False),
+    (['SMB'], {'limit': 1}, False),
 ])
-def test_may_use_sql_filters_options(services, options, expected):
+def test_requires_python_filtering_options(services, options, expected):
     """ test that selecting for subkey in JSON object results in rejection """
-    result = may_use_sql_filters(services, [], [], options)
+    result = requires_python_filtering(services, [], [], options)
     assert result is expected
