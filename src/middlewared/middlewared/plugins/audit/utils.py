@@ -174,4 +174,34 @@ def requires_python_filtering(
     return False
 
 
+def validate_audit_query_filters(
+    valid_params: set,
+    services: list,
+    filters_in: list,
+    schema: str,
+    verrors: object
+) -> None:
+    """
+    Iterate through the specified filters for the audit query request and
+    raise ValidationErrors where we can detect something is definitely wrong
+
+    Currently we only flag non-existent parameters.
+    """
+    for f in filters_in:
+        if len(f == 2):
+            # Disjunction, call validate each branch separately. Standard
+            # query-filters validation has already performed a check on
+            # recursion depth check so we don't need to track it here.
+            for sub in f[1]:
+                validate_audit_query_filters([sub], verrors)
+
+            return
+
+        key, op, value = f
+
+        if key not in valid_params:
+            verrors.add(schema, f'[{key}] column does not exist.')
+            break
+
+
 AUDIT_TABLES = {svc[0]: generate_audit_table(*svc) for svc in AUDITED_SERVICES}

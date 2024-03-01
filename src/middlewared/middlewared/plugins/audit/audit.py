@@ -20,6 +20,7 @@ from .utils import (
     AUDITED_SERVICES,
     parse_query_filters,
     requires_python_filtering,
+    validate_audit_query_filters,
 )
 from .schema.middleware import AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS, AUDIT_EVENT_MIDDLEWARE_PARAM_SET
 from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
@@ -190,16 +191,7 @@ class AuditService(ConfigService):
         sql_filters = data['query-options']['force_sql_filters']
 
         verrors = ValidationErrors()
-        if (select := data['query-options'].get('select')):
-            for idx, entry in enumerate(select):
-                if isinstance(entry, list):
-                    entry = entry[0]
-
-                if entry not in (AUDIT_EVENT_MIDDLEWARE_PARAM_SET | AUDIT_EVENT_SMB_PARAM_SET):
-                    verrors.add(
-                        f'audit.query.query-options.select.{idx}',
-                        f'{entry}: column does not exist'
-                    )
+        valid_params = set()
 
         services_to_check, filters = parse_query_filters(
             data['services'], data['query-filters'], sql_filters
@@ -211,6 +203,24 @@ class AuditService(ConfigService):
                 'in no databases being queried.'
             )
 
+        if 'SMB' in services_to_check:
+            valid_params |= AUDIT_EVENT_SMB_PARAM_SET
+
+        if 'MIDDLEWARE' in services_to_check:
+            valid_params |= AUDIT_EVENT_MIDDLEWARE_PARAM_SET
+
+        if (select := data['query-options'].get('select')):
+            for idx, entry in enumerate(select):
+                if isinstance(entry, list):
+                    entry = entry[0]
+
+                if entry not in valid_params:
+                    verrors.add(
+                        f'audit.query.query-options.select.{idx}',
+                        f'{entry}: column does not exist'
+                    )
+
+        validate_audit_query_filters(valid_params, data['query-filters'], 'audit.query.query-filters', verrors)
         verrors.check()
 
         if sql_filters:
