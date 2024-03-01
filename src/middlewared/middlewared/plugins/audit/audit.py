@@ -555,3 +555,18 @@ class AuditService(ConfigService):
     @filterable
     async def json_schemas(self, filters, options):
         return filter_list(AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS + AUDIT_EVENT_SMB_JSON_SCHEMAS, filters, options)
+
+    @accepts(List(
+        'services',
+        items=[Str('db_name', enum=ALL_AUDITED)],
+        default=ALL_AUDITED
+    ), roles=['AUDIT_READ'])
+    async def supported_filter_parameters(self, services):
+        valid_params = set()
+        if 'SMB' in services_to_check:
+            valid_params |= AUDIT_EVENT_SMB_PARAM_SET
+
+        if 'MIDDLEWARE' in services_to_check:
+            valid_params |= AUDIT_EVENT_MIDDLEWARE_PARAM_SET
+
+        return list(valid_params)
