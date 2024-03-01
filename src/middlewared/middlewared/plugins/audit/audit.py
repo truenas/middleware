@@ -560,7 +560,7 @@ class AuditService(ConfigService):
         'services',
         items=[Str('db_name', enum=ALL_AUDITED)],
         default=ALL_AUDITED
-    ), roles=['AUDIT_READ'])
+    ), roles=['SYSTEM_AUDIT_READ'])
     async def supported_filter_parameters(self, services):
         valid_params = set()
         if 'SMB' in services_to_check:
