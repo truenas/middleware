@@ -1,3 +1,4 @@
+import asyncio
 import csv
 import errno
 import json
@@ -18,7 +19,7 @@ from .utils import (
     AUDIT_REPORTS_DIR,
     AUDITED_SERVICES,
     parse_query_filters,
-    may_use_sql_filters,
+    requires_python_filtering,
 )
 from .schema.middleware import AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS, AUDIT_EVENT_MIDDLEWARE_PARAM_SET
 from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
@@ -207,7 +208,7 @@ class AuditService(ConfigService):
             verrors.add(
                 'audit.query.query-filters',
                 'The combination of filters and specified services would result '
-                'in no databases being queries.'
+                'in no databases being queried.'
             )
 
         verrors.check()
@@ -217,21 +218,26 @@ class AuditService(ConfigService):
             options = data['query-options']
         else:
             # Check whether we can pass to SQL backend directly
-            if may_use_sql_filters(services_to_check, data['query-filters'], filters, data['query-options']):
+            if requires_python_filtering(services_to_check, data['query-filters'], filters, data['query-options']):
+                options = {}
+            else:
                 options = data['query-options']
                 # set sql_filters so that we don't pass through filter_list
                 sql_filters = True
-            else:
-                options = {}
 
         if options.get('count'):
             results = 0
         else:
             results = []
 
-        for svc in services_to_check:
-            entries = await self.middleware.call('auditbackend.query', svc, filters, options)
-            results += entries
+        # `services_to_check` is a set and so ordering isn't guaranteed;
+        # however, strict ordering when multiple databases are queried is
+        # a requirement for pagination and consistent results.
+        for op in await asyncio.gather(*[
+            self.middleware.call('auditbackend.query', svc, filters, options)
+            for svc in ALL_AUDITED if svc in services_to_check
+        ]):
+            results += op
 
         if sql_filters:
             return results
