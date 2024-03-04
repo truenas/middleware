@@ -19,7 +19,6 @@ from middlewared.alert.base import (
     AlertLevel,
     Alert,
     AlertSource,
-    FilePresenceAlertSource,
     ThreadedAlertSource,
     ThreadedAlertService,
     ProThreadedAlertService,
@@ -212,7 +211,7 @@ class AlertService(Service):
     @private
     def load_impl(self):
         for module in load_modules(os.path.join(get_middlewared_dir(), "alert", "source")):
-            for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource)):
+            for cls in load_classes(module, AlertSource, (ThreadedAlertSource,)):
                 source = cls(self.middleware)
                 if source.name in ALERT_SOURCES:
                     raise RuntimeError(f"Alert source {source.name} is already registered")
