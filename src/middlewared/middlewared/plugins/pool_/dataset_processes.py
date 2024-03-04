@@ -115,7 +115,17 @@ class PoolDatasetService(Service):
         })
 
     @private
-    def processes_using_paths(self, paths, include_paths=False):
+    def processes_using_paths(self, paths, include_paths=False, include_middleware=False):
+        """
+        Find processes using paths supplied via `paths`. Path may be an absolute path for
+        a directory (e.g. /var/db/system) or a path in /dev/zvol or /dev/zd*
+
+        `include_paths`: include paths that are open by the process in output. By default
+        this is not included in output for performance reasons.
+
+        `include_middleware`: include files opened by the middlewared process in output.
+        These are not included by default.
+        """
         exact_matches = set()
         include_devs = []
         for path in paths:
@@ -138,29 +148,44 @@ class PoolDatasetService(Service):
         result = []
         if include_devs or exact_matches:
             for pid in os.listdir('/proc'):
-                if not pid.isdigit() or int(pid) == os.getpid():
+                if not pid.isdigit() or (not include_middleware and (int(pid) == os.getpid())):
                     continue
 
                 with contextlib.suppress(FileNotFoundError, ProcessLookupError):
                     # FileNotFoundError for when a process is killed/exits
                     # while we're iterating
                     found = False
-                    paths = set()
+                    found_paths = set()
                     for f in os.listdir(f'/proc/{pid}/fd'):
                         fd = f'/proc/{pid}/fd/{f}'
                         is_link = False
                         realpath = None
-                        if (
-                            (include_devs and os.stat(fd).st_dev in include_devs) or
-                            (
-                                exact_matches and
-                                (is_link := os.path.islink(fd)) and
-                                (realpath := os.path.realpath(fd)) in exact_matches
-                            )
-                        ):
-                            found = True
-                            if is_link:
-                                paths.add(realpath)
+                        with contextlib.suppress(FileNotFoundError):
+                            # Have second suppression here so that we don't lose list of files
+                            # if we have TOCTOU issue on one of files.
+                            #
+                            # We want to include file in list of paths in the following
+                            # situations:
+                            #
+                            # 1. File is regular file and has same device id as specified path
+                            # 2. File is a symbolic link and exactly matches a provided /dev/zvol or /dev/zd path
+                            if (
+                                (include_devs and os.stat(fd).st_dev in include_devs) or
+                                (
+                                    exact_matches and
+                                    (is_link := os.path.islink(fd)) and
+                                    (realpath := os.path.realpath(fd)) in exact_matches
+                                )
+                            ):
+                                found = True
+                                if include_paths:
+                                    if is_link:
+                                        # This is a path in `/dev/zvol` or `/dev/zd*`
+                                        found_paths.add(realpath)
+                                    else:
+                                        # We need to readlink to convert `/proc/<pid>/fd/<fd>` to
+                                        # the file's path name.
+                                        found_paths.add(os.readlink(fd))
 
                     if found:
                         with open(f'/proc/{pid}/comm') as comm:
@@ -177,7 +202,7 @@ class PoolDatasetService(Service):
                             proc['cmdline'] = cmdline
 
                         if include_paths:
-                            proc['paths'] = sorted(paths)
+                            proc['paths'] = sorted(found_paths)
 
                         result.append(proc)
 
