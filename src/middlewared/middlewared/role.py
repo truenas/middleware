@@ -177,6 +177,13 @@ ROLES = {
     'KUBERNETES_WRITE': Role(includes=['CONTAINER_WRITE', 'KUBERNETES_READ']),
     'APPS_READ': Role(includes=['CATALOG_READ', 'CONTAINER_READ']),
     'APPS_WRITE': Role(includes=['CATALOG_WRITE', 'APPS_READ', 'CONTAINER_WRITE']),
+
+    # System settings
+    'SYSTEM_GENERAL_READ': Role(),
+    'SYSTEM_GENERAL_WRITE': Role(includes=['SYSTEM_GENERAL_READ']),
+
+    'SYSTEM_ADVANCED_READ': Role(),
+    'SYSTEM_ADVANCED_WRITE': Role(includes=['SYSTEM_ADVANCED_READ'])
 }
 ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
 

@@ -65,7 +65,7 @@ class SystemGeneralService(Service):
         }
 
     @rest_api_metadata(extra_methods=['GET'])
-    @accepts(Int('delay', default=3, validators=[Range(min_=0)]))
+    @accepts(Int('delay', default=3, validators=[Range(min_=0)]), roles=['SYSTEM_GENERAL_WRITE'])
     async def ui_restart(self, delay):
         """
         Restart HTTP server to use latest UI settings.
@@ -75,7 +75,7 @@ class SystemGeneralService(Service):
         event_loop = asyncio.get_event_loop()
         event_loop.call_later(delay, lambda: self.middleware.create_task(self.middleware.call('service.restart', 'http')))
 
-    @accepts()
+    @accepts(roles=['SYSTEM_GENERAL_READ'])
     @returns(Str('local_url'))
     async def local_url(self):
         """
