@@ -10,7 +10,6 @@ DEFAULT_SCALE_UPDATE_SERVER = "https://update.ixsystems.com/scale"
 SCALE_MANIFEST_FILE = "/data/manifest.json"
 DOWNLOAD_UPDATE_FILE = "update.sqsh"
 UPLOAD_LOCATION = os.path.join(MIDDLEWARE_RUN_DIR, "upload_image")
-UPDATE_FAILED_SENTINEL = "/data/update.failed"
 SEP = re.compile(r"[-.]")
 
 

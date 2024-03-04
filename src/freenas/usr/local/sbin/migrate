@@ -1,5 +1,7 @@
 #!/bin/sh -ex
+DATABASE="${1:-/data/freenas-v1.db}"
 (
     cd "$(python3 -c 'import os; import sys; sys.path.remove("") if "" in sys.path else None; import middlewared; print(os.path.dirname(middlewared.__spec__.origin))')" &&
-    alembic upgrade head
+    FREENAS_DATABASE="$DATABASE" alembic upgrade head &&
+    echo "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')" | sqlite3 "$DATABASE"
 )

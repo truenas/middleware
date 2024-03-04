@@ -1,26 +1,23 @@
+from datetime import datetime
 import glob
 import os
+import pathlib
 import re
 import shutil
-import sqlite3
+import subprocess
 import tarfile
 import tempfile
-import pathlib
-
-from datetime import datetime
 
 from middlewared.schema import accepts, Bool, Dict, returns
 from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.db import FREENAS_DATABASE
-from middlewared.utils.python import get_middlewared_dir
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
     'admin_authorized_keys': '/home/admin/.ssh/authorized_keys',
     'root_authorized_keys': '/root/.ssh/authorized_keys',
 }
-NEED_UPDATE_SENTINEL = '/data/need-update'
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
 UPLOADED_DB_PATH = '/data/uploaded.db'
 PWENC_UPLOADED = '/data/pwenc_secret_uploaded'
@@ -140,7 +137,11 @@ class ConfigService(Service):
             if found_db_file is None:
                 raise CallError('Neither a valid tar or TrueNAS database file was provided.')
 
-            self.validate_uploaded_db(found_db_file)
+            p = subprocess.run(['migrate', str(found_db_file.absolute())], capture_output=True, text=True)
+            if p.returncode != 0:
+                raise CallError(
+                    f'Uploaded TrueNAS database file is not valid:\n{p.stderr}'
+                )
 
             # now copy uploaded files/dirs to respective location
             send_to_remote = []
@@ -162,12 +163,6 @@ class ConfigService(Service):
                     shutil.move(abspath, ROOT_KEYS_UPLOADED)
                     send_to_remote.append(ROOT_KEYS_UPLOADED)
 
-        # Create this file so on reboot, system will migrate the provided
-        # database which will catch the scenario if the database is from
-        # an older version
-        with open(NEED_UPDATE_SENTINEL, 'w+'):
-            send_to_remote.append(NEED_UPDATE_SENTINEL)
-
         self.middleware.call_hook_sync('config.on_upload', UPLOADED_DB_PATH)
         if self.middleware.call_sync('failover.licensed'):
             try:
@@ -186,44 +181,6 @@ class ConfigService(Service):
                     f'Please use Sync to Peer on the System/Failover page to perform a manual sync after reboot.',
                     CallError.EREMOTENODEERROR,
                 )
-
-    @private
-    def validate_uploaded_db(self, pathobj):
-        conn = sqlite3.connect(str(pathobj.absolute()))
-
-        # Currently we compare only the number of migrations for south and django
-        # of new and current installed database. This is not bullet proof as we can
-        # eventually have more migrations in a stable release compared to a older
-        # nightly and still be considered a downgrade, however this is simple enough
-        # and works in most cases.
-        alembic_version = None
-        try:
-            cur = conn.cursor()
-            try:
-                cur.execute("SELECT version_num FROM alembic_version")
-                alembic_version = cur.fetchone()[0]
-            finally:
-                cur.close()
-        except sqlite3.OperationalError as e:
-            raise CallError(f'TrueNAS database file is invalid: {e}')
-        except Exception as e:
-            raise CallError(f'Unexpected failure: {e}')
-        finally:
-            conn.close()
-
-        self.validate_alembic(alembic_version)
-
-    @private
-    def validate_alembic(self, alembic_version):
-        for root, _, files in os.walk(os.path.join(get_middlewared_dir(), 'alembic', 'versions')):
-            for name in filter(lambda x: x.endswith('.py'), files):
-                with open(os.path.join(root, name)) as f:
-                    search_string = f'Revision ID: {alembic_version}'
-                    for line in f:
-                        if line.strip() == search_string:
-                            return
-
-        raise CallError('Uploaded TrueNAS database file is newer than the current database.')
 
     @accepts(Dict('options', Bool('reboot', default=True)))
     @returns()
@@ -307,3 +264,17 @@ class ConfigService(Service):
             os.makedirs(dirname)
 
         shutil.copy(FREENAS_DATABASE, newfile)
+
+
+def setup(middleware):
+    if os.path.exists(UPLOADED_DB_PATH):
+        shutil.move(UPLOADED_DB_PATH, FREENAS_DATABASE)
+
+        if os.path.exists(PWENC_UPLOADED):
+            shutil.move(PWENC_UPLOADED, PWENC_FILE_SECRET)
+
+        if os.path.exists(ADMIN_KEYS_UPLOADED):
+            shutil.move(ADMIN_KEYS_UPLOADED, CONFIG_FILES['admin_authorized_keys'])
+
+        if os.path.exists(ROOT_KEYS_UPLOADED):
+            shutil.move(ROOT_KEYS_UPLOADED, CONFIG_FILES['root_authorized_keys'])

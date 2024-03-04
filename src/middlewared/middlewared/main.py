@@ -1014,6 +1014,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             plugin, function = plugin__function
 
             beginning = [
+                # Move uploaded config files to their appropriate locations
+                'config',
+                # Connect to the database
                 'datastore',
                 # Allow internal UNIX socket authentication for plugins that run in separate pools
                 'auth',
