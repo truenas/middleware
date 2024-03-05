@@ -67,6 +67,17 @@ def test__open_path_and_check_proc(request, datasets, file_open_path, arg_path):
             result = res[0]
             assert result['pid'] == open_pid, f'{result["pid"]!r} does not match {open_pid!r}'
             assert result['cmdline'] == cmdline, f'{result["cmdline"]!r} does not match {cmdline!r}'
+            assert 'paths' not in result
+
+            res = call('pool.dataset.processes_using_paths', [arg_path(ssh)], True)
+            assert len(res) == 1
+            result = res[0]
+            assert result['pid'] == open_pid, f'{result["pid"]!r} does not match {open_pid!r}'
+            assert result['cmdline'] == cmdline, f'{result["cmdline"]!r} does not match {cmdline!r}'
+            assert 'paths' in result
+            assert len(result['paths']) == 1
+            assert result['paths'][0] == test_file if test_file.startswith('/mnt') else '/dev/zd0'
+
         finally:
             if opened:
                 ssh(f'kill -9 {open_pid}', check=False)
