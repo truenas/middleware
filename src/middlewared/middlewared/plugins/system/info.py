@@ -20,29 +20,25 @@ def throttle_condition(middleware, app, *args, **kwargs):
 
 
 class SystemService(Service):
-    CPU_INFO = {
-        'cpu_model': None,
-        'core_count': None,
-        'physical_core_count': None,
-    }
-
-    MEM_INFO = {
-        'physmem_size': None,
-    }
-
+    CPU_INFO = {'cpu_model': None, 'core_count': None, 'physical_core_count': None}
     HOST_ID = None
 
     class Config:
         cli_namespace = 'system'
 
     @private
-    async def mem_info(self):
+    def mem_info(self):
+        result = {'physmem_size': None}
+        try:
+            with open('/proc/meminfo') as f:
+                for line in filter(lambda x: x.find('MemTotal') != -1, f):
+                    fields = line.split()
+                    # procfs reports in kB
+                    result['physmem_size'] = int(fields[1]) * 1024
+        except (FileNotFoundError, ValueError, IndexError):
+            pass
 
-        if self.MEM_INFO['physmem_size'] is None:
-            # physmem doesn't change after boot so cache the results
-            self.MEM_INFO['physmem_size'] = psutil.virtual_memory().total
-
-        return self.MEM_INFO
+        return result
 
     @private
     def get_cpu_model(self):
