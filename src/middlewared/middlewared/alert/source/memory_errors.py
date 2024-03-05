@@ -1,5 +1,6 @@
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
+from middlewared.utils.size import format_size
 
 
 class MemoryErrorsAlertClass(AlertClass):
@@ -14,7 +15,7 @@ class MemoryErrorsAlertClass(AlertClass):
 class MemorySizeMismatchAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     title = 'Memory Size Mismatch Detected'
-    text = 'Memory size on this controller %(r1)d doesn\'t match other controller %(r2)d'
+    text = 'Memory size on this controller %(r1)s doesn\'t match other controller %(r2)s'
     products = ('SCALE_ENTERPRISE',)
     proactive_support = True
 
@@ -68,6 +69,9 @@ class MemorySizeMismatchAlertSource(AlertSource):
             return alerts
 
         if r1 != r2:
-            alerts.append(Alert(MemorySizeMismatchAlertClass, {'r1': r1, 'r2': r2}))
+            alerts.append(Alert(
+                MemorySizeMismatchAlertClass,
+                {'r1': format_size(r1), 'r2': format_size(r2)}
+            ))
 
         return alerts
