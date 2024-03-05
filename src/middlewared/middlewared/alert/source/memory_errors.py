@@ -1,4 +1,6 @@
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
+from middlewared.alert.schedule import CrontabSchedule
+from middlewared.utils.size import format_size
 
 
 class MemoryErrorsAlertClass(AlertClass):
@@ -10,7 +12,16 @@ class MemoryErrorsAlertClass(AlertClass):
     proactive_support = True
 
 
+class MemorySizeMismatchAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    title = 'Memory Size Mismatch Detected'
+    text = 'Memory size on this controller %(r1)s doesn\'t match other controller %(r2)s'
+    products = ('SCALE_ENTERPRISE',)
+    proactive_support = True
+
+
 class MemoryErrorsAlertSource(AlertSource):
+    schedule = CrontabSchedule(hours=1)  # every 24hrs
 
     async def check(self):
         alerts = []
@@ -31,5 +42,36 @@ class MemoryErrorsAlertSource(AlertSource):
                         alerts.append(Alert(
                             MemoryErrorsAlertClass, {'count': val2, 'loc': location + f' on dimm {dimm_key}'}
                         ))
+
+        return alerts
+
+
+class MemorySizeMismatchAlertSource(AlertSource):
+    schedule = CrontabSchedule(hours=1)  # every 24hrs
+    run_on_backup_node = False
+
+    async def check(self):
+        alerts = []
+        if not await self.middleware.call('failover.licensed'):
+            return alerts
+
+        r1 = (await self.middleware.call('system.mem_info'))['physmem_size']
+        if r1 is None:
+            return alerts
+
+        try:
+            r2 = await self.middleware.call(
+                'failover.call_remote', 'system.mem_info', {'raise_connect_error': False}
+            )
+            if r2['physmem_size'] is None:
+                return alerts
+        except Exception:
+            return alerts
+
+        if r1 != r2:
+            alerts.append(Alert(
+                MemorySizeMismatchAlertClass,
+                {'r1': format_size(r1), 'r2': format_size(r2)}
+            ))
 
         return alerts
