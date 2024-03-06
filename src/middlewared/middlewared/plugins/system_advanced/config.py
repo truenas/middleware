@@ -168,11 +168,6 @@ class SystemAdvancedService(ConfigService):
                     f'{schema}.syslog_tls_certificate', False
                 ))
 
-        if data['isolated_gpu_pci_ids']:
-            verrors = await self.middleware.call(
-                'system.advanced.validate_gpu_pci_ids', data['isolated_gpu_pci_ids'], verrors, schema
-            )
-
         for invalid_char in ('\n', '"'):
             if invalid_char in data['kernel_extra_options']:
                 verrors.add('kernel_extra_options', f'{invalid_char!r} is an invalid character and not allowed')
@@ -190,6 +185,7 @@ class SystemAdvancedService(ConfigService):
             'system_advanced_entry', 'system_advanced_update',
             ('rm', {'name': 'id'}),
             ('rm', {'name': 'anonstats_token'}),
+            ('rm', {'name': 'isolated_gpu_pci_ids'}),
             ('add', Password('sed_passwd')),
             ('attr', {'update': True}),
         )
@@ -209,8 +205,6 @@ class SystemAdvancedService(ConfigService):
 
         `consolemsg` is a deprecated attribute and will be removed in further releases. Please, use `consolemsg`
         attribute in the `system.general` plugin.
-
-        `isolated_gpu_pci_ids` is a list of PCI ids which are isolated from host system.
         """
         consolemsg = None
         if 'consolemsg' in data:
@@ -278,9 +272,6 @@ class SystemAdvancedService(ConfigService):
                 # should be enough
                 await self.middleware.call('etc.generate', 'kdump')
                 generate_grub = True
-
-            if original_data['isolated_gpu_pci_ids'] != config_data['isolated_gpu_pci_ids']:
-                await self.middleware.call('boot.update_initramfs')
 
             if original_data['debugkernel'] != config_data['debugkernel']:
                 generate_grub = True
