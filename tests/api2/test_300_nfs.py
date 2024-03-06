@@ -1412,28 +1412,26 @@ def test_48_syslog_filters(request):
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     with nfs_config():
 
-        # The effect is much more clear if there are many mountd.
-        # We can force this by configuring many nfsd
-        call("nfs.update", {"servers": 24})
-
         # Confirm default setting: mountd logging enabled
-        call("nfs.update", {"mountd_log": True})
+        # The effect is much more clear if there are many mountd.
+        call("nfs.update", {"servers": 24, "mountd_log": True})
 
         # Add dummy entries to avoid false positives
         for i in range(10):
             ssh(f'logger "====== {i}: NFS test_48_syslog_filters (with) ======"')
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
-            num_tries = 10
+            num_tries = 20
             found = False
             res = ""
+            # The wait is highly variable and can take over a minute
             while not found and num_tries > 0:
-                numlines = 3 * (10 - num_tries) + 5
+                numlines = (20 - num_tries) + 5
                 res = ssh(f"tail -{numlines} /var/log/syslog")
                 if "rpc.mountd" in res:
                     found = True
                     break
                 num_tries -= 1
-                sleep(10 - num_tries)
+                sleep(20 - num_tries)
 
             assert found, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
 
