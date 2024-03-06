@@ -1472,6 +1472,12 @@ class SharingSMBService(SharingService):
                 f'{name} is a reserved section name, please select another one'
             )
 
+        if len(name) == 0:
+            verrors.add(
+                f'{schema_name}.name',
+                'Share name may not be an empty string.'
+            )
+
         invalid_characters = INVALID_SHARE_NAME_CHARACTERS & set(name)
         if invalid_characters:
             verrors.add(
@@ -1523,7 +1529,7 @@ class SharingSMBService(SharingService):
                 'of SMB share.'
             )
 
-        if data.get('name'):
+        if data.get('name') is not None:
             await self.validate_share_name(data['name'], schema_name, verrors)
 
         if data.get('path_suffix') and len(data['path_suffix'].split('/')) > 2:
@@ -1588,7 +1594,7 @@ class SharingSMBService(SharingService):
                     'at least one local SMB user before creating an SMB share.'
                 )
 
-        if data.get('name'):
+        if data.get('name') is not None:
             await self.validate_share_name(data['name'], 'sharing.smb.share_precheck', verrors, False)
 
         verrors.check()
