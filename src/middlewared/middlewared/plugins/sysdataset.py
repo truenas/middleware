@@ -536,10 +536,8 @@ class SystemDatasetService(ConfigService):
         mounted = False
         for ds_config in get_system_dataset_spec(pool, uuid):
             dataset, name = ds_config['name'], os.path.basename(ds_config['name'])
-            if desired_mountpoint := ds_config.get('mountpoint'):
-                mountpoint = desired_mountpoint
-            else:
-                mountpoint = f'{path}/{name}'
+
+            mountpoint = ds_config.get('mountpoint', f'{SYSDATASET_PATH}/{name}').replace(SYSDATASET_PATH, path)
 
             if os.path.ismount(mountpoint):
                 continue

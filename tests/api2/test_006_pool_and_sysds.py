@@ -83,6 +83,16 @@ def test_002_create_permanent_zpool(request, ws_client):
         assert results['pool'] == pool_name
         assert results['basename'] == f'{pool_name}/.system'
 
+    try:
+        sysdataset_update = ws_client.call('core.get_jobs', [
+            ['method', '=', 'systemdataset.update']
+        ], {'order_by': ['-id'], 'get': True})
+    except Exception:
+        fail('Failed to get status of systemdataset update')
+
+    if sysdataset_update['state'] != 'SUCCESS':
+        fail(f'System dataset move failed: {sysdataset_update["error"]}')
+
 
 @pytest.mark.dependency(name='POOL_FUNCTIONALITY1')
 def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(ws_client, pool_data):
@@ -115,6 +125,16 @@ def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(ws_client, p
         sysds = ws_client.call('systemdataset.config')
         assert pool['name'] != sysds['pool']
         assert f'{pool["name"]}/.system' != sysds['basename']
+
+    try:
+        ws_client.call('systemdataset.update', {'pool': 'temp'}, job=True)
+    except Exception as e:
+        fail(f'Failed to move system dataset to temporary pool: {e}')
+
+    try:
+        ws_client.call('systemdataset.update', {'pool': pool_name}, job=True)
+    except Exception as e:
+        fail(f'Failed to return system dataset from temporary pool: {e}')
 
 
 def test_004_verify_pool_property_unused_disk_functionality(request, ws_client, pool_data):
