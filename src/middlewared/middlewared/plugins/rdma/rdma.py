@@ -2,7 +2,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from middlewared.schema import Dict, List, Ref, Str, accepts, returns
+from middlewared.schema import Bool, Dict, List, Ref, Str, accepts, returns
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
 from middlewared.utils.functools_ import cache
@@ -40,15 +40,53 @@ class RDMAService(Service):
         return result
 
     @private
-    @accepts()
+    async def get_configured_interfaces(self):
+        """
+        Return a list of configured interfaces.
+
+        This will include names of regular interfaces that have been configured,
+        plus any higher-order interfaces and their constituents."""
+        # Start with any interfaces that have an address assigned, or have DHCP enabled
+        filters = [['OR',
+                    [['int_dhcp', '=', True],
+                     ['int_address', '!=', '']]]]
+        options = {'select': ['int_interface']}
+        result = [i['int_interface'] for i in await self.middleware.call('datastore.query', 'network.interfaces', filters, options)]
+        # The add any constituent interfaces of BRIDGE, VLAN, or LINK_AGGREGATION
+        ifaces = {i['name']: i for i in await self.middleware.call('interface.query')}
+        for ifname, info in ifaces.items():
+            if ifname.startswith('br'):
+                for child in info.get('bridge_members', []):
+                    result.append(child)
+            elif ifname.startswith('vlan'):
+                result.append(info['vlan_parent_interface'])
+            elif ifname.startswith('bond'):
+                for child in info.get('lag_ports', []):
+                    result.append(child)
+        return result
+
+    @private
+    @accepts(Bool('all', default=False))
     @returns(List(items=[Dict(
         'rdma_link_config',
         Str('rdma', required=True),
         Str('netdev', required=True),
         register=True
     )]))
+    async def get_link_choices(self, all):
+        """Return a list containing dictionaries with keys 'rdma' and 'netdev'.
+
+        Unless all is set to True, configured interfaces will be excluded."""
+        all_links = await self.middleware.call('rdma._get_link_choices')
+        if all:
+            return all_links
+
+        existing = await self.middleware.call('rdma.get_configured_interfaces')
+        return list(filter(lambda x: x['netdev'] not in existing, all_links))
+
+    @private
     @cache
-    def get_link_choices(self):
+    def _get_link_choices(self):
         """Return a list containing dictionaries with keys 'rdma' and 'netdev'.
 
         Since these are just the hardware present in the system, we cache the result."""
