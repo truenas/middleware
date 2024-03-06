@@ -21,7 +21,7 @@ class MemorySizeMismatchAlertClass(AlertClass):
 
 
 class MemoryErrorsAlertSource(AlertSource):
-    schedule = CrontabSchedule(hours=1)  # every 24hrs
+    schedule = CrontabSchedule(hour=1)  # every 24hrs
 
     async def check(self):
         alerts = []
@@ -47,7 +47,7 @@ class MemoryErrorsAlertSource(AlertSource):
 
 
 class MemorySizeMismatchAlertSource(AlertSource):
-    schedule = CrontabSchedule(hours=1)  # every 24hrs
+    schedule = CrontabSchedule(hour=1)  # every 24hrs
     run_on_backup_node = False
 
     async def check(self):
