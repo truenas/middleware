@@ -535,7 +535,7 @@ class SystemDatasetService(ConfigService):
 
         return mounted
 
-    def __umount(self, pool, uuid):
+    def __umount(self, pool, uuid, retry=True):
         """
         Umount the group of datasets associated with the system dataset.
         When migrating between system datasets, `pool` will be filesystem
@@ -555,7 +555,13 @@ class SystemDatasetService(ConfigService):
             return
 
         mp = mntinfo[0]['mountpoint']
-        flags = '-f' if not self.middleware.call_sync('failover.licensed') else '-l'
+        if retry:
+            flags = '-f' if not self.middleware.call_sync('failover.licensed') else '-l'
+        else:
+            # We're doing a retry and have logged a warning message pointing fingers
+            # at offending processes so that a dev can hopefully fix it later on.
+            flags = '-lf'
+
         try:
             subprocess.run(['umount', flags, '--recursive', mp], check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
@@ -570,6 +576,12 @@ class SystemDatasetService(ConfigService):
             # error message is of format "umount: <mountpoint>: target is busy"
             ds_mp = stderr.split(':')[1].strip()
             processes = self.middleware.call_sync('pool.dataset.processes_using_paths', [ds_mp], True, True)
+
+            if retry:
+                self.logger.warning("The following processes are using %s: %s",
+                                    ds_mp, json.dumps(processes, indent=2))
+                return self.__umount(pool, uuid, False)
+
             error += f'\nThe following processes are using {ds_mp!r}: ' + json.dumps(processes, indent=2)
 
         raise CallError(error) from None
