@@ -497,3 +497,15 @@ def test_35_create_ancestors(request):
         assert ds['aclmode']['value'] == 'RESTRICTED'
         st = call('filesystem.stat', ds['mountpoint'])
         assert st['acl'] is True, str(st)
+
+
+def test_36_nested_smb_dataset(request):
+    with dataset_asset('parent', {'share_type': 'GENERIC'}) as d:
+        ds = call('pool.dataset.get_instance', d)
+        assert ds['acltype']['value'] == 'POSIX'
+        assert ds['aclmode']['value'] == 'DISCARD'
+
+        with dataset_asset('parent/child', {'share_type': 'SMB'}) as d:
+            ds = call('pool.dataset.get_instance', d)
+            assert ds['acltype']['value'] == 'NFSV4'
+            assert ds['aclmode']['value'] == 'RESTRICTED'
