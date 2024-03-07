@@ -1401,6 +1401,8 @@ def test_46_set_bind_ip():
         assert ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
 
 
+# Under certain random conditions this test can take a long time
+@pytest.mark.timeout(500)
 def test_48_syslog_filters(request):
     """
     This test checks the function of the mountd_log setting to filter
@@ -1420,19 +1422,22 @@ def test_48_syslog_filters(request):
         for i in range(10):
             ssh(f'logger "====== {i}: NFS test_48_syslog_filters (with) ======"')
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
-            num_tries = 20
+            num_tries = 30
             found = False
             res = ""
-            # The wait is highly variable and can take over a minute
+            # The wait is highly variable. Technically, this loop will
+            # search for ~465 seconds.
             while not found and num_tries > 0:
-                numlines = (20 - num_tries) + 5
+                numlines = (30 - num_tries) + 5
                 res = ssh(f"tail -{numlines} /var/log/syslog")
                 if "rpc.mountd" in res:
                     found = True
                     break
                 num_tries -= 1
-                sleep(20 - num_tries)
+                sleep(30 - num_tries)
 
+            # Leaving this 'marker' message for failure analysis
+            ssh(f'logger "===== test_48 completed wait loop.  num_tries={num_tries}"')
             assert found, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
 
         # NOTE: Additional mountd messages will get logged on unmount at the exit of the 'with'
