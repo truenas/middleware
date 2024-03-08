@@ -238,14 +238,16 @@ class RDMAInterfaceService(CRUDService):
                 return False
         return True
 
-    async def internal_interfaces(self):
-        links = await self.middleware.call('rdma.get_link_choices')
+    async def internal_interfaces(self, all=False):
+        # We must fetch all link choices.  If we did not there would
+        # be a circular call chain between interface and rdma
+        links = await self.middleware.call('rdma._get_link_choices')
         ifname_to_netdev = {}
         for link in links:
             ifname_to_netdev[link['rdma']] = link['netdev']
 
-        if await self.middleware.call('system.is_enterprise'):
-            # For Enterprise we treat all RDMA interfaces as internal
+        if all:
+            # Treat all RDMA interfaces as internal
             return list(ifname_to_netdev.values())
         else:
             # Otherwise we only treat used RDMA interfaces as internal

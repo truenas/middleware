@@ -2,7 +2,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from middlewared.schema import Dict, List, Ref, Str, accepts, returns
+from middlewared.schema import Bool, Dict, List, Ref, Str, accepts, returns
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
 from middlewared.utils.functools import cache
@@ -40,15 +40,27 @@ class RDMAService(Service):
         return result
 
     @private
-    @accepts()
+    @accepts(Bool('all', default=False))
     @returns(List(items=[Dict(
         'rdma_link_config',
         Str('rdma', required=True),
         Str('netdev', required=True),
         register=True
     )]))
+    async def get_link_choices(self, all):
+        """Return a list containing dictionaries with keys 'rdma' and 'netdev'.
+
+        Unless all is set to True, configured interfaces will be excluded."""
+        all_links = await self.middleware.call('rdma._get_link_choices')
+        if all:
+            return all_links
+
+        existing = await self.middleware.call('interface.get_configured_interfaces')
+        return list(filter(lambda x: x['netdev'] not in existing, all_links))
+
+    @private
     @cache
-    def get_link_choices(self):
+    def _get_link_choices(self):
         """Return a list containing dictionaries with keys 'rdma' and 'netdev'.
 
         Since these are just the hardware present in the system, we cache the result."""
