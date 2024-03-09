@@ -1413,6 +1413,15 @@ def test_48_syslog_filters(request):
     """
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     with nfs_config():
+        # The timeout for this test is 600 seconds
+        # Empirical testing have found the messages can be
+        # delayed for several minutes (see NAS-127743).  We need to accomodate this.
+
+        # The value NUM_RETRY_WAIT represents the approximate
+        # sum of the total number of seconds to wait.  We want
+        # that to be under 600.  Selecting 33 gives us approximately
+        # 561 seconds of total time.
+        NUM_RETRY_WAIT = 33
 
         # Confirm default setting: mountd logging enabled
         # The effect is much more clear if there are many mountd.
@@ -1422,19 +1431,21 @@ def test_48_syslog_filters(request):
         for i in range(10):
             ssh(f'logger "====== {i}: NFS test_48_syslog_filters (with) ======"')
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
-            num_tries = 33
+            num_tries = NUM_RETRY_WAIT
             found = False
             res = ""
             # The wait is highly variable. Technically, this loop will
-            # search for up to ~560 seconds.
+            # search for up to ~560 seconds.  The time between retries start
+            # small and increase with each interation.  This is done so as
+            # to minimize the time penalty for well behaved test runs.
             while not found and num_tries > 0:
-                numlines = (33 - num_tries) + 5
+                numlines = (NUM_RETRY_WAIT - num_tries) + 5
                 res = ssh(f"tail -{numlines} /var/log/syslog")
                 if "rpc.mountd" in res:
                     found = True
                     break
                 num_tries -= 1
-                sleep(33 - num_tries)
+                sleep(NUM_RETRY_WAIT - num_tries)
 
             # Leaving this 'marker' message for failure analysis
             ssh(f'logger "===== test_48 completed wait loop.  num_tries={num_tries}"')
