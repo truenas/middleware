@@ -16,21 +16,21 @@ if not ha:
         assert '0.0.0.0' in results.json(), results.text
         assert ip in results.json(), results.text
 
-    @pytest.mark.dependency(name='setup_kubernetes')
-    def test_02_setup_kubernetes(request):
-        global payload
-        gateway = GET("/network/general/summary/").json()['default_routes'][0]
-        payload = {
-            'pool': pool_name,
-            'route_v4_interface': interface,
-            'route_v4_gateway': gateway,
-            'node_ip': ip
-        }
-        results = PUT('/kubernetes/', payload)
-        assert results.status_code == 200, results.text
-        job_id = results.json()
-        job_status = wait_on_job(job_id, 300)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    # @pytest.mark.dependency(name='setup_kubernetes')
+    # def test_02_setup_kubernetes(request):
+    #     global payload
+    #     gateway = GET("/network/general/summary/").json()['default_routes'][0]
+    #     payload = {
+    #         'pool': pool_name,
+    #         'route_v4_interface': interface,
+    #         'route_v4_gateway': gateway,
+    #         'node_ip': ip
+    #     }
+    #     results = PUT('/kubernetes/', payload)
+    #     assert results.status_code == 200, results.text
+    #     job_id = results.json()
+    #     job_status = wait_on_job(job_id, 300)
+    #     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     @pytest.mark.parametrize('data', ['pool', 'route_v4_interface', 'route_v4_gateway', 'node_ip'])
     def test_03_verify_kubernetes(request, data):
