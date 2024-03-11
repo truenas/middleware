@@ -44,6 +44,7 @@ class TunableService(CRUDService):
     ENTRY = Patch(
         'tunable_create', 'tunable_entry',
         ('add', Int('id')),
+        ('add', Str('orig_value')),
     )
 
     @private
