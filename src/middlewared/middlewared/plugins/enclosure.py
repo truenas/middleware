@@ -16,6 +16,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
 from middlewared.plugins.enclosure_.r30_drive_identify import set_slot_status as r30_set_slot_status
 from middlewared.plugins.enclosure_.fseries_drive_identify import set_slot_status as fseries_set_slot_status
+from middlewared.plugins.enclosure_.sysfs_disks import toggle_enclosure_slot_identifier
 
 logger = logging.getLogger(__name__)
 
@@ -237,6 +238,25 @@ class EnclosureService(CRUDService):
             info = self.middleware.call_sync('enclosure.query', [['id', '=', enclosure_id]])[0]
         except IndexError:
             raise CallError(f'Enclosure with id: {enclosure_id!r} not found', errno.ENOENT)
+
+        if info['model'] == 'H Series':
+            sysfs_to_ui = {
+                1: '8', 2: '9', 3: '10', 4: '11',
+                5: '12', 6: '13', 7: '14', 8: '15',
+                9: '0', 10: '1', 11: '2', 12: '3',
+            }
+            if slot not in sysfs_to_ui:
+                raise CallError(f'Slot: {slot!r} not found', errno.ENOENT)
+
+            addr = info['bsg'].removeprefix('bsg/')
+            sysfs_path = f'/sys/class/enclosure/{addr}'
+            mapped_slot = sysfs_to_ui[slot]
+            try:
+                toggle_enclosure_slot_identifier(sysfs_path, mapped_slot, status, True)
+            except FileNotFoundError:
+                raise CallError(f'Slot: {slot!r} not found', errno.ENOENT)
+
+            return
 
         original = self._get_orig_enclosure_and_disk(enclosure_id, slot, info)
         if original is None:

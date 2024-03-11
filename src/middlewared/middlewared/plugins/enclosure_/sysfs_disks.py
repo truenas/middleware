@@ -57,3 +57,56 @@ def map_disks_to_enclosure_slots(pci):
                 mapping[slot] = BaseDev.name
 
     return mapping
+
+
+def toggle_enclosure_slot_identifier(sysfs_path, slot, action, by_dirname=False):
+    """Use sysfs to toggle the enclosure light indicator for a disk
+    slot.
+
+    Args:
+        sysfs_path: string (i.e. /sys/clas/enclosure/0:0:0:0)
+        slot: string | int
+        action: string
+        by_dirname: bool defaults to False, when set to True will treat the
+            parent directory _NAME_ as the drive "slot". For example,
+            /sys/class/enclosure/0:0:0:0/1 will be treated as slot "1".
+            Otherwise, the slot _FILE_ inside the parent directory will be
+            read and treated as the slot. For example,
+            cat /sys/class/enclosure/0:0:0:0/1/slot == 9. "9" is treated
+            as the slot.
+
+    Returns:
+        None
+    """
+    pathobj = Path(sysfs_path)
+    if not pathobj.exists():
+        raise FileNotFoundError(f'Enclosure path: {sysfs_path!r} not found')
+
+    slot_errmsg = f'Slot: {slot!r} not found'
+    if by_dirname:
+        pathobj = Path(f'{sysfs_path}/{slot}')
+        if not pathobj.exists():
+            raise FileNotFoundError(slot_errmsg)
+    else:
+        for i in pathobj.iterdir():
+            slot_path = (i / 'slot')
+            if slot_path.exists() and slot_path.read_text().strip() == str(slot):
+                pathobj = i
+                break
+        else:
+            raise FileNotFoundError(slot_errmsg)
+
+    fault = (pathobj / 'fault')
+    locate = (pathobj / 'locate')
+    match action:
+        case 'CLEAR':
+            actions = ((fault, '0'), (locate, '0'),)
+        case 'FAULT':
+            actions = ((fault, '1'),)
+        case 'IDENTIFY':
+            actions = ((locate, '1'),)
+        case _:
+            raise ValueError(f'Invalid action ({action!r})')
+
+    for path, action in actions:
+        path.write_text(action)
