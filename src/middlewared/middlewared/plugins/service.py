@@ -341,6 +341,10 @@ async def __event_service_ready(middleware, event_type, args):
 
 
 async def setup(middleware):
+    for service in await middleware.call('datastore.query', 'services.services'):
+        if service['srv_service'] == 's3':
+            await middleware.call('datastore.delete', 'services.services', service['id'])
+
     for klass in all_services:
         await middleware.call('service.register_object', klass(middleware))
 
