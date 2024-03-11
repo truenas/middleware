@@ -953,11 +953,17 @@ class KerberosKeytabService(CRUDService):
         """
         kt = await self.get_instance(id_)
         if kt['name'] == 'AD_MACHINE_ACCOUNT':
-            if (await self.middleware.call('activedirectory.get_state')) != 'DISABLED':
+            ad_config = await self.middleware.call('activedirectory.config')
+            if ad_config['enable']:
                 raise CallError(
                     'Active Directory machine account keytab may not be deleted while '
                     'the Active Directory service is enabled.'
                 )
+
+            await self.middleware.call(
+                'datastore.update', 'directoryservice.activedirectory',
+                ad_config['id'], {'kerberos_principal': ''}, {'prefix': 'ad_'}
+            )
 
         await self.middleware.call('datastore.delete', self._config.datastore, id_)
         await self.middleware.call('etc.generate', 'kerberos')
