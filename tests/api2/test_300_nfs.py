@@ -1401,8 +1401,6 @@ def test_46_set_bind_ip():
         assert ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
 
 
-# Under certain random conditions this test can take a long time
-@pytest.mark.timeout(600)
 def test_48_syslog_filters(request):
     """
     This test checks the function of the mountd_log setting to filter
@@ -1413,57 +1411,53 @@ def test_48_syslog_filters(request):
     """
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     with nfs_config():
-        # The timeout for this test is 600 seconds
-        # Empirical testing have found the messages can be
-        # delayed for several minutes (see NAS-127743).  We need to accomodate this.
-
         # The value NUM_RETRY_WAIT represents the approximate
         # sum of the total number of seconds to wait.  We want
-        # that to be under 600.  Selecting 33 gives us approximately
-        # 561 seconds of total time.
-        NUM_RETRY_WAIT = 33
+        # that to be under 120.  Selecting  gives us approximately
+        # 105 seconds of total time.
+        NUM_RETRY_WAIT = 14
 
         # Confirm default setting: mountd logging enabled
         # The effect is much more clear if there are many mountd.
         call("nfs.update", {"servers": 24, "mountd_log": True})
 
         # Add dummy entries to avoid false positives
-        for i in range(10):
-            ssh(f'logger "====== {i}: NFS test_48_syslog_filters (with) ======"')
-        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
-            num_tries = NUM_RETRY_WAIT
-            found = False
-            res = ""
-            # The wait is highly variable. Technically, this loop will
-            # search for up to ~560 seconds.  The time between retries start
-            # small and increase with each interation.  This is done so as
-            # to minimize the time penalty for well behaved test runs.
-            while not found and num_tries > 0:
-                numlines = (NUM_RETRY_WAIT - num_tries) + 5
-                res = ssh(f"tail -{numlines} /var/log/syslog")
-                if "rpc.mountd" in res:
-                    found = True
-                    break
-                num_tries -= 1
-                sleep(NUM_RETRY_WAIT - num_tries)
+        ssh('for i in {1..10}; do logger "====== $i: NFS test_48_syslog_filters (with) ======"; done')
+        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip) as n:
+            # Do some action to ensure log messages are present
+            n.ls('.')
 
-            # Leaving this 'marker' message for failure analysis
-            ssh(f'logger "===== test_48 completed wait loop.  num_tries={num_tries}"')
-            assert found, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
+        num_tries = NUM_RETRY_WAIT
+        found = False
+        res = ""
+        # This loop will search for up to ~105 seconds.
+        # The time between retries start small and increase with each interation.
+        # This is done so as to minimize the time penalty for well behaved test runs.
+        while not found and num_tries > 0:
+            numlines = (NUM_RETRY_WAIT - num_tries) + 5
+            res = ssh(f"tail -{numlines} /var/log/syslog")
+            if "rpc.mountd" in res:
+                found = True
+                break
+            num_tries -= 1
+            sleep(NUM_RETRY_WAIT - num_tries)
+
+        assert found, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
 
         # NOTE: Additional mountd messages will get logged on unmount at the exit of the 'with'
-
         # Disable mountd logging
         call("nfs.update", {"mountd_log": False})
 
         # Add dummy entries to avoid false positives
-        for i in range(10):
-            ssh(f'logger "====== {i}: NFS test_48_syslog_filters (without) ======"')
-        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
-            # wait a few seconds to make sure syslog has a chance to flush log messages
-            sleep(4)
-            res = ssh("tail -10 /var/log/syslog")
-            assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
+        ssh('for i in {1..10}; do logger "====== $i: NFS test_48_syslog_filters (without) ======"; done')
+        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip) as n:
+            # Do some action to ensure log messages are present
+            n.ls('.')
+
+        # wait a few seconds to make sure syslog has a chance to flush log messages
+        sleep(4)
+        res = ssh("tail -10 /var/log/syslog")
+        assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
 
         # Get a second chance to catch mountd messages on the umount.  They should not be present.
         sleep(4)
