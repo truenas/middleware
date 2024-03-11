@@ -25,7 +25,7 @@ NETWORK_ERRORS = (errno.ETIMEDOUT, errno.ECONNABORTED, errno.ECONNREFUSED, errno
                   errno.EHOSTUNREACH)
 
 
-class RemoteClient(object):
+class RemoteClient:
 
     def __init__(self):
         self.client = None
@@ -69,7 +69,8 @@ class RemoteClient(object):
                 c._closed.wait()
         except OSError as e:
             if e.errno in (
-                errno.EPIPE,  # Happens when failover is configured on cxl device that has no link
+                errno.EPIPE,    # Happens when failover is configured on cxl device that has no link
+                errno.EINVAL,   # F-Series have `ntb0` device removed when other node is being rebooted
                 errno.ENETDOWN, errno.EHOSTDOWN, errno.ENETUNREACH, errno.EHOSTUNREACH,
                 errno.ECONNREFUSED,
             ) or isinstance(e, socket.timeout):
@@ -265,7 +266,7 @@ class FailoverService(Service):
             `timeout`: time to wait for `method` to return
                 NOTE: This parameter _ONLY_ applies if the remote
                     client is connected to the other node.
-            `job`: whether or not the `method` being called is a job
+            `job`: whether the `method` being called is a job
             `job_return`: if true, will return immediately and not wait
                 for the job to complete, otherwise will wait for the
                 job to complete
@@ -293,7 +294,6 @@ class FailoverService(Service):
 
     @private
     def get_remote_os_version(self):
-
         if self.CLIENT.remote_ip is not None:
             return self.CLIENT.get_remote_os_version()
 
