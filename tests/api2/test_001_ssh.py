@@ -3,6 +3,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
+import json
 import pytest
 
 from functions import if_key_listed, SSH_TEST
@@ -117,3 +118,44 @@ def test_007_check_local_accounts(ws_client, account):
     entry = entry[0]
     if entry['group'] != account['name']:
         fail(f'Group has unexpected name: {account["name"]} -> {entry["group"]}')
+
+
+def test_008_check_root_dataset_settings(ws_client, ip_to_use):
+    data = SSH_TEST('cat /conf/truenas_root_ds.json', user, password, ip_to_use)
+    if not data['result']:
+        fail(f'Unable to get dataset schema: {data["output"]}')
+
+    try:
+        ds_schema = json.loads(data['stdout'])
+    except Exception as e:
+        fail(f'Unable to load dataset schema: {e}')
+
+    data = SSH_TEST('zfs get -o value -H truenas:developer /', user, password, ip_to_use)
+    if not data['result']:
+        fail('Failed to determine whether developer mode enabled')
+
+    is_dev = data['stdout'] == 'on'
+
+    for entry in ds_schema:
+        fhs_entry = entry['fhs_entry']
+        mp = fhs_entry.get('mountpoint') or os.path.join('/', fhs_entry['name'])
+        if (force_mode := fhs_entry.get('mode')):
+            st = ws_client.call('filesystem.stat', mp)
+            assert st['mode'] & 0o777 == force_mode, f'{entry["ds"]}: unexpected permissions on dataset'
+
+        fs = ws_client.call('filesystem.mount_info', [['mountpoint', '=', mp]])
+        if not fs:
+            fail(f'{mp}: mountpoint not found')
+
+        fs = fs[0]
+
+        if fs['mount_source'] != entry['ds']:
+            fail(f'{fs["mount_source"]}: unexpected filesystem, expected {entry["ds"]}')
+
+        if is_dev:
+            # This is a run where root filesystem is unlocked. Don't obther checking remaining
+            continue
+
+        for opt in fhs_entry['options']:
+            if opt not in fs['mount_opts']:
+                assert opt in fs['mount_opts'], f'{opt}: mount option not present for {mp}: {fs["mount_opts"]}'
