@@ -715,7 +715,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         'cloud_sync_entry',
         ('add', Int('id')),
         ("replace", Dict("credentials", additional_attrs=True, private_keys=["attributes"])),
-        ("add", Dict("job", null=True)),
+        ("add", Dict("job", additional_attrs=True, null=True)),
         ("add", Bool("locked")),
     )
 
