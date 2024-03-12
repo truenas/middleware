@@ -1,5 +1,8 @@
 import ipaddress
+import re
 from pathlib import Path
+
+RE_IS_PART = re.compile(r'p\d{1,3}$')
 
 
 def jbof_static_ip(shelf_index, eth_index):
@@ -66,5 +69,16 @@ def get_sys_class_nvme():
         if data[i.name]['transport_protocol'] == 'rdma':
             data[i.name]['hostnqn'] = (i / 'hostnqn').read_text().strip()
             data[i.name]['transport_address'] = data[i.name]['transport_address'].split('=')[1].split(',')[0].strip()
+
+        namespaces, partitions = list(), list()
+        for j in filter(lambda x: x.is_dir() and x.name.startswith(f'{i.name}n'), i.iterdir()):
+            # nvme1n1/n2/n3 etc
+            namespaces.append(j.name)
+            for k in filter(lambda x: RE_IS_PART.search(x.name), j.iterdir()):
+                # nvme1n1p1/p2/p3 etc
+                partitions.append(k.name)
+
+        data[i.name]['namespaces'] = namespaces
+        data[i.name]['partitions'] = partitions
 
     return data
