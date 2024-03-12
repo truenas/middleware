@@ -56,6 +56,7 @@ class SystemAdvancedService(ConfigService):
         datastore_extend = 'system.advanced.system_advanced_extend'
         namespace = 'system.advanced'
         cli_namespace = 'system.advanced'
+        role_prefix = 'SYSTEM_ADVANCED'
 
     ENTRY = Dict(
         'system_advanced_entry',
@@ -292,14 +293,14 @@ class SystemAdvancedService(ConfigService):
 
         return await self.config()
 
-    @accepts(roles=['READONLY_ADMIN'])
+    @accepts(roles=['SYSTEM_ADVANCED_READ'])
     @returns(Bool('sed_global_password_is_set'))
     async def sed_global_password_is_set(self):
         """Returns a boolean identifying whether or not a global
         SED password has been set"""
         return bool(await self.sed_global_password())
 
-    @accepts()
+    @accepts(roles=['SYSTEM_ADVANCED_READ'])
     @returns(Password('sed_global_password'))
     async def sed_global_password(self):
         """Returns configured global SED password in clear-text if one

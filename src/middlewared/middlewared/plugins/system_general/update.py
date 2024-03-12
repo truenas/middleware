@@ -43,6 +43,7 @@ class SystemGeneralService(ConfigService):
         datastore_prefix = 'stg_'
         datastore_extend = 'system.general.general_system_extend'
         cli_namespace = 'system.general'
+        role_prefix = 'SYSTEM_GENERAL'
 
     ENTRY = Dict(
         'system_general_entry',
