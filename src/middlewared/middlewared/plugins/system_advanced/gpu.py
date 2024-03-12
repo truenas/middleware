@@ -8,7 +8,7 @@ class SystemAdvancedService(Service):
         namespace = 'system.advanced'
         cli_namespace = 'system.advanced'
 
-    @accepts(List('isolated_gpu_pci_ids', items=[Str('pci_id')], required=True))
+    @accepts(List('isolated_gpu_pci_ids', items=[Str('pci_id')], required=True), roles=['SYSTEM_ADVANCED_WRITE'])
     @returns()
     async def update_gpu_pci_ids(self, isolated_gpu_pci_ids):
         """
