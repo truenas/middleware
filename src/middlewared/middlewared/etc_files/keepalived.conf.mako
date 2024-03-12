@@ -34,6 +34,7 @@
     # keepalived requires that ipv4 and ipv6 addresses for a given
     # interface be separated into their own vrrp_instance entry
     ips = []
+    both_ip_versions = []
     for i in info:
         ips.append({
             'name': i['id'] + '_v4',
@@ -47,6 +48,8 @@
             'failover_aliases': [j for j in i['failover_aliases'] if j['type'] == 'INET6'],
             'failover_virtual_aliases': [j for j in i['failover_virtual_aliases'] if j['type'] == 'INET6'],
         })
+        if ips[-1]['aliases'] and ips[-2]['aliases']:
+            both_ip_versions.append(i['id'])
 
     # ipv4 or ipv6 addresses might not exist so remove them from
     # here so we don't generate an empty entry in the config
@@ -56,6 +59,14 @@
 global_defs {
     vrrp_notify_fifo /var/run/vrrpd.fifo
 }
+% for i in both_ip_versions:
+vrrp_sync_group ${i} {
+    group {
+        ${i}_v4
+        ${i}_v6
+    }
+}
+% endfor
 % for i in ips:
 vrrp_instance ${i['name']} {
     interface ${i['name'].split('_')[0]}
