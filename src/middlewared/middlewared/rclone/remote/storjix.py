@@ -78,6 +78,7 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
         # Storj recommended these settings
         return {
             "chunk_size": "64M",
+            "disable_http2": "true",
             "upload_cutoff": "64M",
             "provider": "Other",
         }
