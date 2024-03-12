@@ -103,7 +103,12 @@ def map_es24n(model, rclient, uri):
     for disk in all_disks['Members']:
         slot = int(disk['Id'])
         if found := mounted_disks.get(disk['SerialNumber']):
-            mapped[slot] = found[0]
+            try:
+                # we expect namespace 1 for the device (i.e. nvme1n1)
+                idx = found[1]['namespaces'].index(f'{found[0]}n1')
+                mapped[slot] = found[1]['namespaces'][idx]
+            except ValueError:
+                mapped[slot] = None
         else:
             mapped[slot] = None
 
