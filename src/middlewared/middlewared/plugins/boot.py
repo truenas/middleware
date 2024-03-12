@@ -217,17 +217,25 @@ class BootService(Service):
         else:
             yield
 
-    @accepts(
-        Bool('force', default=False)
-    )
+    @accepts(Dict(
+        'options',
+        Str('database', default=None, null=True),
+        Bool('force', default=False),
+    ))
     @private
-    async def update_initramfs(self, force):
+    async def update_initramfs(self, options):
         """
         Returns true if initramfs was updated and false otherwise.
         """
         async with self.__toggle_rootfs_readwrite():
+            args = ['/']
+            if options['database']:
+                args.append(['-d', options['database']])
+            if options['force']:
+                args.append(['-f'])
+
             cp = await run(
-                '/usr/local/bin/truenas-initrd.py', *['/', '--force'] if force else '/',
+                '/usr/local/bin/truenas-initrd.py', *args,
                 encoding='utf8', errors='ignore', check=False
             )
             if cp.returncode > 1:
@@ -304,6 +312,10 @@ class BootService(Service):
             await self.middleware.call('zfs.pool.update', BOOT_POOL_NAME, {'properties': properties})
 
 
+async def on_config_upload(middleware, path):
+    await middleware.call('boot.update_initramfs', {'database': path})
+
+
 async def setup(middleware):
     global BOOT_POOL_NAME
 
@@ -331,3 +343,5 @@ async def setup(middleware):
             break
     else:
         middleware.logger.error('Failed to detect boot pool name.')
+
+    middleware.register_hook('config.on_upload', on_config_upload, sync=True)

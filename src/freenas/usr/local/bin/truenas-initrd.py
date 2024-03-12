@@ -102,8 +102,8 @@ def update_zfs_default(root):
     return False
 
 
-def get_current_gpu_pci_ids(root):
-    adv_config = query_config_table("system_advanced", os.path.join(root, FREENAS_DATABASE[1:]), "adv_")
+def get_current_gpu_pci_ids(database):
+    adv_config = query_config_table("system_advanced", database, "adv_")
     to_isolate = [gpu for gpu in get_gpus() if gpu["addr"]["pci_slot"] in adv_config.get("isolated_gpu_pci_ids", [])]
     return [dev["pci_slot"] for gpu in to_isolate for dev in gpu["devices"]]
 
@@ -174,10 +174,10 @@ def update_pci_module_files(root, config):
     os.chmod(get_path("etc/initramfs-tools/scripts/init-top/truenas_bind_vfio.sh"), 0o755)
 
 
-def update_pci_initramfs_config(root):
+def update_pci_initramfs_config(root, database):
     initramfs_config_path = os.path.join(root, "boot/initramfs_config.json")
     initramfs_config = {
-        "pci_ids": get_current_gpu_pci_ids(root),
+        "pci_ids": get_current_gpu_pci_ids(database),
     }
     original_config = None
     if os.path.exists(initramfs_config_path):
@@ -196,9 +196,9 @@ def update_pci_initramfs_config(root):
     return False
 
 
-def update_zfs_module_config(root):
+def update_zfs_module_config(root, database):
     options = []
-    for tunable in query_table("system_tunable", os.path.join(root, FREENAS_DATABASE[1:]), "tun_"):
+    for tunable in query_table("system_tunable", database, "tun_"):
         if tunable["type"] != "ZFS":
             continue
         if not tunable["enabled"]:
@@ -236,6 +236,7 @@ if __name__ == "__main__":
     try:
         p = argparse.ArgumentParser()
         p.add_argument("chroot", nargs=1)
+        p.add_argument("--database", "-d", default="")
         p.add_argument("--force", "-f", action="store_true")
         args = p.parse_args()
         root = args.chroot[0]
@@ -246,13 +247,16 @@ if __name__ == "__main__":
         from middlewared.utils.db import FREENAS_DATABASE, query_config_table, query_table
         from middlewared.utils.gpu import get_gpus
 
-        if (
-            update_required := args.force | update_zfs_default(root) | update_pci_initramfs_config(
-                root
-            ) | update_zfs_module_config(root)
+        database = args.database or os.path.join(root, FREENAS_DATABASE[1:])
+
+        if update_required := (
+            args.force |
+            update_zfs_default(root) |
+            update_pci_initramfs_config(root, database) |
+            update_zfs_module_config(root, database)
         ):
+            set_readonly(root, False)
             subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
-            # Root was made writeable if and only if an update was required
             set_readonly(root, True)
     except Exception:
         logger.error("Failed to update initramfs", exc_info=True)

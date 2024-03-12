@@ -294,7 +294,7 @@ class SystemGeneralService(ConfigService):
     async def set_kbdlayout(self, kbdmap='us'):
         await self.middleware.call('etc.generate', 'keyboard')
         await run(['setupcon'], check=False)
-        await self.middleware.call('boot.update_initramfs', True)
+        await self.middleware.call('boot.update_initramfs', {'force': True})
 
     @accepts()
     @returns(Int('remaining_seconds', null=True))
