@@ -83,13 +83,14 @@ class ISCSIPortalService(CRUDService):
             for i in await self.middleware.call('datastore.query', 'network.Alias', filters):
                 choices[i['alias_vip']] = f'{i["alias_address"]}/{i["alias_address_b"]}'
         else:
-            for i in await self.middleware.call('interface.query'):
-                if await self.middleware.call('failover.licensed'):
-                    # If ALUA is disabled, HA system should only offer Virtual IPs
+            if await self.middleware.call('failover.licensed'):
+                # If ALUA is disabled, HA system should only offer Virtual IPs
+                for i in await self.middleware.call('interface.query'):
                     for alias in i.get('failover_virtual_aliases') or []:
                         choices[alias['address']] = alias['address']
-                else:
-                    # Non-HA system should offer all addresses
+            else:
+                # Non-HA system should offer all addresses
+                for i in await self.middleware.call('interface.query'):
                     for alias in i['aliases']:
                         choices[alias['address']] = alias['address']
         return choices
