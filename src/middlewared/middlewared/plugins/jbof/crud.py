@@ -217,18 +217,17 @@ class JBOFService(CRUDService):
         # To do that we first need to fetch the config.
         data = await self.get_instance(id_)
 
-        if force:
-            # If we have lost communication with the redfish interface for any reason
-            # we might still want to proceed with removing the JBOF, even without tearing
-            # down the shelf configuration.  However, we wil still want to undo the
-            # host configuration (hence this being a separate try..catch to the one around
-            # jbof.unwire_dataplane below).
-            try:
-                await self.middleware.run_in_thread(self.ensure_redfish_client_cached, data)
-            except Exception:
-                self.logger.debug('Unable to ensure redfish client for JBOF %r. Forcing.', data['id'])
-        else:
+        try:
             await self.middleware.run_in_thread(self.ensure_redfish_client_cached, data)
+        except Exception as e:
+            if force:
+                # If we have lost communication with the redfish interface for any reason
+                # we might still want to proceed with removing the JBOF, even without tearing
+                # down the shelf configuration.  However, we wil still want to undo the
+                # host configuration.
+                self.logger.debug('Unable to ensure redfish client for JBOF %r. Forcing.', data['id'])
+            else:
+                raise e
 
         try:
             await self.middleware.call('jbof.unwire_dataplane', data['mgmt_ip1'], data['index'])
