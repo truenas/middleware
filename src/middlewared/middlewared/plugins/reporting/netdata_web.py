@@ -6,10 +6,11 @@ import time
 
 from middlewared.schema import accepts, returns, Password
 from middlewared.service import cli_private, job, pass_app, periodic, private, CallError, Service
+from middlewared.utils import MIDDLEWARE_RUN_DIR
 from passlib.apache import HtpasswdFile
 
 
-BASIC_FILE = '/tmp/netdata-basic'
+BASIC_FILE = f'{MIDDLEWARE_RUN_DIR}/netdata-basic'
 
 
 class ReportingService(Service):
