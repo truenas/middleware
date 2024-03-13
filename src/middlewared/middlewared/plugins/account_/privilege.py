@@ -77,7 +77,7 @@ class PrivilegeService(CRUDService):
         ("add", List("local_groups", items=[Int("local_group")])),
         ("add", List("ds_groups", items=[Int("ds_group_gid"), SID("ds_group_sid")])),
         register=True
-    ))
+    ), audit="Create privilege", audit_extended=lambda data: data["name"])
     async def do_create(self, data):
         """
         Creates a privilege.
@@ -108,13 +108,17 @@ class PrivilegeService(CRUDService):
             "privilege_create",
             "privilege_update",
             ("attr", {"update": True}),
-        )
+        ),
+        audit="Update privilege",
+        audit_callback=True,
     )
-    async def do_update(self, id_, data):
+    async def do_update(self, audit_callback, id_, data):
         """
         Update the privilege `id`.
         """
         old = await self.get_instance(id_)
+        audit_callback(old["name"])
+
         new = old.copy()
         new["local_groups"] = [g["gid"] for g in new["local_groups"]]
 
@@ -172,13 +176,17 @@ class PrivilegeService(CRUDService):
         return await self.get_instance(id_)
 
     @accepts(
-        Int("id")
+        Int("id"),
+        audit="Delete privilege",
+        audit_callback=True,
     )
-    async def do_delete(self, id_):
+    async def do_delete(self, audit_callback, id_):
         """
         Delete the privilege `id`.
         """
         privilege = await self.get_instance(id_)
+        audit_callback(privilege["name"])
+
         if privilege["builtin_name"]:
             raise CallError("Unable to delete built-in privilege", errno.EPERM)
 
