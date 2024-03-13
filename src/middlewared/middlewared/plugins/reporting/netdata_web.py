@@ -1,12 +1,11 @@
-import random
 import os
-import string
 import shutil
 import time
 
 from middlewared.schema import accepts, returns, Password
 from middlewared.service import cli_private, job, pass_app, periodic, private, CallError, Service
 from middlewared.utils import MIDDLEWARE_RUN_DIR
+from middlewared.utils.crypto import generate_string
 from passlib.apache import HtpasswdFile
 
 
@@ -38,9 +37,7 @@ class ReportingService(Service):
                 shutil.chown(BASIC_FILE, 'root', 'www-data')
 
         ht = HtpasswdFile(BASIC_FILE, autosave=True, default_scheme='bcrypt')
-        password = ''.join(random.choice(
-            string.ascii_letters + string.digits + string.punctuation
-        ) for i in range(16))
+        password = generate_string(16, punctuation_chars=True)
         ht.set_password(authenticated_user, password)
 
         try:
