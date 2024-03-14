@@ -173,6 +173,26 @@ class JBOFService(CRUDService):
             verrors.add('jbof_create.mgmt_ip1', f'Failed to add JBOF: {e}')
         verrors.check()
 
+        # If the caller just supplied mgmt_ip1, let's fetch mgmt_ip2 to store in the DB
+        if data.get('mgmt_ip2') in ['', None]:
+            try:
+                # Grab the IOM redfish IPs
+                redfish = RedfishClient.cache_get(mgmt_ip)
+                mgmt_ips = filter(lambda x: x != mgmt_ip, await self.middleware.run_in_thread(redfish.mgmt_ips))
+                # Connectivity check - pick one we can talk to
+                for ip in mgmt_ips:
+                    if await self.middleware.run_in_thread(RedfishClient.is_redfish, ip):
+                        data['mgmt_ip2'] = ip
+                        self.logger.info('Detected additional JBOF mgmt IP %r', ip)
+                        break
+                # If unable to talk to one, pick the first one.  Maybe connectivity will
+                # be restored later.
+                if data.get('mgmt_ip2') in ['', None] and len(mgmt_ips):
+                    data['mgmt_ip2'] = mgmt_ips[0]
+                    self.logger.info('Added additional JBOF mgmt IP %r without connectivity', mgmt_ips[0])
+            except Exception:
+                self.logger.warning('Unable to detect additional JBOF mgmt IP', exc_info=True)
+
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
