@@ -17,6 +17,7 @@ from threading import Event, Lock, Thread
 import ssl
 from websocket import WebSocketApp
 from websocket._abnf import STATUS_NORMAL
+from websocket._exceptions import WebSocketConnectionClosedException
 from websocket._http import connect, proxy_info
 from websocket._socket import sock_opt
 
@@ -307,7 +308,7 @@ class Client:
     def _send(self, data):
         try:
             self._ws.send(json.dumps(data))
-        except AttributeError:
+        except (AttributeError, WebSocketConnectionClosedException):
             # happens when other node on HA is rebooted, for example, and there are
             # running tasks in the event loop (i.e. failover.call_remote failover.get_disks_local)
             raise ClientException('Unexpected closure of remote connection', errno.ECONNABORTED)
