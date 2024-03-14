@@ -1172,6 +1172,9 @@ class ActiveDirectoryService(ConfigService):
         used to perform the actual removal from the domain.
         """
         ad = await self.config()
+        if not ad['domainname']:
+            raise CallError('Active Directory domain name present in configuration.')
+
         smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
 
         ad['bindname'] = data.get("username", "")
