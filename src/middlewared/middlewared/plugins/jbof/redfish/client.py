@@ -144,6 +144,18 @@ class RedfishClient:
         uri = f'{self.managers()[iom]}/EthernetInterfaces'
         return self._cached_fetch(f'{iom}/mgmt_ethernet_interfaces', uri, use_cached)
 
+    def mgmt_ips(self):
+        result = []
+        for iom in self.managers():
+            for eth_uri in self.mgmt_ethernet_interfaces(iom).values():
+                # Do not want any cached value.  IPs can change.
+                data = self.get_uri(eth_uri, False)
+                for ipv4_address in data.get('IPv4Addresses', []):
+                    addr = ipv4_address.get('Address')
+                    if addr:
+                        result.append(addr)
+        return result
+
     def network_device_functions(self, iom, use_cached=True):
         return self._cached_fetch(
             f'{iom}/network_device_functions',
