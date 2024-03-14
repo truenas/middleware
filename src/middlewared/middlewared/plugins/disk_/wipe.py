@@ -73,6 +73,7 @@ class DiskService(Service):
                 for i in range(_32):
                     # wipe first 32MB
                     os.write(f.fileno(), to_write)
+                    os.fsync(f.fileno())
                     if event.is_set():
                         return
                     # we * 50 since we write a total of 64MB
@@ -85,6 +86,7 @@ class DiskService(Service):
                 for i in range(_32, _64):  # this is done to have accurate reporting
                     # wipe last 32MB
                     os.write(f.fileno(), to_write)
+                    os.fsync(f.fileno())
                     if event.is_set():
                         return
                     job.set_progress(round(((i / _64) * 100), 2))
@@ -102,6 +104,7 @@ class DiskService(Service):
                         os.lseek(f.fileno(), sector_start - (2 * CHUNK), os.SEEK_SET)
                         for i in range(4):
                             os.write(f.fileno(), to_write)
+                            os.fsync(f.fileno())
                             if event.is_set():
                                 return
                     # This is quick. We can reasonably skip the progress update
@@ -110,6 +113,14 @@ class DiskService(Service):
                 iterations = (size // CHUNK)
                 for i in range(iterations):
                     os.write(f.fileno(), to_write)
+                    # Linux allocates extremely large buffers for some disks. Even after everything is written and the
+                    # device is successfully closed, disk activity might still continue for quite a while. This will
+                    # give a false sense of data on the disk being completely destroyed while in reality it is still
+                    # not.
+                    # Additionally, such a behavior causes issues when aborting the disk wipe. Even after the file
+                    # descriptor is closed, OS will prevent any other program from opening the disk with O_EXCL until
+                    # all the buffers are flushed, resulting in a "Device or resource busy" error.
+                    os.fsync(f.fileno())
                     if event.is_set():
                         return
                     job.set_progress(round(((i / iterations) * 100), 2))
