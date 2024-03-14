@@ -67,7 +67,9 @@ class NftablesService(Service):
         return True
 
     def flush_chain_INPUT(self):
-        return not bool(run(['nft', 'flush', 'chain', 'filter', 'INPUT']).returncode)
+        ip4_flush = not bool(run(['nft', 'flush', 'chain', 'filter', 'INPUT']).returncode)
+        ip6_flush = not bool(run(['nft', 'flush', 'chain', 'ip6', 'filter', 'INPUT']).returncode)
+        return ip4_flush and ip6_flush
 
     @accepts()
     @job(lock=JOB_LOCK)
