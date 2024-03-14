@@ -5,10 +5,10 @@ import time
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.jbof.redfish import (InvalidCredentialsError,
                                               RedfishClient)
-from middlewared.schema import (Dict, Int, IPAddr, Password, Patch, Str,
+from middlewared.schema import (Bool, Dict, Int, IPAddr, Password, Patch, Str,
                                 accepts, returns)
-from middlewared.service import (CallError, CRUDService, ValidationErrors,
-                                 job, private)
+from middlewared.service import (CallError, CRUDService, ValidationErrors, job,
+                                 private)
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 from .functions import (decode_static_ip, get_sys_class_nvme,
@@ -208,18 +208,27 @@ class JBOFService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'))
-    async def do_delete(self, id_):
+    @accepts(Int('id'), Bool('force', default=False))
+    async def do_delete(self, id_, force):
         """
         Delete a JBOF by ID.
         """
         # Will make a best-effort un tear down existing connections / wiring
         # To do that we first need to fetch the config.
         data = await self.get_instance(id_)
-        await self.middleware.run_in_thread(self.ensure_redfish_client_cached,
-                                            data['mgmt_ip1'],
-                                            data.get('mgmt_username'),
-                                            data.get('mgmt_password'))
+
+        try:
+            await self.middleware.run_in_thread(self.ensure_redfish_client_cached, data)
+        except Exception as e:
+            if force:
+                # If we have lost communication with the redfish interface for any reason
+                # we might still want to proceed with removing the JBOF, even without tearing
+                # down the shelf configuration.  However, we wil still want to undo the
+                # host configuration.
+                self.logger.debug('Unable to ensure redfish client for JBOF %r. Forcing.', data['id'])
+            else:
+                raise e
+
         try:
             await self.middleware.call('jbof.unwire_dataplane', data['mgmt_ip1'], data['index'])
         except Exception:
@@ -231,8 +240,11 @@ class JBOFService(CRUDService):
         return response
 
     @private
-    def ensure_redfish_client_cached(self, mgmt_ip, username=None, password=None):
+    def ensure_redfish_client_cached(self, data):
         """Synchronous function to ensure we have a redfish client in cache."""
+        mgmt_ip = data['mgmt_ip1']
+        username = data.get('mgmt_username')
+        password = data.get('mgmt_password')
         try:
             RedfishClient.cache_get(mgmt_ip)
         except KeyError:
