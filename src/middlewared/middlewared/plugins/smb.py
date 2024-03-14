@@ -601,6 +601,9 @@ class SMBService(ConfigService):
         if in_progress:
             return False
 
+        if not await self.middleware.call('systemdataset.sysdataset_path'):
+            return False
+
         self.logger.warning(
             "SMB service was not properly initialized. "
             "Attempting to configure SMB service."
