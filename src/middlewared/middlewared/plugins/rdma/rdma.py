@@ -78,7 +78,8 @@ class RDMAService(Service):
 
         result = []
         for link in json.loads(ret.stdout.decode()):
-            result.append({'rdma': link['ifname'], 'netdev': link['netdev']})
+            if 'netdev' in link:
+                result.append({'rdma': link['ifname'], 'netdev': link['netdev']})
         return result
 
     @accepts()
