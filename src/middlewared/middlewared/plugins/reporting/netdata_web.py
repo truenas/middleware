@@ -27,6 +27,8 @@ class ReportingService(Service):
         Generate a password to access netdata web.
         That password will be stored in htpasswd format for HTTP Basic access.
         """
+        # Password schema is not used here because for READONLY_ADMIN
+        # will make it return "******" instead, breaking this method for that role.
         if app.authenticated_credentials.is_user_session:
             authenticated_user = app.authenticated_credentials.user['username']
         else:
