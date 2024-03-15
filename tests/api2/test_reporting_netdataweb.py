@@ -19,6 +19,7 @@ def test_netdata_web_login_fail():
 
 @pytest.mark.parametrize("role,expected",  [
     (["FULL_ADMIN"], True),
+    (["READONLY_ADMIN"], True),
 ])
 def test_netdata_web_login_unprivileged_succeed(role, expected):
     with unprivileged_user_client(roles=role) as c:

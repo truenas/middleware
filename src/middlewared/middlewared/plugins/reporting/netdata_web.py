@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 
-from middlewared.schema import accepts, returns, Password
+from middlewared.schema import accepts, returns, Str
 from middlewared.service import cli_private, job, pass_app, periodic, private, CallError, Service
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.crypto import generate_string
@@ -19,8 +19,8 @@ class ReportingService(Service):
         return BASIC_FILE
 
     @cli_private
-    @accepts()
-    @returns(Password('password'))
+    @accepts(roles=['READONLY_ADMIN'])
+    @returns(Str('password'))
     @pass_app()
     def netdataweb_generate_password(self, app):
         """
