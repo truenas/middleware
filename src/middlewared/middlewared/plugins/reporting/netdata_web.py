@@ -1,5 +1,6 @@
 import os
 import shutil
+import threading
 import time
 
 from middlewared.schema import accepts, returns, Str
@@ -10,6 +11,7 @@ from passlib.apache import HtpasswdFile
 
 
 BASIC_FILE = f'{MIDDLEWARE_RUN_DIR}/netdata-basic'
+HTPASSWD_LOCK = threading.Lock()
 
 
 class ReportingService(Service):
@@ -38,9 +40,10 @@ class ReportingService(Service):
             with open(os.open(BASIC_FILE, flags=os.O_CREAT, mode=0o640)):
                 shutil.chown(BASIC_FILE, 'root', 'www-data')
 
-        ht = HtpasswdFile(BASIC_FILE, autosave=True, default_scheme='bcrypt')
-        password = generate_string(16, punctuation_chars=True)
-        ht.set_password(authenticated_user, password)
+        with HTPASSWD_LOCK:
+            ht = HtpasswdFile(BASIC_FILE, autosave=True, default_scheme='bcrypt')
+            password = generate_string(16, punctuation_chars=True)
+            ht.set_password(authenticated_user, password)
 
         try:
             expire = self.middleware.call_sync('cache.get', 'NETDATA_WEB_EXPIRE')
@@ -70,13 +73,14 @@ class ReportingService(Service):
         except KeyError:
             expire = {}
 
-        ht = HtpasswdFile(BASIC_FILE)
-        time_now = int(time.monotonic())
-        for user in ht.users():
-            if expire_time := expire.get(user):
-                if time_now < expire_time:
-                    continue
-            # User is not in our cache or expired, should be deleted
-            ht.delete(user)
+        with HTPASSWD_LOCK:
+            ht = HtpasswdFile(BASIC_FILE)
+            time_now = int(time.monotonic())
+            for user in ht.users():
+                if expire_time := expire.get(user):
+                    if time_now < expire_time:
+                        continue
+                # User is not in our cache or expired, should be deleted
+                ht.delete(user)
 
-        ht.save()
+            ht.save()
