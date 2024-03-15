@@ -163,6 +163,6 @@ class Enclosure2Service(Service):
 
         combine_enclosures(enclosures)
 
-        enclosures = sorted(enclosures, key=lambda enclosure: enclosure['id'])
+        enclosures = sorted(enclosures, key=lambda enclosure: (0 if enclosure["controller"] else 1, enclosure['id']))
 
         return filter_list(enclosures, filters, options)
