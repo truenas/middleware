@@ -10,6 +10,7 @@ from pathlib import Path
 from subprocess import run
 
 
+ZFS_CMD = '/usr/sbin/zfs'
 TO_CHMOD = ['apt', 'dpkg']
 EXECUTE_BITS = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 PKG_MGMT_DISABLED_PATH = '/usr/local/bin/pkg_mgmt_disabled'
@@ -28,7 +29,7 @@ def set_readwrite(entry):
         return
 
     print(f'Setting readonly=off on dataset {entry["ds"]}')
-    run(['zfs', 'set', 'readonly=off', entry['ds']])
+    run([ZFS_CMD, 'set', 'readonly=off', entry['ds']])
 
 
 def chmod_files():
@@ -75,7 +76,14 @@ if __name__ == '__main__':
     datasets = []
     args = process_args()
 
-    rv = run(['zfs', 'get', '-o', 'value', '-H', 'truenas:developer', '/'], capture_output=True)
+    if os.getuid() != 0:
+        print((
+            'Removal of filesystem protections is limited to superuser only. '
+            'This action must be performed as the root user or through sudo.'
+        ))
+        sys.exit(1)
+
+    rv = run([ZFS_CMD, 'get', '-o', 'value', '-H', 'truenas:developer', '/'], capture_output=True)
 
     # If we're already in developer-mode, skip license check
     # This is to allow workflow for developer working on HA platform to
@@ -99,9 +107,9 @@ if __name__ == '__main__':
         pass
 
     print('Flagging root dataset as developer mode')
-    rv = run(['zfs', 'get', '-o', 'name', '-H', 'name', '/'], capture_output=True)
+    rv = run([ZFS_CMD, 'get', '-o', 'name', '-H', 'name', '/'], capture_output=True)
     root = rv.stdout.decode().strip()
-    run(['zfs', 'set', 'truenas:developer=on', root])
+    run([ZFS_CMD, 'set', 'truenas:developer=on', root])
 
     for entry in datasets:
         set_readwrite(entry)
