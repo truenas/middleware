@@ -28,6 +28,8 @@ class ReportingService(Service):
         """
         Generate a password to access netdata web.
         That password will be stored in htpasswd format for HTTP Basic access.
+
+        Concurrent access for the same user is not supported and may lead to undesired behavior.
         """
         # Password schema is not used here because for READONLY_ADMIN
         # will make it return "******" instead, breaking this method for that role.
@@ -42,6 +44,8 @@ class ReportingService(Service):
 
         with HTPASSWD_LOCK:
             ht = HtpasswdFile(BASIC_FILE, autosave=True, default_scheme='bcrypt')
+            if ht.get_hash(authenticated_user):
+                self.logger.warning('Password for %r already exists, overwriting...', authenticated_user)
             password = generate_string(16, punctuation_chars=True)
             ht.set_password(authenticated_user, password)
 
