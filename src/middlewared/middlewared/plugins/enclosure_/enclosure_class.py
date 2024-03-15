@@ -157,7 +157,7 @@ class Enclosure:
                 # R50
                 self.model = dmi_model.value
                 self.controller = True
-            case 'CELESTIC_X2012':
+            case 'CELESTIC_X2012' | 'CELESTIC_X2012-MT':
                 self.model = JbodModels.ES12.value
                 self.controller = False
             case 'ECStream_4024J' | 'iX_4024J':
