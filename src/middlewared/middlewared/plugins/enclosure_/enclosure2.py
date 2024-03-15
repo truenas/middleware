@@ -162,4 +162,7 @@ class Enclosure2Service(Service):
             enclosures.append(i)
 
         combine_enclosures(enclosures)
+
+        enclosures = sorted(enclosures, key=lambda enclosure: enclosure['id'])
+
         return filter_list(enclosures, filters, options)
