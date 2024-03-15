@@ -173,6 +173,17 @@ class JBOFService(CRUDService):
             verrors.add('jbof_create.mgmt_ip1', f'Failed to add JBOF: {e}')
         verrors.check()
 
+        # If the caller just supplied mgmt_ip1, let's fetch mgmt_ip2 to store in the DB
+        if data.get('mgmt_ip2') in ['', None]:
+            try:
+                if ip := await self.middleware.call('jbof.alt_mgmt_ip', mgmt_ip):
+                    data['mgmt_ip2'] = ip
+                    self.logger.info('Detected additional JBOF mgmt IP %r', ip)
+                else:
+                    self.logger.warning('Unable to determine additional JBOF mgmt IP')
+            except Exception:
+                self.logger.warning('Unable to detect additional JBOF mgmt IP', exc_info=True)
+
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
@@ -238,6 +249,21 @@ class JBOFService(CRUDService):
         # Now delete the entry
         response = await self.middleware.call('datastore.delete', self._config.datastore, id_)
         return response
+
+    @private
+    def get_mgmt_ips(self, mgmt_ip):
+        redfish = RedfishClient.cache_get(mgmt_ip)
+        return redfish.mgmt_ips()
+
+    @private
+    def alt_mgmt_ip(self, mgmt_ip):
+        other_mgmt_ips = filter(lambda x: x != mgmt_ip, self.get_mgmt_ips(mgmt_ip))
+        for ip in other_mgmt_ips:
+            if RedfishClient.is_redfish(ip):
+                return ip
+        # If unable to talk to one, pick the first one.  Maybe connectivity will be restored later.
+        if len(other_mgmt_ips):
+            self.logger.info('Unable to validate connectivity to alternate JBOF mgmt IP %r', other_mgmt_ips[0])
 
     @private
     def ensure_redfish_client_cached(self, data):
