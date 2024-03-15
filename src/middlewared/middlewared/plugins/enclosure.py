@@ -139,6 +139,8 @@ class EnclosureService(CRUDService):
         for enclosure in enclosures:
             enclosure["label"] = labels.get(enclosure["id"]) or enclosure["name"]
 
+        enclosures = sorted(enclosures, key=lambda enclosure: enclosure["id"])
+
         return filter_list(enclosures, filters=filters or [], options=options or {})
 
     @accepts(
