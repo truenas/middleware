@@ -29,7 +29,7 @@ class ReportingService(Service):
         """
         # Password schema is not used here because for READONLY_ADMIN
         # will make it return "******" instead, breaking this method for that role.
-        if app.authenticated_credentials.is_user_session:
+        if app and app.authenticated_credentials.is_user_session:
             authenticated_user = app.authenticated_credentials.user['username']
         else:
             raise CallError('This method needs to be called from an authenticated user only.')
