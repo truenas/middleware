@@ -53,7 +53,7 @@ class TrueNASService(Service):
     @accepts()
     @returns(Bool())
     @pass_app()
-    async def managed_by_truecommand(self):
+    async def managed_by_truecommand(self, app):
         """
         Returns whether TrueNAS is being managed by TrueCommand or not.
 
