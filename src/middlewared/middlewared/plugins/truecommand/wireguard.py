@@ -1,21 +1,16 @@
 import asyncio
 import re
-import subprocess
 import time
 
 from middlewared.schema import Bool, Dict, IPAddr, returns, Str
-from middlewared.service import accepts, CallError, no_auth_required, periodic, pass_app, private, Service, throttle
-from middlewared.utils import Popen, run
+from middlewared.service import accepts, CallError, periodic, private, Service
+from middlewared.utils import run
 
 from .enums import Status
 from .utils import WIREGUARD_INTERFACE_NAME
 
 HEALTH_CHECK_SECONDS = 1800
 WIREGUARD_HEALTH_RE = re.compile(r'=\s*(.*)')
-
-
-def throttle_condition(middleware, app, *args, **kwargs):
-    return app is None or (app and app.authenticated), None
 
 
 class TruecommandService(Service):
@@ -99,8 +94,6 @@ class TruecommandService(Service):
                         health_error = True
         return not health_error
 
-    @no_auth_required
-    @throttle(seconds=2, condition=throttle_condition)
     @accepts()
     @returns(Dict(
         'truecommand_connected',
@@ -110,8 +103,7 @@ class TruecommandService(Service):
         Str('status', required=True),
         Str('status_reason', required=True),
     ))
-    @pass_app()
-    async def connected(self, app):
+    async def info(self):
         """
         Returns information which shows if system has an authenticated api key
         and has initiated a VPN connection with TrueCommand.
