@@ -78,8 +78,8 @@ if __name__ == '__main__':
 
     if os.getuid() != 0:
         print((
-            'Removal of filesystem protections is limited to superuser only. '
-            'This action must be performed as the root user or through sudo.'
+            'Removing filesystem protections must be done as the root user '
+            'or with sudo.'
         ))
         sys.exit(1)
 
