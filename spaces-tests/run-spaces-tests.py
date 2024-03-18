@@ -1,0 +1,115 @@
+import argparse
+import os
+import pathlib
+import subprocess
+
+import init_servers
+import get_debugs
+
+from config import CLEANUP_TEST_DIR
+from inspect import getcallargs
+from websocket import WebSocketApp
+
+
+def setup_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--initialize-servers',
+        action='store_true',
+        default=False,
+        help='Setup the servers for API testing.'
+    )
+    parser.add_argument(
+        '--pytest-path',
+        default='pytest',
+        help='path to pytest command'
+    )
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        '--test-dir',
+        default=False,
+        help='Relative path to the test directory (i.e. tests/smb)'
+    )
+    group.add_argument(
+        '--test-file',
+        default=False,
+        help='Relative path to the test file (i.e. tests/smb/test_blah.py)'
+    )
+
+    return parser.parse_args()
+
+
+def setup_api_results_dir(resultsfile='results.xml'):
+    # create the results directory
+    path = pathlib.Path(pathlib.os.getcwd()).joinpath('results')
+    path.mkdir(exist_ok=True)
+
+    # add the file that will store the api results
+    path = path.joinpath(resultsfile)
+    try:
+        path.unlink()
+    except FileNotFoundError:
+        pass
+
+    path.touch()
+
+    return path.as_posix()
+
+
+def setup_pytest_command(args, results_path, ignore=True):
+    cmd = [args.pytest_path, '-v', '-rfesp', '-o', 'junit_family=xunit2', f'--junit-xml={results_path}']
+
+    # pytest is clever enough to search the "tests" subdirectory
+    # and look at the argument that is passed and figure out if
+    # it's a file or a directory so we don't need to do anything
+    # fancy other than pass it on
+    if args.test_file:
+        cmd.append(args.test_file)
+    elif args.test_dir:
+        cmd.append(args.test_dir)
+
+    if ignore:
+        cmd.append(f'--ignore={CLEANUP_TEST_DIR}')
+
+    return cmd
+
+
+def validate_modules():
+    # check that we have correct websocket client
+    getcallargs(WebSocketApp, *[None], **{'url': None, 'socket': None})
+
+
+def main():
+    args = setup_args()
+
+    print('Validating modules')
+    validate_modules()
+    print('Modules validated')
+
+    if args.initialize_servers:
+        print('Initializing cluster')
+        init_servers.init()
+
+    print('Setting up API results directory')
+    results_path = setup_api_results_dir()
+
+    print('Running API tests')
+    subprocess.call(setup_pytest_command(args, results_path))
+
+    print('gathering debugs')
+    get_debugs.init(os.path.dirname(results_path))
+
+    """
+    # Run separate set of tests for spaces cleanup
+    print('Setting up cleanup API results file')
+    cleanup_results_path = setup_api_results_dir(resultsfile='cleanup-results.xml')
+
+    print('Running cleanup API tests')
+    args.test_dir = CLEANUP_TEST_DIR  # overwrite test_dir args
+    subprocess.call(setup_pytest_command(args, cleanup_results_path, ignore=False))
+    """
+
+
+if __name__ == '__main__':
+    main()
