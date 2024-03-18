@@ -3,7 +3,9 @@ import pytest
 
 from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.assets.smb import smb_share, smb_mount
+from middlewared.test.integration.assets.smb import (
+    del_stream, get_stream, list_stream, set_stream, smb_share, smb_mount
+)
 from middlewared.test.integration.utils import call, client, ssh
 
 
@@ -186,3 +188,42 @@ def test_acl_share_flags(request, mount_share, flagset):
     }
     call('filesystem.setacl', payload, job=True)
     compare_acls(mount_share['share']['path'], mount_share['mountpoint'])
+
+
+def do_stream_ops(fname):
+    assert list_stream(fname) == []
+
+    # test basic get / set
+    set_stream(fname, 'teststream', b'canary')
+
+    assert list_stream(fname) == ['teststream']
+
+    xat_data = get_stream(fname, 'teststream')
+    assert xat_data == b'canary'
+
+    # test that stream is appropriately truncated
+    set_stream(fname, 'teststream', b'can')
+
+    xat_data = get_stream(fname, 'teststream')
+    assert xat_data == b'can'
+
+    # test that stream can be deleted
+    del_stream(fname, 'teststream')
+
+    assert list_stream(fname) == []
+
+
+def test_get_set_del_stream_on_dir(request, mount_share):
+    assert call('filesystem.statfs', mount_share['mountpoint'])['fstype'] == 'cifs'
+    dirname = os.path.join(mount_share['share']['path'], 'testdirstream')
+    call('filesystem.mkdir', {'path': dirname, 'options': {'raise_chmod_error': False}})
+
+    do_stream_ops(dirname)
+
+
+def test_get_set_del_stream_on_file(request, mount_share):
+    assert call('filesystem.statfs', mount_share['mountpoint'])['fstype'] == 'cifs'
+    filename = os.path.join(mount_share['share']['path'], 'testfilestream')
+    ssh(f'touch {filename}')
+
+    do_stream_ops(filename)
