@@ -328,13 +328,14 @@ class DiskService(CRUDService):
         return not bool(await self.middleware.call('disk.list_partitions', disk))
 
     @private
-    async def sed_unlock_all(self):
+    async def sed_unlock_all(self, force=False):
         # on an HA system, if both controllers manage to send
         # SED commands at the same time, then it can cause issues
         # where, ultimately, the disks don't get unlocked
-        if await self.middleware.call('failover.licensed'):
-            if await self.middleware.call('failover.status') == 'BACKUP':
-                return
+        if not force:  # Do not check the status if we are unlocking from vrrp_event
+            if await self.middleware.call('failover.licensed'):
+                if await self.middleware.call('failover.status') == 'BACKUP':
+                    return
 
         advconfig = await self.middleware.call('system.advanced.config')
         disks = await self.middleware.call('disk.query', [], {'extra': {'passwords': True}})
@@ -345,7 +346,7 @@ class DiskService(CRUDService):
         ):
             return
 
-        result = await asyncio_map(lambda disk: self.sed_unlock(disk['name'], disk, advconfig), disks, 16)
+        result = await asyncio_map(lambda disk: self.sed_unlock(disk['name'], disk, advconfig, True), disks, 16)
         locked = list(filter(lambda x: x['locked'] is True, result))
         if locked:
             disk_names = ', '.join([i['name'] for i in locked])
@@ -354,16 +355,17 @@ class DiskService(CRUDService):
         return True
 
     @private
-    async def sed_unlock(self, disk_name, disk=None, _advconfig=None):
+    async def sed_unlock(self, disk_name, disk=None, advconfig=None, force=False):
         # on an HA system, if both controllers manage to send
         # SED commands at the same time, then it can cause issues
         # where, ultimately, the disks don't get unlocked
-        if await self.middleware.call('failover.licensed'):
-            if await self.middleware.call('failover.status') == 'BACKUP':
-                return
+        if not force:  # Do not check the status if we are unlocking from vrrp_event
+            if await self.middleware.call('failover.licensed'):
+                if await self.middleware.call('failover.status') == 'BACKUP':
+                    return
 
-        if _advconfig is None:
-            _advconfig = await self.middleware.call('system.advanced.config')
+        if advconfig is None:
+            advconfig = await self.middleware.call('system.advanced.config')
 
         devname = f'/dev/{disk_name}'
         # We need two states to tell apart when disk was successfully unlocked
@@ -407,7 +409,7 @@ class DiskService(CRUDService):
 
         # Try ATA Security if SED was not unlocked and its not locked by OPAL
         if not unlocked and not locked:
-            locked, unlocked = await self.middleware.call('disk.unlock_ata_security', devname, _advconfig, password)
+            locked, unlocked = await self.middleware.call('disk.unlock_ata_security', devname, advconfig, password)
 
         if locked:
             self.logger.error(f'Failed to unlock {disk_name}')

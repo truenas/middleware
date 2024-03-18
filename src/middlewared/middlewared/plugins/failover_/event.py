@@ -477,7 +477,7 @@ class FailoverEventsService(Service):
 
         # unlock SED disks
         try:
-            self.run_call('disk.sed_unlock_all')
+            self.run_call('disk.sed_unlock_all', True)
         except Exception as e:
             # failing here doesn't mean the zpool won't import
             # we could have failed on only 1 disk so log an
