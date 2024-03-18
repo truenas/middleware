@@ -915,9 +915,11 @@ class UserService(CRUDService):
             'options',
             Bool('delete_group', default=True),
         ),
+        audit='Delete user',
+        audit_callback=True,
     )
     @returns(Int('primary_key'))
-    def do_delete(self, pk, options):
+    def do_delete(self, audit_callback, pk, options):
         """
         Delete user `id`.
 
@@ -926,6 +928,7 @@ class UserService(CRUDService):
         """
 
         user = self.middleware.call_sync('user.get_instance', pk)
+        audit_callback(user['username'])
 
         if user['builtin']:
             raise CallError('Cannot delete a built-in user', errno.EINVAL)
@@ -1759,7 +1762,7 @@ class GroupService(CRUDService):
         Bool('allow_duplicate_gid', default=False),
         List('users', items=[Int('id')], required=False),
         register=True,
-    ))
+    ), audit='Create group', audit_extended=lambda data: data['name'])
     @returns(Int('primary_key'))
     async def do_create(self, data):
         """
@@ -1814,14 +1817,18 @@ class GroupService(CRUDService):
             'group_update',
             ('attr', {'update': True}),
         ),
+        audit='Update group',
+        audit_callback=True,
     )
     @returns(Int('primary_key'))
-    async def do_update(self, pk, data):
+    async def do_update(self, audit_callback, pk, data):
         """
         Update attributes of an existing group.
         """
 
         group = await self.get_instance(pk)
+        audit_callback(group['name'])
+
         groupmap_changed = False
 
         if data.get('gid') == group['gid']:
@@ -1887,9 +1894,9 @@ class GroupService(CRUDService):
 
         return pk
 
-    @accepts(Int('id'), Dict('options', Bool('delete_users', default=False)))
+    @accepts(Int('id'), Dict('options', Bool('delete_users', default=False)), audit='Delete group', audit_callback=True)
     @returns(Int('primary_key'))
-    async def do_delete(self, pk, options):
+    async def do_delete(self, audit_callback, pk, options):
         """
         Delete group `id`.
 
@@ -1897,6 +1904,8 @@ class GroupService(CRUDService):
         """
 
         group = await self.get_instance(pk)
+        audit_callback(group['name'] + (' and all its users' if options['delete_users'] else ''))
+
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
 
