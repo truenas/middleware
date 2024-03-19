@@ -7,7 +7,7 @@ from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware
 
 from middlewared.plugins.truecommand.enums import Status as TrueCommandStatus
 from middlewared.schema import accepts, Bool, Dict, Patch, returns, Str
-from middlewared.service import cli_private, job, no_auth_required, pass_app, private, Service, throttle
+from middlewared.service import cli_private, job, no_auth_required, private, Service
 from middlewared.utils.functools_ import cache
 import middlewared.sqlalchemy as sa
 
@@ -29,10 +29,6 @@ user_attrs = [
 ]
 
 
-def throttle_condition(middleware, app, *args, **kwargs):
-    return app is None or (app and app.authenticated), None
-
-
 class TruenasCustomerInformationModel(sa.Model):
     __tablename__ = 'truenas_customerinformation'
 
@@ -49,11 +45,9 @@ class TrueNASService(Service):
         cli_namespace = 'system.truenas'
 
     @no_auth_required
-    @throttle(seconds=2, condition=throttle_condition)
     @accepts()
     @returns(Bool())
-    @pass_app()
-    async def managed_by_truecommand(self, app):
+    async def managed_by_truecommand(self):
         """
         Returns whether TrueNAS is being managed by TrueCommand or not.
 
