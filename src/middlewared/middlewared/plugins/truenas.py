@@ -1,12 +1,13 @@
-from datetime import datetime, timedelta
 import errno
 import json
 import os
+from datetime import datetime, timedelta
 
 from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware
 
+from middlewared.plugins.truecommand.enums import Status as TrueCommandStatus
 from middlewared.schema import accepts, Bool, Dict, Patch, returns, Str
-from middlewared.service import cli_private, job, private, Service
+from middlewared.service import cli_private, job, no_auth_required, private, Service
 from middlewared.utils.functools_ import cache
 import middlewared.sqlalchemy as sa
 
@@ -41,7 +42,21 @@ class TruenasCustomerInformationModel(sa.Model):
 class TrueNASService(Service):
 
     class Config:
-        cli_namespace = "system.truenas"
+        cli_namespace = 'system.truenas'
+
+    @no_auth_required
+    @accepts()
+    @returns(Bool())
+    async def managed_by_truecommand(self):
+        """
+        Returns whether TrueNAS is being managed by TrueCommand or not.
+
+        This endpoint has no authentication required as it is used by UI when the user has not logged in to see
+        if the system is being managed by TrueCommand or not.
+        """
+        return TrueCommandStatus(
+            (await self.middleware.call('truecommand.config'))['status']
+        ) == TrueCommandStatus.CONNECTED
 
     @accepts()
     @returns(Str('system_chassis_hardware'))

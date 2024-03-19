@@ -52,7 +52,7 @@
     ip6_list = [f'[{ip}]' for ip in ip6_list]
 
     wg_config = middleware.call_sync('datastore.config', 'system.truecommand')
-    if middleware.call_sync('truecommand.connected')['connected'] and wg_config['wg_address']:
+    if middleware.call_sync('truecommand.info')['connected'] and wg_config['wg_address']:
         ip4_list.append(ipaddress.ip_network(wg_config['wg_address'], False).network_address)
 
     ip_list = ip4_list + ip6_list
