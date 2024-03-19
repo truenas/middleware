@@ -37,5 +37,17 @@ class ISCSIPortalIPAlertSource(AlertSource):
                     )
                 )
 
+        if ips and await self.middleware.call('iscsi.global.alua_enabled'):
+            # When ALUA is enabled on HA, the STANDBY node will report the
+            # virtual IPs as missing.  Remove them if the corresponding
+            # underlying IP is in use.
+            choices = await self.middleware.call('iscsi.portal.listen_ip_choices')
+            node = await self.middleware.call('failover.node')
+            if node in ['A', 'B']:
+                index = ['A', 'B'].index(node)
+                vips = {k: v.split('/')[index] for k, v in choices.items() if v.find('/') != -1}
+                ok = {ip for ip in ips if ip in vips and vips[ip] in in_use_ips}
+                ips -= ok
+
         if ips:
             return Alert(ISCSIPortalIPAlertClass, ', '.join(ips))
