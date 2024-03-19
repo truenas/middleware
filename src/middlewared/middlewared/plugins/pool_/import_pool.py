@@ -234,6 +234,37 @@ class PoolService(Service):
             self.logger.error('Unhandled exception importing %r', vol_name, exc_info=True)
             return False
 
+        # normalize ZFS dataset properties on boot. Pool may be foreign to SCALE
+        # (including those created on CORE)
+        try:
+            ds = self.middleware.call_sync(
+                'pool.dataset.query',
+                [['id', '=', vol_name]],
+                {'get': True, 'extra': {'retrieve_children': False}}
+            )
+        except Exception:
+            self.logger.warning('%r: failed to query properties of root-level dataset', vol_name, exc_info=True)
+            return True
+
+        if ds['acltype']['value'] == 'NFSV4':
+            opts = {'properties': {
+                'aclinherit': {'value': 'passthrough'}
+            }}
+        else:
+            opts = {'properties': {
+                'aclinherit': {'value': 'discard'},
+                'aclmode': {'value': 'discard'},
+            }}
+
+        opts['properties'].update({
+            'sharenfs': {'value': 'off'}, 'sharesmb': {'value': 'off'},
+        })
+
+        try:
+            self.middleware.call_sync('zfs.dataset.update', vol_name, opts)
+        except Exception:
+            self.logger.warning('%r: failed to normalize properties of root-level dataset', vol_name, exc_info=True)
+
         self.logger.debug('SUCCESS importing %r with guid: %r', vol_name, vol_guid)
         return True
 
