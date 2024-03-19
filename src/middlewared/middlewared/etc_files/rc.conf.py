@@ -127,7 +127,6 @@ def services_config(middleware, context):
             'ftp': ['proftpd'],
             'openvpn_client': ['openvpn_client'],
             'openvpn_server': ['openvpn_server'],
-            's3': ['minio'],
             'rsync': ['rsyncd'],
             'snmp': ['snmpd', 'snmp_agent'],
             'tftp': ['inetd'],
@@ -303,25 +302,6 @@ def powerd_config(middleware, context):
     yield f'powerd_enable="{value}"'
 
 
-def s3_config(middleware, context):
-    s3 = middleware.call_sync('s3.config')
-    path = s3['storage_path'].replace(' ', '\\ ')
-    yield f'minio_disks="{path}"'
-    yield f'minio_address="{s3["bindip"]}:{s3["bindport"]}"'
-    yield f'minio_console_address="{s3["bindip"]}:{s3["console_bindport"]}"'
-    yield 'minio_certs="/usr/local/etc/minio/certs"'
-    minio_server_url = f'MINIO_SERVER_URL=https://{s3["tls_server_uri"]}:{s3["bindport"]} \\\n' if s3['certificate'] else ''
-    browser = 'MINIO_BROWSER=off \\\n' if not s3['browser'] else ''
-    yield (
-        'minio_env="\\\n'
-        f'MINIO_ACCESS_KEY={s3["access_key"]} \\\n'
-        f'MINIO_SECRET_KEY={s3["secret_key"]} \\\n'
-        f'{minio_server_url}'
-        f'{browser}'
-        '"'
-    )
-
-
 def smart_config(middleware, context):
     smart = middleware.call_sync('smart.config')
     yield f'smartd_daemon_flags="-i {smart["interval"] * 60}"'
@@ -455,7 +435,6 @@ def render(service, middleware):
         openvpn_client_config,
         openvpn_server_config,
         powerd_config,
-        s3_config,
         smart_config,
         snmp_config,
         staticroute_config,

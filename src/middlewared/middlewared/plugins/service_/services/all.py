@@ -10,7 +10,6 @@ from .nfs import NFSService
 from .openvpn_client import OpenVPNClientService
 from .openvpn_server import OpenVPNServerService
 from .rsync import RsyncService
-from .s3 import S3Service
 from .smartd import SMARTDService
 from .snmp import SNMPService
 from .ssh import SSHService
@@ -63,7 +62,6 @@ all_services = [
     OpenVPNClientService,
     OpenVPNServerService,
     RsyncService,
-    S3Service,
     SMARTDService,
     SNMPService,
     SSHService,

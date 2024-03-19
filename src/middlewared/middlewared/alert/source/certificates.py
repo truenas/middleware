@@ -72,7 +72,6 @@ class CertificateRevokedAlertSource(AlertSource):
 
         for cert_id, service, type_c, datastore in (
             ((await self.middleware.call('ftp.config'))['ssltls_certificate'], 'FTP', 'certificate', 'certificate'),
-            ((await self.middleware.call('s3.config'))['certificate'], 'S3', 'certificate', 'certificate'),
             ((await self.middleware.call('webdav.config'))['certssl'], 'Webdav', 'certificate', 'certificate'),
             (
                 (await self.middleware.call('openvpn.server.config'))['server_certificate'],
