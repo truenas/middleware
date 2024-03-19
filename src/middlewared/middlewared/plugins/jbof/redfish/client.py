@@ -1,6 +1,7 @@
 import enum
 import json
 import logging
+import socket
 from urllib.parse import urlencode
 
 import requests
@@ -144,16 +145,30 @@ class RedfishClient:
         uri = f'{self.managers()[iom]}/EthernetInterfaces'
         return self._cached_fetch(f'{iom}/mgmt_ethernet_interfaces', uri, use_cached)
 
+    def mgmt_ip(self):
+        return socket.gethostbyname(self.base_url.split('/')[-1])
+
+    def iom_eth_mgmt_ips(self, eth_uri):
+        result = []
+        # Do not want any cached value.  IPs can change.
+        data = self.get_uri(eth_uri, False)
+        for ipv4_address in data.get('IPv4Addresses', []):
+            addr = ipv4_address.get('Address')
+            if addr:
+                result.append(addr)
+        return result
+
+    def iom_mgmt_ips(self, iom):
+        result = []
+        for eth_uri in self.mgmt_ethernet_interfaces(iom).values():
+            # Do not want any cached value.  IPs can change.
+            result.extend(self.iom_eth_mgmt_ips(eth_uri))
+        return result
+
     def mgmt_ips(self):
         result = []
         for iom in self.managers():
-            for eth_uri in self.mgmt_ethernet_interfaces(iom).values():
-                # Do not want any cached value.  IPs can change.
-                data = self.get_uri(eth_uri, False)
-                for ipv4_address in data.get('IPv4Addresses', []):
-                    addr = ipv4_address.get('Address')
-                    if addr:
-                        result.append(addr)
+            result.extend(self.iom_mgmt_ips(iom))
         return result
 
     def network_device_functions(self, iom, use_cached=True):
