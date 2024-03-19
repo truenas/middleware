@@ -306,11 +306,6 @@ http {
             proxy_set_header X-Real-Remote-Port $remote_port;
         }
 
-        location /images {
-            allow all;
-            alias /var/db/system/webui/images;
-        }
-
         location ~ /netdata/(?<ndpath>.*) {
             auth_basic "Netdata Closed";
             auth_basic_user_file ${netdata_basic_file};
