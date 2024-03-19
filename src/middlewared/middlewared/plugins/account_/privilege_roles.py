@@ -1,6 +1,6 @@
 from middlewared.role import ROLES
 from middlewared.service import Service, filterable, filterable_returns, filter_list, no_authz_required
-from middlewared.schema import Dict, List, Str
+from middlewared.schema import Bool, Dict, List, Str
 
 
 class PrivilegeService(Service):
@@ -16,6 +16,7 @@ class PrivilegeService(Service):
         Str("name"),
         Str("title"),
         List("includes", items=[Str("name")]),
+        Bool("builtin")
     ))
     async def roles(self, filters, options):
         """
