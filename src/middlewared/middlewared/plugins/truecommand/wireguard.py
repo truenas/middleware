@@ -94,7 +94,7 @@ class TruecommandService(Service):
                         health_error = True
         return not health_error
 
-    @accepts()
+    @accepts(roles=['TRUECOMMAND_READ'])
     @returns(Dict(
         'truecommand_connected',
         Bool('connected', required=True),
