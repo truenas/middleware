@@ -2,6 +2,8 @@ import subprocess
 
 import sqlite3
 
+from middlewared.service_exception import MatchNotFound
+
 
 def on_config_upload(middleware, path):
     # For SCALE, we have to enable/disable services based on the uploaded database
@@ -12,7 +14,7 @@ def on_config_upload(middleware, path):
         for service, enabled in cursor.execute('SELECT srv_service, srv_enable FROM services_services').fetchall():
             try:
                 units = middleware.call_sync('service.systemd_units', service)
-            except KeyError:
+            except MatchNotFound:
                 # An old service which we don't have currently
                 continue
 
