@@ -1,0 +1,12 @@
+/var/log/scst.log
+{
+	rotate 3
+	size 3M
+	missingok
+	notifempty
+	compress
+	delaycompress
+	postrotate
+		invoke-rc.d syslog-ng reload > /dev/null
+	endscript
+}
