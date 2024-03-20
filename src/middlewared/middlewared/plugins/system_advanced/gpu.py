@@ -1,5 +1,6 @@
-from middlewared.schema import accepts, List, returns, Str
+from middlewared.schema import accepts, Dict, List, returns, Str
 from middlewared.service import private, Service, ValidationErrors
+from middlewared.utils.gpu import get_gpus
 
 
 class SystemAdvancedService(Service):
@@ -7,6 +8,22 @@ class SystemAdvancedService(Service):
     class Config:
         namespace = 'system.advanced'
         cli_namespace = 'system.advanced'
+
+    @accepts(roles=['SYSTEM_ADVANCED_READ'])
+    @returns(Dict(additional_attrs=True))
+    def get_gpu_pci_choices(self):
+        """
+        This endpoint gives all the gpu pci ids/slots that can be isolated.
+        """
+        configured_value = self.middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
+        gpus = {
+            f'{gpu["description"]} [{gpu["addr"]["pci_slot"]}]': gpu['addr']['pci_slot']
+            for gpu in get_gpus() if not gpu['uses_system_critical_devices']
+        }
+        for slot in filter(lambda gpu: gpu not in gpus.values(), configured_value):
+            gpus[f'Unknown {slot!r} slot'] = slot
+
+        return gpus
 
     @accepts(List('isolated_gpu_pci_ids', items=[Str('pci_id')], required=True), roles=['SYSTEM_ADVANCED_WRITE'])
     @returns()
