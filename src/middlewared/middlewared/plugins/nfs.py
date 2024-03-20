@@ -388,7 +388,7 @@ class SharingNFSService(SharingService):
             filters.append(["id", "!=", old["id"]])
         other_shares = await self.middleware.call("sharing.nfs.query", filters)
         dns_cache = await self.resolve_hostnames(
-            sum([share["hosts"] for share in other_shares], []) + data["hosts"]
+            sum([share["hosts"] for share in other_shares], []) + data.get("hosts", [])
         )
         await self.middleware.run_in_thread(
             self.validate_hosts_and_networks, other_shares,
@@ -499,7 +499,7 @@ class SharingNFSService(SharingService):
                     used_networks.add(ipaddress.ip_network("0.0.0.0/0"))
                     used_networks.add(ipaddress.ip_network("::/0"))
 
-        for host in set(data["hosts"]):
+        for host in set(data.get("hosts", [])):
             host = dns_cache[host]
             if host is None:
                 continue
@@ -524,7 +524,7 @@ class SharingNFSService(SharingService):
 
             used_networks.add(network)
 
-        if not data["hosts"] and not data["networks"]:
+        if not data.get("hosts", []) and not data["networks"]:
             if used_networks:
                 verrors.add(
                     f"{schema_name}.networks",
@@ -541,7 +541,7 @@ class SharingNFSService(SharingService):
     @private
     async def compress(self, data):
         data["network"] = " ".join(data.pop("networks"))
-        data["hosts"] = " ".join(data["hosts"])
+        data["hosts"] = " ".join(data.get("hosts", []))
         data["security"] = [s.lower() for s in data["security"]]
         data.pop(self.locked_field, None)
         return data
