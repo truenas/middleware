@@ -4,7 +4,7 @@ from .base import SimpleService
 class LLDPService(SimpleService):
     name = "lldp"
 
-    etc = ["s3"]
+    etc = []
 
     freebsd_rc = "ladvd"
     freebsd_pidfile = "/var/run/ladvd.pid"
