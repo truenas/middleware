@@ -217,11 +217,11 @@ class ACLTemplateService(CRUDService):
         ])
         has_bu = bool([x['id'] for x in data['acl'] if x['id'] == bu_id])
         if has_bu:
-            du = idmaps['mapped'][domain_users_sid]
+            du = idmaps['mapped'].get(domain_users_sid)
         else:
             du = {'id': -1}
 
-        da = idmaps['mapped'][domain_admins_sid]
+        da = idmaps['mapped'].get(domain_admins_sid)
         if du is None:
             self.logger.warning(
                 "Failed to resolve the Domain Users group to a Unix ID. This most likely "
