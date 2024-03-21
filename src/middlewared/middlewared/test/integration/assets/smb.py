@@ -17,7 +17,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["get_stream", "set_stream", "smb_share", "smb_mount"]
+__all__ = ["copy_stream", "list_stream", "get_stream", "set_stream", "smb_share", "smb_mount"]
 
 STREAM_PREFIX = 'user.DosStream.'
 STREAM_SUFFIX = ':$DATA'
@@ -59,7 +59,22 @@ def smb_mount(share, username, password, local_path='/mnt/cifs', options=None, i
         ssh(f'umount {escaped_path}; rmdir {local_path}')
 
 
+def copy_stream(filename, xat_name_from, xat_name_to, mountpoint='/mnt/cifs'):
+    assert call('filesystem.statfs', mountpoint)['fstype'] == 'cifs'
+    local_path = os.path.join(mountpoint, filename)
+
+    xat_name_from = f'{STREAM_PREFIX}{xat_name_from}{STREAM_SUFFIX_ESC}'
+    xat_name_to = f'{STREAM_PREFIX}{xat_name_to}{STREAM_SUFFIX_ESC}'
+
+    cmd = 'python3 -c "from samba.xattr_native import wrap_getxattr, wrap_setxattr;'
+    cmd += f'wrap_setxattr(\\\"{local_path}\\\", \\\"{xat_name_to}\\\", '
+    cmd += f'wrap_getxattr(\\\"{local_path}\\\", \\\"{xat_name_from}\\\"))"'
+    results = ssh(cmd, complete_response=True, check=False)
+    assert results['result'], f'cmd: {cmd}, result: {results["stderr"]}'
+
+
 def del_stream(filename, xat_name, mountpoint='/mnt/cifs'):
+    assert call('filesystem.statfs', mountpoint)['fstype'] == 'cifs'
     local_path = os.path.join(mountpoint, filename)
     xat_name = f'{STREAM_PREFIX}{xat_name}{STREAM_SUFFIX_ESC}'
     cmd = 'python3 -c "import os;'
@@ -69,6 +84,7 @@ def del_stream(filename, xat_name, mountpoint='/mnt/cifs'):
 
 
 def list_stream(filename, mountpoint='/mnt/cifs'):
+    assert call('filesystem.statfs', mountpoint)['fstype'] == 'cifs'
     local_path = os.path.join(mountpoint, filename)
 
     # Vertical bar is used as separator because it is a reserved character
@@ -99,6 +115,7 @@ def get_stream(filename, xat_name, mountpoint='/mnt/cifs'):
     the samba wrapper around getxattr due to limitations in os.getxattr regarding
     maximum xattr size.
     """
+    assert call('filesystem.statfs', mountpoint)['fstype'] == 'cifs'
     local_path = os.path.join(mountpoint, filename)
     xat_name = f'{STREAM_PREFIX}{xat_name}{STREAM_SUFFIX_ESC}'
     cmd = 'python3 -c "from samba.xattr_native import wrap_getxattr; import base64;'
@@ -116,6 +133,7 @@ def set_stream(filename, xat_name, data, mountpoint='/mnt/cifs'):
     the samba wrapper around setxattr due to limitations in os.setxattr regarding
     maximum xattr size.
     """
+    assert call('filesystem.statfs', mountpoint)['fstype'] == 'cifs'
     b64data = b64encode(data).decode()
     local_path = os.path.join(mountpoint, filename)
     xat_name = f'{STREAM_PREFIX}{xat_name}{STREAM_SUFFIX_ESC}'

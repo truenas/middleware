@@ -16,7 +16,7 @@ from auto_config import (
     password,
 )
 from middlewared.test.integration.assets.account import user as create_user
-from middlewared.test.integration.assets.smb import get_stream, smb_share, smb_mount
+from middlewared.test.integration.assets.smb import copy_stream, get_stream, smb_share, smb_mount
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 from pytest_dependency import depends
@@ -305,24 +305,57 @@ def test_062_write_stream_large_offset_smb2(request, mount_share):
     cause resuling xattr to exceed 64KiB default xattr size limit in Linux.
     """
     depends(request, ["STREAM_TESTFILE_CREATED"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
-    fd = c.create_file("streamstestfile:smb2_stream", "w")
-    c.write(fd, b'test2', 131072)
-    c.close(fd)
+    with smb_connection(
+        host=ip,
+        share=SMB_NAME,
+        username=SMB_USER,
+        password=SMB_PWD,
+        smb1=False
+    ) as c:
+        fd = c.create_file("streamstestfile:smb2_stream", "w")
+        try:
+            c.write(fd, b'test2', 131072)
+        finally:
+            c.close(fd)
 
-    fd2 = c.create_file("streamstestfile:smb2_stream", "w")
-    contents = c.read(fd2, 131072, 5)
-    c.close(fd2)
-    kcontent = get_stream('streamstestfile', 'smb2_stream')
-    c.disconnect()
-    assert (contents.decode() == "test2")
+        fd2 = c.create_file("streamstestfile:smb2_stream", "w")
+        try:
+            contents = c.read(fd2, 131072, 5)
+        finally:
+            c.close(fd2)
 
-    # Verify that reading a large stream functions correctly
-    assert len(kcontent) == 131072 + 5 + 1
+        kcontent = get_stream('streamstestfile', 'smb2_stream')
 
-    # Remove samba compatibility NULL byte
-    assert kcontent[131072:-1].decode() == 'test2'
+        assert (contents.decode() == "test2")
+
+        # Verify that reading a large stream functions correctly
+        assert len(kcontent) == 131072 + 5 + 1
+
+        # Remove samba compatibility NULL byte
+        assert kcontent[131072:-1].decode() == 'test2'
+
+        # Verify that SMB server rejects too-large stream write
+        fd = c.create_file("streamstestfile:smb2_stream", "w")
+        try:
+            with pytest.raises(NTSTATUSError) as e:
+                c.write(fd, b'test2', 2097152)
+
+            assert e.value.args[0] == ntstatus.NT_STATUS_FILE_SYSTEM_LIMITATION
+        finally:
+            c.close(fd)
+
+        # Verify that SMB server allows _very_ large write
+        fd = c.create_file("streamstestfile:smb2_stream", "w")
+        try:
+            # We have to an extra byte for that nul at end of xattr
+            offset = 2097152 - (len(b"test2") + 1)
+            c.write(fd, b"test2", offset)
+            contents = c.read(fd, offset, 5)
+            assert contents.decode() == "test2"
+        finally:
+            c.close(fd)
+
+        copy_stream('streamstestfile', 'smb2_stream', 'smb2_stream2')
 
 
 def test_063_stream_delete_on_close_smb2(request):
