@@ -934,7 +934,7 @@ class FailoverService(ConfigService):
             return False
 
         if self.middleware.call_sync('core.get_jobs', [['method', '=', 'failover.upgrade'], ['state', '=', 'RUNNING']]):
-            # We don't want to prematurely set `HA_UPGRADE` to true in the event that remote is still updating
+            # We don't want to prematurely set `HA_UPGRADE` to false in the event that remote is still updating
             # and reports the same version as active - so we would want to make sure that no HA upgrade job
             # is executing at the moment.
             return False
