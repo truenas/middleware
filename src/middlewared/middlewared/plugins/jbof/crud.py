@@ -5,11 +5,12 @@ import time
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.jbof.redfish import (InvalidCredentialsError,
                                               RedfishClient)
-from middlewared.schema import (Bool, Dict, Int, IPAddr, Password, Patch, Str,
-                                accepts, returns)
+from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Password, Patch,
+                                Str, accepts, returns)
 from middlewared.service import (CallError, CRUDService, ValidationErrors, job,
                                  private)
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
+from middlewared.validators import Netmask, Range
 
 from .functions import (decode_static_ip, get_sys_class_nvme,
                         initiator_ip_from_jbof_static_ip, initiator_static_ip,
@@ -272,11 +273,12 @@ class JBOFService(CRUDService):
         username = data.get('mgmt_username')
         password = data.get('mgmt_password')
         try:
-            RedfishClient.cache_get(mgmt_ip)
+            return RedfishClient.cache_get(mgmt_ip)
         except KeyError:
             # This could take a while to login, etc ... hence synchronous wrapper.
             redfish = RedfishClient(f'https://{mgmt_ip}', username, password)
             RedfishClient.cache_set(mgmt_ip, redfish)
+            return redfish
 
     @accepts(roles=['JBOF_READ'])
     @returns(Int())
@@ -303,6 +305,129 @@ class JBOFService(CRUDService):
                 if name == 'ES24N':
                     result += quantity
         return result
+
+    @private
+    @accepts(
+        Int('id', required=True),
+        Str('iom', enum=['IOM1', 'IOM2'], required=True),
+        Dict(
+            'iom_network',
+            Bool('dhcp'),
+            Str('fqdn'),
+            Str('hostname'),
+            List('ipv4_static_addresses', items=[Dict(
+                'ipv4_static_address',
+                IPAddr('address', v6=False),
+                Str('netmask', validators=[Netmask(ipv6=False, prefix_length=False)]),
+                IPAddr('gateway', v6=False))], default=None),
+            List('ipv6_static_addresses', items=[Dict(
+                'ipv6_static_address',
+                IPAddr('address', v4=False),
+                Int('prefixlen', validators=[Range(min_=1, max_=64)]))], default=None),
+            List('nameservers', items=[IPAddr('nameserver')], default=None),
+        ),
+        Int('ethindex', default=1),
+        Bool('force', default=False),
+    )
+    def set_mgmt_ip(self, id_, iom, data, ethindex, force):
+        """Change the mamagement IP for a particular IOM"""
+        # Fetch the existing JBOF config
+        config = self.get_instance__sync(id_)
+        config_mgmt_ips = set([config['mgmt_ip1'], config['mgmt_ip2']])
+
+        # Do we need to switch redfish to the other IOM
+        redfish = self.ensure_redfish_client_cached(config)
+        old_iom_mgmt_ips = set(redfish.iom_mgmt_ips(iom))
+        if redfish.mgmt_ip() in old_iom_mgmt_ips:
+            other_iom = 'IOM2' if iom == 'IOM1' else 'IOM1'
+            for mgmt_ip in redfish.iom_mgmt_ips(other_iom):
+                if mgmt_ip in config_mgmt_ips:
+                    redfish = self.ensure_redfish_client_cached({'mgmt_ip1': mgmt_ip,
+                                                                 'mgmt_username': config['mgmt_username'],
+                                                                 'mgmt_password': config['mgmt_password']})
+                    break
+
+        if not force:
+            if redfish.mgmt_ip() in redfish.iom_mgmt_ips(iom):
+                raise CallError('Can not modify IOM network config thru same IOM')
+
+        # Read the existing config via redfish
+        uri = f'/redfish/v1/Managers/{iom}/EthernetInterfaces/{ethindex}'
+        r = redfish.get(uri)
+        if not r.ok:
+            raise CallError('Unable to read existing network configuration of {iom}/{ethindex}')
+        orig_net_config = r.json()
+
+        newdata = {}
+        olddata = {}
+        if dhcp := data.get('dhcp') is not None:
+            newdata.update({'DHCPv4': {'DHCPEnabled': dhcp}})
+            olddata.update({'DHCPv4': orig_net_config['DHCPv4']})
+        if fqdn := data.get('fqdn') is not None:
+            newdata.update({'FQDN': fqdn})
+            olddata.update({'FQDN': orig_net_config['FQDN']})
+        if hostname := data.get('hostname') is not None:
+            newdata.update({'HostName': hostname})
+            olddata.update({'HostName': orig_net_config['HostName']})
+        if ipv4_static_addresses := data.get('ipv4_static_addresses') is not None:
+            newitems = []
+            for item in ipv4_static_addresses:
+                newitems.append({'Address': item['address'], 'Gateway': item['gateway'], 'SubnetMask': item['netmask']})
+            newdata.update({'IPv4StaticAddresses': newitems})
+            olddata.update({'IPv4StaticAddresses': orig_net_config['IPv4StaticAddresses']})
+        if ipv6_static_addresses := data.get('ipv6_static_addresses') is not None:
+            newitems = []
+            for item in ipv6_static_addresses:
+                newitems.append({'Address': item['address'], 'PrefixLength': item['prefixlen']})
+            newdata.update({'IPv6StaticAddresses': newitems})
+            olddata.update({'IPv6StaticAddresses': orig_net_config['IPv6StaticAddresses']})
+        if nameservers := data.get('nameservers') is not None:
+            newdata.update({'NameServers': nameservers})
+            olddata.update({'NameServers': orig_net_config['NameServers']})
+
+        try:
+            removed_active = False
+            added_active = False
+            redfish.post(uri, data=newdata)
+            # Give a few seconds for the changes to take effect
+            time.sleep(5)
+            new_iom_mgmt_ips = set(redfish.iom_mgmt_ips(iom))
+            if old_iom_mgmt_ips != new_iom_mgmt_ips:
+                # IPs have changed.
+                # 1. Was the IP that changed on one of the stored mgmt_ips
+                for removed_ip in old_iom_mgmt_ips - new_iom_mgmt_ips:
+                    if removed_ip in config_mgmt_ips:
+                        removed_active = True
+                        break
+                if removed_active:
+                    for added_ip in new_iom_mgmt_ips - old_iom_mgmt_ips:
+                        if RedfishClient.is_redfish(added_ip):
+                            added_active = True
+                            break
+                    if not added_active:
+                        raise CallError(f'Unable to access redfish IP on {iom}')
+                    # Update the config to reflect the new IP
+                    if removed_ip == config['mgmt_ip1']:
+                        self.middleware.call_sync(
+                            'jbof.update', config['id'], {'mgmt_ip1': added_ip}
+                        )
+                    else:
+                        self.middleware.call_sync(
+                            'jbof.update', config['id'], {'mgmt_ip2': added_ip}
+                        )
+            else:
+                # IPs did not change, still want to test connectivity
+                for ip in config_mgmt_ips:
+                    if ip in old_iom_mgmt_ips:
+                        if not RedfishClient.is_redfish(ip):
+                            raise CallError(f'Unable to access redfish IP {ip}')
+        except Exception as e:
+            self.logger.error(f'Unable to modify mgmt ip for {iom}/{ethindex}', exc_info=True)
+            try:
+                redfish.post(uri, data=olddata)
+            except Exception:
+                self.logger.error(f'Unable to restore original mgmt ip for {iom}/{ethindex}', exc_info=True)
+            raise e
 
     @private
     async def next_index(self):
