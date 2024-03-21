@@ -360,29 +360,29 @@ class JBOFService(CRUDService):
 
         newdata = {}
         olddata = {}
-        if 'dhcp' in data:
-            newdata.update({'DHCPv4': {'DHCPEnabled': data['dhcp']}})
+        if dhcp := data.get('dhcp') is not None:
+            newdata.update({'DHCPv4': {'DHCPEnabled': dhcp}})
             olddata.update({'DHCPv4': orig_net_config['DHCPv4']})
-        if 'fqdn' in data:
-            newdata.update({'FQDN': data['fqdn']})
+        if fqdn := data.get('fqdn') is not None:
+            newdata.update({'FQDN': fqdn})
             olddata.update({'FQDN': orig_net_config['FQDN']})
-        if 'hostname' in data:
-            newdata.update({'HostName': data['hostname']})
+        if hostname := data.get('hostname') is not None:
+            newdata.update({'HostName': hostname})
             olddata.update({'HostName': orig_net_config['HostName']})
-        if 'ipv4_static_addresses' in data and data['ipv4_static_addresses'] is not None:
+        if ipv4_static_addresses := data.get('ipv4_static_addresses') is not None:
             newitems = []
-            for item in data['ipv4_static_addresses']:
+            for item in ipv4_static_addresses:
                 newitems.append({'Address': item['address'], 'Gateway': item['gateway'], 'SubnetMask': item['netmask']})
             newdata.update({'IPv4StaticAddresses': newitems})
             olddata.update({'IPv4StaticAddresses': orig_net_config['IPv4StaticAddresses']})
-        if 'ipv6_static_addresses' in data and data['ipv6_static_addresses'] is not None:
+        if ipv6_static_addresses := data.get('ipv6_static_addresses') is not None:
             newitems = []
-            for item in data['ipv6_static_addresses']:
+            for item in ipv6_static_addresses:
                 newitems.append({'Address': item['address'], 'PrefixLength': item['prefixlen']})
             newdata.update({'IPv6StaticAddresses': newitems})
             olddata.update({'IPv6StaticAddresses': orig_net_config['IPv6StaticAddresses']})
-        if 'nameservers' in data and data['nameservers'] is not None:
-            newdata.update({'NameServers': data['nameservers']})
+        if nameservers := data.get('nameservers') is not None:
+            newdata.update({'NameServers': nameservers})
             olddata.update({'NameServers': orig_net_config['NameServers']})
 
         try:
@@ -394,7 +394,7 @@ class JBOFService(CRUDService):
             new_iom_mgmt_ips = set(redfish.iom_mgmt_ips(iom))
             if old_iom_mgmt_ips != new_iom_mgmt_ips:
                 # IPs have changed.
-                # 1. Was the IP that changed on of the stored mgmt_ips
+                # 1. Was the IP that changed on one of the stored mgmt_ips
                 for removed_ip in old_iom_mgmt_ips - new_iom_mgmt_ips:
                     if removed_ip in config_mgmt_ips:
                         removed_active = True
@@ -408,13 +408,13 @@ class JBOFService(CRUDService):
                         raise CallError(f'Unable to access redfish IP on {iom}')
                     # Update the config to reflect the new IP
                     if removed_ip == config['mgmt_ip1']:
-                        self.middleware.call_sync('jbof.update',
-                                                  config['id'],
-                                                  {'mgmt_ip1': added_ip})
+                        self.middleware.call_sync(
+                            'jbof.update', config['id'], {'mgmt_ip1': added_ip}
+                        )
                     else:
-                        self.middleware.call_sync('jbof.update',
-                                                  config['id'],
-                                                  {'mgmt_ip2': added_ip})
+                        self.middleware.call_sync(
+                            'jbof.update', config['id'], {'mgmt_ip2': added_ip}
+                        )
             else:
                 # IPs did not change, still want to test connectivity
                 for ip in config_mgmt_ips:
