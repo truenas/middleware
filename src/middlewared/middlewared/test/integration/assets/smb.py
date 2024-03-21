@@ -7,7 +7,6 @@ import sys
 
 from base64 import b64encode, b64decode
 from middlewared.test.integration.utils import call, ssh
-from time import sleep
 
 try:
     apifolder = os.getcwd()
