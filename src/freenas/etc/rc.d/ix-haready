@@ -14,7 +14,7 @@
 
 . /etc/rc.subr
 
-name="ix-haready"
+name="ix_haready"
 start_cmd='haready_start'
 stop_cmd='haready_stop'
 
