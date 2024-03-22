@@ -16,7 +16,7 @@ do_shutdown()
 	/usr/local/bin/midclt call -job initshutdownscript.execute_init_tasks SHUTDOWN > /dev/null 2>&1
 }
 
-name="ix-shutdown"
+name="ix_shutdown"
 start_cmd=':'
 stop_cmd='do_shutdown'
 

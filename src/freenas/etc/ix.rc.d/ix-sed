@@ -20,7 +20,7 @@ unlock_drives()
 	fi
 }
 
-name="ix-sed"
+name="ix_sed"
 start_cmd='unlock_drives'
 stop_cmd=':'
 
