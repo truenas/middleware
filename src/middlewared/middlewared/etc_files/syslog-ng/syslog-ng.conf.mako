@@ -147,6 +147,11 @@ log {
   filter(f_app_mounts);
   destination { file("/var/log/app_mounts.log"); };
 };
+log {
+  source(s_src);
+  filter(f_scst);
+  destination { file("/var/log/scst.log"); };
+};
 
 % if render_ctx['system.advanced.config']['syslogserver']:
 ${generate_syslog_remote_destination(render_ctx['system.advanced.config'])}

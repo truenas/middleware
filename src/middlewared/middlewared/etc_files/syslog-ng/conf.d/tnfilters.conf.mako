@@ -49,6 +49,16 @@ filter f_app_mounts {
 filter f_nfs_mountd {
   program("rpc.mountd") and level(debug..notice);
 };
+filter f_scst {
+  program("iscsi-scstd") or
+  program("scst") or
+  program("dlm") or
+  program("kernel") and match("scst:" value("MESSAGE")); or
+  program("kernel") and match("iscsi-scst:" value("MESSAGE")); or
+  program("kernel") and match("dev_vdisk:" value("MESSAGE")); or
+  program("kernel") and match("dev_disk:" value("MESSAGE")); or
+  program("kernel") and match("dlm:" value("MESSAGE"));
+};
 
 filter f_truenas_exclude {
 % if not nfs_conf['mountd_log']:
@@ -58,7 +68,8 @@ filter f_truenas_exclude {
   not filter(f_k3s) and
   not filter(f_containerd) and
   not filter(f_kube_router) and
-  not filter(f_app_mounts)
+  not filter(f_app_mounts) and
+  not filter(f_scst)
 };
 
 #####################
@@ -96,7 +107,7 @@ filter f_daemon {
 };
 
 filter f_kern {
-  facility(kern) and not filter(f_dbg);
+  facility(kern) and not filter(f_dbg) and not filter(f_scst);
 };
 
 
