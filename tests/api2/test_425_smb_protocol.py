@@ -16,7 +16,7 @@ from auto_config import (
     password,
 )
 from middlewared.test.integration.assets.account import user as create_user
-from middlewared.test.integration.assets.smb import smb_share
+from middlewared.test.integration.assets.smb import copy_stream, get_stream, smb_share, smb_mount
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 from pytest_dependency import depends
@@ -105,6 +105,12 @@ def initialize_for_smb_tests(request):
                         'aapl_extensions': False
                     })
                     call('service.stop', 'cifs')
+
+
+@pytest.fixture(scope='module')
+def mount_share():
+    with smb_mount(TEST_DATA['share']['name'], SMB_USER, SMB_PWD) as mp:
+        yield {'mountpoint': mp}
 
 
 @pytest.mark.dependency(name="SMB_SHARE_CREATED")
@@ -256,7 +262,7 @@ def test_060_create_base_file_for_streams_tests(request):
 
 
 @pytest.mark.dependency(name="STREAM_WRITTEN_SMB2")
-def test_061_create_and_write_stream_smb2(request):
+def test_061_create_and_write_stream_smb2(request, mount_share):
     """
     Create our initial stream and write to it over SMB2/3 protocol.
     Start with offset 0.
@@ -275,35 +281,95 @@ def test_061_create_and_write_stream_smb2(request):
     fd3 = c.create_file("streamstestfile:smb2_stream", "w")
     contents = c.read(fd3, 0, 5)
     c.close(fd3)
+    kcontent1 = get_stream('streamstestfile', 'smb2_stream')
 
     fd4 = c.create_file("streamstestdir:smb2_stream", "w")
     contents2 = c.read(fd4, 0, 5)
     c.close(fd4)
+    kcontent2 = get_stream('streamstestdir', 'smb2_stream')
 
     c.rmdir("streamstestdir")
     c.disconnect()
     assert (contents.decode() == "test1")
     assert (contents2.decode() == "test2")
 
+    # Remove samba compatibility NULL byte
+    assert kcontent1[:-1].decode() == 'test1'
+    assert kcontent2[:-1].decode() == 'test2'
+
 
 @pytest.mark.dependency(name="LARGE_STREAM_WRITTEN_SMB2")
-def test_062_write_stream_large_offset_smb2(request):
+def test_062_write_stream_large_offset_smb2(request, mount_share):
     """
     Append to our existing stream over SMB2/3 protocol. Specify an offset that will
     cause resuling xattr to exceed 64KiB default xattr size limit in Linux.
     """
     depends(request, ["STREAM_TESTFILE_CREATED"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
-    fd = c.create_file("streamstestfile:smb2_stream", "w")
-    c.write(fd, b'test2', 131072)
-    c.close(fd)
+    with smb_connection(
+        host=ip,
+        share=SMB_NAME,
+        username=SMB_USER,
+        password=SMB_PWD,
+        smb1=False
+    ) as c:
+        fd = c.create_file("streamstestfile:smb2_stream", "w")
+        try:
+            c.write(fd, b'test2', 131072)
+        finally:
+            c.close(fd)
 
-    fd2 = c.create_file("streamstestfile:smb2_stream", "w")
-    contents = c.read(fd2, 131072, 5)
-    c.close(fd2)
-    c.disconnect()
-    assert (contents.decode() == "test2")
+        fd2 = c.create_file("streamstestfile:smb2_stream", "w")
+        try:
+            contents = c.read(fd2, 131072, 5)
+        finally:
+            c.close(fd2)
+
+        kcontent = get_stream('streamstestfile', 'smb2_stream')
+
+        assert (contents.decode() == "test2")
+
+        # Verify that reading a large stream functions correctly
+        assert len(kcontent) == 131072 + 5 + 1
+
+        # Remove samba compatibility NULL byte
+        assert kcontent[131072:-1].decode() == 'test2'
+
+        # Verify that SMB server rejects too-large stream write
+        fd = c.create_file("streamstestfile:smb2_stream", "w")
+        try:
+            with pytest.raises(NTSTATUSError) as e:
+                c.write(fd, b'test2', 2097152)
+
+            assert e.value.args[0] == ntstatus.NT_STATUS_FILE_SYSTEM_LIMITATION
+        finally:
+            c.close(fd)
+
+        # Verify that SMB server allows _very_ large write
+        fd = c.create_file("streamstestfile:smb2_stream", "w")
+        try:
+            # We have to an extra byte for that nul at end of xattr
+            offset = 2097152 - (len(b"test2") + 1)
+            c.write(fd, b"test2", offset)
+            contents = c.read(fd, offset, 5)
+            assert contents.decode() == "test2"
+        finally:
+            c.close(fd)
+
+        copy_stream('streamstestfile', 'smb2_stream', 'smb2_stream2')
+
+        fd = c.create_file("streamstestfile:smb2_stream", "r")
+        try:
+            contents_stream1 = c.read(fd, 0, 2097152)
+        finally:
+            c.close(fd)
+
+        fd = c.create_file("streamstestfile:smb2_stream2", "r")
+        try:
+            contents_stream2 = c.read(fd, 0, 2097152)
+        finally:
+            c.close(fd)
+
+        assert contents_stream1 == contents_stream2
 
 
 def test_063_stream_delete_on_close_smb2(request):
@@ -582,28 +648,36 @@ def test_151_set_xattr_via_ssh(request, xat):
 
 @pytest.mark.dependency(name="XATTR_CHECK_SMB_READ")
 @pytest.mark.parametrize('xat', AFPXattr.keys())
-def test_152_check_xattr_via_smb(request, xat):
+def test_152_check_xattr_via_smb(request, mount_share, xat):
     """
     Read xattr that was written via SSH and verify that
     data is same when viewed over SMB.
     """
     depends(request, ["SSH_XATTR_SET"])
     afptestfile = f'afp_xattr_testfile:{AFPXattr[xat]["smbname"]}'
-    bytes = AFPXattr[xat]["smb_bytes"] if xat == "org.netatalk.Metadata" else AFPXattr[xat]["bytes"]
+    bytes_to_read = AFPXattr[xat]["smb_bytes"] if xat == "org.netatalk.Metadata" else AFPXattr[xat]["bytes"]
     c = SMB()
     c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     fd = c.create_file(afptestfile, "w")
-    xat_bytes = c.read(fd, 0, len(bytes) + 1)
+    xat_bytes = c.read(fd, 0, len(bytes_to_read) + 1)
     c.close(fd)
     c.disconnect()
 
     err = {
         "name": xat,
-        "b64data": b64encode(bytes)
+        "b64data": b64encode(xat_bytes)
     }
 
     # Python base64 library appends a `\t` to end of byte string
-    assert xat_bytes == bytes, str(err)
+    assert xat_bytes == bytes_to_read, str(err)
+
+    # Check via kernel client.
+    kcontent = get_stream('afp_xattr_testfile', AFPXattr[xat]['smbname'])
+    err = {
+        "name": xat,
+        "b64data": b64encode(kcontent[:-1])
+    }
+    assert kcontent[:-1] == bytes_to_read, str(err)
 
 
 @pytest.mark.dependency(name="XATTR_CHECK_SMB_UNLINK")
