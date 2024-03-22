@@ -147,8 +147,6 @@ class SystemService(Service):
 
     @staticmethod
     def _get_license():
-        # NOTE: this is called in truenas/migrate113 repo so before you remove/rename
-        # this method, be sure and account for it over there
         try:
             with open(LICENSE_FILE) as f:
                 licenseobj = License.load(f.read().strip('\n'))
@@ -206,8 +204,9 @@ class SystemService(Service):
         except Exception:
             raise ValidationError('system.license', 'This is not a valid license.')
         else:
-            if not self.middleware.call_sync('system.is_ha_capable'):
-                raise ValidationError('system.license', 'This is not a HA capable system.')
+            if dser_license.system_serial_ha:
+                if not self.middleware.call_sync('system.is_ha_capable'):
+                    raise ValidationError('system.license', 'This is not an HA capable system.')
 
         prev_product_type = self.middleware.call_sync('system.product_type')
         with open(LICENSE_FILE, 'w+') as f:
