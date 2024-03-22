@@ -4,7 +4,8 @@ import pytest
 from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import (
-    del_stream, get_stream, list_stream, set_stream, smb_share, smb_mount
+    del_stream, get_stream, list_stream, set_stream, set_xattr_compat,
+    smb_share, smb_mount
 )
 from middlewared.test.integration.utils import call, client, ssh
 
@@ -190,22 +191,32 @@ def test_acl_share_flags(request, mount_share, flagset):
     compare_acls(mount_share['share']['path'], mount_share['mountpoint'])
 
 
-def do_stream_ops(fname):
+def do_stream_ops(fname, samba_compat):
+    set_xattr_compat(samba_compat)
+
     assert list_stream(fname) == []
 
+    data_to_write = b'canary'
+    if samba_compat:
+        data_to_write += b'\x00'
+
     # test basic get / set
-    set_stream(fname, 'teststream', b'canary')
+    set_stream(fname, 'teststream', data_to_write)
 
     assert list_stream(fname) == ['teststream']
 
     xat_data = get_stream(fname, 'teststream')
-    assert xat_data == b'canary'
+    assert xat_data == data_to_write
+
+    data_to_write = b'can'
+    if samba_compat:
+        data_to_write += b'\x00'
 
     # test that stream is appropriately truncated
-    set_stream(fname, 'teststream', b'can')
+    set_stream(fname, 'teststream', data_to_write)
 
     xat_data = get_stream(fname, 'teststream')
-    assert xat_data == b'can'
+    assert xat_data == data_to_write
 
     # test that stream can be deleted
     del_stream(fname, 'teststream')
@@ -213,17 +224,20 @@ def do_stream_ops(fname):
     assert list_stream(fname) == []
 
 
-def test_get_set_del_stream_on_dir(request, mount_share):
+@pytest.mark.parametrize("is_dir", [True, False])
+@pytest.mark.parametrize("samba_compat", [True, False])
+def test_get_set_del_stream(request, mount_share, is_dir, samba_compat):
     assert call('filesystem.statfs', mount_share['mountpoint'])['fstype'] == 'cifs'
-    dirname = os.path.join(mount_share['share']['path'], 'testdirstream')
-    call('filesystem.mkdir', {'path': dirname, 'options': {'raise_chmod_error': False}})
+    if is_dir:
+        fname = os.path.join(mount_share['mountpoint'], 'testdirstream')
+        call('filesystem.mkdir', {'path': fname, 'options': {'raise_chmod_error': False}})
+        cleanup = f'rmdir {fname}'
+    else:
+        fname = os.path.join(mount_share['mountpoint'], 'testfilestream')
+        ssh(f'touch {fname}')
+        cleanup = f'rm {fname}'
 
-    do_stream_ops(dirname)
-
-
-def test_get_set_del_stream_on_file(request, mount_share):
-    assert call('filesystem.statfs', mount_share['mountpoint'])['fstype'] == 'cifs'
-    filename = os.path.join(mount_share['share']['path'], 'testfilestream')
-    ssh(f'touch {filename}')
-
-    do_stream_ops(filename)
+    try:
+        do_stream_ops(fname, samba_compat)
+    finally:
+        ssh(cleanup)

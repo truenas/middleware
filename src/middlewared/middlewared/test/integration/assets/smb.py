@@ -17,11 +17,20 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["copy_stream", "list_stream", "get_stream", "set_stream", "smb_share", "smb_mount"]
+__all__ = [
+    "copy_stream",
+    "list_stream",
+    "get_stream",
+    "set_stream",
+    "set_xattr_compat",
+    "smb_share",
+    "smb_mount"
+]
 
 STREAM_PREFIX = 'user.DosStream.'
 STREAM_SUFFIX = ':$DATA'
 STREAM_SUFFIX_ESC = ':\\$DATA'
+SAMBA_COMPAT = '/proc/fs/cifs/stream_samba_compat'
 
 
 @contextlib.contextmanager
@@ -59,7 +68,35 @@ def smb_mount(share, username, password, local_path='/mnt/cifs', options=None, i
         ssh(f'umount {escaped_path}; rmdir {local_path}')
 
 
-def copy_stream(filename, xat_name_from, xat_name_to, mountpoint='/mnt/cifs'):
+def set_xattr_compat(enable_status: bool) -> None:
+    """
+    Enable / disable samba compatibility byte for SMB client. See
+    SMB client implementation notes.
+
+    NOTE: this requires that at least one SMB share be mounted.
+    """
+    assert isinstance(enable_status, bool)
+    val = 1 if enable_status is True else 0
+
+    ssh(f'echo {val} > {SAMBA_COMPAT}')
+    res = ssh(f'cat {SAMBA_COMPAT}')
+
+    assert val == int(res.strip())
+
+
+def copy_stream(
+    filename: str,
+    xat_name_from: str,
+    xat_name_to: str,
+    mountpoint='/mnt/cifs'
+) -> None:
+    """
+    Duplicate one stream to another stream on the same file.
+    This is used to validate that xattr handler works properly
+    for large xattrs.
+
+    NOTE: requires existing SMB client mount at `mountpoint`.
+    """
     assert call('filesystem.statfs', mountpoint)['fstype'] == 'cifs'
     local_path = os.path.join(mountpoint, filename)
 
@@ -73,7 +110,17 @@ def copy_stream(filename, xat_name_from, xat_name_to, mountpoint='/mnt/cifs'):
     assert results['result'], f'cmd: {cmd}, result: {results["stderr"]}'
 
 
-def del_stream(filename, xat_name, mountpoint='/mnt/cifs'):
+def del_stream(
+    filename: str,
+    xat_name: str,
+    mountpoint='/mnt/cifs'
+) -> None:
+    """
+    Delete the alternate data stream with name `xat_name` from
+    the specified file.
+
+    NOTE: requires existing SMB client mount at `mountpoint`.
+    """
     assert call('filesystem.statfs', mountpoint)['fstype'] == 'cifs'
     local_path = os.path.join(mountpoint, filename)
     xat_name = f'{STREAM_PREFIX}{xat_name}{STREAM_SUFFIX_ESC}'
@@ -83,7 +130,16 @@ def del_stream(filename, xat_name, mountpoint='/mnt/cifs'):
     assert results['result'], f'cmd: {cmd}, result: {results["stderr"]}'
 
 
-def list_stream(filename, mountpoint='/mnt/cifs'):
+def list_stream(
+    filename: str,
+    mountpoint='/mnt/cifs'
+) -> list:
+    """
+    Return list of alternate data streams contained by the specified
+    file. Stream prefix and suffix will be stripped from return.
+
+    NOTE: requires existing SMB client mount at `mountpoint`.
+    """
     assert call('filesystem.statfs', mountpoint)['fstype'] == 'cifs'
     local_path = os.path.join(mountpoint, filename)
 
@@ -108,12 +164,18 @@ def list_stream(filename, mountpoint='/mnt/cifs'):
     return streams
 
 
-def get_stream(filename, xat_name, mountpoint='/mnt/cifs'):
+def get_stream(
+    filename: str,
+    xat_name: str,
+    mountpoint='/mnt/cifs'
+) -> bytes:
     """
     Retrieve binary data for an alternate data stream via the xattr handler on
     a SMB client mount via the remote TrueNAS server. The python script below uses
     the samba wrapper around getxattr due to limitations in os.getxattr regarding
     maximum xattr size.
+
+    NOTE: requires existing SMB client mount at `mountpoint`.
     """
     assert call('filesystem.statfs', mountpoint)['fstype'] == 'cifs'
     local_path = os.path.join(mountpoint, filename)
@@ -126,12 +188,19 @@ def get_stream(filename, xat_name, mountpoint='/mnt/cifs'):
     return b64decode(results['stdout'])
 
 
-def set_stream(filename, xat_name, data, mountpoint='/mnt/cifs'):
+def set_stream(
+    filename: str,
+    xat_name: str,
+    data: bytes,
+    mountpoint='/mnt/cifs'
+) -> None:
     """
     Write binary data for an alternate data stream via the xattr handler on
     a SMB client mount via the remote TrueNAS server. The python script below uses
     the samba wrapper around setxattr due to limitations in os.setxattr regarding
     maximum xattr size.
+
+    NOTE: requires existing SMB client mount at `mountpoint`.
     """
     assert call('filesystem.statfs', mountpoint)['fstype'] == 'cifs'
     b64data = b64encode(data).decode()
