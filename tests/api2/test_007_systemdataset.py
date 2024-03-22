@@ -6,7 +6,7 @@ import os
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET, PUT, SSH_TEST, wait_on_job
+from functions import fail, POST, GET, PUT, SSH_TEST, wait_on_job
 from auto_config import ha, dev_test, hostname, user, password
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
@@ -121,7 +121,9 @@ def test_05_verify_the_first_pool_created_become_sysds(request, pool_data):
     assert results.status_code == 200, results.text
     job_id = results.json()
     job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    if job_status['state'] != SUCCESS:
+        fail(f'Failed to create first pool: {job_status["state"]}: {job_status["results"]}')
+
     pool_data['first_pool'] = job_status['results']['result']
 
     results = GET("/systemdataset/")

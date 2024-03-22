@@ -10,7 +10,7 @@ from time import sleep
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, is_agent_setup, if_key_listed, SSH_TEST
+from functions import fail, PUT, POST, GET, is_agent_setup, if_key_listed, SSH_TEST
 from auto_config import sshKey, user, password, ha
 
 if "controller1_ip" in os.environ:
@@ -52,7 +52,8 @@ def test_05_Checking_if_ssh_is_running():
 def test_06_test_ssh():
     cmd = 'ls -la'
     results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    if not results['result']:
+        fail(f'Failed to set up SSH output: {results["output"]}, err: {results["stderr"]}')
 
 
 def test_07_Ensure_ssh_agent_is_setup():

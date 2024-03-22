@@ -10,7 +10,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import ha, interface, user, password
-from functions import GET, PUT, SSH_TEST
+from functions import fail, GET, PUT, SSH_TEST
 
 # Only run HA test on HA and vice versa
 if ha and "domain" in os.environ:
@@ -61,7 +61,9 @@ else:
         for num, nameserver in enumerate(nameservers, start=1):
             payload[f'nameserver{num}'] = nameserver
         results = PUT("/network/configuration/", payload)
-        assert results.status_code == 200, results.text
+        if results.status_code != 200:
+            fail(f'Network setup failed with config {payload}: {results.text}')
+
         assert isinstance(results.json(), dict), results.text
 
     @pytest.mark.parametrize('dkeys', ["domain", "hostname", "ipv4gateway", "nameserver1"])
