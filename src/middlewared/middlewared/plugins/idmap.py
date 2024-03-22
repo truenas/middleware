@@ -1200,6 +1200,7 @@ class IdmapDomainService(CRUDService):
             'sshpubkey': None,
             'local': False,
             'id_type_both': idmap_info[1],
+            'smb': True,
             'sid': sid
         }
 
@@ -1223,6 +1224,7 @@ class IdmapDomainService(CRUDService):
             'users': [],
             'local': False,
             'id_type_both': idmap_info[1],
+            'smb': True,
             'sid': sid
         }
 
