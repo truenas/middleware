@@ -357,6 +357,20 @@ def test_062_write_stream_large_offset_smb2(request, mount_share):
 
         copy_stream('streamstestfile', 'smb2_stream', 'smb2_stream2')
 
+        fd = c.create_file("streamstestfile:smb2_stream", "r")
+        try:
+            contents_stream1 = c.read(fd, 0, 2097152)
+        finally:
+            c.close(fd)
+
+        fd = c.create_file("streamstestfile:smb2_stream2", "r")
+        try:
+            contents_stream2 = c.read(fd, 0, 2097152)
+        finally:
+            c.close(fd)
+
+        assert contents_stream1 == contents_stream2
+
 
 def test_063_stream_delete_on_close_smb2(request):
     """
@@ -651,11 +665,11 @@ def test_152_check_xattr_via_smb(request, mount_share, xat):
 
     err = {
         "name": xat,
-        "b64data": b64encode(bytes_to_read)
+        "b64data": b64encode(xat_bytes)
     }
 
     # Python base64 library appends a `\t` to end of byte string
-    assert xat_bytes == bytes, str(err)
+    assert xat_bytes == bytes_to_read, str(err)
 
     # Check via kernel client.
     kcontent = get_stream('afp_xattr_testfile', AFPXattr[xat]['smbname'])
