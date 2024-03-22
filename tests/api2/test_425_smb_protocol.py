@@ -663,7 +663,7 @@ def test_152_check_xattr_via_smb(request, mount_share, xat):
         "name": xat,
         "b64data": b64encode(kcontent[:-1])
     }
-    assert xat_bytes == bytes, str(err)
+    assert kcontent == bytes, str(err)
 
 
 @pytest.mark.dependency(name="XATTR_CHECK_SMB_UNLINK")
