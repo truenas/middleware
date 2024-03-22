@@ -44,6 +44,8 @@ def test_02_wipe_all_pool_disk():
         job_id = results.json()
         job_status = wait_on_job(job_id, 180)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+        if job_status['state'] != 'SUCCESS':
+            fail(f'{disk}: failed to wipe disk: {job_status["state"]}: {job_status["results"]}')
 
 
 @pytest.mark.dependency(name="pool_04")
@@ -65,7 +67,7 @@ def test_04_creating_a_pool(pool_data):
     job_id = results.json()
     job_status = wait_on_job(job_id, 180)
     if job_status['state'] != 'SUCCESS':
-        fail(f'Failed to create first pool: {job_status["results"]}')
+        fail(f'Failed to create first pool: {job_status["state"]}: {job_status["results"]}')
 
     pool_data['id'] = job_status['results']['result']['id']
 
