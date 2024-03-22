@@ -6,7 +6,7 @@ import os
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET, wait_on_job
+from functions import fail, POST, GET, wait_on_job
 from auto_config import pool_name, ha
 
 IMAGES = {}
@@ -59,10 +59,14 @@ def test_04_creating_a_pool(pool_data):
         }
     }
     results = POST("/pool/", payload)
-    assert results.status_code == 200, results.text
+    if results.status_code != 200:
+        fail(f'Failed to start job to create first pool: {results.text}')
+
     job_id = results.json()
     job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    if job_status['state'] != 'SUCCESS':
+        fail(f'Failed to create first pool: {job_status["results"]}')
+
     pool_data['id'] = job_status['results']['result']['id']
 
 
