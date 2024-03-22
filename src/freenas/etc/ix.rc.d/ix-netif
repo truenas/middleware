@@ -236,7 +236,7 @@ netif_start()
 	fi
 }
 
-name="ix-netif"
+name="ix_netif"
 start_cmd='netif_start'
 stop_cmd=':'
 status_cmd=':'

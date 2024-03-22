@@ -54,7 +54,7 @@ q
 EOF
 }
 
-name="ix-bsdloader"
+name="ix_bsdloader"
 start_cmd='migrate_bsd_loader'
 stop_cmd=':'
 

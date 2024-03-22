@@ -163,7 +163,7 @@ db_update()
 	reboot
 }
 
-name="ix-update"
+name="ix_update"
 start_cmd='db_update'
 stop_cmd=':'
 

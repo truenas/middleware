@@ -17,7 +17,7 @@ syncmultipaths()
 	fi
 }
 
-name="ix-syncmultipaths"
+name="ix_syncmultipaths"
 start_cmd='syncmultipaths'
 stop_cmd=''
 

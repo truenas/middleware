@@ -20,7 +20,7 @@ generate_nsswitch_stop()
 	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate nss > /dev/null
 }
 
-name="ix-nsswitch"
+name="ix_nsswitch"
 start_cmd='generate_nsswitch_start'
 stop_cmd='generate_nsswitch_stop'
 

@@ -44,7 +44,7 @@ generate_etc()
 	killall -ALRM sh
 }
 
-name="ix-etc"
+name="ix_etc"
 start_cmd='generate_etc'
 stop_cmd=':'
 

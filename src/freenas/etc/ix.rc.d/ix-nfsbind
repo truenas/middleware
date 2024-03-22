@@ -16,7 +16,7 @@ nfs_bindip() {
 	/usr/local/bin/midclt call etc.generate rc > /dev/null
 }
 
-name="ix-nfsbind"
+name="ix_nfsbind"
 start_cmd='nfs_bindip'
 stop_cmd=':'
 

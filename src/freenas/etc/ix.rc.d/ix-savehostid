@@ -24,7 +24,7 @@ ix_save_hostid()
 	fi
 }
 
-name="ix-savehostid"
+name="ix_savehostid"
 start_cmd='ix_save_hostid'
 stop_cmd=':'
 

@@ -30,7 +30,7 @@ kerberos_renew()
 	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call kerberos.renew > /dev/null
 }
 
-name="ix-kinit"
+name="ix_kinit"
 start_cmd='kerberos_start'
 status_cmd='kerberos_status'
 stop_cmd='kerberos_stop'

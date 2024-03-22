@@ -18,7 +18,7 @@ if sysctl dev.cxl > /dev/null 2>&1 ; then
 fi
 }
 
-name="ix-chelsio"
+name="ix_chelsio"
 start_cmd='set_sysctl'
 stop_cmd=':'
 
