@@ -14,7 +14,7 @@ do_postinit()
 	/usr/local/bin/midclt call -job initshutdownscript.execute_init_tasks POSTINIT > /dev/null 2>&1
 }
 
-name="ix-postinit"
+name="ix_postinit"
 start_cmd='do_postinit'
 stop_cmd=':'
 

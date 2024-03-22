@@ -8,7 +8,7 @@
 
 . /etc/rc.freenas
 
-name="ix-update-scripts"
+name="ix_update_scripts"
 start_cmd="update_scripts"
 stop_cmd=":"
 status_cmd=":"
