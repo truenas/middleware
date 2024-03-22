@@ -280,6 +280,8 @@ def test_07_enable_leave_activedirectory(request):
         assert res['result'][0]['ds_groups'][0]['sid'].endswith('512')
         assert res['result'][0]['allowlist'][0] == {'method': '*', 'resource': '*'}
 
+        assert call('directoryservices.secrets_has_domain', 'AD02')
+
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
@@ -299,6 +301,8 @@ def test_07_enable_leave_activedirectory(request):
     error = res.get('error')
     assert error is None, str(error)
     assert len(res['result']) == 0, str(res['result'])
+
+    assert call('directoryservices.secrets_has_domain', 'AD02') is False
 
 
 def test_08_activedirectory_smb_ops(request):
