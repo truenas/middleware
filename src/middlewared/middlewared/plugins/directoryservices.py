@@ -359,6 +359,7 @@ class DirectoryServices(Service):
         on it. It's better to just do a quick lookup of the
         single value.
         """
+        ha_mode = self.middleware.call_sync('smb.get_smb_ha_mode')
         with DirectorySecrets(logger=self.logger, ha_mode=ha_mode) as s:
             rv = s.has_domain(domain)
 
