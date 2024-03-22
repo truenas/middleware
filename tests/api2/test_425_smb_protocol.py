@@ -641,17 +641,17 @@ def test_152_check_xattr_via_smb(request, mount_share, xat):
     """
     depends(request, ["SSH_XATTR_SET"])
     afptestfile = f'afp_xattr_testfile:{AFPXattr[xat]["smbname"]}'
-    bytes = AFPXattr[xat]["smb_bytes"] if xat == "org.netatalk.Metadata" else AFPXattr[xat]["bytes"]
+    bytes_to_read = AFPXattr[xat]["smb_bytes"] if xat == "org.netatalk.Metadata" else AFPXattr[xat]["bytes"]
     c = SMB()
     c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     fd = c.create_file(afptestfile, "w")
-    xat_bytes = c.read(fd, 0, len(bytes) + 1)
+    xat_bytes = c.read(fd, 0, len(bytes_to_read) + 1)
     c.close(fd)
     c.disconnect()
 
     err = {
         "name": xat,
-        "b64data": b64encode(bytes)
+        "b64data": b64encode(bytes_to_read)
     }
 
     # Python base64 library appends a `\t` to end of byte string
@@ -663,7 +663,7 @@ def test_152_check_xattr_via_smb(request, mount_share, xat):
         "name": xat,
         "b64data": b64encode(kcontent[:-1])
     }
-    assert kcontent == bytes, str(err)
+    assert kcontent[:-1] == bytes_to_read, str(err)
 
 
 @pytest.mark.dependency(name="XATTR_CHECK_SMB_UNLINK")
