@@ -28,6 +28,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, run, MIDDLEWARE_RUN_DIR
 from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
+from middlewared.utils.privilege import credential_has_full_admin
 
 NETIF_COMPLETE_SENTINEL = f"{MIDDLEWARE_RUN_DIR}/ix-netif-complete"
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
@@ -762,7 +763,8 @@ class SMBService(ConfigService):
         Str('smb_options', max_length=None),
         update=True,
     ))
-    async def do_update(self, data):
+    @pass_app(rest=True)
+    async def do_update(self, app, data):
         """
         Update SMB Service Configuration.
 
@@ -810,6 +812,14 @@ class SMBService(ConfigService):
                                 'This parameter may not be changed after joining Active Directory (AD). '
                                 'If it must be changed, the proper procedure is to leave the AD domain '
                                 'and then alter the parameter before re-joining the domain.')
+
+        if app and not credential_has_full_admin(app->authenticated_user):
+            if old['smb_options'] != new['smb_options']:
+                verrors.add(
+                    'smb_update.smb_options',
+                    'Changes to auxiliary parameters for the SMB service are restricted '
+                    'to users with full administrative privileges.'
+                )
 
         await self.validate_smb(new, verrors)
         verrors.check()
@@ -953,7 +963,8 @@ class SharingSMBService(SharingService):
             register=True
         )
     )
-    async def do_create(self, data):
+    @pass_app(rest=True)
+    async def do_create(self, app, data):
         """
         Create a SMB Share.
 
@@ -998,6 +1009,14 @@ class SharingSMBService(SharingService):
 
         verrors = ValidationErrors()
 
+        if app and not credential_has_full_admin(app->authenticated_user):
+            if data['auxsmbconf']:
+                verrors.add(
+                    'smb_update.smb_options',
+                    'Changes to auxiliary parameters for SMB shares are restricted '
+                    'to users with full administrative privileges.'
+                )
+
         await self.add_path_local(data)
         await self.validate(data, 'sharingsmb_create', verrors)
         await self.apply_presets(data)
@@ -1039,7 +1058,8 @@ class SharingSMBService(SharingService):
             ('attr', {'update': True})
         )
     )
-    async def do_update(self, id_, data):
+    @pass_app(rest=True)
+    async def do_update(self, app, id_, data):
         """
         Update SMB Share of `id`.
         """
@@ -1063,6 +1083,14 @@ class SharingSMBService(SharingService):
         await self.validate(new, 'sharingsmb_update', verrors, old=old)
         await self.legacy_afp_check(new, 'sharingsmb_update', verrors)
         check_mdns = False
+
+        if app and not credential_has_full_admin(app->authenticated_user):
+            if old['auxsmbconf'] != new['auxsmbconf']:
+                verrors.add(
+                    'smb_update.smb_options',
+                    'Changes to auxiliary parameters for SMB shares are restricted '
+                    'to users with full administrative privileges.'
+                )
 
         verrors.check()
 
