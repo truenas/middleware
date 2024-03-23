@@ -18,7 +18,7 @@ from middlewared.schema import Path as SchemaPath
 # List schema defaults to [], supplying NOT_PROVIDED avoids having audit update that
 # defaults for ignore_list or watch_list from overrwriting previous value
 from middlewared.schema.utils import NOT_PROVIDED
-from middlewared.service import accepts, job, private, SharingService
+from middlewared.service import accepts, job, pass_app, private, SharingService
 from middlewared.service import ConfigService, ValidationErrors, filterable
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
