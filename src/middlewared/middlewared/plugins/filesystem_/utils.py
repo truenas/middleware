@@ -137,7 +137,7 @@ class ACLType(enum.Enum):
                         # doesn't apply to this dir and shouldn't apply to contents.
                         continue
 
-                    # This is a directoy ACL and we have entry that only applies to files.
+                    # This is a directory ACL and we have entry that only applies to files.
                     flags['INHERIT_ONLY'] = True
                 elif flags.get('INHERIT_ONLY', False):
                     flags['INHERIT_ONLY'] = False
