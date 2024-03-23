@@ -813,7 +813,7 @@ class SMBService(ConfigService):
                                 'If it must be changed, the proper procedure is to leave the AD domain '
                                 'and then alter the parameter before re-joining the domain.')
 
-        if app and not credential_has_full_admin(app->authenticated_user):
+        if app and not credential_has_full_admin(app.authenticated_credentials):
             if old['smb_options'] != new['smb_options']:
                 verrors.add(
                     'smb_update.smb_options',
@@ -1009,7 +1009,7 @@ class SharingSMBService(SharingService):
 
         verrors = ValidationErrors()
 
-        if app and not credential_has_full_admin(app->authenticated_user):
+        if app and not credential_has_full_admin(app.authenticated_credentials):
             if data['auxsmbconf']:
                 verrors.add(
                     'smb_update.smb_options',
@@ -1084,7 +1084,7 @@ class SharingSMBService(SharingService):
         await self.legacy_afp_check(new, 'sharingsmb_update', verrors)
         check_mdns = False
 
-        if app and not credential_has_full_admin(app->authenticated_user):
+        if app and not credential_has_full_admin(app.authenticated_credentials):
             if old['auxsmbconf'] != new['auxsmbconf']:
                 verrors.add(
                     'smb_update.smb_options',
