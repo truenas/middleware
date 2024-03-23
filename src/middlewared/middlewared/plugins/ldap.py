@@ -1084,6 +1084,7 @@ class LDAPService(ConfigService):
                 'local': False,
                 'id_type_both': False,
                 'nt_name': None,
+                'smb': True,
                 'sid': None,
             }
             self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'USER', entry)
@@ -1102,6 +1103,7 @@ class LDAPService(ConfigService):
                 'local': False,
                 'id_type_both': False,
                 'nt_name': None,
+                'smb': True,
                 'sid': None,
             }
             self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'GROUP', entry)
