@@ -2,7 +2,7 @@ from middlewared.service import CallError, CRUDService, ValidationErrors
 from middlewared.service import accepts, private, returns
 from middlewared.schema import Bool, Dict, Int, List, Str, Ref, Patch, OROperator
 from middlewared.plugins.smb import SMBBuiltin
-from .acl_base import ACLType
+from .utils import ACLType
 
 import middlewared.sqlalchemy as sa
 import errno

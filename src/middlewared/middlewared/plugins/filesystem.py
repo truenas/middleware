@@ -20,7 +20,7 @@ from middlewared.service import private, CallError, filterable_returns, filterab
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.path import FSLocation, path_location, strip_location_prefix, is_child_realpath
-from middlewared.plugins.filesystem_.acl_base import ACLType
+from middlewared.plugins.filesystem_.utils import ACLType
 from middlewared.plugins.zfs_.utils import ZFSCTL
 
 
