@@ -9,6 +9,8 @@ import os
 import sys
 sys.path.append(os.getcwd())
 
+pytestmark = pytest.mark.zfs
+
 
 def test_empty_for_locked_root_dataset():
     with dataset("test_pool_dataset_snapshot_count") as ds:

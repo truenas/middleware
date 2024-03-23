@@ -11,6 +11,8 @@ from middlewared.test.integration.assets.account import root_with_password_disab
 from middlewared.test.integration.assets.keychain import ssh_keypair
 from middlewared.test.integration.utils import call, client, host, mock, url
 
+pytestmark = pytest.mark.accounts
+
 
 @pytest.fixture(scope="module")
 def admin():

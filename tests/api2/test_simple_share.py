@@ -13,6 +13,7 @@ from middlewared.test.integration.utils import call
 PASSWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
 
 
+@pytest.mark.smb
 def test__smb_simple_share_validation():
     assert call('user.query', [['smb', '=', True]], {'count': True}) == 0
 

@@ -8,6 +8,8 @@ import os
 import sys
 sys.path.append(os.getcwd())
 
+pytestmark = pytest.mark.zfs
+
 
 @pytest.mark.parametrize("id", ["0", "root"])
 @pytest.mark.parametrize("quota_type,error", [

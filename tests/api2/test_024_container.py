@@ -25,6 +25,7 @@ try:
 except ImportError:
     skip_container_image = pytest.mark.skipif(True, reason=container_reason)
 
+pytestmark = pytest.mark.apps
 
 # Read all the test below only on non-HA
 if not ha:

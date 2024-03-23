@@ -15,6 +15,7 @@ from auto_config import user, password, ip
 from middlewared.test.integration.utils import call
 from pytest_dependency import depends
 GroupIdFile = "/tmp/.ixbuild_test_groupid"
+pytestmark = pytest.mark.accounts
 
 
 def test_01_get_next_gid():

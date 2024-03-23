@@ -5,6 +5,7 @@ import pytest
 
 from middlewared.test.integration.utils import call, mock
 
+pytestmark = pytest.mark.disk
 
 
 @pytest.fixture(autouse=True, scope="function")

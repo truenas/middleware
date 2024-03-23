@@ -11,6 +11,8 @@ from auto_config import hostname, ip
 from middlewared.test.integration.assets.directory_service import active_directory, ldap
 from middlewared.test.integration.utils import call
 
+pytestmark = pytest.mark.ds
+
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME
 except ImportError:

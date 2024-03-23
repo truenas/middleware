@@ -12,6 +12,8 @@ sys.path.append(apifolder)
 from functions import PUT
 from auto_config import pool_name, ha
 
+pytestmark = pytest.mark.zfs
+
 
 def test_systemdataset_migrate_error(request):
     """

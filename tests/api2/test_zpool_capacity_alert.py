@@ -3,6 +3,7 @@ from pytest_dependency import depends
 from middlewared.service_exception import CallError
 from middlewared.test.integration.utils import call, mock, pool
 
+pytestmark = [pytest.mark.alerts, pytest.mark.zfs]
 
 
 def test__does_not_emit_alert(request):

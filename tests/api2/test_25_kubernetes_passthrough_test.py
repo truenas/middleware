@@ -15,6 +15,7 @@ import pytest
 
 
 APP_NAME = 'syncthing'
+pytestmark = pytest.mark.apps
 
 
 @pytest.mark.dependency(name='default_kubernetes_cluster')

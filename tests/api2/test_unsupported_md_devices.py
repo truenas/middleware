@@ -12,6 +12,7 @@ from middlewared.test.integration.utils import call, ssh
 
 MD_DEVICE_NAME = 'mddevicetest'
 MD_DEVICE_MIRROR_LENGTH = 2
+pytestmark = pytest.mark.disk
 
 if not ha:
     # HA vms don't have enough disks for this so skip

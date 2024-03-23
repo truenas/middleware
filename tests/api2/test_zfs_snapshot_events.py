@@ -8,6 +8,8 @@ from middlewared.service_exception import InstanceNotFound, ValidationErrors, Va
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import client
 
+pytestmark = pytest.mark.zfs
+
 
 def test_create():
     with dataset("test_snapshot_events_create") as ds:

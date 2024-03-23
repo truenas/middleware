@@ -5,6 +5,7 @@ from middlewared.test.integration.utils import call, mock, ssh
 
 
 PASSPHRASE = "12345678"
+pytestmark = [pytest.mark.vm, pytest.mark.zfs]
 
 
 def encryption_props():

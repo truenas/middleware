@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import pytest
 import os
 import sys
 
@@ -12,6 +12,7 @@ from auto_config import ha
 
 
 if ha:
+    @pytest.mark.disk
     def test_swap_creation_on_ha(request):
         with another_pool():
             swap_disks = [

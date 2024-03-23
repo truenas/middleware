@@ -26,6 +26,7 @@ try:
         LDAPBINDPASSWORD,
         LDAPHOSTNAME
     )
+    pytestmark = pytest.mark.ds
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     pytestmark = pytest.mark.skip(reason=Reason)

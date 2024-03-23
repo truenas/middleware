@@ -20,6 +20,7 @@ try:
         AWS_SECRET_ACCESS_KEY,
         AWS_BUCKET
     )
+    pytestmark = pytest.mark.cloudsync
 except ImportError:
     Reason = 'AWS credential are missing in config.py'
     pytestmark = pytest.mark.skip(reason=Reason)

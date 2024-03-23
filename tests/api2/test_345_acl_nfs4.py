@@ -32,6 +32,7 @@ group0 = "root"
 
 ACL_USER = 'acluser'
 ACL_PWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
+pytestmark = [pytest.mark.fs, pytest.mark.slow]
 
 base_permset = {
     "READ_DATA": False,

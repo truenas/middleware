@@ -5,6 +5,7 @@ from middlewared.test.integration.assets.replication import replication_task
 from middlewared.test.integration.utils import call
 
 
+pytestmark = pytest.mark.zfs
 BASE_REPLICATION = {
     'direction': 'PUSH',
     'transport': 'LOCAL',

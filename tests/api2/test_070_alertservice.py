@@ -7,6 +7,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE
 
+pytestmark = pytest.mark.alerts
+
 
 def test_01_get_alertservice():
     results = GET("/alertservice/")

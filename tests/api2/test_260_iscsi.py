@@ -30,6 +30,7 @@ basename = "iqn.2005-10.org.freenas.ctl"
 zvol_name = f"ds{digit}"
 zvol = f'{pool_name}/{zvol_name}'
 zvol_url = zvol.replace('/', '%2F')
+pytestmark = pytest.mark.iscsi
 
 
 def has_session_present(target):

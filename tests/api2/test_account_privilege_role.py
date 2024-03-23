@@ -10,6 +10,7 @@ from middlewared.test.integration.utils import client
 from time import sleep
 
 logger = logging.getLogger(__name__)
+pytestmark = pytest.mark.rbac
 
 
 @pytest.mark.parametrize("role", ["SNAPSHOT_READ", "SNAPSHOT_WRITE"])

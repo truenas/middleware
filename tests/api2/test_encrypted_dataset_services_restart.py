@@ -11,6 +11,7 @@ sys.path.append(os.getcwd())
 
 
 PASSPHRASE = 'testing123'
+pytestmark = pytest.mark.zfs
 
 
 @contextlib.contextmanager

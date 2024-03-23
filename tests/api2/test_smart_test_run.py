@@ -6,6 +6,7 @@ import pytest
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call, client, mock
+pytestmark = pytest.mark.disk
 
 
 @pytest.fixture(scope="function")

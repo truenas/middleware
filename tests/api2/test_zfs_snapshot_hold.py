@@ -1,7 +1,10 @@
+import pytest
 from unittest.mock import ANY
 
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call
+
+pytestmark = pytest.mark.zfs
 
 
 def test_normal_snapshot():

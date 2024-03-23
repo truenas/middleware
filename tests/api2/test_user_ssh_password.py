@@ -3,6 +3,8 @@ import pytest
 from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.utils import call, ssh
 
+pytestmark = pytest.mark.accounts
+
 
 @pytest.mark.parametrize("ssh_password_enabled", [True, False])
 def test_user_ssh_password_enabled(ssh_password_enabled):

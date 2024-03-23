@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import pytest
 import sys
 from pytest_dependency import depends
 
@@ -13,6 +14,7 @@ from middlewared.test.integration.utils import call, client
 
 PARENT_DATASET = 'test_parent'
 CHILD_DATASET = f'{PARENT_DATASET}/child_dataset'
+pytestmark = pytest.mark.zfs
 
 
 def test_attachment_with_child_path(request):

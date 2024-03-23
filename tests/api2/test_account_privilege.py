@@ -13,6 +13,8 @@ from middlewared.test.integration.utils.audit import expect_audit_method_calls
 sys.path.append(os.getcwd())
 from functions import DELETE, POST, PUT
 
+pytestmark = pytest.mark.rbac
+
 
 def test_change_local_administrator_groups_to_invalid():
     operator = call("group.query", [["group", "=", "operator"]], {"get": True})

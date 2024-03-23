@@ -33,6 +33,8 @@ SWAP_SIZE = (WITH_2GB_SWAP * ONE_GB)
 DATA_TYPE_UUID = "6a898cc3-1dd2-11b2-99a6-080020736631"
 SWAP_TYPE_UUID = "0657fd6d-a4ab-43c4-84e5-0933c84b4f4f"
 
+pytestmark = pytest.mark.disk
+
 
 # Currently, we use the same 'unused' disk for all tests
 @pytest.fixture(scope='module')

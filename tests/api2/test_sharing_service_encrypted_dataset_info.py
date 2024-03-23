@@ -15,6 +15,7 @@ ENCRYPTION_PARAMETERS = {
     },
     'inherit_encryption': False,
 }
+pytestmark = pytest.mark.vm
 
 
 @contextlib.contextmanager

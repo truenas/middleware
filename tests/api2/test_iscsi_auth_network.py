@@ -14,6 +14,8 @@ from middlewared.test.integration.utils import call, ssh
 import contextlib
 from auto_config import ip
 
+pytestmark = pytest.mark.iscsi
+
 
 def my_ip4(ipaddr=ip, port=80):
     """See which of my IP addresses will be used to connect."""

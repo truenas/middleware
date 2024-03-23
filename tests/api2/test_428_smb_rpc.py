@@ -18,6 +18,7 @@ from protocols import MS_RPC
 SMB_USER = "smbrpcuser"
 SMB_PWD = "smb1234#!@"
 INVALID_SHARE_NAME_CHARACTERS = {'%', '<', '>', '*', '?', '|', '/', '\\', '+', '=', ';', ':', '"', ',', '[', ']'}
+pytestmark = pytest.mark.smb
 
 @pytest.fixture(scope="module")
 def setup_smb_share(request):

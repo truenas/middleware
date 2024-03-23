@@ -1,4 +1,7 @@
+import pytest
 from middlewared.test.integration.utils import call
+
+pytestmark = pytest.mark.disk
 
 
 def test_device_get_disk_names():

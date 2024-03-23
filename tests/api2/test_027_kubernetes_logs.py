@@ -5,6 +5,7 @@ from middlewared.test.integration.utils import call, ssh
 from pytest_dependency import depends
 from time import sleep
 
+pytestmark = pytest.mark.apps
 
 @contextlib.contextmanager
 def official_chart_release(chart_name, release_name):

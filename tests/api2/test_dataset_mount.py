@@ -1,5 +1,8 @@
+import pytest
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
+
+pytestmark = pytest.mark.zfs
 
 
 def test_dataset_mount_on_readonly_dataset():

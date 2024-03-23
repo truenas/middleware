@@ -13,6 +13,7 @@ from functions import DELETE, GET, POST, SSH_TEST
 from auto_config import ip, pool_name, user, password
 
 G = 1024 * 1024 * 1024
+pytestmark = pytest.mark.zfs
 
 
 @pytest.mark.parametrize("datasets,expected_alerts", [

@@ -4,6 +4,7 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, mock
 from time import sleep
 
+pytestmark = [pytest.mark.alerts, pytest.mark.zfs]
 
 def test_snapshot_total_count_alert(request):
     with dataset("snapshot_count") as ds:

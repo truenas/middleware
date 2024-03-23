@@ -8,6 +8,7 @@ from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, ssh, mock
 
 SMB_SHARE_NAME = 'test_share'
+pytestmark = pytest.mark.apps
 
 
 @pytest.fixture(scope='module')

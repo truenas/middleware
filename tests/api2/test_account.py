@@ -48,6 +48,8 @@ def test_create_account_audit(api):
         if user_id is not None:
             call("user.delete", user_id)
 
+pytestmark = pytest.mark.audit
+
 
 @pytest.mark.parametrize("api", ["ws", "rest"])
 def test_update_account_audit(api):

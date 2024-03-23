@@ -10,6 +10,8 @@ from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.audit import expect_audit_log
 
+pytestmark = pytest.mark.audit
+
 
 def test_unauthenticated_call():
     with client(auth=None) as c:

@@ -12,6 +12,8 @@ from middlewared.test.integration.assets.directory_service import active_directo
 from middlewared.test.integration.utils import fail
 from middlewared.test.integration.utils.client import client
 
+pytestmark = pytest.mark.base
+
 
 @pytest.fixture(scope='module')
 def ws_client():

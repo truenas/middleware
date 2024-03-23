@@ -25,6 +25,7 @@ from utils import create_dataset
 SMB_USER = "smbacluser"
 SMB_PWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
 TEST_DATA = {}
+pytestmark = pytest.mark.smb
 
 
 permset = {

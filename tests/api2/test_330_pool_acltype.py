@@ -12,6 +12,8 @@ from auto_config import ip, user, password, pool_name
 test1_dataset = f'{pool_name}/test1'
 dataset_url = test1_dataset.replace("/", "%2F")
 
+pytestmark = pytest.mark.zfs
+
 
 def test_01_verify_default_acltype_from_pool_dataset_with_api(request):
     results = GET(f'/pool/dataset/id/{pool_name}/')

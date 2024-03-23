@@ -1,5 +1,9 @@
+import pytest
+
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.assets.pool import pool
+
+pytestmark = pytest.mark.zfs
 
 
 def test_pool_dataset_unlock_recursive():

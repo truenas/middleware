@@ -16,6 +16,7 @@ import string
 
 SMBUSER = 'audit-smb-user'
 PASSWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
+pytestmark = pytest.mark.audit
 
 
 @pytest.fixture(scope='module')

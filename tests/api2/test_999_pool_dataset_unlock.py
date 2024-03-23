@@ -14,6 +14,7 @@ from auto_config import ip, pool_name, password, user
 from functions import POST, DELETE, SSH_TEST, wait_on_job
 from protocols import SMB
 
+pytestmark = pytest.mark.zfs
 
 
 def passphrase_encryption():

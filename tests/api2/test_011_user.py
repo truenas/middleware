@@ -20,6 +20,8 @@ from middlewared.test.integration.assets.account import user as user_asset
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call, ssh
 
+pytestmark = pytest.mark.accounts
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job

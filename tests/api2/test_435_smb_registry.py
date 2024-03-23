@@ -17,6 +17,7 @@ PRESETS = [
     "WORM_DROPBOX"
 ]
 DETECTED_PRESETS = None
+pytestmark = pytest.mark.smb
 
 """
 Note: following sample auxiliary parameters and comments were

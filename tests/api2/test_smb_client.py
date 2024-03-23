@@ -46,6 +46,7 @@ PERSISTENT_ACL = [
 ]
 
 TMP_SMB_USER_PASSWORD = 'Abcd1234$'
+pytestmark = pytest.mark.smb
 
 
 @pytest.fixture(scope='module')

@@ -7,6 +7,8 @@ import os
 import sys
 sys.path.append(os.getcwd())
 
+pytestmark = pytest.mark.zfs
+
 
 def test_empty_for_locked_root_dataset():
     with another_pool({"encryption": True, "encryption_options": {"passphrase": "passphrase"}}):

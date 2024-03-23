@@ -12,6 +12,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, DELETE
 
+pytestmark = pytest.mark.accounts
+
 
 def test_01_deleting_user_shareuser(request):
     depends(request, ["shareuser"], scope="session")

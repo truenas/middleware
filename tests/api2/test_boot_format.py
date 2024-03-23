@@ -1,4 +1,7 @@
+import pytest
 from middlewared.test.integration.utils import call
+
+pytestmark = pytest.mark.boot
 
 
 def test_optimal_disk_usage():

@@ -6,6 +6,7 @@ from middlewared.test.integration.utils import call
 
 
 POOL_NAME = 'test_draid_pool'
+pytestmark = pytest.mark.zfs
 
 
 @pytest.mark.parametrize(

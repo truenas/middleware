@@ -1,5 +1,8 @@
+import pytest
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.assets.account import group, user
+
+pytestmark = pytest.mark.accounts
 
 
 def test_root_password_disabled():

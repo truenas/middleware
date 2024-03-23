@@ -15,6 +15,7 @@ from middlewared.client import ClientException
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call
 
+pytestmark = pytest.mark.zfs
 dataset = f'{pool_name}/dataset1'
 dataset_url = dataset.replace('/', '%2F')
 zvol = f'{pool_name}/zvol1'

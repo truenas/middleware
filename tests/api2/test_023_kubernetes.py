@@ -6,6 +6,7 @@ from functions import GET, PUT, wait_on_job
 from auto_config import ha, pool_name, interface, ip
 from middlewared.test.integration.utils import call
 
+pytestmark = pytest.mark.apps
 
 # Read all the test below only on non-HA
 if not ha:

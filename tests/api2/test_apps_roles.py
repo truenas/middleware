@@ -2,6 +2,8 @@ import pytest
 
 from middlewared.test.integration.assets.roles import common_checks
 
+pytestmark = [pytest.mark.slow, pytest.mark.apps]
+
 
 def test_app_readonly_role():
     common_checks('app.categories', 'READONLY_ADMIN', True, valid_role_exception=False)
