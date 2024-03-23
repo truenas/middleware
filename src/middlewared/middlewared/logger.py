@@ -20,6 +20,7 @@ logging.getLogger('googleapiclient').setLevel(logging.ERROR)
 # registered 'pbkdf2_sha256' handler: <class 'passlib.handlers.pbkdf2.pbkdf2_sha256'>
 logging.getLogger('passlib.registry').setLevel(logging.INFO)
 logging.getLogger('passlib.handlers').setLevel(logging.INFO)
+logging.getLogger('passlib.utils.compat').setLevel(logging.INFO)
 # pyroute2.ndb is chatty....only log errors
 logging.getLogger('pyroute2.ndb').setLevel(logging.CRITICAL)
 logging.getLogger('pyroute2.netlink').setLevel(logging.CRITICAL)
