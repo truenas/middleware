@@ -6,6 +6,7 @@ from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.schema import Bool, Str
 from middlewared.service import CallError, private
+from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.validators import validate_schema
 
 
@@ -67,7 +68,7 @@ class CloudTaskServiceMixin:
         verrors.add_child(f"{name}.attributes", attributes_verrors)
 
     @private
-    async def _validate(self, verrors, name, data):
+    async def _validate(self, app, verrors, name, data):
         await self._basic_validate(verrors, name, data)
 
         if not verrors:
@@ -99,3 +100,9 @@ class CloudTaskServiceMixin:
                                              ["type", "=", "FILESYSTEM"]]):
                 verrors.add(f"{name}.snapshot", "This option is only available for datasets that have no further "
                                                 "nesting")
+
+        if app and not credential_has_full_admin(app.authenticated_credentials):
+            for k in ["pre_script", "post_script"]:
+                if data[k]:
+                    verrors.add(f"{name}.{k}", "The ability to edit cloud sync pre and post scripts is limited to "
+                                               "users who have full administrative credentials")

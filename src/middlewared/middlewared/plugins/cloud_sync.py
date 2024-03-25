@@ -6,7 +6,7 @@ from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, Password, Patch, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, item_method, job, private, TaskPathService,
+    CallError, CRUDService, ValidationErrors, item_method, job, pass_app, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
@@ -754,8 +754,8 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         await super()._basic_validate(verrors, name, data)
 
     @private
-    async def _validate(self, verrors, name, data):
-        await super()._validate(verrors, name, data)
+    async def _validate(self, app, verrors, name, data):
+        await super()._validate(app, verrors, name, data)
 
         if data["snapshot"]:
             if data["direction"] != "PUSH":
@@ -813,7 +813,8 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         Bool("follow_symlinks", default=False),
         register=True,
     ))
-    async def do_create(self, cloud_sync):
+    @pass_app(rest=True)
+    async def do_create(self, app, cloud_sync):
         """
         Creates a new cloud_sync entry.
 
@@ -845,7 +846,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         verrors = ValidationErrors()
 
-        await self._validate(verrors, "cloud_sync_create", cloud_sync)
+        await self._validate(app, verrors, "cloud_sync_create", cloud_sync)
 
         verrors.check()
 
@@ -861,7 +862,8 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         return await self.get_instance(cloud_sync["id"])
 
     @accepts(Int("id"), Patch("cloud_sync_create", "cloud_sync_update", ("attr", {"update": True})))
-    async def do_update(self, id_, data):
+    @pass_app(rest=True)
+    async def do_update(self, app, id_, data):
         """
         Updates the cloud_sync entry `id` with `data`.
         """
@@ -875,7 +877,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         verrors = ValidationErrors()
 
-        await self._validate(verrors, "cloud_sync_update", cloud_sync)
+        await self._validate(app, verrors, "cloud_sync_update", cloud_sync)
 
         verrors.check()
 
