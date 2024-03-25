@@ -3,7 +3,7 @@ from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_schema
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, Password, Patch
-from middlewared.service import ValidationErrors, private, TaskPathService
+from middlewared.service import pass_app, private, TaskPathService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
@@ -28,6 +28,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         datastore_extend_context = "cloud_backup.extend_context"
         cli_namespace = "task.cloud_backup"
         namespace = "cloud_backup"
+        role_prefix = "CLOUD_BACKUP"
 
     ENTRY = Patch(
         'cloud_backup_create',
@@ -37,7 +38,6 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         ("add", Dict("job", null=True)),
         ("add", Bool("locked")),
     )
-
 
     @private
     async def extend_context(self, rows, extra):
@@ -72,12 +72,13 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         Password("password", required=True, empty=False),
         register=True,
     ))
-    async def do_create(self, cloud_backup):
+    @pass_app(rest=True)
+    async def do_create(self, app, cloud_backup):
         """
         """
         verrors = ValidationErrors()
 
-        await self._validate(verrors, "cloud_backup_create", cloud_backup)
+        await self._validate(app, verrors, "cloud_backup_create", cloud_backup)
 
         verrors.check()
 
@@ -90,7 +91,8 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         return await self.get_instance(cloud_backup["id"])
 
     @accepts(Int("id"), Patch("cloud_backup_create", "cloud_backup_update", ("attr", {"update": True})))
-    async def do_update(self, id_, data):
+    @pass_app(rest=True)
+    async def do_update(self, app, id_, data):
         """
         Updates the cloud backup entry `id` with `data`.
         """
@@ -104,7 +106,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
         verrors = ValidationErrors()
 
-        await self._validate(verrors, "cloud_backup_update", cloud_backup)
+        await self._validate(app, verrors, "cloud_backup_update", cloud_backup)
 
         verrors.check()
 
