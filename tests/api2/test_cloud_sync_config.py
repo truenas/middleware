@@ -1,20 +1,12 @@
 import time
 
-import pytest
-from pytest_dependency import depends
 from middlewared.test.integration.assets.cloud_sync import credential, task
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.mock_rclone import mock_rclone
 
-import sys
-import os
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 
-
-def test_rclone_config_writer_bool(request):
-    #
+def test_rclone_config_writer_bool():
     with dataset("test_cloud_sync_config") as ds:
         with credential({
             "name": "Google Cloud Storage",

@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
 import os
 import sys
 
 import pytest
-from pytest_dependency import depends
 
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.assets.cloud_sync import credential, task, run_task
@@ -68,8 +66,7 @@ def test_storj_list_directory(storj_credential):
     assert result[0]["Name"] == "a"
 
 
-def test_storj_sync(request, storj_credential):
-
+def test_storj_sync(storj_credential):
     with dataset("test_storj_sync") as ds:
         with task({
             "direction": "PULL",
