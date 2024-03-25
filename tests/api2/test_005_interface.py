@@ -6,7 +6,7 @@ sys.path.append(apifolder)
 
 import pytest
 
-from auto_config import ip, interface, ha
+from auto_config import ip, interface, ha, netmask
 from middlewared.test.integration.utils.client import client
 
 
@@ -37,7 +37,7 @@ def get_payload(ws_client, ip_to_use):
                 {
                     'type': 'INET',
                     'address': os.environ['controller1_ip'],
-                    'netmask': 23
+                    'netmask': int(netmask)
                 }
             ],
             'failover_aliases': [
