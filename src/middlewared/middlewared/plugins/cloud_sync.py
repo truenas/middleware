@@ -276,15 +276,14 @@ async def run_script(job, env, hook, script_name):
     else:
         shebang = ["/bin/bash"]
 
-    fd, name = tempfile.mkstemp()
-    os.close(fd)
-    try:
-        os.chmod(name, 0o700)
-        with open(name, "w+") as f:
-            f.write(hook)
+    # It is ok to do synchronous I/O here since we are operating in ramfs which will never block
+    with tempfile.NamedTemporaryFile("w+") as f:
+        os.chmod(f.name, 0o700)
+        f.write(hook)
+        f.flush()
 
         proc = await Popen(
-            shebang + [name],
+            shebang + [f.name],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             env=dict(os.environ, **env),
@@ -294,8 +293,6 @@ async def run_script(job, env, hook, script_name):
         await asyncio.wait_for(future, None)
         if proc.returncode != 0:
             raise CallError(f"{script_name} failed with exit code {proc.returncode}")
-    finally:
-        os.unlink(name)
 
 
 async def run_script_check(job, proc, name):
