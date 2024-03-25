@@ -52,9 +52,11 @@ ROLES = {
 
     'FULL_ADMIN': Role(full_admin=True, builtin=False),
 
-
     # Alert roles
     'ALERT_LIST_READ': Role(),
+
+    'CLOUD_BACKUP_READ': Role(),
+    'CLOUD_BACKUP_WRITE': Role(includes=['CLOUD_BACKUP_READ']),
 
     'CLOUD_SYNC_READ': Role(),
     'CLOUD_SYNC_WRITE': Role(includes=['CLOUD_SYNC_READ']),
