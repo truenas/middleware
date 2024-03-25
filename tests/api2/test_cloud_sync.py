@@ -15,7 +15,7 @@ sys.path.append(apifolder)
 from auto_config import ha
 
 
-def test_include(request):
+def test_include():
     with local_ftp_task({
         "include": ["/office/**", "/work/**"],
     }) as task:
@@ -32,7 +32,7 @@ def test_include(request):
         assert ssh(f'ls /mnt/{pool}/cloudsync_remote') == 'office\nwork\n'
 
 
-def test_exclude_recycle_bin(request):
+def test_exclude_recycle_bin():
     with local_ftp_task({
         "exclude": ["$RECYCLE.BIN/"],
     }) as task:
@@ -49,7 +49,7 @@ def test_exclude_recycle_bin(request):
 @pytest.mark.parametrize("anonymous", [True, False])
 @pytest.mark.parametrize("defaultroot", [True, False])
 @pytest.mark.parametrize("has_leading_slash", [True, False])
-def test_ftp_subfolder(request, anonymous, defaultroot, has_leading_slash):
+def test_ftp_subfolder(anonymous, defaultroot, has_leading_slash):
     with dataset("cloudsync_local") as local_dataset:
         config = {"defaultroot": defaultroot}
         with (anonymous_ftp_server if anonymous else ftp_server_with_user_account)(config) as ftp:
@@ -92,7 +92,7 @@ def test_ftp_subfolder(request, anonymous, defaultroot, has_leading_slash):
 
 
 @pytest.mark.parametrize("has_zvol_sibling", [True, False])
-def test_snapshot(request, has_zvol_sibling):
+def test_snapshot(has_zvol_sibling):
     with dataset("test_cloudsync_snapshot") as ds:
         ssh(f"mkdir -p /mnt/{ds}/dir1/dir2")
         ssh(f"dd if=/dev/urandom of=/mnt/{ds}/dir1/dir2/blob bs=1M count=1")
@@ -124,7 +124,7 @@ def test_snapshot(request, has_zvol_sibling):
                 ssh(f"zfs destroy -r {pool}/zvol")
 
 
-def test_sync_onetime(request):
+def test_sync_onetime():
     with dataset("cloudsync_local") as local_dataset:
         with local_ftp_credential() as c:
             call("cloudsync.sync_onetime", {
@@ -138,7 +138,7 @@ def test_sync_onetime(request):
             }, job=True)
 
 
-def test_abort(request):
+def test_abort():
     with dataset("test_cloudsync_abort") as ds:
         ssh(f"dd if=/dev/urandom of=/mnt/{ds}/blob bs=1M count=1")
 
@@ -169,7 +169,7 @@ def test_abort(request):
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5)
 @pytest.mark.parametrize("create_empty_src_dirs", [True, False])
-def test_create_empty_src_dirs(request, create_empty_src_dirs):
+def test_create_empty_src_dirs(create_empty_src_dirs):
     with dataset("cloudsync_local") as local_dataset:
         ssh(f"mkdir /mnt/{local_dataset}/empty-dir")
         ssh(f"mkdir /mnt/{local_dataset}/non-empty-dir")
