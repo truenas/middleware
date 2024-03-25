@@ -271,8 +271,10 @@ async def run_script(job, env, hook, script_name):
     if not hook:
         return
 
-    if not hook.startswith("#!"):
-        hook = f"#!/bin/bash\n{hook}"
+    if hook.startswith("#!"):
+        shebang = shlex.split(hook.splitlines()[0][2:].strip())
+    else:
+        shebang = ["/bin/bash"]
 
     fd, name = tempfile.mkstemp()
     os.close(fd)
@@ -282,7 +284,7 @@ async def run_script(job, env, hook, script_name):
             f.write(hook)
 
         proc = await Popen(
-            [name],
+            shebang + [name],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             env=dict(os.environ, **env),

@@ -1,16 +1,11 @@
 import time
 
 import pytest
-from pytest_dependency import depends
+
 from middlewared.test.integration.assets.cloud_sync import credential, task
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.mock_rclone import mock_rclone
-
-import sys
-import os
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 
 
 @pytest.mark.parametrize("credential_attributes,result", [
@@ -25,7 +20,7 @@ sys.path.append(apifolder)
         {"region": "fr-par"},
     )
 ])
-def test_custom_s3(request, credential_attributes, result):
+def test_custom_s3(credential_attributes, result):
     with dataset("test_cloudsync_custom_s3") as ds:
         with credential({
             "name": "S3",
