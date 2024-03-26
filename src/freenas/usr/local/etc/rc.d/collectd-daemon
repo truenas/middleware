@@ -66,7 +66,7 @@ collectd_daemon_stop()
         debug "killing: ${d_pid}"
         kill -KILL "${d_pid}"
     else
-	echo "collectd-daemon is already stopped"
+	debug "collectd-daemon is already stopped"
 	return 0
     fi
 
