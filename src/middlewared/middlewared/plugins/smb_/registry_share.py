@@ -3,6 +3,7 @@ from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import run, filter_list
 from middlewared.plugins.smb import SMBCmd, SMBHAMODE
 from middlewared.plugins.smb_.smbconf.reg_service import ShareSchema
+from .utils import smb_strip_comments
 
 import errno
 import json
@@ -180,7 +181,7 @@ class SharingSMBService(Service):
         if gl['smb_shares'] is None:
             gl['smb_shares'] = await self.middleware.call('sharing.smb.query', [['enabled', '=', True]])
             for share in gl['smb_shares']:
-                await self.middleware.call('sharing.smb.strip_comments', share)
+                share['auxsmbconf'] = smb_strip_comments(share['auxsmbconf'])
 
         if gl['ad_enabled'] is None:
             gl['ad_enabled'] = (await self.middleware.call('activedirectory.config'))['enable']
@@ -199,7 +200,7 @@ class SharingSMBService(Service):
         if data is None:
             data = await self.middleware.call('sharing.smb.query', [('name', '=', share)], {'get': True})
 
-        await self.middleware.call('sharing.smb.strip_comments', data)
+        data['auxsmbconf'] = smb_strip_comments(data['auxsmbconf'])
         share_conf = await self.middleware.call("sharing.smb.share_to_smbconf", data)
         try:
             reg_conf = (await self.reg_showshare(share if not data['home'] else 'homes'))['parameters']
@@ -247,7 +248,7 @@ class SharingSMBService(Service):
     def share_to_smbconf(self, conf_in, globalconf=None):
         data = conf_in.copy()
         gl = self.middleware.call_sync('sharing.smb.get_global_params', globalconf)
-        self.middleware.call_sync('sharing.smb.strip_comments', data)
+        data['auxsmbconf'] = smb_strip_comments(data['auxsmbconf'])
         conf = {}
 
         if not data['path_suffix'] and data['home']:
