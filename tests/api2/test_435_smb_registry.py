@@ -40,6 +40,30 @@ SAMPLE_AUX = [
     'hide dot files = yes',
 ]
 
+SAMPLE_OPTIONS = [
+    'mangled names = no',
+    'dos charset = CP850',
+    'unix charset = UTF-8',
+    'strict sync = no',
+    '',
+    'min protocol = SMB2',
+    'vfs objects = fruit streams_xattr  ',
+    'fruit:model = MacSamba', 'fruit:posix_rename = yes ',
+    'fruit:veto_appledouble = no',
+    'fruit:wipe_intentionally_left_blank_rfork = yes ',
+    'fruit:delete_empty_adfiles = yes ',
+    '',
+    'fruit:locking=none',
+    'fruit:metadata=netatalk',
+    'fruit:resource=file',
+    'streams_xattr:prefix=user.',
+    'streams_xattr:store_stream_type=no',
+    'strict locking=auto',
+    '# oplocks=no  # breaks Time Machine',
+    ' level2 oplocks=no  #  breaks TM?',
+    '# spotlight=yes  # invalid without further config'
+]
+
 
 @contextlib.contextmanager
 def create_smb_share(share_name, mkdir=False, options=None):
@@ -346,3 +370,11 @@ def test_022_registry_rebuild_homes(request):
     call('service.reload', 'cifs')
     reg_shares = call('sharing.smb.reg_listshares')
     assert any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
+
+
+def test_023_test_smb_options():
+    """
+    Validate that user comments are preserved as-is
+    """
+    new_config = call('smb.update', {'smb_options': '\n'.join(SAMPLE_OPTIONS)})
+    assert new_config['smb_options'].splitlines() == SAMPLE_OPTIONS
