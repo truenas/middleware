@@ -27,8 +27,7 @@ pidfile=${collectd_daemon_pidfile:="/var/run/collectd-daemon.pid"}
 command="/usr/sbin/daemon"
 
 start_cmd=collectd_daemon_start
-stop_precmd=collectd_daemon_pre_stop
-stop_postcmd=collectd_daemon_post_stop
+stop_cmd=collectd_daemon_stop
 
 collectd_daemon_start()
 {
@@ -36,20 +35,43 @@ collectd_daemon_start()
 	$command -f -p /var/run/collectd.pid -P /var/run/collectd-daemon.pid -r -R 60 /usr/local/sbin/collectd -f
 }
 
-collectd_daemon_pre_stop()
+collectd_daemon_stop()
 {
-    collectd_pid=$(cat /var/run/collectd.pid 2> /dev/null)
-    return 0
-}
+    local collectd_pid d_pid
 
-collectd_daemon_post_stop()
-{
-    if [ -z "$collectd_pid"  ]; then
-        return 0
+    collectd_pid="$(check_pidfile "/var/run/collectd.pid" "/usr/local/sbin/collectd")"
+    d_pid="$(check_pidfile ${pidfile} ${command})"
+
+    debug "collectd pid: ${collectd_pid}"
+    debug "collectd-daemon pid: ${d_pid}"
+
+    echo "stopping collectd-daemon pids: ${d_pid} ${collectd_pid}"
+    if [ -n "$collectd_pid" ]; then
+        if [ -n "${d_pid}" ]; then
+            # This is the normal situation both processes are running
+	    # and we can kill send SIGTERM to the daemon process and it
+	    # will pass along to the collectd process
+            debug "killing daemon process: ${d_pid}"
+            kill -TERM "${d_pid}"
+	else
+	    # We have a collectd process, but no associated collectd-daemon
+	    # process. Stop it.
+            echo "killing orphaned collectd process ${collectd_pid}"
+	    kill -TERM "${collectd_pid}"
+	fi
+    elif [ -n "${d_pid}" ]; then
+	# We have a daemon process, but the process its monitoring has already died
+	# Send SIGKILL to prevent it from waiting long enough to try to restart the
+	# collectd process (in the best situation) or hanging forever (in worst case).
+        debug "killing: ${d_pid}"
+        kill -KILL "${d_pid}"
+    else
+	debug "collectd-daemon is already stopped"
+	return 0
     fi
 
-    echo "Waiting for collectd to terminate."
-    wait_for_pids "$collectd_pid"
+    wait_for_pids "$collectd_pid" "$d_pid"
+    return $?
 }
 
 run_rc_command "$1"
