@@ -1,3 +1,8 @@
+# Copyright (c) - iXsystems Inc.
+#
+# Licensed under the terms of the TrueNAS Enterprise License Agreement
+# See the file LICENSE.IX for complete terms and conditions
+
 def alarm(value_raw):
     values = {
         'Identify on': (value_raw >> 16) & 0x80,
