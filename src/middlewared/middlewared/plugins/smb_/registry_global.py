@@ -3,6 +3,7 @@ from middlewared.service_exception import CallError
 from middlewared.plugins.smb_.smbconf.reg_global_smb import GlobalSchema
 from middlewared.plugins.activedirectory import AD_SMBCONF_PARAMS
 from middlewared.plugins.ldap import LDAP_SMBCONF_PARAMS
+from .utils import smb_strip_comments
 
 import errno
 
@@ -156,4 +157,5 @@ class SMBService(Service):
     @private
     async def initialize_globals(self):
         data = await self.middleware.call('smb.config')
+        data['smb_options'] = smb_strip_comments(data['smb_options'])
         await self.reg_update(data)
