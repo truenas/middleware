@@ -24,6 +24,7 @@ from middlewared.service import accepts, job, private, SharingService
 from middlewared.service import ConfigService, ValidationErrors, filterable
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
+from middlewared.plugins.smb_.utils import smb_strip_comments
 from middlewared.plugins.tdb.utils import TDBError
 from middlewared.plugins.idmap_.utils import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 import middlewared.sqlalchemy as sa
@@ -828,7 +829,8 @@ class SMBService(ConfigService):
         )
 
         new_config = await self.config()
-        await self.middleware.call('smb.reg_update', new_config)
+        stripped_options = smb_strip_comments(new_config['smb_options'])
+        await self.middleware.call('smb.reg_update', new_config | {'smb_options': stripped_options})
         await self.reset_smb_ha_mode()
 
         """
@@ -911,16 +913,6 @@ class SharingSMBService(SharingService):
         role_prefix = 'SHARING_SMB'
 
     LP_CTX = param.LoadParm(SMBPath.STUBCONF.platform())
-
-    @private
-    async def strip_comments(self, data):
-        parsed_config = ""
-        for entry in data['auxsmbconf'].splitlines():
-            if entry == "" or entry.startswith(('#', ';')):
-                continue
-            parsed_config += entry if len(parsed_config) == 0 else f'\n{entry}'
-
-        data['auxsmbconf'] = parsed_config
 
     @accepts(
         Dict(
@@ -1016,7 +1008,7 @@ class SharingSMBService(SharingService):
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
-        await self.strip_comments(data)
+        data['auxsmbconf'] = smb_strip_comments(data['auxsmbconf'])
         await self.middleware.call('sharing.smb.reg_addshare', data)
         do_global_reload = await self.must_reload_globals(data)
 
@@ -1084,7 +1076,7 @@ class SharingSMBService(SharingService):
             'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix})
 
-        await self.strip_comments(new)
+        new['auxsmbconf'] = smb_strip_comments(new['auxsmbconf'])
         if not new_is_locked:
             """
             Enabling AAPL SMB2 extensions globally affects SMB shares. If this
