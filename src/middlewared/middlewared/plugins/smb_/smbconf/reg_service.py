@@ -1,4 +1,5 @@
 from middlewared.plugins.smb_.registry_base import RegObj, RegistrySchema
+from middlewared.plugins.smb_.utils import apply_presets
 from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
 
 
@@ -57,7 +58,7 @@ class ShareSchema(RegistrySchema):
         data_out['vfs objects'] = {'parsed': ['zfs_core', 'io_uring']}
         data_out['ea support'] = {'parsed': False}
         data_in['fruit_enabled'] = self.middleware.call_sync('smb.config')['aapl_extensions']
-        self.middleware.call_sync('sharing.smb.apply_presets', data_in)
+        data_in = apply_presets(data_in)
 
         super().convert_schema_to_registry(data_in, data_out)
 

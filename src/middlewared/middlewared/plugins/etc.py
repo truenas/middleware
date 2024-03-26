@@ -229,9 +229,18 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': 'root', 'group': 'nut', 'mode': 0o440},
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
-        'smb': [
-            {'type': 'mako', 'path': 'local/smb4.conf'},
-        ],
+        'smb': {
+            'ctx': [
+                {'method': 'directoryservices.get_state'},
+                {'method': 'failover.status'},
+                {'method': 'idmap.query'},
+                {'method': 'sharing.smb.query'},
+                {'method': 'smb.config'},
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'local/smb4.conf'},
+            ]
+        },
         'snmpd': [
             {'type': 'mako', 'path': 'snmp/snmpd.conf', 'local_path': 'local/snmpd.conf'},
         ],
