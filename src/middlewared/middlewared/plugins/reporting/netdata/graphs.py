@@ -347,7 +347,7 @@ class UPSLoadPlugin(UPSBase):
 class UPSTemperaturePlugin(UPSBase):
 
     title = 'UPS Temperature'
-    vertical_label = 'Temperature'
+    vertical_label = 'Celsius'
     skip_zero_values_in_aggregation = True
     uses_identifiers = False
 
