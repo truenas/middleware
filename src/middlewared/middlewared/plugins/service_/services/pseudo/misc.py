@@ -86,6 +86,16 @@ class NetworkGeneralService(PseudoServiceBase):
         await self.middleware.call("service.restart", "routing")
 
 
+class NfsMountdService(PseudoServiceBase):
+    '''
+    Used in HA mode to stop nfs-mountd on the standby node
+    '''
+    name = "mountd"
+
+    async def stop(self):
+        await systemd_unit("nfs-mountd", "stop")
+
+
 class NtpdService(SimpleService):
     name = "ntpd"
 

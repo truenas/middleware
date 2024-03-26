@@ -803,6 +803,9 @@ class FailoverEventsService(Service):
 
         self.run_call('truecommand.stop_truecommand_service')
 
+        logger.info('Stopping NFS mountd service')
+        self.run_call('service.stop', 'mountd')
+
         # we keep SSH running on both controllers (if it's enabled by user)
         filters = [['srv_service', '=', 'ssh']]
         options = {'get': True}
