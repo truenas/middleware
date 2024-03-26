@@ -3,6 +3,7 @@ import os
 import pytest
 
 from pytest_dependency import depends
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, ssh
@@ -301,7 +302,7 @@ def test_011_test_aux_param_on_create(setup_tm_share):
         if entry.startswith(('#', ';')):
             ncomments_sent += 1
 
-    assert ncomments_sent == ncomments_recv, new_aux
+    assert ncomments_sent == ncomments_recv, f'new: {new_aux}, sample: {SAMPLE_AUX}'
 
 
 def test_012_delete_shares(request):
@@ -378,3 +379,25 @@ def test_023_test_smb_options():
     """
     new_config = call('smb.update', {'smb_options': '\n'.join(SAMPLE_OPTIONS)})
     assert new_config['smb_options'].splitlines() == SAMPLE_OPTIONS
+
+
+def test_024_test_invalid_share_aux_param_create():
+    init_share_count = call('sharing.smb.query', [], {'count': True})
+    with pytest.raises(ValidationError) as ve:
+        call('sharing.smb.create', {'name': 'FAIL', 'path': smb_registry_mp, 'auxsmbconf': 'oplocks = canary'})
+
+    assert ve.value.attribute == 'sharingsmb_create.auxsmbconf'
+
+    assert init_share_count == call('sharing.smb.query', [], {'count': True})
+
+
+def test_025_test_invalid_share_aux_param_update():
+    this_share = call('sharing.smb.create', {'name': 'FAIL', 'path': smb_registry_mp})
+
+    try:
+        with pytest.raises(ValidationError) as ve:
+            call('sharing.smb.update', this_share['id'], {'auxsmbconf': 'oplocks = canary'})
+    finally:
+        call('sharing.smb.delete', this_share['id'])
+
+    assert ve.value.attribute == 'sharingsmb_update.auxsmbconf'

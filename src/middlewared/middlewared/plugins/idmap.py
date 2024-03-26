@@ -831,7 +831,8 @@ class IdmapDomainService(CRUDService):
             data, {'prefix': self._config.datastore_prefix}
         )
         out = await self.query([('id', '=', id_)], {'get': True})
-        await self.synchronize()
+        await self.middleware.call('etc.generate', 'smb')
+        await self.middleware.call('service.restart', 'idmap')
         return out
 
     async def do_update(self, id_, data):
@@ -911,7 +912,7 @@ class IdmapDomainService(CRUDService):
         )
 
         out = await self.query([('id', '=', id_)], {'get': True})
-        await self.synchronize(False)
+        await self.middleware.call('etc.generate', 'smb')
         cache_job = await self.middleware.call('idmap.clear_idmap_cache')
         await cache_job.wait()
         return out
@@ -925,7 +926,7 @@ class IdmapDomainService(CRUDService):
             raise CallError(f'Deleting system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
 
         ret = await self.middleware.call('datastore.delete', self._config.datastore, id_)
-        await self.synchronize()
+        await self.middleware.call('etc.generate', 'smb')
         return ret
 
     def _pyuidgid_to_dict(self, entry):
@@ -1229,98 +1230,3 @@ class IdmapDomainService(CRUDService):
             'smb': True,
             'sid': sid
         }
-
-    @private
-    async def idmap_to_smbconf(self, data=None):
-        rv = {}
-        if data is None:
-            idmap = await self.query()
-        else:
-            idmap = data
-
-        ds_state = await self.middleware.call('directoryservices.get_state')
-        workgroup = await self.middleware.call('smb.getparm', 'workgroup', 'global')
-        ad_enabled = ds_state['activedirectory'] in ['HEALTHY', 'JOINING', 'FAULTED']
-        ldap_enabled = ds_state['ldap'] in ['HEALTHY', 'JOINING', 'FAULTED']
-        ad_idmap = filter_list(idmap, [('name', '=', DSType.DS_TYPE_ACTIVEDIRECTORY.name)], {'get': True}) if ad_enabled else None
-        disable_ldap_starttls = False
-
-        for i in idmap:
-            if i['name'] == DSType.DS_TYPE_DEFAULT_DOMAIN.name:
-                if ad_idmap and ad_idmap['idmap_backend'] == 'AUTORID':
-                    continue
-                domain = "*"
-            elif i['name'] == DSType.DS_TYPE_ACTIVEDIRECTORY.name:
-                if not ad_enabled:
-                    continue
-                if i['idmap_backend'] == 'AUTORID':
-                    domain = "*"
-                else:
-                    domain = workgroup
-            elif i['name'] == DSType.DS_TYPE_LDAP.name:
-                if not ldap_enabled:
-                    continue
-                domain = workgroup
-                if i['idmap_backend'] == 'LDAP':
-                    """
-                    In case of default LDAP backend, populate values from ldap form.
-                    """
-                    idmap_prefix = f"idmap config {domain} :"
-                    ldap = await self.middleware.call('ldap.config')
-                    rv.update({
-                        f"{idmap_prefix} backend": {"raw": i['idmap_backend'].lower()},
-                        f"{idmap_prefix} range": {"raw": f"{i['range_low']} - {i['range_high']}"},
-                        f"{idmap_prefix} ldap_base_dn": {"raw": ldap['basedn']},
-                        f"{idmap_prefix} ldap_url": {"raw": ' '.join(ldap['uri_list'])},
-                    })
-                    continue
-            else:
-                domain = i['name']
-
-            idmap_prefix = f"idmap config {domain} :"
-            rv.update({
-                f"{idmap_prefix} backend": {"raw": i['idmap_backend'].lower()},
-                f"{idmap_prefix} range": {"raw": f"{i['range_low']} - {i['range_high']}"}
-            })
-            for k, v in i['options'].items():
-                backend_parameter = "realm" if k == "cn_realm" else k
-                if k == 'ldap_server':
-                    v = 'ad' if v == 'AD' else 'stand-alone'
-                elif k == 'ldap_url':
-                    v = f'{"ldaps://" if i["options"]["ssl"]  == "ON" else "ldap://"}{v}'
-                elif k == 'ssl':
-                    if v != 'STARTTLS':
-                        disable_ldap_starttls = True
-
-                    continue
-
-                rv.update({
-                    f"{idmap_prefix} {backend_parameter}": {"parsed": v},
-                })
-
-        if ad_enabled:
-            rv['ldap ssl'] = {'parsed': 'off' if disable_ldap_starttls else 'start tls'}
-
-        return rv
-
-    @private
-    async def diff_conf_and_registry(self, data, idmaps):
-        r = idmaps
-        s_keys = set(data.keys())
-        r_keys = set(r.keys())
-        intersect = s_keys.intersection(r_keys)
-        return {
-            'added': {x: data[x] for x in s_keys - r_keys},
-            'removed': {x: r[x] for x in r_keys - s_keys},
-            'modified': {x: data[x] for x in intersect if data[x] != r[x]},
-        }
-
-    @private
-    async def synchronize(self, restart=True):
-        config_idmap = await self.query()
-        idmaps = await self.idmap_to_smbconf(config_idmap)
-        to_check = (await self.middleware.call('smb.reg_globals'))['idmap']
-        diff = await self.diff_conf_and_registry(idmaps, to_check)
-        await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
-        if restart:
-            await self.middleware.call('service.restart', 'idmap')
