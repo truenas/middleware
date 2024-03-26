@@ -1,4 +1,5 @@
 import sys
+import time
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -11,6 +12,42 @@ from middlewared.client.client import ValidationErrors
 from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import fail
 from middlewared.test.integration.utils.client import client
+
+
+def wait_for_standby(ws_client):
+    # we sleep here since this function is called directly after
+    # the system dataset has been explicitly migrated to another
+    # zpool. On HA systems, the standby node will reboot but we
+    # need to give the other controller some time to actually
+    # reboot before we start checking to make sure it's online
+    time.sleep(5)
+
+    sleep_time, max_wait_time = 1, 300
+    rebooted = False
+    waited_time = 0
+    while waited_time < max_wait_time and not rebooted:
+        if ws_client.call('failover.remote_connected'):
+            rebooted = True
+        else:
+            waited_time += sleep_time
+            time.sleep(sleep_time)
+
+    assert rebooted, f'Standby did not connect after {max_wait_time} seconds'
+
+    waited_time = 0  # need to reset this
+    is_backup = False
+    while waited_time < max_wait_time and not is_backup:
+        try:
+            is_backup = ws_client.call('failover.call_remote', 'failover.status') == 'BACKUP'
+        except Exception:
+            pass
+
+        if not is_backup:
+            waited_time += sleep_time
+            time.sleep(sleep_time)
+
+    assert is_backup, f'Standby node did not become BACKUP after {max_wait_time} seconds'
+    pass
 
 
 @pytest.fixture(scope='module')
@@ -49,7 +86,9 @@ def test_activedirectory_requires_pool(request):
         with active_directory():
             pass
 
-    assert ve.value.errors[0].errmsg.startswith('Active Directory service may not be enabled before data pool is created')
+    assert ve.value.errors[0].errmsg.startswith(
+        'Active Directory service may not be enabled before data pool is created'
+    )
 
 
 def test_002_create_permanent_zpool(request, ws_client):
@@ -99,14 +138,22 @@ def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(ws_client, p
         currently imported
     2. make sure the system dataset doesn't migrate to the 2nd zpool that we create
         since it should only be migrating to the 1st zpool that is created
+    3. after verifying system dataset doesn't migrate to the 2nd zpool, explicitly
+        migrate it to the 2nd zpool. Migrating system datasets between zpools is a
+        common operation and can be very finicky so explicitly testing this operation
+        is of paramount importance.
+    4. after the system dataset was migrated to the 2nd pool, migrate it back to the
+        1st pool. The 2nd pool is a temporary pool used to test other functionality
+        and isn't used through the CI test suite so best to clean it up.
     """
     unused_disks = ws_client.call('disk.get_unused')
     assert len(unused_disks) >= 1
 
+    temp_pool_name = 'temp'
     try:
         pool = ws_client.call(
             'pool.create', {
-                'name': 'temp',
+                'name': temp_pool_name,
                 'topology': {'data': [{'type': 'STRIPE', 'disks': [unused_disks[0]['name']]}]}
             },
             job=True
@@ -123,15 +170,22 @@ def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(ws_client, p
         assert pool['name'] != sysds['pool']
         assert f'{pool["name"]}/.system' != sysds['basename']
 
+    # explicitly migrate sysdataset to temp pool
     try:
-        ws_client.call('systemdataset.update', {'pool': 'temp'}, job=True)
+        ws_client.call('systemdataset.update', {'pool': temp_pool_name}, job=True)
     except Exception as e:
         fail(f'Failed to move system dataset to temporary pool: {e}')
+    else:
+        if ha:
+            wait_for_standby(ws_client)
 
     try:
         ws_client.call('systemdataset.update', {'pool': pool_name}, job=True)
     except Exception as e:
         fail(f'Failed to return system dataset from temporary pool: {e}')
+    else:
+        if ha:
+            wait_for_standby(ws_client)
 
 
 def test_004_verify_pool_property_unused_disk_functionality(request, ws_client, pool_data):

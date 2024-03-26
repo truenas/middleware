@@ -308,7 +308,7 @@ class Client:
     def _send(self, data):
         try:
             self._ws.send(json.dumps(data))
-        except (AttributeError, WebSocketConnectionClosedException):
+        except AttributeError:
             # happens when other node on HA is rebooted, for example, and there are
             # running tasks in the event loop (i.e. failover.call_remote failover.get_disks_local)
             raise ClientException('Unexpected closure of remote connection', errno.ECONNABORTED)
