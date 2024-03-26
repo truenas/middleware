@@ -1,0 +1,358 @@
+import pytest
+from unittest.mock import Mock
+
+from middlewared.plugins.ldap_ import constants, utils
+from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
+
+BASE_DS_STATUS = {
+    'activedirectory': 'DISABLED',
+    'ldap': 'DISABLED',
+}
+
+BASE_SMB_CONFIG = {
+    'id': 1,
+    'netbiosname': 'TESTSERVER',
+    'netbiosalias': ['BOB', 'LARRY'],
+    'workgroup': 'TESTDOMAIN',
+    'description': 'TrueNAS Server',
+    'unixcharset': 'UTF-8',
+    'loglevel': 'MINIMUM',
+    'syslog': False,
+    'aapl_extensions': False,
+    'localmaster': False,
+    'guest': 'nobody',
+    'filemask': '',
+    'dirmask': '',
+    'smb_options': '',
+    'bindip': [],
+    'cifs_SID': 'S-1-5-21-732395397-2008429054-3061640861',
+    'ntlmv1_auth': False,
+    'enable_smb1': False,
+    'admin_group': None,
+    'next_rid': 0,
+    'multichannel': False,
+    'netbiosname_local': 'TESTSERVER'
+}
+
+SMB_SYSLOG = BASE_SMB_CONFIG | {'syslog': True}
+SMB_AAPL = BASE_SMB_CONFIG | {'aapl_extensions': True}
+SMB_LOCALMASTER = BASE_SMB_CONFIG | {'localmaster': True}
+SMB_GUEST = BASE_SMB_CONFIG | {'guest': 'mike'}
+SMB_BINDIP = BASE_SMB_CONFIG | {'bindip': ['192.168.0.250', '192.168.0.251']}
+SMB_NTLMV1 = BASE_SMB_CONFIG | {'ntlmv1_auth': True}
+SMB_SMB1 = BASE_SMB_CONFIG | {'enable_smb1': True}
+SMB_MULTICHANNEL = BASE_SMB_CONFIG | {'multichannel': True}
+
+BASE_SMB_SHARE = {
+    'id': 1,
+    'purpose': 'NO_PRESET',
+    'path': '/mnt/dozer/BASE',
+    'path_suffix': '',
+    'home': False,
+    'name': 'TEST_HOME',
+    'comment': 'canary',
+    'browsable': True,
+    'ro': False,
+    'guestok': False,
+    'recyclebin': False,
+    'hostsallow': [],
+    'hostsdeny': [],
+    'auxsmbconf': '',
+    'aapl_name_manging': False,
+    'abe': False,
+    'acl': True,
+    'durablehandle': True,
+    'streams': True,
+    'timemachine': False,
+    'timemachine_quota': 0,
+    'vuid': '',
+    'shadowcopy': True,
+    'fsrvp': False,
+    'enabled': True,
+    'afp': False,
+    'audit': {
+        'enable': False,
+        'watch_list': [],
+        'ignore_list': []
+    },
+    'path_local': '/mnt/dozer/BASE',
+    'locked': False
+}
+
+HOMES_SHARE = BASE_SMB_SHARE | {'path_suffix': '%U', 'home': True}
+FSRVP_SHARE = BASE_SMB_SHARE | {'fsrvp': True}
+GUEST_SHARE = BASE_SMB_SHARE | {'guestok': True}
+
+BASE_IDMAP = [
+    {
+        'id': 1,
+        'name': 'DS_TYPE_ACTIVEDIRECTORY',
+        'dns_domain_name': None,
+        'range_low': 100000001,
+        'range_high': 200000000,
+        'idmap_backend': 'RID',
+        'options': {},
+        'certificate': None
+    },
+    {
+        'id': 2,
+        'name': 'DS_TYPE_LDAP',
+        'dns_domain_name': None,
+        'range_low': 10000,
+        'range_high': 90000000,
+        'idmap_backend': 'LDAP',
+        'options': {
+            'ldap_base_dn': '',
+            'ldap_user_dn': '',
+            'ldap_url': '',
+            'ssl': 'OFF'
+        },
+        'certificate': None
+    },
+    {
+        'id': 5,
+        'name': 'DS_TYPE_DEFAULT_DOMAIN',
+        'dns_domain_name': None,
+        'range_low': 90000001,
+        'range_high': 100000000,
+        'idmap_backend': 'TDB',
+        'options': {},
+        'certificate': None
+    }
+]
+
+ADDITIONAL_DOMAIN = {
+    'id': 6,
+    'name': 'BOBDOM',
+    'dns_domain_name': None,
+    'range_low': 200000001,
+    'range_high': 300000000,
+    'idmap_backend': 'RID',
+    'options': {},
+    'certificate': None
+}
+
+AUTORID_DOMAIN = {
+    'id': 1,
+    'name': 'DS_TYPE_ACTIVEDIRECTORY',
+    'dns_domain_name': None,
+    'range_low': 10000,
+    'range_high': 200000000,
+    'idmap_backend': 'AUTORID',
+    'options': {
+        'rangesize': 100000,
+        'readonly': False,
+        'ignore_builtin': False,
+    },
+    'certificate': None
+}
+
+BASE_AD_CONFIG = {
+    'id': 1,
+    'domainname': 'TESTDOMAIN.IXSYSTEMS.COM',
+    'bindname': '',
+    'verbose_logging': False,
+    'allow_trusted_doms': False,
+    'use_default_domain': False,
+    'allow_dns_updates': True,
+    'disable_freenas_cache': False,
+    'restrict_pam': False,
+    'site': None,
+    'timeout': 60,
+    'dns_timeout': 10,
+    'nss_info': 'TEMPLATE',
+    'enable': True,
+    'kerberos_principal': 'TESTSERVER$@TESTDOMAIN.IXSYSTEMS.COM',
+    'create_computer': None,
+    'kerberos_realm': 1,
+    'netbiosname': 'TESTSERVER',
+    'netbiosalias': [],
+}
+TRUSTED_DOMS = BASE_AD_CONFIG | {'allow_trusted_doms': True}
+USE_DEFAULT_DOM = BASE_AD_CONFIG | {'use_default_domain': True}
+DISABLE_ENUM = BASE_AD_CONFIG | {'disable_freenas_cache': True}
+
+BIND_IP_CHOICES = {"192.168.0.250": "192.168.0.250"}
+
+
+def test__base_smb():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['netbios name'] == 'TESTSERVER'
+    assert conf['netbios aliases'] == 'BOB LARRY'
+    assert conf['workgroup'] == 'TESTDOMAIN'
+    assert conf['server string'] == 'TrueNAS Server'
+    assert conf['obey pam restrictions'] is False
+    assert conf['restrict anonymous'] == 2
+    assert conf['guest account'] == 'nobody'
+    assert conf['local master'] is False
+    assert conf['ntlm auth'] is False
+    assert 'server min protocol' not in conf
+    assert conf['server multichannel support'] is False
+    assert conf['idmap config * : backend'] == 'tdb'
+    assert conf['idmap config * : range'] == '90000001 - 100000000'
+
+
+def test__syslog():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, SMB_SYSLOG, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['logging'] == ('syslog@1 file')
+
+
+def test__localmaster():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, SMB_LOCALMASTER, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['local master'] is True
+
+
+def test__guestaccount():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, SMB_GUEST, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['guest account'] == 'mike'
+
+
+def test__bindip():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, SMB_BINDIP, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert set(conf['interfaces'].split(' ')) == set(['192.168.0.250', '127.0.0.1'])
+
+
+def test__ntlmv1auth():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, SMB_NTLMV1, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['ntlm auth'] is True
+
+
+def test__smb1_enable():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, SMB_SMB1, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['server min protocol'] == 'NT1'
+
+
+def test__multichannel():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, SMB_MULTICHANNEL, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['server multichannel support'] is True
+
+
+def test__homes_share():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, BASE_SMB_CONFIG, [HOMES_SHARE],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert 'obey pam restrictions' in conf
+    assert conf['obey pam restrictions'] is True
+
+
+def test__guest_share():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, BASE_SMB_CONFIG, [GUEST_SHARE],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['restrict anonymous'] == 0
+
+
+def test__fsrvp_share():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, BASE_SMB_CONFIG, [FSRVP_SHARE],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['rpc_daemon:fssd'] == 'fork'
+    assert conf['fss:prune stale'] is True
+
+
+def test__ad_base():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS | {'activedirectory': 'HEALTHY'}, BASE_AD_CONFIG,
+        BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['realm'] == 'TESTDOMAIN.IXSYSTEMS.COM'
+    assert conf['winbind use default domain'] is False
+    assert conf['allow trusted domains'] is False
+    assert conf['template homedir'] == '/var/empty'
+    assert conf['winbind enum users'] is True
+    assert conf['winbind enum groups'] is True
+    assert conf['local master'] is False
+    assert conf['domain master'] is False
+    assert conf['idmap config * : backend'] == 'tdb'
+    assert conf['idmap config * : range'] == '90000001 - 100000000'
+    assert conf['idmap config TESTDOMAIN : backend'] == 'rid'
+    assert conf['idmap config TESTDOMAIN : range'] == '100000001 - 200000000'
+
+
+def test__ad_homes_share():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS | {'activedirectory': 'HEALTHY'}, BASE_AD_CONFIG,
+        BASE_SMB_CONFIG, [HOMES_SHARE],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert 'obey pam restrictions' in conf
+    assert conf['obey pam restrictions'] is True
+
+    assert 'template homedir' in conf
+    assert conf['template homedir'] == '/mnt/dozer/BASE/%D/%U'
+
+
+def test__ad_enumeration():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS | {'activedirectory': 'HEALTHY'}, DISABLE_ENUM,
+        BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['winbind enum users'] is False
+    assert conf['winbind enum groups'] is False
+
+
+def test__ad_trusted_doms():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS | {'activedirectory': 'HEALTHY'}, TRUSTED_DOMS,
+        BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['allow trusted domains'] is True
+
+
+def test__ad_default_domain():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS | {'activedirectory': 'HEALTHY'}, USE_DEFAULT_DOM,
+        BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['winbind use default domain'] is True
+
+
+def test__ad_additional_domain():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS | {'activedirectory': 'HEALTHY'}, TRUSTED_DOMS,
+        BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, BASE_IDMAP + [ADDITIONAL_DOMAIN]
+    )
+    assert conf['idmap config BOBDOM : backend'] == 'rid'
+    assert conf['idmap config BOBDOM : range'] == '200000001 - 300000000'
+
+
+def test__ad_autorid():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS | {'activedirectory': 'HEALTHY'}, BASE_AD_CONFIG,
+        BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, [AUTORID_DOMAIN, BASE_IDMAP[1], BASE_IDMAP[2]]
+    )
+    assert conf['idmap config * : backend'] == 'autorid'
+    assert conf['idmap config * : range'] == '10000 - 200000000'

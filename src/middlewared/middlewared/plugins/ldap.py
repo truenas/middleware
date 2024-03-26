@@ -19,22 +19,6 @@ from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.validators import Range
 
-LDAP_SMBCONF_PARAMS = {
-    "server role": "member server",
-    "kerberos method": None,
-    "security": "user",
-    "ldap admin dn": None,
-    "ldap suffix": None,
-    "ldap replication sleep": "1000",
-    "ldap passwd sync": "Yes",
-    "ldap ssl": None,
-    "ldapsam:trusted": "Yes",
-    "domain logons": "Yes",
-    "passdb backend": None,
-    "local master": "No",
-    "domain master": "No",
-    "preferred master": "No",
-}
 
 LDAP_DEPRECATED = "LDAP with SMB schema support"
 
@@ -289,34 +273,6 @@ class LDAPService(ConfigService):
     )
 
     @private
-    async def convert_schema_to_registry(self, data_in):
-        """
-        Convert middleware schema SMB shares to an SMB service definition
-        """
-        data_out = {}
-        if data_in['enable'] is False or data_in['has_samba_schema'] is False:
-            return data_out
-
-        params = LDAP_SMBCONF_PARAMS.copy()
-        for k, v in params.items():
-            if v is None:
-                continue
-            data_out[k] = {"parsed": v}
-
-        passdb_backend = f'ldapsam:{" ".join(data_in["uri_list"])}'
-        data_out.update({
-            "passdb backend": {"parsed": passdb_backend},
-            "ldap admin dn": {"parsed": data_in["binddn"]},
-            "ldap suffix": {"parsed": data_in["basedn"]},
-            "ldap ssl": {"raw": "start tls" if data_in['ssl'] == SSL.USESTARTTLS.value else "off"},
-        })
-
-        if data_in['kerberos_principal']:
-            data_out["kerberos method"] = "system keytab"
-
-        return data_out
-
-    @private
     async def ldap_conf_to_client_config(self, data=None):
         if data is None:
             data = await self.config()
@@ -356,29 +312,6 @@ class LDAPService(ConfigService):
             }
 
         return client_config
-
-    @private
-    async def diff_conf_and_registry(self, data):
-        smbconf = (await self.middleware.call('smb.reg_globals'))['ds']
-        to_check = await self.convert_schema_to_registry(data)
-
-        r = smbconf
-        s_keys = set(to_check.keys())
-        r_keys = set(r.keys())
-        intersect = s_keys.intersection(r_keys)
-        return {
-            'added': {x: to_check[x] for x in s_keys - r_keys},
-            'removed': {x: r[x] for x in r_keys - s_keys},
-            'modified': {x: to_check[x] for x in intersect if to_check[x] != r[x]},
-        }
-
-    @private
-    async def synchronize(self, data=None):
-        if data is None:
-            data = await self.config()
-
-        diff = await self.diff_conf_and_registry(data)
-        await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
 
     @private
     async def ldap_extend(self, data):
@@ -998,10 +931,9 @@ class LDAPService(ConfigService):
         await self.middleware.call('service.restart', 'sssd')
 
         job.set_progress(50, 'Reconfiguring SMB service')
-        await self.middleware.call('smb.initialize_globals')
-        await self.synchronize()
-        job.set_progress(60, 'Reconfiguring idmap service')
-        await self.middleware.call('idmap.synchronize')
+        await self.set_state(DSStatus['HEALTHY'])
+        await self.middleware.call('etc.generate', 'smb')
+        await self.middleware.call('service.restart', 'idmap')
 
         if ldap['has_samba_schema']:
             await self.middleware.call(
@@ -1014,7 +946,6 @@ class LDAPService(ConfigService):
         else:
             await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
 
-        await self.set_state(DSStatus['HEALTHY'])
         job.set_progress(80, 'Restarting dependent services')
         cache_job = await self.middleware.call('directoryservices.cache.refresh')
         await cache_job.wait()
@@ -1035,14 +966,12 @@ class LDAPService(ConfigService):
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
-        await self.synchronize()
-        job.set_progress(20, 'Reconfiguring idmap settings.')
-        await self.middleware.call('idmap.synchronize')
+        await self.middleware.call('etc.generate', 'smb')
+        await self.middleware.call('service.restart', 'idmap')
 
         job.set_progress(30, 'Reconfiguring SMB service.')
         await self.middleware.call('smb.synchronize_passdb')
         await self.middleware.call('smb.synchronize_group_mappings')
-        await self.middleware.call('smb.initialize_globals')
         await self._service_change('cifs', 'restart')
 
         job.set_progress(50, 'Clearing directory service cache.')

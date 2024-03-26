@@ -25,7 +25,7 @@ from middlewared.utils.nss import pwd, grp
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
 from middlewared.validators import Email, Range
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.plugins.smb import SMBBuiltin
+from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.utils import (
     TRUENAS_IDMAP_DEFAULT_LOW,
     SID_LOCAL_USER_PREFIX,

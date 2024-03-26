@@ -7,19 +7,8 @@ import errno
 from base64 import b64decode
 from middlewared.schema import accepts, Dict, List, OROperator, Ref, returns, Str
 from middlewared.service import no_authz_required, Service, private, job
-from middlewared.plugins.smb import SMBCmd, SMBPath
+from middlewared.plugins.smb_.constants import SMBCmd, SMBPath
 from middlewared.service_exception import CallError, MatchNotFound
-
-DEFAULT_AD_CONF = {
-    "id": 1,
-    "bindname": "",
-    "verbose_logging": False,
-    "kerberos_principal": "",
-    "kerberos_realm": None,
-    "createcomputer": "",
-    "disable_freenas_cache": False,
-    "restrict_pam": False
-}
 
 DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh']
 
