@@ -415,7 +415,7 @@ def test_04_kerberos_nfs4(do_ad_connection):
             })
             error = res.get('error')
             assert error is None, str(error)
-            assert res['result'] == 'true'
+            assert res['result'] is True
 
             """
             Second NFS exports check. We now have an NFS SPN entry

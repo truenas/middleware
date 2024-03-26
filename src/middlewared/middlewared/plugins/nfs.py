@@ -297,7 +297,7 @@ class NFSService(SystemServiceService):
                     'datastore.update', 'directoryservice.activedirectory', ad_config['id'],
                     {'use_default_domain': True}, {'prefix': 'ad_'}
                 )
-                await self.middleware.call('activedirectory.synchronize')
+                await self.middleware.call('etc.generate', 'smb')
                 await self.middleware.call('service.reload', 'idmap')
 
         if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_v3owner"]:

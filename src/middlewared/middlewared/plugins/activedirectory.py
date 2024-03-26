@@ -20,27 +20,6 @@ from middlewared.plugins.directoryservices import DSStatus
 from middlewared.plugins.idmap import DSType
 from middlewared.validators import Range
 
-AD_SMBCONF_PARAMS = {
-    "server role": "member server",
-    "kerberos method": "secrets and keytab",
-    "security": "ADS",
-    "local master": False,
-    "domain master": False,
-    "preferred master": False,
-    "winbind cache time": 7200,
-    "winbind max domain connections": 10,
-    "client ldap sasl wrapping": "seal",
-    "template shell": "/bin/sh",
-    "template homedir": None,
-    "ads dns update": None,
-    "realm": None,
-    "allow trusted domains": None,
-    "winbind enum users": None,
-    "winbind enum groups": None,
-    "winbind use default domain": None,
-    "winbind nss info": None,
-}
-
 
 class neterr(enum.Enum):
     JOINED = 1
@@ -580,8 +559,7 @@ class ActiveDirectoryService(ConfigService):
 
         config = await self.ad_compress(new)
         await self.middleware.call('datastore.update', self._config.datastore, new['id'], config, {'prefix': 'ad_'})
-        diff = await self.diff_conf_and_registry(config)
-        await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
+        await self.middleware.call('etc.generate', 'smb')
 
         if not old['enable'] and new['enable']:
             ngc = await self.middleware.call('network.configuration.config')
@@ -601,7 +579,7 @@ class ActiveDirectoryService(ConfigService):
                 await self.middleware.call('kerberos.start')
 
             try:
-                await self.__start(job, new)
+                await self.__start(job)
             except Exception:
                 self.logger.error('Failed to start active directory service. Disabling.')
                 await self.middleware.call(
@@ -616,30 +594,6 @@ class ActiveDirectoryService(ConfigService):
             await self.middleware.call('service.restart', 'idmap')
 
         return await self.config()
-
-    @private
-    async def diff_conf_and_registry(self, data):
-        to_check = {}
-        smbconf = (await self.middleware.call('smb.reg_globals'))['ds']
-        await self.convert_schema_to_registry(data, to_check)
-
-        r = smbconf
-        s_keys = set(to_check.keys())
-        r_keys = set(r.keys())
-        intersect = s_keys.intersection(r_keys)
-        return {
-            'added': {x: to_check[x] for x in s_keys - r_keys},
-            'removed': {x: r[x] for x in r_keys - s_keys},
-            'modified': {x: to_check[x] for x in intersect if to_check[x] != r[x]},
-        }
-
-    @private
-    async def synchronize(self, data=None):
-        if data is None:
-            data = await self.config()
-
-        diff = await self.diff_conf_and_registry(data)
-        await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
 
     @private
     async def set_state(self, state):
@@ -721,11 +675,12 @@ class ActiveDirectoryService(ConfigService):
         if not await self.middleware.call('kerberos.keytab.store_samba_keytab'):
             raise CallError("Failed to store machine account keytab")
 
-    async def __start(self, job, ad):
+    async def __start(self, job):
         """
         Start AD service. In 'UNIFIED' HA configuration, only start AD service
         on active storage controller.
         """
+        ad = await self.config()
         smb = await self.middleware.call('smb.config')
         workgroup = smb['workgroup']
         smb_ha_mode = await self.middleware.call('smb.reset_smb_ha_mode')
@@ -745,7 +700,7 @@ class ActiveDirectoryService(ConfigService):
             self.logger.debug('Starting Active Directory service for [%s]', ad['domainname'])
 
         await self.middleware.call('datastore.update', self._config.datastore, ad['id'], {'enable': True}, {'prefix': 'ad_'})
-        await self.synchronize()
+        await self.middleware.call('etc.generate', 'smb')
         await self.middleware.call('etc.generate', 'hostname')
 
         """
@@ -793,8 +748,10 @@ class ActiveDirectoryService(ConfigService):
             await self.middleware.call('datastore.update', 'services.cifs', smb['id'], {
                 'cifs_srv_workgroup': dc_info['Pre-Win2k Domain']
             })
+            workgroup = dc_info['Pre-Win2k Domain']
 
-        await self.middleware.call('smb.initialize_globals')
+        # Ensure smb4.conf has correct workgorup.
+        await self.middleware.call('etc.generate', 'smb')
 
         """
         Check response of 'net ads testjoin' to determine whether the server needs to be joined to Active Directory.
@@ -808,7 +765,7 @@ class ActiveDirectoryService(ConfigService):
         if ret == neterr.NOTJOINED:
             job.set_progress(50, 'Joining Active Directory Domain')
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
-            await self._net_ads_join(ad)
+            await self._net_ads_join(workgroup, ad)
 
             try:
                 await self.post_join_setup(job, {
@@ -877,8 +834,8 @@ class ActiveDirectoryService(ConfigService):
                     'principal, which is required maintain a stable domain connection. Disabling service.'
                 )
 
-        await self.middleware.call('idmap.synchronize')
-        await self.middleware.call('service.reload', 'idmap')
+        await self.middleware.call('etc.generate', 'smb')
+        await self.middleware.call('service.restart', 'idmap')
         await self.middleware.call('etc.generate', 'pam')
         if ret == neterr.JOINED:
             await self.set_state(DSStatus['HEALTHY'].name)
@@ -917,16 +874,14 @@ class ActiveDirectoryService(ConfigService):
         job.set_progress(10, 'Stopping kerberos service')
         await self.middleware.call('kerberos.stop')
         job.set_progress(20, 'Reconfiguring SMB.')
-        await self.synchronize()
-        await self.middleware.call('idmap.synchronize')
         await self.middleware.call('service.stop', 'cifs')
+        await self.middleware.call('service.restart', 'idmap')
         job.set_progress(40, 'Reconfiguring pam and nss.')
         await self.middleware.call('etc.generate', 'pam')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(60, 'clearing caches.')
         await self.middleware.call('service.stop', 'dscache')
         smb_ha_mode = await self.middleware.call('smb.reset_smb_ha_mode')
-        await self.middleware.call('smb.initialize_globals')
         await self.middleware.call('service.start', 'cifs')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(100, 'Active Directory stop completed.')
@@ -977,15 +932,13 @@ class ActiveDirectoryService(ConfigService):
             raise CallError(msg[1])
 
     @private
-    async def _net_ads_join(self, ad=None):
+    async def _net_ads_join(self, workgroup, ad):
         await self.middleware.call("kerberos.check_ticket")
-        if ad is None:
-            ad = await self.config()
-
         cmd = [
             SMBCmd.NET.value,
             '--use-kerberos', 'required',
             '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            '-w', workgroup,
             '-U', ad['bindname'],
             '-d', '5',
             'ads', 'join'
@@ -1262,8 +1215,7 @@ class ActiveDirectoryService(ConfigService):
 
         job.set_progress(60, 'Regenerating configuration.')
         await self.middleware.call('etc.generate', 'pam')
-        await self.synchronize()
-        await self.middleware.call('idmap.synchronize')
+        await self.middleware.call('etc.generate', 'smb')
 
         job.set_progress(60, 'Restarting services.')
         await self.middleware.call('service.restart', 'cifs')
