@@ -6,18 +6,13 @@ sys.path.append(apifolder)
 import pytest
 from pytest_dependency import depends
 
-from auto_config import ha, interface, hostname, domain, ip
+from auto_config import ha, interface, hostname, domain, ip, gateway
 from middlewared.test.integration.utils.client import client
 
 
 @pytest.fixture(scope='module')
-def ip_to_use():
-    return ip if not ha else os.environ['controller1_ip']
-
-
-@pytest.fixture(scope='module')
-def ws_client(ip_to_use):
-    with client(host_ip=ip_to_use) as c:
+def ws_client():
+    with client(host_ip=ip) as c:
         yield c
 
 
@@ -28,7 +23,7 @@ def netinfo(ws_client):
     if ha and (domain_to_use := os.environ.get('domain', None)) is not None:
         info = {
             'domain': domain_to_use,
-            'ipv4gateway': os.environ['gateway'],
+            'ipv4gateway': gateway,
             'hostname': os.environ['hostname'],
             'hostname_b': os.environ['hostname_b'],
             'hostname_virtual': os.environ['hostname_virtual'],
@@ -83,7 +78,7 @@ def test_002_verify_network_global_settings_state(request, ws_client, netinfo):
 
 
 @pytest.mark.dependency(name='GENERAL')
-def test_003_verify_network_general_summary(request, ws_client, netinfo, ip_to_use):
+def test_003_verify_network_general_summary(request, ws_client, netinfo):
     depends(request, ['NET_CONFIG'])
     summary = ws_client.call('network.general.summary')
-    assert any(i.startswith(ip_to_use) for i in summary['ips'][interface]['IPV4'])
+    assert any(i.startswith(ip) for i in summary['ips'][interface]['IPV4'])
