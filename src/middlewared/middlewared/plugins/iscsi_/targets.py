@@ -97,7 +97,7 @@ class iSCSITargetService(CRUDService):
         ]),
         List('auth_networks', items=[IPAddr('ip', network=True)]),
         register=True
-    ))
+    ), audit='Create iSCSI target', audit_extended=lambda data: data["name"])
     async def do_create(self, data):
         """
         Create an iSCSI Target.
@@ -285,13 +285,16 @@ class iSCSITargetService(CRUDService):
             'iscsi_target_create',
             'iscsi_target_update',
             ('attr', {'update': True})
-        )
+        ),
+        audit='Update iSCSI target',
+        audit_callback=True,
     )
-    async def do_update(self, id_, data):
+    async def do_update(self, audit_callback, id_, data):
         """
         Update iSCSI Target of `id`.
         """
         old = await self.get_instance(id_)
+        audit_callback(old['name'])
         new = old.copy()
         new.update(data)
 
@@ -322,14 +325,20 @@ class iSCSITargetService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'), Bool('force', default=False))
-    async def do_delete(self, id_, force):
+    @accepts(Int('id'),
+             Bool('force', default=False),
+             audit='Delete iSCSI target',
+             audit_callback=True,
+             )
+    async def do_delete(self, audit_callback, id_, force):
         """
         Delete iSCSI Target of `id`.
 
         Deleting an iSCSI Target makes sure we delete all Associated Targets which use `id` iSCSI Target.
         """
         target = await self.get_instance(id_)
+        audit_callback(target['name'])
+
         if await self.active_sessions_for_targets([target['id']]):
             if force:
                 self.middleware.logger.warning('Target %s is in use.', target['name'])

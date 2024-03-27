@@ -4,6 +4,20 @@ from middlewared.schema import accepts, Dict, Int, List, Patch, Str
 from middlewared.service import CRUDService, private
 
 
+def initiator_summary(data):
+    """Select a human-readable string representing this initiator"""
+    if title := data.get('comment'):
+        return title
+    initiators = data.get('initiators', [])
+    count = len(initiators)
+    if count == 0:
+        return 'Allow All initiators'
+    elif count == 1:
+        return initiators[0]
+    else:
+        return initiators[0] + ',...'
+
+
 class iSCSITargetAuthorizedInitiatorModel(sa.Model):
     __tablename__ = 'services_iscsitargetauthorizedinitiator'
 
@@ -27,7 +41,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         List('initiators'),
         Str('comment'),
         register=True
-    ))
+    ), audit='Create iSCSI initiator', audit_extended=lambda data: initiator_summary(data))
     async def do_create(self, data):
         """
         Create an iSCSI Initiator.
@@ -51,13 +65,16 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
             'iscsi_initiator_create',
             'iscsi_initiator_update',
             ('attr', {'update': True})
-        )
+        ),
+        audit='Update iSCSI initiator',
+        audit_callback=True,
     )
-    async def do_update(self, id_, data):
+    async def do_update(self, audit_callback, id_, data):
         """
         Update iSCSI initiator of `id`.
         """
         old = await self.get_instance(id_)
+        audit_callback(initiator_summary(old))
 
         new = old.copy()
         new.update(data)
@@ -71,12 +88,16 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'))
-    async def do_delete(self, id_):
+    @accepts(Int('id'),
+             audit='Delete iSCSI initiator',
+             audit_callback=True,
+             )
+    async def do_delete(self, audit_callback, id_):
         """
         Delete iSCSI initiator of `id`.
         """
-        await self.get_instance(id_)
+        old = await self.get_instance(id_)
+        audit_callback(initiator_summary(old))
         result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id_
         )
