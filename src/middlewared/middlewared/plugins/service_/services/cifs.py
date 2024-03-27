@@ -1,6 +1,7 @@
 import socket
 
 from middlewared.service_exception import CallError
+from time import sleep
 
 from .base import SimpleService, ServiceState
 
@@ -17,12 +18,19 @@ class CIFSService(SimpleService):
     systemd_unit = "smbd"
 
 
-    def smbd_is_listening(self):
+    def smbd_is_listening(self, retries=5):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(5)
 
         try:
             s.connect(('127.0.0.1', 445))
+        except ConnectionRefusedError:
+            if retries > 0:
+                sleep(1)
+                s.close()
+                return self.smbd_is_listening(retries - 1)
+
+            self.logger.debug('Failed to connect to smbd server', exc_info=True)
         except Exception:
             self.logger.debug('Failed to determine whether smbd is listening', exc_info=True)
         finally:
@@ -51,7 +59,7 @@ class CIFSService(SimpleService):
             await self.middleware.call("smb.add_admin_group", "", True)
         except Exception as e:
             raise CallError(e)
-        await self.midddleware.run_in_thread(self.smbd_is_listening)
+        await self.middleware.run_in_thread(self.smbd_is_listening)
 
     async def stop(self):
         await self._freebsd_service("smbd", "stop", force=True)
