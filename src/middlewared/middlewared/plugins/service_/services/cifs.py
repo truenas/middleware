@@ -1,3 +1,5 @@
+import socket
+
 from middlewared.service_exception import CallError
 
 from .base import SimpleService, ServiceState
@@ -13,6 +15,18 @@ class CIFSService(SimpleService):
     freebsd_pidfile = "/var/run/samba4/smbd.pid"
 
     systemd_unit = "smbd"
+
+
+    def smbd_is_listening(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(5)
+
+        try:
+            s.connect(('127.0.0.1', 445))
+        except Exception:
+            self.logger.debug('Failed to determine whether smbd is listening', exc_info=True)
+        finally:
+            s.close()
 
     async def _get_state_freebsd(self):
         return ServiceState(
@@ -37,6 +51,7 @@ class CIFSService(SimpleService):
             await self.middleware.call("smb.add_admin_group", "", True)
         except Exception as e:
             raise CallError(e)
+        await self.midddleware.run_in_thread(self.smbd_is_listening)
 
     async def stop(self):
         await self._freebsd_service("smbd", "stop", force=True)
