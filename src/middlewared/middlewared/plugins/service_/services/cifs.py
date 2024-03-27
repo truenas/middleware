@@ -30,9 +30,9 @@ class CIFSService(SimpleService):
                 s.close()
                 return self.smbd_is_listening(retries - 1)
 
-            self.logger.debug('Failed to connect to smbd server', exc_info=True)
+            self.middleware.logger.debug('Failed to connect to smbd server', exc_info=True)
         except Exception:
-            self.logger.debug('Failed to determine whether smbd is listening', exc_info=True)
+            self.middleware.logger.debug('Failed to determine whether smbd is listening', exc_info=True)
         finally:
             s.close()
 
