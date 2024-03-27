@@ -87,7 +87,7 @@ class iSCSITargetExtentService(SharingService):
         Bool('ro', default=False),
         Bool('enabled', default=True),
         register=True
-    ))
+    ), audit='Create iSCSI extent', audit_extended=lambda data: data["name"])
     async def do_create(self, data):
         """
         Create an iSCSI Extent.
@@ -129,14 +129,17 @@ class iSCSITargetExtentService(SharingService):
             'iscsi_extent_create',
             'iscsi_extent_update',
             ('attr', {'update': True})
-        )
+        ),
+        audit='Update iSCSI extent',
+        audit_callback=True,
     )
-    async def do_update(self, id_, data):
+    async def do_update(self, audit_callback, id_, data):
         """
         Update iSCSI Extent of `id`.
         """
         verrors = ValidationErrors()
         old = await self.get_instance(id_)
+        audit_callback(old['name'])
 
         new = old.copy()
         new.update(data)
@@ -167,14 +170,17 @@ class iSCSITargetExtentService(SharingService):
         Int('id'),
         Bool('remove', default=False),
         Bool('force', default=False),
+        audit='Delete iSCSI extent',
+        audit_callback=True,
     )
-    async def do_delete(self, id_, remove, force):
+    async def do_delete(self, audit_callback, id_, remove, force):
         """
         Delete iSCSI Extent of `id`.
 
         If `id` iSCSI Extent's `type` was configured to FILE, `remove` can be set to remove the configured file.
         """
         data = await self.get_instance(id_)
+        audit_callback(data['name'])
         target_to_extents = await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id_]])
         active_sessions = await self.middleware.call(
             'iscsi.target.active_sessions_for_targets', [t['target'] for t in target_to_extents]
