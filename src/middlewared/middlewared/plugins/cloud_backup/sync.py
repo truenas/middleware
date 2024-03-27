@@ -3,18 +3,15 @@ from datetime import datetime
 import itertools
 import subprocess
 
-from middlewared.plugins.cloud.path import get_remote_path, check_local_path
-from middlewared.plugins.cloud.remotes import REMOTES
+from middlewared.plugins.cloud.path import check_local_path
+from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int
 from middlewared.service import CallError, Service, item_method, job, private
-from middlewared.utils import Popen
 
 
 async def restic(middleware, job, cloud_backup, dry_run):
     await middleware.call("network.general.will_perform_activity", "cloud_backup")
-
-    remote = REMOTES[cloud_backup["credentials"]["provider"]]
 
     snapshot = None
     clone = None
@@ -62,47 +59,14 @@ async def restic(middleware, job, cloud_backup, dry_run):
         if cmd is None:
             cmd = [local_path]
 
-        remote_path = get_remote_path(remote, cloud_backup["attributes"])
-
-        url, env = remote.get_restic_config(cloud_backup)
-
-        cmd = ["restic", "-r", f"{remote.rclone_type}:{url}/{remote_path}", "--verbose", "backup"] + cmd
         if dry_run:
             cmd.append("-n")
 
-        env["RESTIC_PASSWORD"] = cloud_backup["password"]
+        restic_config = get_restic_config(cloud_backup)
 
-        job.middleware.logger.debug("Running %r", cmd)
-        proc = await Popen(
-            cmd,
-            env=env,
-            stdin=stdin,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        check_progress = asyncio.ensure_future(restic_check_progress(job, proc))
-        cancelled_error = None
-        try:
-            try:
-                await proc.wait()
-            except asyncio.CancelledError as e:
-                cancelled_error = e
-                try:
-                    await middleware.call("service.terminate_process", proc.pid)
-                except CallError as e:
-                    job.middleware.logger.warning(f"Error terminating restic on cloud backup abort: {e!r}")
-        finally:
-            await asyncio.wait_for(check_progress, None)
+        cmd = restic_config.cmd + ["--verbose", "backup"] + cmd
 
-        if cancelled_error is not None:
-            raise cancelled_error
-        if proc.returncode != 0:
-            message = "".join(job.internal_data.get("messages", []))
-            if message and proc.returncode != 1:
-                if not message.endswith("\n"):
-                    message += "\n"
-                message += f"restic failed with exit code {proc.returncode}"
-            raise CallError(message)
+        await run_restic(job, cmd, restic_config.env, stdin)
     finally:
         if stdin:
             try:
@@ -123,21 +87,6 @@ async def restic(middleware, job, cloud_backup, dry_run):
                 middleware.logger.warning(f"Error deleting snapshot {snapshot}: {e!r}")
 
 
-async def restic_check_progress(job, proc):
-    try:
-        while True:
-            read = (await proc.stdout.readline()).decode("utf-8", "ignore")
-            if read == "":
-                break
-
-            await job.logs_fd_write(read.encode("utf-8", "ignore"))
-
-            job.internal_data.setdefault("messages", [])
-            job.internal_data["messages"] = job.internal_data["messages"][-4:] + [read]
-    finally:
-        pass
-
-
 class CloudBackupService(Service):
 
     class Config:
@@ -155,19 +104,16 @@ class CloudBackupService(Service):
 
         cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id_)
 
-        remote = REMOTES[cloud_backup["credentials"]["provider"]]
-
-        remote_path = get_remote_path(remote, cloud_backup["attributes"])
-
-        url, env = remote.get_restic_config(cloud_backup)
+        restic_config = get_restic_config(cloud_backup)
 
         try:
-            subprocess.run([
-                "restic", "init", "-r", f"{remote.rclone_type}:{url}/{remote_path}",
-            ], env={
-                "RESTIC_PASSWORD": cloud_backup["password"],
-                **env,
-            }, capture_output=True, text=True, check=True)
+            subprocess.run(
+                restic_config.cmd + ["init"],
+                env=restic_config.env,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
         except subprocess.CalledProcessError as e:
             raise CallError(e.stderr)
 
