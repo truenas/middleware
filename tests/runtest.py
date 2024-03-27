@@ -3,7 +3,9 @@
 # Author: Eric Turgeon
 # License: BSD
 
-from subprocess import call
+from middlewared.test.integration.utils import client
+from ipaddress import ip_interface
+from subprocess import run, call
 from sys import argv, exit
 import os
 import getopt
@@ -37,10 +39,13 @@ Mandatory option
     --interface <interface>     - The interface that TrueNAS is run one
 
 Optional option
+    --ip2                       - B controller IPv4 of TrueNAS HA machine
+    --vip                       - VIP (ipv4) of TrueNAS HA machine
     --test <test name>          - Test name (Network, ALL)
     --tests <test1>[,test2,...] - List of tests to be supplied to pytest
     --vm-name <VM_NAME>         - Name the the Bhyve VM
     --ha                        - Run test for HA
+    --ha_license                - The base64 encoded string of an HA license
     --debug-mode                - Start API tests with middleware debug mode
     --isns_ip <###.###.###.###> - IP of the iSNS server (default: {isns_ip})
     --pool <POOL_NAME>          - Name of the ZFS pool (default: {pool_name})
@@ -53,6 +58,8 @@ if len(argv) == 1:
 
 option_list = [
     "ip=",
+    "ip2=",
+    "vip=",
     "password=",
     "interface=",
     'test=',
@@ -66,6 +73,9 @@ option_list = [
     "isns_ip=",
     "pool=",
     "tests=",
+    "ha_license=",
+    "hostname=",
+    "show_locals"
 ]
 
 # look if all the argument are there.
@@ -87,9 +97,19 @@ exitfirst = ''
 returncode = False
 callargs = []
 tests = []
+ip2 = vip = ''
+netmask = None
+gateway = None
+ha_license = ''
+hostname = None
+show_locals = False
 for output, arg in myopts:
     if output in ('-i', '--ip'):
         ip = arg
+    elif output == '--ip2':
+        ip2 = arg
+    elif output == '--vip':
+        vip = arg
     elif output in ('-p', '--password'):
         passwd = arg
     elif output in ('-I', '--interface'):
@@ -102,6 +122,8 @@ for output, arg in myopts:
         vm_name = f"'{arg}'"
     elif output == '--ha':
         ha = True
+    elif output == '--hostname':
+        hostname = arg
     elif output == '--update':
         update = True
     elif output == '--debug-mode':
@@ -123,6 +145,10 @@ for output, arg in myopts:
         callargs.append('-s')
     elif output == '--tests':
         tests.extend(arg.split(','))
+    elif output == '--ha_license':
+        ha_license = arg
+    elif output == '--show_locals':
+        show_locals = True
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -131,17 +157,92 @@ if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in loca
 
 # create random hostname and random fake domain
 digit = ''.join(secrets.choice((string.ascii_uppercase + string.digits)) for i in range(10))
-hostname = f'test{digit}'
-domain = f'test{digit}.nb.ixsystems.com'
+if not hostname:
+    hostname = f'test{digit}'
+domain = f'{hostname}.nb.ixsystems.com'
 artifacts = f"{workdir}/artifacts/"
 if not os.path.exists(artifacts):
     os.makedirs(artifacts)
+
+os.environ["MIDDLEWARE_TEST_IP"] = ip
+os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
+os.environ["SERVER_TYPE"] = "ENTERPRISE_HA" if ha else "STANDARD"
+
+ip_to_use = ip
+if ha and ip2:
+    domain = 'tn.ixsystems.com'
+    os.environ['controller1_ip'] = ip
+    os.environ['controller2_ip'] = ip2
+
+
+def get_ipinfo(ip_to_use):
+    iface = net = gate = ns1 = ns2 = None
+    with client(host_ip=ip_to_use) as c:
+        net_config = c.call('network.configuration.config')
+        ns1 = net_config.get('nameserver1')
+        ns2 = net_config.get('nameserver2')
+        _ip_to_use = socket.gethostbyname(ip_to_use)
+        for i in c.call('interface.query'):
+            for j in i['state']['aliases']:
+                if j.get('address') == _ip_to_use:
+                    iface = i['id']
+                    net = j['netmask']
+                    for k in c.call('route.system_routes'):
+                        if k.get('network') == '0.0.0.0' and k.get('interface') == i['id']:
+                            if k['gateway']:
+                                return iface, net, k['gateway'], ns1, ns2
+
+    return iface, net, gate, ns1, ns2
+
+interface, netmask, gateway, ns1, ns2 = get_ipinfo(ip_to_use)
+if not all((interface, netmask, gateway)):
+    print(f'Unable to determine interface ({interface!r}), netmask ({netmask!r}) and gateway ({gateway!r}) for {ip_to_use!r}')
+    exit()
+
+os.environ['USE_VIP'] = 'NO'
+if ha:
+    if vip:
+        os.environ['virtual_ip'] = vip
+    elif os.environ.get('virtual_ip'):
+        vip = os.environ['virtual_ip']
+    else:
+        for i in ip_interface(f'{ip}/{netmask}').network:
+            last_octet = int(i.compressed.split('.')[-1])
+            if last_octet < 15 or last_octet >= 250:
+                # addresses like *.255, *.0 and any of them that
+                # are < *.15 we'll ignore. Those are typically
+                # reserved for routing/switch devices anyways
+                continue
+            elif run(['ping', '-c', '2', '-w', '4', i.compressed]).returncode != 0:
+                # sent 2 packets to the address and got no response so assume
+                # it's safe to use
+                os.environ['virtual_ip'] = i.compressed
+                vip = i.compressed
+                break
+
+    # Set various env variables for HA, if not already set
+    if not os.environ.get('domain'):
+        os.environ['domain'] = domain
+    if not os.environ.get('hostname_virtual'):
+        os.environ['hostname_virtual'] = hostname
+    if not os.environ.get('hostname'):
+        os.environ['hostname'] = f'{hostname}-nodea'
+    if not os.environ.get('hostname_b'):
+        os.environ['hostname_b'] = f'{hostname}-nodeb'
+    if not os.environ.get('primary_dns'):
+        os.environ['primary_dns'] = ns1 or '10.230.0.10'
+    if not os.environ.get('secondary_dns'):
+        os.environ['secondary_dns'] = ns2 or '10.230.0.11'
 
 cfg_content = f"""#!{sys.executable}
 
 user = "root"
 password = "{passwd}"
 ip = "{ip}"
+ip2 = "{ip2}"
+netmask = "{netmask}"
+gateway = "{gateway}"
+vip = "{vip}"
 vm_name = {vm_name}
 hostname = "{hostname}"
 domain = "{domain}"
@@ -153,6 +254,7 @@ keyPath = "{keyPath}"
 pool_name = "{pool_name}"
 ha_pool_name = "ha"
 ha = {ha}
+ha_license = "{ha_license}"
 update = {update}
 debug_mode = {debug_mode}
 artifacts = "{artifacts}"
@@ -188,6 +290,9 @@ if verbose:
     callargs.append("-" + "v" * verbose)
 if exitfirst:
     callargs.append("-x")
+
+if show_locals:
+    callargs.append('--showlocals')
 
 # Use the right python version to start pytest with sys.executable
 # So that we can support virtualenv python pytest.
