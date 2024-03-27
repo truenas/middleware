@@ -13,17 +13,8 @@ from middlewared.test.integration.utils.client import client
 
 
 @pytest.fixture(scope='module')
-def ip_to_use():
-    ip_to_use = ip
-    if (ctrl1_ip := os.environ.get('controller1_ip')) is not None:
-        ip_to_use = ctrl1_ip
-
-    return ip_to_use
-
-
-@pytest.fixture(scope='module')
-def ws_client(ip_to_use):
-    with client(host_ip=ip_to_use) as c:
+def ws_client():
+    with client(host_ip=ip) as c:
         yield c
 
 
@@ -90,16 +81,16 @@ def test_004_enable_and_start_ssh(ws_client):
     assert ws_client.call('service.query', [['service', '=', 'ssh']], options)['state'] == 'RUNNING'
 
 
-def test_005_ssh_using_root_password(ip_to_use):
-    results = SSH_TEST('ls -la', user, password, ip_to_use)
+def test_005_ssh_using_root_password():
+    results = SSH_TEST('ls -la', user, password, ip)
     if not results['result']:
         fail(f"SSH is not usable: {results['output']}. Aborting tests.")
 
 
-def test_006_setup_and_login_using_root_ssh_key(ip_to_use):
+def test_006_setup_and_login_using_root_ssh_key():
     assert os.environ.get('SSH_AUTH_SOCK') is not None
     assert if_key_listed() is True  # horrible function name
-    results = SSH_TEST('ls -la', user, None, ip_to_use)
+    results = SSH_TEST('ls -la', user, None, ip)
     assert results['result'] is True, results['output']
 
 
@@ -119,8 +110,8 @@ def test_007_check_local_accounts(ws_client, account):
         fail(f'Group has unexpected name: {account["name"]} -> {entry["group"]}')
 
 
-def test_008_check_root_dataset_settings(ws_client, ip_to_use):
-    data = SSH_TEST('cat /conf/truenas_root_ds.json', user, password, ip_to_use)
+def test_008_check_root_dataset_settings(ws_client):
+    data = SSH_TEST('cat /conf/truenas_root_ds.json', user, password, ip)
     if not data['result']:
         fail(f'Unable to get dataset schema: {data["output"]}')
 
@@ -129,7 +120,7 @@ def test_008_check_root_dataset_settings(ws_client, ip_to_use):
     except Exception as e:
         fail(f'Unable to load dataset schema: {e}')
 
-    data = SSH_TEST('zfs get -o value -H truenas:developer /', user, password, ip_to_use)
+    data = SSH_TEST('zfs get -o value -H truenas:developer /', user, password, ip)
     if not data['result']:
         fail('Failed to determine whether developer mode enabled')
 
