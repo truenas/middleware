@@ -1,5 +1,6 @@
 # -*- coding=utf-8 -*-
 import contextlib
+import logging
 import os
 import socket
 
@@ -9,11 +10,85 @@ from .pytest import fail
 from middlewared.client import Client
 from middlewared.client.utils import undefined
 
-__all__ = ["client", "host", "host_websocket_uri", "password", "session", "url", "websocket_url"]
+__all__ = ["client", "host", "host_websocket_uri", "password", "session", "url", "websocket_url", "PersistentCtx"]
+
+logger = logging.getLogger(__name__)
+
+class PersistentClient(Client):
+    authenticated = False
+
+    def call(self, method, *args, **kwargs):
+        if method.startswith('auth.login') and self.authenticated:
+            raise ValueError(
+                'Login related endpoint used with persistent handle. '
+                'Please specify `reuse_conn=False` as a keyword argument '
+                'for the client connection.'
+            )
+
+        return super().call(method, *args, **kwargs)
+
+
+class ClientCtx:
+    conn = None
+
+    def setup(self, *, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None):
+        """
+        Test developer may directly call this method after importing PersistentCtx
+        in order to replcate the PersistentClient connection with one using different
+        credentials or target IP address. Note that such changes will impact subsequent
+        tests and so developers should either document this clearly or properly
+        clean up after themselves.
+        """
+        if auth is None:
+            raise ValueError('Authentication is required for client context wrapper')
+
+        elif auth is undefined:
+            auth = ("root", password())
+
+        if self.conn is not None:
+            self.conn.close()
+            self.conn = None
+
+        self.conn = PersistentClient(
+            host_websocket_uri(host_ip),
+            py_exceptions=py_exceptions,
+            log_py_exceptions=log_py_exceptions
+        )
+
+        try:
+            logged_in = self.conn.call("auth.login", *auth)
+            if auth_required:
+                assert logged_in
+
+            self.conn.authenticated = True
+        except Exception:
+            self.conn.close()
+            self.conn = None
+            raise
+
+        return self.conn
+
+    def get_or_setup(self, *args, **kwargs):
+        if self.conn:
+            try:
+                self.conn.ping()
+                return self.conn
+            except Exception:
+                logger.warning("Persistent websocket connection died. Reconnecting.")
+                pass
+
+        return self.setup(*args, **kwargs)
+
+
+PersistentCtx = ClientCtx()
 
 
 @contextlib.contextmanager
-def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None):
+def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None, reuse_conn=True):
+    if reuse_conn and auth is undefined and host_ip is None and auth_required:
+        yield PersistentCtx.get_or_setup()
+        return
+
     if auth is undefined:
         auth = ("root", password())
 
