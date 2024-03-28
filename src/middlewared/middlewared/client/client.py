@@ -445,7 +445,7 @@ class Client:
                     ).start()
                 if mtype == 'CHANGED' and job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'):
                     # If an Event already exist we just set it to mark it finished.
-                    # Otherwise we create a new Event.
+                    # Otherwise, we create a new Event.
                     # This is to prevent a race-condition of job finishing before
                     # the client can create the Event.
                     event = job.get('__ready')
