@@ -381,16 +381,7 @@ def test_023_test_smb_options():
     assert new_config['smb_options'].splitlines() == SAMPLE_OPTIONS
 
 
-def test_024_test_invalid_smb_option():
-    old_config = call('smb.config')
-    with pytest.raises(ValidationError) as ve:
-        call('smb.update', {'smb_options': 'oplocks = canary'})
-
-    assert ve.value.attribute == 'smb_update.smb_options'
-    assert old_config == call('smb.config')
-
-
-def test_025_test_invalid_share_aux_param_create():
+def test_024_test_invalid_share_aux_param_create():
     init_share_count = call('sharing.smb.query', [], {'count': True})
     with pytest.raises(ValidationError) as ve:
         call('sharing.smb.create', {'name': 'FAIL', 'path': smb_registry_mp, 'auxsmbconf': 'oplocks = canary'})

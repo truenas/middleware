@@ -959,9 +959,9 @@ class SharingSMBService(SharingService):
             if e.errno != errno.EINVAL:
                 raise e from None
 
-            await self.compress(old)
+            compressed = await self.compress(old)
             await self.middleware.call(
-                'datastore.update', self._config.datastore, id_, old,
+                'datastore.update', self._config.datastore, id_, compressed,
                 {'prefix': self._config.datastore_prefix}
             )
             raise ValidationError('sharingsmb_update.auxsmbconf', e.errmsg)
