@@ -213,12 +213,66 @@ class PoolService(Service):
         return True
 
     @private
+    def recursive_mount(self, name):
+        cmd = [
+            'zfs', 'mount',
+            '-R',  # recursive flag
+            name,  # name of the zpool / root dataset
+        ]
+        try:
+            self.logger.debug('Going to mount root dataset recusively: %r', name)
+            cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            if cp.returncode != 0:
+                self.logger.error(
+                    'Failed to mount datasets for pool: %r with error: %r',
+                    name, cp.stdout.decode()
+                )
+                return False
+            return True
+        except Exception:
+            self.logger.error(
+                'Unhandled exception while mounting datasets for pool: %r',
+                name, exc_info=True
+            )
+            return False
+
+    @private
+    def encryption_is_active(self, name):
+        cmd = [
+            'zpool', 'get',
+            '-H',                 # use in script
+            '-o', 'value',        # retrieve the value
+            'feature@encryption', # property to retrieve
+            name,                 # name of the zpool
+        ]
+        try:
+            self.logger.debug('Checking if feature@encryption is active on pool: %r', name)
+            cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            if cp.returncode != 0:
+                self.logger.error(
+                    'Failed to get feature@encryption for pool: %r with error: %r',
+                    name, cp.stdout.decode()
+                )
+                return False
+            if cp.stdout.decode().strip() == 'active':
+                return True
+            else:
+                return False
+        except Exception:
+            self.logger.error(
+                'Unhandled exception while checking on feature@encryption for pool: %r',
+                name, exc_info=True
+            )
+            return False
+
+    @private
     def import_on_boot_impl(self, vol_name, vol_guid, set_cachefile=False):
         cmd = [
             'zpool', 'import',
             vol_guid,  # the GUID of the zpool
             '-R', '/mnt',  # altroot
             '-m',  # import pool with missing log device(s)
+            '-N',  # do not mount the datasets
             '-f',  # force import since hostid can change (upgrade from CORE to SCALE changes it, for example)
             '-o', f'cachefile={ZPOOL_CACHE_FILE}' if set_cachefile else 'cachefile=none',
         ]
@@ -419,6 +473,10 @@ class PoolService(Service):
         for i in self.middleware.call_sync('datastore.query', 'storage.volume'):
             name, guid = i['vol_name'], i['vol_guid']
             if not self.import_on_boot_impl(name, guid, set_cachefile_property):
+                continue
+
+            if not self.encryption_is_active(name):
+                self.recursive_mount(name)
                 continue
 
             self.unlock_on_boot_impl(name)
