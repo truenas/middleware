@@ -1,3 +1,6 @@
+import os
+import types
+
 import boto3
 import pytest
 
@@ -41,37 +44,8 @@ def s3_credential():
         yield c
 
 
-def test_cloud_backup(s3_credential):
-    clean()
-
-    with dataset("cloud_backup") as local_dataset:
-        ssh(f"dd if=/dev/urandom of=/mnt/{local_dataset}/blob1 bs=1M count=1")
-
-        with task({
-            "path": f"/mnt/{local_dataset}",
-            "credentials": s3_credential["id"],
-            "attributes": {
-                "bucket": AWS_BUCKET,
-                "folder": "cloud_backup",
-            },
-            "password": "test",
-        }) as t:
-            call("cloud_backup.init", t["id"], job=True)
-
-            run_task(t)
-
-            logs = ssh("cat " + call("cloud_backup.get_instance", t["id"])["job"]["logs_path"])
-            assert "Files:           1 new,     0 changed,     0 unmodified" in logs
-
-            ssh(f"dd if=/dev/urandom of=/mnt/{local_dataset}/blob2 bs=1M count=1")
-
-            run_task(t)
-
-            logs = ssh("cat " + call("cloud_backup.get_instance", t["id"])["job"]["logs_path"])
-            assert "Files:           1 new,     0 changed,     1 unmodified" in logs
-
-
-def test_double_init_error(s3_credential):
+@pytest.fixture(scope="function")
+def cloud_backup_task(s3_credential):
     clean()
 
     with dataset("cloud_backup") as local_dataset:
@@ -86,10 +60,111 @@ def test_double_init_error(s3_credential):
         }) as t:
             call("cloud_backup.init", t["id"], job=True)
 
-            with pytest.raises(ClientException) as ve:
-                call("cloud_backup.init", t["id"], job=True)
+            yield types.SimpleNamespace(
+                local_dataset=local_dataset,
+                task=t,
+            )
 
-            assert ve.value.error.rstrip().endswith("already initialized")
+
+def test_cloud_backup(cloud_backup_task):
+    assert call("cloud_backup.list_snapshots", cloud_backup_task.task["id"]) == []
+
+    ssh(f"dd if=/dev/urandom of=/mnt/{cloud_backup_task.local_dataset}/blob1 bs=1M count=1")
+    run_task(cloud_backup_task.task)
+
+    logs = ssh("cat " + call("cloud_backup.get_instance", cloud_backup_task.task["id"])["job"]["logs_path"])
+    assert "Files:           1 new,     0 changed,     0 unmodified" in logs
+
+    snapshots = call("cloud_backup.list_snapshots", cloud_backup_task.task["id"])
+    assert len(snapshots) == 1
+    assert (snapshots[0]["time"] - call("system.info")["datetime"]).total_seconds() < 300
+    assert snapshots[0]["paths"] == [f"/mnt/{cloud_backup_task.local_dataset}"]
+
+    ssh(f"mkdir /mnt/{cloud_backup_task.local_dataset}/dir1")
+    ssh(f"dd if=/dev/urandom of=/mnt/{cloud_backup_task.local_dataset}/dir1/blob2 bs=1M count=1")
+
+    run_task(cloud_backup_task.task)
+
+    logs = ssh("cat " + call("cloud_backup.get_instance", cloud_backup_task.task["id"])["job"]["logs_path"])
+    assert "Files:           1 new,     0 changed,     1 unmodified" in logs
+
+    snapshots = call("cloud_backup.list_snapshots", cloud_backup_task.task["id"])
+    assert len(snapshots) == 2
+
+    contents = call(
+        "cloud_backup.list_snapshot_directory",
+        cloud_backup_task.task["id"],
+        snapshots[-1]["id"],
+        f"/mnt/{cloud_backup_task.local_dataset}",
+    )
+    assert len(contents) == 3
+    assert contents[0]["name"] == "cloud_backup"
+    assert contents[1]["name"] == "blob1"
+    assert contents[2]["name"] == "dir1"
+
+
+@pytest.fixture(scope="module")
+def completed_cloud_backup_task(s3_credential):
+    clean()
+
+    with dataset("completed_cloud_backup") as local_dataset:
+        ssh(f"mkdir /mnt/{local_dataset}/dir1")
+        ssh(f"touch /mnt/{local_dataset}/dir1/file1")
+        ssh(f"mkdir /mnt/{local_dataset}/dir2")
+        ssh(f"touch /mnt/{local_dataset}/dir2/file2")
+        ssh(f"mkdir /mnt/{local_dataset}/dir3")
+        ssh(f"touch /mnt/{local_dataset}/dir3/file3")
+
+        with task({
+            "path": f"/mnt/{local_dataset}",
+            "credentials": s3_credential["id"],
+            "attributes": {
+                "bucket": AWS_BUCKET,
+                "folder": "cloud_backup",
+            },
+            "password": "test",
+        }) as t:
+            call("cloud_backup.init", t["id"], job=True)
+
+            run_task(t)
+
+            snapshot = call("cloud_backup.list_snapshots", t["id"])[0]
+
+            yield types.SimpleNamespace(
+                local_dataset=local_dataset,
+                task=t,
+                snapshot=snapshot,
+            )
+
+
+@pytest.mark.parametrize("options,result", [
+    ({}, ["dir1/file1", "dir2/file2", "dir3/file3"]),
+    ({"include": ["dir1", "dir2"]}, ["dir1/file1", "dir2/file2"]),
+    ({"exclude": ["dir2", "dir3"]}, ["dir1/file1"]),
+])
+def test_cloud_backup_restore(completed_cloud_backup_task, options, result):
+    with dataset("restore") as restore:
+        call(
+            "cloud_backup.restore",
+            completed_cloud_backup_task.task["id"],
+            completed_cloud_backup_task.snapshot["id"],
+            f"/mnt/{completed_cloud_backup_task.local_dataset}",
+            f"/mnt/{restore}",
+            options,
+            job=True,
+        )
+
+        assert sorted([
+            os.path.relpath(path, f"/mnt/{restore}")
+            for path in ssh(f"find /mnt/{restore} -type f").splitlines()
+        ]) == result
+
+
+def test_double_init_error(cloud_backup_task):
+    with pytest.raises(ClientException) as ve:
+        call("cloud_backup.init", cloud_backup_task.task["id"], job=True)
+
+    assert ve.value.error.rstrip().endswith("already initialized")
 
 
 @pytest.fixture(scope="module")
