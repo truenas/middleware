@@ -2043,8 +2043,9 @@ def _ha_reboot_master(delay=900):
         sleep(5)
 
 
-@pytest.mark.dependency(name="iscsi_alua_config")
-@pytest.mark.timeout(900)
+@pytest.mark.skip(reason='REST and HA are broken')
+#@pytest.mark.dependency(name="iscsi_alua_config")
+#@pytest.mark.timeout(900)
 def test_19_alua_config(request):
     """
     Test various aspects of ALUA configuration.
