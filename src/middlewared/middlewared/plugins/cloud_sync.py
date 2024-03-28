@@ -1059,7 +1059,15 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         """
         verrors = ValidationErrors()
 
-        await self._validate(verrors, "cloud_sync_sync_onetime", cloud_sync)
+        # Forbid unprivileged users to execute scripts as root this way.
+        for k in ["pre_script", "post_script"]:
+            if cloud_sync[k]:
+                verrors.add(
+                    f"cloud_sync_sync_onetime.{k}",
+                    "This option may not be used for onetime cloud sync operations",
+                )
+
+        await self._validate(None, verrors, "cloud_sync_sync_onetime", cloud_sync)
 
         verrors.check()
 
