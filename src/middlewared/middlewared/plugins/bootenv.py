@@ -163,7 +163,7 @@ class BootEnvService(CRUDService):
         try:
             subprocess.run([self.BE_TOOL, 'activate', oid], capture_output=True, text=True, check=True)
         except subprocess.CalledProcessError as cpe:
-            raise CallError(f'Failed to activate BE: {cpe.stdout.strip()}')
+            raise CallError(f'Failed to activate BE: {cpe.stderr.strip()}')
         else:
             return True
 
@@ -222,7 +222,7 @@ class BootEnvService(CRUDService):
         try:
             await run(args, encoding='utf8', check=True)
         except subprocess.CalledProcessError as cpe:
-            raise CallError(f'Failed to create boot environment: {cpe.stdout}')
+            raise CallError(f'Failed to create boot environment: {cpe.stderr}')
         return data['name']
 
     @accepts(Str('id'), Dict(
@@ -271,7 +271,7 @@ class BootEnvService(CRUDService):
         try:
             await run(self.BE_TOOL, 'destroy', '-F', be['id'], encoding='utf8', check=True)
         except subprocess.CalledProcessError as cpe:
-            raise CallError(f'Failed to delete boot environment: {cpe.stdout}')
+            raise CallError(f'Failed to delete boot environment: {cpe.stderr}')
         return True
 
     @private
