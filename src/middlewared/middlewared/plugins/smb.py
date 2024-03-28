@@ -996,7 +996,6 @@ class SharingSMBService(SharingService):
         that are accessing the share.
         """
         share = await self.get_instance(id_)
-        self.logger.debug("XXX: deleting smb share: %s", share)
         result = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
         share_name = 'homes' if share['home'] else share['name']
@@ -1023,7 +1022,7 @@ class SharingSMBService(SharingService):
             await self.middleware.call('service.reload', 'mdns')
 
         if share_name == 'homes':
-            await self.middleware.call('smb.initialize_globals')
+            await self.middleware.call('etc.generate', 'smb')
 
         return result
 

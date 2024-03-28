@@ -953,7 +953,6 @@ class LDAPService(ConfigService):
         await self.middleware.call('service.restart', 'nslcd')
 
         job.set_progress(50, 'Reconfiguring SMB service')
-        await self.middleware.call('smb.initialize_globals')
         await self.middleware.call('etc.generate', 'smb')
 
         if ldap['has_samba_schema']:
@@ -993,7 +992,6 @@ class LDAPService(ConfigService):
         job.set_progress(30, 'Reconfiguring SMB service.')
         await self.middleware.call('smb.synchronize_passdb')
         await self.middleware.call('smb.synchronize_group_mappings')
-        await self.middleware.call('smb.initialize_globals')
         await self._service_change('cifs', 'restart')
 
         job.set_progress(50, 'Clearing directory service cache.')

@@ -748,7 +748,7 @@ class ActiveDirectoryService(ConfigService):
                 'cifs_srv_workgroup': dc_info['Pre-Win2k Domain']
             })
 
-        await self.middleware.call('smb.initialize_globals')
+        await self.middleware.call('etc.generate', 'smb')
 
         """
         Check response of 'net ads testjoin' to determine whether the server needs to be joined to Active Directory.
@@ -871,7 +871,6 @@ class ActiveDirectoryService(ConfigService):
         job.set_progress(10, 'Stopping kerberos service')
         await self.middleware.call('kerberos.stop')
         job.set_progress(20, 'Reconfiguring SMB.')
-        await self.middleware.call('etc.generate', 'smb')
         await self.middleware.call('service.stop', 'cifs')
         job.set_progress(40, 'Reconfiguring pam and nss.')
         await self.middleware.call('etc.generate', 'pam')
@@ -879,7 +878,6 @@ class ActiveDirectoryService(ConfigService):
         job.set_progress(60, 'clearing caches.')
         await self.middleware.call('service.stop', 'dscache')
         smb_ha_mode = await self.middleware.call('smb.reset_smb_ha_mode')
-        await self.middleware.call('smb.initialize_globals')
         await self.middleware.call('service.start', 'cifs')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(100, 'Active Directory stop completed.')
