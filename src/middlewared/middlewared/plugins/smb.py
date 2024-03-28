@@ -1012,7 +1012,7 @@ class SharingSMBService(SharingService):
         if app and not credential_has_full_admin(app.authenticated_credentials):
             if data['auxsmbconf']:
                 verrors.add(
-                    'smb_update.smb_options',
+                    'smb_update.auxsmbconf',
                     'Changes to auxiliary parameters for SMB shares are restricted '
                     'to users with full administrative privileges.'
                 )
@@ -1087,7 +1087,7 @@ class SharingSMBService(SharingService):
         if app and not credential_has_full_admin(app.authenticated_credentials):
             if old['auxsmbconf'] != new['auxsmbconf']:
                 verrors.add(
-                    'smb_update.smb_options',
+                    'smb_update.auxsmbconf',
                     'Changes to auxiliary parameters for SMB shares are restricted '
                     'to users with full administrative privileges.'
                 )
