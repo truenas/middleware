@@ -3,9 +3,11 @@ import errno
 import pytest
 
 from middlewared.client import ClientException
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.account import unprivileged_user_client
+from middlewared.test.integration.utils import call
 
 
 @pytest.fixture(scope="module")
@@ -72,3 +74,27 @@ def test_write_role_can_write(ds, role):
         c.call("service.restart", "cifs")
         c.call("service.reload", "cifs")
         c.call("service.stop", "cifs")
+
+
+@pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_SMB_WRITE"])
+def test_auxsmbconf_rejected_create(ds, role):
+    share = None
+    with unprivileged_user_client(roles=[role]) as c:
+        with pytest.raises(ValidationErrors) as ve:
+            try:
+                share = c.call('sharing.smb.create', {
+                    'name': 'FAIL',
+                    'path': f'/mnt/{create_dataset}',
+                    'auxsmbconf': 'test:param = CANARY'
+                })
+            finally:
+                if share:
+                    call('sharing.smb.delete', share['id'])
+
+
+@pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_SMB_WRITE"])
+def test_auxsmbconf_rejected_update(ds, role):
+    with smb_share(f'/mnt/{create_dataset}', 'FAIL') as share:
+        with unprivileged_user_client(roles=[role]) as c:
+            with pytest.raises(ValidationErrors):
+                c.call('sharing.smb.update', share['id'], {'auxsmbconf': 'test:param = Bob'})
