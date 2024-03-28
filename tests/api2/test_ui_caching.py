@@ -5,7 +5,7 @@ import requests
 
 from middlewared.test.integration.utils import url
 
-RE_MAIN_SCRIPT = re.compile(r'<script src="(main\..+\.js)" type="module">')
+RE_MAIN_SCRIPT = re.compile(r'<script src="(main[.-].+\.js)" type="module">')
 
 
 @pytest.mark.parametrize("path", ["/", "/ui", "/ui/", "/ui/index.html", "/ui/sessions/signin"])
