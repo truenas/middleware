@@ -1567,6 +1567,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         )
 
     def call_sync(self, name, *params, job_on_progress_cb=None, app=None, audit_callback=None, background=False):
+        if threading.get_ident() == self.__thread_id:
+            raise RuntimeError('You cannot use call_sync from main thread')
+
         if background:
             return self.loop.call_soon_threadsafe(lambda: self.create_task(self.call(name, *params, app=app)))
 
@@ -1606,7 +1609,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def run_coroutine(self, coro, wait=True):
         if threading.get_ident() == self.__thread_id:
-            raise RuntimeError('You cannot call_sync or run_coroutine from main thread')
+            raise RuntimeError('You cannot use run_coroutine from main thread')
 
         fut = asyncio.run_coroutine_threadsafe(coro, self.loop)
         if not wait:

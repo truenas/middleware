@@ -132,7 +132,7 @@ class VMWareService(CRUDService):
             {**new, 'state': {'state': 'PENDING'}},
         )
 
-        self.middleware.call_sync("alert.oneshot_delete", "VMWareLoginFailed", old["hostname"])
+        await self.middleware.call("alert.oneshot_delete", "VMWareLoginFailed", old["hostname"])
 
         return await self.get_instance(id_)
 
@@ -152,7 +152,7 @@ class VMWareService(CRUDService):
             id_
         )
 
-        self.middleware.call_sync("alert.oneshot_delete", "VMWareLoginFailed", vmsnapobj["hostname"])
+        await self.middleware.call("alert.oneshot_delete", "VMWareLoginFailed", vmsnapobj["hostname"])
 
         return response
 
