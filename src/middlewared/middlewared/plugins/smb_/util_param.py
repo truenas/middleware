@@ -6,41 +6,7 @@ from samba import param
 from .constants import SMBPath
 from .util_net_conf import reg_getparm
 
-# This is safe to initialize because stub file never changes
-LP_CTX = param.LoadParm(SMBPath.STUBCONF.platform())
 LP_CTX_LOCK = threading.Lock()
-
-
-def smbconf_getparm_file(param):
-        with open(SMBPath.GLOBALCONF.platform(), "r") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.strip().startswith(("[", "#", ";")):
-                    continue
-
-                try:
-                    k, v = line.split("=", 1)
-                except ValueError:
-                    continue
-
-                k = k.strip()
-                v = v.strip()
-
-                if k.casefold() != param.casefold():
-                    continue
-
-                if v.lower() in ("off", "false", "no"):
-                    return False
-
-                if v.lower() in ("on", "true", "yes"):
-                    return True
-
-                if v.isnumeric():
-                    return int(v)
-
-                return v
-
-        raise MatchNotFound(param)
 
 
 def smbconf_getparm_lpctx(param):
@@ -49,7 +15,8 @@ def smbconf_getparm_lpctx(param):
     default value for a parameter.
     """
     with LP_CTX_LOCK:
-        return LP_CTX.get(param)
+        ctx = param.LoadParm(SMBPath.GLOBALCONF.platform())
+        return ctx.get(param)
 
 
 def smbconf_getparm(parm, section='GLOBAL'):
@@ -62,19 +29,14 @@ def smbconf_getparm(parm, section='GLOBAL'):
     through samba's param binding. This is initialized under a non-default loadparm context
     based on empty smb4.conf file.
     """
+
+    if section.upper() == 'GLOBAL':
+        return smbconf_getparm_file(parm)
+
     try:
         return reg_getparm(section, parm)
     except Exception as e:
-        if not section.upper() == 'GLOBAL':
-            raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
-
-    if section.upper() == 'GLOBAL':
-        try:
-            return smbconf_getparm_file(parm)
-        except MatchNotFound:
-            pass
-
-    return smbconf_getparm_lpctx(parm)
+        raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
 
 
 def lpctx_validate_global_parm(param):
@@ -85,4 +47,5 @@ def lpctx_validate_global_parm(param):
     This should be a lightweight validation of GLOBAL params.
     """
     with LP_CTX_LOCK:
+        ctx = param.LoadParm(SMBPath.GLOBALCONF.platform())
         LP_CTX.dump_a_parameter(param)
