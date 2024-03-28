@@ -44,9 +44,7 @@ class SystemDatasetService(ConfigService):
         Str('pool', required=True),
         Bool('pool_set', required=True),
         Str('uuid', required=True),
-        Str('uuid_b', required=True, null=True),
         Str('basename', required=True),
-        Str('uuid_a', required=True),
         Str('path', required=True, null=True),
     )
 
@@ -122,7 +120,6 @@ class SystemDatasetService(ConfigService):
 
     @private
     async def config_extend(self, config):
-
         # Treat empty system dataset pool as boot pool
         config['pool_set'] = bool(config['pool'])
         config['pool'] = self.force_pool or config['pool'] or await self.middleware.call('boot.pool_name')
@@ -130,27 +127,49 @@ class SystemDatasetService(ConfigService):
         config['basename'] = f'{config["pool"]}/.system'
 
         # Make `uuid` point to the uuid of current node
-        config['uuid_a'] = config['uuid']
-        is_enterprise = await self.middleware.call('system.is_enterprise')
-        is_node_b = False
-        if is_enterprise:
+        uuid_key = 'uuid'
+        if await self.middleware.call('system.is_enterprise'):
             if await self.middleware.call('failover.node') == 'B':
-                is_node_b = True
+                uuid_key = 'uuid_b'
                 config['uuid'] = config['uuid_b']
+
+        del config['uuid_b']
 
         if not config['uuid']:
             config['uuid'] = uuid.uuid4().hex
-            if is_enterprise and is_node_b:
-                attr = 'uuid_b'
-                config[attr] = config['uuid']
-            else:
-                attr = 'uuid'
             await self.middleware.call(
-                'datastore.update', 'system.systemdataset', config['id'], {f'sys_{attr}': config['uuid']}
+                'datastore.update', 'system.systemdataset', config['id'], {uuid_key: config['uuid']}, {'prefix': 'sys_'}
             )
 
         config['path'] = await self.middleware.run_in_thread(self.sysdataset_path, config['basename'])
         return config
+
+    @private
+    async def ensure_standby_uuid(self):
+        remote_uuid_key = 'uuid_b'
+        if await self.middleware.call('failover.node') == 'B':
+            remote_uuid_key = 'uuid'
+
+        local_config = await self.middleware.call('datastore.config', 'system.systemdataset', {'prefix': 'sys_'})
+        if local_config[remote_uuid_key]:
+            self.logger.debug('We already know the standby controller system dataset UUID')
+            return
+
+        remote_config = await self.middleware.call(
+            'failover.call_remote', 'datastore.config', ['system.systemdataset', {'prefix': 'sys_'}],
+        )
+        if not remote_config[remote_uuid_key]:
+            self.logger.warning('Standby controller does not yet have the system dataset UUID')
+            return
+
+        self.logger.info(f'Setting {remote_uuid_key}={remote_config[remote_uuid_key]!r}')
+        await self.middleware.call(
+            'datastore.update',
+            'system.systemdataset',
+            local_config['id'],
+            {remote_uuid_key: remote_config[remote_uuid_key]},
+            {'prefix': 'sys_'},
+        )
 
     @private
     async def is_boot_pool(self):
@@ -251,9 +270,7 @@ class SystemDatasetService(ConfigService):
 
         verrors.check()
 
-        update_dict = new.copy()
-        for key in ('basename', 'uuid_a', 'path', 'pool_exclude', 'pool_set'):
-            update_dict.pop(key, None)
+        update_dict = {k: v for k, v in new.items() if k in ['pool']}
 
         await self.middleware.call(
             'datastore.update',
