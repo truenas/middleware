@@ -8,6 +8,17 @@ from middlewared.service import CRUDService, private, ValidationErrors
 from .utils import AUTHMETHOD_LEGACY_MAP
 
 
+def portal_summary(data):
+    """Select a human-readable string representing this portal"""
+    if title := data.get('comment'):
+        return title
+    ips = []
+    for pair in data.get('listen', []):
+        if ip := pair.get('ip'):
+            ips.append(ip)
+    return ','.join(ips)
+
+
 class ISCSIPortalModel(sa.Model):
     __tablename__ = 'services_iscsitargetportal'
 
@@ -142,7 +153,7 @@ class ISCSIPortalService(CRUDService):
             ),
         ]),
         register=True,
-    ))
+    ), audit='Create iSCSI portal', audit_extended=lambda data: portal_summary(data))
     async def do_create(self, data):
         """
         Create a new iSCSI Portal.
@@ -211,14 +222,17 @@ class ISCSIPortalService(CRUDService):
             'iscsiportal_create',
             'iscsiportal_update',
             ('attr', {'update': True})
-        )
+        ),
+        audit='Update iSCSI portal',
+        audit_callback=True,
     )
-    async def do_update(self, pk, data):
+    async def do_update(self, audit_callback, pk, data):
         """
         Update iSCSI Portal `id`.
         """
 
         old = await self.get_instance(pk)
+        audit_callback(portal_summary(old))
 
         new = old.copy()
         new.update(data)
@@ -242,12 +256,15 @@ class ISCSIPortalService(CRUDService):
 
         return await self.get_instance(pk)
 
-    @accepts(Int('id'))
-    async def do_delete(self, id_):
+    @accepts(Int('id'),
+             audit='Delete iSCSI portal',
+             audit_callback=True,)
+    async def do_delete(self, audit_callback, id_):
         """
         Delete iSCSI Portal `id`.
         """
-        await self.get_instance(id_)
+        old = await self.get_instance(id_)
+        audit_callback(portal_summary(old))
         await self.middleware.call(
             'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target_portalgroup', '=', id_]]
         )

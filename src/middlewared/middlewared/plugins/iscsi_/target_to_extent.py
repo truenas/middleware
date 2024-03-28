@@ -35,13 +35,18 @@ class iSCSITargetToExtentService(CRUDService):
         Int('lunid', null=True),
         Int('extent', required=True),
         register=True
-    ))
-    async def do_create(self, data):
+    ), audit='Create iSCSI target/LUN/extent mapping', audit_callback=True)
+    async def do_create(self, audit_callback, data):
         """
         Create an Associated Target.
 
         `lunid` will be automatically assigned if it is not provided based on the `target`.
         """
+        # It is unusual to do a audit_callback on a do_create, but we want to perform
+        # more extensive operations than is usual for a create ... because the parameters
+        # supplied as so opaque to the user.
+        audit_callback(await self._mapping_summary(data))
+
         verrors = ValidationErrors()
 
         await self.validate(data, 'iscsi_targetextent_create', verrors)
@@ -66,6 +71,19 @@ class iSCSITargetToExtentService(CRUDService):
             attr.null = False
         return {'name': name, 'method': set_null_false}
 
+    async def _mapping_summary(self, data):
+        try:
+            target = (await self.middleware.call('iscsi.target.query', [['id', '=', data.get('target')]], {'get': True}))['name']
+        except Exception:
+            target = data.get('target')
+
+        try:
+            extent = (await self.middleware.call('iscsi.extent.query', [['id', '=', data.get('extent')]], {'get': True}))['name']
+        except Exception:
+            extent = data.get('extent')
+
+        return f'{target}/{data.get("lunid")}/{extent}'
+
     @accepts(
         Int('id'),
         Patch(
@@ -73,14 +91,17 @@ class iSCSITargetToExtentService(CRUDService):
             'iscsi_targetextent_update',
             ('edit', _set_null_false('lunid')),
             ('attr', {'update': True})
-        )
+        ),
+        audit='Update iSCSI target/LUN/extent mapping',
+        audit_callback=True,
     )
-    async def do_update(self, id_, data):
+    async def do_update(self, audit_callback, id_, data):
         """
         Update Associated Target of `id`.
         """
         verrors = ValidationErrors()
         old = await self.get_instance(id_)
+        audit_callback(await self._mapping_summary(old))
 
         new = old.copy()
         new.update(data)
@@ -97,8 +118,11 @@ class iSCSITargetToExtentService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'), Bool('force', default=False))
-    async def do_delete(self, id_, force):
+    @accepts(Int('id'),
+             Bool('force', default=False),
+             audit='Delete iSCSI target/LUN/extent mapping',
+             audit_callback=True,)
+    async def do_delete(self, audit_callback, id_, force):
         """
         Delete Associated Target of `id`.
         """
@@ -112,6 +136,7 @@ class iSCSITargetToExtentService(CRUDService):
             else:
                 raise CallError(f'Associated target {active_sessions[0]} is in use.')
 
+        audit_callback(await self._mapping_summary(associated_target))
         result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id_
         )

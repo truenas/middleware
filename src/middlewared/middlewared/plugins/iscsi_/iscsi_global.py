@@ -106,7 +106,7 @@ class ISCSIGlobalService(SystemServiceService):
         Int('pool_avail_threshold', validators=[Range(min_=1, max_=99)], null=True),
         Bool('alua'),
         update=True
-    ))
+    ), audit='Update iSCSI')
     async def do_update(self, data):
         """
         `alua` is a no-op for FreeNAS.
