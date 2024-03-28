@@ -1,6 +1,7 @@
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
 from middlewared.schema import accepts, Dict, Int, List, Str
-from middlewared.service import job, Service
+from middlewared.service import job, Service, ValidationErrors
 from middlewared.validators import NotMatch
 
 
@@ -14,7 +15,7 @@ class CloudBackupService(Service):
         Int("id"),
         Str("snapshot_id", validators=[NotMatch(r"^-")]),
         Str("subfolder"),
-        Str("destination_path", validators=[NotMatch(r"^-")]),
+        Str("destination_path"),
         Dict(
             "options",
             List("exclude", items=[Str("item")]),
@@ -28,6 +29,12 @@ class CloudBackupService(Service):
         created by the cloud backup job `id`.
         """
         await self.middleware.call("network.general.will_perform_activity", "cloud_backup")
+
+        verrors = ValidationErrors()
+
+        await check_path_resides_within_volume(verrors, self.middleware, "destination_path", destination_path)
+
+        verrors.check()
 
         cloud_backup = await self.middleware.call("cloud_backup.get_instance", id_)
 
