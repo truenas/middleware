@@ -1,5 +1,6 @@
 import contextlib
 import enum
+import errno
 import ipaddress
 import os
 import random
@@ -18,11 +19,11 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call
 from auto_config import ha, hostname, isns_ip, pool_name
-from functions import DELETE, GET, POST, PUT, SSH_TEST
+from functions import SSH_TEST
 from protocols import (initiator_name_supported, iscsi_scsi_connection,
                        isns_connection)
 
@@ -100,12 +101,7 @@ zvol = f'{pool_name}/{zvol_name}'
 
 
 def snapshot_rollback(snapshot_id):
-    payload = {
-        'id': snapshot_id,
-        'options': {}
-    }
-    results = POST("/zfs/snapshot/rollback", payload)
-    assert results.status_code == 200, results.text
+    call('zfs.snapshot.rollback', snapshot_id)
 
 
 def other_node(node):
@@ -138,17 +134,12 @@ def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None):
             'peeruser': peeruser,
             'peersecret': peersecret
         })
-    results = POST("/iscsi/auth/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    auth_config = results.json()
+    auth_config = call('iscsi.auth.create', payload)
 
     try:
         yield auth_config
     finally:
-        results = DELETE(f"/iscsi/auth/id/{auth_config['id']}/")
-        assert results.status_code == 200, results.text
-        assert results.json(), results.text
+        call('iscsi.auth.delete', auth_config['id'])
 
 
 @contextlib.contextmanager
@@ -157,17 +148,12 @@ def initiator(comment='Default initiator', initiators=[]):
         'comment': comment,
         'initiators': initiators,
     }
-    results = POST("/iscsi/initiator/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    initiator_config = results.json()
+    initiator_config = call('iscsi.initiator.create', payload)
 
     try:
         yield initiator_config
     finally:
-        results = DELETE(f"/iscsi/initiator/id/{initiator_config['id']}/")
-        assert results.status_code == 200, results.text
-        assert results.json(), results.text
+        call('iscsi.initiator.delete', initiator_config['id'])
 
 
 @contextlib.contextmanager
@@ -177,17 +163,12 @@ def portal(listen=[{'ip': '0.0.0.0'}], comment='Default portal', discovery_authm
         'comment': comment,
         'discovery_authmethod': discovery_authmethod
     }
-    results = POST("/iscsi/portal/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    portal_config = results.json()
+    portal_config = call('iscsi.portal.create', payload)
 
     try:
         yield portal_config
     finally:
-        results = DELETE(f"/iscsi/portal/id/{portal_config['id']}/")
-        assert results.status_code == 200, results.text
-        assert results.json(), results.text
+        call('iscsi.portal.delete', portal_config['id'])
 
 
 @contextlib.contextmanager
@@ -198,17 +179,12 @@ def target(target_name, groups, alias=None):
     }
     if alias:
         payload.update({'alias': alias})
-    results = POST("/iscsi/target/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    target_config = results.json()
+    target_config = call('iscsi.target.create', payload)
 
     try:
         yield target_config
     finally:
-        results = DELETE(f"/iscsi/target/id/{target_config['id']}/", True)
-        assert results.status_code == 200, results.text
-        assert results.json(), results.text
+        call('iscsi.target.delete', target_config['id'], True)
 
 
 @contextlib.contextmanager
@@ -222,20 +198,12 @@ def file_extent(pool_name, dataset_name, file_name, filesize=MB_512, extent_name
     # We want to allow any non-None serial to be specified (even '')
     if serial is not None:
         payload.update({'serial': serial})
-    results = POST("/iscsi/extent/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    extent_config = results.json()
+    extent_config = call('iscsi.extent.create', payload)
 
     try:
         yield extent_config
     finally:
-        payload = {
-            'remove': True
-        }
-        results = DELETE(f"/iscsi/extent/id/{extent_config['id']}/", payload)
-        assert results.status_code == 200, results.text
-        assert results.json(), results.text
+        call('iscsi.extent.delete', extent_config['id'], True, True)
 
 
 @contextlib.contextmanager
@@ -246,28 +214,23 @@ def zvol_dataset(zvol, volsize=MB_512):
         'volsize': volsize,
         'volblocksize': '16K'
     }
-    results = POST("/pool/dataset/", payload)
-    assert results.status_code == 200, results.text
-    dataset_config = results.json()
+    dataset_config = call('pool.dataset.create', payload)
 
     try:
         yield dataset_config
     finally:
-        zvol_url = zvol.replace('/', '%2F')
-        results = DELETE(f'/pool/dataset/id/{zvol_url}')
-        assert results.status_code == 200, results.text
+        call('pool.dataset.delete', dataset_config['id'])
 
 
-def modify_extent(ident, payload, expected_status_code=200):
-    results = PUT(f"/iscsi/extent/id/{ident}/", payload)
-    assert results.status_code == expected_status_code, results.text
+def modify_extent(ident, payload):
+    call('iscsi.extent.update', ident, payload)
 
 
-def file_extent_resize(ident, filesize, expected_status_code=200):
+def file_extent_resize(ident, filesize):
     payload = {
         'filesize': filesize,
     }
-    modify_extent(ident, payload, expected_status_code)
+    modify_extent(ident, payload)
 
 
 def extent_disable(ident):
@@ -278,13 +241,11 @@ def extent_enable(ident):
     modify_extent(ident, {'enabled': True})
 
 
-def zvol_resize(zvol, volsize, expected_status_code=200):
+def zvol_resize(zvol, volsize):
     payload = {
         'volsize': volsize,
     }
-    zvol_url = zvol.replace('/', '%2F')
-    result = PUT(f'/pool/dataset/id/{zvol_url}/', payload)
-    assert result.status_code == expected_status_code, result.text
+    call('pool.dataset.update', zvol, payload)
 
 
 def get_iscsi_sessions(filters=None, check_length=None):
@@ -308,20 +269,12 @@ def zvol_extent(zvol, extent_name='zvol_extent'):
         'disk': f'zvol/{zvol}',
         'name': extent_name,
     }
-    results = POST("/iscsi/extent/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    extent_config = results.json()
+    extent_config = call('iscsi.extent.create', payload)
 
     try:
         yield extent_config
     finally:
-        payload = {
-            'remove': True
-        }
-        results = DELETE(f"/iscsi/extent/id/{extent_config['id']}/", payload)
-        assert results.status_code == 200, results.text
-        assert results.json(), results.text
+        call('iscsi.extent.delete', extent_config['id'], True, True)
 
 
 @contextlib.contextmanager
@@ -332,10 +285,7 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
         'lunid': lun_id,
         'extent': extent_id
     }
-    results = POST("/iscsi/targetextent/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    associate_config = results.json()
+    associate_config = call('iscsi.targetextent.create', payload)
     if alua_enabled:
         # Give a little time for the STANDBY target to surface
         sleep(2)
@@ -343,9 +293,7 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
     try:
         yield associate_config
     finally:
-        results = DELETE(f"/iscsi/targetextent/id/{associate_config['id']}/", True)
-        assert results.status_code == 200, results.text
-        assert results.json(), results.text
+        call('iscsi.targetextent.delete', associate_config['id'], True)
     if alua_enabled:
         sleep(2)
 
@@ -454,14 +402,12 @@ def configured_target(config, name, extent_type, alias=None, extent_size=MB_512)
 @contextlib.contextmanager
 def isns_enabled(delay=5):
     payload = {'isns_servers': [isns_ip]}
-    results = PUT("/iscsi/global", payload)
-    assert results.status_code == 200, results.text
+    call('iscsi.global.update', payload)
     try:
         yield
     finally:
         payload = {'isns_servers': []}
-        results = PUT("/iscsi/global", payload)
-        assert results.status_code == 200, results.text
+        call('iscsi.global.update', payload)
         if delay:
             print(f'Sleeping for {delay} seconds after turning off iSNS')
             sleep(delay)
@@ -470,16 +416,15 @@ def isns_enabled(delay=5):
 @contextlib.contextmanager
 def alua_enabled(delay=10):
     payload = {'alua': True}
-    results = PUT("/iscsi/global", payload)
-    assert results.status_code == 200, results.text
+    call('iscsi.global.update', payload)
     if delay:
         sleep(delay)
+        call('iscsi.alua.wait_for_alua_settled', 5, 8)
     try:
         yield
     finally:
         payload = {'alua': False}
-        results = PUT("/iscsi/global", payload)
-        assert results.status_code == 200, results.text
+        call('iscsi.global.update', payload)
         if delay:
             sleep(delay)
 
@@ -609,26 +554,18 @@ def get_target(targetid):
     """
     Return target JSON data.
     """
-    result = GET(f"/iscsi/target/id/{targetid}")
-    assert result.status_code == 200, result.text
-    return result.json()
+    return call('iscsi.target.get_instance', int(targetid))
 
 
 def get_targets():
     """
     Return a dictionary of target JSON data, keyed by target name.
     """
-    result = {}
-    results = GET("/iscsi/target")
-    assert results.status_code == 200, results.text
-    for target in results.json():
-        result[target['name']] = target
-    return result
+    return {target['name']: target for target in call('iscsi.target.query')}
 
 
 def modify_target(targetid, payload):
-    results = PUT(f"/iscsi/target/id/{targetid}/", payload)
-    assert results.status_code == 200, results.text
+    call('iscsi.target.update', targetid, payload)
 
 
 def set_target_alias(targetid, newalias):
@@ -646,24 +583,21 @@ def set_target_initiator_id(targetid, initiatorid):
     modify_target(targetid, {'groups': groups})
 
 
+def _get_service(service_name='iscsitarget'):
+    return call('service.query', [['service', '=', service_name]], {'get': True})
+
+
 @pytest.mark.dependency(name="iscsi_cmd_00")
 def test_00_setup(request):
     # Enable iSCSI service
     payload = {"enable": True}
-    results = PUT("/service/id/iscsitarget/", payload)
-    assert results.status_code == 200, results.text
+    call('service.update', 'iscsitarget', payload)
     # Start iSCSI service
-    result = POST(
-        '/service/start', {
-            'service': 'iscsitarget',
-        }
-    )
-    assert result.status_code == 200, result.text
+    call('service.start', 'iscsitarget')
     sleep(1)
     # Verify running
-    results = GET("/service/?service=iscsitarget")
-    assert results.status_code == 200, results.text
-    assert results.json()[0]["state"] == "RUNNING", results.text
+    service = _get_service()
+    assert service['state'] == "RUNNING", service
 
 
 def test_01_inquiry(request):
@@ -1196,12 +1130,15 @@ def test_11_modify_portal(request):
         assert portal_config['comment'] == 'Default portal', portal_config
         # First just change the comment
         payload = {'comment': 'New comment'}
-        results = PUT(f"/iscsi/portal/id/{portal_config['id']}", payload)
+        call('iscsi.portal.update', portal_config['id'], payload)
+        new_config = call('iscsi.portal.get_instance', portal_config['id'])
+        assert new_config['comment'] == 'New comment', new_config
         # Then try to reapply everything
         payload = {'comment': 'test1', 'discovery_authmethod': 'NONE', 'discovery_authgroup': None, 'listen': [{'ip': '0.0.0.0'}]}
         # payload = {'comment': 'test1', 'discovery_authmethod': 'NONE', 'discovery_authgroup': None, 'listen': [{'ip': '0.0.0.0'}, {'ip': '::'}]}
-        results = PUT(f"/iscsi/portal/id/{portal_config['id']}", payload)
-        assert results.status_code == 200, results.text
+        call('iscsi.portal.update', portal_config['id'], payload)
+        new_config = call('iscsi.portal.get_instance', portal_config['id'])
+        assert new_config['comment'] == 'test1', new_config
 
 
 def test_12_pblocksize_setting(request):
@@ -1222,8 +1159,7 @@ def test_12_pblocksize_setting(request):
 
                 # First let's just change the blocksize to 2K
                 payload = {'blocksize': 2048}
-                results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
-                assert results.status_code == 200, results.text
+                call('iscsi.extent.update', extent_config['id'], payload)
 
                 expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
 
@@ -1233,8 +1169,7 @@ def test_12_pblocksize_setting(request):
 
                 # Now let's change it back to 512, but also set pblocksize
                 payload = {'blocksize': 512, 'pblocksize': True}
-                results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
-                assert results.status_code == 200, results.text
+                call('iscsi.extent.update', extent_config['id'], payload)
 
                 expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
 
@@ -1252,8 +1187,7 @@ def test_12_pblocksize_setting(request):
 
                 # First let's just change the blocksize to 4K
                 payload = {'blocksize': 4096}
-                results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
-                assert results.status_code == 200, results.text
+                call('iscsi.extent.update', extent_config['id'], payload)
 
                 expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
 
@@ -1263,8 +1197,7 @@ def test_12_pblocksize_setting(request):
 
                 # Now let's also set pblocksize
                 payload = {'pblocksize': True}
-                results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
-                assert results.status_code == 200, results.text
+                call('iscsi.extent.update', extent_config['id'], payload)
 
                 TUR(s)
                 data = s.readcapacity16().result
@@ -1293,13 +1226,12 @@ def test_13_test_target_name(request, extent_type):
             target_test_readwrite16(ip, iqn)
 
         name65 = generate_name(65)
-        with pytest.raises(AssertionError) as ve:
+        with pytest.raises(ValidationErrors) as ve:
             with configured_target(config, name65, extent_type):
                 assert False, f"Should not have been able to create a target with name length {len(name65)}."
-                iqn = f'{basename}:{name65}'
-                target_test_readwrite16(ip, iqn)
-        assert "iscsi_extent_create.name" in str(ve), ve
-        assert "The value may not be longer than 64 characters" in str(ve), ve
+        assert ve.value.errors == [
+            ValidationError('iscsi_extent_create.name', 'The value may not be longer than 64 characters', errno.EINVAL),
+        ]
 
 
 @pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
@@ -1366,9 +1298,7 @@ def test_14_target_lun_extent_modify(request, extent_type):
                             call('iscsi.targetextent.create', payload)
 
                             # Get the current config
-                            results = GET('/iscsi/targetextent')
-                            assert results.status_code == 200, results.text
-                            textents = results.json()
+                            textents = call('iscsi.targetextent.query')
 
                             # Now perform some updates that will not succeed
                             textent4 = next(textent for textent in textents if textent['extent'] == config4['id'])
@@ -1851,34 +1781,21 @@ def _verify_ha_inquiry(s, serial_number, naa, tpgs=0,
 
 
 def _get_node(timeout=None):
-    results = GET('/failover/node', timeout=timeout)
-    assert results.status_code == 200, results.text
-    return results.text.replace('"', '').replace("'", "")
+    return call('failover.node')
 
 
 def _get_ha_failover_status():
     # Make sure we're talking to the master
-    results = GET('/failover/status')
-    assert results.status_code == 200, results.text
-    return results.text.replace('"', '').replace("'", "")
+    return call('failover.status')
 
 
 def _get_ha_remote_failover_status():
-    payload = {
-        'method': 'failover.status',
-        'args': [],
-        'options': {}
-    }
-    results = POST('/failover/call_remote', payload)
-    assert results.status_code == 200, results.text
-    return results.text.replace('"', '').replace("'", "")
+    return call('failover.call_remote', 'failover.status')
 
 
 def _get_ha_failover_in_progress():
     # Make sure we're talking to the master
-    results = GET('/failover/in_progress')
-    assert results.status_code == 200, results.text
-    return results.text == "true"
+    return call('failover.in_progress')
 
 
 def _check_master():
@@ -1902,17 +1819,9 @@ def _check_ha_node_configuration():
     for anode in both_nodes:
         ips[anode] = set()
         if anode == node:
-            results = GET('/interface')
-            assert results.status_code == 200, results.text
-            interfaces = results.json()
+            interfaces = call('interface.query')
         else:
-            payload = {'method': 'interface.query',
-                       'args': [],
-                       'options': {}
-                       }
-            results = POST('/failover/call_remote', payload)
-            assert results.status_code == 200, results.text
-            interfaces = results.json()
+            interfaces = call('failover.call_remote', 'interface.query')
 
         for i in interfaces:
             for alias in i['state']['aliases']:
@@ -1970,8 +1879,7 @@ def _ha_reboot_master(delay=900):
     orig_master_node = _get_node()
     new_master_node = other_node(orig_master_node)
 
-    results = POST('/system/reboot', {})
-    assert results.status_code == 200, results.text
+    call('system.reboot')
 
     # First we'll loop until the node is no longer the orig_node
     new_master = False
@@ -2043,6 +1951,11 @@ def _ha_reboot_master(delay=900):
         sleep(5)
 
 
+def _ensure_alua_state(state):
+    results = call('iscsi.global.config')
+    assert results['alua'] == state, results
+
+
 @pytest.mark.dependency(name="iscsi_alua_config")
 @pytest.mark.timeout(900)
 def test_19_alua_config(request):
@@ -2050,9 +1963,7 @@ def test_19_alua_config(request):
     Test various aspects of ALUA configuration.
     """
     # First ensure ALUA is off
-    results = GET('/iscsi/global')
-    assert results.status_code == 200, results.text
-    assert not results.json()['alua'], results.text
+    _ensure_alua_state(False)
 
     if ha:
         _check_ha_node_configuration()
@@ -2076,9 +1987,7 @@ def test_19_alua_config(request):
                 # Only perform this section on a HA system
 
                 with alua_enabled():
-                    results = GET('/iscsi/global')
-                    assert results.status_code == 200, results.text
-                    assert results.json()['alua'], results.text
+                    _ensure_alua_state(True)
 
                     # We will login to the target on BOTH controllers and make sure
                     # we see the same target.  Observe that we supply tpgs=1 as
@@ -2100,17 +2009,13 @@ def test_19_alua_config(request):
                             _verify_ha_report_target_port_groups(s2, tpgs, active_tpg)
 
                 # Ensure ALUA is off again
-                results = GET('/iscsi/global')
-                assert results.status_code == 200, results.text
-                assert not results.json()['alua'], results.text
+                _ensure_alua_state(False)
 
         # At this point we have no targets and ALUA is off
         if ha:
             # Now turn on ALUA again
             with alua_enabled():
-                results = GET('/iscsi/global')
-                assert results.status_code == 200, results.text
-                assert results.json()['alua'], results.text
+                _ensure_alua_state(True)
 
                 # Then create a target (with ALUA already enabled)
                 with configured_target_to_file_extent(config,
@@ -2152,9 +2057,7 @@ def test_19_alua_config(request):
                             _verify_ha_report_target_port_groups(s2, tpgs, new_active_tpg)
 
             # Ensure ALUA is off again
-            results = GET('/iscsi/global')
-            assert results.status_code == 200, results.text
-            assert not results.json()['alua'], results.text
+            _ensure_alua_state(False)
 
 
 @skip_persistent_reservations
@@ -2200,9 +2103,7 @@ def test_20_alua_basic_persistent_reservation(request):
                         _pr_check_reservation(s2)
 
     # Ensure ALUA is off again
-    results = GET('/iscsi/global')
-    assert results.status_code == 200, results.text
-    assert not results.json()['alua'], results.text
+    _ensure_alua_state(False)
 
 
 @skip_persistent_reservations
@@ -2459,8 +2360,9 @@ def test_25_resize_target_zvol(request):
                 zvol_resize(zvol, MB_512)
                 expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
                 assert MB_512 == _read_capacity16(s)
-                # Try to shrink the ZVOL again.  Expect an error (422)
-                zvol_resize(zvol, MB_256, 422)
+                # Try to shrink the ZVOL again.  Expect an error
+                with pytest.raises(ValidationErrors):
+                    zvol_resize(zvol, MB_256)
                 assert MB_512 == _read_capacity16(s)
 
 
@@ -2491,8 +2393,9 @@ def test_26_resize_target_file(request):
                 file_extent_resize(extent_id, MB_512)
                 expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
                 assert MB_512 == _read_capacity16(s)
-                # Try to shrink the file again.  Expect an error (422)
-                file_extent_resize(extent_id, MB_256, 422)
+                # Try to shrink the file again.  Expect an error
+                with pytest.raises(ValidationErrors):
+                    file_extent_resize(extent_id, MB_256)
                 assert MB_512 == _read_capacity16(s)
 
 
@@ -2569,9 +2472,7 @@ def test_28_portal_access(request):
                 # the specific IP addresses
                 if ha:
                     with alua_enabled():
-                        results = GET('/iscsi/global')
-                        assert results.status_code == 200, results.text
-                        assert results.json()['alua'], results.text
+                        _ensure_alua_state(True)
 
                         with pytest.raises(RuntimeError) as ve:
                             with iscsi_scsi_connection(ip, iqn) as s:
@@ -2620,11 +2521,13 @@ def test_29_multiple_extents():
 
                                 # Now try to create another extent using the same serial number
                                 # We expect this to fail.
-                                with pytest.raises(AssertionError) as ve:
+                                with pytest.raises(ValidationErrors) as ve:
                                     with file_extent(pool_name, dataset_name, "target.extent3", filesize=MB_512,
                                                      extent_name="extent3", serial=extent1_config['serial']):
                                         pass
-                                assert 'Serial number must be unique' in str(ve), ve
+                                assert ve.value.errors == [
+                                    ValidationError('iscsi_extent_create.serial', 'Serial number must be unique', errno.EINVAL)
+                                ]
 
                                 with file_extent(pool_name, dataset_name, "target.extent3", filesize=MB_512,
                                                  extent_name="extent3", serial='') as extent3_config:
@@ -2696,9 +2599,8 @@ def test_30_target_without_active_extent(request):
                     'lunid': 1,
                     'extent': target2_config['extent']['id']
                 }
-                results = PUT(f"/iscsi/targetextent/id/{target2_config['associate']['id']}/", payload)
-                assert results.status_code == 200, results.text
-                assert results.json(), results.text
+                call('iscsi.targetextent.update', target2_config['associate']['id'], payload)
+
                 check_inq_enabled_state(iqn1, 1)
                 check_inq_enabled_state(iqn2, 0)
                 with iscsi_scsi_connection(ip, iqn1) as s1:
@@ -2830,13 +2732,10 @@ def test_99_teardown(request):
     # Disable iSCSI service
     depends(request, ["iscsi_cmd_00"])
     payload = {'enable': False}
-    results = PUT("/service/id/iscsitarget/", payload)
-    assert results.status_code == 200, results.text
+    call('service.update', 'iscsitarget', payload)
     # Stop iSCSI service.
-    results = POST('/service/stop/', {'service': 'iscsitarget'})
-    assert results.status_code == 200, results.text
+    call('service.stop', 'iscsitarget')
     sleep(1)
     # Verify stopped
-    results = GET("/service/?service=iscsitarget")
-    assert results.status_code == 200, results.text
-    assert results.json()[0]["state"] == "STOPPED", results.text
+    service = _get_service()
+    assert service['state'] == "STOPPED", service
