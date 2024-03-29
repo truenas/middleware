@@ -25,35 +25,32 @@ global authentication
 authentication = (user, password)
 RE_HTTPS = re.compile(r'^http(:.*)')
 
-class RESTTarget(enum.Enum):
+class SRVTarget(enum.Enum):
     DEFAULT = enum.auto()
     NODEA = enum.auto()
     NODEB = enum.auto()
 
-def controller_url(target=RESTTarget.DEFAULT):
+
+def get_host_ip(target):
     server = host()
 
-    if target is RESTTarget.DEFAULT:
-        return f'http://{host().ip}/api/v2.0'
-
-    elif target is RESTTarget.NODEA:
-        if not server.nodea_ip:
-            raise ValueError('No IP address set for NODE A')
-
-        return f'http://{host().nodea_ip}/api/v2.0'
-
-    elif target is RESTTarget.NODEB:
-        if not server.nodeb_ip:
-            raise ValueError('No IP address set for NODE B')
-
-        return f'http://{host().nodeb_ip}/api/v2.0'
+    if target is SRVTarget.DEFAULT:
+        return host().ip
+    elif target is SRVTarget.NODEA:
+        return host().nodea_ip
+    elif target is SRVTarget.NODEB:
+        return host().nodeb_ip
 
     raise ValueError(f'{target}: unexpected target')
 
 
+def controller_url(target=SRVTarget.DEFAULT):
+    return f'http://{get_host_ip(target)}/api/v2.0'
+
+
 def GET(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
-    url = controller_url(RESTTarget.NODEA if controller_a else RESTTarget.DEFAULT)
+    url = controller_url(SRVTarget.NODEA if controller_a else SRVTarget.DEFAULT)
     complete_uri = testpath if testpath.startswith('http') else f'{url}{testpath}'
     if optional.get('force_ssl', False):
         complete_uri = RE_HTTPS.sub(r'https\1', complete_uri)
@@ -73,7 +70,7 @@ def GET(testpath, payload=None, controller_a=False, **optional):
 
 def POST(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
-    url = controller_url(RESTTarget.NODEA if controller_a else RESTTarget.DEFAULT)
+    url = controller_url(SRVTarget.NODEA if controller_a else SRVTarget.DEFAULT)
     if optional.get("use_ip_only"):
         parsed = urlparse(url)
         url = f"{parsed.scheme}://{parsed.netloc}"
@@ -96,7 +93,7 @@ def POST(testpath, payload=None, controller_a=False, **optional):
 
 def PUT(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
-    url = controller_url(RESTTarget.NODEA if controller_a else RESTTarget.DEFAULT)
+    url = controller_url(SRVTarget.NODEA if controller_a else SRVTarget.DEFAULT)
     if optional.pop("anonymous", False):
         auth = None
     else:
@@ -108,7 +105,7 @@ def PUT(testpath, payload=None, controller_a=False, **optional):
 
 def DELETE(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
-    url = controller_url(RESTTarget.NODEA if controller_a else RESTTarget.DEFAULT)
+    url = controller_url(SRVTarget.NODEA if controller_a else SRVTarget.DEFAULT)
     if optional.pop("anonymous", False):
         auth = None
     else:
@@ -119,7 +116,9 @@ def DELETE(testpath, payload=None, controller_a=False, **optional):
     return deleteit
 
 
-def SSH_TEST(command, username, passwrd, host):
+def SSH_TEST(command, username, passwrd, host=None):
+    target = host or get_host_ip(SRVTarget.DEFAULT)
+
     cmd = [] if passwrd is None else ["sshpass", "-p", passwrd]
     cmd += [
         "ssh",
@@ -129,7 +128,7 @@ def SSH_TEST(command, username, passwrd, host):
         "UserKnownHostsFile=/dev/null",
         "-o",
         "VerifyHostKeyDNS=no",
-        f"{username}@{host}",
+        f"{username}@{target}",
         command
     ]
     # 120 second timeout, to make sure no SSH connection hang.
