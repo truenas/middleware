@@ -24,6 +24,10 @@ class FailoverService(Service):
         """
         Returns whether a reboot is required for failover/security system configuration changes to take effect.
         """
+        return await self.check_reboot_required()
+
+    @private
+    async def check_reboot_required(self):
         fips_change_info = await self.middleware.call('keyvalue.get', 'fips_toggled', False)
         if not fips_change_info:
             return {
@@ -44,5 +48,7 @@ class FailoverService(Service):
                 'reboot_required': True,
                 'reason': 'Reboot required for FIPS configuration change to take effect',
             })
+        else:
+            await self.middleware.call('keyvalue.delete', 'fips_toggled')
 
         return info
