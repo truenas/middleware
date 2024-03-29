@@ -3,6 +3,7 @@
 # Author: Eric Turgeon
 # License: BSD
 
+import enum
 import json
 import os
 import re
@@ -24,29 +25,35 @@ global authentication
 authentication = (user, password)
 RE_HTTPS = re.compile(r'^http(:.*)')
 
-def controller_url(target='DEFAULT'):
+class RESTTarget(enum.Enum):
+    DEFAULT = enum.auto()
+    NODEA = enum.auto()
+    NODEB = enum.auto()
+
+def controller_url(target=RESTTarget.DEFAULT):
     server = host()
 
-    match target:
-        case 'DEFAULT':
-            return f'http://{host().ip}/api/v2.0'
-        case 'NODEA':
-            if not server.nodea_ip:
-                raise ValueError('No IP address set for NODE A')
+    if target is RESTTarget.DEFAULT:
+        return f'http://{host().ip}/api/v2.0'
 
-            return f'http://{host().nodea_ip}/api/v2.0'
-        case 'NODEB':
-            if not server.nodeb_ip:
-                raise ValueError('No IP address set for NODE B')
+    elif target is RESTTarget.NODEA:
+        if not server.nodea_ip:
+            raise ValueError('No IP address set for NODE A')
 
-            return f'http://{host().nodeb_ip}/api/v2.0'
-        case _:
-            raise ValueError(f'{target}: unexpected target')
+        return f'http://{host().nodea_ip}/api/v2.0'
+
+    elif target is RESTTarget.NODEB:
+        if not server.nodeb_ip:
+            raise ValueError('No IP address set for NODE B')
+
+        return f'http://{host().nodeb_ip}/api/v2.0'
+
+    raise ValueError(f'{target}: unexpected target')
 
 
 def GET(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
-    url = controller_url('NODEA' if controller_a else 'DEFAULT')
+    url = controller_url(RESTTarget.NODEA if controller_a else RESTTarget.DEFAULT)
     complete_uri = testpath if testpath.startswith('http') else f'{url}{testpath}'
     if optional.get('force_ssl', False):
         complete_uri = RE_HTTPS.sub(r'https\1', complete_uri)
@@ -66,7 +73,7 @@ def GET(testpath, payload=None, controller_a=False, **optional):
 
 def POST(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
-    url = controller_url('NODEA' if controller_a else 'DEFAULT')
+    url = controller_url(RESTTarget.NODEA if controller_a else RESTTarget.DEFAULT)
     if optional.get("use_ip_only"):
         parsed = urlparse(url)
         url = f"{parsed.scheme}://{parsed.netloc}"
@@ -89,7 +96,7 @@ def POST(testpath, payload=None, controller_a=False, **optional):
 
 def PUT(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
-    url = controller_url('NODEA' if controller_a else 'DEFAULT')
+    url = controller_url(RESTTarget.NODEA if controller_a else RESTTarget.DEFAULT)
     if optional.pop("anonymous", False):
         auth = None
     else:
@@ -101,7 +108,7 @@ def PUT(testpath, payload=None, controller_a=False, **optional):
 
 def DELETE(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
-    url = controller_url('NODEA' if controller_a else 'DEFAULT')
+    url = controller_url(RESTTarget.NODEA if controller_a else RESTTarget.DEFAULT)
     if optional.pop("anonymous", False):
         auth = None
     else:
