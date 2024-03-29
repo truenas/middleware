@@ -1,7 +1,7 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
-from middlewared.service import ConfigService, ValidationError
+from middlewared.service import CallError, ConfigService, ValidationError
 
 
 class SystemSecurityModel(sa.Model):
@@ -43,6 +43,9 @@ class SystemSecurityService(ConfigService):
                 'This feature can only be enabled on licensed iX enterprise systems. '
                 'Please contact iX sales for more information.'
             )
+
+        if await self.middleware.call('failover.disabled.reasons'):
+            raise CallError('Failover is not healthy and security settings cannot be updated')
 
         old = await self.config()
         new = old.copy()
