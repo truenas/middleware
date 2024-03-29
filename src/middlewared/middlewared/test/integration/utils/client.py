@@ -2,6 +2,7 @@
 import contextlib
 import os
 import socket
+import types
 
 import requests
 
@@ -10,7 +11,12 @@ from middlewared.client import Client
 from middlewared.client.utils import undefined
 
 __all__ = ["client", "host", "host_websocket_uri", "password", "session", "url", "websocket_url"]
-IS_HA = os.environ.get('SERVER_TYPE') == 'ENTERPRISE_HA'
+"""
+truenas_server object is used by both websocket client and REST client for determining which
+server to access for API calls. For HA, the `ip` attribute should be set to the virtual IP
+of the truenas server.
+"""
+truenas_server = types.SimpleNamespace(ip=None, nodea_ip=None, nodeb_ip=None, server_type=None)
 
 
 @contextlib.contextmanager
@@ -31,18 +37,24 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
 
 
 def host():
-    if "NODE_A_IP" in os.environ:
-        # this is not to be confused with HA systems
-        # as it should only be set on NON-HA environments
-        return os.environ["NODE_A_IP"]
-    elif IS_HA:
-        return os.environ["virtual_ip"]
-    else:
-        return os.environ["MIDDLEWARE_TEST_IP"]
+    if truenas_server.ip:
+        return truenas_server
+
+    # Initialize our settings. At this point on HA servers, the VIP is not available
+    truenas_server.server_type = os.environ['SERVER_TYPE']
+    match truenas_server.server_type:
+        case 'ENTERPRISE_HA':
+            truenas_server.ip = os.environ["controller1_ip"]
+            truenas_server.nodea_ip = os.environ["controller1_ip"]
+            truenas_server.nodeb_ip = os.environ["controller2_ip"]
+        case _:
+            truenas_server.ip = os.environ["MIDDLEWARE_TEST_IP"]
+
+    return truenas_server
 
 
 def host_websocket_uri(host_ip=None):
-    return f"ws://{host_ip or host()}/websocket"
+    return f"ws://{host_ip or host().ip}/websocket"
 
 
 def password():

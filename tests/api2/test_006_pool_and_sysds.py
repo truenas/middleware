@@ -10,7 +10,7 @@ from auto_config import ha, ip, vip, pool_name
 from middlewared.client.client import ValidationErrors
 # from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import fail
-from middlewared.test.integration.utils.client import client
+from middlewared.test.integration.utils.client import client, host
 
 
 @pytest.fixture(scope='module')
@@ -41,6 +41,10 @@ def test_001_check_sysdataset_exists_on_boot_pool(ws_client):
     sysds = ws_client.call('systemdataset.config')
     assert bp_name == sysds['pool']
     assert bp_basename == sysds['basename']
+
+    # If we are here on HA system, then VIP is working.
+    if ha:
+        host().ip = os.environ['virtual_ip']
 
 
 """
