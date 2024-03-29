@@ -44,13 +44,14 @@ def host():
     # Initialize our settings. At this point on HA servers, the VIP is not available
     truenas_server.server_type = os.environ['SERVER_TYPE']
 
-    match truenas_server.server_type:
-        case 'ENTERPRISE_HA':
-            truenas_server.ip = os.environ["controller1_ip"]
-            truenas_server.nodea_ip = os.environ["controller1_ip"]
-            truenas_server.nodeb_ip = os.environ["controller2_ip"]
-        case _:
-            truenas_server.ip = os.environ["MIDDLEWARE_TEST_IP"]
+    # Some older test runners have old python
+    if truenas_server.server_type == 'ENTERPRISE_HA':
+        truenas_server.ip = os.environ["controller1_ip"]
+        truenas_server.nodea_ip = os.environ["controller1_ip"]
+        truenas_server.nodeb_ip = os.environ["controller2_ip"]
+    else:
+        truenas_server.ip = os.environ["MIDDLEWARE_TEST_IP"]
+
 
     return truenas_server
 
