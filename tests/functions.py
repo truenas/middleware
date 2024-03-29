@@ -15,12 +15,8 @@ import requests
 import websocket
 
 from auto_config import api_url, password, user
+from middlewared.test.integration.utils import host
 
-if "controller1_ip" in os.environ:
-    controller1_ip = os.environ["controller1_ip"]
-    controller1_api_url = f'http://{controller1_ip}/api/v2.0'
-else:
-    controller1_api_url = api_url
 
 global header
 header = {'Content-Type': 'application/json', 'Vary': 'accept'}
@@ -28,10 +24,29 @@ global authentication
 authentication = (user, password)
 RE_HTTPS = re.compile(r'^http(:.*)')
 
+def controller_url(target='DEFAULT'):
+    server = host()
+
+    match target:
+        case 'DEFAULT':
+            return f'http://{host().ip}/api/v2.0'
+        case 'NODEA':
+            if not server.nodea_ip:
+                raise ValueError('No IP address set for NODE A')
+
+            return f'http://{host().nodea_ip}/api/v2.0'
+        case 'NODEB':
+            if not server.nodeb_ip:
+                raise ValueError('No IP address set for NODE B')
+
+            return f'http://{host().nodeb_ip}/api/v2.0'
+        case _:
+            raise ValueError(f'{target}: unexpected target')
+
 
 def GET(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
-    url = controller1_api_url if controller_a else api_url
+    url = controller_url('NODEA' if controller_a else 'DEFAULT')
     complete_uri = testpath if testpath.startswith('http') else f'{url}{testpath}'
     if optional.get('force_ssl', False):
         complete_uri = RE_HTTPS.sub(r'https\1', complete_uri)
@@ -51,7 +66,7 @@ def GET(testpath, payload=None, controller_a=False, **optional):
 
 def POST(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
-    url = controller1_api_url if controller_a else api_url
+    url = controller_url('NODEA' if controller_a else 'DEFAULT')
     if optional.get("use_ip_only"):
         parsed = urlparse(url)
         url = f"{parsed.scheme}://{parsed.netloc}"
@@ -74,7 +89,7 @@ def POST(testpath, payload=None, controller_a=False, **optional):
 
 def PUT(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
-    url = controller1_api_url if controller_a else api_url
+    url = controller_url('NODEA' if controller_a else 'DEFAULT')
     if optional.pop("anonymous", False):
         auth = None
     else:
@@ -86,7 +101,7 @@ def PUT(testpath, payload=None, controller_a=False, **optional):
 
 def DELETE(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
-    url = controller1_api_url if controller_a else api_url
+    url = controller_url('NODEA' if controller_a else 'DEFAULT')
     if optional.pop("anonymous", False):
         auth = None
     else:
