@@ -659,6 +659,11 @@ class FailoverEventsService(Service):
 
         self.run_call('interface.persist_link_addresses')
 
+        try:
+            self.run_call('failover.check_reboot_required')
+        except Exception:
+            logger.error('Failed to check if reboot is required after failover event', exc_info=True)
+
         logger.info('Failover event complete.')
 
         # clear the description and set the result
