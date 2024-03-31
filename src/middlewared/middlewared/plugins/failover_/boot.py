@@ -8,8 +8,10 @@ class FailoverService(Service):
     async def retrieve_boot_ids(self):
         return {
             await self.middleware.call('failover.node'): await self.middleware.call('system.boot_id'),
-            await self.middleware.call('failover.call_remote', 'failover.node'): await self.middleware.call(
-                'failover.call_remote', 'system.boot_id',
+            await self.middleware.call(
+                'failover.call_remote', 'failover.node', [], {'raise_connect_error': False}
+            ): await self.middleware.call(
+                'failover.call_remote', 'system.boot_id', [], {'raise_connect_error': False}
             ),
         }
 
@@ -40,8 +42,10 @@ class FailoverService(Service):
         existing_boot_ids = await self.retrieve_boot_ids()
         info = {
             'reason': 'No reboot required',
-            'node_a_reboot_required': existing_boot_ids['A'] == fips_change_info['A'],
-            'node_b_reboot_required': existing_boot_ids['B'] == fips_change_info['B'],
+            # We retrieve A/B safely just to be sure that we don't have any issues
+            # Not sure what the best way to handle it would be if we were not able to connect to remote
+            'node_a_reboot_required': existing_boot_ids.get('A') == fips_change_info.get('B'),
+            'node_b_reboot_required': existing_boot_ids.get('B') == fips_change_info.get('B'),
         }
         if info['node_a_reboot_required'] or info['node_b_reboot_required']:
             info.update({
