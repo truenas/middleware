@@ -1,6 +1,9 @@
 import collections
 import contextlib
+import os.path
 import typing
+
+from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 
 from .netdata.graph_base import GraphBase
 
@@ -45,6 +48,10 @@ async def fetch_data_from_graph_plugins(
         await graph_plugin.build_context()
         with contextlib.suppress(Exception):
             yield await graph_plugin.export_multiple_identifiers(query_params, identifiers, aggregate=aggregate)
+
+
+def get_netdata_state_path() -> str:
+    return os.path.join(SYSDATASET_PATH, 'netdata/ix_state')
 
 
 def get_metrics_approximation(disk_count: int, core_count: int, interface_count: int, pool_count: int) -> dict:

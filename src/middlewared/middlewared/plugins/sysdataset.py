@@ -559,12 +559,27 @@ class SystemDatasetService(ConfigService):
                 os.chmod(mountpoint, mode_perms)
 
             mounted = True
+            self.__post_mount_actions(ds_config['name'], ds_config.get('post_mount_actions', []))
 
         if mounted and path == SYSDATASET_PATH:
             fsid = os.statvfs(SYSDATASET_PATH).f_fsid
             self.middleware.call_sync('cache.put', 'SYSDATASET_PATH', {'dataset': f'{path}/.system', 'fsid': fsid})
 
         return mounted
+
+    def __post_mount_actions(self, ds_name, actions):
+        for action in actions:
+            try:
+                self.middleware.call_sync(action['method'], *action.get('args', []))
+            except Exception:
+                self.logger.error(
+                    'Failed to run post mount action %r endpoint for %r dataset',
+                    action['method'], ds_name, exc_info=True,
+                )
+            else:
+                self.logger.info(
+                    'Successfully ran post mount action %r endpoint for %r dataset', action['method'], ds_name
+                )
 
     def __umount(self, pool, uuid, retry=True):
         """
