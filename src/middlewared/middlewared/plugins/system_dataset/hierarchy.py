@@ -55,7 +55,21 @@ SYSTEM_DATASET_JSON_SCHEMA = {
                     },
                     'required': ['path', 'uid', 'gid']
                 }
-            }
+            },
+            'post_mount_actions': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'method': {'type': 'string'},
+                        'args': {
+                            'type': 'array',
+                            'items': {'type': 'string'},
+                        },
+                    },
+                    'required': ['method']
+                }
+            },
         },
         'required': ['name', 'props', 'chown_config'],
         'additionalProperties': False,
@@ -135,5 +149,11 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
             'create_paths': [
                 {'path': '/var/log/netdata', 'uid': 999, 'gid': 997},
             ],
+            'post_mount_actions': [
+                {
+                    'method': 'reporting.post_dataset_mount_action',
+                    'args': [],
+                }
+            ]
         },
     ]
