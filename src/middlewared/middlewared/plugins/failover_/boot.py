@@ -44,7 +44,7 @@ class FailoverService(Service):
             'reason': 'No reboot required',
             # We retrieve A/B safely just to be sure that we don't have any issues
             # Not sure what the best way to handle it would be if we were not able to connect to remote
-            'node_a_reboot_required': existing_boot_ids.get('A') == fips_change_info.get('B'),
+            'node_a_reboot_required': existing_boot_ids.get('A') == fips_change_info.get('A'),
             'node_b_reboot_required': existing_boot_ids.get('B') == fips_change_info.get('B'),
         }
         if info['node_a_reboot_required'] or info['node_b_reboot_required']:
