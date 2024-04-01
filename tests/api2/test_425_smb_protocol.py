@@ -93,18 +93,22 @@ def initialize_for_smb_tests(request):
             'group_create': True,
             'password': SMB_PWD
         }) as u:
-            with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
-                'auxsmbconf': 'zfs_core:base_user_quota = 1G'
-            }) as s:
-                try:
-                    call('service.start', 'cifs')
-                    yield {'dataset': ds, 'share': s, 'user': u}
-                finally:
-                    call('smb.update', {
-                        'enable_smb1': False,
-                        'aapl_extensions': False
-                    })
-                    call('service.stop', 'cifs')
+            try:
+                with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
+                    'auxsmbconf': 'zfs_core:base_user_quota = 1G'
+                }) as s:
+                    try:
+                        call('service.start', 'cifs')
+                        yield {'dataset': ds, 'share': s, 'user': u}
+                    finally:
+                        call('service.stop', 'cifs')
+            finally:
+                # In test_140_enable_aapl we turned afp on for the share, so wait until
+                # it has been destroyed before turning off aapl_extensions.
+                call('smb.update', {
+                    'enable_smb1': False,
+                    'aapl_extensions': False
+                })
 
 
 @pytest.mark.dependency(name="SMB_SHARE_CREATED")
@@ -702,9 +706,8 @@ def test_176_check_dataset_auto_create(request):
 
 
 def test_180_create_share_multiple_dirs_deep(request):
-    depends(request, ["SMB_USER_CREATED"])
     with dataset('nested_dirs', data={'share_type': 'SMB'}) as ds:
-        dirs_path = f'{ds["mountpoint"]}/d1/d2/d3'
+        dirs_path = os.path.join('/mnt', ds, 'd1/d2/d3')
         ssh(f'mkdir -p {dirs_path}')
 
         with smb_share(dirs_path, 'DIRS'):
@@ -723,7 +726,6 @@ def test_180_create_share_multiple_dirs_deep(request):
 
 
 def test_181_create_and_disable_share(request):
-    depends(request, ["SMB_USER_CREATED"])
     with dataset('smb_disabled', data={'share_type': 'SMB'}) as ds:
         with smb_share(os.path.join('/mnt', ds), 'TO_DISABLE') as tmp_share:
             with smb_connection(
