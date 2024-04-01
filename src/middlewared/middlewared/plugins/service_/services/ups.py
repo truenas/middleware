@@ -17,8 +17,8 @@ class UPSService(SimpleService):
 
     async def start(self):
         if (await self.middleware.call("ups.config"))["mode"] == "MASTER":
-            await self._systemd_unit("nut-driver-enumerator", "start")
             await self._systemd_unit("nut-server", "start")
+            await self._systemd_unit("nut-driver-enumerator", "start")
         await self._unit_action("Start")
 
     async def before_stop(self):
