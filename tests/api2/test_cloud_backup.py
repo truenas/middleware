@@ -57,6 +57,7 @@ def cloud_backup_task(s3_credential):
                 "folder": "cloud_backup",
             },
             "password": "test",
+            "keep_last": 100,
         }) as t:
             call("cloud_backup.init", t["id"], job=True)
 
@@ -79,6 +80,7 @@ def test_cloud_backup(cloud_backup_task):
     assert len(snapshots) == 1
     assert (snapshots[0]["time"] - call("system.info")["datetime"]).total_seconds() < 300
     assert snapshots[0]["paths"] == [f"/mnt/{cloud_backup_task.local_dataset}"]
+    first_snapshot = snapshots[0]
 
     ssh(f"mkdir /mnt/{cloud_backup_task.local_dataset}/dir1")
     ssh(f"dd if=/dev/urandom of=/mnt/{cloud_backup_task.local_dataset}/dir1/blob2 bs=1M count=1")
@@ -102,6 +104,13 @@ def test_cloud_backup(cloud_backup_task):
     assert contents[1]["name"] == "blob1"
     assert contents[2]["name"] == "dir1"
 
+    call("cloud_backup.update", cloud_backup_task.task["id"], {"keep_last": 2})
+
+    run_task(cloud_backup_task.task)
+
+    snapshots = call("cloud_backup.list_snapshots", cloud_backup_task.task["id"])
+    assert all(snapshot["id"] != first_snapshot["id"] for snapshot in snapshots)
+
 
 @pytest.fixture(scope="module")
 def completed_cloud_backup_task(s3_credential):
@@ -123,6 +132,7 @@ def completed_cloud_backup_task(s3_credential):
                 "folder": "cloud_backup",
             },
             "password": "test",
+            "keep_last": 100,
         }) as t:
             call("cloud_backup.init", t["id"], job=True)
 
@@ -188,6 +198,7 @@ def test_zvol_cloud_backup(s3_credential, zvol):
                 "folder": "cloud_backup",
             },
             "password": "test",
+            "keep_last": 100,
         }) as t:
             call("cloud_backup.init", t["id"], job=True)
 
@@ -206,6 +217,7 @@ def test_zvol_cloud_backup_create_time_validation(s3_credential, zvol):
                 "folder": "cloud_backup",
             },
             "password": "test",
+            "keep_last": 100,
         }):
             pass
 
@@ -227,6 +239,7 @@ def test_zvol_cloud_backup_runtime_validation(s3_credential, zvol):
                 "folder": "cloud_backup",
             },
             "password": "test",
+            "keep_last": 100,
         }) as t:
             m.__exit__(None, None, None)
             exited = True
