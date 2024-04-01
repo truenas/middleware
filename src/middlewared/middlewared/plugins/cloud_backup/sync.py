@@ -144,6 +144,14 @@ class CloudBackupService(Service):
         try:
             await restic(self.middleware, job, cloud_backup, options["dry_run"])
 
+            job.set_progress(100, "Cleaning up")
+            restic_config = get_restic_config(cloud_backup)
+            await run_restic(
+                job,
+                restic_config.cmd + ["forget", "--keep-last", str(cloud_backup["keep_last"])],
+                restic_config.env,
+            )
+
             if "id" in cloud_backup:
                 await self.middleware.call("alert.oneshot_delete", "CloudBackupTaskFailed", cloud_backup["id"])
         except Exception:

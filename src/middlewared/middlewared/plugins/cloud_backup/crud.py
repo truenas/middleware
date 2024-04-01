@@ -7,12 +7,14 @@ from middlewared.service import pass_app, private, TaskPathService, ValidationEr
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
+from middlewared.validators import Range
 
 
 class CloudBackupModel(CloudTaskModelMixin, sa.Model):
     __tablename__ = "tasks_cloud_backup"
 
     password = sa.Column(sa.EncryptedText())
+    keep_last = sa.Column(sa.Integer())
 
 
 class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
@@ -70,6 +72,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         "cloud_backup_create",
         *cloud_task_schema,
         Password("password", required=True, empty=False),
+        Int("keep_last", required=True, validators=[Range(min_=1)]),
         register=True,
     ))
     @pass_app(rest=True)
