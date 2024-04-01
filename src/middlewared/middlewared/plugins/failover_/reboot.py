@@ -23,22 +23,9 @@ class FailoverService(Service):
 
         job.set_progress(5, 'Rebooting standby controller')
         await self.middleware.call(
-            'failover.call_remote', 'system.reboot',
-            [{'delay': 5}],
-            {'job': True}
+            'failover.call_remote', 'failover.become_passive', [], {'raise_connect_error': False, 'timeout': 20}
         )
-        # SCALE is using systemd and at the time of writing this, the
-        # DefaultTimeoutStopSec setting hasn't been changed and so
-        # defaults to 90 seconds. This means when the system is sent the
-        # shutdown signal, all the associated user-space programs are
-        # asked to be shutdown. If any of those take longer than 90
-        # seconds to respond to SIGTERM then the program is sent SIGKILL.
-        # Finally, if after 90 seconds the standby controller is still
-        # responding to remote requests then play it safe and assume the
-        # reboot failed (this should be rare but my future self will
-        # appreciate the fact I wrote this out because of the inevitable
-        # complexities of gluster/k8s/vms etc for which I predict
-        # will exhibit this behavior :P )
+
         job.set_progress(30, 'Waiting on the Standby Controller to reboot')
         try:
             retry_time = time.monotonic()
