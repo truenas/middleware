@@ -30,14 +30,7 @@ def log_test_name_to_middlewared_log(request):
     with client(host_ip=ip_to_use) as c:
         c.call("test.notify_test_start", test_name)
         if ha:
-            # the CI suite does all kinds of things to the standby controller
-            # on HA systems, so we need to suppress connection errors here
-            with contextlib.suppress(Exception):
-                c.call(
-                    "failover.call_remote",
-                    "test.notify_test_start",
-                    [test_name],
-                )
+            c.call("failover.call_remote", "test.notify_test_start", [test_name])
 
     yield
 
@@ -50,8 +43,4 @@ def log_test_name_to_middlewared_log(request):
             # the CI suite does all kinds of things to the standby controller
             # on HA systems, so we need to suppress connection errors here
             with contextlib.suppress(Exception):
-                c.call(
-                    "failover.call_remote",
-                    "test.notify_test_end",
-                    [test_name],
-                )
+                c.call("failover.call_remote", "test.notify_test_end", [test_name])
