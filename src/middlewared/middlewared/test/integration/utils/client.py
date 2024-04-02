@@ -27,13 +27,7 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
                     assert logged_in
             yield c
     except socket.timeout as e:
-        if IS_HA:
-            # don't fail the entire run on HA systems since
-            # we perform failovers to and from each controller
-            # so timeouts could happen (which are expected)
-            raise e from None
-        else:
-            fail(f'socket timeout on URI: {uri!r} HOST_IP: {host_ip!r}')
+        fail(f'socket timeout on URI: {uri!r} HOST_IP: {host_ip!r}')
 
 
 def host():
