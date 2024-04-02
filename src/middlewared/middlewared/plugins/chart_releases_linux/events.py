@@ -31,20 +31,46 @@ class ChartReleaseStatsEventSource(EventSource):
                 Float('cpu', description='Percentage of total core utilization'),
                 Dict(
                     'network',
-                    Int('incoming', description='All Incoming network traffic in bytes'),
-                    Int('outgoing', description='All Outgoing network traffic in bytes'),
+                    Int('incoming', description='All Incoming network traffic in bytes/sec'),
+                    Int('outgoing', description='All Outgoing network traffic in bytes/sec'),
                 )
             )
         )]
     )
 
-    async def run(self):
+    async def chart_stats(self, cached_stats):
+        apps_info = await self.middleware.call(
+            'chart.release.query', [], {'extra': {'stats': True}, 'select': ['id', 'stats']},
+        )
         interval = self.arg['interval']
 
+        for app_info in apps_info:
+            if app_info['id'] not in cached_stats:
+                cached_stats[app_info['id']] = app_info['stats']
+                app_info['stats']['network'] = {'incoming': 0, 'outgoing': 0}
+            else:
+                network_stats = app_info['stats']['network']
+                cached_network_stats = cached_stats[app_info['id']]['network']
+                app_info['stats']['network'] = {
+                    'incoming': abs(network_stats['incoming'] - cached_network_stats['incoming']) / interval,
+                    'outgoing': abs(network_stats['outgoing'] - cached_network_stats['outgoing']) / interval,
+                }
+                cached_stats[app_info['id']] = app_info['stats']
+
+        return apps_info
+
+    async def run(self):
+        interval = self.arg['interval']
+        cached_stats = collections.defaultdict(lambda: {
+            'memory': 0,
+            'cpu': 0,
+            'network': {'incoming': 0, 'outgoing': 0},
+        })
+
         while not self._cancel.is_set():
-            self.send_event('ADDED', fields=await self.middleware.call(
-                'chart.release.query', [], {'extra': {'stats': True}, 'select': ['id', 'stats']},
-            ))
+            self.send_event(
+                'ADDED', fields=await self.chart_stats(cached_stats)
+            )
 
             await asyncio.sleep(interval)
 
