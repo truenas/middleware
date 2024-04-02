@@ -54,6 +54,28 @@ def test__parse_smart_selftest_results__ataprint(line, subresult):
     assert {k: v for k, v in parse_smart_selftest_results(f"{hdr}\n{line}")[0].items() if k in subresult} == subresult
 
 
+def test__parse_smart_selftest_results__nvmeprint__1():
+    assert parse_smart_selftest_results(textwrap.dedent("""\
+        Self-test Log (NVMe Log 0x06)
+        Self-test status: No self-test in progress
+        Num  Test_Description  Status                       Power_on_Hours  Failing_LBA  NSID Seg SCT Code
+         0   Short             Completed without error               18636            -     -   - 0x0 0x00
+    """)) == [
+        {
+            "num": 0,
+            "description": "Short",
+            "status": "SUCCESS",
+            "status_verbose": "Completed without error",
+            "power_on_hours": 18636,
+            "failing_lba": None,
+            "nsid": None,
+            "seg": None,
+            "sct": "0x0",
+            "code": "0x00",
+        },
+    ]
+
+
 def test__parse_smart_selftest_results__scsiprint__1():
     assert parse_smart_selftest_results(textwrap.dedent("""\
         smartctl version 5.37 [i686-pc-linux-gnu] Copyright (C) 2002-6 Bruce Allen
@@ -84,6 +106,15 @@ def test__parse_smart_selftest_results__scsiprint__1():
             SMART Self-test log
         """),
         {"progress": 59},
+    ),
+    # nvmeprint.cpp
+    (
+        textwrap.dedent("""\
+            Self-test Log (NVMe Log 0x06)
+            Self-test status: Short self-test in progress (3% completed)
+            No Self-tests Logged
+        """),
+        {"progress": 3},
     ),
     # scsiprint.spp
     (

@@ -20,6 +20,7 @@ RE_TIME = re.compile(r'test will complete after ([a-z]{3} [a-z]{3} [0-9 ]+ \d\d:
 RE_TIME_SCSIPRINT_EXTENDED = re.compile(r'Please wait (\d+) minutes for test to complete')
 
 RE_OF_TEST_REMAINING = re.compile(r'([0-9]+)% of test remaining')
+RE_SELF_TEST_STATUS = re.compile(r'self-test in progress \(([0-9]+)% completed\)')
 
 
 async def annotate_disk_smart_tests(middleware, tests_filter, disk):
@@ -64,6 +65,51 @@ def parse_smart_selftest_results(stdout):
 
             if test["lba_of_first_error"] == "-":
                 test["lba_of_first_error"] = None
+
+            tests.append(test)
+
+        return tests
+
+    # nvmeprint.cpp
+    if "Failing_LBA" in stdout:
+        got_header = False
+        for line in stdout.split("\n"):
+            if "Failing_LBA" in line:
+                got_header = True
+                continue
+
+            if not got_header:
+                continue
+
+            try:
+                status_verbose = line[23:56].strip()
+                if status_verbose == "Completed without error":
+                    status = "SUCCESS"
+                elif status_verbose.startswith("Aborted:"):
+                    status = "ABORTED"
+                else:
+                    status = "FAILED"
+
+                failing_lba = line[67:79].strip()
+                nsid = line[80:85].strip()
+                seg = line[86:89].strip()
+                sct = line[90:93]
+                code = line[94:98]
+
+                test = {
+                    "num": int(line[0:2].strip()),
+                    "description": line[5:22].strip(),
+                    "status": status,
+                    "status_verbose": status_verbose,
+                    "power_on_hours": int(line[57:66].strip()),
+                    "failing_lba": None if failing_lba == "-" else int(failing_lba),
+                    "nsid": None if nsid == "-" else nsid,
+                    "seg": None if seg == "-" else int(seg),
+                    "sct": sct,
+                    "code": code,
+                }
+            except ValueError:
+                break
 
             tests.append(test)
 
@@ -114,6 +160,9 @@ def parse_smart_selftest_results(stdout):
 def parse_current_smart_selftest(stdout):
     if remaining := RE_OF_TEST_REMAINING.search(stdout):
         return {"progress": 100 - int(remaining.group(1))}
+
+    if remaining := RE_SELF_TEST_STATUS.search(stdout):
+        return {"progress": int(remaining.group(1))}
 
     if "Self test in progress ..." in stdout:
         return {"progress": 0}
@@ -279,10 +328,9 @@ class SMARTTestService(CRUDService):
 
         `full_disk` will return full disk objects instead of just names.
         """
-        filters = [['name', '!^', 'pmem'], ['name', '!^', 'nvme']]
         return {
             disk['identifier']: disk if full_disk else disk['name']
-            for disk in await self.middleware.call('disk.query', filters)
+            for disk in await self.middleware.call('disk.query', [['name', '!^', 'pmem']])
             if await self.middleware.call('disk.smartctl_args', disk['name']) is not None
         }
 
@@ -494,6 +542,9 @@ class SMARTTestService(CRUDService):
                     expected_result_time = expected_result_time.astimezone(timezone.utc).replace(tzinfo=None)
             elif time_details := re.search(RE_TIME_SCSIPRINT_EXTENDED, result):
                 expected_result_time = datetime.utcnow() + timedelta(minutes=int(time_details.group(1)))
+            elif 'Self-test has begun' in result:
+                # nvmeprint.cpp does not print expected result time
+                expected_result_time = datetime.utcnow() + timedelta(minutes=1)
             elif 'Self Test has begun' in result:
                 # scsiprint.cpp does not always print expected result time
                 expected_result_time = datetime.utcnow() + timedelta(minutes=1)
@@ -559,7 +610,7 @@ class SMARTTestService(CRUDService):
             [
               # ATA disk
               {
-                "disk": "ada0",
+                "disk": "sda",
                 "tests": [
                   {
                     "num": 1,
@@ -572,9 +623,27 @@ class SMARTTestService(CRUDService):
                   }
                 ]
               },
+              # NVME disk
+              {
+                "disk": "nvme0n1",
+                "tests: [
+                  {
+                    "num": 0,
+                    "description": "Short",
+                    "status": "SUCCESS",
+                    "status_verbose": "Completed without error",
+                    "power_on_hours": 18636,
+                    "failing_lba": None,
+                    "nsid": None,
+                    "seg": None,
+                    "sct": "0x0",
+                    "code": "0x00",
+                  },
+                ]
+              },
               # SCSI disk
               {
-                "disk": "ada1",
+                "disk": "sdb",
                 "tests": [
                   {
                     "num": 1,
