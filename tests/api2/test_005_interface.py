@@ -6,28 +6,18 @@ sys.path.append(apifolder)
 
 import pytest
 
-from auto_config import ip, interface, ha
+from auto_config import ip, interface, ha, netmask
 from middlewared.test.integration.utils.client import client
 
 
 @pytest.fixture(scope='module')
-def ip_to_use():
-    return ip if not ha else os.environ['controller1_ip']
-
-
-@pytest.fixture(scope='module')
-def ws_client(ip_to_use):
-    with client(host_ip=ip_to_use) as c:
+def ws_client():
+    with client(host_ip=ip) as c:
         yield c
 
 
 @pytest.fixture(scope='module')
-def iface_to_use():
-    return interface if not ha else os.environ['iface']
-
-
-@pytest.fixture(scope='module')
-def get_payload(ws_client, ip_to_use):
+def get_payload(ws_client):
     if ha:
         payload = {
             'ipv4_dhcp': False,
@@ -37,7 +27,7 @@ def get_payload(ws_client, ip_to_use):
                 {
                     'type': 'INET',
                     'address': os.environ['controller1_ip'],
-                    'netmask': 23
+                    'netmask': int(netmask)
                 }
             ],
             'failover_aliases': [
@@ -61,16 +51,16 @@ def get_payload(ws_client, ip_to_use):
         ans = ws_client.call('interface.query', [['name', '=', interface]], {'get': True})
         payload = {'ipv4_dhcp': False, 'aliases': []}
         to_validate = []
-        for info in filter(lambda x: x['address'] == ip_to_use, ans['state']['aliases']):
-            payload['aliases'].append({'address': ip_to_use, 'netmask': info['netmask']})
-            to_validate.append(ip_to_use)
+        for info in filter(lambda x: x['address'] == ip, ans['state']['aliases']):
+            payload['aliases'].append({'address': ip, 'netmask': info['netmask']})
+            to_validate.append(ip)
 
         assert all((payload['aliases'], to_validate))
 
     return payload, to_validate
 
 
-def test_001_configure_interface(request, ws_client, iface_to_use, get_payload):
+def test_001_configure_interface(request, ws_client, get_payload):
     if ha:
         # can not make network changes on an HA system unless failover has
         # been explicitly disabled
@@ -78,7 +68,7 @@ def test_001_configure_interface(request, ws_client, iface_to_use, get_payload):
         assert ws_client.call('failover.config')['disabled'] is True
 
     # send the request to configure the interface
-    ws_client.call('interface.update', iface_to_use, get_payload[0])
+    ws_client.call('interface.update', interface, get_payload[0])
 
     # 1. verify there are pending changes
     # 2. commit the changes specifying the rollback timer
@@ -107,3 +97,8 @@ def test_001_configure_interface(request, ws_client, iface_to_use, get_payload):
         with client(host_ip=os.environ['virtual_ip']) as c:
             assert c.call('core.ping') == 'pong'
             assert c.call('failover.call_remote', 'core.ping') == 'pong'
+
+        # it's very important to set this because the `tests/conftest.py` config
+        # (that pytest uses globally for the entirety of CI runs) will check this
+        # value and use the proper IP address (the VIP) on HA systems
+        os.environ['USE_VIP'] = 'YES'
