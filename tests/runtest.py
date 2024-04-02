@@ -189,9 +189,8 @@ def get_ipinfo(ip_to_use):
                     iface = i['id']
                     net = j['netmask']
                     for k in c.call('route.system_routes'):
-                        if k.get('network') == '0.0.0.0' and k.get('interface') == i['id']:
-                            if k['gateway']:
-                                return iface, net, k['gateway'], ns1, ns2
+                        if k.get('network') == '0.0.0.0' and k.get('gateway'):
+                            return iface, net, k['gateway'], ns1, ns2
 
     return iface, net, gate, ns1, ns2
 
