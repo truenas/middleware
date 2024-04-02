@@ -6,6 +6,8 @@
 from middlewared.schema import accepts, Bool, Dict, returns, Str
 from middlewared.service import private, Service
 
+from .disabled_reasons import DisabledReasonsEnum
+
 
 class FailoverService(Service):
 
@@ -41,7 +43,7 @@ class FailoverService(Service):
                 'reboot_required': False,
                 'node_a_reboot_required': False,
                 'node_b_reboot_required': False,
-                'reason': 'No reboot required',
+                'reason': None,
             }
 
         existing_boot_ids = await self.retrieve_boot_ids()
@@ -55,7 +57,7 @@ class FailoverService(Service):
         if info['node_a_reboot_required'] or info['node_b_reboot_required']:
             info.update({
                 'reboot_required': True,
-                'reason': 'Reboot required for FIPS configuration change to take effect',
+                'reason': DisabledReasonsEnum.REBOOT_REQUIRED_FOR_FIPS.value,
             })
         else:
             await self.middleware.call('keyvalue.delete', 'fips_toggled')
