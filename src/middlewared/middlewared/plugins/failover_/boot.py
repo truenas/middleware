@@ -9,8 +9,6 @@ import time
 from middlewared.schema import accepts, Bool, Dict, returns, Str
 from middlewared.service import CallError, job, private, Service
 
-from .disabled_reasons import DisabledReasonsEnum
-
 
 class FailoverRebootService(Service):
 
@@ -57,22 +55,17 @@ class FailoverRebootService(Service):
                 'reboot_required': False,
                 'node_a_reboot_required': False,
                 'node_b_reboot_required': False,
-                'reason': None,
             }
 
         existing_boot_ids = await self.retrieve_boot_ids()
         info = {
-            'reason': 'No reboot required',
             # We retrieve A/B safely just to be sure that we don't have any issues
             # Not sure what the best way to handle it would be if we were not able to connect to remote
             'node_a_reboot_required': existing_boot_ids.get('A') == fips_change_info.get('A'),
             'node_b_reboot_required': existing_boot_ids.get('B') == fips_change_info.get('B'),
         }
         if info['node_a_reboot_required'] or info['node_b_reboot_required']:
-            info.update({
-                'reboot_required': True,
-                'reason': DisabledReasonsEnum.REBOOT_REQUIRED_FOR_FIPS.value,
-            })
+            info['reboot_required'] = True
         else:
             await self.middleware.call('keyvalue.delete', 'fips_toggled')
 
