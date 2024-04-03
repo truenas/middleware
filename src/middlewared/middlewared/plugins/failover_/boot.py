@@ -37,8 +37,6 @@ class FailoverRebootService(Service):
         """
         Returns whether a reboot is required for failover/security system configuration changes to take effect.
         """
-        # If we ever add more metadata to this endpoint, we should always
-        # revisit implementation of failover.get_local_reasons
         return await self.check_reboot_required()
 
     @accepts(roles=['FAILOVER_READ'])

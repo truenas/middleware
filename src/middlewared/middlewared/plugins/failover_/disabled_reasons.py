@@ -82,10 +82,13 @@ class FailoverDisabledReasonsService(Service):
 
         current_node = self.middleware.call_sync('failover.node')
         reboot_info = self.middleware.call_sync('failover.reboot.info')
-        if current_node in ('A', 'B') and reboot_info.pop('reboot_required'):
-            if reboot_info.pop(f'node_{current_node.lower()}_reboot_required'):
+        if current_node in ('A', 'B') and reboot_info['reboot_required']:
+            if reboot_info[f'node_{current_node.lower()}_reboot_required']:
                 reasons.add(DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ.name)
-            if list(reboot_info.values())[0]:
+            if any((
+                reboot_info['node_a_reboot_required'] and current_node != 'A',
+                reboot_info['node_b_reboot_required'] and current_node != 'B',
+            )):
                 reasons.add(DisabledReasonsEnum.REM_FIPS_REBOOT_REQ.name)
 
         if self.middleware.call_sync('failover.in_progress'):
