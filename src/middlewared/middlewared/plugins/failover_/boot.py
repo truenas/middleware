@@ -9,7 +9,10 @@ from middlewared.service import private, Service
 from .disabled_reasons import DisabledReasonsEnum
 
 
-class FailoverService(Service):
+class FailoverRebootService(Service):
+
+    class Config:
+        namespace = 'failover.reboot'
 
     @private
     async def retrieve_boot_ids(self):
@@ -29,7 +32,7 @@ class FailoverService(Service):
         Bool('node_b_reboot_required'),
         Str('reason'),
     ))
-    async def reboot_required(self):
+    async def info(self):
         """
         Returns whether a reboot is required for failover/security system configuration changes to take effect.
         """

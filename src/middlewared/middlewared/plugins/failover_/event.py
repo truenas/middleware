@@ -661,7 +661,7 @@ class FailoverEventsService(Service):
 
         try:
             logger.info('Updating system reboot required status after failover event')
-            self.run_call('failover.check_reboot_required')
+            self.run_call('failover.reboot.check_reboot_required')
         except Exception:
             logger.error('Failed to check if reboot is required after failover event', exc_info=True)
 

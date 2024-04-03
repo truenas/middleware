@@ -65,7 +65,7 @@ class SystemSecurityService(ConfigService):
             #  let's investigate the exact configuration there
             await self.middleware.call('etc.generate', 'fips')
             await self.middleware.call('keyvalue.set', 'fips_toggled', await self.middleware.call(
-                'failover.retrieve_boot_ids'
+                'failover.reboot.retrieve_boot_ids'
             ))
 
         return await self.config()
