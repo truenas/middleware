@@ -898,23 +898,41 @@ class FailoverService(ConfigService):
         return True
 
     @private
-    def upgrade_waitstandby(self, seconds=900):
+    def upgrade_waitstandby(self, seconds=1200):
         """
-        We will wait up to 15 minutes by default for the Standby Controller to reboot.
+        We will wait up to 20 minutes by default for the Standby Controller to reboot.
         This values come from observation from support of how long a M-series can take.
         """
         retry_time = time.monotonic()
+        system_ready = False
+        failover_in_progress = True
         while time.monotonic() - retry_time < seconds:
             try:
-                if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
+                if system_ready is False and not self.middleware.call_sync('failover.call_remote', 'system.ready'):
                     time.sleep(5)
                     continue
-                return True
+                else:
+                    system_ready = True
+
+                if failover_in_progress is True and self.middleware.call_sync(
+                    'failover.call_remote', 'failover.in_progress'
+                ):
+                    time.sleep(5)
+                    continue
+                else:
+                    failover_in_progress = False
+
+                if self.middleware.call_sync('failover.call_remote', 'failover.status') != 'BACKUP':
+                    time.sleep(5)
+                    continue
+
             except CallError as e:
                 if e.errno in NETWORK_ERRORS:
                     time.sleep(5)
                     continue
                 raise
+            else:
+                return True
         return False
 
     @accepts(roles=['FAILOVER_READ'])
