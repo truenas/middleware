@@ -33,13 +33,12 @@ class SRVTarget(enum.Enum):
 
 def get_host_ip(target):
     server = host()
-
     if target is SRVTarget.DEFAULT:
-        return host().ip
+        return server.ip
     elif target is SRVTarget.NODEA:
-        return host().nodea_ip
+        return server.nodea_ip
     elif target is SRVTarget.NODEB:
-        return host().nodeb_ip
+        return server.nodeb_ip
 
     raise ValueError(f'{target}: unexpected target')
 
