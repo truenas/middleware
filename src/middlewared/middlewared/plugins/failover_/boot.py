@@ -38,6 +38,14 @@ class FailoverRebootService(Service):
         """
         return await self.check_reboot_required()
 
+    @accepts()
+    @returns(Bool())
+    async def required(self):
+        """
+        Returns whether a reboot is required for failover/security system configuration changes to take effect.
+        """
+        return (await self.check_reboot_required())['reboot_required']
+
     @private
     async def check_reboot_required(self):
         fips_change_info = await self.middleware.call('keyvalue.get', 'fips_toggled', False)
