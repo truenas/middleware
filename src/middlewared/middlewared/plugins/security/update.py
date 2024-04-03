@@ -1,5 +1,6 @@
 import middlewared.sqlalchemy as sa
 
+from middlewared.plugins.failover_.disabled_reasons import DisabledReasonsEnum
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
 from middlewared.service import CallError, ConfigService, ValidationError
 
@@ -44,7 +45,9 @@ class SystemSecurityService(ConfigService):
                 'Please contact iX sales for more information.'
             )
 
-        if await self.middleware.call('failover.disabled.reasons'):
+        if set(await self.middleware.call('failover.disabled.reasons')) - {
+            DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ, DisabledReasonsEnum.REM_FIPS_REBOOT_REQ,
+        }:
             raise CallError('Failover is not healthy and security settings cannot be updated')
 
         old = await self.config()
