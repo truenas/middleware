@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 import requests
 import websocket
 
-from auto_config import api_url, password, user
+from auto_config import password, user
 from middlewared.test.integration.utils import host
 
 
@@ -24,6 +24,7 @@ header = {'Content-Type': 'application/json', 'Vary': 'accept'}
 global authentication
 authentication = (user, password)
 RE_HTTPS = re.compile(r'^http(:.*)')
+
 
 class SRVTarget(enum.Enum):
     DEFAULT = enum.auto()
