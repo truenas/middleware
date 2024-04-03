@@ -79,10 +79,6 @@ def test_001_check_sysdataset_exists_on_boot_pool(ws_client):
     assert bp_name == sysds['pool']
     assert bp_basename == sysds['basename']
 
-    # If we are here on HA system, then VIP is working.
-    if ha:
-        host().ip = os.environ['virtual_ip']
-
 
 def test_activedirectory_requires_pool(request):
     depends(request, ['SYSDS'])
