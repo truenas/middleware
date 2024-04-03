@@ -35,7 +35,7 @@ def upgrade():
                     if m := re.search(r'/([0-9]+)$', value):
                         value = f'*/{m.group(1)}'
                     else:
-                        value = '1'  # No luck in guessing the correct value, here is out best guess
+                        value = '1'  # No luck in guessing the correct value, here is our best guess
 
                     conn.execute(f"UPDATE {table} SET {k} = ? WHERE id = ?", [value, row["id"]])
 
