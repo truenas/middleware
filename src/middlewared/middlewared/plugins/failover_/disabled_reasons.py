@@ -26,7 +26,8 @@ class DisabledReasonsEnum(str, Enum):
     LOC_FAILOVER_ONGOING = 'This node is currently processing a failover event.'
     NO_HEARTBEAT_IFACE = 'Local heartbeat interface does not exist.'
     NO_CARRIER_ON_HEARTBEAT = 'Local heartbeat interface is down.'
-    REBOOT_REQUIRED_FOR_FIPS = 'Reboot required for FIPS configuration change to take effect'
+    LOC_FIPS_REBOOT_REQ = 'This node needs to be rebooted to apply FIPS configuration'
+    REM_FIPS_REBOOT_REQ = 'Other node needs to be rebooted to apply FIPS configuration'
 
 
 class FailoverDisabledReasonsService(Service):
@@ -78,6 +79,12 @@ class FailoverDisabledReasonsService(Service):
         """This method checks the local node to try and determine its failover status."""
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.add(DisabledReasonsEnum.NO_FAILOVER.name)
+
+        reboot_info = self.middleware.call_sync('failover.reboot.info')
+        if reboot_info['node_a_reboot_required']:
+            reasons.add(DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ.name)
+        if reboot_info['node_b_reboot_required']:
+            reasons.add(DisabledReasonsEnum.REM_FIPS_REBOOT_REQ.name)
 
         if self.middleware.call_sync('failover.in_progress'):
             reasons.add(DisabledReasonsEnum.LOC_FAILOVER_ONGOING.name)
