@@ -81,10 +81,13 @@ class FailoverRebootService(Service):
     @accepts(roles=['FULL_ADMIN'])
     @returns()
     @job(lock='reboot_standby')
-    async def reboot_standby(self, job):
+    async def standby_reboot(self, job):
         """
         Reboot the standby node and wait for it to come back online.
         """
+        if await self.middleware.call('failover.status') != 'MASTER':
+            raise CallError('This action can only be performed on the MASTER controller')
+
         remote_boot_id = await self.middleware.call('failover.call_remote', 'system.boot_id')
 
         job.set_progress(5, 'Rebooting standby controller')
