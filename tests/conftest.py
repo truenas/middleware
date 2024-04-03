@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.test.integration.utils.client import client, host
+from middlewared.test.integration.utils.client import client, truenas_server
 from middlewared.test.integration.utils.pytest import failed
 
 pytest.register_assert_rewrite("middlewared.test")
@@ -17,7 +17,7 @@ def log_test_name_to_middlewared_log(request):
     # Beware that this is executed after session/package/module/class fixtures
     # are applied so the logs will still not be exactly precise.
     test_name = request.node.name
-    ip_to_use = host().ip
+    ip_to_use = truenas_server.ip
     with client(host_ip=ip_to_use) as c:
         c.call("test.notify_test_start", test_name)
 
