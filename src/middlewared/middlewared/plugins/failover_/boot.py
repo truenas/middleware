@@ -13,6 +13,7 @@ from middlewared.service import CallError, job, private, Service
 class FailoverRebootService(Service):
 
     class Config:
+        cli_namespace = 'system.failover.reboot'
         namespace = 'failover.reboot'
 
     @private
