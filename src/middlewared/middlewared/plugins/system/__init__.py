@@ -1,5 +1,4 @@
 import os
-import subprocess
 import uuid
 
 from middlewared.utils import BOOTREADY
@@ -21,8 +20,17 @@ def firstboot(middleware):
             middleware.call_sync('datastore.update', 'system.advanced', config['id'], {'adv_autotune': True})
 
 
+def read_system_boot_id(middleware):
+    try:
+        with open('/proc/sys/kernel/random/boot_id', 'r') as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        middleware.logger.error('Failed to read boot_id from /proc/sys/kernel/random/boot_id')
+        return str(uuid.uuid4())
+
+
 async def setup(middleware):
-    lifecycle_conf.SYSTEM_BOOT_ID = str(uuid.uuid4())
+    lifecycle_conf.SYSTEM_BOOT_ID = await middleware.run_in_thread(read_system_boot_id, middleware)
     middleware.event_register('system.ready', 'Finished boot process')
     middleware.event_register('system.reboot', 'Started reboot process')
     middleware.event_register('system.shutdown', 'Started shutdown process')
