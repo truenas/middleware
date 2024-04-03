@@ -193,12 +193,12 @@ def get_ipinfo(ip_to_use):
 
     return iface, net, gate, ns1, ns2
 
+
 interface, netmask, gateway, ns1, ns2 = get_ipinfo(ip_to_use)
 if not all((interface, netmask, gateway)):
     print(f'Unable to determine interface ({interface!r}), netmask ({netmask!r}) and gateway ({gateway!r}) for {ip_to_use!r}')
     exit()
 
-os.environ['USE_VIP'] = 'NO'
 if ha:
     if vip:
         os.environ['virtual_ip'] = vip

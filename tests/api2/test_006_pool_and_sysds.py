@@ -42,10 +42,6 @@ def test_001_check_sysdataset_exists_on_boot_pool(ws_client):
     assert bp_name == sysds['pool']
     assert bp_basename == sysds['basename']
 
-    # If we are here on HA system, then VIP is working.
-    if ha:
-        host().ip = os.environ['virtual_ip']
-
 
 """
 # TODO: refactor and backport the active_directory test asset
