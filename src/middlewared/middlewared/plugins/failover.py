@@ -273,7 +273,7 @@ class FailoverService(ConfigService):
                     'failover.events.vrrp_master',
                     'failover.events.vrrp_backup'
                 ]),
-                ('state', '=', 'RUNNING'),
+                ('state', 'in', ('RUNNING', 'WAITING')),
             ]
         )
         return bool(event)
