@@ -79,9 +79,6 @@ class FailoverDisabledReasonsService(Service):
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.add(DisabledReasonsEnum.NO_FAILOVER.name)
 
-        if self.middleware.call_sync('failover.reboot_required')['reboot_required']:
-            reasons.add(DisabledReasonsEnum.REBOOT_REQUIRED_FOR_FIPS.name)
-
         if self.middleware.call_sync('failover.in_progress'):
             reasons.add(DisabledReasonsEnum.LOC_FAILOVER_ONGOING.name)
             # no reason to check anything else since failover
