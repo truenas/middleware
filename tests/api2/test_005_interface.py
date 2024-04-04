@@ -6,13 +6,13 @@ sys.path.append(apifolder)
 
 import pytest
 
-from auto_config import ip, interface, ha, netmask
-from middlewared.test.integration.utils.client import client
+from auto_config import interface, ha, netmask
+from middlewared.test.integration.utils.client import client, truenas_server
 
 
 @pytest.fixture(scope='module')
 def ws_client():
-    with client(host_ip=ip) as c:
+    with client(host_ip=truenas_server.ip) as c:
         yield c
 
 
@@ -51,6 +51,7 @@ def get_payload(ws_client):
         ans = ws_client.call('interface.query', [['name', '=', interface]], {'get': True})
         payload = {'ipv4_dhcp': False, 'aliases': []}
         to_validate = []
+        ip = truenas_server.ip
         for info in filter(lambda x: x['address'] == ip, ans['state']['aliases']):
             payload['aliases'].append({'address': ip, 'netmask': info['netmask']})
             to_validate.append(ip)
@@ -99,6 +100,9 @@ def test_001_configure_interface(request, ws_client, get_payload):
             assert c.call('failover.call_remote', 'core.ping') == 'pong'
 
         # it's very important to set this because the `tests/conftest.py` config
-        # (that pytest uses globally for the entirety of CI runs) will check this
-        # value and use the proper IP address (the VIP) on HA systems
-        os.environ['USE_VIP'] = 'YES'
+        # (that pytest uses globally for the entirety of CI runs) uses this IP
+        # address and so we need to make sure it uses the VIP on HA systems
+        truenas_server.ip = os.environ['virtual_ip']
+        truenas_server.nodea_ip = os.environ['controller1_ip']
+        truenas_server.nodeb_ip = os.environ['controller2_ip']
+        truenas_server.server_type = os.environ['SERVER_TYPE']
