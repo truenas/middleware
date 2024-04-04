@@ -61,7 +61,7 @@ class iSCSIHostService(CRUDService):
         List("iqns", items=[Str("iqn", empty=False)], default=[]),
         Bool("added_automatically", default=False),
         register=True,
-    ))
+    ), audit='Create iSCSI host', audit_extended=lambda data: data["ip"])
     async def do_create(self, data):
         """
         Creates iSCSI host.
@@ -99,19 +99,21 @@ class iSCSIHostService(CRUDService):
             "iscsi_host_update",
             ("attr", {"update": True}),
             register=True,
-        )
+        ),
+        audit='Update iSCSI host',
+        audit_callback=True,
     )
-    async def do_update(self, id_, data):
+    async def do_update(self, audit_callback, id_, data):
         """
         Update iSCSI host `id`.
         """
         async with LOCK:
-            return await self.update_unlocked(id_, data)
+            return await self.update_unlocked(audit_callback, id_, data)
 
-    @accepts(Int("id"), Ref("iscsi_host_update"))
     @private
-    async def update_unlocked(self, id_, data):
+    async def update_unlocked(self, audit_callback, id_, data):
         old = await self.get_instance(id_)
+        audit_callback(old['ip'])
         new = old.copy()
         new.update(data)
 
@@ -132,17 +134,21 @@ class iSCSIHostService(CRUDService):
 
         return host
 
-    @accepts(Int("id"))
-    async def do_delete(self, id_):
+    @accepts(Int("id"),
+             audit='Delete iSCSI host',
+             audit_callback=True,
+             )
+    async def do_delete(self, audit_callback, id_):
         """
         Update iSCSI host `id`.
         """
         async with LOCK:
-            return await self.delete_unlocked(id_)
+            return await self.delete_unlocked(audit_callback, id_)
 
     @private
-    async def delete_unlocked(self, id_):
+    async def delete_unlocked(self, audit_callback, id_):
         host = await self.get_instance(id_)
+        audit_callback(host['ip'])
 
         await self.middleware.call("datastore.delete", self._config.datastore, id_)
 

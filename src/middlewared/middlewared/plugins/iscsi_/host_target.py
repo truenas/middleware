@@ -30,11 +30,16 @@ class iSCSIHostService(Service, ServiceChangeMixin):
             ], {"relationships": False})
         ]]])
 
-    @accepts(Int("id"), List("ids", items=[Int("id")]), roles=['SHARING_ISCSI_HOST_WRITE'])
-    async def set_targets(self, id_, ids):
+    @accepts(Int("id"),
+             List("ids", items=[Int("id")]),
+             audit='Set iSCSI host targets',
+             audit_callback=True,
+             roles=['SHARING_ISCSI_HOST_WRITE'])
+    async def set_targets(self, audit_callback, id_, ids):
         """
         Associates targets `ids` with host `id`.
         """
+        audit_callback(await self._audit_summary(id_, ids))
         await self.middleware.call("datastore.delete", "services.iscsihosttarget", [["host_id", "=", id_]])
 
         for target_id in ids:
@@ -44,6 +49,23 @@ class iSCSIHostService(Service, ServiceChangeMixin):
             })
 
         await self._service_change("iscsitarget", "reload")
+
+    async def _audit_summary(self, id_, ids):
+        """
+        Return a summary string of the data provided, to be used in the audit summary.
+        """
+        try:
+            host = (await self.middleware.call('iscsi.host.query', [['id', '=', id_]], {'get': True}))['ip']
+        except Exception:
+            host = id_
+        try:
+            targets = [target['name'] for target in await self.middleware.call('iscsi.target.query', [['id', 'in', ids]], {'select': ['name']})]
+        except Exception:
+            targets = ids
+        if len(targets) > 3:
+            return f'{host}: {",".join(targets[:3])},...'
+        else:
+            return f'{host}: {",".join(targets)}'
 
     @private
     async def get_target_hosts(self):

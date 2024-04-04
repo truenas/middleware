@@ -4,6 +4,14 @@ from middlewared.schema import accepts, Dict, Int, Password, Patch, Str
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 
 
+def _auth_summary(data):
+    user = data.get('user', '')
+    tag = data.get('tag', '')
+    if peeruser := data.get('peeruser'):
+        return f'{user}/{peeruser} ({tag})'
+    return f'{user} ({tag})'
+
+
 class iSCSITargetAuthCredentialModel(sa.Model):
     __tablename__ = 'services_iscsitargetauthcredential'
 
@@ -38,7 +46,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         Str('peeruser', default=''),
         Password('peersecret', default=''),
         register=True
-    ))
+    ), audit='Create iSCSI Authorized Access', audit_extended=lambda data: _auth_summary(data))
     async def do_create(self, data):
         """
         Create an iSCSI Authorized Access.
@@ -70,13 +78,16 @@ class iSCSITargetAuthCredentialService(CRUDService):
             'iscsi_auth_create',
             'iscsi_auth_update',
             ('attr', {'update': True})
-        )
+        ),
+        audit='Update iSCSI Authorized Access',
+        audit_callback=True,
     )
-    async def do_update(self, id_, data):
+    async def do_update(self, audit_callback, id_, data):
         """
         Update iSCSI Authorized Access of `id`.
         """
         old = await self.get_instance(id_)
+        audit_callback(_auth_summary(old))
 
         new = old.copy()
         new.update(data)
@@ -99,12 +110,16 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'))
-    async def do_delete(self, id_):
+    @accepts(Int('id'),
+             audit='Delete iSCSI Authorized Access',
+             audit_callback=True,)
+    async def do_delete(self, audit_callback, id_):
         """
         Delete iSCSI Authorized Access of `id`.
         """
         config = await self.get_instance(id_)
+        audit_callback(_auth_summary(config))
+
         if not await self.query([['tag', '=', config['tag']], ['id', '!=', id_]]):
             usages = await self.is_in_use_by_portals_targets(id_)
             if usages['in_use']:
