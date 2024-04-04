@@ -1,10 +1,6 @@
-import contextlib
-import os
-
 import pytest
 
-from auto_config import ha, ip, vip
-from middlewared.test.integration.utils.client import client
+from middlewared.test.integration.utils.client import client, truenas_server
 from middlewared.test.integration.utils.pytest import failed
 
 pytest.register_assert_rewrite("middlewared.test")
@@ -21,12 +17,7 @@ def log_test_name_to_middlewared_log(request):
     # Beware that this is executed after session/package/module/class fixtures
     # are applied so the logs will still not be exactly precise.
     test_name = request.node.name
-    ip_to_use = ip
-    if ha and os.environ['USE_VIP'] == 'YES':
-        # this is set after the first few tests run that
-        # "setup" the prereqs for an HA system
-        ip_to_use = vip
-
+    ip_to_use = truenas_server.ip
     with client(host_ip=ip_to_use) as c:
         c.call("test.notify_test_start", test_name)
 
