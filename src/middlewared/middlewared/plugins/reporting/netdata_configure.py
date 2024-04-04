@@ -1,4 +1,4 @@
-import os.path
+import os
 import subprocess
 
 from middlewared.service import private, Service
@@ -32,3 +32,6 @@ class ReportingService(Service):
         )
         if cp.returncode != 0:
             self.logger.error('Failed to copy netdata state over from /var/lib/netdata: %r', cp.stderr.decode())
+            # We want to make sure this path exists always regardless of an error so that
+            # at least netdata can start itself gracefully
+            os.makedirs(get_netdata_state_path(), exist_ok=True)
