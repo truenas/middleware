@@ -37,9 +37,9 @@ def test__can_update(old_version, new_version, result):
     assert can_update(new_version, old_version) is not result
 
 
-def test_can_update_anything_to_internal():
+def test_can_update_internal_to_anything():
     assert can_update("TrueNAS-SCALE-22.02-INTERNAL-225", "TrueNAS-SCALE-22.02-RC.1")
 
 
-def test_can_update_internal_to_anything():
+def test_can_update_anything_to_internal():
     assert can_update("TrueNAS-SCALE-22.02-RC.1", "TrueNAS-SCALE-22.02-INTERNAL-225")
