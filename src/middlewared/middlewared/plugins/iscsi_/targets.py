@@ -25,6 +25,7 @@ class iSCSITargetModel(sa.Model):
     iscsi_target_alias = sa.Column(sa.String(120), nullable=True, unique=True)
     iscsi_target_mode = sa.Column(sa.String(20), default='iscsi')
     iscsi_target_auth_networks = sa.Column(sa.JSON(list))
+    iscsi_target_rel_tgt_id = sa.Column(sa.Integer(), nullable=False, unique=True)
 
 
 class iSCSITargetGroupModel(sa.Model):
@@ -115,6 +116,7 @@ class iSCSITargetService(CRUDService):
 
         await self.compress(data)
         groups = data.pop('groups')
+        data['rel_tgt_id'] = await self.middleware.call('iscsi.target.get_rel_tgt_id')
         pk = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
@@ -377,6 +379,14 @@ class iSCSITargetService(CRUDService):
             ], check=False)
             if cp.returncode:
                 self.middleware.logger.error('Failed to remove %r target: %s', name, cp.stderr.decode())
+
+    @private
+    async def get_rel_tgt_id(self):
+        existing = {target['rel_tgt_id'] for target in await self.middleware.call(f'{self._config.namespace}.query', [], {'select': ['rel_tgt_id']})}
+        for i in range(1, 32000):
+            if i not in existing:
+                return i
+        raise ValueError("Unable to deletmine rel_tgt_id")
 
     @private
     async def active_sessions_for_targets(self, target_id_list):
