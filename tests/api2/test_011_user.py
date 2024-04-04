@@ -1,11 +1,4 @@
-#!/usr/bin/env python3
-
-# Author: Eric Turgeon
-# License: BSD
-# Location for tests into REST API of FreeNAS
-
-from contextlib import contextmanager
-import sys
+import contextlib
 import json
 import os
 import time
@@ -20,8 +13,6 @@ from middlewared.test.integration.assets.account import user as user_asset
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call, ssh
 
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job
 from auto_config import pool_name, ha, password, user, ip
 SHELL = '/usr/bin/bash'
@@ -78,22 +69,19 @@ def test_01_get_next_uid(request):
     next_uid = results.json()
 
 
-@contextmanager
+@contextlib.contextmanager
 def create_user_with_dataset(ds_info, user_info):
     with dataset_asset(ds_info['name'], ds_info.get('options', []), **ds_info.get('kwargs', {})) as ds:
-        payload = user_info['payload']
         if 'path' in user_info:
-            payload['home'] = os.path.join(f'/mnt/{ds}', user_info['path'])
+            user_info['payload']['home'] = os.path.join(f'/mnt/{ds}', user_info['path'])
 
-        results = POST("/user/", payload)
-        assert results.status_code == 200, results.text
-        user_req = GET(f'/user?id={results.json()}')
-        assert user_req.status_code == 200, results.text
-
+        user_id = None
         try:
-            yield user_req.json()[0]
+            user_id = call('user.create', user_info['payload'])
+            yield call('user.query', [['id', '=', user_id]], {'get': True})
         finally:
-            results = DELETE(f"/user/id/{results.json()}/", {"delete_group": True})
+            if user_id is not None:
+                call('user.delete', user_id, {"delete_group": True})
 
 
 @pytest.mark.dependency(name="user_02")
@@ -811,7 +799,7 @@ def test_59_create_user_ro_dataset(request):
     {'username': 'glusterd_bad'},
 ])
 def test_60_immutable_user_validation(payload, request):
-    # Glusterd happens to be an immutable 
+    # Glusterd happens to be an immutable
     user_req = call('user.query', [['username', '=', 'news']], {'get': True})
 
     with pytest.raises(ValidationErrors) as ve:
@@ -820,7 +808,7 @@ def test_60_immutable_user_validation(payload, request):
     assert ve.value.errors[0].errmsg == 'This attribute cannot be changed'
 
 
-@contextmanager
+@contextlib.contextmanager
 def toggle_smb_configured():
     ssh(f'rm {SMB_CONFIGURED_SENTINEL}')
     assert call('smb.is_configured') is False
