@@ -6,7 +6,7 @@ sys.path.append(apifolder)
 import pytest
 from pytest_dependency import depends
 
-from auto_config import ha, ip, pool_name
+from auto_config import ha, ip, vip, pool_name
 from middlewared.client.client import ValidationErrors
 # from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import fail
@@ -18,7 +18,7 @@ def ws_client():
     # by the time this test is called in the pipeline,
     # the HA VM should have networking configured so
     # we can use the VIP
-    with client(host_ip=os.environ['virtual_ip'] if ha else ip) as c:
+    with client(host_ip=vip if ha else ip) as c:
         yield c
 
 

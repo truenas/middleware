@@ -3,10 +3,11 @@ import os
 
 import pytest
 
-pytest.register_assert_rewrite("middlewared.test")
-
-from middlewared.test.integration.utils import call
+from auto_config import ha, ip, vip
+from middlewared.test.integration.utils.client import client
 from middlewared.test.integration.utils.pytest import failed
+
+pytest.register_assert_rewrite("middlewared.test")
 
 
 @pytest.fixture(autouse=True)
@@ -17,20 +18,29 @@ def fail_fixture():
 
 @pytest.fixture(autouse=True)
 def log_test_name_to_middlewared_log(request):
-    client_kwargs_list = [dict(host_ip=os.environ.get('controller1_ip', None))]
-    if 'controller2_ip' in os.environ:
-        client_kwargs_list.append(dict(host_ip=os.environ['controller2_ip']))
+    # Beware that this is executed after session/package/module/class fixtures
+    # are applied so the logs will still not be exactly precise.
+    test_name = request.node.name
+    ip_to_use = ip
+    if ha and os.environ['USE_VIP'] == 'YES':
+        # this is set after the first few tests run that
+        # "setup" the prereqs for an HA system
+        ip_to_use = vip
 
-    for client_kwargs in client_kwargs_list:
-        # Beware that this is executed after session/package/module/class fixtures are applied so the logs will still
-        # not be exactly precise.
-        with contextlib.suppress(Exception):
-            call("test.notify_test_start", request.node.name, client_kwargs=client_kwargs)
+    with client(host_ip=ip_to_use) as c:
+        c.call("test.notify_test_start", test_name)
+        if ha:
+            c.call("failover.call_remote", "test.notify_test_start", [test_name])
 
     yield
 
-    for client_kwargs in client_kwargs_list:
-        # That's why we also notify test ends. What happens between a test end and the next test start is caused by
-        # session/package/module/class fixtures setup code.
-        with contextlib.suppress(Exception):
-            call("test.notify_test_end", request.node.name, client_kwargs=client_kwargs)
+    # That's why we also notify test ends. What happens between a test end
+    # and the next test start is caused by session/package/module/class
+    # fixtures setup code.
+    with client(host_ip=ip_to_use) as c:
+        c.call("test.notify_test_end", test_name)
+        if ha:
+            # the CI suite does all kinds of things to the standby controller
+            # on HA systems, so we need to suppress connection errors here
+            with contextlib.suppress(Exception):
+                c.call("failover.call_remote", "test.notify_test_end", [test_name])
