@@ -373,13 +373,13 @@ TARGET_DRIVER iscsi {
 ##
 %       if alua_enabled:
 %           if node == "A":
-        rel_tgt_id ${idx}
+        rel_tgt_id ${target['rel_tgt_id']}
 %           endif
 %           if node == "B":
-        rel_tgt_id ${idx + 32000}
+        rel_tgt_id ${target['rel_tgt_id'] + 32000}
 %           endif
 %       else:
-        rel_tgt_id ${idx}
+        rel_tgt_id ${target['rel_tgt_id']}
 %       endif
 ##
 ## For ALUA target is enabled if MASTER, disabled for BACKUP
@@ -445,10 +445,10 @@ ${retrieve_luns(target['id'], ' ' * 4)}\
     TARGET ${global_config['basename']}:HA:${target['name']} {
         allowed_portal ${local_ip}
 %       if node == "A":
-        rel_tgt_id ${idx + 32000}
+        rel_tgt_id ${target['rel_tgt_id'] + 32000}
 %       endif
 %       if node == "B":
-        rel_tgt_id ${idx}
+        rel_tgt_id ${target['rel_tgt_id']}
 %       endif
 ## Mimic the enabled behavior of the base target.  Only enable if have associated extents
 %   if associated_targets.get(target['id']):
@@ -531,10 +531,10 @@ DEVICE_GROUP targets {
 % for idx, target in enumerate(targets, start=1):
                 TARGET ${global_config['basename']}:alt:${target['name']} {
 %     if node == "A":
-                   rel_tgt_id ${idx + 32000}
+                   rel_tgt_id ${target['rel_tgt_id'] + 32000}
 %     endif
 %     if node == "B":
-                   rel_tgt_id ${idx}
+                   rel_tgt_id ${target['rel_tgt_id']}
 %     endif
                 }
 % endfor
