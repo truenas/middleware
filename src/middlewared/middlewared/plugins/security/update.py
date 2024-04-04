@@ -2,7 +2,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.failover_.disabled_reasons import DisabledReasonsEnum
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
-from middlewared.service import CallError, ConfigService, ValidationError
+from middlewared.service import CallError, ConfigService, ValidationError, job
 
 
 class SystemSecurityModel(sa.Model):
@@ -32,7 +32,8 @@ class SystemSecurityService(ConfigService):
             ('attr', {'update': True}),
         )
     )
-    async def do_update(self, data):
+    @job(lock='security_update')
+    async def do_update(self, job, data):
         """
         Update System Security Service Configuration.
 
@@ -45,10 +46,13 @@ class SystemSecurityService(ConfigService):
                 'Please contact iX sales for more information.'
             )
 
-        if set(await self.middleware.call('failover.disabled.reasons')) - {
-            DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ, DisabledReasonsEnum.REM_FIPS_REBOOT_REQ,
-        }:
-            raise CallError('Failover is not healthy and security settings cannot be updated')
+        is_ha = await self.middleware.call('failover.licensed')
+        if is_ha and (reasons := await self.middleware.call('failover.disabled.reasons')):
+            if set(reasons) - {
+                DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ,
+                DisabledReasonsEnum.REM_FIPS_REBOOT_REQ,
+            }:
+                raise CallError('Security settings cannot be updated while HA is in an unhealthy state')
 
         old = await self.config()
         new = old.copy()
@@ -56,19 +60,16 @@ class SystemSecurityService(ConfigService):
         if new == old:
             return new
 
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            old['id'],
-            new,
-        )
+        await self.middleware.call('datastore.update', self._config.datastore, old['id'], new)
 
         if new['enable_fips'] != old['enable_fips']:
             # TODO: We likely need to do some SSH magic as well
             #  let's investigate the exact configuration there
             await self.middleware.call('etc.generate', 'fips')
-            await self.middleware.call('keyvalue.set', 'fips_toggled', await self.middleware.call(
-                'failover.reboot.retrieve_boot_ids'
-            ))
+            if is_ha:
+                boot_id_info = await self.middleware.call('failover.reboot.retrieve_boot_ids')
+                await self.middleware.call('keyvalue.set', 'fips_toggled', boot_id_info)
+                reboot_job = await self.middleware.call('failover.reboot.other_node')
+                await job.wrap(reboot_job)
 
         return await self.config()

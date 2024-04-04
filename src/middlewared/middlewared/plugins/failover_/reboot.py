@@ -6,7 +6,7 @@ import asyncio
 import errno
 import time
 
-from middlewared.schema import accepts, Bool, Dict, returns, Str
+from middlewared.schema import accepts, Bool, Dict, returns
 from middlewared.service import CallError, job, private, Service
 
 
@@ -75,47 +75,50 @@ class FailoverRebootService(Service):
     @accepts(roles=['FULL_ADMIN'])
     @returns()
     @job(lock='reboot_standby')
-    async def standby_reboot(self, job):
+    async def other_node(self, job):
         """
-        Reboot the standby node and wait for it to come back online.
+        Reboot the other node and wait for it to come back online.
+
+        NOTE: This makes very few checks on HA systems. You need to
+            know what you're doing before calling this.
         """
-        if await self.middleware.call('failover.status') != 'MASTER':
-            raise CallError('This action can only be performed on the MASTER controller')
+        if not await self.middleware.call('failover.licensed'):
+            return
 
         remote_boot_id = await self.middleware.call('failover.call_remote', 'system.boot_id')
 
-        job.set_progress(5, 'Rebooting standby controller')
+        job.set_progress(5, 'Rebooting other controller')
         await self.middleware.call(
             'failover.call_remote', 'failover.become_passive', [], {'raise_connect_error': False, 'timeout': 20}
         )
 
-        job.set_progress(30, 'Waiting on the Standby Controller to reboot')
+        job.set_progress(30, 'Waiting on the other controller to go offline')
         try:
             retry_time = time.monotonic()
-            shutdown_timeout = 90  # seconds
-            while time.monotonic() - retry_time < shutdown_timeout:
+            timeout = 90  # seconds
+            while time.monotonic() - retry_time < timeout:
                 await self.middleware.call('failover.call_remote', 'core.ping', [], {'timeout': 5})
                 await asyncio.sleep(5)
         except CallError:
             pass
         else:
             raise CallError(
-                f'Timed out waiting {shutdown_timeout} seconds for the standby controller to reboot',
+                f'Timed out after {timeout}seconds waiting for the other controller to come back online',
                 errno.ETIMEDOUT
             )
 
-        job.set_progress(60, 'Waiting for the Standby Controller to come back online')
-
-        # Wait for the standby controller to come back online and report as being ready
+        job.set_progress(60, 'Waiting for the other controller to come back online')
         if not await self.middleware.call('failover.upgrade_waitstandby'):
-            raise CallError('Timed out waiting for the standby controller to upgrade', errno.ETIMEDOUT)
+            # FIXME: `upgrade_waitstandby` is a really poor name for a method that
+            # just waits on the other controller to come back online and be ready
+            raise CallError('Timed out waiting for the other controller to come online', errno.ETIMEDOUT)
 
         # We captured the boot_id of the standby controller before we rebooted it
         # This variable represents a 1-time unique boot id. It's supposed to be different
         # every time the system boots up. If this check is True, then it's safe to say
         # that the remote system never rebooted
         if remote_boot_id == await self.middleware.call('failover.call_remote', 'system.boot_id'):
-            raise CallError('Standby Controller failed to reboot')
+            raise CallError('Other controller failed to reboot')
 
-        job.set_progress(100, 'Standby Controller has been rebooted successfully')
+        job.set_progress(100, 'Other controller rebooted successfully')
         return True
