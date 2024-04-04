@@ -1,7 +1,8 @@
 import middlewared.sqlalchemy as sa
 
+from middlewared.plugins.failover_.disabled_reasons import DisabledReasonsEnum
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
-from middlewared.service import ConfigService, ValidationError
+from middlewared.service import CallError, ConfigService, ValidationError
 
 
 class SystemSecurityModel(sa.Model):
@@ -44,6 +45,11 @@ class SystemSecurityService(ConfigService):
                 'Please contact iX sales for more information.'
             )
 
+        if set(await self.middleware.call('failover.disabled.reasons')) - {
+            DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ, DisabledReasonsEnum.REM_FIPS_REBOOT_REQ,
+        }:
+            raise CallError('Failover is not healthy and security settings cannot be updated')
+
         old = await self.config()
         new = old.copy()
         new.update(data)
@@ -61,5 +67,8 @@ class SystemSecurityService(ConfigService):
             # TODO: We likely need to do some SSH magic as well
             #  let's investigate the exact configuration there
             await self.middleware.call('etc.generate', 'fips')
+            await self.middleware.call('keyvalue.set', 'fips_toggled', await self.middleware.call(
+                'failover.reboot.retrieve_boot_ids'
+            ))
 
         return await self.config()
