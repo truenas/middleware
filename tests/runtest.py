@@ -9,6 +9,7 @@ from subprocess import run, call
 from sys import argv, exit
 import os
 import getopt
+import socket
 import sys
 import secrets
 import string
