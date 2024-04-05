@@ -1,4 +1,5 @@
 import contextlib
+import dataclasses
 import json
 import os
 import time
@@ -16,7 +17,8 @@ from middlewared.test.integration.utils import call, ssh
 from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job
 from auto_config import pool_name, ha, password, user, ip
 SHELL = '/usr/bin/bash'
-GROUP = 'root'
+VAR_EMPTY = '/var/empty'
+ROOT_GROUP = 'root'
 DEFAULT_HOMEDIR_OCTAL = 0o40700
 group_id = GET(f'/group/?group={GROUP}', controller_a=ha).json()[0]['id']
 dataset = f"{pool_name}/test_homes"
@@ -55,18 +57,52 @@ home_acl = [
 ]
 
 
+@dataclasses.dataclass
+class HomeAssets:
+    Dataset01 = {
+        'name': dataset,
+        'share_type': 'SMB',
+        'acltype': 'NFSV4',
+        'aclmode': 'RESTRICTED'
+    }
+
+
+@dataclasses.dataclass
+class UserAssets:
+    TestUser01 = {
+        'depends_name': 'user_01',
+        'query_response': dict(),
+        'get_user_obj_response': dict(),
+        'create_payload': {
+            'username': 'testuser',
+            'full_name': 'Test User',
+            'group_create': True,
+            'password': 'test1234',
+            'uid': None,
+            'smb': False,
+            'shell': SHELL
+        }
+    }
+    ShareUser01 = {
+        'depends_name': 'share_user_01',
+        'query_response': dict(),
+        'get_user_obj_reasponse': dict(),
+        'create_payload': {
+            'username': 'shareuser',
+            'full_name': 'Share User',
+            'group_create': True,
+            'groups': [],
+            'password': 'testing',
+            'uid': None,
+            'shell': SHELL
+        }
+    }
+
+
 def check_config_file(file_name, expected_line):
     results = SSH_TEST(f'cat {file_name}', user, password, ip)
     assert results['result'], results['output']
     assert expected_line in results['stdout'].splitlines(), results['output']
-
-
-@pytest.mark.dependency(name="user_01")
-def test_01_get_next_uid(request):
-    results = GET('/user/get_next_uid/')
-    assert results.status_code == 200, results.text
-    global next_uid
-    next_uid = results.json()
 
 
 @contextlib.contextmanager
@@ -84,228 +120,142 @@ def create_user_with_dataset(ds_info, user_info):
                 call('user.delete', user_id, {"delete_group": True})
 
 
-@pytest.mark.dependency(name="user_02")
-def test_02_creating_user_testuser(request):
-    depends(request, ["user_01"])
+@pytest.mark.dependency(name=UserAssets.TestUser01['depends_name'])
+def test_001_create_and_verify_testuser():
     """
     Test for basic user creation. In this case 'smb' is disabled to bypass
     passdb-related code. This is because the passdb add relies on users existing
     in passwd database, and errors during error creation will get masked as
     passdb errors.
     """
-    global user_id
-    payload = {
-        "username": "testuser",
-        "full_name": "Test User",
-        "group_create": True,
-        "password": "test1234",
-        "uid": next_uid,
-        "smb": False,
-        "shell": SHELL
-    }
-    results = POST("/user/", payload)
-    assert results.status_code == 200, results.text
-    user_id = results.json()
+    UserAssets.TestUser01['create_payload']['uid'] = call('user.get_next_uid')
+    call('user.create', UserAssets.TestUser01['create_payload'])
+    qry = call('user.query', [['username', '=', UserAssets.TestUser01['create_payload']['username']]], {'get': True})
+    UserAssets.TestUser01['query_response'].update(qry)
 
+    # verify basic info
+    for key in UserAssets.TestUser01['create_payload']:
+        assert qry[key] == UserAssets.TestUser01['query_response'][key]
 
-def test_03_verify_post_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["user_01"], scope="session")
-    cmd = """grep -R "test1234" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, str(results['output'])
-
-
-def test_04_verify_user_was_created(request):
-    depends(request, ["user_02", "user_01"])
-    results = GET('/user?username=testuser')
-    assert len(results.json()) == 1, results.text
-
-    u = results.json()[0]
-    g = u['group']
-    to_check = [
+    # verify various /etc files were updated
+    for f in (
         {
             'file': '/etc/shadow',
-            'value': f'testuser:{u["unixhash"]}:18397:0:99999:7:::'
+            'value': f'testuser:{qry["unixhash"]}:18397:0:99999:7:::'
         },
         {
             'file': '/etc/passwd',
-            'value': f'testuser:x:{u["uid"]}:{u["group"]["bsdgrp_gid"]}:{u["full_name"]}:{u["home"]}:{u["shell"]}'
+            'value': f'testuser:x:{qry["uid"]}:{qry["group"]["bsdgrp_gid"]}:{qry["full_name"]}:{qry["home"]}:{qry["shell"]}'
         },
         {
             'file': '/etc/group',
-            'value': f'{g["bsdgrp_group"]}:x:{g["bsdgrp_gid"]}:'
+            'value': f'{qry["group"]["bsdgrp_group"]}:x:{qry["group"]["bsdgrp_gid"]}:'
         }
-    ]
-    for f in to_check:
+    ):
         check_config_file(f['file'], f['value'])
 
+    # verify password doesn't leak to middlewared.log
+    # we do this inside the create and verify function
+    # because this is severe enough problem that we should
+    # just "fail" at this step so it sets off a bunch of
+    # red flags in the CI
+    results = SSH_TEST(
+        f'grep -R {UserAssets.TestUser01["create_payload"]["password"]!r} /var/log/middlewared.log',
+        user, password, ip
+    )
+    assert results['result'] is False, str(results['output'])
 
-def test_05_verify_user_exists(request):
+
+def test_002_verify_user_exists_in_pwd(request):
     """
     get_user_obj is a wrapper around the pwd module.
     This check verifies that the user is _actually_ created.
     """
-    results = POST("/user/get_user_obj/", {"username": "testuser", "sid_info": True})
-    assert results.status_code == 200, results.text
-    pw = results.json()
-    assert pw['pw_uid'] == next_uid, results.text
-    assert pw['pw_shell'] == SHELL, results.text
-    assert pw['pw_gecos'] == 'Test User', results.text
-    assert pw['pw_dir'] == '/var/empty', results.text
+    depends(request, [UserAssets.TestUser01['depends_name']])
+    pw = call(
+        'user.get_user_obj',
+        {'username': UserAssets.TestUser01['create_payload']['username'], 'sid_info': True}
+    )
+    UserAssets.TestUser01['get_user_obj_response'].update(pw)
+
+    # Verify pwd info
+    assert pw['pw_uid'] == UserAssets.TestUser01['query_response']['uid']
+    assert pw['pw_shell'] == UserAssets.TestUser01['query_response']['shell']
+    assert pw['pw_gecos'] == UserAssets.TestUser01['query_response']['full_name']
+    assert pw['pw_dir'] == VAR_EMPTY
 
     # At this point, we're not an SMB user
-    assert pw['sid_info'] is not None, results.text
-    assert pw['sid_info']['domain_information']['online'], results.text
-    assert pw['sid_info']['domain_information']['activedirectory'] is False, results.text
+    assert pw['sid_info'] is not None
+    assert pw['sid_info']['domain_information']['online']
+    assert pw['sid_info']['domain_information']['activedirectory'] is False
 
 
-def test_06_get_user_info(request):
-    depends(request, ["user_02", "user_01"])
-    global userinfo
-    userinfo = GET(f'/user/id/{user_id}').json()
+def test_003_get_next_uid_again(request):
+    """user.get_next_uid should always return a unique uid"""
+    depends(request, [UserAssets.TestUser01['depends_name']])
+    assert call('user.get_next_uid') != UserAssets.TestUser01['create_payload']['uid']
 
 
-def test_07_look_user_name(request):
-    depends(request, ["user_02", "user_01"])
-    assert userinfo["username"] == "testuser"
+def test_004_update_and_verify_user_groups(request):
+    """Add the user to the root users group"""
+    depends(request, [UserAssets.TestUser01['depends_name']])
+    call(
+        'user.update',
+        UserAssets.TestUser01['query_response']['id'],
+        {'groups': ROOT_GROUP}
+    )
+
+    grouplist = call(
+        'user.get_user_obj',
+        {'username': UserAssets.TestUser01['create_payload']['username'], 'get_groups': True}
+    )['grouplist']
+    assert 0 in grouplist
 
 
-def test_08_look_user_full_name(request):
-    depends(request, ["user_02", "user_01"])
-    assert userinfo["full_name"] == "Test User"
+def test_006_delete_testuser(request):
+    depends(request, [UserAssets.TestUser01['depends_name']])
+    call(
+        'user.delete',
+        UserAssets.TestUser01['query_response']['id'],
+        {'delete_group': True}
+    )
+    assert not call(
+        'user.query',
+        [['username', '=', UserAssets.TestUser01['query_response']['username']]]
+    )
 
 
-def test_09_look_user_uid(request):
-    depends(request, ["user_02", "user_01"])
-    assert userinfo["uid"] == next_uid
+# FIXME: why is this being called here randomly in the middle of this test? And why are we using REST?
+# def test_25_has_local_administrator_set_up(request):
+    # depends(request, ["user_02", "user_01"])
+    # assert GET('/user/has_local_administrator_set_up/', anonymous=True).json() is True
 
 
-def test_10_look_user_shell(request):
-    depends(request, ["user_02", "user_01"])
-    assert userinfo["shell"] == SHELL
+@pytest.mark.dependency(name=UserAssets.ShareUser01['depends_name'])
+def test_020_create_and_verify_shareuser():
+    UserAssets.ShareUser01['create_payload']['uid'] = call('user.get_next_uid')
+    UserAssets.ShareUser01['create_payload']['grouplist'].append(
+        call('group.query', [['group', '=', ROOT_GROUP]], {'get': True})['id']
+    )
 
+    call('user.create', UserAssets.ShareUser01['create_payload'])
+    qry = call('user.query', [['username', '=', UserAssets.ShareUser01['create_payload']['username']]], {'get': True})
+    UserAssets.ShareUser01['query_response'].update(qry)
 
-def test_12_get_new_next_uid(request):
-    depends(request, ["user_02", "user_01"])
-    results = GET('/user/get_next_uid/')
-    assert results.status_code == 200, results.text
-    global new_next_uid
-    new_next_uid = results.json()
+    # verify basic info
+    for key in UserAssets.ShareUser01['create_payload']:
+        assert qry[key] == UserAssets.ShareUser01['query_response'][key]
 
-
-def test_13_next_and_new_next_uid_not_equal(request):
-    depends(request, ["user_02", "user_01"])
-    assert new_next_uid != next_uid
-
-
-def test_14_setting_user_groups(request):
-    depends(request, ["user_02", "user_01"])
-    payload = {'groups': [group_id]}
-    GET('/user?username=testuser').json()[0]['id']
-    results = PUT(f"/user/id/{user_id}/", payload)
-    assert results.status_code == 200, results.text
-
-    payload = {"username": "testuser", "get_groups": True}
-    results = POST("/user/get_user_obj/", payload)
-    assert results.status_code == 200, results.text
-
-    grouplist = results.json()['grouplist']
-    assert 0 in grouplist, results.text
-
-
-# Update tests
-# Update the testuser
-def test_15_updating_user_testuser_info(request):
-    depends(request, ["user_02", "user_01"])
-    payload = {"full_name": "Test Renamed",
-               "password": "testing123",
-               "uid": new_next_uid}
-    results = PUT(f"/user/id/{user_id}/", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_16_verify_put_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["user_02", "user_01"], scope="session")
-    cmd = """grep -R "testing123" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    # verify password doesn't leak to middlewared.log
+    # we do this inside the create and verify function
+    # because this is severe enough problem that we should
+    # just "fail" at this step so it sets off a bunch of
+    # red flags in the CI
+    results = SSH_TEST(
+        f'grep -R {UserAssets.ShareUser01["create_payload"]["password"]!r} /var/log/middlewared.log',
+        user, password, ip
+    )
     assert results['result'] is False, str(results['output'])
-
-
-def test_17_get_user_new_info(request):
-    depends(request, ["user_02", "user_01"])
-    global userinfo
-    userinfo = GET('/user?username=testuser').json()[0]
-
-
-def test_18_look_user_full_name(request):
-    depends(request, ["user_02", "user_01"])
-    assert userinfo["full_name"] == "Test Renamed"
-
-
-def test_19_look_user_new_uid(request):
-    depends(request, ["user_02", "user_01"])
-    assert userinfo["uid"] == new_next_uid
-
-
-def test_20_look_user_groups(request):
-    depends(request, ["user_02", "user_01"])
-    assert userinfo["groups"] == [group_id]
-
-
-# Delete the testuser
-def test_23_deleting_user_testuser(request):
-    depends(request, ["user_02", "user_01"])
-    results = DELETE(f"/user/id/{user_id}/", {"delete_group": True})
-    assert results.status_code == 200, results.text
-
-
-def test_24_look_user_is_delete(request):
-    depends(request, ["user_02", "user_01"])
-    assert len(GET('/user?username=testuser').json()) == 0
-
-
-def test_25_has_local_administrator_set_up(request):
-    depends(request, ["user_02", "user_01"])
-    assert GET('/user/has_local_administrator_set_up/', anonymous=True).json() is True
-
-
-def test_26_get_next_uid_for_shareuser(request):
-    depends(request, ["user_02", "user_01"])
-    results = GET('/user/get_next_uid/')
-    assert results.status_code == 200, results.text
-    global next_uid
-    next_uid = results.json()
-
-
-@pytest.mark.dependency(name="shareuser")
-def test_27_creating_shareuser_to_test_sharing(request):
-    depends(request, ["user_02", "user_01"])
-    global share_user_db_id
-    payload = {
-        "username": "shareuser",
-        "full_name": "Share User",
-        "group_create": True,
-        "groups": [group_id],
-        "password": "testing",
-        "uid": next_uid,
-        "shell": SHELL
-    }
-    results = POST("/user/", payload)
-    assert results.status_code == 200, results.text
-    share_user_db_id = results.json()
-
-
-def test_28_verify_post_user_do_not_leak_password_in_middleware_log(request):
-    cmd = """grep -R "testing" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, str(results['output'])
-
-
-def test_29_get_next_uid_for_homes_check(request):
-    results = GET('/user/get_next_uid/')
-    assert results.status_code == 200, results.text
-    global next_uid
-    next_uid = results.json()
 
 
 @pytest.mark.dependency(name="HOME_DS_CREATED")
@@ -315,6 +265,7 @@ def test_30_creating_home_dataset(request):
     we verify that ACL is being stripped properly from
     the newly-created home directory.
     """
+    depends(request, [UserAssets.ShareUser01['depends_name']])
     payload = {
         "name": dataset,
         "share_type": "SMB",
