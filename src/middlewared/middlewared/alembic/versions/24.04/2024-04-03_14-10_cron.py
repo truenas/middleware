@@ -31,7 +31,7 @@ def upgrade():
         for row in map(dict, conn.execute(f"SELECT id, {', '.join(fields)} FROM {table}").fetchall()):
             for k in fields:
                 value = row[k]
-                if '/' in value and not re.match(r'^(\*|[0-9]+-[0-9]+)/([0-9]+)$', value):
+                if value is not None and '/' in value and not re.match(r'^(\*|[0-9]+-[0-9]+)/([0-9]+)$', value):
                     if m := re.search(r'/([0-9]+)$', value):
                         value = f'*/{m.group(1)}'
                     else:
