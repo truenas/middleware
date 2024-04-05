@@ -45,7 +45,10 @@ def host():
 
     # Some older test runners have old python
     if truenas_server.server_type == 'ENTERPRISE_HA':
-        truenas_server.ip = os.environ["controller1_ip"]
+        if "USE_VIP" in os.environ and os.environ["USE_VIP"] == "yes":
+            truenas_server.ip = os.environ["virtual_ip"]
+        else:
+            truenas_server.ip = os.environ["controller1_ip"]
         truenas_server.nodea_ip = os.environ["controller1_ip"]
         truenas_server.nodeb_ip = os.environ["controller2_ip"]
     else:
