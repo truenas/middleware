@@ -27,7 +27,7 @@ class SystemSecurityService(ConfigService):
     )
 
     @private
-    async def configure_fips_on_ha(self, is_ha):
+    async def configure_fips_on_ha(self, is_ha, job):
         if not is_ha:
             return
 
@@ -122,6 +122,6 @@ class SystemSecurityService(ConfigService):
             #  let's investigate the exact configuration there
             await self.middleware.call('etc.generate', 'fips')
             # TODO: We need to fix this for non-HA iX hardware...
-            await self.configure_fips_for_ha(is_ha)
+            await self.configure_fips_on_ha(is_ha, job)
 
         return await self.config()
