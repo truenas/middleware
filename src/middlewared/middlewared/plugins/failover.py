@@ -435,8 +435,10 @@ class FailoverService(ConfigService):
         result = {'missing_local': list(), 'missing_remote': list()}
         if (ld := await self.get_disks_local()) is not None:
             try:
-                rd = await self.middleware.call('failover.call_remote', 'failover.get_disks_local', [],
-                                                {'raise_connect_error': False})
+                rd = await self.middleware.call(
+                    'failover.call_remote', 'failover.get_disks_local', [],
+                    {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+                )
             except Exception:
                 self.logger.error('Unhandled exception in get_disks_local on remote controller', exc_info=True)
             else:
