@@ -6,8 +6,10 @@ import asyncio
 import errno
 import time
 
-from middlewared.schema import accepts, Bool, Dict, returns
+from middlewared.schema import accepts, Bool, Dict, UUID, returns
 from middlewared.service import CallError, job, private, Service
+
+FIPS_KEY = 'fips_toggled'
 
 
 class FailoverRebootService(Service):
@@ -17,60 +19,65 @@ class FailoverRebootService(Service):
         namespace = 'failover.reboot'
 
     @private
-    async def retrieve_boot_ids(self):
-        return {
-            await self.middleware.call('failover.node'): await self.middleware.call('system.boot_id'),
-            await self.middleware.call(
-                'failover.call_remote', 'failover.node', [], {'raise_connect_error': False}
-            ): await self.middleware.call(
-                'failover.call_remote', 'system.boot_id', [], {'raise_connect_error': False}
-            ),
+    async def boot_ids(self):
+        info = {
+            'this_node': {'id': await self.middleware.call('system.boot_id')},
+            'other_node': {'id': None}
         }
+        try:
+            info['other_node']['id'] = await self.middleware.call(
+                'failover.call_remote', 'system.boot_id', [], {
+                    'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2,
+                }
+            )
+        except Exception:
+            self.logger.warning('Unexpected error querying remote node boot id', exc_info=True)
+
+        return info
+
+    @private
+    async def info_impl(self):
+        # initial state
+        current_info = await self.boot_ids()
+        current_info['this_node'].update({'reboot_required': None})
+        current_info['other_node'].update({'reboot_required': None})
+
+        fips_change_info = await self.middleware.call('keyvalue.get', FIPS_KEY, False)
+        if not fips_change_info:
+            for i in current_info:
+                current_info[i]['reboot_required'] = False
+            return current_info
+
+        for key in ('this_node', 'other_node'):
+            current_info[key]['reboot_required'] = fips_change_info[key]['id'] != current_info[key]['id']
+
+        if all((
+            current_info['this_node']['reboot_required'] is False,
+            current_info['other_node']['reboot_required'] is False,
+        )):
+            # no reboot required for either controller so delete
+            await self.middleware.call('keyvalue.delete', FIPS_KEY)
+
+        return current_info
 
     @accepts(roles=['FAILOVER_READ'])
     @returns(Dict(
-        Bool('reboot_required'),
-        Bool('node_a_reboot_required'),
-        Bool('node_b_reboot_required'),
+        'info',
+        Dict('this_node', UUID('id'), Bool('reboot_required')),
+        Dict('other_node', UUID('id', null=True), Bool('reboot_required', null=True)),
     ))
     async def info(self):
-        """
-        Returns whether a reboot is required for failover/security system configuration changes to take effect.
-        """
-        return await self.check_reboot_required()
+        """Returns the local and remote nodes boot_ids along with their
+        reboot statuses (i.e. does a reboot need to take place)"""
+        return await self.info_impl()
 
     @accepts(roles=['FAILOVER_READ'])
     @returns(Bool())
     async def required(self):
-        """
-        Returns whether a reboot is required for failover/security system configuration changes to take effect.
-        """
-        return (await self.check_reboot_required())['reboot_required']
-
-    @private
-    async def check_reboot_required(self):
-        fips_change_info = await self.middleware.call('keyvalue.get', 'fips_toggled', False)
-        if not fips_change_info:
-            return {
-                'reboot_required': False,
-                'node_a_reboot_required': False,
-                'node_b_reboot_required': False,
-            }
-
-        existing_boot_ids = await self.retrieve_boot_ids()
-        info = {
-            # We retrieve A/B safely just to be sure that we don't have any issues
-            # Not sure what the best way to handle it would be if we were not able to connect to remote
-            'node_a_reboot_required': existing_boot_ids.get('A') == fips_change_info.get('A'),
-            'node_b_reboot_required': existing_boot_ids.get('B') == fips_change_info.get('B'),
-            'reboot_required': False,
-        }
-        if info['node_a_reboot_required'] or info['node_b_reboot_required']:
-            info['reboot_required'] = True
-        else:
-            await self.middleware.call('keyvalue.delete', 'fips_toggled')
-
-        return info
+        """Returns whether this node needs to be rebooted for failover/security
+        system configuration changes to take effect."""
+        # TODO: should we raise Callerror/ValidationError if reboot_required is None?
+        return (await self.info())['this_node']['reboot_required'] is True
 
     @accepts(roles=['FULL_ADMIN'])
     @returns()
