@@ -131,7 +131,8 @@ class PoolService(Service):
         )
         if ds['acltype']['value'] == 'NFSV4':
             opts = {'properties': {
-                'aclinherit': {'value': 'passthrough'}
+                'aclinherit': {'value': 'passthrough'},
+                'aclmode': {'value': 'passthrough'},
             }}
         else:
             opts = {'properties': {
@@ -248,7 +249,8 @@ class PoolService(Service):
 
         if ds['acltype']['value'] == 'NFSV4':
             opts = {'properties': {
-                'aclinherit': {'value': 'passthrough'}
+                'aclinherit': {'value': 'passthrough'},
+                'aclmode': {'value': 'passthrough'},
             }}
         else:
             opts = {'properties': {
