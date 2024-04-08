@@ -7,7 +7,9 @@
 		middleware.logger.error('Netdata configuration file could not be generated')
 		raise FileShouldNotExist()
 
-	disk_space = middleware.call_sync('netdata.get_disk_space')
+	reporting_config = middleware.call_sync('reporting.config')
+	disk_space_for_tier0 = middleware.call_sync('netdata.get_disk_space_for_tier0')
+	disk_space_for_tier1 = middleware.call_sync('netdata.get_disk_space_for_tier1')
 %>\
 [global]
 	run as user = netdata
@@ -20,8 +22,11 @@
 
 [db]
 	mode = dbengine
-	storage tiers = 1
-	dbengine multihost disk space MB = ${disk_space}
+	storage tiers = 2
+	dbengine multihost disk space MB = ${disk_space_for_tier0}
+
+	dbengine tier 1 multihost disk space MB = ${disk_space_for_tier1}
+	dbengine tier 1 update every iterations = ${reporting_config['tier1_update_interval']}
 
 [plugins]
 	proc = yes
