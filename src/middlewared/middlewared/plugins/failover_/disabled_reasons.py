@@ -80,22 +80,17 @@ class FailoverDisabledReasonsService(Service):
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.add(DisabledReasonsEnum.NO_FAILOVER.name)
 
-        current_node = self.middleware.call_sync('failover.node')
-        reboot_info = self.middleware.call_sync('failover.reboot.info')
-        if current_node in ('A', 'B') and reboot_info['reboot_required']:
-            if reboot_info[f'node_{current_node.lower()}_reboot_required']:
-                reasons.add(DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ.name)
-            if any((
-                reboot_info['node_a_reboot_required'] and current_node != 'A',
-                reboot_info['node_b_reboot_required'] and current_node != 'B',
-            )):
-                reasons.add(DisabledReasonsEnum.REM_FIPS_REBOOT_REQ.name)
-
         if self.middleware.call_sync('failover.in_progress'):
             reasons.add(DisabledReasonsEnum.LOC_FAILOVER_ONGOING.name)
             # no reason to check anything else since failover
             # is happening on this system
             return
+
+        reboot_info = self.middleware.call_sync('failover.reboot.info')
+        if reboot_info['this_node']['reboot_required']:
+            reasons.add(DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ.name)
+        if reboot_info['other_node']['reboot_required']:
+            reasons.add(DisabledReasonsEnum.REM_FIPS_REBOOT_REQ.name)
 
         self.heartbeat_health(app, reasons)
 
