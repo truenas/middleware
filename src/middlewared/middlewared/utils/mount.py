@@ -40,9 +40,8 @@ def __parse_to_mnt_id(line, out_dict):
     out_dict.update({entry['mount_id']: entry})
 
 
-def __create_tree(info, dev_id):
+def __create_tree(info, mount_id):
     root_id = None
-    mount_id = None
 
     for entry in info.values():
         if not entry.get('children'):
@@ -52,26 +51,23 @@ def __create_tree(info, dev_id):
             root_id = entry['mount_id']
             continue
 
-        if entry['device_id']['dev_t'] == dev_id:
-            mount_id = entry['mount_id']
-
         parent = info[entry['parent_id']]
         if not parent.get('children'):
             parent['children'] = [entry]
         else:
             parent['children'].append(entry)
 
-    if dev_id and not mount_id:
-        raise KeyError(f'{dev_id}: device not in mountinfo')
-
     return info[mount_id or root_id]
 
 
-def __iter_mountinfo(dev_id=None, callback=None, private_data=None):
+def __iter_mountinfo(dev_id=None, mnt_id=None, callback=None, private_data=None):
     if dev_id:
         maj_min = f'{os.major(dev_id)}:{os.minor(dev_id)}'
     else:
         maj_min = None
+
+    if mnt_id:
+        mount_id = f'{mnt_id} '
 
     with open('/proc/self/mountinfo') as f:
         for line in f:
@@ -81,26 +77,36 @@ def __iter_mountinfo(dev_id=None, callback=None, private_data=None):
 
                 callback(line, private_data)
                 break
+            elif mnt_id is not None:
+                if not line.startswith(mount_id):
+                    continue
+
+                callback(line, private_data)
+                break
 
             callback(line, private_data)
 
 
-def getmntinfo(dev_id=None):
+def getmntinfo(dev_id=None, mnt_id=None):
     """
     Get mount information. returns dictionary indexed by dev_t.
     User can optionally specify dev_t for faster lookup of single
     device.
     """
     info = {}
-    __iter_mountinfo(dev_id, __parse_to_dev, info)
+    if mnt_id:
+        __iter_mountinfo(mnt_id=mnt_id, callback=__parse_to_mnt_id, private_data=info)
+    else:
+        __iter_mountinfo(dev_id=dev_id, callback=__parse_to_dev, private_data=info)
+
     return info
 
 
-def getmnttree(dev_id=None):
+def getmnttree(mount_id=None):
     """
     Generate a mount info tree of either the root filesystem
     or a given filesystem specified by dev_t.
     """
     info = {}
-    __iter_mountinfo(None, __parse_to_mnt_id, info)
-    return __create_tree(info, dev_id)
+    __iter_mountinfo(callback=__parse_to_mnt_id, private_data=info)
+    return __create_tree(info, mount_id)
