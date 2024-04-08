@@ -11,25 +11,15 @@ from middlewared.client import ClientException
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user as user_asset
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, fail, ssh
 
-from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job
-from auto_config import pool_name, ha, password, user, ip
+from functions import SSH_TEST, wait_on_job
+from auto_config import pool_name, password, user, ip
 SHELL = '/usr/bin/bash'
 VAR_EMPTY = '/var/empty'
 ROOT_GROUP = 'root'
 DEFAULT_HOMEDIR_OCTAL = 0o40700
-group_id = GET(f'/group/?group={GROUP}', controller_a=ha).json()[0]['id']
-dataset = f"{pool_name}/test_homes"
-dataset_url = dataset.replace('/', '%2F')
 SMB_CONFIGURED_SENTINEL = '/var/run/samba/.configured'
-
-home_files = {
-    "~/": oct(DEFAULT_HOMEDIR_OCTAL),
-    "~/.profile": "0o100644",
-    "~/.ssh": "0o40700",
-    "~/.ssh/authorized_keys": "0o100600",
-}
 
 
 @dataclasses.dataclass
@@ -160,13 +150,11 @@ def test_001_create_and_verify_testuser():
     UserAssets.TestUser01['create_payload']['uid'] = call('user.get_next_uid')
     call('user.create', UserAssets.TestUser01['create_payload'])
     username = UserAssets.TestUser01['create_payload']['username']
-    qry = call('user.query', [], {
-        'query-filters': [['username', '=', username]],
-        'query-options': {
-            'get': True,
-            'extra': {'additional_information': ['SMB']}
-        }
-    })
+    qry = call(
+        'user.query',
+        [['username', '=', username]],
+        {'get': True, 'extra': {'additional_information': ['SMB']}}
+    )
     UserAssets.TestUser01['query_response'].update(qry)
 
     # verify basic info
@@ -252,8 +240,94 @@ def test_004_update_and_verify_user_groups(request):
     assert 0 in grouplist
 
 
-def test_006_delete_testuser(request):
+@pytest.mark.dependency(name='SMB_CONVERT')
+def test_005_convert_non_smbuser_to_smbuser(request):
     depends(request, [UserAssets.TestUser01['depends_name']])
+    with pytest.raises(ValidationErrors):
+        """
+        SMB auth for local users relies on a stored NT hash. We only generate this hash
+        for SMB users. This means that converting from non-SMB to SMB requires
+        re-submitting password so that we can generate the required hash. If
+        payload submitted without password, then validation error _must_ be raised.
+        """
+        call('user.update', UserAssets.TestUser01['query_response']['id'], {'smb': True})
+
+    rv = call(
+        'user.update',
+        UserAssets.TestUser01['query_response']['id'],
+        {'smb': True, 'password': UserAssets.TestUser01['create_payload']['password']}
+    )
+    assert rv
+    # TODO: why sleep here?
+    time.sleep(2)
+
+    # verify converted smb user doesn't leak password
+    results = SSH_TEST(
+        f'grep -R {UserAssets.TestUser01["create_payload"]["password"]!r} /var/log/middlewared.log',
+        user, password, ip
+    )
+    assert results['result'] is False, str(results['output'])
+
+
+def test_006_verify_converted_smbuser_passdb_entry_exists(request):
+    """
+    At this point the non-SMB user has been converted to an SMB user. Verify
+    that a passdb entry was appropriately generated.
+    """
+    depends(request, ['SMB_CONVERT', UserAssets.TestUser01['depends_name']])
+    qry = call(
+        'user.query',
+        [['username', '=', UserAssets.TestUser01['create_payload']['username']]],
+        {'get': True, 'extra': {'additional_information': ['SMB']}}
+    )
+    assert qry
+    assert qry['sid']
+    assert qry['nt_name']
+
+
+def test_007_add_smbuser_to_sudoers(request):
+    depends(request, ['SMB_CONVERT', UserAssets.TestUser01['depends_name']])
+    username = UserAssets.TestUser01['create_payload']['username']
+    # all sudo commands
+    call(
+        'user.update',
+        UserAssets.TestUser01['query_response']['id'],
+        {'sudo_commands': ['ALL'], 'sudo_commands_nopasswd': []}
+    )
+    check_config_file('/etc/sudoers', f"{username} ALL=(ALL) ALL")
+
+    # all sudo commands no password
+    call(
+        'user.update',
+        UserAssets.TestUser01['query_response']['id'],
+        {'sudo_commands': [], 'sudo_commands_nopasswd': ['ALL']}
+    )
+    check_config_file('/etc/sudoers', f"{username} ALL=(ALL)  NOPASSWD: ALL")
+
+    # all sudo commands and all sudo commands no password
+    call(
+        'user.update',
+        UserAssets.TestUser01['query_response']['id'],
+        {'sudo_commands': ['ALL'], 'sudo_commands_nopasswd': ['ALL']}
+    )
+    check_config_file('/etc/sudoers', f"{username} ALL=(ALL) ALL,  NOPASSWD: ALL")
+
+
+def test_008_disable_smb_and_password(request):
+    depends(request, ['SMB_CONVERT', UserAssets.TestUser01['depends_name']])
+    username = UserAssets.TestUser01['create_payload']['username']
+    call(
+        'user.update',
+        UserAssets.TestUser01['query_response']['id'],
+        {'password_disabled': True, 'smb': False}
+    )
+    check_config_file('/etc/shadow', f'{username}:*:18397:0:99999:7:::')
+
+
+@pytest.mark.parametrize('username', [UserAssets.TestUser01['create_payload']['username']])
+def test_009_delete_user(username, request):
+    depends(request, ['SMB_CONVERT', UserAssets.TestUser01['depends_name']])
+    # delete the user first
     call(
         'user.delete',
         UserAssets.TestUser01['query_response']['id'],
@@ -274,7 +348,7 @@ def test_006_delete_testuser(request):
 @pytest.mark.dependency(name=UserAssets.ShareUser01['depends_name'])
 def test_020_create_and_verify_shareuser():
     UserAssets.ShareUser01['create_payload']['uid'] = call('user.get_next_uid')
-    UserAssets.ShareUser01['create_payload']['grouplist'].append(
+    UserAssets.ShareUser01['create_payload']['groups'].append(
         call('group.query', [['group', '=', ROOT_GROUP]], {'get': True})['id']
     )
 
@@ -309,19 +383,17 @@ def test_031_create_user_with_homedir(request):
     call(
         'pool.dataset.permission',
         HomeAssets.Dataset01['create_payload']['name'],
-        HomeAssets.Dataset01['home_acl'],
+        {'acl': HomeAssets.Dataset01['home_acl']},
         job=True
     )
     # now create the user
     UserAssets.TestUser02['create_payload']['uid'] = call('user.get_next_uid')
     call('user.create', UserAssets.TestUser02['create_payload'])
-    qry = call('user.query', [], {
-        'query-filters': [['username', '=', UserAssets.TestUser02['create_payload']['username']]],
-        'query-options': {
-            'get': True,
-            'extra': {'additional_information': ['SMB']}
-        }
-    })
+    qry = call(
+        'user.query',
+        [['username', '=', UserAssets.TestUser02['create_payload']['username']]],
+        {'get': True, 'extra': {'additional_information': ['SMB']}}
+    )
     UserAssets.TestUser02['query_response'].update(qry)
 
     # verify basic info
@@ -425,6 +497,7 @@ def test_037_move_homedir_to_new_directory(request):
 
 
 def test_038_change_homedir_to_existing_path(request):
+    depends(request, [UserAssets.ShareUser01['depends_name'], UserAssets.TestUser01['depends_name']])
     # Manually create a new home dir
     new_home = os.path.join(
         '/mnt',
@@ -447,13 +520,13 @@ def test_038_change_homedir_to_existing_path(request):
     st_info = call('filesystem.stat', os.path.join(new_home, UserAssets.TestUser02['create_payload']['username']))
     assert st_info['uid'] == UserAssets.TestUser02['query_response']['uid']
 
-    # verify files in the homedir that was moved are what we expect
+    # verify files in the homedir that were moved are what we expect
     for to_test in HomeAssets.HOME_FILES:
         st_info = call('filesystem.stat', os.path.join(new_home, to_test[2:]))
         assert oct(st_info['mode']) == HomeAssets.HOME_FILES[to_test]
         assert st_info['uid'] == UserAssets.TestUser02['query_response']['uid']
 
-    # verify the file that existed in the previous homedir location were moved over
+    # verify the specific file that existed in the previous homedir location was moved over
     # NOTE: this file was created in test_036
     assert call('filesystem.stat', os.path.join(new_home, UserAssets.TestUser02['filename']))
 
@@ -478,17 +551,14 @@ def test_041_lock_smb_user(request):
 def test_042_disable_smb_user(request):
     depends(request, [UserAssets.TestUser02['depends_name']], scope='session')
     assert call('user.update', UserAssets.TestUser02['query_response']['id'], {'smb': False})
-    username = UserAssets.TestUser02['create_payload']['username']
-    qry = call('user.query', [], {
-        'query-filters': [['username', '=', username]],
-        'query-options': {
-            'get': True,
-            'extra': {'additional_information': ['SMB']}
-        }
-    })
+    qry = call(
+        'user.query',
+        [['username', '=', UserAssets.TestUser02['create_payload']['username']]],
+        {'get': True, 'extra': {'additional_information': ['SMB']}}
+    )
     assert qry
-    assert qry['sid'] == ""
-    assert qry['nt_name'] == ""
+    assert qry['sid'] == ''
+    assert qry['nt_name'] == ''
 
 
 def test_043_raise_validation_error_on_homedir_collision(request):
@@ -510,106 +580,23 @@ def test_043_raise_validation_error_on_homedir_collision(request):
         )
 
 
-def test_046_delete_homedir_user(request):
-    # Remove the SMB user
+@pytest.mark.parametrize('username', [UserAssets.TestUser02['create_payload']['username']])
+def test_046_delete_homedir_user(username, request):
     depends(request, [UserAssets.TestUser02['depends_name']], scope='session')
-    call('user.delete', UserAssets.TestUser02['query_response']['id'])
-
-
-def test_49_convert_to_smb_knownfail(request):
-    """
-    SMB auth for local users relies stored NT hash. We only generate this hash
-    for SMB users. This means that converting from non-SMB to SMB requires
-    re-submitting password so that we can generate the required hash. If
-    payload submitted without password, then validation error _must_ be raised.
-    """
-    depends(request, ["NON_SMB_USER_CREATED"])
-    payload = {
-        "smb": True,
-    }
-    results = PUT(f"/user/id/{user_id}", payload)
-    assert results.status_code == 422, results.text
-
-
-def test_50_convert_to_smb_user(request):
-    depends(request, ["NON_SMB_USER_CREATED"])
-    payload = {
-        "smb": True,
-        "password": "testabcd1234",
-    }
-    results = PUT(f"/user/id/{user_id}", payload)
-    assert results.status_code == 200, results.text
-    time.sleep(2)
-
-
-def test_51_verify_put_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["NON_SMB_USER_CREATED"], scope="session")
-    cmd = """grep -R "testabcd1234" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, str(results['output'])
-
-
-def test_52_converted_smb_user_passb_entry_exists(request):
-    """
-    At this point the non-SMB user has been converted to an SMB user. Verify
-    that a passdb entry was appropriately generated.
-    """
-    global testuser_id
-    depends(request, ["NON_SMB_USER_CREATED"], scope="session")
-    result = GET(
-        '/user', payload={
-            'query-filters': [['username', '=', 'testuser3']],
-            'query-options': {
-                'get': True,
-                'extra': {'additional_information': ['SMB']}
-            }
-        }
+    # delete user first
+    assert call(
+        'user.delete',
+        UserAssets.TestUser02['query_response']['id']
     )
-    testuser_id = result.json()['id']
-    assert result.status_code == 200, result.text
-    assert result.json()['sid'], result.text
-    assert result.json()['nt_name'], result.text
+
+    # now clean-up dataset that was used as homedir
+    assert call(
+        'pool.dataset.delete',
+        UserAssets.TestUser02['create_payload']['home'].removeprefix('/mnt/')
+    )
 
 
-def test_53_add_user_to_sudoers(request):
-    depends(request, ["NON_SMB_USER_CREATED"], scope="session")
-    results = PUT(f"/user/id/{testuser_id}", {"sudo_commands": ["ALL"], "sudo_commands_nopasswd": []})
-    assert results.status_code == 200, results.text
-
-    check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) ALL")
-
-    results = PUT(f"/user/id/{user_id}", {"sudo_commands": [], "sudo_commands_nopasswd": ["ALL"]})
-    assert results.status_code == 200, results.text
-
-    check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) NOPASSWD: ALL")
-
-    results = PUT(f"/user/id/{user_id}", {"sudo_commands": ["ALL"], "sudo_commands_nopasswd": ["ALL"]})
-    assert results.status_code == 200, results.text
-
-    check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) ALL, NOPASSWD: ALL")
-
-
-def test_54_disable_password_auth(request):
-    depends(request, ["NON_SMB_USER_CREATED"], scope="session")
-    results = PUT(f"/user/id/{testuser_id}", {"password_disabled": True, "smb": False})
-    assert results.status_code == 200, results.text
-
-    check_config_file("/etc/shadow", "testuser3:*:18397:0:99999:7:::")
-
-
-def test_55_deleting_non_smb_user(request):
-    depends(request, ["NON_SMB_USER_CREATED"])
-    results = DELETE(f"/user/id/{testuser_id}/", {"delete_group": True})
-    assert results.status_code == 200, results.text
-
-
-def test_56_destroying_home_dataset(request):
-    depends(request, ["HOME_DS_CREATED"])
-    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
-    assert results.status_code == 200, results.text
-
-
-def test_57_check_no_builtin_smb_users(request):
+def test_050_verify_no_builtin_smb_users(request):
     """
     We have builtin SMB groups, but should have no builtin
     users. Failure here may indicate an issue with builtin user
@@ -617,16 +604,11 @@ def test_57_check_no_builtin_smb_users(request):
     may lead to accidentally granting SMB access to builtin
     accounts.
     """
-    result = GET(
-        '/user', payload={
-            'query-filters': [['builtin', '=', True], ['smb', '=', True]],
-            'query-options': {'count': True},
-        }
-    )
-    assert result.json() == 0, result.text
+    qry = call('user.query', [['builtin', '=', True], ['smb', '=', True]], {'count': True})
+    assert qry == 0
 
 
-def test_58_create_new_user_existing_home_path(request):
+def test_058_create_new_user_knownfails(request):
     """
     Specifying an existing path without home_create should
     succeed and set mode to desired value.
@@ -640,76 +622,62 @@ def test_58_create_new_user_existing_home_path(request):
         'home_mode': '770'
     }
     with create_user_with_dataset(ds, {'payload': user_info, 'path': ''}) as user:
-        results = POST('/filesystem/stat/', user['home'])
-        assert results.status_code == 200, results.text
-        assert results.json()['acl'] is False, results.text
-        assert f'{stat.S_IMODE(results.json()["mode"]):03o}' == '770', results.text
+        results = call('filesystem.stat', user['home'])
+        assert results['acl'] is False
+        assert f'{stat.S_IMODE(results["mode"]):03o}' == '770'
 
         # Attempting to repeat the same with new user should
         # fail (no users may share same home path)
-        results = POST('/user/', {
+        user2 = {
             'username': 't2',
             'full_name': 't2',
             'group_create': True,
             'password': 'test1234',
             'home': user['home']
-        })
-        assert results.status_code == 422, results.text
+        }
+        with pytest.raises(ValidationErrors):
+            # Attempting to repeat the same with new user should
+            # fail (no users may share same home path)
+            call('user.create', user2)
 
-        # Attempting to put homedir in subdirectory of existing homedir
-        # should also rase validation error
-        results = POST('/user/', {
-            'username': 't2',
-            'full_name': 't2',
-            'group_create': True,
-            'password': 'test1234',
-            'home': user['home'],
-            'home_create': True,
-        })
-        assert results.status_code == 422, results.text
+            # Attempting to put homedir in subdirectory of existing homedir
+            # should also rase validation error
+            user2.update({'home_create': True})
+            call('user.create', user2)
 
-        # Attempting to create a user with non-existing path
-        results = POST('/user/', {
-            'username': 't2',
-            'full_name': 't2',
-            'group_create': True,
-            'password': 'test1234',
-            'home': os.path.join(user['home'], 'canary'),
-            'home_create': True,
-        })
-        assert results.status_code == 422, results.text
+            # Attempting to create a user with non-existing path
+            user2.update({'home': os.path.join(user2['home'], 'canary')})
+            call('user.create', user2)
 
 
-def test_59_create_user_ro_dataset(request):
-    user_info = {
-        'username': 't1',
-        "full_name": 'T1',
-        'group_create': True,
-        'password': 'test1234',
-        'home_mode': '770',
-        'home_create': True,
-    }
+def test_059_create_user_ro_dataset(request):
     with dataset_asset('ro_user_ds', {'readonly': 'ON'}) as ds:
-        user_info['home'] = f'/mnt/{ds}'
-        results = POST("/user/", user_info)
-        assert results.status_code == 422, results.text
+        with pytest.raises(ValidationErrors):
+            call('user.create', {
+                'username': 't1',
+                'full_name': 'T1',
+                'group_create': True,
+                'password': 'test1234',
+                'home_mode': '770',
+                'home_create': True,
+                'home': f'/mnt/{ds}'
+            })
 
 
-@pytest.mark.parametrize('payload', [
-    {'group': 1},
-    {'home': '/mnt/tank', 'home_create': True},
-    {'uid': 777777},
-    {'smb': True},
-    {'username': 'glusterd_bad'},
-])
-def test_60_immutable_user_validation(payload, request):
-    # Glusterd happens to be an immutable
-    user_req = call('user.query', [['username', '=', 'news']], {'get': True})
-
-    with pytest.raises(ValidationErrors) as ve:
-        call('user.update', user_req['id'], payload)
-
-    assert ve.value.errors[0].errmsg == 'This attribute cannot be changed'
+def test_060_immutable_user_validation(request):
+    # the `news` user is immutable
+    immutable_id = call('user.query', [['username', '=', 'news']], {'get': True})['id']
+    to_validate = [
+        {'group': 1},
+        {'home': '/mnt/tank', 'home_create': True},
+        {'uid': 777777},
+        {'smb': True},
+        {'username': 'no_way_bad'},
+    ]
+    for i in to_validate:
+        with pytest.raises(ValidationErrors) as ve:
+            call('user.update', immutable_id, i)
+        assert ve.value.errors[0].errmsg == 'This attribute cannot be changed'
 
 
 @contextlib.contextmanager
@@ -741,3 +709,7 @@ def test_061_check_smb_configured_sentinel():
 
     assert call('smb.is_configured')
     call('smb.synchronize_passdb', job=True)
+
+
+def test_062_end_early():
+    fail('ending test early')
