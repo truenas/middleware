@@ -9,17 +9,22 @@ from .netdata.graph_base import GraphBase
 
 
 K8S_PODS_COUNT = 20  # A default value has been assumed for now
+# https://learn.netdata.cloud/docs/netdata-agent/configuration/optimizing-metrics-database/
+# change-how-long-netdata-stores-metrics
+TIER_0_POINT_SIZE = 1
+TIER_1_POINT_SIZE = 4
 
 
-def calculate_disk_space_for_netdata(metric_intervals: dict, days: int) -> int:
+def calculate_disk_space_for_netdata(
+    metric_intervals: dict, days: int, bytes_per_point: int, tier_interval: int
+) -> int:
     # Constants
     sec_per_day = 86400
-    bytes_per_point = 1
-    required_disk_space_bytes = 0
+    total_metrics = 0
     for collection_interval_seconds, metrics in metric_intervals.items():
-        points_per_metric_per_day = (sec_per_day / collection_interval_seconds) * days
-        required_disk_space_bytes += metrics * points_per_metric_per_day * bytes_per_point
+        total_metrics += metrics / collection_interval_seconds
 
+    required_disk_space_bytes = days * (sec_per_day / tier_interval) * bytes_per_point * total_metrics
     # Convert bytes to megabytes (1 MB = 1024 * 1024 bytes)
     required_disk_space_mb = required_disk_space_bytes / (1024 * 1024)
 
