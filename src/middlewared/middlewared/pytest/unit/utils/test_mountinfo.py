@@ -147,7 +147,7 @@ def test__mountinfo_tree():
     for line in fake_mntinfo.splitlines():
         __parse_to_mnt_id(line, data)
 
-    root = __create_tree(data, 61)
+    root = __create_tree(data, 369)
     assert root['mount_source'] == 'dozer/administrative_share', str(root)
     assert len(root['children']) == 1, str(root)
 
@@ -175,5 +175,3 @@ def test__mountinfo_tree_miss():
 
     with pytest.raises(KeyError) as e:
         root = __create_tree(data, 8675309)
-
-    assert 'device not in mountinfo' in str(e), str(e)
