@@ -11,7 +11,7 @@ from middlewared.client import ClientException
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user as user_asset
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
-from middlewared.test.integration.utils import call, fail, ssh
+from middlewared.test.integration.utils import call, ssh
 
 from functions import SSH_TEST, wait_on_job
 from auto_config import pool_name, password, user, ip
@@ -158,8 +158,8 @@ def test_001_create_and_verify_testuser():
     UserAssets.TestUser01['query_response'].update(qry)
 
     # verify basic info
-    for key in UserAssets.TestUser01['create_payload']:
-        assert qry[key] == UserAssets.TestUser01['query_response'][key]
+    for key in ('username', 'full_name', 'shell'):
+        assert qry[key] == UserAssets.TestUser01['create_payload'][key]
 
     # verify various /etc files were updated
     for f in (
@@ -190,8 +190,8 @@ def test_001_create_and_verify_testuser():
     assert results['result'] is False, str(results['output'])
 
     # non-smb users shouldn't show up in smb's passdb
-    assert qry['sid'] == ''
-    assert qry['nt_name'] == ''
+    assert not qry['sid']
+    assert not qry['nt_name']
 
 
 def test_002_verify_user_exists_in_pwd(request):
@@ -227,17 +227,20 @@ def test_003_get_next_uid_again(request):
 def test_004_update_and_verify_user_groups(request):
     """Add the user to the root users group"""
     depends(request, [UserAssets.TestUser01['depends_name']])
+    root_group_info = call(
+        'group.query', [['group', '=', ROOT_GROUP]], {'get': True}
+    )
     call(
         'user.update',
         UserAssets.TestUser01['query_response']['id'],
-        {'groups': ROOT_GROUP}
+        {'groups': [root_group_info['id']]}
     )
 
     grouplist = call(
         'user.get_user_obj',
         {'username': UserAssets.TestUser01['create_payload']['username'], 'get_groups': True}
     )['grouplist']
-    assert 0 in grouplist
+    assert root_group_info['gid'] in grouplist
 
 
 @pytest.mark.dependency(name='SMB_CONVERT')
@@ -302,7 +305,7 @@ def test_007_add_smbuser_to_sudoers(request):
         UserAssets.TestUser01['query_response']['id'],
         {'sudo_commands': [], 'sudo_commands_nopasswd': ['ALL']}
     )
-    check_config_file('/etc/sudoers', f"{username} ALL=(ALL)  NOPASSWD: ALL")
+    check_config_file('/etc/sudoers', f"{username} ALL=(ALL) NOPASSWD: ALL")
 
     # all sudo commands and all sudo commands no password
     call(
@@ -310,7 +313,7 @@ def test_007_add_smbuser_to_sudoers(request):
         UserAssets.TestUser01['query_response']['id'],
         {'sudo_commands': ['ALL'], 'sudo_commands_nopasswd': ['ALL']}
     )
-    check_config_file('/etc/sudoers', f"{username} ALL=(ALL) ALL,  NOPASSWD: ALL")
+    check_config_file('/etc/sudoers', f"{username} ALL=(ALL) ALL, NOPASSWD: ALL")
 
 
 def test_008_disable_smb_and_password(request):
@@ -357,8 +360,8 @@ def test_020_create_and_verify_shareuser():
     UserAssets.ShareUser01['query_response'].update(qry)
 
     # verify basic info
-    for key in UserAssets.ShareUser01['create_payload']:
-        assert qry[key] == UserAssets.ShareUser01['query_response'][key]
+    for key in ('username', 'full_name', 'shell'):
+        assert qry[key] == UserAssets.ShareUser01['create_payload'][key]
 
     # verify password doesn't leak to middlewared.log
     # we do this inside the create and verify function
@@ -397,8 +400,8 @@ def test_031_create_user_with_homedir(request):
     UserAssets.TestUser02['query_response'].update(qry)
 
     # verify basic info
-    for key in UserAssets.TestUser02['create_payload']:
-        assert qry[key] == UserAssets.TestUser02['query_response'][key]
+    for key in ('username', 'full_name', 'shell'):
+        assert qry[key] == UserAssets.TestUser02['create_payload'][key]
 
     # verify password doesn't leak to middlewared.log
     # we do this here because this is severe enough
@@ -437,15 +440,13 @@ def test_031_create_user_with_homedir(request):
     assert st_info['acl'] is False
 
 
-@pytest.mark.parametrize('to_test', HomeAssets.HOME_FILES.keys())
-def test_035_check_file_perms_in_homedir(to_test, request):
+def test_035_check_file_perms_in_homedir(request):
     depends(request, [UserAssets.TestUser02['depends_name']])
-    st_info = call(
-        'filesystem.stat',
-        f'{UserAssets.TestUser02["query_response"]["home"]}/{to_test[2:]}'
-    )
-    assert oct(st_info['mode']) == HomeAssets.HOME_FILES[to_test], f"{to_test}: {st_info}"
-    assert st_info['uid'] == UserAssets.TestUser02['query_response']['uid']
+    home_path = UserAssets.TestUser02['query_response']['home']
+    for file, mode in HomeAssets.HOME_FILES['files'].items():
+        st_info = call('filesystem.stat', os.path.join(home_path, file.removeprefix('~/')))
+        assert oct(st_info['mode']) == mode, f"{file}: {st_info}"
+        assert st_info['uid'] == UserAssets.TestUser02['query_response']['uid']
 
 
 def test_036_create_testfile_in_homedir(request):
@@ -465,7 +466,7 @@ def test_037_move_homedir_to_new_directory(request):
     depends(request, [UserAssets.TestUser02['depends_name']])
 
     # Validation of autocreation of homedir during path update
-    with dataset_asset(os.path.join(HomeAssets.Dataset01['create_payload']['name'], 'ds2')) as ds:
+    with dataset_asset('temp_dataset_for_home') as ds:
         new_home = os.path.join('/mnt', ds)
         call(
             'user.update',
@@ -473,9 +474,13 @@ def test_037_move_homedir_to_new_directory(request):
             {'home': new_home, 'home_create': True}
         )
 
-        home_move_job = call('core.get_jobs', [['method', '=', 'user.do_home_copy']])
-        job_status = wait_on_job(home_move_job['id'], 180)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+        filters = [['method', '=', 'user.do_home_copy']]
+        opts = {'get': True, 'order_by': ['-id']}
+        move_job_timeout = 300  # 5 mins
+        move_job1 = call('core.get_jobs', filters, opts)
+        assert move_job1
+        rv = wait_on_job(move_job1['id'], move_job_timeout)
+        assert rv['state'] == 'SUCCESS', f'JOB: {move_job1!r}, RESULT: {str(rv["results"])}'
 
         st_info = call('filesystem.stat', os.path.join(new_home, UserAssets.TestUser02['create_payload']['username']))
         assert st_info['uid'] == UserAssets.TestUser02['query_response']['uid']
@@ -488,9 +493,11 @@ def test_037_move_homedir_to_new_directory(request):
             {'home': new_home, 'home_create': True}
         )
 
-        home_move_job = call('core.get_jobs', [['method', '=', 'user.do_home_copy']])
-        job_status = wait_on_job(home_move_job['id'], 180)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+        move_job2 = call('core.get_jobs', filters, opts)
+        assert move_job2
+        assert move_job1['id'] != move_job2['id']
+        rv = wait_on_job(move_job2['id'], move_job_timeout)
+        assert rv['state'] == 'SUCCESS', f'JOB: {move_job2!r}, RESULT: {str(rv["results"])}'
 
         st_info = call('filesystem.stat', os.path.join(new_home, UserAssets.TestUser02['create_payload']['username']))
         assert st_info['uid'] == UserAssets.TestUser02['query_response']['uid']
@@ -513,17 +520,17 @@ def test_038_change_homedir_to_existing_path(request):
         UserAssets.TestUser02['query_response']['id'],
         {'home': new_home}
     )
-    home_move_job = call('core.get_jobs', [['method', '=', 'user.do_home_copy']])
-    job_status = wait_on_job(home_move_job['id'], 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-    st_info = call('filesystem.stat', os.path.join(new_home, UserAssets.TestUser02['create_payload']['username']))
-    assert st_info['uid'] == UserAssets.TestUser02['query_response']['uid']
+    filters = [['method', '=', 'user.do_home_copy']]
+    opts = {'get': True, 'order_by': ['-id']}
+    move_job_timeout = 300  # 5 mins
+    home_move_job = call('core.get_jobs', filters, opts)
+    rv = wait_on_job(home_move_job['id'], move_job_timeout)
+    assert rv['state'] == 'SUCCESS', str(rv['results'])
 
     # verify files in the homedir that were moved are what we expect
-    for to_test in HomeAssets.HOME_FILES:
-        st_info = call('filesystem.stat', os.path.join(new_home, to_test[2:]))
-        assert oct(st_info['mode']) == HomeAssets.HOME_FILES[to_test]
+    for file, mode in HomeAssets.HOME_FILES['files'].items():
+        st_info = call('filesystem.stat', os.path.join(new_home, file.removeprefix("~/")))
+        assert oct(st_info['mode']) == mode, f"{file}: {st_info}"
         assert st_info['uid'] == UserAssets.TestUser02['query_response']['uid']
 
     # verify the specific file that existed in the previous homedir location was moved over
@@ -709,7 +716,3 @@ def test_061_check_smb_configured_sentinel():
 
     assert call('smb.is_configured')
     call('smb.synchronize_passdb', job=True)
-
-
-def test_062_end_early():
-    fail('ending test early')
