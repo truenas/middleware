@@ -3,7 +3,7 @@ from middlewared.schema import Str, Dict, Int
 from middlewared.utils.cpu import cpu_info
 
 from .netdata import ClientConnectError, Netdata
-from .utils import calculate_disk_space_for_netdata, get_metrics_approximation
+from .utils import calculate_disk_space_for_netdata, get_metrics_approximation, TIER_0_POINT_SIZE, TIER_1_POINT_SIZE
 
 
 class NetdataService(Service):
@@ -49,7 +49,14 @@ class NetdataService(Service):
             self.middleware.call_sync('zfs.pool.query', [], {'count': True}),
         )
 
-    def get_disk_space(self):
+    def get_disk_space_for_tier0(self):
+        config = self.middleware.call_sync('reporting.config')
         return calculate_disk_space_for_netdata(
-            self.calculated_metrics_count(), 7
-        )  # We only want to maintain 7 days of stats
+            self.calculated_metrics_count(), config['tier0_days'], TIER_0_POINT_SIZE, 1,
+        )
+
+    def get_disk_space_for_tier1(self):
+        config = self.middleware.call_sync('reporting.config')
+        return calculate_disk_space_for_netdata(
+            self.calculated_metrics_count(), config['tier1_days'], TIER_1_POINT_SIZE, config['tier1_update_interval'],
+        )
