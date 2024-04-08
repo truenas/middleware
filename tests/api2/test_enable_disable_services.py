@@ -7,4 +7,4 @@ def enable_services():
 
 def disable_services():
     for svc in filter(lambda x: x['enable'], call('service.query'):
-        call('service.update', svc['id'], {'enable': True})
+        call('service.update', svc['id'], {'enable': False})
