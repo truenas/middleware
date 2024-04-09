@@ -482,6 +482,8 @@ class DirectoryServices(Service):
         except Exception:
             self.logger.warning('Cache flush failed', exc_info=True)
 
+        await self.middleware.call('service.restart', 'idmap')
+
         if is_kerberized:
             await self.__kerberos_start_retry()
 
@@ -529,6 +531,8 @@ class DirectoryServices(Service):
             self.middleware.call_sync('activedirectory.started')
         else:
             self.middleware.call_sync('ldap.started')
+
+        await self.middleware.call('service.restart', 'idmap')
 
         job.set_progress(10, 'Refreshing cache'),
         cache_refresh = self.middleware.call_sync('dscache.refresh')
