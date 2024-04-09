@@ -352,6 +352,7 @@ class FilesystemService(Service):
         Float('ctime', required=True),
         Float('btime', required=True),
         Int('dev', required=True),
+        Int('mount_id', required=True),
         Int('inode', required=True),
         Int('nlink', required=True),
         Bool('is_mountpoint', required=True),
@@ -434,6 +435,7 @@ class FilesystemService(Service):
             'mtime': float(st['st'].stx_mtime.tv_sec),
             'ctime': float(st['st'].stx_ctime.tv_sec),
             'btime': float(st['st'].stx_btime.tv_sec),
+            'mount_id': st['st'].stx_mnt_id,
             'dev': os.makedev(st['st'].stx_dev_major, st['st'].stx_dev_minor),
             'inode': st['st'].stx_ino,
             'nlink': st['st'].stx_nlink,
@@ -579,14 +581,14 @@ class FilesystemService(Service):
             fd = os.open(path, os.O_PATH)
             try:
                 st = os.fstatvfs(fd)
-                devid = os.fstat(fd).st_dev
+                mntid = stat_x.statx('', {'dirfd': fd, 'flags':  stat_x.ATFlags.EMPTY_PATH}).stx_mnt_id
             finally:
                 os.close(fd)
 
         except FileNotFoundError:
             raise CallError('Path not found.', errno.ENOENT)
 
-        mntinfo = getmntinfo(devid)[devid]
+        mntinfo = getmntinfo(mnt_id=mntid)[mntid]
         flags = mntinfo['mount_opts']
         for flag in mntinfo['super_opts']:
             if flag in flags:
