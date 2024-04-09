@@ -89,9 +89,40 @@ def __iter_mountinfo(dev_id=None, mnt_id=None, callback=None, private_data=None)
 
 def getmntinfo(dev_id=None, mnt_id=None):
     """
-    Get mount information. returns dictionary indexed by dev_t.
-    User can optionally specify dev_t for faster lookup of single
-    device.
+    Get mount information. Takes the following arguments for faster lookup of
+    information for a mounted filesystem.
+
+    `dev_id` - the device ID of the mounted filesystem of interest. This will
+    uniquely identify the filesystem, but not uniquely identify the mount point.
+    If specified results are a dictionary indexed by dev_t.
+
+    `mnt_id` - specify the unique ID for the mount. This is unique only for the
+    lifetime of the mount. statx() may be used to retrieve the mnt_id for a given
+    path or open file. If specified results are a dictionary indexed by mnt_id.
+
+    Each result entry contains the following keys (from proc(5)):
+
+    `mount_id` - unique id for a mount (may be reused after umount(2))
+
+    `parent_id` - mount_id of the parent mount. A parent_id of `1` indicates the
+    root of the mount tree.
+
+    `device_id` - dictionary containing the value of `st_dev` for files in this
+    filesystem.
+
+    `root` - the pathname of the directory in the filesystem which forms the
+    root of this mount.
+
+    `mountpoint` - the pathname of the mountpoint relative to the root directory.
+
+    `mount_opts` - per-mount options (see mount(2)).
+
+    `fstype` - the filesystem type.
+
+    `mount_source` - filesystem-specific information or "none". In case of ZFS
+    this contains dataset name.
+
+    `super_opts` - per-superblock options (see mount(2)).
     """
     info = {}
     if mnt_id:
@@ -104,8 +135,8 @@ def getmntinfo(dev_id=None, mnt_id=None):
 
 def getmnttree(mount_id=None):
     """
-    Generate a mount info tree of either the root filesystem
-    or a given filesystem specified by dev_t.
+    Generate a mount info tree of either the root filesystem or a given
+    filesystem specified by mnt_id. cf. documentation for getmntinfo().
     """
     info = {}
     __iter_mountinfo(callback=__parse_to_mnt_id, private_data=info)
