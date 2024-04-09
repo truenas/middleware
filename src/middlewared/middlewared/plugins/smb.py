@@ -1414,12 +1414,12 @@ class SharingSMBService(SharingService):
 
             return 'OFF'
 
-        st = os.lstat(path)
-        if stat.S_ISLNK(st.st_mode):
+        st = self.middleware.call_sync('filesystem.stat', path)
+        if st['type'] == 'SYMLINK':
             verrors.add(schema, f'{path}: is symbolic link.')
             return
 
-        this_mnt = getmnttree(st.st_dev)
+        this_mnt = getmnttree(st['mount_id'])
         if this_mnt['fs_type'] != 'zfs':
             verrors.add(schema, f'{this_mnt["fstype"]}: path is not a ZFS dataset')
 
