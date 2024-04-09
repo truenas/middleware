@@ -41,9 +41,8 @@ def __parse_to_mnt_id(line, out_dict):
     out_dict.update({entry['mount_id']: entry})
 
 
-def __create_tree(info, dev_id):
+def __create_tree(info, mount_id):
     root_id = None
-    mount_id = None
 
     for entry in info.values():
         if not entry.get('children'):
@@ -53,26 +52,23 @@ def __create_tree(info, dev_id):
             root_id = entry['mount_id']
             continue
 
-        if entry['device_id']['dev_t'] == dev_id:
-            mount_id = entry['mount_id']
-
         parent = info[entry['parent_id']]
         if not parent.get('children'):
             parent['children'] = [entry]
         else:
             parent['children'].append(entry)
 
-    if dev_id and not mount_id:
-        raise KeyError(f'{dev_id}: device not in mountinfo')
-
     return info[mount_id or root_id]
 
 
-def __iter_mountinfo(dev_id=None, callback=None, private_data=None):
+def __iter_mountinfo(dev_id=None, mnt_id=None, callback=None, private_data=None):
     if dev_id:
         maj_min = f'{os.major(dev_id)}:{os.minor(dev_id)}'
     else:
         maj_min = None
+
+    if mnt_id:
+        mount_id = f'{mnt_id} '
 
     with open('/proc/self/mountinfo') as f:
         for line in f:
@@ -82,26 +78,67 @@ def __iter_mountinfo(dev_id=None, callback=None, private_data=None):
 
                 callback(line, private_data)
                 break
+            elif mnt_id is not None:
+                if not line.startswith(mount_id):
+                    continue
+
+                callback(line, private_data)
+                break
 
             callback(line, private_data)
 
 
-def getmntinfo(dev_id=None):
+def getmntinfo(dev_id=None, mnt_id=None):
     """
-    Get mount information. returns dictionary indexed by dev_t.
-    User can optionally specify dev_t for faster lookup of single
-    device.
+    Get mount information. Takes the following arguments for faster lookup of
+    information for a mounted filesystem.
+
+    `dev_id` - the device ID of the mounted filesystem of interest. This will
+    uniquely identify the filesystem, but not uniquely identify the mount point.
+    If specified results are a dictionary indexed by dev_t.
+
+    `mnt_id` - specify the unique ID for the mount. This is unique only for the
+    lifetime of the mount. statx() may be used to retrieve the mnt_id for a given
+    path or open file. If specified results are a dictionary indexed by mnt_id.
+
+    Each result entry contains the following keys (from proc(5)):
+
+    `mount_id` - unique id for a mount (may be reused after umount(2))
+
+    `parent_id` - mount_id of the parent mount. A parent_id of `1` indicates the
+    root of the mount tree.
+
+    `device_id` - dictionary containing the value of `st_dev` for files in this
+    filesystem.
+
+    `root` - the pathname of the directory in the filesystem which forms the
+    root of this mount.
+
+    `mountpoint` - the pathname of the mountpoint relative to the root directory.
+
+    `mount_opts` - per-mount options (see mount(2)).
+
+    `fstype` - the filesystem type.
+
+    `mount_source` - filesystem-specific information or "none". In case of ZFS
+    this contains dataset name.
+
+    `super_opts` - per-superblock options (see mount(2)).
     """
     info = {}
-    __iter_mountinfo(dev_id, __parse_to_dev, info)
+    if mnt_id:
+        __iter_mountinfo(mnt_id=mnt_id, callback=__parse_to_mnt_id, private_data=info)
+    else:
+        __iter_mountinfo(dev_id=dev_id, callback=__parse_to_dev, private_data=info)
+
     return info
 
 
-def getmnttree(dev_id=None):
+def getmnttree(mount_id=None):
     """
-    Generate a mount info tree of either the root filesystem
-    or a given filesystem specified by dev_t.
+    Generate a mount info tree of either the root filesystem or a given
+    filesystem specified by mnt_id. cf. documentation for getmntinfo().
     """
     info = {}
-    __iter_mountinfo(None, __parse_to_mnt_id, info)
-    return __create_tree(info, dev_id)
+    __iter_mountinfo(callback=__parse_to_mnt_id, private_data=info)
+    return __create_tree(info, mount_id)
