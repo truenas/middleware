@@ -360,28 +360,28 @@ class JBOFService(CRUDService):
 
         newdata = {}
         olddata = {}
-        if dhcp := data.get('dhcp') is not None:
+        if (dhcp := data.get('dhcp')) is not None:
             newdata.update({'DHCPv4': {'DHCPEnabled': dhcp}})
             olddata.update({'DHCPv4': orig_net_config['DHCPv4']})
-        if fqdn := data.get('fqdn') is not None:
+        if (fqdn := data.get('fqdn')) is not None:
             newdata.update({'FQDN': fqdn})
             olddata.update({'FQDN': orig_net_config['FQDN']})
-        if hostname := data.get('hostname') is not None:
+        if (hostname := data.get('hostname')) is not None:
             newdata.update({'HostName': hostname})
             olddata.update({'HostName': orig_net_config['HostName']})
-        if ipv4_static_addresses := data.get('ipv4_static_addresses') is not None:
+        if (ipv4_static_addresses := data.get('ipv4_static_addresses')) is not None:
             newitems = []
             for item in ipv4_static_addresses:
                 newitems.append({'Address': item['address'], 'Gateway': item['gateway'], 'SubnetMask': item['netmask']})
             newdata.update({'IPv4StaticAddresses': newitems})
             olddata.update({'IPv4StaticAddresses': orig_net_config['IPv4StaticAddresses']})
-        if ipv6_static_addresses := data.get('ipv6_static_addresses') is not None:
+        if (ipv6_static_addresses := data.get('ipv6_static_addresses')) is not None:
             newitems = []
             for item in ipv6_static_addresses:
                 newitems.append({'Address': item['address'], 'PrefixLength': item['prefixlen']})
             newdata.update({'IPv6StaticAddresses': newitems})
             olddata.update({'IPv6StaticAddresses': orig_net_config['IPv6StaticAddresses']})
-        if nameservers := data.get('nameservers') is not None:
+        if (nameservers := data.get('nameservers')) is not None:
             newdata.update({'NameServers': nameservers})
             olddata.update({'NameServers': orig_net_config['NameServers']})
 
@@ -390,7 +390,7 @@ class JBOFService(CRUDService):
             added_active = False
             redfish.post(uri, data=newdata)
             # Give a few seconds for the changes to take effect
-            time.sleep(5)
+            time.sleep(10)
             new_iom_mgmt_ips = set(redfish.iom_mgmt_ips(iom))
             if old_iom_mgmt_ips != new_iom_mgmt_ips:
                 # IPs have changed.
