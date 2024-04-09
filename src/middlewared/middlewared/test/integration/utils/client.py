@@ -76,8 +76,8 @@ def session():
 
 
 def url():
-    return f"http://{host()}"
+    return f"http://{host().ip}"
 
 
 def websocket_url():
-    return f"ws://{host()}"
+    return f"ws://{host().ip}"
