@@ -706,7 +706,6 @@ def test_176_check_dataset_auto_create(request):
 
 
 def test_180_create_share_multiple_dirs_deep(request):
-    depends(request, ["SMB_SHARE_CREATED"])
     with dataset('nested_dirs', data={'share_type': 'SMB'}) as ds:
         dirs_path = os.path.join('/mnt', ds, 'd1/d2/d3')
         ssh(f'mkdir -p {dirs_path}')
@@ -727,7 +726,6 @@ def test_180_create_share_multiple_dirs_deep(request):
 
 
 def test_181_create_and_disable_share(request):
-    depends(request, ["SMB_SHARE_CREATED"])
     with dataset('smb_disabled', data={'share_type': 'SMB'}) as ds:
         with smb_share(os.path.join('/mnt', ds), 'TO_DISABLE') as tmp_share:
             with smb_connection(
