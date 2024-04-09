@@ -8,14 +8,6 @@
         middleware.logger.error('Netdata configuration file could not be generated')
         raise FileShouldNotExist()
 
-
-
-
-    if not middleware.call_sync('reporting.netdata_setup'):
-        # Let's exit if netdata storage is not in place
-        middleware.logger.error('Netdata configuration file could not be generated')
-        raise FileShouldNotExist()
-
     reporting_config = middleware.call_sync('reporting.config')
     disk_space_for_tier0 = middleware.call_sync('netdata.get_disk_space_for_tier0')
     disk_space_for_tier1 = middleware.call_sync('netdata.get_disk_space_for_tier1')
