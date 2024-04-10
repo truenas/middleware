@@ -26,6 +26,8 @@ class VmAssets:
 def test_001_is_virtualization_supported():
     if not call('vm.virtualization_details')['supported']:
         pytest.skip('Virtualization not supported')
+    elif call('failover.licensed'):
+        pytest.skip('Virtualization not supported on HA')
 
 
 @pytest.mark.parametrize(
