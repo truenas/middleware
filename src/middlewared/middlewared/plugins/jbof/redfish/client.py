@@ -43,6 +43,7 @@ class RedfishClient:
         verify=False,
         timeout=DEFAULT_REDFISH_TIMEOUT_SECS
     ):
+        self.log_requests = False
         self.base_url = base_url.rstrip('/')
         self.username = username
         self.password = password
@@ -289,6 +290,9 @@ class RedfishClient:
         timeout = kwargs.get('timeout', self.timeout)
         payload = kwargs.get('data', {})
         headers = kwargs.get('headers', {})
+
+        if self.log_requests:
+            LOGGER.debug('%r %r %r', method.upper(), url, payload)
 
         if payload:
             if isinstance(payload, dict) or isinstance(payload, list):
