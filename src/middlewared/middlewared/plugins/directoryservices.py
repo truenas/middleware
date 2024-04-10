@@ -532,7 +532,7 @@ class DirectoryServices(Service):
         else:
             self.middleware.call_sync('ldap.started')
 
-        await self.middleware.call('service.restart', 'idmap')
+        self.middleware.call_sync('service.restart', 'idmap')
 
         job.set_progress(10, 'Refreshing cache'),
         cache_refresh = self.middleware.call_sync('dscache.refresh')
