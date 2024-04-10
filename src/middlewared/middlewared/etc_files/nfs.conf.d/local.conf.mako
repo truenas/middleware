@@ -1,4 +1,8 @@
 <%
+    from middlewared.plugins.nfs import NFSPath
+    state_path = NFSPath.STATEDIR.platform()
+    cld_storedir = NFSPath.CLDDIR.platform()
+    cltrack_storedir = NFSPath.CLDTRKDIR.platform()
     config = render_ctx["nfs.config"]
 
     # Fail-safe setting is two nfsd
@@ -28,7 +32,15 @@ vers4 = n
 host = ${','.join(config['bindip'])}
 % endif
 
+[exportd]
+state-directory-path = ${state_path}
+[nfsdcld]
+storagedir = ${cld_storedir}
+[nfsdcltrack]
+storagedir = ${cltrack_storedir}
+
 [mountd]
+state-directory-path = ${state_path}
 threads = ${num_mountd}
 % if config['mountd_port']:
 port = ${config['mountd_port']}
@@ -36,6 +48,7 @@ port = ${config['mountd_port']}
 manage-gids = ${manage_gids}
 
 [statd]
+state-directory-path = ${state_path}
 % if config['rpcstatd_port']:
 port = ${config['rpcstatd_port']}
 % endif

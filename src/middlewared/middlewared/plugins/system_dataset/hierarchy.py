@@ -107,6 +107,25 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
             },
         },
         {
+            'name': os.path.join(pool_name, '.system/nfs'),
+            'props': {
+                'mountpoint': 'legacy',
+                'readonly': 'off',
+                'snapdir': 'hidden',
+            },
+            'chown_config': {
+                'uid': 0,
+                'gid': 0,
+                'mode': 0o755,
+            },
+            'post_mount_actions': [
+                {
+                    'method': 'nfs.setup_directories',
+                    'args': [],
+                }
+            ]
+        },
+        {
             'name': os.path.join(pool_name, '.system/samba4'),
             'props': {
                 'mountpoint': 'legacy',

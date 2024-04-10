@@ -1,9 +1,12 @@
 import enum
 import errno
+import grp
 import ipaddress
 import itertools
-import os.path
+import os
 import pathlib
+import pwd
+import subprocess
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
@@ -15,6 +18,35 @@ from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
+from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+
+
+class NFSPath(enum.Enum):
+    # nfs conf sections that use STATEDIR: exportd, mountd, statd
+    STATEDIR = (os.path.join(SYSDATASET_PATH, 'nfs'), 0o755, True, {'uid': 0, 'gid': 0})
+    CLDDIR = (os.path.join(STATEDIR, 'nfs', 'nfsdcld'), 0o700, True, {'uid': 0, 'gid': 0})
+    CLDTRKDIR = (os.path.join(STATEDIR, 'nfs', 'nfsdcltrack'), 0o700, True, {'uid': 0, 'gid': 0})
+    SMDIR = (os.path.join(STATEDIR, 'nfs', 'sm'), 0o755, True, {
+        'uid': pwd.getpwnam("statd").pw_uid,
+        'gid': grp.getgrnam("nogroup").gr_gid
+    })
+    SMBAKDIR = (os.path.join(STATEDIR, 'nfs', 'sm.bak'), 0o755, True, {
+        'uid': pwd.getpwnam("statd").pw_uid,
+        'gid': grp.getgrnam("nogroup").gr_gid
+    })
+    V4RECOVERYDIR = (os.path.join(STATEDIR, 'nfs', 'v4recovery'), 0o755, True, {'uid': 0, 'gid': 0})
+
+    def platform(self):
+        return self.value[0]
+
+    def mode(self):
+        return self.value[1]
+
+    def is_dir(self):
+        return self.value[2]
+
+    def owner(self):
+        return self.value[3]
 
 
 class NFSProtocol(str, enum.Enum):
@@ -76,6 +108,54 @@ class NFSService(SystemServiceService):
         Bool('keytab_has_nfs_spn', required=True),
         Bool('managed_nfsd', default=True),
     )
+
+    @private
+    async def setup_directories(self):
+        '''
+        We are moving the NFS state directory from /var/lib/nfs to
+        the system dataset: /var/db/system/nfs.
+        When setup_directories is called /var/db/system/nfs is expected to exist.
+
+        If STATEDIR is empty, then this might be an initialization
+        and there might be current info in /var/lib/nfs.
+
+        We always make sure the expected directories are present
+        '''
+        def create_dirs(spec, path):
+            try:
+                os.chmod(path, spec.mode())
+                stat = os.stat(path)
+                if (stat.st_uid != spec.owner().get('uid')) or (stat.st_gid != spec.owner().get('gid')):
+                    self.logger.warning("%s: invalid owner for path. Correcting.", path)
+                    os.chown(path, spec.owner().get('uid'), spec.owner().get('gid'))
+            except FileNotFoundError:
+                if spec.is_dir():
+                    os.mkdir(path, spec.mode())
+                    os.chown(path, spec.owner().get('uid'), spec.owner().get('gid'))
+
+        if not os.listdir(NFSPath.STATEDIR.platform()):
+            # System db is empty, populate it with contents of /var/lib/nfs
+            # Going forward, the system dataset should hold the NFS state data
+            if os.path.isdir('/var/lib/nfs'):
+                res = subprocess.run(
+                    ['cp', '-a', '/var/lib/nfs/*', NFSPath.STATEDIR.platform()], check=False, capture_output=True,
+                )
+                if res.returncode != 0:
+                    self.logger.error('Failed to initialize NFS state from /var/lib/nfs: %r', res.stderr.decode())
+                # Continue anyway.
+
+        # Make sure we have the necessary directories
+        for p in NFSPath:
+            path = p.platform()
+            await self.middleware.run_in_thread(create_dirs, p, path)
+
+        # legacy nfsv4 management path
+        if os.path.exists('/proc/fs/nfsd/nfsv4recoverydir'):
+            try:
+                with open('/proc/fs/nfsd/nfsv4recoverydir', 'r+') as fp:
+                    fp.write(NFSPath.V4RECOVERYDIR.platform())
+            except Exception as e:
+                self.logger.error(f"Failed to update nfsv4recoverydir: {e}")
 
     @private
     async def nfs_extend(self, nfs):
