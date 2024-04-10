@@ -94,6 +94,9 @@ def test_010_create_vm(vm_name, request):
 def test_011_add_devices_to_vm(device, request):
     depends(request, ['VM_CREATED'])
     for vm_name, info in VmAssets.VM_INFO.items():
+        if vm_name not in VmAssets.VM_DEVICES:
+            VmAssets.VM_DEVICES[vm_name] = dict()
+
         dev_info = {
             'dtype': device,
             'vm': info['query_response']['id'],
@@ -117,7 +120,7 @@ def test_011_add_devices_to_vm(device, request):
             assert False, f'Unhandled device type: ({device!r})'
 
         info = call('vm.device.create', dev_info)
-        VmAssets.VM_DEVICES.update({vm_name: {device: info}})
+        VmAssets.VM_DEVICES[vm_name].update({device: info})
         # only adding these devices to 1 VM
         break
 
@@ -249,7 +252,7 @@ def test_024_clone_powered_off_vm(vm_name, request):
     assert call('vm.get_console', qry['id']) == f'{qry["id"]}_{new_name}'
 
     VmAssets.VM_DEVICES.update({new_name: dict()})
-    for dev in call('vm.device.query', qry['id']):
+    for dev in call('vm.device.query', [['vm', '=', qry['id']]]):
         if dev['dtype'] in ('DISK', 'NIC', 'DEVICE'):
             # add this to VM_DEVICES so we properly clean-up after
             # the test module runs
@@ -258,13 +261,6 @@ def test_024_clone_powered_off_vm(vm_name, request):
 
 def test_025_cleanup_vms(request):
     depends(request, ['VM_POWERED_OFF'])
-    for vm_name, info in VmAssets.VM_INFO.items():
-        _id = info['query_response']['id']
-        call('vm.delete', _id)
-        assert not call('vm.query', [['name', '=', _id]])
-
-        zvol_device = VmAssets.VM_DEVICES[vm_name]['DISK']['attributes']['path']
-        # this will remove the zvol that was created when we cloned the VM
-        # as well.
-        # TODO: Should the cloned VM's zvol be a child of the original VM???
-        call('pool.dataset.delete', zvol_device.removeprefix('/dev/zvol/'), {'recursive': True})
+    for vm in call('vm.query'):
+        call('vm.delete', vm['id'])
+        assert not call('vm.query', [['name', '=', vm['id']]])
