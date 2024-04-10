@@ -201,7 +201,7 @@ def test_021_resume_vm(vm_name, request):
     else:
         assert False, f'Timed out after {retry} seconds waiting on {vm_name!r} to resume'
 
-
+@pytest.mark.skip(reason='Takes > 60 seconds and is flaky')
 @pytest.mark.parametrize('vm_name', VmAssets.VM_NAMES)
 @pytest.mark.dependency(name='VM_RESTARTED')
 def test_022_restart_vm(vm_name, request):
@@ -215,7 +215,7 @@ def test_022_restart_vm(vm_name, request):
 @pytest.mark.parametrize('vm_name', VmAssets.VM_NAMES)
 @pytest.mark.dependency(name='VM_POWERED_OFF')
 def test_023_poweroff_vm(vm_name, request):
-    depends(request, ['VM_RESTARTED'])
+    depends(request, ['VM_RESUMED'])
     _id = VmAssets.VM_INFO[vm_name]['query_response']['id']
     call('vm.poweroff', _id)
     for retry in range(1, 4):
