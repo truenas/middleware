@@ -103,6 +103,9 @@ def statx(path, options=None):
     mask = Mask.BASIC_STATS | Mask.BTIME
     path = path.encode() if isinstance(path, str) else path
 
+    if flags & ATFlags.EMPTY_PATH and dirfd == AT_FDCWD:
+        raise ValueError('dir_fd key is required when using AT_EMPTY_PATH')
+
     invalid_flags = flags & ~ATFlags.VALID_FLAGS
     if invalid_flags:
         raise ValueError(f'{hex(invalid_flags)}: unsupported statx flags')
