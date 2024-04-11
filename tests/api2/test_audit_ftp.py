@@ -48,7 +48,7 @@ def test_ftp_config_audit(api):
         # Restore initial state
         restore_payload = {
             'clients': initial_ftp_config['clients'],
-            'onlyanonymous': initial_ftp_config['onlyanonymous'],
+            'rootlogin': initial_ftp_config['rootlogin'],
             'banner': initial_ftp_config['banner']
         }
         if api == 'ws':
