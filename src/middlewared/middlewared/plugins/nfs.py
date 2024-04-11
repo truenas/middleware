@@ -24,17 +24,17 @@ from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 class NFSPath(enum.Enum):
     # nfs conf sections that use STATEDIR: exportd, mountd, statd
     STATEDIR = (os.path.join(SYSDATASET_PATH, 'nfs'), 0o755, True, {'uid': 0, 'gid': 0})
-    CLDDIR = (os.path.join(STATEDIR, 'nfs', 'nfsdcld'), 0o700, True, {'uid': 0, 'gid': 0})
-    CLDTRKDIR = (os.path.join(STATEDIR, 'nfs', 'nfsdcltrack'), 0o700, True, {'uid': 0, 'gid': 0})
-    SMDIR = (os.path.join(STATEDIR, 'nfs', 'sm'), 0o755, True, {
+    CLDDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'nfsdcld'), 0o700, True, {'uid': 0, 'gid': 0})
+    CLDTRKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'nfsdcltrack'), 0o700, True, {'uid': 0, 'gid': 0})
+    SMDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm'), 0o755, True, {
         'uid': pwd.getpwnam("statd").pw_uid,
         'gid': grp.getgrnam("nogroup").gr_gid
     })
-    SMBAKDIR = (os.path.join(STATEDIR, 'nfs', 'sm.bak'), 0o755, True, {
+    SMBAKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm.bak'), 0o755, True, {
         'uid': pwd.getpwnam("statd").pw_uid,
         'gid': grp.getgrnam("nogroup").gr_gid
     })
-    V4RECOVERYDIR = (os.path.join(STATEDIR, 'nfs', 'v4recovery'), 0o755, True, {'uid': 0, 'gid': 0})
+    V4RECOVERYDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'v4recovery'), 0o755, True, {'uid': 0, 'gid': 0})
 
     def platform(self):
         return self.value[0]
@@ -136,7 +136,7 @@ class NFSService(SystemServiceService):
         if not os.listdir(NFSPath.STATEDIR.platform()):
             # System db is empty, populate it with contents of /var/lib/nfs
             # Going forward, the system dataset should hold the NFS state data
-            if os.path.isdir('/var/lib/nfs'):
+            if not os.path.isdir('/var/lib/nfs'):
                 res = subprocess.run(
                     ['cp', '-a', '/var/lib/nfs/*', NFSPath.STATEDIR.platform()], check=False, capture_output=True,
                 )
@@ -149,13 +149,12 @@ class NFSService(SystemServiceService):
             path = p.platform()
             await self.middleware.run_in_thread(create_dirs, p, path)
 
-        # legacy nfsv4 management path
         if os.path.exists('/proc/fs/nfsd/nfsv4recoverydir'):
             try:
                 with open('/proc/fs/nfsd/nfsv4recoverydir', 'r+') as fp:
-                    fp.write(NFSPath.V4RECOVERYDIR.platform())
+                    fp.write(NFSPath.V4RECOVERYDIR.platform() + '\n')
             except Exception as e:
-                self.logger.error(f"Failed to update nfsv4recoverydir: {e}")
+                self.logger.error(f"Failed to update nfsv4recoverydir: %r", str(e))
 
     @private
     async def nfs_extend(self, nfs):
