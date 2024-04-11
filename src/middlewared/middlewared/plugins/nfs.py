@@ -144,14 +144,17 @@ class NFSService(SystemServiceService):
 
             return []
 
-    @accepts(Patch(
-        'nfs_entry', 'nfs_update',
-        ('rm', {'name': 'id'}),
-        ('rm', {'name': 'v4_krb_enabled'}),
-        ('rm', {'name': 'keytab_has_nfs_spn'}),
-        ('rm', {'name': 'managed_nfsd'}),
-        ('attr', {'update': True}),
-    ))
+    @accepts(
+        Patch(
+            'nfs_entry', 'nfs_update',
+            ('rm', {'name': 'id'}),
+            ('rm', {'name': 'v4_krb_enabled'}),
+            ('rm', {'name': 'keytab_has_nfs_spn'}),
+            ('rm', {'name': 'managed_nfsd'}),
+            ('attr', {'update': True}),
+        ),
+        audit='Update NFS configuration',
+    )
     async def do_update(self, data):
         """
         Update NFS Service Configuration.
@@ -356,31 +359,34 @@ class SharingNFSService(SharingService):
         register=True,
     )
 
-    @accepts(Dict(
-        "sharingnfs_create",
-        Dir("path", required=True),
-        List("aliases", items=[Str("path", validators=[Match(r"^/.*")])]),
-        Str("comment", default=""),
-        List("networks", items=[IPAddr("network", network=True)], unique=True),
-        List(
-            "hosts", items=[Str("host", validators=[NotMatch(
-                r'.*[\s"]', explanation='Name cannot contain spaces or quotes')]
-            )],
-            unique=True
+    @accepts(
+        Dict(
+            "sharingnfs_create",
+            Dir("path", required=True),
+            List("aliases", items=[Str("path", validators=[Match(r"^/.*")])]),
+            Str("comment", default=""),
+            List("networks", items=[IPAddr("network", network=True)], unique=True),
+            List(
+                "hosts", items=[Str("host", validators=[NotMatch(
+                    r'.*[\s"]', explanation='Name cannot contain spaces or quotes')]
+                )],
+                unique=True
+            ),
+            Bool("ro", default=False),
+            Str("maproot_user", required=False, default=None, null=True),
+            Str("maproot_group", required=False, default=None, null=True),
+            Str("mapall_user", required=False, default=None, null=True),
+            Str("mapall_group", required=False, default=None, null=True),
+            List(
+                "security",
+                items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])],
+            ),
+            Bool("enabled", default=True),
+            register=True,
+            strict=True,
         ),
-        Bool("ro", default=False),
-        Str("maproot_user", required=False, default=None, null=True),
-        Str("maproot_group", required=False, default=None, null=True),
-        Str("mapall_user", required=False, default=None, null=True),
-        Str("mapall_group", required=False, default=None, null=True),
-        List(
-            "security",
-            items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])],
-        ),
-        Bool("enabled", default=True),
-        register=True,
-        strict=True,
-    ))
+        audit='NFS share create', audit_extended=lambda data: data["path"]
+    )
     async def do_create(self, data):
         """
         Create a NFS Share.
@@ -421,14 +427,17 @@ class SharingNFSService(SharingService):
             "sharingnfs_create",
             "sharingnfs_update",
             ("attr", {"update": True})
-        )
+        ),
+        audit='NFS share update',
+        audit_callback=True,
     )
-    async def do_update(self, id_, data):
+    async def do_update(self, audit_callback, id_, data):
         """
         Update NFS Share of `id`.
         """
         verrors = ValidationErrors()
         old = await self.get_instance(id_)
+        audit_callback(old['path'])
 
         new = old.copy()
         new.update(data)
@@ -449,11 +458,18 @@ class SharingNFSService(SharingService):
 
         return await self.get_instance(id_)
 
+    @accepts(
+        Int("id"),
+        audit='NFS share delete',
+        audit_callback=True,
+    )
     @returns()
-    async def do_delete(self, id_):
+    async def do_delete(self, audit_callback, id_):
         """
         Delete NFS Share of `id`.
         """
+        nfs_share = await self.get_instance(id_)
+        audit_callback(nfs_share['path'])
         await self.middleware.call("datastore.delete", self._config.datastore, id_)
         await self._service_change("nfs", "reload")
 

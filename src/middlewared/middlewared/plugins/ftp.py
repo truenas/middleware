@@ -1,5 +1,5 @@
 from middlewared.async_validators import check_path_resides_within_volume, resolve_hostname, validate_port
-from middlewared.schema import Bool, Dict, Dir, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Dir, Int, Patch, Str
 from middlewared.validators import Exact, Match, Or, Range
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -62,6 +62,7 @@ class FTPService(SystemServiceService):
 
     ENTRY = Dict(
         'ftp_entry',
+        Int('id', required=True),
         Int('port', validators=[Range(min_=1, max_=65535)], required=True),
         Int('clients', validators=[Range(min_=1, max_=10000)], required=True),
         Int('ipconnections', validators=[Range(min_=0, max_=1000)], required=True),
@@ -104,7 +105,6 @@ class FTPService(SystemServiceService):
         Bool('tls_opt_ip_address_required', required=True),
         Int('ssltls_certificate', null=True, required=True),
         Str('options', max_length=None, required=True),
-        Int('id', required=True),
     )
 
     @private
@@ -113,6 +113,14 @@ class FTPService(SystemServiceService):
             data['ssltls_certificate'] = data['ssltls_certificate']['id']
         return data
 
+    @accepts(
+        Patch(
+            'ftp_entry', 'ftp_update',
+            ('rm', {'name': 'id'}),
+            ('attr', {'update': True}),
+        ),
+        audit='Update FTP configuration',
+    )
     async def do_update(self, data):
         """
         Update ftp service configuration.
