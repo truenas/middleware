@@ -54,7 +54,7 @@ def test_can_set_admin_authorized_key(admin):
                     "-o", "StrictHostKeyChecking=no",
                     "-o", "UserKnownHostsFile=/dev/null",
                     "-o", "VerifyHostKeyDNS=no",
-                    f"admin@{host()}",
+                    f"admin@{host().ip}",
                     "uptime",
                 ], capture_output=True, check=True, timeout=30)
 

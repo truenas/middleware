@@ -9,7 +9,7 @@ from middlewared.test.integration.utils import call, host, mock, ssh, url, webso
 
 def test_system_general_ui_allowlist():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect((host(), 1))  # connect() for UDP doesn't send packets
+    s.connect((host().ip, 1))  # connect() for UDP doesn't send packets
     local_ip = s.getsockname()[0]
 
     with mock("vm.query", return_value=[
