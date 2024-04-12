@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
 import pytest
-from pytest_dependency import depends
 
 from middlewared.client import ClientException
+from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, mock
 
 import os
@@ -15,7 +14,7 @@ from auto_config import pool_name, ha
 
 def test_systemdataset_migrate_error(request):
     """
-    On HA this test will fail with the error below if failover is enable:
+    On HA this test will fail with the error below if failover is enabled:
     [ENOTSUP] Disable failover before exporting last pool on system.
     """
 
@@ -44,3 +43,20 @@ def test_systemdataset_migrate_error(request):
     if ha is True:
         results = PUT('/failover/', {"disabled": False, "master": True})
         assert results.status_code == 200, results.text
+
+
+def test_destroy_offline_disks():
+    with another_pool(topology=(2, lambda disks: {
+        "data": [
+            {"type": "MIRROR", "disks": disks[0:2]},
+        ],
+    })) as pool:
+        disk = pool["topology"]["data"][0]["children"][0]
+
+        call("pool.offline", pool["id"], {"label": disk["guid"]})
+
+        call("pool.export", pool["id"], {"destroy": True}, job=True)
+
+        unused = [unused for unused in call("disk.get_unused") if unused["name"] == disk["disk"]][0]
+
+        assert unused["exported_zpool"] is None

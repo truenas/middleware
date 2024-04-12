@@ -59,7 +59,11 @@ def another_pool(data=None, topology=None):
     try:
         yield pool
     finally:
-        call("pool.export", pool["id"], job=True)
+        try:
+            call("pool.export", pool["id"], job=True)
+        except ValidationErrors as e:
+            if not any(error.errcode == errno.ENOENT for error in e.errors):
+                raise
 
 
 @contextlib.contextmanager
