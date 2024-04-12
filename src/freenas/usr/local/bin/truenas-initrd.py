@@ -246,13 +246,14 @@ if __name__ == "__main__":
         from middlewared.utils.db import FREENAS_DATABASE, query_config_table, query_table
         from middlewared.utils.gpu import get_gpus
 
-        if (
-            update_required := args.force | update_zfs_default(root) | update_pci_initramfs_config(
-                root
-            ) | update_zfs_module_config(root)
-        ):
+        if update_required := any((
+            args.force,
+            update_zfs_default(root),
+            update_pci_initramfs_config(root),
+            update_zfs_module_config(root),
+        )):
+            set_readonly(root, False)
             subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
-            # Root was made writeable if and only if an update was required
             set_readonly(root, True)
     except Exception:
         logger.error("Failed to update initramfs", exc_info=True)
