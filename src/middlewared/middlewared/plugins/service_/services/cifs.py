@@ -3,6 +3,7 @@ from middlewared.service_exception import CallError
 from .base import SimpleService, ServiceState
 
 import os
+import psutil
 import signal
 import time
 
@@ -19,12 +20,19 @@ class CIFSService(SimpleService):
 
     systemd_unit = "smbd"
 
+    def lookup_pid(self):
+        for proc in psutil.process_iter(attrs=['pid', 'name']):
+            if proc.info['name'] == 'samba-dcerpcd':
+                return proc.info['pid']
+
+        return None
+
     def get_pid(self):
         try:
             with open(self.dcerpc_pidfile, 'r') as f:
                 return int(f.read().strip())
         except FileNotFoundError:
-            return None
+            return self.lookup_pid()
         except Exception:
             self.middleware.logger.debug('Failed to open pidfile', exc_info=True)
 
@@ -94,10 +102,10 @@ class CIFSService(SimpleService):
         await self._freebsd_service("winbindd", "stop", force=True)
         await self._freebsd_service("nmbd", "stop", force=True)
         await self._freebsd_service("wsdd", "stop", force=True)
+        await self.middleware.run_in_thread(self.terminate_dcerpcd)
 
     async def after_stop(self):
         await self.middleware.call("service.reload", "mdns")
-        await self.middleware.run_in_thread(self.terminate_dcerpcd)
 
     async def after_reload(self):
         await self.middleware.call("service.reload", "mdns")
