@@ -249,12 +249,12 @@ if __name__ == "__main__":
 
         database = args.database or os.path.join(root, FREENAS_DATABASE[1:])
 
-        if update_required := (
-            args.force |
-            update_zfs_default(root) |
-            update_pci_initramfs_config(root, database) |
-            update_zfs_module_config(root, database)
-        ):
+        if update_required := any((
+            args.force,
+            update_zfs_default(root),
+            update_pci_initramfs_config(root, database),
+            update_zfs_module_config(root, database),
+        )):
             set_readonly(root, False)
             subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
             set_readonly(root, True)
