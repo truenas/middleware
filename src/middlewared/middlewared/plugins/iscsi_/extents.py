@@ -113,7 +113,7 @@ class iSCSITargetExtentService(SharingService):
 
         # This change is being made in conjunction with threads_num being specified in scst.conf
         if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
-            zvolname = data['path'][5:]
+            zvolname = zvol_path_to_name(os.path.join('/dev', data["path"]))
             await self.middleware.call('zfs.dataset.update', zvolname, {'properties': {'volthreading': {'value': 'off'}}})
 
         data['id'] = await self.middleware.call(
@@ -204,7 +204,7 @@ class iSCSITargetExtentService(SharingService):
 
         # This change is being made in conjunction with threads_num being specified in scst.conf
         if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
-            zvolname = data['path'][5:]
+            zvolname = zvol_path_to_name(os.path.join('/dev', data["path"]))
             await self.middleware.call('zfs.dataset.update', zvolname, {'properties': {'volthreading': {'value': 'on'}}})
 
         try:
