@@ -24,7 +24,7 @@ def test_truenas_mib_elements(snmpd_running):
         f.flush()
 
         snmp = subprocess.run(
-            f"snmpwalk -v2c -c public -m {f.name} {host()} "
+            f"snmpwalk -v2c -c public -m {f.name} {host().ip} "
             "1.3.6.1.4.1.50536",
             shell=True,
             capture_output=True,
