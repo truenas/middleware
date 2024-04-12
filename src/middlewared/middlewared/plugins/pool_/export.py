@@ -138,11 +138,17 @@ class PoolService(Service):
         await self.middleware.call_hook('pool.pre_export', pool=pool['name'], options=options, job=job)
 
         if pool['status'] == 'OFFLINE':
-            # Pool exists only in database, its not imported
+            # Pool exists only in database, it's not imported
             pass
         elif options['destroy']:
             job.set_progress(60, 'Destroying pool')
             await self.middleware.call('zfs.pool.delete', pool['name'])
+
+            disks_to_clean = disks + [
+                vdev['disk']
+                for vdev in await self.middleware.call('pool.flatten_topology', pool['topology'])
+                if vdev['type'] == 'DISK' and vdev['disk'] is not None and vdev['disk'] not in disks
+            ]
 
             async def unlabel(disk):
                 wipe_job = await self.middleware.call(
@@ -153,7 +159,7 @@ class PoolService(Service):
                     self.logger.warning('Failed to wipe disk %r: {%r}', disk, wipe_job.error)
 
             job.set_progress(80, 'Cleaning disks')
-            await asyncio_map(unlabel, disks, limit=16)
+            await asyncio_map(unlabel, disks_to_clean, limit=16)
 
             if await self.middleware.call('failover.licensed'):
                 try:
