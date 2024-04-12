@@ -14,7 +14,8 @@ def task(data):
             "month": "1",
             "dow": "1",
         },
-        **data
+        "keep_last": 10,
+        **data,
     }
 
     task = call("cloud_backup.create", data)

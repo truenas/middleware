@@ -34,6 +34,7 @@ def test_cloud_backup(unprivileged_client, cloudsync_template, param, value):
         unprivileged_client.call("cloud_backup.create", {
             **cloudsync_template,
             "password": "test",
+            "keep_last": 10,
             param: value,
         })
 
