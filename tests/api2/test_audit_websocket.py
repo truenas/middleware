@@ -165,7 +165,8 @@ def test_valid_call():
                 "description": "Create user sergey",
             },
             "success": True,
-        }
+        },
+        {},
     ]):
         with user({
             "username": "sergey",
