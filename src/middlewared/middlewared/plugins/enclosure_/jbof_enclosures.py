@@ -105,14 +105,14 @@ def map_es24n(model, rclient, uri):
             mapped[slot] = None
             continue
 
-        sn = disk.get('SerialNumber')
-        if not sn:
+        slot = dis.get('Id', '')
+        if not slot or not slot.isdigit():
+            # shouldn't happen but need to catch edge-case
             mapped[slot] = None
             continue
 
-        slot = disk.get('Id', '')
-        if not slot or not slot.isdigit():
-            # shouldn't happen but need to catch edge-case
+        sn = disk.get('SerialNumber')
+        if not sn:
             mapped[slot] = None
             continue
 
