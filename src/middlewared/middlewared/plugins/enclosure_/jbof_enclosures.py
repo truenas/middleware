@@ -114,6 +114,7 @@ def map_es24n(model, rclient, uri):
         if not slot or not slot.isdigit():
             # shouldn't happen but need to catch edge-case
             mapped[slot] = None
+            continue
 
         slot = int(slot)
         if found := mounted_disks.get(sn):
