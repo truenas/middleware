@@ -183,7 +183,7 @@ class FilesystemService(Service):
         }
 
     @private
-    def check_as_user_imp(self, user_details, path, perms):
+    def check_as_user_impl(self, user_details, path, perms):
         return run_with_user_context(check_access, user_details, [path, perms])
 
     @accepts(
