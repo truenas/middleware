@@ -37,6 +37,7 @@ def set_usr_readonly(value):
     cmd += f'\\\"{value}\\\"' + '}});"'
     ssh(cmd)
 
+
 @contextlib.contextmanager
 def mock_binary(path, code="", exitcode=1):
     set_usr_readonly("off")
@@ -64,5 +65,6 @@ def mock_binary(path, code="", exitcode=1):
         )
         yield BinaryMock()
     finally:
+        set_usr_readonly("off")  # In case something like `truenas-initrd.py` was launched by `yield`
         ssh(f"mv {path}.bak {path}")
         set_usr_readonly("on")
