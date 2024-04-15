@@ -13,19 +13,28 @@ __all__ = ["run_command_with_user_context", "run_with_user_context", "set_user_c
 
 
 def set_user_context(user_details: dict) -> None:
-    os.setgroups(user_details['grouplist'])
-    os.setresgid(user_details['pw_gid'], user_details['pw_gid'], user_details['pw_gid'])
-    os.setresuid(user_details['pw_uid'], user_details['pw_uid'], user_details['pw_uid'])
+    if os.geteuid() != 0:
+        # We need to reset to UID 0 before setgroups is called
+        os.seteuid(0)
 
-    if any(
-        c() != v for c, v in (
-            (os.getuid, user_details['pw_uid']),
-            (os.geteuid, user_details['pw_uid']),
-            (os.getgid, user_details['pw_gid']),
-            (os.getegid, user_details['pw_gid']),
-        )
-    ):
-        raise Exception(f'Unable to set user context to {user_details["pw_name"]!r} user')
+    os.setgroups(user_details['grouplist'])
+
+    # We must preserve the saved uid of zero so that we can call this multiple times
+    # in same child process.
+    gids = (user_details['pw_gid'], user_details['pw_gid'], 0)
+    uids = (user_details['pw_uid'], user_details['pw_uid'], 0)
+
+    os.setresgid(*gids)
+    os.setresuid(*uids)
+
+    new_gids = os.getresgid()
+    new_uids = os.getresuid()
+
+    if new_gids != gids:
+        raise Exception(f'{user_details["pw_name"]}: Unable to set gids for user context received {new_gids}, expected {gids}')
+
+    if new_uids != uids:
+        raise Exception(f'{user_details["pw_name"]}: Unable to set uids for user context received {new_uids}, expected {uids}')
 
     try:
         os.chdir(user_details['pw_dir'])
