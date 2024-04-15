@@ -101,14 +101,15 @@ def map_es24n(model, rclient, uri):
     }
     mapped = dict()
     for disk in all_disks['Members']:
-        slot = dis.get('Id', '')
+        slot = disk.get('Id', '')
         if not slot or not slot.isdigit():
             # shouldn't happen but need to catch edge-case
             continue
         else:
             slot = int(slot)
 
-        if disk['State'] == 'Absent':
+        state = disk.get('Status', {}).get('State')
+        if not state or state == 'Absent':
             mapped[slot] = None
             continue
 
