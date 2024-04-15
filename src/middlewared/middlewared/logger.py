@@ -35,13 +35,13 @@ logging.getLogger('acme.client').setLevel(logging.WARNING)
 logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(logging.WARNING)
 # "Encoding detection: ascii is most likely the one."
 logging.getLogger('charset_normalizer').setLevel(logging.INFO)
+logging.TRACE = 6
 
-
-LOGFILE = '/var/log/middlewared.log'
-ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
 FAILOVER_LOGFILE = '/var/log/failover.log'
 K8S_API_LOGFILE = '/var/log/k8s_api.log'
-logging.TRACE = 6
+LOGFILE = '/var/log/middlewared.log'
+NETDATA_API_LOGFILE = '/var/log/netdata_api.log'
+ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
 
 
 def trace(self, message, *args, **kws):
@@ -82,6 +82,7 @@ class Logger:
                 (None, LOGFILE, self.log_format),
                 ('failover', FAILOVER_LOGFILE, self.log_format),
                 ('k8s_api', K8S_API_LOGFILE, self.log_format),
+                ('netdata_api', NETDATA_API_LOGFILE, self.log_format),
                 ('zettarepl', ZETTAREPL_LOGFILE,
                  '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s'),
             ]:
