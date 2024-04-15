@@ -101,13 +101,14 @@ def map_es24n(model, rclient, uri):
     }
     mapped = dict()
     for disk in all_disks['Members']:
-        if disk['State'] == 'Absent':
-            mapped[slot] = None
-            continue
-
         slot = dis.get('Id', '')
         if not slot or not slot.isdigit():
             # shouldn't happen but need to catch edge-case
+            continue
+        else:
+            slot = int(slot)
+
+        if disk['State'] == 'Absent':
             mapped[slot] = None
             continue
 
@@ -116,7 +117,6 @@ def map_es24n(model, rclient, uri):
             mapped[slot] = None
             continue
 
-        slot = int(slot)
         if found := mounted_disks.get(sn):
             try:
                 # we expect namespace 1 for the device (i.e. nvme1n1)
