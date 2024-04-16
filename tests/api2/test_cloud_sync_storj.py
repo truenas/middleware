@@ -10,6 +10,7 @@ from middlewared.test.integration.assets.pool import dataset
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
+pytestmark = pytest.mark.skip(reason='See IT ticket IT-9829')
 try:
     from config import (
         STORJ_IX_AWS_ACCESS_KEY_ID,
