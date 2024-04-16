@@ -1,7 +1,9 @@
+import os
 import shlex
 
 from middlewared.plugins.vm.devices import CDROM, DISK, PCI, RAW, DISPLAY, USB
 from middlewared.plugins.vm.numeric_set import parse_numeric_set
+from middlewared.plugins.vm.utils import SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name
 from middlewared.utils import Nid
 
 from .utils import create_element
@@ -256,10 +258,14 @@ def os_xml(vm_data):
         }
     )]
     if vm_data['bootloader'] == 'UEFI':
-        children.append(
+        children.extend([
             create_element(
                 'loader', attribute_dict={'text': f'/usr/share/OVMF/{vm_data["bootloader_ovmf"]}'},
                 readonly='yes', type='pflash',
-            )
-        )
+            ),
+            create_element('nvram', attribute_dict={
+                'text': os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(vm_data)),
+            })
+        ])
+
     return create_element('os', attribute_dict={'children': children})
