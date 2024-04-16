@@ -128,10 +128,9 @@ class SystemDatasetService(ConfigService):
 
         # Make `uuid` point to the uuid of current node
         uuid_key = 'uuid'
-        if await self.middleware.call('system.is_enterprise'):
-            if await self.middleware.call('failover.node') == 'B':
-                uuid_key = 'uuid_b'
-                config['uuid'] = config['uuid_b']
+        if await self.middleware.call('failover.node') == 'B':
+            uuid_key = 'uuid_b'
+            config['uuid'] = config['uuid_b']
 
         del config['uuid_b']
 
