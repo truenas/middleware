@@ -1,4 +1,4 @@
-import contextlib
+import collections
 import errno
 import random
 import pytest
@@ -9,7 +9,11 @@ from middlewared.test.integration.assets.account import (
     unprivileged_user,
     unprivileged_user_client as unprivileged_user_client_main,
 )
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, client
+
+
+USER_FIXTURE_TUPLE = collections.namedtuple('UserFixture', 'username password group_name')
+USER_CLIENT_FIXTURE_TUPLE = collections.namedtuple('UserClientFixture', 'client group_name')
 
 
 @pytest.fixture(scope='session')
@@ -24,7 +28,14 @@ def unprivileged_user_fixture(request):
         roles=[],
         web_shell=False,
     ) as t:
-        yield t, group_name
+        yield USER_FIXTURE_TUPLE(t.username, t.password, group_name)
+
+
+@pytest.fixture(scope='module')
+def unprivileged_custom_user_client(unprivileged_user_fixture):
+    with client(auth=(unprivileged_user_fixture.username, unprivileged_user_fixture.password)) as c:
+        c.username = unprivileged_user_fixture.username
+        yield USER_CLIENT_FIXTURE_TUPLE(c, unprivileged_user_fixture.group_name)
 
 
 def common_checks(
