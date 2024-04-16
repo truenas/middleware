@@ -54,6 +54,7 @@ class ValidationErrors(CallException):
 
     def __init__(self, errors=None):
         self.errors = errors or []
+        super().__init__(self.errors)
 
     def add(self, attribute, errmsg, errno=errno.EINVAL):
         self.errors.append(ValidationError(attribute, errmsg, errno))
