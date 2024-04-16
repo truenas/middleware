@@ -189,7 +189,11 @@ http {
 
 % for device in display_devices:
         location ${display_device_path}/${device['id']} {
+    % if ":" in device['attributes']['bind']:
+            proxy_pass http://[${device['attributes']['bind']}]:${device['attributes']['web_port']}/;
+    % else:
             proxy_pass http://${device['attributes']['bind']}:${device['attributes']['web_port']}/;
+    % endif
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
