@@ -336,6 +336,9 @@ class JBOFService(CRUDService):
         config = self.get_instance__sync(id_)
         config_mgmt_ips = set([config['mgmt_ip1'], config['mgmt_ip2']])
 
+        redfish = self.ensure_redfish_client_cached(config)
+        old_iom_mgmt_ips = set(redfish.iom_mgmt_ips(iom))
+
         if not check:
             if data.get('dhcp'):
                 raise CallError('Can not bypass check when setting DHCP')
@@ -344,9 +347,14 @@ class JBOFService(CRUDService):
             except Exception:
                 raise CallError('Can not determine new static IP')
 
+            if config['mgmt_ip1'] in old_iom_mgmt_ips:
+                ip_to_update = 'mgmt_ip1'
+            elif config['mgmt_ip2'] in old_iom_mgmt_ips:
+                ip_to_update = 'mgmt_ip2'
+            else:
+                raise CallError('Can not determine whether updating mgmt_ip1 or mgmt_ip2')
+
         # Do we need to switch redfish to the other IOM
-        redfish = self.ensure_redfish_client_cached(config)
-        old_iom_mgmt_ips = set(redfish.iom_mgmt_ips(iom))
         if redfish.mgmt_ip() in old_iom_mgmt_ips:
             other_iom = 'IOM2' if iom == 'IOM1' else 'IOM1'
             for mgmt_ip in redfish.iom_mgmt_ips(other_iom):
@@ -433,17 +441,10 @@ class JBOFService(CRUDService):
                                 raise CallError(f'Unable to access redfish IP {ip}')
             else:
                 # check is False ... don't attempt to communicate with the new IP
-                # just update the database.  Unfortunately because mgmt_ip1 and
-                # mgmt_ip2 can be in any order we have to determine which one to
-                # update by examing the historical data.
-                if config['mgmt_ip1'] in old_iom_mgmt_ips:
-                    self.middleware.call_sync(
-                        'jbof.update', config['id'], {'mgmt_ip1': new_static_ip}
-                    )
-                elif config['mgmt_ip2'] in old_iom_mgmt_ips:
-                    self.middleware.call_sync(
-                        'jbof.update', config['id'], {'mgmt_ip2': new_static_ip}
-                    )
+                # just update the database.
+                self.middleware.call_sync(
+                    'jbof.update', config['id'], {ip_to_update: new_static_ip}
+                )
         except Exception as e:
             self.logger.error(f'Unable to modify mgmt ip for {iom}/{ethindex}', exc_info=True)
             try:
