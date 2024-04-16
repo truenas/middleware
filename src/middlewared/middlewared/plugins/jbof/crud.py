@@ -328,12 +328,21 @@ class JBOFService(CRUDService):
         ),
         Int('ethindex', default=1),
         Bool('force', default=False),
+        Bool('check', default=True),
     )
-    def set_mgmt_ip(self, id_, iom, data, ethindex, force):
+    def set_mgmt_ip(self, id_, iom, data, ethindex, force, check):
         """Change the mamagement IP for a particular IOM"""
         # Fetch the existing JBOF config
         config = self.get_instance__sync(id_)
         config_mgmt_ips = set([config['mgmt_ip1'], config['mgmt_ip2']])
+
+        if not check:
+            if data.get('dhcp'):
+                raise CallError('Can not bypass check when setting DHCP')
+            try:
+                new_static_ip = data.get('ipv4_static_addresses', [])[0]['address']
+            except Exception:
+                raise CallError('Can not determine new static IP')
 
         # Do we need to switch redfish to the other IOM
         redfish = self.ensure_redfish_client_cached(config)
@@ -391,36 +400,50 @@ class JBOFService(CRUDService):
             redfish.post(uri, data=newdata)
             # Give a few seconds for the changes to take effect
             time.sleep(10)
-            new_iom_mgmt_ips = set(redfish.iom_mgmt_ips(iom))
-            if old_iom_mgmt_ips != new_iom_mgmt_ips:
-                # IPs have changed.
-                # 1. Was the IP that changed on one of the stored mgmt_ips
-                for removed_ip in old_iom_mgmt_ips - new_iom_mgmt_ips:
-                    if removed_ip in config_mgmt_ips:
-                        removed_active = True
-                        break
-                if removed_active:
-                    for added_ip in new_iom_mgmt_ips - old_iom_mgmt_ips:
-                        if RedfishClient.is_redfish(added_ip):
-                            added_active = True
+            if check:
+                new_iom_mgmt_ips = set(redfish.iom_mgmt_ips(iom))
+                if old_iom_mgmt_ips != new_iom_mgmt_ips:
+                    # IPs have changed.
+                    # 1. Was the IP that changed on one of the stored mgmt_ips
+                    for removed_ip in old_iom_mgmt_ips - new_iom_mgmt_ips:
+                        if removed_ip in config_mgmt_ips:
+                            removed_active = True
                             break
-                    if not added_active:
-                        raise CallError(f'Unable to access redfish IP on {iom}')
-                    # Update the config to reflect the new IP
-                    if removed_ip == config['mgmt_ip1']:
-                        self.middleware.call_sync(
-                            'jbof.update', config['id'], {'mgmt_ip1': added_ip}
-                        )
-                    else:
-                        self.middleware.call_sync(
-                            'jbof.update', config['id'], {'mgmt_ip2': added_ip}
-                        )
+                    if removed_active:
+                        for added_ip in new_iom_mgmt_ips - old_iom_mgmt_ips:
+                            if RedfishClient.is_redfish(added_ip):
+                                added_active = True
+                                break
+                        if not added_active:
+                            raise CallError(f'Unable to access redfish IP on {iom}')
+                        # Update the config to reflect the new IP
+                        if removed_ip == config['mgmt_ip1']:
+                            self.middleware.call_sync(
+                                'jbof.update', config['id'], {'mgmt_ip1': added_ip}
+                            )
+                        else:
+                            self.middleware.call_sync(
+                                'jbof.update', config['id'], {'mgmt_ip2': added_ip}
+                            )
+                else:
+                    # IPs did not change, still want to test connectivity
+                    for ip in config_mgmt_ips:
+                        if ip in old_iom_mgmt_ips:
+                            if not RedfishClient.is_redfish(ip):
+                                raise CallError(f'Unable to access redfish IP {ip}')
             else:
-                # IPs did not change, still want to test connectivity
-                for ip in config_mgmt_ips:
-                    if ip in old_iom_mgmt_ips:
-                        if not RedfishClient.is_redfish(ip):
-                            raise CallError(f'Unable to access redfish IP {ip}')
+                # check is False ... don't attempt to communicate with the new IP
+                # just update the database.  Unfortunately because mgmt_ip1 and
+                # mgmt_ip2 can be in any order we have to determine which one to
+                # update by examing the historical data.
+                if config['mgmt_ip1'] in old_iom_mgmt_ips:
+                    self.middleware.call_sync(
+                        'jbof.update', config['id'], {'mgmt_ip1': new_static_ip}
+                    )
+                elif config['mgmt_ip2'] in old_iom_mgmt_ips:
+                    self.middleware.call_sync(
+                        'jbof.update', config['id'], {'mgmt_ip2': new_static_ip}
+                    )
         except Exception as e:
             self.logger.error(f'Unable to modify mgmt ip for {iom}/{ethindex}', exc_info=True)
             try:
