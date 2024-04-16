@@ -63,7 +63,7 @@ def test_vm_read_write_roles_requiring_virtualization(unprivileged_user_fixture,
     ('VM_DEVICE_READ', 'vm.device.usb_passthrough_choices', True),
     ('VM_READ', 'vm.guest_architecture_and_machine_choices', True),
 ])
-def atest_vm_device_read_write_roles(unprivileged_user_fixture, role, method, valid_role):
+def test_vm_device_read_write_roles(unprivileged_user_fixture, role, method, valid_role):
     common_checks(unprivileged_user_fixture, method, role, valid_role, valid_role_exception=False)
 
 
@@ -71,5 +71,5 @@ def atest_vm_device_read_write_roles(unprivileged_user_fixture, role, method, va
     ('VM_DEVICE_READ', 'vm.device.passthrough_device', True),
     ('VM_DEVICE_WRITE', 'vm.device.passthrough_device', True),
 ])
-def atest_vm_device_read_write_roles_requiring_virtualization(unprivileged_user_fixture, role, method, valid_role):
+def test_vm_device_read_write_roles_requiring_virtualization(unprivileged_user_fixture, role, method, valid_role):
     common_checks(unprivileged_user_fixture, method, role, valid_role)
