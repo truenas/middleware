@@ -1,19 +1,16 @@
 import collections
+import contextlib
 import errno
 import random
 import pytest
 import string
 
 from middlewared.client.client import ClientException
-from middlewared.test.integration.assets.account import (
-    unprivileged_user,
-    unprivileged_user_client as unprivileged_user_client_main,
-)
+from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.utils import call, client
 
 
 USER_FIXTURE_TUPLE = collections.namedtuple('UserFixture', 'username password group_name')
-USER_CLIENT_FIXTURE_TUPLE = collections.namedtuple('UserClientFixture', 'client group_name')
 
 
 @pytest.fixture(scope='session')
@@ -31,19 +28,25 @@ def unprivileged_user_fixture(request):
         yield USER_FIXTURE_TUPLE(t.username, t.password, group_name)
 
 
-@pytest.fixture(scope='module')
-def unprivileged_custom_user_client(unprivileged_user_fixture):
-    with client(auth=(unprivileged_user_fixture.username, unprivileged_user_fixture.password)) as c:
-        c.username = unprivileged_user_fixture.username
-        yield USER_CLIENT_FIXTURE_TUPLE(c, unprivileged_user_fixture.group_name)
+@contextlib.contextmanager
+def unprivileged_custom_user_client(user_client_context):
+    with client(auth=(user_client_context.username, user_client_context.password)) as c:
+        c.username = user_client_context.username
+        yield c
 
 
 def common_checks(
-    method, role, valid_role, valid_role_exception=True, method_args=None, method_kwargs=None, is_return_type_none=False
+    user_client_context, method, role, valid_role, valid_role_exception=True, method_args=None,
+    method_kwargs=None, is_return_type_none=False,
 ):
     method_args = method_args or []
     method_kwargs = method_kwargs or {}
-    with unprivileged_user_client_main(roles=[role]) as client:
+    privilege = call('privilege.query', [['local_groups.0.group', '=', user_client_context.group_name]])
+    assert len(privilege) > 0, 'Privilege not found'
+
+    call('privilege.update', privilege[0]['id'], {'roles': [role]})
+
+    with unprivileged_custom_user_client(user_client_context) as client:
         if valid_role:
             if valid_role_exception:
                 with pytest.raises(Exception) as exc_info:
