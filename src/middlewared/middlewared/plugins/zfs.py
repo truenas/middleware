@@ -80,11 +80,11 @@ class ZFSPoolService(CRUDService):
             # Handle `id` filter specially to avoiding getting all pool
             if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
                 try:
-                    pools = [zfs.get(filters[0][2]).__getstate__(**state_kwargs)]
+                    pools = [zfs.get(filters[0][2]).asdict(**state_kwargs)]
                 except libzfs.ZFSException:
                     pools = []
             else:
-                pools = [i.__getstate__(**state_kwargs) for i in zfs.pools]
+                pools = [i.asdict(**state_kwargs) for i in zfs.pools]
         return filter_list(pools, filters, options)
 
     def is_upgraded(self, pool_name):
@@ -315,12 +315,12 @@ class ZFSPoolService(CRUDService):
 
     def scrub_state(self, name):
         with libzfs.ZFS() as zfs:
-            return zfs.get(name).scrub.__getstate__()
+            return zfs.get(name).scrub.asdict()
 
     @accepts()
     def find_import(self):
         with libzfs.ZFS() as zfs:
-            return [i.__getstate__() for i in zfs.find_import()]
+            return [i.asdict() for i in zfs.find_import()]
 
     @accepts(
         Str('name_or_guid'),
@@ -379,7 +379,7 @@ class ZFSPoolService(CRUDService):
                 vdev = find_vdev(pool, vname)
                 if not vdev:
                     raise CallError(f'{vname} not found in {name}', errno.ENOENT)
-                return vdev.__getstate__()
+                return vdev.asdict()
         except libzfs.ZFSException as e:
             raise CallError(str(e))
 
@@ -416,11 +416,6 @@ class ZFSDatasetService(CRUDService):
         In `query-options` we can provide `extra` arguments which control which data should be retrieved
         for a dataset.
 
-        `query-options.extra.top_level_properties` is a list of properties which we will like to include in the
-        top level dict of dataset. It defaults to adding only mountpoint key keeping legacy behavior. If none are
-        desired in top level dataset, an empty list should be passed else if null is specified it will add mountpoint
-        key to the top level dict if it's present in `query-options.extra.properties` or it's null as well.
-
         `query-options.extra.properties` is a list of properties which should be retrieved. If null ( by default ),
         it would retrieve all properties, if empty, it will retrieve no property ( `mountpoint` is special in this
         case and is controlled by `query-options.extra.mountpoint` attribute ).
@@ -444,7 +439,6 @@ class ZFSDatasetService(CRUDService):
         """
         options = options or {}
         extra = options.get('extra', {}).copy()
-        top_level_props = None if extra.get('top_level_properties') is None else extra['top_level_properties'].copy()
         props = extra.get('properties', None)
         flat = extra.get('flat', True)
         user_properties = extra.get('user_properties', True)
@@ -464,12 +458,12 @@ class ZFSDatasetService(CRUDService):
                     'snapshots_recursive': extra.get('snapshots_recursive', False)
                 }
                 try:
-                    datasets = [zfs.get_dataset(filters[0][2]).__getstate__(**state_options)]
+                    datasets = [zfs.get_dataset(filters[0][2]).asdict(**state_options)]
                 except libzfs.ZFSException:
                     datasets = []
             else:
                 datasets = zfs.datasets_serialized(
-                    props=props, top_level_props=top_level_props, user_props=user_properties
+                    props=props, user_props=user_properties
                 )
                 if flat:
                     datasets = self.flatten_datasets(datasets)
@@ -957,14 +951,14 @@ class ZFSSnapshot(CRUDService):
             snapshots = []
             if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
                 try:
-                    snapshots.append(zfs.get_snapshot(filters[0][2]).__getstate__())
+                    snapshots.append(zfs.get_snapshot(filters[0][2]).asdict())
                 except libzfs.ZFSException as e:
                     if e.code != libzfs.Error.NOENT:
                         raise
             else:
                 for i in zfs.snapshots:
                     try:
-                        snapshots.append(i.__getstate__())
+                        snapshots.append(i.asdict())
                     except libzfs.ZFSException as e:
                         # snapshot may have been deleted while this is running
                         if e.code != libzfs.Error.NOENT:
