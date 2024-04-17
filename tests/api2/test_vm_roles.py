@@ -11,8 +11,8 @@ from middlewared.test.integration.assets.roles import common_checks
     ('vm.get_available_memory', False),
     ('vm.bootloader_options', False),
 ])
-def test_vm_readonly_role(method, expected_error):
-    common_checks(method, 'READONLY_ADMIN', True, valid_role_exception=expected_error)
+def test_vm_readonly_role(unprivileged_user_fixture, method, expected_error):
+    common_checks(unprivileged_user_fixture, method, 'READONLY_ADMIN', True, valid_role_exception=expected_error)
 
 
 @pytest.mark.parametrize('role, method, valid_role', [
@@ -29,8 +29,8 @@ def test_vm_readonly_role(method, expected_error):
     ('VM_READ', 'vm.port_wizard', True),
     ('VM_READ', 'vm.bootloader_options', True),
 ])
-def test_vm_read_write_roles(role, method, valid_role):
-    common_checks(method, role, valid_role, valid_role_exception=False)
+def test_vm_read_write_roles(unprivileged_user_fixture, role, method, valid_role):
+    common_checks(unprivileged_user_fixture, method, role, valid_role, valid_role_exception=False)
 
 
 @pytest.mark.parametrize('role, method, valid_role', [
@@ -52,8 +52,8 @@ def test_vm_read_write_roles(role, method, valid_role):
     ('VM_READ', 'vm.status', True),
     ('VM_READ', 'vm.log_file_path', True),
 ])
-def test_vm_read_write_roles_requiring_virtualization(role, method, valid_role):
-    common_checks(method, role, valid_role)
+def test_vm_read_write_roles_requiring_virtualization(unprivileged_user_fixture, role, method, valid_role):
+    common_checks(unprivileged_user_fixture, method, role, valid_role)
 
 
 @pytest.mark.parametrize('role, method, valid_role', [
@@ -63,13 +63,13 @@ def test_vm_read_write_roles_requiring_virtualization(role, method, valid_role):
     ('VM_DEVICE_READ', 'vm.device.usb_passthrough_choices', True),
     ('VM_READ', 'vm.guest_architecture_and_machine_choices', True),
 ])
-def test_vm_device_read_write_roles(role, method, valid_role):
-    common_checks(method, role, valid_role, valid_role_exception=False)
+def test_vm_device_read_write_roles(unprivileged_user_fixture, role, method, valid_role):
+    common_checks(unprivileged_user_fixture, method, role, valid_role, valid_role_exception=False)
 
 
 @pytest.mark.parametrize('role, method, valid_role', [
     ('VM_DEVICE_READ', 'vm.device.passthrough_device', True),
     ('VM_DEVICE_WRITE', 'vm.device.passthrough_device', True),
 ])
-def test_vm_device_read_write_roles_requiring_virtualization(role, method, valid_role):
-    common_checks(method, role, valid_role)
+def test_vm_device_read_write_roles_requiring_virtualization(unprivileged_user_fixture, role, method, valid_role):
+    common_checks(unprivileged_user_fixture, method, role, valid_role)

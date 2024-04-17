@@ -3,8 +3,8 @@ import pytest
 from middlewared.test.integration.assets.roles import common_checks
 
 
-def test_app_readonly_role():
-    common_checks('app.categories', 'READONLY_ADMIN', True, valid_role_exception=False)
+def test_app_readonly_role(unprivileged_user_fixture):
+    common_checks(unprivileged_user_fixture, 'app.categories', 'READONLY_ADMIN', True, valid_role_exception=False)
 
 
 @pytest.mark.parametrize('role,endpoint,payload,job,should_work,valid_role_exception,is_return_type_none', [
@@ -27,10 +27,10 @@ def test_app_readonly_role():
     ('CATALOG_WRITE', 'catalog.items', [], False, True, True, False),
 ])
 def test_catalog_read_and_write_role(
-    role, endpoint, payload, job, should_work, valid_role_exception, is_return_type_none
+    unprivileged_user_fixture, role, endpoint, payload, job, should_work, valid_role_exception, is_return_type_none
 ):
     common_checks(
-        endpoint, role, should_work, is_return_type_none=is_return_type_none,
+        unprivileged_user_fixture, endpoint, role, should_work, is_return_type_none=is_return_type_none,
         valid_role_exception=valid_role_exception, method_args=payload, method_kwargs={'job': job}
     )
 
@@ -42,8 +42,10 @@ def test_catalog_read_and_write_role(
     ('APPS_READ', 'container.prune', True, False),
     ('APPS_WRITE', 'container.prune', True, True),
 ])
-def test_apps_read_and_write_roles(role, endpoint, job, should_work):
-    common_checks(endpoint, role, should_work, valid_role_exception=False, method_kwargs={'job': job})
+def test_apps_read_and_write_roles(unprivileged_user_fixture, role, endpoint, job, should_work):
+    common_checks(
+        unprivileged_user_fixture, endpoint, role, should_work, valid_role_exception=False, method_kwargs={'job': job}
+    )
 
 
 @pytest.mark.parametrize('role,endpoint,job,should_work', [
@@ -55,8 +57,8 @@ def test_apps_read_and_write_roles(role, endpoint, job, should_work):
     ('APPS_READ', 'chart.release.upgrade', True, False),
     ('APPS_WRITE', 'chart.release.upgrade', True, True),
 ])
-def test_apps_read_and_write_roles_with_params(role, endpoint, job, should_work):
-    common_checks(endpoint, role, should_work, method_kwargs={'job': job})
+def test_apps_read_and_write_roles_with_params(unprivileged_user_fixture, role, endpoint, job, should_work):
+    common_checks(unprivileged_user_fixture, endpoint, role, should_work, method_kwargs={'job': job})
 
 
 @pytest.mark.parametrize('role,endpoint,job,should_work', [
@@ -69,5 +71,7 @@ def test_apps_read_and_write_roles_with_params(role, endpoint, job, should_work)
     ('KUBERNETES_READ', 'kubernetes.events', False, True),
     ('KUBERNETES_WRITE', 'kubernetes.events', False, True),
 ])
-def test_kubernetes_read_and_write_roles(role, endpoint, job, should_work):
-    common_checks(endpoint, role, should_work, valid_role_exception=False, method_kwargs={'job': job})
+def test_kubernetes_read_and_write_roles(unprivileged_user_fixture, role, endpoint, job, should_work):
+    common_checks(
+        unprivileged_user_fixture, endpoint, role, should_work, valid_role_exception=False, method_kwargs={'job': job}
+    )
