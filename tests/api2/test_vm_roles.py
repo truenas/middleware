@@ -1,9 +1,6 @@
-import errno
 import pytest
 
-from middlewared.client import ClientException
-from middlewared.service_exception import ValidationErrors
-from middlewared.test.integration.assets.account import unprivileged_user_client
+from middlewared.test.integration.assets.roles import common_checks
 
 
 @pytest.mark.parametrize('method, expected_error', [
@@ -14,14 +11,8 @@ from middlewared.test.integration.assets.account import unprivileged_user_client
     ('vm.get_available_memory', False),
     ('vm.bootloader_options', False),
 ])
-def test_vm_readonly_role(method, expected_error):
-    with unprivileged_user_client(roles=['READONLY_ADMIN']) as c:
-        if expected_error:
-            with pytest.raises(Exception) as ve:
-                c.call(method)
-            assert isinstance(ve.value, ValidationErrors) or ve.value.errno != errno.EACCES
-        else:
-            assert c.call(method) is not None
+def test_vm_readonly_role(unprivileged_user_fixture, method, expected_error):
+    common_checks(unprivileged_user_fixture, method, 'READONLY_ADMIN', True, valid_role_exception=expected_error)
 
 
 @pytest.mark.parametrize('role, method, valid_role', [
@@ -38,15 +29,8 @@ def test_vm_readonly_role(method, expected_error):
     ('VM_READ', 'vm.port_wizard', True),
     ('VM_READ', 'vm.bootloader_options', True),
 ])
-def test_vm_read_write_roles(role, method, valid_role):
-    with unprivileged_user_client(roles=[role]) as c:
-        if valid_role:
-            assert c.call(method) is not None
-        else:
-            with pytest.raises(ClientException) as ve:
-                c.call(method)
-            assert ve.value.errno == errno.EACCES
-            assert ve.value.error == 'Not authorized'
+def test_vm_read_write_roles(unprivileged_user_fixture, role, method, valid_role):
+    common_checks(unprivileged_user_fixture, method, role, valid_role, valid_role_exception=False)
 
 
 @pytest.mark.parametrize('role, method, valid_role', [
@@ -68,17 +52,8 @@ def test_vm_read_write_roles(role, method, valid_role):
     ('VM_READ', 'vm.status', True),
     ('VM_READ', 'vm.log_file_path', True),
 ])
-def test_vm_read_write_roles_requiring_virtualization(role, method, valid_role):
-    with unprivileged_user_client(roles=[role]) as c:
-        if valid_role:
-            with pytest.raises(Exception) as ve:
-                c.call(method)
-            assert isinstance(ve.value, (ValidationErrors, IndexError)) or ve.value.errno != errno.EACCES
-        else:
-            with pytest.raises(ClientException) as ve:
-                c.call(method)
-            assert ve.value.errno == errno.EACCES
-            assert ve.value.error == 'Not authorized'
+def test_vm_read_write_roles_requiring_virtualization(unprivileged_user_fixture, role, method, valid_role):
+    common_checks(unprivileged_user_fixture, method, role, valid_role)
 
 
 @pytest.mark.parametrize('role, method, valid_role', [
@@ -88,29 +63,13 @@ def test_vm_read_write_roles_requiring_virtualization(role, method, valid_role):
     ('VM_DEVICE_READ', 'vm.device.usb_passthrough_choices', True),
     ('VM_READ', 'vm.guest_architecture_and_machine_choices', True),
 ])
-def test_vm_device_read_write_roles(role, method, valid_role):
-    with unprivileged_user_client(roles=[role]) as c:
-        if valid_role:
-            assert c.call(method) is not None
-        else:
-            with pytest.raises(ClientException) as ve:
-                c.call(method)
-            assert ve.value.errno == errno.EACCES
-            assert ve.value.error == 'Not authorized'
+def test_vm_device_read_write_roles(unprivileged_user_fixture, role, method, valid_role):
+    common_checks(unprivileged_user_fixture, method, role, valid_role, valid_role_exception=False)
 
 
 @pytest.mark.parametrize('role, method, valid_role', [
     ('VM_DEVICE_READ', 'vm.device.passthrough_device', True),
     ('VM_DEVICE_WRITE', 'vm.device.passthrough_device', True),
 ])
-def test_vm_device_read_write_roles_requiring_virtualization(role, method, valid_role):
-    with unprivileged_user_client(roles=[role]) as c:
-        if valid_role:
-            with pytest.raises(Exception) as ve:
-                c.call(method)
-            assert isinstance(ve.value, ValidationErrors) or ve.value.errno != errno.EACCES
-        else:
-            with pytest.raises(ClientException) as ve:
-                c.call(method)
-            assert ve.value.errno == errno.EACCES
-            assert ve.value.error == 'Not authorized'
+def test_vm_device_read_write_roles_requiring_virtualization(unprivileged_user_fixture, role, method, valid_role):
+    common_checks(unprivileged_user_fixture, method, role, valid_role)

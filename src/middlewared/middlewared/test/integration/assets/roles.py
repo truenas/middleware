@@ -1,16 +1,52 @@
+import collections
+import contextlib
 import errno
+import random
 import pytest
+import string
 
 from middlewared.client.client import ClientException
-from middlewared.test.integration.assets.account import unprivileged_user_client
+from middlewared.test.integration.assets.account import unprivileged_user
+from middlewared.test.integration.utils import call, client
+
+
+USER_FIXTURE_TUPLE = collections.namedtuple('UserFixture', 'username password group_name')
+
+
+@pytest.fixture(scope='session')
+def unprivileged_user_fixture(request):
+    suffix = ''.join([random.choice(string.ascii_lowercase + string.digits) for _ in range(8)])
+    group_name = f'unprivileged_users_fixture_{suffix}'
+    with unprivileged_user(
+        username=f'unprivileged_fixture_{suffix}',
+        group_name=group_name,
+        privilege_name=f'Unprivileged users fixture ({suffix})',
+        allowlist=[],
+        roles=[],
+        web_shell=False,
+    ) as t:
+        yield USER_FIXTURE_TUPLE(t.username, t.password, group_name)
+
+
+@contextlib.contextmanager
+def unprivileged_custom_user_client(user_client_context):
+    with client(auth=(user_client_context.username, user_client_context.password)) as c:
+        c.username = user_client_context.username
+        yield c
 
 
 def common_checks(
-    method, role, valid_role, valid_role_exception=True, method_args=None, method_kwargs=None, is_return_type_none=False
+    user_client_context, method, role, valid_role, valid_role_exception=True, method_args=None,
+    method_kwargs=None, is_return_type_none=False,
 ):
     method_args = method_args or []
     method_kwargs = method_kwargs or {}
-    with unprivileged_user_client(roles=[role]) as client:
+    privilege = call('privilege.query', [['local_groups.0.group', '=', user_client_context.group_name]])
+    assert len(privilege) > 0, 'Privilege not found'
+
+    call('privilege.update', privilege[0]['id'], {'roles': [role]})
+
+    with unprivileged_custom_user_client(user_client_context) as client:
         if valid_role:
             if valid_role_exception:
                 with pytest.raises(Exception) as exc_info:

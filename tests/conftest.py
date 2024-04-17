@@ -1,5 +1,6 @@
 import pytest
 
+from middlewared.test.integration.assets.roles import unprivileged_user_fixture  # noqa
 from middlewared.test.integration.utils.client import client, truenas_server
 from middlewared.test.integration.utils.pytest import failed
 

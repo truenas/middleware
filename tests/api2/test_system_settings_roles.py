@@ -20,9 +20,9 @@ from middlewared.test.integration.assets.roles import common_checks
     ('SYSTEM_GENERAL_READ', 'system.general.local_url', [], True, False, False),
 ])
 def test_catalog_read_and_write_role(
-    role, endpoint, payload, should_work, valid_role_exception, is_return_type_none
+    unprivileged_user_fixture, role, endpoint, payload, should_work, valid_role_exception, is_return_type_none
 ):
     common_checks(
-        endpoint, role, should_work, is_return_type_none=is_return_type_none,
+        unprivileged_user_fixture, endpoint, role, should_work, is_return_type_none=is_return_type_none,
         valid_role_exception=valid_role_exception, method_args=payload
     )

@@ -1,81 +1,44 @@
-import errno
-
 import pytest
 
-from middlewared.client import ClientException
-from middlewared.test.integration.assets.nfs import nfs_share
-from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.assets.account import unprivileged_user_client
-
-try:
-    from config import ADPASSWORD, ADUSERNAME
-except ImportError:
-    Reason = 'ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
-    pytestmark = pytest.mark.skip(reason=Reason)
-
-
-@pytest.fixture(scope="module")
-def ds():
-    with dataset("nfs_crud_test1") as ds:
-        yield ds
-
-
-@pytest.fixture(scope="module")
-def share():
-    with dataset("nfs_crud_test2") as ds:
-        with nfs_share(ds) as share:
-            yield share
+from middlewared.test.integration.assets.roles import common_checks
 
 
 @pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_NFS_READ"])
-def test_read_role_can_read(role):
-    with unprivileged_user_client(roles=[role]) as c:
-        c.call("sharing.nfs.query")
-        c.call("nfs.client_count")
+def test_read_role_can_read(unprivileged_user_fixture, role):
+    common_checks(unprivileged_user_fixture, "sharing.nfs.query", role, True, valid_role_exception=False)
+    common_checks(unprivileged_user_fixture, "nfs.client_count", role, True, valid_role_exception=False)
 
 
 @pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_NFS_READ"])
-def test_read_role_cant_write(ds, share, role):
-    with unprivileged_user_client(roles=[role]) as c:
-        with pytest.raises(ClientException) as ve:
-            c.call("sharing.nfs.create", {"path": f"/mnt/{ds}"})
-        assert ve.value.errno == errno.EACCES
+def test_read_role_cant_write(unprivileged_user_fixture, role):
+    common_checks(unprivileged_user_fixture, "sharing.nfs.create", role, False)
+    common_checks(unprivileged_user_fixture, "sharing.nfs.update", role, False)
+    common_checks(unprivileged_user_fixture, "sharing.nfs.delete", role, False)
 
-        with pytest.raises(ClientException) as ve:
-            c.call("sharing.nfs.update", share["id"], {})
-        assert ve.value.errno == errno.EACCES
-
-        with pytest.raises(ClientException) as ve:
-            c.call("sharing.nfs.delete", share["id"])
-        assert ve.value.errno == errno.EACCES
-
-        with pytest.raises(ClientException) as ve:
-            c.call("nfs.get_nfs3_clients")
-        assert ve.value.errno == errno.EACCES
-
-        with pytest.raises(ClientException) as ve:
-            c.call("nfs.get_nfs4_clients")
-        assert ve.value.errno == errno.EACCES
-
-        # This should be blocked before needing to mock any configuration
-        with pytest.raises(ClientException) as ve:
-            c.call("nfs.add_principal", {"username": ADUSERNAME, "password": ADPASSWORD})
-        assert ve.value.errno == errno.EACCES
+    common_checks(unprivileged_user_fixture, "nfs.get_nfs3_clients", role, False)
+    common_checks(unprivileged_user_fixture, "nfs.get_nfs4_clients", role, False)
+    common_checks(unprivileged_user_fixture, "nfs.add_principal", role, False)
 
 
 @pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_NFS_WRITE"])
-def test_write_role_can_write(ds, role):
-    with unprivileged_user_client(roles=[role]) as c:
-        share = c.call("sharing.nfs.create", {"path": f"/mnt/{ds}"})
+def test_write_role_can_write(unprivileged_user_fixture, role):
+    common_checks(unprivileged_user_fixture, "sharing.nfs.create", role, True)
+    common_checks(unprivileged_user_fixture, "sharing.nfs.update", role, True)
+    common_checks(unprivileged_user_fixture, "sharing.nfs.delete", role, True)
 
-        c.call("sharing.nfs.update", share["id"], {})
-        c.call("sharing.nfs.delete", share["id"])
-        c.call("nfs.get_nfs3_clients")
-        c.call("nfs.get_nfs4_clients")
-        # Multiple layers of dependencies to mock up this as a successful write
-        # c.call("nfs.add_principal", {"username": ADUSERNAME, "password": ADPASSWORD})
+    common_checks(unprivileged_user_fixture, "nfs.get_nfs3_clients", role, True, valid_role_exception=False)
+    common_checks(unprivileged_user_fixture, "nfs.get_nfs4_clients", role, True, valid_role_exception=False)
+    common_checks(unprivileged_user_fixture, "nfs.add_principal", role, True)
 
-        c.call("service.start", "nfs")
-        c.call("service.restart", "nfs")
-        c.call("service.reload", "nfs")
-        c.call("service.stop", "nfs")
+    common_checks(
+        unprivileged_user_fixture, "service.start", role, True, method_args=["nfs"], valid_role_exception=False
+    )
+    common_checks(
+        unprivileged_user_fixture, "service.restart", role, True, method_args=["nfs"], valid_role_exception=False
+    )
+    common_checks(
+        unprivileged_user_fixture, "service.reload", role, True, method_args=["nfs"], valid_role_exception=False
+    )
+    common_checks(
+        unprivileged_user_fixture, "service.stop", role, True, method_args=["nfs"], valid_role_exception=False
+    )
