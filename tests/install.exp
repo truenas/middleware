@@ -4,7 +4,7 @@ set vm [lindex $argv 0];
 set logfilepath [lindex $argv 1];
 log_file -noappend "$logfilepath"
 set timeout 600
-set PID [spawn vm console "$vm"]
+set PID [spawn virsh console "$vm"]
 send_user "Spawned PID: $PID \n"
 
 # boot serial
@@ -20,7 +20,6 @@ expect {
   }
 }
 
-
 # ┌────────────────────TrueNAS 22.12.0 Console Setup──────────────────────┐
 # │ ┌───────────────────────────────────────────────────────────────────┐ │
 # │ │                        1  Install/Upgrade                         │ │
@@ -35,7 +34,7 @@ expect {
 # └───────────────────────────────────────────────────────────────────────┘
 
 expect {
-  "Console Setup" {
+  "TrueNAS * Console Setup" {
     sleep .5
     send "1"
     send "\r"
@@ -47,7 +46,7 @@ expect {
   }
 }
 
-# ┌────────────────Choose destination media──────────────────┐
+# ┌────────────────Choose Destination Media──────────────────┐
 # │ Select one or more drives where TrueNAS should be        │
 # │ installed (use arrow keys to navigate to the drive(s)    │
 # │ for installation; select a drive with the spacebar).     │
@@ -62,7 +61,7 @@ expect {
 
 
 expect {
-  "Choose destination media" {
+  "Choose Destination Media" {
     sleep .5
     send \040
     send "\r"
