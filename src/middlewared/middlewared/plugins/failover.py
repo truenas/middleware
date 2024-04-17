@@ -750,7 +750,8 @@ class FailoverService(ConfigService):
                     'failover.send_file',
                     token,
                     os.path.join(local_path, effective_updatefile_name),
-                    os.path.join(remote_path, effective_updatefile_name)
+                    os.path.join(remote_path, effective_updatefile_name),
+                    {'mode': 0o600}
                 )
 
             local_version = self.middleware.call_sync('system.version')
