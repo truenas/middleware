@@ -230,9 +230,9 @@ class BootService(Service):
         async with self.__toggle_rootfs_readwrite():
             args = ['/']
             if options['database']:
-                args.append(['-d', options['database']])
+                args.extend(['-d', options['database']])
             if options['force']:
-                args.append(['-f'])
+                args.extend(['-f'])
 
             cp = await run(
                 '/usr/local/bin/truenas-initrd.py', *args,
