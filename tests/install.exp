@@ -7,6 +7,14 @@ set timeout 1800
 set PID [spawn vm console "$vm"]
 send_user "Spawned PID: $PID \n"
 
+# Select the serial console at the boot setup.
+expect {
+  "Autoboot" {
+    sleep .5
+    send "2"
+  }
+}
+
 # ┌───────────FreeNAS 11.3-MASTER-201810170704 Console Setup──────────────┐
 # │ ┌───────────────────────────────────────────────────────────────────┐ │
 # │ │                        1  Install/Upgrade                         │ │
@@ -21,7 +29,7 @@ send_user "Spawned PID: $PID \n"
 # └───────────────────────────────────────────────────────────────────────┘
 
 expect {
-  "Console Setup" {
+  "TrueNAS * Console Setup" {
     sleep .5
     send "1"
     send "\r"
@@ -149,14 +157,14 @@ expect {
 
 # Installation complete!
 expect {
-  "installation on ada0 succeeded!" {
+  "installation on * succeeded!" {
     send_user "Bhyve installation finished."
     sleep 5
     exit 0
   }
 
-  "installation on ada0 failed." {
-    send_user "Bhyve installation failed."
+  "installation on * failed." {
+    send_user "Installation failed."
     sleep 5
     exit 1
   }
