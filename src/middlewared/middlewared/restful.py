@@ -383,7 +383,7 @@ class OpenAPIResource(object):
         for schema in method_returns:
             self._schemas[method_name] = self._convert_schema(schema)
 
-        json_request = {'schema': {'$ref': f'#components/schemas/{method_name}'}}
+        json_request = {'schema': {'$ref': f'#/components/schemas/{method_name}'}}
 
         return {
             'description': 'Response schema:',
