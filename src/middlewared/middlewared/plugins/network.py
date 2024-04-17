@@ -618,7 +618,7 @@ class InterfaceService(CRUDService):
     async def checkin(self):
         """
         If this method is called after interface changes have been committed and within the checkin timeout,
-        then the task that automatically rollsback any interface changes is cancelled and the in-memory snapshot
+        then the task that automatically rolls back any interface changes is cancelled and the in-memory snapshot
         of database tables for the various interface tables will be cleared. The idea is that the end-user has
         verified the changes work as intended and need to be committed permanently.
         """
@@ -629,7 +629,7 @@ class InterfaceService(CRUDService):
     async def cancel_rollback(self):
         """
         If this method is called after interface changes have been committed and within the checkin timeout,
-        then the task that automatically rollsback any interface changes is cancelled and the in-memory snapshot
+        then the task that automatically rolls back any interface changes is cancelled and the in-memory snapshot
         of database tables for the various interface tables will NOT be cleared.
         """
         return await self.checkin_impl(clear_cache=False)
@@ -638,7 +638,7 @@ class InterfaceService(CRUDService):
     @returns(Int('remaining_seconds', null=True))
     async def checkin_waiting(self):
         """
-        Returns whether or not we are waiting user to checkin the applied network changes
+        Returns whether we are waiting user to check in the applied network changes
         before they are rolled back.
         Value is in number of seconds or null.
         """
@@ -657,7 +657,7 @@ class InterfaceService(CRUDService):
         """
         Commit/apply pending interfaces changes.
 
-        `rollback` as true (default) will rollback changes in case they fail to apply.
+        `rollback` as true (default) will roll back changes in case they fail to apply.
         `checkin_timeout` is the time in seconds it will wait for the checkin call to acknowledge
         the interfaces changes happened as planned from the user. If checkin does not happen
         within this period of time the changes will get reverted.
