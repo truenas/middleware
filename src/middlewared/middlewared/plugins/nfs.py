@@ -154,7 +154,7 @@ class NFSService(SystemServiceService):
                 with open('/proc/fs/nfsd/nfsv4recoverydir', 'r+') as fp:
                     fp.write(NFSPath.V4RECOVERYDIR.platform() + '\n')
             except Exception as e:
-                self.logger.error(f"Failed to update nfsv4recoverydir: %r", str(e))
+                self.logger.error("Failed to update nfsv4recoverydir: %r", str(e))
 
     @private
     async def nfs_extend(self, nfs):

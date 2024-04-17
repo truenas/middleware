@@ -38,7 +38,14 @@ NFS_PATH = "/mnt/" + dataset
 conf_file = {
     "nfs": {
         "pname": "/etc/nfs.conf.d/local.conf",
-        "sections": {'nfsd': {}, 'mountd': {}, 'statd': {}, 'lockd': {}}
+        "sections": {
+            'nfsd': {},
+            'exportd': {},
+            'nfsdcld': {},
+            'nfsdcltrack': {},
+            'mountd': {},
+            'statd': {},
+            'lockd': {}}
     },
     "idmapd": {
         "pname": "/etc/idmapd.conf",
@@ -396,8 +403,33 @@ def test_09_checking_to_see_if_nfs_service_is_running(request):
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
+def test_10_confirm_state_directory(request):
+    """
+    By default, the NFS state directory is at /var/lib/nfs.
+    To support HA systems, we moved this to the system dataset
+    at /var/db/system/nfs.  In support of this we updated the
+    NFS conf file settings
+    """
+    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
+
+    # Make sure the conf file has the expected settings
+    nfs_state_dir = '/var/db/system/nfs'
+    s = parse_server_config()
+    assert s['exportd']['state-directory-path'] == nfs_state_dir, str(s)
+    assert s['nfsdcld']['storagedir'] == os.path.join(nfs_state_dir, 'nfsdcld'), str(s)
+    assert s['nfsdcltrack']['storagedir'] == os.path.join(nfs_state_dir, 'nfsdcltrack'), str(s)
+    assert s['nfsdcld']['storagedir'] == os.path.join(nfs_state_dir, 'nfsdcld'), str(s)
+    assert s['mountd']['state-directory-path'] == nfs_state_dir, str(s)
+    assert s['statd']['state-directory-path'] == nfs_state_dir, str(s)
+    # Confirm we have the mount point in the system dataset
+    # ----------------------------------------------------------------------
+    # NOTE: Update test_001_ssh.py: test_002_first_boot_checks.
+    # NOTE: Test fresh-install and upgrade.
+    # ----------------------------------------------------------------------
+
+
 @pytest.mark.parametrize('vers', [3, 4])
-def test_10_perform_basic_nfs_ops(request, vers):
+def test_11_perform_basic_nfs_ops(request, vers):
     with SSH_NFS(ip, NFS_PATH, vers=vers, user=user, password=password, ip=ip) as n:
         n.create('testfile')
         n.mkdir('testdir')
@@ -412,7 +444,7 @@ def test_10_perform_basic_nfs_ops(request, vers):
         assert 'testfile' not in contents
 
 
-def test_11_perform_server_side_copy(request):
+def test_12_perform_server_side_copy(request):
     with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip) as n:
         n.server_side_copy('ssc1', 'ssc2')
 
@@ -1208,6 +1240,7 @@ def test_43_check_nfsv4_acl_support(request):
     4) For NFSv4.1 or NFSv4.2, repeat same process for each of the
        supported acl_flags.
     """
+    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
     acl_nfs_path = f'/mnt/{pool_name}/test_nfs4_acl'
     test_perms = {
         "READ_DATA": True,
