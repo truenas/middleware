@@ -187,7 +187,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'generate_ssl_certs'},
         ],
         'scst': [
-            {'type': 'mako', 'path': 'scst.conf', 'checkpoint': 'pool_import'},
+            {'type': 'mako', 'path': 'scst.conf', 'checkpoint': 'pool_import', 'mode': 0o600},
             {'type': 'mako', 'path': 'scst.env', 'checkpoint': 'pool_import', 'mode': 0o744},
         ],
         'scst_targets': [
