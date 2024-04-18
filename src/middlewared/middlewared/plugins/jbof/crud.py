@@ -354,17 +354,17 @@ class JBOFService(CRUDService):
             else:
                 raise CallError('Can not determine whether updating mgmt_ip1 or mgmt_ip2')
 
-        # Do we need to switch redfish to the other IOM
-        if redfish.mgmt_ip() in old_iom_mgmt_ips:
-            other_iom = 'IOM2' if iom == 'IOM1' else 'IOM1'
-            for mgmt_ip in redfish.iom_mgmt_ips(other_iom):
-                if mgmt_ip in config_mgmt_ips:
-                    redfish = self.ensure_redfish_client_cached({'mgmt_ip1': mgmt_ip,
-                                                                 'mgmt_username': config['mgmt_username'],
-                                                                 'mgmt_password': config['mgmt_password']})
-                    break
-
         if not force:
+            # Do we need to switch redfish to the other IOM
+            if redfish.mgmt_ip() in old_iom_mgmt_ips:
+                other_iom = 'IOM2' if iom == 'IOM1' else 'IOM1'
+                for mgmt_ip in redfish.iom_mgmt_ips(other_iom):
+                    if mgmt_ip in config_mgmt_ips:
+                        redfish = self.ensure_redfish_client_cached({'mgmt_ip1': mgmt_ip,
+                                                                     'mgmt_username': config['mgmt_username'],
+                                                                     'mgmt_password': config['mgmt_password']})
+                        break
+
             if redfish.mgmt_ip() in redfish.iom_mgmt_ips(iom):
                 raise CallError('Can not modify IOM network config thru same IOM')
 
@@ -442,8 +442,11 @@ class JBOFService(CRUDService):
             else:
                 # check is False ... don't attempt to communicate with the new IP
                 # just update the database.
+                new = config.copy()
+                new.update({ip_to_update: new_static_ip})
                 self.middleware.call_sync(
-                    'jbof.update', config['id'], {ip_to_update: new_static_ip}
+                    'datastore.update', self._config.datastore, config['id'], new,
+                    {'prefix': self._config.datastore_prefix}
                 )
         except Exception as e:
             self.logger.error(f'Unable to modify mgmt ip for {iom}/{ethindex}', exc_info=True)
