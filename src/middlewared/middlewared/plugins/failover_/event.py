@@ -660,10 +660,10 @@ class FailoverEventsService(Service):
         self.run_call('interface.persist_link_addresses')
 
         try:
-            logger.info('Updating HA boot status')
-            self.run_call('failover.reboot.check_reboot_required')
+            logger.info('Updating HA reboot info')
+            self.run_call('failover.reboot.info')
         except Exception:
-            logger.error('Failed to check if reboot is required after failover event', exc_info=True)
+            logger.warning('Failed to update reboot info', exc_info=True)
 
         logger.info('Failover event complete.')
 
