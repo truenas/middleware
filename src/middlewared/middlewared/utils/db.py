@@ -1,6 +1,7 @@
 import sqlite3
 
 FREENAS_DATABASE = '/data/freenas-v1.db'
+FREENAS_DATABASE_MODE = 0o600
 
 
 def dict_factory(cursor, row):
