@@ -8,7 +8,7 @@ import pytest
 
 from functions import if_key_listed, SSH_TEST
 from auto_config import ip, sshKey, user, password
-from middlewared.test.integration.utils import call, fail
+from middlewared.test.integration.utils import fail
 from middlewared.test.integration.utils.client import client
 
 
@@ -34,6 +34,7 @@ def test_002_firstboot_checks(ws_client):
     expected_ds = [
         'boot-pool/.system',
         'boot-pool/.system/cores',
+        'boot-pool/.system/nfs',
         'boot-pool/.system/samba4',
         'boot-pool/grub'
     ]
@@ -50,8 +51,8 @@ def test_002_firstboot_checks(ws_client):
     # always start in all circumstances (even if there is an invalid (or empty) config)
     ignore = ('smartd',)
     for srv in filter(lambda x: x['service'] not in ignore, ws_client.call('service.query')):
-        assert srv['enable'] is False
-        assert srv['state'] == 'STOPPED'
+        assert srv['enable'] is False, f"service {srv['service']} is unexpectedly enabled"
+        assert srv['state'] == 'STOPPED', f"service {srv['service']} expected STOPPED, but found {srv['state']}"
 
     # verify posix mode, uid and gid for standard users
     stat_info = {
