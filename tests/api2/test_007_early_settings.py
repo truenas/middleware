@@ -1,9 +1,3 @@
-import sys
-from os import getcwd
-
-apifolder = getcwd()
-sys.path.append(apifolder)
-
 from auto_config import ha
 from middlewared.test.integration.utils import call
 
