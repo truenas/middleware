@@ -141,6 +141,11 @@ def parse_rpcbind_config():
     return rv
 
 
+def get_nfs_service_state():
+    nfs_service = call('service.query', [['service', '=', 'nfs']], {'get': True})
+    return nfs_service['state']
+
+
 def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=None):
     '''
     Start or Stop NFS service
@@ -328,21 +333,29 @@ def nfs_config(options=None):
 
 
 # Enable NFS server
-def test_01_creating_the_nfs_server():
+def test_01_init_the_nfs_config():
     # initialize default_nfs_config for later restore
     save_nfs_config()
 
+    # Confirm NFS is not running
+    nfs_state = get_nfs_service_state()
+    assert nfs_state == 'STOPPED', f'Before update, expected NFS to be STOPPED, but found {nfs_state}'
+
     payload = {
-        "servers": 10,
         "mountd_port": 618,
         "allow_nonroot": False,
         "rpcstatd_port": 871,
         "rpclockd_port": 32803,
         "protocols": ["NFSV3", "NFSV4"]
     }
-    results = PUT("/nfs/", payload)
-    assert results.status_code == 200, results.text
-    # The service is not yet enabled, so we cannot yet confirm the settings
+    nfs_conf = call("nfs.update", payload)
+    assert nfs_conf['mountd_port'] == 618
+    assert nfs_conf['rpcstatd_port'] == 871
+    assert nfs_conf['rpclockd_port'] == 32803
+
+    # Confirm NFS remains not running
+    nfs_state = get_nfs_service_state()
+    assert nfs_state == 'STOPPED', f'After update, xpected NFS to be STOPPED, but found {nfs_state}'
 
 
 @pytest.mark.dependency(name='NFS_DATASET_CREATED')

@@ -51,8 +51,8 @@ def test_002_firstboot_checks(ws_client):
     # always start in all circumstances (even if there is an invalid (or empty) config)
     ignore = ('smartd',)
     for srv in filter(lambda x: x['service'] not in ignore, ws_client.call('service.query')):
-        assert srv['enable'] is False, f"service {srv['service']} is unexpectedly enabled"
-        assert srv['state'] == 'STOPPED', f"service {srv['service']} expected STOPPED, but found {srv['state']}"
+        assert srv['enable'] is False, f"{srv['service']} service is unexpectedly enabled"
+        assert srv['state'] == 'STOPPED', f"{srv['service']} service expected STOPPED, but found {srv['state']}"
 
     # verify posix mode, uid and gid for standard users
     stat_info = {
