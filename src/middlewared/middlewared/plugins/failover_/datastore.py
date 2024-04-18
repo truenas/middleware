@@ -85,7 +85,7 @@ class FailoverDatastoreService(Service):
 
     def send(self):
         token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
-        self.middleware.call_sync('failover.send_file', token, FREENAS_DATABASE, FREENAS_DATABASE_REPLICATED, {'mode': 0o600})
+        self.middleware.call_sync('failover.send_file', token, FREENAS_DATABASE, FREENAS_DATABASE_REPLICATED, {'mode': db_utils.FREENAS_DATABASE_MODE})
         self.middleware.call_sync('failover.call_remote', 'failover.datastore.receive')
 
         self.failure = False
