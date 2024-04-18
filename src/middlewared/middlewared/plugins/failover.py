@@ -7,6 +7,7 @@ import logging
 import os
 import shutil
 import socket
+import stat
 import textwrap
 import time
 from functools import partial
@@ -397,23 +398,29 @@ class FailoverService(ConfigService):
 
     @private
     def send_small_file(self, path, dest=None):
-        if dest is None:
-            dest = path
-        if not os.path.exists(path):
+        try:
+            with open(path, 'rb') as f:
+                st = os.fstat(f.fileno())
+                if not stat.S_ISREG(st.st_mode):
+                    raise CallError(f'{path!r} must be a regular file')
+
+                first = True
+                dest = path if dest is None else dest
+                opts = {'mode': st.st_mode, 'uid': st.st_uid, 'gid': st.st_gid}
+                while True:
+                    read = f.read(1024 * 1024 * 10)
+                    if not read:
+                        break
+
+                    opts.update({'append': not first})
+                    self.middleware.call_sync(
+                        'failover.call_remote',
+                        'filesystem.file_receive',
+                        [dest, base64.b64encode(read).decode(), opts]
+                    )
+                    first = False
+        except FileNotFoundError:
             return
-        mode = os.stat(path).st_mode
-        uid = os.stat(path).st_uid
-        gid = os.stat(path).st_gid
-        with open(path, 'rb') as f:
-            first = True
-            while True:
-                read = f.read(1024 * 1024 * 10)
-                if not read:
-                    break
-                self.middleware.call_sync('failover.call_remote', 'filesystem.file_receive', [
-                    dest, base64.b64encode(read).decode(), {'mode': mode, 'uid': uid, 'gid': gid, 'append': not first}
-                ])
-                first = False
 
     @private
     async def get_disks_local(self):
