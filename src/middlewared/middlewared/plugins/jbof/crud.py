@@ -442,8 +442,11 @@ class JBOFService(CRUDService):
             else:
                 # check is False ... don't attempt to communicate with the new IP
                 # just update the database.
+                new = config.copy()
+                new.update({ip_to_update: new_static_ip})
                 self.middleware.call_sync(
-                    'jbof.update', config['id'], {ip_to_update: new_static_ip}
+                    'datastore.update', self._config.datastore, config['id'], new,
+                    {'prefix': self._config.datastore_prefix}
                 )
         except Exception as e:
             self.logger.error(f'Unable to modify mgmt ip for {iom}/{ethindex}', exc_info=True)
