@@ -161,19 +161,20 @@ class RemoteClient:
             except Exception:
                 logger.warning('Failed to run callback for %s', name, exc_info=True)
 
-    def send_file(self, token, local_path, remote_path):
+    def send_file(self, token, local_path, remote_path, options=None):
         # No reason to honor proxy settings in this
         # method since we're sending across the
         # heartbeat interface which is point-to-point
         proxies = {'http': '', 'https': ''}
 
+        options = options or {}
         r = requests.post(
             f'http://{self.remote_ip}:6000/_upload/',
             proxies=proxies,
             files=[
                 ('data', json.dumps({
                     'method': 'filesystem.put',
-                    'params': [remote_path],
+                    'params': [remote_path, options],
                 })),
                 ('file', open(local_path, 'rb')),
             ],
@@ -298,8 +299,8 @@ class FailoverService(Service):
             return self.CLIENT.get_remote_os_version()
 
     @private
-    def send_file(self, token, src, dst):
-        self.CLIENT.send_file(token, src, dst)
+    def send_file(self, token, src, dst, options=None):
+        self.CLIENT.send_file(token, src, dst, options)
 
     @private
     async def ensure_remote_client(self):
