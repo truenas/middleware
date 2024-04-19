@@ -31,6 +31,7 @@ class SystemSecurityService(ConfigService):
         if not is_ha:
             return
 
+        await self.middleware.call('failover.call_remote', 'etc.generate', ['fips'])
         boot_info = await self.middleware.call('failover.reboot.info')
         if boot_info['this_node']['reboot_required']:
             # means FIPS is being toggled but this node is already pending a reboot

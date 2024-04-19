@@ -3,6 +3,7 @@ import os
 import shutil
 import sqlite3
 import subprocess
+import typing
 
 from middlewared.utils.db import query_config_table
 
@@ -37,6 +38,29 @@ def configure_fips(enable_fips: bool) -> None:
     modify_openssl_config(enable_fips)
 
 
+def get_active_be() -> typing.Optional[str]:
+    cp = subprocess.run(['zfs', 'get', '-o', 'name', '-H', 'name', '/'], capture_output=True, check=False)
+    if cp.returncode or not (active_be := cp.stdout.decode().strip()):
+        return None
+
+    return active_be
+
+
+def set_readonly(readonly: bool) -> None:
+    active_be = get_active_be()
+    if not active_be or subprocess.run(
+        ['zfs', 'get', '-H', 'truenas:developer', active_be], capture_output=True, check=False
+    ).stdout.decode().split()[-2] == 'on':
+        # We do not want to do anything here if developer mode is enabled or if we are not able to find active be
+        # because we are in chroot env in that case
+        return
+
+    subprocess.run(
+        ['zfs', 'set', f'readonly={"on" if readonly else "off"}', os.path.join(active_be, 'usr')],
+        capture_output=True, check=False
+    )
+
+
 def main() -> None:
     validate_system_state()
     try:
@@ -47,7 +71,9 @@ def main() -> None:
         # into the system
         security_settings = {'enable_fips': False}
 
+    set_readonly(False)
     configure_fips(security_settings['enable_fips'])
+    set_readonly(True)
 
 
 if __name__ == '__main__':
