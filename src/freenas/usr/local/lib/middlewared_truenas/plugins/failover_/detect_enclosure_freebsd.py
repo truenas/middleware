@@ -21,10 +21,9 @@ class EnclosureDetectionService(Service):
     @private
     def detect(self):
 
-        # First check if this is a BHYVE HA instance
-        manufacturer = self.middleware.call_sync(
-            'system.dmidecode_info'
-        )['system-product-name']
+        # First check if this is a BHYVE HA instance, or IXKVM HA instance
+        dmi = self.middleware.call_sync('system.dmidecode_info')
+        manufacturer = dmi['system-product-name']
 
         if manufacturer == 'BHYVE':
             devlist = subprocess.run(
@@ -49,8 +48,18 @@ class EnclosureDetectionService(Service):
                         self.NODE = 'B'
 
                     return self.HARDWARE, self.NODE
+        elif dmi['system-manufacturer'] == 'QEMU':
+            serial = dmi['system-serial-number']
+            if not serial.startswith('ha') and not serial.endswith(('_c1', '_c2')):
+                # truenas is often installed in KVM so we need to check our specific
+                # strings in DMI and bail out early here
+                return self.HARDWARE, self.NODE
+            else:
+                self.HARDWARE = 'IXKVM'
+                self.NODE = 'A' if serial[-1] == '1' else 'B'
+                return self.HARDWARE, self.NODE
 
-        # We're not BHYVE if we get here so identify the
+        # We're not BHYVE or IXKVM if we get here so identify the
         # hardware platform accordingly.
         enclosures = [
             '/dev/' + i for i in os.listdir('/dev')
