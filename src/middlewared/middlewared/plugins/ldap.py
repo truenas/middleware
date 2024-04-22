@@ -925,6 +925,7 @@ class LDAPService(ConfigService):
         await self.middleware.call('service.restart', 'nslcd')
 
         job.set_progress(50, 'Reconfiguring SMB service')
+        await self.set_state(DSStatus['HEALTHY'])
         await self.middleware.call('etc.generate', 'smb')
 
         if ldap['has_samba_schema']:
@@ -938,7 +939,6 @@ class LDAPService(ConfigService):
         else:
             await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
 
-        await self.set_state(DSStatus['HEALTHY'])
         job.set_progress(80, 'Restarting dependent services')
         cache_job = await self.middleware.call('dscache.refresh')
         await cache_job.wait()
