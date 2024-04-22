@@ -160,7 +160,7 @@ class NFSService(SystemServiceService):
         try:
             with open(procfs_path, 'r+') as fp:
                 fp.write(f'{NFSPath.V4RECOVERYDIR.path()}\n')
-        except FileNotFoundError:
+        except Exception:
             self.logger.error("Unexpected failure updating %r", procfs_path, exc_info=True)
 
     @private
