@@ -1,12 +1,10 @@
 import enum
 import errno
-import grp
 import ipaddress
 import itertools
 import os
 import pathlib
-import pwd
-import subprocess
+import shutil
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
@@ -26,14 +24,9 @@ class NFSPath(enum.Enum):
     STATEDIR = (os.path.join(SYSDATASET_PATH, 'nfs'), 0o755, True, {'uid': 0, 'gid': 0})
     CLDDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'nfsdcld'), 0o700, True, {'uid': 0, 'gid': 0})
     CLDTRKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'nfsdcltrack'), 0o700, True, {'uid': 0, 'gid': 0})
-    SMDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm'), 0o755, True, {
-        'uid': pwd.getpwnam("statd").pw_uid,
-        'gid': grp.getgrnam("nogroup").gr_gid
-    })
-    SMBAKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm.bak'), 0o755, True, {
-        'uid': pwd.getpwnam("statd").pw_uid,
-        'gid': grp.getgrnam("nogroup").gr_gid
-    })
+    # Fix up the uid and gid in setup_directories
+    SMDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm'), 0o755, True, {'uid': 'statd', 'gid': 'nogroup'})
+    SMBAKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm.bak'), 0o755, True, {'uid': 'statd', 'gid': 'nogroup'})
     V4RECOVERYDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'v4recovery'), 0o755, True, {'uid': 0, 'gid': 0})
 
     def platform(self):
@@ -110,7 +103,7 @@ class NFSService(SystemServiceService):
     )
 
     @private
-    async def setup_directories(self):
+    def setup_directories(self):
         '''
         We are moving the NFS state directory from /var/lib/nfs to
         the system dataset: /var/db/system/nfs.
@@ -121,33 +114,47 @@ class NFSService(SystemServiceService):
 
         We always make sure the expected directories are present
         '''
-        def create_dirs(spec, path):
-            try:
-                os.chmod(path, spec.mode())
-                stat = os.stat(path)
-                if (stat.st_uid != spec.owner().get('uid')) or (stat.st_gid != spec.owner().get('gid')):
-                    self.logger.warning("%s: invalid owner for path. Correcting.", path)
-                    os.chown(path, spec.owner().get('uid'), spec.owner().get('gid'))
-            except FileNotFoundError:
-                if spec.is_dir():
-                    os.mkdir(path, spec.mode())
-                    os.chown(path, spec.owner().get('uid'), spec.owner().get('gid'))
+        def name_to_id_conversion(usrgrp):
+            ''' Accept [usr,grp], return [usr,grp] as IDs '''
+            if any(isinstance(owner, str) for owner in usrgrp):
+                # Convert from name to ID, then apply
+                try:
+                    usrgrp[0] = self.middleware.call_sync('user.get_builtin_user_id', usrgrp[0])
+                    usrgrp[1] = self.middleware.call_sync('group.get_builtin_group_id', usrgrp[1])
+                except Exception as e:
+                    self.logger.error(
+                        "%s: Failed to apply ownership. usr=%r, grp=%r %r", usrgrp[0], usrgrp[1], e
+                    )
+            return usrgrp
 
-        if not os.listdir(NFSPath.STATEDIR.platform()):
-            # System db is empty, populate it with contents of /var/lib/nfs
-            # Going forward, the system dataset should hold the NFS state data
-            if not os.path.isdir('/var/lib/nfs'):
-                res = subprocess.run(
-                    ['cp', '-a', '/var/lib/nfs/*', NFSPath.STATEDIR.platform()], check=False, capture_output=True,
-                )
-                if res.returncode != 0:
-                    self.logger.error('Failed to initialize NFS state from /var/lib/nfs: %r', res.stderr.decode())
-                # Continue anyway.
+        # Initialize the system dataset NFS state directory
+        try:
+            if not any(os.scandir(NFSPath.STATEDIR.platform())):
+                # System db is empty, populate it with contents of /var/lib/nfs
+                # Going forward, the system dataset should hold the NFS state data
+                if not os.path.isdir('/var/lib/nfs'):
+                    try:
+                        shutil.copytree('/var/lib/nfs', NFSPath.STATEDIR.platform())
+                    except Exception as e:
+                        self.logger.error('Failed to initialize NFS state from /var/lib/nfs: %r', e)
+                    # Continue anyway.
+        except Exception as e:
+            self.logger.error("Could not find required path: %r", e)
 
         # Make sure we have the necessary directories
         for p in NFSPath:
             path = p.platform()
-            await self.middleware.run_in_thread(create_dirs, p, path)
+            usrgrp = name_to_id_conversion([p.owner().get('uid'), p.owner().get('gid')])
+            try:
+                os.chmod(path, p.mode())
+                stat = os.stat(path)
+                if (stat.st_uid != usrgrp[0]) or (stat.st_gid != usrgrp[1]):
+                    self.logger.info("%s: Fix up owner for path", path)
+                    os.chown(path, usrgrp[0], usrgrp[1])
+            except FileNotFoundError:
+                if p.is_dir():
+                    os.mkdir(path, p.mode())
+                    os.chown(path, usrgrp[0], usrgrp[1])
 
         if os.path.exists('/proc/fs/nfsd/nfsv4recoverydir'):
             try:
