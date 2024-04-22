@@ -156,12 +156,12 @@ class NFSService(SystemServiceService):
                     os.mkdir(path, p.mode())
                     os.chown(path, usrgrp[0], usrgrp[1])
 
-        if os.path.exists('/proc/fs/nfsd/nfsv4recoverydir'):
-            try:
-                with open('/proc/fs/nfsd/nfsv4recoverydir', 'r+') as fp:
-                    fp.write(NFSPath.V4RECOVERYDIR.platform() + '\n')
-            except Exception as e:
-                self.logger.error("Failed to update nfsv4recoverydir: %r", str(e))
+        procfs_path = '/proc/fs/nfsd/nfsv4recoverydir'
+        try:
+            with open(procfs_path, 'r+') as fp:
+                fp.write(f'{NFSPath.V4RECOVERYDIR.platform()}\n')
+        except FileNotFoundError:
+            self.logger.error("Unexpected failure updating %r", procfs_path, exec_info=True)
 
     @private
     async def nfs_extend(self, nfs):
