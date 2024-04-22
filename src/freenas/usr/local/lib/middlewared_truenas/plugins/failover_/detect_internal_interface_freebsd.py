@@ -35,6 +35,9 @@ class InternalInterfaceDetectionService(Service):
         if hardware == 'BHYVE':
             return ['vtnet1']
 
+        if hardware == 'IXKVM':
+            return ['vtnet0']
+
         if hardware == 'SBB':
             return ['ix0']
 

@@ -221,6 +221,7 @@ class FailoverService(ConfigService):
           SBB
           ULTIMATE
           BHYVE
+          IXKVM (HA VMs (on KVM) for CI)
           MANUAL
         """
 
