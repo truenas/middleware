@@ -29,7 +29,7 @@ class NFSPath(enum.Enum):
     SMBAKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm.bak'), 0o755, True, {'uid': 'statd', 'gid': 'nogroup'})
     V4RECOVERYDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'v4recovery'), 0o755, True, {'uid': 0, 'gid': 0})
 
-    def platform(self):
+    def path(self):
         return self.value[0]
 
     def mode(self):
@@ -129,12 +129,12 @@ class NFSService(SystemServiceService):
 
         # Initialize the system dataset NFS state directory
         try:
-            if not any(os.scandir(NFSPath.STATEDIR.platform())):
+            if not any(os.scandir(NFSPath.STATEDIR.path())):
                 # System db is empty, populate it with contents of /var/lib/nfs
                 # Going forward, the system dataset should hold the NFS state data
                 if not os.path.isdir('/var/lib/nfs'):
                     try:
-                        shutil.copytree('/var/lib/nfs', NFSPath.STATEDIR.platform())
+                        shutil.copytree('/var/lib/nfs', NFSPath.STATEDIR.path())
                     except Exception as e:
                         self.logger.error('Failed to initialize NFS state from /var/lib/nfs: %r', e)
                     # Continue anyway.
@@ -143,7 +143,7 @@ class NFSService(SystemServiceService):
 
         # Make sure we have the necessary directories
         for p in NFSPath:
-            path = p.platform()
+            path = p.path()
             usrgrp = name_to_id_conversion([p.owner().get('uid'), p.owner().get('gid')])
             try:
                 os.chmod(path, p.mode())
@@ -159,9 +159,9 @@ class NFSService(SystemServiceService):
         procfs_path = '/proc/fs/nfsd/nfsv4recoverydir'
         try:
             with open(procfs_path, 'r+') as fp:
-                fp.write(f'{NFSPath.V4RECOVERYDIR.platform()}\n')
+                fp.write(f'{NFSPath.V4RECOVERYDIR.path()}\n')
         except FileNotFoundError:
-            self.logger.error("Unexpected failure updating %r", procfs_path, exec_info=True)
+            self.logger.error("Unexpected failure updating %r", procfs_path, exc_info=True)
 
     @private
     async def nfs_extend(self, nfs):

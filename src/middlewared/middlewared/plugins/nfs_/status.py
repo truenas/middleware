@@ -19,7 +19,7 @@ class NFSService(Service):
         """
         entries = []
         with suppress(FileNotFoundError):
-            with open(os.path.join(NFSPath.STATEDIR.platform(), "rmtab"), "r") as f:
+            with open(os.path.join(NFSPath.STATEDIR.path(), "rmtab"), "r") as f:
                 for line in f:
                     ip, data = line.split(":", 1)
                     export, refcnt = line.rsplit(":", 1)
