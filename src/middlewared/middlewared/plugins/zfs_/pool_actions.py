@@ -186,6 +186,10 @@ class ZFSPoolService(Service):
         with libzfs.ZFS() as zfs:
             return zfs.get(name).scrub.asdict()
 
+    def expand_state(self, name):
+        with libzfs.ZFS() as zfs:
+            return zfs.get(name).expand.asdict()
+
     @accepts()
     def find_import(self):
         sp = self.get_search_paths()

@@ -1,3 +1,5 @@
+import asyncio
+
 from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import job, Service, ValidationErrors
 
@@ -40,7 +42,7 @@ class PoolService(Service):
             verrors.add('pool_attach.target_vdev', f'Attaching disks to {topology_type} not allowed.')
         elif topology_type == 'data':
             # We would like to make sure here that we don't have inconsistent vdev types across data
-            if vdev['type'] not in ('DISK', 'MIRROR'):
+            if vdev['type'] not in ('DISK', 'MIRROR', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3'):
                 verrors.add('pool_attach.target_vdev', f'Attaching disk to {vdev["type"]} vdev is not allowed.')
 
         # Let's validate new disk now
@@ -51,7 +53,7 @@ class PoolService(Service):
         )
         verrors.check()
 
-        guid = vdev['guid'] if vdev['type'] == 'DISK' else vdev['children'][0]['guid']
+        guid = vdev['guid'] if vdev['type'] in ['DISK', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3'] else vdev['children'][0]['guid']
         disks = {options['new_disk']: {'create_swap': topology_type == 'data', 'vdev': []}}
         await self.middleware.call('pool.format_disks', job, disks)
 
@@ -62,3 +64,25 @@ class PoolService(Service):
         await job.wrap(extend_job)
 
         self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
+
+        if vdev['type'] in ('RAIDZ1', 'RAIDZ2', 'RAIDZ3'):
+            while True:
+                expand = await self.middleware.call('zfs.pool.expand_state', pool['name'])
+
+                if expand['state'] is None:
+                    job.set_progress(0, 'Waiting for expansion to start')
+                    await asyncio.sleep(1)
+                    continue
+
+                if expand['state'] == 'FINISHED':
+                    job.set_progress(100, '')
+                    break
+
+                if expand['waiting_for_resilver']:
+                    message = 'Paused for resilver or clear'
+                else:
+                    message = 'Expanding'
+
+                job.set_progress(min(expand['percentage'], 100), message)
+
+                await asyncio.sleep(10 if expand['total_secs_left'] > 60 else 1)
