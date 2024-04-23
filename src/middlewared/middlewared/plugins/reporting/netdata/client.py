@@ -11,7 +11,7 @@ from .exceptions import ApiException, ClientConnectError
 from .utils import NETDATA_URI, NETDATA_REQUEST_TIMEOUT
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('netdata_api')
 
 
 class ClientMixin:
