@@ -60,7 +60,7 @@ def test__iscsi_extent__locked(request):
         with iscsi_extent({
             "name": "test_extent",
             "type": "DISK",
-            "disk": f"zvol/{ds}",
+            "disk": f"zvol/{ds.replace(' ', '+')}",
         }) as extent:
             assert not extent["locked"]
 
