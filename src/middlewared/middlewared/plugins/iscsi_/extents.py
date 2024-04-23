@@ -8,7 +8,7 @@ import uuid
 import middlewared.sqlalchemy as sa
 
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.plugins.zfs_.utils import zvol_path_to_name
+from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import CallError, private, SharingService, ValidationErrors
 from middlewared.utils.size import format_size
@@ -327,7 +327,8 @@ class iSCSITargetExtentService(SharingService):
                 verrors.add(f'{schema_name}.disk', 'Disk name must start with "zvol/"')
                 raise verrors
 
-            device = os.path.join('/dev', disk.replace(" ", "+"))
+            # When providing a parameter here, skip past the 'zvol/'
+            device = zvol_name_to_path(disk[5:])
 
             zvol_name = zvol_path_to_name(device)
             if not os.path.exists(device):
