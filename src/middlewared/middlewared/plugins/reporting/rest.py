@@ -1,9 +1,14 @@
+import logging
+
 from middlewared.service import accepts, Service
 from middlewared.schema import Str, Dict, Int
 from middlewared.utils.cpu import cpu_info
 
 from .netdata import ClientConnectError, Netdata
 from .utils import calculate_disk_space_for_netdata, get_metrics_approximation, TIER_0_POINT_SIZE, TIER_1_POINT_SIZE
+
+
+logger = logging.getLogger('netdata_api')
 
 
 class NetdataService(Service):
@@ -38,7 +43,7 @@ class NetdataService(Service):
         try:
             return await Netdata.get_all_metrics()
         except ClientConnectError:
-            self.logger.debug('Failed to connect to netdata when retrieving all metrics')
+            logger.debug('Failed to connect to netdata when retrieving all metrics')
             return {}
 
     def calculated_metrics_count(self):
