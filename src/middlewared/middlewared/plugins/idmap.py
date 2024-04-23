@@ -15,6 +15,10 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.validators import Range
 from middlewared.plugins.smb import SMBPath
+try:
+    from pysss_murmur import murmurhash3
+except ImportError:
+    murmurhash3 = None
 
 
 """
@@ -366,47 +370,8 @@ class IdmapDomainService(CRUDService):
         range_max = sssd_config.get('range_max', 2000200000)
         max_slices = int((range_max - range_low) / range_size)
 
-        data = bytearray(sid.encode())
-        datalen = len(data)
-        hash_ = seed
-        data_bytes = data
-
-        c1 = 0xcc9e2d51
-        c2 = 0x1b873593
-        r1 = 15
-        r2 = 13
-        n = 0xe6546b64
-
-        while datalen >= 4:
-            k = int.from_bytes(data_bytes[:4], byteorder='little') & 0xFFFFFFFF
-            data_bytes = data_bytes[4:]
-            datalen = datalen - 4
-            k = (k * c1) & 0xFFFFFFFF
-            k = (k << r1 | k >> 32 - r1) & 0xFFFFFFFF
-            k = (k * c2) & 0xFFFFFFFF
-            hash_ ^= k
-            hash_ = (hash_ << r2 | hash_ >> 32 - r2) & 0xFFFFFFFF
-            hash_ = (hash_ * 5 + n) & 0xFFFFFFFF
-
-        if datalen > 0:
-            k = 0
-            if datalen >= 3:
-                k = k | data_bytes[2] << 16
-            if datalen >= 2:
-                k = k | data_bytes[1] << 8
-            if datalen >= 1:
-                k = k | data_bytes[0]
-                k = (k * c1) & 0xFFFFFFFF
-                k = (k << r1 | k >> 32 - r1) & 0xFFFFFFFF
-                k = (k * c2) & 0xFFFFFFFF
-                hash_ ^= k
-
-        hash_ = (hash_ ^ len(data)) & 0xFFFFFFFF
-        hash_ ^= hash_ >> 16
-        hash_ = (hash_ * 0x85ebca6b) & 0xFFFFFFFF
-        hash_ ^= hash_ >> 13
-        hash_ = (hash_ * 0xc2b2ae35) & 0xFFFFFFFF
-        hash_ ^= hash_ >> 16
+        data = sid.encode()
+        hash_ = murmurhash3(data, len(data), seed)
 
         return (hash_ % max_slices) * range_size + range_size
 

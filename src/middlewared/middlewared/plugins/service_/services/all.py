@@ -8,10 +8,10 @@ from .netbios import NetBIOSService
 from .netdata import NetdataService
 from .nfs import NFSService
 from .nscd import NSCDService
-from .nslcd import NSSPamLdapdService
 from .smartd import SMARTDService
 from .snmp import SNMPService
 from .ssh import SSHService
+from .sssd import SSSDService
 from .truecommand import TruecommandService
 from .ups import UPSService
 from .wsd import WSDService
@@ -52,10 +52,10 @@ all_services = [
     NetBIOSService,
     NFSService,
     NSCDService,
-    NSSPamLdapdService,
     SMARTDService,
     SNMPService,
     SSHService,
+    SSSDService,
     UPSService,
     WSDService,
     NetdataService,

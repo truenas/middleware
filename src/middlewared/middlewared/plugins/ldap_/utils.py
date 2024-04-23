@@ -13,11 +13,11 @@ def search_base_data_to_params(data):
 
         match base:
             case constants.SEARCH_BASE_USER:
-                search_params.append(f'base passwd {value}')
+                search_params.append(f'ldap_user_search_base = {value}')
             case constants.SEARCH_BASE_GROUP:
-                search_params.append(f'base group {value}')
+                search_params.append(f'ldap_group_search_base = {value}')
             case constants.SEARCH_BASE_NETGROUP:
-                search_params.append(f'base netgroup {value}')
+                search_params.append(f'ldap_netgroup_search_base = {value}')
             case _:
                 raise ValueError(f'{base}: unexpected LDAP search base type')
 
@@ -38,51 +38,52 @@ def attribute_maps_data_to_params(data):
             match key:
                 # passwd
                 case constants.ATTR_USER_OBJ:
-                    map_params.append(f'filter passwd (objectClass={value})')
+                    map_params.append(f'ldap_user_object_class = (objectClass={value})')
                 case constants.ATTR_USER_NAME:
-                    map_params.append(f'map passwd uid {value}')
+                    map_params.append(f'ldap_user_user_name = {value}')
                 case constants.ATTR_USER_UID:
-                    map_params.append(f'map passwd uidNumber {value}')
+                    map_params.append(f'ldap_user_uid_number = {value}')
                 case constants.ATTR_USER_GID:
-                    map_params.append(f'map passwd gidNumber {value}')
+                    map_params.append(f'ldap_user_gid_number = {value}')
                 case constants.ATTR_USER_GECOS:
-                    map_params.append(f'map passwd gecos {value}')
+                    map_params.append(f'ldap_user_gecos = {value}')
                 case constants.ATTR_USER_HOMEDIR:
-                    map_params.append(f'map passwd homeDirectory {value}')
+                    map_params.append(f'ldap_user_home_directory = {value}')
                 case constants.ATTR_USER_SHELL:
-                    map_params.append(f'map passwd loginShell {value}')
+                    map_params.append(f'ldap_user_shell = {value}')
 
                 # shadow
                 case constants.ATTR_SHADOW_OBJ:
-                    map_params.append(f'filter shadow (objectClass={value})')
+                    # SSSD does not support overriding object class for shadow
+                    map_params.append('')
                 case constants.ATTR_SHADOW_LAST_CHANGE:
-                    map_params.append(f'map shadow shadowLastChange {value}')
+                    map_params.append(f'ldap_user_shadow_last_change = {value}')
                 case constants.ATTR_SHADOW_MIN:
-                    map_params.append(f'map shadow shadowMin {value}')
+                    map_params.append(f'ldap_user_shadow_min = {value}')
                 case constants.ATTR_SHADOW_MAX:
-                    map_params.append(f'map shadow shadowMax {value}')
+                    map_params.append(f'ldap_user_shadow_max = {value}')
                 case constants.ATTR_SHADOW_WARNING:
-                    map_params.append(f'map shadow shadowWarning {value}')
+                    map_params.append(f'ldap_user_shadow_warning = {value}')
                 case constants.ATTR_SHADOW_INACTIVE:
-                    map_params.append(f'map shadow shadowInactive {value}')
+                    map_params.append(f'ldap_user_shadow_inactive = {value}')
                 case constants.ATTR_SHADOW_EXPIRE:
-                    map_params.append(f'map shadow shadowExpire {value}')
+                    map_params.append(f'ldap_user_shadow_expire = {value}')
 
                 # group
                 case constants.ATTR_GROUP_OBJ:
-                    map_params.append(f'filter group (objectClass={value})')
+                    map_params.append(f'ldap_group_object_class = (objectClass={value})')
                 case constants.ATTR_GROUP_GID:
-                    map_params.append(f'map group gidNumber {value}')
+                    map_params.append(f'ldap_group_gid_number = {value}')
                 case constants.ATTR_GROUP_MEMBER:
-                    map_params.append(f'map group member {value}')
+                    map_params.append(f'ldap_group_member = {value}')
 
                 # netgroup
                 case constants.ATTR_NETGROUP_OBJ:
-                    map_params.append(f'filter netgroup (objectClass={value})')
+                    map_params.append(f'ldap_netgroup_object_class = (objectClass={value})')
                 case constants.ATTR_NETGROUP_MEMBER:
-                    map_params.append(f'map netgroup memberNisNetgroup {value}')
+                    map_params.append(f'ldap_netgroup_member = {value}')
                 case constants.ATTR_NETGROUP_TRIPLE:
-                    map_params.append(f'map netgroup nisNetgroupTriple {value}')
+                    map_params.append(f'ldap_netgroup_triple = {value}')
                 case _:
                     raise ValueError(f'{key}: unexpected attribute map parameter for {nss_type}')
 
