@@ -5,6 +5,7 @@ class IdmapService(SimpleService):
     name = "idmap"
     reloadable = True
     restartable = True
+    default_ha_propagate = False
 
     systemd_unit = "winbind"
 

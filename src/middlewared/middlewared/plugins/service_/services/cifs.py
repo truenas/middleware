@@ -7,6 +7,7 @@ from middlewared.service_exception import CallError
 class CIFSService(SimpleService):
     name = "cifs"
     reloadable = True
+    default_ha_propagate = False
 
     etc = ["smb"]
 

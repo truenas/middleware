@@ -5,6 +5,7 @@ class ServiceInterface:
     restartable = False  # Implements `restart` method instead of `stop` + `start`
     reloadable = False  # Implements `reload` method
     deprecated = False  # Alert if service is running
+    default_ha_propagate = True # If HA propagate service changes to other node
 
     def __init__(self, middleware):
         self.middleware = middleware

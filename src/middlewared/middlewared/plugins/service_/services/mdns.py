@@ -4,6 +4,7 @@ from .base import SimpleService
 class MDNSService(SimpleService):
     name = "mdns"
     reloadable = True
+    default_ha_propagate = False
 
     etc = ["mdns"]
 

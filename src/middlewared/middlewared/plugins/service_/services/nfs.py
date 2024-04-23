@@ -6,6 +6,7 @@ from .base import SimpleService
 class NFSService(SimpleService):
     name = "nfs"
     reloadable = True
+    default_ha_propagate = False
 
     etc = ["nfsd"]
 

@@ -199,6 +199,7 @@ class TimeservicesService(PseudoServiceBase):
 
 class DSCacheService(PseudoServiceBase):
     name = "dscache"
+    default_ha_propagate = False
 
     async def start(self):
         await self.middleware.call('dscache.refresh')

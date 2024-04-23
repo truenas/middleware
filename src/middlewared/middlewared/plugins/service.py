@@ -89,6 +89,12 @@ class ServiceService(CRUDService):
     async def service_extend(self, svc, ctx):
         return svc | ctx.get(svc['service'], {'state': 'UNKNOWN', 'pids': []})
 
+    async def __normalize_service_options(self, svc_obj, options):
+        if options.get('ha_propagate') != None:
+            return options
+
+        return options | {'ha_propagate': svc_obj.default_ha_propagate}
+
     @filterable
     async def query(self, filters, options):
         """
@@ -149,7 +155,7 @@ class ServiceService(CRUDService):
         Str('service'),
         Dict(
             'service-control',
-            Bool('ha_propagate', default=True),
+            Bool('ha_propagate'),
             Bool('silent', default=True),
             register=True,
         ),
@@ -165,6 +171,8 @@ class ServiceService(CRUDService):
         then in case of service startup failure, an exception will be raised.
         """
         service_object = await self.middleware.call('service.object', service)
+
+        options = await self.__normalize_service_options(service_object, options)
 
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to start service', errno.EPERM)
@@ -249,6 +257,8 @@ class ServiceService(CRUDService):
         """
         service_object = await self.middleware.call('service.object', service)
 
+        options = await self.__normalize_service_options(service_object, options)
+
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to stop service')
 
@@ -284,6 +294,8 @@ class ServiceService(CRUDService):
         Restart the service specified by `service`.
         """
         service_object = await self.middleware.call('service.object', service)
+
+        options = await self.__normalize_service_options(service_object, options)
 
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to restart service', errno.EPERM)
@@ -346,6 +358,8 @@ class ServiceService(CRUDService):
         Reload the service specified by `service`.
         """
         service_object = await self.middleware.call('service.object', service)
+
+        options = await self.__normalize_service_options(service_object, options)
 
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to restart service', errno.EPERM)
