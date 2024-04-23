@@ -327,7 +327,7 @@ class iSCSITargetExtentService(SharingService):
                 verrors.add(f'{schema_name}.disk', 'Disk name must start with "zvol/"')
                 raise verrors
 
-            device = os.path.join('/dev', disk)
+            device = os.path.join('/dev', disk.replace(" ", "+"))
 
             zvol_name = zvol_path_to_name(device)
             if not os.path.exists(device):
