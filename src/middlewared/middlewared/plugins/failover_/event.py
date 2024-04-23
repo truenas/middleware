@@ -17,6 +17,7 @@ from middlewared.service import Service, job, accepts
 from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Bool, Int
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
+from middlewared.plugins.directoryservices import DEPENDENT_SERVICES
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 
@@ -105,6 +106,12 @@ class FailoverEventsService(Service):
             to_restart = [i for i in to_restart if i in self.CRITICAL_SERVICES]
         else:
             to_restart = [i for i in to_restart if i not in self.CRITICAL_SERVICES]
+
+        # Some service restarts need to be handled within the directory services plugin
+        # via directoryservice.setup if LDAP or AD is enabled
+        ds_state = await self.middleware.call('directoryservices.get_state')
+        if ds_state['activedirectory'] != 'DISABLED' or ds_state['ldap'] != 'DISABLED':
+            to_restart = [i for i in to_restart if i not in DEPENDENT_SERVICES]
 
         exceptions = await asyncio.gather(
             *[
