@@ -160,6 +160,9 @@ class NFSService(SystemServiceService):
         try:
             with open(procfs_path, 'r+') as fp:
                 fp.write(f'{NFSPath.V4RECOVERYDIR.path()}\n')
+        except FileNotFoundError:
+            # When this is removed from the kernel we will have a gentle reminder
+            self.logger.info("%r: Proc file has been removed", procfs_path)
         except Exception:
             self.logger.error("Unexpected failure updating %r", procfs_path, exc_info=True)
 
