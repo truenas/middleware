@@ -198,7 +198,7 @@ class Job:
                 trace={
                     'class': job['exc_info']['type'],
                     'formatted': job['exception'],
-                    'repr': job['exc_info'].get('repr'),
+                    'repr': job['exc_info'].get('repr', job['exception'].splitlines()[-1]),
                 },
                 extra=job['exc_info']['extra']
             )
