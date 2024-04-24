@@ -31,7 +31,6 @@ def my_ip4():
         sock.close()
         # Check that we have an IPv4 address
         socket.inet_pton(socket.AF_INET, myip)
-        print("BRIAN myip", myip)
         return myip
 
 
