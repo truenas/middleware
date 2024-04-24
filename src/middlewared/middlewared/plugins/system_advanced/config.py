@@ -1,5 +1,7 @@
 import os
 import re
+import tempfile
+import textwrap
 import warnings
 
 from copy import deepcopy
@@ -9,6 +11,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Password, returns, Str
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.validators import Range
+from middlewared.utils import run
 
 
 class SystemAdvancedModel(sa.Model):
@@ -172,6 +175,18 @@ class SystemAdvancedService(ConfigService):
         for invalid_char in ('\n', '"'):
             if invalid_char in data['kernel_extra_options']:
                 verrors.add('kernel_extra_options', f'{invalid_char!r} is an invalid character and not allowed')
+
+        with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as f:
+            f.write(textwrap.dedent(f"""\
+                menuentry 'TrueNAS' {{
+                    linux /boot/vmlinuz {data['kernel_extra_options']}
+                }}
+            """))
+            f.flush()
+
+            result = await run(["grub-script-check", f.name], check=False)
+            if result.returncode != 0:
+                verrors.add('kernel_extra_options', 'Invalid syntax')
 
         invalid_param = 'systemd.unified_cgroup_hierarchy'
         if invalid_param in data['kernel_extra_options']:
