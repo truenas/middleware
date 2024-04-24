@@ -187,6 +187,7 @@ class InterfaceService(CRUDService):
         """
         Query Interfaces with `query-filters` and `query-options`
         """
+        retrieve_names_only = options.get('extra', {}).get('retrieve_names_only')
         data = {}
         configs = {
             i['int_interface']: i
@@ -212,6 +213,12 @@ class InterfaceService(CRUDService):
                 # interface so users can't configure it
                 continue
 
+            if retrieve_names_only:
+                data[name] = {
+                    'name': name,
+                }
+                continue
+
             iface_extend_kwargs = {}
             if ha_hardware:
                 vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
@@ -221,28 +228,33 @@ class InterfaceService(CRUDService):
             except OSError:
                 self.logger.warn('Failed to get interface state for %s', name, exc_info=True)
         for name, config in filter(lambda x: x[0] not in data, configs.items()):
-            data[name] = self.iface_extend({
-                'name': config['int_interface'],
-                'orig_name': config['int_interface'],
-                'description': config['int_name'],
-                'aliases': [],
-                'link_address': '',
-                'permanent_link_address': None,
-                'hardware_link_address': '',
-                'cloned': True,
-                'mtu': 1500,
-                'flags': [],
-                'nd6_flags': [],
-                'capabilities': [],
-                'link_state': '',
-                'media_type': '',
-                'media_subtype': '',
-                'active_media_type': '',
-                'active_media_subtype': '',
-                'supported_media': [],
-                'media_options': [],
-                'vrrp_config': [],
-            }, configs, ha_hardware, fake=True)
+            if retrieve_names_only:
+                data[name] = {
+                    'name': name,
+                }
+            else:
+                data[name] = self.iface_extend({
+                    'name': config['int_interface'],
+                    'orig_name': config['int_interface'],
+                    'description': config['int_name'],
+                    'aliases': [],
+                    'link_address': '',
+                    'permanent_link_address': None,
+                    'hardware_link_address': '',
+                    'cloned': True,
+                    'mtu': 1500,
+                    'flags': [],
+                    'nd6_flags': [],
+                    'capabilities': [],
+                    'link_state': '',
+                    'media_type': '',
+                    'media_subtype': '',
+                    'active_media_type': '',
+                    'active_media_subtype': '',
+                    'supported_media': [],
+                    'media_options': [],
+                    'vrrp_config': [],
+                }, configs, ha_hardware, fake=True)
         return filter_list(list(data.values()), filters, options)
 
     @private
