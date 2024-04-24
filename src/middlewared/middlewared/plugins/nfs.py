@@ -130,14 +130,16 @@ class NFSService(SystemServiceService):
         # Initialize the system dataset NFS state directory
         try:
             if not any(os.scandir(NFSPath.STATEDIR.path())):
-                # System db is empty, populate it with contents of /var/lib/nfs
-                # Going forward, the system dataset should hold the NFS state data
-                if not os.path.isdir('/var/lib/nfs'):
-                    try:
-                        shutil.copytree('/var/lib/nfs', NFSPath.STATEDIR.path())
-                    except Exception as e:
-                        self.logger.error('Failed to initialize NFS state from /var/lib/nfs: %r', e)
-                    # Continue anyway.
+                # System db is empty, populate it with contents of /var/lib/nfs.
+                # This should be a one-time operation.
+                # Going forward, the system dataset will hold the NFS state data.
+                try:
+                    shutil.copytree('/var/lib/nfs', NFSPath.STATEDIR.path())
+                except FileExistsError:
+                    pass
+                except Exception as e:
+                    self.logger.error('Failed to initialize NFS state from /var/lib/nfs: %r', e)
+                # Continue anyway.
         except Exception as e:
             self.logger.error("Could not find required path: %r", e)
 
