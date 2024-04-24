@@ -1,8 +1,8 @@
 <%
-    from middlewared.plugins.nfs import NFSPath
-    state_path = NFSPath.STATEDIR.path()
-    cld_storedir = NFSPath.CLDDIR.path()
-    cltrack_storedir = NFSPath.CLDTRKDIR.path()
+    from middlewared.plugins.nfs import NFSServicePathInfo
+    state_path = NFSServicePathInfo.STATEDIR.path()
+    cld_storedir = NFSServicePathInfo.CLDDIR.path()
+    cltrack_storedir = NFSServicePathInfo.CLDTRKDIR.path()
     config = render_ctx["nfs.config"]
 
     # Fail-safe setting is two nfsd

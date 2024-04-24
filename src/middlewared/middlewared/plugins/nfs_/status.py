@@ -1,4 +1,4 @@
-from middlewared.plugins.nfs import NFSPath
+from middlewared.plugins.nfs import NFSServicePathInfo
 from middlewared.schema import accepts, Int, returns, Str, Dict
 from middlewared.service import Service, private, filterable, filterable_returns
 from middlewared.utils import filter_list
@@ -19,7 +19,7 @@ class NFSService(Service):
         """
         entries = []
         with suppress(FileNotFoundError):
-            with open(os.path.join(NFSPath.STATEDIR.path(), "rmtab"), "r") as f:
+            with open(os.path.join(NFSServicePathInfo.STATEDIR.path(), "rmtab"), "r") as f:
                 for line in f:
                     ip, data = line.split(":", 1)
                     export, refcnt = line.rsplit(":", 1)

@@ -19,7 +19,7 @@ from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, g
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 
 
-class NFSPath(enum.Enum):
+class NFSServicePathInfo(enum.Enum):
     # nfs conf sections that use STATEDIR: exportd, mountd, statd
     STATEDIR = (os.path.join(SYSDATASET_PATH, 'nfs'), 0o755, True, {'uid': 0, 'gid': 0})
     CLDDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'nfsdcld'), 0o700, True, {'uid': 0, 'gid': 0})
@@ -103,6 +103,30 @@ class NFSService(SystemServiceService):
     )
 
     @private
+    def name_to_id_converstion(self, name, name_type='user'):
+        ''' Convert built-in user or group name to associated UID or GID '''
+        if any((not isinstance(name, str), isinstance(name, int))):
+            # it's not a string (NoneType, float, w/e) or it's an int
+            # so there is nothing to do
+            return name
+
+        if name_type == 'user':
+            method = 'user.get_builtin_user_id'
+        elif name_type == 'group':
+            method = 'group.get_builtin_group_id'
+        else:
+            self.logger.error('Unexpected name_type (%r)', name_type)
+            return name
+        try:
+            return self.middleware.call_sync(method, name)
+        except Exception as e:
+            if hasattr(e, 'errno') and e.errno == errno.ENOENT:
+                self.logger.error('Failed to resolve builtin %s %r', name_type, name)
+            else:
+                self.logger.error('Unexpected error resolving builtin %s %r', name_type, name, exc_info=True)
+            return name
+
+    @private
     def setup_directories(self):
         '''
         We are moving the NFS state directory from /var/lib/nfs to
@@ -114,54 +138,51 @@ class NFSService(SystemServiceService):
 
         We always make sure the expected directories are present
         '''
-        def name_to_id_conversion(usrgrp):
-            ''' Accept [usr,grp], return [usr,grp] as IDs '''
-            if any(isinstance(owner, str) for owner in usrgrp):
-                # Convert from name to ID, then apply
-                try:
-                    usrgrp[0] = self.middleware.call_sync('user.get_builtin_user_id', usrgrp[0])
-                    usrgrp[1] = self.middleware.call_sync('group.get_builtin_group_id', usrgrp[1])
-                except Exception as e:
-                    self.logger.error(
-                        "%s: Failed to apply ownership. usr=%r, grp=%r %r", usrgrp[0], usrgrp[1], e
-                    )
-            return usrgrp
 
         # Initialize the system dataset NFS state directory
+        state_dir = NFSServicePathInfo().STATEDIR.path()
         try:
-            if not any(os.scandir(NFSPath.STATEDIR.path())):
-                # System db is empty, populate it with contents of /var/lib/nfs.
-                # This should be a one-time operation.
-                # Going forward, the system dataset will hold the NFS state data.
-                try:
-                    shutil.copytree('/var/lib/nfs', NFSPath.STATEDIR.path())
-                except FileExistsError:
-                    pass
-                except Exception as e:
-                    self.logger.error('Failed to initialize NFS state from /var/lib/nfs: %r', e)
-                # Continue anyway.
-        except Exception as e:
-            self.logger.error("Could not find required path: %r", e)
+            shutil.copytree('/var/lib/nfs', state_dir)
+        except FileExistsError:
+            # destination file/dir already exists so ignore error
+            pass
+        except Exception:
+            self.logger.error('Unexpected error initializing %r', state_dir, exc_info=True)
 
         # Make sure we have the necessary directories
-        for p in NFSPath:
-            path = p.path()
-            usrgrp = name_to_id_conversion([p.owner().get('uid'), p.owner().get('gid')])
+        for i in NFSServicePathInfo:
+            uid = self.name_to_id_conversion(i.owner()['uid'], name_type='user')
+            gid = self.name_to_id_conversion(i.owner()['gid'], name_type='group')
+            path = i.path()
+            if i.is_dir():
+                open_flags = os.O_RDWR | os.O_DIRECTORY
+                os.makedirs(path, exist_ok=True)
+            else:
+                open_flags = os.O_RDWR
+
             try:
-                os.chmod(path, p.mode())
-                stat = os.stat(path)
-                if (stat.st_uid != usrgrp[0]) or (stat.st_gid != usrgrp[1]):
-                    self.logger.info("%s: Fix up owner for path", path)
-                    os.chown(path, usrgrp[0], usrgrp[1])
-            except FileNotFoundError:
-                if p.is_dir():
-                    os.mkdir(path, p.mode())
-                    os.chown(path, usrgrp[0], usrgrp[1])
+                with open(os.open(path, flags=open_flags)) as f:
+                    os.fchmod(f.fileno(), i.mode())
+                    os.fchown(f.fileno(), uid, gid)
+            except IsADirectoryError:
+                if not i.is_dir():
+                    # the path is expected to be a file but it's a directory
+                    self.logger.error('Expected %r to be a file but instead found a directory', path)
+                else:
+                    self.logger.error('Unexpected failure updating file %r', path, exc_info=True)
+            except NotADirectoryError:
+                if i.is_dir():
+                    # the path is expected to be a directory but it's a file
+                    self.logger.error('Expected %r to be a directory but instead found a file', path)
+                else:
+                    self.logger.error('Unexpected failure updating directory %r', path, exc_info=True)
+            except Exception:
+                self.logger.error('Unexpected failure initializing %r', path, exc_info=True)
 
         procfs_path = '/proc/fs/nfsd/nfsv4recoverydir'
         try:
             with open(procfs_path, 'r+') as fp:
-                fp.write(f'{NFSPath.V4RECOVERYDIR.path()}\n')
+                fp.write(f'{NFSServicePathInfo.V4RECOVERYDIR.path()}\n')
         except FileNotFoundError:
             # When this is removed from the kernel we will have a gentle reminder
             self.logger.info("%r: Proc file has been removed", procfs_path)
