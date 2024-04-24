@@ -54,7 +54,7 @@ class WebUIEnclosureService(Service):
                         # map disk details
                         # NOTE: some of these fields need to be removed
                         # work with UI to remove unnecessary ones
-                        self.map_disk_details(slot_info, disks_deets)
+                        self.map_disk_details(slot_info, disk_deets)
 
                         if (pool_info := disks_to_pools['disks'].get(slot_info['dev'])):
                             # now map zpool info
