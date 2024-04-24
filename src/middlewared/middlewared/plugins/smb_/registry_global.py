@@ -150,7 +150,7 @@ class SMBService(Service):
             kv = i.split("=", 1)
             if len(kv) != 2:
                 continue
-            to_set.update({kv[0]: {"parsed": kv[1], "raw": kv[1]}})
+            to_set.update({kv[0]: {"parsed": kv[1].strip(), "raw": kv[1].strip()}})
 
         return to_set
 
