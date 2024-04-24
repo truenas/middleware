@@ -103,7 +103,7 @@ class NFSService(SystemServiceService):
     )
 
     @private
-    def name_to_id_converstion(self, name, name_type='user'):
+    def name_to_id_conversion(self, name, name_type='user'):
         ''' Convert built-in user or group name to associated UID or GID '''
         if any((not isinstance(name, str), isinstance(name, int))):
             # it's not a string (NoneType, float, w/e) or it's an int
