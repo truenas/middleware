@@ -1,4 +1,5 @@
 import asyncio
+import enum
 import errno
 import os
 import pathlib
@@ -10,11 +11,39 @@ import middlewared.sqlalchemy as sa
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Str
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 from middlewared.utils import UnexpectedFailure, run
+from middlewared.validators import Range
 from collections import defaultdict
 
 from .utils import AUTHMETHOD_LEGACY_MAP
 
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
+
+
+class DigestEnum(str, enum.Enum):
+    NONE = 'None'
+    NONE_CRC32C = 'None,CRC32C'
+    CRC32C = 'CRC32C'
+
+    def choices():
+        return [x.value for x in DigestEnum]
+
+
+# These are taken from iSCSI rfc-3720 / rfc-7143
+MAX_RECV_DATA_SEGMENT_LENGTH_MIN = 512
+MAX_RECV_DATA_SEGMENT_LENGTH_MAX = 2**24 - 1
+MAX_BURST_LENGTH_MIN = 512
+MAX_BURST_LENGTH_MAX = 2**24 - 1
+FIRST_BURST_LENGTH_MIN = 512
+FIRST_BURST_LENGTH_MAX = 2**24 - 1
+MAX_OUTSTANDING_R2T_MIN = 1
+MAX_OUTSTANDING_R2T_MAX = 65535
+
+# MaxXmitDataSegmentLength is not documented in iSCSI RFCs, but
+# it is present in SCST and other iSCSI software (incl upstream
+# linux, where struct iscsi_conn_ops has a comment showing it
+# has the same range as for MaxRecvDataSegmentLength.)
+MAX_XMIT_DATA_SEGMENT_LENGTH_MIN = 512
+MAX_XMIT_DATA_SEGMENT_LENGTH_MAX = 2**24 - 1
 
 
 class iSCSITargetModel(sa.Model):
@@ -26,6 +55,7 @@ class iSCSITargetModel(sa.Model):
     iscsi_target_mode = sa.Column(sa.String(20), default='iscsi')
     iscsi_target_auth_networks = sa.Column(sa.JSON(list))
     iscsi_target_rel_tgt_id = sa.Column(sa.Integer(), unique=True)
+    iscsi_target_options = sa.Column(sa.JSON(), nullable=True)
 
 
 class iSCSITargetGroupModel(sa.Model):
@@ -97,6 +127,18 @@ class iSCSITargetService(CRUDService):
             ),
         ]),
         List('auth_networks', items=[IPAddr('ip', network=True)]),
+        Dict(
+            'options',
+            Str('DataDigest', enum=DigestEnum.choices()),
+            Str('HeaderDigest', enum=DigestEnum.choices()),
+            Bool('InitialR2T'),
+            Bool('ImmediateData'),
+            Int('MaxRecvDataSegmentLength', validators=[Range(min_=MAX_RECV_DATA_SEGMENT_LENGTH_MIN, max_=MAX_RECV_DATA_SEGMENT_LENGTH_MAX)]),
+            Int('MaxXmitDataSegmentLength', validators=[Range(min_=MAX_XMIT_DATA_SEGMENT_LENGTH_MIN, max_=MAX_XMIT_DATA_SEGMENT_LENGTH_MAX)]),
+            Int('MaxBurstLength', validators=[Range(min_=MAX_BURST_LENGTH_MIN, max_=MAX_BURST_LENGTH_MAX)]),
+            Int('FirstBurstLength', validators=[Range(min_=FIRST_BURST_LENGTH_MIN, max_=FIRST_BURST_LENGTH_MAX)]),
+            Int('MaxOutstandingR2T', validators=[Range(min_=MAX_OUTSTANDING_R2T_MIN, max_=MAX_OUTSTANDING_R2T_MAX)]),
+        ),
         register=True
     ), audit='Create iSCSI target', audit_extended=lambda data: data["name"])
     async def do_create(self, data):
