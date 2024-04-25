@@ -140,7 +140,7 @@ class NFSService(SystemServiceService):
         '''
 
         # Initialize the system dataset NFS state directory
-        state_dir = NFSServicePathInfo().STATEDIR.path()
+        state_dir = NFSServicePathInfo.STATEDIR.path()
         try:
             shutil.copytree('/var/lib/nfs', state_dir)
         except FileExistsError:
