@@ -6,6 +6,7 @@ from .base import SimpleService
 class NFSService(SimpleService):
     name = "nfs"
     reloadable = True
+    systemd_unit_timeout = 10
 
     etc = ["nfsd"]
 

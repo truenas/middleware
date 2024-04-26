@@ -38,7 +38,14 @@ NFS_PATH = "/mnt/" + dataset
 conf_file = {
     "nfs": {
         "pname": "/etc/nfs.conf.d/local.conf",
-        "sections": {'nfsd': {}, 'mountd': {}, 'statd': {}, 'lockd': {}}
+        "sections": {
+            'nfsd': {},
+            'exportd': {},
+            'nfsdcld': {},
+            'nfsdcltrack': {},
+            'mountd': {},
+            'statd': {},
+            'lockd': {}}
     },
     "idmapd": {
         "pname": "/etc/idmapd.conf",
@@ -132,6 +139,11 @@ def parse_rpcbind_config():
                 rv[opts[1]] = opts[2]
 
     return rv
+
+
+def get_nfs_service_state():
+    nfs_service = call('service.query', [['service', '=', 'nfs']], {'get': True})
+    return nfs_service['state']
 
 
 def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=None):
@@ -321,21 +333,29 @@ def nfs_config(options=None):
 
 
 # Enable NFS server
-def test_01_creating_the_nfs_server():
+def test_01_init_the_nfs_config():
     # initialize default_nfs_config for later restore
     save_nfs_config()
 
+    # Confirm NFS is not running
+    nfs_state = get_nfs_service_state()
+    assert nfs_state == 'STOPPED', f'Before update, expected NFS to be STOPPED, but found {nfs_state}'
+
     payload = {
-        "servers": 10,
         "mountd_port": 618,
         "allow_nonroot": False,
         "rpcstatd_port": 871,
         "rpclockd_port": 32803,
         "protocols": ["NFSV3", "NFSV4"]
     }
-    results = PUT("/nfs/", payload)
-    assert results.status_code == 200, results.text
-    # The service is not yet enabled, so we cannot yet confirm the settings
+    nfs_conf = call("nfs.update", payload)
+    assert nfs_conf['mountd_port'] == 618
+    assert nfs_conf['rpcstatd_port'] == 871
+    assert nfs_conf['rpclockd_port'] == 32803
+
+    # Confirm NFS remains not running
+    nfs_state = get_nfs_service_state()
+    assert nfs_state == 'STOPPED', f'After update, xpected NFS to be STOPPED, but found {nfs_state}'
 
 
 @pytest.mark.dependency(name='NFS_DATASET_CREATED')
@@ -396,8 +416,33 @@ def test_09_checking_to_see_if_nfs_service_is_running(request):
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
+def test_10_confirm_state_directory(request):
+    """
+    By default, the NFS state directory is at /var/lib/nfs.
+    To support HA systems, we moved this to the system dataset
+    at /var/db/system/nfs.  In support of this we updated the
+    NFS conf file settings
+    """
+    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
+
+    # Make sure the conf file has the expected settings
+    nfs_state_dir = '/var/db/system/nfs'
+    s = parse_server_config()
+    assert s['exportd']['state-directory-path'] == nfs_state_dir, str(s)
+    assert s['nfsdcld']['storagedir'] == os.path.join(nfs_state_dir, 'nfsdcld'), str(s)
+    assert s['nfsdcltrack']['storagedir'] == os.path.join(nfs_state_dir, 'nfsdcltrack'), str(s)
+    assert s['nfsdcld']['storagedir'] == os.path.join(nfs_state_dir, 'nfsdcld'), str(s)
+    assert s['mountd']['state-directory-path'] == nfs_state_dir, str(s)
+    assert s['statd']['state-directory-path'] == nfs_state_dir, str(s)
+    # Confirm we have the mount point in the system dataset
+    # ----------------------------------------------------------------------
+    # NOTE: Update test_001_ssh.py: test_002_first_boot_checks.
+    # NOTE: Test fresh-install and upgrade.
+    # ----------------------------------------------------------------------
+
+
 @pytest.mark.parametrize('vers', [3, 4])
-def test_10_perform_basic_nfs_ops(request, vers):
+def test_11_perform_basic_nfs_ops(request, vers):
     with SSH_NFS(ip, NFS_PATH, vers=vers, user=user, password=password, ip=ip) as n:
         n.create('testfile')
         n.mkdir('testdir')
@@ -412,7 +457,7 @@ def test_10_perform_basic_nfs_ops(request, vers):
         assert 'testfile' not in contents
 
 
-def test_11_perform_server_side_copy(request):
+def test_12_perform_server_side_copy(request):
     with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip) as n:
         n.server_side_copy('ssc1', 'ssc2')
 
@@ -1208,6 +1253,7 @@ def test_43_check_nfsv4_acl_support(request):
     4) For NFSv4.1 or NFSv4.2, repeat same process for each of the
        supported acl_flags.
     """
+    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
     acl_nfs_path = f'/mnt/{pool_name}/test_nfs4_acl'
     test_perms = {
         "READ_DATA": True,

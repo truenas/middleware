@@ -2,8 +2,9 @@ import enum
 import errno
 import ipaddress
 import itertools
-import os.path
+import os
 import pathlib
+import shutil
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
@@ -15,6 +16,30 @@ from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
+from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+
+
+class NFSServicePathInfo(enum.Enum):
+    # nfs conf sections that use STATEDIR: exportd, mountd, statd
+    STATEDIR = (os.path.join(SYSDATASET_PATH, 'nfs'), 0o755, True, {'uid': 0, 'gid': 0})
+    CLDDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'nfsdcld'), 0o700, True, {'uid': 0, 'gid': 0})
+    CLDTRKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'nfsdcltrack'), 0o700, True, {'uid': 0, 'gid': 0})
+    # Fix up the uid and gid in setup_directories
+    SMDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm'), 0o755, True, {'uid': 'statd', 'gid': 'nogroup'})
+    SMBAKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm.bak'), 0o755, True, {'uid': 'statd', 'gid': 'nogroup'})
+    V4RECOVERYDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'v4recovery'), 0o755, True, {'uid': 0, 'gid': 0})
+
+    def path(self):
+        return self.value[0]
+
+    def mode(self):
+        return self.value[1]
+
+    def is_dir(self):
+        return self.value[2]
+
+    def owner(self):
+        return self.value[3]
 
 
 class NFSProtocol(str, enum.Enum):
@@ -76,6 +101,77 @@ class NFSService(SystemServiceService):
         Bool('keytab_has_nfs_spn', required=True),
         Bool('managed_nfsd', default=True),
     )
+
+    @private
+    def name_to_id_conversion(self, name, name_type='user'):
+        ''' Convert built-in user or group name to associated UID or GID '''
+        if any((not isinstance(name, str), isinstance(name, int))):
+            # it's not a string (NoneType, float, w/e) or it's an int
+            # so there is nothing to do
+            return name
+
+        if name_type == 'user':
+            method = 'user.get_builtin_user_id'
+        elif name_type == 'group':
+            method = 'group.get_builtin_group_id'
+        else:
+            self.logger.error('Unexpected name_type (%r)', name_type)
+            return name
+        try:
+            return self.middleware.call_sync(method, name)
+        except Exception as e:
+            if hasattr(e, 'errno') and e.errno == errno.ENOENT:
+                self.logger.error('Failed to resolve builtin %s %r', name_type, name)
+            else:
+                self.logger.error('Unexpected error resolving builtin %s %r', name_type, name, exc_info=True)
+            return name
+
+    @private
+    def setup_directories(self):
+        '''
+        We are moving the NFS state directory from /var/lib/nfs to
+        the system dataset: /var/db/system/nfs.
+        When setup_directories is called /var/db/system/nfs is expected to exist.
+
+        If STATEDIR is empty, then this might be an initialization
+        and there might be current info in /var/lib/nfs.
+
+        We always make sure the expected directories are present
+        '''
+
+        # Initialize the system dataset NFS state directory
+        state_dir = NFSServicePathInfo.STATEDIR.path()
+        try:
+            shutil.copytree('/var/lib/nfs', state_dir)
+        except FileExistsError:
+            # destination file/dir already exists so ignore error
+            pass
+        except Exception:
+            self.logger.error('Unexpected error initializing %r', state_dir, exc_info=True)
+
+        # Make sure we have the necessary directories
+        for i in NFSServicePathInfo:
+            uid = self.name_to_id_conversion(i.owner()['uid'], name_type='user')
+            gid = self.name_to_id_conversion(i.owner()['gid'], name_type='group')
+            path = i.path()
+            if i.is_dir():
+                os.makedirs(path, exist_ok=True)
+
+            try:
+                os.chmod(path, i.mode())
+                os.chown(path, uid, gid)
+            except Exception:
+                self.logger.error('Unexpected failure initializing %r', path, exc_info=True)
+
+        procfs_path = '/proc/fs/nfsd/nfsv4recoverydir'
+        try:
+            with open(procfs_path, 'r+') as fp:
+                fp.write(f'{NFSServicePathInfo.V4RECOVERYDIR.path()}\n')
+        except FileNotFoundError:
+            # When this is removed from the kernel we will have a gentle reminder
+            self.logger.info("%r: Proc file has been removed", procfs_path)
+        except Exception:
+            self.logger.error("Unexpected failure updating %r", procfs_path, exc_info=True)
 
     @private
     async def nfs_extend(self, nfs):
