@@ -13,7 +13,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.plugins.directoryservices import DSStatus, SSL
 from middlewared.plugins.idmap import DSType
 from middlewared.plugins.ldap_.ldap_client import LdapClient
-from middlewared.plugins.ldap_.nslcd_utils import MidNslcdClient
 from middlewared.plugins.ldap_ import constants
 from middlewared.validators import Range
 
@@ -922,12 +921,9 @@ class LDAPService(ConfigService):
         except Exception as e:
             raise CallError(e)
 
-        if not await self.middleware.call('service.started', 'nslcd'):
+        if not await self.middleware.call('service.started', 'sssd'):
             await self.middleware.call('etc.generate', 'ldap')
-            await self.middleware.call('service.start', 'nslcd')
-
-        if not MidNslcdClient().is_alive():
-            raise CallError('nss-pam-ldapd daemon control socket is not available')
+            await self.middleware.call('service.start', 'sssd')
 
         await self.set_state(DSStatus['HEALTHY'])
         return True
@@ -988,8 +984,8 @@ class LDAPService(ConfigService):
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
 
-        job.set_progress(30, 'Starting nslcd service')
-        await self.middleware.call('service.restart', 'nslcd')
+        job.set_progress(30, 'Starting sssd service')
+        await self.middleware.call('service.restart', 'sssd')
 
         job.set_progress(50, 'Reconfiguring SMB service')
         await self.middleware.call('smb.initialize_globals')
@@ -1042,8 +1038,8 @@ class LDAPService(ConfigService):
         job.set_progress(50, 'Clearing directory service cache.')
         await self.middleware.call('service.stop', 'dscache')
 
-        job.set_progress(80, 'Stopping nslcd service.')
-        await self.middleware.call('service.stop', 'nslcd')
+        job.set_progress(80, 'Stopping sssd service.')
+        await self.middleware.call('service.stop', 'sssd')
         await self.set_state(DSStatus['DISABLED'])
         job.set_progress(100, 'LDAP directory service stopped.')
 
@@ -1058,8 +1054,8 @@ class LDAPService(ConfigService):
             self.logger.debug('LDAP cache is disabled. Bypassing cache fill.')
             return
 
-        pwd_list = MidNslcdClient().getpwall()
-        grp_list = MidNslcdClient().getgrall()
+        pwd_list = []
+        grp_list = []
 
         for u in pwd_list:
             entry = {

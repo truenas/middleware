@@ -122,7 +122,7 @@ class EtcService(Service):
         ],
         'ldap': [
             {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
-            {'type': 'mako', 'path': 'local/nslcd.conf', 'owner': 'nslcd', 'group': 'nslcd', 'mode': 0o0400},
+            {'type': 'mako', 'path': 'sssd/sssd.conf', 'mode': 0o0600},
         ],
         'dhclient': [
             {'type': 'mako', 'path': 'dhcp/dhclient.conf', 'local_path': 'dhclient.conf'},

@@ -87,11 +87,11 @@ def test__freeipa_schema_conversion():
     for key, entry in FREEIPA_SAMPLE_SEARCH_BASE.items():
         match key:
             case "base_user":
-                assert f'base passwd {entry}' in search_bases
+                assert f'ldap_user_search_base = {entry}' in search_bases
             case "base_group":
-                assert f'base group {entry}' in search_bases
+                assert f'ldap_group_search_base = {entry}' in search_bases
             case "base_netgroup":
-                assert f'base netgroup {entry}' in search_bases
+                assert f'ldap_netgroup_search_base = {entry}' in search_bases
 
 
 def test__default_search_base():
@@ -106,19 +106,19 @@ def test__attribute_map_keys_passwd():
 
         match key:
             case constants.ATTR_USER_OBJ:
-                assert results[0] == "filter passwd (objectClass=canary)"
+                assert results[0] == "ldap_user_object_class = (objectClass=canary)"
             case constants.ATTR_USER_NAME:
-                assert results[0] == "map passwd uid canary"
+                assert results[0] == "ldap_user_name = canary"
             case constants.ATTR_USER_UID:
-                assert results[0] == "map passwd uidNumber canary"
+                assert results[0] == "ldap_user_uid_number = canary"
             case constants.ATTR_USER_GID:
-                assert results[0] == "map passwd gidNumber canary"
+                assert results[0] == "ldap_user_gid_number = canary"
             case constants.ATTR_USER_GECOS:
-                assert results[0] == "map passwd gecos canary"
+                assert results[0] == "ldap_user_gecos = canary"
             case constants.ATTR_USER_HOMEDIR:
-                assert results[0] == "map passwd homeDirectory canary"
+                assert results[0] == "ldap_user_home_directory = canary"
             case constants.ATTR_USER_SHELL:
-                assert results[0] == "map passwd loginShell canary"
+                assert results[0] == "ldap_user_shell = canary"
             case _:
                 assert key is None, f"{key}: Unexpected key"
 
@@ -131,19 +131,19 @@ def test__attribute_map_keys_shadow():
 
         match key:
             case constants.ATTR_SHADOW_OBJ:
-                assert results[0] == "filter shadow (objectClass=canary)"
+                assert results[0] == ""
             case constants.ATTR_SHADOW_LAST_CHANGE:
-                assert results[0] == "map shadow shadowLastChange canary"
+                assert results[0] == "ldap_user_shadow_last_change = canary"
             case constants.ATTR_SHADOW_MIN:
-                assert results[0] == "map shadow shadowMin canary"
+                assert results[0] == "ldap_user_shadow_min = canary"
             case constants.ATTR_SHADOW_MAX:
-                assert results[0] == "map shadow shadowMax canary"
+                assert results[0] == "ldap_user_shadow_max = canary"
             case constants.ATTR_SHADOW_WARNING:
-                assert results[0] == "map shadow shadowWarning canary"
+                assert results[0] == "ldap_user_shadow_warning = canary"
             case constants.ATTR_SHADOW_INACTIVE:
-                assert results[0] == "map shadow shadowInactive canary"
+                assert results[0] == "ldap_user_shadow_inactive = canary"
             case constants.ATTR_SHADOW_EXPIRE:
-                assert results[0] == "map shadow shadowExpire canary"
+                assert results[0] == "ldap_user_shadow_expire = canary"
             case _:
                 assert key is None, f"{key}: Unexpected key"
 
@@ -156,11 +156,11 @@ def test__attribute_map_keys_group():
 
         match key:
             case constants.ATTR_GROUP_OBJ:
-                assert results[0] == "filter group (objectClass=canary)"
+                assert results[0] == "ldap_group_object_class = (objectClass=canary)"
             case constants.ATTR_GROUP_GID:
-                assert results[0] == "map group gidNumber canary"
+                assert results[0] == "ldap_group_gid_number = canary"
             case constants.ATTR_GROUP_MEMBER:
-                assert results[0] == "map group member canary"
+                assert results[0] == "ldap_group_member = canary"
             case _:
                 assert key is None, f"{key}: Unexpected key"
 
@@ -173,10 +173,10 @@ def test__attribute_map_keys_netgroup():
 
         match key:
             case constants.ATTR_NETGROUP_OBJ:
-                assert results[0] == "filter netgroup (objectClass=canary)"
+                assert results[0] == "ldap_netgroup_object_class = (objectClass=canary)"
             case constants.ATTR_NETGROUP_MEMBER:
-                assert results[0] == "map netgroup memberNisNetgroup canary"
+                assert results[0] == "ldap_netgroup_member = canary"
             case constants.ATTR_NETGROUP_TRIPLE:
-                assert results[0] == "map netgroup nisNetgroupTriple canary"
+                assert results[0] == "ldap_netgroup_triple = canary"
             case _:
                 assert key is None, f"{key}: Unexpected key"
