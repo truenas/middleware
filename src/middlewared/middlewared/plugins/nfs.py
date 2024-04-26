@@ -155,27 +155,11 @@ class NFSService(SystemServiceService):
             gid = self.name_to_id_conversion(i.owner()['gid'], name_type='group')
             path = i.path()
             if i.is_dir():
-                open_flags = os.O_RDWR | os.O_DIRECTORY
                 os.makedirs(path, exist_ok=True)
-            else:
-                open_flags = os.O_RDWR
 
             try:
-                with open(os.open(path, flags=open_flags)) as f:
-                    os.fchmod(f.fileno(), i.mode())
-                    os.fchown(f.fileno(), uid, gid)
-            except IsADirectoryError:
-                if not i.is_dir():
-                    # the path is expected to be a file but it's a directory
-                    self.logger.error('Expected %r to be a file but instead found a directory', path)
-                else:
-                    self.logger.error('Unexpected failure updating file %r', path, exc_info=True)
-            except NotADirectoryError:
-                if i.is_dir():
-                    # the path is expected to be a directory but it's a file
-                    self.logger.error('Expected %r to be a directory but instead found a file', path)
-                else:
-                    self.logger.error('Unexpected failure updating directory %r', path, exc_info=True)
+                os.chmod(path, i.mode())
+                os.chown(path, uid, gid)
             except Exception:
                 self.logger.error('Unexpected failure initializing %r', path, exc_info=True)
 
