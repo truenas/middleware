@@ -39,21 +39,25 @@ class DiskService(Service):
             for in_use_disk in await self.get_exported_disks(i['groups']):
                 in_use_disks_exported[in_use_disk] = i['name']
 
+        enc_info = dict()
+        for enc in await self.middleware.call('enclosure2.query'):
+            for slot, info in filter(lambda x: x[1], enc['elements']['Array Device Slot'].items()):
+                enc_info[info['dev']] = (int(slot), enc['id'])
+
         unused = []
         unsupported_md_devices_mapping = await self.middleware.call('disk.get_disks_to_unsupported_md_devices_mapping')
         serial_to_disk = defaultdict(list)
-        for i in await self.middleware.call(
-            'datastore.query', 'storage.disk', [['disk_expiretime', '=', None]], {'prefix': 'disk_'}
-        ):
+        for dname, i in (await self.middleware.call('device.get_disks')).items():
             if not i['size']:
                 # seen on an internal system during QA. The disk had actually been spun down
                 # by OS because it had so many errors so the size was an empty string in our db
                 # SMART data reported the following for the disk: "device is NOT READY (e.g. spun down, busy)"
                 continue
 
+            i['enclosure_slot'] = enc_info.get(dname, ())
             serial_to_disk[(i['serial'], i['lunid'])].append(i)
 
-            if i['name'] in in_use_disks_imported:
+            if dname in in_use_disks_imported:
                 # exclude disks that are currently in use by imported zpool(s)
                 continue
 
@@ -61,10 +65,10 @@ class DiskService(Service):
             # and can be imported so the disk would be "in use" if the zpool
             # was imported so we'll mark this disk specially so that end-user
             # can be warned appropriately
-            i['exported_zpool'] = in_use_disks_exported.get(i['name'])
+            i['exported_zpool'] = in_use_disks_exported.get(dname)
             # User might have unsupported md devices configured and a single disk might have multiple
             # partitions which are being used by different md devices so this value will be a list or null
-            i['unsupported_md_devices'] = unsupported_md_devices_mapping.get(i['name'])
+            i['unsupported_md_devices'] = unsupported_md_devices_mapping.get(dname)
 
             unused.append(i)
 
@@ -77,9 +81,8 @@ class DiskService(Service):
 
             # add enclosure information
             i['enclosure'] = {}
-            enc_info = i.pop('enclosure_slot', None)
-            if enc_info is not None:
-                i['enclosure'] = {'number': enc_info // 1000, 'slot': enc_info % 1000}
+            if enc := i.pop('enclosure_slot'):
+                i['enclosure'].update({'drive_bay_number': enc[0], 'id': enc[1]})
 
             # query partitions for the disk(s) if requested
             i['partitions'] = []
