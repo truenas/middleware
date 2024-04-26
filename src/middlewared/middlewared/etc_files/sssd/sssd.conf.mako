@@ -73,11 +73,12 @@ enumerate = ${not ldap['disable_freenas_cache']}
 ldap_sasl_mech = GSSAPI
 ldap_sasl_realm = ${kerberos_realm}
   % if ldap['kerberos_principal']:
-ldap_sasl_authid = ldap['kerberos_principal']
+ldap_sasl_authid = ${ldap['kerberos_principal']}
   % endif
 % endif
 timeout = ${ldap['timeout']}
 ldap_schema = ${ldap['schema'].lower()}
+min_id = ${min_uid}
 ${'\n    '.join(search_params)}
 ${'\n    '.join(map_params)}
 % if aux:

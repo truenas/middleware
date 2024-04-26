@@ -40,7 +40,7 @@ def attribute_maps_data_to_params(data):
                 case constants.ATTR_USER_OBJ:
                     map_params.append(f'ldap_user_object_class = (objectClass={value})')
                 case constants.ATTR_USER_NAME:
-                    map_params.append(f'ldap_user_user_name = {value}')
+                    map_params.append(f'ldap_user_name = {value}')
                 case constants.ATTR_USER_UID:
                     map_params.append(f'ldap_user_uid_number = {value}')
                 case constants.ATTR_USER_GID:
