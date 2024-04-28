@@ -1,10 +1,8 @@
 import binascii
 import errno
 import functools
-import grp
 import os
 import pathlib
-import pwd
 import shutil
 import stat as statlib
 import time
@@ -19,6 +17,7 @@ from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, retur
 from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
+from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, strip_location_prefix, is_child_realpath
 from middlewared.plugins.filesystem_.utils import ACLType
 from middlewared.plugins.zfs_.utils import ZFSCTL

@@ -14,6 +14,8 @@ from middlewared.plugins.directoryservices import DSStatus, SSL
 from middlewared.plugins.idmap import DSType
 from middlewared.plugins.ldap_.ldap_client import LdapClient
 from middlewared.plugins.ldap_ import constants
+from middlewared.utils.nss import pwd, grp
+from middlewared.utils.nss.nss_common import NssModule
 from middlewared.validators import Range
 
 LDAP_SMBCONF_PARAMS = {
@@ -1047,15 +1049,12 @@ class LDAPService(ConfigService):
     @job(lock='fill_ldap_cache')
     def fill_cache(self, job, force=False):
         user_next_index = group_next_index = 100000000
-        if self.middleware.call_sync('cache.has_key', 'LDAP_cache') and not force:
-            raise CallError('LDAP cache already exists. Refusing to generate cache.')
-
         if (self.middleware.call_sync('ldap.config'))['disable_freenas_cache']:
             self.logger.debug('LDAP cache is disabled. Bypassing cache fill.')
             return
 
-        pwd_list = []
-        grp_list = []
+        pwd_list = pwd.getpwall(module=NssModule.SSS.name, as_dict=True)
+        grp_list = grp.getgrall(module=NssModule.SSS.name, as_dict=True)
 
         for u in pwd_list:
             entry = {
