@@ -139,6 +139,11 @@ class CRIClientMixin:
                 # 3) Redo the manifest call with updated token
                 response = await self._api_call(manifest_url, headers=headers, mode=mode)
 
+        try:
+            json_schema_validate(response['response'], DIGEST_JSON_SCHEMA)
+        except JsonValidationError as e:
+            response['error'] = f'Invalid response schema: {e}'
+
         if raise_error and response['error']:
             raise CallError(f"Unable to retrieve latest image digest for registry={registry} "
                             f"image={image} tag={tag}: {response['error']}")
