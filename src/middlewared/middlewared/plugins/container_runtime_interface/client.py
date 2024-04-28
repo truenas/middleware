@@ -8,12 +8,14 @@ import urllib
 from cri_api.channel import Channel
 from cri_api.containers import Containers
 from cri_api.images import Images
+from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 
 from middlewared.service import CallError, private
 
 from .utils import DEFAULT_DOCKER_REGISTRY, DOCKER_CONTENT_DIGEST_HEADER
 
 
+CONTAINERD_SOCKET_PATH = '/run/k3s/containerd/containerd.sock'
 DOCKER_AUTH_HEADER = 'WWW-Authenticate'
 DOCKER_AUTH_URL = 'https://auth.docker.io/token'
 DOCKER_AUTH_SERVICE = 'registry.docker.io'
@@ -21,7 +23,21 @@ DOCKER_MANIFEST_SCHEMA_V1 = 'application/vnd.docker.distribution.manifest.v1+jso
 DOCKER_MANIFEST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.v2+json'
 DOCKER_MANIFEST_LIST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.list.v2+json'
 DOCKER_RATELIMIT_URL = 'https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest'
-CONTAINERD_SOCKET_PATH = '/run/k3s/containerd/containerd.sock'
+DIGEST_JSON_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'mediaType': {
+            'type': 'string',
+        },
+        'config': {
+            'type': 'object',
+        },
+        'manifests': {
+            'type': 'array',
+        },
+    },
+    'required': ['mediaType'],
+}
 
 
 def parse_digest_from_schema(response):
