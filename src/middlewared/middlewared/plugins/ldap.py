@@ -1053,8 +1053,8 @@ class LDAPService(ConfigService):
             self.logger.debug('LDAP cache is disabled. Bypassing cache fill.')
             return
 
-        pwd_list = pwd.getpwall(module=NssModule.SSS.name, as_dict=True)
-        grp_list = grp.getgrall(module=NssModule.SSS.name, as_dict=True)
+        pwd_list = pwd.getpwall(module=NssModule.SSS.name, as_dict=True)[NssModule.SSS.name]
+        grp_list = grp.getgrall(module=NssModule.SSS.name, as_dict=True)[NssModule.SSS.name]
 
         for u in pwd_list:
             entry = {
