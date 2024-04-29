@@ -8,11 +8,6 @@ SSS_NSS_PATH = os.path.join(NSS_MODULES_DIR, 'libnss_sss.so.2')
 WINBIND_NSS_PATH = os.path.join(NSS_MODULES_DIR, 'libnss_winbind.so.2')
 
 
-class NssAccountFile(enum.Enum):
-    USER = '/etc/passwd'
-    GROUP = '/etc/group'
-
-
 class NssReturnCode(enum.IntEnum):
     """ Possible NSS return codes, see /usr/include/nss.h """
     TRYAGAIN = -2
