@@ -48,7 +48,7 @@ class DiskService(Service):
 
     @private
     async def get_valid_zfs_partition_type_uuids(self):
-        return list(valid_zfs_partition_uuids)
+        return list(valid_zfs_partition_uuids())
 
     @private
     async def get_valid_swap_partition_type_uuids(self):
