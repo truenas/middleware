@@ -1,0 +1,15 @@
+[Unit]
+Description=Setup TrueNAS Reporting
+DefaultDependencies=no
+
+# The after here reflects the after of netdata.service
+After=middlewared.service network-online.target httpd.service squid.service nfs-server.service mysqld.service named.service postfix.service smartmontools.service nut.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=midclt -t 120 call reporting.start_service
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target

@@ -35,3 +35,10 @@ class ReportingService(Service):
             # We want to make sure this path exists always regardless of an error so that
             # at least netdata can start itself gracefully
             os.makedirs(get_netdata_state_path(), exist_ok=True)
+
+    @private
+    async def start_service(self):
+        if await self.middleware.call('failover.licensed'):
+            return
+
+        await self.middleware.call('service.start', 'netdata')

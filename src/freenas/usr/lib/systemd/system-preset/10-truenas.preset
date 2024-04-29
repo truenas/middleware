@@ -19,6 +19,7 @@ disable avahi-daemon.service
 disable nmbd.service
 disable nfs*
 disable rsync.service
+disable netdata.service
 disable nscd.service
 disable snmpd.service
 disable snmp-agent.service
