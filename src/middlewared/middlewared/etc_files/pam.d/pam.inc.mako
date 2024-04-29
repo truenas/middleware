@@ -3,9 +3,8 @@
         def __init__(self, **kwargs):
             self.middleware = kwargs.get('middleware')
             self.pam_mkhomedir = "pam_mkhomedir.so"
-            self.pam_ldap = "pam_ldap.so"
+            self.pam_ldap = "pam_sss.so"
             self.pam_winbind = "pam_winbind.so"
-            self.pam_krb5 = "pam_krb5.so"
             self.pam_unix = "pam_unix.so"
             self.render_ctx = kwargs.get("render_ctx")
 
@@ -154,9 +153,6 @@
 
         def enabled(self):
             return self.render_ctx['ldap.config']['enable']
-
-        def is_kerberized(self):
-            return True if self.render_ctx['ldap.config']['kerberos_realm'] else False
 
         def min_uid(self):
             config = self.render_ctx['ldap.config']
