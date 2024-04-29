@@ -58,7 +58,7 @@ def get_smartd_config(disk):
 
 def get_smartd_schedule(disk):
     return "/".join([
-        smartd_schedule_piece(disk["smarttest_schedule"][piece.key], piece.min, piece.max, piece.enum)
+        smartd_schedule_piece(disk["smarttest_schedule"][piece.key], piece.min, piece.max, piece.enum, piece.map)
         for piece in SMARTD_SCHEDULE_PIECES
     ])
 
