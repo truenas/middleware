@@ -148,8 +148,8 @@ def smart_test_disks_intersect(existing_test, new_test, disk_choices):
 def smart_test_schedules_intersect_at(a, b):
     intersections = []
     for piece in SMARTD_SCHEDULE_PIECES:
-        a_values = set(smartd_schedule_piece_values(a[piece.key], piece.min, piece.max, piece.enum))
-        b_values = set(smartd_schedule_piece_values(b[piece.key], piece.min, piece.max, piece.enum))
+        a_values = set(smartd_schedule_piece_values(a[piece.key], piece.min, piece.max, piece.enum, piece.map))
+        b_values = set(smartd_schedule_piece_values(b[piece.key], piece.min, piece.max, piece.enum, piece.map))
 
         intersection = a_values & b_values
         if not intersection:

@@ -16,6 +16,8 @@ DEFAULTS = {"hour": "*", "month": "*", "dom": "*", "dow": "*"}
     ({"dom": "1,3,6", "month": "*/2"}, {"dom": "2,4,6", "month": "1"}, None),
     ({"dom": "1,3,6", "month": "*/2"}, {"dom": "2,4,6", "month": "3,8"}, "Aug, 6th, 00:00"),
     ({"hour": "2"}, {"dow": "4", "hour": "2"}, "Thu, 02:00"),
+    ({"dow": "0"}, {"dow": "0"}, "Sun, 00:00"),
+    ({"dow": "0"}, {"dow": "7"}, "Sun, 00:00"),
 ])
 def test__smart_test_schedules_intersect_at(a, b, result):
     assert smart_test_schedules_intersect_at({**DEFAULTS, **a}, {**DEFAULTS, **b}) == result
