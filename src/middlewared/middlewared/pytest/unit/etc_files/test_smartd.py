@@ -75,6 +75,17 @@ def test__get_smartd_schedule__need_mapping():
     }) == "../(01|03)/(2|7)/.."
 
 
+def test__get_smartd_schedule__0_is_sunday():
+    assert get_smartd_schedule({
+        "smarttest_schedule": {
+            "month": "*",
+            "dom": "*",
+            "dow": "0",
+            "hour": "0",
+        }
+    }) == "../../(7)/(00)"
+
+
 def test__get_smartd_config():
     assert get_smartd_config({
         "smartctl_args": ["/dev/ada0", "-d", "sat"],
