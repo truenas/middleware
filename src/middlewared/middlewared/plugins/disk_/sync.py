@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
+from middlewared.plugins.disk_.utils import dev_to_ident
 
 RE_IDENT = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
@@ -98,20 +99,7 @@ class DiskService(Service, ServiceChangeMixin):
 
     @private
     def dev_to_ident(self, name, sys_disks, uuids):
-        if name not in sys_disks:
-            return ''
-        else:
-            dev = sys_disks[name]
-
-        if dev['serial_lunid']:
-            return f'{{serial_lunid}}{dev["serial_lunid"]}'
-        elif dev['serial']:
-            return f'{{serial}}{dev["serial"]}'
-        elif dev['parts']:
-            for part in filter(lambda x: x['partition_type'] in uuids, dev['parts']):
-                return f'{{uuid}}{part["partition_uuid"]}'
-
-        return f'{{devicename}}{name}'
+        return dev_to_ident(name, sys_disks, uuids)
 
     @private
     @accepts(Dict(

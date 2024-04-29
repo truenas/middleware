@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from middlewared.plugins.disk_.utils import dev_to_ident, valid_zfs_partition_uuids
 from middlewared.service import accepts, private, Service
 from middlewared.service_exception import ValidationErrors
 from middlewared.schema import Bool
@@ -47,13 +48,16 @@ class DiskService(Service):
         unused = []
         unsupported_md_devices_mapping = await self.middleware.call('disk.get_disks_to_unsupported_md_devices_mapping')
         serial_to_disk = defaultdict(list)
-        for dname, i in (await self.middleware.call('device.get_disks')).items():
+        sys_disks = await self.middleware.call('device.get_disks')
+        uuids = valid_zfs_partition_uuids()
+        for dname, i in sys_disks.items():
             if not i['size']:
                 # seen on an internal system during QA. The disk had actually been spun down
                 # by OS because it had so many errors so the size was an empty string in our db
                 # SMART data reported the following for the disk: "device is NOT READY (e.g. spun down, busy)"
                 continue
 
+            i['identifier'] = dev_to_ident(dname, sys_disks, uuids)
             i['enclosure_slot'] = enc_info.get(dname, ())
             serial_to_disk[(i['serial'], i['lunid'])].append(i)
 
