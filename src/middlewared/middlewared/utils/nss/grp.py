@@ -39,7 +39,13 @@ def __parse_nss_result(result, as_dict, module_name):
 
 
 def __getgrnam_r(name, result_p, buffer_p, buflen, nss_module):
-    """ctypes wrapper for _nss_##module##_getgrnam_r"""
+    """
+    enum nss_status _nss_#module#_getgrnam_r(const char *name,
+                                             struct group *result,
+                                             char *buffer,
+                                             size_t buflen,
+                                             int *error)
+    """
     func = get_nss_func(NssOperation.GETGRNAM, nss_module)
     func.restype = ctypes.c_int
     func.argtypes = [
@@ -58,7 +64,13 @@ def __getgrnam_r(name, result_p, buffer_p, buflen, nss_module):
 
 
 def __getgrgid_r(gid, result_p, buffer_p, buflen, nss_module):
-    """ctypes wrapper for _nss_##module##_getgrgid_r"""
+    """
+    enum nss_status _nss_#module#_getgrgid_r(gid_t gid,
+                                             struct group *result,
+                                             char *buffer,
+                                             size_t buflen,
+                                             int *error)
+    """
     func = get_nss_func(NssOperation.GETGRGID, nss_module)
     func.restype = ctypes.c_int
     func.argtypes = [
@@ -75,7 +87,12 @@ def __getgrgid_r(gid, result_p, buffer_p, buflen, nss_module):
 
 
 def __getgrent_r(result_p, buffer_p, buflen, nss_module):
-    """ctypes wrapper for _nss_##module##_getgrent_r"""
+    """
+    enum nss_status _nss_#module#_getgrent_r(struct group *result,
+                                             char *buffer,
+                                             size_t buflen,
+                                             int *error)
+    """
     func = get_nss_func(NssOperation.GETGRENT, nss_module)
     func.restype = ctypes.c_int
     func.argtypes = [
@@ -93,9 +110,7 @@ def __getgrent_r(result_p, buffer_p, buflen, nss_module):
 
 def __setgrent(nss_module):
     """
-    ctypes wrapper for _nss_##module##_setgrent
-
-    NOTE: this calls thread-safe per-module variant of setgrent
+    enum nss_status _nss_#module#_setgrent(void)
     """
     func = get_nss_func(NssOperation.SETGRENT, nss_module)
     func.argtypes = []
@@ -108,9 +123,7 @@ def __setgrent(nss_module):
 
 def __endgrent(nss_module):
     """
-    ctypes wrapper for _nss_##module##_setgrent
-
-    NOTE: this calls thread-safe per-module variant of endgrent
+    enum nss_status _nss_#module#_endgrent(void)
     """
     func = get_nss_func(NssOperation.ENDGRENT, nss_module)
     func.argtypes = []
