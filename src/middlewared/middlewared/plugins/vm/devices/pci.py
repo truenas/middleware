@@ -2,20 +2,41 @@ import subprocess
 
 from middlewared.service import CallError
 from middlewared.schema import Dict, Str
+from middlewared.utils import filter_list
 
 from .device import Device
 from .utils import ACTIVE_STATES, create_element, LIBVIRT_URI
 
 
-class PCI(Device):
+class PCIBase(Device):
+
+    def is_available(self):
+        return self.get_details()['available']
+
+    def in_use_by_vm(self, vms, vm_devices):
+        return any(vm['status']['state'] in ACTIVE_STATES for vm in self.get_vms_using_device(vms, vm_devices))
+
+    def get_vms_using_device(self, vms, vm_devices):
+        devs = filter_list(vm_devices, self.vm_device_filters())
+        return filter_list(vms, [['id', 'in', [dev['vm'] for dev in devs]]])
+
+    def vm_device_filters(self):
+        raise NotImplementedError()
+
+    def pre_start_vm_device_setup(self, context):
+        if self.in_use_by_vm(context['vms'], context['vm_devices']):
+            raise CallError(f'{self.data["dtype"]} device is already being used by another active VM')
+
+
+class PCI(PCIBase):
 
     schema = Dict(
         'attributes',
         Str('pptdev', required=True, empty=False),
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def vm_device_filters(self):
+        return [['attributes.pptdev', '=', self.passthru_device()], ['dtype', '=', 'PCI']]
 
     def detach_device(self):
         cp = subprocess.Popen(
@@ -36,12 +57,11 @@ class PCI(Device):
             raise CallError(f'Unable to re-attach {self.passthru_device()} PCI device: {stderr.decode()}')
 
     def pre_start_vm_device_setup(self, *args, **kwargs):
+        super().pre_start_vm_device_setup(*args, **kwargs)
         device = self.get_details()
+
         if not device['error'] and not device['available']:
             self.detach_device()
-
-    def is_available(self):
-        return self.get_details()['available']
 
     def identity(self):
         return str(self.passthru_device())
@@ -49,19 +69,9 @@ class PCI(Device):
     def passthru_device(self):
         return str(self.data['attributes']['pptdev'])
 
-    def get_vms_using_device(self):
-        devs = self.middleware.call_sync(
-            'vm.device.query', [['attributes.pptdev', '=', self.passthru_device()], ['dtype', '=', 'PCI']]
-        )
-        return self.middleware.call_sync('vm.query', [['id', 'in', [dev['vm'] for dev in devs]]])
-
-    def safe_to_reattach(self):
-        return not self.get_details()['error'] and all(
-            vm['status']['state'] not in ACTIVE_STATES for vm in self.get_vms_using_device()
-        )
-
-    def post_stop_vm(self, *args, **kwargs):
-        if self.safe_to_reattach():
+    def post_stop_vm(self, context):
+        # safe to re-attach
+        if not self.get_details()['error'] and not self.in_use_by_vm(context['vms'], context['vm_devices']):
             try:
                 self.reattach_device()
             except CallError:
