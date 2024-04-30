@@ -167,13 +167,12 @@
             return {'primary': entries, 'additional': []}
 
         def pam_account(self):
-            min_uid = self.min_uid()
             ldap_args = {
                 'user_unknown': 'ignore',
                 'default': 'bad'
             }
             unix_entry = super().pam_account()
-            ldap_entry = super().pam_account(success="ok", pam_path=self.pam_sss, pam_args=[f"minimum_uid={min_uid}"], **ldap_args)
+            ldap_entry = super().pam_account(success="ok", pam_path=self.pam_sss, **ldap_args)
 
             return {'primary': [unix_entry], 'additional': [ldap_entry]}
 
