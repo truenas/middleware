@@ -301,7 +301,7 @@ class DSCache(Service):
                 }])['mapped']):
                     sid = idmap[f'GID:{grp_obj["gr_gid"]}']['sid']
                 else:
-                    sid = SID_LOCAL_GROUP_PREFIX + str(grp_obj['grp_gid'])
+                    sid = SID_LOCAL_GROUP_PREFIX + str(grp_obj['gr_gid'])
             except CallError as e:
                 if e.errno not in (errno.ENOENT, errno.ENOTCONN):
                     self.logger.error('Failed to retrieve SID for gid: %d', grp_obj['gr_gid'], exc_info=True)
