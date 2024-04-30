@@ -3,6 +3,7 @@ import libvirt
 import os
 
 from middlewared.service import CallError
+from middlewared.utils.functools_ import cache
 
 from .utils import LIBVIRT_URI
 
@@ -11,6 +12,10 @@ class LibvirtConnectionMixin:
 
     LIBVIRT_CONNECTION = None
     KVM_SUPPORTED = None
+
+    @cache
+    async def _is_ha(self):
+        return await self.middleware.call_sync('system.is_ha_capable')
 
     def _open(self):
         try:
@@ -38,6 +43,9 @@ class LibvirtConnectionMixin:
             self.KVM_SUPPORTED = os.path.exists('/dev/kvm')
         return self.KVM_SUPPORTED
 
+    def _system_supports_virtualization_safe(self):
+        return self._is_kvm_supported() and not self._is_ha()
+
     def _is_libvirt_connection_alive(self):
         with contextlib.suppress(libvirt.libvirtError):
             # We see isAlive call failed for a user in NAS-109072, it would be better
@@ -54,11 +62,13 @@ class LibvirtConnectionMixin:
             return {domain.name(): domain.state() for domain in self.LIBVIRT_CONNECTION.listAllDomains()}
 
     def _is_connection_alive(self):
-        return self._is_kvm_supported() and self._is_libvirt_connection_alive()
+        return self._system_supports_virtualization_safe() and self._is_libvirt_connection_alive()
 
     def _system_supports_virtualization(self):
         if not self._is_kvm_supported():
             raise CallError('This system does not support virtualization.')
+        if self._is_ha():
+            raise CallError('Virtualization is not supported in HA systems.')
 
     def _check_connection_alive(self):
         self._system_supports_virtualization()
@@ -66,6 +76,7 @@ class LibvirtConnectionMixin:
             raise CallError('Failed to connect to libvirt')
 
     def _check_setup_connection(self):
+        self._system_supports_virtualization()
         if not self._is_connection_alive():
             self.middleware.call_sync('vm.setup_libvirt_connection', 10)
         self._check_connection_alive()

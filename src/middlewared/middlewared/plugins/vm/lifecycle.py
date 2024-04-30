@@ -38,13 +38,17 @@ class VMService(Service, VMSupervisorMixin):
 
     @private
     async def check_setup_libvirt(self):
-        if not await self.middleware.call('service.started', 'libvirtd'):
+        if not await self.middleware.call(
+            'service.started', 'libvirtd'
+        ) and self._system_supports_virtualization_safe():
             await self.middleware.call('vm.setup_libvirt_connection')
+            return True
+        return False
 
     @private
     def initialize_vms(self, timeout=30):
         vms = self.middleware.call_sync('vm.query')
-        if vms and self._is_kvm_supported():
+        if vms and self._system_supports_virtualization_safe():
             self.setup_libvirt_connection(timeout)
         else:
             return
@@ -64,7 +68,10 @@ class VMService(Service, VMSupervisorMixin):
 
     @private
     async def start_on_boot(self):
-        for vm in await self.middleware.call('vm.query', [('autostart', '=', True)], {'force_sql_filters': True}):
+        for vm in (
+            await self.middleware.call('vm.query', [('autostart', '=', True)], {'force_sql_filters': True})
+            if self._system_supports_virtualization_safe() else []
+        ):
             try:
                 await self.middleware.call('vm.start', vm['id'])
             except Exception as e:

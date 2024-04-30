@@ -6,11 +6,6 @@ from .vm_supervisor import VMSupervisorMixin
 
 class VMService(Service, VMSupervisorMixin):
 
-    @private
-    async def lifecycle_action_check(self):
-        if not await self.middleware.call('vm.license_active'):
-            raise CallError('Requested action cannot be performed as system is not licensed to use VMs')
-
     @item_method
     @accepts(
         Int('id'),
@@ -30,7 +25,6 @@ class VMService(Service, VMSupervisorMixin):
 
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
-        await self.lifecycle_action_check()
         await self.middleware.run_in_thread(self._check_setup_connection)
 
         vm = await self.middleware.call('vm.get_instance', id_)
@@ -42,14 +36,6 @@ class VMService(Service, VMSupervisorMixin):
 
         if vm['bootloader'] not in await self.middleware.call('vm.bootloader_options'):
             raise CallError(f'"{vm["bootloader"]}" is not supported on this platform.')
-
-        if await self.middleware.call('system.is_ha_capable'):
-            for device in vm['devices']:
-                if device['dtype'] in ('PCI', 'USB'):
-                    raise CallError(
-                        'Please remove PCI/USB devices from VM before starting it in HA capable machines as '
-                        'they are not supported.'
-                    )
 
         # Perhaps we should have a default config option for VMs?
         await self.middleware.call('vm.init_guest_vmemory', vm, options['overcommit'])

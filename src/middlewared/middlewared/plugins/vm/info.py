@@ -26,20 +26,16 @@ class VMService(Service, LibvirtConnectionMixin):
         """
         Returns "true" if system supports virtualization, "false" otherwise
         """
-        return self._is_kvm_supported()
+        return self._system_supports_virtualization_safe()
 
     @private
     async def license_active(self):
         """
-        If this is HA capable hardware and has NOT been licensed to run VMs
-        then this will return False. Otherwise this will return true.
+        If this is HA capable hardware then this will return False,
+        otherwise this will return true.
         """
-        can_run_vms = True
-        if await self.middleware.call('system.is_ha_capable'):
-            license_ = await self.middleware.call('system.license')
-            can_run_vms = license_ is not None and 'VM' in license_['features']
 
-        return can_run_vms
+        return not await self.middleware.call('system.is_ha_capable')
 
     @accepts(roles=['VM_READ'])
     @returns(Dict(
@@ -50,9 +46,14 @@ class VMService(Service, LibvirtConnectionMixin):
         """
         Retrieve details if virtualization is supported on the system and in case why it's not supported if it isn't.
         """
+        error = None
+        if not self._is_kvm_supported():
+            error = 'Your CPU does not support KVM extensions'
+        if self._is_ha():
+            error = 'Virtualization is not supported on HA systems'
         return {
-            'supported': self._is_kvm_supported(),
-            'error': None if self._is_kvm_supported() else 'Your CPU does not support KVM extensions',
+            'supported': not bool(error),
+            'error': error,
         }
 
     @accepts(roles=['VM_READ'])
@@ -127,7 +128,9 @@ class VMService(Service, LibvirtConnectionMixin):
         """
         Retrieve CPU Model choices which can be used with a VM guest to emulate the CPU in the guest.
         """
-        self.middleware.call_sync('vm.check_setup_libvirt')
+        if not self.middleware.call_sync('vm.check_setup_libvirt'):
+            return {}
+
         base_path = '/usr/share/libvirt/cpu_map'
         if self.CPU_MODEL_CHOICES or not os.path.exists(base_path):
             return self.CPU_MODEL_CHOICES

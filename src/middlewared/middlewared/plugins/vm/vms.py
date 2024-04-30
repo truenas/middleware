@@ -99,10 +99,18 @@ class VMService(CRUDService, VMSupervisorMixin):
     @private
     def extend_context(self, rows, extra):
         status = {}
-        if rows:
+        license_active = self.middleware.call_sync('vm.license_active')
+        if rows and license_active:
             self._check_setup_connection()
         for row in rows:
-            status[row['id']] = self.status_impl(row)
+            if license_active:
+                status[row['id']] = self.status_impl(row)
+            else:
+                status[row['id']] = {
+                    'state': 'ERROR',
+                    'pid': None,
+                    'domain_state': 'ERROR'
+                }
 
         return {
             'status': status,
@@ -219,12 +227,6 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         if not data.get('uuid'):
             data['uuid'] = str(uuid.uuid4())
-
-        if not await self.middleware.call('vm.license_active'):
-            verrors.add(
-                f'{schema_name}.name',
-                'System is not licensed to use VMs'
-            )
 
         if data['min_memory'] and data['min_memory'] > data['memory']:
             verrors.add(
@@ -392,7 +394,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         async with LIBVIRT_LOCK:
             vm = await self.get_instance(id_)
             # Deletion should be allowed even if host does not support virtualization
-            if self._is_kvm_supported():
+            if self._is_kvm_supported() and not self._is_ha():
                 await self.middleware.run_in_thread(self._check_setup_connection)
             status = await self.middleware.call('vm.status', id_)
             force_delete = data.get('force')
@@ -461,7 +463,6 @@ class VMService(CRUDService, VMSupervisorMixin):
             - pid, process id if RUNNING
         """
         vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id_]], {'get': True})
-        self._check_setup_connection()
         return self.status_impl(vm)
 
     @private

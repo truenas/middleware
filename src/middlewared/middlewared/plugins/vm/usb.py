@@ -71,8 +71,14 @@ class VMDeviceService(Service):
         """
         Retrieve details about `device` USB device.
         """
-        await self.middleware.call('vm.check_setup_libvirt')
         data = await self.get_basic_usb_passthrough_device_data()
+        if not await self.middleware.call('vm.check_setup_libvirt'):
+            return {
+                **data,
+                'error': 'Virtualization is not setup on this system',
+                'available': False,
+            }
+
         cp = await run(get_virsh_command_args() + ['nodedev-dumpxml', device], check=False)
         if cp.returncode:
             data['error'] = cp.stderr.decode()
@@ -105,7 +111,8 @@ class VMDeviceService(Service):
         """
         Available choices for USB passthrough devices.
         """
-        await self.middleware.call('vm.check_setup_libvirt')
+        if not await self.middleware.call('vm.check_setup_libvirt'):
+            return {}
 
         cp = await run(get_virsh_command_args() + ['nodedev-list', 'usb_device'], check=False)
         if cp.returncode:

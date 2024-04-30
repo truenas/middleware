@@ -636,7 +636,7 @@ class FailoverEventsService(Service):
         logger.info('Restarting reporting metrics')
         self.run_call('service.restart', 'netdata')
 
-        self.run_call('failover.events.start_apps_vms')
+        self.run_call('failover.events.start_apps')
         self.run_call('zettarepl.update_tasks')
 
         logger.info('Initializing alert system')
@@ -674,17 +674,7 @@ class FailoverEventsService(Service):
 
         return self.FAILOVER_RESULT
 
-    async def start_apps_vms(self):
-        async def start_vms():
-            await self.middleware.call('vm.initialize_vms')
-            await self.middleware.call('vm.start_on_boot')
-
-        if await self.middleware.call('vm.license_active'):
-            # start any VMs (this will log errors if the vm(s) fail to start)
-            # Initialize VMs first to make sure system has relevant
-            # objects for each VM initialized
-            self.middleware.create_task(start_vms())
-
+    async def start_apps(self):
         if await self.middleware.call('kubernetes.license_active') and (
             await self.middleware.call('kubernetes.config')
         )['dataset']:

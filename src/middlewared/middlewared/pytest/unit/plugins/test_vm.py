@@ -10,7 +10,7 @@ VMService = load_compound_service('vm')
 
 @pytest.mark.parametrize('ha_capable,license_features,should_work', [
     (True, [], False),
-    (True, ['VM'], True),
+    (True, ['VM'], False),
     (False, [], True),
 ])
 @pytest.mark.asyncio
