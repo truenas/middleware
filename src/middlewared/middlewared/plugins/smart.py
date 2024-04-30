@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta, timezone
 import functools
 import re
@@ -712,25 +713,37 @@ class SMARTTestService(CRUDService):
         )
 
     @private
-    @job()
+    @job(abortable=True)
     async def wait(self, job, disk, expected_result_time):
-        start = datetime.utcnow()
-        if expected_result_time < start:
-            raise CallError(f'Invalid expected_result_time {expected_result_time.isoformat()}')
+        try:
+            start = datetime.utcnow()
+            if expected_result_time < start:
+                raise CallError(f'Invalid expected_result_time {expected_result_time.isoformat()}')
 
-        start_monotime = time.monotonic()
-        end_monotime = start_monotime + (expected_result_time - start).total_seconds()
+            start_monotime = time.monotonic()
+            end_monotime = start_monotime + (expected_result_time - start).total_seconds()
 
-        await self.middleware.call('smart.test.set_test_data', disk['disk'], {
-            'start_monotime': start_monotime,
-            'end_monotime': end_monotime,
-        })
+            await self.middleware.call('smart.test.set_test_data', disk['disk'], {
+                'start_monotime': start_monotime,
+                'end_monotime': end_monotime,
+            })
 
-        async for _, data in await self.middleware.event_source_manager.iterate('smart.test.progress', disk['disk']):
-            if data['fields']['progress'] is None:
-                return
+            async for _, data in await self.middleware.event_source_manager.iterate('smart.test.progress', disk['disk']):
+                if data['fields']['progress'] is None:
+                    return
 
-            job.set_progress(data['fields']['progress'])
+                job.set_progress(data['fields']['progress'])
+        except asyncio.CancelledError:
+            await self.middleware.call('smart.test.abort', disk['disk'])
+            raise
+
+    @accepts(Str('disk'))
+    @returns()
+    async def abort(self, disk):
+        """
+        Abort non-captive S.M.A.R.T. tests for disk.
+        """
+        await self.middleware.call("disk.smartctl", disk, ["-X"], {"silent": True})
 
 
 class SmartModel(sa.Model):
