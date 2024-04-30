@@ -182,6 +182,12 @@ nvme)
 		exit 1
 	fi
 
+	#Check if drive is attached via pcie if not assume resize wil fail due to ES24N Jbod behavior.
+	if ! cat "/sys/class/nvme/${dev%n*}/transport"|grep 'pcie' ;then
+		echo "Drive is not attached via pcie, can't resize due to risk of a failed resize"
+		exit 1
+	fi
+
 	# Identify namespace properties.
 	idns=`nvme id-ns -n -1 ${ctrlr}`
 
