@@ -3,7 +3,7 @@
         def __init__(self, **kwargs):
             self.middleware = kwargs.get('middleware')
             self.pam_mkhomedir = "pam_mkhomedir.so"
-            self.pam_ldap = "pam_sss.so"
+            self.pam_sss = "pam_sss.so"
             self.pam_winbind = "pam_winbind.so"
             self.pam_unix = "pam_unix.so"
             self.render_ctx = kwargs.get("render_ctx")
@@ -154,23 +154,6 @@
         def enabled(self):
             return self.render_ctx['ldap.config']['enable']
 
-        def min_uid(self):
-            config = self.render_ctx['ldap.config']
-            min_uid = 1000
-            for param in config['auxiliary_parameters'].splitlines():
-                param = param.strip()
-                if param.startswith('nss_min_uid'):
-                    try:
-                        override = param.split()[1].strip()
-                        if override.isdigit():
-                            min_uid = override
-                    except Exception:
-                        self.middleware.logger.debug(
-                            "Failed to override default minimum UID for pam_ldap",
-                            exc_info=True
-                        )
-            return min_uid
-
         def pam_auth(self):
             ldap_args = [
                 "ignore_unknown_user",
@@ -178,7 +161,7 @@
             ]
 
             unix_entry = super().pam_auth(success=2)
-            ldap_entry = super().pam_auth(pam_path=self.pam_ldap, success=1, pam_args=ldap_args)
+            ldap_entry = super().pam_auth(pam_path=self.pam_sss, success=1, pam_args=ldap_args)
             entries = [unix_entry, ldap_entry]
 
             return {'primary': entries, 'additional': []}
@@ -190,13 +173,13 @@
                 'default': 'bad'
             }
             unix_entry = super().pam_account()
-            ldap_entry = super().pam_account(success="ok", pam_path=self.pam_ldap, pam_args=[f"minimum_uid={min_uid}"], **ldap_args)
+            ldap_entry = super().pam_account(success="ok", pam_path=self.pam_sss, pam_args=[f"minimum_uid={min_uid}"], **ldap_args)
 
             return {'primary': [unix_entry], 'additional': [ldap_entry]}
 
         def pam_session(self):
             entries = [super().pam_session()]
-            entries.append(super().pam_session(pam_path=self.pam_ldap, pam_control='optional'))
+            entries.append(super().pam_session(pam_path=self.pam_sss, pam_control='optional'))
             entries.append(super().pam_session(pam_path=self.pam_mkhomedir, pam_control='required'))
 
             return {'primary': [], 'additional': entries}
@@ -207,7 +190,7 @@
             ]
 
             unix_entry = super().pam_password(success=2)
-            ldap_entry = super().pam_password(pam_path=self.pam_ldap, pam_args=ldap_args, success=1)
+            ldap_entry = super().pam_password(pam_path=self.pam_sss, pam_args=ldap_args, success=1)
 
             entries = [unix_entry, ldap_entry]
 
