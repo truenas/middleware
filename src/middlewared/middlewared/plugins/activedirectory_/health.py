@@ -160,14 +160,14 @@ class ActiveDirectoryService(Service):
         verrors = ValidationErrors()
         config = await self.middleware.call('activedirectory.config')
         if not config['enable']:
-            await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus['DISABLED'].name})
+            await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus.DISABLED.name})
             return False
 
         """
         Initialize state to "JOINING" until after booted.
         """
         if not await self.middleware.call('system.ready'):
-            await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus['JOINING'].name})
+            await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus.JOINING.name})
             return True
 
         await self.middleware.call('activedirectory.common_validate', config, config, verrors)
@@ -175,16 +175,13 @@ class ActiveDirectoryService(Service):
         try:
             verrors.check()
         except ValidationErrors as ve:
-            await self.middleware.call(
-                'datastore.update', self._config.datastore, config['id'],
-                {"enable": False}, {'prefix': 'ad_'}
-            )
-            raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration',
+            await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus.FAULTED.name})
+            raise CallError(' disabling ActiveDirectory service due to invalid configuration',
                             errno.EINVAL, ', '.join([err[1] for err in ve]))
 
         """
         Verify winbindd netlogon connection.
         """
         await self.middleware.call('activedirectory.winbind_status')
-        await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus['HEALTHY'].name})
+        await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus.HEALTHY.name})
         return True

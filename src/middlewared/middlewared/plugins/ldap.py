@@ -902,10 +902,7 @@ class LDAPService(ConfigService):
         try:
             verrors.check()
         except ValidationErrors:
-            await self.middleware.call(
-                'datastore.update', self._config.datastore, 1,
-                {'enable': False}, {'prefix': 'ldap_'}
-            )
+            await self.set_state(DSStatus.FAULTED)
             raise CallError('Automatically disabling LDAP service due to invalid configuration.',
                             errno.EINVAL)
 
@@ -913,7 +910,7 @@ class LDAPService(ConfigService):
         Initialize state to "JOINING" until after booted.
         """
         if not await self.middleware.call('system.ready'):
-            await self.set_state(DSStatus['JOINING'])
+            await self.set_state(DSStatus.JOINING)
             return True
 
         try:
@@ -927,7 +924,7 @@ class LDAPService(ConfigService):
             await self.middleware.call('etc.generate', 'ldap')
             await self.middleware.call('service.start', 'sssd')
 
-        await self.set_state(DSStatus['HEALTHY'])
+        await self.set_state(DSStatus.HEALTHY)
         return True
 
     @private
@@ -971,18 +968,17 @@ class LDAPService(ConfigService):
         that the service begins in a clean state.
         """
         ldap_state = await self.middleware.call('ldap.get_state')
-        if ldap_state in ['LEAVING', 'JOINING']:
-            raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
-
         job.set_progress(0, 'Preparing to configure LDAP directory service.')
         ldap = await self.config()
 
+        await self.set_state(DSStatus.JOINING)
         if ldap['kerberos_realm']:
             job.set_progress(5, 'Starting kerberos')
             await self.middleware.call('kerberos.start')
 
         job.set_progress(15, 'Generating configuration files')
         await self.middleware.call('etc.generate', 'rc')
+        await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
 
@@ -1006,7 +1002,7 @@ class LDAPService(ConfigService):
         else:
             await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
 
-        await self.set_state(DSStatus['HEALTHY'])
+        await self.set_state(DSStatus.HEALTHY)
         job.set_progress(80, 'Restarting dependent services')
         cache_job = await self.middleware.call('dscache.refresh')
         await cache_job.wait()
@@ -1017,14 +1013,12 @@ class LDAPService(ConfigService):
     @private
     async def __stop(self, job):
         ldap_state = await self.middleware.call('ldap.get_state')
-        if ldap_state in ['LEAVING', 'JOINING']:
-            raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
-
         job.set_progress(0, 'Preparing to stop LDAP directory service.')
         await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
-        await self.set_state(DSStatus['LEAVING'])
+        await self.set_state(DSStatus.LEAVING)
         job.set_progress(10, 'Rewriting configuration files.')
         await self.middleware.call('etc.generate', 'rc')
+        await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
         await self.synchronize()
@@ -1042,7 +1036,7 @@ class LDAPService(ConfigService):
 
         job.set_progress(80, 'Stopping sssd service.')
         await self.middleware.call('service.stop', 'sssd')
-        await self.set_state(DSStatus['DISABLED'])
+        await self.set_state(DSStatus.DISABLED)
         job.set_progress(100, 'LDAP directory service stopped.')
 
     @private

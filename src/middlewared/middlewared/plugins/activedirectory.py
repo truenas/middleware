@@ -922,6 +922,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('service.stop', 'cifs')
         job.set_progress(40, 'Reconfiguring pam and nss.')
         await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('etc.generate', 'nss')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(60, 'clearing caches.')
         await self.middleware.call('service.stop', 'dscache')
@@ -1262,6 +1263,7 @@ class ActiveDirectoryService(ConfigService):
 
         job.set_progress(60, 'Regenerating configuration.')
         await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('etc.generate', 'nss')
         await self.synchronize()
         await self.middleware.call('idmap.synchronize')
 

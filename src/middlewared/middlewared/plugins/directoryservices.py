@@ -105,6 +105,66 @@ class DirectoryServices(Service):
             await self.middleware.call('cache.put', 'DS_STATE', ds_state, 60)
             return ds_state
 
+    @no_authz_required
+    @accepts()
+    @returns(Dict(
+        'directoryservices_status',
+        Str('directory_service', enum=[x.value.upper() for x in DSType], null=True),
+        Ref('directoryservice_state', 'state')
+    ))
+    async def status(self):
+        ds_state = await self.get_state()
+        enabled_service = None
+        state = DSStatus.DISABLED.name
+        for srv in DSType:
+            if ds_state[srv.value] != DSStatus.DISABLED.name
+                enabled_service = srv.value.upper()
+                state = ds_state[srv.value]
+                break
+
+        return {'service': enabled_service, 'state': state}
+
+    @private
+    def reset_nss(self, new):
+        target_ds = None
+
+        for ds, status in new.itemes():
+            if status != (DSStatus.DISABLED.name):
+                target_ds = ds
+                break
+
+        # avoid reading existing nsswitch unless absolutely necessary
+        if target_ds is None or status not in (DSStatus.HEALTHY.name, DSStatus.FAULTED.name):
+            return
+
+        with open('/etc/nsswitch.conf', 'r') as f:
+            nss_contents = f.read()
+
+        match target_ds:
+            case DSStatus.AD.value:
+                nss_module = 'winbind'
+            case DSStatus.LDAP.value:
+                nss_module = 'sss'
+            case _:
+                self.logger.error('%s: unknown directory service', target_ds)
+                # We don't want this to be fatal because it may trigger production
+                # outage
+                return
+
+        match status:
+            case DSStatus.HEALTHY.name:
+                must_refresh = nss_module not in nss_contents
+            case DSStatus.FAULTED.name:
+                must_refresh = nss_module in nss_contents
+            case _:
+                self.logger.error('%s: unexpected status', status)
+                # We don't want this to be fatal because it may trigger production
+                # outage
+                return
+
+        if must_refresh:
+            self.middleware.call_sync('etc.generate', 'nss')
+
     @private
     async def set_state(self, new):
         ds_state = {
