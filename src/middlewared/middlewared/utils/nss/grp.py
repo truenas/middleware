@@ -293,7 +293,7 @@ def getgrall(module=NssModule.ALL.name, as_dict=False):
 
         entries = []
         try:
-            entries = __getgrall_impl(mod.name, as_dict)):
+            entries = __getgrall_impl(mod.name, as_dict)
         except NssError as e:
             if e.return_code != NssReturnCode.UNAVAIL:
                 raise e from None
