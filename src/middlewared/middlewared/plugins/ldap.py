@@ -2,6 +2,7 @@ import enum
 import errno
 import ipaddress
 import ldap as pyldap
+import os
 import socket
 import struct
 
@@ -964,6 +965,11 @@ class LDAPService(ConfigService):
         return (await self.middleware.call('directoryservices.get_state'))['ldap']
 
     @private
+    def create_sssd_dirs(self):
+        os.makedirs('/var/run/sssd-cache/mc', mode=0o755, exist_ok=True)
+        os.makedirs('/var/run/sssd-cache/db', mode=0o755, exist_ok=True)
+
+    @private
     async def __start(self, job):
         """
         Refuse to start service if the service is alreading in process of starting or stopping.
@@ -976,6 +982,8 @@ class LDAPService(ConfigService):
 
         job.set_progress(0, 'Preparing to configure LDAP directory service.')
         ldap = await self.config()
+
+        await self.middleware.call('ldap.create_sssd_dirs')
 
         if ldap['kerberos_realm']:
             job.set_progress(5, 'Starting kerberos')
