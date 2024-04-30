@@ -2,6 +2,7 @@ import enum
 import errno
 import ipaddress
 import ldap as pyldap
+import os
 import socket
 import struct
 
