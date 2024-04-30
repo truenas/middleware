@@ -3,9 +3,8 @@
         def __init__(self, **kwargs):
             self.middleware = kwargs.get('middleware')
             self.pam_mkhomedir = "pam_mkhomedir.so"
-            self.pam_ldap = "pam_ldap.so"
+            self.pam_sss = "pam_sss.so"
             self.pam_winbind = "pam_winbind.so"
-            self.pam_krb5 = "pam_krb5.so"
             self.pam_unix = "pam_unix.so"
             self.render_ctx = kwargs.get("render_ctx")
 
@@ -155,97 +154,44 @@
         def enabled(self):
             return self.render_ctx['ldap.config']['enable']
 
-        def is_kerberized(self):
-            return True if self.render_ctx['ldap.config']['kerberos_realm'] else False
-
-        def min_uid(self):
-            config = self.render_ctx['ldap.config']
-            min_uid = 1000
-            for param in config['auxiliary_parameters'].splitlines():
-                param = param.strip()
-                if param.startswith('nss_min_uid'):
-                    try:
-                        override = param.split()[1].strip()
-                        if override.isdigit():
-                            min_uid = override
-                    except Exception:
-                        self.middleware.logger.debug(
-                            "Failed to override default minimum UID for pam_ldap",
-                            exc_info=True
-                        )
-            return min_uid
-
         def pam_auth(self):
-            min_uid = self.min_uid()
-
             ldap_args = [
-                "try_first_pass",
                 "ignore_unknown_user",
-                "ignore_authinfo_unavail",
-                "no_warn",
-                f"minimum_uid={min_uid}"
+                "use_first_pass"
             ]
-            krb5_args = ["try_first_pass", "no_warn", f'minimum_uid={min_uid}']
 
             unix_entry = super().pam_auth(success=2)
-            ldap_entry = super().pam_auth(pam_path=self.pam_ldap, success=1, pam_args=ldap_args)
-
+            ldap_entry = super().pam_auth(pam_path=self.pam_sss, success=1, pam_args=ldap_args)
             entries = [unix_entry, ldap_entry]
-            if self.is_kerberized():
-                krb5_entry = super().pam_auth(pam_path=self.pam_krb5, success=3, pam_args=krb5_args)
-                entries.insert(0, krb5_entry)
 
             return {'primary': entries, 'additional': []}
 
         def pam_account(self):
-            min_uid = self.min_uid()
             ldap_args = {
-                'new_authtok_reqd': 'done',
-                'ignore': 'ignore',
                 'user_unknown': 'ignore',
-                'authinfo_unavail': 'ignore',
                 'default': 'bad'
             }
-            krb5_args = ["no_warn", f"minimum_uid={min_uid}"]
-
             unix_entry = super().pam_account()
-            ldap_entry = super().pam_account(success="ok", pam_path=self.pam_ldap, pam_args=[f"minimum_uid={min_uid}"], **ldap_args)
+            ldap_entry = super().pam_account(success="ok", pam_path=self.pam_sss, **ldap_args)
 
-            entries = [ldap_entry]
-
-            if self.is_kerberized():
-                krb5_entry = f"account\t\trequired\t{self.pam_krb5}\t\t{' '.join(krb5_args)}"
-                entries.insert(1, krb5_entry)
-
-            return {'primary': [unix_entry], 'additional': entries}
+            return {'primary': [unix_entry], 'additional': [ldap_entry]}
 
         def pam_session(self):
             entries = [super().pam_session()]
-            entries.append(super().pam_session(pam_path=self.pam_ldap, pam_control='optional'))
+            entries.append(super().pam_session(pam_path=self.pam_sss, pam_control='optional'))
             entries.append(super().pam_session(pam_path=self.pam_mkhomedir, pam_control='required'))
-            if self.is_kerberized():
-                entries.append(super().pam_session(pam_path=self.pam_krb5, pam_control='optional'))
 
             return {'primary': [], 'additional': entries}
 
         def pam_password(self):
-            min_uid = self.min_uid()
             ldap_args = [
-                "ignore_unknown_user",
-                "ignore_authinfo_unavail",
-                "no_warn",
-                f"minimum_uid={min_uid}"
+                "use_authtok",
             ]
-            krb5_args = ["try_first_pass", f"minimum_uid={min_uid}"]
 
             unix_entry = super().pam_password(success=2)
-            ldap_entry = super().pam_password(pam_path=self.pam_ldap, pam_args=ldap_args, success=1)
+            ldap_entry = super().pam_password(pam_path=self.pam_sss, pam_args=ldap_args, success=1)
 
             entries = [unix_entry, ldap_entry]
-
-            if self.is_kerberized():
-                krb5_entry = super().pam_password(pam_path=self.pam_krb5, pam_args=krb5_args, success=3)
-                entries.insert(0, krb5_entry)
 
             return {'primary': entries, 'additional': []}
 
