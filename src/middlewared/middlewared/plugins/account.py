@@ -1049,6 +1049,7 @@ class UserService(CRUDService):
         Int('pw_gid'),
         List('grouplist'),
         Dict('sid_info'),
+        Bool('local'),
         register=True,
     ))
     async def get_user_obj(self, data):

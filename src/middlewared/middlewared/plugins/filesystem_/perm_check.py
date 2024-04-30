@@ -1,12 +1,11 @@
 import errno
-import grp
 import os
 import pathlib
-import pwd
 
 from middlewared.schema import accepts, Bool, Dict, returns, Str
 from middlewared.service import CallError, Service, private
 
+from middlewared.utils.nss import pwd, grp
 from middlewared.utils.user_context import run_with_user_context, set_user_context
 
 # This should be a sufficiently high UID to never be used explicitly

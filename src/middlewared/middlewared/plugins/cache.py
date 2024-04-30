@@ -1,6 +1,7 @@
 from middlewared.schema import Any, Str, Ref, Int, Dict, Bool, accepts
 from middlewared.service import Service, private, job, filterable
 from middlewared.utils import filter_list
+from middlewared.utils.nss import pwd, grp
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.idmap_.utils import SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 
@@ -8,8 +9,6 @@ from collections import namedtuple
 import errno
 import os
 import time
-import pwd
-import grp
 
 
 class CacheService(Service):
@@ -234,42 +233,37 @@ class DSCache(Service):
         for user validation.
         """
         if username:
-            u = pwd.getpwnam(username)
+            user_obj = pwd.getpwnam(username, module='ALL', as_dict=True)
         elif uid is not None:
-            u = pwd.getpwuid(uid)
+            user_obj = pwd.getpwuid(uid, module='ALL', as_dict=True)
         else:
             return {}
 
-        user_obj = {
-            'pw_name': u.pw_name,
-            'pw_uid': u.pw_uid,
-            'pw_gid': u.pw_gid,
-            'pw_gecos': u.pw_gecos,
-            'pw_dir': u.pw_dir,
-            'pw_shell': u.pw_shell,
-        }
+        source = user_obj.pop('source')
+        user_obj['local'] = source == 'FILES'
+
         if getgroups:
-            user_obj['grouplist'] = os.getgrouplist(u.pw_name, u.pw_gid)
+            user_obj['grouplist'] = os.getgrouplist(user_obj['pw_name'], user_obj['pw_gid'])
 
         if sid_info:
             try:
                 if (idmap := self.middleware.call_sync('idmap.convert_unixids', [{
                     'id_type': 'USER',
-                    'id': u.pw_uid,
+                    'id': user_obj['pw_uid'],
                 }])['mapped']):
-                    sid = idmap[f'UID:{u.pw_uid}']['sid']
+                    sid = idmap[f'UID:{user_obj["pw_uid"]}']['sid']
                 else:
-                    sid = SID_LOCAL_USER_PREFIX + str(u.pw_uid)
+                    sid = SID_LOCAL_USER_PREFIX + str(user_obj['pw_uid'])
             except CallError as e:
                 # ENOENT means no winbindd entry for user
                 # ENOTCONN means winbindd is stopped / can't be started
                 # EAGAIN means the system dataset is hosed and needs to be fixed,
                 # but we need to let it through so that it's very clear in logs
                 if e.errno not in (errno.ENOENT, errno.ENOTCONN):
-                    self.logger.error('Failed to retrieve SID for uid: %d', u.pw_uid, exc_info=True)
+                    self.logger.error('Failed to retrieve SID for uid: %d', user_obj['pw_uid'], exc_info=True)
                 sid = None
             except Exception:
-                self.logger.error('Failed to retrieve SID for uid: %d', u.pw_uid, exc_info=True)
+                self.logger.error('Failed to retrieve SID for uid: %d', user_obj['pw_uid'], exc_info=True)
                 sid = None
 
             if sid:
@@ -290,33 +284,30 @@ class DSCache(Service):
         for group validation.
         """
         if groupname:
-            g = grp.getgrnam(groupname)
+            grp_obj = grp.getgrnam(groupname, module='ALL', as_dict=True)
         elif gid is not None:
-            g = grp.getgrgid(gid)
+            grp_obj = grp.getgrgid(gid, module='ALL', as_dict=True)
         else:
             return {}
 
-        grp_obj = {
-            'gr_name': g.gr_name,
-            'gr_gid': g.gr_gid,
-            'gr_mem': g.gr_mem
-        }
+        source = grp_obj.pop('source')
+        grp_obj['local'] = source == 'FILES'
 
         if sid_info:
             try:
                 if (idmap := self.middleware.call_sync('idmap.convert_unixids', [{
                     'id_type': 'GROUP',
-                    'id': g.gr_gid,
+                    'id': grp_obj['gr_gid'],
                 }])['mapped']):
-                    sid = idmap[f'GID:{g.gr_gid}']['sid']
+                    sid = idmap[f'GID:{grp_obj["gr_gid"]}']['sid']
                 else:
-                    sid = SID_LOCAL_GROUP_PREFIX + str(g.gr_gid)
+                    sid = SID_LOCAL_GROUP_PREFIX + str(grp_obj['gr_gid'])
             except CallError as e:
                 if e.errno not in (errno.ENOENT, errno.ENOTCONN):
-                    self.logger.error('Failed to retrieve SID for gid: %d', grp.gr_gid, exc_info=True)
+                    self.logger.error('Failed to retrieve SID for gid: %d', grp_obj['gr_gid'], exc_info=True)
                 sid = None
             except Exception:
-                self.logger.error('Failed to retrieve SID for gid: %d', grp.gr_gid, exc_info=True)
+                self.logger.error('Failed to retrieve SID for gid: %d', grp['gr_gid'], exc_info=True)
                 sid = None
 
             if sid:
