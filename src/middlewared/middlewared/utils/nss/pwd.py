@@ -69,7 +69,7 @@ def __getpwnam_r(name, result_p, buffer_p, buflen, nss_module):
     return (int(res), err.value, result_p)
 
 
-def __getpwuid_r(gid, result_p, buffer_p, buflen, nss_module):
+def __getpwuid_r(uid, result_p, buffer_p, buflen, nss_module):
     """
     enum nss_status _nss_#module#_getpwuid_r(uid_t uid,
                                              struct passwd *result,
@@ -87,7 +87,7 @@ def __getpwuid_r(gid, result_p, buffer_p, buflen, nss_module):
         ctypes.POINTER(ctypes.c_int)
     ]
     err = ctypes.c_int()
-    res = func(gid, result_p, buffer_p, buflen, ctypes.byref(err))
+    res = func(uid, result_p, buffer_p, buflen, ctypes.byref(err))
 
     return (int(res), err.value, result_p)
 
