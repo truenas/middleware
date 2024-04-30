@@ -31,18 +31,12 @@ class ActiveDirectoryService(Service):
 
         if entry_type == 'USER':
             entries = pwd.getpwall(module=NssModule.WINBIND.name)[NssModule.WINBIND.name]
+            for i in entries:
+                ret.append({"id": i.pw_uid, "sid": None, "nss": i, "id_type": entry_type})
         else:
             entries = grp.getgrall(module=NssModule.WINBIND.name)[NssModule.WINBIND.name]
-
-        for i in entries:
-            entry = {"id": -1, "sid": None, "nss": i, "id_type": entry_type}
-            if entry_type == 'USER':
-                entry["id"] = entry["nss"].pw_uid
-
-            else:
-                entry["id"] = entry["nss"].gr_gid
-
-            ret.append(entry)
+            for i in entries:
+                ret.append({"id": i.gr_gid, "sid": None, "nss": i, "id_type": entry_type})
 
         idmaps = self.middleware.call_sync('idmap.convert_unixids', ret)
         to_remove = []
