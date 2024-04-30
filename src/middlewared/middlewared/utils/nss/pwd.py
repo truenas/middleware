@@ -293,11 +293,13 @@ def getpwall(module=NssModule.ALL.name, as_dict=False):
         if mod == NssModule.ALL:
             continue
 
+        entries = []
         try:
-            if (entries := __getpwall_impl(mod.name, as_dict)):
-                results[mod.name] = entries
+            entries = __getpwall_impl(mod.name, as_dict)):
         except NssError as e:
             if e.return_code != NssReturnCode.UNAVAIL:
                 raise e from None
+
+        results[mod.name] = entries
 
     return results

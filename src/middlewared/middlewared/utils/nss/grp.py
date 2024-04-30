@@ -16,7 +16,7 @@ class Group(ctypes.Structure):
     ]
 
 
-group_struct = namedtuple('group_struct', ['gr_name', 'gr_gid', 'gr_mem', 'source'])
+group_struct = namedtuple('struct_group', ['gr_name', 'gr_gid', 'gr_mem', 'source'])
 
 
 def __parse_nss_result(result, as_dict, module_name):
@@ -218,6 +218,12 @@ def __getgrgid_impl(gid, module, as_dict, buffer_len=GROUP_INIT_BUFLEN):
 
 
 def getgrgid(gid, module=NssModule.ALL.name, as_dict=False):
+    """
+    Return the group database entry for the given group by gid.
+
+    `module` - NSS module from which to retrieve the group
+    `as_dict` - return output as a dictionary rather than `struct_group`.
+    """
     if module != NssModule.ALL.name:
         if (result := __getgrgid_impl(gid, module, as_dict)):
             return result
@@ -240,6 +246,12 @@ def getgrgid(gid, module=NssModule.ALL.name, as_dict=False):
 
 
 def getgrnam(name, module=NssModule.ALL.name, as_dict=False):
+    """
+    Return the group database entry for the given group by name.
+
+    `module` - NSS module from which to retrieve the group
+    `as_dict` - return output as a dictionary rather than `struct_group`.
+    """
     if module != NssModule.ALL.name:
         if (result := __getgrnam_impl(name, module, as_dict)):
             return result
@@ -262,6 +274,15 @@ def getgrnam(name, module=NssModule.ALL.name, as_dict=False):
 
 
 def getgrall(module=NssModule.ALL.name, as_dict=False):
+    """
+    Returns all group entries on server (similar to grp.getgrall()).
+
+    `module` - NSS module from which to retrieve the entries
+    `as_dict` - return password database entries as dictionaries
+
+    This module returns a dictionary keyed by NSS module, e.g.
+    {'FILES': [<struct_group>, <struct_group>], 'WINBIND': [], 'SSS': []}
+    """
     if module != NssModule.ALL.name:
         return {module: __getgrall_impl(module, as_dict)}
 
@@ -270,11 +291,13 @@ def getgrall(module=NssModule.ALL.name, as_dict=False):
         if mod == NssModule.ALL:
             continue
 
+        entries = []
         try:
-            if (entries := __getgrall_impl(mod.name, as_dict)):
-                results[mod.name] = entries
+            entries = __getgrall_impl(mod.name, as_dict)):
         except NssError as e:
             if e.return_code != NssReturnCode.UNAVAIL:
                 raise e from None
+
+        results[mod.name] = entries
 
     return results
