@@ -45,7 +45,13 @@ def __parse_nss_result(result, as_dict, module_name):
 
 
 def __getpwnam_r(name, result_p, buffer_p, buflen, nss_module):
-    """ctypes wrapper for _nss_##module##_getpwnam_r"""
+    """
+    enum nss_status _nss_#module#_getpwnam_r(const char *name,
+                                             struct passwd *result,
+                                             char *buffer,
+                                             size_t buflen,
+                                             int *errnop)
+    """
     func = get_nss_func(NssOperation.GETPWNAM, nss_module)
     func.restype = ctypes.c_int
     func.argtypes = [
@@ -64,7 +70,13 @@ def __getpwnam_r(name, result_p, buffer_p, buflen, nss_module):
 
 
 def __getpwuid_r(gid, result_p, buffer_p, buflen, nss_module):
-    """ctypes wrapper for _nss_##module##_getpwuid_r"""
+    """
+    enum nss_status _nss_#module#_getpwuid_r(uid_t uid,
+                                             struct passwd *result,
+                                             char *buffer,
+                                             size_t buflen,
+                                             int *errnop)
+    """
     func = get_nss_func(NssOperation.GETPWUID, nss_module)
     func.restype = ctypes.c_int
     func.argtypes = [
@@ -81,7 +93,11 @@ def __getpwuid_r(gid, result_p, buffer_p, buflen, nss_module):
 
 
 def __getpwent_r(result_p, buffer_p, buflen, nss_module):
-    """ctypes wrapper for _nss_##module##_getpwent_r"""
+    """
+    enum nss_status _nss_#module#_getpwent_r(struct passwd *result,
+                                             char *buffer, size_t buflen,
+                                             int *errnop)
+    """
     func = get_nss_func(NssOperation.GETPWENT, nss_module)
     func.restype = ctypes.c_int
     func.argtypes = [
@@ -99,9 +115,7 @@ def __getpwent_r(result_p, buffer_p, buflen, nss_module):
 
 def __setpwent(nss_module):
     """
-    ctypes wrapper for _nss_##module##_setpwent
-
-    NOTE: this calls thread-safe per-module variant of setpwent
+    enum nss_status _nss_#module#_setpwent(void)
     """
     func = get_nss_func(NssOperation.SETPWENT, nss_module)
     func.argtypes = []
@@ -114,9 +128,7 @@ def __setpwent(nss_module):
 
 def __endpwent(nss_module):
     """
-    ctypes wrapper for _nss_##module##_endpwent
-
-    NOTE: this calls thread-safe per-module variant of endpwent
+    enum nss_status _nss_#module#_endpwent(void)
     """
     func = get_nss_func(NssOperation.ENDPWENT, nss_module)
     func.argtypes = []
