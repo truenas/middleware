@@ -1,9 +1,10 @@
 import ctypes
+import errno
 
 from collections import namedtuple
 from .nss_common import get_nss_func, NssError, NssModule, NssOperation, NssReturnCode
 
-GROUP_BUFLEN = 8096
+GROUP_INIT_BUFLEN = 1024
 
 
 class Group(ctypes.Structure):
@@ -134,14 +135,22 @@ def __endgrent(nss_module):
         raise NssError(ctypes.get_errno(), NssOperation.ENDGRENT, res, nss_module)
 
 
-def __getgrent_impl(mod, as_dict):
+def __getgrent_impl(mod, as_dict, buffer_len=GROUP_INIT_BUFLEN):
     result = Group()
-    buf = ctypes.create_string_buffer(GROUP_BUFLEN)
 
-    res, errno, result_p = __getgrent_r(ctypes.byref(result), buf,
-                                        GROUP_BUFLEN, mod)
-    if errno != 0:
-        raise NssError(errno, NssOperation.GETGRENT, res, mod)
+    buf = ctypes.create_string_buffer(buffer_len)
+
+    res, error, result_p = __getgrent_r(ctypes.byref(result), buf,
+                                        buffer_len, mod)
+
+    match error:
+        case 0:
+            pass
+        case errno.ERANGE:
+            # Our buffer was too small, increment
+            return __getgrent_impl(mod, as_dict, buffer_len * 2)
+        case _:
+            raise NssError(error, NssOperation.GETGRENT, res, mod)
 
     if res != NssReturnCode.SUCCESS:
         return None
@@ -163,15 +172,22 @@ def __getgrall_impl(module, as_dict):
     return group_list
 
 
-def __getgrnam_impl(name, module, as_dict):
+def __getgrnam_impl(name, module, as_dict, buffer_len=GROUP_INIT_BUFLEN):
     mod = NssModule[module]
     result = Group()
-    buf = ctypes.create_string_buffer(GROUP_BUFLEN)
 
-    res, errno, result_p = __getgrnam_r(name, ctypes.byref(result),
-                                        buf, GROUP_BUFLEN, mod)
-    if errno != 0:
-        raise NssError(errno, NssOperation.GETGRNAM, res, mod)
+    buf = ctypes.create_string_buffer(buffer_len)
+
+    res, error, result_p = __getgrnam_r(name, ctypes.byref(result),
+                                        buf, buffer_len, mod)
+    match error:
+        case 0:
+            pass
+        case errno.ERANGE:
+            # Our buffer was too small, increment
+            return __getgrnam_impl(name, module, as_dict, buffer_len * 2)
+        case _:
+            raise NssError(error, NssOperation.GETGRNAM, res, mod)
 
     if res == NssReturnCode.NOTFOUND:
         return None
@@ -179,15 +195,21 @@ def __getgrnam_impl(name, module, as_dict):
     return  __parse_nss_result(result, as_dict, mod.name)
 
 
-def __getgrgid_impl(gid, module, as_dict):
+def __getgrgid_impl(gid, module, as_dict, buffer_len=GROUP_INIT_BUFLEN):
     mod = NssModule[module]
     result = Group()
-    buf = ctypes.create_string_buffer(GROUP_BUFLEN)
+    buf = ctypes.create_string_buffer(buffer_len)
 
-    res, errno, result_p = __getgrgid_r(gid, ctypes.byref(result),
-                                        buf, GROUP_BUFLEN, mod)
-    if errno != 0:
-        raise NssError(errno, NssOperation.GETGRGID, res, mod)
+    res, error, result_p = __getgrgid_r(gid, ctypes.byref(result),
+                                        buf, buffer_len, mod)
+    match error:
+        case 0:
+            pass
+        case errno.ERANGE:
+            # Our buffer was too small, increment
+            return __getgrgid_impl(gid, module, as_dict, buffer_len * 2)
+        case _:
+            raise NssError(error, NssOperation.GETGRGID, res, mod)
 
     if res == NssReturnCode.NOTFOUND:
         return None

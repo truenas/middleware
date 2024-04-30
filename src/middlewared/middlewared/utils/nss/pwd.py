@@ -1,9 +1,10 @@
 import ctypes
+import errno
 
 from collections import namedtuple
 from .nss_common import get_nss_func, NssError, NssModule, NssOperation, NssReturnCode
 
-PASSWD_BUFLEN = 8096
+PASSWD_INIT_BUFLEN = 1024
 
 
 class Passwd(ctypes.Structure):
@@ -126,14 +127,20 @@ def __endpwent(nss_module):
         raise NssError(ctypes.get_errno(), NssOperation.ENDPWENT, res, nss_module)
 
 
-def __getpwent_impl(mod, as_dict):
+def __getpwent_impl(mod, as_dict, buffer_len=PASSWD_INIT_BUFLEN):
     result = Passwd()
-    buf = ctypes.create_string_buffer(PASSWD_BUFLEN)
+    buf = ctypes.create_string_buffer(buffer_len)
 
-    res, errno, result_p = __getpwent_r(ctypes.byref(result), buf,
-                                        PASSWD_BUFLEN, mod)
-    if errno != 0:
-        raise NssError(errno, NssOperation.GETPWENT, res, mod)
+    res, error, result_p = __getpwent_r(ctypes.byref(result), buf,
+                                        buffer_len, mod)
+    match error:
+        case 0:
+            pass
+        case errno.ERANGE:
+            # Our buffer was too small, increment
+            return __getpwent_impl(mod, as_dict, buffer_len * 2)
+        case _:
+            raise NssError(error, NssOperation.GETPWENT, res, mod)
 
     if res != NssReturnCode.SUCCESS:
         return None
@@ -155,15 +162,21 @@ def __getpwall_impl(module, as_dict):
     return pwd_list
 
 
-def __getpwnam_impl(name, module, as_dict):
+def __getpwnam_impl(name, module, as_dict, buffer_len=PASSWD_INIT_BUFLEN):
     mod = NssModule[module]
     result = Passwd()
-    buf = ctypes.create_string_buffer(PASSWD_BUFLEN)
+    buf = ctypes.create_string_buffer(buffer_len)
 
-    res, errno, result_p = __getpwnam_r(name, ctypes.byref(result),
-                                        buf, PASSWD_BUFLEN, mod)
-    if errno != 0:
-        raise NssError(errno, NssOperation.GETPWNAM, res, mod)
+    res, error, result_p = __getpwnam_r(name, ctypes.byref(result),
+                                        buf, buffer_len, mod)
+    match error:
+        case 0:
+            pass
+        case errno.ERANGE:
+            # Our buffer was too small, increment
+            return __getpwnam_impl(name, module, as_dict, buffer_len * 2)
+        case _:
+            raise NssError(error, NssOperation.GETPWNAM, res, mod)
 
     if res == NssReturnCode.NOTFOUND:
         return None
@@ -171,15 +184,21 @@ def __getpwnam_impl(name, module, as_dict):
     return  __parse_nss_result(result, as_dict, mod.name)
 
 
-def __getpwuid_impl(uid, module, as_dict):
+def __getpwuid_impl(uid, module, as_dict, buffer_len=PASSWD_INIT_BUFLEN):
     mod = NssModule[module]
     result = Passwd()
-    buf = ctypes.create_string_buffer(PASSWD_BUFLEN)
+    buf = ctypes.create_string_buffer(buffer_len)
 
-    res, errno, result_p = __getpwuid_r(uid, ctypes.byref(result),
-                                        buf, PASSWD_BUFLEN, mod)
-    if errno != 0:
-        raise NssError(errno, NssOperation.GETPWUID, res, mod)
+    res, error, result_p = __getpwuid_r(uid, ctypes.byref(result),
+                                        buf, buffer_len, mod)
+    match error:
+        case 0:
+            pass
+        case errno.ERANGE:
+            # Our buffer was too small, increment
+            return __getpwuid_impl(uid, module, as_dict, buffer_len * 2)
+        case _:
+            raise NssError(error, NssOperation.GETPWUID, res, mod)
 
     if res == NssReturnCode.NOTFOUND:
         return None
