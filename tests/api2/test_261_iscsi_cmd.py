@@ -21,7 +21,7 @@ sys.path.append(apifolder)
 
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 from auto_config import ha, hostname, isns_ip, pool_name
 from functions import SSH_TEST
 from protocols import (initiator_name_supported, iscsi_scsi_connection,
@@ -2726,6 +2726,104 @@ def test_32_multi_lun_targets(request):
                             with alua_enabled():
                                 test_target_sizes(controller1_ip)
                                 test_target_sizes(controller2_ip)
+
+
+class TwoTargetFixture:
+    """Abstract two-target fixture class"""
+    # Keeping it separate for possible future reuse, although we can also just
+    # add additional tests under TestFixtureTargetOptions.
+
+    name1 = f"{target_name}x1"
+    name2 = f"{target_name}x2"
+    iqn1 = f'{basename}:{name1}'
+    iqn2 = f'{basename}:{name2}'
+
+    @pytest.fixture(scope='class')
+    def create_two_targets(self):
+        with initiator_portal() as config:
+            with configured_target(config, self.name1, 'VOLUME') as config1:
+                with configured_target(config, self.name2, 'FILE') as config2:
+                    yield config1, config2
+
+
+class TestFixtureTargetOptions(TwoTargetFixture):
+
+    int_options = ['MaxRecvDataSegmentLength', 'MaxXmitDataSegmentLength', 'MaxBurstLength', 'FirstBurstLength', 'MaxOutstandingR2T']
+    bool_options = ['InitialR2T', 'ImmediateData']
+
+    # mapped, meaning with some post-processing performed e.g. "No" -> False
+    scst_default_mapped_values = {
+        'DataDigest': 'None',
+        'HeaderDigest': 'None',
+        'InitialR2T': False,
+        'ImmediateData': True,
+        'MaxRecvDataSegmentLength': 1048576,
+        'MaxXmitDataSegmentLength': 1048576,
+        'MaxBurstLength': 1048576,
+        'FirstBurstLength': 65536,
+        'MaxOutstandingR2T': 32,
+    }
+
+    def read_target_value(self, iqn, name):
+        return ssh(f'head -1 /sys/kernel/scst_tgt/targets/iscsi/{iqn}/{name}').strip()
+
+    def read_mapped_target_value(self, iqn, optionname):
+        value = self.read_target_value(iqn, optionname)
+        if optionname in self.int_options:
+            return int(value)
+        elif optionname in self.bool_options:
+            if value.lower() == "yes":
+                return True
+            elif value.lower() == "no":
+                return False
+            raise ValueError("Unhandled boolean value", value)
+        else:
+            return value
+
+    def read_target_values(self, iqn):
+        values = {}
+        for k in self.scst_default_mapped_values:
+            values[k] = self.read_mapped_target_value(iqn, k)
+        return values
+
+    options_values = [
+        {'DataDigest': 'None,CRC32C'},
+        {'DataDigest': 'None,CRC32C', 'HeaderDigest': 'CRC32C'},
+        {'HeaderDigest': 'None,CRC32C'},
+        {'InitialR2T': True},
+        {'ImmediateData': False},
+        {'MaxRecvDataSegmentLength': 8192},
+        {'MaxXmitDataSegmentLength': 16384},
+        {'MaxRecvDataSegmentLength': 16384, 'MaxXmitDataSegmentLength': 8192},
+        {'MaxBurstLength': 32768},
+        {'FirstBurstLength': 49152},
+        {'MaxOutstandingR2T': 48},
+    ]
+
+    options_values_parms = [pytest.param({}, id='{} - Initial empty options')] + \
+        [pytest.param(options, id=str(options)) for options in options_values] + \
+        [pytest.param({}, id='{} - Final empty options')]
+
+    @pytest.mark.parametrize('options', options_values_parms)
+    def test_33_target_options(self, request, create_two_targets, options):
+        """Test some target options."""
+        depends(request, ["iscsi_cmd_00"], scope="session")
+
+        config1, config2 = create_two_targets
+        # For the time being libiscsi is limited, so cannot test DataDigest with it.
+        # We will at least check the middleware-2-scst linkage here, and can perform
+        # some additional manual testing (for now).
+
+        newdata = self.scst_default_mapped_values.copy()
+        newdata.update(options)
+
+        newalias = ''.join(random.choices(string.ascii_uppercase) + random.choices(string.ascii_lowercase + string.digits, k=10))
+        modify_target(config1['target']['id'], {'options': options})
+        modify_target(config2['target']['id'], {'alias': newalias})
+
+        assert newdata == self.read_target_values(self.iqn1)
+        assert self.scst_default_mapped_values == self.read_target_values(self.iqn2)
+        assert newalias == self.read_target_value(self.iqn2, 'alias')
 
 
 def test_99_teardown(request):
