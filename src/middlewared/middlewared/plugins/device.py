@@ -7,7 +7,15 @@ class DeviceService(Service):
     class Config:
         cli_namespace = 'system.device'
 
-    @accepts(Str('type', enum=['SERIAL', 'DISK', 'GPU']), roles=['READONLY_ADMIN'])
+    @accepts(
+        Dict(
+            'data',
+            Str('type', enum=['SERIAL', 'DISK', 'GPU'], required=True),
+            Bool('get_partitions', required=False, default=False),
+            Bool('serials_only', required=False, default=False),
+        ),
+        roles=['READONLY_ADMIN']
+    )
     @returns(OROperator(
         List('serial_info', items=[Dict(
             'serial_info',
@@ -42,8 +50,18 @@ class DeviceService(Service):
         Dict('disk_info', additional_attrs=True),
         name='device_info',
     ))
-    async def get_info(self, _type):
+    async def get_info(self, data):
         """
-        Get info for SERIAL/DISK/GPU device types.
+        Get info for `data['type']` device.
+
+        If `type` is "DISK":
+            `get_partitions`: boolean, when set to True will query partition
+                information for the disks. NOTE: this can be expensive on
+                systems with a large number of disks present.
+            `serials_only`: boolean, when set to True will query serial information
+                _ONLY_ for the disks.
         """
-        return await self.middleware.call(f'device.get_{_type.lower()}s')
+        method = f'device.get_{data["type"].lower()}s'
+        if method == 'device.get_disks':
+            return await self.middleware.call(method, data['get_partitions'], data['serials_only'])
+        return await self.middleware.call(method)

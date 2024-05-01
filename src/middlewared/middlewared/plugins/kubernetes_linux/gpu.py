@@ -186,7 +186,7 @@ class KubernetesGPUService(Service):
             self.logger.error('Unable to configure GPU for node: %s', e, exc_info=True)
 
     async def get_system_gpus(self):
-        gpus = await self.middleware.call('device.get_info', 'GPU')
+        gpus = await self.middleware.call('device.get_info', {'type': 'GPU'})
         supported_gpus = {'NVIDIA', 'INTEL', 'AMD'}
         return supported_gpus.intersection(set([gpu['vendor'] for gpu in gpus if gpu['available_to_host']]))
 
