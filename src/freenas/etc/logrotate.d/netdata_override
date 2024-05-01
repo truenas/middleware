@@ -1,0 +1,8 @@
+/var/log/netdata/*.log {
+    size 10M
+    rotate 7
+    compress
+    missingok
+    notifempty
+    copytruncate
+}
