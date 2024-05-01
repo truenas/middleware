@@ -9,6 +9,7 @@ class DeviceService(Service):
 
     @accepts(
         Dict(
+            'data',
             Str('type', enum=['SERIAL', 'DISK', 'GPU'], required=True),
             Bool('get_partitions', required=False, default=False),
             Bool('serials_only', required=False, default=False),
@@ -60,7 +61,7 @@ class DeviceService(Service):
             `serials_only`: boolean, when set to True will query serial information
                 _ONLY_ for the disks.
         """
-        method = f'device.get_{data["type"].lower()}'
-        if method == 'device.get_disk':
+        method = f'device.get_{data["type"].lower()}s'
+        if method == 'device.get_disks':
             return await self.middleware.call(method, data['get_partitions'], data['serials_only'])
         return await self.middleware.call(method)
