@@ -2825,6 +2825,44 @@ class TestFixtureTargetOptions(TwoTargetFixture):
         assert self.scst_default_mapped_values == self.read_target_values(self.iqn2)
         assert newalias == self.read_target_value(self.iqn2, 'alias')
 
+    def test_34_target_header_digest(self, request, create_two_targets):
+        # Currently, by default python-scsi uses "None,CRC32C", so what gets negociated
+        # depends on the target setting.
+        config1, _ = create_two_targets
+
+        # Check that both HeaderDigest and DataDigest are negociated as None by default
+        with iscsi_scsi_connection(ip, self.iqn1):
+            # Validate that the two sessions are reported correctly
+            data = get_iscsi_sessions([['target', '=', self.iqn1]], 1)[0]
+            assert data['header_digest'] is None, data
+            assert data['data_digest'] is None, data
+
+        # Check that when HeaderDigest is set to "None,CRC32C", CRC32C is negociated
+        modify_target(config1['target']['id'], {'options': {'HeaderDigest': 'None,CRC32C'}})
+        with iscsi_scsi_connection(ip, self.iqn1):
+            # Validate that the two sessions are reported correctly
+            data = get_iscsi_sessions([['target', '=', self.iqn1]], 1)[0]
+            assert data['header_digest'] == 'CRC32C', data
+            assert data['data_digest'] is None, data
+
+        # Check that when HeaderDigest is set to "CRC32C", CRC32C is negociated
+        modify_target(config1['target']['id'], {'options': {'HeaderDigest': 'CRC32C'}})
+        with iscsi_scsi_connection(ip, self.iqn1):
+            # Validate that the two sessions are reported correctly
+            data = get_iscsi_sessions([['target', '=', self.iqn1]], 1)[0]
+            assert data['header_digest'] == 'CRC32C', data
+            assert data['data_digest'] is None, data
+
+        # Check that when HeaderDigest is set to "None" and DataDigest is set to CRC32C,
+        # None is negociated for HeaderDigest
+        modify_target(config1['target']['id'], {'options': {'DataDigest': 'CRC32C'}})
+        with iscsi_scsi_connection(ip, self.iqn1):
+            # Validate that the two sessions are reported correctly
+            data = get_iscsi_sessions([['target', '=', self.iqn1]], 1)[0]
+            assert data['header_digest'] is None, data
+            # Currently libiscsi, cython-iscsi and python-scsi cannot drive DataDigest
+            # assert data['data_digest'] == 'CRC32C', data
+
 
 def test_99_teardown(request):
     # Disable iSCSI service
