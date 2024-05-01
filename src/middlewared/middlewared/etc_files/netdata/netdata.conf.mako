@@ -38,7 +38,7 @@
 [plugins]
 	proc = yes
 	diskspace = no
-	cgroups = no
+	cgroups = yes # Useful stats (CPU, MEM, DISK) for VMs and systemd services
 	tc = no
 	idlejitter = no
 	perf = no
