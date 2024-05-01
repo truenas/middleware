@@ -169,6 +169,17 @@ nvme)
 	ctrlr=/dev/${dev%n*}
 	nsid=`nvme get-ns-id /dev/${dev} | awk -F 'namespace-id:' '{ print $2 }'`
 
+	# if nvme device provided is a "fabric" device
+	# (i.e. nvme over tcp/rdma) then gracefully exit
+	transport="$(cat /sys/class/nvme/${dev%n*}/transport)" 2>/dev/null
+	if [ -z ${transport} ]; then
+		echo "Unable to determine transport protocol for /dev/${dev}"
+		exit 1
+	elif [ ${transport} != "pcie" ]; then
+		echo "Transport protocol (${transport}) unsupported at this time"
+		exit 1
+	fi
+
 	# Identify controller properties.
 	idctrl=`nvme id-ctrl ${ctrlr}`
 	ctrls=`nvme list-ctrl ${ctrlr} | awk -F: '/^\[\s*[0-9]+\]/ { print $2 }' | xargs | tr ' ' ,`
