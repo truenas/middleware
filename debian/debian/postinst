@@ -47,6 +47,11 @@ systemctl disable nvidia-persistenced
 # NOTE: This should be reviewed on next update where the startup issue is fixed via a new systemd unit file.
 systemctl disable proftpd.socket
 
+# Disable auto-start of nslcd - NAS-128651
+echo "[MCG DEBUG] postinst: rm nslcd from multi-user.target.wants"
+rm -f /lib/systemd/system/multi-user.target.wants/nslcd.service
+rm -f /lib/systemd/system/graphical.target.wants/nslcd.service
+
 # Update alternatives
 update-alternatives --install "/usr/sbin/sendmail" sendmail "/etc/find_alias_for_smtplib.sh" "10"
 update-alternatives --install "/usr/bin/vim" vim.tiny "/usr/bin/vim.tiny" "10"
