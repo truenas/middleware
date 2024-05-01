@@ -106,46 +106,7 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
             },
         },
         {
-            'name': os.path.join(pool_name, f'.system/rrd-{uuid}'),
-            'props': {
-                'mountpoint': 'legacy',
-                'readonly': 'off',
-                'snapdir': 'hidden',
-            },
-            'chown_config': {
-                'uid': 0,
-                'gid': 0,
-                'mode': 0o755,
-            },
-        },
-        {
             'name': os.path.join(pool_name, f'.system/configs-{uuid}'),
-            'props': {
-                'mountpoint': 'legacy',
-                'readonly': 'off',
-                'snapdir': 'hidden',
-            },
-            'chown_config': {
-                'uid': 0,
-                'gid': 0,
-                'mode': 0o755,
-            },
-        },
-        {
-            'name': os.path.join(pool_name, '.system/webui'),
-            'props': {
-                'mountpoint': 'legacy',
-                'readonly': 'off',
-                'snapdir': 'hidden',
-            },
-            'chown_config': {
-                'uid': 0,
-                'gid': 0,
-                'mode': 0o755,
-            },
-        },
-        {
-            'name': os.path.join(pool_name, '.system/services'),
             'props': {
                 'mountpoint': 'legacy',
                 'readonly': 'off',
