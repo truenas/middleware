@@ -1121,13 +1121,14 @@ class IdmapDomainService(CRUDService):
     async def get_idmap_info(self, ds, id_):
         low_range = None
         id_type_both = False
+
+        if ds == 'ldap':
+            return (0, id_type_both)
+
         domains = await self.query()
 
         for d in domains:
             if ds == 'activedirectory' and d['name'] == 'DS_TYPE_LDAP':
-                continue
-
-            if ds == 'ldap' and d['name'] != 'DS_TYPE_LDAP':
                 continue
 
             if id_ in range(d['range_low'], d['range_high']):
@@ -1139,10 +1140,11 @@ class IdmapDomainService(CRUDService):
 
     @private
     async def synthetic_user(self, ds, passwd, sid):
+        if passwd['local']:
+            return None
+
         idmap_info = await self.get_idmap_info(ds, passwd['pw_uid'])
         if idmap_info[0] is None:
-            # ID doesn't match one of our configured idmap ranges.
-            # This means it's probably local
             return None
 
         rid = int(sid.rsplit('-', 1)[1])
@@ -1173,10 +1175,11 @@ class IdmapDomainService(CRUDService):
 
     @private
     async def synthetic_group(self, ds, grp, sid):
+        if grp['local']:
+            return None
+
         idmap_info = await self.get_idmap_info(ds, grp['gr_gid'])
         if idmap_info[0] is None:
-            # ID doesn't match one of our configured idmap ranges.
-            # This means it's probably local
             return None
 
         rid = int(sid.rsplit('-', 1)[1])
