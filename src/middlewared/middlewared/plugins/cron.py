@@ -75,7 +75,7 @@ class CronJobService(CRUDService):
             else:
                 user_data = None
                 with contextlib.suppress(KeyError):
-                    user_data = await self.middleware.call('dscache.get_uncached_user', user)
+                    user_data = await self.middleware.call('user.get_user_obj', {'username': user})
 
                 if not user_data:
                     verrors.add(

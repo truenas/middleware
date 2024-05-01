@@ -1,9 +1,7 @@
 from middlewared.schema import Any, Str, Ref, Int, Dict, Bool, accepts
 from middlewared.service import Service, private, job, filterable
 from middlewared.utils import filter_list
-from middlewared.utils.nss import pwd, grp
 from middlewared.service_exception import CallError, MatchNotFound
-from middlewared.plugins.idmap_.utils import SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 
 from collections import namedtuple
 import errno
@@ -153,12 +151,13 @@ class DSCache(Service):
             """
             if cache lacks entry, create one from passwd / grp info,
             insert into cache and return synthesized value.
-            get_uncached_* will raise KeyError if NSS lookup fails.
+            user.get_user_obj and group.get_group_obj will raise KeyError if NSS lookup fails.
             """
             try:
                 if data['idtype'] == 'USER':
-                    pwdobj = await self.middleware.call('dscache.get_uncached_user',
-                                                        who_str, who_id, False, True)
+                    pwdobj = await self.middleware.call('user.get_user_obj', {
+                        'username': who_str, 'uid': who_id, 'get_groups': False, 'sid_info': True
+                    })
                     if pwdobj['sid_info'] is None:
                         # This indicates that idmapping is significantly broken
                         return None
@@ -168,9 +167,9 @@ class DSCache(Service):
                     if entry is None:
                         return None
                 else:
-                    grpobj = await self.middleware.call('dscache.get_uncached_group',
-                                                        who_str, who_id, True)
-
+                    grpobj = await self.middleware.call('group.get_group_obj', {
+                        'groupname': who_str, 'gid': who_id, 'sid_info': True
+                    })
                     if grpobj['sid_info'] is None:
                         # This indicates that idmapping is significantly broken
                         return None
@@ -207,118 +206,6 @@ class DSCache(Service):
             'query-filters': [('key', '^', 'ID')]
         })
         return [x['val'] for x in entries]
-
-    def parse_domain_info(self, sid):
-        if sid.startswith(SID_LOCAL_USER_PREFIX):
-            return {'domain': 'LOCAL', 'domain_sid': None, 'online': True, 'activedirectory': False}
-
-        domain_info = self.middleware.call_sync(
-            'idmap.known_domains', [['sid', '=', sid.rsplit('-', 1)[0]]]
-        )
-        if not domain_info:
-            return {'domain': 'UNKNOWN', 'domain_sid': None, 'online': False, 'activedirectory': False}
-
-        return {
-            'domain': domain_info[0]['netbios_domain'],
-            'domain_sid': domain_info[0]['sid'],
-            'online': domain_info[0]['online'],
-            'activedirectory': 'ACTIVE_DIRECTORY' in domain_info[0]['domain_flags']['parsed']
-        }
-
-    def get_uncached_user(self, username=None, uid=None, getgroups=False, sid_info=False):
-        """
-        Returns dictionary containing pwd_struct data for
-        the specified user or uid. Will raise an exception
-        if the user does not exist. This method is appropriate
-        for user validation.
-        """
-        if username:
-            user_obj = pwd.getpwnam(username, module='ALL', as_dict=True)
-        elif uid is not None:
-            user_obj = pwd.getpwuid(uid, module='ALL', as_dict=True)
-        else:
-            return {}
-
-        source = user_obj.pop('source')
-        user_obj['local'] = source == 'FILES'
-
-        if getgroups:
-            user_obj['grouplist'] = os.getgrouplist(user_obj['pw_name'], user_obj['pw_gid'])
-
-        if sid_info:
-            try:
-                if (idmap := self.middleware.call_sync('idmap.convert_unixids', [{
-                    'id_type': 'USER',
-                    'id': user_obj['pw_uid'],
-                }])['mapped']):
-                    sid = idmap[f'UID:{user_obj["pw_uid"]}']['sid']
-                else:
-                    sid = SID_LOCAL_USER_PREFIX + str(user_obj['pw_uid'])
-            except CallError as e:
-                # ENOENT means no winbindd entry for user
-                # ENOTCONN means winbindd is stopped / can't be started
-                # EAGAIN means the system dataset is hosed and needs to be fixed,
-                # but we need to let it through so that it's very clear in logs
-                if e.errno not in (errno.ENOENT, errno.ENOTCONN):
-                    self.logger.error('Failed to retrieve SID for uid: %d', user_obj['pw_uid'], exc_info=True)
-                sid = None
-            except Exception:
-                self.logger.error('Failed to retrieve SID for uid: %d', user_obj['pw_uid'], exc_info=True)
-                sid = None
-
-            if sid:
-                user_obj['sid_info'] = {
-                    'sid': sid,
-                    'domain_information': self.parse_domain_info(sid)
-                }
-            else:
-                user_obj['sid_info'] = None
-
-        return user_obj
-
-    def get_uncached_group(self, groupname=None, gid=None, sid_info=False):
-        """
-        Returns dictionary containing grp_struct data for
-        the specified group or gid. Will raise an exception
-        if the group does not exist. This method is appropriate
-        for group validation.
-        """
-        if groupname:
-            grp_obj = grp.getgrnam(groupname, module='ALL', as_dict=True)
-        elif gid is not None:
-            grp_obj = grp.getgrgid(gid, module='ALL', as_dict=True)
-        else:
-            return {}
-
-        source = grp_obj.pop('source')
-        grp_obj['local'] = source == 'FILES'
-
-        if sid_info:
-            try:
-                if (idmap := self.middleware.call_sync('idmap.convert_unixids', [{
-                    'id_type': 'GROUP',
-                    'id': grp_obj['gr_gid'],
-                }])['mapped']):
-                    sid = idmap[f'GID:{grp_obj["gr_gid"]}']['sid']
-                else:
-                    sid = SID_LOCAL_GROUP_PREFIX + str(grp_obj['gr_gid'])
-            except CallError as e:
-                if e.errno not in (errno.ENOENT, errno.ENOTCONN):
-                    self.logger.error('Failed to retrieve SID for gid: %d', grp_obj['gr_gid'], exc_info=True)
-                sid = None
-            except Exception:
-                self.logger.error('Failed to retrieve SID for gid: %d', grp['gr_gid'], exc_info=True)
-                sid = None
-
-            if sid:
-                grp_obj['sid_info'] = {
-                    'sid': sid,
-                    'domain_information': self.parse_domain_info(sid)
-                }
-            else:
-                grp_obj['sid_info'] = None
-
-        return grp_obj
 
     @accepts(
         Str('objtype', enum=['USERS', 'GROUPS'], default='USERS'),
