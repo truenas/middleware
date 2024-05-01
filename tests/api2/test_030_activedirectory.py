@@ -118,8 +118,9 @@ def set_product_type(request):
     if ha:
         # HA product is already enterprise-licensed
         yield
-    with product_type():
-        yield
+    else:
+        with product_type():
+            yield
 
 
 @pytest.fixture(scope="module")
