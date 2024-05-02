@@ -1016,7 +1016,7 @@ class LDAPService(ConfigService):
 
         await self.set_state(DSStatus['HEALTHY'])
         job.set_progress(80, 'Restarting dependent services')
-        cache_job = await self.middleware.call('dscache.refresh')
+        cache_job = await self.middleware.call('directoryservices.cache.refresh')
         await cache_job.wait()
         await self.middleware.call('directoryservices.restart_dependent_services')
 
@@ -1090,7 +1090,7 @@ class LDAPService(ConfigService):
                 'smb': True,
                 'sid': None,
             }
-            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'USER', entry)
+            self.middleware.call_sync('directoryservices.cache.insert', self._config.namespace.upper(), 'USER', entry)
             user_next_index += 1
 
         for g in grp_list:
@@ -1109,11 +1109,11 @@ class LDAPService(ConfigService):
                 'smb': True,
                 'sid': None,
             }
-            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'GROUP', entry)
+            self.middleware.call_sync('directoryservices.cache.insert', self._config.namespace.upper(), 'GROUP', entry)
             group_next_index += 1
 
     @private
     async def get_cache(self):
-        users = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'USER')
-        groups = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'GROUP')
+        users = await self.middleware.call('directoryservices.cache.entries', self._config.namespace.upper(), 'USER')
+        groups = await self.middleware.call('directoryservices.cache.entries', self._config.namespace.upper(), 'GROUP')
         return {"USERS": users, "GROUPS": groups}
