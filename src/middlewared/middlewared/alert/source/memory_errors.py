@@ -19,6 +19,7 @@ class MemoryErrorsAlertClass(AlertClass):
 
 class MemorySizeMismatchAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
+    level = AlertLevel.WARNING
     title = 'Memory Size Mismatch Detected'
     text = 'Memory size on this controller %(r1)s doesn\'t match other controller %(r2)s'
     products = ('SCALE_ENTERPRISE',)
