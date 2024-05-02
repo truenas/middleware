@@ -108,13 +108,13 @@ class PoolDatasetService(Service):
         verrors = ValidationErrors()
         if user is not None:
             try:
-                uid = (await self.middleware.call('dscache.get_uncached_user', user))['pw_uid']
+                uid = (await self.middleware.call('user.get_user_obj', {'username': user}))['pw_uid']
             except Exception as e:
                 verrors.add('pool_dataset_permission.user', str(e))
 
         if group is not None:
             try:
-                gid = (await self.middleware.call('dscache.get_uncached_group', group))['gr_gid']
+                gid = (await self.middleware.call('group.get_group_obj', {'groupname': group}))['gr_gid']
             except Exception as e:
                 verrors.add('pool_dataset_permission.group', str(e))
 

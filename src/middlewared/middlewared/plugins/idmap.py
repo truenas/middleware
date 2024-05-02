@@ -351,6 +351,22 @@ class IdmapDomainService(CRUDService):
         return WBClient().domain_info(domain)
 
     @private
+    def parse_domain_info(self, sid):
+        if sid.startswith((SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX)):
+            return {'domain': 'LOCAL', 'domain_sid': None, 'online': True, 'activedirectory': False}
+
+        domain_info = self.known_domains([['sid', '=', sid.rsplit('-', 1)[0]]])
+        if not domain_info:
+            return {'domain': 'UNKNOWN', 'domain_sid': None, 'online': False, 'activedirectory': False}
+
+        return {
+            'domain': domain_info[0]['netbios_domain'],
+            'domain_sid': domain_info[0]['sid'],
+            'online': domain_info[0]['online'],
+            'activedirectory': 'ACTIVE_DIRECTORY' in domain_info[0]['domain_flags']['parsed']
+        }
+
+    @private
     async def get_sssd_low_range(self, domain, sssd_config=None, seed=0xdeadbeef):
         """
         This is best effort attempt for SSSD compatibility. It will allocate low
