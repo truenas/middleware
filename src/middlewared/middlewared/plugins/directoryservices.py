@@ -138,7 +138,7 @@ class DirectoryServices(Service):
         permissions and ACL related methods. Likewise, a cache refresh will not resolve issues
         with users being unable to authenticate to shares.
         """
-        return await job.wrap(await self.middleware.call('dscache.refresh'))
+        return await job.wrap(await self.middleware.call('directoryservices.cache.refresh'))
 
     @private
     @returns(List(
