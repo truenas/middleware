@@ -15,7 +15,7 @@ from middlewared.plugins.catalogs_linux.items_util import min_max_scale_version_
     (
         {'chart_metadata': {'annotations': {'min_scale_version': '24.05'}}},
         False, '24.04-MASTER-20230928-144829',
-        'Your system version is less then specified minimum scale version for the app version'
+        'Your TrueNAS system version (24.04) is less than the minimum version (24.05) required by this application.'
     ),
 
     (
@@ -27,19 +27,19 @@ from middlewared.plugins.catalogs_linux.items_util import min_max_scale_version_
     (
         {'chart_metadata': {'annotations': {'min_scale_version': '22.03', 'max_scale_version': '23.10'}}},
         False, '24.04-MASTER-20230928-144829',
-        'Your system version is greater then specified maximum scale version for the app version'
+        'Your TrueNAS system version (24.04) is greater than the maximum version (23.10) required by this application.'
     ),
 
     (
         {'chart_metadata': {'annotations': {'min_scale_version': '24.05', 'max_scale_version': '25.10'}}},
         False, '24.04-MASTER-20230928-144829',
-        'Your system version is less then specified minimum scale version for the app version'
+        'Your TrueNAS system version (24.04) is less than the minimum version (24.05) required by this application.'
     ),
 
     (
         {'chart_metadata': {'annotations': {'min_scale_version': '24.05', 'max_scale_version': '25.10'}}},
         False, '24.04-MASTER-20230928-144829',
-        'Your system version is less then specified minimum scale version for the app version'
+        'Your TrueNAS system version (24.04) is less than the minimum version (24.05) required by this application.'
     ),
 
     (
@@ -51,19 +51,19 @@ from middlewared.plugins.catalogs_linux.items_util import min_max_scale_version_
     (
         {'chart_metadata': {'annotations': {'min_scale_version': '22.03', 'max_scale_version': '23.10'}}},
         False, '24.04',
-        'Your system version is greater then specified maximum scale version for the app version'
+        'Your TrueNAS system version (24.04) is greater than the maximum version (23.10) required by this application.'
     ),
 
     (
         {'chart_metadata': {'annotations': {'min_scale_version': '24.05', 'max_scale_version': '25.10'}}},
         False, '24.04',
-        'Your system version is less then specified minimum scale version for the app version'
+        'Your TrueNAS system version (24.04) is less than the minimum version (24.05) required by this application.'
     ),
 
     (
         {'chart_metadata': {'annotations': {'min_scale_version': '24.05', 'max_scale_version': '25.10'}}},
         False, '24.04',
-        'Your system version is less then specified minimum scale version for the app version'
+        'Your TrueNAS system version (24.04) is less than the minimum version (24.05) required by this application.'
     ),
 
     (
@@ -81,7 +81,7 @@ from middlewared.plugins.catalogs_linux.items_util import min_max_scale_version_
     (
         {'chart_metadata': {'annotations': {'max_scale_version': '24.03'}}},
         False, '24.04',
-        'Your system version is greater then specified maximum scale version for the app version'
+        'Your TrueNAS system version (24.04) is greater than the maximum version (24.03) required by this application.'
     ),
 
     (
