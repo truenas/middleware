@@ -38,6 +38,7 @@ systemctl disable wsdd
 systemctl disable walinuxagent
 systemctl disable openipmi
 systemctl disable nfs-server
+systemctl disable nslcd
 
 # nvidia-persistenced is not respecting vendor preset file so we disable it explicitly
 systemctl disable nvidia-persistenced
