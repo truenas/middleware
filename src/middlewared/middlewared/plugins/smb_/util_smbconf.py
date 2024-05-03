@@ -307,7 +307,7 @@ def generate_smb_conf_dict(
             continue
 
         param, value = entry.split('=', 1)
-        smbconf[param] = value
+        smbconf[param.strip()] = value.strip()
 
     smbconf.update({
         'registry shares': True,
