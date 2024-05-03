@@ -32,7 +32,7 @@ def create_new_entries(old_entry):
         alias_entry['alias_interface_id'] = old_entry['id']
         alias_entry['alias_address'] = old_entry['int_ipv6address']
         alias_entry['alias_address_b'] = old_entry['int_ipv6address_b']
-        alias_entry['alias_vip'] = old_entry['int_vipv6address']
+        alias_entry['alias_vip'] = old_entry['int_vipv6address'] or ''
         alias_entry['alias_version'] = 6
         alias_entry['alias_netmask'] = int(old_entry['int_v6netmaskbit']) if old_entry['int_v6netmaskbit'] else 128
     elif old_entry['int_ipv4address']:
