@@ -2267,9 +2267,9 @@ class RouteService(Service):
             Returns:
                 bool: True if the gateway is reachable or otherwise False.
         """
-        ignore_nics = ('lo', 'tap', 'epair')
+        ignore = tuple(self.middleware.call_sync('interface.internal_interfaces'))
         for if_name, iface in list(netif.list_interfaces().items()):
-            if not if_name.startswith(ignore_nics):
+            if not if_name.startswith(ignore):
                 for nic_address in iface.addresses:
                     if nic_address.af == netif.AddressFamily.INET:
                         ipv4_nic = ipaddress.IPv4Interface(nic_address)
