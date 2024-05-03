@@ -154,7 +154,7 @@ def generate_smb_conf_dict(
            )
 
        if (final_ips := allowed_ips & set(smb_bindips)):
-           smbconf['interfaces'] = ' '.join(final_ips + {'127.0.0.1'})
+           smbconf['interfaces'] = ' '.join(final_ips | {'127.0.0.1'})
        else:
            # We need to generate SMB configuration to prevent breaking
            # winbindd
