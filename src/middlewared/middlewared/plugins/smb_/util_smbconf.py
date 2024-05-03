@@ -116,8 +116,6 @@ def generate_smb_conf_dict(
         'server string': smb_service_config['description'],
         'log level': loglevelint,
         'logging': 'file',
-        'registry shares': True,
-        'include': 'registry',
     }
 
     """
@@ -302,4 +300,17 @@ def generate_smb_conf_dict(
 
             smbconf.update({f'{idmap_prefix} {backend_parameter}': value})
 
+    for e in smb_service_config['smb_options'].splitlines():
+        # Add relevant auxiliary parameters
+        entry = e.strip()
+        if entry.startswith(('#', ';')) or '=' not in entry:
+            continue
+
+        param, value = entry.split('=', 1)
+        smbconf[param] = value
+
+    smbconf.update({
+        'registry shares': True,
+        'include': 'registry',
+    })
     return smbconf

@@ -42,6 +42,7 @@ SMB_BINDIP = BASE_SMB_CONFIG | {'bindip': ['192.168.0.250', '192.168.0.251']}
 SMB_NTLMV1 = BASE_SMB_CONFIG | {'ntlmv1_auth': True}
 SMB_SMB1 = BASE_SMB_CONFIG | {'enable_smb1': True}
 SMB_MULTICHANNEL = BASE_SMB_CONFIG | {'multichannel': True}
+SMB_OPTIONS = BASE_SMB_CONFIG | {'smb_options': 'canary = bob\n canary2 = bob2 \n #comment\n ;othercomment'}
 
 BASE_SMB_SHARE = {
     'id': 1,
@@ -241,6 +242,15 @@ def test__smb1_enable():
         BIND_IP_CHOICES, BASE_IDMAP
     )
     assert conf['server min protocol'] == 'NT1'
+
+
+def test__smb_options():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, SMB_OPTIONS, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['canary'] == 'bob'
+    assert conf['canary2'] == 'bob2'
 
 
 def test__multichannel():
