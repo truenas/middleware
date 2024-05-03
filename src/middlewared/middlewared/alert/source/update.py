@@ -11,10 +11,13 @@ class HasUpdateAlertClass(AlertClass):
     text = "A system update is available. Go to System Settings → Update to download and apply the update."
 
 
-class HadUpdateAlertSource(AlertSource):
+class HasUpdateAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
     run_on_backup_node = False
 
     async def check(self):
-        if (await self.middleware.call("update.check_available"))["status"] == "AVAILABLE":
-            return Alert(HasUpdateAlertClass)
+        try:
+            if (await self.middleware.call("update.check_available"))["status"] == "AVAILABLE":
+                return Alert(HasUpdateAlertClass)
+        except Exception:
+            pass
