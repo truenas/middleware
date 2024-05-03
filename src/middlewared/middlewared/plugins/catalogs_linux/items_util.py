@@ -2,7 +2,6 @@ import errno
 import json
 import jsonschema
 import os
-import typing
 
 from catalog_validation.items.items_util import (
     get_item_version_details as get_catalog_item_version_details, normalise_questions,
@@ -26,19 +25,21 @@ def minimum_scale_version_check_update(version_details: dict) -> dict:
 
 def custom_scale_version_checks(min_scale_version: str, max_scale_version: str, system_scale_version: str) -> str:
     if not (normalized_system_version := RE_VERSION_PATTERN.findall(system_scale_version)):
-        return 'Unable to determine system scale version'
+        return 'Unable to determine your TrueNAS system version'
 
     normalized_system_version = normalized_system_version[0]
 
     if min_scale_version and min_scale_version != normalized_system_version and not can_update(
         min_scale_version, normalized_system_version
     ):
-        return 'Your system version is less then specified minimum scale version for the app version'
+        return (f'Your TrueNAS system version ({normalized_system_version}) is less than the minimum version '
+                f'({min_scale_version}) required by this application.')
 
     if max_scale_version and max_scale_version != normalized_system_version and not can_update(
         normalized_system_version, max_scale_version
     ):
-        return 'Your system version is greater then specified maximum scale version for the app version'
+        return (f'Your TrueNAS system version ({normalized_system_version}) is greater than the maximum version '
+                f'({max_scale_version}) required by this application.')
 
     return ''
 
@@ -63,17 +64,19 @@ def min_max_scale_version_check_update_impl(version_details: dict, check_support
                     min_scale_version and min_scale_version != system_scale_version and
                     not can_update(min_scale_version, system_scale_version)
                 ):
-                    return 'Your system version is less then specified minimum scale version for the app version'
+                    return (f'Your TrueNAS system version ({system_scale_version}) is less than the minimum version '
+                            f'({min_scale_version}) required by this application.')
 
                 if (
                     max_scale_version and system_scale_version != max_scale_version and
                     not can_update(system_scale_version, max_scale_version)
                 ):
-                    return 'Your system version is greater then specified maximum scale version for the app version'
+                    return (f'Your TrueNAS system version ({system_scale_version}) is greater than the maximum version '
+                            f'({max_scale_version}) required by this application.')
         except Exception:
             # In case invalid version string is specified we don't want a traceback here
             # let's just explicitly not support the app version in question
-            return 'Unable to complete scale version compatibility checks'
+            return 'Unable to complete TrueNAS system version compatibility checks'
 
     return ''
 
