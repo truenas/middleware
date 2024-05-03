@@ -124,7 +124,7 @@ class ActiveDirectoryService(Service):
                 'smb': True,
                 'sid': u['sid'],
             }
-            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'USER', entry)
+            self.middleware.call_sync('directoryservices.cache.insert', self._config.namespace.upper(), 'USER', entry)
 
         groups = self.get_entries({'entry_type': 'GROUP', 'cache_enabled': not ad['disable_freenas_cache']})
         for g in groups:
@@ -146,10 +146,10 @@ class ActiveDirectoryService(Service):
                 'smb': True,
                 'sid': g['sid'],
             }
-            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'GROUP', entry)
+            self.middleware.call_sync('directoryservices.cache.insert', self._config.namespace.upper(), 'GROUP', entry)
 
     @private
     async def get_cache(self):
-        users = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'USER')
-        groups = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'GROUP')
+        users = await self.middleware.call('directoryservices.cache.entries', self._config.namespace.upper(), 'USER')
+        groups = await self.middleware.call('directoryservices.cache.entries', self._config.namespace.upper(), 'GROUP')
         return {"USERS": users, "GROUPS": groups}

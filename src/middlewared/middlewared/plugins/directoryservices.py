@@ -138,7 +138,7 @@ class DirectoryServices(Service):
         permissions and ACL related methods. Likewise, a cache refresh will not resolve issues
         with users being unable to authenticate to shares.
         """
-        return await job.wrap(await self.middleware.call('dscache.refresh'))
+        return await job.wrap(await self.middleware.call('directoryservices.cache.refresh'))
 
     @private
     @returns(List(
@@ -330,7 +330,7 @@ class DirectoryServices(Service):
             self.middleware.call_sync('ldap.started')
 
         job.set_progress(10, 'Refreshing cache'),
-        cache_refresh = self.middleware.call_sync('dscache.refresh')
+        cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh')
         cache_refresh.wait_sync()
 
         job.set_progress(75, 'Restarting dependent services')
