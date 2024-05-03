@@ -19,13 +19,16 @@ class UpdateFailedAlertClass(AlertClass):
     text = f"Update failed. See {UPDATE_FAILED_SENTINEL} for details."
 
 
-class HadUpdateAlertSource(AlertSource):
+class HasUpdateAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
     run_on_backup_node = False
 
     async def check(self):
-        if (await self.middleware.call("update.check_available"))["status"] == "AVAILABLE":
-            return Alert(HasUpdateAlertClass)
+        try:
+            if (await self.middleware.call("update.check_available"))["status"] == "AVAILABLE":
+                return Alert(HasUpdateAlertClass)
+        except Exception:
+            pass
 
 
 class UpdateFailedAlertSource(FilePresenceAlertSource):
