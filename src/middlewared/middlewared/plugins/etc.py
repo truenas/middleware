@@ -6,10 +6,11 @@ import stat
 
 from mako import exceptions
 from middlewared.service import CallError, Service
-from middlewared.utils.io import write_if_changed
+from middlewared.utils.io import write_if_changed, UnexpectedFileChange
 from middlewared.utils.mako import get_template
 
 DEFAULT_ETC_PERMS = 0o644
+DEFAULT_ETC_XID = 0
 
 
 class FileShouldNotExist(Exception):
@@ -325,36 +326,15 @@ class EtcService(Service):
 
         return rv
 
-    def set_etc_file_perms(self, fd, entry):
-        perm_changed = False
+    def get_perms_and_ownership(self, entry):
         user_name = entry.get('owner')
         group_name = entry.get('group')
         mode = entry.get('mode', DEFAULT_ETC_PERMS)
 
-        if all(i is None for i in (user_name, group_name, mode)):
-            return perm_changed
+        uid = self.middleware.call_sync('user.get_builtin_user_id', user_name) if user_name else DEFAULT_ETC_XID
+        gid = self.middleware.call_sync('group.get_builtin_group_id', group_name) if group_name else DEFAULT_ETC_XID
 
-        uid = self.middleware.call_sync('user.get_builtin_user_id', user_name) if user_name else -1
-        gid = self.middleware.call_sync('group.get_builtin_group_id', group_name) if group_name else -1
-        st = os.fstat(fd)
-        uid_to_set = -1
-        gid_to_set = -1
-
-        if uid != -1 and st.st_uid != uid:
-            uid_to_set = uid
-
-        if gid != -1 and st.st_gid != gid:
-            gid_to_set = gid
-
-        if gid_to_set != -1 or uid_to_set != -1:
-            os.fchown(fd, uid_to_set, gid_to_set)
-            perm_changed = True
-
-        if mode and stat.S_IMODE(st.st_mode) != mode:
-            os.fchmod(fd, mode)
-            perm_changed = True
-
-        return perm_changed
+        return {'uid': uid, 'gid': gid, 'perms': mode}
 
     def make_changes(self, full_path, entry, rendered):
         mode = entry.get('mode', DEFAULT_ETC_PERMS)
@@ -366,11 +346,14 @@ class EtcService(Service):
         if outfile_dirname != '/etc':
             os.makedirs(outfile_dirname, exist_ok=True)
 
-        with open(full_path, "w", opener=opener) as f:
-            perms_changed = self.set_etc_file_perms(f.fileno(), entry)
-            contents_changed = write_if_changed(f.fileno(), rendered)
+        payload = self.get_perms_and_ownership(entry)
+        try:
+            changes = write_if_changed(full_path, rendered, raise_error=True, **payload)
+        except UnexpectedFileChange as e:
+            self.logger.error(str(e))
+            changes = e.changes
 
-        return perms_changed or contents_changed
+        return changes
 
     async def generate(self, name, checkpoint=None):
         group = self.GROUPS.get(name)
