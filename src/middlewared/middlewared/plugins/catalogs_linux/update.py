@@ -70,7 +70,9 @@ class CatalogService(CRUDService):
     @private
     async def catalog_extend_context(self, rows, extra):
         if await self.dataset_mounted():
-            catalogs_dir = (await self.middleware.call('kubernetes.config'))['dataset']
+            catalogs_dir = os.path.join(
+                '/mnt', (await self.middleware.call('kubernetes.config'))['dataset'], 'catalogs'
+            )
         else:
             # FIXME: TMP_IX_APPS_DIR is in tmpfs (RAM)....a large catalog
             # will eat a large amount of RAM....
