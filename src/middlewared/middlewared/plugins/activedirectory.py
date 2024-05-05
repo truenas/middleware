@@ -99,44 +99,6 @@ class ActiveDirectoryService(ConfigService):
     )
 
     @private
-    async def convert_schema_to_registry(self, data_in, data_out):
-        """
-        Convert middleware schema SMB shares to an SMB service definition
-        """
-        params = AD_SMBCONF_PARAMS.copy()
-
-        if not data_in['enable']:
-            return
-
-        for k, v in params.items():
-            if v is None:
-                continue
-
-            data_out[k] = {"raw": str(v), "parsed": v}
-
-        data_out.update({
-            "ads dns update": {"parsed": data_in["allow_dns_updates"]},
-            "realm": {"parsed": data_in["domainname"].upper()},
-            "allow trusted domains": {"parsed": data_in["allow_trusted_doms"]},
-            "winbind enum users": {"parsed": not data_in["disable_freenas_cache"]},
-            "winbind enum groups": {"parsed": not data_in["disable_freenas_cache"]},
-            "winbind use default domain": {"parsed": data_in["use_default_domain"]},
-        })
-
-        if data_in.get("nss_info"):
-            data_out["winbind nss info"] = {"parsed": data_in["nss_info"].lower()}
-
-        try:
-            home_share = await self.middleware.call('sharing.smb.reg_showshare', 'homes')
-            home_path = home_share['parameters']['path']['raw']
-        except MatchNotFound:
-            home_path = '/var/empty'
-
-        data_out['template homedir'] = {"parsed": f'{home_path}'}
-
-        return
-
-    @private
     async def ad_extend(self, ad):
         smb = await self.middleware.call('smb.config')
 
