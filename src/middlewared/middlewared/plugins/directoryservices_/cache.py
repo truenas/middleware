@@ -73,9 +73,14 @@ class DSCache(Service):
             """
             try:
                 if data['idtype'] == 'USER':
+                    if who_str is not None:
+                        who = {'username': who_str}
+                    else:
+                        who = {'uid': who_id}
+
                     pwdobj = await self.middleware.call('user.get_user_obj', {
-                        'username': who_str, 'uid': who_id, 'get_groups': False, 'sid_info': True
-                    })
+                        'get_groups': False, 'sid_info': True
+                    } | who)
                     if pwdobj['sid_info'] is None:
                         # This indicates that idmapping is significantly broken
                         return None
@@ -85,9 +90,12 @@ class DSCache(Service):
                     if entry is None:
                         return None
                 else:
-                    grpobj = await self.middleware.call('group.get_group_obj', {
-                        'groupname': who_str, 'gid': who_id, 'sid_info': True
-                    })
+                    if who_str is not None:
+                        who = {'groupname': who_str}
+                    else:
+                        who = {'gid': who_id}
+
+                    grpobj = await self.middleware.call('group.get_group_obj', {'sid_info': True} | who)
                     if grpobj['sid_info'] is None:
                         # This indicates that idmapping is significantly broken
                         return None
@@ -143,7 +151,7 @@ class DSCache(Service):
         get_smb = 'SMB' in extra.get('additional_information', [])
         options.pop('get', None)  # This needs to happen as otherwise `res` will become a list of keys of user attrs
 
-        is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'name'])
+        is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'name', 'group'])
         is_id_check = bool(filters and len(filters) == 1 and filters[0][0] in ['uid', 'gid'])
 
         for dstype, state in ds_state.items():
