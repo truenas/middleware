@@ -126,7 +126,6 @@ def test__write_file_exceptions(create_etc_dir):
     changes = write_if_changed(target, "canary")
     assert changes == FileChanges.CONTENTS
 
-
     with pytest.raises(UnexpectedFileChange) as exc:
         changes = write_if_changed(target, "canary", uid=1000, gid=1001, perms=0o700, raise_error=True)
 
