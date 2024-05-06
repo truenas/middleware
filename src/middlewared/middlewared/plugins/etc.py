@@ -348,7 +348,7 @@ class EtcService(Service):
 
         payload = self.get_perms_and_ownership(entry)
         try:
-            changes = write_if_changed(full_path, rendered, raise_error=True, **payload)
+            changes = write_if_changed(full_path, rendered, **payload)
         except Exception:
             changes = 0
             self.logger.warning('%s: failed to write changes to configuration file', full_path, exc_info=True)
