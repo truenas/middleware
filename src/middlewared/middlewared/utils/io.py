@@ -37,6 +37,9 @@ def write_if_changed(path, data, uid=0, gid=0, perms=0o755, dirfd=None, raise_er
 
     `perms` - numeric permissions that file should have
 
+    `dirfd` - optional open file descriptor (may be O_PATH or O_DIRECTORY) if `path` is
+    relative.
+
     `raise_error` - raise an exception if file ownership or permissions have unexpectedly
     changed.
     """
