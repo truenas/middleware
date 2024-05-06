@@ -350,8 +350,14 @@ class EtcService(Service):
         try:
             changes = write_if_changed(full_path, rendered, raise_error=True, **payload)
         except UnexpectedFileChange as e:
-            self.logger.error(str(e))
+            self.logger.error(
+                '%s: unexpected changes were made to configuration file that may '
+                'allow unauthorized user to alter service behavior', full_path, exc_info=True
+            )
             changes = e.changes
+        except Exception:
+            changes = 0
+            self.logger.warning('%s: failed to write changes to configuration file', full_path, exc_info=True)
 
         return changes
 
