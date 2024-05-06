@@ -1,3 +1,4 @@
+import fcntl
 import os
 import enum
 import stat
@@ -68,10 +69,19 @@ def write_if_changed(path, data, uid=0, gid=0, perms=0o755, dirfd=None, raise_er
         if not os.path.exists(f'/proc/self/fd/{dirfd}'):
             raise ValueError(f'{dirfd}: file descriptor not found')
 
-    if dirfd is not None:
+        if os.path.isabs(path):
+            raise ValueError(f'{path}: absolute paths may not be used with a `dirfd`')
+
+        if fcntl.fcntl(dirfd, fcntl.F_GETFL) & (os.O_DIRECTORY | os.O_PATH) == 0:
+            raise ValueError('dirfd must be opened via O_DIRECTORY or O_PATH')
+
         # tempfile API does not permit using a file descriptor
+        # so we'll get the underlying directory name from procfs
         parent_dir = os.readlink(f'/proc/self/fd/{dirfd}')
     else:
+        if not os.path.isabs(path):
+            raise ValueError(f'{path}: relative paths may not be used without a `dirfd`')
+
         parent_dir = os.path.dirname(path)
 
     changes = 0
