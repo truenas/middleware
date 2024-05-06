@@ -4,14 +4,19 @@ import threading
 from middlewared.service_exception import CallError, MatchNotFound
 
 try:
-    from samba.samba3 import param
+    from samba.samba3 import param as s3param
+except ImportError:
+    s3param = None
+
+try:
+    from samba import param
 except ImportError:
     param = None
 
 from .constants import SMBPath
 from .util_net_conf import reg_getparm
 
-LP_CTX = param.get_context()
+LP_CTX = s3param.get_context()
 LP_CTX_LOCK = threading.Lock()
 
 
@@ -39,13 +44,13 @@ def smbconf_getparm(parm, section='GLOBAL'):
         raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
 
 
-def lpctx_validate_global_parm(parm):
+def lpctx_validate_global_parm(parm, value):
     """
-    lib/param doesn't validate params containing a colon.
-    dump_a_parameter() wraps around the respective lp_ctx
-    function in samba that checks the known parameter table.
-    This should be a lightweight validation of GLOBAL params.
+    Validate a given parameter using a temporary loadparm context from
+    a stub smb.conf file
+
+    WARNING: lib/param doesn't validate params containing a colon
     """
     with LP_CTX_LOCK:
-        LP_CTX.load(SMBPath.GLOBALCONF.platform())
-        LP_CTX.dump_a_parameter(parm)
+        testconf = param.LoadParm(SMBPath.STUBCONF.platform())
+        testconf.set(parm, value)

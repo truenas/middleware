@@ -1205,18 +1205,17 @@ class SharingSMBService(SharingService):
             if schema_name == 'smb_update.smb_options' and ':' not in kv[0]:
                 """
                 lib/param doesn't validate params containing a colon.
-                this dump_a_parameter() wraps around the respective lp_ctx
-                function in samba that checks the known parameter table.
-                This should be a lightweight validation of GLOBAL params.
                 """
+                param = kv[0].strip()
+                value = kv[1].strip()
                 try:
                     await self.middleware.run_in_thread(
-                        lpctx_validate_global_parm, kv[0].strip()
+                        lpctx_validate_global_parm, param, value
                     )
-                except RuntimeError as e:
+                except RuntimeError:
                     verrors.add(
                         f'{schema_name}.auxsmbconf',
-                        str(e)
+                        f'{param}: unable to set parameter to value: [{value}]'
                     )
 
         verrors.check()
