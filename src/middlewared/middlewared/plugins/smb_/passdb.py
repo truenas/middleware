@@ -55,15 +55,10 @@ class SMBService(Service):
         passdb entries for local SAM database. This will be populated with
         local users in an AD environment. Immediately return in ldap enviornment.
         """
-        pdbentries = []
-
-        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
-        if not passdb_backend.startswith('tdbsam'):
-            return pdbentries
-
         if verbose:
             return await self.passdb_list_full()
 
+        pdbentries = []
         pdb = await run([SMBCmd.PDBEDIT.value, '-L', '-d', '0'], check=False)
         if pdb.returncode != 0:
             raise CallError(f'Failed to list passdb output: {pdb.stderr.decode()}')

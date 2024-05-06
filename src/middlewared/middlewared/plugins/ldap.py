@@ -263,7 +263,6 @@ class LDAPService(ConfigService):
         Int('dns_timeout', default=5),
         Int('kerberos_realm', null=True),
         Str('kerberos_principal'),
-        Bool('has_samba_schema', default=False),
         Str('auxiliary_parameters', max_length=None),
         Ref('nss_info_ldap', 'schema'),
         Bool('enable'),
@@ -426,12 +425,6 @@ class LDAPService(ConfigService):
                 new["certificate"], "ldap_update.certificate", False
             ))
 
-        if not new["bindpw"] and new["has_samba_schema"]:
-            verrors.add(
-                "ldap_update.bindpw",
-                "Bind credentials are required in order to use samba schema."
-            )
-
         if not new["bindpw"] and not new["kerberos_principal"] and not new["anonbind"]:
             verrors.add(
                 "ldap_update.binddn",
@@ -517,7 +510,6 @@ class LDAPService(ConfigService):
 
     @private
     async def ldap_validate(self, old, data, verrors):
-        ldap_has_samba_schema = False
         for idx, h in enumerate(data['uri_list']):
             host, port = urlparse(h).netloc.rsplit(':', 1)
             try:
@@ -534,19 +526,6 @@ class LDAPService(ConfigService):
         except CallError as e:
             await self.convert_ldap_err_to_verr(data, e, verrors)
             return
-
-        try:
-            ldap_has_samba_schema = True if (await self.get_workgroup(data)) else False
-        except CallError as e:
-            await self.convert_ldap_err_to_verr(data, e, verrors)
-
-        if data['has_samba_schema'] and not ldap_has_samba_schema:
-            verrors.add('ldap_update.has_samba_schema',
-                        'Remote LDAP server does not have Samba schema extensions.')
-
-        if data['has_samba_schema'] and SSL(data['ssl']) == SSL.NOSSL:
-            verrors.add('ldap_update.has_samba_schema',
-                        'Encryption is required in order to use legacy Samba schema.')
 
         if not set(old['hostname']) & set(data['hostname']):
             # No overlap between old and new hostnames and so force server_type autodetection
@@ -662,11 +641,6 @@ class LDAPService(ConfigService):
         use when connecting to the directory server. This directly impacts the
         length of time that the LDAP service tries before failing over to
         a secondary LDAP URI.
-
-        `has_samba_schema` determines whether to configure samba to use the
-        ldapsam passdb backend to provide SMB access to LDAP users. This feature
-        requires the presence of Samba LDAP schema extensions on the remote
-        LDAP server.
 
         The following are advanced settings are configuration parameters for
         handling LDAP servers that do not fully comply with RFC-2307. In most
@@ -930,21 +904,7 @@ class LDAPService(ConfigService):
         job.set_progress(30, 'Starting sssd service')
         await self.middleware.call('service.restart', 'sssd')
 
-        job.set_progress(50, 'Reconfiguring SMB service')
         await self.set_state(DSStatus['HEALTHY'])
-        await self.middleware.call('etc.generate', 'smb')
-        await self.middleware.call('service.restart', 'idmap')
-
-        if ldap['has_samba_schema']:
-            await self.middleware.call(
-                'alert.oneshot_create',
-                'DeprecatedServiceConfiguration',
-                {'config': LDAP_DEPRECATED}
-            )
-            job.set_progress(70, 'Storing LDAP password for SMB configuration')
-            await self.middleware.call('smb.store_ldap_admin_password')
-        else:
-            await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
 
         job.set_progress(80, 'Restarting dependent services')
         cache_job = await self.middleware.call('directoryservices.cache.refresh')
@@ -966,13 +926,6 @@ class LDAPService(ConfigService):
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
-        await self.middleware.call('etc.generate', 'smb')
-        await self.middleware.call('service.restart', 'idmap')
-
-        job.set_progress(30, 'Reconfiguring SMB service.')
-        await self.middleware.call('smb.synchronize_passdb')
-        await self.middleware.call('smb.synchronize_group_mappings')
-        await self._service_change('cifs', 'restart')
 
         job.set_progress(50, 'Clearing directory service cache.')
         await self.middleware.call('service.stop', 'dscache')

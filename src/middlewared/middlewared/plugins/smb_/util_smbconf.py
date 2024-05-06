@@ -162,34 +162,6 @@ def generate_smb_conf_dict(
            smbconf['interfaces'] = '127.0.0.1'
 
     """
-    The following LDAP parameters are defined for the purpose of configuring
-    Samba as a legacy NT-style domain controller or backup domain controller
-    with an OpenLDAP server acting as the passdb backend. This is scheduled
-    for planned deprecation. FreeIPA-related SMB server parameters will go
-    here once SSSD is merged.
-    """
-    if ldap_enabled:
-        lc = ds_config
-        if lc['has_samba_schema']:
-            # Legacy LDAP parameters
-            smbconf.update({
-                'server role': 'member server',
-                'passdb backend': f'ldapsam:{" ".join(lc["uri_list"])}',
-                'domain logons': True,
-                'ldap admin dn': lc['binddn'],
-                'ldap suffix': lc['basedn'],
-                'ldap ssl': 'start tls' if lc['ssl'] == SSL.USESTARTTLS.value else 'off',
-                'ldap passwd sync': 'Yes',
-                'ldapsam:trusted': True,
-                'local master': False,
-                'domain master': False,
-                'preferred master': False,
-                'security': 'user',
-            })
-            if lc['kerberos_principal']:
-                smbconf['kerberos method'] = 'system keytab'
-
-    """
     The following are our default Active Directory related parameters
 
     winbindd max domain connections
@@ -262,17 +234,6 @@ def generate_smb_conf_dict(
                 else:
                     domain = smb_service_config['workgroup']
             case 'DS_TYPE_LDAP':
-                if not ldap_enabled or not lc['has_samba_schema']:
-                    continue
-
-                # Legacy LDAP-based domain. In this case we'll rely
-                # LDAP nss plugin exclusively.
-                domain = smb_service_config['workgroup']
-                idmap_prefix = f'idmap config {domain} :'
-                smbconf.update({
-                    f'{idmap_prefix} backend': 'nss',
-                    f'{idmap_prefix} range': f'1000 - {TRUENAS_IDMAP_MAX}'
-                })
                 continue
             case _:
                 domain = i['name']
