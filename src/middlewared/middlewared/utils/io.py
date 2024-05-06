@@ -48,7 +48,7 @@ def write_if_changed(path, data, uid=0, gid=0, perms=0o755, dirfd=None, raise_er
         raise ValueError('perms must be an integer')
 
     if perms & ~(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO):
-        raise ValueError(f'{perms}: invalid mode')
+        raise ValueError(f'{perms}: invalid mode. Supported bits are RWX for UGO.')
 
     for xid in ((uid, 'uid'), (gid, 'gid')):
         value, name = xid

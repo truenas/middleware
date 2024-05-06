@@ -6,7 +6,7 @@ import stat
 
 from mako import exceptions
 from middlewared.service import CallError, Service
-from middlewared.utils.io import write_if_changed, UnexpectedFileChange
+from middlewared.utils.io import write_if_changed, FileChanges
 from middlewared.utils.mako import get_template
 
 DEFAULT_ETC_PERMS = 0o644
@@ -349,15 +349,16 @@ class EtcService(Service):
         payload = self.get_perms_and_ownership(entry)
         try:
             changes = write_if_changed(full_path, rendered, raise_error=True, **payload)
-        except UnexpectedFileChange as e:
-            self.logger.error(
-                '%s: unexpected changes were made to configuration file that may '
-                'allow unauthorized user to alter service behavior', full_path, exc_info=True
-            )
-            changes = e.changes
         except Exception:
             changes = 0
             self.logger.warning('%s: failed to write changes to configuration file', full_path, exc_info=True)
+
+        if (unexpected_changes := changes & ~FileChanges.CONTENTS):
+            self.logger.error(
+                '%s: unexpected changes [%s] were made to configuration file that may '
+                'allow unauthorized user to alter service behavior', full_path,
+                ', '.join([x.name for x in FileChanges if unexpected_changes & x])
+            )
 
         return changes
 

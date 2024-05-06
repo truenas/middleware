@@ -148,7 +148,7 @@ def test__write_file_exceptions(create_etc_dir):
     ({'uid': 'bob'}, 'uid must be an integer'),
     ({'gid': 'bob'}, 'gid must be an integer'),
     ({'perms': 'bob'}, 'perms must be an integer'),
-    ({'perms': 0o4777}, '2559: invalid mode'),
+    ({'perms': 0o4777}, '2559: invalid mode. Supported bits are RWX for UGO.'),
     ({'dirfd': 'home'}, 'dirfd must be a valid file descriptor'),
     ({'dirfd': -1}, '-1: file descriptor not found'),
 ])
