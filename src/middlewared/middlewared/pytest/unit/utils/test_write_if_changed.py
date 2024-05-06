@@ -159,3 +159,34 @@ def test__write_file_value_errors(create_etc_dir, params, expected_text):
         write_if_changed(target, "canary", **params)
 
     assert expected_text in str(exc.value)
+
+
+def test__write_file_path_absolute_dirfd_value_error(create_etc_dir):
+    target = os.path.join(create_etc_dir, 'testfile8')
+
+    dirfd = os.open(create_etc_dir, os.O_DIRECTORY)
+    try:
+        with pytest.raises(ValueError) as exc:
+            write_if_changed(target, "canary", dirfd=dirfd)
+    finally:
+        os.close(dirfd)
+
+    assert 'absolute paths may not be used' in str(exc.value)
+
+
+def test__write_file_path_relative_no_dirfd_value_error(create_etc_dir):
+    with pytest.raises(ValueError) as exc:
+        write_if_changed('testfile9', "canary")
+
+    assert 'relative paths may not be used' in str(exc.value)
+
+
+def test__write_file_wrong_open_type_value_error(create_etc_dir):
+    # create a test file
+    with open(os.path.join(create_etc_dir, 'testfile10'), 'w') as f:
+        with pytest.raises(ValueError) as exc:
+            write_if_changed('willnotexist', "canary", dirfd=f.fileno())
+
+        assert 'dirfd must be opened' in str(exc.value)
+
+    os.unlink(os.path.join(create_etc_dir, 'testfile10'))
