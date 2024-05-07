@@ -17,6 +17,7 @@ from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, retur
 from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
+from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 from middlewared.plugins.filesystem_.utils import ACLType
 from middlewared.plugins.zfs_.utils import ZFSCTL
@@ -589,7 +590,7 @@ class FilesystemService(Service):
             fd = os.open(path, os.O_PATH)
             try:
                 st = os.fstatvfs(fd)
-                mntid = stat_x.statx('', {'dir_fd': fd, 'flags':  stat_x.ATFlags.EMPTY_PATH}).stx_mnt_id
+                mntid = stat_x.statx('', {'dir_fd': fd, 'flags': stat_x.ATFlags.EMPTY_PATH}).stx_mnt_id
             finally:
                 os.close(fd)
 
