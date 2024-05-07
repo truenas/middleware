@@ -37,6 +37,7 @@ logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(lo
 logging.getLogger('charset_normalizer').setLevel(logging.INFO)
 logging.TRACE = 6
 
+CONTAINER_IMAGES_LOGFILE = '/var/log/container_images.log'
 FAILOVER_LOGFILE = '/var/log/failover.log'
 K8S_API_LOGFILE = '/var/log/k8s_api.log'
 LOGFILE = '/var/log/middlewared.log'
@@ -80,6 +81,7 @@ class Logger:
         else:
             for name, filename, log_format in [
                 (None, LOGFILE, self.log_format),
+                ('container_images', CONTAINER_IMAGES_LOGFILE, self.log_format),
                 ('failover', FAILOVER_LOGFILE, self.log_format),
                 ('k8s_api', K8S_API_LOGFILE, self.log_format),
                 ('netdata_api', NETDATA_API_LOGFILE, self.log_format),
