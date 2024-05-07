@@ -8,7 +8,7 @@ from middlewared.utils import run
 from middlewared.validators import Range
 
 BOOT_ATTACH_REPLACE_LOCK = 'boot_attach_replace'
-BOOT_POOL_NAME = None
+BOOT_POOL_NAME = BOOT_POOL_DISKS = None
 BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
 
 
@@ -34,13 +34,36 @@ class BootService(Service):
         # WebUI expects same data as `pool.pool_extend`
         return await self.middleware.call('pool.pool_normalize_info', BOOT_POOL_NAME)
 
+    @private
+    async def get_disks_cache(self):
+        """If boot pool disk cache hasn't been set (or cleared),
+        then set it.
+
+        NOTE: we cache this information since it doesn't change
+        very often and we have a ton of callers (especially on HA)
+        that need to determine this information. By caching this,
+        it reduces the amount of times we have to use our ProcessPool
+        """
+        global BOOT_POOL_DISKS
+        if BOOT_POOL_DISKS is None:
+            # Using an immutable object is very important since this is
+            # a globally cached value
+            BOOT_POOL_DISKS = tuple(await self.middleware.call('zfs.pool.get_disks', BOOT_POOL_NAME))
+        return list(BOOT_POOL_DISKS)
+
+    @private
+    async def clear_disks_cache(self):
+        """Clear the boot pool disk cache"""
+        global BOOT_POOL_DISKS
+        BOOT_POOL_DISKS = None
+
     @accepts(roles=['READONLY_ADMIN'])
     @returns(List('disks', items=[Str('disk')]))
     async def get_disks(self):
         """
         Returns disks of the boot pool.
         """
-        return await self.middleware.call('zfs.pool.get_disks', BOOT_POOL_NAME)
+        return await self.get_disks_cache()
 
     @private
     async def get_boot_type(self):
@@ -112,7 +135,6 @@ class BootService(Service):
         # If the user is upgrading his disks, let's set expand to True to make sure that we
         # register the new disks capacity which increase the size of the pool
         await self.middleware.call('zfs.pool.online', BOOT_POOL_NAME, zfs_dev_part['name'], True)
-
         await self.update_initramfs()
 
     @accepts(Str('dev'))
@@ -318,6 +340,7 @@ async def on_config_upload(middleware, path):
 
 async def setup(middleware):
     global BOOT_POOL_NAME
+    global BOOT_POOL_DISKS
 
     try:
         pools = dict([line.split('\t') for line in (
@@ -331,6 +354,7 @@ async def setup(middleware):
     for i in BOOT_POOL_NAME_VALID:
         if i in pools:
             BOOT_POOL_NAME = i
+            BOOT_POOL_DISKS = tuple(await middleware.call('zfs.pool.get_disks', BOOT_POOL_NAME))
 
             compatibility = pools[i]
             if compatibility != 'grub2':
