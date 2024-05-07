@@ -1,26 +1,24 @@
 import ipaddress
-import errno
 import os
-import sys
 from time import sleep
 
+import dns.resolver
 import pytest
-from pytest_dependency import depends
-
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from auto_config import ip, ha
-from functions import GET, POST, make_ws_request
-from protocols import smb_connection, smb_share
-
+from middlewared.client.client import \
+    ValidationErrors as ClientValidationErrors
 from middlewared.service_exception import CallError, ValidationErrors
-from middlewared.client.client import ValidationErrors as ClientValidationErrors
+from middlewared.test.integration.assets.directory_service import (
+    active_directory, override_nameservers)
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
-from middlewared.test.integration.assets.directory_service import active_directory, override_nameservers
-from middlewared.test.integration.utils import call, ssh, client
 from middlewared.test.integration.assets.product import product_type
+from middlewared.test.integration.utils import call, client, ssh
+from pytest_dependency import depends
 
+from auto_config import ha, ip, vip
+from protocols import smb_connection, smb_share
+
+public_ip = vip if ha else ip
 if ha and "hostname_virtual" in os.environ:
     hostname = os.environ["hostname_virtual"]
 else:
@@ -38,29 +36,17 @@ SMB_NAME = "TestADShare"
 
 
 def remove_dns_entries(payload):
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'dns.nsupdate',
-        'params': [{'ops': payload}]
-    })
-    error = res.get('error')
-    assert error is None, str(error)
+    call('dns.nsupdate', {'ops': payload})
 
 
 def cleanup_forward_zone():
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'dnsclient.forward_lookup',
-        'params': [{'names': [f'{hostname}.{AD_DOMAIN}']}]
-    })
-    error = res.get('error')
-
-    if error and error['trace']['class'] == 'NXDOMAIN':
+    try:
+        result = call('dnsclient.forward_lookup', {'names': [f'{hostname}.{AD_DOMAIN}']})
+    except dns.resolver.NXDOMAIN:
         # No entry, nothing to do
         return
 
-    assert error is None, str(error)
-    ips_to_remove = [rdata['address'] for rdata in res['result']]
+    ips_to_remove = [rdata['address'] for rdata in result]
 
     payload = []
     for i in ips_to_remove:
@@ -76,32 +62,17 @@ def cleanup_forward_zone():
 
 
 def cleanup_reverse_zone():
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'activedirectory.ipaddresses_to_register',
-        'params': [
-            {'hostname': f'{hostname}.{AD_DOMAIN}.', 'bindip': []},
-            False
-        ],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
-    ptr_table = {f'{ipaddress.ip_address(i).reverse_pointer}.': i for i in res['result']}
+    result = call('activedirectory.ipaddresses_to_register', {'hostname': f'{hostname}.{AD_DOMAIN}.', 'bindip': []}, False)
+    ptr_table = {f'{ipaddress.ip_address(i).reverse_pointer}.': i for i in result}
 
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'dnsclient.reverse_lookup',
-        'params': [{'addresses': list(ptr_table.values())}],
-    })
-    error = res.get('error')
-    if error and error['trace']['class'] == 'NXDOMAIN':
+    try:
+        result = call('dnsclient.reverse_lookup', {'addresses': list(ptr_table.values())})
+    except dns.resolver.NXDOMAIN:
         # No entry, nothing to do
         return
 
-    assert error is None, str(error)
-
     payload = []
-    for host in res['result']:
+    for host in result:
         reverse_pointer = host["name"]
         assert reverse_pointer in ptr_table, str(ptr_table)
         addr = ipaddress.ip_address(ptr_table[reverse_pointer])
@@ -132,41 +103,21 @@ def set_ad_nameserver(request):
 
 
 def test_02_cleanup_nameserver(set_ad_nameserver):
-    results = POST("/activedirectory/domain_info/", AD_DOMAIN)
-    assert results.status_code == 200, results.text
-    domain_info = results.json()
+    domain_info = call('activedirectory.domain_info', AD_DOMAIN)
 
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'kerberos.get_cred',
-        'params': [{
-            'dstype': 'DS_TYPE_ACTIVEDIRECTORY',
-            'conf': {
-                'bindname': ADUSERNAME,
-                'bindpw': ADPASSWORD,
-                'domainname': AD_DOMAIN,
-            }
-        }],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
-    cred = res['result']
+    cred = call('kerberos.get_cred', {'dstype': 'DS_TYPE_ACTIVEDIRECTORY',
+                                      'conf': {'bindname': ADUSERNAME,
+                                               'bindpw': ADPASSWORD,
+                                               'domainname': AD_DOMAIN
+                                               }
+                                      })
 
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'kerberos.do_kinit',
-        'params': [{
-            'krb5_cred': cred,
-            'kinit-options': {
-                'kdc_override': {
-                    'domain': AD_DOMAIN.upper(),
-                    'kdc': domain_info['KDC server']
-                },
-            }
-        }],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
+    call('kerberos.do_kinit', {'krb5_cred': cred,
+                               'kinit-options': {'kdc_override': {'domain': AD_DOMAIN.upper(),
+                                                                  'kdc': domain_info['KDC server']
+                                                                  },
+                                                 }
+                               })
 
     # Now that we have proper kinit as domain admin
     # we can nuke stale DNS entries from orbit.
@@ -176,21 +127,15 @@ def test_02_cleanup_nameserver(set_ad_nameserver):
 
 
 def test_03_get_activedirectory_data(request):
-    global results
-    results = GET('/activedirectory/')
-    assert results.status_code == 200, results.text
+    call('activedirectory.config')
 
 
 def test_05_get_activedirectory_state(request):
-    results = GET('/activedirectory/get_state/')
-    assert results.status_code == 200, results.text
-    assert results.json() == 'DISABLED', results.text
+    assert 'DISABLED' == call('activedirectory.get_state')
 
 
 def test_06_get_activedirectory_started_before_starting_activedirectory(request):
-    results = GET('/activedirectory/started/')
-    assert results.status_code == 200, results.text
-    assert results.json() is False, results.text
+    assert call('activedirectory.started') is False
 
 
 @pytest.mark.dependency(name="ad_works")
@@ -250,17 +195,11 @@ def test_07_enable_leave_activedirectory(request):
         assert pw['sid_info']['domain_information']['online'], str(ad)
         assert pw['sid_info']['domain_information']['activedirectory'], str(ad)
 
-        res = make_ws_request(ip, {
-            'msg': 'method',
-            'method': 'dnsclient.forward_lookup',
-            'params': [{'names': [f'{hostname}.{AD_DOMAIN}']}],
-        })
-        error = res.get('error')
-        assert error is None, str(error)
-        assert len(res['result']) != 0
+        result = call('dnsclient.forward_lookup', {'names': [f'{hostname}.{AD_DOMAIN}']})
+        assert len(result) != 0
 
-        addresses = [x['address'] for x in res['result']]
-        assert ip in addresses
+        addresses = [x['address'] for x in result]
+        assert public_ip in addresses
 
         res = call('privilege.query', [['name', 'C=', AD_DOMAIN]], {'get': True})
         assert res['ds_groups'][0]['name'].endswith('domain admins')
@@ -272,21 +211,13 @@ def test_07_enable_leave_activedirectory(request):
     secrets_has_domain = call('directoryservices.secrets.has_domain', short_name)
     assert secrets_has_domain is False
 
-    results = POST("/user/get_user_obj/", {'username': AD_USER})
-    assert results.status_code != 200, results.text
+    with pytest.raises(KeyError):
+        call('user.get_user_obj', {'username': AD_USER})
 
-    results = GET('/activedirectory/started/')
-    assert results.status_code == 200, results.text
-    assert results.json() is False, results.text
+    assert call('activedirectory.started') is False
 
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'privilege.query',
-        'params': [[['name', 'C=', AD_DOMAIN]]]
-    })
-    error = res.get('error')
-    assert error is None, str(error)
-    assert len(res['result']) == 0, str(res['result'])
+    result = call('privilege.query', [['name', 'C=', AD_DOMAIN]])
+    assert len(result) == 0, str(result)
 
 
 def test_08_activedirectory_smb_ops(request):
@@ -311,12 +242,11 @@ def test_08_activedirectory_smb_ops(request):
                 'type': 'ALLOW'
             }]
         ) as ds:
-            results = POST("/service/restart/", {"service": "cifs"})
-            assert results.status_code == 200, results.text
+            call('service.restart', 'cifs')
 
             with smb_share(f'/mnt/{ds}', {'name': SMB_NAME}):
                 with smb_connection(
-                    host=ip,
+                    host=public_ip,
                     share=SMB_NAME,
                     username=ADUSERNAME,
                     domain='AD02',
@@ -355,7 +285,7 @@ def test_08_activedirectory_smb_ops(request):
                 'path_suffix': '%D/%U'
             }):
                 with smb_connection(
-                    host=ip,
+                    host=public_ip,
                     share='DATASETS',
                     username=ADUSERNAME,
                     domain='AD02',
@@ -365,13 +295,7 @@ def test_08_activedirectory_smb_ops(request):
                     c.write(fd, b'EXTERNAL_TEST')
                     c.close(fd)
 
-            results = POST('/filesystem/getacl/', {
-                'path': os.path.join(f'/mnt/{ds}', 'AD02', ADUSERNAME),
-                'simplified': True
-            })
-
-            assert results.status_code == 200, results.text
-            acl = results.json()
+            acl = call('filesystem.getacl', os.path.join(f'/mnt/{ds}', 'AD02', ADUSERNAME), True)
             assert acl['trivial'] is False, str(acl)
 
         with dataset(
@@ -385,8 +309,7 @@ def test_08_activedirectory_smb_ops(request):
                 'type': 'ALLOW'
             }]
         ) as ds:
-            results = POST("/service/restart/", {"service": "cifs"})
-            assert results.status_code == 200, results.text
+            call('service.restart', 'cifs')
 
             with smb_share(f'/mnt/{ds}', {
                 'name': 'TEST_HOME',
@@ -399,7 +322,7 @@ def test_08_activedirectory_smb_ops(request):
                 sleep(5)
 
                 with smb_connection(
-                    host=ip,
+                    host=public_ip,
                     share='HOMES',
                     username=ADUSERNAME,
                     domain='AD02',
@@ -410,13 +333,7 @@ def test_08_activedirectory_smb_ops(request):
                     c.close(fd)
 
             file_local_path = os.path.join(f'/mnt/{ds}', 'AD02', ADUSERNAME, 'homes_test_file')
-            results = POST('/filesystem/getacl/', {
-                'path': file_local_path,
-                'simplified': True
-            })
-
-            assert results.status_code == 200, results.text
-            acl = results.json()
+            acl = call('filesystem.getacl', file_local_path, True)
             assert acl['trivial'] is False, str(acl)
 
 
