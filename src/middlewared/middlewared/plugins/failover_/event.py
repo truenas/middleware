@@ -723,6 +723,11 @@ class FailoverEventsService(Service):
 
         logger.warning('Entering BACKUP on "%s".', ifname)
 
+        # We stop netdata before exporting pools because otherwise we might have erroneous stuff
+        # getting logged and causing spam
+        logger.info('Stopping reporting metrics')
+        self.run_call('service.stop', 'netdata', self.HA_PROPAGATE)
+
         logger.info('Blocking network traffic.')
         fw_drop_job = self.run_call('failover.firewall.drop_all')
         fw_drop_job.wait_sync()
@@ -803,9 +808,6 @@ class FailoverEventsService(Service):
 
         logger.info('Regenerating cron')
         self.run_call('etc.generate', 'cron')
-
-        logger.info('Stopping reporting metrics')
-        self.run_call('service.stop', 'netdata', self.HA_PROPAGATE)
 
         self.run_call('truecommand.stop_truecommand_service')
 

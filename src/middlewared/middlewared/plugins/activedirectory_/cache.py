@@ -1,6 +1,3 @@
-import grp
-import pwd
-
 from middlewared.plugins.idmap_.utils import (
     IDType,
     SID_LOCAL_USER_PREFIX,
@@ -9,6 +6,8 @@ from middlewared.plugins.idmap_.utils import (
 )
 from middlewared.service import Service, private, job
 from middlewared.service_exception import CallError
+from middlewared.utils.nss import pwd, grp
+from middlewared.utils.nss.nss_common import NssModule
 from time import sleep
 
 
@@ -31,27 +30,13 @@ class ActiveDirectoryService(Service):
         dom_by_sid = {x['domain_info']['sid']: x for x in domain_info}
 
         if entry_type == 'USER':
-            entries = WBClient().users()
+            entries = pwd.getpwall(module=NssModule.WINBIND.name)[NssModule.WINBIND.name]
+            for i in entries:
+                ret.append({"id": i.pw_uid, "sid": None, "nss": i, "id_type": entry_type})
         else:
-            entries = WBClient().groups()
-
-        for i in entries:
-            entry = {"id": -1, "sid": None, "nss": None, "id_type": entry_type}
-            if entry_type == 'USER':
-                try:
-                    entry["nss"] = pwd.getpwnam(i)
-                except KeyError:
-                    continue
-                entry["id"] = entry["nss"].pw_uid
-
-            else:
-                try:
-                    entry["nss"] = grp.getgrnam(i)
-                except KeyError:
-                    continue
-                entry["id"] = entry["nss"].gr_gid
-
-            ret.append(entry)
+            entries = grp.getgrall(module=NssModule.WINBIND.name)[NssModule.WINBIND.name]
+            for i in entries:
+                ret.append({"id": i.gr_gid, "sid": None, "nss": i, "id_type": entry_type})
 
         idmaps = self.middleware.call_sync('idmap.convert_unixids', ret)
         to_remove = []
@@ -139,7 +124,7 @@ class ActiveDirectoryService(Service):
                 'smb': True,
                 'sid': u['sid'],
             }
-            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'USER', entry)
+            self.middleware.call_sync('directoryservices.cache.insert', self._config.namespace.upper(), 'USER', entry)
 
         groups = self.get_entries({'entry_type': 'GROUP', 'cache_enabled': not ad['disable_freenas_cache']})
         for g in groups:
@@ -161,10 +146,10 @@ class ActiveDirectoryService(Service):
                 'smb': True,
                 'sid': g['sid'],
             }
-            self.middleware.call_sync('dscache.insert', self._config.namespace.upper(), 'GROUP', entry)
+            self.middleware.call_sync('directoryservices.cache.insert', self._config.namespace.upper(), 'GROUP', entry)
 
     @private
     async def get_cache(self):
-        users = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'USER')
-        groups = await self.middleware.call('dscache.entries', self._config.namespace.upper(), 'GROUP')
+        users = await self.middleware.call('directoryservices.cache.entries', self._config.namespace.upper(), 'USER')
+        groups = await self.middleware.call('directoryservices.cache.entries', self._config.namespace.upper(), 'GROUP')
         return {"USERS": users, "GROUPS": groups}

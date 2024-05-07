@@ -1,3 +1,4 @@
+from middlewared.plugins.disk_.utils import valid_zfs_partition_uuids
 from middlewared.schema import accepts, Str
 from middlewared.service import filterable, private, Service
 from middlewared.utils import filter_list
@@ -47,12 +48,7 @@ class DiskService(Service):
 
     @private
     async def get_valid_zfs_partition_type_uuids(self):
-        # https://salsa.debian.org/debian/gdisk/blob/master/parttypes.cc for valid zfs types
-        # 516e7cba was being used by freebsd and 6a898cc3 is being used by linux
-        return [
-            '6a898cc3-1dd2-11b2-99a6-080020736631',
-            '516e7cba-6ecf-11d6-8ff8-00022d09712b',
-        ]
+        return list(valid_zfs_partition_uuids())
 
     @private
     async def get_valid_swap_partition_type_uuids(self):

@@ -86,7 +86,11 @@ class RealtimeEventSource(EventSource):
                     'cpu': get_cpu_stats(netdata_metrics, cores),
                     'disks': get_disk_stats(netdata_metrics, self.middleware.call_sync('device.get_disk_names')),
                     'interfaces': get_interface_stats(
-                        netdata_metrics, self.middleware.call_sync('interface.query_names_only')
+                        netdata_metrics, [
+                            iface['name'] for iface in self.middleware.call_sync(
+                                'interface.query', [], {'extra': {'retrieve_names_only': True}}
+                            )
+                        ]
                     ),
                     'failed_to_connect': False,
                 }

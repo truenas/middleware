@@ -134,6 +134,12 @@ class VMSupervisor(LibvirtConnectionMixin):
     def unavailable_devices(self):
         return [d for d in self.devices if not d.is_available()]
 
+    def vm_devices_context(self):
+        return {
+            'vms': self.middleware.call_sync('vm.query'),
+            'vm_devices': self.middleware.call_sync('vm.device.query'),
+        }
+
     def start(self, vm_data=None):
         if self.domain.isActive():
             raise CallError(f'{self.libvirt_domain_name} domain is already active')
@@ -141,9 +147,10 @@ class VMSupervisor(LibvirtConnectionMixin):
         self.update_vm_data(vm_data)
 
         errors = []
+        context = self.vm_devices_context()
         for device in self.devices:
             try:
-                device.pre_start_vm_device_setup()
+                device.pre_start_vm_device_setup(context)
             except Exception as e:
                 errors.append(str(e))
         if errors:
@@ -215,9 +222,10 @@ class VMSupervisor(LibvirtConnectionMixin):
             time.sleep(5)
 
         errors = []
+        context = self.vm_devices_context()
         for device in self.devices:
             try:
-                device.post_stop_vm()
+                device.post_stop_vm(context)
             except Exception as e:
                 errors.append(f'Failed to execute post stop actions for {device.data["dtype"]} device: {e}')
         else:

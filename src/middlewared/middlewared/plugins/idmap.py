@@ -15,6 +15,10 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.validators import Range
 from middlewared.plugins.smb import SMBPath
+try:
+    from pysss_murmur import murmurhash3
+except ImportError:
+    murmurhash3 = None
 
 
 """
@@ -347,6 +351,22 @@ class IdmapDomainService(CRUDService):
         return WBClient().domain_info(domain)
 
     @private
+    def parse_domain_info(self, sid):
+        if sid.startswith((SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX)):
+            return {'domain': 'LOCAL', 'domain_sid': None, 'online': True, 'activedirectory': False}
+
+        domain_info = self.known_domains([['sid', '=', sid.rsplit('-', 1)[0]]])
+        if not domain_info:
+            return {'domain': 'UNKNOWN', 'domain_sid': None, 'online': False, 'activedirectory': False}
+
+        return {
+            'domain': domain_info[0]['netbios_domain'],
+            'domain_sid': domain_info[0]['sid'],
+            'online': domain_info[0]['online'],
+            'activedirectory': 'ACTIVE_DIRECTORY' in domain_info[0]['domain_flags']['parsed']
+        }
+
+    @private
     async def get_sssd_low_range(self, domain, sssd_config=None, seed=0xdeadbeef):
         """
         This is best effort attempt for SSSD compatibility. It will allocate low
@@ -366,47 +386,8 @@ class IdmapDomainService(CRUDService):
         range_max = sssd_config.get('range_max', 2000200000)
         max_slices = int((range_max - range_low) / range_size)
 
-        data = bytearray(sid.encode())
-        datalen = len(data)
-        hash_ = seed
-        data_bytes = data
-
-        c1 = 0xcc9e2d51
-        c2 = 0x1b873593
-        r1 = 15
-        r2 = 13
-        n = 0xe6546b64
-
-        while datalen >= 4:
-            k = int.from_bytes(data_bytes[:4], byteorder='little') & 0xFFFFFFFF
-            data_bytes = data_bytes[4:]
-            datalen = datalen - 4
-            k = (k * c1) & 0xFFFFFFFF
-            k = (k << r1 | k >> 32 - r1) & 0xFFFFFFFF
-            k = (k * c2) & 0xFFFFFFFF
-            hash_ ^= k
-            hash_ = (hash_ << r2 | hash_ >> 32 - r2) & 0xFFFFFFFF
-            hash_ = (hash_ * 5 + n) & 0xFFFFFFFF
-
-        if datalen > 0:
-            k = 0
-            if datalen >= 3:
-                k = k | data_bytes[2] << 16
-            if datalen >= 2:
-                k = k | data_bytes[1] << 8
-            if datalen >= 1:
-                k = k | data_bytes[0]
-                k = (k * c1) & 0xFFFFFFFF
-                k = (k << r1 | k >> 32 - r1) & 0xFFFFFFFF
-                k = (k * c2) & 0xFFFFFFFF
-                hash_ ^= k
-
-        hash_ = (hash_ ^ len(data)) & 0xFFFFFFFF
-        hash_ ^= hash_ >> 16
-        hash_ = (hash_ * 0x85ebca6b) & 0xFFFFFFFF
-        hash_ ^= hash_ >> 13
-        hash_ = (hash_ * 0xc2b2ae35) & 0xFFFFFFFF
-        hash_ ^= hash_ >> 16
+        data = sid.encode()
+        hash_ = murmurhash3(data, len(data), seed)
 
         return (hash_ % max_slices) * range_size + range_size
 
@@ -831,7 +812,8 @@ class IdmapDomainService(CRUDService):
             data, {'prefix': self._config.datastore_prefix}
         )
         out = await self.query([('id', '=', id_)], {'get': True})
-        await self.synchronize()
+        await self.middleware.call('etc.generate', 'smb')
+        await self.middleware.call('service.restart', 'idmap')
         return out
 
     async def do_update(self, id_, data):
@@ -911,7 +893,7 @@ class IdmapDomainService(CRUDService):
         )
 
         out = await self.query([('id', '=', id_)], {'get': True})
-        await self.synchronize(False)
+        await self.middleware.call('etc.generate', 'smb')
         cache_job = await self.middleware.call('idmap.clear_idmap_cache')
         await cache_job.wait()
         return out
@@ -925,7 +907,7 @@ class IdmapDomainService(CRUDService):
             raise CallError(f'Deleting system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
 
         ret = await self.middleware.call('datastore.delete', self._config.datastore, id_)
-        await self.synchronize()
+        await self.middleware.call('etc.generate', 'smb')
         return ret
 
     def _pyuidgid_to_dict(self, entry):
@@ -1156,13 +1138,14 @@ class IdmapDomainService(CRUDService):
     async def get_idmap_info(self, ds, id_):
         low_range = None
         id_type_both = False
+
+        if ds == 'ldap':
+            return (0, id_type_both)
+
         domains = await self.query()
 
         for d in domains:
             if ds == 'activedirectory' and d['name'] == 'DS_TYPE_LDAP':
-                continue
-
-            if ds == 'ldap' and d['name'] != 'DS_TYPE_LDAP':
                 continue
 
             if id_ in range(d['range_low'], d['range_high']):
@@ -1174,10 +1157,11 @@ class IdmapDomainService(CRUDService):
 
     @private
     async def synthetic_user(self, ds, passwd, sid):
+        if passwd['local']:
+            return None
+
         idmap_info = await self.get_idmap_info(ds, passwd['pw_uid'])
         if idmap_info[0] is None:
-            # ID doesn't match one of our configured idmap ranges.
-            # This means it's probably local
             return None
 
         rid = int(sid.rsplit('-', 1)[1])
@@ -1208,10 +1192,11 @@ class IdmapDomainService(CRUDService):
 
     @private
     async def synthetic_group(self, ds, grp, sid):
+        if grp['local']:
+            return None
+
         idmap_info = await self.get_idmap_info(ds, grp['gr_gid'])
         if idmap_info[0] is None:
-            # ID doesn't match one of our configured idmap ranges.
-            # This means it's probably local
             return None
 
         rid = int(sid.rsplit('-', 1)[1])
@@ -1229,98 +1214,3 @@ class IdmapDomainService(CRUDService):
             'smb': True,
             'sid': sid
         }
-
-    @private
-    async def idmap_to_smbconf(self, data=None):
-        rv = {}
-        if data is None:
-            idmap = await self.query()
-        else:
-            idmap = data
-
-        ds_state = await self.middleware.call('directoryservices.get_state')
-        workgroup = await self.middleware.call('smb.getparm', 'workgroup', 'global')
-        ad_enabled = ds_state['activedirectory'] in ['HEALTHY', 'JOINING', 'FAULTED']
-        ldap_enabled = ds_state['ldap'] in ['HEALTHY', 'JOINING', 'FAULTED']
-        ad_idmap = filter_list(idmap, [('name', '=', DSType.DS_TYPE_ACTIVEDIRECTORY.name)], {'get': True}) if ad_enabled else None
-        disable_ldap_starttls = False
-
-        for i in idmap:
-            if i['name'] == DSType.DS_TYPE_DEFAULT_DOMAIN.name:
-                if ad_idmap and ad_idmap['idmap_backend'] == 'AUTORID':
-                    continue
-                domain = "*"
-            elif i['name'] == DSType.DS_TYPE_ACTIVEDIRECTORY.name:
-                if not ad_enabled:
-                    continue
-                if i['idmap_backend'] == 'AUTORID':
-                    domain = "*"
-                else:
-                    domain = workgroup
-            elif i['name'] == DSType.DS_TYPE_LDAP.name:
-                if not ldap_enabled:
-                    continue
-                domain = workgroup
-                if i['idmap_backend'] == 'LDAP':
-                    """
-                    In case of default LDAP backend, populate values from ldap form.
-                    """
-                    idmap_prefix = f"idmap config {domain} :"
-                    ldap = await self.middleware.call('ldap.config')
-                    rv.update({
-                        f"{idmap_prefix} backend": {"raw": i['idmap_backend'].lower()},
-                        f"{idmap_prefix} range": {"raw": f"{i['range_low']} - {i['range_high']}"},
-                        f"{idmap_prefix} ldap_base_dn": {"raw": ldap['basedn']},
-                        f"{idmap_prefix} ldap_url": {"raw": ' '.join(ldap['uri_list'])},
-                    })
-                    continue
-            else:
-                domain = i['name']
-
-            idmap_prefix = f"idmap config {domain} :"
-            rv.update({
-                f"{idmap_prefix} backend": {"raw": i['idmap_backend'].lower()},
-                f"{idmap_prefix} range": {"raw": f"{i['range_low']} - {i['range_high']}"}
-            })
-            for k, v in i['options'].items():
-                backend_parameter = "realm" if k == "cn_realm" else k
-                if k == 'ldap_server':
-                    v = 'ad' if v == 'AD' else 'stand-alone'
-                elif k == 'ldap_url':
-                    v = f'{"ldaps://" if i["options"]["ssl"]  == "ON" else "ldap://"}{v}'
-                elif k == 'ssl':
-                    if v != 'STARTTLS':
-                        disable_ldap_starttls = True
-
-                    continue
-
-                rv.update({
-                    f"{idmap_prefix} {backend_parameter}": {"parsed": v},
-                })
-
-        if ad_enabled:
-            rv['ldap ssl'] = {'parsed': 'off' if disable_ldap_starttls else 'start tls'}
-
-        return rv
-
-    @private
-    async def diff_conf_and_registry(self, data, idmaps):
-        r = idmaps
-        s_keys = set(data.keys())
-        r_keys = set(r.keys())
-        intersect = s_keys.intersection(r_keys)
-        return {
-            'added': {x: data[x] for x in s_keys - r_keys},
-            'removed': {x: r[x] for x in r_keys - s_keys},
-            'modified': {x: data[x] for x in intersect if data[x] != r[x]},
-        }
-
-    @private
-    async def synchronize(self, restart=True):
-        config_idmap = await self.query()
-        idmaps = await self.idmap_to_smbconf(config_idmap)
-        to_check = (await self.middleware.call('smb.reg_globals'))['idmap']
-        diff = await self.diff_conf_and_registry(idmaps, to_check)
-        await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
-        if restart:
-            await self.middleware.call('service.restart', 'idmap')

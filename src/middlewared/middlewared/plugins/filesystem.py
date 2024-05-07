@@ -1,10 +1,8 @@
 import binascii
 import errno
 import functools
-import grp
 import os
 import pathlib
-import pwd
 import shutil
 import stat as statlib
 import time

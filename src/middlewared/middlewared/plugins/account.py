@@ -21,11 +21,16 @@ from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.utils.crypto import sha512_crypt
+from middlewared.utils.nss import pwd, grp
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
 from middlewared.validators import Email, Range
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.plugins.smb import SMBBuiltin
-from middlewared.plugins.idmap_.utils import TRUENAS_IDMAP_DEFAULT_LOW
+from middlewared.plugins.smb_.constants import SMBBuiltin
+from middlewared.plugins.idmap_.utils import (
+    TRUENAS_IDMAP_DEFAULT_LOW,
+    SID_LOCAL_USER_PREFIX,
+    SID_LOCAL_GROUP_PREFIX
+)
 
 ADMIN_UID = 950  # When googled, does not conflict with anything
 ADMIN_GID = 950
@@ -313,7 +318,7 @@ class UserService(CRUDService):
         if dssearch:
             ds_state = await self.middleware.call('directoryservices.get_state')
             if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
-                ds_users = await self.middleware.call('dscache.query', 'USERS', filters, options.copy())
+                ds_users = await self.middleware.call('directoryservices.cache.query', 'USERS', filters, options.copy())
                 # For AD users, we will not have 2FA attribute normalized so let's do that
                 ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
                 for index, user in enumerate(filter(
@@ -1049,19 +1054,43 @@ class UserService(CRUDService):
         Int('pw_gid'),
         List('grouplist'),
         Dict('sid_info'),
+        Bool('local'),
         register=True,
     ))
-    async def get_user_obj(self, data):
+    def get_user_obj(self, data):
         """
         Returns dictionary containing information from struct passwd for the user specified by either
         the username or uid. Bypasses user cache.
 
-        Supports the following additional parameters:
+        Supports the following optional parameters:
         `get_groups` - retrieve group list for the specified user.
 
         NOTE: results will not include nested groups for Active Directory users
 
         `sid_info` - retrieve SID and domain information for the user
+
+        Returns object with following keys:
+
+        `pw_name` - name of the user
+
+        `pw_uid` - numerical user id of the user
+
+        `pw_gid` - numerical group id for the user's primary group
+
+        `pw_gecos` - full username or comment field
+
+        `pw_dir` - user home directory
+
+        `pw_shell` - user command line interpreter
+
+        `local` - boolean value indicating whether the account is local to TrueNAS or provided by
+        a directory service.
+
+        `grouplist` - optional list of group ids for groups of which this account is a member. If `get_groups`
+        is not specified, this value will be null.
+
+        `sid_info - optional dictionary object containing details of SID and domain information. If `sid_info`
+        is not specified, this value will be null.
 
         NOTE: in some pathological scenarios this may make the operation hang until
         the winbindd request timeout has been reached if the winbindd connection manager
@@ -1071,12 +1100,53 @@ class UserService(CRUDService):
         """
         verrors = ValidationErrors()
         if not data['username'] and data['uid'] is None:
-            verrors.add('get_user_obj.username', 'Either "username" or "uid" must be specified')
+            verrors.add('get_user_obj.username', 'Either "username" or "uid" must be specified.')
+
+        if data['username'] and data['uid'] is not None:
+            verrors.add('get_user_obj.username', '"username" and "uid" may not be simultaneously specified')
         verrors.check()
 
-        return await self.middleware.call(
-            'dscache.get_uncached_user', data['username'], data['uid'], data['get_groups'], data['sid_info']
-        )
+        if data['username']:
+            user_obj = pwd.getpwnam(data['username'], as_dict=True)
+        else:
+            user_obj = pwd.getpwuid(data['uid'], as_dict=True)
+
+        source = user_obj.pop('source')
+        user_obj['local'] = source == 'FILES'
+
+        if data['get_groups']:
+            user_obj['grouplist'] = os.getgrouplist(user_obj['pw_name'], user_obj['pw_gid'])
+
+        if data['sid_info']:
+            try:
+                if (idmap := self.middleware.call_sync('idmap.convert_unixids', [{
+                    'id_type': 'USER',
+                    'id': user_obj['pw_uid'],
+                }])['mapped']):
+                    sid = idmap[f'UID:{user_obj["pw_uid"]}']['sid']
+                else:
+                    sid = SID_LOCAL_USER_PREFIX + str(user_obj['pw_uid'])
+            except CallError as e:
+                # ENOENT means no winbindd entry for user
+                # ENOTCONN means winbindd is stopped / can't be started
+                # EAGAIN means the system dataset is hosed and needs to be fixed,
+                # but we need to let it through so that it's very clear in logs
+                if e.errno not in (errno.ENOENT, errno.ENOTCONN):
+                    self.logger.error('Failed to retrieve SID for uid: %d', user_obj['pw_uid'], exc_info=True)
+                sid = None
+            except Exception:
+                self.logger.error('Failed to retrieve SID for uid: %d', user_obj['pw_uid'], exc_info=True)
+                sid = None
+
+            if sid:
+                user_obj['sid_info'] = {
+                    'sid': sid,
+                    'domain_information': self.middleware.call_sync('idmap.parse_domain_info', sid)
+                }
+            else:
+                user_obj['sid_info'] = None
+
+        return user_obj
 
     @accepts(roles=['ACCOUNT_READ'])
     @returns(Int('next_available_uid'))
@@ -1719,7 +1789,7 @@ class GroupService(CRUDService):
         if dssearch:
             ds_state = await self.middleware.call('directoryservices.get_state')
             if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
-                ds_groups = await self.middleware.call('dscache.query', 'GROUPS', filters, options)
+                ds_groups = await self.middleware.call('directoryservices.cache.query', 'GROUPS', filters, options)
 
         if 'SMB' in additional_information:
             try:
@@ -1962,24 +2032,80 @@ class GroupService(CRUDService):
     @accepts(Dict(
         'get_group_obj',
         Str('groupname', default=None),
-        Int('gid', default=None)
+        Int('gid', default=None),
+        Bool('sid_info', default=False)
     ), roles=['ACCOUNT_READ'])
     @returns(Dict(
         'group_info',
         Str('gr_name'),
         Int('gr_gid'),
         List('gr_mem'),
+        Dict('sid_info'),
+        Bool('local'),
     ))
-    async def get_group_obj(self, data):
+    def get_group_obj(self, data):
         """
         Returns dictionary containing information from struct grp for the group specified by either
-        the groupname or gid. Bypasses group cache.
+        the `groupname` or `gid`.
+
+        If `sid_info` is specified then addition SMB / domain information is returned for the
+        group.
+
+        Output contains following keys:
+
+        `gr_name` - name of the group
+
+        `gr_gid` - group id of the group
+
+        `gr_mem` - list of gids that are members of the group
+
+        `sid_info` - optional SMB information if `sid_info` is specified specified, otherwise
+        this field will be null.
+
+        `local` - boolean indicating whether this group is local to the NAS or provided by a
+        directory service.
         """
         verrors = ValidationErrors()
         if not data['groupname'] and data['gid'] is None:
             verrors.add('get_group_obj.groupname', 'Either "groupname" or "gid" must be specified')
+        if data['groupname'] and data['gid'] is not None:
+            verrors.add('get_group_obj.groupname', '"groupname" and "gid" may not be simultaneously specified')
         verrors.check()
-        return await self.middleware.call('dscache.get_uncached_group', data['groupname'], data['gid'])
+
+        if data['groupname']:
+            grp_obj = grp.getgrnam(data['groupname'], as_dict=True)
+        else:
+            grp_obj = grp.getgrgid(data['gid'], as_dict=True)
+
+        source = grp_obj.pop('source')
+        grp_obj['local'] = source == 'FILES'
+
+        if data['sid_info']:
+            try:
+                if (idmap := self.middleware.call_sync('idmap.convert_unixids', [{
+                    'id_type': 'GROUP',
+                    'id': grp_obj['gr_gid'],
+                }])['mapped']):
+                    sid = idmap[f'GID:{grp_obj["gr_gid"]}']['sid']
+                else:
+                    sid = SID_LOCAL_GROUP_PREFIX + str(grp_obj['gr_gid'])
+            except CallError as e:
+                if e.errno not in (errno.ENOENT, errno.ENOTCONN):
+                    self.logger.error('Failed to retrieve SID for gid: %d', grp_obj['gr_gid'], exc_info=True)
+                sid = None
+            except Exception:
+                self.logger.error('Failed to retrieve SID for gid: %d', grp['gr_gid'], exc_info=True)
+                sid = None
+
+            if sid:
+                grp_obj['sid_info'] = {
+                    'sid': sid,
+                    'domain_information': self.middleware.call_sync('idmap.parse_domain_info', sid)
+                }
+            else:
+                grp_obj['sid_info'] = None
+
+        return grp_obj
 
     async def __common_validation(self, verrors, data, schema, pk=None):
 

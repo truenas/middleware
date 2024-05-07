@@ -152,10 +152,7 @@ def test_08_test_backend_options(request, backend):
     """
     Validate that backend was correctly set in smb.conf.
     """
-    cmd = f'midclt call smb.getparm "{IDMAP_CFG}: backend" GLOBAL'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    running_backend = results['stdout'].strip()
+    running_backend = call('smb.getparm', f'{IDMAP_CFG}: backend', 'GLOBAL')
     assert running_backend == backend.lower(), results['output']
 
     if backend == "RID":
@@ -237,9 +234,9 @@ def test_08_test_backend_options(request, backend):
         if k in ['realm', 'ssl']:
             continue
 
-        cmd = f'midclt call smb.getparm "{IDMAP_CFG}: {k}" GLOBAL'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        res = call('smb.getparm', f'{IDMAP_CFG}: {k}', 'GLOBAL')
+        assert res is not None, f'Failed to retrieve `{IDMAP_CFG}: {k}` from running configuration'
+
         if k == 'ldap_url':
             v = f'ldaps://{v}'
         elif k == 'ldap_domain':
@@ -249,14 +246,16 @@ def test_08_test_backend_options(request, backend):
             v = 'stand-alone'
 
         try:
-            res = json.loads(results['stdout'].strip())
+            res = json.loads(res)
             assert res == v, f"{backend} - [{k}]: {res}"
         except json.decoder.JSONDecodeError:
-            res = results['stdout'].strip()
             if isinstance(v, bool):
                 v = str(v)
 
-            assert v.casefold() == res.casefold(), f"{backend} - [{k}]: {res}"
+            if v is None:
+                assert res in (None, ''), f"{backend} - [{k}]: {res}"
+            else:
+                assert v.casefold() == res.casefold(), f"{backend} - [{k}]: {res}"
 
     if set_secret:
         """

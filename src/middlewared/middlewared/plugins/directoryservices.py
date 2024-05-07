@@ -7,19 +7,8 @@ import errno
 from base64 import b64decode
 from middlewared.schema import accepts, Dict, List, OROperator, Ref, returns, Str
 from middlewared.service import no_authz_required, Service, private, job
-from middlewared.plugins.smb import SMBCmd, SMBPath
+from middlewared.plugins.smb_.constants import SMBCmd, SMBPath
 from middlewared.service_exception import CallError, MatchNotFound
-
-DEFAULT_AD_CONF = {
-    "id": 1,
-    "bindname": "",
-    "verbose_logging": False,
-    "kerberos_principal": "",
-    "kerberos_realm": None,
-    "createcomputer": "",
-    "disable_freenas_cache": False,
-    "restrict_pam": False
-}
 
 DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh']
 
@@ -138,7 +127,7 @@ class DirectoryServices(Service):
         permissions and ACL related methods. Likewise, a cache refresh will not resolve issues
         with users being unable to authenticate to shares.
         """
-        return await job.wrap(await self.middleware.call('dscache.refresh'))
+        return await job.wrap(await self.middleware.call('directoryservices.cache.refresh'))
 
     @private
     @returns(List(
@@ -330,7 +319,7 @@ class DirectoryServices(Service):
             self.middleware.call_sync('ldap.started')
 
         job.set_progress(10, 'Refreshing cache'),
-        cache_refresh = self.middleware.call_sync('dscache.refresh')
+        cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh')
         cache_refresh.wait_sync()
 
         job.set_progress(75, 'Restarting dependent services')

@@ -49,12 +49,12 @@ class WebUIEnclosureService(Service):
                         slot_info.pop(to_pop)
 
                     pool_info = None
-                    slot_info.update(self.disk_detail_dict())
+                    slot_info.update({'drive_bay_number': int(disk_slot), **self.disk_detail_dict()})
                     if slot_info['dev']:
                         # map disk details
                         # NOTE: some of these fields need to be removed
                         # work with UI to remove unnecessary ones
-                        self.map_disk_details(slot_info, disks_deets)
+                        self.map_disk_details(slot_info, disk_deets)
 
                         if (pool_info := disks_to_pools['disks'].get(slot_info['dev'])):
                             # now map zpool info

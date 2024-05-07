@@ -176,7 +176,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
         user = None
         with contextlib.suppress(KeyError):
-            user = await self.middleware.call('dscache.get_uncached_user', username)
+            user = await self.middleware.call('user.get_user_obj', {'username': username})
 
         if not user:
             verrors.add(f'{schema}.user', f'Provided user "{username}" does not exist')
@@ -596,7 +596,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                     remote = f'"{credentials["username"]}"@{credentials["host"]}'
                     port = credentials['port']
 
-                    user = self.middleware.call_sync('dscache.get_uncached_user', rsync['user'])
+                    user = self.middleware.call_sync('user.get_user_obj', {'username': rsync['user']})
 
                     private_key_file = exit_stack.enter_context(tempfile.NamedTemporaryFile('w'))
                     os.fchmod(private_key_file.fileno(), 0o600)
