@@ -234,6 +234,8 @@ def generate_smb_conf_dict(
                 else:
                     domain = smb_service_config['workgroup']
             case 'DS_TYPE_LDAP':
+                # TODO: in future we will have migration remove this
+                # from the idmap table
                 continue
             case _:
                 domain = i['name']
