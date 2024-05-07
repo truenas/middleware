@@ -163,10 +163,8 @@ def __getgrall_impl(module, as_dict):
     __setgrent(mod)
     group_list = []
 
-    group = __getgrent_impl(mod, as_dict)
-    while group is not None:
-        if (group := __getgrent_impl(mod, as_dict)):
-            group_list.append(group)
+    while group := __getgrent_impl(mod, as_dict):
+        group_list.append(group)
 
     __endgrent(mod)
     return group_list
