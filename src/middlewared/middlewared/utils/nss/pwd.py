@@ -41,7 +41,7 @@ def __parse_nss_result(result, as_dict, module_name):
             'source': module_name
         }
 
-    return pwd_struct(name, result.pw_uid, result.pw_gid, homedir, gecos, shell, module_name)
+    return pwd_struct(name, result.pw_uid, result.pw_gid, gecos, homedir, shell, module_name)
 
 
 def __getpwnam_r(name, result_p, buffer_p, buflen, nss_module):
@@ -165,10 +165,8 @@ def __getpwall_impl(module, as_dict):
     __setpwent(mod)
     pwd_list = []
 
-    user = __getpwent_impl(mod, as_dict)
-    while user is not None:
-        if (user := __getpwent_impl(mod, as_dict)):
-            pwd_list.append(user)
+    while user := __getpwent_impl(mod, as_dict):
+        pwd_list.append(user)
 
     __endpwent(mod)
     return pwd_list
