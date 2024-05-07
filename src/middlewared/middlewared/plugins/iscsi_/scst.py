@@ -103,3 +103,25 @@ class iSCSITargetService(Service):
         else:
             pathlib.Path(SCST_CONTROLLER_A_TARGET_GROUPS_STATE).write_text("nonoptimized\n")
             pathlib.Path(SCST_CONTROLLER_B_TARGET_GROUPS_STATE).write_text("active\n")
+
+    def reset_target_parameter(self, iqn, param):
+        """Reset the specified parameter to its default value."""
+        # Do some sanity checking
+        valid_parm_names = [
+            'DataDigest',
+            'HeaderDigest',
+            'InitialR2T',
+            'ImmediateData',
+            'MaxRecvDataSegmentLength',
+            'MaxXmitDataSegmentLength',
+            'MaxBurstLength',
+            'FirstBurstLength',
+            'MaxOutstandingR2T'
+        ]
+        if param not in valid_parm_names:
+            raise ValueError('Invalid parameter name supplied', param)
+        try:
+            return pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}/{param}').write_text(':default:\n')
+        except FileNotFoundError:
+            # If we're not running, that's OK
+            pass

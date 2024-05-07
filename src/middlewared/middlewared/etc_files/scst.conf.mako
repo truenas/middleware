@@ -212,6 +212,11 @@
             if set(devices).issubset(clustered_extents):
                 return True
         return False
+
+    def option_value(v):
+        if type(v) is bool:
+            return "Yes" if v else "No"
+        return v
 %>\
 ##
 ## If we are on a HA system then write out a cluster name, we'll hard-code
@@ -415,6 +420,12 @@ TARGET_DRIVER iscsi {
 %   if mutual_chap:
         OutgoingUser "${mutual_chap}"
 %   endif
+##
+## Add target options
+##
+% for k,v in target.get('options', {}).items():
+        ${k} ${option_value(v)}
+% endfor
 
         GROUP security_group {
 %   for access_control in initiator_portal_access:
