@@ -13,14 +13,14 @@ import pyinotify
 
 from itertools import product
 from middlewared.event import EventSource
-from middlewared.plugins.pwenc import PWENC_FILE_SECRET
+from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
 from middlewared.plugins.filesystem_ import chflags, dosmode, stat_x
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str, UnixPerm
 from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
 from middlewared.utils import filter_list
-from middlewared.utils.osc import getmntinfo
-from middlewared.utils.path import FSLocation, path_location, strip_location_prefix, is_child_realpath
-from middlewared.plugins.filesystem_.acl_base import ACLType
+from middlewared.utils.mount import getmntinfo
+from middlewared.utils.path import FSLocation, path_location, is_child_realpath
+from middlewared.plugins.filesystem_.utils import ACLType
 from middlewared.plugins.zfs_.utils import ZFSCTL
 
 
@@ -242,7 +242,11 @@ class FilesystemService(Service):
         Int('gid', required=True, null=True),
         Bool('is_mountpoint', required=True),
         Bool('is_ctldir', required=True),
-        List('attributes', required=True, items=[Str('statx_attribute', enum=[attr.name for attr in stat_x.StatxAttr])]),
+        List(
+            'attributes',
+            required=True,
+            items=[Str('statx_attribute', enum=[attr.name for attr in stat_x.StatxAttr])]
+        ),
         register=True
     ))
     def listdir(self, path, filters, options):
@@ -357,7 +361,11 @@ class FilesystemService(Service):
         Int('nlink', required=True),
         Bool('is_mountpoint', required=True),
         Bool('is_ctldir', required=True),
-        List('attributes', required=True, items=[Str('statx_attribute', enum=[attr.name for attr in stat_x.StatxAttr])]),
+        List(
+            'attributes',
+            required=True,
+            items=[Str('statx_attribute', enum=[attr.name for attr in stat_x.StatxAttr])]
+        ),
         Str('user', null=True, required=True),
         Str('group', null=True, required=True),
         Bool('acl', required=True),
@@ -476,21 +484,23 @@ class FilesystemService(Service):
 
         `content` must be a base 64 encoded file content.
         """
-        dirname = os.path.dirname(path)
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
-        if options.get('append'):
-            openmode = 'ab'
-        else:
-            openmode = 'wb+'
-        with open(path, openmode) as f:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'ab' if options.get('append') else 'wb+') as f:
             f.write(binascii.a2b_base64(content))
-        if mode := options.get('mode'):
-            os.chmod(path, mode)
-        if (uid := options.get('uid')) is not None and (gid := options.get('gid')) is not None:
-            os.chown(path, uid, gid)
+            if path == PWENC_FILE_SECRET:
+                # don't allow someone to clobber mode/ownership
+                os.fchmod(f.fileno(), PWENC_FILE_SECRET_MODE)
+                os.fchown(f.fileno(), 0, 0)
+            else:
+                if mode := options.get('mode'):
+                    os.fchmod(f.fileno(), mode)
+                # -1 means don't change uid/gid if the one provided is
+                # the same that is on disk already
+                os.fchown(f.fileno(), options.get('uid', -1), options.get('gid', -1))
+
         if path == PWENC_FILE_SECRET:
             self.middleware.call_sync('pwenc.reset_secret_cache')
+
         return True
 
     @accepts(Str('path'))
