@@ -20,14 +20,16 @@ class DiskService(Service):
         We try to mirror all available swap partitions to avoid a system
         crash in case one of them dies.
         """
-        swap_redundancy = await self.middleware.call('disk.swap_redundancy')
-        used_partitions_in_mirror = set()
-        create_swap_devices = {}
-        if await self.middleware.call('system.is_ha_capable') or await self.swap_boot_partitions_exist():
-            disks = []
+        boot_disks = await self.middleware.call('boot.get_disks')
+        if any((
+            await self.middleware.call('system.is_ha_capable'),
+            await self.swap_boot_partitions_exist(boot_disks)
+        )):
+            disks = boot_disks
         else:
             disks = await self.middleware.call('pool.get_disks')
-        disks.extend(await self.middleware.call('boot.get_disks'))
+            disks.extend(boot_disks)
+
         existing_swap_devices = {'mirrors': [], 'partitions': []}
         mirrors = await self.middleware.call('disk.get_swap_mirrors')
         encrypted_mirrors = {m['encrypted_provider']: m for m in mirrors if m['encrypted_provider']}
@@ -45,6 +47,8 @@ class DiskService(Service):
             else:
                 existing_swap_devices['partitions'].append(device)
 
+        create_swap_devices = {}
+        used_partitions_in_mirror = set()
         for mirror in mirrors:
             mirror_name = (mirror['encrypted_provider'] or mirror['real_path'])
 
@@ -76,6 +80,7 @@ class DiskService(Service):
                 swap_partitions_by_size[swap_part['size']].append(swap_part['name'])
 
         unused_partitions = []
+        swap_redundancy = await self.middleware.call('disk.swap_redundancy')
         for size, partitions in swap_partitions_by_size.items():
             # If we don't have enough partitions for requested redundancy, add them to unused_partitions list
             if len(partitions) < swap_redundancy:
@@ -214,13 +219,17 @@ class DiskService(Service):
                 return name
 
     @private
-    async def swap_boot_partitions_exist(self):
+    async def swap_boot_partitions_exist(self, boot_disks=None):
         valid_swap_part_uuids = await self.middleware.call('disk.get_valid_swap_partition_type_uuids')
-        return any([
-            partition['partition_type'] in valid_swap_part_uuids
-            for disk in await self.middleware.call('boot.get_disks')
-            for partition in await self.middleware.call('disk.list_partitions', disk)
-        ])
+        if boot_disks is None:
+            boot_disks = await self.middleware.call('boot.get_disks')
+
+        for disk in boot_disks:
+            for part in await self.middleware.call('disk.list_partitions', disk):
+                if part['partition_type'] in valid_swap_part_uuids:
+                    return True
+
+        return False
 
     @private
     async def create_swap_partition(self):
