@@ -319,7 +319,7 @@ def test_08_activedirectory_smb_ops(request):
                 # must refresh idmap cache to get new homedir from NSS
                 # this means we may need a few seconds for winbindd
                 # service to settle down on slow systems (like our CI VMs)
-                sleep(5)
+                sleep(10 if ha else 5)
 
                 with smb_connection(
                     host=public_ip,
