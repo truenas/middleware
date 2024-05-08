@@ -13,12 +13,12 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client, ssh
+from middlewared.test.integration.utils.client import truenas_server
 from pytest_dependency import depends
 
-from auto_config import ha, ip, vip
+from auto_config import ha
 from protocols import smb_connection, smb_share
 
-public_ip = vip if ha else ip
 if ha and "hostname_virtual" in os.environ:
     hostname = os.environ["hostname_virtual"]
 else:
@@ -199,7 +199,7 @@ def test_07_enable_leave_activedirectory(request):
         assert len(result) != 0
 
         addresses = [x['address'] for x in result]
-        assert public_ip in addresses
+        assert truenas_server.ip in addresses
 
         res = call('privilege.query', [['name', 'C=', AD_DOMAIN]], {'get': True})
         assert res['ds_groups'][0]['name'].endswith('domain admins')
@@ -246,7 +246,7 @@ def test_08_activedirectory_smb_ops(request):
 
             with smb_share(f'/mnt/{ds}', {'name': SMB_NAME}):
                 with smb_connection(
-                    host=public_ip,
+                    host=truenas_server.ip,
                     share=SMB_NAME,
                     username=ADUSERNAME,
                     domain='AD02',
@@ -285,7 +285,7 @@ def test_08_activedirectory_smb_ops(request):
                 'path_suffix': '%D/%U'
             }):
                 with smb_connection(
-                    host=public_ip,
+                    host=truenas_server.ip,
                     share='DATASETS',
                     username=ADUSERNAME,
                     domain='AD02',
@@ -322,7 +322,7 @@ def test_08_activedirectory_smb_ops(request):
                 sleep(10 if ha else 5)
 
                 with smb_connection(
-                    host=public_ip,
+                    host=truenas_server.ip,
                     share='HOMES',
                     username=ADUSERNAME,
                     domain='AD02',
