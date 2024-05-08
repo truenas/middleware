@@ -18,7 +18,7 @@ class FileChanges(enum.IntFlag):
     PERMS = enum.auto()
 
     def dump(mask):
-        if unmapped := mask & ~(FileChanges.CONTENTS | FileChanges.UID | FileChanges.GID | FileChanges.PERMS):
+        if unmapped := mask & ~int(FileChanges.CONTENTS | FileChanges.UID | FileChanges.GID | FileChanges.PERMS):
             raise ValueError(f'{unmapped}: unsupported flags in mask')
 
         return [
