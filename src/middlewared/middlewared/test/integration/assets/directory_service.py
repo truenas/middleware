@@ -164,7 +164,6 @@ def clear_ldap_info():
         "kerberos_principal": "",
         "kerberos_realm": None,
         "anonbind": False,
-        "has_samba_schema": False,
         "validate_certificates": True,
         "disable_freenas_cache": False,
         "certificate": None,
