@@ -14,6 +14,8 @@ from middlewared.utils import filter_list
 
 from .utils import applications_ds_name, Status
 
+IFACE_LINK_STATE_MAX_WAIT = 60
+
 
 class KubernetesModel(sa.Model):
     __tablename__ = 'services_kubernetes'
@@ -373,9 +375,9 @@ class KubernetesService(ConfigService):
 
     @private
     def wait_on_interface_link_state_up(self, interface):
-        max_wait, sleep_time, time_waited = 60, 1, 0
+        sleep_time, time_waited = 1, 0
         is_up, error_msg = False, ''
-        while time_waited < max_wait:
+        while time_waited < IFACE_LINK_STATE_MAX_WAIT:
             time.sleep(sleep_time)
             time_waited += 1
             with contextlib.suppress(Exception):
@@ -384,7 +386,7 @@ class KubernetesService(ConfigService):
                     if is_up:
                         break
         if not is_up:
-            error_msg = f'Timed out waiting {max_wait} seconds for {interface} to come up'
+            error_msg = f'Timed out waiting {IFACE_LINK_STATE_MAX_WAIT} seconds for {interface} to come up'
 
         return is_up, error_msg
 
