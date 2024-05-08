@@ -12,6 +12,7 @@ from middlewared.utils.path import pathref_open
 
 PWENC_BLOCK_SIZE = 32
 PWENC_FILE_SECRET = os.environ.get('FREENAS_PWENC_SECRET', '/data/pwenc_secret')
+PWENC_FILE_SECRET_MODE = 0o600
 PWENC_PADDING = b'{'
 PWENC_CHECK = 'Donuts!'
 
@@ -63,7 +64,7 @@ class PWEncService(Service):
     def _write_secret(self, secret, reset_passwords):
         with open(self.secret_path, 'wb', opener=self._secret_opener) as f:
             with self._lock_secrets(f.fileno()):
-                os.fchmod(f.fileno(), 0o600)
+                os.fchmod(f.fileno(), PWENC_FILE_SECRET_MODE)
                 f.write(secret)
                 f.flush()
                 os.fsync(f.fileno())

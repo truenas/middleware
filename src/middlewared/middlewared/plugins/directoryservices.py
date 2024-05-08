@@ -257,11 +257,6 @@ class DirectoryServices(Service):
                 self.logger.warning("Failed to restore domain secrets database. "
                                     "Re-joining AD domain may be required.")
 
-        elif ldap_enabled and not has_secrets and ldap_conf["has_samba_schema"]:
-            self.logger.warning("LDAP SMB secrets database does not exist. "
-                                "attempting to restore secrets from configuration file.")
-            await self.middleware.call("smb.store_ldap_admin_password")
-
         if ldap_enabled and ldap_conf['kerberos_realm']:
             is_kerberized = True
 
