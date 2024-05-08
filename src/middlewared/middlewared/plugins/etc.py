@@ -357,7 +357,7 @@ class EtcService(Service):
             self.logger.error(
                 '%s: unexpected changes [%s] were made to configuration file that may '
                 'allow unauthorized user to alter service behavior', full_path,
-                ', '.join([x.name for x in FileChanges if unexpected_changes & x])
+                ', '.join(FileChanges.dump(unexpected_changes))
             )
 
         return changes
@@ -367,6 +367,7 @@ class EtcService(Service):
         if group is None:
             raise ValueError('{0} group not found'.format(name))
 
+        output = []
         async with self.LOCKS[name]:
             if isinstance(group, dict):
                 ctx = await self.gather_ctx(group['ctx'])
@@ -397,7 +398,13 @@ class EtcService(Service):
                     try:
                         await self.middleware.run_in_thread(os.unlink, outfile)
                         self.logger.debug(f'{entry["type"]}:{entry["path"]} file removed.')
+                        output.append({
+                            'path': outfile,
+                            'status': 'REMOVED',
+                            'changes': FileChanges.dump(FileChanges.CONTENT)
+                        })
                     except FileNotFoundError:
+                        # Nothing to log
                         pass
 
                     continue
@@ -406,12 +413,23 @@ class EtcService(Service):
                     continue
 
                 if rendered is None:
+                    # TODO: scripts that write config files internally should be refacorted
+                    # to return bytes or str so that we can properly monitor for changes
                     continue
 
                 changes = await self.middleware.run_in_thread(self.make_changes, outfile, entry, rendered)
 
                 if not changes:
                     self.logger.debug(f'No new changes for {outfile}')
+
+                else:
+                    output.append({
+                        'path': outfile,
+                        'status': 'CHANGED',
+                        'changes': FileChanges.dump(changes)
+                    })
+
+        return output
 
     async def generate_checkpoint(self, checkpoint):
         if checkpoint not in await self.get_checkpoints():

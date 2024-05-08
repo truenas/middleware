@@ -141,7 +141,6 @@ def test__write_file_exceptions(create_etc_dir):
 
 
 @pytest.mark.parametrize("params,expected_text", [
-    # ataprint.cpp
     ({'uid': -1}, f'uid must be between 0 and {ID_MAX}'),
     ({'gid': -1}, f'gid must be between 0 and {ID_MAX}'),
     ({'uid': 'bob'}, 'uid must be an integer'),
@@ -189,3 +188,23 @@ def test__write_file_wrong_open_type_value_error(create_etc_dir):
         assert 'dirfd must be opened' in str(exc.value)
 
     os.unlink(os.path.join(create_etc_dir, 'testfile10'))
+
+@pytest.mark.parametrize("mask,expected_dump", [
+    (FileChanges.CONTENTS, ['CONTENTS']),
+    (FileChanges.UID, ['UID']),
+    (FileChanges.GID, ['GID']),
+    (FileChanges.PERMS, ['PERMS']),
+    (FileChanges.CONTENTS | FileChanges.UID | FileChanges.GID | FileChanges.PERMS, [
+        'CONTENTS', 'UID', 'GID', 'PERMS'
+    ])
+])
+def test__write_file_dump_changes(mask, expected_dump):
+    assert FileChanges.dump(mask) == expected_dump
+
+
+
+def test__write_file_dump_changes_validation():
+    with pytest.raises(ValueError) as exc:
+        FileChanges.dump(16)
+
+    assert 'unsupported flags in mask' in str(exc.value)
