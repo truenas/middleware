@@ -401,10 +401,10 @@ class KubernetesService(ConfigService):
                     (k, iface, f'{iface!r} is invalid. Valid interfaces are {", ".join([i for i in interfaces])!r}.')
                 )
             else:
-                # means the interface is valid but isn't up so instead of immediately
-                # error'ing, let's play nice and allow the interface to come online.
-                # this is particularly important when the interface that's configured
-                # for apps is a bridge (or lagg) for example
+                # instead of immediately erroring out when the interface isn't up,
+                # let's play nice and allow the interface to come online.
+                # this is particularly important when the interface that's
+                # configured for apps is a bridge (or lagg) for example
                 is_up, err_str = await self.middleware.run_in_thread(
                     self.wait_on_interface_link_state_up, valid_iface
                 )
