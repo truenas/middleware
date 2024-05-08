@@ -118,7 +118,7 @@ def parse_query_filters(
             if not services_to_check:
                 # These filters are guaranteed to have no results. Bail
                 # early and let caller handle it.
-                break;
+                break
 
         if skip_sql_filters:
             # User has manually specified to pass all these filters to datastore
@@ -159,7 +159,7 @@ def requires_python_filtering(
         # Field is being selected that may not be safe for SQL select
         for entry in to_investigate:
             # Selecting subkey in entry is not currently supported
-            if '.' in entry or isiinstance(entry, tuple):
+            if '.' in entry or isinstance(entry, tuple):
                 return True
 
     if len(services) > 1:

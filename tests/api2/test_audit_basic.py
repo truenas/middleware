@@ -36,6 +36,21 @@ def initialize_for_smb_tests(request):
                 yield {'dataset': ds, 'share': s, 'user': u}
 
 
+@pytest.fixture(scope='module')
+def audit_config(request):
+    defaults = {
+        'retention': 7,
+        'quota': 0,
+        'reservation': 0,
+        'quota_fill_warning': 80,
+        'quota_fill_critical': 95
+    }
+    try:
+        yield defaults
+    finally:
+        call('audit.update', defaults)
+
+
 def test_audit_config_defaults(request):
     config = call('audit.config')
     for key in [
@@ -61,7 +76,7 @@ def test_audit_config_defaults(request):
     assert 'SMB' in config['enabled_services']
 
 
-def test_audit_config_updates(request):
+def test_audit_config_updates(audit_config):
     """
     This test just validates that setting values has expected results.
     """
@@ -86,6 +101,16 @@ def test_audit_config_updates(request):
 
     assert new_config['quota_fill_warning'] == 70
     assert new_config['quota_fill_critical'] == 80
+
+    # Test disable reservation
+    new_config = call('audit.update', {'reservation': 0})
+    assert new_config['reservation'] == 0
+
+    # Test disable quota
+    new_config = call('audit.update', {'quota': 0})
+    assert new_config['quota'] == 0
+
+    # TODO: Get values from zfs.dataset.query
 
 
 @pytest.mark.dependency(name="AUDIT_OPS_PERFORMED")
