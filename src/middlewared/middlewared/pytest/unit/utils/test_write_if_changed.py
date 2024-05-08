@@ -189,7 +189,7 @@ def test__write_file_wrong_open_type_value_error(create_etc_dir):
 
     os.unlink(os.path.join(create_etc_dir, 'testfile10'))
 
-@pyetst.mark.parametrize("mask,expected_dump", [
+@pytest.mark.parametrize("mask,expected_dump", [
     (FileChanges.CONTENTS, ['CONTENTS']),
     (FileChanges.UID, ['UID']),
     (FileChanges.GID, ['GID']),
