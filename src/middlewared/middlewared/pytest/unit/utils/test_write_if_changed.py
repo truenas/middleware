@@ -200,3 +200,11 @@ def test__write_file_wrong_open_type_value_error(create_etc_dir):
 ])
 def test__write_file_dump_changes(mask, expected_dump):
     assert FileChanges.dump(mask) == expected_dump
+
+
+
+def test__write_file_dump_changes_validation():
+    with pytest.raises(ValueError) as exc:
+        FileChanges.dump(16)
+
+    assert 'unsupported flags in mask' in str(exc.value)
