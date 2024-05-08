@@ -45,9 +45,16 @@ class Service(SimpleService):
         pod_name = pod_stats['podRef']['name']
         data[self.get_dimension_name(pod_name, StatsTypes.CPU.value)] = int(pod_stats['cpu']['usageNanoCores'])
         data[self.get_dimension_name(pod_name, StatsTypes.MEMORY.value)] = int(pod_stats['memory']['rssBytes'])
-        for interface in pod_stats.get('network', {'interfaces': []})['interfaces']:
-            data[f'{self.get_dimension_name(pod_name, StatsTypes.NETWORK.value)}.incoming'] += int(interface['rxBytes'])
-            data[f'{self.get_dimension_name(pod_name, StatsTypes.NETWORK.value)}.outgoing'] += int(interface['txBytes'])
+        interfaces = pod_stats.get('network', {'interfaces': []})['interfaces']
+        incoming_key = f'{self.get_dimension_name(pod_name, StatsTypes.NETWORK.value)}.incoming'
+        outgoing_key = f'{self.get_dimension_name(pod_name, StatsTypes.NETWORK.value)}.outgoing'
+        if kube_bridge := [iface for iface in interfaces if iface['name'] == 'kube-bridge']:
+            data[incoming_key] += int(kube_bridge[0]['rxBytes'])
+            data[outgoing_key] += int(kube_bridge[0]['txBytes'])
+        else:
+            for interface in interfaces:
+                data[incoming_key] += int(interface['rxBytes'])
+                data[outgoing_key] += int(interface['txBytes'])
 
     def prepare_pods_charts(self, pod_stats):
         self.charts.charts.clear()
