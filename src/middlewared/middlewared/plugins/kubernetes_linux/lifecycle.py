@@ -228,7 +228,9 @@ class KubernetesService(Service):
 
         iface_errors = await self.middleware.call('kubernetes.validate_interfaces', config)
         if iface_errors:
-            raise CallError(f'Unable to lookup configured interfaces: {", ".join([v[1] for v in iface_errors])}')
+            iface = iface_errors[1]
+            err_msg = iface_errors[-1]
+            raise CallError(f'Failed to setup {iface!r} with error: {err_msg}')
 
         errors = await self.middleware.call('kubernetes.validate_config')
         if errors:
