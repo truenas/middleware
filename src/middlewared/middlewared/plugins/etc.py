@@ -106,7 +106,7 @@ class EtcService(Service):
         ],
         'kerberos': [
             {'type': 'mako', 'path': 'krb5.conf'},
-            {'type': 'py', 'path': 'krb5.keytab'},
+            {'type': 'py', 'path': 'krb5.keytab', 'mode': 0o600},
         ],
         'cron': [
             {'type': 'mako', 'path': 'cron.d/middlewared', 'checkpoint': 'pool_import'},
