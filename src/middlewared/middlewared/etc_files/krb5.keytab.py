@@ -9,17 +9,18 @@ from contextlib import suppress
 logger = logging.getLogger(__name__)
 kdir = "/etc/kerberos"
 keytabfile = "/etc/krb5.keytab"
+unified_keytab = os.path.join(kdir, 'tmp_keytab')
 
 
 def mit_copy(temp_keytab):
     kt_copy = subprocess.run(
         ['ktutil'],
-        input=f'rkt {temp_keytab}\nwkt /etc/mit_tmp.keytab'.encode(),
+        input=f'rkt {temp_keytab}\nwkt {unified_keytab}'.encode(),
         capture_output=True
     )
     if kt_copy.stderr:
-        logger.debug("%s: failed to generate keytab: %s",
-                     keytabfile, kt_copy.stderr.decode())
+        logger.error("%s: failed to add to uinified keytab: %s",
+                     temp_keytab, kt_copy.stderr.decode())
 
 
 def write_keytab(db_keytabname, db_keytabfile):
@@ -59,7 +60,8 @@ def render(service, middleware):
         db_keytabname = f'keytab_{keytab["id"]}'
         write_keytab(db_keytabname, db_keytabfile)
 
-    with suppress(FileNotFoundError):
-        os.unlink(keytabfile)
+    with open(unified_keytab, 'rb') as f:
+        keytab_bytes = f.read()
 
-    os.rename("/etc/mit_tmp.keytab", keytabfile)
+    os.unlink(unified_keytab)
+    return keytab_bytes
