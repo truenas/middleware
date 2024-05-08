@@ -1364,6 +1364,6 @@ async def setup(middleware):
         # We add a delay here to give the standby node middleware a chance to boot up because
         # if we do it asap, it is highly likely that the standby node middleware is not ready
         # to make connection to the active node middleware.
-        asyncio.get_event_loop().call_later(
+        middleware.loop.call_later(
             30, lambda: middleware.create_task(middleware.call('failover.sync_keys_from_remote_node'))
         )

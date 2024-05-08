@@ -902,7 +902,7 @@ class Resource(object):
             })
             await resp.prepare(req)
 
-            loop = asyncio.get_event_loop()
+            loop = self.middleware.loop
 
             def do_copy():
                 while True:

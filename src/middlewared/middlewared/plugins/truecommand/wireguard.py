@@ -127,7 +127,7 @@ class TruecommandService(Service):
             ):
                 await self.middleware.call('service.start', 'truecommand')
                 await self.middleware.call('service.reload', 'http')
-                asyncio.get_event_loop().call_later(
+                self.middleware.loop.call_later(
                     30,  # 30 seconds is enough time to initiate a health check to see if the connection is alive
                     lambda: self.middleware.create_task(self.middleware.call('truecommand.health_check')),
                 )

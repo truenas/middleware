@@ -73,7 +73,7 @@ async def run(*args, **kwargs):
     kwargs.setdefault('close_fds', True)
     kwargs['preexec_fn'] = die_with_parent
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop() #This is actually a guess, but I think that we use get_running_loop
     subprocess_identifier = f"{time.monotonic()}: {args!r}"
     try:
         currently_running_subprocesses.add(subprocess_identifier)

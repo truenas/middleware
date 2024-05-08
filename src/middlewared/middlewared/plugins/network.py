@@ -655,7 +655,7 @@ class InterfaceService(CRUDService):
         Value is in number of seconds or null.
         """
         if self._rollback_timer:
-            remaining = self._rollback_timer.when() - asyncio.get_event_loop().time()
+            remaining = self._rollback_timer.when() - self.middleware.loop.time()
             if remaining > 0:
                 return int(remaining)
 
@@ -688,7 +688,7 @@ class InterfaceService(CRUDService):
             raise
 
         if options['rollback'] and options['checkin_timeout']:
-            loop = asyncio.get_event_loop()
+            loop = self.middleware.loop
             self._rollback_timer = loop.call_later(
                 options['checkin_timeout'], lambda: self.middleware.create_task(self.rollback())
             )

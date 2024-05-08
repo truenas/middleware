@@ -49,7 +49,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
                     await self.middleware.call('truecommand.dismiss_alerts', True)
                     await self.middleware.call('alert.oneshot_create', 'TruecommandContainerHealth', None)
 
-                    asyncio.get_event_loop().call_later(
+                    self.middleware.loop.call_later(
                         self.POLLING_GAP_MINUTES * 60,
                         lambda: self.middleware.create_task(
                             self.middleware.call('truecommand.start_truecommand_service')

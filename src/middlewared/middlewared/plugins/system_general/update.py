@@ -280,7 +280,7 @@ class SystemGeneralService(ConfigService):
 
         if rollback_timeout is not None:
             self._original_datastore = original_datastore
-            self._rollback_timer = asyncio.get_event_loop().call_later(
+            self._rollback_timer = self.middleware.loop.call_later(
                 rollback_timeout,
                 lambda: self.middleware.create_task(self.rollback()),
             )
@@ -304,7 +304,7 @@ class SystemGeneralService(ConfigService):
         back. Returns a number of seconds before the automatic rollback or null if there are no changes pending.
         """
         if self._rollback_timer:
-            remaining = self._rollback_timer.when() - asyncio.get_event_loop().time()
+            remaining = self._rollback_timer.when() - self.middleware.loop.time()
             if remaining > 0:
                 return int(remaining)
 

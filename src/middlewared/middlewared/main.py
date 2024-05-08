@@ -841,7 +841,7 @@ class ShellApplication(object):
                                 break
 
                 conndata.t_worker = ShellWorkerThread(
-                    middleware=self.middleware, ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(),
+                    middleware=self.middleware, ws=ws, input_queue=input_queue, loop=self.middleware.loop,
                     username=token['username'], as_root=as_root, options=options,
                 )
                 conndata.t_worker.start()
@@ -913,7 +913,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.log_handler = log_handler
         self.log_format = log_format
         self.app = None
-        self.loop = None
+        self.loop = asyncio.new_event_loop()
         self.__thread_id = threading.get_ident()
         multiprocessing.set_start_method('spawn')  # Spawn new processes for ProcessPool instead of forking
         self.__init_procpool()
@@ -1328,8 +1328,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         to block the event loop indefinitely.
         Also used to run non thread safe libraries (using a ProcessPool)
         """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
+        return await self.loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
 
     async def run_in_thread(self, method, *args, **kwargs):
         return await self.run_in_executor(io_thread_pool_executor, method, *args, **kwargs)
@@ -1955,7 +1954,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self._console_write('starting')
 
         set_thread_name('asyncio_loop')
-        self.loop = asyncio.get_event_loop()
 
         if self.loop_debug:
             self.loop.set_debug(True)
