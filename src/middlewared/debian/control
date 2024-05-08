@@ -76,6 +76,8 @@ Homepage: https://github.com/freenas/freenas
 
 Package: middlewared
 Architecture: all
+Pre-Depends: truenas-samba
+             truenas-sssd
 Depends: alembic,
          avahi-daemon,
          bsd-mailx,
