@@ -1,6 +1,8 @@
+import contextlib
 import ipaddress
 import itertools
 import json
+import time
 import os.path
 
 import middlewared.sqlalchemy as sa
@@ -370,22 +372,45 @@ class KubernetesService(ConfigService):
         verrors.check()
 
     @private
+    def wait_on_interface_link_state_up(self, interface):
+        max_wait, sleep_time, time_waited = 60, 1, 0
+        is_up, error_msg = False, ''
+        while time_waited < max_wait:
+            time.sleep(sleep_time)
+            time_waited += 1
+            with contextlib.suppress(Exception):
+                with open(f'/sys/class/net/{interface}/operstate') as f:
+                    is_up = f.read().strip() == 'up'
+                    if is_up:
+                        break
+        if not is_up:
+            error_msg = f'Timed out waiting {max_wait} seconds for {interface} to come up'
+
+        return is_up, error_msg
+
+    @private
     async def validate_interfaces(self, data):
         errors = []
         interfaces = await self.route_interface_choices()
-        interface_states = {
-            i['id']: i.get('state', {}).get('link_state') == 'LINK_STATE_UP'
-            for i in await self.middleware.call('interface.query')
-        }
-        valid_choices = [i for i in filter(lambda k: interface_states.get(k), interfaces)]
         for k in filter(lambda k: data[k], ('route_v4_interface', 'route_v6_interface')):
-            err_str = ''
-            if data[k] not in interfaces:
-                err_str = f'Please specify a valid interface (i.e {", ".join(valid_choices)!r}).'
-            elif not interface_states.get(data[k]):
-                err_str = f'Please specify a valid interface which is active (i.e {", ".join(valid_choices)!r}).'
-            if err_str:
-                errors.append((k, data[k], err_str))
+            iface = data[k]
+            try:
+                valid_iface = interfaces[iface]
+            except KeyError:
+                errors.append(
+                    (k, iface, f'{iface!r} is invalid. Valid interfaces are {", ".join([i for i in interfaces])!r}.')
+                )
+            else:
+                # means the interface is valid but isn't up so instead of immediately
+                # error'ing, let's play nice and allow the interface to come online.
+                # this is particularly important when the interface that's configured
+                # for apps is a bridge (or lagg) for example
+                is_up, err_str = await self.middleware.run_in_thread(
+                    self.wait_on_interface_link_state_up, valid_iface
+                )
+                if not is_up:
+                    errors.append((k, valid_iface, err_str))
+
         return errors
 
     @private
