@@ -47,8 +47,8 @@ class AuditModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     retention = sa.Column(sa.Integer(), default=AUDIT_LIFETIME)
-    reservation = sa.Column(sa.Integer(), default=AUDIT_DEFAULT_RESERVATION)
-    quota = sa.Column(sa.Integer(), default=AUDIT_DEFAULT_QUOTA)
+    reservation = sa.Column(sa.Integer(), nullable=True, default=AUDIT_DEFAULT_RESERVATION)
+    quota = sa.Column(sa.Integer(), nullable=True, default=AUDIT_DEFAULT_QUOTA)
     quota_fill_warning = sa.Column(sa.Integer(), default=AUDIT_DEFAULT_FILL_WARNING)
     quota_fill_critical = sa.Column(sa.Integer(), default=AUDIT_DEFAULT_FILL_CRITICAL)
 
@@ -382,9 +382,9 @@ class AuditService(ConfigService):
 
     @private
     async def validate_local_storage(self, new, old, verrors):
-        new_volsize = new['quota'] * _GIB
-        used = new['space']['used_by_dataset'] + new['space']['used_by_snapshots']
-        if old['quota'] != new['quota']:
+        if new['quota'] is not None:
+            new_volsize = new['quota'] * _GIB
+            used = new['space']['used_by_dataset'] + new['space']['used_by_snapshots']
             if used / new_volsize > new['quota_fill_warning'] / 100:
                 verrors.add(
                     'audit_update.quota',
@@ -392,7 +392,7 @@ class AuditService(ConfigService):
                     'audit dataset to exceed the maximum permitted by the configured '
                     'quota_fill_warning.'
                 )
-        if new['quota'] < new['reservation']:
+        if (new['quota'] or 0) < (new['reservation'] or 0):
             verrors.add(
                 'audit_update.quota',
                 'Quota on auditing dataset must be greater than or equal to '
@@ -410,10 +410,12 @@ class AuditService(ConfigService):
 
         payload = {}
         if new['quota'] != old_quota / _GIB:
-            payload['refquota'] = {'parsed': f'{new["quota"]}G'}
+            quota_val = "none" if new['quota'] is None else f'{new["quota"]}G'
+            payload['refquota'] = {'parsed': quota_val}
 
         if new['reservation'] != old_reservation / _GIB:
-            payload['refreservation'] = {'parsed': f'{new["reservation"]}G'}
+            reservation_val = "none" if new['reservation'] is None else f'{new["reservation"]}G'
+            payload['refreservation'] = {'parsed': reservation_val}
 
         if new["quota_fill_warning"] != old_warn:
             payload[QUOTA_WARN] = {'parsed': str(new['quota_fill_warning'])}
@@ -431,8 +433,8 @@ class AuditService(ConfigService):
     @accepts(Dict(
         'system_audit_update',
         Int('retention', validators=[Range(1, 30)]),
-        Int('reservation', validators=[Range(0, 100)]),
-        Int('quota', validators=[Range(0, 100)]),
+        Int('reservation', validators=[Range(1, 100)], null=True),
+        Int('quota', validators=[Range(1, 100)], null=True),
         Int('quota_fill_warning', validators=[Range(5, 80)]),
         Int('quota_fill_critical', validators=[Range(50, 95)]),
         register=True
@@ -449,10 +451,12 @@ class AuditService(ConfigService):
         where the audit databases are stored. The refreservation specifies the
         minimum amount of space guaranteed to the dataset, and counts against
         the space available for other datasets in the zpool where the audit
-        dataset is located.
+        dataset is located.  To disable, set the value to none, i.e. clear
+        the field.
 
         `quota` - size in GiB of the maximum amount of space that may be
-        consumed by the dataset where the audit dabases are stored.
+        consumed by the dataset where the audit dabases are stored.  To disable,
+        set the value to none, i.e. clear the field.
 
         `quota_fill_warning` - percentage used of dataset quota at which to
         generate a warning alert.

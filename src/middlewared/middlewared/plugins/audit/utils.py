@@ -9,8 +9,8 @@ AUDIT_DATASET_PATH = '/audit'
 AUDITED_SERVICES = [('MIDDLEWARE', 0.1), ('SMB', 0.1)]
 AUDIT_TABLE_PREFIX = 'audit_'
 AUDIT_LIFETIME = 7
-AUDIT_DEFAULT_RESERVATION = 0
-AUDIT_DEFAULT_QUOTA = 0
+AUDIT_DEFAULT_RESERVATION = None
+AUDIT_DEFAULT_QUOTA = None
 AUDIT_DEFAULT_FILL_CRITICAL = 95
 AUDIT_DEFAULT_FILL_WARNING = 80
 AUDIT_REPORTS_DIR = os.path.join(AUDIT_DATASET_PATH, 'reports')
@@ -118,7 +118,7 @@ def parse_query_filters(
             if not services_to_check:
                 # These filters are guaranteed to have no results. Bail
                 # early and let caller handle it.
-                break;
+                break
 
         if skip_sql_filters:
             # User has manually specified to pass all these filters to datastore
@@ -159,7 +159,7 @@ def requires_python_filtering(
         # Field is being selected that may not be safe for SQL select
         for entry in to_investigate:
             # Selecting subkey in entry is not currently supported
-            if '.' in entry or isiinstance(entry, tuple):
+            if '.' in entry or isinstance(entry, tuple):
                 return True
 
     if len(services) > 1:
