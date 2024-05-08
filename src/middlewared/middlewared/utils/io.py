@@ -1,3 +1,6 @@
+# NOTE: tests are provided in src/middlewared/middlewared/pytest/unit/utils/test_write_if_changed.py
+# Any updates to this file should have corresponding updates to tests
+
 import fcntl
 import os
 import enum
@@ -14,12 +17,20 @@ class FileChanges(enum.IntFlag):
     GID = enum.auto()
     PERMS = enum.auto()
 
+    def dump(mask):
+        if unmapped := mask & ~(FileChanges.CONTENTS | FileChanges.UID | FileChanges.GID | FileChanges.PERMS):
+            raise ValueError(f'{unmapped}: unsupported flags in mask')
+
+        return [
+            change.name for change in FileChanges if mask & change
+        ]
+
 
 class UnexpectedFileChange(Exception):
     def __init__(self, path, changes):
         self.changes = changes
         self.path = path
-        self.changes_str = ', '.join([x.name for x in FileChanges if self.changes & x])
+        self.changes_str = ', '.join(FileChanges.dump(self.changes))
 
     def __str__(self):
         return f'{self.path}: unexpected change in the following file attributes: {self.changes_str}'
