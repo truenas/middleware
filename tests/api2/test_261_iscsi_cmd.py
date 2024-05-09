@@ -4,24 +4,21 @@ import errno
 import ipaddress
 import os
 import random
-import requests
 import socket
 import string
-import sys
 from time import sleep
 
 import iscsi
 import pyscsi
 import pytest
+import requests
+from middlewared.service_exception import ValidationError, ValidationErrors
+from middlewared.test.integration.assets.iscsi import target_login_test
+from middlewared.test.integration.assets.pool import dataset, snapshot
+from middlewared.test.integration.utils import call
 from pyscsi.pyscsi.scsi_sense import sense_ascq_dict
 from pytest_dependency import depends
 
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-
-from middlewared.service_exception import ValidationError, ValidationErrors
-from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.utils import call
 from auto_config import ha, hostname, isns_ip, pool_name
 from functions import SSH_TEST
 from protocols import (initiator_name_supported, iscsi_scsi_connection,
@@ -2726,6 +2723,30 @@ def test_32_multi_lun_targets(request):
                             with alua_enabled():
                                 test_target_sizes(controller1_ip)
                                 test_target_sizes(controller2_ip)
+
+
+def test_33_no_lun_zero():
+    """
+    Verify that an iSCSI client can login to a target that is missing LUN 0 (and LUN 1)
+    and that report LUNs works as expected.
+    """
+    iqn = f'{basename}:{target_name}'
+    with initiator_portal() as config:
+        portal_id = config['portal']['id']
+        with target(target_name, [{'portal': portal_id}]) as target_config:
+            target_id = target_config['id']
+            with dataset(dataset_name):
+                with file_extent(pool_name, dataset_name, "target.extent1", filesize=MB_100, extent_name="extent1") as extent1_config:
+                    with file_extent(pool_name, dataset_name, "target.extent2", filesize=MB_256, extent_name="extent2") as extent2_config:
+                        with target_extent_associate(target_id, extent1_config['id'], 100):
+                            with target_extent_associate(target_id, extent2_config['id'], 101):
+                                # libiscsi sends a TUR to the lun on connect, so cannot properly test using it.
+                                # Let's actually login and check that the expected LUNs surface.
+                                assert target_login_test(get_ip_addr(ip), iqn, {100, 101})
+
+                                # With libiscsi we can also check that the expected LUNs are there
+                                with iscsi_scsi_connection(ip, iqn, 100) as s:
+                                    _verify_luns(s, [100, 101])
 
 
 def test_99_teardown(request):
