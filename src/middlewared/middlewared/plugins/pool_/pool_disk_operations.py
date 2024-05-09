@@ -138,12 +138,7 @@ class PoolService(Service):
         verrors.check()
 
         await self.middleware.call('zfs.pool.online', pool['name'], found[1]['guid'])
-
-        disk = await self.middleware.call(
-            'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
-        )
-        if disk:
-            self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
+        await self.middleware.call('disk.label_to_disk', found[1]['path'].replace('/dev/', ''))
 
         return True
 

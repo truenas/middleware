@@ -207,7 +207,6 @@ class PoolService(Service):
 
         await self.middleware.call_hook('pool.post_import', pool)
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
-        self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
 
         return True
@@ -422,9 +421,6 @@ class PoolService(Service):
                 continue
 
             self.unlock_on_boot_impl(name)
-
-        # no reason to wait on this to complete
-        self.middleware.call_sync('disk.swaps_configure', background=True)
 
         # TODO: we need to fix this. There is 0 reason to do all this stuff
         # and block the entire boot-up process.

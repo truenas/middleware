@@ -190,8 +190,5 @@ class PoolService(Service):
         # scrub needs to be regenerated in crontab
         await self.middleware.call('service.restart', 'cron')
 
-        # Let's reconfigure swap in case dumpdev needs to be configured again
-        self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
-
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
         self.middleware.send_event('pool.query', 'REMOVED', id=oid)

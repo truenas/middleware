@@ -14,17 +14,13 @@ class PoolService(Service):
         swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
         formatted = 0
         await self.middleware.call('pool.remove_unsupported_md_devices_from_disks', disks)
-        create_swap_partition = await self.middleware.call('disk.create_swap_partition')
         len_disks = len(disks)
 
         async def format_disk(arg):
             nonlocal formatted
             disk, config = arg
-            swap_size = 0
-            if config['create_swap'] and create_swap_partition:
-                swap_size = swapgb
             # Drives are partitioned to maximize the data partition
-            await self.middleware.call('disk.format', disk, swap_size)
+            await self.middleware.call('disk.format', disk, 0)
             formatted += 1
             job.set_progress(15, f'Formatting disks ({formatted}/{len_disks})')
 
