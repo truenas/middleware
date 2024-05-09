@@ -417,7 +417,7 @@ class IdmapDomainService(CRUDService):
 
         await self.middleware.call('service.start', 'idmap')
         if smb_started:
-            await self.middleware.call('service.start', 'cifs')
+            await self.middleware.call('service.restart', 'cifs')
 
     @private
     async def may_enable_trusted_domains(self):

@@ -872,6 +872,7 @@ class SharingSMBService(SharingService):
         if do_global_reload:
             if (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY':
                 if data['home']:
+                    await self.middleware.call('etc.generate', 'smb')
                     await self.middleware.call('idmap.clear_idmap_cache')
 
             await self._service_change('cifs', 'restart')
