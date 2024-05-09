@@ -28,8 +28,7 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
         _logger = logger.Logger('worker')
         self.logger = _logger.getLogger()
         _logger.configure_logging('console')
-        self.loop = asyncio.get_running_loop() #Should this be a new_event_loop or is this within the context of get_running_loop??
-        #Guess we'll find out
+        self.loop = asyncio.new_event_loop()
 
     def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, job=None):
         try:
