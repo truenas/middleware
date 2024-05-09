@@ -309,7 +309,6 @@ def test_08_activedirectory_smb_ops(request):
                 'type': 'ALLOW'
             }]
         ) as ds:
-            call('service.restart', 'cifs')
 
             with smb_share(f'/mnt/{ds}', {
                 'name': 'TEST_HOME',
