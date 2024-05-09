@@ -32,6 +32,7 @@ from middlewared.plugins.smb_.constants import (
     SMBPath,
     SMBSharePreset
 )
+from middlewared.plugins.smb_.constants import SMBBuiltin  # noqa (imported so may be imported from here)
 from middlewared.plugins.smb_.util_param import smbconf_getparm, lpctx_validate_global_parm
 from middlewared.plugins.smb_.util_net_conf import reg_delshare, reg_listshares, reg_setparm
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
