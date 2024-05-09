@@ -113,6 +113,38 @@ source tn_remote_src_files {
 #######################
 # Log paths
 ########################
+log {
+  source(s_src);
+  filter(f_k3s);
+  destination { file("/var/log/k3s_daemon.log"); };
+  flags(final);
+};
+
+log {
+  source(s_src);
+  filter(f_containerd);
+  destination { file("/var/log/containerd.log"); };
+  flags(final);
+};
+log {
+  source(s_src);
+  filter(f_kube_router);
+  destination { file("/var/log/kube_router.log"); };
+  flags(final);
+};
+log {
+  source(s_src);
+  filter(f_app_mounts);
+  destination { file("/var/log/app_mounts.log"); };
+  flags(final);
+};
+log {
+  source(s_src);
+  filter(f_scst);
+  destination { file("/var/log/scst.log"); };
+  flags(final);
+};
+
 log { source(s_src); filter(f_auth); destination(d_auth); };
 log { source(s_src); filter(f_cron); destination(d_cron); };
 log { source(s_src); filter(f_daemon); destination(d_daemon); };
@@ -127,31 +159,6 @@ log { source(s_src); filter(f_messages); destination(d_messages); };
 log { source(s_src); filter(f_console); destination(d_console_all); destination(d_xconsole); };
 log { source(s_src); filter(f_crit); destination(d_console); };
 
-log {
-  source(s_src);
-  filter(f_k3s);
-  destination { file("/var/log/k3s_daemon.log"); };
-};
-log {
-  source(s_src);
-  filter(f_containerd);
-  destination { file("/var/log/containerd.log"); };
-};
-log {
-  source(s_src);
-  filter(f_kube_router);
-  destination { file("/var/log/kube_router.log"); };
-};
-log {
-  source(s_src);
-  filter(f_app_mounts);
-  destination { file("/var/log/app_mounts.log"); };
-};
-log {
-  source(s_src);
-  filter(f_scst);
-  destination { file("/var/log/scst.log"); };
-};
 
 % if render_ctx['system.advanced.config']['syslogserver']:
 ${generate_syslog_remote_destination(render_ctx['system.advanced.config'])}
