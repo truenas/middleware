@@ -1,6 +1,28 @@
 from middlewared.plugins.etc import FileShouldNotExist
 from middlewared.utils import mdns
 
+"""
+Time Machine (adisk):
+-------------------------
+sys=adVF=0x100 -- this is required when _adisk._tcp is present on device. When it is
+set, the MacOS client will send a NetShareEnumAll IOCTL and shares will be visible.
+Otherwise, Finder will only see the Time Machine share. In the absence of _adisk._tcp
+MacOS will _always_ send NetShareEnumAll IOCTL.
+
+waMa=0 -- MacOS server uses waMa=0, while embedded devices have it set to their Mac Address.
+Speculation in Samba-Technical indicates that this stands for "Wireless ADisk Mac Address".
+
+adVU -- ADisk Volume UUID.
+
+dk(n)=adVF=
+0xa1, 0x81 - AFP support
+0xa2, 0x82 - SMB support
+0xa3, 0x83 - AFP and SMB support
+
+adVN -- AirDisk Volume Name. We set this to the share name.
+network analysis indicates that current MacOS Time Machine shares set the port for adisk to 311.
+"""
+
 
 def render(service, middleware, render_ctx):
 
