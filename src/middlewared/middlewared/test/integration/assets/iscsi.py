@@ -3,6 +3,7 @@ import json
 import os
 import platform
 import time
+from pathlib import Path
 
 from middlewared.test.integration.utils import call, run_on_runner, RunOnRunnerException
 
@@ -73,14 +74,15 @@ def iscsi_target(data):
         call("iscsi.target.delete", target["id"])
 
 
-def target_login_test(portal_ip, target_name):
+def target_login_test(portal_ip, target_name, check_surfaced_luns=None):
     if IS_LINUX:
-        return target_login_test_linux(portal_ip, target_name)
+        return target_login_test_linux(portal_ip, target_name, check_surfaced_luns)
     else:
-        return target_login_test_freebsd(portal_ip, target_name)
+        return target_login_test_freebsd(portal_ip, target_name, check_surfaced_luns)
 
 
-def target_login_test_linux(portal_ip, target_name):
+def target_login_test_linux(portal_ip, target_name, check_surfaced_luns=None):
+    logged_in = False
     try:
         if os.geteuid():
             # Non-root requires sudo
@@ -89,11 +91,27 @@ def target_login_test_linux(portal_ip, target_name):
             iscsiadm = ['iscsiadm']
         run_on_runner(iscsiadm + ['-m', 'discovery', '-t', 'sendtargets', '--portal', portal_ip])
         run_on_runner(iscsiadm + ['-m', 'node', '--targetname', target_name, '--portal', portal_ip, '--login'])
+        logged_in = True
+        if check_surfaced_luns is not None:
+            retries = 10
+            pattern = f'ip-{portal_ip}:3260-iscsi-{target_name}-lun-*'
+            by_path = Path('/dev/disk/by-path')
+            while retries:
+                luns = set(int(p.name.split('-')[-1]) for p in by_path.glob(pattern))
+                if luns == check_surfaced_luns:
+                    break
+                time.sleep(1)
+                retries -= 1
+            assert check_surfaced_luns == luns, luns
     except RunOnRunnerException:
         return False
+    except AssertionError:
+        return False
     else:
-        run_on_runner(iscsiadm + ['-m', 'node', '--targetname', target_name, '--portal', portal_ip, '--logout'])
         return True
+    finally:
+        if logged_in:
+            run_on_runner(iscsiadm + ['-m', 'node', '--targetname', target_name, '--portal', portal_ip, '--logout'])
 
 
 @contextlib.contextmanager
@@ -109,7 +127,7 @@ def iscsi_client_freebsd():
             run_on_runner(['service', 'iscsid', 'onestop'])
 
 
-def target_login_impl_freebsd(portal_ip, target_name):
+def target_login_impl_freebsd(portal_ip, target_name, check_surfaced_luns=None):
     run_on_runner(['iscsictl', '-A', '-p', portal_ip, '-t', target_name], check=False)
     retries = 5
     connected = False
@@ -128,11 +146,20 @@ def target_login_impl_freebsd(portal_ip, target_name):
 
     assert connected is True, connected_clients
 
+    if check_surfaced_luns is not None:
+        luns = set()
+        for session in connected_clients.get('iscsictl', {}).get('session', []):
+            if session.get('name') == target_name and session.get('state') == 'Connected':
+                for lun in session.get('devices', {}).get('lun'):
+                    if lun_val := lun.get('lun'):
+                        luns.add(lun_val)
+        assert check_surfaced_luns == luns, luns
 
-def target_login_test_freebsd(portal_ip, target_name):
+
+def target_login_test_freebsd(portal_ip, target_name, check_surfaced_luns=None):
     with iscsi_client_freebsd():
         try:
-            target_login_impl_freebsd(portal_ip, target_name)
+            target_login_impl_freebsd(portal_ip, target_name, check_surfaced_luns)
         except AssertionError:
             return False
         else:
