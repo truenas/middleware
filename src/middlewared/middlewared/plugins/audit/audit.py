@@ -382,9 +382,10 @@ class AuditService(ConfigService):
 
     @private
     async def validate_local_storage(self, new, old, verrors):
-        new_volsize = new['quota'] * _GIB
-        used = new['space']['used_by_dataset'] + new['space']['used_by_snapshots']
-        if old['quota'] != new['quota']:
+        # A quota of `0` == `disable`
+        if new['quota'] and (old['quota'] != new['quota']):
+            new_volsize = new['quota'] * _GIB
+            used = new['space']['used_by_dataset'] + new['space']['used_by_snapshots']
             if used / new_volsize > new['quota_fill_warning'] / 100:
                 verrors.add(
                     'audit_update.quota',
@@ -410,10 +411,12 @@ class AuditService(ConfigService):
 
         payload = {}
         if new['quota'] != old_quota / _GIB:
-            payload['refquota'] = {'parsed': f'{new["quota"]}G'}
+            quota_val = "none" if new['quota'] == 0 else f'{new["quota"]}G'
+            payload['refquota'] = {'parsed': quota_val}
 
         if new['reservation'] != old_reservation / _GIB:
-            payload['refreservation'] = {'parsed': f'{new["reservation"]}G'}
+            reservation_val = "none" if new['reservation'] == 0 else f'{new["reservation"]}G'
+            payload['refreservation'] = {'parsed': reservation_val}
 
         if new["quota_fill_warning"] != old_warn:
             payload[QUOTA_WARN] = {'parsed': str(new['quota_fill_warning'])}
