@@ -14,6 +14,8 @@
 # USA.
 # See avahi-daemon.conf(5).
 <%
+    from middlewared.utils import filter_list
+
     hamode = middleware.call_sync('smb.get_smb_ha_mode')
     hostname_override = None
 
@@ -26,7 +28,7 @@
     ipv4_enabled = any(middleware.call_sync('interface.ip_in_use', {'ipv4': True, 'ipv6': False}))
     ipv6_enabled = any(middleware.call_sync('interface.ip_in_use', {'ipv4': False, 'ipv6': True}))
     deny_interfaces = middleware.call_sync("interface.internal_interfaces")
-    allow_interfaces = middleware.call_sync("interface.query", [["name", "!^", "macvtap"]])
+    allow_interfaces = filter_list(render_ctx['interface.query'], [["name", "!^", "macvtap"]])
 %>
 
 [server]
