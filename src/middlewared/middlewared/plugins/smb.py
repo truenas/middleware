@@ -328,7 +328,6 @@ class SMBService(ConfigService):
         do not exist or have incorrect permissions.
         """
         data = await self.config()
-        ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
         job.set_progress(0, 'Setting up SMB directories.')
         if create_paths:
             await self.setup_directories()
@@ -829,7 +828,6 @@ class SharingSMBService(SharingService):
 
         `auxsmbconf` is a string of additional smb4.conf parameters not covered by the system's API.
         """
-        ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
         audit_info = deepcopy(SMB_AUDIT_DEFAULTS) | data.get('audit')
         data['audit'] = audit_info
 
@@ -921,7 +919,6 @@ class SharingSMBService(SharingService):
             Since the old share was not in our running configuration, we need
             to add it.
             """
-            check_mdns = True
             await self.toggle_share(newname, True)
 
         elif not old_is_locked and new_is_locked:
@@ -1326,7 +1323,6 @@ class SharingSMBService(SharingService):
     async def validate_share_name(self, name, schema_name, verrors, exist_ok=True):
         # Standards for SMB share name are defined in MS-FSCC 2.1.6
         # We are slighly more strict in that blacklist all unicode control characters
-        has_control_characters = False
         if name.lower() in RESERVED_SHARE_NAMES:
             verrors.add(
                 f'{schema_name}.name',
