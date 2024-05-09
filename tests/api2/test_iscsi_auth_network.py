@@ -3,11 +3,11 @@ import ipaddress
 import socket
 
 import pytest
-from auto_config import ip
 
 from middlewared.test.integration.assets.iscsi import target_login_test
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.client import truenas_server
 
 
 @pytest.fixture(scope="module")
@@ -25,7 +25,7 @@ def my_ip4():
         # Fall back
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(2)
-        result = sock.connect_ex((ip, 80))
+        result = sock.connect_ex((truenas_server.ip, 80))
         assert result == 0
         myip = sock.getsockname()[0]
         sock.close()
@@ -36,7 +36,7 @@ def my_ip4():
 
 @contextlib.contextmanager
 def portal():
-    portal_config = call('iscsi.portal.create', {'listen': [{'ip': ip}], 'discovery_authmethod': 'NONE'})
+    portal_config = call('iscsi.portal.create', {'listen': [{'ip': truenas_server.ip}], 'discovery_authmethod': 'NONE'})
     try:
         yield portal_config
     finally:
