@@ -672,6 +672,7 @@ class SMBService(ConfigService):
             new['id'], new, {'prefix': 'cifs_srv_'}
         )
 
+        await self.middleware.call('etc.generate', 'smb')
         new_config = await self.config()
         await self.reset_smb_ha_mode()
 
