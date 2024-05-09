@@ -1,5 +1,4 @@
 from middlewared.plugins.etc import FileShouldNotExist
-from middlewared.utils import filter_list
 from middlewared.utils import mdns
 
 
