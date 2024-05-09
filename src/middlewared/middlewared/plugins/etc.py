@@ -401,7 +401,7 @@ class EtcService(Service):
                         output.append({
                             'path': outfile,
                             'status': 'REMOVED',
-                            'changes': FileChanges.dump(FileChanges.CONTENT)
+                            'changes': FileChanges.dump(FileChanges.CONTENTS)
                         })
                     except FileNotFoundError:
                         # Nothing to log
