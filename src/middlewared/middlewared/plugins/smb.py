@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 import stat
 import subprocess
+import uuid
 import unicodedata
 import uuid
 
@@ -1021,6 +1022,7 @@ class SharingSMBService(SharingService):
 
         verrors.check()
 
+        data['vuid'] = str(uuid.uuid4())
         await self.compress(data)
 
         data['id'] = await self.middleware.call(
@@ -1527,8 +1529,6 @@ class SharingSMBService(SharingService):
         that the path should be dynamically set to the user's home directory on the LDAP server.
         Local user auth to SMB shares is prohibited when LDAP is enabled with a samba schema.
         """
-        smb_config = None
-
         if await self.home_exists(data['home'], schema_name, verrors, old):
             verrors.add(f'{schema_name}.home',
                         'Only one share is allowed to be a home share.')
@@ -1567,10 +1567,9 @@ class SharingSMBService(SharingService):
                     'mDNS must be enabled in order to use an SMB share as a time machine target.'
                 )
 
-        if data['audit']['enable']:
-            if not smb_config:
-                smb_config = await self.middleware.call('smb.config')
+        smb_config = await self.middleware.call('smb.config')
 
+        if data['audit']['enable']:
             if smb_config['enable_smb1']:
                 verrors.add(
                     f'{schema_name}.audit.enable',
@@ -1584,20 +1583,20 @@ class SharingSMBService(SharingService):
                         verrors.add(f'{schema_name}.audit.{key}.{idx}',
                                     f'{group}: group does not exist.')
 
-        for entry in ['afp', 'timemachine']:
-            if not data[entry]:
-                continue
-            if not smb_config:
-                smb_config = await self.middleware.call('smb.config')
-
-            if smb_config['aapl_extensions']:
-                continue
-
+        if data['afp'] and not smb_config['aapl_extensions']:
             verrors.add(
-                f'{schema_name}.{entry}',
+                f'{schema_name}.afp',
                 'Apple SMB2/3 protocol extension support is required by this parameter. '
                 'This feature may be enabled in the general SMB server configuration.'
             )
+
+        if data['timemachine'] or data['purpose'] in ('TIMEMACHINE', 'ENHANCED_TIMEMACHINE'):
+            if not smb_config['aapl_extensions']:
+                verrors.add(
+                    f'{schema_name}.timemachine',
+                    'Apple SMB2/3 protocol extension support is required by this parameter. '
+                    'This feature may be enabled in the general SMB server configuration.'
+                )
 
     @private
     @accepts(Dict('share_validate_payload', Str('name')), roles=['READONLY_ADMIN'])
@@ -1677,6 +1676,10 @@ class SharingSMBService(SharingService):
         for key, val in [('enable', False), ('watch_list', []), ('ignore_list', [])]:
             if key not in data['audit']:
                 data['audit'][key] = val
+
+        if data['purpose'] in ('TIMEMACHINE', 'ENHANCED_TIMEMACHINE'):
+            # backstop to ensure all checks for time machine being enabled succeed
+            data['timemachine'] = True
 
         return await self.add_path_local(data)
 
