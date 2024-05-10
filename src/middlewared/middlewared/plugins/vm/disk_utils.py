@@ -10,8 +10,8 @@ from middlewared.service import CallError, Service, job
 class VMService(Service):
 
     @accepts(
-        Str('diskimg', default=None),
-        Str('zvol', default=None)
+        Str('diskimg', required=True),
+        Str('zvol', required=True)
     )
     @returns(Bool())
     @job()
@@ -39,22 +39,14 @@ class VMService(Service):
         `zvol` is the required target for the imported disk image
         """
         
-        if diskimg is None:
-           self.logger.error('Missing disk image') 
-           return False
-        if zvol is None:
-           self.logger.error('Missing zvol parameter')
-           return False
         if not self.middleware.call_sync('zfs.dataset.query', [('id', '=', zvol)]):
            raise CallError(f'zvol {zvol} does not exist.', errno.ENOENT)
 
         if os.path.exists(diskimg) is False:
-           self.logger.error('Disk Image does not exist')
-           return False
+           raise CallError('Disk Image does not exist.', errno.ENOENT)
 
         if os.path.exists(zvol_name_to_path(zvol)) is False:
-           self.logger.error('zvol device does not exist')
-           return False
+           raise CallError('Zvol device does not exist.', errno.ENOENT)
 
         zvol_device_path = str(zvol_name_to_path(zvol))
 
