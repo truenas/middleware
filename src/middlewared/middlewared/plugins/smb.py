@@ -1,12 +1,11 @@
 import asyncio
 import codecs
-import enum
 import errno
 import middlewared.sqlalchemy as sa
 import os
 import re
 from pathlib import Path
-import stat
+import uuid
 import unicodedata
 
 from copy import deepcopy
@@ -19,7 +18,7 @@ from middlewared.schema import Path as SchemaPath
 # defaults for ignore_list or watch_list from overrwriting previous value
 from middlewared.schema.utils import NOT_PROVIDED
 from middlewared.service import accepts, job, pass_app, private, SharingService
-from middlewared.service import ConfigService, ValidationError, ValidationErrors, filterable
+from middlewared.service import ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.constants import (
     NETIF_COMPLETE_SENTINEL,
@@ -30,10 +29,10 @@ from middlewared.plugins.smb_.constants import (
     RESERVED_SHARE_NAMES,
     SMBHAMODE,
     SMBCmd,
-    SMBBuiltin,
     SMBPath,
     SMBSharePreset
 )
+from middlewared.plugins.smb_.constants import SMBBuiltin  # noqa (imported so may be imported from here)
 from middlewared.plugins.smb_.util_param import smbconf_getparm, lpctx_validate_global_parm
 from middlewared.plugins.smb_.util_net_conf import reg_delshare, reg_listshares, reg_setparm
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
@@ -116,9 +115,9 @@ class SMBService(ConfigService):
         ds_state = self.middleware.call_sync('directoryservices.get_state')
         ds_config = None
         for svc, state in ds_state.items():
-           if state != 'DISABLED':
-               ds_config = self.middleware.call_sync(f'{svc}.config')
-               break
+            if state != 'DISABLED':
+                ds_config = self.middleware.call_sync(f'{svc}.config')
+                break
 
         idmap_config = self.middleware.call_sync('idmap.query')
         smb_config = self.middleware.call_sync('smb.config')
@@ -126,7 +125,7 @@ class SMBService(ConfigService):
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
 
         return generate_smb_conf_dict(
-                ds_state, ds_config, smb_config, smb_shares, bind_ip_choices, idmap_config
+            ds_state, ds_config, smb_config, smb_shares, bind_ip_choices, idmap_config
         )
 
     @private
@@ -330,7 +329,6 @@ class SMBService(ConfigService):
         do not exist or have incorrect permissions.
         """
         data = await self.config()
-        ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
         job.set_progress(0, 'Setting up SMB directories.')
         if create_paths:
             await self.setup_directories()
@@ -671,6 +669,7 @@ class SMBService(ConfigService):
             new['id'], new, {'prefix': 'cifs_srv_'}
         )
 
+        await self.middleware.call('etc.generate', 'smb')
         new_config = await self.config()
         await self.reset_smb_ha_mode()
 
@@ -830,7 +829,6 @@ class SharingSMBService(SharingService):
 
         `auxsmbconf` is a string of additional smb4.conf parameters not covered by the system's API.
         """
-        ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
         audit_info = deepcopy(SMB_AUDIT_DEFAULTS) | data.get('audit')
         data['audit'] = audit_info
 
@@ -850,6 +848,7 @@ class SharingSMBService(SharingService):
 
         verrors.check()
 
+        data['vuid'] = str(uuid.uuid4())
         compressed = await self.compress(data)
 
         data['id'] = await self.middleware.call(
@@ -872,6 +871,7 @@ class SharingSMBService(SharingService):
         if do_global_reload:
             if (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY':
                 if data['home']:
+                    await self.middleware.call('etc.generate', 'smb')
                     await self.middleware.call('idmap.clear_idmap_cache')
 
             await self._service_change('cifs', 'restart')
@@ -920,7 +920,6 @@ class SharingSMBService(SharingService):
             Since the old share was not in our running configuration, we need
             to add it.
             """
-            check_mdns = True
             await self.toggle_share(newname, True)
 
         elif not old_is_locked and new_is_locked:
@@ -1325,7 +1324,6 @@ class SharingSMBService(SharingService):
     async def validate_share_name(self, name, schema_name, verrors, exist_ok=True):
         # Standards for SMB share name are defined in MS-FSCC 2.1.6
         # We are slighly more strict in that blacklist all unicode control characters
-        has_control_characters = False
         if name.lower() in RESERVED_SHARE_NAMES:
             verrors.add(
                 f'{schema_name}.name',
@@ -1355,7 +1353,6 @@ class SharingSMBService(SharingService):
                 f'{schema_name}.name', 'Share with this name already exists.', errno.EEXIST
             )
 
-
     @private
     async def validate(self, data, schema_name, verrors, old=None):
         """
@@ -1364,8 +1361,6 @@ class SharingSMBService(SharingService):
         that the path should be dynamically set to the user's home directory on the LDAP server.
         Local user auth to SMB shares is prohibited when LDAP is enabled with a samba schema.
         """
-        smb_config = None
-
         if await self.home_exists(data['home'], schema_name, verrors, old):
             verrors.add(f'{schema_name}.home',
                         'Only one share is allowed to be a home share.')
@@ -1404,10 +1399,9 @@ class SharingSMBService(SharingService):
                     'mDNS must be enabled in order to use an SMB share as a time machine target.'
                 )
 
-        if data['audit']['enable']:
-            if not smb_config:
-                smb_config = await self.middleware.call('smb.config')
+        smb_config = await self.middleware.call('smb.config')
 
+        if data['audit']['enable']:
             if smb_config['enable_smb1']:
                 verrors.add(
                     f'{schema_name}.audit.enable',
@@ -1421,20 +1415,20 @@ class SharingSMBService(SharingService):
                         verrors.add(f'{schema_name}.audit.{key}.{idx}',
                                     f'{group}: group does not exist.')
 
-        for entry in ['afp', 'timemachine']:
-            if not data[entry]:
-                continue
-            if not smb_config:
-                smb_config = await self.middleware.call('smb.config')
-
-            if smb_config['aapl_extensions']:
-                continue
-
+        if data['afp'] and not smb_config['aapl_extensions']:
             verrors.add(
-                f'{schema_name}.{entry}',
+                f'{schema_name}.afp',
                 'Apple SMB2/3 protocol extension support is required by this parameter. '
                 'This feature may be enabled in the general SMB server configuration.'
             )
+
+        if data['timemachine'] or data['purpose'] in ('TIMEMACHINE', 'ENHANCED_TIMEMACHINE'):
+            if not smb_config['aapl_extensions']:
+                verrors.add(
+                    f'{schema_name}.timemachine',
+                    'Apple SMB2/3 protocol extension support is required by this parameter. '
+                    'This feature may be enabled in the general SMB server configuration.'
+                )
 
     @private
     @accepts(Dict('share_validate_payload', Str('name')), roles=['READONLY_ADMIN'])
@@ -1492,6 +1486,10 @@ class SharingSMBService(SharingService):
         for key, val in [('enable', False), ('watch_list', []), ('ignore_list', [])]:
             if key not in data['audit']:
                 data['audit'][key] = val
+
+        if data['purpose'] in ('TIMEMACHINE', 'ENHANCED_TIMEMACHINE'):
+            # backstop to ensure all checks for time machine being enabled succeed
+            data['timemachine'] = True
 
         return await self.add_path_local(data)
 

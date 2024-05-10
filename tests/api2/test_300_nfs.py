@@ -24,6 +24,7 @@ from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.account import group as create_group
 from middlewared.test.integration.assets.filesystem import directory
 from middlewared.test.integration.utils import call, ssh, mock
+from middlewared.test.integration.utils.system import reset_systemd_svcs as reset_svcs
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -232,18 +233,6 @@ def confirm_rpc_port(rpc_name, port_num):
     line = ssh(f"rpcinfo -p | grep {rpc_name} | grep tcp")
     # example:    '100005    3   tcp    618  mountd'
     assert int(line.split()[3]) == port_num, str(line)
-
-
-def reset_svcs(svcs_to_reset):
-    '''
-    Systemd services can get disabled if they restart too
-    many times or too quickly.   This can happen during testing.
-    Input a space delimited string of systemd services to reset.
-    Example usage:
-        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
-    '''
-    results = SSH_TEST(f"systemctl reset-failed {svcs_to_reset}", user, password, ip)
-    assert results['result'] is True
 
 
 class NFS_CONFIG:

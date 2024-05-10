@@ -210,10 +210,21 @@ class EtcService(Service):
         'motd': [
             {'type': 'mako', 'path': 'motd'}
         ],
-        'mdns': [
-            {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': None},
-            {'type': 'py', 'path': 'local/avahi/avahi_services', 'checkpoint': None}
-        ],
+        'mdns': {
+            'ctx': [
+                {'method': 'interface.query'},
+                {'method': 'smb.config'},
+                {'method': 'system.general.config'},
+                {'method': 'service.started_or_enabled', 'args': ['cifs']}
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': None},
+                {'type': 'py', 'path': 'local/avahi/services/ADISK.service', 'checkpoint': None},
+                {'type': 'py', 'path': 'local/avahi/services/DEV_INFO.service', 'checkpoint': None},
+                {'type': 'py', 'path': 'local/avahi/services/HTTP.service', 'checkpoint': None},
+                {'type': 'py', 'path': 'local/avahi/services/SMB.service', 'checkpoint': None},
+            ]
+        },
         'nscd': [
             {'type': 'mako', 'path': 'nscd.conf'},
         ],
@@ -401,7 +412,7 @@ class EtcService(Service):
                         output.append({
                             'path': outfile,
                             'status': 'REMOVED',
-                            'changes': FileChanges.dump(FileChanges.CONTENT)
+                            'changes': FileChanges.dump(FileChanges.CONTENTS)
                         })
                     except FileNotFoundError:
                         # Nothing to log
