@@ -55,9 +55,11 @@ class VMService(Service):
 
         cp = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
 
-        RE_PROGRESS = re.compile(r'(\d+\.\d+)')
+        re_progress = re.compile(r'(\d+\.\d+)')
+        stderr = ''
+
         for line in iter(cp.stdout.readline, ""):
-            progress = RE_PROGRESS.search(line.lstrip())
+            progress = re_progress.search(line.lstrip())
             if progress:
                 try:
                     progress = round(float(progress.group(1)))
@@ -65,7 +67,8 @@ class VMService(Service):
                 except ValueError:
                     self.logger.warning('Invalid progress in: "' + progress.group(1) + '"')
             else:
-                self.logger.warning('No progress reported from qemu-img: "' + line.lstrip + '"')
+                stderr += line
+                self.logger.warning('No progress reported from qemu-img: "' + line.lstrip() + '"')
         cp.wait()
 
         if cp.returncode:
