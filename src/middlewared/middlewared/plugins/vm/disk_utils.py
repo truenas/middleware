@@ -4,18 +4,19 @@ import re
 import subprocess
 
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from middlewared.schema import accepts, Bool, returns, Str
+from middlewared.schema import accepts, Bool, Dict, returns, Str
 from middlewared.service import CallError, Service, job
 
 class VMService(Service):
 
-    @accepts(
+    @accepts(Dict(
+        'vm_info',
         Str('diskimg', required=True),
         Str('zvol', required=True)
-    )
+    ))
     @returns(Bool())
-    @job()
-    def import_disk_image(self, job, diskimg, zvol):
+    @job(lock_queue_size=1, lock=lambda args: f"import_disk_image_{args[-1]['zvol']}")
+    def import_disk_image(self, job, data):
 
         def progress_callback(progress, description):
             job.set_progress(progress, description)
@@ -39,18 +40,18 @@ class VMService(Service):
         `zvol` is the required target for the imported disk image
         """
         
-        if not self.middleware.call_sync('zfs.dataset.query', [('id', '=', zvol)]):
+        if not self.middleware.call_sync('zfs.dataset.query', [('id', '=', data['zvol'])]):
            raise CallError(f'zvol {zvol} does not exist.', errno.ENOENT)
 
-        if os.path.exists(diskimg) is False:
+        if os.path.exists(data['diskimg']) is False:
            raise CallError('Disk Image does not exist.', errno.ENOENT)
 
-        if os.path.exists(zvol_name_to_path(zvol)) is False:
+        if os.path.exists(zvol_name_to_path(data['zvol'])) is False:
            raise CallError('Zvol device does not exist.', errno.ENOENT)
 
-        zvol_device_path = str(zvol_name_to_path(zvol))
+        zvol_device_path = str(zvol_name_to_path(data['zvol']))
 
-        command = f"qemu-img convert -p -O raw {diskimg} {zvol_device_path}"
+        command = f"qemu-img convert -p -O raw {data['diskimg']} {zvol_device_path}"
         self.logger.warning('Running Disk Import using: "' + command + '"')
 
         cp = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
