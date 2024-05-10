@@ -13,7 +13,7 @@ class VMService(Service):
         Str('zvol', default=None)
     )
     @returns(Bool())
-    async def import_disk_image(self, diskimg, zvol):
+    def import_disk_image(self, diskimg, zvol):
         """
         Imports a specified disk image. 
 
@@ -33,20 +33,20 @@ class VMService(Service):
         `zvol` is the required target for the imported disk image
         """
         
-        if diskimg == None:
+        if diskimg is None:
            self.logger.error('Missing disk image') 
            return False
-        if zvol == None:
+        if zvol is None:
            self.logger.error('Missing zvol parameter')
            return False
-        if not await self.middleware.call('zfs.dataset.query', [('id', '=', zvol)]):
+        if not self.middleware.call_sync('zfs.dataset.query', [('id', '=', zvol)]):
            raise CallError(f'zvol {zvol} does not exist.', errno.ENOENT)
 
-        if os.path.exists(diskimg) == False:
+        if os.path.exists(diskimg) is False:
            self.logger.error('Disk Image does not exist')
            return False
 
-        if os.path.exists(zvol_name_to_path(zvol)) == False:
+        if os.path.exists(zvol_name_to_path(zvol)) is False:
            self.logger.error('zvol device does not exist')
            return False
 
@@ -55,20 +55,10 @@ class VMService(Service):
         command = "qemu-img convert -p -O raw " + diskimg + " " + zvol_device_path
         self.logger.warning('Running Disk Import using: "' + command + '"')
 
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
+        cp = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
+        stdout, stderr = cp.communicate()
 
-        for line in process.stdout:
-            # Display output
-            self.logger.warning(line.strip)
-
-        process.wait()
-
-        # Report any failure
-        if process.returncode != 0:
-            for line in process.stderr:
-                # Display output
-                self.logger.warning(line.strip)
-            self.logger.error('Failed importing disk image')
-            return False
+        if cp.returncode:
+            raise CallError(f'Failed to import disk: {stderr}')
 
         return True
