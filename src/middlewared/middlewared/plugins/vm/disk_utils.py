@@ -50,13 +50,14 @@ class VMService(Service):
 
         zvol_device_path = str(zvol_name_to_path(zvol))
 
-        command = "qemu-img convert -p -O raw " + diskimg + " " + zvol_device_path
+        command = f"qemu-img convert -p -O raw {diskimg} {zvol_device_path}"
         self.logger.warning('Running Disk Import using: "' + command + '"')
 
         cp = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
 
+        RE_PROGRESS = re.compile(r'(\d+\.\d+)')
         for line in iter(cp.stdout.readline, ""):
-            progress = re.search(r'(\d+\.\d+)', line.lstrip())
+            progress = RE_PROGRESS.search(line.lstrip())
             if progress:
                 try:
                     progress = round(float(progress.group(1)))
