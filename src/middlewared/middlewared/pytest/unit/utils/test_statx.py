@@ -69,7 +69,7 @@ def test__check_statx_vs_stat_file(tmpdir, stat_prop):
 
 
 @pytest.mark.parametrize('stat_prop', BASIC_STAT_ATTRS)
-def test__check_statx_vs_stat(tmpdir, stat_prop):
+def test__check_statx_vs_stat_dir(tmpdir, stat_prop):
     st1, st2 = do_stat(str(tmpdir), True)
     validate_stat(stat_prop, st1, st2)
 

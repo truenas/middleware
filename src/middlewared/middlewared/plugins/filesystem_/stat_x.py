@@ -1,3 +1,8 @@
+# This utility provides a basic wrapper for statx(2).
+#
+# We need statx(2) for gathering birth time, mount id, and
+# file attributes for the middleware filesystem plugin
+#
 # NOTE: tests for these utils are in src/middlewared/middlewared/pytest/unit/utils/test_statx.py
 
 import os
