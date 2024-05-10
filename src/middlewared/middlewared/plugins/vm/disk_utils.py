@@ -1,10 +1,11 @@
 import errno
 import os
+import re
 import subprocess
 
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.schema import accepts, Bool, returns, Str
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, Service, job
 
 class VMService(Service):
 
@@ -13,7 +14,12 @@ class VMService(Service):
         Str('zvol', default=None)
     )
     @returns(Bool())
-    def import_disk_image(self, diskimg, zvol):
+    @job()
+    def import_disk_image(self, job, diskimg, zvol):
+
+        def progress_callback(progress, description):
+            job.set_progress(progress, description)
+
         """
         Imports a specified disk image. 
 
@@ -56,7 +62,18 @@ class VMService(Service):
         self.logger.warning('Running Disk Import using: "' + command + '"')
 
         cp = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
-        stdout, stderr = cp.communicate()
+
+        for line in iter(cp.stdout.readline, ""):
+            progress = re.search(r'(\d+\.\d+)', line.lstrip())
+            if progress:
+                try:
+                    progress = round(float(progress.group(1)))
+                    progress_callback(progress, "Disk Import Progress")
+                except ValueError:
+                    self.logger.warning('Invalid progress in: "' + progress.group(1) + '"')
+            else:
+                self.logger.warning('No progress reported from qemu-img: "' + line.lstrip + '"')
+        cp.wait()
 
         if cp.returncode:
             raise CallError(f'Failed to import disk: {stderr}')
