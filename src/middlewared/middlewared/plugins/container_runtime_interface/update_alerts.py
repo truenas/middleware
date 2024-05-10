@@ -1,4 +1,5 @@
 import contextlib
+import logging
 
 from collections import defaultdict
 from typing import Dict
@@ -7,6 +8,9 @@ from middlewared.service import CallError, private, Service
 
 from .client import CRIClientMixin
 from .utils import normalize_reference
+
+
+logger = logging.getLogger('container_images')
 
 
 class ContainerImagesService(Service, CRIClientMixin):
@@ -33,7 +37,7 @@ class ContainerImagesService(Service, CRIClientMixin):
                 try:
                     await self.check_update_for_image(tag, image)
                 except CallError as e:
-                    self.logger.error(str(e))
+                    logger.error(str(e))
 
     @private
     async def retrieve_image_digest(self, reference: str):
