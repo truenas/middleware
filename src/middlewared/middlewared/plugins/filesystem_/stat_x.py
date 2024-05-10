@@ -1,3 +1,5 @@
+# NOTE: tests for these utils are in src/middlewared/middlewared/pytest/unit/utils/test_statx.py
+
 import os
 import ctypes
 from enum import IntFlag
