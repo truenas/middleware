@@ -1,31 +1,26 @@
 import contextlib
-import os
 import random
 import re
 import socket
 import string
-import sys
 from datetime import datetime, timedelta
 from time import sleep
 from typing import cast
 
 import pytest
-from pytest_dependency import depends
-from zeroconf import ServiceBrowser, ServiceStateChange, Zeroconf
-
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 from assets.websocket.server import reboot
 from assets.websocket.service import (ensure_service_disabled,
                                       ensure_service_enabled,
                                       ensure_service_started,
                                       ensure_service_stopped)
+from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.utils import call, ssh
+from pytest_dependency import depends
+from zeroconf import ServiceBrowser, ServiceStateChange, Zeroconf
+
 from auto_config import ip, password, pool_name, user
 from functions import SSH_TEST
 from protocols import smb_share
-
-from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, ssh
 
 digits = ''.join(random.choices(string.digits, k=4))
 dataset_name = f"smb-cifs{digits}"
@@ -195,7 +190,11 @@ class AvahiBrowserCollector:
                         item['addresses'] = [pub_ip]
                         item['port'] = items[8]
                         item['server'] = items[6]
-                        service_type = AvahiBrowserCollector.name_to_service[items[4]]
+                        try:
+                            service_type = AvahiBrowserCollector.name_to_service[items[4]]
+                        except KeyError:
+                            # Skip service types that we don't care about
+                            continue
                         key = f"{server}.{service_type}"
                         item['properties'] = self.process_properties(items[9], service_type)
                         self.result[service_type][key] = item
