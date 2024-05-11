@@ -88,8 +88,7 @@ def test_disk_format_removes_existing_partition_table(unused_disk):
     partitions = call('disk.list_partitions', disk['name'])
     assert len(partitions) == 1
 
-    # format removes existing partition labels
-    call('disk.format', disk['name'], 0)
-    # We should now have one partition: data
+    # format removes existing partition labels and creates a new (data) partition
+    call('disk.format', disk['name'], NO_SWAP)
     partitions = call('disk.list_partitions', disk['name'])
     assert len(partitions) == 1

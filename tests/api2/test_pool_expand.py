@@ -11,8 +11,8 @@ def test_expand_pool():
 
         # Transform this pool into a pool on a vdev with a partition that is only 2 GiB
         ssh(f"zpool export {pool['name']}")
-        ssh(f"sgdisk -d 2 /dev/{disk}")
-        ssh(f"sgdisk -n 2:0:+2GiB -t 2:BF01 /dev/{disk}")
+        ssh(f"sgdisk -d 1 /dev/{disk}")
+        ssh(f"sgdisk -n 1:0:+2GiB -t 1:BF01 /dev/{disk}")
         small_partition = call("disk.list_partitions", disk)[-1]
         assert small_partition["size"] < 2147483648 * 1.01
         device = "disk/by-partuuid/" + small_partition["partition_uuid"]

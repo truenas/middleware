@@ -72,7 +72,7 @@ class PoolService(Service):
         await self.middleware.call('pool.format_disks', job, {
             disk['devname']: {
                 'vdev': vdev,
-                'size': min_size,
+                'size': None,  # pool.format_disks checks size of disk
                 'create_swap': False,
             },
         })
