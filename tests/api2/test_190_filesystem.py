@@ -26,28 +26,6 @@ path_list = ['default', 'kernel', 'zfs', 'ssh']
 random_path = ['/boot/grub', '/root', '/bin', '/usr/bin']
 
 
-def test_01_get_filesystem_listdir():
-    results = POST('/filesystem/listdir/', {'path': path})
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list) is True, results.text
-    assert len(results.json()) > 0, results.text
-    global listdir
-    listdir = results
-
-
-@pytest.mark.parametrize('name', path_list)
-def test_02_looking_at_listdir_path_(name):
-    for dline in listdir.json():
-        if dline['path'] == f'{path}/{name}':
-            assert dline['type'] in ('DIRECTORY', 'FILE'), listdir.text
-            assert dline['uid'] == 0, listdir.text
-            assert dline['gid'] == 0, listdir.text
-            assert dline['name'] == name, listdir.text
-            break
-    else:
-        raise AssertionError(f'/{path}/{name} not found')
-
-
 @pytest.mark.parametrize('path', random_path)
 def test_03_get_filesystem_stat_(path):
     results = POST('/filesystem/stat/', path)
@@ -71,10 +49,7 @@ def test_03_get_filesystem_stat_(path):
 def test_04_test_filesystem_statfs_fstype(request):
     # test zfs fstype first
     parent_path = f'/mnt/{pool_name}'
-    results = POST('/filesystem/statfs/', parent_path)
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert data, results.text
+    data = call('filesystem.statfs', parent_path)
     assert data['fstype'] == 'zfs', data['fstype']
 
     # mount nested tmpfs entry and make sure statfs
@@ -91,10 +66,7 @@ def test_04_test_filesystem_statfs_fstype(request):
     assert results['result'] is True, results['output']
 
     # test fstype
-    results = POST('/filesystem/statfs/', nested_path)
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert data, results.text
+    data = call('filesystem.statfs', nested_path)
     assert data['fstype'] == 'tmpfs', data['fstype']
 
     # cleanup
@@ -164,40 +136,26 @@ def test_07_test_filesystem_stat_filetype(request):
 
         for x in targets:
             target = f'{path}/{x}'
-            results = POST('/filesystem/stat/', target)
-            assert results.status_code == 200, f'{target}: {results.text}'
-            statout = results.json()
-
+            statout = call('filesystem.stat', target)
             assert statout['type'] == x.upper(), str(statout)
             assert not statout['is_ctldir']
 
-        result = POST("/zfs/snapshot/", {
+        call('zfs.snapshot.create', {
             'dataset': f'{pool_name}/{ds_name}',
             'name': snap_name,
             'recursive': False,
         })
-        assert result.status_code == 200, result.text
-
         for x in targets:
             target = f'{path}/.zfs/snapshot/{snap_name}/{x}'
-            results = POST('/filesystem/stat/', target)
-            assert results.status_code == 200, f'{target}: {results.text}'
-            statout = results.json()
-
+            statout = call('filesystem.stat', target)
             assert statout['type'] == x.upper(), str(statout)
             assert statout['is_ctldir']
 
-        results = POST('/filesystem/stat/', f'{path}/.zfs/snapshot/{snap_name}')
-        assert results.status_code == 200, results.text
-        assert results.json()['is_ctldir']
-
-        results = POST('/filesystem/stat/', f'{path}/.zfs/snapshot')
-        assert results.status_code == 200, results.text
-        assert results.json()['is_ctldir']
-
-        results = POST('/filesystem/stat/', f'{path}/.zfs')
-        assert results.status_code == 200, results.text
-        assert results.json()['is_ctldir']
+        assert call('filesystem.stat', f'{path}/.zfs/snapshot/{snap_name}')['is_ctldir']
+        assert all(dirent['is_ctldir'] for dirent in call('filesystem.listdir', f'{path}/.zfs/snapshot'))
+        assert call('filesystem.stat', f'{path}/.zfs/snapshot')['is_ctldir']
+        assert all(dirent['is_ctldir'] for dirent in call('filesystem.listdir', f'{path}/.zfs'))
+        assert call('filesystem.stat', f'{path}/.zfs')['is_ctldir']
 
 
 def test_08_test_fiilesystem_statfs_flags(request):
@@ -262,20 +220,15 @@ def test_09_test_dosmodes():
         assert results['result'] is True, str(results)
 
         for p in testpaths:
-            results = POST('/filesystem/get_dosmode', p)
-            assert results.status_code == 200, results
-
-            expected_flags = results.json()
-
+            expected_flags = call('filesystem.get_zfs_attributes', p)
             for m in modes:
                 to_set = {m: not expected_flags[m]}
-                results = POST('/filesystem/set_dosmode', {'path': p, 'dosmode': to_set})
-                assert results.status_code == 200, results.text
-
+                res = call('filesystem.set_zfs_attributes', {'path': p, 'zfs_file_attributes': to_set})
                 expected_flags.update(to_set)
-                results = POST('/filesystem/get_dosmode', p)
-                assert results.status_code == 200, results
-                assert results.json() == expected_flags
+                assert expected_flags == res
+
+                res = call('filesystem.get_zfs_attributes', p)
+                assert expected_flags == res
 
 
 def test_10_acl_path_execute_validation():

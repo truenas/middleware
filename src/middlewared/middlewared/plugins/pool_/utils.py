@@ -9,6 +9,7 @@ from pathlib import Path
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import CallError
 from middlewared.utils.size import MB
+from middlewared.utils.filesystem.directory import directory_is_empty
 
 
 DATASET_DATABASE_MODEL_NAME = 'storage.encrypteddataset'
@@ -64,7 +65,7 @@ def dataset_can_be_mounted(ds_name, ds_mountpoint):
     mount_error_check = ''
     if os.path.isfile(ds_mountpoint):
         mount_error_check = f'A file exists at {ds_mountpoint!r} and {ds_name} cannot be mounted'
-    elif os.path.isdir(ds_mountpoint) and os.listdir(ds_mountpoint):
+    elif os.path.isdir(ds_mountpoint) and not directory_is_empty(ds_mountpoint):
         mount_error_check = f'{ds_mountpoint!r} directory is not empty'
     mount_error_check += (
         ' (please provide "force" flag to override this error and file/directory '

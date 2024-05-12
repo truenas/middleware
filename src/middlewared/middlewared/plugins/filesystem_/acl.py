@@ -8,6 +8,7 @@ from pathlib import Path
 from middlewared.plugins.chart_releases_linux.utils import is_ix_volume_path
 from middlewared.schema import Bool, Dict, Int, List, Str, Ref, UnixPerm, OROperator
 from middlewared.service import accepts, private, returns, job, CallError, ValidationErrors, Service
+from middlewared.utils.filesystem.directory import directory_is_empty
 from middlewared.utils.path import FSLocation, path_location
 from middlewared.validators import Range
 from .utils import ACLType
@@ -1083,7 +1084,7 @@ class FilesystemService(Service):
         self._common_perm_path_validate('filesystem.add_to_acl', data, verrors)
         verrors.check()
 
-        if next(Path(data['path']).iterdir(), None) and not data['options']['force']:
+        if not directory_is_empty(data['path']) and not data['options']['force']:
             raise CallError(
                 f'{data["path"]}: path contains existing data '
                 'and `force` was not specified', errno.EPERM

@@ -7,9 +7,10 @@
 
 import os
 import ctypes
+import stat as statlib
 from enum import IntFlag
-
-AT_FDCWD = -100  # special fd value meaning no FD
+from .constants import AT_FDCWD, FileType, ZFSCTL
+from .utils import path_in_ctldir
 
 
 class ATFlags(IntFlag):
@@ -133,3 +134,61 @@ def statx(path, options=None):
         raise OSError(err, os.strerror(err))
     else:
         return data
+
+
+def statx_entry_impl(entry, dir_fd=None, get_ctldir=True):
+    """
+    This is a convenience wrapper around stat_x that was originally
+    located within the filesystem plugin
+
+    `entry` - pathlib.Path for target of statx
+
+    returns a dictionary with the following keys:
+    `st` - StructStatx object for entry
+
+    `attributes` - statx attributes
+
+    `etype` - file type (matches names in FileType enum)
+
+    `is_ctldir` - boolean value indicating whether path is in the
+    ZFS ctldir. NOTE: is_ctldir is omitted when using a relative path
+
+    Warning: this method is blocking and includes data that is not JSON
+    serializable
+    """
+    out = {'st': None, 'etype': None, 'attributes': []}
+
+    options = {'dir_fd': dir_fd} if dir_fd is not None else {}
+    try:
+        # This is equivalent to lstat() call
+        out['st'] = statx(
+            entry.as_posix(),
+            {"flags": ATFlags.STATX_SYNC_AS_STAT | ATFlags.SYMLINK_NOFOLLOW} | options
+        )
+    except FileNotFoundError:
+        return None
+
+    for attr in StatxAttr:
+        if out['st'].stx_attributes & attr:
+            out['attributes'].append(attr.name)
+
+    if statlib.S_ISDIR(out['st'].stx_mode):
+        out['etype'] = 'DIRECTORY'
+
+    elif statlib.S_ISLNK(out['st'].stx_mode):
+        out['etype'] = 'SYMLINK'
+        try:
+            out['st'] = statx(entry.as_posix(), options)
+        except FileNotFoundError:
+            return None
+
+    elif statlib.S_ISREG(out['st'].stx_mode):
+        out['etype'] = 'FILE'
+
+    else:
+        out['etype'] = 'OTHER'
+
+    if entry.is_absolute():
+        out['is_ctldir'] = path_in_ctldir(entry)
+
+    return out
