@@ -19,7 +19,7 @@ class VMService(Service):
         Str('zvol', required=True)
     ))
     @returns(Bool())
-    @job(lock_queue_size=1, lock=lambda args: f"import_disk_image_{args[-1]['zvol']}")
+    @job(lock_queue_size=1, lock=lambda args: f"zvol_disk_image_{args[-1]['zvol']}")
     def import_disk_image(self, job, data):
 
         def progress_callback(progress, description):
@@ -91,7 +91,7 @@ class VMService(Service):
         Str('zvol', required=True)
     ))
     @returns(Bool())
-    @job(lock_queue_size=1, lock=lambda args: f"export_disk_image_{args[-1]['zvol']}")
+    @job(lock_queue_size=1, lock=lambda args: f"zvol_disk_image_{args[-1]['zvol']}")
     def export_disk_image(self, job, data):
 
         def progress_callback(progress, description):
