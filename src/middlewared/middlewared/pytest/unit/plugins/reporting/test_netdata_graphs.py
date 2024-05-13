@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import AsyncMock, patch
 
 from middlewared.plugins.reporting.netdata.graphs import (
-    CPUPlugin, CPUTempPlugin, DiskTempPlugin, DISKPlugin, InterfacePlugin, LoadPlugin, MemoryPlugin, SwapPlugin,
+    CPUPlugin, CPUTempPlugin, DiskTempPlugin, DISKPlugin, InterfacePlugin, LoadPlugin, MemoryPlugin,
     UptimePlugin, ARCActualRatePlugin, ARCRatePlugin, ARCSizePlugin
 )
 from middlewared.pytest.unit.middleware import Middleware
@@ -16,7 +16,6 @@ from middlewared.pytest.unit.middleware import Middleware
     (InterfacePlugin, 'enp1s0', ['time', 'received', 'sent']),
     (LoadPlugin, 'load', ['time']),
     (MemoryPlugin, 'memory', ['time']),
-    (SwapPlugin, 'swap', ['time']),
     (UptimePlugin, 'uptime', ['time']),
     (ARCActualRatePlugin, 'arcactualrate', ['time']),
     (ARCRatePlugin, 'arcrate', ['time']),

@@ -138,21 +138,6 @@ class MemoryPlugin(GraphBase):
         return 'system.ram'
 
 
-class SwapPlugin(GraphBase):
-
-    title = 'Swap Utilization'
-    uses_identifiers = False
-    vertical_label = 'Mebibytes'
-
-    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return 'system.swap'
-
-    def query_parameters(self) -> dict:
-        return super().query_parameters() | {
-            'dimensions': 'used|free',
-        }
-
-
 class UptimePlugin(GraphBase):
 
     title = 'System Uptime'
