@@ -1,6 +1,7 @@
 import errno
 import os
 import re
+import shlex
 import subprocess
 
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
@@ -54,7 +55,10 @@ class VMService(Service):
 
         zvol_device_path = str(zvol_name_to_path(data['zvol']))
 
-        command = f"qemu-img convert -p -O raw {data['diskimg']} {zvol_device_path}"
+        # Use quotes safely and assemble the command
+        imgsafe = shlex.quote(data['diskimg'])
+        devsafe = shlex.quote(zvol_device_path)
+        command = f"qemu-img convert -p -O raw {imgsafe} {devsafe}"
         self.logger.warning('Running Disk Import using: "' + command + '"')
 
         cp = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
@@ -140,7 +144,10 @@ class VMService(Service):
         zvolbasename = os.path.basename(data['zvol'])
         targetfile = f"{data['directory']}/vmdisk-{zvolbasename}.{format}"
 
-        command = f"qemu-img convert -p -f raw -O {data['format']} {zvol_device_path} {targetfile}"
+        # Use quotes safely and assemble the command
+        filesafe = shlex.quote(targetfile)
+        devsafe = shlex.quote(zvol_device_path)
+        command = f"qemu-img convert -p -f raw -O {data['format']} {devsafe} {filesafe}"
         self.logger.warning('Running Disk export using: "' + command + '"')
 
         cp = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
