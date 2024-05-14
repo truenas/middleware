@@ -127,6 +127,11 @@ http {
         keepalive 64;
     }
 
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        '' close;
+    }
+
     server {
         server_name  localhost;
 % if ssl_configuration:
@@ -199,7 +204,7 @@ http {
             proxy_set_header X-Real-Remote-Port $remote_port;
             proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "Upgrade";
+            proxy_set_header Connection $connection_upgrade;
         }
 
 % endfor
