@@ -9,18 +9,15 @@ class PoolService(Service):
         """
         Format all disks, putting all ZFS partitions created into their respective vdevs.
         """
-        # Make sure all SED disks are unlocked
         await self.middleware.call('disk.sed_unlock_all')
-        swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
-        formatted = 0
         await self.middleware.call('pool.remove_unsupported_md_devices_from_disks', disks)
-        len_disks = len(disks)
 
+        formatted = 0
+        len_disks = len(disks)
         async def format_disk(arg):
             nonlocal formatted
             disk, config = arg
-            # Drives are partitioned to maximize the data partition
-            await self.middleware.call('disk.format', disk, 0)
+            await self.middleware.call('disk.format', disk)
             formatted += 1
             job.set_progress(15, f'Formatting disks ({formatted}/{len_disks})')
 
