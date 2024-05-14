@@ -635,6 +635,7 @@ def sw_info():
             'buildtime': manifest['buildtime'],
         }
 
+
 def sw_codename():
     return sw_info()['codename']
 

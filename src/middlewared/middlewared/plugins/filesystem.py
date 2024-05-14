@@ -24,7 +24,6 @@ from middlewared.utils.filesystem.utils import timespec_convert
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
-from middlewared.plugins.filesystem_.utils import ACLType
 
 
 class FilesystemService(Service):
@@ -278,9 +277,7 @@ class FilesystemService(Service):
         if 'ix-applications' in path.parts:
             raise CallError('Ix-applications is a system managed dataset and its contents cannot be listed')
 
-        stat_opts = {"file_only": False, "dir_only": False}
         file_type = None
-
         for filter_ in filters:
             if filter_[0] not in ['type']:
                 continue

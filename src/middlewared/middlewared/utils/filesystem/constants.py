@@ -2,6 +2,7 @@ import enum
 
 AT_FDCWD = -100  # special fd value meaning current working directory
 
+
 class FileType(enum.Enum):
     DIRECTORY = enum.auto()
     FILE = enum.auto()

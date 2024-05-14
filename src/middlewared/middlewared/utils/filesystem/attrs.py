@@ -98,7 +98,7 @@ def dict_to_zfs_attributes_mask(attr_dict: dict) -> int:
         if value is not True:
             continue
 
-        attr_mask |= zfs_attr 
+        attr_mask |= zfs_attr
 
     return int(attr_mask)
 

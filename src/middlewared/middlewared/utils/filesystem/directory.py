@@ -52,7 +52,9 @@ ALL_ATTRS = (
     DirectoryRequestMask.ZFS_ATTRS
 )
 
-dirent_struct = namedtuple('struct_dirent', ['name', 'path', 'realpath', 'stat', 'acl', 'xattrs', 'zfs_attrs', 'is_in_ctldir'])
+dirent_struct = namedtuple('struct_dirent', [
+    'name', 'path', 'realpath', 'stat', 'acl', 'xattrs', 'zfs_attrs', 'is_in_ctldir'
+])
 
 
 class DirectoryFd():

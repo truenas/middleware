@@ -1,5 +1,4 @@
 import enum
-import os
 
 
 class ACLXattr(enum.Enum):

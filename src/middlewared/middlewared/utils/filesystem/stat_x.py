@@ -9,7 +9,7 @@ import os
 import ctypes
 import stat as statlib
 from enum import IntFlag
-from .constants import AT_FDCWD, FileType, ZFSCTL
+from .constants import AT_FDCWD
 from .utils import path_in_ctldir
 
 
