@@ -4,6 +4,7 @@ import logging
 import os
 
 from middlewared.service_exception import MatchNotFound
+from middlewared.utils.filesystem.constants import ZFSCTL
 
 logger = logging.getLogger(__name__)
 
@@ -44,12 +45,6 @@ class TNUserProp(enum.Enum):
 
     def values():
         return [a.value for a in TNUserProp]
-
-
-class ZFSCTL(enum.IntEnum):
-    # from include/os/linux/zfs/sys/zfs_ctldir.h in ZFS repo
-    INO_ROOT = 0x0000FFFFFFFFFFFF
-    INO_SNAPDIR = 0x0000FFFFFFFFFFFD
 
 
 def zvol_name_to_path(name):

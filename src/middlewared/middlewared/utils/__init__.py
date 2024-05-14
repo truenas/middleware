@@ -387,11 +387,17 @@ class filters(object):
 
         return False
 
-    def getter_fn(self, _list):
-        if not _list:
+    def getter_fn(self, entry):
+        """
+        Evaluate the type of objects returned by iterable and return an
+        appropriate function to retrieve attributes so that we can apply filters
+
+        This allows us to filter objects that are not dictionaries.
+        """
+        if not entry:
             return None
 
-        if isinstance(_list[0], dict):
+        if isinstance(entry, dict):
             return get_impl
 
         return get_attr
@@ -450,8 +456,13 @@ class filters(object):
     def do_filters(self, _list, filters, select, shortcircuit, value_maps):
         rv = []
 
-        getter = self.getter_fn(_list)
+        # we may be filtering output from a generator and so delay
+        # evaluation of what "getter" to use until we begin iteration
+        getter = None
+
         for i in _list:
+            if getter is None:
+                getter = self.getter_fn(i)
             valid = True
             for f in filters:
                 if not self.eval_filter(i, f, getter, value_maps):
@@ -555,6 +566,7 @@ class filters(object):
         options, select, order_by = self.validate_options(options)
 
         do_shortcircuit = options.get('get') and not order_by
+
         if filters:
             maps = {}
             self.validate_filters(filters, value_maps=maps)
@@ -565,7 +577,9 @@ class filters(object):
         elif select:
             rv = self.do_select(_list, select)
         else:
-            rv = _list
+            # Normalize the output to a list. Caller may have passed
+            # a generator into this method.
+            rv = list(_list)
 
         if options.get('count') is True:
             return self.do_count(rv)
@@ -620,6 +634,7 @@ def sw_info():
             'fullname': f'{BRAND_PRODUCT}-{version}',
             'buildtime': manifest['buildtime'],
         }
+
 
 def sw_codename():
     return sw_info()['codename']
