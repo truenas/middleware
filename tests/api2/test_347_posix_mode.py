@@ -103,11 +103,11 @@ def test_05_prepare_recursive_tests(request):
     assert result.status_code == 200, result.text
 
     cmd = f'mkdir -p /mnt/{MODE_DATASET}/dir1/dir2'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
     cmd = f'touch /mnt/{MODE_DATASET}/dir1/dir2/testfile'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
     results = POST('/filesystem/stat/', f'/mnt/{MODE_SUBDATASET}')
@@ -241,70 +241,70 @@ Next series of tests are for correct behavior of POSIX permissions
 def dir_mode_check(mode_bit):
     if mode_bit.endswith("READ"):
         cmd = f'ls /mnt/{MODE_DATASET}'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is True, results['output']
 
         cmd = f'touch /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
         cmd = f'cd /mnt/{MODE_DATASET}'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
     elif mode_bit.endswith("WRITE"):
         cmd = f'ls /mnt/{MODE_DATASET}'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
         cmd = f'touch /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is True, results['output']
 
         cmd = f'rm /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is True, results['output']
 
     elif mode_bit.endswith("EXECUTE"):
         cmd = f'ls /mnt/{MODE_DATASET}'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
         # Ensure that file is deleted before trying to create
         cmd = f'rm /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, user, password, ip)
+        results = SSH_TEST(cmd, user, password)
 
         cmd = f'touch /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
 
 def file_mode_check(mode_bit):
     if mode_bit.endswith("READ"):
         cmd = f'cat /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is True, results['output']
         assert results['stdout'].strip() == "echo CANARY", results['output']
 
         cmd = f'echo "FAIL" >> /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
         cmd = f'/mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
     elif mode_bit.endswith("WRITE"):
         cmd = f'cat /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
         cmd = f'echo "SUCCESS" > /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is True, results['output']
 
         cmd = f'/mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
         """
@@ -312,20 +312,20 @@ def file_mode_check(mode_bit):
         means rm should fail even though WRITE is set for user.
         """
         cmd = f'rm /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
         cmd = f'echo "echo CANARY" > /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, user, password, ip)
+        results = SSH_TEST(cmd, user, password)
         assert results['result'] is True, results['output']
 
     elif mode_bit.endswith("EXECUTE"):
         cmd = f'cat /mnt/{MODE_DATASET}'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
         cmd = f'echo "FAIL" > /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
 
@@ -336,17 +336,17 @@ def file_mode_check_xor(mode_bit):
     """
     if mode_bit.endswith("READ"):
         cmd = f'cat /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
     elif mode_bit.endswith("WRITE"):
         cmd = f'echo "SUCCESS" > /mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
     elif mode_bit.endswith("EXECUTE"):
         cmd = f'/mnt/{MODE_DATASET}/canary'
-        results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
+        results = SSH_TEST(cmd, MODE_USER, MODE_PWD)
         assert results['result'] is False, results['output']
 
 
@@ -459,7 +459,7 @@ def test_14_setup_file_test(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     cmd = f'echo "echo CANARY" > /mnt/{MODE_DATASET}/canary'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
 

@@ -125,7 +125,6 @@ def test_001_initialize_smb_servce(initialize_for_smb_tests):
 def test_002_check_client_count(request):
     depends(request, ["SMB_SHARE_CREATED"])
     with smb_connection(
-        host=ip,
         share=SMB_NAME,
         username=SMB_USER,
         password=SMB_PWD,
@@ -145,7 +144,7 @@ def test_009_share_is_writable(request):
     """
     depends(request, ["SMB_SHARE_CREATED"])
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     fd = c.create_file("testfile", "w")
     c.close(fd, True)
     c.disconnect()
@@ -162,7 +161,7 @@ def test_010_check_dosmode_create(request, dm):
         return
 
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     if dm == DOSmode.READONLY:
         c.create_file(dm.name, "w", "r")
     elif dm == DOSmode.HIDDEN:
@@ -186,7 +185,7 @@ def test_011_check_dos_ro_cred_handling(request):
     """
     depends(request, ["SHARE_IS_WRITABLE"])
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     fd = c.create_file("RO_TEST", "w", "r")
     c.write(fd, b"TESTING123\n")
     c.disconnect()
@@ -217,7 +216,7 @@ def test_051_share_is_writable_smb1(request):
     """
     depends(request, ["SMB_SHARE_CREATED"])
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     fd = c.create_file("testfile", "w")
     c.close(fd, True)
     c.disconnect()
@@ -234,7 +233,7 @@ def test_052_check_dosmode_create_smb1(request, dm):
         return
 
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     if dm == DOSmode.READONLY:
         c.create_file(f'{dm.name}_smb1', "w", "r")
     elif dm == DOSmode.HIDDEN:
@@ -258,7 +257,7 @@ def test_060_create_base_file_for_streams_tests(request):
     """
     depends(request, ["SMB_SHARE_CREATED"])
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     fd = c.create_file("streamstestfile", "w")
     c.close(fd)
     c.mkdir("streamstestdir")
@@ -273,7 +272,7 @@ def test_061_create_and_write_stream_smb2(request, mount_share):
     """
     depends(request, ["STREAM_TESTFILE_CREATED"])
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     fd = c.create_file("streamstestfile:smb2_stream", "w")
     c.write(fd, b'test1', 0)
     c.close(fd)
@@ -310,7 +309,6 @@ def test_062_write_stream_large_offset_smb2(request, mount_share):
     """
     depends(request, ["STREAM_TESTFILE_CREATED"])
     with smb_connection(
-        host=ip,
         share=SMB_NAME,
         username=SMB_USER,
         password=SMB_PWD,
@@ -386,7 +384,7 @@ def test_063_stream_delete_on_close_smb2(request):
     """
     depends(request, ["STREAM_WRITTEN_SMB2", "LARGE_STREAM_WRITTEN_SMB2"])
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     fd = c.create_file("streamstestfile:smb2_stream", "w")
     c.close(fd, True)
 
@@ -401,7 +399,7 @@ def test_065_create_and_write_stream_smb1(request):
     """
     depends(request, ["STREAM_TESTFILE_CREATED"])
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     fd = c.create_file("streamstestfile:smb1_stream", "w")
     c.write(fd, b'test1', 0)
     c.close(fd)
@@ -421,7 +419,7 @@ def test_066_write_stream_large_offset_smb1(request):
     """
     depends(request, ["STREAM_WRITTEN_SMB1"])
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     fd = c.create_file("streamstestfile:smb1_stream", "w")
     c.write(fd, b'test2', 131072)
     c.close(fd)
@@ -443,7 +441,7 @@ def test_067_stream_delete_on_close_smb1(request):
     """
     depends(request, ["STREAM_WRITTEN_SMB1", "LARGE_STREAM_WRITTEN_SMB1"])
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     fd = c.create_file("streamstestfile:smb1_stream", "w")
     c.close(fd, True)
 
@@ -462,7 +460,7 @@ def test_068_case_insensitive_rename(request):
     """
     depends(request, ["SHARE_IS_WRITABLE"])
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     fd = c.create_file("to_rename", "w")
     c.close(fd)
     c.rename("to_rename", "To_rename")
@@ -477,7 +475,7 @@ def test_069_normal_rename(request):
     """
     depends(request, ["SHARE_IS_WRITABLE"])
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     fd = c.create_file("old_file_to_rename", "w")
     c.close(fd)
     c.rename("old_file_to_rename", "renamed_new_file")
@@ -522,7 +520,6 @@ def test_090_test_auto_smb_quota(request, proto):
     depends(request, ["BA_ADDED_TO_USER"])
     c = SMB()
     qt = c.get_quota(
-        host=ip,
         share=SMB_NAME,
         username=SMB_USER,
         password=SMB_PWD,
@@ -559,7 +556,6 @@ def test_092_set_smb_quota(request, proto):
     new_quota = 2 * (2**30)
     c = SMB()
     qt = c.set_quota(
-        host=ip,
         share=SMB_NAME,
         username=SMB_USER,
         password=SMB_PWD,
@@ -573,7 +569,6 @@ def test_092_set_smb_quota(request, proto):
     assert qt[0]['hard_limit'] == new_quota, qt
 
     qt = c.get_quota(
-        host=ip,
         share=SMB_NAME,
         username=SMB_USER,
         password=SMB_PWD,
@@ -585,7 +580,6 @@ def test_092_set_smb_quota(request, proto):
     assert qt[0]['hard_limit'] == new_quota, qt
 
     qt = c.set_quota(
-        host=ip,
         share=SMB_NAME,
         username=SMB_USER,
         password=SMB_PWD,
@@ -599,7 +593,6 @@ def test_092_set_smb_quota(request, proto):
     assert qt[0]['hard_limit'] is None, qt
 
     qt = c.get_quota(
-        host=ip,
         share=SMB_NAME,
         username=SMB_USER,
         password=SMB_PWD,
@@ -661,7 +654,7 @@ def test_152_check_xattr_via_smb(request, mount_share, xat):
     afptestfile = f'afp_xattr_testfile:{AFPXattr[xat]["smbname"]}'
     bytes_to_read = AFPXattr[xat]["smb_bytes"] if xat == "org.netatalk.Metadata" else AFPXattr[xat]["bytes"]
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     fd = c.create_file(afptestfile, "w")
     xat_bytes = c.read(fd, 0, len(bytes_to_read) + 1)
     c.close(fd)
@@ -693,7 +686,7 @@ def test_153_unlink_xattr_via_smb(request, xat):
     depends(request, ["XATTR_CHECK_SMB_READ"])
     afptestfile = f'afp_xattr_testfile:{AFPXattr[xat]["smbname"]}'
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     fd = c.create_file(afptestfile, "w")
     c.close(fd, True)
     c.disconnect()
@@ -709,7 +702,7 @@ def test_154_write_afp_xattr_via_smb(request, xat):
     afptestfile = f'afp_xattr_testfile:{AFPXattr[xat]["smbname"]}'
     payload = AFPXattr[xat]["smb_bytes"] if xat == "org.netatalk.Metadata" else AFPXattr[xat]["bytes"]
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     fd = c.create_file(afptestfile, "w")
     c.write(fd, payload)
     c.close(fd)
@@ -741,7 +734,6 @@ def test_155_ssh_read_afp_xattr(request, xat):
 def test_175_check_external_path(request):
     with smb_share(f'EXTERNAL:{ip}\\{SMB_NAME}', 'EXTERNAL'):
         with smb_connection(
-            host=ip,
             share=SMB_NAME,
             username=SMB_USER,
             password=SMB_PWD,
@@ -765,7 +757,6 @@ def test_176_check_dataset_auto_create(request):
         ds_mp = os.path.join('/mnt', ds)
         with smb_share(ds_mp, 'DATASETS', {'purpose': 'PRIVATE_DATASETS'}):
             with smb_connection(
-                host=ip,
                 share='DATASETS',
                 username=SMB_USER,
                 password=SMB_PWD,
@@ -786,7 +777,6 @@ def test_180_create_share_multiple_dirs_deep(request):
 
         with smb_share(dirs_path, 'DIRS'):
             with smb_connection(
-                host=ip,
                 share='DIRS',
                 username=SMB_USER,
                 password=SMB_PWD,
@@ -803,7 +793,6 @@ def test_181_create_and_disable_share(request):
     with dataset('smb_disabled', data={'share_type': 'SMB'}) as ds:
         with smb_share(os.path.join('/mnt', ds), 'TO_DISABLE') as tmp_share:
             with smb_connection(
-                host=ip,
                 share='TO_DISABLE',
                 username=SMB_USER,
                 password=SMB_PWD,

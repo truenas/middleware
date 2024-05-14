@@ -71,7 +71,6 @@ def test_012_test_basic_smb_ops(request, params):
     depends(request, ["smb_initialized"], scope="session")
     proto, runas = params
     with smb_connection(
-        host=ip,
         share=SMB_NAME,
         username=runas,
         password=PASSWD,
@@ -187,7 +186,6 @@ def test_042_recyclebin_functional_test(request):
     depends(request, ["SMB_RECYCLE_CONFIGURED"], scope="session")
     with create_dataset(f'{test_420_ds_name}/subds', {'share_type': 'SMB'}):
         with smb_connection(
-            host=ip,
             share=SMB_NAME,
             username=SHAREUSER,
             password=PASSWD,
@@ -215,7 +213,6 @@ def test_043_recyclebin_functional_test_subdir(request, smb_config):
             'recyclebin': True
         } | smb_config['share']):
             with smb_connection(
-                host=ip,
                 share=tmp_share_name,
                 username=SHAREUSER,
                 password=PASSWD,
@@ -236,7 +233,6 @@ def test_043_recyclebin_functional_test_subdir(request, smb_config):
             'recyclebin': True
         } | smb_config['share']):
             with smb_connection(
-                host=ip,
                 share=tmp_share_name,
                 username=SHAREUSER,
                 password=PASSWD,
@@ -388,7 +384,6 @@ def validate_audit_op(msg, svc):
 
 def do_audit_ops(svc):
     with smb_connection(
-        host=ip,
         share=svc,
         username=SHAREUSER,
         password=PASSWD,

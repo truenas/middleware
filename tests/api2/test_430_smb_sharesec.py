@@ -9,7 +9,6 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, client
 from functions import PUT, POST, GET, DELETE, SSH_TEST
-from functions import make_ws_request, wait_on_job
 from auto_config import pool_name, user, password, ip
 
 Guests = {
@@ -132,14 +131,14 @@ def test_07_set_smb_acl_by_unix_id(request, sharesec_user):
 def test_24_delete_share_info_tdb(request):
     depends(request, ["sharesec_acl_set"], scope="session")
     cmd = 'rm /var/db/system/samba4/share_info.tdb'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
 
 def test_25_verify_share_info_tdb_is_deleted(request):
     depends(request, ["sharesec_acl_set"], scope="session")
     cmd = 'test -f /var/db/system/samba4/share_info.tdb'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, results['output']
 
     results = POST("/sharing/smb/getacl", {'share_name': share_info['name']})
@@ -166,7 +165,7 @@ def test_27_restore_sharesec_with_flush_share_info(request, sharesec_user):
 def test_29_verify_share_info_tdb_is_created(request):
     depends(request, ["sharesec_acl_set"], scope="session")
     cmd = 'test -f /var/db/system/samba4/share_info.tdb'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
 
@@ -206,49 +205,14 @@ def test_31_toggle_share_and_verify_acl_preserved(request, sharesec_user):
 
     # Abusive test, bypass normal APIs for share and
     # verify that sync_registry call still preserves info.
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'datastore.update',
-        'params': ['sharing.cifs.share', share_info['id'], {'cifs_enabled': False}],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
+    call('datastore.update', 'sharing.cifs.share', share_info['id'], {'cifs_enabled': False})
 
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'sharing.smb.sync_registry',
-        'params': [],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
+    call('sharing.smb.sync_registry', job=True)
 
-    job_id = res['result']
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    call('datastore.update', 'sharing.cifs.share', share_info['id'], {'cifs_enabled': True})
 
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'datastore.update',
-        'params': ['sharing.cifs.share', share_info['id'], {'cifs_enabled': True}],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
+    call('sharing.smb.sync_registry', job=True)
 
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'sharing.smb.sync_registry',
-        'params': [],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
-
-    job_id = res['result']
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-    results = POST("/sharing/smb/getacl", {'share_name': 'my_sharesec2'})
-    assert results.status_code == 200, results.text
-    acl = results.json()
-
+    acl = call('sharing.smb.getacl', {'share_name': 'my_sharesec2'})
     assert acl['share_name'].casefold() == share_info['name'].casefold()
     assert acl['share_acl'][0]['ae_who_str'] == sharesec_user['username']
