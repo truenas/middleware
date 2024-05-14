@@ -270,7 +270,7 @@ class InterfaceService(CRUDService):
             'state': iface_state,
             'aliases': [],
             'ipv4_dhcp': False if configs else True,
-            'ipv6_auto': False,
+            'ipv6_auto': False if configs else True,
             'description': '',
             'mtu': None,
         }
@@ -1287,6 +1287,9 @@ class InterfaceService(CRUDService):
                         config['id'],
                         {'int_interface': new['name']},
                     )
+
+            autoconf = '1' if new['ipv6_auto'] else '0'
+            await self.middleware.call('tunable.set_sysctl', f'net.ipv6.conf.{new["name"]}.autoconf', autoconf)
 
             if iface['type'] == 'PHYSICAL':
                 link_address_update = {'link_address': iface['state']['hardware_link_address']}
