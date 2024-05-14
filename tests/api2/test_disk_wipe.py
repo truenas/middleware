@@ -32,7 +32,7 @@ def test_disk_wipe_partition_clean():
     disk = call("disk.get_unused")[0]["name"]
 
     # Create a data partition
-    call('disk.format', disk, 0)
+    call('disk.format', disk)
     parts = call('disk.list_partitions', disk)
     seek_blk = parts[0]['start_sector']
     blk_size = int(parts[0]['start'] / parts[0]['start_sector'])
