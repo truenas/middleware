@@ -1,5 +1,5 @@
 import sys
-from functions import SSH_TEST
+from functions import SSH_TEST, SRVTarget, get_host_ip
 from platform import system
 
 # sys.real_prefix only found in old virtualenv
@@ -49,7 +49,7 @@ class NFS(object):
 
     def __init__(self, hostname, path, **kwargs):
         self._path = path
-        self._hostname = hostname
+        self._hostname = hostname or get_host_ip(SRVTarget.DEFAULT)
         self._version = kwargs.get('vers', 3)
         self._localpath = kwargs.get('localpath', '/mnt/testnfs')
         self._mounted = False

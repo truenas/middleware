@@ -69,13 +69,13 @@ def test_dataset_quota_alert(request, datasets, expected_alerts):
 
             if used is not None:
                 results = SSH_TEST(f'dd if=/dev/urandom of=/mnt/{pool_name}/quota_test/{dataset}/blob '
-                                   f'bs=1M count={used}', user, password, ip)
+                                   f'bs=1M count={used}', user, password)
                 assert results['result'] is True, results
 
-        results = SSH_TEST("midclt call alert.initialize", user, password, ip)
+        results = SSH_TEST("midclt call alert.initialize", user, password)
         assert results['result'] is True, results
 
-        results = SSH_TEST("midclt call -job core.bulk alert.process_alerts '[[]]'", user, password, ip)
+        results = SSH_TEST("midclt call -job core.bulk alert.process_alerts '[[]]'", user, password)
         assert results['result'] is True, results
 
         result = GET("/alert/list/")

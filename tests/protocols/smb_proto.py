@@ -1,7 +1,9 @@
 import sys
 import enum
 import subprocess
+from functions import SRVTarget, get_host_ip
 from platform import system
+
 
 # sys.real_prefix only found in old virtualenv
 # if detected set local site-packages to use for samba
@@ -81,7 +83,7 @@ class SMB(object):
         self._smb1 = False
 
     def connect(self, **kwargs):
-        host = kwargs.get("host")
+        host = kwargs.get("host", get_host_ip(SRVTarget.DEFAULT))
         share = kwargs.get("share")
         username = kwargs.get("username")
         domain = kwargs.get("domain")

@@ -41,7 +41,7 @@ def test_001_net_share_enum(setup_smb_user, setup_smb_share):
     path = setup_smb_share['share']['path']
     share_name = setup_smb_share['share']['name']
 
-    with MS_RPC(username=SMB_USER, password=SMB_PWD, host=ip) as hdl:
+    with MS_RPC(username=SMB_USER, password=SMB_PWD) as hdl:
         shares = hdl.shares()
         # IPC$ share should always be present
         assert len(shares) == 2, str(shares)
@@ -62,7 +62,7 @@ def test_002_enum_users(setup_smb_user, setup_smb_share):
     assert results.status_code == 200, results.text
     user_info = results.json()
 
-    with MS_RPC(username=SMB_USER, password=SMB_PWD, host=ip) as hdl:
+    with MS_RPC(username=SMB_USER, password=SMB_PWD) as hdl:
         entry = None
         users = hdl.users()
         for u in users:
@@ -94,7 +94,7 @@ def test_003_access_based_share_enum(setup_smb_user, setup_smb_share):
     results = GET("/sharing/smb")
     assert results.status_code == 200, results.text
 
-    with MS_RPC(username=SMB_USER, password=SMB_PWD, host=ip) as hdl:
+    with MS_RPC(username=SMB_USER, password=SMB_PWD) as hdl:
         shares = hdl.shares()
         assert len(shares) == 1, str({"enum": shares, "shares": results.json()})
 

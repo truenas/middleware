@@ -362,15 +362,15 @@ def test_12_prepare_recursive_tests(request):
     assert result.status_code == 200, result.text
 
     cmd = f'mkdir -p /mnt/{ACLTEST_DATASET}/dir1/dir2'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
     cmd = f'touch /mnt/{ACLTEST_DATASET}/dir1/testfile'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
     cmd = f'touch /mnt/{ACLTEST_DATASET}/dir1/dir2/testfile'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
 

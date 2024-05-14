@@ -2,6 +2,7 @@ import re
 import subprocess
 
 from collections import namedtuple
+from functions import SRVTarget, get_host_ip
 
 RE_SAMR_ENUMDOMAINS = re.compile(r"name:\[(?P<name>\w+)\] idx:\[(?P<idx>\w+)\]")
 RE_SAMR_ENUMDOMUSER = re.compile(r"user:\[(?P<user>\w+)\] rid:\[(?P<rid>\w+)\]")
@@ -17,7 +18,7 @@ class MS_RPC():
         self.workgroup = kwargs.get('workgroup')
         self.kerberos = kwargs.get('use_kerberos', False)
         self.realm = kwargs.get('realm')
-        self.host = kwargs.get('host')
+        self.host = kwargs.get('host', get_host_ip(SRVTarget.DEFAULT))
         self.smb1 = kwargs.get('smb1', False)
 
     def connect(self):

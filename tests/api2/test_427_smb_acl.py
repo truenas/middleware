@@ -241,7 +241,7 @@ def test_007_test_disable_autoinherit(request):
     with create_dataset(f'{pool_name}/{ds}', {'share_type': 'SMB'}):
         with smb_share(path, 'NFS4_INHERIT'):
             c = SMB()
-            c.connect(host=ip, share='NFS4_INHERIT', username=SMB_USER, password=SMB_PWD, smb1=False)
+            c.connect(share='NFS4_INHERIT', username=SMB_USER, password=SMB_PWD, smb1=False)
             c.mkdir('foo')
             sd = c.get_sd('foo')
             assert 'SEC_DESC_DACL_PROTECTED' not in sd['control']['parsed'], str(sd)

@@ -486,7 +486,7 @@ def test_23_test_acl_function_deny(perm, request):
         # This should never happen.
         cmd = "touch /var/empty/ERROR"
 
-    results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+    results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
     """
     Per RFC5661 Section 6.2.1.3.2, deletion is permitted if either
     DELETE_CHILD is permitted on parent, or DELETE is permitted on
@@ -583,7 +583,7 @@ def test_24_test_acl_function_allow(perm, request):
         # This should never happen.
         cmd = "touch /var/empty/ERROR"
 
-    results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+    results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
     errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
     assert results['result'] is True, errstr
     if perm in ["DELETE", "DELETE_CHILD"]:
@@ -666,7 +666,7 @@ def test_25_test_acl_function_omit(perm, request):
         # This should never happen.
         cmd = "touch /var/empty/ERROR"
 
-    results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+    results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
     errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
     assert results['result'] is False, errstr
 
@@ -718,13 +718,13 @@ def test_25_test_acl_function_allow_restrict(perm, request):
 
     if "EXECUTE" not in tests_to_skip:
         cmd = f'cd /mnt/{ACLTEST_DATASET}'
-        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
         errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
         assert results['result'] is False, errstr
 
     if "DELETE" not in tests_to_skip:
         cmd = f'rm /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
         errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
         assert results['result'] is False, errstr
         if results['result'] is True:
@@ -734,37 +734,37 @@ def test_25_test_acl_function_allow_restrict(perm, request):
 
     if "READ_DATA" not in tests_to_skip:
         cmd = f'cat /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
         errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
         assert results['result'] is False, errstr
 
     if "WRITE_DATA" not in tests_to_skip:
         cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
         errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
         assert results['result'] is False, errstr
 
     if "WRITE_ATTRIBUTES" not in tests_to_skip:
         cmd = f'touch -a -m -t 201512180130.09 /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
         errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
         assert results['result'] is False, errstr
 
     if "READ_ACL" not in tests_to_skip:
         cmd = f'{getfaclcmd} /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
         errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
         assert results['result'] is False, errstr
 
     if "WRITE_ACL" not in tests_to_skip:
         cmd = f'{setfaclcmd} -x 0 /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
         errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
         assert results['result'] is False, errstr
 
     if "WRITE_OWNER" not in tests_to_skip:
         cmd = f'chown {ACL_USER} /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+        results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
         errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {to_allow}'
         assert results['result'] is False, errstr
 
@@ -802,7 +802,7 @@ def test_26_file_execute_deny(request):
     ssh(f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt')
 
     cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
-    results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+    results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
     errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {payload_acl}'
     assert results['result'] is False, errstr
 
@@ -845,7 +845,7 @@ def test_27_file_execute_allow(request):
     ssh(f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt')
 
     cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
-    results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+    results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
     errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {payload_acl}'
     assert results['result'] is True, errstr
 
@@ -886,7 +886,7 @@ def test_28_file_execute_omit(request):
     ssh(f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt')
 
     cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
-    results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
+    results = SSH_TEST(cmd, ACL_USER, ACL_PWD)
     errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {payload_acl}'
     assert results['result'] is False, errstr
 

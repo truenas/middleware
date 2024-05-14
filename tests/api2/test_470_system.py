@@ -11,6 +11,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import ip
 from functions import GET, make_ws_request
+from middlewared.test.integration.utils import call
 
 
 def test_01_check_if_system_is_ready_to_use():
@@ -56,13 +57,7 @@ def test_06_check_system_set_time():
 
     # hop 300 seconds into the past
     target = datetime - 300
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'system.set_time',
-        'params': [int(target)]
-    })
-    error = res.get('error')
-    assert error is None, str(error)
+    call('system.set_time', int(target))
 
     results = GET("/system/info/")
     assert results.status_code == 200, results.text
