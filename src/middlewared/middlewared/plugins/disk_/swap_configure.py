@@ -197,6 +197,11 @@ class DiskService(Service):
             else:
                 existing_swap_devices['partitions'] = []
 
+        # NOTE: We disable swap partitions by default. See NAS-128873 for details.
+        # If the user wants to re-enable the swap partition(s), they will need to
+        # run "swapon -a" manually (or in a post-init script).
+        await run('swapoff -a', check=False)
+
         return existing_swap_devices['partitions'] + existing_swap_devices['mirrors'] + created_swap_devices
 
     @private
