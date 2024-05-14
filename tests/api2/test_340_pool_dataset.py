@@ -9,9 +9,10 @@ import pytest
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job, make_ws_request
+from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password
 from middlewared.client import ClientException
+from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call
 
@@ -355,17 +356,12 @@ def test_31_path_to_dataset(request):
     path points to the boot pool.
     """
 
-    get_payload = {'msg': 'method', 'method': 'zfs.dataset.path_to_dataset', 'params': []}
-    get_payload['params'] = [f'/mnt/{pool_name}']
+    assert call('zfs.dataset.path_to_dataset', f'/mnt/{pool_name}') == pool_name
 
-    res = make_ws_request(ip, get_payload)
-    assert res.get('error') is None, res['error']
-    assert res['result'] == pool_name, res
+    with pytest.raises(CallError) as ve:
+        call('zfs.dataset.path_to_dataset', '/mnt')
 
-    get_payload['params'] = ['/mnt']
-    res = make_ws_request(ip, get_payload)
-    assert 'error' in res
-    assert 'path is on boot pool' in res['error']['reason']
+    assert 'path is on boot pool' in str(ve.value)
 
 
 def test_32_test_apps_preset(request):

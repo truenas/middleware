@@ -5,18 +5,10 @@ import sys
 import os
 import time
 from pytest_dependency import depends
+from auto_config import pool_name
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import (
-    GET,
-    PUT,
-    POST,
-    DELETE,
-    SSH_TEST,
-    cmd_test,
-    wait_on_job
-)
-from auto_config import pool_name, ip, user, password
+from functions import GET, POST
 
 from middlewared.test.integration.assets.directory_service import ldap
 from middlewared.test.integration.assets.privilege import privilege

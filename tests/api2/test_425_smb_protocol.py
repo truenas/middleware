@@ -639,7 +639,7 @@ def test_151_set_xattr_via_ssh(request, xat):
     cmd += f'echo -n \"{AFPXattr[xat]["text"]}\" | base64 -d | '
     cmd += f'attr -q -s {xat} {afptestfile}'
 
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, {"cmd": cmd, "res": results['output']}
 
 
@@ -725,7 +725,7 @@ def test_155_ssh_read_afp_xattr(request, xat):
     smb_path = TEST_DATA['share']['path']
     afptestfile = f'{smb_path}/afp_xattr_testfile'
     cmd = f'attr -q -g {xat} {afptestfile} | base64'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
     xat_data = b64decode(results['stdout'])
     assert AFPXattr[xat]['bytes'] == xat_data, results['output']
@@ -747,7 +747,7 @@ def test_175_check_external_path(request):
         cmd += '-c "get external_test_file"'
         ssh(cmd)
 
-        results = SSH_TEST('cat external_test_file', user, password, ip)
+        results = SSH_TEST('cat external_test_file', user, password)
         assert results['result'] is True, results['output']
         assert results['stdout'] == 'EXTERNAL_TEST'
 

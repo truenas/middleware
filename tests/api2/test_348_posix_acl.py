@@ -9,7 +9,7 @@ import pytest
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, user, password
+from auto_config import pool_name, user, password
 from pytest_dependency import depends
 
 

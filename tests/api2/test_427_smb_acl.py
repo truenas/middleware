@@ -9,13 +9,13 @@ import subprocess
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import (
-    ip,
     pool_name,
 )
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils.client import truenas_server
 from protocols import SMB
 from pytest_dependency import depends
 from time import sleep
@@ -210,7 +210,7 @@ def test_006_test_preserve_dynamic_id_mapping(request):
             sleep(5)
             cmd = [
                 'smbcacls',
-                f'//{ip}/DYNAMIC',
+                f'//{truenas_server.ip}/DYNAMIC',
                 '\\',
                 '-a', r'ACL:S-1-3-4:ALLOWED/0x0/FULL',
                 '-d', '0',

@@ -6,8 +6,8 @@ import os
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+from auto_config import pool_name
 from functions import POST, GET, PUT, DELETE, SSH_TEST
-from auto_config import user, password, pool_name
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.assets.pool import dataset as make_dataset
 

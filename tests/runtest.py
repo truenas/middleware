@@ -238,8 +238,6 @@ cfg_content = f"""#!{sys.executable}
 
 user = "root"
 password = "{passwd}"
-ip = "{ip}"
-ip2 = "{ip2}"
 netmask = "{netmask}"
 gateway = "{gateway}"
 vip = "{vip}"

@@ -9,7 +9,6 @@ try:
 except ImportError:
     default_user = None
     default_password = None
-    default_ip = None
 
 __all__ = ["ssh"]
 

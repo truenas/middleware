@@ -10,7 +10,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from protocols import smb_connection
 from utils import create_dataset
-from auto_config import ip, pool_name
+from auto_config import pool_name
 from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset as make_dataset
@@ -117,7 +117,7 @@ def test_019_change_sharing_smd_home_to_true_and_set_guestok_to_false(request):
     share_path = call('smb.getparm', 'path', new_info['name'])
     assert share_path == share['path_local']
     obey_pam_restrictions = call('smb.getparm', 'obey pam restrictions', 'GLOBAL')
-    assert obey_pam_restrictions == False
+    assert obey_pam_restrictions is False
 
 
 def test_034_change_timemachine_to_true(request):

@@ -7,13 +7,8 @@ import sys
 
 from base64 import b64encode, b64decode
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.client import truenas_server
 
-try:
-    apifolder = os.getcwd()
-    sys.path.append(apifolder)
-    from auto_config import ip as default_ip
-except ImportError:
-    default_ip = None
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +45,8 @@ def smb_share(path, name, options=None):
 
 
 @contextlib.contextmanager
-def smb_mount(share, username, password, local_path='/mnt/cifs', options=None, ip=default_ip):
+def smb_mount(share, username, password, local_path='/mnt/cifs', options=None, ip=None):
+    ip = ip or truenas_server.ip
     mount_options = [f'username={username}', f'password={password}'] + (options or [])
     escaped_path = shlex.quote(local_path)
     mount_cmd = [
