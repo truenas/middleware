@@ -1,7 +1,7 @@
 import pytest
 
 from time import sleep
-from middlewared.test.integration.assets.pool import mirror_topology, another_pool_topologies, another_pool
+from middlewared.test.integration.assets.pool import another_pool_topologies, another_pool
 from middlewared.test.integration.utils import call
 from auto_config import ha
 pytestmark = [
@@ -49,29 +49,3 @@ def test_pool_replace_disk(topology, i):
 
         assert call("disk.get_instance", new_disk["identifier"], {"extra": {"pools": True}})["pool"] == pool["name"]
         assert call("disk.get_instance", to_replace_disk["identifier"], {"extra": {"pools": True}})["pool"] is None
-
-
-@pytest.mark.parametrize("swaps", [[0, 0], [2, 2], [2, 4]])
-def test_pool_replace_disk_swap(swaps):
-    unused = call("disk.get_unused")
-    if len(unused) < 3:
-        raise RuntimeError(f"At least 3 unused disks required to run this test")
-
-    test_disks = unused[:3]
-
-    sizes = {disk["name"]: disk["size"] for disk in test_disks}
-    assert len(set(sizes.values())) == 1, sizes
-
-    call("system.advanced.update", {"swapondrive": swaps[0]})
-    try:
-        with another_pool(topology=mirror_topology) as pool:
-            to_replace_vdev = disks(pool["topology"])[0]
-
-            call("system.advanced.update", {"swapondrive": swaps[1]})
-            call("pool.replace", pool["id"], {
-                "label": to_replace_vdev["guid"],
-                "disk": test_disks[2]["identifier"],
-                "force": True,
-            }, job=True)
-    finally:
-        call("system.advanced.update", {"swapondrive": 2})

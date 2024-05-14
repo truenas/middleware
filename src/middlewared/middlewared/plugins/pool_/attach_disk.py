@@ -54,7 +54,7 @@ class PoolService(Service):
         verrors.check()
 
         guid = vdev['guid'] if vdev['type'] in ['DISK', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3'] else vdev['children'][0]['guid']
-        disks = {options['new_disk']: {'create_swap': topology_type == 'data', 'vdev': []}}
+        disks = {options['new_disk']: {'create_swap': False}}
         await self.middleware.call('pool.format_disks', job, disks)
 
         devname = disks[options['new_disk']]['vdev'][0]
@@ -62,8 +62,6 @@ class PoolService(Service):
             {'target': guid, 'type': 'DISK', 'path': devname}
         ])
         await job.wrap(extend_job)
-
-        self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
 
         if vdev['type'] in ('RAIDZ1', 'RAIDZ2', 'RAIDZ3'):
             while True:

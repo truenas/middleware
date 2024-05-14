@@ -208,12 +208,9 @@ class PoolService(CRUDService):
         return pool
 
     async def __convert_topology_to_vdevs(self, topology):
-        # We do two things here:
-        # 1. Gather all disks transversing the topology
-        # 2. Keep track of the vdev each disk is supposed to be located
-        #    along with a flag whether we should use swap partition in said vdev
-        # This is required so we can format all disks in one pass, allowing it
-        # to be performed in parallel if we wish to do so.
+        # Gather all disks transversing the topology so we can
+        # format all disks in one pass, allowing it to be performed
+        # in parallel if we wish to do so.
         disks = {}
         vdevs = []
         for i in ('data', 'cache', 'log', 'special', 'dedup'):
@@ -231,10 +228,8 @@ class PoolService(CRUDService):
                     vdev['draid_data_disks'] = t_vdev['draid_data_disks']
                     vdev['draid_spare_disks'] = t_vdev['draid_spare_disks']
                 vdevs.append(vdev)
-                # cache and log devices should not have a swap
-                create_swap = True if i == 'data' else False
                 for disk in t_vdev['disks']:
-                    disks[disk] = {'vdev': vdev_devs_list, 'create_swap': create_swap}
+                    disks[disk] = {'vdev': vdev_devs_list, 'create_swap': False}
 
         if topology.get('spares'):
             vdev_devs_list = []
@@ -244,7 +239,7 @@ class PoolService(CRUDService):
                 'devices': vdev_devs_list,
             })
             for disk in topology['spares']:
-                disks[disk] = {'vdev': vdev_devs_list, 'create_swap': True}
+                disks[disk] = {'vdev': vdev_devs_list, 'create_swap': False}
 
         return disks, vdevs
 
@@ -665,7 +660,6 @@ class PoolService(CRUDService):
 
         # There is really no point in waiting all these services to reload so do them
         # in background.
-        self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
         self.middleware.create_task(self.middleware.call('pool.restart_services'))
 
         pool = await self.get_instance(pool_id)

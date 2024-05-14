@@ -31,19 +31,18 @@ def test_disk_wipe_partition_clean():
 
     disk = call("disk.get_unused")[0]["name"]
 
-    # Create 1 GiB swap and a data partition
-    call('disk.format', disk, 1)
+    # Create a data partition
+    call('disk.format', disk)
     parts = call('disk.list_partitions', disk)
-    seek_blk = parts[1]['start_sector']
+    seek_blk = parts[0]['start_sector']
     blk_size = int(parts[0]['start'] / parts[0]['start_sector'])
 
     # Write some private data into the start of the data partition
-    cmd = (
+    ssh(
         f"echo '{signal_msg}' > junk;"
         f"dd if=junk bs={blk_size} count=1 oseek={seek_blk} of=/dev/{disk};"
         "rm -f junk"
     )
-    ssh(cmd)
 
     # Confirm presence
     readback_presence = ssh(f"dd if=/dev/{disk} bs={blk_size} iseek={seek_blk} count=1").splitlines()[0]
@@ -64,8 +63,7 @@ def test_disk_wipe_partition_clean():
     proc_partitions = str(ssh('cat /proc/partitions'))
     # If the wipe is truly successful /proc/partitions should have a singular
     # entry for 'disk' in the table
-    disk_entries = [line for line in proc_partitions.splitlines() if disk in line]
-    assert len(disk_entries) == 1
+    assert len([line for line in proc_partitions.splitlines() if disk in line]) == 1
 
 
 @pytest.mark.parametrize('dev_name', ['BOOT', 'UNUSED', 'bogus', ''])

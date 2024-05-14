@@ -165,13 +165,6 @@ async def zfs_events(middleware, data):
     ):
         pool_name = data.get('pool')
         pool_guid = data.get('guid')
-        if await middleware.call('system.ready'):
-            # Swap must be configured only on disks being used by some pool,
-            # for this reason we must react to certain types of ZFS events to keep
-            # it in sync every time there is a change. Also, we only want to configure swap
-            # if system is ready as otherwise when the pools have not been imported,
-            # middleware will remove swap disks as all pools might not have imported
-            middleware.create_task(middleware.call('disk.swaps_configure'))
 
         if pool_name:
             await middleware.call('cache.pop', 'VolumeStatusAlerts')

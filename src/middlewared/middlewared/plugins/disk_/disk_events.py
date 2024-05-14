@@ -11,9 +11,6 @@ async def added_disk(middleware, disk_name):
 async def remove_disk(middleware, disk_name):
     await (await middleware.call('disk.sync_all')).wait()
     await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
-    # If a disk dies we need to reconfigure swaps so we are not left
-    # with a single disk mirror swap, which may be a point of failure.
-    middleware.create_task(middleware.call('disk.swaps_configure'))
 
 
 async def udev_block_devices_hook(middleware, data):

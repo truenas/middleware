@@ -59,19 +59,6 @@ class PoolService(Service):
 
         verrors.check()
 
-        create_swap = found[0] in ('data', 'spare')
-
-        min_size = None
-        if create_swap:
-            for vdev in found[2]:
-                if vdev.get('device'):
-                    size = await self.middleware.call('disk.get_dev_size', vdev['device'])
-                    if size is not None:
-                        if min_size is None:
-                            min_size = size
-                        else:
-                            min_size = min(min_size, size)
-
         swap_disks = [disk['devname']]
         from_disk = None
         if found[1] and await self.middleware.run_in_thread(os.path.exists, found[1]['path']):
@@ -85,8 +72,8 @@ class PoolService(Service):
         await self.middleware.call('pool.format_disks', job, {
             disk['devname']: {
                 'vdev': vdev,
-                'size': min_size,
-                'create_swap': create_swap,
+                'size': None,  # pool.format_disks checks size of disk
+                'create_swap': False,
             },
         })
 
@@ -99,10 +86,6 @@ class PoolService(Service):
         else:
             if from_disk:
                 await self.middleware.call('disk.wipe', from_disk, 'QUICK')
-        finally:
-            # Needs to happen even if replace failed to put back disk that had been
-            # removed from swap prior to replacement
-            self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
 
         if options['preserve_settings']:
             filters = [['zfs_guid', '=', options['label']]]
