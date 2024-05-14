@@ -138,7 +138,6 @@ class PoolService(Service):
         verrors.check()
 
         await self.middleware.call('zfs.pool.online', pool['name'], found[1]['guid'])
-        await self.middleware.call('disk.label_to_disk', found[1]['path'].replace('/dev/', ''))
 
         return True
 

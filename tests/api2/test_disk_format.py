@@ -23,7 +23,6 @@ Verification is based on 'parted' documentation (https://people.redhat.com/msnit
 
 # Some 'constants'
 MBR_SECTOR_GAP = 34
-NO_SWAP = 0  # SWAP was removed, but arg left in API for backwards compat (is a NO-OP)
 ONE_MB = 1048576
 DATA_TYPE_UUID = "6a898cc3-1dd2-11b2-99a6-080020736631"
 
@@ -56,7 +55,7 @@ def test_disk_format(unused_disk):
     disk, dd, grain_size, first_sector = unused_disk
     assert grain_size != 0, 'ERROR: Cannot run this test without a non-zero grain_size'
 
-    call('disk.format', disk['name'], NO_SWAP)
+    call('disk.format', disk['name'])
 
     partitions = call('disk.list_partitions', disk['name'])
     assert len(partitions) == 1
@@ -90,6 +89,6 @@ def test_disk_format_removes_existing_partition_table(unused_disk):
     assert len(partitions) == 1
 
     # format removes existing partition labels and creates a new (data) partition
-    call('disk.format', disk['name'], NO_SWAP)
+    call('disk.format', disk['name'])
     partitions = call('disk.list_partitions', disk['name'])
     assert len(partitions) == 1
