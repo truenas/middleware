@@ -361,14 +361,17 @@ class KubernetesService(ConfigService):
         if data['pool'] and (
             attachments := filter_list(
                 await self.middleware.call('pool.dataset.attachments_with_path', f'/mnt/{data["pool"]}', False, True), [
-                    ['service', 'in', ['cifs', 'iscsitarget', 'nfs']]
+                    ['service', 'in', ['cifs', 'nfs']]
                 ]
             )
         ):
+            svcs = ', '.join([attachment['service'].upper() for attachment in attachments])
             verrors.add(
                 f'{schema}.pool',
-                'This pool cannot be used as the root dataset is '
-                f'used by {", ".join([attachment["service"] for attachment in attachments])!r} services'
+                f'The root dataset of pool `{data["pool"]}` is used by '
+                f'`{svcs.replace("CIFS", "SMB")}` services. '
+                'Shares should be configured so that they export data contained '
+                f'in child datasets such as `{data["pool"]}/SHARE`.'
             )
 
         verrors.check()
