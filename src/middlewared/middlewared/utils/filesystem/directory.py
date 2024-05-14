@@ -11,12 +11,13 @@ import enum
 import errno
 import os
 import pathlib
+import stat
 
 from collections import namedtuple
 from .acl import acl_is_present
 from .attrs import fget_zfs_file_attributes, zfs_attributes_dump
 from .constants import FileType
-from .stat_x import statx_entry_impl
+from .stat_x import ATFlags, statx, statx_entry_impl
 from .utils import path_in_ctldir
 
 
@@ -52,9 +53,45 @@ ALL_ATTRS = (
     DirectoryRequestMask.ZFS_ATTRS
 )
 
+
+class DirectoryRecursionFlag(enum.IntFlag):
+    XDEV = enum.auto() # Cross device (ZFS dataset) boundaries
+    SEE_CTL = enum.auto() # Include paths within .zfs 
+
+
+ALL_RECURSION_FLAGS = (
+    DirectoryRecursionFlag.XDEV,
+    DirectoryRecursionFlag.SEE_CTL
+)
+
+
 dirent_struct = namedtuple('struct_dirent', [
     'name', 'path', 'realpath', 'stat', 'acl', 'xattrs', 'zfs_attrs', 'is_in_ctldir'
 ])
+
+
+class DirectoryEntry():
+    def __init__(self, parent, dirent, this=None):
+        self.__parent = parent
+        self.__dirent = dirent
+        self.__this_iterator = this
+
+    @property
+    def dirent(self):
+        return self.__dirent
+
+    @property
+    def dir_fd(self):
+        if self.__parent is None:
+            return None
+
+        return self.__parent.dir_fd
+
+    def skip(self):
+        """
+        Prune this directory from recursion tree
+        """
+        self.__this_iterator.close()
 
 
 class DirectoryFd():
@@ -121,17 +158,26 @@ class DirectoryIterator():
        entries.
     """
 
-    def __init__(self, path, file_type=None, request_mask=None, dir_fd=None, as_dict=True):
+    def __init__(
+        self, path, file_type=None, request_mask=None,
+        dir_fd=None, as_dict=True, recurse=False, recursion_mask=0
+    ):
         self.__dir_fd = None
         self.__path_iter = None
         self.__path = path
 
         self.__dir_fd = DirectoryFd(path, dir_fd)
+        self.__realpath = os.path.realpath(f'/proc/self/fd/{self.dir_fd}')
         self.__file_type = FileType(file_type).name if file_type else None
         self.__path_iter = os.scandir(self.__dir_fd.fileno)
+        self.__child_iter = None
+        self.__stat = statx('', {'dir_fd': self.__dir_fd.fileno, 'flags': ATFlags.EMPTY_PATH})
 
         # Explicitly allow zero for request_mask
         self.__request_mask = request_mask if request_mask is not None else ALL_ATTRS
+
+        self.__recursive = recurse
+        self.__recursion_mask = recursion_mask
 
         self.__return_fn = self.__return_dict if as_dict else self.__return_dirent
 
@@ -139,6 +185,7 @@ class DirectoryIterator():
         return (
             f"<DirectoryIterator path='{self.__path}' "
             f"file_type='{'ALL' if self.__file_type is None else self.__file_type}' "
+            f"recursive={self.__recursive} recursion_mask={self.__recursion_mask} "
             f"request_mask={self.__request_mask}>"
         )
 
@@ -168,6 +215,11 @@ class DirectoryIterator():
             # and reduces cost of any subsequent filtering.
             return None
 
+        if self.__recursion_mask & DirectoryRecursionFlag.XDEV != 0:
+            # Check for crossing device boundaries and omit
+            if stat_info['st'].stx_mnt_id != self.__stat_info.stx_mnt_id:
+                return False
+
         return stat_info
 
     def __return_dirent(self, dirent, st, realpath, xattrs, acl, zfs_attrs, is_in_ctldir):
@@ -186,19 +238,19 @@ class DirectoryIterator():
         )
 
     def __return_dict(self, dirent, st, realpath, xattrs, acl, zfs_attrs, is_in_ctldir):
-        stat = st['st']
+        stat_info = st['st']
         return {
             'name': dirent.name,
             'path': os.path.join(self.__path, dirent.name),
             'realpath': realpath,
             'type': st['etype'],
-            'size': stat.stx_size,
-            'allocation_size': stat.stx_blocks * 512,
-            'mode': stat.stx_mode,
+            'size': stat_info.stx_size,
+            'allocation_size': stat_info.stx_blocks * 512,
+            'mode': stat_info.stx_mode,
             'acl': acl,
-            'uid': stat.stx_uid,
-            'gid': stat.stx_gid,
-            'mount_id': stat.stx_mnt_id,
+            'uid': stat_info.stx_uid,
+            'gid': stat_info.stx_gid,
+            'mount_id': stat_info.stx_mnt_id,
             'is_mountpoint': 'MOUNT_ROOT' in st['attributes'],
             'is_ctldir': is_in_ctldir,
             'attributes': st['attributes'],
@@ -208,9 +260,30 @@ class DirectoryIterator():
 
     def __next__(self):
         # dirent here is os.DirEntry yielded from os.scandir()
+        if self.__child_iter is not None:
+            try:
+                return next(self.__child_iter)
+            except StopIteration:
+                self.__child_iter.close(force=True)
+                self.__child_iter = None
+            except Exception as e:
+                self.__child_iter.close(force=True)
+                self.__child_iter = None
+
         dirent = next(self.__path_iter)
         while (st := self.__check_dir_entry(dirent)) is None:
             dirent = next(self.__path_iter)
+
+        if self.__recursive and stat.S_ISDIR(st['st'].stx_mode):
+            try:
+                self.__child_iter = DirectoryIterator(
+                    dirent.name, dir_fd=self.__dir_fd.fileno, file_type=self.__file_type,
+                    request_mask=self.__request_mask, recurse=True,
+                    recursion_mask=self.__recursion_mask, 
+                    as_dict=self.__return_fn == self.__return_dict
+                )
+            except Exception as e:
+                print(f"XXX: failed with error: {e}")
 
         if self.__request_mask == 0:
             # Skip an unnecessary file open/close if we only need stat info
@@ -255,7 +328,7 @@ class DirectoryIterator():
                 zfs_attrs = None
 
             if self.__request_mask & int(DirectoryRequestMask.CTLDIR):
-                is_in_ctldir = path_in_ctldir(os.path.join(self.__path, dirent.name))
+                is_in_ctldir = path_in_ctldir(os.path.join(self.__realpath, dirent.name))
             else:
                 is_in_ctldir = None
 
@@ -273,6 +346,10 @@ class DirectoryIterator():
             return None
 
         return self.__dir_fd.fileno
+
+    @property
+    def closed(self):
+        return self.dir_fd is None
 
     @property
     def request_mask(self):
@@ -295,6 +372,34 @@ class DirectoryIterator():
 
             self.__dir_fd = None
 
+        while self.__child_iter is not None:
+            self.recursion_stop()
+
+    def __get_last_child(self, child, depth, parent):
+        """
+        Returns tuple of following
+        `child` last child in linked iterators
+
+        `depth` current depth in directories
+
+        `parent` parent iterator of child
+        """
+        if child._DirectoryIterator__child_iter is None:
+            return (child, depth, parent)
+
+        return self.__get_last_child(child.__child_iter, depth + 1, parent=child)
+
+    def recursion_stop(self):
+        """
+        If recusive, stop iterating the current tree
+        """
+        if not self.__recursive:
+            raise ValueError("Not a recursive directory iteration")
+
+        child, depth, parent = self.__get_last_child(self.__child_iter, 1, parent=self)
+        child.close(force=True)
+        parent._DirectoryIterator__child_iter = None
+        
 
 def directory_is_empty(path):
     """
