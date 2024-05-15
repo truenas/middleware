@@ -120,9 +120,7 @@ def test_002_configure_interface(request, ws_client, get_payload):
 def test_003_recheck_ipvx(request, ws_client, get_payload):
     autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, truenas_server.ip)['stdout'])
     assert autoconf == 1
-    payload = get_payload[0]
-    payload['ipv6_auto'] = False
-    ws_client.call('interface.update', interface, payload)
+    ws_client.call('interface.update', interface, {"ipv6_auto": False})
     time.sleep(5) # Prevent race conditions
     autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, truenas_server.ip)['stdout'])
     assert autoconf == 0
