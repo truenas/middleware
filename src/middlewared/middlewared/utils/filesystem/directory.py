@@ -162,19 +162,22 @@ class DirectoryIterator():
         self, path, file_type=None, request_mask=None,
         dir_fd=None, as_dict=True, recurse=False, recursion_mask=0
     ):
+        self.__cur_fd = None
         self.__dir_fd = None
         self.__path_iter = None
         self.__path = path
 
         self.__dir_fd = DirectoryFd(path, dir_fd)
-        self.__realpath = os.path.realpath(f'/proc/self/fd/{self.dir_fd}')
         self.__file_type = FileType(file_type).name if file_type else None
         self.__path_iter = os.scandir(self.__dir_fd.fileno)
         self.__child_iter = None
-        self.__stat = statx('', {'dir_fd': self.__dir_fd.fileno, 'flags': ATFlags.EMPTY_PATH})
+        self.__stat = statx('', dir_fd=self.__dir_fd.fileno, flags=ATFlags.EMPTY_PATH.value)
 
         # Explicitly allow zero for request_mask
         self.__request_mask = request_mask if request_mask is not None else ALL_ATTRS
+        if self.__request_mask & DirectoryRequestMask.CTLDIR.value:
+            self.__realpath = os.path.realpath(f'/proc/self/fd/{self.dir_fd}')
+             
 
         self.__recursive = recurse
         self.__recursion_mask = recursion_mask
@@ -204,7 +207,12 @@ class DirectoryIterator():
         self.close(force=True)
 
     def __check_dir_entry(self, dirent):
-        stat_info = statx_entry_impl(pathlib.Path(dirent.name), dir_fd=self.dir_fd)
+        if self.__cur_fd is not None:
+           os.close(self.__cur_fd)
+           self.__cur_fd = None
+
+        self.__cur_fd = os.open(dirent.name, os.O_PATH | os.O_NOFOLLOW, dir_fd=self.dir_fd)
+        stat_info = statx_entry_impl(None, dir_fd=self.__cur_fd)
         if stat_info is None:
             # path doesn't exist anymore
             return None
@@ -290,7 +298,7 @@ class DirectoryIterator():
             return self.__return_fn(dirent, st, None, None, None, None, None)
 
         try:
-            fd = os.open(dirent.name, os.O_RDONLY, dir_fd=self.dir_fd)
+            fd = os.open(f'/proc/self/fd/{self.__cur_fd}', os.O_RDONLY)
         except FileNotFoundError:
             # `dirent` was most likely deleted while we were generating listing
             # There's not point in logging an error. Just keep moving on.

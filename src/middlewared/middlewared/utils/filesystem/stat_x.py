@@ -124,6 +124,9 @@ __statx_lstat_flags = int(ATFlags.STATX_SYNC_AS_STAT | ATFlags.SYMLINK_NOFOLLOW)
 
 def statx(path, dir_fd=None, flags=ATFlags.STATX_SYNC_AS_STAT.value):
     path = path.encode() if isinstance(path, str) else path
+    if path is None:
+        flags |= ATFlags.EMPTY_PATH.value
+        path = b''
 
     dir_fd = dir_fd or AT_FDCWD
 
@@ -165,11 +168,10 @@ def statx_entry_impl(entry, dir_fd=None, get_ctldir=True):
     """
     out = {'st': None, 'etype': None, 'attributes': []}
 
-    path = entry.as_posix()
     try:
         # This is equivalent to lstat() call
         out['st'] = statx(
-            path,
+            entry,
             dir_fd = dir_fd,
             flags = __statx_lstat_flags
         )
@@ -185,6 +187,11 @@ def statx_entry_impl(entry, dir_fd=None, get_ctldir=True):
 
     elif statlib.S_ISLNK(out['st'].stx_mode):
         out['etype'] = 'SYMLINK'
+        if path is None:
+            # We need to convert our fd back to a path
+            path = os.readlink(f'/proc/self/fd/{dir_fd}')
+            dir_fd = None
+
         try:
             out['st'] = statx(path, dir_fd=dir_fd)
         except FileNotFoundError:
@@ -196,7 +203,7 @@ def statx_entry_impl(entry, dir_fd=None, get_ctldir=True):
     else:
         out['etype'] = 'OTHER'
 
-    if entry.is_absolute():
+    if entry is not None:
         out['is_ctldir'] = path_in_ctldir(entry)
 
     return out
