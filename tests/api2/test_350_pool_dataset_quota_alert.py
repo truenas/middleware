@@ -10,7 +10,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST
-from auto_config import ip, pool_name, user, password
+from auto_config import pool_name, user, password
 
 G = 1024 * 1024 * 1024
 

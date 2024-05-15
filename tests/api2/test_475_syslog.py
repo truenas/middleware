@@ -1,8 +1,9 @@
 from time import sleep
 
 import pytest
-from auto_config import ip, password, user
+from auto_config import password, user
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.client import truenas_server
 
 
 
@@ -17,7 +18,7 @@ def do_syslog(ident, message, facility='syslog.LOG_USER', priority='syslog.LOG_I
     ssh(cmd)
 
 
-def check_syslog(log_path, message, target_ip=ip, target_user=user, target_passwd=password, timeout=30):
+def check_syslog(log_path, message, target_ip=None, target_user=user, target_passwd=password, timeout=30):
     """
     Common function to check whether a particular message exists in a log file.
     This will be used to check local and remote syslog servers.
@@ -26,6 +27,7 @@ def check_syslog(log_path, message, target_ip=ip, target_user=user, target_passw
     onus is on test developer to not under-specify `message` in order to avoid
     false positives.
     """
+    target_ip = target_ip or truenas_server.ip
     sleep_time = 1
     while timeout > 0:
         found = ssh(

@@ -10,13 +10,14 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import make_ws_request
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import pool_name, ip, hostname, password, user
+from auto_config import hostname, password, user
 from calendar import timegm
 from contextlib import contextmanager
 from base64 import b64decode
 from protocols import nfs_share
 from pytest_dependency import depends
 from middlewared.test.integration.assets.directory_service import active_directory
+from middlewared.test.integration.utils.client import truenas_server
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer, AD_COMPUTER_OU
@@ -59,6 +60,7 @@ def get_export_sec(exports_config):
 def regenerate_exports():
     # NFS service isn't running for these tests
     # and so exports aren't updated. Force the update.
+    ip = truenas_server.ip
     res = make_ws_request(ip, {
         'msg': 'method',
         'method': 'etc.generate',
@@ -70,7 +72,7 @@ def regenerate_exports():
 
 def check_export_sec(expected):
     regenerate_exports()
-    results = SSH_TEST('cat /etc/exports', user, password, ip)
+    results = SSH_TEST('cat /etc/exports', user, password)
     assert results['result'] is True, results['stderr']
     exports_config = results['stdout'].strip()
     sec = get_export_sec(exports_config)
@@ -78,7 +80,7 @@ def check_export_sec(expected):
 
 
 def parse_krb5_conf(fn, split=None, state=None):
-    results = SSH_TEST('cat /etc/krb5.conf', user, password, ip)
+    results = SSH_TEST('cat /etc/krb5.conf', user, password)
     assert results['result'] is True, results['output']
 
     if split:
@@ -141,6 +143,7 @@ def do_ad_connection(request):
 
 
 def test_02_kerberos_keytab_and_realm(do_ad_connection):
+    ip = truenas_server.ip
     def krb5conf_parser(krb5conf_lines, idx, entry, state):
         if entry.lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][0]}":
             assert krb5conf_lines[idx + 1].lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][1]}"
@@ -350,6 +353,7 @@ def test_03_kerberos_krbconf(do_ad_connection):
 
 
 def test_04_kerberos_nfs4(do_ad_connection):
+    ip = truenas_server.ip
     res = make_ws_request(ip, {
         'msg': 'method',
         'method': 'kerberos.keytab.has_nfs_principal',
@@ -457,6 +461,7 @@ def test_05_verify_nfs_krb_disabled(request):
 
 def test_06_kerberos_ticket_management(do_ad_connection):
     depends(do_ad_connection[0], ["SET_DNS"])
+    ip = truenas_server.ip
 
     res = make_ws_request(ip, {
         'msg': 'method',

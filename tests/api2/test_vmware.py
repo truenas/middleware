@@ -12,13 +12,13 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.snapshot_task import snapshot_task
 from middlewared.test.integration.assets.vmware import vmware
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.string import random_string
 
 import os
 import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import ip
 
 try:
     from config import (
@@ -156,7 +156,7 @@ def test_vmware():
                 for rds in result["datastores"]:
                     if (
                         rds["name"] == ds.name and
-                        rds["description"] == f"NFS mount '/mnt/{ds.dataset}' on {ip}" and
+                        rds["description"] == f"NFS mount '/mnt/{ds.dataset}' on {truenas_server.ip}" and
                         rds["filesystems"] == [ds.dataset]
                     ):
                         break

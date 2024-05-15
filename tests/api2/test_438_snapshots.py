@@ -6,7 +6,7 @@ from middlewared.test.integration.assets.pool import dataset, snapshot
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import hostname, ip, pool_name
+from auto_config import pool_name
 from functions import DELETE, GET, POST, PUT, wait_on_job
 
 

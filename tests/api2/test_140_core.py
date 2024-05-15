@@ -10,7 +10,7 @@ from urllib.request import urlretrieve
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST
-from auto_config import ip
+from middlewared.test.integration.utils.client import truenas_server
 
 
 def test_01_get_core_jobs():
@@ -48,7 +48,7 @@ def test_04_verify_job_id_state_is_running():
 
 
 def test_05_download_from_url():
-    rv = urlretrieve(f'http://{ip}{url}')
+    rv = urlretrieve(f'http://{truenas_server.ip}{url}')
     stat = os.stat(rv[0])
     assert stat.st_size > 0
 

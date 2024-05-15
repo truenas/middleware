@@ -11,7 +11,7 @@ import pytest
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE, SSH_TEST
-from auto_config import user, password, ip
+from auto_config import user, password
 from middlewared.test.integration.utils import call
 from pytest_dependency import depends
 GroupIdFile = "/tmp/.ixbuild_test_groupid"
@@ -259,7 +259,7 @@ def test_27_full_groupmap_check(request):
     """
     depends(request, ["SMB_GROUP_CREATED"], scope="session")
     cmd = "midclt call smb.groupmap_list"
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'], str(results['output'])
 
     gm = json.loads(results['stdout'].strip())
@@ -290,13 +290,13 @@ def test_27_full_groupmap_check(request):
     assert str(gid_to_check) in gm['local'], str(gm)
 
     cmd = "midclt call smb.groupmap_listmem S-1-5-32-544"
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'], str(results['output'])
     ba = json.loads(results['stdout'].strip())
     assert gm['local_builtins']['544']['sid'] in ba, str(ba)
 
     cmd = "midclt call smb.groupmap_listmem S-1-5-32-546"
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'], str(results['output'])
     bg = json.loads(results['stdout'].strip())
     assert gm['local_builtins']['546']['sid'] in bg, str(bg)

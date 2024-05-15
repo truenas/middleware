@@ -6,13 +6,13 @@ sys.path.append(apifolder)
 import pytest
 from pytest_dependency import depends
 
-from auto_config import ha, interface, hostname, domain, ip, gateway
-from middlewared.test.integration.utils.client import client
+from auto_config import ha, interface, hostname, domain, gateway
+from middlewared.test.integration.utils.client import client, truenas_server
 
 
 @pytest.fixture(scope='module')
 def ws_client():
-    with client(host_ip=ip) as c:
+    with client(host_ip=truenas_server.ip) as c:
         yield c
 
 
@@ -81,4 +81,4 @@ def test_002_verify_network_global_settings_state(request, ws_client, netinfo):
 def test_003_verify_network_general_summary(request, ws_client, netinfo):
     depends(request, ['NET_CONFIG'])
     summary = ws_client.call('network.general.summary')
-    assert any(i.startswith(ip) for i in summary['ips'][interface]['IPV4'])
+    assert any(i.startswith(truenas_server.ip) for i in summary['ips'][interface]['IPV4'])

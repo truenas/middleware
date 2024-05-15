@@ -2,14 +2,14 @@ import os
 import sys
 import time
 sys.path.append(os.getcwd())
-from auto_config import ip, ha, ha_license
+from auto_config import ha, ha_license
 
 from middlewared.test.integration.utils import client
 
 # Only read the test on HA
 if ha:
     def test_apply_and_verify_license():
-        with client(host_ip=ip) as c:
+        with client() as c:
             if ha_license:
                 _license_string = ha_license
             else:

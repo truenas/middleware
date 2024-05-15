@@ -11,7 +11,7 @@ import json
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, hostname, password, user
+from auto_config import hostname, password, user
 from base64 import b64decode
 from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import call, ssh
@@ -358,7 +358,7 @@ def test_13_idmap_new_domain(request):
     depends(request, ["AD_IS_HEALTHY"], scope="session")
     global dom_id
     cmd = 'midclt call idmap.get_next_idmap_range'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
     low, high = json.loads(results['stdout'].strip())
 
@@ -381,7 +381,7 @@ def test_14_idmap_new_domain_duplicate_fail(request):
     """
     depends(request, ["AD_IS_HEALTHY"], scope="session")
     cmd = 'midclt call idmap.get_next_idmap_range'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
     low, high = json.loads(results['stdout'].strip())
 

@@ -11,7 +11,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 
 from middlewared.test.integration.assets.directory_service import active_directory, ldap
-from auto_config import ip, hostname, password, pool_name, user, ha
+from auto_config import hostname, password, pool_name, user, ha
 from functions import GET, POST, PUT, SSH_TEST, make_ws_request, wait_on_job
 from protocols import nfs_share, SSH_NFS
 from pytest_dependency import depends

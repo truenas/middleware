@@ -9,7 +9,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import (
-    ip,
     pool_name,
     user,
     password,
@@ -17,6 +16,7 @@ from auto_config import (
 from pytest_dependency import depends
 from protocols import SMB
 from samba import ntstatus
+from middlewared.test.integration.utils.client import truenas_server
 
 
 dataset = f"{pool_name}/smb-vss"
@@ -44,6 +44,7 @@ snapshots = {
 
 
 def check_previous_version_exists(path, home=False):
+    ip = truenas_server.ip
     cmd = [
         'smbclient',
         f'//{ip}/{SMB_NAME if not home else SMB_USER}',
@@ -173,7 +174,7 @@ def test_004_creating_a_smb_share_path(request):
     smb_id = results.json()['id']
 
     cmd = f'mkdir {smb_path}/{SMB_USER}; zpool sync; net cache flush'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, {"cmd": cmd, "res": results['output']}
 
 
@@ -205,7 +206,6 @@ def test_007_check_shadow_copies(request, proto):
     depends(request, ["VSS_USER_CREATED"])
     c = SMB()
     snaps = c.get_shadow_copies(
-        host=ip,
         share=SMB_NAME,
         username=SMB_USER,
         password=SMB_PWD,
@@ -223,7 +223,7 @@ def test_008_set_up_testfiles(request, payload):
     i = int(payload[-1])
     offset = i * 2 * len(payload)
     c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
 
     for f in to_check:
         fd = c.create_file(f, "w")
@@ -252,7 +252,6 @@ def test_009_check_shadow_copies_count_after_setup(request, proto):
     depends(request, ["VSS_USER_CREATED"])
     c = SMB()
     snaps = c.get_shadow_copies(
-        host=ip,
         share=SMB_NAME,
         username=SMB_USER,
         password=SMB_PWD,

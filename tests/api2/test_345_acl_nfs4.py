@@ -10,7 +10,7 @@ import pytest
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, user, password
+from auto_config import pool_name
 from pytest_dependency import depends
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user as create_user
@@ -327,21 +327,21 @@ def test_13_recursive_no_traverse(request):
     # INHERIT_ONLY should be set to False at this depth.
     acl_result = call('filesystem.getacl', f'/mnt/{ACLTEST_DATASET}/dir1', False)
     theacl = acl_result['acl']
-    assert theacl[0]['flags'] == expected_flags_0, results.text
-    assert theacl[1]['flags'] == expected_flags_1, results.text
+    assert theacl[0]['flags'] == expected_flags_0, acl_result 
+    assert theacl[1]['flags'] == expected_flags_1, acl_result
 
     # Verify that user was changed on subdirectory
-    assert acl_result['uid'] == 65534, results.text
+    assert acl_result['uid'] == 65534, acl_result
 
     # check on dir 2 - the no propogate inherit flag should have taken
     # effect and ACL length should be 1
     acl_result = call('filesystem.getacl', f'/mnt/{ACLTEST_DATASET}/dir1/dir2', False)
     theacl = acl_result['acl']
-    assert theacl[0]['flags'] == expected_flags_0, results.text
-    assert len(theacl) == 1, results.text
+    assert theacl[0]['flags'] == expected_flags_0, acl_result
+    assert len(theacl) == 1, acl_result
 
     # Verify that user was changed two deep
-    assert acl_result['uid'] == 65534, results.text
+    assert acl_result['uid'] == 65534, acl_result
 
 
 def test_14_recursive_with_traverse(request):
@@ -360,11 +360,11 @@ def test_14_recursive_with_traverse(request):
 
     acl_result = call('filesystem.getacl', f'/mnt/{ACLTEST_SUBDATASET}', True)
     theacl = acl_result['acl']
-    assert theacl[0]['flags'] == expected_flags_0, results.text
-    assert theacl[1]['flags'] == expected_flags_1, results.text
+    assert theacl[0]['flags'] == expected_flags_0, acl_result
+    assert theacl[1]['flags'] == expected_flags_1, acl_result
 
     # Verify that user was changed
-    assert acl_result['uid'] == 65534, results.text
+    assert acl_result['uid'] == 65534, acl_result
 
 
 def test_15_strip_acl_from_dataset(request):

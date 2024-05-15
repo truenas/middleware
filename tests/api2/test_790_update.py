@@ -10,8 +10,9 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST, vm_state, vm_start, ping_host
-from auto_config import vm_name, ip, user, password, update
+from auto_config import vm_name, user, password, update
 from time import sleep
+from middlewared.test.integration.utils.client import truenas_server
 
 url = "https://raw.githubusercontent.com/iXsystems/ixbuild/master/prepnode/"
 
@@ -22,9 +23,9 @@ if update:
         fetch_cmd = f'fetch {url}{update_conf}'
         mv_cmd = f'mv {update_conf} /data/update.conf'
         if 'INTERNAL' in version:
-            results = SSH_TEST(fetch_cmd, user, password, ip)
+            results = SSH_TEST(fetch_cmd, user, password)
             assert results['result'] is True, results['output']
-            results = SSH_TEST(mv_cmd, user, password, ip)
+            results = SSH_TEST(mv_cmd, user, password)
             assert results['result'] is True, results['output']
         assert True
 
@@ -151,9 +152,9 @@ if update:
         if reboot is False:
             pytest.skip('Reboot is False skip')
         else:
-            while ping_host(ip, 1) is not True:
+            while ping_host(truenas_server.ip, 1) is not True:
                 sleep(5)
-            assert ping_host(ip, 1) is True
+            assert ping_host(truenas_server.ip, 1) is True
         sleep(10)
 
     def test_14_verify_initial_version_is_not_current_FreeNAS_version(request):

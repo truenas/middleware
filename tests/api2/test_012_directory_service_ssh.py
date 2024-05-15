@@ -6,7 +6,6 @@
 import pytest
 from pytest_dependency import depends
 from functions import SSH_TEST
-from auto_config import hostname, ip
 
 from middlewared.test.integration.assets.directory_service import active_directory, ldap
 from middlewared.test.integration.utils import call
@@ -44,7 +43,7 @@ def test_08_test_ssh_ad(do_ad_connection):
     groupobj = call('group.get_group_obj', {'gid': userobj['pw_gid']})
     call('ssh.update', {"password_login_groups": [groupobj['gr_name']]})
     cmd = 'ls -la'
-    results = SSH_TEST(cmd, f'{ADUSERNAME}@{AD_DOMAIN}', ADPASSWORD, ip)
+    results = SSH_TEST(cmd, f'{ADUSERNAME}@{AD_DOMAIN}', ADPASSWORD)
     call('ssh.update', {"password_login_groups": []})
     assert results['result'] is True, results
 
@@ -54,6 +53,6 @@ def test_09_test_ssh_ldap(do_ldap_connection):
     groupobj = call('group.get_group_obj', {'gid': userobj['pw_gid']})
     call('ssh.update', {"password_login_groups": [groupobj['gr_name']]})
     cmd = 'ls -la'
-    results = SSH_TEST(cmd, LDAPUSER, LDAPPASSWORD, ip)
+    results = SSH_TEST(cmd, LDAPUSER, LDAPPASSWORD)
     call('ssh.update', {"password_login_groups": []})
     assert results['result'] is True, results

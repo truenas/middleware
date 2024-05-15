@@ -6,10 +6,11 @@ import pytest
 import sys
 sys.path.append(os.getcwd())
 from functions import POST, GET, DELETE, SSH_TEST
-from auto_config import password, user as user_, ip
+from auto_config import password, user as user_
 
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils.client import truenas_server
 
 
 @contextlib.contextmanager
@@ -32,10 +33,11 @@ def user():
 
 def test_root_api_key_websocket(request):
     """We should be able to call a method with root API key using Websocket."""
+    ip = truenas_server.ip
     with api_key([{"method": "*", "resource": "*"}]) as key:
         with user():
             cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
-            results = SSH_TEST(cmd, user_, password, ip)
+            results = SSH_TEST(cmd, user_, password)
         assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         assert 'uptime' in str(results['stdout'])
 
@@ -53,20 +55,22 @@ def test_root_api_key_websocket(request):
 
 def test_allowed_api_key_websocket(request):
     """We should be able to call a method with API key that allows that call using Websocket."""
+    ip = truenas_server.ip
     with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
         with user():
             cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
-            results = SSH_TEST(cmd, user_, password, ip)
+            results = SSH_TEST(cmd, user_, password)
         assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         assert 'uptime' in str(results['stdout'])
 
 
 def test_denied_api_key_websocket(request):
     """We should not be able to call a method with API key that does not allow that call using Websocket."""
+    ip = truenas_server.ip
     with api_key([{"method": "CALL", "resource": "system.info_"}]) as key:
         with user():
             cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
-            results = SSH_TEST(cmd, user_, password, ip)
+            results = SSH_TEST(cmd, user_, password)
         assert results['result'] is False
 
 

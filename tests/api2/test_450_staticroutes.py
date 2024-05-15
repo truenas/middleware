@@ -9,7 +9,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST
-from auto_config import user, password, ip
+from auto_config import user, password
 DESTINATION = '127.1.1.1'
 GATEWAY = '127.0.0.1'
 

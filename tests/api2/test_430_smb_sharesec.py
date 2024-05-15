@@ -9,7 +9,7 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, client
 from functions import PUT, POST, GET, DELETE, SSH_TEST
-from auto_config import pool_name, user, password, ip
+from auto_config import user, password
 
 Guests = {
     "domain": "BUILTIN",
@@ -90,7 +90,7 @@ def test_06_set_smb_acl_by_sid(request):
         {'get': True}
     )['cifs_share_acl']
 
-    assert b64acl is not ""
+    assert b64acl != ""
 
     call('smb.sharesec.synchronize_acls')
 

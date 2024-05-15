@@ -8,10 +8,10 @@ import os
 import sys
 sys.path.append(os.getcwd())
 from functions import GET
-from auto_config import ip
 
 from middlewared.test.integration.assets.account import unprivileged_user as unprivileged_user_template
 from middlewared.test.integration.utils import call, client, ssh
+from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.shell import assert_shell_works
 
 
@@ -27,7 +27,7 @@ def test_download_auth_token_cannot_be_used_for_restful_api_call(download_token)
 
 def test_download_auth_token_cannot_be_used_for_upload(download_token):
     r = requests.post(
-        f"http://{ip}/_upload",
+        f"http://{truenas_server.ip}/_upload",
         headers={"Authorization": f"Token {download_token}"},
         data={
             "data": json.dumps({

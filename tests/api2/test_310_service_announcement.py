@@ -20,12 +20,14 @@ from assets.websocket.service import (ensure_service_disabled,
                                       ensure_service_enabled,
                                       ensure_service_started,
                                       ensure_service_stopped)
-from auto_config import ip, password, pool_name, user
+from auto_config import password, pool_name, user
 from functions import SSH_TEST
 from protocols import smb_share
 
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.client import truenas_server
+
 
 digits = ''.join(random.choices(string.digits, k=4))
 dataset_name = f"smb-cifs{digits}"
@@ -98,7 +100,7 @@ def wait_for_avahi_startup(interval=5, timeout=300):
     brackets = re.compile(r'[\[\]]+')
     while timeout > 0:
         startup = None
-        ssh_out = SSH_TEST(command, user, password, ip)
+        ssh_out = SSH_TEST(command, user, password)
         assert ssh_out['result'], str(ssh_out)
         output = ssh_out['output']
         # First we just look for the most recent startup command
@@ -178,9 +180,9 @@ class AvahiBrowserCollector:
             self.result[service] = {}
         with service_announcement_config(service_announcement):
             assert wait_for_avahi_startup(), "Failed to detect avahi-daemon startup"
-            # ssh_out = SSH_TEST("avahi-browse -v --all -t -p --resolve", user, password, ip)
+            # ssh_out = SSH_TEST("avahi-browse -v --all -t -p --resolve", user, password)
             # Appears sometimes we need a little more time
-            ssh_out = SSH_TEST("timeout --preserve-status 5 avahi-browse -v --all -p --resolve", user, password, ip)
+            ssh_out = SSH_TEST("timeout --preserve-status 5 avahi-browse -v --all -p --resolve", user, password)
             assert ssh_out['result'], str(ssh_out)
             output = ssh_out['output']
             for line in output.split('\n'):
@@ -338,7 +340,7 @@ def test_001_initial_config(request):
 
     # Let's restart avahi (in case we've updated middleware)
     call('service.restart', 'mdns')
-    ac = mDNSAnnounceCollector(ip, current_hostname)
+    ac = mDNSAnnounceCollector(truenas_server.ip, current_hostname)
     ac.find_items()
     ac.check_present(smb=False, time_machine=False)
 
@@ -355,7 +357,7 @@ def test_001_initial_config(request):
 @skip_avahi_browse_tests
 def test_002_mdns_disabled(request):
     depends(request, ["servann_001"], scope="session")
-    ac = mDNSAnnounceCollector(ip, current_hostname)
+    ac = mDNSAnnounceCollector(truenas_server.ip, current_hostname)
     ac.clear_cache()
     ac.find_items({'mdns': False, 'wsd': True, 'netbios': False})
     ac.check_present(False, False, False, False)
@@ -374,7 +376,7 @@ def test_003_mdns_smb_share(request):
     depends(request, ["servann_001"], scope="session")
 
     # SMB is not started originally
-    ac = mDNSAnnounceCollector(ip, current_hostname)
+    ac = mDNSAnnounceCollector(truenas_server.ip, current_hostname)
     ac.find_items()
     ac.check_present(smb=False, time_machine=False)
 
@@ -472,7 +474,7 @@ if DO_MDNS_REBOOT_TEST:
                 with ensure_service_enabled('cifs'):
                     # Next reboot and then check the expected services
                     # are advertised.
-                    reboot(ip, 'cifs')
-                    ac = mDNSAnnounceCollector(ip, current_hostname)
+                    reboot(truenas_server.ip, 'cifs')
+                    ac = mDNSAnnounceCollector(truenas_server.ip, current_hostname)
                     ac.find_items()
                     ac.check_present()

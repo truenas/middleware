@@ -1,6 +1,5 @@
 import stat
 
-from auto_config import ha
 from middlewared.test.integration.utils import call
 
 # this is found in middlewared.plugins.sysctl.sysctl_info

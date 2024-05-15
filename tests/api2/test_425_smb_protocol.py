@@ -11,7 +11,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, SSH_TEST
 from auto_config import (
-    ip,
     user,
     password,
 )
@@ -19,6 +18,7 @@ from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.smb import copy_stream, get_stream, smb_share, smb_mount
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.client import truenas_server
 from pytest_dependency import depends
 from protocols import SMB, smb_connection
 from samba import ntstatus
@@ -639,7 +639,7 @@ def test_151_set_xattr_via_ssh(request, xat):
     cmd += f'echo -n \"{AFPXattr[xat]["text"]}\" | base64 -d | '
     cmd += f'attr -q -s {xat} {afptestfile}'
 
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, {"cmd": cmd, "res": results['output']}
 
 
@@ -725,14 +725,14 @@ def test_155_ssh_read_afp_xattr(request, xat):
     smb_path = TEST_DATA['share']['path']
     afptestfile = f'{smb_path}/afp_xattr_testfile'
     cmd = f'attr -q -g {xat} {afptestfile} | base64'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
     xat_data = b64decode(results['stdout'])
     assert AFPXattr[xat]['bytes'] == xat_data, results['output']
 
 
 def test_175_check_external_path(request):
-    with smb_share(f'EXTERNAL:{ip}\\{SMB_NAME}', 'EXTERNAL'):
+    with smb_share(f'EXTERNAL:{truenas_server.ip}\\{SMB_NAME}', 'EXTERNAL'):
         with smb_connection(
             share=SMB_NAME,
             username=SMB_USER,
@@ -747,7 +747,7 @@ def test_175_check_external_path(request):
         cmd += '-c "get external_test_file"'
         ssh(cmd)
 
-        results = SSH_TEST('cat external_test_file', user, password, ip)
+        results = SSH_TEST('cat external_test_file', user, password)
         assert results['result'] is True, results['output']
         assert results['stdout'] == 'EXTERNAL_TEST'
 
