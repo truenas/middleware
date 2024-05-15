@@ -3,6 +3,8 @@ import os
 from middlewared.service import lock, private, Service
 from middlewared.utils.shutil import rmtree_one_filesystem
 
+NETDATA_USERNAME = NETDATA_GROUPNAME = 'netdata'
+
 
 class ReportingService(Service):
 
@@ -11,9 +13,28 @@ class ReportingService(Service):
 
     @private
     async def cache_netdata_uid_gid(self):
-        user_obj = await self.middleware.call('user.get_user_obj', {'username': 'netdata'})
-        self.NETDATA_UID = user_obj['pw_uid']
-        self.NETDATA_GID = user_obj['pw_gid']
+        # this method runs in middleware init phase so it's important
+        # to handle errors and log a message instead of crashing. If
+        # we crash here, middleware service won't start
+        try:
+            self.NETDATA_UID = await self.middleware.call('user.get_builtin_user_id', NETDATA_USERNAME)
+        except Exception:
+            # unhandled error so we'll set to -1 because
+            # chown'ing with this value is handled specially
+            # which means no perms will be altered on disk
+            self.NETDATA_UID = -1
+            self.logger.error('Unexpected failure resolving username %r to uid', NETDATA_USERNAME, exc_info=True)
+            return
+
+        try:
+            self.NETDATA_GID = await self.middleware.call('group.get_builtin_group_id', NETDATA_GROUPNAME)
+        except Exception:
+            # unhandled error so we'll set to -1 because
+            # chown'ing with this value is handled specially
+            # which means no perms will be altered on disk
+            self.NETDATA_GID = -1
+            self.logger.error('Unexpected failure resolving groupname %r to gid', NETDATA_GROUPNAME, exc_info=True)
+            return
 
     @private
     def netdata_storage_location(self):
