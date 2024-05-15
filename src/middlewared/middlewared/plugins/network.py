@@ -1288,9 +1288,6 @@ class InterfaceService(CRUDService):
                         {'int_interface': new['name']},
                     )
 
-            autoconf = '1' if new['ipv6_auto'] else '0'
-            await self.middleware.call('tunable.set_sysctl', f'net.ipv6.conf.{new["name"]}.autoconf', autoconf)
-
             if iface['type'] == 'PHYSICAL':
                 link_address_update = {'link_address': iface['state']['hardware_link_address']}
                 if await self.middleware.call('truenas.is_ix_hardware'):

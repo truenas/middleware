@@ -90,6 +90,9 @@ class InterfaceService(Service):
                 iface.replace_address(addr)
             # TODO: what are we doing with ipv6auto??
 
+        autoconf = '1' if has_ipv6 else '0'
+        self.middleware.call_sync('tunable.set_sysctl', f'net.ipv6.conf.{name}.autoconf', autoconf)
+
         if vip or alias_vips:
             if not self.middleware.call_sync('service.started', 'keepalived'):
                 self.middleware.call_sync('service.start', 'keepalived')

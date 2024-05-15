@@ -22,6 +22,7 @@ def get_payload(ws_client):
     if ha:
         payload = {
             'ipv4_dhcp': False,
+            'ipv6_auto': False,
             'failover_critical': True,
             'failover_group': 1,
             'aliases': [
@@ -50,7 +51,7 @@ def get_payload(ws_client):
         # that the machine has been handed an IPv4 address
         # from a DHCP server. That's why we're getting this information.
         ans = ws_client.call('interface.query', [['name', '=', interface]], {'get': True})
-        payload = {'ipv4_dhcp': False, 'aliases': []}
+        payload = {'ipv4_dhcp': False, 'ipv6_auto': False, 'aliases': []}
         to_validate = []
         ip = truenas_server.ip
         for info in filter(lambda x: x['address'] == ip, ans['state']['aliases']):
@@ -67,8 +68,8 @@ def test_001_check_ipvx(request, ws_client, get_payload):
     ps_count = int(SSH_TEST('ps -aux | grep dhclient | wc -l', user, password, truenas_server.ip)['stdout'])
     assert ps_count > 1 # account for the grep
 
+    # Check that our proc entry is set to its default 1.
     autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, truenas_server.ip)['stdout'])
-    # Check that our proc entry is set to default 1. Identical to tunable.get_sysctl
     assert autoconf == 1
 
 def test_002_configure_interface(request, ws_client, get_payload):
@@ -118,10 +119,6 @@ def test_002_configure_interface(request, ws_client, get_payload):
         truenas_server.server_type = os.environ['SERVER_TYPE']
 
 def test_003_recheck_ipvx(request, ws_client, get_payload):
-    autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, truenas_server.ip)['stdout'])
-    assert autoconf == 1
-    ws_client.call('interface.update', interface, {"ipv6_auto": False})
-    time.sleep(5) # Prevent race conditions
     autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, truenas_server.ip)['stdout'])
     assert autoconf == 0
     
