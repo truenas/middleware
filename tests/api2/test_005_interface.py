@@ -120,9 +120,8 @@ def test_002_configure_interface(request, ws_client, get_payload):
 def test_003_recheck_ipvx(request, ws_client, get_payload):
     autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, ip)['stdout'])
     assert autoconf == 1
-    ws_client.call('interface.update', interface, {
-        'ipv6_auto': False
-    })
+    get_payload[0]['ipv6_auto'] = False
+    ws_client.call('interface.update', interface, get_payload[0])
     autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, ip)['stdout'])
     assert autoconf == 0
     
