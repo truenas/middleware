@@ -104,6 +104,22 @@ class StructStatx(ctypes.Structure):
     ]
 
 
+def __get_statx_fn():
+    libc = ctypes.CDLL('libc.so.6', use_errno=True)
+    func = libc.statx
+    func.argtypes = (
+        ctypes.c_int,
+        ctypes.c_char_p,
+        ctypes.c_int,
+        ctypes.c_uint,
+        ctypes.POINTER(StructStatx)
+    )
+    return func
+
+
+__statx_fn = __get_statx_fn()
+
+
 def statx(path, options=None):
     opts = options or {}
     dirfd = opts.get('dir_fd', AT_FDCWD)
@@ -118,17 +134,8 @@ def statx(path, options=None):
     if invalid_flags:
         raise ValueError(f'{hex(invalid_flags)}: unsupported statx flags')
 
-    _libc = ctypes.CDLL('libc.so.6', use_errno=True)
-    _func = _libc.statx
-    _func.argtypes = (
-        ctypes.c_int,
-        ctypes.c_char_p,
-        ctypes.c_int,
-        ctypes.c_uint,
-        ctypes.POINTER(StructStatx)
-    )
     data = StructStatx()
-    result = _func(dirfd, path, flags, mask, ctypes.byref(data))
+    result = __statx_fn(dirfd, path, flags, mask, ctypes.byref(data))
     if result < 0:
         err = ctypes.get_errno()
         raise OSError(err, os.strerror(err))
