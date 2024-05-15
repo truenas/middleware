@@ -3,6 +3,8 @@ import os
 from middlewared.service import lock, private, Service
 from middlewared.utils.shutil import rmtree_one_filesystem
 
+NETDATA_USERNAME = NETDATA_GROUPNAME = 'netdata'
+
 
 class ReportingService(Service):
 
@@ -11,9 +13,8 @@ class ReportingService(Service):
 
     @private
     async def cache_netdata_uid_gid(self):
-        user_obj = await self.middleware.call('user.get_user_obj', {'username': 'netdata'})
-        self.NETDATA_UID = user_obj['pw_uid']
-        self.NETDATA_GID = user_obj['pw_gid']
+        self.NETDATA_UID = await self.middleware.call('user.get_builtin_user_id', NETDATA_USERNAME)
+        self.NETDATA_GID = await self.middleware.call('group.get_builtin_user_id', NETDATA_GROUPNAME)
 
     @private
     def netdata_storage_location(self):
