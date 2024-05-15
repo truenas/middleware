@@ -63,12 +63,11 @@ def get_payload(ws_client):
 
 # Make sure that our initial conditions are met
 def test_001_check_ipvx(request, ws_client, get_payload):
-    
     # Verify that dhclient is running
     ps_count = int(SSH_TEST('ps -aux | grep dhclient | wc -l', user, password, ip)['stdout'])
     assert ps_count > 1 # account for the grep
 
-    autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf')['stdout'])
+    autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, ip)['stdout'])
     # Check that our proc entry is set to default 1. Identical to tunable.get_sysctl
     assert autoconf == 1
 
@@ -119,11 +118,11 @@ def test_002_configure_interface(request, ws_client, get_payload):
         truenas_server.server_type = os.environ['SERVER_TYPE']
 
 def test_003_recheck_ipvx(request, ws_client, get_payload):
-    autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf')['stdout'])
+    autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, ip)['stdout'])
     assert autoconf == 1
     ws_client.call('interface.update', interface, {
         'ipv6_auto': False
     })
-    autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf')['stdout'])
+    autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, ip)['stdout'])
     assert autoconf == 0
     
