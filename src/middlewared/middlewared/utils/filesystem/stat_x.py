@@ -118,24 +118,22 @@ def __get_statx_fn():
 
 
 __statx_fn = __get_statx_fn()
+__statx_default_mask = int(Mask.BASIC_STATS | Mask.BTIME)
+__statx_lstat_flags = int(ATFlags.STATX_SYNC_AS_STAT | ATFlags.SYMLINK_NOFOLLOW)
 
 
-def statx(path, options=None):
-    opts = options or {}
-    dirfd = opts.get('dir_fd', AT_FDCWD)
-    flags = opts.get('flags', ATFlags.STATX_SYNC_AS_STAT)
-    mask = Mask.BASIC_STATS | Mask.BTIME
+def statx(path, dir_fd=AT_FDCWD, flags=ATFlags.STATX_SYNC_AS_STAT.value):
     path = path.encode() if isinstance(path, str) else path
 
-    if flags & ATFlags.EMPTY_PATH and dirfd == AT_FDCWD:
-        raise ValueError('dir_fd key is required when using AT_EMPTY_PATH')
+    if dir_fd == AT_FDCWD and flags & ATFlags.EMPTY_PATH.value:
+        raise ValueError('dir_fd is required when using AT_EMPTY_PATH')
 
-    invalid_flags = flags & ~ATFlags.VALID_FLAGS
+    invalid_flags = flags & ~ATFlags.VALID_FLAGS.value
     if invalid_flags:
         raise ValueError(f'{hex(invalid_flags)}: unsupported statx flags')
 
     data = StructStatx()
-    result = __statx_fn(dirfd, path, flags, mask, ctypes.byref(data))
+    result = __statx_fn(dirfd, path, flags, __statx_default_mask, ctypes.byref(data))
     if result < 0:
         err = ctypes.get_errno()
         raise OSError(err, os.strerror(err))
@@ -143,7 +141,7 @@ def statx(path, options=None):
         return data
 
 
-def statx_entry_impl(entry, dir_fd=None, get_ctldir=True):
+def statx_entry_impl(entry, dir_fd=AT_FDCWD, get_ctldir=True):
     """
     This is a convenience wrapper around stat_x that was originally
     located within the filesystem plugin
@@ -165,18 +163,19 @@ def statx_entry_impl(entry, dir_fd=None, get_ctldir=True):
     """
     out = {'st': None, 'etype': None, 'attributes': []}
 
-    options = {'dir_fd': dir_fd} if dir_fd is not None else {}
+    path = entry.as_posix()
     try:
         # This is equivalent to lstat() call
         out['st'] = statx(
-            entry.as_posix(),
-            {"flags": ATFlags.STATX_SYNC_AS_STAT | ATFlags.SYMLINK_NOFOLLOW} | options
+            path,
+            dir_fd = dir_fd,
+            flags = __statx_lstat_flags
         )
     except FileNotFoundError:
         return None
 
     for attr in StatxAttr:
-        if out['st'].stx_attributes & attr:
+        if out['st'].stx_attributes & attr.value:
             out['attributes'].append(attr.name)
 
     if statlib.S_ISDIR(out['st'].stx_mode):
@@ -185,7 +184,7 @@ def statx_entry_impl(entry, dir_fd=None, get_ctldir=True):
     elif statlib.S_ISLNK(out['st'].stx_mode):
         out['etype'] = 'SYMLINK'
         try:
-            out['st'] = statx(entry.as_posix(), options)
+            out['st'] = statx(path, dir_fd=dir_fd)
         except FileNotFoundError:
             return None
 
