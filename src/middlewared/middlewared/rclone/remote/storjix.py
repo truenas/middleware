@@ -82,3 +82,13 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
             "upload_cutoff": "64M",
             "provider": "Other",
         }
+
+    def get_restic_config(self, task):
+        url = "gateway.storjshare.io"
+
+        env = {
+            "AWS_ACCESS_KEY_ID": task["credentials"]["attributes"]["access_key_id"],
+            "AWS_SECRET_ACCESS_KEY": task["credentials"]["attributes"]["secret_access_key"],
+        }
+
+        return url, env
