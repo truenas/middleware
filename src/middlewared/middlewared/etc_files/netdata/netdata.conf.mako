@@ -151,4 +151,4 @@
 	# performance metrics for disks with major 230 = no
 
 [plugin:cgroups]
-        enable by default cgroups names matching = *qemu* /system
+        enable by default cgroups names matching = !*udev* *

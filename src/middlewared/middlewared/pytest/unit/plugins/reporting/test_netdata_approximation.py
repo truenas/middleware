@@ -4,9 +4,9 @@ from middlewared.plugins.reporting.utils import get_metrics_approximation, calcu
 
 
 @pytest.mark.parametrize('disk_count,core_count,interface_count,pool_count,services_count,vms_count,expected_output', [
-    (4, 2, 1, 2, 10, 2, {1: 526, 60: 4}),
-    (1600, 32, 4, 4, 10, 1, {1: 44125, 60: 1600}),
-    (10, 16, 2, 2, 12, 3, {1: 993, 60: 10}),
+    (4, 2, 1, 2, 10, 2, {1: 966, 60: 4}),
+    (1600, 32, 4, 4, 10, 1, {1: 44565, 60: 1600}),
+    (10, 16, 2, 2, 12, 3, {1: 1433, 60: 10}),
 ])
 def test_netdata_metrics_count_approximation(
     disk_count, core_count, interface_count, pool_count, services_count, vms_count, expected_output
@@ -19,14 +19,14 @@ def test_netdata_metrics_count_approximation(
 @pytest.mark.parametrize(
     'disk_count,core_count,interface_count,pool_count,services_count,vms_count,days,'
     'bytes_per_point,tier_interval,expected_output', [
-        (4, 2, 1, 2, 10, 2, 7, 1, 1, 303),
-        (4, 2, 1, 2, 10, 1, 7, 4, 60, 18),
-        (1600, 32, 4, 12, 2, 4, 4, 1, 1, 14599),
-        (1600, 32, 4, 10, 1, 4, 4, 4, 900, 64),
-        (10, 16, 2, 2, 12, 1, 3, 1, 1, 221),
-        (10, 16, 2, 2, 10, 3, 3, 4, 60, 16),
-        (1600, 32, 4, 4, 12, 3,  18, 1, 1, 65643),
-        (1600, 32, 4, 4, 12, 1, 18, 4, 900, 291),
+        (4, 2, 1, 2, 10, 2, 7, 1, 1, 557),
+        (4, 2, 1, 2, 10, 1, 7, 4, 60, 35),
+        (1600, 32, 4, 12, 2, 4, 4, 1, 1, 14744),
+        (1600, 32, 4, 10, 1, 4, 4, 4, 900, 65),
+        (10, 16, 2, 2, 12, 1, 3, 1, 1, 330),
+        (10, 16, 2, 2, 10, 3, 3, 4, 60, 23),
+        (1600, 32, 4, 4, 12, 3,  18, 1, 1, 66296),
+        (1600, 32, 4, 4, 12, 1, 18, 4, 900, 294),
     ],
 )
 def test_netdata_disk_space_approximation(

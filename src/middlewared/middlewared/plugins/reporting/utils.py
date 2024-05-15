@@ -55,7 +55,8 @@ def get_netdata_state_path() -> str:
 
 
 def get_metrics_approximation(
-    disk_count: int, core_count: int, interface_count: int, pool_count: int, vms_count: int, systemd_service_count: int,
+    disk_count: int, core_count: int, interface_count: int, pool_count: int, vms_count: int,
+    systemd_service_count: int, containers_count: typing.Optional[int] = 10,
 ) -> dict:
     data = {
         1: {
@@ -194,6 +195,29 @@ def get_metrics_approximation(
             'cgroup_qemu_vm.io_some_pressure_stall_time': vms_count,
             'cgroup_qemu_vm.io_full_pressure': 3 * vms_count,
             'cgroup_qemu_vm.io_full_pressure_stall_time': vms_count,
+
+            'cgroup_hash.cpu_limit': containers_count,
+            'cgroup_hash.cpu': 2 * containers_count,
+            'cgroup_hash.throttled': containers_count,
+            'cgroup_hash.throttled_duration': containers_count,
+            'cgroup_hash.mem': 6 * containers_count,
+            'cgroup_hash.writeback': 2 * containers_count,
+            'cgroup_hash.pgfaults': 2 * containers_count,
+            'cgroup_hash.mem_usage': 2 * containers_count,
+            'cgroup_hash.mem_usage_limit': 2 * containers_count,
+            'cgroup_hash.mem_utilization': containers_count,
+            'cgroup_hash.cpu_some_pressure': 3 * containers_count,
+            'cgroup_hash.cpu_some_pressure_stall_time': containers_count,
+            'cgroup_hash.cpu_full_pressure': 3 * containers_count,
+            'cgroup_hash.cpu_full_pressure_stall_time': containers_count,
+            'cgroup_hash.mem_some_pressure': 3 * containers_count,
+            'cgroup_hash.memory_some_pressure_stall_time': containers_count,
+            'cgroup_hash.mem_full_pressure': 3 * containers_count,
+            'cgroup_hash.memory_full_pressure_stall_time': containers_count,
+            'cgroup_hash.io_some_pressure': 3 * containers_count,
+            'cgroup_hash.io_some_pressure_stall_time': containers_count,
+            'cgroup_hash.io_full_pressure': 3 * containers_count,
+            'cgroup_hash.io_full_pressure_stall_time': containers_count,
         },
         60: {  # smartd_logs
             'smart_log.temperature_celsius': disk_count}
