@@ -10,10 +10,8 @@ from middlewared.test.integration.utils import call, fail
 try:
     apifolder = os.getcwd()
     sys.path.append(apifolder)
-    from auto_config import ip as default_ip
     from auto_config import ha, hostname
 except ImportError:
-    default_ip = None
     ha = False
     hostname = None
 

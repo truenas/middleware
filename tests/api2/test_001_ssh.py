@@ -7,14 +7,14 @@ import json
 import pytest
 
 from functions import if_key_listed, SSH_TEST
-from auto_config import ip, sshKey, user, password
+from auto_config import sshKey, user, password
 from middlewared.test.integration.utils import fail
-from middlewared.test.integration.utils.client import client
+from middlewared.test.integration.utils.client import client, truenas_server
 
 
 @pytest.fixture(scope='module')
 def ws_client():
-    with client(host_ip=ip) as c:
+    with client(host_ip=truenas_server.ip) as c:
         yield c
 
 
@@ -83,7 +83,7 @@ def test_004_enable_and_start_ssh(ws_client):
 
 
 def test_005_ssh_using_root_password():
-    results = SSH_TEST('ls -la', user, password, ip)
+    results = SSH_TEST('ls -la', user, password)
     if not results['result']:
         fail(f"SSH is not usable: {results['output']}. Aborting tests.")
 
@@ -91,7 +91,7 @@ def test_005_ssh_using_root_password():
 def test_006_setup_and_login_using_root_ssh_key():
     assert os.environ.get('SSH_AUTH_SOCK') is not None
     assert if_key_listed() is True  # horrible function name
-    results = SSH_TEST('ls -la', user, None, ip)
+    results = SSH_TEST('ls -la', user, None)
     assert results['result'] is True, results['output']
 
 
@@ -112,7 +112,7 @@ def test_007_check_local_accounts(ws_client, account):
 
 
 def test_008_check_root_dataset_settings(ws_client):
-    data = SSH_TEST('cat /conf/truenas_root_ds.json', user, password, ip)
+    data = SSH_TEST('cat /conf/truenas_root_ds.json', user, password)
     if not data['result']:
         fail(f'Unable to get dataset schema: {data["output"]}')
 
@@ -121,7 +121,7 @@ def test_008_check_root_dataset_settings(ws_client):
     except Exception as e:
         fail(f'Unable to load dataset schema: {e}')
 
-    data = SSH_TEST('zfs get -o value -H truenas:developer /', user, password, ip)
+    data = SSH_TEST('zfs get -o value -H truenas:developer /', user, password)
     if not data['result']:
         fail('Failed to determine whether developer mode enabled')
 

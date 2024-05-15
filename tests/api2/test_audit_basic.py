@@ -1,4 +1,3 @@
-from auto_config import ip
 from middlewared.test.integration.assets.account import user, unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
@@ -35,20 +34,21 @@ def initialize_for_smb_tests(request):
             }) as u:
                 yield {'dataset': ds, 'share': s, 'user': u}
 
-
-@pytest.fixture(scope='module')
-def audit_config(request):
+class AUDIT_CONFIG():
     defaults = {
         'retention': 7,
         'quota': 0,
         'reservation': 0,
-        'quota_fill_warning': 80,
+        'quota_fill_warning': 75,
         'quota_fill_critical': 95
     }
+
+@pytest.fixture(scope='module')
+def audit_config(request):
     try:
-        yield defaults
+        yield
     finally:
-        call('audit.update', defaults)
+        call('audit.update', AUDIT_CONFIG.defaults)
 
 
 def test_audit_config_defaults(request):
@@ -64,11 +64,11 @@ def test_audit_config_defaults(request):
     ]:
         assert key in config, str(config)
 
-    assert config['retention'] == 7
-    assert config['quota'] == 0
-    assert config['reservation'] == 0
-    assert config['quota_fill_warning'] == 80
-    assert config['quota_fill_critical'] == 95
+    assert config['retention'] == AUDIT_CONFIG.defaults['retention']
+    assert config['quota'] == AUDIT_CONFIG.defaults['quota']
+    assert config['reservation'] == AUDIT_CONFIG.defaults['reservation']
+    assert config['quota_fill_warning'] == AUDIT_CONFIG.defaults['quota_fill_warning']
+    assert config['quota_fill_critical'] == AUDIT_CONFIG.defaults['quota_fill_critical']
     assert config['remote_logging_enabled'] is False
     for key in ['used', 'used_by_snapshots', 'used_by_dataset', 'used_by_reservation', 'available']:
         assert key in config['space'], str(config['space'])

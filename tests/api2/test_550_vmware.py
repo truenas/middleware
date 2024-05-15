@@ -10,7 +10,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST
-from auto_config import ip, user, password
+from auto_config import user, password
 
 try:
     Reason = 'VMWARE credentials credential is missing'
@@ -40,5 +40,5 @@ if vmw_credentials:
     def test_03_verify_vmware_get_datastore_do_not_leak_password(request):
         cmd = f"grep -R \"{os.environ['VMWARE_PASSWORD']}\" " \
             "/var/log/middlewared.log"
-        results = SSH_TEST(cmd, user, password, ip)
+        results = SSH_TEST(cmd, user, password)
         assert results['result'] is False, str(results['output'])

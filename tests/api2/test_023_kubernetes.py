@@ -3,8 +3,9 @@ import time
 
 from pytest_dependency import depends
 from functions import GET, PUT, wait_on_job
-from auto_config import ha, pool_name, interface, ip
+from auto_config import ha, pool_name, interface
 from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils.client import truenas_server
 
 
 # Read all the test below only on non-HA
@@ -14,7 +15,7 @@ if not ha:
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         assert '0.0.0.0' in results.json(), results.text
-        assert ip in results.json(), results.text
+        assert truenas_server.ip in results.json(), results.text
 
     @pytest.mark.dependency(name='setup_kubernetes')
     def test_02_setup_kubernetes(request):
@@ -24,7 +25,7 @@ if not ha:
             'pool': pool_name,
             'route_v4_interface': interface,
             'route_v4_gateway': gateway,
-            'node_ip': ip
+            'node_ip': truenas_server.ip
         }
         results = PUT('/kubernetes/', payload)
         assert results.status_code == 200, results.text
@@ -45,7 +46,7 @@ if not ha:
         results = GET('/kubernetes/node_ip/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), str), results.text
-        assert results.json() == ip, results.text
+        assert results.json() == truenas_server.ip, results.text
 
     def test_05_get_kubernetes_events(request):
         depends(request, ["setup_kubernetes"])

@@ -10,7 +10,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, wait_on_job, SSH_TEST
-from auto_config import ha, ip, password, user
+from auto_config import ha, password, user
 
 # genrated token_hex 32bit for
 pool_token_hex = secrets.token_hex(32)
@@ -67,7 +67,7 @@ def test_create_a_passphrase_encrypted_root_on_normal_pool(request):
 
 def test_verify_pool_dataset_does_not_leak_passphrase_into_middleware_log(request):
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -180,7 +180,7 @@ def test_try_to_create_an_encrypted_dataset_with_inherit_encryption_true(request
 
 def test_verify_pool_encrypted_dataset_does_not_leak_passphrase_into_middleware_log(request):
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -238,7 +238,7 @@ def test_create_an_encrypted_root_with_a_key(request):
 
 def test_verify_pool_encrypted_root_dataset_does_not_leak_encryption_key_into_middleware_log(request):
     cmd = f"""grep -R "{dataset_token_hex}" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -283,7 +283,7 @@ def test_verify_that_the_dataset_changed_to_passphrase(request):
 
 def test_verify_pool_dataset_change_key_does_not_leak_passphrase_into_middleware_log(request):
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -456,7 +456,7 @@ def test_create_a_passphrase_encrypted_pool(request):
 
 def test_verify_pool_does_not_leak_passphrase_into_middleware_log(request):
     cmd = """grep -R "my_pool_passphrase" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -487,7 +487,7 @@ def test_create_a_passphrase_encrypted_root_on_passphrase_encrypted_pool(request
 
 def test_verify_pool_encrypted_root_dataset_change_key_does_not_leak_passphrase_into_middleware_log(request):
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -508,7 +508,7 @@ def test_try_to_change_a_passphrase_encrypted_root_to_key_on_passphrase_encrypte
 
 def test_verify_pool_dataset_change_key_does_not_leak_passphrase_into_middleware_log_after_key_change(request):
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -565,7 +565,7 @@ def test_try_to_create_an_encrypted_root_with_key_on_passphrase_encrypted_pool(r
 
 def test_verify_pool_key_encrypted_dataset_does_not_leak_encryption_key_into_middleware_log(request):
     cmd = f"""grep -R "{dataset_token_hex}" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -610,7 +610,7 @@ def test_creating_a_key_encrypted_pool(request):
 
 def test_verify_pool_does_not_leak_encryption_key_into_middleware_log(request):
     cmd = f"""grep -R "{pool_token_hex}" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -639,7 +639,7 @@ def test_creating_a_key_encrypted_root_on_key_encrypted_pool(request):
 
 def test_verify_pool_dataset_does_not_leak_encryption_hex_key_into_middleware_log(request):
     cmd = f"""grep -R "{dataset_token_hex}" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -660,7 +660,7 @@ def test_change_a_key_encrypted_root_to_passphrase_on_key_encrypted_pool(request
 
 def test_verify_pool_encrypted_root_key_does_not_leak_passphrase_into_middleware_log(request):
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -737,7 +737,7 @@ def test_unlock_passphrase_key_encrypted_datasets(request):
 
 def test_verify_pool_dataset_unlock_does_not_leak_passphrase_into_middleware_log(request):
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -820,7 +820,7 @@ def test_create_a_passphrase_encrypted_root_dataset_parrent(request):
 
 def test_verify_pool_passphrase_encrypted_root_dataset_parrent_does_not_leak_passphrase_into_middleware_log(request):
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -840,7 +840,7 @@ def test_create_a_passphrase_encrypted_root_child_of_passphrase_parent(request):
 
 def test_verify_encrypted_root_child_of_passphrase_parent_dataset_does_not_leak_passphrase_into_middleware_log(request):
     cmd = """grep -R "my_passphrase2" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -935,7 +935,7 @@ def test_try_to_unlock_the_child_of_lock_parent_encrypted_root(request):
 
 def test_verify_child_of_lock_parent_encrypted_root_dataset_unlock_do_not_leak_passphrase_into_middleware_log(request):
     cmd = """grep -R "my_passphrase2" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -987,10 +987,10 @@ def test_unlock_parent_dataset_with_child_recursively(request):
 
 def test_verify_pool_dataset_unlock_with_child_dataset_does_not_leak_passphrase_into_middleware_log(request):
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
     cmd = """grep -R "my_passphrase2" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -1073,7 +1073,7 @@ def test_creating_a_key_encrypted_dataset_on_key_encrypted_pool(request):
 
 def test_verify_pool_encrypted_dataset_on_key_encrypted_pool_does_not_leak_encryption_key_into_middleware_log(request):
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 
@@ -1093,7 +1093,7 @@ def test_create_a_passphrase_encrypted_root_from_key_encrypted_root(request):
 
 def test_verify_ncrypted_root_from_key_encrypted_root_does_not_leak_passphrase_into_middleware_log(request):
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 

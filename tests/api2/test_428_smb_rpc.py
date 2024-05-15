@@ -5,7 +5,6 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import (ip, pool_name)
 from functions import GET, POST
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user

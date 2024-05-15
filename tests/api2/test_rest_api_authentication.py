@@ -9,12 +9,12 @@ import requests
 from middlewared.test.integration.assets.account import unprivileged_user as unprivileged_user_template
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import client
+from middlewared.test.integration.utils.client import truenas_server
 
 import os
 import sys
 sys.path.append(os.getcwd())
 from functions import POST, GET, DELETE, SSH_TEST
-from auto_config import password, ip
 
 
 @contextlib.contextmanager
@@ -86,6 +86,7 @@ def test_denied_api_key_rest(auth):
 
 def test_root_api_key_upload(auth):
     """We should be able to call a method with root a credential using file upload endpoint."""
+    ip = truenas_server.ip
     with auth([{"method": "*", "resource": "*"}]) as kwargs:
         kwargs.pop("anonymous", None)  # This key is only used for our test requests library
         r = requests.post(
@@ -107,6 +108,7 @@ def test_root_api_key_upload(auth):
 
 def test_allowed_api_key_upload(auth):
     """We should be able to call a method with an API that allows that call using file upload endpoint."""
+    ip = truenas_server.ip
     with auth([{"method": "CALL", "resource": "filesystem.put"}]) as kwargs:
         kwargs.pop("anonymous", None)  # This key is only used for our test requests library
         r = requests.post(
@@ -130,6 +132,7 @@ def test_denied_api_key_upload(auth):
     """
     We should not be able to call a method with a credential that does not allow that call using file upload endpoint.
     """
+    ip = truenas_server.ip
     with auth([{"method": "CALL", "resource": "filesystem.put_"}]) as kwargs:
         kwargs.pop("anonymous", None)  # This key is only used for our test requests library
         r = requests.post(

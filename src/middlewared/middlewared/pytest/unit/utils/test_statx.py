@@ -2,7 +2,8 @@ import os
 import pytest
 import stat
 
-from middlewared.plugins.filesystem_ import stat_x as sx
+from middlewared.utils.filesystem import stat_x as sx
+from middlewared.utils.filesystem.utils import timespec_convert
 
 
 BASIC_STAT_ATTRS = [
@@ -19,9 +20,6 @@ BASIC_STAT_ATTRS = [
     'BLKSIZE',
     'NLINK',
 ]
-
-def timespec_convert(timespec):
-    return timespec.tv_sec + timespec.tv_nsec / 1000000000
 
 
 def do_stat(filename, isdir):

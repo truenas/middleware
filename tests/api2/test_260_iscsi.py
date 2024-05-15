@@ -11,8 +11,9 @@ from time import sleep
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import ip, pool_name, hostname
+from auto_config import pool_name, hostname
 from functions import PUT, POST, GET, SSH_TEST, DELETE
+from middlewared.test.integration.utils.client import truenas_server
 
 try:
     Reason = 'BSD host configuration is missing in ixautomation.conf'
@@ -169,7 +170,7 @@ def test_08_Verify_the_iSCSI_service_is_enabled(request):
 @pytest.mark.dependency(name="iscsi_09")
 def test_09_Connecting_to_iSCSI_target(request):
     depends(request, ["iscsi_05"], scope='session')
-    cmd = f'iscsictl -A -p {ip}:3260 -t {basename}:{target_name}'
+    cmd = f'iscsictl -A -p {truenas_server.ip}:3260 -t {basename}:{target_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, f"{results['output']}, {results['stderr']}"
 
@@ -388,7 +389,7 @@ def test_33_verify_the_iscsi_service_is_running(request):
 @pytest.mark.dependency(name="iscsi_34")
 def test_34_connecting_to_the_zvol_iscsi_target(request):
     depends(request, ["iscsi_32"])
-    cmd = f'iscsictl -A -p {ip}:3260 -t {basename}:{zvol_name}'
+    cmd = f'iscsictl -A -p {truenas_server.ip}:3260 -t {basename}:{zvol_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'], f"{results['output']}, {results['stderr']}"
 
@@ -506,7 +507,7 @@ def test_46_disconnect_iscsi_zvol_target(request):
 @pytest.mark.dependency(name="iscsi_47")
 def test_47_connecting_to_the_zvol_iscsi_target(request):
     depends(request, ["iscsi_32"])
-    cmd = f'iscsictl -A -p {ip}:3260 -t {basename}:{zvol_name}'
+    cmd = f'iscsictl -A -p {truenas_server.ip}:3260 -t {basename}:{zvol_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'], f"{results['output']}, {results['stderr']}"
 

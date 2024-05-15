@@ -11,7 +11,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, SSH_TEST
-from auto_config import user, password, ip
+from auto_config import user, password
 TIMEZONE = "America/New_York"
 
 
@@ -64,5 +64,5 @@ def test_07_Checking_timezone_using_api():
 
 def test_08_Checking_timezone_using_ssh(request):
     results = SSH_TEST(f'diff /etc/localtime /usr/share/zoneinfo/{TIMEZONE}',
-                       user, password, ip)
+                       user, password)
     assert results['result'] is True, results

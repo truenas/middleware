@@ -12,15 +12,18 @@ import pyinotify
 from itertools import product
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
-from middlewared.plugins.filesystem_ import chflags, dosmode, stat_x
+from middlewared.plugins.filesystem_ import chflags
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str, UnixPerm
 from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
 from middlewared.utils import filter_list
+from middlewared.utils.filesystem import attrs, stat_x
+from middlewared.utils.filesystem.acl import acl_is_present
+from middlewared.utils.filesystem.constants import FileType
+from middlewared.utils.filesystem.directory import DirectoryIterator
+from middlewared.utils.filesystem.utils import timespec_convert
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
-from middlewared.plugins.filesystem_.utils import ACLType
-from middlewared.plugins.zfs_.utils import ZFSCTL
 
 
 class FilesystemService(Service):
@@ -48,28 +51,68 @@ class FilesystemService(Service):
         chflags.set_immutable(path, set_flag)
 
     @accepts(Dict(
-        'set_dosmode',
+        'set_zfs_file_attributes',
         Path('path', required=True),
         Dict(
-            'dosmode',
+            'zfs_file_attributes',
             Bool('readonly'),
             Bool('hidden'),
             Bool('system'),
             Bool('archive'),
-            Bool('reparse'),
+            Bool('immutable'),
+            Bool('nounlink'),
+            Bool('appendonly'),
             Bool('offline'),
             Bool('sparse'),
             register=True
         ),
     ), roles=['FILESYSTEM_ATTRS_WRITE'])
     @returns()
-    def set_dosmode(self, data):
-        return dosmode.set_dosflags(data['path'], data['dosmode'])
+    def set_zfs_attributes(self, data):
+        """
+        Set special ZFS-related file flags on the specified path
+
+        `readonly` - this maps to READONLY MS-DOS attribute. When set, file may not be
+        written to (toggling does not impact existing file opens).
+
+        `hidden` - this maps to HIDDEN MS-DOS attribute. When set, the SMB HIDDEN flag
+        is set and file is "hidden" from the perspective of SMB clients.
+
+        `system` - this maps to SYSTEM MS-DOS attribute. Is presented to SMB clients, but
+        has no impact on local filesystem.
+
+        `archive` - this maps to ARCHIVE MS-DOS attribute. Value is reset to True whenever
+        file is modified.
+
+        `immutable` - file may not be altered or deleted. Also appears as IMMUTABLE in
+        attributes in `filesystem.stat` output and as STATX_ATTR_IMMUTABLE in statx() response.
+
+        `nounlink` - file may be altered but not deleted.
+
+        `appendonly` - file may only be opened with O_APPEND flag. Also appears as APPEND in
+        attributes in `filesystem.stat` output and as STATX_ATTR_APPEND in statx() response.
+
+        `offline` - this maps to OFFLINE MS-DOS attribute. Is presented to SMB clients, but
+        has no impact on local filesystem.
+
+        `sparse` - maps to SPARSE MS-DOS attribute. Is presented to SMB clients, but has
+        no impact on local filesystem.
+        """
+        return attrs.set_zfs_file_attributes_dict(data['path'], data['zfs_file_attributes'])
 
     @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
-    @returns(Ref('dosmode'))
-    def get_dosmode(self, path):
-        return dosmode.get_dosflags(path)
+    @returns(Ref('zfs_file_attributes'))
+    def get_zfs_attributes(self, path):
+        """
+        Get the current ZFS attributes for the file at the given path
+        """
+        fd = os.open(path, os.O_RDONLY)
+        try:
+            attr_mask = attrs.fget_zfs_file_attributes(fd)
+        finally:
+            os.close(fd)
+
+        return attrs.zfs_attributes_to_dict(attr_mask)
 
     @private
     def is_child(self, child, parent):
@@ -166,60 +209,9 @@ class FilesystemService(Service):
             'gid': stat.st_gid,
             'is_mountpoint': False,
             'is_ctldir': False,
+            'xattrs': [],
+            'zfs_attrs': ['ARCHIVE']
         }
-
-    @private
-    def statx_entry_impl(self, entry, options=None):
-        out = {'st': None, 'etype': None, 'is_ctldir': False, 'attributes': []}
-        opts = options or {"dir_only": False, "file_only": False}
-        path = entry.absolute()
-
-        try:
-            out['st'] = stat_x.statx(
-                entry.as_posix(),
-                {"flags": stat_x.ATFlags.STATX_SYNC_AS_STAT | stat_x.ATFlags.SYMLINK_NOFOLLOW}
-            )
-        except FileNotFoundError:
-            return None
-
-        for attr in stat_x.StatxAttr:
-            if out['st'].stx_attributes & attr:
-                out['attributes'].append(attr.name)
-
-        if statlib.S_ISDIR(out['st'].stx_mode):
-            out['etype'] = 'DIRECTORY'
-
-        elif statlib.S_ISLNK(out['st'].stx_mode):
-            out['etype'] = 'SYMLINK'
-            try:
-                out['st'] = stat_x.statx(entry.as_posix())
-            except FileNotFoundError:
-                return None
-
-        elif statlib.S_ISREG(out['st'].stx_mode):
-            out['etype'] = 'FILE'
-
-        else:
-            out['etype'] = 'OTHER'
-
-        while path.as_posix() != '/':
-            if not path.name == '.zfs':
-                path = path.parent
-                continue
-
-            if path.stat().st_ino == ZFSCTL.INO_ROOT:
-                out['is_ctldir'] = True
-                break
-
-            path = path.parent
-
-        if opts['dir_only'] and out['etype'] != 'DIRECTORY':
-            return None
-
-        elif opts['file_only'] and out['etype'] != 'FILE':
-            return None
-
-        return out
 
     @accepts(
         Str('path', required=True),
@@ -236,6 +228,7 @@ class FilesystemService(Service):
         Int('size', required=True, null=True),
         Int('allocation_size', required=True, null=True),
         Int('mode', required=True, null=True),
+        Int('mount_id', required=True, null=True),
         Bool('acl', required=True, null=True),
         Int('uid', required=True, null=True),
         Int('gid', required=True, null=True),
@@ -246,6 +239,8 @@ class FilesystemService(Service):
             required=True,
             items=[Str('statx_attribute', enum=[attr.name for attr in stat_x.StatxAttr])]
         ),
+        List('xattrs', required=True, null=True),
+        List('zfs_attrs', required=True, null=True),
         register=True
     ))
     def listdir(self, path, filters, options):
@@ -267,6 +262,8 @@ class FilesystemService(Service):
           is_ctldir(bool): path is within special .zfs directory
           attributes(list): list of statx file attributes that apply to the
           file. See statx(2) manpage for more details.
+          xattrs(list): list of extended attribute names.
+          zfs_attrs(list): list of ZFS file attributes on file
         """
 
         path = pathlib.Path(path)
@@ -276,10 +273,11 @@ class FilesystemService(Service):
         if not path.is_dir():
             raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
 
+        # TODO: once new apps implementation is in-place remove this check
         if 'ix-applications' in path.parts:
             raise CallError('Ix-applications is a system managed dataset and its contents cannot be listed')
 
-        stat_opts = {"file_only": False, "dir_only": False}
+        file_type = None
         for filter_ in filters:
             if filter_[0] not in ['type']:
                 continue
@@ -288,58 +286,25 @@ class FilesystemService(Service):
                 continue
 
             if filter_[2] == 'DIRECTORY':
-                stat_opts["dir_only"] = True
+                file_type = FileType.DIRECTORY
             elif filter_[2] == 'FILE':
-                stat_opts["file_only"] = True
+                file_type = FileType.FILE
             else:
                 continue
 
-        rv = []
-        if stat_opts["dir_only"] and stat_opts["file_only"]:
-            return rv
+        if path.absolute() == pathlib.Path('/mnt'):
+            # sometimes (on failures) the top-level directory
+            # where the zpool is mounted does not get removed
+            # after the zpool is exported. WebUI calls this
+            # specifying `/mnt` as the path. This is used when
+            # configuring shares in the "Path" drop-down. To
+            # prevent shares from being configured to point to
+            # a path that doesn't exist on a zpool, we'll
+            # filter these here.
+            filters.append(['is_mountpoint', '=', True])
 
-        only_top_level = path.absolute() == pathlib.Path('/mnt')
-        for entry in path.iterdir():
-            st = self.statx_entry_impl(entry, stat_opts)
-            if st is None:
-                continue
-
-            if only_top_level and not entry.is_mount():
-                # sometimes (on failures) the top-level directory
-                # where the zpool is mounted does not get removed
-                # after the zpool is exported. WebUI calls this
-                # specifying `/mnt` as the path. This is used when
-                # configuring shares in the "Path" drop-down. To
-                # prevent shares from being configured to point to
-                # a path that doesn't exist on a zpool, we'll
-                # filter these here.
-                continue
-            if 'ix-applications' in entry.parts:
-                continue
-
-            etype = st['etype']
-            stat = st['st']
-            realpath = entry.resolve().as_posix() if etype == 'SYMLINK' else entry.absolute().as_posix()
-
-            data = {
-                'name': entry.name,
-                'path': entry.as_posix(),
-                'realpath': realpath,
-                'type': etype,
-                'size': stat.stx_size,
-                'allocation_size': stat.stx_blocks * 512,
-                'mode': stat.stx_mode,
-                'acl': False if self.acl_is_trivial(realpath) else True,
-                'uid': stat.stx_uid,
-                'gid': stat.stx_gid,
-                'is_mountpoint': 'MOUNT_ROOT' in st['attributes'],
-                'is_ctldir': st['is_ctldir'],
-                'attributes': st['attributes']
-            }
-
-            rv.append(data)
-
-        return filter_list(rv, filters=filters or [], options=options or {})
+        with DirectoryIterator(path, file_type=file_type) as d_iter:
+            return filter_list(d_iter, filters, options)
 
     @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
     @returns(Dict(
@@ -402,6 +367,11 @@ class FilesystemService(Service):
         context of the TrueNAS API, this is sufficient to uniquely identify
         a given dataset.
 
+        `mount_id(int)`: the mount id for the filesystem underlying the given path.
+        Bind mounts will have same device id, but different mount IDs. This value
+        is sufficient to uniquely identify the particular mount which can be used
+        to identify children of the given mountpoint.
+
         `inode(int)`: inode number of the file. This number uniquely identifies
         the file on the given device, but once a file is deleted its inode number
         may be reused.
@@ -424,7 +394,7 @@ class FilesystemService(Service):
         if not path.is_absolute():
             raise CallError(f'{_path}: path must be absolute', errno.EINVAL)
 
-        st = self.statx_entry_impl(path, None)
+        st = stat_x.statx_entry_impl(path, None)
         if st is None:
             raise CallError(f'Path {_path} not found', errno.ENOENT)
 
@@ -438,10 +408,10 @@ class FilesystemService(Service):
             'mode': st['st'].stx_mode,
             'uid': st['st'].stx_uid,
             'gid': st['st'].stx_gid,
-            'atime': float(st['st'].stx_atime.tv_sec),
-            'mtime': float(st['st'].stx_mtime.tv_sec),
-            'ctime': float(st['st'].stx_ctime.tv_sec),
-            'btime': float(st['st'].stx_btime.tv_sec),
+            'atime': timespec_convert(st['st'].stx_atime),
+            'mtime': timespec_convert(st['st'].stx_mtime),
+            'ctime': timespec_convert(st['st'].stx_ctime),
+            'btime': timespec_convert(st['st'].stx_btime),
             'mount_id': st['st'].stx_mnt_id,
             'dev': os.makedev(st['st'].stx_dev_major, st['st'].stx_dev_minor),
             'inode': st['st'].stx_ino,
@@ -635,10 +605,7 @@ class FilesystemService(Service):
         if not os.path.exists(path):
             raise CallError(f'Path not found [{path}].', errno.ENOENT)
 
-        acl_xattrs = ACLType.xattr_names()
-        xattrs_present = set(os.listxattr(path))
-
-        return False if (xattrs_present & acl_xattrs) else True
+        return not acl_is_present(os.listxattr(path))
 
 
 class FileFollowTailEventSource(EventSource):
