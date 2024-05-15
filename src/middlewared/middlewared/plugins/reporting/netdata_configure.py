@@ -19,12 +19,20 @@ class ReportingService(Service):
         try:
             self.NETDATA_UID = await self.middleware.call('user.get_builtin_user_id', NETDATA_USERNAME)
         except Exception:
+            # unhandled error so we'll set to -1 because
+            # chown'ing with this value is handled specially
+            # which means no perms will be altered on disk
+            self.NETDATA_UID = -1
             self.logger.error('Unexpected failure resolving username %r to uid', NETDATA_USERNAME, exc_info=True)
             return
 
         try:
             self.NETDATA_GID = await self.middleware.call('group.get_builtin_group_id', NETDATA_GROUPNAME)
         except Exception:
+            # unhandled error so we'll set to -1 because
+            # chown'ing with this value is handled specially
+            # which means no perms will be altered on disk
+            self.NETDATA_GID = -1
             self.logger.error('Unexpected failure resolving groupname %r to gid', NETDATA_GROUPNAME, exc_info=True)
             return
 
