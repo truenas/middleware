@@ -13,7 +13,7 @@ sys.path.append(apifolder)
 
 from copy import deepcopy
 from functions import POST, PUT, SSH_TEST, wait_on_job
-from auto_config import pool_name, ip, user, password
+from auto_config import pool_name, user, password
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.filesystem import directory
 from middlewared.test.integration.assets.pool import dataset
@@ -82,12 +82,12 @@ def test_04_test_filesystem_statfs_fstype(request):
     # mkdir
     nested_path = f'{parent_path}/tmpfs'
     cmd1 = f'mkdir -p {nested_path}'
-    results = SSH_TEST(cmd1, user, password, ip)
+    results = SSH_TEST(cmd1, user, password)
     assert results['result'] is True, results['output']
 
     # mount tmpfs
     cmd2 = f'mount -t tmpfs -o size=10M tmpfstest {nested_path}'
-    results = SSH_TEST(cmd2, user, password, ip)
+    results = SSH_TEST(cmd2, user, password)
     assert results['result'] is True, results['output']
 
     # test fstype
@@ -99,10 +99,10 @@ def test_04_test_filesystem_statfs_fstype(request):
 
     # cleanup
     cmd3 = f'umount {nested_path}'
-    results = SSH_TEST(cmd3, user, password, ip)
+    results = SSH_TEST(cmd3, user, password)
     assert results['result'] is True, results['output']
     cmd4 = f'rmdir {nested_path}'
-    results = SSH_TEST(cmd4, user, password, ip)
+    results = SSH_TEST(cmd4, user, password)
     assert results['result'] is True, results['output']
 
 
@@ -159,7 +159,7 @@ def test_07_test_filesystem_stat_filetype(request):
     ]
 
     with create_dataset(f'{pool_name}/{ds_name}'):
-        results = SSH_TEST(' && '.join(cmds), user, password, ip)
+        results = SSH_TEST(' && '.join(cmds), user, password)
         assert results['result'] is True, str(results)
 
         for x in targets:
@@ -258,7 +258,7 @@ def test_09_test_dosmodes():
             f'touch {testpaths[0]}',
             f'mkdir {testpaths[1]}'
         ]
-        results = SSH_TEST(' && '.join(cmd), user, password, ip)
+        results = SSH_TEST(' && '.join(cmd), user, password)
         assert results['result'] is True, str(results)
 
         for p in testpaths:

@@ -10,7 +10,7 @@ import pytest
 from pytest_dependency import depends
 from samba import ntstatus, NTSTATUSError
 
-from auto_config import ip, pool_name, password, user
+from auto_config import pool_name, password, user
 from functions import POST, DELETE, SSH_TEST, wait_on_job
 from protocols import SMB
 
@@ -126,13 +126,13 @@ def test_pool_dataset_unlock_smb(request, toggle_attachments):
             with dataset("encrypted", passphrase_encryption()) as encrypted:
                 with smb_share("encrypted", f"/mnt/{encrypted}"):
                     cmd = f"touch /mnt/{encrypted}/secret"
-                    results = SSH_TEST(cmd, user, password, ip)
+                    results = SSH_TEST(cmd, user, password)
                     assert results['result'] is True, results['output']
                     results = POST("/service/start/", {"service": "cifs"})
                     assert results.status_code == 200, results.text
                     lock_dataset(encrypted)
                     # Mount test SMB share
-                    with smb_connection(host=ip, share="normal") as normal_connection:
+                    with smb_connection(share="normal") as normal_connection:
                         # Locked share should not be mountable
                         with pytest.raises(NTSTATUSError) as e:
                             with smb_connection(host=ip, share="encrypted"):
@@ -148,12 +148,12 @@ def test_pool_dataset_unlock_smb(request, toggle_attachments):
 
                     if toggle_attachments:
                         # We should be able to mount encrypted share
-                        with smb_connection(host=ip, share="encrypted") as encrypted_connection:
+                        with smb_connection(share="encrypted") as encrypted_connection:
                             assert [x["name"] for x in encrypted_connection.ls("")] == ["secret"]
                     else:
                         # We should still not be able to mount encrypted share as we did not reload attachments
                         with pytest.raises(NTSTATUSError) as e:
-                            with smb_connection(host=ip, share="encrypted"):
+                            with smb_connection(share="encrypted"):
                                 pass
 
                         assert e.value.args[0] == ntstatus.NT_STATUS_BAD_NETWORK_NAME

@@ -7,7 +7,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, DELETE, SSH_TEST, wait_on_job
-from auto_config import ha, artifacts, password, ip, pool_name
+from auto_config import ha, artifacts, password, pool_name
 from middlewared.test.integration.utils import call, ssh
 
 from middlewared.test.integration.assets.apps import chart_release
@@ -234,7 +234,7 @@ if not ha:
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     def test_25_get_k3s_logs():
-        results = SSH_TEST('journalctl --no-pager -u k3s', 'root', password, ip)
+        results = SSH_TEST('journalctl --no-pager -u k3s', 'root', password)
         ks3_logs = open(f'{artifacts}/k3s-scale.log', 'w')
         ks3_logs.writelines(results['output'])
         ks3_logs.close()

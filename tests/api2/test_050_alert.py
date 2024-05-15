@@ -8,7 +8,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST
-from auto_config import ip, password, user, pool_name
+from auto_config import password, user, pool_name
 from middlewared.test.integration.utils import call
 
 
@@ -40,14 +40,14 @@ def test_04_degrading_a_pool_to_create_an_alert(request):
     id_path = '/dev/disk/by-partuuid/'
     gptid = get_pool['topology']['data'][0]['path'].replace(id_path, '')
     cmd = f'zinject -d {gptid} -A fault {pool_name}'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
 
 def test_05_verify_the_pool_is_degraded(request):
     depends(request, ['degrade_pool'], scope="session")
     cmd = f'zpool status {pool_name} | grep {gptid}'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
     assert 'DEGRADED' in results['output'], results['output']
 
@@ -109,14 +109,14 @@ def test_11_verify_the_alert_is_restored(request):
 def test_12_clear_the_pool_degradation(request):
     depends(request, ["degrade_pool"], scope="session")
     cmd = f'zpool clear {pool_name}'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
 
 def test_13_verify_the_pool_is_not_degraded(request):
     depends(request, ["degrade_pool"], scope="session")
     cmd = f'zpool status {pool_name} | grep {gptid}'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
     assert 'DEGRADED' not in results['output'], results['output']
 

@@ -14,7 +14,7 @@ from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call, ssh
 
 from functions import SSH_TEST, wait_on_job
-from auto_config import pool_name, password, user, ip
+from auto_config import pool_name, password, user
 SHELL = '/usr/bin/bash'
 VAR_EMPTY = '/var/empty'
 ROOT_GROUP = 'root'
@@ -119,7 +119,7 @@ class UserAssets:
 
 
 def check_config_file(file_name, expected_line):
-    results = SSH_TEST(f'cat {file_name}', user, password, ip)
+    results = SSH_TEST(f'cat {file_name}', user, password)
     assert results['result'], results['output']
     assert expected_line in results['stdout'].splitlines(), results['output']
 
@@ -185,7 +185,7 @@ def test_001_create_and_verify_testuser():
     # red flags in the CI
     results = SSH_TEST(
         f'grep -R {UserAssets.TestUser01["create_payload"]["password"]!r} /var/log/middlewared.log',
-        user, password, ip
+        user, password
     )
     assert results['result'] is False, str(results['output'])
 
@@ -267,7 +267,7 @@ def test_005_convert_non_smbuser_to_smbuser(request):
     # verify converted smb user doesn't leak password
     results = SSH_TEST(
         f'grep -R {UserAssets.TestUser01["create_payload"]["password"]!r} /var/log/middlewared.log',
-        user, password, ip
+        user, password
     )
     assert results['result'] is False, str(results['output'])
 
@@ -370,7 +370,7 @@ def test_020_create_and_verify_shareuser():
     # red flags in the CI
     results = SSH_TEST(
         f'grep -R {UserAssets.ShareUser01["create_payload"]["password"]!r} /var/log/middlewared.log',
-        user, password, ip
+        user, password
     )
     assert results['result'] is False, str(results['output'])
 
@@ -409,7 +409,7 @@ def test_031_create_user_with_homedir(request):
     # so it sets off a bunch of red flags in the CI
     results = SSH_TEST(
         f'grep -R {UserAssets.TestUser02["create_payload"]["password"]!r} /var/log/middlewared.log',
-        user, password, ip
+        user, password
     )
     assert results['result'] is False, str(results['output'])
 
@@ -455,7 +455,7 @@ def test_036_create_testfile_in_homedir(request):
     filepath = f'{UserAssets.TestUser02["query_response"]["home"]}/{filename}'
     results = SSH_TEST(
         f'touch {filepath}; chown {UserAssets.TestUser01["query_response"]["uid"]} {filepath}',
-        user, password, ip
+        user, password
     )
     assert results['result'] is True, results['output']
     assert call('filesystem.stat', filepath)
@@ -511,7 +511,7 @@ def test_038_change_homedir_to_existing_path(request):
         HomeAssets.Dataset01['create_payload']['name'],
         HomeAssets.Dataset01['new_home']
     )
-    results = SSH_TEST(f'mkdir {new_home}', user, password, ip)
+    results = SSH_TEST(f'mkdir {new_home}', user, password)
     assert results['result'] is True, results['output']
 
     # Move the homedir to existing dir

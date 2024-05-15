@@ -7,7 +7,7 @@ sys.path.append(apifolder)
 import pytest
 from pytest_dependency import depends
 
-from auto_config import ha, ip, vip, pool_name
+from auto_config import ha, vip, pool_name
 from middlewared.client.client import ValidationErrors
 from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import fail

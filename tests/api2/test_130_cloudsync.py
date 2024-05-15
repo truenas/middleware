@@ -9,7 +9,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
-from auto_config import pool_name, ip, password, user
+from auto_config import pool_name, password, user
 
 dataset = f"{pool_name}/cloudsync"
 dataset_path = os.path.join("/mnt", dataset)
@@ -127,7 +127,7 @@ def test_06_run_cloud_sync(request, task):
             continue
         assert state["job"]["state"] == "SUCCESS", state
         cmd = f'cat {dataset_path}/freenas-test.txt'
-        ssh_result = SSH_TEST(cmd, user, password, ip)
+        ssh_result = SSH_TEST(cmd, user, password)
         assert ssh_result['result'] is True, ssh_result['output']
         assert ssh_result['stdout'] == 'freenas-test\n', ssh_result['output']
         return

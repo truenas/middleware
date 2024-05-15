@@ -10,7 +10,7 @@ from pytest_dependency import depends
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import badNtpServer, ip, password, user
+from auto_config import badNtpServer, password, user
 from functions import DELETE, GET, POST, PUT, SSH_TEST
 
 CONFIG_FILE = '/etc/chrony/chrony.conf'
@@ -65,7 +65,7 @@ class TestBadNtpServer:
 
     def test_03_Checking_ntpserver_configured_using_ssh(self, request):
         cmd = f'fgrep "{badNtpServer}" {CONFIG_FILE}'
-        results = SSH_TEST(cmd, user, password, ip)
+        results = SSH_TEST(cmd, user, password)
         assert results['result'] is True, results
 
     def test_04_Check_ntpservers(self, ntp_dict):
@@ -87,7 +87,7 @@ class TestBadNtpServer:
             ntp_dict['servers'].pop(k)
 
     def test_06_Checking_ntpservers_num_configured_using_ssh(self, ntp_dict, request):
-        results = SSH_TEST(f'grep -R ^server {CONFIG_FILE}', user, password, ip)
+        results = SSH_TEST(f'grep -R ^server {CONFIG_FILE}', user, password)
         assert results['result'] is True, results
         assert len(results['stdout'].strip().split('\n')) == \
             len(ntp_dict['servers']), results['output']

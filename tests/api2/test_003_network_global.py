@@ -6,13 +6,13 @@ sys.path.append(apifolder)
 import pytest
 from pytest_dependency import depends
 
-from auto_config import ha, interface, hostname, domain, ip, gateway
-from middlewared.test.integration.utils.client import client
+from auto_config import ha, interface, hostname, domain, gateway
+from middlewared.test.integration.utils.client import client, truenas_server
 
 
 @pytest.fixture(scope='module')
 def ws_client():
-    with client(host_ip=ip) as c:
+    with client(host_ip=truenas_server.ip) as c:
         yield c
 
 

@@ -11,7 +11,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, SSH_TEST
 from auto_config import (
-    ip,
     user,
     password,
 )
@@ -19,6 +18,7 @@ from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.smb import copy_stream, get_stream, smb_share, smb_mount
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.client import truenas_server
 from pytest_dependency import depends
 from protocols import SMB, smb_connection
 from samba import ntstatus
@@ -732,7 +732,7 @@ def test_155_ssh_read_afp_xattr(request, xat):
 
 
 def test_175_check_external_path(request):
-    with smb_share(f'EXTERNAL:{ip}\\{SMB_NAME}', 'EXTERNAL'):
+    with smb_share(f'EXTERNAL:{truenas_server.ip}\\{SMB_NAME}', 'EXTERNAL'):
         with smb_connection(
             share=SMB_NAME,
             username=SMB_USER,

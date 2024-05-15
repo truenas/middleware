@@ -8,7 +8,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, wait_on_job
-from auto_config import ip, hostname, password, user
+from auto_config import hostname, password, user
 from pytest_dependency import depends
 from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.directory_service import active_directory
@@ -67,7 +67,7 @@ def test_07_check_for_ad_users(request):
     """
     depends(request, ["INITIAL_CACHE_FILL"], scope="session")
     cmd = "wbinfo -u"
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'], str(results['output'])
     wbinfo_entries = results['stdout'].splitlines()
 
@@ -91,7 +91,7 @@ def test_08_check_for_ad_groups(request):
     """
     depends(request, ["INITIAL_CACHE_FILL"], scope="session")
     cmd = "wbinfo -g"
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'], str(results['output'])
     wbinfo_entries = results['stdout'].splitlines()
 
@@ -123,7 +123,7 @@ def test_09_check_directoryservices_cache_refresh(request):
     Cache resides in tdb files. Remove the files to clear cache.
     """
     cmd = 'rm -f /root/tdb/persistent/*'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
     """
@@ -177,7 +177,7 @@ def test_10_check_lazy_initialization_of_users_and_groups_by_name(request):
     ad_group = f'{domain_prefix}domain users'
 
     cmd = 'rm -f /root/tdb/persistent/*'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
     if not results['result']:
@@ -239,7 +239,7 @@ def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
     depends(request, ["LAZY_INITIALIZATION_BY_NAME"], scope="session")
 
     cmd = 'rm -f /root/tdb/persistent/*'
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
     if not results['result']:

@@ -9,7 +9,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, PUT, SSH_TEST, GET, DELETE
-from auto_config import user, password, ip
+from auto_config import user, password
 
 TESTFILE = '/tmp/.testFileCreatedViaCronjob'
 
@@ -55,7 +55,7 @@ def test_05_Checking_that_API_reports_the_cronjob_as_updated(cronjob_dict):
 
 
 def test_06_Deleting_test_file_created_by_cronjob(request):
-    results = SSH_TEST(f'rm "{TESTFILE}"', user, password, ip)
+    results = SSH_TEST(f'rm "{TESTFILE}"', user, password)
     assert results['result'] is True, results['output']
 
 

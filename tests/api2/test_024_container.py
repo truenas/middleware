@@ -11,7 +11,8 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, PUT, POST, DELETE, wait_on_job
-from auto_config import ha, interface, ip, pool_name
+from auto_config import ha, interface, pool_name
+from middlewared.test.integration.utils.client import truenas_server
 
 container_reason = "Can't import docker_username and docker_password"
 try:
@@ -310,7 +311,7 @@ if not ha:
                         'hostInterface': f'{interface}',
                         'ipam': {
                             'type': 'static',
-                            'staticIPConfigurations': [f'{ip}/24'],
+                            'staticIPConfigurations': [f'{truenas_server.ip}/24'],
                             'staticRoutes': [
                                 {
                                     'destination': '0.0.0.0/0',
@@ -342,7 +343,7 @@ if not ha:
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         ipam = results.json()['config']['externalInterfaces'][0]['ipam']
-        assert f'{ip}/24' in ipam['staticIPConfigurations'], results.text
+        assert f'{truenas_server.ip}/24' in ipam['staticIPConfigurations'], results.text
         assert {'destination': '0.0.0.0/0', 'gateway': gateway} in ipam['staticRoutes'], results.text
         assert ipam['type'] == 'static', results.text
 
