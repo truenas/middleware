@@ -212,7 +212,7 @@ class DirectoryIterator():
         while (st := self.__check_dir_entry(dirent)) is None:
             dirent = next(self.__path_iter)
 
-        if request_mask == 0:
+        if self.__request_mask == 0:
             # Skip an unnecessary file open/close if we only need stat info
             return self.__return_fn(dirent, st, None, None, None, None, None)
 
