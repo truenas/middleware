@@ -13,8 +13,20 @@ class ReportingService(Service):
 
     @private
     async def cache_netdata_uid_gid(self):
-        self.NETDATA_UID = await self.middleware.call('user.get_builtin_user_id', NETDATA_USERNAME)
-        self.NETDATA_GID = await self.middleware.call('group.get_builtin_user_id', NETDATA_GROUPNAME)
+        # this method runs in middleware init phase so it's important
+        # to handle errors and log a message instead of crashing. If
+        # we crash here, middleware service won't start
+        try:
+            self.NETDATA_UID = await self.middleware.call('user.get_builtin_user_id', NETDATA_USERNAME)
+        except Exception:
+            self.logger.error('Unexpected failure resolving username %r to uid', NETDATA_USERNAME, exc_info=True)
+            return
+
+        try:
+            self.NETDATA_GID = await self.middleware.call('group.get_builtin_user_id', NETDATA_GROUPNAME)
+        except Exception:
+            self.logger.error('Unexpected failure resolving groupname %r to gid', NETDATA_GROUPNAME, exc_info=True)
+            return
 
     @private
     def netdata_storage_location(self):
