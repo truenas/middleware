@@ -23,7 +23,7 @@ class ReportingService(Service):
             return
 
         try:
-            self.NETDATA_GID = await self.middleware.call('group.get_builtin_user_id', NETDATA_GROUPNAME)
+            self.NETDATA_GID = await self.middleware.call('group.get_builtin_group_id', NETDATA_GROUPNAME)
         except Exception:
             self.logger.error('Unexpected failure resolving groupname %r to gid', NETDATA_GROUPNAME, exc_info=True)
             return
