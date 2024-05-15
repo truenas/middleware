@@ -122,8 +122,10 @@ __statx_default_mask = int(Mask.BASIC_STATS | Mask.BTIME)
 __statx_lstat_flags = int(ATFlags.STATX_SYNC_AS_STAT | ATFlags.SYMLINK_NOFOLLOW)
 
 
-def statx(path, dir_fd=AT_FDCWD, flags=ATFlags.STATX_SYNC_AS_STAT.value):
+def statx(path, dir_fd=None, flags=ATFlags.STATX_SYNC_AS_STAT.value):
     path = path.encode() if isinstance(path, str) else path
+
+    dir_fd = dir_fd or AT_FDCWD
 
     if dir_fd == AT_FDCWD and flags & ATFlags.EMPTY_PATH.value:
         raise ValueError('dir_fd is required when using AT_EMPTY_PATH')
@@ -141,7 +143,7 @@ def statx(path, dir_fd=AT_FDCWD, flags=ATFlags.STATX_SYNC_AS_STAT.value):
         return data
 
 
-def statx_entry_impl(entry, dir_fd=AT_FDCWD, get_ctldir=True):
+def statx_entry_impl(entry, dir_fd=None, get_ctldir=True):
     """
     This is a convenience wrapper around stat_x that was originally
     located within the filesystem plugin
