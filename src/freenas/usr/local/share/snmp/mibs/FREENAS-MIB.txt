@@ -433,21 +433,13 @@ zfsArcC OBJECT-TYPE
         ""
     ::= { arc 6 }
 
-zfsArcP OBJECT-TYPE
-    SYNTAX     Gauge32
-    MAX-ACCESS read-only
-    STATUS     current
-    DESCRIPTION
-        ""
-    ::= { arc 7 }
-
 zfsArcMissPercent OBJECT-TYPE
     SYNTAX     DisplayString
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
         "Arc Miss Percentage.
-        (Note: Floating precision sent across SNMP as a String"
+        (Note: Floating precision sent across SNMP as a String)"
     ::= { arc 8 }
 
 zfsArcCacheHitRatio OBJECT-TYPE
@@ -456,7 +448,7 @@ zfsArcCacheHitRatio OBJECT-TYPE
     STATUS     current
     DESCRIPTION
         "Arc Cache Hit Ration Percentage.
-        (Note: Floating precision sent across SNMP as a String"
+        (Note: Floating precision sent across SNMP as a String)"
     ::= { arc 9 }
 
 zfsArcCacheMissRatio OBJECT-TYPE
@@ -465,7 +457,7 @@ zfsArcCacheMissRatio OBJECT-TYPE
     STATUS     current
     DESCRIPTION
         "Arc Cache Miss Ration Percentage.
-        (Note: Floating precision sent across SNMP as a String"
+        (Note: Floating precision sent across SNMP as a String)"
     ::= { arc 10 }
 
 zfsL2ArcHits OBJECT-TYPE
