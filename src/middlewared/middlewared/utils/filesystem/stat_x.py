@@ -133,7 +133,7 @@ def statx(path, dir_fd=AT_FDCWD, flags=ATFlags.STATX_SYNC_AS_STAT.value):
         raise ValueError(f'{hex(invalid_flags)}: unsupported statx flags')
 
     data = StructStatx()
-    result = __statx_fn(dirfd, path, flags, __statx_default_mask, ctypes.byref(data))
+    result = __statx_fn(dir_fd, path, flags, __statx_default_mask, ctypes.byref(data))
     if result < 0:
         err = ctypes.get_errno()
         raise OSError(err, os.strerror(err))
