@@ -55,7 +55,7 @@ def ws_client():
     # by the time this test is called in the pipeline,
     # the HA VM should have networking configured so
     # we can use the VIP
-    with client(host_ip=vip if ha else ip) as c:
+    with client() as c:
         yield c
 
 

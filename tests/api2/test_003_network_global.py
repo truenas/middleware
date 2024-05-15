@@ -81,4 +81,4 @@ def test_002_verify_network_global_settings_state(request, ws_client, netinfo):
 def test_003_verify_network_general_summary(request, ws_client, netinfo):
     depends(request, ['NET_CONFIG'])
     summary = ws_client.call('network.general.summary')
-    assert any(i.startswith(ip) for i in summary['ips'][interface]['IPV4'])
+    assert any(i.startswith(truenas_server.ip) for i in summary['ips'][interface]['IPV4'])
