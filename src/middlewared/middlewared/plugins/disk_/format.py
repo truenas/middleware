@@ -8,7 +8,7 @@ from middlewared.service import CallError, private, Service
 class DiskService(Service):
 
     @private
-    def format(self, disk, swap_size_gb=None):
+    def format(self, disk):
         """Format a data drive with a maximized data partition"""
         sysfs = pathlib.Path(f'/sys/class/block/{disk}')
         if not sysfs.exists():
