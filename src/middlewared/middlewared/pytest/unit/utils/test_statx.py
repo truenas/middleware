@@ -80,7 +80,7 @@ def test__check_dirfd(tmpdir):
     stx1 = sx.statx(testfile)
     try:
         dirfd = os.open(tmpdir, os.O_PATH)
-        stx2 = sx.statx('testfile', {'dir_fd': dirfd})
+        stx2 = sx.statx('testfile', dir_fd=dirfd)
     finally:
         os.close(dirfd)
 
@@ -96,7 +96,7 @@ def test__check_statx_empty_path(tmpdir):
     stx1 = sx.statx(testfile)
     try:
         fd = os.open(testfile, os.O_PATH)
-        stx2 = sx.statx('', {'dir_fd': fd, 'flags': sx.ATFlags.EMPTY_PATH})
+        stx2 = sx.statx('', dir_fd=fd, flags=sx.ATFlags.EMPTY_PATH.value)
     finally:
         os.close(fd)
 

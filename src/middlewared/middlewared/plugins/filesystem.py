@@ -560,7 +560,7 @@ class FilesystemService(Service):
             fd = os.open(path, os.O_PATH)
             try:
                 st = os.fstatvfs(fd)
-                mntid = stat_x.statx('', {'dir_fd': fd, 'flags': stat_x.ATFlags.EMPTY_PATH}).stx_mnt_id
+                mntid = stat_x.statx('', dir_fd=fd, flags=stat_x.ATFlags.EMPTY_PATH.value).stx_mnt_id
             finally:
                 os.close(fd)
 
