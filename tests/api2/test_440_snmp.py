@@ -13,13 +13,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import ha, interface, password, user
 from functions import GET, POST, PUT, SSH_TEST, async_SSH_done, async_SSH_start
+from middlewared.test.integration.utils.client import truenas_server
 
-if ha and "virtual_ip" in os.environ:
-    ip = os.environ["virtual_ip"]
-    controller1_ip = os.environ['controller1_ip']
-    controller2_ip = os.environ['controller2_ip']
-else:
-    from auto_config import ip
 
 skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
 COMMUNITY = 'public'
@@ -126,11 +121,11 @@ def test_08_Validate_that_SNMP_settings_are_preserved():
 
 
 def test_09_get_sysname_reply_uses_same_ip():
-    validate_snmp_get_sysname_uses_same_ip(ip)
+    validate_snmp_get_sysname_uses_same_ip(truenas_server.ip)
 
 
 @skip_ha_tests
 def test_10_ha_get_sysname_reply_uses_same_ip():
-    validate_snmp_get_sysname_uses_same_ip(ip)
-    validate_snmp_get_sysname_uses_same_ip(controller1_ip)
-    validate_snmp_get_sysname_uses_same_ip(controller2_ip)
+    validate_snmp_get_sysname_uses_same_ip(truenas_server.ip)
+    validate_snmp_get_sysname_uses_same_ip(truenas_server.nodea_ip)
+    validate_snmp_get_sysname_uses_same_ip(truenas_server.nodeb_ip)
