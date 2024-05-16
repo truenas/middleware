@@ -7,8 +7,8 @@ import uuid
 from string import digits, ascii_uppercase, ascii_lowercase, punctuation
 from pathlib import Path
 
-from middlewared.plugins.zfs_.utils import ZFSCTL
 from middlewared.utils import filters
+from midddlewared.utils.filesystem.constants import ZFSCTL
 from middlewared.utils.path import path_location
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
@@ -415,7 +415,7 @@ def check_path_resides_within_volume_sync(verrors, schema_name, path, vol_names)
     ):
         verrors.add(schema_name, "The path must reside within a pool mount point")
 
-    if inode in (ZFSCTL.INO_ROOT, ZFSCTL.INO_SNAPDIR):
+    if inode in (ZFSCTL.INO_ROOT.value, ZFSCTL.INO_SNAPDIR.value):
         verrors.add(schema_name,
                     "The ZFS control directory (.zfs) and snapshot directory (.zfs/snapshot) "
                     "are not permitted paths. If a snapshot within this directory must "
