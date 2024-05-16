@@ -45,8 +45,10 @@ def test__email_schema(email, should_raise):
 @pytest.fixture(scope="function")
 def setup_mnt(tmpdir):
     os.makedirs('/mnt/pool/foo')
+    os.mkdir('/mnt/foo')
     try:
         os.symlink(tmpdir, '/mnt/pool/symlink')
+        os.symlink('/mnt/foo', '/mnt/pool/symlink2')
         yield
     finally:
         shutil.rmtree('/mnt/pool')
@@ -56,9 +58,12 @@ def setup_mnt(tmpdir):
     ('/tmp', True),
     ('EXTERNAL://smb_server.local/SHARE', True),
     ('/mnt/does_not_exist', True),
+    ('/mnt/foo', True),
     ('/mnt/pool/foo', False),
     ('/mnt/pool', False),
-    ('/mnt/pool/symlink', True)
+    ('/mnt/pool/..', True),
+    ('/mnt/pool/symlink', True),
+    ('/mnt/pool/symlink2', True)
 ])
 def test___check_path_resides_within_volume(setup_mnt, path, should_raise):
     volumes = ['pool']
