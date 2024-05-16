@@ -1,8 +1,8 @@
 import asyncio
-import threading
 import os
-from glob import glob
-from time import sleep
+import pathlib
+import threading
+import time
 
 from middlewared.schema import accepts, Bool, Ref, Str, returns
 from middlewared.service import job, Service, private
@@ -16,25 +16,45 @@ MAX_NUM_PARTITION_UPDATE_RETRIES = 4
 class DiskService(Service):
 
     @private
-    def get_partitions_quick(self, dev_name):
+    def get_partitions_quick(self, dev_name, tries=None):
         """
         Lightweight function to generate a dictionary of
-        partition start in units of bytes to be used by seek
+        partition start in units of bytes.
+
+        `tries` int, specifies the number of tries that we will
+            look for the various files in sysfs. Often times this
+            function is called after a drive has been formatted
+            and so the caller might want to wait on udev to become
+            aware of the new partitions.
         """
+        if tries in (0, 1) or not isinstance(tries, int):
+            tries = 1
+        else:
+            tries = min(tries, 10)
+
         startsect = {}
         sectsize = 0
-        lbs_file = f"/sys/block/{dev_name}/queue/logical_block_size"
-        try:
-            with open(lbs_file, "r") as fd:
-                sectsize = int(fd.read().strip())
-        except (FileNotFoundError, ValueError):
-            pass
-        except Exception:
-            self.logger.error('Unexpected failure trying to open %s', lbs_file, exc_info=True)
-        else:
-            for sdpath in glob(f"/sys/block/{dev_name}/{dev_name}[1-9]"):
-                with open(f"{sdpath}/start", "r") as fd:
-                    startsect[int(sdpath[-1])] = int(fd.read().strip()) * sectsize
+        path_obj = pathlib.path(f"/sys/block/{dev_name}")
+        for _try in range(tries):
+            if startsect:
+                # dictionary of partition info has already been populated
+                # so we'll break out early
+                return startsect
+            else:
+                time.sleep(0.2)
+
+            try:
+                sectsize = int((path_obj / 'queue/logical_block_size').read_text().strip())
+                with os.scandir(path_obj) as dir_contents:
+                    for partdir in filter(lambda x: x.is_dir() and x.name.startswith(dev_name), dir_contents):
+                        part_num = int((partdir / 'partition').read_text().strip())
+                        part_start = int((partdir / 'start').read_text().strip()) * sectsize
+                        startsect[part_num] = part_start
+            except (FileNotFoundError, ValueError):
+                continue
+            except Exception:
+                if _try == retries:
+                    self.logger.error('Unexpected failure gathering partition info', exc_info=True)
 
         return startsect
 
@@ -130,13 +150,13 @@ class DiskService(Service):
         retries = MAX_NUM_PARTITION_UPDATE_RETRIES
         # Unfortunately, without a small initial sleep, the following
         # retry loop will almost certainly require two iterations.
-        sleep(0.1)
+        time.sleep(0.1)
         while retries > 0:
             # Use BLKRRPATH ioctl to update the kernel partition table
             error = self.middleware.call_sync('disk.update_partition_table_quick', disk_path)
             if not error[disk_path]:
                 break
-            sleep(0.1)
+            time.sleep(0.1)
             retries -= 1
 
         if error[disk_path]:
