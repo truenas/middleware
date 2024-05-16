@@ -189,8 +189,7 @@ class FilesystemService(Service):
             check=False
         )
         if stripacl.returncode != 0:
-            raise CallError("Failed to strip ACL on path: %s",
-                            stripacl.stderr.decode())
+            raise CallError(f"{path}: Failed to strip ACL on path: {stripacl.stderr.decode()}")
 
         return
 
@@ -343,8 +342,7 @@ class FilesystemService(Service):
             check=False
         )
         if getacl.returncode != 0:
-            raise CallError("Failed to get ACL for path [%s]: %s",
-                            path, getacl.stderr.decode())
+            raise CallError(f"Failed to get ACL for path [{path}]: {getacl.stderr.decode()}")
 
         output = json.loads(getacl.stdout.decode())
         for ace in output['acl']:
