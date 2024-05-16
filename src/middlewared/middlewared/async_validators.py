@@ -4,12 +4,15 @@ import socket
 from middlewared.validators import IpAddress, check_path_resides_within_volume_sync
 
 
-async def check_path_resides_within_volume(verrors, middleware, name, path):
+async def check_path_resides_within_volume(verrors, middleware, schema_name, path):
     """
     async wrapper around synchronous general-purpose path validation function
     """
     vol_names = [vol["vol_name"] for vol in await middleware.call("datastore.query", "storage.volume")]
-    return await middleware.run_in_thread(check_path_resides_within_volume_sync, verrors, name, path, vol_names)
+    return await middleware.run_in_thread(
+        check_path_resides_within_volume_sync,
+        verrors, schema_name, path, vol_names
+    )
 
 
 async def resolve_hostname(middleware, verrors, name, hostname):

@@ -396,7 +396,7 @@ def check_path_resides_within_volume_sync(verrors, schema_name, path, vol_names)
     * path is not explicitly a `.zfs` or `.zfs/snapshot` directory
     * path is not ix-applications dataset
     """
-    if path_location(path) == 'EXTERNAL':
+    if path_location(path).name == 'EXTERNAL':
         # There are some fields where we allow external paths
         verrors.add(schema_name, "Path is external to TrueNAS.")
         return

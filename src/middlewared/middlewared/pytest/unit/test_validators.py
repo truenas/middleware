@@ -58,7 +58,7 @@ def setup_mnt(tmpdir):
     ('/mnt/does_not_exist', True),
     ('/mnt/pool/foo', False),
     ('/mnt/pool', False),
-    ('/mnt/pool//symlink', True)
+    ('/mnt/pool/symlink', True)
 ])
 def test___check_path_resides_within_volume(setup_mnt, path, should_raise):
     volumes = ['pool']
