@@ -1,0 +1,11 @@
+# Beware! This file is rewritten by htop when settings are changed in the interface.
+# The parser is also very primitive, and not human-friendly.
+find_comm_in_cmdline=1
+header_margin=1
+show_cpu_usage=1
+show_cpu_frequency=1
+show_cpu_temperature=1
+column_meters_0=LeftCPUs2 Memory Swap ZFSARC ZFSCARC NetworkIO
+column_meter_modes_0=1 1 1 2 2 2
+column_meters_1=RightCPUs2 Tasks LoadAverage Uptime DiskIO System
+column_meter_modes_1=1 2 2 2 2 2
