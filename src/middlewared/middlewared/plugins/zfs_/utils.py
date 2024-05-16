@@ -2,6 +2,7 @@
 import enum
 import logging
 import os
+import re
 
 from middlewared.service_exception import MatchNotFound
 
@@ -11,6 +12,7 @@ __all__ = ["zvol_name_to_path", "zvol_path_to_name", "get_snapshot_count_cached"
 
 LEGACY_USERPROP_PREFIX = 'org.freenas'
 USERPROP_PREFIX = 'org.truenas'
+ZD_PARTITION = re.compile(r'zd[0-9]+p[0-9]+$')
 
 
 class TNUserProp(enum.Enum):
@@ -131,6 +133,9 @@ def unlocked_zvols_fast(options=None, data=None):
                     # a regular file. When we readlink() that file, it
                     # crashed with OSError 22 Invalid Argument so we just
                     # skip this file
+                    continue
+
+                if ZD_PARTITION.match(dev_name):
                     continue
 
                 out.update({
