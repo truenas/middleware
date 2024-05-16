@@ -1,7 +1,5 @@
 # Beware! This file is rewritten by htop when settings are changed in the interface.
 # The parser is also very primitive, and not human-friendly.
-htop_version=3.2.2
-config_reader_min_version=3
 find_comm_in_cmdline=1
 header_margin=1
 show_cpu_usage=1
