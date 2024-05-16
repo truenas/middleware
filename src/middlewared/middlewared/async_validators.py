@@ -1,10 +1,6 @@
 import asyncio
-import os
 import socket
-from pathlib import Path
 
-from middlewared.plugins.zfs_.utils import ZFSCTL
-from middlewared.utils.path import path_location
 from middlewared.validators import IpAddress, check_path_resides_within_volume_sync
 
 
