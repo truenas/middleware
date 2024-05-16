@@ -8,7 +8,7 @@ from string import digits, ascii_uppercase, ascii_lowercase, punctuation
 from pathlib import Path
 
 from middlewared.utils import filters
-from midddlewared.utils.filesystem.constants import ZFSCTL
+from middlewared.utils.filesystem.constants import ZFSCTL
 from middlewared.utils.path import path_location
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
