@@ -41,7 +41,7 @@ class DiskService(Service):
                 # so we'll break out early
                 return startsect
             else:
-                time.sleep(0.2)
+                time.sleep(0.5)
 
             try:
                 sectsize = int((path_obj / 'queue/logical_block_size').read_text().strip())
