@@ -46,6 +46,10 @@ class DiskService(Service):
         part.name = 'data'  # give a human readable name to the label
         parted_disk.addPartition(part, constraint=dev.optimalAlignedConstraint)
         parted_disk.commit()
+
+        # Found that this was necessary to avoid a possible race wrt disk.get_partitions_quick
+        self.middleware.call_sync('device.settle_udev_events')
+
         if len(self.middleware.call_sync('disk.get_partitions_quick', disk)) != len(parted_disk.partitions):
             # In some rare cases udev does not re-read the partition table correctly; force it
             self.middleware.call_sync('device.trigger_udev_events', f'/dev/{disk}')
