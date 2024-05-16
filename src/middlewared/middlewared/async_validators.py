@@ -5,66 +5,15 @@ from pathlib import Path
 
 from middlewared.plugins.zfs_.utils import ZFSCTL
 from middlewared.utils.path import path_location
-from middlewared.validators import IpAddress
+from middlewared.validators import IpAddress, check_path_resides_within_volume_sync
 
 
 async def check_path_resides_within_volume(verrors, middleware, name, path):
-
-    # we need to make sure the sharing service is configured within the zpool
-    def get_file_info(path):
-        """
-        avoid filesytem.stat here because we do not want to fail if path does
-        not exist
-        """
-        rv = {'realpath': None, 'inode': None, 'dev': None, 'is_mountpoint': False}
-        try:
-            st = os.stat(path)
-            rv['inode'] = st.st_ino
-            rv['dev'] = st.st_dev
-        except FileNotFoundError:
-            pass
-
-        rv['realpath'] = os.path.realpath(path)
-        rv['is_mountpoint'] = os.path.ismount(path)
-        return rv
-
-    loc = path_location(path)
-
-    if loc == 'EXTERNAL':
-        verrors.add(name, "Path is external to TrueNAS.")
-
-    st = await middleware.run_in_thread(get_file_info, path)
-    rp = st["realpath"]
-
+    """
+    async wrapper around synchronous general-purpose path validation function
+    """
     vol_names = [vol["vol_name"] for vol in await middleware.call("datastore.query", "storage.volume")]
-    vol_paths = [os.path.join("/mnt", vol_name) for vol_name in vol_names]
-    if not path.startswith("/mnt/") or not any(
-        os.path.commonpath([parent]) == os.path.commonpath([parent, rp]) for parent in vol_paths
-    ):
-        verrors.add(name, "The path must reside within a pool mount point")
-
-    if st['inode'] in (ZFSCTL.INO_ROOT, ZFSCTL.INO_SNAPDIR):
-        verrors.add(name,
-                    "The ZFS control directory (.zfs) and snapshot directory (.zfs/snapshot) "
-                    "are not permitted paths. If a snapshot within this directory must "
-                    "be accessed through the path-based API, then it should be called "
-                    "directly, e.g. '/mnt/dozer/.zfs/snapshot/mysnap'.")
-
-    rp = Path(rp)
-    for check_path, svc_name in (('ix-applications', 'Applications'),):
-        in_use = False
-        if st['is_mountpoint'] and rp.name == check_path:
-            in_use = True
-        else:
-            # subtract 2 here to remove the '/' and 'mnt' parents
-            for i in range(0, len(rp.parents) - 2):
-                p = rp.parents[i]
-                p_ismnt = await middleware.run_in_thread(p.is_mount)
-                if p_ismnt and p.name == check_path:
-                    in_use = True
-                    break
-        if in_use:
-            verrors.add(name, f'A path being used by {svc_name} is not allowed')
+    return await middleware.run_in_thread(check_path_resides_within_volume_sync, verrors, name, path, vol_names)
 
 
 async def resolve_hostname(middleware, verrors, name, hostname):
