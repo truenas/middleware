@@ -346,8 +346,6 @@ class FailoverService(ConfigService):
             rc = await self.middleware.call('failover.fenced.start', True)
             return not rc if rc != 6 else bool(rc)  # 6 means already running
 
-        return False
-
     @accepts(Dict(
         'options',
         Bool('reboot', default=False),
@@ -360,6 +358,10 @@ class FailoverService(ConfigService):
         `reboot` as true will reboot the other controller after syncing.
         """
         standby = ' standby controller.'
+
+        self.logger.debug('Pulling system dataset UUID from' + standby)
+        self.middleware.call_sync('systemdataset.ensure_standby_uuid')
+
         self.logger.debug('Syncing database to' + standby)
         self.middleware.call_sync('failover.datastore.send')
 
