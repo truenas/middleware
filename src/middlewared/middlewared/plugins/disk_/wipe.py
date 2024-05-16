@@ -34,7 +34,7 @@ class DiskService(Service):
 
         startsect = {}
         sectsize = 0
-        path_obj = pathlib.path(f"/sys/block/{dev_name}")
+        path_obj = pathlib.Path(f"/sys/block/{dev_name}")
         for _try in range(tries):
             if startsect:
                 # dictionary of partition info has already been populated
