@@ -53,7 +53,7 @@ class DiskService(Service):
             except (FileNotFoundError, ValueError):
                 continue
             except Exception:
-                if _try == retries:
+                if _try == tries:
                     self.logger.error('Unexpected failure gathering partition info', exc_info=True)
 
         return startsect
