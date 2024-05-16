@@ -1,11 +1,15 @@
 from datetime import time
 import ipaddress
+import os
 import re
 from urllib.parse import urlparse
 import uuid
 from string import digits, ascii_uppercase, ascii_lowercase, punctuation
+from pathlib import Path
 
 from middlewared.utils import filters
+from middlewared.utils.filesystem.constants import ZFSCTL
+from middlewared.utils.path import path_location
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 RE_MAC_ADDRESS = re.compile(r"^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$")
@@ -371,3 +375,63 @@ class URL:
 
         if not result.netloc:
             raise ValueError('Invalid URL: no netloc specified')
+
+
+def check_path_resides_within_volume_sync(verrors, schema_name, path, vol_names):
+    """
+    This provides basic validation of whether a given `path` is allowed to
+    be exposed to end-users.
+
+    `verrors` - ValidationErrors created by calling function
+
+    `schema_name` - schema name to use in validation error message
+
+    `path` - path to validate
+
+    `vol_names` - list of expected pool names
+
+    It checks the following:
+    * path is within /mnt
+    * path is located within one of the specified `vol_names`
+    * path is not explicitly a `.zfs` or `.zfs/snapshot` directory
+    * path is not ix-applications dataset
+    """
+    if path_location(path).name == 'EXTERNAL':
+        # There are some fields where we allow external paths
+        verrors.add(schema_name, "Path is external to TrueNAS.")
+        return
+
+    try:
+        inode = os.stat(path).st_ino
+    except FileNotFoundError:
+        inode = None
+
+    rp = Path(os.path.realpath(path))
+    is_mountpoint = os.path.ismount(path)
+
+    vol_paths = [os.path.join("/mnt", vol_name) for vol_name in vol_names]
+    if not path.startswith("/mnt/") or not any(
+        os.path.commonpath([parent]) == os.path.commonpath([parent, rp]) for parent in vol_paths
+    ):
+        verrors.add(schema_name, "The path must reside within a pool mount point")
+
+    if inode in (ZFSCTL.INO_ROOT.value, ZFSCTL.INO_SNAPDIR.value):
+        verrors.add(schema_name,
+                    "The ZFS control directory (.zfs) and snapshot directory (.zfs/snapshot) "
+                    "are not permitted paths. If a snapshot within this directory must "
+                    "be accessed through the path-based API, then it should be called "
+                    "directly, e.g. '/mnt/dozer/.zfs/snapshot/mysnap'.")
+
+    for check_path, svc_name in (('ix-applications', 'Applications'),):
+        in_use = False
+        if is_mountpoint and rp.name == check_path:
+            in_use = True
+        else:
+            # subtract 2 here to remove the '/' and 'mnt' parents
+            for i in range(0, len(rp.parents) - 2):
+                p = rp.parents[i]
+                if p.is_mount() and p.name == check_path:
+                    in_use = True
+                    break
+        if in_use:
+            verrors.add(schema_name, f'A path being used by {svc_name} is not allowed')
