@@ -53,7 +53,7 @@ class DiskService(Service):
             except (FileNotFoundError, ValueError):
                 continue
             except Exception:
-                if _try == tries:
+                if _try + 1 == tries:  # range() built-in is half-open
                     self.logger.error('Unexpected failure gathering partition info', exc_info=True)
 
         return startsect
