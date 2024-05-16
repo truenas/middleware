@@ -23,15 +23,12 @@ sys.path.append(apifolder)
 from assets.websocket.server import reboot
 from middlewared.test.integration.assets.account import user as ftp_user
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
+from middlewared.test.integration.utils.client import truenas_server
 
 from auto_config import ha, password, pool_name, user
 from functions import SSH_TEST, make_ws_request, send_file
 from protocols import ftp_connect, ftp_connection, ftps_connection
 
-if ha and "virtual_ip" in os.environ:
-    ip = os.environ["virtual_ip"]
-else:
-    from auto_config import ip
 
 FTP_DEFAULT = {}
 DB_DFLT = {}
@@ -70,16 +67,16 @@ def ftp_init_db_dflt():
     cmd_file = open('ftpconf.py', 'w')
     cmd_file.writelines(ftpconf_script)
     cmd_file.close()
-    results = send_file('ftpconf.py', 'ftpconf.py', user, password, ip)
+    results = send_file('ftpconf.py', 'ftpconf.py', user, password, truenas_server.ip)
     assert results['result'], str(results['output'])
-    rv_defaults = SSH_TEST("python3 ftpconf.py", user, password, ip)
+    rv_defaults = SSH_TEST("python3 ftpconf.py", user, password)
     assert rv_defaults['result'], str(rv_defaults)
     global FTP_DEFAULT
     FTP_DEFAULT = json.loads(rv_defaults['stdout'].strip())
 
     # clean up the temporary script
     os.remove('ftpconf.py')
-    results = SSH_TEST('rm ftpconf.py', user, password, ip)
+    results = SSH_TEST('rm ftpconf.py', user, password)
     assert results['result'] is True, results
 
     # # Special cases: The default banner is in a file (see proftpd.conf.mako)
@@ -118,7 +115,7 @@ def ftp_set_config(config={}):
 
 
 def parse_proftpd_conf():
-    results = SSH_TEST("cat /etc/proftpd/proftpd.conf", user, password, ip)
+    results = SSH_TEST("cat /etc/proftpd/proftpd.conf", user, password)
     assert results['result'], str(results)
     lines = results['stdout'].splitlines()
 
@@ -170,7 +167,7 @@ def validate_proftp_conf():
     xlat = {True: "on", False: "off"}
     # Retrieve result from the database
     payload = {'msg': 'method', 'method': 'ftp.config', 'params': []}
-    rv_ftpConfig = make_ws_request(ip, payload)
+    rv_ftpConfig = make_ws_request(truenas_server.ip, payload)
     ftpConf = rv_ftpConfig['result']
 
     parsed = parse_proftpd_conf()
@@ -211,7 +208,7 @@ def validate_proftp_conf():
             assert parsed['AllowGroup'][1] == 'root'
 
     # The banner is saved to a file
-    rv_motd = SSH_TEST("cat /var/run/proftpd/proftpd.motd", user, password, ip)
+    rv_motd = SSH_TEST("cat /var/run/proftpd/proftpd.motd", user, password)
     assert rv_motd['result'], str(rv_motd)
     motd = rv_motd['stdout'].strip()
     if ftpConf['banner']:
@@ -293,21 +290,21 @@ def ftp_configure(changes=None):
     '''
     changes = changes or {}
     payload = {'msg': 'method', 'method': 'ftp.config', 'params': []}
-    res = make_ws_request(ip, payload)
+    res = make_ws_request(truenas_server.ip, payload)
     assert res.get('error') is None, res
     ftpConf = res['result']
     restore_keys = set(ftpConf) & set(changes)
     restore_items = {key: ftpConf[key] for key in restore_keys}
     try:
         payload = {'msg': 'method', 'method': 'ftp.update', 'params': [changes]}
-        res = make_ws_request(ip, payload)
+        res = make_ws_request(truenas_server.ip, payload)
         assert res.get('error') is None, res
         yield
     finally:
         # Restore settings
         if changes:
             payload = {'msg': 'method', 'method': 'ftp.update', 'params': [restore_items]}
-            res = make_ws_request(ip, payload)
+            res = make_ws_request(truenas_server.ip, payload)
             assert res.get('error') is None, res
             # Validate the restore
             validate_proftp_conf()
@@ -326,7 +323,7 @@ def ftp_set_service_enable_state(state=None):
             'params': [[["service", "=", "ftp"]], {'get': True}]
         }
         # save current setting
-        res = make_ws_request(ip, get_payload)
+        res = make_ws_request(truenas_server.ip, get_payload)
         restore_setting = res['result']['enable']
 
         set_payload = {
@@ -334,7 +331,7 @@ def ftp_set_service_enable_state(state=None):
             'params': ['ftp', {'enable': state}]
         }
 
-        res = make_ws_request(ip, set_payload)
+        res = make_ws_request(truenas_server.ip, set_payload)
         assert res.get('error') is None, res
 
     return restore_setting
@@ -355,7 +352,7 @@ def ftp_server(service_state=None):
         'msg': 'method', 'method': 'service.start',
         'params': ['ftp', {'silent': False}]
     }
-    res = make_ws_request(ip, payload)
+    res = make_ws_request(truenas_server.ip, payload)
     assert res.get('error') is None, res
 
     try:
@@ -368,7 +365,7 @@ def ftp_server(service_state=None):
             'msg': 'method', 'method': 'service.stop',
             'params': ['ftp', {'silent': False}]
         }
-        res = make_ws_request(ip, payload)
+        res = make_ws_request(truenas_server.ip, payload)
         assert res.get('error') is None, res
 
         # Restore original service state
@@ -399,7 +396,7 @@ def ftp_anon_ds_and_srvr_conn(dsname='ftpdata', FTPconfig=None, useFTPS=None, wi
             with ftp_configure(anon_config):
                 ftpConf, motd = validate_proftp_conf()
                 if withConn:
-                    with (ftps_connection if useFTPS else ftp_connection)(ip) as ftp:
+                    with (ftps_connection if useFTPS else ftp_connection)(truenas_server.ip) as ftp:
                         yield SimpleNamespace(ftp=ftp, dirs_and_files=ftp_dirs_and_files,
                                               ftpConf=ftpConf, motd=motd)
 
@@ -428,7 +425,7 @@ def ftp_user_ds_and_srvr_conn(dsname='ftpdata', username="FTPlocal", FTPconfig=N
             with ftp_server():
                 with ftp_configure(FTPconfig):
                     ftpConf, motd = validate_proftp_conf()
-                    with (ftps_connection if useFTPS else ftp_connection)(ip) as ftp:
+                    with (ftps_connection if useFTPS else ftp_connection)(truenas_server.ip) as ftp:
                         yield SimpleNamespace(ftp=ftp, dirs_and_files=ftp_dirs_and_files, ftpConf=ftpConf, motd=motd)
 
 
@@ -445,7 +442,7 @@ def ftp_get_users():
     Return a list of active users
     NB: ftp service should be running when called
     '''
-    ssh_out = SSH_TEST("ftpwho -o json", user, password, ip)
+    ssh_out = SSH_TEST("ftpwho -o json", user, password)
     assert ssh_out['result'], str(ssh_out)
     output = ssh_out['output']
     # Strip off trailing bogus data
@@ -457,7 +454,7 @@ def ftp_get_users():
 def ftp_get_ftp_group():
     payload = {'msg': 'method', 'method': 'group.query',
                'params': [[["name", "=", "ftp"]], {"get": True}]}
-    res = make_ws_request(ip, payload)
+    res = make_ws_request(truenas_server.ip, payload)
     assert res.get('error') is None, res
     return res['result']['id']
 
@@ -543,22 +540,22 @@ def ftp_init_dirs_and_files(items=None):
         assert items['path'] is not None
         path = items['path']
         for d in items['dirs']:
-            res = SSH_TEST(f"mkdir -p {path}/{d['name']}", user, password, ip)
+            res = SSH_TEST(f"mkdir -p {path}/{d['name']}", user, password)
             assert res['result'], str(res)
             thispath = f"{path}/{d['name']}"
             if 'contents' in d:
                 for f in d['contents']:
-                    res = SSH_TEST(f"touch {thispath}/{f}", user, password, ip)
+                    res = SSH_TEST(f"touch {thispath}/{f}", user, password)
                     assert res['result'], str(res)
             if 'perm' in d:
-                res = SSH_TEST(f"chmod {d['perm']} {thispath}", user, password, ip)
+                res = SSH_TEST(f"chmod {d['perm']} {thispath}", user, password)
                 assert res['result'], str(res)
 
         for f in items['files']:
-            res = SSH_TEST(f"echo \'{f['contents']}\' > \'{path}/{f['name']}\'", user, password, ip)
+            res = SSH_TEST(f"echo \'{f['contents']}\' > \'{path}/{f['name']}\'", user, password)
             assert res['result'], str(res)
             if 'perm' in f:
-                res = SSH_TEST(f"chmod {f['perm']} {path}/{f['name']}", user, password, ip)
+                res = SSH_TEST(f"chmod {f['perm']} {path}/{f['name']}", user, password)
                 assert res['result'], str(res)
 
 
@@ -587,7 +584,7 @@ def ftp_ipconnections_test(test_data=None, *extra):
     NewConnects = []
     while NumConnects < ConnectionLimit:
         try:
-            ftpConn = ftp_connect(ip)
+            ftpConn = ftp_connect(truenas_server.ip)
         except all_errors as e:
             assert False, f"Unexpected connection error: {e}"
         NewConnects.append(ftpConn)
@@ -596,7 +593,7 @@ def ftp_ipconnections_test(test_data=None, *extra):
         assert len(CurrentFtpUsers) == ConnectionLimit
     try:
         # This next connect should fail
-        ftp_connect(ip)
+        ftp_connect(truenas_server.ip)
     except all_errors as e:
         # An expected error
         assert NumConnects == ConnectionLimit
@@ -777,7 +774,7 @@ def test_005_ftp_service_at_boot(request):
         'msg': 'method', 'method': 'service.query',
         'params': [[["service", "=", "ftp"]], {'get': True}]
     }
-    res = make_ws_request(ip, get_payload)
+    res = make_ws_request(truenas_server.ip, get_payload)
     assert res['result']['enable'] is True, res
 
     # Restore original setting
@@ -796,13 +793,13 @@ def test_010_ftp_service_start(request):
             'msg': 'method', 'method': 'service.query',
             'params': [[["service", "=", "ftp"]], {'get': True}]
         }
-        res = make_ws_request(ip, payload)
+        res = make_ws_request(truenas_server.ip, payload)
         assert res.get('error') is None, res
         result = res['result']
         assert result["state"] == "RUNNING"
 
         # Confirm we have /etc/proftpd/proftpd.conf
-        rv_conf = SSH_TEST("ls /etc/proftpd/proftpd.conf", user, password, ip)
+        rv_conf = SSH_TEST("ls /etc/proftpd/proftpd.conf", user, password)
         assert rv_conf['result'], str(rv_conf)
 
 
@@ -836,13 +833,13 @@ def test_017_ftp_port(request):
             'msg': 'method', 'method': 'service.query',
             'params': [[["service", "=", "ftp"]], {'get': True}]
         }
-        res = make_ws_request(ip, payload)
+        res = make_ws_request(truenas_server.ip, payload)
         assert res.get('error') is None, res
         result = res['result']
         assert result["state"] == "RUNNING"
 
         # Confirm FTP is listening on the default port
-        res = SSH_TEST("ss -tlpn", user, password, ip)
+        res = SSH_TEST("ss -tlpn", user, password)
         sslist = res['output'].splitlines()
         ftp_entry = [line for line in sslist if "ftp" in line]
         ftpPort = ftp_entry[0].split()[3][2:]
@@ -854,7 +851,7 @@ def test_017_ftp_port(request):
         }
         with ftp_configure(changes):
             validate_proftp_conf()
-            res = SSH_TEST("ss -tlpn", user, password, ip)
+            res = SSH_TEST("ss -tlpn", user, password)
             sslist = res['output'].splitlines()
             ftp_entry = [line for line in sslist if "ftp" in line]
             ftpPort = ftp_entry[0].split()[3][2:]
@@ -991,7 +988,7 @@ def test_045_masquerade_address(request, masq_type, expect_to_pass):
     '''
     depends(request, ["init_dflt_config"], scope="session")
     payload = {'msg': 'method', 'method': 'network.configuration.config', 'params': []}
-    res = make_ws_request(ip, payload)
+    res = make_ws_request(truenas_server.ip, payload)
     assert res.get('error') is None, res
     netconfig = res['result']
     if masq_type == 'hostname':
@@ -999,7 +996,7 @@ def test_045_masquerade_address(request, masq_type, expect_to_pass):
         if netconfig['domain'] and netconfig['domain'] != "local":
             masqaddr = masqaddr + "." + netconfig['domain']
     elif masq_type == 'ip_addr':
-        masqaddr = ip
+        masqaddr = truenas_server.ip 
     else:
         masqaddr = masq_type
 
@@ -1018,7 +1015,7 @@ def test_045_masquerade_address(request, masq_type, expect_to_pass):
                 if masq_type == "hostname":
                     assert srvr_ip == '127.0.0.1'
                 else:
-                    assert srvr_ip == ip
+                    assert srvr_ip == truenas_server.ip
             except all_errors as e:
                 assert False, f"FTP failed with masqaddres = '{masqaddr}'. {e}"
 
@@ -1057,7 +1054,7 @@ def test_050_passive_ports(request, testing, ftpConfig, expect_to_pass):
                 srvr_ip, p1, p2 = res.split('(', 1)[1].split(')')[0].rsplit(',', 2)
                 # Calculate the passive port
                 pasv_port = int(p1) * 256 + int(p2)
-                assert srvr_ip.replace(',', '.') == ip
+                assert srvr_ip.replace(',', '.') == truenas_server.ip
                 assert pasv_port == ftpdata.ftpConf['passiveportsmin']
             except all_errors as e:
                 assert expect_to_pass is False, f"Unexpected failure, {e}"
@@ -1128,7 +1125,7 @@ def test_060_bandwidth_limiter(request, testwho, ftp_setup_func):
         ftpObj = ftpdata.ftp
         localfname = f"/tmp/{ftpfname}"
         if testwho == 'anon':
-            results = SSH_TEST(f"chown ftp {ftpdata.ftpConf['anonpath']}", user, password, ip)
+            results = SSH_TEST(f"chown ftp {ftpdata.ftpConf['anonpath']}", user, password)
             assert results['result'] is True, results
         try:
             if testwho == 'anon':
@@ -1239,7 +1236,7 @@ def test_070_resume_xfer(request, ftpConf, expect_to_pass):
             # Create a 1MB local binary file.  Use the same file for the download test
             localsize, local_chksum = ftp_create_local_file(localfname, 1024)
 
-            ftpObj = ftp_connect(ip)
+            ftpObj = ftp_connect(truenas_server.ip)
             ftpObj.login()
             upload_partial(ftpObj, localfname, remotefname, 768)
             # Quit to simulate loss of connection
@@ -1248,7 +1245,7 @@ def test_070_resume_xfer(request, ftpConf, expect_to_pass):
             sleep(1)
 
             # Attempt resume to complete the upload
-            ftpObj = ftp_connect(ip)
+            ftpObj = ftp_connect(truenas_server.ip)
             ftpObj.login()
             ftpObj.voidcmd('TYPE I')
             # Get current 'remote' size
@@ -1258,7 +1255,7 @@ def test_070_resume_xfer(request, ftpConf, expect_to_pass):
 
             # Check result
             remotesize = ftpObj.size(remotefname)
-            results = SSH_TEST(f"sha256sum {remotepath}", user, password, ip)
+            results = SSH_TEST(f"sha256sum {remotepath}", user, password)
             assert results['result'] is True, results
             remote_chksum = results['stdout'].split()[0]
             assert remotesize == localsize
@@ -1347,7 +1344,7 @@ class TestAnonUser(UserTests):
         with ftp_anon_ds_and_srvr_conn('anonftpDS') as anonftp:
             # Make the directory owned by the anonymous ftp user
             anon_path = anonftp.dirs_and_files['path']
-            results = SSH_TEST(f"chown ftp {anon_path}", user, password, ip)
+            results = SSH_TEST(f"chown ftp {anon_path}", user, password)
             assert results['result'] is True, results
             login_error = None
             ftpObj = anonftp.ftp
@@ -1439,13 +1436,13 @@ def test_085_ftp_service_starts_after_reboot():
             'msg': 'method', 'method': 'service.query',
             'params': [[["service", "=", "ftp"]], {'get': True}]
         }
-        res = make_ws_request(ip, payload)
+        res = make_ws_request(truenas_server.ip, payload)
         assert res.get('error') is None, res
         result = res['result']
         assert result["state"] == "RUNNING"
         assert result["enable"] is True
 
-        reboot(ip)
+        reboot(truenas_server.ip)
 
         # Confirm FTP is running
         TotalWait = 60
@@ -1456,7 +1453,7 @@ def test_085_ftp_service_starts_after_reboot():
                     'msg': 'method', 'method': 'service.query',
                     'params': [[["service", "=", "ftp"]], {'get': True}]
                 }
-                res = make_ws_request(ip, payload)
+                res = make_ws_request(truenas_server.ip, payload)
                 assert res.get('error') is None, res
                 HaveConnection = True
                 break
@@ -1475,7 +1472,7 @@ def test_100_ftp_service_stop():
         'method': 'service.stop',
         'params': ['ftp', {'silent': False}]
     }
-    res = make_ws_request(ip, payload)
+    res = make_ws_request(truenas_server.ip, payload)
     assert res.get('error') is None, res
 
     # Confirm we show as STOPPED and disabled
@@ -1485,7 +1482,7 @@ def test_100_ftp_service_stop():
             [["service", "=", "ftp"]], {'get': True}
         ]
     }
-    res = make_ws_request(ip, payload)
+    res = make_ws_request(truenas_server.ip, payload)
     assert res.get('error') is None, res
     result = res['result']
     assert result['state'] == "STOPPED"

@@ -11,11 +11,6 @@ from middlewared.test.integration.assets.directory_service import ldap
 from middlewared.test.integration.utils import call
 from auto_config import ha, user, password
 
-if ha and "virtual_ip" in os.environ:
-    ip = os.environ["virtual_ip"]
-else:
-    from auto_config import ip
-
 try:
     from config import (
         FREEIPA_IP,
@@ -32,13 +27,13 @@ except ImportError:
 @pytest.fixture(scope="module")
 def do_freeipa_connection(request):
     # Confirm DNS forward
-    res = SSH_TEST(f"host {FREEIPA_HOSTNAME}", user, password, ip)
+    res = SSH_TEST(f"host {FREEIPA_HOSTNAME}", user, password)
     assert res['result'] is True, res
     # stdout: "<FREEIPA_HOSTNAME> has address <FREEIPA_IP>"
     assert res['stdout'].split()[-1] == FREEIPA_IP
 
     # DNS reverse
-    res = SSH_TEST(f"host {FREEIPA_IP}", user, password, ip)
+    res = SSH_TEST(f"host {FREEIPA_IP}", user, password)
     assert res['result'] is True, res
     # stdout: <FREEIPA_IP_reverse_format>.in-addr.arpa domain name pointer <FREEIPA_HOSTNAME>.
     assert res['stdout'].split()[-1] == FREEIPA_HOSTNAME + "."
@@ -101,7 +96,7 @@ def test_10_verify_support_for_netgroups(request):
     'getent netgroup' should be able to retrieve netgroup
     """
     depends(request, ["FREEIPA_NSS_WORKING"], scope="session")
-    res = SSH_TEST("getent netgroup ixtestusers", user, password, ip)
+    res = SSH_TEST("getent netgroup ixtestusers", user, password)
     assert res['result'] is True, f"Failed to find netgroup 'ixgroup', returncode={res['returncode']}"
 
     # Confirm expected set of users or hosts

@@ -16,21 +16,15 @@ from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.iscsi import target_login_test
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils.client import truenas_server
 from pyscsi.pyscsi.scsi_sense import sense_ascq_dict
 from pytest_dependency import depends
 
-from auto_config import ha, hostname, isns_ip, pool_name
+from auto_config import ha, hostname, isns_ip, pool_name, password, user
 from functions import SSH_TEST
 from protocols import (initiator_name_supported, iscsi_scsi_connection,
                        isns_connection)
 
-if ha and "virtual_ip" in os.environ:
-    from auto_config import password, user
-    ip = os.environ["virtual_ip"]
-    controller1_ip = os.environ['controller1_ip']
-    controller2_ip = os.environ['controller2_ip']
-else:
-    from auto_config import ip, password, user
 
 # Setup some flags that will enable/disable tests based upon the capabilities of the
 # python-scsi package in use
@@ -613,7 +607,7 @@ def test_01_inquiry(request):
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
-                            with iscsi_scsi_connection(ip, iqn) as s:
+                            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 _verify_inquiry(s)
 
 
@@ -635,14 +629,14 @@ def test_02_read_capacity16(request):
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
-                            with iscsi_scsi_connection(ip, iqn) as s:
+                            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 _verify_capacity(s, MB_100)
                     # 512 MB file extent
                     with file_extent(pool_name, dataset_name, file_name, MB_512) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
-                            with iscsi_scsi_connection(ip, iqn) as s:
+                            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 _verify_capacity(s, MB_512)
                 # 100 MB zvol extent
                 with zvol_dataset(zvol, MB_100):
@@ -650,7 +644,7 @@ def test_02_read_capacity16(request):
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
-                            with iscsi_scsi_connection(ip, iqn) as s:
+                            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 _verify_capacity(s, MB_100)
                 # 512 MB zvol extent
                 with zvol_dataset(zvol):
@@ -658,7 +652,7 @@ def test_02_read_capacity16(request):
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
-                            with iscsi_scsi_connection(ip, iqn) as s:
+                            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 _verify_capacity(s, MB_512)
 
 
@@ -741,7 +735,7 @@ def test_03_readwrite16_file_extent(request):
     with initiator_portal() as config:
         with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name):
             iqn = f'{basename}:{target_name}'
-            target_test_readwrite16(ip, iqn)
+            target_test_readwrite16(truenas_server.ip, iqn)
 
 
 def test_04_readwrite16_zvol_extent(request):
@@ -753,7 +747,7 @@ def test_04_readwrite16_zvol_extent(request):
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol):
             iqn = f'{basename}:{target_name}'
-            target_test_readwrite16(ip, iqn)
+            target_test_readwrite16(truenas_server.ip, iqn)
 
 
 @skip_invalid_initiatorname
@@ -779,20 +773,20 @@ def test_05_chap(request):
 
                                 # Try and fail to connect without supplying CHAP creds
                                 with pytest.raises(RuntimeError) as ve:
-                                    with iscsi_scsi_connection(ip, iqn) as s:
+                                    with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                         TUR(s)
                                         assert False, "Should not have been able to connect without CHAP credentials."
                                 assert 'Unable to connect to' in str(ve), ve
 
                                 # Try and fail to connect supplying incorrect CHAP creds
                                 with pytest.raises(RuntimeError) as ve:
-                                    with iscsi_scsi_connection(ip, iqn, 0, user, "WrongSecret") as s:
+                                    with iscsi_scsi_connection(truenas_server.ip, iqn, 0, user, "WrongSecret") as s:
                                         TUR(s)
                                         assert False, "Should not have been able to connect without CHAP credentials."
                                 assert 'Unable to connect to' in str(ve), ve
 
                                 # Finally ensure we can connect with the right CHAP creds
-                                with iscsi_scsi_connection(ip, iqn, 0, user, secret) as s:
+                                with iscsi_scsi_connection(truenas_server.ip, iqn, 0, user, secret) as s:
                                     _verify_inquiry(s)
 
 
@@ -821,32 +815,32 @@ def test_06_mutual_chap(request):
 
                                 # Try and fail to connect without supplying Mutual CHAP creds
                                 with pytest.raises(RuntimeError) as ve:
-                                    with iscsi_scsi_connection(ip, iqn) as s:
+                                    with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                         TUR(s)
                                         assert False, "Should not have been able to connect without CHAP credentials."
                                 assert 'Unable to connect to' in str(ve), ve
 
                                 # Try and fail to connect supplying incorrect CHAP creds (not mutual)
                                 with pytest.raises(RuntimeError) as ve:
-                                    with iscsi_scsi_connection(ip, iqn, 0, user, "WrongSecret") as s:
+                                    with iscsi_scsi_connection(truenas_server.ip, iqn, 0, user, "WrongSecret") as s:
                                         TUR(s)
                                         assert False, "Should not have been able to connect with incorrect CHAP credentials."
                                 assert 'Unable to connect to' in str(ve), ve
 
                                 # Ensure we can connect with the right CHAP creds, if we *choose* not
                                 # to validate things.
-                                with iscsi_scsi_connection(ip, iqn, 0, user, secret) as s:
+                                with iscsi_scsi_connection(truenas_server.ip, iqn, 0, user, secret) as s:
                                     _verify_inquiry(s)
 
                                 # Try and fail to connect supplying incorrect Mutual CHAP creds
                                 with pytest.raises(RuntimeError) as ve:
-                                    with iscsi_scsi_connection(ip, iqn, 0, user, secret, peer_user, "WrongSecret") as s:
+                                    with iscsi_scsi_connection(truenas_server.ip, iqn, 0, user, secret, peer_user, "WrongSecret") as s:
                                         TUR(s)
                                         assert False, "Should not have been able to connect with incorrect Mutual CHAP credentials."
                                 assert 'Unable to connect to' in str(ve), ve
 
                                 # Finally ensure we can connect with the right Mutual CHAP creds
-                                with iscsi_scsi_connection(ip, iqn, 0, user, secret, peer_user, peer_secret) as s:
+                                with iscsi_scsi_connection(truenas_server.ip, iqn, 0, user, secret, peer_user, peer_secret) as s:
                                     _verify_inquiry(s)
 
 
@@ -866,7 +860,7 @@ def test_07_report_luns(request):
                     with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
-                            with iscsi_scsi_connection(ip, iqn) as s:
+                            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 _verify_luns(s, [0])
                                 _verify_capacity(s, MB_100)
                             # Now create a 512 MB zvol and associate with LUN 1
@@ -875,15 +869,15 @@ def test_07_report_luns(request):
                                     extent_id = extent_config['id']
                                     with target_extent_associate(target_id, extent_id, 1):
                                         # Connect to LUN 0
-                                        with iscsi_scsi_connection(ip, iqn, 0) as s0:
+                                        with iscsi_scsi_connection(truenas_server.ip, iqn, 0) as s0:
                                             _verify_luns(s0, [0, 1])
                                             _verify_capacity(s0, MB_100)
                                         # Connect to LUN 1
-                                        with iscsi_scsi_connection(ip, iqn, 1) as s1:
+                                        with iscsi_scsi_connection(truenas_server.ip, iqn, 1) as s1:
                                             _verify_luns(s1, [0, 1])
                                             _verify_capacity(s1, MB_512)
                             # Check again now that LUN 1 has been removed again.
-                            with iscsi_scsi_connection(ip, iqn) as s:
+                            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 _verify_luns(s, [0])
                                 _verify_capacity(s, MB_100)
 
@@ -1053,9 +1047,9 @@ def test_08_snapshot_zvol_extent(request):
     iqn = f'{basename}:{target_name}'
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
-            target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset'])
+            target_test_snapshot_single_login(truenas_server.ip, iqn, iscsi_config['dataset'])
         with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
-            target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset'])
+            target_test_snapshot_multiple_login(truenas_server.ip, iqn, iscsi_config['dataset'])
 
 
 def test_09_snapshot_file_extent(request):
@@ -1066,9 +1060,9 @@ def test_09_snapshot_file_extent(request):
     iqn = f'{basename}:{target_name}'
     with initiator_portal() as config:
         with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name) as iscsi_config:
-            target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset'])
+            target_test_snapshot_single_login(truenas_server.ip, iqn, iscsi_config['dataset'])
         with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
-            target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset'])
+            target_test_snapshot_multiple_login(truenas_server.ip, iqn, iscsi_config['dataset'])
 
 
 def test_10_target_alias(request):
@@ -1148,7 +1142,7 @@ def test_12_pblocksize_setting(request):
     with initiator_portal() as config:
         with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name) as iscsi_config:
             extent_config = iscsi_config['extent']
-            with iscsi_scsi_connection(ip, iqn) as s:
+            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 TUR(s)
                 data = s.readcapacity16().result
                 # By default 512 << 3 == 4096
@@ -1176,7 +1170,7 @@ def test_12_pblocksize_setting(request):
 
         with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
             extent_config = iscsi_config['extent']
-            with iscsi_scsi_connection(ip, iqn) as s:
+            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 TUR(s)
                 data = s.readcapacity16().result
                 # We created a vol with volblocksize == 16K (512 << 5)
@@ -1220,7 +1214,7 @@ def test_13_test_target_name(request, extent_type):
         name64 = generate_name(64)
         with configured_target(config, name64, extent_type):
             iqn = f'{basename}:{name64}'
-            target_test_readwrite16(ip, iqn)
+            target_test_readwrite16(truenas_server.ip, iqn)
 
         name65 = generate_name(65)
         with pytest.raises(ValidationErrors) as ve:
@@ -1476,11 +1470,11 @@ class TestFixtureInitiatorName:
         depends(request, ["iscsi_cmd_00"], scope="session")
 
         if expected:
-            with iscsi_scsi_connection(ip, TestFixtureInitiatorName.iqn, initiator_name=initiator_name) as s:
+            with iscsi_scsi_connection(truenas_server.ip, TestFixtureInitiatorName.iqn, initiator_name=initiator_name) as s:
                 _verify_inquiry(s)
         else:
             with pytest.raises(RuntimeError) as ve:
-                with iscsi_scsi_connection(ip, TestFixtureInitiatorName.iqn, initiator_name=initiator_name) as s:
+                with iscsi_scsi_connection(truenas_server.ip, TestFixtureInitiatorName.iqn, initiator_name=initiator_name) as s:
                     assert False, "Should not have been able to connect with invalid initiator name."
                 assert 'Unable to connect to' in str(ve), ve
 
@@ -1571,7 +1565,7 @@ def test_17_basic_persistent_reservation(request):
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol):
             iqn = f'{basename}:{target_name}'
-            with iscsi_scsi_connection(ip, iqn) as s:
+            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 TUR(s)
 
                 _pr_check_registered_keys(s, [])
@@ -1728,11 +1722,11 @@ def test_18_persistent_reservation_two_initiators(request):
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol):
             iqn = f'{basename}:{target_name}'
-            with iscsi_scsi_connection(ip, iqn) as s1:
+            with iscsi_scsi_connection(truenas_server.ip, iqn) as s1:
                 s1.blocksize = 512
                 TUR(s1)
                 initiator_name2 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:second"
-                with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_name2) as s2:
+                with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_name2) as s2:
                     s2.blocksize = 512
                     TUR(s2)
                     _check_persistent_reservations(s1, s2)
@@ -1809,8 +1803,8 @@ def _check_ha_node_configuration():
     _check_master()
 
     # Now let's get IPs and ensure that
-    # - Node A has controller1_ip
-    # - Node B has controller2_ip
+    # - Node A has truenas_server.nodea_ip
+    # - Node B has truenas_server.nodeb_ip
     # We will need this later when we start checking TPG, etc
     ips = {}
     for anode in both_nodes:
@@ -1824,11 +1818,11 @@ def _check_ha_node_configuration():
             for alias in i['state']['aliases']:
                 if alias.get('type') == 'INET':
                     ips[anode].add(alias['address'])
-    # Ensure that controller1_ip and controller2_ip are what we expect
-    assert controller1_ip in ips['A']
-    assert controller1_ip not in ips['B']
-    assert controller2_ip in ips['B']
-    assert controller2_ip not in ips['A']
+    # Ensure that truenas_server.nodea_ip and truenas_server.nodeb_ip are what we expect
+    assert truenas_server.nodea_ip in ips['A']
+    assert truenas_server.nodea_ip not in ips['B']
+    assert truenas_server.nodeb_ip in ips['B']
+    assert truenas_server.nodeb_ip not in ips['A']
 
 
 def _verify_ha_device_identification(s, naa, relative_target_port_identifier, target_port_group):
@@ -1977,7 +1971,7 @@ def test_19_alua_config(request):
             iqn = f'{basename}:{target_name}'
             api_serial_number = iscsi_config['extent']['serial']
             api_naa = iscsi_config['extent']['naa']
-            with iscsi_scsi_connection(ip, iqn) as s:
+            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 _verify_ha_inquiry(s, api_serial_number, api_naa)
 
             if ha:
@@ -1989,9 +1983,9 @@ def test_19_alua_config(request):
                     # We will login to the target on BOTH controllers and make sure
                     # we see the same target.  Observe that we supply tpgs=1 as
                     # part of the check
-                    with iscsi_scsi_connection(controller1_ip, iqn) as s1:
+                    with iscsi_scsi_connection(truenas_server.nodea_ip, iqn) as s1:
                         _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
-                        with iscsi_scsi_connection(controller2_ip, iqn) as s2:
+                        with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn) as s2:
                             _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
 
                             _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
@@ -2025,10 +2019,10 @@ def test_19_alua_config(request):
                     api_serial_number = iscsi_config['extent']['serial']
                     api_naa = iscsi_config['extent']['naa']
                     # Login to the target and ensure that things look reasonable.
-                    with iscsi_scsi_connection(controller1_ip, iqn) as s1:
+                    with iscsi_scsi_connection(truenas_server.nodea_ip, iqn) as s1:
                         _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
 
-                        with iscsi_scsi_connection(controller2_ip, iqn) as s2:
+                        with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn) as s2:
                             _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
 
                             _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
@@ -2069,8 +2063,8 @@ def test_20_alua_basic_persistent_reservation(request):
             with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name):
                 iqn = f'{basename}:{target_name}'
                 # Login to the target on each controller
-                with iscsi_scsi_connection(controller1_ip, iqn) as s1:
-                    with iscsi_scsi_connection(controller2_ip, iqn) as s2:
+                with iscsi_scsi_connection(truenas_server.nodea_ip, iqn) as s1:
+                    with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn) as s2:
                         # Now we can do some basic tests
                         _pr_check_registered_keys(s1, [])
                         _pr_check_registered_keys(s2, [])
@@ -2113,11 +2107,11 @@ def test_21_alua_persistent_reservation_two_initiators(request):
             with configured_target_to_zvol_extent(config, target_name, zvol):
                 iqn = f'{basename}:{target_name}'
                 # Login to the target on each controller
-                with iscsi_scsi_connection(controller1_ip, iqn) as s1:
+                with iscsi_scsi_connection(truenas_server.nodea_ip, iqn) as s1:
                     s1.blocksize = 512
                     TUR(s1)
                     initiator_name2 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:second"
-                    with iscsi_scsi_connection(controller2_ip, iqn, initiator_name=initiator_name2) as s2:
+                    with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn, initiator_name=initiator_name2) as s2:
                         s2.blocksize = 512
                         TUR(s2)
                         _check_persistent_reservations(s1, s2)
@@ -2218,8 +2212,8 @@ def test_22_extended_copy(request, extent1, extent2):
     with initiator_portal() as config:
         with configured_target(config, name1, extent1):
             with configured_target(config, name2, extent2):
-                with iscsi_scsi_connection(ip, iqn1) as s1:
-                    with iscsi_scsi_connection(ip, iqn2) as s2:
+                with iscsi_scsi_connection(truenas_server.ip, iqn1) as s1:
+                    with iscsi_scsi_connection(truenas_server.ip, iqn2) as s2:
                         s1.testunitready()
                         s1.blocksize = 512
                         s2.testunitready()
@@ -2242,10 +2236,10 @@ def test_23_ha_extended_copy(request, extent1, extent2):
         with initiator_portal() as config:
             with configured_target(config, name1, extent1):
                 with configured_target(config, name2, extent2):
-                    with iscsi_scsi_connection(controller1_ip, iqn1) as sa1:
-                        with iscsi_scsi_connection(controller1_ip, iqn2) as sa2:
-                            with iscsi_scsi_connection(controller2_ip, iqn1) as sb1:
-                                with iscsi_scsi_connection(controller2_ip, iqn2) as sb2:
+                    with iscsi_scsi_connection(truenas_server.nodea_ip, iqn1) as sa1:
+                        with iscsi_scsi_connection(truenas_server.nodea_ip, iqn2) as sa2:
+                            with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn1) as sb1:
+                                with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn2) as sb2:
                                     sa1.testunitready()
                                     sa1.blocksize = 512
                                     sa2.testunitready()
@@ -2300,7 +2294,7 @@ def test_24_iscsi_target_disk_login(request):
     else:
         # In non-HA we will create a target and login to it from the same TrueNAS system
         # Just in case IP was supplied as a hostname use actual_ip
-        actual_ip = get_ip_addr(ip)
+        actual_ip = get_ip_addr(truenas_server.ip)
         data_before = fetch_disk_data()
         with initiator_portal() as config:
             with configured_target_to_zvol_extent(config, target_name, zvol):
@@ -2308,7 +2302,7 @@ def test_24_iscsi_target_disk_login(request):
                 check_disk_data(data_before, data_after, "after iSCSI target creation")
 
                 # Discover the target (loopback)
-                results = SSH_TEST(f"iscsiadm -m discovery -t st -p {actual_ip}", user, password, ip)
+                results = SSH_TEST(f"iscsiadm -m discovery -t st -p {actual_ip}", user, password)
                 assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
                 # Make SURE we find the target at the ip we expect
                 found_iqn = False
@@ -2320,7 +2314,7 @@ def test_24_iscsi_target_disk_login(request):
                 assert found_iqn, f'Failed to find IQN {iqn}: out: {results["output"]}'
 
                 # Login the target
-                results = SSH_TEST(f"iscsiadm -m node -T {iqn} -p {actual_ip}:3260 --login", user, password, ip)
+                results = SSH_TEST(f"iscsiadm -m node -T {iqn} -p {actual_ip}:3260 --login", user, password)
                 assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
                 # Allow some time for the disk to surface
                 sleep(5)
@@ -2329,7 +2323,7 @@ def test_24_iscsi_target_disk_login(request):
                     data_after = fetch_disk_data()
                     check_disk_data(data_before, data_after, "after iSCSI target login")
                 finally:
-                    results = SSH_TEST(f"iscsiadm -m node -T {iqn} -p {actual_ip}:3260 --logout", user, password, ip)
+                    results = SSH_TEST(f"iscsiadm -m node -T {iqn} -p {actual_ip}:3260 --logout", user, password)
                     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
@@ -2343,7 +2337,7 @@ def test_25_resize_target_zvol(request):
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol, volsize=MB_100) as config:
             iqn = f'{basename}:{target_name}'
-            with iscsi_scsi_connection(ip, iqn) as s:
+            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 TUR(s)
                 s.blocksize = 512
                 assert MB_100 == _read_capacity16(s)
@@ -2353,7 +2347,7 @@ def test_25_resize_target_zvol(request):
                 assert MB_256 == _read_capacity16(s)
                 # But we can do better (in terms of test) ... turn AEN off,
                 # which means we will get a CHECK CONDITION on the next resize
-                SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password, ip)
+                SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password)
                 zvol_resize(zvol, MB_512)
                 expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
                 assert MB_512 == _read_capacity16(s)
@@ -2378,7 +2372,7 @@ def test_26_resize_target_file(request):
                                               file_name,
                                               filesize=MB_100) as config:
             iqn = f'{basename}:{target_name}'
-            with iscsi_scsi_connection(ip, iqn) as s:
+            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 extent_id = config['extent']['id']
                 TUR(s)
                 s.blocksize = 512
@@ -2386,7 +2380,7 @@ def test_26_resize_target_file(request):
                 file_extent_resize(extent_id, MB_256)
                 assert MB_256 == _read_capacity16(s)
                 # Turn AEN off so that we will get a CHECK CONDITION on the next resize
-                SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password, ip)
+                SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password)
                 file_extent_resize(extent_id, MB_512)
                 expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
                 assert MB_512 == _read_capacity16(s)
@@ -2412,7 +2406,7 @@ def test_27_initiator_group(request):
 
             # Ensure we can access from all initiators
             for initiator_iqn in [initiator_iqn1, initiator_iqn2, initiator_iqn3]:
-                with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_iqn) as s:
+                with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn) as s:
                     s.blocksize = 512
                     TUR(s)
 
@@ -2421,7 +2415,7 @@ def test_27_initiator_group(request):
             # target from all initiators
             set_target_initiator_id(config['target']['id'], config['initiator']['id'])
             for initiator_iqn in [initiator_iqn1, initiator_iqn2, initiator_iqn3]:
-                with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_iqn) as s:
+                with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn) as s:
                     s.blocksize = 512
                     TUR(s)
 
@@ -2431,12 +2425,12 @@ def test_27_initiator_group(request):
                 set_target_initiator_id(config['target']['id'], twoinit_config['id'])
                 # First two initiators can connect to the target
                 for initiator_iqn in [initiator_iqn1, initiator_iqn2]:
-                    with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_iqn) as s:
+                    with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn) as s:
                         s.blocksize = 512
                         TUR(s)
                 # Third initiator cannot connect to the target
                 with pytest.raises(RuntimeError) as ve:
-                    with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_iqn3) as s:
+                    with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn3) as s:
                         s.blocksize = 512
                         TUR(s)
                 assert 'Unable to connect to' in str(ve), ve
@@ -2444,7 +2438,7 @@ def test_27_initiator_group(request):
                 set_target_initiator_id(config['target']['id'], None)
 
             for initiator_iqn in [initiator_iqn1, initiator_iqn2, initiator_iqn3]:
-                with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_iqn) as s:
+                with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn) as s:
                     s.blocksize = 512
                     TUR(s)
 
@@ -2458,10 +2452,10 @@ def test_28_portal_access(request):
     """
     iqn = f'{basename}:{target_name}'
     with initiator() as initiator_config:
-        with portal(listen=[{'ip': get_ip_addr(ip)}]) as portal_config:
+        with portal(listen=[{'ip': get_ip_addr(truenas_server.ip)}]) as portal_config:
             config1 = {'initiator': initiator_config, 'portal': portal_config}
             with configured_target_to_zvol_extent(config1, target_name, zvol, volsize=MB_100):
-                with iscsi_scsi_connection(ip, iqn) as s:
+                with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                     TUR(s)
                     s.blocksize = 512
                     assert MB_100 == _read_capacity16(s)
@@ -2472,17 +2466,17 @@ def test_28_portal_access(request):
                         _ensure_alua_state(True)
 
                         with pytest.raises(RuntimeError) as ve:
-                            with iscsi_scsi_connection(ip, iqn) as s:
+                            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 s.blocksize = 512
                                 TUR(s)
                         assert 'Unable to connect to' in str(ve), ve
 
-                        with iscsi_scsi_connection(controller1_ip, iqn) as s:
+                        with iscsi_scsi_connection(truenas_server.nodea_ip, iqn) as s:
                             TUR(s)
                             s.blocksize = 512
                             assert MB_100 == _read_capacity16(s)
 
-                        with iscsi_scsi_connection(controller2_ip, iqn) as s:
+                        with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn) as s:
                             TUR(s)
                             s.blocksize = 512
                             assert MB_100 == _read_capacity16(s)
@@ -2507,11 +2501,11 @@ def test_29_multiple_extents():
                     with file_extent(pool_name, dataset_name, "target.extent2", filesize=MB_256, extent_name="extent2") as extent2_config:
                         with target_extent_associate(target_id, extent1_config['id'], 0):
                             with target_extent_associate(target_id, extent2_config['id'], 1):
-                                with iscsi_scsi_connection(ip, iqn, 0) as s:
+                                with iscsi_scsi_connection(truenas_server.ip, iqn, 0) as s:
                                     TUR(s)
                                     s.blocksize = 512
                                     assert MB_100 == _read_capacity16(s)
-                                with iscsi_scsi_connection(ip, iqn, 1) as s:
+                                with iscsi_scsi_connection(truenas_server.ip, iqn, 1) as s:
                                     TUR(s)
                                     s.blocksize = 512
                                     assert MB_256 == _read_capacity16(s)
@@ -2535,7 +2529,7 @@ def test_29_multiple_extents():
 def check_inq_enabled_state(iqn, expected):
     """Check the current enabled state of the specified SCST IQN directly from /sys
     is as expected."""
-    results = SSH_TEST(f"cat /sys/kernel/scst_tgt/targets/iscsi/{iqn}/enabled", user, password, ip)
+    results = SSH_TEST(f"cat /sys/kernel/scst_tgt/targets/iscsi/{iqn}/enabled", user, password)
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
     for line in results["output"].split('\n'):
         if line.startswith('Warning: Permanently added'):
@@ -2561,19 +2555,19 @@ def test_30_target_without_active_extent(request):
                 # OK, we've configured two separate targets, ensure all looks good
                 check_inq_enabled_state(iqn1, 1)
                 check_inq_enabled_state(iqn2, 1)
-                with iscsi_scsi_connection(ip, iqn1) as s1:
+                with iscsi_scsi_connection(truenas_server.ip, iqn1) as s1:
                     TUR(s1)
-                with iscsi_scsi_connection(ip, iqn2) as s2:
+                with iscsi_scsi_connection(truenas_server.ip, iqn2) as s2:
                     TUR(s2)
 
                 # Disable an extent and ensure things are as expected
                 extent_disable(target2_config['extent']['id'])
                 check_inq_enabled_state(iqn1, 1)
                 check_inq_enabled_state(iqn2, 0)
-                with iscsi_scsi_connection(ip, iqn1) as s1:
+                with iscsi_scsi_connection(truenas_server.ip, iqn1) as s1:
                     TUR(s1)
                 with pytest.raises(RuntimeError) as ve:
-                    with iscsi_scsi_connection(ip, iqn2) as s2:
+                    with iscsi_scsi_connection(truenas_server.ip, iqn2) as s2:
                         TUR(s2)
                 assert 'Unable to connect to' in str(ve), ve
 
@@ -2581,9 +2575,9 @@ def test_30_target_without_active_extent(request):
                 extent_enable(target2_config['extent']['id'])
                 check_inq_enabled_state(iqn1, 1)
                 check_inq_enabled_state(iqn2, 1)
-                with iscsi_scsi_connection(ip, iqn1) as s1:
+                with iscsi_scsi_connection(truenas_server.ip, iqn1) as s1:
                     TUR(s1)
-                with iscsi_scsi_connection(ip, iqn2) as s2:
+                with iscsi_scsi_connection(truenas_server.ip, iqn2) as s2:
                     TUR(s2)
 
                 # Move the extent from target2 to target1
@@ -2600,13 +2594,13 @@ def test_30_target_without_active_extent(request):
 
                 check_inq_enabled_state(iqn1, 1)
                 check_inq_enabled_state(iqn2, 0)
-                with iscsi_scsi_connection(ip, iqn1) as s1:
+                with iscsi_scsi_connection(truenas_server.ip, iqn1) as s1:
                     TUR(s1)
                 # We should now have a LUN 1
-                with iscsi_scsi_connection(ip, iqn1, 1) as s1b:
+                with iscsi_scsi_connection(truenas_server.ip, iqn1, 1) as s1b:
                     TUR(s1b)
                 with pytest.raises(RuntimeError) as ve:
-                    with iscsi_scsi_connection(ip, iqn2) as s2:
+                    with iscsi_scsi_connection(truenas_server.ip, iqn2) as s2:
                         TUR(s2)
                 assert 'Unable to connect to' in str(ve), ve
 
@@ -2631,9 +2625,9 @@ def test_31_iscsi_sessions(request):
             with configured_target(config, name2, 'FILE'):
                 with configured_target(config, name3, 'VOLUME'):
                     assert get_client_count() == 0
-                    with iscsi_scsi_connection(ip, iqn1, initiator_name=initiator_iqn1):
+                    with iscsi_scsi_connection(truenas_server.ip, iqn1, initiator_name=initiator_iqn1):
                         assert get_client_count() == 1
-                        with iscsi_scsi_connection(ip, iqn2, initiator_name=initiator_iqn2):
+                        with iscsi_scsi_connection(truenas_server.ip, iqn2, initiator_name=initiator_iqn2):
                             # Client count checks the number of different IPs attached, not sessions
                             assert get_client_count() == 1
                             # Validate that the two sessions are reported correctly
@@ -2659,7 +2653,7 @@ def test_31_iscsi_sessions(request):
                             assert data[0]['target'] == iqn2, data
                             data = get_iscsi_sessions([['initiator', '=', initiator_iqn3]], 0)
                             # Now login to target2 with initiator1
-                            with iscsi_scsi_connection(ip, iqn2, initiator_name=initiator_iqn1):
+                            with iscsi_scsi_connection(truenas_server.ip, iqn2, initiator_name=initiator_iqn1):
                                 assert get_client_count() == 1
                                 get_iscsi_sessions(check_length=3)
                                 # Filter by target
@@ -2717,12 +2711,12 @@ def test_32_multi_lun_targets(request):
                 with configured_target(config, name2, 'VOLUME', extent_size=MB_256) as config1:
                     with add_zvol_extent_target_lun(config1, 1, volsize=MB_512):
                         # Check that we can connect to each LUN and that it has the expected capacity
-                        test_target_sizes(ip)
+                        test_target_sizes(truenas_server.ip)
                         if ha:
                             # Only perform this section on a HA system
                             with alua_enabled():
-                                test_target_sizes(controller1_ip)
-                                test_target_sizes(controller2_ip)
+                                test_target_sizes(truenas_server.nodea_ip)
+                                test_target_sizes(truenas_server.nodeb_ip)
 
 
 def test_33_no_lun_zero():
@@ -2742,10 +2736,10 @@ def test_33_no_lun_zero():
                             with target_extent_associate(target_id, extent2_config['id'], 101):
                                 # libiscsi sends a TUR to the lun on connect, so cannot properly test using it.
                                 # Let's actually login and check that the expected LUNs surface.
-                                assert target_login_test(get_ip_addr(ip), iqn, {100, 101})
+                                assert target_login_test(get_ip_addr(truenas_server.ip), iqn, {100, 101})
 
                                 # With libiscsi we can also check that the expected LUNs are there
-                                with iscsi_scsi_connection(ip, iqn, 100) as s:
+                                with iscsi_scsi_connection(truenas_server.ip, iqn, 100) as s:
                                     _verify_luns(s, [100, 101])
 
 

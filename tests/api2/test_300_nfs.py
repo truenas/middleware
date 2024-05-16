@@ -24,12 +24,9 @@ from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.account import group as create_group
 from middlewared.test.integration.assets.filesystem import directory
 from middlewared.test.integration.utils import call, ssh, mock
+from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.system import reset_systemd_svcs as reset_svcs
 
-if ha and "virtual_ip" in os.environ:
-    ip = os.environ["virtual_ip"]
-else:
-    from auto_config import ip
 MOUNTPOINT = f"/tmp/nfs-{hostname}"
 dataset = f"{pool_name}/nfs"
 dataset_url = dataset.replace('/', '%2F')
@@ -56,7 +53,7 @@ conf_file = {
 
 
 def parse_exports():
-    results = SSH_TEST("cat /etc/exports", user, password, ip)
+    results = SSH_TEST("cat /etc/exports", user, password)
     assert results['result'] is True, f"rc={results['returncode']}, {results['output']}, {results['stderr']}"
     exp = results['stdout'].splitlines()
     rv = []
@@ -120,7 +117,7 @@ def parse_rpcbind_config():
     In Debian 12 (Bookwork) rpcbind uses /etc/default/rpcbind.
     Look for /etc/rpcbind.conf in future releases.
     '''
-    results = SSH_TEST("cat /etc/default/rpcbind", user, password, ip)
+    results = SSH_TEST("cat /etc/default/rpcbind", user, password)
     assert results['result'] is True, f"rc={results['returncode']}, {results['output']}, {results['stderr']}"
     conf = results['stdout'].splitlines()
     rv = {}
@@ -160,7 +157,7 @@ def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=None):
         'msg': 'method', 'method': f'service.{do_what}',
         'params': ['nfs', {'silent': False}]
     }
-    res = make_ws_request(ip, payload)
+    res = make_ws_request(truenas_server.ip, payload)
     if expect_to_pass:
         assert res.get('error') is None, res
         sleep(1)
@@ -175,7 +172,7 @@ def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=None):
             'msg': 'method', 'method': 'service.started',
             'params': ['nfs']
         }
-        res = make_ws_request(ip, payload)
+        res = make_ws_request(truenas_server.ip, payload)
         assert res.get('error') is None, res
         assert res['result'] == test_res[do_what], f"Expected {test_res[do_what]} for NFS started result, but found {res['result']}"
 
@@ -184,7 +181,7 @@ def confirm_nfsd_processes(expected):
     '''
     Confirm the expected number of nfsd processes are running
     '''
-    result = SSH_TEST("cat /proc/fs/nfsd/threads", user, password, ip)
+    result = SSH_TEST("cat /proc/fs/nfsd/threads", user, password)
     assert int(result['stdout']) == expected, result
 
 
@@ -193,7 +190,7 @@ def confirm_mountd_processes(expected):
     Confirm the expected number of mountd processes are running
     '''
     rx_mountd = r"rpc\.mountd"
-    result = SSH_TEST(f"ps -ef | grep '{rx_mountd}' | wc -l", user, password, ip)
+    result = SSH_TEST(f"ps -ef | grep '{rx_mountd}' | wc -l", user, password)
 
     # If there is more than one, we subtract one to account for the rpc.mountd thread manager
     num_detected = int(result['stdout'])
@@ -208,7 +205,7 @@ def confirm_rpc_processes(expected=['idmapd', 'bind', 'statd']):
     prepend = {'idmapd': 'rpc.', 'bind': 'rpc', 'statd': 'rpc.'}
     for n in expected:
         procname = prepend[n] + n
-        result = SSH_TEST(f"pgrep {procname}", user, password, ip)
+        result = SSH_TEST(f"pgrep {procname}", user, password)
         assert len(result['output'].splitlines()) > 0
 
 
@@ -220,7 +217,7 @@ def confirm_nfs_version(expected=[]):
         ["4"] means NFSv4 only
         ["3","4"] means both NFSv3 and NFSv4
     '''
-    results = SSH_TEST("rpcinfo -s | grep ' nfs '", user, password, ip)
+    results = SSH_TEST("rpcinfo -s | grep ' nfs '", user, password)
     for v in expected:
         assert v in results['stdout'].strip().split()[1], results
 
@@ -252,7 +249,7 @@ def save_nfs_config():
     '''
     exclude = ['id', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd']
     get_conf_cmd = {'msg': 'method', 'method': 'nfs.config', 'params': []}
-    res = make_ws_request(ip, get_conf_cmd)
+    res = make_ws_request(truenas_server.ip, get_conf_cmd)
     assert res.get('error') is None, res
     NFS_CONFIG.default_nfs_config = res['result']
     [NFS_CONFIG.default_nfs_config.pop(key) for key in exclude]
@@ -432,7 +429,7 @@ def test_10_confirm_state_directory(request):
 
 @pytest.mark.parametrize('vers', [3, 4])
 def test_11_perform_basic_nfs_ops(request, vers):
-    with SSH_NFS(ip, NFS_PATH, vers=vers, user=user, password=password, ip=ip) as n:
+    with SSH_NFS(truenas_server.ip, NFS_PATH, vers=vers, user=user, password=password, ip=truenas_server.ip) as n:
         n.create('testfile')
         n.mkdir('testdir')
         contents = n.ls('.')
@@ -447,7 +444,7 @@ def test_11_perform_basic_nfs_ops(request, vers):
 
 
 def test_12_perform_server_side_copy(request):
-    with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip) as n:
+    with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, user=user, password=password, ip=truenas_server.ip) as n:
         n.server_side_copy('ssc1', 'ssc2')
 
 
@@ -682,7 +679,7 @@ def test_33_check_nfs_share_ro(request):
         assert "rw" in parsed[0]['opts'][0]['parameters'], str(parsed)
 
         # Create the file and dir
-        with SSH_NFS(ip, NFS_PATH, user=user, password=password, ip=ip) as n:
+        with SSH_NFS(truenas_server.ip, NFS_PATH, user=user, password=password, ip=truenas_server.ip) as n:
             n.create("testfile_should_pass")
             n.mkdir("testdir_should_pass")
 
@@ -696,7 +693,7 @@ def test_33_check_nfs_share_ro(request):
         assert "rw" not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
         # Attempt create and delete
-        with SSH_NFS(ip, NFS_PATH, user=user, password=password, ip=ip) as n:
+        with SSH_NFS(truenas_server.ip, NFS_PATH, user=user, password=password, ip=truenas_server.ip) as n:
             with pytest.raises(RuntimeError) as re:
                 n.create("testfile_should_fail")
                 assert False, "Should not have been able to create a new file"
@@ -716,7 +713,7 @@ def test_33_check_nfs_share_ro(request):
         assert "rw" in parsed[0]['opts'][0]['parameters'], str(parsed)
 
         # Cleanup the file and dir
-        with SSH_NFS(ip, NFS_PATH, user=user, password=password, ip=ip) as n:
+        with SSH_NFS(truenas_server.ip, NFS_PATH, user=user, password=password, ip=truenas_server.ip) as n:
             n.unlink("testfile_should_pass")
             n.rmdir("testdir_should_pass")
 
@@ -894,15 +891,15 @@ class Test37WithFixture:
                 subdirs = ["subdir1", "subdir2", "subdir3"]
                 try:
                     for dir in dirs:
-                        results = SSH_TEST(f"mkdir -p {vol0}/{dir}", user, password, ip)
+                        results = SSH_TEST(f"mkdir -p {vol0}/{dir}", user, password)
                         assert results['result'] is True
                         for subdir in subdirs:
-                            results = SSH_TEST(f"mkdir -p {vol0}/{dir}/{subdir}", user, password, ip)
+                            results = SSH_TEST(f"mkdir -p {vol0}/{dir}/{subdir}", user, password)
                             assert results['result'] is True
                             # And symlinks
                             results = SSH_TEST(
                                 f"ln -sf {vol0}/{dir}/{subdir} {vol0}/{dir}/symlink2{subdir}",
-                                user, password, ip
+                                user, password
                             )
                             assert results['result'] is True
 
@@ -910,7 +907,7 @@ class Test37WithFixture:
                 finally:
                     # Remove the created dirs
                     for dir in dirs:
-                        SSH_TEST(f"rm -rf {vol0}/{dir}", user, password, ip)
+                        SSH_TEST(f"rm -rf {vol0}/{dir}", user, password)
                         assert results['result'] is True
 
                     # Remove the created shares
@@ -1039,7 +1036,7 @@ def test_38_check_nfs_allow_nonroot_behavior(request):
         assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
         # Confirm we allow mounts from 'root' ports
-        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+        with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, user=user, password=password, ip=truenas_server.ip):
             client_port = get_client_nfs_port()
             assert client_port[1] is not None, f"Failed to get client port: f{client_port[0]}"
             assert int(client_port[1]) < 1024, \
@@ -1047,8 +1044,8 @@ def test_38_check_nfs_allow_nonroot_behavior(request):
 
         # Confirm we block mounts from 'non-root' ports
         with pytest.raises(RuntimeError) as re:
-            with SSH_NFS(ip, NFS_PATH, vers=4, options=['noresvport'],
-                         user=user, password=password, ip=ip):
+            with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, options=['noresvport'],
+                         user=user, password=password, ip=truenas_server.ip):
                 pass
             # We should not get to this assert
             assert False, "Unexpected success with mount"
@@ -1063,15 +1060,15 @@ def test_38_check_nfs_allow_nonroot_behavior(request):
         assert 'insecure' in parsed[0]['opts'][0]['parameters'], str(parsed)
 
         # Confirm we allow mounts from 'root' ports
-        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+        with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, user=user, password=password, ip=truenas_server.ip):
             client_port = get_client_nfs_port()
             assert client_port[1] is not None, "Failed to get client port"
             assert int(client_port[1]) < 1024, \
                 f"client_port is not in 'root' range: {client_port[1]}\n{client_port[0]}"
 
         # Confirm we allow mounts from 'non-root' ports
-        with SSH_NFS(ip, NFS_PATH, vers=4, options=['noresvport'],
-                     user=user, password=password, ip=ip):
+        with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, options=['noresvport'],
+                     user=user, password=password, ip=truenas_server.ip):
             client_port = get_client_nfs_port()
             assert client_port[1] is not None, "Failed to get client port"
             assert int(client_port[1]) >= 1024, \
@@ -1213,7 +1210,7 @@ def test_42_check_nfs_client_status(request):
     """
 
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
-    with SSH_NFS(ip, NFS_PATH, vers=3, user=user, password=password, ip=ip):
+    with SSH_NFS(truenas_server.ip, NFS_PATH, vers=3, user=user, password=password, ip=truenas_server.ip):
         results = GET('/nfs/get_nfs3_clients/', payload={
             'query-filters': [],
             'query-options': {'count': True}
@@ -1221,7 +1218,7 @@ def test_42_check_nfs_client_status(request):
         assert results.status_code == 200, results.text
         assert results.json() != 0, results.text
 
-    with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+    with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, user=user, password=password, ip=truenas_server.ip):
         results = GET('/nfs/get_nfs4_clients/', payload={
             'query-filters': [],
             'query-options': {'count': True}
@@ -1277,7 +1274,7 @@ def test_43_check_nfsv4_acl_support(request):
         ]
         with nfs_dataset("test_nfs4_acl", {"acltype": "NFSV4", "aclmode": "PASSTHROUGH"}, theacl):
             with nfs_share(acl_nfs_path):
-                with SSH_NFS(ip, acl_nfs_path, vers=version, user=user, password=password, ip=ip) as n:
+                with SSH_NFS(truenas_server.ip, acl_nfs_path, vers=version, user=user, password=password, ip=truenas_server.ip) as n:
                     nfsacl = n.getacl(".")
                     for idx, ace in enumerate(nfsacl):
                         assert ace == theacl[idx], str(ace)
@@ -1354,7 +1351,7 @@ def test_44_check_nfs_xattr_support(request):
     xattr_nfs_path = f'/mnt/{pool_name}/test_nfs4_xattr'
     with nfs_dataset("test_nfs4_xattr"):
         with nfs_share(xattr_nfs_path):
-            with SSH_NFS(ip, xattr_nfs_path, vers=4.2, user=user, password=password, ip=ip) as n:
+            with SSH_NFS(truenas_server.ip, xattr_nfs_path, vers=4.2, user=user, password=password, ip=truenas_server.ip) as n:
                 n.create("testfile")
                 n.setxattr("testfile", "user.testxattr", "the_contents")
                 xattr_val = n.getxattr("testfile", "user.testxattr")
@@ -1379,12 +1376,12 @@ def test_45_check_setting_runtime_debug(request):
 
     try:
         get_payload = {'msg': 'method', 'method': 'nfs.get_debug', 'params': []}
-        res = make_ws_request(ip, get_payload)
+        res = make_ws_request(truenas_server.ip, get_payload)
         assert res['result'] == disabled, res
 
         set_payload = {'msg': 'method', 'method': 'nfs.set_debug', 'params': [enabled]}
-        make_ws_request(ip, set_payload)
-        res = make_ws_request(ip, get_payload)
+        make_ws_request(truenas_server.ip, set_payload)
+        res = make_ws_request(truenas_server.ip, get_payload)
         assert set(res['result']['NFS']) == set(enabled['NFS']), f"Mismatch on NFS: {res}"
         assert set(res['result']['NFSD']) == set(enabled['NFSD']), f"Mismatch on NFSD: {res}"
         assert set(res['result']['NLM']) == set(enabled['NLM']), f"Mismatch on NLM: {res}"
@@ -1392,12 +1389,12 @@ def test_45_check_setting_runtime_debug(request):
 
         # Test failure case.  This should generate an ValueError exception on the system
         set_payload['params'] = [failure]
-        res = make_ws_request(ip, set_payload)
+        res = make_ws_request(truenas_server.ip, set_payload)
         assert res['error']['errname'] == "EINVAL", res['error']['errname']
     finally:
         set_payload['params'] = [disabled]
-        make_ws_request(ip, set_payload)
-        res = make_ws_request(ip, get_payload)
+        make_ws_request(truenas_server.ip, set_payload)
+        res = make_ws_request(truenas_server.ip, get_payload)
         assert res['result'] == disabled, res
 
 
@@ -1457,7 +1454,7 @@ def test_48_syslog_filters(request):
         # Add dummy entries to avoid false positives
         for i in range(10):
             ssh(f'logger "====== {i}: NFS test_48_syslog_filters (with) ======"')
-        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+        with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, user=user, password=password, ip=truenas_server.ip):
             num_tries = 10
             found = False
             res = ""
@@ -1480,7 +1477,7 @@ def test_48_syslog_filters(request):
         # Add dummy entries to avoid false positives
         for i in range(10):
             ssh(f'logger "====== {i}: NFS test_48_syslog_filters (without) ======"')
-        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+        with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, user=user, password=password, ip=truenas_server.ip):
             # wait a few seconds to make sure syslog has a chance to flush log messages
             sleep(4)
             res = ssh("tail -10 /var/log/syslog")
@@ -1684,10 +1681,10 @@ def test_72_check_adjusting_threadpool_mode(request):
 
     for m in supported_modes:
         payload.update({'method': 'nfs.set_threadpool_mode', 'params': [m]})
-        make_ws_request(ip, payload)
+        make_ws_request(truenas_server.ip, payload)
 
         payload.update({'method': 'nfs.get_threadpool_mode', 'params': []})
-        res = make_ws_request(ip, payload)
+        res = make_ws_request(truenas_server.ip, payload)
         assert res['result'] == m, res
 
 
@@ -1713,15 +1710,15 @@ def test_80_start_nfs_service_with_missing_or_empty_exports(request, exports):
     The goal is to make the NFS server behavior similar to the other protocols
     '''
     if exports == 'empty':
-        results = SSH_TEST("echo '' > /etc/exports", user, password, ip)
+        results = SSH_TEST("echo '' > /etc/exports", user, password)
     else:  # 'missing'
-        results = SSH_TEST("rm -f /etc/exports", user, password, ip)
+        results = SSH_TEST("rm -f /etc/exports", user, password)
     assert results['result'] is True
 
     with nfs_config() as nfs_conf:
         # Start NFS
         payload = {'msg': 'method', 'method': 'service.start', 'params': ['nfs']}
-        res = make_ws_request(ip, payload)
+        res = make_ws_request(truenas_server.ip, payload)
         assert res['result'] is True, f"Expected start success: {res}"
         sleep(1)
         confirm_nfsd_processes(nfs_conf['servers'])
@@ -1754,13 +1751,13 @@ def test_82_files_in_exportsd(request, expect_NFS_start):
             'msg': 'method', 'method': 'filesystem.set_immutable',
             'params': [want_immutable, '/etc/exports.d']
         }
-        res = make_ws_request(ip, payload)
+        res = make_ws_request(truenas_server.ip, payload)
         assert res.get('error') is None, res
         payload = {
             'msg': 'method', 'method': 'filesystem.is_immutable',
             'params': ['/etc/exports.d']
         }
-        res = make_ws_request(ip, payload)
+        res = make_ws_request(truenas_server.ip, payload)
         assert res['result'] is want_immutable, f"Expected mutable filesystem: {res}"
 
     try:
@@ -1769,15 +1766,15 @@ def test_82_files_in_exportsd(request, expect_NFS_start):
 
         # Do the 'failing' case first to end with a clean condition
         if not expect_NFS_start:
-            results = SSH_TEST("echo 'bogus data' > /etc/exports.d/persistent.file", user, password, ip)
+            results = SSH_TEST("echo 'bogus data' > /etc/exports.d/persistent.file", user, password)
             assert results['result'] is True
-            results = SSH_TEST("chattr +i /etc/exports.d/persistent.file", user, password, ip)
+            results = SSH_TEST("chattr +i /etc/exports.d/persistent.file", user, password)
             assert results['result'] is True
         else:
             # Restore /etc/exports.d directory to a clean state
-            results = SSH_TEST("chattr -i /etc/exports.d/persistent.file", user, password, ip)
+            results = SSH_TEST("chattr -i /etc/exports.d/persistent.file", user, password)
             assert results['result'] is True
-            results = SSH_TEST("rm -rf /etc/exports.d/*", user, password, ip)
+            results = SSH_TEST("rm -rf /etc/exports.d/*", user, password)
             assert results['result'] is True
 
         set_immutable_state(want_immutable=True)  # Enable immutable
@@ -1790,7 +1787,7 @@ def test_82_files_in_exportsd(request, expect_NFS_start):
 
         # If NFS start is blocked, then an alert should have been raised
         payload = {'msg': 'method', 'method': 'alert.list', 'params': []}
-        res = make_ws_request(ip, payload)
+        res = make_ws_request(truenas_server.ip, payload)
         alerts = res['result']
         if not expect_NFS_start:
             # Find alert

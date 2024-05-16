@@ -117,7 +117,6 @@ def test_audit_config_updates(audit_config):
 def test_audit_query(initialize_for_smb_tests):
     share = initialize_for_smb_tests['share']
     with smb_connection(
-        host=ip,
         share=share['name'],
         username=SMBUSER,
         password=PASSWD,

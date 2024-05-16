@@ -17,7 +17,7 @@ dataset_url = test1_dataset.replace("/", "%2F")
 
 @pytest.fixture(scope='module')
 def create_test_dataset():
-    with make_dataset(test1_dataset) as ds:
+    with make_dataset('test1') as ds:
         yield ds
 
 
