@@ -52,6 +52,7 @@ def setup_mnt(tmpdir):
         yield
     finally:
         shutil.rmtree('/mnt/pool')
+        os.rmdir('/mnt/foo')
 
 
 @pytest.mark.parametrize("path,should_raise", [
