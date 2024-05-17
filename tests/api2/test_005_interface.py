@@ -94,6 +94,9 @@ def test_002_configure_interface(request, ws_client, get_payload):
     assert ws_client.call('interface.checkin_waiting') is None
     assert ws_client.call('interface.has_pending_changes') is False
 
+    autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, truenas_server.ip)['stdout'])
+    assert autoconf == 0
+
     if ha:
         # on HA, keepalived is responsible for configuring the VIP so let's give it
         # some time to settle
