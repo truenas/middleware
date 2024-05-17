@@ -1,3 +1,4 @@
+import glob
 import logging
 
 from middlewared.service import accepts, Service
@@ -52,6 +53,8 @@ class NetdataService(Service):
             cpu_info()['core_count'],
             self.middleware.call_sync('interface.query', [], {'count': True}),
             self.middleware.call_sync('zfs.pool.query', [], {'count': True}),
+            self.middleware.call_sync('vm.query', [], {'count': True}),
+            len(glob.glob('/sys/fs/cgroup/**/*.service')),
         )
 
     def get_disk_space_for_tier0(self):

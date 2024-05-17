@@ -54,7 +54,10 @@ def get_netdata_state_path() -> str:
     return os.path.join(SYSDATASET_PATH, 'netdata/ix_state')
 
 
-def get_metrics_approximation(disk_count: int, core_count: int, interface_count: int, pool_count: int) -> dict:
+def get_metrics_approximation(
+    disk_count: int, core_count: int, interface_count: int, pool_count: int, vms_count: int,
+    systemd_service_count: int, containers_count: typing.Optional[int] = 10,
+) -> dict:
     data = {
         1: {
             'system.cpu': 10,
@@ -160,6 +163,61 @@ def get_metrics_approximation(disk_count: int, core_count: int, interface_count:
             'nut_ups.load': 1,
             'nut_ups.temp': 1,
             'netdata.plugin_chartsd_nut': 1,
+
+            # cgroups
+            'services.io_ops_write': systemd_service_count,
+            'services.io_ops_read': systemd_service_count,
+            'services.io_write': systemd_service_count,
+            'services.io_read': systemd_service_count,
+            'services.mem_usage': systemd_service_count,
+            'services.cpu': systemd_service_count,
+            'cgroup_qemu_vm.cpu_limit': vms_count,
+            'cgroup_qemu_vm.cpu': 2 * vms_count,
+            'cgroup_qemu_vm.throttled': vms_count,
+            'cgroup_qemu_vm.throttled_duration': vms_count,
+            'cgroup_qemu_vm.mem': 6 * vms_count,
+            'cgroup_qemu_vm.writeback': 2 * vms_count,
+            'cgroup_qemu_vm.pgfaults': 2 * vms_count,
+            'cgroup_qemu_vm.mem_usage': 2 * vms_count,
+            'cgroup_qemu_vm.mem_usage_limit': 2 * vms_count,
+            'cgroup_qemu_vm.mem_utilization': vms_count,
+            'cgroup_qemu_vm.io': 2 * vms_count,
+            'cgroup_qemu_vm.serviced_ops': 2 * vms_count,
+            'cgroup_qemu_vm.cpu_some_pressure': 3 * vms_count,
+            'cgroup_qemu_vm.cpu_some_pressure_stall_time': vms_count,
+            'cgroup_qemu_vm.cpu_full_pressure': 3 * vms_count,
+            'cgroup_qemu_vm.cpu_full_pressure_stall_time': vms_count,
+            'cgroup_qemu_vm.mem_some_pressure': 3 * vms_count,
+            'cgroup_qemu_vm.memory_some_pressure_stall_time': vms_count,
+            'cgroup_qemu_vm.mem_full_pressure': 3 * vms_count,
+            'cgroup_qemu_vm.memory_full_pressure_stall_time': vms_count,
+            'cgroup_qemu_vm.io_some_pressure': 3 * vms_count,
+            'cgroup_qemu_vm.io_some_pressure_stall_time': vms_count,
+            'cgroup_qemu_vm.io_full_pressure': 3 * vms_count,
+            'cgroup_qemu_vm.io_full_pressure_stall_time': vms_count,
+
+            'cgroup_hash.cpu_limit': containers_count,
+            'cgroup_hash.cpu': 2 * containers_count,
+            'cgroup_hash.throttled': containers_count,
+            'cgroup_hash.throttled_duration': containers_count,
+            'cgroup_hash.mem': 6 * containers_count,
+            'cgroup_hash.writeback': 2 * containers_count,
+            'cgroup_hash.pgfaults': 2 * containers_count,
+            'cgroup_hash.mem_usage': 2 * containers_count,
+            'cgroup_hash.mem_usage_limit': 2 * containers_count,
+            'cgroup_hash.mem_utilization': containers_count,
+            'cgroup_hash.cpu_some_pressure': 3 * containers_count,
+            'cgroup_hash.cpu_some_pressure_stall_time': containers_count,
+            'cgroup_hash.cpu_full_pressure': 3 * containers_count,
+            'cgroup_hash.cpu_full_pressure_stall_time': containers_count,
+            'cgroup_hash.mem_some_pressure': 3 * containers_count,
+            'cgroup_hash.memory_some_pressure_stall_time': containers_count,
+            'cgroup_hash.mem_full_pressure': 3 * containers_count,
+            'cgroup_hash.memory_full_pressure_stall_time': containers_count,
+            'cgroup_hash.io_some_pressure': 3 * containers_count,
+            'cgroup_hash.io_some_pressure_stall_time': containers_count,
+            'cgroup_hash.io_full_pressure': 3 * containers_count,
+            'cgroup_hash.io_full_pressure_stall_time': containers_count,
         },
         60: {  # smartd_logs
             'smart_log.temperature_celsius': disk_count}

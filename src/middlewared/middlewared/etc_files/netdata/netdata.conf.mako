@@ -38,7 +38,7 @@
 [plugins]
 	proc = yes
 	diskspace = no
-	cgroups = no
+	cgroups = yes
 	tc = no
 	idlejitter = no
 	perf = no
@@ -149,3 +149,6 @@
 	# performance metrics for disks with major 9 = no
 	# performance metrics for disks with major 253 = no
 	# performance metrics for disks with major 230 = no
+
+[plugin:cgroups]
+        enable by default cgroups names matching = !*udev* *
