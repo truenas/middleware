@@ -1,8 +1,10 @@
 import os
 
-from middlewared.schema import Dict, Str
+from middlewared.plugins.boot import BOOT_POOL_NAME
+from middlewared.schema import Dict, File
 from middlewared.service import CallError
-from middlewared.validators import Match
+from middlewared.utils.zfs import query_imported_fast_impl
+from middlewared.validators import check_path_resides_within_volume_sync, Match
 
 from .device import Device
 from .utils import create_element, disk_from_number, LIBVIRT_USER
@@ -12,9 +14,12 @@ class CDROM(Device):
 
     schema = Dict(
         'attributes',
-        Str(
+        File(
             'path', required=True, validators=[
-                Match(r'^[^{}]*$', explanation='Path should not contain "{", "}" characters')
+                Match(
+                    r'^/mnt/[^{}]*$',
+                    explanation='Path must not contain "{", "}" characters, and it should start with "/mnt/"'
+                ),
             ], empty=False
         ),
     )
@@ -40,9 +45,12 @@ class CDROM(Device):
 
     def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
         path = device['attributes']['path']
-        if not os.path.exists(path):
-            verrors.add('attributes.path', f'Unable to locate CDROM device at {path!r}')
-        elif not self.middleware.call_sync('vm.device.disk_uniqueness_integrity_check', device, vm_instance):
+        check_path_resides_within_volume_sync(
+            verrors, 'attributes.path', path, [
+                i['name'] for i in query_imported_fast_impl().values() if i['name'] != BOOT_POOL_NAME
+            ]
+        )
+        if not self.middleware.call_sync('vm.device.disk_uniqueness_integrity_check', device, vm_instance):
             verrors.add(
                 'attributes.path',
                 f'{vm_instance["name"]} has "{self.identity()}" already configured'
