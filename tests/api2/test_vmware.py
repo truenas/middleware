@@ -5,7 +5,7 @@ import types
 
 import pytest
 from pyVim import connect, task as VimTask
-from pyVmomi import vim, vmodl
+from pyVmomi import vim
 
 from middlewared.test.integration.assets.nfs import nfs_share
 from middlewared.test.integration.assets.pool import dataset
@@ -81,7 +81,7 @@ def datastore(si):
 
             datastore = host.configManager.datastoreSystem.CreateNasDatastore(
                 vim.host.NasVolume.Specification(
-                    remoteHost=ip,
+                    remoteHost=truenas_server.ip,
                     remotePath=share["path"],
                     localPath=datastore_name,
                     accessMode=vim.host.MountInfo.AccessMode.readWrite,

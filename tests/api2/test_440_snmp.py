@@ -2,19 +2,15 @@
 # License: BSD
 
 import os
-import sys
 from time import sleep
 
 import pytest
+from middlewared.test.integration.utils.client import truenas_server
 from pysnmp.hlapi import (CommunityData, ContextData, ObjectIdentity,
                           ObjectType, SnmpEngine, UdpTransportTarget, getCmd)
 
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 from auto_config import ha, interface, password, user
 from functions import GET, POST, PUT, SSH_TEST, async_SSH_done, async_SSH_start
-from middlewared.test.integration.utils.client import truenas_server
-
 
 skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
 COMMUNITY = 'public'
@@ -84,7 +80,7 @@ def test_02_Enable_SNMP_service_at_boot():
 
 def test_03_verify_snmp_do_not_leak_password_in_middleware_log(request):
     cmd = f"""grep -R "{PASSWORD}" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
+    results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, str(results['output'])
 
 

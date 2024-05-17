@@ -9,26 +9,21 @@ import copy
 import json
 import os
 import subprocess
-import sys
 from ftplib import all_errors
 from time import sleep
 from timeit import default_timer as timer
 from types import SimpleNamespace
 
 import pytest
-from pytest_dependency import depends
-
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 from assets.websocket.server import reboot
 from middlewared.test.integration.assets.account import user as ftp_user
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils.client import truenas_server
+from pytest_dependency import depends
 
-from auto_config import ha, password, pool_name, user
+from auto_config import password, pool_name, user
 from functions import SSH_TEST, make_ws_request, send_file
 from protocols import ftp_connect, ftp_connection, ftps_connection
-
 
 FTP_DEFAULT = {}
 DB_DFLT = {}
@@ -90,7 +85,7 @@ def ftp_init_db_dflt():
 
 def ftp_get_config():
     payload = {'msg': 'method', 'method': 'ftp.config', 'params': []}
-    res = make_ws_request(ip, payload)
+    res = make_ws_request(truenas_server.ip, payload)
     assert res.get('error') is None, res
     return res['result']
 
@@ -110,7 +105,7 @@ def ftp_set_config(config={}):
         if 'options' in tmpconf and tmpconf['options'] is None:
             tmpconf['options'] = ''
         payload = {'msg': 'method', 'method': 'ftp.update', 'params': [tmpconf]}
-        res = make_ws_request(ip, payload)
+        res = make_ws_request(truenas_server.ip, payload)
         assert res.get('error') is None, res
 
 
@@ -432,7 +427,7 @@ def ftp_user_ds_and_srvr_conn(dsname='ftpdata', username="FTPlocal", FTPconfig=N
 def ftp_get_default_cert():
     payload = {'msg': 'method', 'method': 'certificate.get_instance',
                'params': ['name', '=', 'truenas_default']}
-    res = make_ws_request(ip, payload)
+    res = make_ws_request(truenas_server.ip, payload)
     assert res.get('error') is None, res
     return res['result']
 
@@ -741,7 +736,7 @@ def test_001_validate_default_configuration(request, ftp_init_db_dflt):
 
     with ftp_server():
         # Get the DB settings
-        rv_db = make_ws_request(ip, {'msg': 'method', 'method': 'ftp.config', 'params': []})
+        rv_db = make_ws_request(truenas_server.ip, {'msg': 'method', 'method': 'ftp.config', 'params': []})
         assert rv_db.get('error') is None, rv_db
         db = rv_db['result']
 
@@ -996,7 +991,7 @@ def test_045_masquerade_address(request, masq_type, expect_to_pass):
         if netconfig['domain'] and netconfig['domain'] != "local":
             masqaddr = masqaddr + "." + netconfig['domain']
     elif masq_type == 'ip_addr':
-        masqaddr = truenas_server.ip 
+        masqaddr = truenas_server.ip
     else:
         masqaddr = masq_type
 
@@ -1269,7 +1264,7 @@ def test_070_resume_xfer(request, ftpConf, expect_to_pass):
             sleep(1)
 
             # Attempt resume to complete the download
-            ftpObj = ftp_connect(ip)
+            ftpObj = ftp_connect(truenas_server.ip)
             ftpObj.login()
             ftpObj.voidcmd('TYPE I')
             localsize = os.path.getsize(localfname)
