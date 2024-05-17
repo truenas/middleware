@@ -6,7 +6,7 @@ sys.path.append(apifolder)
 
 import pytest
 
-from auto_config import interface, ha, netmask
+from auto_config import interface, ha, netmask, user, password
 from middlewared.test.integration.utils.client import client, truenas_server
 from middlewared.test.integration.utils import fail
 from functions import SSH_TEST
