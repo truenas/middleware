@@ -22,9 +22,6 @@ class VMService(Service):
     @job(lock_queue_size=1, lock=lambda args: f"zvol_disk_image_{args[-1]['zvol']}")
     def import_disk_image(self, job, data):
 
-        def progress_callback(progress, description):
-            job.set_progress(progress, description)
-
         """
         Imports a specified disk image. 
 
@@ -71,7 +68,7 @@ class VMService(Service):
             if progress:
                 try:
                     progress = round(float(progress.group(1)))
-                    progress_callback(progress, "Disk Import Progress")
+                    job.set_progress(progress, "Disk Import Progress")
                 except ValueError:
                     self.logger.warning('Invalid progress in: "' + progress.group(1) + '"')
             else:
@@ -93,9 +90,6 @@ class VMService(Service):
     @returns(Bool())
     @job(lock_queue_size=1, lock=lambda args: f"zvol_disk_image_{args[-1]['zvol']}")
     def export_disk_image(self, job, data):
-
-        def progress_callback(progress, description):
-            job.set_progress(progress, description)
 
         """
         Exports a zvol to a formatted VM disk image.
@@ -160,7 +154,7 @@ class VMService(Service):
             if progress:
                 try:
                     progress = round(float(progress.group(1)))
-                    progress_callback(progress, "Disk Export Progress")
+                    job.set_progress(progress, "Disk Export Progress")
                 except ValueError:
                     self.logger.warning('Invalid progress in: "' + progress.group(1) + '"')
             else:
