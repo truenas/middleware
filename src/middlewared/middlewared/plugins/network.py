@@ -674,6 +674,7 @@ class InterfaceService(CRUDService):
         the interfaces changes happened as planned from the user. If checkin does not happen
         within this period of time the changes will get reverted.
         """
+        self.logger.debug("AIDEN - we're in the commit")
         verrors = ValidationErrors()
         schema = 'interface.commit'
         await self.middleware.call('network.common.check_failover_disabled', schema, verrors)
@@ -1671,6 +1672,7 @@ class InterfaceService(CRUDService):
         """
         Sync interfaces configured in database to the OS.
         """
+        self.logger.debug("AIDEN - We're in the sync")
         await self.middleware.call_hook('interface.pre_sync')
         # The VRRP event thread just reads directly from the database
         # so there is no reason to actually configure the interfaces
