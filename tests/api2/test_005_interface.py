@@ -1,3 +1,4 @@
+import logging
 import sys
 import time
 import os
@@ -9,7 +10,7 @@ import pytest
 from auto_config import interface, ha, netmask, user, password
 from middlewared.test.integration.utils.client import client, truenas_server
 from functions import SSH_TEST
-
+logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope='module')
 def ws_client():
@@ -65,7 +66,7 @@ def get_payload(ws_client):
 def log_proc(ws_client, line = "", sleep = 2):
     time.sleep(sleep)
     autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, truenas_server.ip)['stdout'])
-    ws_client.logger.debug(f"{line} The value of interface {interface} is {autoconf}")
+    logger.debug(f"{line} The value of interface {interface} is {autoconf}")
 
 # Make sure that our initial conditions are met
 def test_001_check_ipvx(request, ws_client, get_payload):
