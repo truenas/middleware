@@ -67,7 +67,7 @@ def test_lock_passphrase_encrypted_pool_with_system_dataset(passphrase_encrypted
 def test_system_dataset_mountpoints():
     system_config = call("systemdataset.config")
     for system_dataset_spec in call(
-        "systemdataset.get_system_dataset_spec", system_config["pool"], system_config["uuid_a"]
+        "systemdataset.get_system_dataset_spec", system_config["pool"], system_config["uuid"]
     ):
         mount_point = system_dataset_spec.get("mountpoint") or os.path.join(
             system_config["path"], os.path.basename(system_dataset_spec["name"])
