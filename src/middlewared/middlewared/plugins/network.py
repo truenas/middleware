@@ -683,11 +683,13 @@ class InterfaceService(CRUDService):
         try:
             await self.sync()
         except Exception:
+            self.logger.debug('AIDEN - We had a crash in the sync, rolling back!')
             if options['rollback']:
                 await self.rollback()
             raise
 
         if options['rollback'] and options['checkin_timeout']:
+            self.logger.debug('AIDEN - We\'re rolling back!')
             loop = asyncio.get_event_loop()
             self._rollback_timer = loop.call_later(
                 options['checkin_timeout'], lambda: self.middleware.create_task(self.rollback())
@@ -1806,6 +1808,11 @@ class InterfaceService(CRUDService):
             await self.middleware.call('route.sync')
         except Exception:
             self.logger.info('Failed to sync routes', exc_info=True)
+
+        autoconf = '1' if has_ipv6 else '0'
+        self.middleware.call_sync('tunable.set_sysctl', f'net.ipv6.conf.{name}.autoconf', autoconf)
+        self.logger.debug(f"We've finished our sync, the value of autoconf is {autoconf}")
+        
 
         await self.middleware.call_hook('interface.post_sync')
 

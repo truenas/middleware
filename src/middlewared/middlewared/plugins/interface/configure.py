@@ -92,6 +92,7 @@ class InterfaceService(Service):
 
         autoconf = '1' if has_ipv6 else '0'
         self.middleware.call_sync('tunable.set_sysctl', f'net.ipv6.conf.{name}.autoconf', autoconf)
+        self.logger.debug(f'Configured autoconf to {autoconf}')
 
         if vip or alias_vips:
             if not self.middleware.call_sync('service.started', 'keepalived'):
