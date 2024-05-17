@@ -20,7 +20,11 @@ def test_kubernetes_pool_of_smb_share_validation_error(test_pool):
     with smb_share(f'/mnt/{test_pool["name"]}', SMB_SHARE_NAME):
         with pytest.raises(ValidationErrors) as ve:
             call('kubernetes.update', {'pool': test_pool['name']}, job=True)
-        assert ve.value.errors[0].errmsg == 'This pool cannot be used as the root dataset is used by \'cifs\' services'
+        assert ve.value.errors[0].errmsg == (
+            f'The root dataset of pool `{test_pool["name"]}` is used by `SMB` services. '
+            'Shares should be configured so that they export data contained in child datasets such as '
+            f'`{test_pool["name"]}/SHARE`.'
+        )
         assert ve.value.errors[0].attribute == 'kubernetes_update.pool'
 
 
@@ -28,7 +32,11 @@ def test_kubernetes_pool_of_nfs_share_validation_error(test_pool):
     with nfs_share(test_pool['name']):
         with pytest.raises(ValidationErrors) as ve:
             call('kubernetes.update', {'pool': test_pool['name']}, job=True)
-        assert ve.value.errors[0].errmsg == 'This pool cannot be used as the root dataset is used by \'nfs\' services'
+        assert ve.value.errors[0].errmsg == (
+            f'The root dataset of pool `{test_pool["name"]}` is used by `NFS` services. '
+            'Shares should be configured so that they export data contained in child datasets such as '
+            f'`{test_pool["name"]}/SHARE`.'
+        )
         assert ve.value.errors[0].attribute == 'kubernetes_update.pool'
 
 
@@ -38,9 +46,8 @@ def test_kubernetes_pool_of_nfs_and_smb_share_validation_error(test_pool):
             with pytest.raises(ValidationErrors) as ve:
                 call('kubernetes.update', {'pool': test_pool['name']}, job=True)
 
-            assert 'This pool cannot be used as the root dataset is used by' in ve.value.errors[0].errmsg
-            assert 'nfs' in ve.value.errors[0].errmsg
-            assert 'cifs' in ve.value.errors[0].errmsg
+            assert 'NFS' in ve.value.errors[0].errmsg
+            assert 'SMB' in ve.value.errors[0].errmsg
             assert ve.value.errors[0].attribute == 'kubernetes_update.pool'
 
 
