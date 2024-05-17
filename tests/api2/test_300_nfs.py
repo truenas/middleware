@@ -4,28 +4,28 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
-import pytest
-import sys
-import os
 import contextlib
 import ipaddress
+import os
 import urllib.parse
 from copy import copy
-from pytest_dependency import depends
 from time import sleep
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
-from functions import make_ws_request
-from auto_config import pool_name, ha, hostname, password, user
-from protocols import SSH_NFS, nfs_share
-from middlewared.service_exception import ValidationErrors, ValidationError
-from middlewared.test.integration.assets.account import user as create_user
+
+import pytest
+from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.account import group as create_group
+from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.filesystem import directory
-from middlewared.test.integration.utils import call, ssh, mock
+from middlewared.test.integration.utils import call, mock, ssh
 from middlewared.test.integration.utils.client import truenas_server
-from middlewared.test.integration.utils.system import reset_systemd_svcs as reset_svcs
+from middlewared.test.integration.utils.system import \
+    reset_systemd_svcs as reset_svcs
+from pytest_dependency import depends
+
+from auto_config import hostname, password, pool_name, user
+from functions import (DELETE, GET, POST, PUT, SSH_TEST, make_ws_request,
+                       wait_on_job)
+from protocols import SSH_NFS, nfs_share
 
 MOUNTPOINT = f"/tmp/nfs-{hostname}"
 dataset = f"{pool_name}/nfs"
@@ -263,7 +263,7 @@ def restore_nfs_config():
     This is called at the start of stopping_nfs_service.
     '''
     set_conf_cmd = {'msg': 'method', 'method': 'nfs.update', 'params': [NFS_CONFIG.default_nfs_config]}
-    res = make_ws_request(ip, set_conf_cmd)
+    res = make_ws_request(truenas_server.ip, set_conf_cmd)
     assert res.get('error') is None, res
 
 
@@ -500,7 +500,7 @@ def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
                 # We know apriori that the current state is managed_nfsd == True
                 with nfs_config():
                     # Test making change to non-'server' setting does not change managed_nfsd
-                    call("nfs.update", {"bindip": [ip]})
+                    call("nfs.update", {"bindip": [truenas_server.ip]})
                     assert call("nfs.config")['managed_nfsd'] == expected['managed']
             else:
                 with pytest.raises(ValidationErrors) as ve:
@@ -1018,7 +1018,7 @@ def test_38_check_nfs_allow_nonroot_behavior(request):
         res = ssh("netstat -nt")
         for line in str(res).splitlines():
             # The server will listen on port 2049
-            if f"{ip}:2049" == line.split()[3]:
+            if f"{truenas_server.ip}:2049" == line.split()[3]:
                 rv = (line, line.split()[4].split(':')[1])
         return rv
 
@@ -1407,9 +1407,9 @@ def test_46_set_bind_ip():
       - Confirm service on IP address
     '''
     choices = call("nfs.bindip_choices")
-    assert ip in choices
+    assert truenas_server.ip in choices
 
-    call("nfs.bindip", {"bindip": [ip]})
+    call("nfs.bindip", {"bindip": [truenas_server.ip]})
     call("nfs.bindip", {"bindip": []})
 
     # Test config with bindip.  Use choices from above
@@ -1424,13 +1424,13 @@ def test_46_set_bind_ip():
         assert rpc_conf.get('-h') is None
 
         # Set bindip
-        call("nfs.update", {"bindip": [ip]})
+        call("nfs.update", {"bindip": [truenas_server.ip]})
 
         # Confirm we see it in the nfs and rpc conf files
         nfs_conf = parse_server_config()
         rpc_conf = parse_rpcbind_config()
-        assert ip in nfs_conf['nfsd'].get('host'), f"nfs_conf = {nfs_conf}"
-        assert ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
+        assert truenas_server.ip in nfs_conf['nfsd'].get('host'), f"nfs_conf = {nfs_conf}"
+        assert truenas_server.ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
 
 
 def test_48_syslog_filters(request):
