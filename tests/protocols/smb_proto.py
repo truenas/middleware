@@ -241,7 +241,7 @@ class SMB(object):
 
     def get_shadow_copies(self, **kwargs):
         snaps = []
-        host = kwargs.get("host")
+        host = kwargs.get("host", get_host_ip(SRVTarget.DEFAULT))
         share = kwargs.get("share")
         path = kwargs.get("path", "/")
         username = kwargs.get("username")
@@ -269,7 +269,7 @@ class SMB(object):
         return snaps
 
     def get_quota(self, **kwargs):
-        host = kwargs.get("host")
+        host = kwargs.get("host", get_host_ip(SRVTarget.DEFAULT))
         share = kwargs.get("share")
         username = kwargs.get("username")
         password = kwargs.get("password")
@@ -291,7 +291,7 @@ class SMB(object):
         return self._parse_quota(quotaout)
 
     def set_quota(self, **kwargs):
-        host = kwargs.get("host")
+        host = kwargs.get("host", get_host_ip(SRVTarget.DEFAULT))
         share = kwargs.get("share")
         username = kwargs.get("username")
         password = kwargs.get("password")
