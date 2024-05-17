@@ -62,6 +62,11 @@ def get_payload(ws_client):
 
     return payload, to_validate
 
+def log_proc(ws_client, line = "", sleep = 2):
+    time.sleep(sleep)
+    autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, truenas_server.ip)['stdout'])
+    ws_client.logger.debug(f"{line} The value of interface {interface} is {autoconf}")
+
 # Make sure that our initial conditions are met
 def test_001_check_ipvx(request, ws_client, get_payload):
     # Verify that dhclient is running
@@ -71,6 +76,7 @@ def test_001_check_ipvx(request, ws_client, get_payload):
     # Check that our proc entry is set to its default 1.
     autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, truenas_server.ip)['stdout'])
     assert autoconf == 1
+    log_proc(ws_client, 80)
 
 def test_002_configure_interface(request, ws_client, get_payload):
     if ha:
@@ -89,8 +95,10 @@ def test_002_configure_interface(request, ws_client, get_payload):
     # 5. verify that there are no more pending interface changes
     assert ws_client.call('interface.has_pending_changes')
     ws_client.call('interface.commit', {'rollback': True, 'checkin_timeout': 10})
+    log_proc(ws_client, 98)
     assert ws_client.call('interface.checkin_waiting')
     ws_client.call('interface.checkin')
+    log_proc(ws_client, 101)
     assert ws_client.call('interface.checkin_waiting') is None
     assert ws_client.call('interface.has_pending_changes') is False
 
@@ -103,6 +111,7 @@ def test_002_configure_interface(request, ws_client, get_payload):
     # match reality
     reality = set([i['address'] for i in ws_client.call('interface.ip_in_use', {'ipv4': True})])
     assert reality == set(get_payload[1])
+    log_proc(ws_client, 114)
 
     if ha:
         # let's go 1-step further and validate that the VIP accepts connections
@@ -119,6 +128,9 @@ def test_002_configure_interface(request, ws_client, get_payload):
         truenas_server.server_type = os.environ['SERVER_TYPE']
 
 def test_003_recheck_ipvx(request, ws_client, get_payload):
+    ws_client.call('interface.update', interface, get_payload[0])
+    ws_client.call('interface.commit')
+    time.sleep(3)
     autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, truenas_server.ip)['stdout'])
     assert autoconf == 0
     
