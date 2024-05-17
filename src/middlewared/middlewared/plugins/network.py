@@ -270,7 +270,7 @@ class InterfaceService(CRUDService):
             'state': iface_state,
             'aliases': [],
             'ipv4_dhcp': False if configs else True,
-            'ipv6_auto': False,
+            'ipv6_auto': False if configs else True,
             'description': '',
             'mtu': None,
         }
