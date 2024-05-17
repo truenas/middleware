@@ -9,6 +9,7 @@ import pytest
 from auto_config import interface, ha, netmask
 from middlewared.test.integration.utils.client import client, truenas_server
 from middlewared.test.integration.utils import fail
+from functions import SSH_TEST
 
 
 @pytest.fixture(scope='module')
