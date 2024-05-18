@@ -1,5 +1,5 @@
 <%
-    from middlewared.plugins.audit.utils import AUDITED_SERVICES
+    from middlewared.plugins.audit.utils import audit_program, AUDITED_SERVICES
 
     adv_conf = render_ctx['system.advanced.config']
 
@@ -13,7 +13,7 @@
 
 # Filter TrueNAS audit-related messages
 % for svc, vers in AUDITED_SERVICES:
-filter f_tnaudit_${svc.lower()} { program("TNAUDIT_${svc}") };
+filter f_tnaudit_${svc.lower()} { program("${audit_program(svc)}") };
 % endfor
 filter f_tnaudit_all {
   ${' or\n  '.join(audit_filters)}

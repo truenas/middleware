@@ -6,7 +6,7 @@ from sqlalchemy.orm import declarative_base
 from .schema.common import AuditEventParam
 
 AUDIT_DATASET_PATH = '/audit'
-AUDITED_SERVICES = [('MIDDLEWARE', 0.1), ('SMB', 0.1)]
+AUDITED_SERVICES = [('MIDDLEWARE', 0.1), ('SMB', 0.1), ('SUDO', 0.1)]
 AUDIT_TABLE_PREFIX = 'audit_'
 AUDIT_LIFETIME = 7
 AUDIT_DEFAULT_RESERVATION = 0
@@ -27,6 +27,19 @@ SQL_SAFE_FIELDS = (
 
 AuditBase = declarative_base()
 
+def audit_program(svc):
+    if svc == 'SUDO':
+        return 'sudo'
+    else:
+        return f'TNAUDIT_{svc}'
+
+def audit_custom_section(svc, section):
+    """
+    Can be used to control whether generic SVC mako rendering applies for this section/service.
+    """
+    if svc == 'SUDO' and section == 'log':
+        return True
+    return False
 
 def audit_file_path(svc):
     return f'{AUDIT_DATASET_PATH}/{svc}.db'

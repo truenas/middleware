@@ -23,6 +23,7 @@ from .utils import (
 )
 from .schema.middleware import AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS, AUDIT_EVENT_MIDDLEWARE_PARAM_SET
 from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
+from .schema.sudo import AUDIT_EVENT_SUDO_JSON_SCHEMAS, AUDIT_EVENT_SUDO_PARAM_SET
 from middlewared.client import ejson
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.schema import (
@@ -107,7 +108,7 @@ class AuditService(ConfigService):
         data['space']['used_by_reservation'] = ds_info['properties']['usedbyrefreservation']['parsed']
         data['space']['used_by_snapshots'] = ds_info['properties']['usedbysnapshots']['parsed']
         data['space']['available'] = ds_info['properties']['available']['parsed']
-        data['enabled_services'] = {'MIDDLEWARE': [], 'SMB': []}
+        data['enabled_services'] = {'MIDDLEWARE': [], 'SMB': [], 'SUDO': []}
         audited_smb_shares = self.middleware.call_sync(
             'sharing.smb.query', [['audit.enable', '=', True]], {'select': ['name', 'audit']}
         )
@@ -195,7 +196,7 @@ class AuditService(ConfigService):
                 if isinstance(entry, list):
                     entry = entry[0]
 
-                if entry not in (AUDIT_EVENT_MIDDLEWARE_PARAM_SET | AUDIT_EVENT_SMB_PARAM_SET):
+                if entry not in (AUDIT_EVENT_MIDDLEWARE_PARAM_SET | AUDIT_EVENT_SMB_PARAM_SET | AUDIT_EVENT_SUDO_PARAM_SET):
                     verrors.add(
                         f'audit.query.query-options.select.{idx}',
                         f'{entry}: column does not exist'
@@ -547,4 +548,4 @@ class AuditService(ConfigService):
     @private
     @filterable
     async def json_schemas(self, filters, options):
-        return filter_list(AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS + AUDIT_EVENT_SMB_JSON_SCHEMAS, filters, options)
+        return filter_list(AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS + AUDIT_EVENT_SMB_JSON_SCHEMAS + AUDIT_EVENT_SUDO_JSON_SCHEMAS, filters, options)
