@@ -52,7 +52,12 @@
     ip6_list = [f'[{ip}]' for ip in ip6_list]
 
     wg_config = middleware.call_sync('datastore.config', 'system.truecommand')
-    if middleware.call_sync('truecommand.connected')['connected'] and wg_config['wg_address']:
+    if middleware.call_sync('failover.is_single_master_node') and wg_config['api_key_state'] == 'CONNECTED' and wg_config['wg_address']:
+        # We use api key state to determine connected because sometimes when nginx config is reloaded
+        # it is not necessary that health of wireguard connection has been established at that point
+        # and another reload of nginx config is required then at that point then which is redundant
+        # An example is that when failover takes place, system knows it is master now but wireguard health hasn't
+        # been established at this point and we miss out on adding wireguard address to listen directive
         ip4_list.append(ipaddress.ip_network(wg_config['wg_address'], False).network_address)
 
     ip_list = ip4_list + ip6_list
