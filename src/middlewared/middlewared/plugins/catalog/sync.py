@@ -1,11 +1,53 @@
 import os
 
-from middlewared.service import private, Service
+from middlewared.schema import accepts, Str
+from middlewared.service import CallError, job, private, returns, Service
 
 from .git_utils import pull_clone_repository
+from .utils import OFFICIAL_LABEL
 
 
 class CatalogService(Service):
+
+    @accepts()
+    @returns()
+    @job(lock='sync_catalogs')
+    async def sync_all(self, job):
+        """
+        Refresh all available catalogs from upstream.
+        """
+        filters = [] if await self.middleware.call('catalog.dataset_mounted') else [['id', '=', OFFICIAL_LABEL]]
+        catalogs = await self.middleware.call('catalog.query', filters)
+        catalog_len = len(catalogs)
+        for index, catalog in enumerate(catalogs):
+            job.set_progress((index / catalog_len) * 100, f'Syncing {catalog["id"]} catalog')
+            sync_job = await self.middleware.call('catalog.sync', catalog['id'])
+            await sync_job.wait()
+
+    @accepts(Str('label', required=True))
+    @returns()
+    @job(lock=lambda args: f'{args[0]}_catalog_sync')
+    async def sync(self, job, catalog_label):
+        """
+        Sync `label` catalog to retrieve latest changes from upstream.
+        """
+        try:
+            catalog = await self.middleware.call('catalog.get_instance', catalog_label)
+            if catalog_label != OFFICIAL_LABEL and not await self.middleware.call('catalog.dataset_mounted'):
+                raise CallError(
+                    'Cannot sync non-official catalogs when apps are not configured or catalog dataset is not mounted'
+                )
+
+            job.set_progress(5, 'Updating catalog repository')
+            await self.middleware.call('catalog.update_git_repository', catalog)
+        except Exception as e:
+            await self.middleware.call(
+                'alert.oneshot_create', 'CatalogSyncFailed', {'catalog': catalog_label, 'error': str(e)}
+            )
+            raise
+        else:
+            await self.middleware.call('alert.oneshot_delete', 'CatalogSyncFailed', catalog_label)
+            job.set_progress(100, f'Synced {catalog_label!r} catalog')
 
     @private
     def update_git_repository(self, catalog):
