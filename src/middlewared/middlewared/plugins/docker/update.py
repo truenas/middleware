@@ -1,11 +1,16 @@
+import os
+
 from middlewared.schema import accepts, Dict, Int, Patch, Str
-from middlewared.service import ConfigService, job
+from middlewared.service import ConfigService, job, private
+
+from .utils import applications_ds_name
 
 
 class DockerService(ConfigService):
 
     class Config:
         datastore = 'services.docker'
+        datastore_extend = 'docker.config_extend'
         cli_namespace = 'app.docker'
         role_prefix = 'DOCKER'
 
@@ -15,6 +20,11 @@ class DockerService(ConfigService):
         Str('name', required=True),
         update=True,
     )
+
+    @private
+    async def config_extend(self, data):
+        data['dataset'] = applications_ds_name(data['pool']) if data.get('pool') else None
+        return data
 
     @accepts(
         Patch(
