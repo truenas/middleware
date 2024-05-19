@@ -1,5 +1,6 @@
 import errno
 import os
+import shutil
 
 import middlewared.sqlalchemy as sa
 
@@ -36,6 +37,7 @@ class CatalogService(CRUDService):
         'catalog_create', 'catalog_entry',
         ('add', Bool('builtin')),
         ('add', Str('id')),
+        ('add', Str('location')),
     )
 
     @private
@@ -171,6 +173,9 @@ class CatalogService(CRUDService):
             raise CallError('Builtin catalogs cannot be deleted')
 
         ret = self.middleware.call_sync('datastore.delete', self._config.datastore, id_)
+
+        if os.path.exists(catalog['location']):
+            shutil.rmtree(catalog['location'], ignore_errors=True)
 
         return ret
 
