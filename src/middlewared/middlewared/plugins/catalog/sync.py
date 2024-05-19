@@ -9,6 +9,12 @@ from .utils import OFFICIAL_LABEL
 
 class CatalogService(Service):
 
+    SYNCED = False
+
+    @private
+    async def synced(self):
+        return self.SYNCED
+
     @accepts()
     @returns()
     @job(lock='sync_catalogs')
@@ -23,6 +29,8 @@ class CatalogService(Service):
             job.set_progress((index / catalog_len) * 100, f'Syncing {catalog["id"]} catalog')
             sync_job = await self.middleware.call('catalog.sync', catalog['id'])
             await sync_job.wait()
+
+        self.SYNCED = True
 
     @accepts(Str('label', required=True))
     @returns()
