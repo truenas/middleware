@@ -6,7 +6,8 @@ from middlewared.utils import filter_list
 class AppService(Service):
 
     class Config:
-        cli_namespace = 'app'
+        namespace = 'app_old'
+        cli_namespace = 'app_old'
 
     @filterable(roles=['CATALOG_READ'])
     @filterable_returns(Ref('available_apps'))
@@ -53,8 +54,8 @@ class AppService(Service):
         """
         Retrieve all available applications from all configured catalogs.
         """
-        if not self.middleware.call_sync('catalog.synced'):
-            self.middleware.call_sync('catalog.initiate_first_time_sync')
+        if not self.middleware.call_sync('catalog_old.synced'):
+            self.middleware.call_sync('catalog_old.initiate_first_time_sync')
 
         results = []
         installed_apps = [
@@ -62,8 +63,8 @@ class AppService(Service):
             for app in self.middleware.call_sync('chart.release.query')
         ]
 
-        for catalog in self.middleware.call_sync('catalog.query'):
-            for train, train_data in self.middleware.call_sync('catalog.items', catalog['label']).items():
+        for catalog in self.middleware.call_sync('catalog_old.query'):
+            for train, train_data in self.middleware.call_sync('catalog_old.items', catalog['label']).items():
                 if train not in catalog['preferred_trains']:
                     continue
 
@@ -83,7 +84,7 @@ class AppService(Service):
         """
         Retrieve list of valid categories which have associated applications.
         """
-        return sorted(list(await self.middleware.call('catalog.retrieve_mapped_categories')))
+        return sorted(list(await self.middleware.call('catalog_old.retrieve_mapped_categories')))
 
     @accepts(Str('app_name'), Str('catalog'), Str('train'), roles=['CATALOG_READ'])
     @returns(List(items=[Ref('available_apps')]))

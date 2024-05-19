@@ -20,7 +20,8 @@ from .utils import get_cache_key
 class CatalogService(Service):
 
     class Config:
-        cli_namespace = 'app.catalog'
+        cli_namespace = 'app_old.catalog'
+        namespace = 'catalog_old'
 
     CATEGORIES_SET = set()
 
@@ -69,7 +70,7 @@ class CatalogService(Service):
     ))
     def items(self, label, options):
         """
-        Retrieve item details for `label` catalog.
+        Retrieve item details for `label` catalog_old.
 
         `options.cache` is a boolean which when set will try to get items details for `label` catalog from cache
         if available.
@@ -82,9 +83,9 @@ class CatalogService(Service):
         present in the catalog ( it is set by default ).
 
         `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
-        of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
+        of desired trains in a catalog_old. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
         """
-        catalog = self.middleware.call_sync('catalog.get_instance', label)
+        catalog = self.middleware.call_sync('catalog_old.get_instance', label)
         all_trains = options['retrieve_all_trains']
         cache_available = False
 
@@ -187,7 +188,7 @@ class CatalogService(Service):
     @private
     def item_version_details(self, version_path, questions_context=None):
         if not questions_context:
-            questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
+            questions_context = self.middleware.call_sync('catalog_old.get_normalised_questions_context')
         return get_item_version_details(version_path, questions_context)
 
     @private
@@ -197,7 +198,7 @@ class CatalogService(Service):
             with contextlib.suppress(KeyError):
                 return self.middleware.call_sync('cache.get', cache_key)
 
-        data = retrieve_recommended_apps(self.middleware.call_sync('catalog.get_instance', OFFICIAL_LABEL)['location'])
+        data = retrieve_recommended_apps(self.middleware.call_sync('catalog_old.get_instance', OFFICIAL_LABEL)['location'])
         self.middleware.call_sync('cache.put', cache_key, data)
         return data
 

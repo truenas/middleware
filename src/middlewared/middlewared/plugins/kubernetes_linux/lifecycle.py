@@ -280,7 +280,7 @@ class KubernetesService(Service):
             with open(config_path, 'w') as f:
                 f.write(json.dumps(config))
 
-            self.middleware.call_sync('catalog.sync_all')
+            self.middleware.call_sync('catalog_old.sync_all')
             self.middleware.call_sync('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
 
     @private
@@ -297,7 +297,7 @@ class KubernetesService(Service):
         # We will make sure that certificate paths point to the newly configured pool
         await self.middleware.call('kubernetes.update_server_credentials', config['dataset'])
         # Now we would like to setup catalogs
-        await self.middleware.call('catalog.sync_all')
+        await self.middleware.call('catalog_old.sync_all')
 
     @private
     def get_dataset_update_props(self, props: typing.Dict) -> typing.Dict:

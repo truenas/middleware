@@ -36,7 +36,7 @@ class ChartReleaseService(Service):
         secrets = self.middleware.call_sync(
             'k8s.secret.query', [namespace_filter], {'extra': {'fieldSelector': 'type=helm.sh/release.v1'}}
         )
-        official_catalog_label = self.middleware.call_sync('catalog.official_catalog_label')
+        official_catalog_label = self.middleware.call_sync('catalog_old.official_catalog_label')
         for release_secret in secrets:
             data = release_secret.pop('data')
             try:
