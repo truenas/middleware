@@ -9,7 +9,8 @@ from middlewared.schema import accepts, Bool, Dict, List, Patch, Str
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.validators import Match
 
-from .utils import convert_repository_to_path, OFFICIAL_ENTERPRISE_TRAIN, TMP_IX_APPS_CATALOGS
+from .git_utils import convert_repository_to_path
+from .utils import OFFICIAL_ENTERPRISE_TRAIN, TMP_IX_APPS_CATALOGS
 
 
 class CatalogModel(sa.Model):
