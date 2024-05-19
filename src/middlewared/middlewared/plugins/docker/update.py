@@ -1,9 +1,16 @@
-import os
+import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Dict, Int, Patch, Str
 from middlewared.service import ConfigService, job, private
 
 from .utils import applications_ds_name
+
+
+class DockerModel(sa.Model):
+    __tablename__ = 'services_docker'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    pool = sa.Column(sa.String(255), default=None, nullable=True)
 
 
 class DockerService(ConfigService):
