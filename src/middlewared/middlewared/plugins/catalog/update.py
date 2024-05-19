@@ -1,10 +1,15 @@
 import errno
+import os
+import shutil
 
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, List, Patch, Str
-from middlewared.service import CRUDService, job, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.validators import Match
+
+
+OFFICIAL_ENTERPRISE_TRAIN = 'enterprise'
 
 
 class CatalogModel(sa.Model):
@@ -38,6 +43,25 @@ class CatalogService(CRUDService):
     def extend(self, data):
         data['id'] = data['label']
         return data
+
+    @private
+    async def common_validation(self, schema, data):
+        verrors = ValidationErrors()
+        if not data['preferred_trains']:
+            verrors.add(
+                f'{schema}.preferred_trains',
+                'At least 1 preferred train must be specified for a catalog_old.'
+            )
+        if (
+            await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE' and
+            OFFICIAL_ENTERPRISE_TRAIN not in data['preferred_trains']
+        ):
+            verrors.add(
+                f'{schema}.preferred_trains',
+                f'Enterprise systems must at least have {OFFICIAL_ENTERPRISE_TRAIN!r} train enabled'
+            )
+
+        verrors.check()
 
     @accepts(
         Dict(
@@ -74,6 +98,8 @@ class CatalogService(CRUDService):
                     f'catalog_create.{k}', 'A catalog with same repository/branch already exists', errno=errno.EEXIST
                 )
 
+        await self.common_validation('catalog_create', data)
+
         verrors.check()
 
         job.set_progress(60, 'Completed catalog validation')
@@ -84,3 +110,38 @@ class CatalogService(CRUDService):
         await self.middleware.call('datastore.insert', self._config.datastore, data)
 
         return await self.get_instance(data['label'])
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'catalog_update',
+            List('preferred_trains'),
+            update=True
+        )
+    )
+    async def do_update(self, id_, data):
+        """
+        Update catalog entry of `id`.
+        """
+        await self.get_instance(id_)
+        await self.common_validation('catalog_update', data)
+
+        await self.middleware.call('datastore.update', self._config.datastore, id_, data)
+
+        return await self.get_instance(id_)
+
+    def do_delete(self, id_):
+        """
+        Delete catalog entry of `id`.
+        """
+        catalog = self.middleware.call_sync('catalog.get_instance', id_)
+        if catalog['builtin']:
+            raise CallError('Builtin catalogs cannot be deleted')
+
+        ret = self.middleware.call_sync('datastore.delete', self._config.datastore, id_)
+
+        if os.path.exists(catalog['location']):
+            shutil.rmtree(catalog['location'], ignore_errors=True)
+
+        return ret
+
