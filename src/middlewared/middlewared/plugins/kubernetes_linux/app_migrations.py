@@ -69,7 +69,7 @@ class KubernetesAppMigrationsService(Service):
         executed_migrations = (await self.middleware.call('k8s.app.migration.applied'))
         applied_migrations = collections.defaultdict(list)
 
-        for catalog in await self.middleware.call('catalog.query', [['label', '=', OFFICIAL_LABEL]]):
+        for catalog in await self.middleware.call('catalog_old.query', [['label', '=', OFFICIAL_LABEL]]):
             for migration_name, migration_data in self.load_migrations(catalog).items():
                 if migration_name in (executed_migrations.get(catalog['label']) or []):
                     continue

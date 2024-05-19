@@ -46,7 +46,7 @@ class KubernetesService(Service):
         k8s_config = self.middleware.call_sync('kubernetes.config')
         catalog_sync_jobs = self.middleware.call_sync('core.get_jobs', [
             ['OR', [
-                ['method', '=', 'catalog.sync'], ['method', '=', 'catalog.sync_all'],
+                ['method', '=', 'catalog_old.sync'], ['method', '=', 'catalog_old.sync_all'],
             ]],
             ['OR', [['state', '=', 'RUNNING'], ['state', '=', 'WAITING']]]
         ])
@@ -223,7 +223,7 @@ class KubernetesService(Service):
             )
 
         job.set_progress(99, 'Syncing catalogs')
-        sync_job = self.middleware.call_sync('catalog.sync_all')
+        sync_job = self.middleware.call_sync('catalog_old.sync_all')
         sync_job.wait_sync()
         if sync_job.error:
             self.logger.error('Failed to sync catalogs after restoring kubernetes backup')

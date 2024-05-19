@@ -264,8 +264,8 @@ class UsageService(Service):
             'custom_deployed_images': set(),
             'chart_releases_images': set(),
         }
-        catalogs = {c['label']: c for c in await self.middleware.call('catalog.query')}
-        official_label = await self.middleware.call('catalog.official_catalog_label')
+        catalogs = {c['label']: c for c in await self.middleware.call('catalog_old.query')}
+        official_label = await self.middleware.call('catalog_old.official_catalog_label')
         chart_releases = await self.middleware.call('chart.release.query', [], {'extra': {'retrieve_resources': True}})
         output['chart_releases'] = len(chart_releases)
         for chart_release in chart_releases:
