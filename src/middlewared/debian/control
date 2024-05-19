@@ -5,7 +5,6 @@ Maintainer: William Grzybowski <william@grzy.org>
 Build-Depends: alembic,
                debhelper-compat (= 12),
                dh-python,
-               freeipa-client,
                python3-acme,
                python3-aiohttp,
                python3-aiorwlock,
@@ -76,6 +75,8 @@ Homepage: https://github.com/freenas/freenas
 
 Package: middlewared
 Architecture: all
+Pre-Depends: truenas-samba,
+             truenas-sssd
 Depends: alembic,
          avahi-daemon,
          bsd-mailx,
