@@ -1,13 +1,14 @@
 import errno
+import os
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.plugins.docker.state_utils import catalog_ds_path
 from middlewared.schema import accepts, Bool, Dict, List, Patch, Str
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.validators import Match
 
-
-OFFICIAL_ENTERPRISE_TRAIN = 'enterprise'
+from .utils import convert_repository_to_path, OFFICIAL_ENTERPRISE_TRAIN, TMP_IX_APPS_CATALOGS
 
 
 class CatalogModel(sa.Model):
@@ -25,6 +26,7 @@ class CatalogService(CRUDService):
     class Config:
         datastore = 'services.catalog'
         datastore_extend = 'catalog.extend'
+        datastore_extend_context = 'catalog.extend_context'
         datastore_primary_key = 'label'
         datastore_primary_key_type = 'string'
         cli_namespace = 'app.catalog'
@@ -37,9 +39,37 @@ class CatalogService(CRUDService):
     )
 
     @private
-    def extend(self, data):
-        data['id'] = data['label']
+    def extend(self, data, context):
+        data.update({
+            'id': data['label'],
+            'location': os.path.join(
+                context['catalog_dir'], convert_repository_to_path(data['repository'], data['branch'])
+            )
+        })
         return data
+
+    @private
+    async def extend_context(self, rows, extra):
+        if await self.dataset_mounted():
+            catalog_dir = catalog_ds_path((await self.middleware.call('docker.config'))['dataset'])
+        else:
+            # FIXME: This can eat lots of memory if it's a large catalog
+            catalog_dir = TMP_IX_APPS_CATALOGS
+
+        return {
+            'catalog_dir': catalog_dir,
+        }
+
+    @private
+    async def dataset_mounted(self):
+        if docker_ds := (await self.middleware.call('docker.config'))['dataset']:
+            return bool(await self.middleware.call(
+                'filesystem.mount_info', [
+                    ['mount_source', '=', os.path.join(docker_ds, 'catalogs')], ['fs_type', '=', 'zfs'],
+                ],
+            ))
+
+        return False
 
     @private
     async def common_validation(self, schema, data):
