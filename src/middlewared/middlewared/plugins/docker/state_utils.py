@@ -2,6 +2,7 @@ import os
 import typing
 
 
+CATALOG_DATASET_NAME = 'catalogs'
 DATASET_DEFAULTS = {
     'aclmode': 'discard',
     'acltype': 'posix',
@@ -12,10 +13,14 @@ DATASET_DEFAULTS = {
 }
 
 
+def catalog_ds_path(docker_ds: str) -> str:
+    return os.path.join('/mnt', docker_ds, CATALOG_DATASET_NAME)
+
+
 def docker_datasets(docker_ds: str) -> typing.List[str]:
     return [docker_ds] + [
         os.path.join(docker_ds, d) for d in (
-            'catalogs',
+            CATALOG_DATASET_NAME,
         )
     ]
 
