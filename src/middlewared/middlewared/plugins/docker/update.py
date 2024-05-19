@@ -12,11 +12,11 @@ class DockerService(ConfigService):
         datastore = 'services.docker'
         datastore_extend = 'docker.config_extend'
         cli_namespace = 'app.docker'
-        role_prefix = 'DOCKER'
 
     ENTRY = Dict(
         'docker_entry',
         Int('id', required=True),
+        Str('dataset', required=True),
         Str('name', required=True),
         update=True,
     )
