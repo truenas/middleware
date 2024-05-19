@@ -17,16 +17,6 @@ OFFICIAL_LABEL = 'TRUENAS'
 TMP_IX_APPS_DIR = os.path.join(MIDDLEWARE_RUN_DIR, 'ix-applications')
 
 
-class CatalogModel(sa.Model):
-    __tablename__ = 'services_catalog'
-
-    label = sa.Column(sa.String(255), nullable=False, unique=True, primary_key=True)
-    repository = sa.Column(sa.Text(), nullable=False)
-    branch = sa.Column(sa.String(255), nullable=False)
-    builtin = sa.Column(sa.Boolean(), nullable=False, default=False)
-    preferred_trains = sa.Column(sa.JSON(list))
-
-
 class CatalogService(CRUDService):
 
     class Config:
@@ -40,7 +30,7 @@ class CatalogService(CRUDService):
         role_prefix = 'CATALOG'
 
     ENTRY = Dict(
-        'catalog_entry',
+        'catalog_old_entry',
         Str(
             'label', required=True, validators=[Match(
                 r'^\w+[\w.-]*$',
@@ -211,8 +201,8 @@ class CatalogService(CRUDService):
 
     @accepts(
         Patch(
-            'catalog_entry',
-            'catalog_create',
+            'catalog_old_entry',
+            'catalog_old_create',
             ('add', Bool('force', default=False)),
             ('rm', {'name': 'id'}),
             ('rm', {'name': 'trains'}),
@@ -225,30 +215,30 @@ class CatalogService(CRUDService):
             ('rm', {'name': 'caching_job'}),
         ),
     )
-    @job(lock=lambda args: f'catalog_create_{args[0]["label"]}')
+    @job(lock=lambda args: f'catalog_old_create_{args[0]["label"]}')
     async def do_create(self, job, data):
         """
-        `catalog_create.preferred_trains` specifies trains which will be displayed in the UI directly for a user.
+        `catalog_old_create.preferred_trains` specifies trains which will be displayed in the UI directly for a user.
         """
         verrors = ValidationErrors()
         # We normalize the label
         data['label'] = data['label'].upper()
 
         if error := await self.cannot_be_added():
-            verrors.add('catalog_create.label', error)
+            verrors.add('catalog_old_create.label', error)
 
         if await self.query([['id', '=', data['label']]]):
-            verrors.add('catalog_create.label', 'A catalog with specified label already exists', errno=errno.EEXIST)
+            verrors.add('catalog_old_create.label', 'A catalog with specified label already exists', errno=errno.EEXIST)
 
         if await self.query([['repository', '=', data['repository']], ['branch', '=', data['branch']]]):
             for k in ('repository', 'branch'):
                 verrors.add(
-                    f'catalog_create.{k}', 'A catalog with same repository/branch already exists', errno=errno.EEXIST
+                    f'catalog_old_create.{k}', 'A catalog with same repository/branch already exists', errno=errno.EEXIST
                 )
 
         if not await self.can_system_add_catalog():
             verrors.add(
-                'catalog_create.label',
+                'catalog_old_create.label',
                 'Enterprise systems are not allowed to add catalog(s)'
             )
 
@@ -270,12 +260,12 @@ class CatalogService(CRUDService):
                 await self.middleware.call('catalog_old.update_git_repository', {**data, 'location': path})
                 await self.middleware.call('catalog_old.validate_catalog_from_path', path)
                 await self.common_validation(
-                    {'trains': await self.middleware.call('catalog_old.retrieve_train_names', path)}, 'catalog_create', data
+                    {'trains': await self.middleware.call('catalog_old.retrieve_train_names', path)}, 'catalog_old_create', data
                 )
             except ValidationErrors as ve:
                 verrors.extend(ve)
             except CallError as e:
-                verrors.add('catalog_create.label', f'Failed to validate catalog: {e}')
+                verrors.add('catalog_old_create.label', f'Failed to validate catalog: {e}')
             finally:
                 await self.middleware.run_in_thread(shutil.rmtree, path, ignore_errors=True)
         else:
@@ -301,14 +291,14 @@ class CatalogService(CRUDService):
     @accepts(
         Str('id'),
         Dict(
-            'catalog_update',
+            'catalog_old_update',
             List('preferred_trains'),
             update=True
         )
     )
     async def do_update(self, id_, data):
         catalog = await self.query([['id', '=', id_]], {'extra': {'item_details': True}, 'get': True})
-        await self.common_validation(catalog, 'catalog_update', data)
+        await self.common_validation(catalog, 'catalog_old_update', data)
 
         await self.middleware.call('datastore.update', self._config.datastore, id_, data)
 
