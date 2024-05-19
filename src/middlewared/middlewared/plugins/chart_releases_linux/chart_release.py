@@ -112,7 +112,7 @@ class ChartReleaseService(CRUDService):
 
         k8s_config = await self.middleware.call('kubernetes.config')
         update_catalog_config = {}
-        catalogs = await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
+        catalogs = await self.middleware.call('catalog_old.query', [], {'extra': {'item_details': True}})
         container_images = {}
         for image in await self.middleware.call('container.image.query'):
             for tag in map(lambda t: normalize_reference(t)['complete_tag'], image['repo_tags']):
@@ -144,7 +144,7 @@ class ChartReleaseService(CRUDService):
         locked_datasets = await self.middleware.call('zfs.dataset.locked_datasets') if get_locked_paths else []
         get_history = extra.get('history')
         if retrieve_schema:
-            questions_context = await self.middleware.call('catalog.get_normalised_questions_context')
+            questions_context = await self.middleware.call('catalog_old.get_normalised_questions_context')
         else:
             questions_context = None
 
@@ -300,7 +300,7 @@ class ChartReleaseService(CRUDService):
                 chart_path = os.path.join(release_data['path'], 'charts', release_data['chart_metadata']['version'])
                 if os.path.exists(chart_path):
                     release_data['chart_schema'] = await self.middleware.call(
-                        'catalog.item_version_details', chart_path, questions_context
+                        'catalog_old.item_version_details', chart_path, questions_context
                     )
                 else:
                     release_data['chart_schema'] = None
@@ -412,8 +412,8 @@ class ChartReleaseService(CRUDService):
         if await self.query([['id', '=', data['release_name']]]):
             raise CallError(f'Chart release with {data["release_name"]!r} name already exists.', errno=errno.EEXIST)
 
-        catalog = await self.middleware.call('catalog.get_instance', data['catalog'])
-        item_details = await self.middleware.call('catalog.get_item_details', data['item'], {
+        catalog = await self.middleware.call('catalog_old.get_instance', data['catalog'])
+        item_details = await self.middleware.call('catalog_old.get_item_details', data['item'], {
             'catalog': data['catalog'],
             'train': data['train'],
         })
@@ -427,7 +427,7 @@ class ChartReleaseService(CRUDService):
             raise CallError(f'Unable to locate "{data["version"]}" catalog item version.', errno=errno.ENOENT)
 
         item_details = item_details['versions'][version]
-        await self.middleware.call('catalog.version_supported_error_check', item_details)
+        await self.middleware.call('catalog_old.version_supported_error_check', item_details)
 
         k8s_config = await self.middleware.call('kubernetes.config')
         release_ds = os.path.join(k8s_config['dataset'], 'releases', data['release_name'])
@@ -537,7 +537,7 @@ class ChartReleaseService(CRUDService):
                 errno=errno.ENOENT
             )
 
-        version_details = await self.middleware.call('catalog.item_version_details', chart_path)
+        version_details = await self.middleware.call('catalog_old.item_version_details', chart_path)
         config = release['config']
         config.update(data['values'])
         # We use update=False because we want defaults to be populated again if they are not present in the payload

@@ -31,11 +31,12 @@ class CatalogService(CRUDService):
 
     class Config:
         datastore = 'services.catalog'
-        datastore_extend = 'catalog.catalog_extend'
-        datastore_extend_context = 'catalog.catalog_extend_context'
+        datastore_extend = 'catalog_old.catalog_extend'
+        datastore_extend_context = 'catalog_old.catalog_extend_context'
         datastore_primary_key = 'label'
         datastore_primary_key_type = 'string'
-        cli_namespace = 'app.catalog'
+        cli_namespace = 'app_old.catalog'
+        namespace = 'catalog_old'
         role_prefix = 'CATALOG'
 
     ENTRY = Dict(
@@ -85,12 +86,12 @@ class CatalogService(CRUDService):
         }
         if extra.get('item_details'):
             sync_jobs = await self.middleware.call(
-                'core.get_jobs', [['method', '=', 'catalog.sync'], ['state', '=', 'RUNNING']]
+                'core.get_jobs', [['method', '=', 'catalog_old.sync'], ['state', '=', 'RUNNING']]
             )
             for row in rows:
                 label = row['label']
                 catalog_info = {
-                    'cached': label == OFFICIAL_LABEL or await self.middleware.call('catalog.cached', label),
+                    'cached': label == OFFICIAL_LABEL or await self.middleware.call('catalog_old.cached', label),
                     'normalized_progress': None,
                     'trains': extra.get('trains', []),
                     'retrieve_all_trains': extra.get('retrieve_all_trains', True),
@@ -99,7 +100,7 @@ class CatalogService(CRUDService):
                     sync_job = filter_list(sync_jobs, [['arguments', '=', [row['label']]]])
                     if sync_job:
                         # We will almost certainly always have this except for the case when middleware starts
-                        # it is guaranteed that we will eventually have this anyways as catalog.sync_all is called
+                        # it is guaranteed that we will eventually have this anyways as catalog_old.sync_all is called
                         # periodically. So let's not trigger a new redundant job for this
                         sync_job = sync_job[0]
                     else:
@@ -124,9 +125,9 @@ class CatalogService(CRUDService):
             'caching_job': None,
         }
         with contextlib.suppress(Exception):
-            # We don't care why it failed, we don't want catalog.query to fail
+            # We don't care why it failed, we don't want catalog_old.query to fail
             # Failure will be caught by other automatic invocations automatically
-            trains = await self.middleware.call('catalog.items', label, {
+            trains = await self.middleware.call('catalog_old.items', label, {
                 'cache': True,
                 'cache_only': await self.official_catalog_label() != label,
                 'retrieve_all_trains': catalog_context['retrieve_all_trains'],
@@ -170,12 +171,12 @@ class CatalogService(CRUDService):
         if diff:
             verrors.add(
                 f'{schema}.preferred_trains',
-                f'{", ".join(diff)} trains were not found in catalog.'
+                f'{", ".join(diff)} trains were not found in catalog_old.'
             )
         if not data['preferred_trains']:
             verrors.add(
                 f'{schema}.preferred_trains',
-                'At least 1 preferred train must be specified for a catalog.'
+                'At least 1 preferred train must be specified for a catalog_old.'
             )
         if (
             await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE' and
@@ -266,10 +267,10 @@ class CatalogService(CRUDService):
             )
             await self.middleware.run_in_thread(shutil.rmtree, path, ignore_errors=True)
             try:
-                await self.middleware.call('catalog.update_git_repository', {**data, 'location': path})
-                await self.middleware.call('catalog.validate_catalog_from_path', path)
+                await self.middleware.call('catalog_old.update_git_repository', {**data, 'location': path})
+                await self.middleware.call('catalog_old.validate_catalog_from_path', path)
                 await self.common_validation(
-                    {'trains': await self.middleware.call('catalog.retrieve_train_names', path)}, 'catalog_create', data
+                    {'trains': await self.middleware.call('catalog_old.retrieve_train_names', path)}, 'catalog_create', data
                 )
             except ValidationErrors as ve:
                 verrors.extend(ve)
@@ -288,7 +289,7 @@ class CatalogService(CRUDService):
         job.set_progress(70, f'Successfully added {data["label"]!r} catalog')
 
         job.set_progress(80, f'Syncing {data["label"]} catalog')
-        sync_job = await self.middleware.call('catalog.sync', data['label'])
+        sync_job = await self.middleware.call('catalog_old.sync', data['label'])
         await sync_job.wait()
         if sync_job.error:
             raise CallError(f'Catalog was added successfully but failed to sync: {sync_job.error}')
@@ -314,7 +315,7 @@ class CatalogService(CRUDService):
         return await self.get_instance(id_)
 
     def do_delete(self, id_):
-        catalog = self.middleware.call_sync('catalog.get_instance', id_)
+        catalog = self.middleware.call_sync('catalog_old.get_instance', id_)
         if catalog['builtin']:
             raise CallError('Builtin catalogs cannot be deleted')
 
@@ -356,7 +357,7 @@ class CatalogService(CRUDService):
 
     @private
     async def update_train_for_enterprise(self):
-        catalog = await self.middleware.call('catalog.get_instance', OFFICIAL_LABEL)
+        catalog = await self.middleware.call('catalog_old.get_instance', OFFICIAL_LABEL)
         if await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE':
             can_system_add_catalog = await self.can_system_add_catalog()
             preferred_trains = []
@@ -374,7 +375,7 @@ class CatalogService(CRUDService):
 
 
 async def enterprise_train_update(middleware, prev_product_type, *args, **kwargs):
-    await middleware.call('catalog.update_train_for_enterprise')
+    await middleware.call('catalog_old.update_train_for_enterprise')
 
 
 async def setup(middleware):

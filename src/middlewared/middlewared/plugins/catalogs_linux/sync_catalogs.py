@@ -9,6 +9,9 @@ from .utils import pull_clone_repository
 
 class CatalogService(Service):
 
+    class Config:
+        namespace = 'catalog_old'
+
     SYNCED = False
 
     @accepts(roles=['CATALOG_WRITE'])
@@ -19,16 +22,16 @@ class CatalogService(Service):
         Refresh all available catalogs from upstream.
         """
         catalogs = await self.middleware.call(
-            'catalog.query', [
+            'catalog_old.query', [
                 ['id', '=', OFFICIAL_LABEL]
-            ] if await self.middleware.call('catalog.cannot_be_added') or not await self.middleware.call(
-                'catalog.dataset_mounted'
+            ] if await self.middleware.call('catalog_old.cannot_be_added') or not await self.middleware.call(
+                'catalog_old.dataset_mounted'
             ) else []
         )
         catalog_len = len(catalogs)
         for index, catalog in enumerate(catalogs):
             job.set_progress((index / catalog_len) * 100, f'Syncing {catalog["id"]} catalog')
-            sync_job = await self.middleware.call('catalog.sync', catalog['id'])
+            sync_job = await self.middleware.call('catalog_old.sync', catalog['id'])
             await sync_job.wait()
 
         if await self.middleware.call('kubernetes.validate_k8s_setup', False):
@@ -47,10 +50,10 @@ class CatalogService(Service):
         Sync `label` catalog to retrieve latest changes from upstream.
         """
         try:
-            catalog = await self.middleware.call('catalog.get_instance', catalog_label)
+            catalog = await self.middleware.call('catalog_old.get_instance', catalog_label)
             if catalog_label != OFFICIAL_LABEL and (
-                await self.middleware.call('catalog.cannot_be_added') or not await self.middleware.call(
-                    'catalog.dataset_mounted'
+                await self.middleware.call('catalog_old.cannot_be_added') or not await self.middleware.call(
+                    'catalog_old.dataset_mounted'
                 )
             ):
                 raise CallError(
@@ -58,13 +61,13 @@ class CatalogService(Service):
                 )
 
             job.set_progress(5, 'Updating catalog repository')
-            await self.middleware.call('catalog.update_git_repository', catalog)
+            await self.middleware.call('catalog_old.update_git_repository', catalog)
             job.set_progress(15, 'Reading catalog information')
             if catalog_label == OFFICIAL_LABEL:
                 # Update feature map cache whenever official catalog is updated
-                await self.middleware.call('catalog.get_feature_map', False)
-                await self.middleware.call('catalog.retrieve_recommended_apps', False)
-            await self.middleware.call('catalog.items', catalog_label, await self.sync_items_params())
+                await self.middleware.call('catalog_old.get_feature_map', False)
+                await self.middleware.call('catalog_old.retrieve_recommended_apps', False)
+            await self.middleware.call('catalog_old.items', catalog_label, await self.sync_items_params())
         except Exception as e:
             await self.middleware.call(
                 'alert.oneshot_create', 'CatalogSyncFailed', {'catalog': catalog_label, 'error': str(e)}
@@ -96,6 +99,6 @@ class CatalogService(Service):
 
     @private
     async def initiate_first_time_sync(self):
-        await (await self.middleware.call('catalog.sync', OFFICIAL_LABEL)).wait()
+        await (await self.middleware.call('catalog_old.sync', OFFICIAL_LABEL)).wait()
         self.SYNCED = True
-        await self.middleware.call('catalog.sync_all')
+        await self.middleware.call('catalog_old.sync_all')

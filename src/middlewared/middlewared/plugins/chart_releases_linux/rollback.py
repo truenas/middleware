@@ -63,8 +63,8 @@ class ChartReleaseService(Service):
         if not await self.middleware.run_in_thread(lambda: os.path.exists(chart_path)):
             raise CallError(f'Unable to locate {chart_path!r} path for rolling back', errno=errno.ENOENT)
 
-        chart_details = await self.middleware.call('catalog.item_version_details', chart_path)
-        await self.middleware.call('catalog.version_supported_error_check', chart_details)
+        chart_details = await self.middleware.call('catalog_old.item_version_details', chart_path)
+        await self.middleware.call('catalog_old.version_supported_error_check', chart_details)
 
         history_item = release['history'][rollback_version]
         history_ver = str(history_item['version'])

@@ -11,6 +11,9 @@ from .validate_utils import check_errors
 
 class CatalogService(Service):
 
+    class Config:
+        namespace = 'catalog_old'
+
     @accepts(Str('label'), roles=['CATALOG_WRITE'])
     @returns()
     @job(lock=lambda args: f'catalog_validate_{args[0]}')
@@ -21,15 +24,15 @@ class CatalogService(Service):
         This does not test if an app version is valid in terms of kubernetes resources but instead ensures it has
         the correct format and files necessary for TrueNAS to use it.
         """
-        catalog = await self.middleware.call('catalog.get_instance', label)
+        catalog = await self.middleware.call('catalog_old.get_instance', label)
         job.set_progress(10, f'Syncing {label} catalog')
-        sync_job = await self.middleware.call('catalog.sync', label)
+        sync_job = await self.middleware.call('catalog_old.sync', label)
         await sync_job.wait()
         if sync_job.error:
             raise CallError(f'Failed to sync {label!r} catalog: {sync_job.error}')
 
         job.set_progress(50, f'Validating {label!r} catalog')
-        await self.middleware.call('catalog.validate_catalog_from_path', catalog['location'])
+        await self.middleware.call('catalog_old.validate_catalog_from_path', catalog['location'])
 
     @private
     def validate_catalog_from_path(self, path):

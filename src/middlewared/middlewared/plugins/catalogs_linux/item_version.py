@@ -11,7 +11,8 @@ from .update import OFFICIAL_LABEL
 class CatalogService(Service):
 
     class Config:
-        cli_namespace = 'app.catalog'
+        cli_namespace = 'app_old.catalog'
+        namespace = 'catalog_old'
 
     @accepts(
         Str('item_name'),
@@ -49,14 +50,14 @@ class CatalogService(Service):
         """
         Retrieve information of `item_name` `item_version_details.catalog` catalog item.
         """
-        catalog = self.middleware.call_sync('catalog.get_instance', options['catalog'])
+        catalog = self.middleware.call_sync('catalog_old.get_instance', options['catalog'])
         item_location = os.path.join(catalog['location'], options['train'], item_name)
         if not os.path.exists(item_location):
             raise CallError(f'Unable to locate {item_name!r} at {item_location!r}', errno=errno.ENOENT)
         elif not os.path.isdir(item_location):
             raise CallError(f'{item_location!r} must be a directory')
 
-        train_data = self.middleware.call_sync('catalog.items', options['catalog'], {
+        train_data = self.middleware.call_sync('catalog_old.items', options['catalog'], {
             'retrieve_all_trains': False,
             'trains': [options['train']],
         })
@@ -65,11 +66,11 @@ class CatalogService(Service):
         elif item_name not in train_data[options['train']]:
             raise CallError(f'Unable to locate {item_name!r} item in {options["train"]!r} train')
 
-        questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
+        questions_context = self.middleware.call_sync('catalog_old.get_normalised_questions_context')
 
         item_details = get_item_details(item_location, train_data[options['train']][item_name], questions_context)
         if options['catalog'] == OFFICIAL_LABEL:
-            recommended_apps = self.middleware.call_sync('catalog.retrieve_recommended_apps')
+            recommended_apps = self.middleware.call_sync('catalog_old.retrieve_recommended_apps')
             if options['train'] in recommended_apps and item_name in recommended_apps[options['train']]:
                 item_details['recommended'] = True
 

@@ -212,7 +212,7 @@ class ChartReleaseService(Service):
     async def get_versions(self, release, options):
         current_chart = release['chart_metadata']
         chart = current_chart['name']
-        item_details = await self.middleware.call('catalog.get_item_details', chart, {
+        item_details = await self.middleware.call('catalog_old.get_item_details', chart, {
             'catalog': release['catalog'],
             'train': release['catalog_train'],
         })
@@ -249,7 +249,7 @@ class ChartReleaseService(Service):
         release_name = release['name']
 
         catalog_item = await self.get_version(release, options)
-        await self.middleware.call('catalog.version_supported_error_check', catalog_item)
+        await self.middleware.call('catalog_old.version_supported_error_check', catalog_item)
 
         config = await self.middleware.call('chart.release.upgrade_values', release, catalog_item['location'])
         release_orig['config'] = config
@@ -337,12 +337,12 @@ class ChartReleaseService(Service):
         # 2) User requests it
         # 3) Has configured Apps
         # 4) Has catalogs configured
-        if not await self.middleware.call('catalog.query', [['builtin', '=', False]]) and not (
+        if not await self.middleware.call('catalog_old.query', [['builtin', '=', False]]) and not (
             await self.middleware.call('kubernetes.config')
         )['dataset']:
             return
 
-        sync_job = await self.middleware.call('catalog.sync_all')
+        sync_job = await self.middleware.call('catalog_old.sync_all')
         await sync_job.wait()
         if not await self.middleware.call('kubernetes.validate_k8s_setup', False):
             return
@@ -357,7 +357,7 @@ class ChartReleaseService(Service):
 
         catalog_items = {
             f'{c["id"]}_{train}_{item}': c['trains'][train][item]
-            for c in await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
+            for c in await self.middleware.call('catalog_old.query', [], {'extra': {'item_details': True}})
             for train in c['trains'] for item in c['trains'][train]
         }
         for application in await self.middleware.call('chart.release.query', chart_releases_filters):

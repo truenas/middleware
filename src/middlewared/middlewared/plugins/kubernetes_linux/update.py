@@ -529,7 +529,7 @@ class KubernetesService(ConfigService):
                     # We only want to do this when we don't have any pool configured and would like to use
                     # host catalog repos temporarily. Otherwise, we should call this after k8s datasets have
                     # been initialised
-                    await self.middleware.call('catalog.sync_all')
+                    await self.middleware.call('catalog_old.sync_all')
                     await self.middleware.call('kubernetes.set_status', Status.UNCONFIGURED.value)
 
         return await self.config()
