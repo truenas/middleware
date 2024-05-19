@@ -12,7 +12,9 @@ from .utils import applications_ds_name
 
 class DockerSetupService(Service):
 
-    namespace = 'docker.setup'
+    class Config:
+        namespace = 'docker.setup'
+        private = True
 
     @private
     async def status_change(self):
