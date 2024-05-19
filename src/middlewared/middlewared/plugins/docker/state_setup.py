@@ -7,6 +7,7 @@ from datetime import datetime
 from middlewared.service import private, Service
 
 from .state_utils import DATASET_DEFAULTS, docker_datasets, docker_dataset_custom_props, docker_dataset_update_props
+from .utils import applications_ds_name
 
 
 class DockerSetupService(Service):
@@ -19,9 +20,11 @@ class DockerSetupService(Service):
         if not config['pool']:
             return
 
+        await self.pools(config)
+
     @private
     async def pools(self, config):
-        return await self.middleware.call('pool.query', [('status', '=', 'ONLINE')])
+        return await self.create_update_docker_datasets(applications_ds_name(config['pool']))
 
     @private
     async def create_update_docker_datasets(self, docker_ds):
