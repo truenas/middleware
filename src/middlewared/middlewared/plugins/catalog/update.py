@@ -1,6 +1,4 @@
 import errno
-import os
-import shutil
 
 import middlewared.sqlalchemy as sa
 
@@ -36,7 +34,6 @@ class CatalogService(CRUDService):
         'catalog_create', 'catalog_entry',
         ('add', Bool('builtin')),
         ('add', Str('id')),
-        ('rm', {'name': 'force'}),
     )
 
     @private
@@ -66,7 +63,6 @@ class CatalogService(CRUDService):
     @accepts(
         Dict(
             'catalog_create',
-            Bool('force', default=False),
             List('preferred_trains'),
             Str(
                 'label', required=True, validators=[Match(
@@ -99,6 +95,12 @@ class CatalogService(CRUDService):
                 )
 
         await self.common_validation('catalog_create', data)
+
+        if not await self.can_system_add_catalog():
+            verrors.add(
+                'catalog_create.label',
+                'Enterprise systems are not allowed to add catalog(s)'
+            )
 
         verrors.check()
 
@@ -140,8 +142,17 @@ class CatalogService(CRUDService):
 
         ret = self.middleware.call_sync('datastore.delete', self._config.datastore, id_)
 
-        if os.path.exists(catalog['location']):
-            shutil.rmtree(catalog['location'], ignore_errors=True)
-
         return ret
 
+    @private
+    async def can_system_add_catalog(self):
+        if await self.middleware.call('system.product_type') != 'SCALE_ENTERPRISE':
+            return True
+
+        # If system is not HA capable and is not R series, we can add catalog
+        if not await self.middleware.call('system.is_ha_capable') and not (
+            await self.middleware.call('failover.hardware')
+        ).startswith('TRUENAS-R'):
+            return True
+
+        return False

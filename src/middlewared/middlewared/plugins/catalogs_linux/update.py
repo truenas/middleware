@@ -3,8 +3,6 @@ import errno
 import os
 import shutil
 
-import middlewared.sqlalchemy as sa
-
 from middlewared.schema import Any, Bool, Dict, Float, List, Patch, Str, ValidationErrors
 from middlewared.service import accepts, CallError, CRUDService, job, private
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
