@@ -21,7 +21,8 @@ from .utils import get_cache_key, OFFICIAL_LABEL
 class CatalogService(Service):
 
     class Config:
-        cli_namespace = 'app.catalog'
+        cli_namespace = 'app_old.catalog'
+        namespace = 'catalog_old'
 
     CATEGORIES_SET = set()
 
@@ -81,7 +82,7 @@ class CatalogService(Service):
         present in the catalog ( it is set by default ).
 
         `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
-        of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
+        of desired trains in a catalog_old. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
         """
         catalog = self.middleware.call_sync('catalog.config')
         all_trains = options['retrieve_all_trains']

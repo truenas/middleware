@@ -6,7 +6,8 @@ from middlewared.utils import filter_list
 class AppService(Service):
 
     class Config:
-        cli_namespace = 'app'
+        namespace = 'app_old'
+        cli_namespace = 'app_old'
 
     @filterable()
     @filterable_returns(Ref('available_apps'))
@@ -84,7 +85,7 @@ class AppService(Service):
         """
         Retrieve list of valid categories which have associated applications.
         """
-        return sorted(list(await self.middleware.call('catalog.retrieve_mapped_categories')))
+        return sorted(list(await self.middleware.call('catalog_old.retrieve_mapped_categories')))
 
     @accepts(Str('app_name'), Str('catalog'), Str('train'))
     @returns(List(items=[Ref('available_apps')]))

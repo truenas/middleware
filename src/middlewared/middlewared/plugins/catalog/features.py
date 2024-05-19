@@ -10,13 +10,15 @@ from .apps_util import min_max_scale_version_check_update_impl
 
 class CatalogService(Service):
 
+    class Config:
+        namespace = 'catalog_old'
+
     @private
     def get_feature_map(self, cache=True):
         if cache and self.middleware.call_sync('cache.has_key', 'catalog_feature_map'):
             return self.middleware.call_sync('cache.get', 'catalog_feature_map')
 
         catalog = self.middleware.call_sync('catalog.config')
-
         path = os.path.join(catalog['location'], 'features_capability.json')
         if not os.path.exists(path):
             raise CallError('Unable to retrieve feature capability mapping for SCALE versions', errno=errno.ENOENT)
@@ -54,7 +56,7 @@ class CatalogService(Service):
     @private
     async def missing_feature_error_message(self, missing_features):
         try:
-            mapping = await self.middleware.call('catalog.get_feature_map')
+            mapping = await self.middleware.call('catalog_old.get_feature_map')
         except Exception as e:
             self.logger.error('Unable to retrieve feature mapping for SCALE versions: %s', e)
             mapping = {}
