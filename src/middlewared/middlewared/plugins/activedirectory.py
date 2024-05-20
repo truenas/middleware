@@ -1141,12 +1141,9 @@ class ActiveDirectoryService(ConfigService):
 
         if left_successfully:
             try:
-                pdir = await self.middleware.call("smb.getparm", "private directory", "GLOBAL")
-                ts = time.time()
-                os.rename(f"{pdir}/secrets.tdb", f"{pdir}/secrets.tdb.bak.{int(ts)}")
                 await self.middleware.call("directoryservices.secrets.backup")
             except Exception:
-                self.logger.debug("Failed to remove stale secrets file.", exc_info=True)
+                self.logger.debug("Failed to remove stale secrets entries.", exc_info=True)
 
         job.set_progress(30, 'Clearing local Active Directory settings.')
         payload = {
