@@ -8,7 +8,7 @@ import pytest
 
 from auto_config import interface, ha, netmask
 from middlewared.test.integration.utils.client import client, truenas_server
-
+from middlewared.test.integration.utils import call
 
 @pytest.fixture(scope='module')
 def ws_client():
@@ -21,6 +21,7 @@ def get_payload(ws_client):
     if ha:
         payload = {
             'ipv4_dhcp': False,
+            'ipv6_auto': False,
             'failover_critical': True,
             'failover_group': 1,
             'aliases': [
@@ -49,7 +50,7 @@ def get_payload(ws_client):
         # that the machine has been handed an IPv4 address
         # from a DHCP server. That's why we're getting this information.
         ans = ws_client.call('interface.query', [['name', '=', interface]], {'get': True})
-        payload = {'ipv4_dhcp': False, 'aliases': []}
+        payload = {'ipv4_dhcp': False, 'ipv6_auto': False, 'aliases': []}
         to_validate = []
         ip = truenas_server.ip
         for info in filter(lambda x: x['address'] == ip, ans['state']['aliases']):
@@ -60,8 +61,16 @@ def get_payload(ws_client):
 
     return payload, to_validate
 
+# Make sure that our initial conditions are met
+def test_001_check_ipvx(request):
+    # Verify that dhclient is running
+    running, _ = call('interface.dhclient_status', interface)
+    assert running is True
 
-def test_001_configure_interface(request, ws_client, get_payload):
+    # Check that our proc entry is set to its default 1.
+    assert int(call('tunable.get_sysctl', f'net.ipv6.conf.{interface}.autoconf')) == 1
+
+def test_002_configure_interface(request, ws_client, get_payload):
     if ha:
         # can not make network changes on an HA system unless failover has
         # been explicitly disabled
@@ -106,3 +115,6 @@ def test_001_configure_interface(request, ws_client, get_payload):
         truenas_server.nodea_ip = os.environ['controller1_ip']
         truenas_server.nodeb_ip = os.environ['controller2_ip']
         truenas_server.server_type = os.environ['SERVER_TYPE']
+
+def test_003_recheck_ipvx(request):
+    assert int(call('tunable.get_sysctl', f'net.ipv6.conf.{interface}.autoconf')) == 0
