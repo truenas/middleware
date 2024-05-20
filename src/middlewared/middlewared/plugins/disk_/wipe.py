@@ -47,8 +47,9 @@ class DiskService(Service):
                 sectsize = int((path_obj / 'queue/logical_block_size').read_text().strip())
                 with os.scandir(path_obj) as dir_contents:
                     for partdir in filter(lambda x: x.is_dir() and x.name.startswith(dev_name), dir_contents):
-                        part_num = int((partdir / 'partition').read_text().strip())
-                        part_start = int((partdir / 'start').read_text().strip()) * sectsize
+                        partdir_obj = pathlib.Path(partdir.path)
+                        part_num = int((partdir_obj / 'partition').read_text().strip())
+                        part_start = int((partdir_obj / 'start').read_text().strip()) * sectsize
                         startsect[part_num] = part_start
             except (FileNotFoundError, ValueError):
                 continue
