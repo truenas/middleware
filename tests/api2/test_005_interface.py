@@ -8,7 +8,7 @@ import pytest
 
 from auto_config import interface, ha, netmask
 from middlewared.test.integration.utils.client import client, truenas_server
-from middlewared.test.integration.utils import fail, call
+from middlewared.test.integration.utils import call
 
 @pytest.fixture(scope='module')
 def ws_client():
@@ -65,7 +65,7 @@ def get_payload(ws_client):
 def test_001_check_ipvx(request):
     # Verify that dhclient is running
     running, _ = call('interface.dhclient_status', interface)
-    assert running
+    assert running is True
 
     # Check that our proc entry is set to its default 1.
     assert int(call('tunable.get_sysctl', f'net.ipv6.conf.{interface}.autoconf')) == 1
