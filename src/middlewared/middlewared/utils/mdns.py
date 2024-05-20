@@ -32,6 +32,7 @@ class ServiceType(enum.Enum):
     DEV_INFO = ('_device-info._tcp.', DISCARD)
     HTTP = ('_http._tcp.', 80)
     SMB = ('_smb._tcp.', 445)
+    NUT = ('_nut._tcp.', 3493)
     CUSTOM = (None, None)
 
 

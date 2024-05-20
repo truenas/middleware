@@ -21,6 +21,10 @@ class UPSService(SimpleService):
             await self._systemd_unit("nut-driver-enumerator", "start")
         await self._unit_action("Start")
 
+    async def after_start(self):
+        # Reconfigure mdns (add nut service)
+        await self.middleware.call('service.reload', 'mdns')
+
     async def before_stop(self):
         await self.middleware.call("ups.dismiss_alerts")
 
@@ -29,3 +33,7 @@ class UPSService(SimpleService):
         await self._systemd_unit("nut-driver-enumerator", "stop")
         await self._systemd_unit("nut-server", "stop")
         await self._systemd_unit("nut-driver.target", "stop")
+
+    async def after_stop(self):
+        # Reconfigure mdns (remove nut service)
+        await self.middleware.call('service.reload', 'mdns')
