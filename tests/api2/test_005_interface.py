@@ -68,7 +68,7 @@ def test_001_check_ipvx(request):
     assert running
 
     # Check that our proc entry is set to its default 1.
-    assert int(call('tunable.get_sysctl', 'net.ipv6.conf.ens1.autoconf')) == 1
+    assert int(call('tunable.get_sysctl', f'net.ipv6.conf.{interface}.autoconf')) == 1
 
 def test_002_configure_interface(request, ws_client, get_payload):
     if ha:
@@ -117,4 +117,4 @@ def test_002_configure_interface(request, ws_client, get_payload):
         truenas_server.server_type = os.environ['SERVER_TYPE']
 
 def test_003_recheck_ipvx(request):
-    assert int(call('tunable.get_sysctl', 'net.ipv6.conf.ens1.autoconf')) == 0
+    assert int(call('tunable.get_sysctl', f'net.ipv6.conf.{interface}.autoconf')) == 0
