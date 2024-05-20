@@ -48,6 +48,18 @@ class CatalogService(Service):
 
             job.set_progress(5, 'Updating catalog repository')
             await self.middleware.call('catalog.update_git_repository', catalog)
+            job.set_progress(15, 'Reading catalog information')
+            if catalog_label == OFFICIAL_LABEL:
+                # Update feature map cache whenever official catalog is updated
+                await self.middleware.call('catalog.get_feature_map', False)
+                await self.middleware.call('catalog.retrieve_recommended_apps', False)
+
+            await self.middleware.call('catalog.apps', catalog_label, {
+                'cache': False,
+                'cache_only': False,
+                'retrieve_all_trains': True,
+                'trains': [],
+            })
         except Exception as e:
             await self.middleware.call(
                 'alert.oneshot_create', 'CatalogSyncFailed', {'catalog': catalog_label, 'error': str(e)}
