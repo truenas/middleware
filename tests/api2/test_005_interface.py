@@ -6,11 +6,9 @@ sys.path.append(apifolder)
 
 import pytest
 
-from auto_config import interface, ha, netmask, user, password
+from auto_config import interface, ha, netmask
 from middlewared.test.integration.utils.client import client, truenas_server
-from middlewared.test.integration.utils import fail
-from functions import SSH_TEST
-
+from middlewared.test.integration.utils import fail, call
 
 @pytest.fixture(scope='module')
 def ws_client():
@@ -64,14 +62,13 @@ def get_payload(ws_client):
     return payload, to_validate
 
 # Make sure that our initial conditions are met
-def test_001_check_ipvx(request, ws_client, get_payload):
+def test_001_check_ipvx(request):
     # Verify that dhclient is running
-    ps_count = int(SSH_TEST('ps -aux | grep dhclient | wc -l', user, password, truenas_server.ip)['stdout'])
-    assert ps_count > 1 # account for the grep
+    running, _ = call('interface.dhclient_status', interface)
+    assert running
 
     # Check that our proc entry is set to its default 1.
-    autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, truenas_server.ip)['stdout'])
-    assert autoconf == 1
+    assert int(call('tunable.get_sysctl', 'net.ipv6.conf.ens1.autoconf')) == 1
 
 def test_002_configure_interface(request, ws_client, get_payload):
     if ha:
@@ -119,6 +116,5 @@ def test_002_configure_interface(request, ws_client, get_payload):
         truenas_server.nodeb_ip = os.environ['controller2_ip']
         truenas_server.server_type = os.environ['SERVER_TYPE']
 
-def test_003_recheck_ipvx(request, ws_client, get_payload):
-    autoconf = int(SSH_TEST(f'cat /proc/sys/net/ipv6/conf/{interface}/autoconf', user, password, truenas_server.ip)['stdout'])
-    assert autoconf == 0
+def test_003_recheck_ipvx(request):
+    assert int(call('tunable.get_sysctl', 'net.ipv6.conf.ens1.autoconf')) == 0
