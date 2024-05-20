@@ -4,7 +4,6 @@ import os
 
 from apps_ci.names import CACHED_CATALOG_FILE_NAME
 from apps_validation.json_schema_utils import CATALOG_JSON_SCHEMA
-from catalog_reader.app import get_app_version_details
 from catalog_reader.app_utils import get_app_details_base
 from catalog_reader.catalog import retrieve_train_names
 from catalog_reader.train_utils import get_train_path
@@ -15,6 +14,7 @@ from jsonschema import validate as json_schema_validate, ValidationError as Json
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import private, Service
 
+from .apps_util import get_app_version_details
 from .utils import get_cache_key, OFFICIAL_LABEL
 
 
