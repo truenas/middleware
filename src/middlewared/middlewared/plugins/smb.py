@@ -36,7 +36,7 @@ from middlewared.plugins.smb_.constants import SMBBuiltin  # noqa (imported so m
 from middlewared.plugins.smb_.util_param import smbconf_getparm, lpctx_validate_global_parm
 from middlewared.plugins.smb_.util_net_conf import reg_delshare, reg_listshares, reg_setparm
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
-from middlewared.plugins.smb_.utils import apply_presets, smb_strip_comments
+from middlewared.plugins.smb_.utils import apply_presets, is_time_machine_share, smb_strip_comments
 from middlewared.plugins.tdb.utils import TDBError
 from middlewared.plugins.idmap_.utils import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 from middlewared.utils import filter_list, run
@@ -878,7 +878,7 @@ class SharingSMBService(SharingService):
         else:
             await self._service_change('cifs', 'reload')
 
-        if data['timemachine']:
+        if is_time_machine_share(data):
             await self.middleware.call('service.reload', 'mdns')
 
         return await self.get_instance(data['id'])
@@ -1066,7 +1066,7 @@ class SharingSMBService(SharingService):
             except Exception:
                 self.logger.warn('Failed to remove registry entry for [%s].', share_name, exc_info=True)
 
-        if share['timemachine']:
+        if is_time_machine_share(share):
             await self.middleware.call('service.reload', 'mdns')
 
         if share_name == 'homes':

@@ -69,3 +69,6 @@ def apply_presets(data_in):
         data["auxsmbconf"] = auxsmbconf_dict(preset_aux, direction="FROM")
 
     return data
+
+def is_time_machine_share(share):
+    return share.get('timemachine', False) or share.get('purpose') in [SMBSharePreset.TIMEMACHINE.name, SMBSharePreset.ENHANCED_TIMEMACHINE.name]
