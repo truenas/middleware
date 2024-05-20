@@ -1,7 +1,7 @@
 <%
     import textwrap
 
-    from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_DATASET_PATH
+    from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_DATASET_PATH, audit_custom_section
 
     COLUMNS = textwrap.dedent('''
         "audit_id varchar",
@@ -76,6 +76,7 @@ ${textwrap.indent(get_db(svc), '  ')}
   indexes());
 };
 
+% if not audit_custom_section(svc, 'log'):
 log {
   source(s_src);
   filter(f_tnaudit_${svc.lower()});
@@ -83,4 +84,72 @@ log {
   rewrite(r_rewrite_success);
   destination(d_tnaudit_${svc.lower()});
 };
+%endif
 % endfor
+
+# SUDO service is a special case because we do not control the format of the
+# events it logs.  Instead we will MAP the events into our database, plus we
+# retain the original sudo generated JSON in the event_data
+<%text>
+filter f_tnaudit_sudo_accept { match(".+" value("sudo.accept.uuid")) };
+filter f_tnaudit_sudo_reject { match(".+" value("sudo.reject.uuid")) };
+
+parser p_tnaudit_sudo_accept {
+  date-parser(
+      format("%Y%m%d%H%M%SZ")
+      template("${sudo.accept.server_time.iso8601}")
+  );
+};
+parser p_tnaudit_sudo_reject {
+  date-parser(
+      format("%Y%m%d%H%M%SZ")
+      template("${sudo.reject.server_time.iso8601}")
+  );
+};
+
+rewrite r_rewrite_sudo_common {
+  set("${PID}", value("TNAUDIT.sess"));
+  set("SUDO", value("TNAUDIT.svc"));
+  set("0", value("TNAUDIT.vers.major"));
+  set("1", value("TNAUDIT.vers.minor"));
+  set('{"vers": {"major": 0, "minor": 1}}', value("TNAUDIT.svc_data"));
+  set("$(format-json --scope none sudo.*)", value("TNAUDIT.event_data"));
+};
+rewrite r_rewrite_sudo_accept {
+  set("${sudo.accept.uuid}", value("TNAUDIT.aid"));
+  set('${S_YEAR}-${S_MONTH}-${S_DAY} ${S_HOUR}:${S_MIN}:${S_SEC}.$(substr "${sudo.accept.server_time.nanoseconds}" "0" "6")', value("TNAUDIT.time"));
+  set("${sudo.accept.submithost}", value("TNAUDIT.addr"));
+  set("${sudo.accept.submituser}", value("TNAUDIT.user"));
+  set("ACCEPT", value("TNAUDIT.event"));
+  set("1", value("TNAUDIT.success"));
+};
+rewrite r_rewrite_sudo_reject {
+  set("${sudo.reject.uuid}", value("TNAUDIT.aid"));
+  set('${S_YEAR}-${S_MONTH}-${S_DAY} ${S_HOUR}:${S_MIN}:${S_SEC}.$(substr "${sudo.reject.server_time.nanoseconds}" "0" "6")', value("TNAUDIT.time"));
+  set("${sudo.reject.submithost}", value("TNAUDIT.addr"));
+  set("${sudo.reject.submituser}", value("TNAUDIT.user"));
+  set("REJECT", value("TNAUDIT.event"));
+  set("0", value("TNAUDIT.success"));
+};
+
+log {
+  source(s_src);
+  filter(f_tnaudit_sudo);
+  parser(p_tnaudit);
+  filter(f_tnaudit_sudo_accept);
+  parser(p_tnaudit_sudo_accept);
+  rewrite(r_rewrite_sudo_accept);
+  rewrite(r_rewrite_sudo_common);
+  destination(d_tnaudit_sudo);
+};
+log {
+  source(s_src);
+  filter(f_tnaudit_sudo);
+  parser(p_tnaudit);
+  filter(f_tnaudit_sudo_reject);
+  parser(p_tnaudit_sudo_reject);
+  rewrite(r_rewrite_sudo_reject);
+  rewrite(r_rewrite_sudo_common);
+  destination(d_tnaudit_sudo);
+};
+</%text>

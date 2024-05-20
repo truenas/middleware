@@ -33,6 +33,8 @@ ${f'%{group["group"]}'} ALL=(ALL) ${sudo_entry(group['sudo_commands'], group['su
 % endfor
 Defaults syslog_goodpri = debug
 Defaults secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+Defaults log_subcmds
+Defaults log_format=json
 
 # Let find_alias_for_smtplib.py runs as root (it needs database access)
 ALL ALL=(ALL) NOPASSWD: /etc/find_alias_for_smtplib.py
