@@ -1,3 +1,4 @@
+import asyncio
 import re
 import subprocess
 import time
@@ -128,8 +129,11 @@ class TruecommandService(Service):
                 config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key', 'wg_address')
             ):
                 await self.middleware.call('service.start', 'truecommand')
-                await self.middleware.call('service.reload', 'http')
-                self.middleware.create_task(self.middleware.call('truecommand.health_check'))
+                await self.middleware.call('service.reload', 'http', {'ha_propagate': False})
+                asyncio.get_event_loop().call_later(
+                    30,  # 30 seconds is enough time to initiate a health check to see if the connection is alive
+                    lambda: self.middleware.create_task(self.middleware.call('truecommand.health_check')),
+                )
             else:
                 # start polling iX Portal to see what's up and why we don't have these values set
                 # This can happen in instances where system was polling and then was rebooted,
