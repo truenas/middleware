@@ -24,7 +24,7 @@ class DockerService(ConfigService):
         'docker_entry',
         Int('id', required=True),
         Str('dataset', required=True),
-        Str('name', required=True),
+        Str('pool', required=True, null=True),
         update=True,
     )
 

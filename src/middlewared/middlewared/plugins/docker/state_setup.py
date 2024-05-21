@@ -49,7 +49,7 @@ class DockerSetupService(Service):
             )
             if not dataset:
                 test_path = os.path.join('/mnt', dataset_name)
-                if self.middleware.run_in_thread(os.path.exists, test_path):
+                if await self.middleware.run_in_thread(os.path.exists, test_path):
                     await self.middleware.run_in_thread(
                         shutil.move, test_path, f'{test_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}',
                     )
