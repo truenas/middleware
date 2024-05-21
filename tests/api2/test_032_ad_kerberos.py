@@ -150,10 +150,14 @@ def test_02_kerberos_keytab_and_realm(do_ad_connection):
             assert krb5conf_lines[idx + 2].lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][2]}"
             state['has_kdc'] = True
 
-        if entry.lstrip() == f"admin_server = {' '.join(SAMPLEDOM_REALM['admin_server'])}":
+        if entry.lstrip() == f"admin_server = {SAMPLEDOM_REALM['admin_server'][0]}":
+            assert krb5conf_lines[idx + 1].lstrip() == f"admin_server = {SAMPLEDOM_REALM['admin_server'][1]}"
+            assert krb5conf_lines[idx + 2].lstrip() == f"admin_server = {SAMPLEDOM_REALM['admin_server'][2]}"
             state['has_admin_server'] = True
 
-        if entry.lstrip() == f"kpasswd_server = {' '.join(SAMPLEDOM_REALM['kpasswd_server'])}":
+        if entry.lstrip() == f"kpasswd_server = {SAMPLEDOM_REALM['kpasswd_server'][0]}":
+            assert krb5conf_lines[idx + 1].lstrip() == f"kpasswd_server = {SAMPLEDOM_REALM['kpasswd_server'][1]}"
+            assert krb5conf_lines[idx + 2].lstrip() == f"kpasswd_server = {SAMPLEDOM_REALM['kpasswd_server'][2]}"
             state['has_kpasswd_server'] = True
 
 
@@ -200,12 +204,12 @@ def test_02_kerberos_keytab_and_realm(do_ad_connection):
     assert orig_kt_len != 0, res['result']
 
     """
-    kerberos._klist_test performs a platform-independent verification
+    kerberos.check_ticket performs a platform-independent verification
     of kerberos ticket.
     """
     res = make_ws_request(ip, {
         'msg': 'method',
-        'method': 'kerberos._klist_test',
+        'method': 'kerberos.check_ticket',
         'params': [],
     })
     error = res.get('error')
@@ -290,12 +294,7 @@ def test_03_kerberos_krbconf(do_ad_connection):
         if not sec.startswith(state['section']):
             return
 
-        pam_closed = False
         for entry in sec.splitlines():
-            if state['section'] == 'appdefaults' and not pam_closed:
-                pam_closed = entry.lstrip().startswith('}')
-                continue
-
             if entry.strip() == state['to_check']:
                 state['found'] = True
                 break
@@ -329,13 +328,13 @@ def test_03_kerberos_krbconf(do_ad_connection):
     output = parse_krb5_conf(parse_section, split='[', state=iter_state)
     assert iter_state['found'] is True, output
 
-    results = PUT("/kerberos/", {"libdefaults_aux": "scan_interfaces = true"})
+    results = PUT("/kerberos/", {"libdefaults_aux": "rdns = true"})
     assert results.status_code == 200, results.text
 
     iter_state = {
         'section': 'libdefaults',
         'found': False,
-        'to_check': 'scan_interfaces = true'
+        'to_check': 'rdns = true'
     }
     output = parse_krb5_conf(parse_section, split='[', state=iter_state)
     assert iter_state['found'] is True, output
@@ -460,7 +459,6 @@ def test_05_verify_nfs_krb_disabled(request):
 
 
 def test_06_kerberos_ticket_management(do_ad_connection):
-    depends(do_ad_connection[0], ["SET_DNS"])
     ip = truenas_server.ip
 
     res = make_ws_request(ip, {
@@ -474,7 +472,7 @@ def test_06_kerberos_ticket_management(do_ad_connection):
     klist_out = res['result']
     assert klist_out['default_principal'].startswith(hostname.upper()), str(klist_out)
     assert klist_out['ticket_cache']['type'] == 'FILE'
-    assert klist_out['ticket_cache']['name'] == 'SYSTEM'
+    assert klist_out['ticket_cache']['name'] == '/var/run/middleware/krb5cc_0'
     assert len(klist_out['tickets']) != 0
 
     to_check = None
@@ -551,7 +549,7 @@ def test_06_kerberos_ticket_management(do_ad_connection):
     klist2_out = res['result']
     assert klist2_out['default_principal'].startswith(hostname.upper())
     assert klist2_out['ticket_cache']['type'] == 'FILE'
-    assert klist2_out['ticket_cache']['name'] == 'SYSTEM'
+    assert klist2_out['ticket_cache']['name'] == '/var/run/middleware/krb5cc_0'
     assert len(klist2_out['tickets']) != 0
 
     to_check2 = None
@@ -586,7 +584,7 @@ def test_06_kerberos_ticket_management(do_ad_connection):
     klist3_out = res['result']
     assert klist3_out['default_principal'].startswith(hostname.upper())
     assert klist3_out['ticket_cache']['type'] == 'FILE'
-    assert klist3_out['ticket_cache']['name'] == 'SYSTEM'
+    assert klist3_out['ticket_cache']['name'] == '/var/run/middleware/krb5cc_0'
     assert len(klist3_out['tickets']) != 0
 
     to_check3 = None
