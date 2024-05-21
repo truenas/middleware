@@ -5,7 +5,6 @@ import struct
 from base64 import b64encode, b64decode
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
-from middlewared.plugins.tdb.utils import TDBError
 
 SECRETS_FILE = '/var/db/system/samba4/private/secrets.tdb'
 
@@ -112,6 +111,12 @@ class DomainSecrets(Service):
         Retrieve idmap secret for the specifed domain and user dn.
         """
         return await self.__fetch(f'SECRETS/GENERIC/IDMAP_LDAP_{domain.upper()}/{user_dn}')
+
+    async def get_machine_secret(self, domain):
+        return await self.__fetch(f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}')
+
+    async def get_salting_principal(self, realm):
+        return await self.__fetch(f'{Secrets.SALTING_PRINCIPAL.value}/DES/{realm.upper()}')
 
     async def dump(self):
         """

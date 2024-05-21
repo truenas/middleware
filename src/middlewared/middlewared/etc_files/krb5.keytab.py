@@ -49,7 +49,7 @@ def write_keytab(db_keytabname, db_keytabfile):
         os.close(dirfd)
 
 
-def render(service, middleware):
+def render(service, middleware, render_ctx):
     keytabs = middleware.call_sync('kerberos.keytab.query')
     if not keytabs:
         logger.trace('No keytabs in configuration database, skipping keytab generation')

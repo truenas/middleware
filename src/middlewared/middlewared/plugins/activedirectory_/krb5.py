@@ -96,7 +96,7 @@ class ActiveDirectoryService(Service):
         if not ok:
             return False
 
-        await self.middleware.call('kerberos.keytab.store_samba_keytab')
+        await self.middleware.call('kerberos.keytab.store_ad_keytab')
         return True
 
     @private

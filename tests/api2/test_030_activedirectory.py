@@ -14,6 +14,7 @@ from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.system import reset_systemd_svcs
 from pytest_dependency import depends
 
 from auto_config import ha
@@ -381,6 +382,7 @@ def test_10_account_privilege_authentication(request, set_product_type):
 
 def test_11_secrets_restore(request):
     depends(request, ["ad_works"], scope="session")
+    reset_systemd_svcs('winbind smbd')
 
     with active_directory():
         assert call('activedirectory.started') is True
@@ -396,3 +398,34 @@ def test_11_secrets_restore(request):
         call('directoryservices.secrets.restore')
         call('service.restart', 'idmap')
         call('activedirectory.started')
+
+        # break it again and restore via connection check
+        reset_systemd_svcs('winbind smbd')
+        ssh('rm /var/db/system/samba4/private/secrets.tdb')
+        call('service.restart', 'idmap')
+        with pytest.raises(CallError) as ce:
+            call('activedirectory.started')
+
+        # WBC_ERR_WINBIND_NOT_AVAILABLE gets converted to ENOTCONN
+        assert 'WBC_ERR_WINBIND_NOT_AVAILABLE' in ce.value.errmsg
+
+        call('activedirectory.validate_domain')
+        call('service.restart', 'idmap')
+        call('activedirectory.started')
+
+
+def test_12_keytab_restore(request):
+    depends(request, ["ad_works"], scope="session")
+    reset_systemd_svcs('winbind smbd')
+
+    with active_directory():
+        call('activedirectory.started')
+
+        kt_id = call('kerberos.keytab.query', [['name', '=', 'AD_MACHINE_ACCOUNT']], {'get': True})['id']
+
+        # delete our keytab from datastore
+        call('datastore.delete', 'directoryservice.kerberoskeytab', kt_id)
+        call('activedirectory.validate_domain')
+
+        # verify that it was recreated during health check
+        call('kerberos.keytab.query', [['name', '=', 'AD_MACHINE_ACCOUNT']], {'get': True})

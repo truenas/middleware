@@ -200,12 +200,12 @@ def test_02_kerberos_keytab_and_realm(do_ad_connection):
     assert orig_kt_len != 0, res['result']
 
     """
-    kerberos._klist_test performs a platform-independent verification
+    kerberos.check_ticket performs a platform-independent verification
     of kerberos ticket.
     """
     res = make_ws_request(ip, {
         'msg': 'method',
-        'method': 'kerberos._klist_test',
+        'method': 'kerberos.check_ticket',
         'params': [],
     })
     error = res.get('error')
@@ -460,7 +460,6 @@ def test_05_verify_nfs_krb_disabled(request):
 
 
 def test_06_kerberos_ticket_management(do_ad_connection):
-    depends(do_ad_connection[0], ["SET_DNS"])
     ip = truenas_server.ip
 
     res = make_ws_request(ip, {
@@ -474,7 +473,7 @@ def test_06_kerberos_ticket_management(do_ad_connection):
     klist_out = res['result']
     assert klist_out['default_principal'].startswith(hostname.upper()), str(klist_out)
     assert klist_out['ticket_cache']['type'] == 'FILE'
-    assert klist_out['ticket_cache']['name'] == 'SYSTEM'
+    assert klist_out['ticket_cache']['name'] == '/var/run/middleware/krb5cc_0'
     assert len(klist_out['tickets']) != 0
 
     to_check = None
@@ -551,7 +550,7 @@ def test_06_kerberos_ticket_management(do_ad_connection):
     klist2_out = res['result']
     assert klist2_out['default_principal'].startswith(hostname.upper())
     assert klist2_out['ticket_cache']['type'] == 'FILE'
-    assert klist2_out['ticket_cache']['name'] == 'SYSTEM'
+    assert klist2_out['ticket_cache']['name'] == '/var/run/middleware/krb5cc_0'
     assert len(klist2_out['tickets']) != 0
 
     to_check2 = None
@@ -586,7 +585,7 @@ def test_06_kerberos_ticket_management(do_ad_connection):
     klist3_out = res['result']
     assert klist3_out['default_principal'].startswith(hostname.upper())
     assert klist3_out['ticket_cache']['type'] == 'FILE'
-    assert klist3_out['ticket_cache']['name'] == 'SYSTEM'
+    assert klist3_out['ticket_cache']['name'] == '/var/run/middleware/krb5cc_0'
     assert len(klist3_out['tickets']) != 0
 
     to_check3 = None

@@ -1,6 +1,4 @@
-import os
-
-from middlewared.schema import Any, Str, Ref, Int, Dict, Bool, accepts
+from middlewared.schema import Str, Ref, Int, Dict, Bool, accepts
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError, MatchNotFound
 
@@ -144,7 +142,6 @@ class DSCache(Service):
 
         `objtype`: 'USERS' or 'GROUPS'
         """
-        res = []
         ds_state = await self.middleware.call('directoryservices.get_state')
         enabled_ds = None
         extra = options.get("extra", {})

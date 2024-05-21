@@ -734,20 +734,31 @@ class LDAPService(ConfigService):
         return ret
 
     @private
+    async def kinit(ldap_conf):
+        if await self.middleware.call(
+            'kerberos.check_ticket',
+            {'ccache': krb5ccache.SYSTEM.name},
+            False
+        ):
+            return
+
+        payload = {
+            'dstype': DSType.DS_TYPE_LDAP.name,
+            'conf': {
+                'binddn': ldap_config.get('binddn', ''),
+                'bindpw': ldap_config.get('bindpw', ''),
+                'kerberos_realm': ldap_config.get('kerberos_realm', ''),
+                'kerberos_principal': ldap_config.get('kerberos_principal', ''),
+            }
+        }
+        cred = await self.middleware.call('kerberos.get_cred', payload)
+        await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
+
+    @private
     async def validate_credentials(self, ldap_config=None):
         client_conf = await self.ldap_conf_to_client_config(ldap_config)
-        if client_conf['bind_type'] == 'GSSAPI' and not (await self.middleware.call('kerberos._klist_test')):
-            payload = {
-                'dstype': DSType.DS_TYPE_LDAP.name,
-                'conf': {
-                    'binddn': ldap_config.get('binddn', ''),
-                    'bindpw': ldap_config.get('bindpw', ''),
-                    'kerberos_realm': ldap_config.get('kerberos_realm', ''),
-                    'kerberos_principal': ldap_config.get('kerberos_principal', ''),
-                }
-            }
-            cred = await self.middleware.call('kerberos.get_cred', payload)
-            await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
+        if client_conf['bind_type'] == 'GSSAPI':
+            await self.kinit(ldap_config)
 
         await self.middleware.call('ldapclient.validate_credentials', client_conf)
 
