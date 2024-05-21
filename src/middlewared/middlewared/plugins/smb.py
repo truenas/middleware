@@ -879,7 +879,7 @@ class SharingSMBService(SharingService):
             await self._service_change('cifs', 'reload')
 
         if is_time_machine_share(data):
-            await self.middleware.call('service.reload', 'mdns')
+            await self.middleware.call('service.reload', 'mdns', {'ha_propagate': False})
 
         return await self.get_instance(data['id'])
 
@@ -1067,7 +1067,7 @@ class SharingSMBService(SharingService):
                 self.logger.warn('Failed to remove registry entry for [%s].', share_name, exc_info=True)
 
         if is_time_machine_share(share):
-            await self.middleware.call('service.reload', 'mdns')
+            await self.middleware.call('service.reload', 'mdns', {'ha_propagate': False})
 
         if share_name == 'homes':
             await self.middleware.call('etc.generate', 'smb')
