@@ -15,7 +15,7 @@ from middlewared.service import CallError, CRUDService, item_method, job, privat
 from middlewared.validators import Range, UUID
 from middlewared.plugins.vm.numeric_set import parse_numeric_set, NumericSet
 
-from .utils import ACTIVE_STATES
+from .utils import ACTIVE_STATES, get_default_status
 from .vm_supervisor import VMSupervisorMixin
 
 
@@ -99,10 +99,11 @@ class VMService(CRUDService, VMSupervisorMixin):
     @private
     def extend_context(self, rows, extra):
         status = {}
-        if rows:
+        kvm_supported = self._is_kvm_supported()
+        if rows and kvm_supported:
             self._check_setup_connection()
         for row in rows:
-            status[row['id']] = self.status_impl(row)
+            status[row['id']] = self.status_impl(row) if kvm_supported else get_default_status()
 
         return {
             'status': status,
@@ -394,7 +395,10 @@ class VMService(CRUDService, VMSupervisorMixin):
             # Deletion should be allowed even if host does not support virtualization
             if self._is_kvm_supported():
                 await self.middleware.run_in_thread(self._check_setup_connection)
-            status = await self.middleware.call('vm.status', id_)
+                status = await self.middleware.call('vm.status', id_)
+            else:
+                status = vm['status']
+
             force_delete = data.get('force')
             if status['state'] in ACTIVE_STATES:
                 await self.middleware.call('vm.poweroff', id_)
@@ -430,8 +434,7 @@ class VMService(CRUDService, VMSupervisorMixin):
                 if not force_delete:
                     raise
                 else:
-                    self.logger.error(
-                        'Failed to un-define %r VM\'s domain', vm['name'], exc_info=True)
+                    self.logger.error('Failed to un-define %r VM\'s domain', vm['name'], exc_info=True)
 
             # We remove vm devices first
             for device in vm['devices']:
@@ -473,11 +476,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             except Exception:
                 self.logger.debug('Failed to retrieve VM status for %r', vm['name'], exc_info=True)
 
-        return {
-            'state': 'ERROR',
-            'pid': None,
-            'domain_state': 'ERROR',
-        }
+        return get_default_status()
 
     @accepts(Int('id'), roles=['VM_READ'])
     @returns(Str(null=True))
