@@ -6,10 +6,9 @@ from middlewared.utils import filter_list
 class AppService(Service):
 
     class Config:
-        namespace = 'app_old'
-        cli_namespace = 'app_old'
+        cli_namespace = 'app'
 
-    @filterable(roles=['CATALOG_READ'])
+    @filterable()
     @filterable_returns(Ref('available_apps'))
     async def latest(self, filters, options):
         """
@@ -23,9 +22,10 @@ class AppService(Service):
             ), filters, options
         )
 
-    @filterable(roles=['CATALOG_READ'])
+    # TODO: Roles are missing
+    @filterable()
     @filterable_returns(Dict(
-        'available_old_apps',
+        'available_apps',
         Bool('healthy', required=True),
         Bool('installed', required=True),
         Bool('recommended', required=True),
@@ -54,17 +54,17 @@ class AppService(Service):
         """
         Retrieve all available applications from all configured catalogs.
         """
-        if not self.middleware.call_sync('catalog_old.synced'):
-            self.middleware.call_sync('catalog_old.initiate_first_time_sync')
+        if not self.middleware.call_sync('catalog.synced'):
+            self.middleware.call_sync('catalog.initiate_first_time_sync')
 
         results = []
         installed_apps = [
             (app['chart_metadata']['name'], app['catalog'], app['catalog_train'])
-            for app in self.middleware.call_sync('chart.release.query')
+            for app in []
         ]
 
-        for catalog in self.middleware.call_sync('catalog_old.query'):
-            for train, train_data in self.middleware.call_sync('catalog_old.items', catalog['label']).items():
+        for catalog in self.middleware.call_sync('catalog.query'):
+            for train, train_data in self.middleware.call_sync('catalog.apps', catalog['label']).items():
                 if train not in catalog['preferred_trains']:
                     continue
 
@@ -78,15 +78,15 @@ class AppService(Service):
 
         return filter_list(results, filters, options)
 
-    @accepts(roles=['CATALOG_READ'])
+    @accepts()
     @returns(List(items=[Str('category')]))
     async def categories(self):
         """
         Retrieve list of valid categories which have associated applications.
         """
-        return sorted(list(await self.middleware.call('catalog_old.retrieve_mapped_categories')))
+        return sorted(list(await self.middleware.call('catalog.retrieve_mapped_categories')))
 
-    @accepts(Str('app_name'), Str('catalog'), Str('train'), roles=['CATALOG_READ'])
+    @accepts(Str('app_name'), Str('catalog'), Str('train'))
     @returns(List(items=[Ref('available_apps')]))
     def similar(self, app_name, catalog, train):
         """
