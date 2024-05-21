@@ -113,6 +113,12 @@ class DomainSecrets(Service):
         """
         return await self.__fetch(f'SECRETS/GENERIC/IDMAP_LDAP_{domain.upper()}/{user_dn}')
 
+    async def get_machine_secret(self, domain):
+        return await self.__fetch(f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}')
+
+    async def get_salting_principal(self, realm):
+        return await self.__fetch(f'{Secrets.SALTING_PRINCIPAL.value}/DES/{realm.upper()}')
+
     async def dump(self):
         """
         Dump contents of secrets.tdb. Values are base64-encoded

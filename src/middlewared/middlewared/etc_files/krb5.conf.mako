@@ -6,7 +6,7 @@
         import logging
         logger = logging.getLogger(__name__)
         from middlewared.utils import filter_list
-        from middlewared.plugins.kerberos import KRB_AppDefaults, KRB_LibDefaults, krb5ccache
+        from middlewared.utils.filesystem.constants import KRB_AppDefaults, KRB_LibDefaults, krb5ccache
 
         def parse_defaults(section_name, section_conf, db_def=None):
             default_section = "krb5_main"

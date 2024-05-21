@@ -7,112 +7,28 @@ import os
 import shutil
 import subprocess
 import contextlib
+import tempfile
 import time
 from middlewared.plugins.idmap import DSType
 from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Password, Ref, Datetime, Bool
 from middlewared.service import CallError, ConfigService, CRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, run
-
-
-KRB_TKT_CHECK_INTERVAL = 1800
-
-
-class keytab(enum.Enum):
-    SYSTEM = '/etc/krb5.keytab'
-    SAMBA = '/var/db/system/samba4/private/samba.keytab'
-    TEST = '/var/db/system/test.keytab'
-
-
-class krb5ccache(enum.Enum):
-    SYSTEM = f'{MIDDLEWARE_RUN_DIR}/krb5cc_0'
-    TEMP = f'{MIDDLEWARE_RUN_DIR}/krb5cc_middleware_temp'
-    USER = f'{MIDDLEWARE_RUN_DIR}/krb5cc_'
-
-
-class krb_tkt_flag(enum.Enum):
-    FORWARDABLE = 'F'
-    FORWARDED = 'f'
-    PROXIABLE = 'P'
-    PROXY = 'p'
-    POSTDATEABLE = 'D'
-    POSTDATED = 'd'
-    RENEWABLE = 'R'
-    INITIAL = 'I'
-    INVALID = 'i'
-    HARDWARE_AUTHENTICATED = 'H'
-    PREAUTHENTICATED = 'A'
-    TRANSIT_POLICY_CHECKED = 'T'
-    OKAY_AS_DELEGATE = 'O'
-    ANONYMOUS = 'a'
-
-
-class KRB_AppDefaults(enum.Enum):
-    FORWARDABLE = ('forwardable', 'boolean')
-    PROXIABLE = ('proxiable', 'boolean')
-    NO_ADDRESSES = ('no-addresses', 'boolean')
-    TICKET_LIFETIME = ('ticket_lifetime', 'time')
-    RENEW_LIFETIME = ('renew_lifetime', 'time')
-    ENCRYPT = ('encrypt', 'boolean')
-    FORWARD = ('forward', 'boolean')
-
-    def __str__(self):
-        return self.value[0]
-
-    def parm(self):
-        return self.value[0]
-
-
-class KRB_LibDefaults(enum.Enum):
-    DEFAULT_REALM = ('default_realm', 'realm')
-    ALLOW_WEAK_CRYPTO = ('allow_weak_crypto', 'boolean')
-    CLOCKSKEW = ('clockskew', 'time')
-    KDC_TIMEOUT = ('kdc_timeout', 'time')
-    DEFAULT_CC_TYPE = ('ccache_type', 'cctype')
-    DEFAULT_CC_NAME = ('default_ccache_name', 'ccname')
-    DEFAULT_ETYPES = ('default_etypes', 'etypes')
-    DEFAULT_AS_ETYPES = ('default_as_etypes', 'etypes')
-    DEFAULT_TGS_ETYPES = ('default_tgs_etypes', 'etypes')
-    DEFAULT_ETYPES_DES = ('default_etypes_des', 'etypes')
-    DEFAULT_KEYTAB_NAME = ('default_keytab_name', 'keytab')
-    DNS_LOOKUP_KDC = ('dns_lookup_kdc', 'boolean')
-    DNS_LOOKUP_REALM = ('dns_lookup_realm', 'boolean')
-    KDC_TIMESYNC = ('kdc_timesync', 'boolean')
-    MAX_RETRIES = ('max_retries', 'number')
-    LARGE_MSG_SIZE = ('large_msg_size', 'number')
-    TICKET_LIFETIME = ('ticket_lifetime', 'time')
-    RENEW_LIFETIME = ('renew_lifetime', 'time')
-    FORWARDABLE = ('forwardable', 'boolean')
-    PROXIABLE = ('proxiable', 'boolean')
-    VERIFY_AP_REQ_NOFAIL = ('verify_ap_req_nofail', 'boolean')
-    WARN_PWEXPIRE = ('warn_pwexpire', 'time')
-    HTTP_PROXY = ('http_proxy', 'proxy-spec')
-    DNS_PROXY = ('dns_proxy', 'proxy-spec')
-    EXTRA_ADDRESSES = ('extra_addresses', 'address')
-    TIME_FORMAT = ('time_format', 'string')
-    DATE_FORMAT = ('date_format', 'string')
-    LOG_UTC = ('log_utc', 'boolean')
-    SCAN_INTERFACES = ('scan_interfaces', 'boolean')
-    FCACHE_VERSION = ('fcache_version', 'int')
-    KRB4_GET_TICKETS = ('krb4_get_tickets', 'boolean')
-    FCC_MIT_TICKETFLAGS = ('fcc-mit-ticketflags', 'boolean')
-    RDNS = ('rdns', 'boolean')
-
-    def __str__(self):
-        return self.value[0]
-
-    def parm(self):
-        return self.value[0]
-
-
-class KRB_ETYPE(enum.Enum):
-    DES_CBC_CRC = 'des-cbc-crc'
-    DES_CBC_MD4 = 'des-cbc-md4'
-    DES_CBC_MD5 = 'des-cbc-md5'
-    DES3_CBC_SHA1 = 'des3-cbc-sha1'
-    ARCFOUR_HMAC_MD5 = 'arcfour-hmac-md5'
-    AES128_CTS_HMAC_SHA1_96 = 'aes128-cts-hmac-sha1-96'
-    AES256_CTS_HMAC_SHA1_96 = 'aes256-cts-hmac-sha1-96'
+from middlewared.utils import filter_list, run
+from middlewared.utils.directoryservices.constants import (
+    KRB_Keytab,
+    krb5ccache,
+    krb_tkt_flag,
+    KRB_AppDefaults,
+    KRB_LibDefaults,
+    KRB_ETYPE,
+    KRB_TKT_CHECK_INTERVAL,
+)
+from middlewared.utils.directoryservices.krb5 import (
+    extract_from_keytab,
+    keytab_from_entries,
+    klist_impl,
+    ktutil_list_impl
+)
 
 
 class KerberosModel(sa.Model):
@@ -266,7 +182,7 @@ class KerberosService(ConfigService):
 
         if data['ptype'] == 'keytab':
             try:
-                keytab(data['value'])
+                KRB_Keytab(data['value'])
             except Exception:
                 raise CallError(f'{data["value"]} is an unsupported keytab path')
 
@@ -527,75 +443,6 @@ class KerberosService(ConfigService):
         await self.do_kinit({'krb5_cred': cred})
 
     @private
-    async def parse_klist(self, klistbuf):
-        tickets = klistbuf.splitlines()
-
-        ticket_cache = None
-        default_principal = None
-        tlen = len(tickets)
-
-        parsed_klist = []
-        for idx, e in enumerate(tickets):
-            if e.startswith('Ticket cache'):
-                cache_type, cache_name = e.strip('Ticket cache: ').split(':', 1)
-                if cache_type == 'FILE':
-                    cache_name = krb5ccache(cache_name.strip()).name
-
-                ticket_cache = {
-                    'type': cache_type,
-                    'name': cache_name
-                }
-
-            if e.startswith('Default'):
-                default_principal = (e.split(':')[1]).strip()
-                continue
-
-            if e and e[0].isdigit():
-                d = e.split("  ")
-                issued = time.mktime(time.strptime(d[0], "%m/%d/%y %H:%M:%S"))
-                expires = time.mktime(time.strptime(d[1], "%m/%d/%y %H:%M:%S"))
-                client = default_principal
-                server = d[2]
-                renew_until = 0
-                flags = ''
-                etype = None
-
-                for i in range(idx + 1, idx + 3):
-                    if i >= tlen:
-                        break
-                    if tickets[i][0].isdigit():
-                        break
-                    if tickets[i].startswith("\tEtype"):
-                        etype = tickets[i].strip()
-                        break
-
-                    if tickets[i].startswith("\trenew"):
-                        ts, flags = tickets[i].split(",")
-                        renew_until = time.mktime(time.strptime(ts.strip('\trenew until '), "%m/%d/%y %H:%M:%S"))
-                        flags = flags.split("Flags: ")[1]
-                        continue
-
-                    extra = tickets[i].split(", ", 1)
-                    flags = extra[0][7:].strip()
-                    etype = extra[1].strip()
-
-                parsed_klist.append({
-                    'issued': issued,
-                    'expires': expires,
-                    'renew_until': renew_until,
-                    'client': client,
-                    'server': server,
-                    'etype': etype,
-                    'flags': [krb_tkt_flag(f).name for f in flags],
-                })
-
-        return {
-            'default_principal': default_principal,
-            'ticket_cache': ticket_cache,
-            'tickets': parsed_klist,
-        }
-
-    @private
     @accepts(Patch(
         'kerberos-options',
         'klist-options',
@@ -605,17 +452,12 @@ class KerberosService(ConfigService):
         ccache = krb5ccache[data['ccache']].value
 
         try:
-            klist = await asyncio.wait_for(
-                self.middleware.create_task(run(['klist', '-ef', ccache], check=False, stdout=subprocess.PIPE)),
+            return await asyncio.wait_for(
+                self.middleware.run_in_thread(klist_impl, ccache),
                 timeout=data['timeout']
             )
         except asyncio.TimeoutError:
             raise CallError(f'Attempt to list kerberos tickets timed out after {data["timeout"]} seconds')
-
-        if klist.returncode != 0:
-            raise CallError(f'klist failed with error: {klist.stderr.decode()}')
-
-        return await self.parse_klist(klist.stdout.decode())
 
     @private
     async def renew(self):
@@ -1001,18 +843,6 @@ class KerberosKeytabService(CRUDService):
             await self.middleware.call('ldap.update', {'kerberos_principal': ''})
 
     @private
-    async def do_ktutil_list(self, data):
-        kt = data.get("kt_name", keytab.SYSTEM.value)
-        ktutil = await run(["klist", "-tek", kt], check=False)
-        if ktutil.returncode != 0:
-            raise CallError(ktutil.stderr.decode())
-        ret = ktutil.stdout.decode().splitlines()
-        if len(ret) < 4:
-            return []
-
-        return '\n'.join(ret[3:])
-
-    @private
     def _validate_impl(self, data):
         """
         - synchronous validation -
@@ -1027,15 +857,14 @@ class KerberosKeytabService(CRUDService):
             verrors.add("kerberos.keytab_create", f"Keytab is a not a properly base64-encoded string: [{e}]")
             return verrors
 
-        with open(keytab['TEST'].value, "wb") as f:
+        with tempfile.NamedTemporaryFile() as f:
             f.write(decoded)
+            f.flush()
 
-        try:
-            self.middleware.call_sync('kerberos.keytab.do_ktutil_list', {"kt_name": keytab['TEST'].value})
-        except CallError as e:
-            verrors.add("kerberos.keytab_create", f"Failed to validate keytab: [{e.errmsg}]")
-
-        os.unlink(keytab['TEST'].value)
+            try:
+                ktutil_list_impl(f.name)
+            except Exception as e:
+                verrors.add("kerberos.keytab_create", f"Failed to validate keytab: [{e}]")
 
         return verrors
 
@@ -1047,30 +876,14 @@ class KerberosKeytabService(CRUDService):
         return await self.middleware.run_in_thread(self._validate_impl, data)
 
     @private
-    async def _ktutil_list(self, keytab_file=keytab['SYSTEM'].value):
-        keytab_entries = []
+    async def ktutil_list(self, keytab_file=KRB_Keytab['SYSTEM'].value):
         try:
-            kt_list_output = await self.do_ktutil_list({"kt_name": keytab_file})
+            return await self.middleware.run_in_thread(ktutil_list_impl, keytab_file)
         except Exception as e:
             self.logger.warning("Failed to list kerberos keytab [%s]: %s",
                                 keytab_file, e)
-            kt_list_output = None
 
-        if not kt_list_output:
-            return keytab_entries
-
-        for idx, line in enumerate(kt_list_output.splitlines()):
-            fields = line.split()
-            keytab_entries.append({
-                'slot': idx + 1,
-                'kvno': int(fields[0]),
-                'principal': fields[3],
-                'etype': fields[4][1:-1].strip('DEPRECATED:'),
-                'etype_deprecated': fields[4][1:].startswith('DEPRECATED'),
-                'date': time.strptime(fields[1], '%m/%d/%y'),
-            })
-
-        return keytab_entries
+        return []
 
     @accepts(roles=['DIRECTORY_SERVICE_READ'])
     @returns(List(
@@ -1091,54 +904,38 @@ class KerberosKeytabService(CRUDService):
         """
         Returns content of system keytab (/etc/krb5.keytab).
         """
-        kt_list = await self._ktutil_list()
-        parsed = []
-        for entry in kt_list:
-            entry['date'] = time.mktime(entry['date'])
-            parsed.append(entry)
-
-        return parsed
+        return await self.ktutil_list()
 
     @private
-    async def _get_nonsamba_principals(self, keytab_list):
+    def keytab_from_entries(self, name, entries):
         """
-        Generate list of Kerberos principals that are not the AD machine account.
+        This method creates or updates a kerberos keytab based on specification provided
+        by `entries`. Its primary use case is recovering from situation where user is
+        mucking around on shell and "re-joining" AD without using our UI (which causes
+        our stored kerberos keytab to contain invalid data).
         """
-        ad = await self.middleware.call('activedirectory.config')
-        return filter_list(keytab_list, [['principal', 'Crnin', ad['netbiosname']]])
+        for e in entries:
+            # We need to convert base64 encoded password and salt
+            # for entry via ktutil - tdb library appends an extra null byte
+            # to end of value
+            e['password'] = base64.b64decode(e['password']).decode()[:-1]
+            if 'salt' in e:
+                e['salt'] = base64.b64decode(e['salt']).decode()[:-1]
 
-    @private
-    async def _generate_tmp_keytab(self):
-        """
-        Generate a temporary keytab to separate out the machine account keytab principal.
-        ktutil copy returns 1 even if copy succeeds.
-        """
-        with contextlib.suppress(OSError):
-            await self.middleware.run_in_thread(os.remove, keytab['SAMBA'].value)
-
-        kt_copy = await run(['ktutil'], input=f'rkt {keytab.SYSTEM.value}\nwkt {keytab.SAMBA.value}\nq\n'.encode(),
-                            check=False)
-        if kt_copy.stderr:
-            raise CallError(f"failed to generate [{keytab['SAMBA'].value}]: {kt_copy.stderr.decode()}")
-
-    @private
-    async def _prune_keytab_principals(self, to_delete=[]):
-        """
-        Delete all keytab entries from the tmp keytab that are not samba entries.
-        The pruned keytab must be written to a new file to avoid duplication of
-        entries.
-        """
-        rkt = f"rkt {keytab.SAMBA.value}"
-        wkt = "wkt /var/db/system/samba4/samba_mit.keytab"
-        delents = "\n".join(f"delent {x['slot']}" for x in reversed(to_delete))
-        ktutil_remove = await run(['ktutil'], input=f'{rkt}\n{delents}\n{wkt}\nq\n'.encode(), check=False)
-        if ktutil_remove.stderr:
-            raise CallError(ktutil_remove.stderr.decode())
-
-        with contextlib.suppress(OSError):
-            await self.middleware.run_in_thread(os.remove, keytab.SAMBA.value)
-
-        await self.middleware.run_in_thread(os.rename, "/var/db/system/samba4/samba_mit.keytab", keytab.SAMBA.value)
+        keytab_file = base64.b64encode(keytab_from_entries(entries)).decode()
+        entry = self.middleware.call_sync('kerberos.keytab.query', [['name', '=', name]])
+        if not entry:
+            self.middleware.call_sync(
+                'datastore.insert', self._config.datastore,
+                {'name': name, 'file': keytab_file},
+                {'prefix': self._config.datastore_prefix}
+            )
+        else:
+            self.middleware.call_sync(
+                'datastore.update', self._config.datastore, entry[0]['id'],
+                {'name': name, 'file': keytab_file},
+                {'prefix': self._config.datastore_prefix}
+            )
 
     @private
     async def kerberos_principal_choices(self):
@@ -1148,17 +945,12 @@ class KerberosKeytabService(CRUDService):
 
         Return empty list if system keytab doesn't exist.
         """
-        if not await self.middleware.run_in_thread(os.path.exists, keytab['SYSTEM'].value):
-            return []
-
-        try:
-            keytab_list = await self._ktutil_list()
-        except Exception as e:
-            self.logger.trace('"ktutil list" failed. Generating empty list of kerberos principal choices. Error: %s' % e)
+        if not await self.middleware.run_in_thread(os.path.exists, KRB_Keytab['SYSTEM'].value):
             return []
 
         kerberos_principals = []
-        for entry in keytab_list:
+
+        for entry in await self.ktutil_list():
             if entry['principal'] not in kerberos_principals:
                 kerberos_principals.append(entry['principal'])
 
@@ -1177,7 +969,7 @@ class KerberosKeytabService(CRUDService):
         return False
 
     @private
-    async def store_samba_keytab(self):
+    def store_ad_keytab(self):
         """
         Samba will automatically generate system keytab entries for the AD machine account
         (netbios name with '$' appended), and maintain them through machine account password changes.
@@ -1188,37 +980,29 @@ class KerberosKeytabService(CRUDService):
         The current system kerberos keytab and compare with a cached copy before overwriting it when a new
         keytab is generated through middleware 'etc.generate kerberos'.
         """
-        if not await self.middleware.run_in_thread(os.path.exists, keytab['SYSTEM'].value):
-            return False
+        if not os.path.exists(KRB_Keytab.SYSTEM.value):
+            return
 
-        encoded_keytab = None
-        keytab_list = await self._ktutil_list()
-        items_to_remove = await self._get_nonsamba_principals(keytab_list)
-        await self._generate_tmp_keytab()
-        await self._prune_keytab_principals(items_to_remove)
-        with open(keytab['SAMBA'].value, 'rb') as f:
-            encoded_keytab = base64.b64encode(f.read())
+        ad_config = self.middleware.call_sync('activedirectory.config')
+        if not ad_config['enabled']:
+            raise CallError('Active Directory service not enabled')
 
-        if not encoded_keytab:
-            self.logger.debug(f"Failed to generate b64encoded version of {keytab['SAMBA'].name}")
-            return False
+        ad_kt_bytes = extract_from_keytab(KRB_Keytab.SYSTEM.value, [['principal', 'Crnin', ad['netbiosname']]])
+        keytab_file = base64.b64encode(ad_kt_bytes).decode()
 
-        keytab_file = encoded_keytab.decode()
-        entry = await self.query([('name', '=', 'AD_MACHINE_ACCOUNT')])
+        entry = self.middleware.call_sync('kerberos.keytab.query', [('name', '=', 'AD_MACHINE_ACCOUNT')])
         if not entry:
-            await self.middleware.call(
+            self.middleware.call_sync(
                 'datastore.insert', self._config.datastore,
                 {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file},
                 {'prefix': self._config.datastore_prefix}
             )
         else:
-            await self.middleware.call(
+            self.middleware.call_sync(
                 'datastore.update', self._config.datastore, entry[0]['id'],
                 {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file},
                 {'prefix': self._config.datastore_prefix}
             )
-
-        return True
 
     @periodic(3600)
     @private
@@ -1247,4 +1031,4 @@ class KerberosKeytabService(CRUDService):
                           "be updated.")
 
         await self.middleware.call('directoryservices.secrets.backup')
-        await self.store_samba_keytab()
+        await self.middleware.call('kerberos.keytab.store_ad_keytab')
