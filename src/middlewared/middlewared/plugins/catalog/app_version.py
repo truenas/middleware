@@ -8,13 +8,13 @@ from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, Service
 
 from .apps_util import get_app_details
+from .utils import OFFICIAL_LABEL
 
 
 class CatalogService(Service):
 
     class Config:
-        cli_namespace = 'app_old.catalog'
-        namespace = 'catalog_old'
+        cli_namespace = 'app.catalog'
 
     @accepts(
         Str('app_name'),
