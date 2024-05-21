@@ -191,7 +191,7 @@ class CatalogService(Service):
     @private
     def app_version_details(self, version_path, questions_context=None):
         if not questions_context:
-            questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
+            questions_context = self.middleware.call_sync('catalog.get_normalized_questions_context')
         return get_app_version_details(version_path, questions_context)
 
     @private
@@ -206,7 +206,7 @@ class CatalogService(Service):
         return data
 
     @private
-    async def get_normalised_questions_context(self):
+    async def get_normalized_questions_context(self):
         return {
             'timezones': await self.middleware.call('system.general.timezone_choices'),
             'system.general.config': await self.middleware.call('system.general.config'),
