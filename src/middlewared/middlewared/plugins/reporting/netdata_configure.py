@@ -1,9 +1,10 @@
+import json
 import os
 import subprocess
 
 from middlewared.service import private, Service
 
-from .utils import get_netdata_state_path
+from .utils import get_netdata_state_path, NETDATA_UPS_INFO_FILE, NETDATA_GID, NETDATA_UID
 
 
 class ReportingService(Service):
@@ -35,6 +36,27 @@ class ReportingService(Service):
             # We want to make sure this path exists always regardless of an error so that
             # at least netdata can start itself gracefully
             os.makedirs(get_netdata_state_path(), exist_ok=True)
+
+    @private
+    def generate_netdata_ups_info_file(self):
+        netdata_storage_location = self.netdata_storage_location()
+        if not netdata_storage_location:
+            return
+
+        ups_config = self.middleware.call_sync('ups.config')
+        file_path = os.path.join(netdata_storage_location, NETDATA_UPS_INFO_FILE)
+
+        remote_addr = ''
+        if ups_config['remotehost'] and ups_config['remoteport']:
+            remote_addr = f'{ups_config["remotehost"]}:{ups_config["remoteport"]}'
+
+        with open(file_path, 'w') as w:
+            w.write(json.dumps({
+                'remote_addr': remote_addr,
+            }))
+
+        os.chown(file_path, NETDATA_UID, NETDATA_GID)
+        os.chmod(file_path, 0o770)
 
     @private
     async def start_service(self):

@@ -1,8 +1,51 @@
 source /usr/lib/netdata/charts.d/nut.chart.sh
 
-nut_get_all() {
-  run -t $nut_timeout upsc -l || echo "ix-dummy-ups"
+
+ups_config=''
+
+get_ups_config(){
+  if [ -e /var/db/system/netdata/ups_info.json ]; then
+    run -t $nut_timeout cat /var/db/system/netdata/ups_info.json;
+  else
+    run -t $nut_timeout echo "";
+  fi
 }
+
+get_ups_remote(){
+  remote_addr=$(echo "$ups_config" | jq '.remote_addr')
+  run -t $nut_timeout echo "${remote_addr:1:-1}"
+}
+
+nut_get_all() {
+  if [ $(ps -aux | grep upsmon | wc -l) -le 1 ]; then
+    run -t $nut_timeout echo "ix-dummy-ups";
+    return 0
+  fi
+
+  if [ -z $(get_ups_remote) ]; then
+      run -t $nut_timeout upsc -l || echo "ix-dummy-ups";
+  else
+    run -t $nut_timeout upsc -l $(get_ups_remote) || echo "ix-dummy-ups";
+  fi
+}
+
+nut_get() {
+  if [ $1 == "ix-dummy-ups" ]; then
+    return 0;
+  fi
+  remote_addr=''
+  if [ ! -z $(get_ups_remote) ]; then
+    remote_addr="@$(get_ups_remote)"
+  fi
+
+  run -t $nut_timeout upsc "$1$remote_addr"
+
+  if [ "${nut_clients_chart}" -eq "1" ]; then
+    run -t $nut_timeout upsc -c $1$remote_addr | wc -l
+  fi
+}
+
+
 
 nut_ups_check() {
 
@@ -14,6 +57,7 @@ nut_ups_check() {
 
   require_cmd upsc || return 1
 
+  ups_config="$(get_ups_config)"
   nut_ups="$(nut_get_all)"
   nut_names=()
   nut_ids=()
@@ -52,6 +96,7 @@ nut_ups_update() {
   # do all the work to collect / calculate the values
   # for each dimension
   # remember: KEEP IT SIMPLE AND SHORT
+  ups_config="$(get_ups_config)"
   nut_ups_check
   nut_ups_create
   nut_update $@

@@ -1,5 +1,7 @@
 import os
 
+from middlewared.plugins.reporting.utils import NETDATA_GID, NETDATA_UID
+
 from .utils import SYSDATASET_PATH
 
 
@@ -160,8 +162,8 @@ def get_system_dataset_spec(pool_name: str, uuid: str) -> list:
                 'canmount': 'noauto',
             },
             'chown_config': {
-                'uid': 999,
-                'gid': 997,
+                'uid': NETDATA_UID,
+                'gid': NETDATA_GID,
                 'mode': 0o755,
             },
             'mountpoint': os.path.join(SYSDATASET_PATH, 'netdata'),

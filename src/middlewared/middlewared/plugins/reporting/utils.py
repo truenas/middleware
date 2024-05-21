@@ -13,6 +13,9 @@ K8S_PODS_COUNT = 20  # A default value has been assumed for now
 # change-how-long-netdata-stores-metrics
 TIER_0_POINT_SIZE = 1
 TIER_1_POINT_SIZE = 4
+NETDATA_GID = 997
+NETDATA_UID = 999
+NETDATA_UPS_INFO_FILE = 'ups_info.json'
 
 
 def calculate_disk_space_for_netdata(

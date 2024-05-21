@@ -258,6 +258,9 @@ class UPSService(SystemServiceService):
 
             await self._update_service(old_config, config)
 
+            if set(data) & {'remotehost', 'remoteport'}:
+                await self.middleware.call('reporting.generate_netdata_ups_info_file')
+
         return await self.config()
 
     @private
