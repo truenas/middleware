@@ -53,4 +53,4 @@ class FailoverZpoolCacheFileService(Service):
                 saved.unlink(missing_ok=True)
             overwrite.unlink(missing_ok=True)
         except Exception:
-            self.logger.warning('Failed setting up zpool cacheilfe', exc_info=True)
+            self.logger.warning('Failed setting up zpool cachefile', exc_info=True)
