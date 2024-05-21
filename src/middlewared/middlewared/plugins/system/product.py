@@ -16,6 +16,7 @@ from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
 LICENSE_FILE = '/data/license'
+LICENSE_FILE_MODE = 0o600
 
 
 class SystemService(Service):
@@ -209,7 +210,7 @@ class SystemService(Service):
                     raise ValidationError('system.license', 'This is not an HA capable system.')
 
         prev_product_type = self.middleware.call_sync('system.product_type')
-        with open(LICENSE_FILE, 'w+') as f:
+        with open(os.open(LICENSE_FILE, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, mode=LICENSE_FILE_MODE), 'w+') as f:
             f.write(license_)
 
         self.middleware.call_sync('etc.generate', 'rc')
