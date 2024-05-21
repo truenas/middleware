@@ -1,33 +1,27 @@
 import contextlib
-import os
 import random
 import re
 import socket
 import string
-import sys
 from datetime import datetime, timedelta
 from time import sleep
 from typing import cast
 
 import pytest
-from pytest_dependency import depends
-from zeroconf import ServiceBrowser, ServiceStateChange, Zeroconf
-
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 from assets.websocket.server import reboot
 from assets.websocket.service import (ensure_service_disabled,
                                       ensure_service_enabled,
                                       ensure_service_started,
                                       ensure_service_stopped)
-from auto_config import password, pool_name, user
-from functions import SSH_TEST
-from protocols import smb_share
-
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from pytest_dependency import depends
+from zeroconf import ServiceBrowser, ServiceStateChange, Zeroconf
 
+from auto_config import ha, password, pool_name, user
+from functions import SSH_TEST
+from protocols import smb_share
 
 digits = ''.join(random.choices(string.digits, k=4))
 dataset_name = f"smb-cifs{digits}"
@@ -43,6 +37,7 @@ TIME_MACHINE = '_adisk._tcp.local.'  # Automatic Disk
 DEVICE_INFO = '_device-info._tcp.local.'  # Device Info
 HTTP = '_http._tcp.local.'
 SMB = '_smb._tcp.local.'
+NUT = '_nut._tcp'
 
 DO_MDNS_REBOOT_TEST = False
 USE_AVAHI_BROWSE = True
@@ -172,6 +167,7 @@ class AvahiBrowserCollector:
         'Web Site': HTTP,
         'Microsoft Windows Network': SMB,
         'Apple TimeMachine': TIME_MACHINE,
+        '_nut._tcp': NUT,
     }
 
     def find_items(self, service_announcement=None, timeout=5):
@@ -243,7 +239,7 @@ class abstractmDNSAnnounceCollector:
     Class to help in the discovery (and processing/checking)
     of services advertised by a particular IP address/server name.
     """
-    SERVICES = [TIME_MACHINE, DEVICE_INFO, HTTP, SMB]
+    SERVICES = [TIME_MACHINE, DEVICE_INFO, HTTP, SMB, NUT]
 
     def __init__(self, ip, tn_hostname):
         self.ip = socket.gethostbyname(ip)
@@ -334,7 +330,10 @@ def test_001_initial_config(request):
 
     network_config = call('network.configuration.config')
     sa = network_config['service_announcement']
-    current_hostname = network_config['hostname']
+    if ha:
+        current_hostname = network_config['hostname_virtual']
+    else:
+        current_hostname = network_config['hostname']
     # At the moment we only care about mdns
     assert sa['mdns'] is True, sa
 

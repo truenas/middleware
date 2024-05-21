@@ -2,7 +2,6 @@ import asyncio
 from collections import defaultdict
 import imp
 import os
-import stat
 
 from mako import exceptions
 from middlewared.service import CallError, Service
@@ -214,8 +213,10 @@ class EtcService(Service):
             'ctx': [
                 {'method': 'interface.query'},
                 {'method': 'smb.config'},
+                {'method': 'ups.config'},
                 {'method': 'system.general.config'},
-                {'method': 'service.started_or_enabled', 'args': ['cifs']}
+                {'method': 'service.started_or_enabled', 'args': ['cifs']},
+                {'method': 'service.started_or_enabled', 'args': ['ups'], 'ctx_prefix': 'ups'}
             ],
             'entries': [
                 {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': None},
@@ -223,6 +224,7 @@ class EtcService(Service):
                 {'type': 'py', 'path': 'local/avahi/services/DEV_INFO.service', 'checkpoint': None},
                 {'type': 'py', 'path': 'local/avahi/services/HTTP.service', 'checkpoint': None},
                 {'type': 'py', 'path': 'local/avahi/services/SMB.service', 'checkpoint': None},
+                {'type': 'py', 'path': 'local/avahi/services/nut.service', 'checkpoint': None},
             ]
         },
         'nscd': [
@@ -333,7 +335,9 @@ class EtcService(Service):
         for m in methods:
             method = m['method']
             args = m.get('args', [])
-            rv[method] = await self.middleware.call(method, *args)
+            prefix = m.get('ctx_prefix', None)
+            key = f'{prefix}.{method}' if prefix else method
+            rv[key] = await self.middleware.call(method, *args)
 
         return rv
 

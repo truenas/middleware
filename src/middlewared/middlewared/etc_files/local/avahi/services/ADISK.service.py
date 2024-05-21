@@ -56,7 +56,7 @@ def render(service, middleware, render_ctx):
         return mdns.generate_avahi_srv_record('ADISK', iindexes, txt_records=txt_records)
     except Exception:
         middleware.logger.error(
-            'Failed to generate mDNS SRV record for the HTTP service',
+            'Failed to generate mDNS SRV record for the ADISK service',
             exc_info=True
         )
 
