@@ -46,16 +46,25 @@ class ChartReleaseStatsEventSource(EventSource):
 
         for app_info in apps_info:
             if app_info['id'] not in cached_stats:
-                cached_stats[app_info['id']] = app_info['stats']
+                cached_stats[app_info['id']] = {
+                    'network_actual': app_info['stats']['network'],
+                    'network_rate': {'incoming': 0, 'outgoing': 0}
+                }
                 app_info['stats']['network'] = {'incoming': 0, 'outgoing': 0}
             else:
                 network_stats = app_info['stats']['network']
-                cached_network_stats = cached_stats[app_info['id']]['network']
-                app_info['stats']['network'] = {
-                    'incoming': abs(network_stats['incoming'] - cached_network_stats['incoming']) / interval,
-                    'outgoing': abs(network_stats['outgoing'] - cached_network_stats['outgoing']) / interval,
+                cached_network_rate = cached_stats[app_info['id']]['network_rate']
+                cached_network_stats = cached_stats[app_info['id']]['network_actual']
+                cached_stats[app_info['id']] = {
+                    'network_actual': app_info['stats']['network'],
                 }
-                cached_stats[app_info['id']] = app_info['stats']
+                app_info['stats']['network'] = {
+                    'incoming': abs(network_stats['incoming'] - cached_network_stats['incoming']) / interval
+                    or cached_network_rate['incoming'],
+                    'outgoing': abs(network_stats['outgoing'] - cached_network_stats['outgoing']) / interval
+                    or cached_network_rate['outgoing'],
+                }
+                cached_stats[app_info['id']]['network_rate'] = app_info['stats']['network']
 
         return apps_info
 
@@ -64,7 +73,8 @@ class ChartReleaseStatsEventSource(EventSource):
         cached_stats = collections.defaultdict(lambda: {
             'memory': 0,
             'cpu': 0,
-            'network': {'incoming': 0, 'outgoing': 0},
+            'network_actual': {'incoming': 0, 'outgoing': 0},
+            'network_rate': {'incoming': 0, 'outgoing': 0},
         })
 
         while not self._cancel.is_set():
