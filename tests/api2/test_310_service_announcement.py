@@ -19,7 +19,7 @@ from middlewared.test.integration.utils.client import truenas_server
 from pytest_dependency import depends
 from zeroconf import ServiceBrowser, ServiceStateChange, Zeroconf
 
-from auto_config import password, pool_name, user
+from auto_config import ha, password, pool_name, user
 from functions import SSH_TEST
 from protocols import smb_share
 
@@ -330,7 +330,10 @@ def test_001_initial_config(request):
 
     network_config = call('network.configuration.config')
     sa = network_config['service_announcement']
-    current_hostname = network_config['hostname']
+    if ha:
+        current_hostname = network_config['hostname_virtual']
+    else:
+        current_hostname = network_config['hostname']
     # At the moment we only care about mdns
     assert sa['mdns'] is True, sa
 
