@@ -210,8 +210,9 @@ class SystemService(Service):
                     raise ValidationError('system.license', 'This is not an HA capable system.')
 
         prev_product_type = self.middleware.call_sync('system.product_type')
-        with open(os.open(LICENSE_FILE, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, mode=LICENSE_FILE_MODE), 'w+') as f:
+        with open(LICENSE_FILE, 'w+') as f:
             f.write(license_)
+            os.fchmod(f.fileno(), LICENSE_FILE_MODE)
 
         self.middleware.call_sync('etc.generate', 'rc')
         SystemService.PRODUCT_TYPE = None
