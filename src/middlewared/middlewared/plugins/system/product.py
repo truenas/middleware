@@ -16,6 +16,7 @@ from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
 LICENSE_FILE = '/data/license'
+LICENSE_FILE_MODE = 0o600
 
 
 class SystemService(Service):
@@ -211,6 +212,7 @@ class SystemService(Service):
         prev_product_type = self.middleware.call_sync('system.product_type')
         with open(LICENSE_FILE, 'w+') as f:
             f.write(license_)
+            os.fchmod(f.fileno(), LICENSE_FILE_MODE)
 
         self.middleware.call_sync('etc.generate', 'rc')
         SystemService.PRODUCT_TYPE = None
