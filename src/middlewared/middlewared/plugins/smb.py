@@ -1483,8 +1483,11 @@ class SharingSMBService(SharingService):
             await self.middleware.run_in_thread(
                 self.validate_mount_info, verrors, name, path
             )
-        except FileNotFoundError:
-            verrors.add(name, 'Path does not exist.')
+        except CallError as e:
+            if e.errno == errno.ENOENT and e.errmsg == f'Path {path} not found':
+                verrors.add(name, 'Path does not exist.')
+            else:
+                raise
 
     @private
     async def validate_share_name(self, name, schema_name, verrors, exist_ok=True):
