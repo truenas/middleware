@@ -1,5 +1,6 @@
 import json
 import re
+import os
 
 from middlewared.service import CallError
 from middlewared.utils import run
@@ -38,4 +39,5 @@ async def render(service, middleware):
 
     # Write out a user enabled services to json file which shows which services user has enabled/disabled
     with open('/data/user-services.json', 'w') as f:
+        os.fchmod(f.fileno(), 0o600)
         f.write(json.dumps(services_enabled))

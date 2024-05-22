@@ -9,6 +9,7 @@ from datetime import date
 from licenselib.license import ContractType, Features, License
 from pathlib import Path
 
+from middlewared.plugins.truenas import EULA_PENDING_PATH
 from middlewared.schema import accepts, Bool, returns, Str
 from middlewared.service import no_auth_required, no_authz_required, private, Service, ValidationError
 from middlewared.utils import sw_info
@@ -217,7 +218,8 @@ class SystemService(Service):
         self.middleware.call_sync('etc.generate', 'rc')
         SystemService.PRODUCT_TYPE = None
         if self.middleware.call_sync('system.is_enterprise'):
-            Path('/data/truenas-eula-pending').touch(exist_ok=True)
+            with open(EULA_PENDING_PATH, 'a+') as f:
+                os.fchmod(f.fileno(), 0o600)
 
         self.middleware.call_sync('alert.alert_source_clear_run', 'LicenseStatus')
         self.middleware.call_sync('failover.configure.license', dser_license)
