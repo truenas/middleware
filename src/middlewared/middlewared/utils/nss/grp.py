@@ -20,6 +20,8 @@ group_struct = namedtuple('struct_group', ['gr_name', 'gr_gid', 'gr_mem', 'sourc
 
 
 def __parse_nss_result(result, as_dict, module_name):
+    if result.gr_name is None:
+        return None
     name = result.gr_name.decode()
     members = list()
 

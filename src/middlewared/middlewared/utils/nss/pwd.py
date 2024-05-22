@@ -25,10 +25,13 @@ pwd_struct = namedtuple('struct_passwd', [
 
 
 def __parse_nss_result(result, as_dict, module_name):
-    name = result.pw_name.decode()
-    gecos = result.pw_gecos.decode()
-    homedir = result.pw_dir.decode()
-    shell = result.pw_shell.decode()
+    try:
+        name = result.pw_name.decode()
+        gecos = result.pw_gecos.decode()
+        homedir = result.pw_dir.decode()
+        shell = result.pw_shell.decode()
+    except AttributeError:
+        return None
 
     if as_dict:
         return {
