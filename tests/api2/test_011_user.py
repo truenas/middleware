@@ -647,11 +647,13 @@ def test_058_create_new_user_knownfails(request):
             # fail (no users may share same home path)
             call('user.create', user2)
 
+        with pytest.raises(ValidationErrors):
             # Attempting to put homedir in subdirectory of existing homedir
             # should also rase validation error
             user2.update({'home_create': True})
             call('user.create', user2)
 
+        with pytest.raises(ValidationErrors):
             # Attempting to create a user with non-existing path
             user2.update({'home': os.path.join(user2['home'], 'canary')})
             call('user.create', user2)
