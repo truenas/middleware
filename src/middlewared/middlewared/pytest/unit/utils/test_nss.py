@@ -4,8 +4,8 @@ import pwd as py_pwd
 import pytest
 from middlewared.utils.nss import grp, pwd
 
-BAD_UIDS = [987654, -2]
-BAD_GIDS = [987654, -2]
+BAD_UIDS = [987654, -1]
+BAD_GIDS = [987654, -1]
 BAD_NAMES = ["BogusName"]
 
 
