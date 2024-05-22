@@ -162,7 +162,7 @@ def get_enclosure_model(rclient):
                 try:
                     model = JbofModels(info.json().get('Model', '')).name
                     break
-                except KeyError:
+                except (KeyError, ValueError):
                     continue
     except Exception:
         LOGGER.error('Unexpected failure determing enclosure model', exc_info=True)
