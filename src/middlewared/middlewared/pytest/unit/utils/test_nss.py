@@ -1,7 +1,12 @@
-import pwd as py_pwd
 import grp as py_grp
+import pwd as py_pwd
 
+import pytest
 from middlewared.utils.nss import grp, pwd
+
+BAD_UIDS = [987654, -2]
+BAD_GIDS = [987654, -2]
+BAD_NAMES = ["BogusName"]
 
 
 def test__check_user_count():
@@ -49,10 +54,44 @@ def test__check_user_dict_conversion():
 
 
 def test__check_group_dict_conversion():
-    py_groups = grp.getgrall()['FILES']
-    groups = grp.getgrall(as_dict=True)['FILES']
+    groups_normal = grp.getgrall()['FILES']
+    groups_dict = grp.getgrall(as_dict=True)['FILES']
 
-    for py_entry, entry in zip(py_groups, groups):
+    for py_entry, entry in zip(groups_normal, groups_dict):
         assert py_entry.gr_name == entry['gr_name']
         assert py_entry.gr_gid == entry['gr_gid']
         assert py_entry.gr_mem == entry['gr_mem']
+
+
+def test__check_user_misses():
+    for uid in BAD_UIDS:
+        with pytest.raises(KeyError) as ve:
+            py_pwd.getpwuid(uid)
+        assert 'uid not found' in str(ve)
+        with pytest.raises(KeyError) as ve:
+            pwd.getpwuid(uid)
+        assert 'uid not found' in str(ve)
+    for name in BAD_NAMES:
+        with pytest.raises(KeyError) as ve:
+            py_pwd.getpwnam(name)
+        assert 'name not found' in str(ve)
+        with pytest.raises(KeyError) as ve:
+            pwd.getpwnam(name)
+        assert 'name not found' in str(ve)
+
+
+def test__check_group_misses():
+    for uid in BAD_GIDS:
+        with pytest.raises(KeyError) as ve:
+            py_grp.getgrgid(uid)
+        assert 'uid not found' in str(ve)
+        with pytest.raises(KeyError) as ve:
+            grp.getgrgid(uid)
+        assert 'uid not found' in str(ve)
+    for name in BAD_NAMES:
+        with pytest.raises(KeyError) as ve:
+            py_grp.getgrnam(name)
+        assert 'name not found' in str(ve)
+        with pytest.raises(KeyError) as ve:
+            grp.getgrnam(name)
+        assert 'name not found' in str(ve)
