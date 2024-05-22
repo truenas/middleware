@@ -598,9 +598,8 @@ class FailoverEventsService(Service):
             logger.error('All volumes failed to import!')
             job.set_progress(None, description='ERROR')
             raise AllZpoolsFailedToImport()
-
-        # if we fail to import any of the zpools then alert the user but continue the process
         elif len(failed):
+            # if we fail to import any of the zpools then alert the user but continue the process
             for i in failed:
                 logger.error(
                     'Failed to import volume with name %r with guid %r with error:\n %r',
@@ -609,6 +608,8 @@ class FailoverEventsService(Service):
                 logger.error(
                     'However, other zpools imported so the failover process continued.'
                 )
+        else:
+            logger.info('Volume imports complete')
 
         # Now that the volumes have been imported, get a head-start on activating extents.
         if handle_alua:
