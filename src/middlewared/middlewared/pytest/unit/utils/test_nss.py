@@ -84,10 +84,10 @@ def test__check_group_misses():
     for uid in BAD_GIDS:
         with pytest.raises(KeyError) as ve:
             py_grp.getgrgid(uid)
-        assert 'uid not found' in str(ve)
+        assert 'gid not found' in str(ve)
         with pytest.raises(KeyError) as ve:
             grp.getgrgid(uid)
-        assert 'uid not found' in str(ve)
+        assert 'gid not found' in str(ve)
     for name in BAD_NAMES:
         with pytest.raises(KeyError) as ve:
             py_grp.getgrnam(name)
