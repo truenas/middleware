@@ -147,7 +147,7 @@ def get_redfish_clients(jbofs):
     return clients
 
 
-def is_this_an_es24n(chassis, rclient):
+def is_this_an_es24n(rclient):
     """At time of writing, we've discovered that OEM of the ES24N
     does not give us predictable model names. Seems to be random
     which is unfortunate but there isn't much we can do about it
@@ -194,7 +194,7 @@ def get_enclosure_model(rclient):
         LOGGER.error('Unexpected failure enumerating chassis info', exc_info=True)
         return model, uri
 
-    model, uri = is_this_an_es24n(chassis, rclient)
+    model, uri = is_this_an_es24n(rclient)
     if all((model, uri)):
         return model, uri
 
