@@ -21,8 +21,7 @@ class CertificateService(Service):
     def dhparam_setup(self, job):
         """Generate dhparam.pem if it doesn't exist, or has no data in it"""
         with open(DHPARAM_PEM_PATH, 'a+') as f:
-            if os.fstat(f.fileno()).st_size > 0:
-                return
-            subprocess.run(
-                ['openssl', 'dhparam', '-rand', '/dev/urandom', '2048'], stdout=f, check=True
-            )
+            if os.fstat(f.fileno()).st_size == 0:
+                subprocess.run(
+                    ['openssl', 'dhparam', '-rand', '/dev/urandom', '2048'], stdout=f, check=True
+                )
