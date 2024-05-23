@@ -147,6 +147,45 @@ def get_redfish_clients(jbofs):
     return clients
 
 
+def is_this_an_es24n(rclient):
+    """At time of writing, we've discovered that OEM of the ES24N
+    does not give us predictable model names. Seems to be random
+    which is unfortunate but there isn't much we can do about it
+    at the moment. We know what the URI _should_ be for this
+    platform and we _thought_ we knew what the model should be so
+    we'll hard-code these values and check for the specific URI
+    and then check if the model at the URI at least has some
+    semblance of an ES24N"""
+    # FIXME: This function shouldn't exist and the OEM should fix
+    # this at some point. When they do (hopefully) fix the model,
+    # remove this function
+    expected_uri = '/redfish/v1/Chassis/2U24'
+    expected_model = JbofModels.ES24N.value
+    try:
+        info = rclient.get(expected_uri)
+        if info.ok:
+            found_model = info.json().get('Model', '').lower()
+            eml = expected_model.lower()
+            if any((
+                eml in found_model,
+                found_model.startswith(eml),
+                found_model.startswith(eml[:-1])
+            )):
+                # 1. the model string is inside the found model
+                # 2. or the model string startswith what we expect
+                # 3. or the model string startswith what we expect
+                #   with the exception of the last character
+                #   (The reason why we chop off last character is
+                #   because internal conversation concluded that the
+                #   last digit coorrelates to "generation" so we're
+                #   going to be extra lenient and ignore it)
+                return JbofModels.ES24N.name, expected_uri
+    except Exception:
+        LOGGER.error('Unexpected failure determining if this is an ES24N', exc_info=True)
+
+    return None, None
+
+
 def get_enclosure_model(rclient):
     model = uri = None
     try:
@@ -155,14 +194,21 @@ def get_enclosure_model(rclient):
         LOGGER.error('Unexpected failure enumerating chassis info', exc_info=True)
         return model, uri
 
+    model, uri = is_this_an_es24n(rclient)
+    if all((model, uri)):
+        return model, uri
+
     try:
         for _, uri in chassis.items():
             info = rclient.get(uri)
             if info.ok:
                 try:
                     model = JbofModels(info.json().get('Model', '')).name
-                    break
-                except (KeyError, ValueError):
+                    return model, uri
+                except ValueError:
+                    # Using parenthesis on the enum checks the string BY VALUE
+                    # and NOT BY NAME. If you were to use square brackets [],
+                    # then a KeyError will be raised.
                     continue
     except Exception:
         LOGGER.error('Unexpected failure determing enclosure model', exc_info=True)
