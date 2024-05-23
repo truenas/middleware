@@ -377,6 +377,8 @@ class FailoverEventsService(Service):
             logger.error('Timed out attaching JBOFs - will continue in background')
         except Exception:
             logger.error('Unexpected error', exc_info=True)
+        else:
+            logger.info('Done bring up of NVMe/RoCE')
 
         fenced_error = None
         if event == 'forcetakeover':
@@ -384,10 +386,13 @@ class FailoverEventsService(Service):
             logger.warning('Forcefully taking over as the MASTER node.')
 
             # need to stop fenced just in case it's running already
+            logger.warning('Forcefully stopping fenced')
             self.run_call('failover.fenced.stop')
+            logger.warning('Done forcefully stopping fenced')
 
             logger.warning('Forcefully starting fenced')
             fenced_error = self.run_call('failover.fenced.start', True)
+            logger.warning('Done forcefully starting fenced')
         else:
             # if we're here then we need to check a couple things before we start fenced
             # and start the process of becoming master
@@ -400,9 +405,11 @@ class FailoverEventsService(Service):
             #   TODO: Not sure how keepalived and laggs operate so need to test this
             #           (maybe the event only gets triggered if the lagg goes down)
             #
+            logger.info('Checking VIP failover groups')
             _, backups = self.run_call(
                 'failover.vip.check_failover_group', ifname, fobj['groups']
             )
+            logger.info('Done checking VIP failover groups')
 
             # this means that we received a master event and the interface was
             # in a failover group. And in that failover group, there were other
@@ -421,10 +428,13 @@ class FailoverEventsService(Service):
             logger.warning('Entering MASTER on "%s".', ifname)
 
             # need to stop fenced just in case it's running already
+            logger.warning('Stopping fenced')
             self.run_call('failover.fenced.stop')
+            logger.warning('Done stopping fenced')
 
-            logger.warning('Starting fenced')
+            logger.warning('Restarting fenced')
             fenced_error = self.fenced_start_loop()
+            logger.warning('Done restarting fenced')
 
         # starting fenced daemon failed....which is bad
         # emit an error and exit
@@ -458,14 +468,21 @@ class FailoverEventsService(Service):
         self.run_call('service.reload', 'keepalived', self.HA_PROPAGATE)
         logger.info('Unpausing failover event processing')
         self.run_call('vrrpthread.unpause_events')
+        logger.info('Done unpausing failover event processing')
 
         # Kick off a job to clean up any left-over ALUA state from when we were STANDBY/BACKUP.
+        logger.info('Verifying iSCSI service')
         if self.run_call('service.started_or_enabled', 'iscsitarget'):
+            logger.info('Checking if ALUA is enabled')
             handle_alua = self.run_call('iscsi.global.alua_enabled')
+            logger.info('Done checking if ALUA is enabled')
             if handle_alua:
+                logger.info('calling iscsi ALUA active elected')
                 self.run_call('iscsi.alua.active_elected')
+                logger.info('done calling iscsi ALUA active elected')
         else:
             handle_alua = False
+        logger.info('Done verifying iSCSI service')
 
         if not fobj['volumes']:
             # means we received a master event but there are no zpools to import
@@ -476,6 +493,7 @@ class FailoverEventsService(Service):
             return self.FAILOVER_RESULT
 
         # unlock SED disks
+        logger.info('Unlocking all SED disks (if any)')
         try:
             self.run_call('disk.sed_unlock_all', True)
         except Exception as e:
@@ -483,6 +501,8 @@ class FailoverEventsService(Service):
             # we could have failed on only 1 disk so log an
             # error and move on
             logger.error('Failed to unlock SED disk(s) with error: %r', e)
+        else:
+            logger.info('Done unlocking all SED disks (if any)')
 
         # setup the zpool cachefile  TODO: see comment below about cachefile usage
         # self.run_call('failover.zpool.cachefile.setup', 'MASTER')
@@ -513,15 +533,18 @@ class FailoverEventsService(Service):
                 if e.errno == errno.ENOENT:
                     try_again = True
                     # logger.warning('Failed importing %r using cachefile so trying without it.', vol['name'])
-                    logger.warning('Failed importing %r with ENOENT, trying again.', vol['name'])
+                    logger.warning('Failed importing %r with ENOENT.', vol['name'])
                 else:
                     vol['error'] = str(e)
                     failed.append(vol)
                     continue
+            else:
+                logger.info('Successfully imported %r', vol['name'])
 
             if try_again:
                 # means the cachefile is "stale" or invalid which will prevent
                 # an import so let's try to import without it
+                logger.warning('Retrying import of %r', vol['name'])
                 try:
                     self.run_call(
                         'zfs.pool.import_pool', vol['guid'], options, any_host, None, new_name, import_options
@@ -530,6 +553,8 @@ class FailoverEventsService(Service):
                     vol['error'] = str(e)
                     failed.append(vol)
                     continue
+                else:
+                    logger.info('Successful retry import of %r', vol['name'])
 
                 # TODO: come back and fix this once we figure out how to properly manage zpool cachefile
                 # (i.e. we need a cachefile per zpool, and not a global one)
@@ -546,11 +571,12 @@ class FailoverEventsService(Service):
             # If root dataset was encrypted, it would not be mounted at this point regardless of it being
             # key/passphrase encrypted - so we make sure that nothing at this point in time is mounted beneath it
             # if that pool has datasets which are unencrypted
+            logger.info('Handling unencrypted datasets on import (if any) for %r', vol['name'])
             self.run_call('pool.handle_unencrypted_datasets_on_import', vol['name'])
-
-            logger.info('Successfully imported %r', vol['name'])
+            logger.info('Successfully handled unencrypted datasets on import (if any) for %r', vol['name'])
 
             # try to unlock the zfs datasets (if any)
+            logger.info('Unlocking zfs datasets (if any) for %r', vol['name'])
             unlock_job = self.run_call('failover.unlock_zfs_datasets', vol['name'])
             unlock_job.wait_sync()
             if unlock_job.error:
@@ -572,9 +598,8 @@ class FailoverEventsService(Service):
             logger.error('All volumes failed to import!')
             job.set_progress(None, description='ERROR')
             raise AllZpoolsFailedToImport()
-
-        # if we fail to import any of the zpools then alert the user but continue the process
         elif len(failed):
+            # if we fail to import any of the zpools then alert the user but continue the process
             for i in failed:
                 logger.error(
                     'Failed to import volume with name %r with guid %r with error:\n %r',
@@ -583,69 +608,95 @@ class FailoverEventsService(Service):
                 logger.error(
                     'However, other zpools imported so the failover process continued.'
                 )
-
-        logger.info('Volume imports complete.')
+        else:
+            logger.info('Volume imports complete')
 
         # Now that the volumes have been imported, get a head-start on activating extents.
         if handle_alua:
+            logger.info('Activating ALUA extents')
             self.run_call('iscsi.alua.activate_extents')
+            logger.info('Done activating ALUA extents')
 
         # need to make sure failover status is updated in the middleware cache
         logger.info('Refreshing failover status')
         self.run_call('failover.status_refresh')
+        logger.info('Done refreshing failover status')
 
         # this enables all necessary services that have been enabled by the user
         logger.info('Enabling necessary services')
         self.run_call('etc.generate', 'rc')
+        logger.info('Done enabling necessary services')
 
         logger.info('Configuring system dataset')
         self.run_call('systemdataset.setup')
+        logger.info('Done configuring system dataset')
 
         # now we restart the services, prioritizing the "critical" services
         logger.info('Restarting critical services.')
         self.run_call('failover.events.restart_services', {'critical': True})
+        logger.info('Done restarting critical services')
 
         # setup directory services. This is backgrounded job
+        logger.info('Starting background job for directoryservices.setup')
         self.run_call('directoryservices.setup')
+        logger.info('Done starting background job for directoryservices.setup')
 
         logger.info('Allowing network traffic.')
         fw_accept_job = self.run_call('failover.firewall.accept_all')
         fw_accept_job.wait_sync()
         if fw_accept_job.error:
             logger.error(f'Error allowing network traffic: {fw_accept_job.error}')
+        else:
+            logger.info('Done allowing network traffic.')
 
         logger.info('Critical portion of failover is now complete')
 
         # regenerate cron
         logger.info('Regenerating cron')
         self.run_call('etc.generate', 'cron')
+        logger.info('Done regenerating cron')
 
         # sync disks is disabled on passive node
         logger.info('Syncing disks')
         self.run_call('disk.sync_all', {'zfs_guid': True})
+        logger.info('Done syncing disks')
 
         # background any methods that can take awhile to
         # run but shouldn't hold up the entire failover
         # event
+        logger.info('Starting failover background jobs')
         self.run_call('failover.events.background')
+        logger.info('Done starting failover background jobs')
 
         # restart the remaining "non-critical" services
         logger.info('Restarting remaining services')
         self.run_call('failover.events.restart_services', {'critical': False, 'timeout': 60})
+        logger.info('Done restarting remaining services')
 
         logger.info('Restarting reporting metrics')
         self.run_call('service.restart', 'netdata')
+        logger.info('Done restarting reporting metrics')
 
-        self.run_call('failover.events.start_apps_vms')
+        self.run_call('failover.events.start_apps')  # this method logs before and after already
+        logger.info('Updating replication tasks')
         self.run_call('zettarepl.update_tasks')
+        logger.info('Done updating replication tasks')
+
+        logger.info('Temporarily blocking failover alerts')
+        self.run_call('alert.block_failover_alerts')
+        logger.info('Done temporarily blocking failover alerts')
 
         logger.info('Initializing alert system')
-        self.run_call('alert.block_failover_alerts')
         self.run_call('alert.initialize', False)
+        logger.info('Done initializing alert system')
 
+        logger.info('Loading api keys')
         self.run_call('api_key.load_keys')
+        logger.info('Done loading api keys')
 
+        logger.info('Starting truecommand service (if necessary)')
         self.run_call('truecommand.start_truecommand_service')
+        logger.info('Done starting truecommand service (if necessary)')
 
         kmip_config = self.run_call('kmip.config')
         if kmip_config and kmip_config['enabled']:
@@ -656,14 +707,19 @@ class FailoverEventsService(Service):
             # from KMIP. If it's unaccessible, the already synced memory keys are used
             # meanwhile.
             self.run_call('kmip.initialize_keys')
+            logger.info('Done syncing encryption keys with KMIP server')
 
+        logger.info('Migrating interface information (if required)')
         self.run_call('interface.persist_link_addresses')
+        logger.info('Done migrating interface information (if required)')
 
         try:
             logger.info('Updating HA reboot info')
             self.run_call('failover.reboot.info')
         except Exception:
             logger.warning('Failed to update reboot info', exc_info=True)
+        else:
+            logger.info('Done updating HA reboot info')
 
         logger.info('Failover event complete.')
 
@@ -674,21 +730,13 @@ class FailoverEventsService(Service):
 
         return self.FAILOVER_RESULT
 
-    async def start_apps_vms(self):
-        async def start_vms():
-            await self.middleware.call('vm.initialize_vms')
-            await self.middleware.call('vm.start_on_boot')
-
-        if await self.middleware.call('vm.license_active'):
-            # start any VMs (this will log errors if the vm(s) fail to start)
-            # Initialize VMs first to make sure system has relevant
-            # objects for each VM initialized
-            self.middleware.create_task(start_vms())
-
+    async def start_apps(self):
         if await self.middleware.call('kubernetes.license_active') and (
             await self.middleware.call('kubernetes.config')
         )['dataset']:
+            logger.info('Starting background task for bring up of apps')
             self.middleware.create_task(self.middleware.call('kubernetes.start_service'))
+            logger.info('Done starting background task for bring up of apps')
 
     @job(lock=FAILOVER_LOCK_NAME)
     def vrrp_backup(self, job, fobj, ifname, event):
