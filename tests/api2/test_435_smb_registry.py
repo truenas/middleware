@@ -253,14 +253,27 @@ def test_010_test_aux_param_on_update(request):
     assert ncomments_sent == ncomments_recv, new_aux
 
 
+@contextlib.contextmanager
+def setup_aapl_extensions(newvalue):
+    oldvalue = call('smb.config')['aapl_extensions']
+    try:
+        if oldvalue != newvalue:
+            call('smb.update', {'aapl_extensions': newvalue})
+        yield
+    finally:
+        if oldvalue != newvalue:
+            call('smb.update', {'aapl_extensions': oldvalue})
+
+
 @pytest.fixture(scope='function')
 def setup_tm_share(request):
-    with create_smb_share('AUX_CREATE', True, {
-        "home": False,
-        "purpose": "ENHANCED_TIMEMACHINE",
-        "auxsmbconf": '\n'.join(SAMPLE_AUX)
-    }) as s:
-        yield (request, s)
+    with setup_aapl_extensions(True):
+        with create_smb_share('AUX_CREATE', True, {
+            "home": False,
+            "purpose": "ENHANCED_TIMEMACHINE",
+            "auxsmbconf": '\n'.join(SAMPLE_AUX)
+        }) as s:
+            yield (request, s)
 
 
 def test_011_test_aux_param_on_create(setup_tm_share):
