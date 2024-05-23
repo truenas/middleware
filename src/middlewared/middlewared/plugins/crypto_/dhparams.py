@@ -23,5 +23,5 @@ class CertificateService(Service):
         with open(DHPARAM_PEM_PATH, 'a+') as f:
             if os.fstat(f.fileno()).st_size == 0:
                 subprocess.run(
-                    ['openssl', 'dhparam', '-rand', '/dev/urandom', '2048'], stdout=f, check=True
+                    ['openssl', 'dhparam', '-rand', '/dev/urandom', '2048', '-out', DHPARAM_PEM_PATH], check=True
                 )
