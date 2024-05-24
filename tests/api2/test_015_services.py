@@ -9,6 +9,9 @@ import pytest
 from middlewared.service_exception import CallError
 from middlewared.test.integration.utils import call, ssh
 
+def test_001_oom_check():
+    pid = call('core.get_pid')
+    assert call('core.get_oom_score_adj', pid) == "-1000"
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5)  # Sometimes systemd unit state is erroneously reported as active
 def test_non_silent_service_start_failure():

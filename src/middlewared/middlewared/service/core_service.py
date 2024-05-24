@@ -756,6 +756,19 @@ class CoreService(Service):
     def threads_stacks(self):
         return get_threads_stacks()
 
+    @private
+    def get_pid(self):
+        return os.getpid()
+
+    @private
+    async def get_oom_score_adj(self, pid):
+        try:
+            with open(f'/proc/{pid}/oom_score_adj', 'r') as f:
+                return f.read().strip()
+        except FileNotFoundError:
+            self.logger.error("Process not found.")
+        return None
+
     @no_authz_required
     @accepts(Str("method"), List("params", items=[List("params")]), Str("description", null=True, default=None))
     @job(lock=lambda args: f"bulk:{args[0]}")
