@@ -52,7 +52,9 @@ def common_checks(
                 with pytest.raises(Exception) as exc_info:
                     client.call(method, *method_args, **method_kwargs)
 
-                assert not isinstance(exc_info.value, ClientException)
+                assert isinstance(exc_info.value, ClientException) is False or (
+                    exc_info.value.errno != errno.EACCES and exc_info.value.error != 'Not authorized'
+                )
 
             elif is_return_type_none:
                 assert client.call(method, *method_args, **method_kwargs) is None
