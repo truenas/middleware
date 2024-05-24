@@ -761,12 +761,12 @@ class CoreService(Service):
         return os.getpid()
 
     @private
-    async def get_oom_score_adj(self, pid):
+    def get_oom_score_adj(self, pid):
         try:
             with open(f'/proc/{pid}/oom_score_adj', 'r') as f:
                 return f.read().strip()
-        except FileNotFoundError:
-            self.logger.error("Process not found.")
+        except Exception:
+            self.logger.error("Unexpected error looking up process %r.", pid, exc_info=True)
         return None
 
     @no_authz_required
