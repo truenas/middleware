@@ -1,6 +1,12 @@
 import pytest
 
 from middlewared.test.integration.assets.roles import common_checks
+from middlewared.test.integration.utils import call
+
+
+@pytest.fixture(scope='module')
+def kubernetes_running():
+    return call('service.started', 'kubernetes')
 
 
 def test_app_readonly_role(unprivileged_user_fixture):
@@ -35,16 +41,20 @@ def test_catalog_read_and_write_role(
     )
 
 
-@pytest.mark.parametrize('role,endpoint,job,should_work', [
-    ('APPS_READ', 'chart.release.used_ports', False, True),
-    ('APPS_READ', 'container.image.dockerhub_rate_limit', False, True),
-    ('APPS_WRITE', 'container.image.dockerhub_rate_limit', False, True),
-    ('APPS_READ', 'container.prune', True, False),
-    ('APPS_WRITE', 'container.prune', True, True),
+@pytest.mark.parametrize('role,endpoint,job,expect_valid_role_exception,should_work', [
+    ('APPS_READ', 'chart.release.used_ports', False, False, True),
+    ('APPS_READ', 'container.image.dockerhub_rate_limit', False, False, True),
+    ('APPS_WRITE', 'container.image.dockerhub_rate_limit', False, False, True),
+    ('APPS_READ', 'container.prune', True, False, False),
+    ('APPS_WRITE', 'container.prune', True, True, True),
 ])
-def test_apps_read_and_write_roles(unprivileged_user_fixture, role, endpoint, job, should_work):
+def test_apps_read_and_write_roles(
+    unprivileged_user_fixture, role, endpoint, job, expect_valid_role_exception, should_work, kubernetes_running
+):
     common_checks(
-        unprivileged_user_fixture, endpoint, role, should_work, valid_role_exception=False, method_kwargs={'job': job}
+        unprivileged_user_fixture, endpoint, role, should_work,
+        valid_role_exception=expect_valid_role_exception and not kubernetes_running,
+        method_kwargs={'job': job}
     )
 
 
@@ -61,17 +71,21 @@ def test_apps_read_and_write_roles_with_params(unprivileged_user_fixture, role, 
     common_checks(unprivileged_user_fixture, endpoint, role, should_work, method_kwargs={'job': job})
 
 
-@pytest.mark.parametrize('role,endpoint,job,should_work', [
-    ('KUBERNETES_READ', 'kubernetes.backup_chart_releases', True, False),
-    ('KUBERNETES_WRITE', 'kubernetes.backup_chart_releases', True, True),
-    ('KUBERNETES_READ', 'kubernetes.list_backups', False, True),
-    ('KUBERNETES_WRITE', 'kubernetes.list_backups', False, True),
-    ('KUBERNETES_READ', 'kubernetes.status', False, True),
-    ('KUBERNETES_READ', 'kubernetes.node_ip', False, True),
-    ('KUBERNETES_READ', 'kubernetes.events', False, True),
-    ('KUBERNETES_WRITE', 'kubernetes.events', False, True),
+@pytest.mark.parametrize('role,endpoint,job,expect_valid_role_exception,should_work', [
+    ('KUBERNETES_READ', 'kubernetes.backup_chart_releases', True, False, False),
+    ('KUBERNETES_WRITE', 'kubernetes.backup_chart_releases', True, True, True),
+    ('KUBERNETES_READ', 'kubernetes.list_backups', False, False, True),
+    ('KUBERNETES_WRITE', 'kubernetes.list_backups', False, False, True),
+    ('KUBERNETES_READ', 'kubernetes.status', False, False, True),
+    ('KUBERNETES_READ', 'kubernetes.node_ip', False, False, True),
+    ('KUBERNETES_READ', 'kubernetes.events', False, False, True),
+    ('KUBERNETES_WRITE', 'kubernetes.events', False, False, True),
 ])
-def test_kubernetes_read_and_write_roles(unprivileged_user_fixture, role, endpoint, job, should_work):
+def test_kubernetes_read_and_write_roles(
+    unprivileged_user_fixture, role, endpoint, job, expect_valid_role_exception, should_work, kubernetes_running
+):
     common_checks(
-        unprivileged_user_fixture, endpoint, role, should_work, valid_role_exception=False, method_kwargs={'job': job}
+        unprivileged_user_fixture, endpoint, role, should_work,
+        valid_role_exception=expect_valid_role_exception and not kubernetes_running,
+        method_kwargs={'job': job}
     )

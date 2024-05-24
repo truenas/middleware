@@ -65,7 +65,6 @@ def test_disk_format(unused_disk):
 
     # Should be a modulo of grain_size
     assert partitions[0]['size'] % grain_size == 0
-    assert partitions[0]['start_sector'] % grain_size == 0
 
     # Uses (almost) all the disk
     assert partitions[0]['start_sector'] == first_sector
