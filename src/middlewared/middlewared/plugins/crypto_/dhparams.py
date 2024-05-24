@@ -3,6 +3,8 @@ import subprocess
 
 from middlewared.service import job, private, Service
 
+DHPARAM_PEM_PATH = '/data/dhparam.pem'
+
 
 class CertificateService(Service):
 
@@ -11,15 +13,15 @@ class CertificateService(Service):
 
     @private
     async def dhparam(self):
-        return '/data/dhparam.pem'
+        return DHPARAM_PEM_PATH
+
 
     @private
     @job()
     def dhparam_setup(self, job):
-        dhparam_path = self.middleware.call_sync('certificate.dhparam')
-        if not os.path.exists(dhparam_path) or os.stat(dhparam_path).st_size == 0:
-            with open('/dev/console', 'wb') as console:
-                with open(dhparam_path, 'wb') as f:
-                    subprocess.run(
-                        ['openssl', 'dhparam', '-rand', '/dev/urandom', '2048'], stdout=f, stderr=console, check=True
-                    )
+        """Generate dhparam.pem if it doesn't exist, or has no data in it"""
+        with open(DHPARAM_PEM_PATH, 'a+') as f:
+            if os.fstat(f.fileno()).st_size == 0:
+                subprocess.run(
+                    ['openssl', 'dhparam', '-out', DHPARAM_PEM_PATH, '-rand', '/dev/urandom', '2048'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True
+                )
