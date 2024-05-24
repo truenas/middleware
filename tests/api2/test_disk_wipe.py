@@ -1,8 +1,10 @@
-import pytest
 import time
 
-from middlewared.test.integration.utils import call, ssh
+import pytest
 from middlewared.test.integration.assets.pool import another_pool
+from middlewared.test.integration.utils import call, ssh
+
+from auto_config import ha
 
 
 def test_disk_wipe_exported_zpool_in_disk_get_unused():
@@ -88,6 +90,14 @@ def test_disk_get_partitions_quick(dev_name):
 
 
 def test_disk_wipe_abort():
+    """Test that we can sucessfully abort a disk.wipe job"""
+    expected_pids = set()
+    if ha:
+        # In HA systems fenced may be using the disk.  Obtain the PID
+        # so that we can ignore it.
+        expected_pids.add(ssh('cat /run/middleware/fenced.pid'))
+
+    # Obtain a disk to wipe
     disk = call("disk.get_unused")[0]["name"]
 
     job_id = call("disk.wipe", disk, "FULL")
@@ -105,10 +115,10 @@ def test_disk_wipe_abort():
     call("core.job_abort", job_id)
 
     for i in range(20):
-        result = ssh(f"fuser /dev/{disk}", check=False, complete_response=True)
-        # Fuser returns 1 when no other process is using the disk
+        result = set(ssh(f"fuser /dev/{disk}", check=False).strip().split())
+        # Check that only the expected PIDs are using the disk
         # (which means that the abort was completed successfully)
-        if result["returncode"] == 1:
+        if result == expected_pids:
             # Ensure that the job was aborted before completion
             job = call("core.get_jobs", [["id", "=", job_id]], {"get": True})
             assert job["state"] == "ABORTED"
