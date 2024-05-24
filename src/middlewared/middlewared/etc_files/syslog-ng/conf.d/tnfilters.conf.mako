@@ -60,6 +60,11 @@ filter f_scst {
   program("kernel") and match("dlm:" value("MESSAGE"));
 };
 
+# Temporary SNMP filter: NAS-129124
+filter f_snmp {
+  program("snmpd") and match("unexpected header length" value("MESSAGE"));
+};
+
 filter f_truenas_exclude {
 % if not nfs_conf['mountd_log']:
   not filter(f_nfs_mountd) and
@@ -69,7 +74,9 @@ filter f_truenas_exclude {
   not filter(f_containerd) and
   not filter(f_kube_router) and
   not filter(f_app_mounts) and
-  not filter(f_scst)
+  not filter(f_scst) and
+  # Temporary SNMP filter: NAS-129124
+  not filter(f_snmp)
 };
 
 #####################
