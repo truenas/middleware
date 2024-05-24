@@ -111,6 +111,12 @@ class iSCSIHostService(CRUDService):
             return await self.update_unlocked(audit_callback, id_, data)
 
     @private
+    @accepts(
+        Int("id"),
+        Ref("iscsi_host_update"),
+        audit='Update iSCSI host',
+        audit_callback=True,
+    )
     async def update_unlocked(self, audit_callback, id_, data):
         old = await self.get_instance(id_)
         audit_callback(old['ip'])
@@ -146,6 +152,10 @@ class iSCSIHostService(CRUDService):
             return await self.delete_unlocked(audit_callback, id_)
 
     @private
+    @accepts(Int("id"),
+             audit='Delete iSCSI host',
+             audit_callback=True,
+             )
     async def delete_unlocked(self, audit_callback, id_):
         host = await self.get_instance(id_)
         audit_callback(host['ip'])
@@ -191,9 +201,10 @@ class iSCSIHostService(CRUDService):
                 ),
             ],
         ),
+        audit_callback=True,
     )
     @private
-    async def batch_update(self, hosts):
+    async def batch_update(self, audit_callback, hosts):
         async with LOCK:
             try:
                 for host in hosts:
@@ -206,7 +217,7 @@ class iSCSIHostService(CRUDService):
                     db_host = self.hosts[host["ip"]]
 
                     if host["iqn"] not in db_host["iqns"]:
-                        await self.update_unlocked(db_host["id"], {"iqns": db_host["iqns"] + [host["iqn"]]})
+                        await self.update_unlocked(audit_callback, db_host["id"], {"iqns": db_host["iqns"] + [host["iqn"]]})
 
             except Exception:
                 await self.read_cache()
