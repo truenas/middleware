@@ -1,10 +1,16 @@
-#
-# NSLCD.CONF(5)		The configuration file for LDAP nameservice daemon
-#
 <%
-        from middlewared.plugins.ldap_ import constants
-        from middlewared.plugins.ldap_ import utils
+    from middlewared.plugins.directoryservices_.all import get_enabled_ds
+    from middlewared.plugins.etc import FileShouldNotExist
+    from middlewared.plugins.ldap_ import constants
+    from middlewared.plugins.ldap_ import utils
+    from middlewared.utils.directoryservices.constants import DSType
 
+    ds_obj = get_enabled_ds()
+    if ds_obj is None:
+        # Standalone server
+        raise FileShouldNotExist
+
+    if ds_obj.ds_type is DSType.LDAP:
         ldap = middleware.call_sync('ldap.config')
         kerberos_realm = None
         aux = []
@@ -28,11 +34,8 @@
                 {'get': True}
             )['realm']
 
-        ldap_enabled = ldap['enable']
-        if ldap_enabled:
-            domain = kerberos_realm or ldap['hostname'][0]
+        domain = kerberos_realm or ldap['hostname'][0]
 
-        ldap_enabled = ldap['enable']
         for param in ldap['auxiliary_parameters'].splitlines():
             param = param.strip()
             if not param.startswith('nss_min_uid'):
@@ -43,8 +46,16 @@
                 except Exception:
                     pass
 
+    elif ds_obj.ds_type is DSType.IPA:
+        ipa_info = ds_obj.setup_legacy()
+        smb_domain_info = ds_obj.get_smb_domain_info()
+
+    else:
+        # AD enabled
+        raise FileShouldNotExist
+
 %>
-% if ldap_enabled:
+% if ds_obj.ds_type is DSType.LDAP:
 [sssd]
 domains = ${domain}
 services = nss, pam
@@ -68,7 +79,7 @@ ldap_tls_reqcert = ${'demand' if ldap['validate_certificates'] else 'allow'}
 ldap_default_bind_dn = ${ldap['binddn']}
 ldap_default_authtok = ${ldap['bindpw']}
 % endif
-enumerate = ${not ldap['disable_freenas_cache']}
+enumerate = ${ldap['enumerate']}
 % if kerberos_realm:
 ldap_sasl_mech = GSSAPI
 ldap_sasl_realm = ${kerberos_realm}
@@ -84,4 +95,19 @@ ${'\n    '.join(map_params)}
 % if aux:
 ${'\n    '.join(aux)}
 % endif
+% elif ds_obj.ds_type is DSType.IPA:
+[sssd]
+domains = ${ipa_info['domain']}
+services = nss, pam
+
+[domain/${ipa_info['domain']}]
+id_provider = ipa
+ipa_server = _srv_, ${ipa_info['target_server']}
+ipa_domain = ${ipa_info['realm'].lower()}
+ipa_hostname = ${ipa_info['host'].lower()}
+auth_provider = ipa
+access_provider = ipa
+cache_credentials = True
+ldap_tls_cacert = /etc/ipa/ca.crt
+enumerate = ${ds_obj.config['enumerate']}
 % endif

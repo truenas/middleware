@@ -631,15 +631,13 @@ class FailoverEventsService(Service):
         self.run_call('systemdataset.setup')
         logger.info('Done configuring system dataset')
 
+        # set up directory services. UI / middleware cache fill is backgrounded
+        self.run_call('directoryservices.become_active')
+
         # now we restart the services, prioritizing the "critical" services
         logger.info('Restarting critical services.')
         self.run_call('failover.events.restart_services', {'critical': True})
         logger.info('Done restarting critical services')
-
-        # setup directory services. This is backgrounded job
-        logger.info('Starting background job for directoryservices.setup')
-        self.run_call('directoryservices.setup')
-        logger.info('Done starting background job for directoryservices.setup')
 
         logger.info('Allowing network traffic.')
         fw_accept_job = self.run_call('failover.firewall.accept_all')
@@ -872,6 +870,11 @@ class FailoverEventsService(Service):
                     self.run_call('service.restart', 'iscsitarget', self.HA_PROPAGATE)
                 else:
                     self.run_call('service.start', 'iscsitarget', self.HA_PROPAGATE)
+
+        try:
+            self.run_call('directoryservices.become_passive')
+        except Exception:
+            self.logger.debug('Failed to fully tear down directory services on standby controller')
 
         logger.info('Syncing encryption keys from MASTER node (if any)')
         try:

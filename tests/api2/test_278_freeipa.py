@@ -3,11 +3,15 @@
 import pytest
 import sys
 import os
+from contextlib import contextmanager
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST
-from middlewared.test.integration.assets.directory_service import ldap
+from middlewared.test.integration.assets.directory_service import (
+    ldap,
+    override_nameservers
+)
 from middlewared.test.integration.utils import call
 from auto_config import ha, user, password
 
@@ -24,6 +28,16 @@ except ImportError:
     pytestmark = pytest.mark.skipif(True, reason=Reason)
 
 
+@contextmanager
+def override_domain():
+    old_domain = call('network.configuration.config')['domain']
+
+    try:
+        call('network.configuration.update', {'domain': 'local'})
+        yield
+    finally:
+        call('network.configuration.update', {'domain': old_domain})
+
 @pytest.fixture(scope="module")
 def do_freeipa_connection(request):
     # Confirm DNS forward
@@ -38,32 +52,28 @@ def do_freeipa_connection(request):
     # stdout: <FREEIPA_IP_reverse_format>.in-addr.arpa domain name pointer <FREEIPA_HOSTNAME>.
     assert res['stdout'].split()[-1] == FREEIPA_HOSTNAME + "."
 
-    with ldap(
-        FREEIPA_BASEDN,
-        FREEIPA_BINDDN,
-        FREEIPA_BINDPW,
-        FREEIPA_HOSTNAME,
-        validate_certificates=False,
-    ) as ldap_conn:
-        yield (request, ldap_conn)
+    with override_domain():
+        with override_nameservers(FREEIPA_IP) as ns:
+            with ldap(
+                FREEIPA_BASEDN,
+                FREEIPA_BINDDN,
+                FREEIPA_BINDPW,
+                FREEIPA_HOSTNAME,
+                validate_certificates=False,
+            ) as ldap_conn:
+                yield (request, ldap_conn)
 
 
 @pytest.mark.dependency(name="setup_freeipa")
-def test_01_setup_and_enabling_freeipa(do_freeipa_connection):
+def test_setup_and_enabling_freeipa(do_freeipa_connection):
     results = GET("/ldap/get_state/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), str), results.text
     assert results.json() == "HEALTHY", results.text
 
 
-def test_02_verify_ldap_enable_is_true(request):
-    depends(request, ["setup_freeipa"], scope="session")
-    results = GET("/ldap/")
-    assert results.json()["enable"] is True, results.text
-
-
 @pytest.mark.dependency(name="FREEIPA_VALID_CONFIG")
-def test_05_verify_config(request):
+def test_verify_config(request):
     depends(request, ["setup_freeipa"], scope="session")
     ldap_config = call('ldap.config')
     assert 'RFC2307BIS' == ldap_config['schema']
@@ -74,7 +84,7 @@ def test_05_verify_config(request):
 
 
 @pytest.mark.dependency(name="FREEIPA_NSS_WORKING")
-def test_07_verify_that_the_freeipa_user_id_exist_on_the_nas(request):
+def test_verify_that_the_freeipa_user_id_exist_on_the_nas(request):
     """
     get_user_obj is a wrapper around the pwd module.
     """
@@ -91,7 +101,7 @@ def test_07_verify_that_the_freeipa_user_id_exist_on_the_nas(request):
     assert len(pwd_obj['grouplist']) >= 1, pwd_obj['grouplist']
 
 
-def test_10_verify_support_for_netgroups(request):
+def test_verify_support_for_netgroups(request):
     """
     'getent netgroup' should be able to retrieve netgroup
     """

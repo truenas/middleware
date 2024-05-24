@@ -197,17 +197,6 @@ class TimeservicesService(PseudoServiceBase):
         await self.middleware.call("core.environ_update", {"TZ": settings["stg_timezone"]})
 
 
-class DSCacheService(PseudoServiceBase):
-    name = "dscache"
-
-    async def start(self):
-        await self.middleware.call('directoryservices.cache.refresh')
-
-    async def stop(self):
-        await self.middleware.call('idmap.clear_idmap_cache')
-        await self.middleware.call('directoryservices.cache.refresh')
-
-
 class UserService(PseudoServiceBase):
     name = "user"
 

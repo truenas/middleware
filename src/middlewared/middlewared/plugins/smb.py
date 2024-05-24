@@ -20,6 +20,7 @@ from middlewared.schema.utils import NOT_PROVIDED
 from middlewared.service import accepts, job, pass_app, private, SharingService
 from middlewared.service import ConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.plugins.directoryservices_.all import get_enabled_ds
 from middlewared.plugins.smb_.constants import (
     NETIF_COMPLETE_SENTINEL,
     CONFIGURED_SENTINEL,
@@ -38,7 +39,8 @@ from middlewared.plugins.smb_.util_net_conf import reg_delshare, reg_listshares,
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.plugins.smb_.utils import apply_presets, is_time_machine_share, smb_strip_comments
 from middlewared.plugins.tdb.utils import TDBError
-from middlewared.plugins.idmap_.utils import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
+from middlewared.plugins.idmap_.idmap_constants import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils import filter_list, run
 from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
@@ -112,12 +114,22 @@ class SMBService(ConfigService):
         if self.middleware.call_sync('failover.status') not in ('SINGLE', 'MASTER'):
             return {'netbiosname': 'TN_STANDBY'}
 
-        ds_state = self.middleware.call_sync('directoryservices.get_state')
-        ds_config = None
-        for svc, state in ds_state.items():
-            if state != 'DISABLED':
-                ds_config = self.middleware.call_sync(f'{svc}.config')
-                break
+        enabled_ds = get_enabled_ds()
+        if enabled_ds is None:
+            enabled_ds_name = None
+            ds_config = {}
+        else:
+            match enabled_ds.name:
+                case DSType.AD.value:
+                    ds_config = enabled_ds.config
+                case DSType.LDAP.value:
+                    ds_config = enabled_ds.config
+                case DSType.IPA.value:
+                    ds_config = enabled_ds.config | {'domain_info': enabled_ds.get_smb_domain_info()}
+                case _:
+                    raise ValueError(f'{enabled_ds.name}: Unexpected directory service')
+
+            enabled_ds_name = enabled_ds.name
 
         idmap_config = self.middleware.call_sync('idmap.query')
         smb_config = self.middleware.call_sync('smb.config')
@@ -125,7 +137,7 @@ class SMBService(ConfigService):
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
 
         return generate_smb_conf_dict(
-            ds_state, ds_config, smb_config, smb_shares, bind_ip_choices, idmap_config
+            enabled_ds_name, ds_config, smb_config, smb_shares, bind_ip_choices, idmap_config
         )
 
     @private
@@ -643,8 +655,8 @@ class SMBService(ConfigService):
 
         verrors = ValidationErrors()
         # Skip this check if we're joining AD
-        ad_state = await self.middleware.call('activedirectory.get_state')
-        if ad_state in ['HEALTHY', 'FAULTED']:
+        ds = await self.middleware.call('directoryservices.status')
+        if ds['type'] == DSType.AD.value.upper() and ds['status'] in ('HEALTHY', 'FAULTED'):
             for i in ('workgroup', 'netbiosname', 'netbiosalias'):
                 if old[i] != new[i]:
                     verrors.add(f'smb_update.{i}',
@@ -869,7 +881,8 @@ class SharingSMBService(SharingService):
         do_global_reload = await self.must_reload_globals(data)
 
         if do_global_reload:
-            if (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY':
+            ds = await self.middleware.call('directoryservices.status')
+            if ds['type'] == DSType.AD.value.upper() and ds['status'] == 'HEALTHY':
                 if data['home']:
                     await self.middleware.call('etc.generate', 'smb')
                     await self.middleware.call('idmap.clear_idmap_cache')
@@ -1024,7 +1037,8 @@ class SharingSMBService(SharingService):
             do_global_reload = True
 
         if do_global_reload:
-            if (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY':
+            ds = await self.middleware.call('directoryservices.status')
+            if ds['type'] == DSType.AD.value.upper() and ds['status'] == 'HEALTHY':
                 if new['home'] or old['home']:
                     await self.middleware.call('idmap.clear_idmap_cache')
 

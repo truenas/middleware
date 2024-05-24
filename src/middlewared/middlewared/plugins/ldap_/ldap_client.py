@@ -3,7 +3,7 @@ import threading
 import ldap as pyldap
 
 from ldap.controls import SimplePagedResultsControl
-from middlewared.plugins.directoryservices import SSL
+from middlewared.utils.directoryservices.constants import SSL
 
 client_lock = threading.RLock()
 

@@ -1,6 +1,5 @@
 from middlewared.service import private, Service
 from middlewared.service_exception import CallError
-from middlewared.plugins.smb import SMBCmd, SMBHAMODE
 from middlewared.plugins.smb_.smbconf.reg_service import ShareSchema
 from .utils import smb_strip_comments
 from .util_net_conf import (
@@ -11,8 +10,6 @@ from .util_net_conf import (
         reg_showshare,
 )
 
-import errno
-import json
 import os
 
 CONF_JSON_VERSION = {"major": 0, "minor": 1}

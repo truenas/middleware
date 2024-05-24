@@ -197,8 +197,8 @@ class ACLTemplateService(CRUDService):
         ba_id = int(SMBBuiltin.ADMINISTRATORS.value[1][9:])
         await self.append_builtins_internal((bu_id, ba_id), data)
 
-        ad_state = await self.middleware.call('activedirectory.get_state')
-        if ad_state != 'HEALTHY':
+        ds = await self.middleware.call('directoryservices.status')
+        if ds['type'] != 'ACTIVEDIRECTORY' or ds['status'] != 'HEALTHY':
             return
 
         domain_info = await self.middleware.call('idmap.domain_info', 'DS_TYPE_ACTIVEDIRECTORY')

@@ -103,6 +103,11 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'fstab'},
             {'type': 'py', 'path': 'fstab_configure', 'checkpoint': 'post_init'}
         ],
+        'ipa': [
+            {'type': 'py', 'path': 'ipa/default_conf'},
+            {'type': 'py', 'path': 'ipa/ca.crt'},
+            {'type': 'py', 'path': 'ipa/smb.keytab', 'mode': 0o600}
+        ],
         'kerberos': {
             'ctx': [
                 {'method': 'activedirectory.config'},
@@ -237,6 +242,9 @@ class EtcService(Service):
         },
         'nscd': [
             {'type': 'mako', 'path': 'nscd.conf'},
+        ],
+        'nss': [
+            {'type': 'mako', 'path': 'nsswitch.conf'},
         ],
         'wsd': [
             {'type': 'mako', 'path': 'local/wsdd.conf', 'checkpoint': 'post_init'},

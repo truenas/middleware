@@ -3,15 +3,14 @@ import os
 from logging import getLogger
 from middlewared.utils import filter_list
 from middlewared.plugins.account import DEFAULT_HOME_PATH
-from middlewared.plugins.idmap_.utils import TRUENAS_IDMAP_MAX
 from middlewared.plugins.smb_.constants import LOGLEVEL_MAP, SMBPath
-from middlewared.plugins.directoryservices import DSStatus, SSL
+from middlewared.utils.directoryservices.constants import DSType
 
 LOGGER = getLogger(__name__)
 
 
 def generate_smb_conf_dict(
-    ds_state,
+    enabled_ds,
     ds_config,
     smb_service_config,
     smb_shares,
@@ -20,16 +19,24 @@ def generate_smb_conf_dict(
 ):
     guest_enabled = any(filter_list(smb_shares, [['guestok', '=', True]]))
     fsrvp_enabled = any(filter_list(smb_shares, [['fsrvp', '=', True]]))
+    ad_enabled = ipa_enabled = ad_idmap = None
 
-    ad_enabled = ds_state['activedirectory'] != 'DISABLED'
-    if ad_enabled:
-        ad_idmap = filter_list(
-            idmap_settings,
-            [('name', '=', 'DS_TYPE_ACTIVEDIRECTORY')],
-            {'get': True}
-        )
-    else:
-        ad_idmap = None
+    match enabled_ds:
+        case DSType.AD.value:
+            ad_enabled = True
+            ad_idmap = filter_list(
+                idmap_settings,
+                [('name', '=', 'DS_TYPE_ACTIVEDIRECTORY')],
+                {'get': True}
+            )
+        case DSType.IPA.value:
+            ipa_enabled = True
+        case DSType.LDAP.value | None:
+            pass
+        case _:
+            raise ValueError(
+                f'{ds_state["name"]}: Unknown directory service'
+            )
 
     home_share = filter_list(smb_shares, [['home', '=', True]])
     if home_share:
@@ -44,7 +51,6 @@ def generate_smb_conf_dict(
     else:
         home_path = DEFAULT_HOME_PATH
 
-    ldap_enabled = ds_state['ldap'] != 'DISABLED'
     loglevelint = int(LOGLEVEL_MAP.inv.get(smb_service_config['loglevel'], 1))
 
     """
@@ -140,26 +146,26 @@ def generate_smb_conf_dict(
         })
 
     if smb_service_config['enable_smb1']:
-       smbconf['server min protocol'] = 'NT1'
+        smbconf['server min protocol'] = 'NT1'
 
     if smb_service_config['syslog']:
-       smbconf['logging'] = f'syslog@{min(3, loglevelint)} file'
+        smbconf['logging'] = f'syslog@{min(3, loglevelint)} file'
 
     if smb_bindips := smb_service_config['bindip']:
-       allowed_ips = set(smb_bind_choices.values())
-       if (rejected := set(smb_bindips) - allowed_ips):
-           LOGGER.warning(
-               '%s: IP address(es) are no longer in use and should be removed '
-               'from SMB configuration.', rejected
-           )
+        allowed_ips = set(smb_bind_choices.values())
+        if (rejected := set(smb_bindips) - allowed_ips):
+            LOGGER.warning(
+                '%s: IP address(es) are no longer in use and should be removed '
+                'from SMB configuration.', rejected
+            )
 
-       if (final_ips := allowed_ips & set(smb_bindips)):
-           smbconf['interfaces'] = ' '.join(final_ips | {'127.0.0.1'})
-       else:
-           # We need to generate SMB configuration to prevent breaking
-           # winbindd
-           LOGGER.error('No specified SMB bind IP addresses are available')
-           smbconf['interfaces'] = '127.0.0.1'
+        if (final_ips := allowed_ips & set(smb_bindips)):
+            smbconf['interfaces'] = ' '.join(final_ips | {'127.0.0.1'})
+        else:
+            # We need to generate SMB configuration to prevent breaking
+            # winbindd
+            LOGGER.error('No specified SMB bind IP addresses are available')
+            smbconf['interfaces'] = '127.0.0.1'
 
     """
     The following are our default Active Directory related parameters
@@ -210,8 +216,22 @@ def generate_smb_conf_dict(
             'ads dns update': False,
             'winbind nss info': ac['nss_info'].lower(),
             'template homedir': home_path,
-            'winbind enum users': not ac['disable_freenas_cache'],
-            'winbind enum groups': not ac['disable_freenas_cache'],
+            'winbind enum users': ac['enumerate'],
+            'winbind enum groups': ac['enumerate'],
+        })
+
+    """
+    Only try to set up IPA configuration if we have an explicitly
+    configured kerberos realm. The following parameters are based on what is
+    performed when admin runs command ipa-client-samba-install
+    """
+    if ipa_enabled and ds_config['kerberos_realm']:
+        smbconf.update({
+            'server role': 'member server',
+            'kerberos method': 'dedicated keytab',
+            'dedicated keytab file': 'FILE:/etc/smb.keytab',
+            'workgroup': ds_config['domain_info']['netbios_name'],
+            'realm': ds_config['kerberos_realm']['krb_realm']
         })
 
     """
@@ -246,7 +266,6 @@ def generate_smb_conf_dict(
             f'{idmap_prefix} range': f'{i["range_low"]} - {i["range_high"]}',
         })
 
-        disable_starttls = False
         for k, v in i['options'].items():
             backend_parameter = 'realm' if k == 'cn_realm' else k
             match k:
@@ -255,13 +274,22 @@ def generate_smb_conf_dict(
                 case 'ldap_url':
                     value = f'{"ldaps://" if i["options"]["ssl"]  == "ON" else "ldap://"}{v}'
                 case 'ssl':
-                    if v != 'STARTTLS':
-                        disable_startls = True
                     continue
                 case _:
                     value = v
 
             smbconf.update({f'{idmap_prefix} {backend_parameter}': value})
+
+    if ipa_enabled:
+        # Separately configure idmap settings for our IPA domain since
+        # this are not user-configurable on the NAS (provided by IPA server).
+        domain_short = ds_config['domain_info']['netbios_name']
+        range_low = ds_config['domain_info']['range_id_min']
+        range_high = ds_config['domain_info']['range_id_max']
+        smbconf.update({
+            f'idmap config {domain_short} : backend' : 'sss',
+            f'idmap config {domain_short} : range' : f'{range_low} - {range_high}'
+        })
 
     for e in smb_service_config['smb_options'].splitlines():
         # Add relevant auxiliary parameters

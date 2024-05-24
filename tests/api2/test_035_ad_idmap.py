@@ -10,16 +10,15 @@ import os
 import json
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import hostname, password, user
+from auto_config import hostname
 from base64 import b64decode
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import call, ssh
-from pytest_dependency import depends
-from time import sleep
+from middlewared.test.integration.utils.system import reset_systemd_svcs
 
 try:
-    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer, AD_COMPUTER_OU
+    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, AD_COMPUTER_OU
     from config import (
         LDAPBASEDN,
         LDAPBINDDN,
@@ -40,35 +39,53 @@ BACKENDS = [
     "RID",
 ]
 
-BACKEND_OPTIONS = None
-WORKGROUP = None
-nameserver1 = None
-nameserver2 = None
+@pytest.fixture(scope="function")
+def idmap_domain():
+    low, high = call('idmap.get_next_idmap_range')
+    payload = {
+        "name": "canary",
+        "range_low": low,
+        "range_high": high,
+        "idmap_backend": "RID",
+        "options": {},
+    }
+    new_idmap = call('idmap.create', payload)
 
-job_id = None
-dom_id = None
+    try:
+        yield new_idmap
+    finally:
+        call('idmap.delete', new_idmap['id'])
 
 
 @pytest.fixture(scope="module")
 def do_ad_connection(request):
-    with active_directory(
-        AD_DOMAIN,
-        ADUSERNAME,
-        ADPASSWORD,
-        netbiosname=hostname,
-        createcomputer=AD_COMPUTER_OU,
-    ) as ad:
-        yield (request, ad)
+    call('service.update', 'cifs', {'enable': True})
+    try:
+        with active_directory(
+            AD_DOMAIN,
+            ADUSERNAME,
+            ADPASSWORD,
+            netbiosname=hostname,
+            createcomputer=AD_COMPUTER_OU,
+        ) as ad:
+            yield ad
+    finally:
+        call('service.update', 'cifs', {'enable': False})
 
 
-@pytest.mark.dependency(name="AD_IS_HEALTHY")
-def test_03_enabling_activedirectory(do_ad_connection):
-    results = GET('/activedirectory/started/')
-    assert results.status_code == 200, results.text
+def assert_ad_healthy():
+    ad_alerts = call('alert.run_source', 'ActiveDirectoryDomainBind')
+    assert len(ad_alerts) == 0, str(ad_alerts)
 
 
-def test_04_name_sid_resolution(request):
-    depends(request, ["AD_IS_HEALTHY"])
+@pytest.fixture(scope="module")
+def backend_data():
+    backend_options = call('idmap.backend_options')
+    workgroup = call('smb.config')['workgroup']
+    yield {'options': backend_options, 'workgroup': workgroup}
+
+
+def test_name_sid_resolution(do_ad_connection):
 
     # get list of AD group gids for user from NSS
     ad_acct = call('user.get_user_obj', {'username': f'{ADUSERNAME}@{AD_DOMAIN}', 'get_groups': True})
@@ -84,25 +101,8 @@ def test_04_name_sid_resolution(request):
     assert set([x['id'] for x in unixids['mapped'].values()]) == groups
 
 
-@pytest.mark.dependency(name="GATHERED_BACKEND_OPTIONS")
-def test_07_get_idmap_backend_options(request):
-    """
-    Create large set of SMB shares for testing registry.
-    """
-    depends(request, ["AD_IS_HEALTHY"])
-    global BACKEND_OPTIONS
-    global WORKGROUP
-    results = GET("/idmap/backend_options")
-    assert results.status_code == 200, results.text
-    BACKEND_OPTIONS = results.json()
-
-    results = GET("/smb")
-    assert results.status_code == 200, results.text
-    WORKGROUP = results.json()['workgroup']
-
-
 @pytest.mark.parametrize('backend', BACKENDS)
-def test_08_test_backend_options(request, backend):
+def test_backend_options(do_ad_connection, backend_data, backend):
     """
     Tests for backend options are performend against
     the backend for the domain we're joined to
@@ -112,8 +112,9 @@ def test_08_test_backend_options(request, backend):
     DS_TYPE_DEFAULT_DOMAIN have hard-coded ids and
     so we don't need to look them up.
     """
-    depends(request, ["GATHERED_BACKEND_OPTIONS"], scope="session")
-    opts = BACKEND_OPTIONS[backend]['parameters'].copy()
+    reset_systemd_svcs('winbind smbd')
+    opts = backend_data['options'][backend]['parameters'].copy()
+    WORKGROUP = backend_data['workgroup']
     set_secret = False
 
     payload = {
@@ -140,9 +141,7 @@ def test_08_test_backend_options(request, backend):
     if not payload['options']:
         payload.pop('options')
 
-    sleep(5)
-    results = PUT("/idmap/id/1/", payload)
-    assert results.status_code == 200, f'payload: {payload}, results: {results.text}'
+    call('idmap.update', 1, payload)
 
     if backend == "AUTORID":
         IDMAP_CFG = "idmap config * "
@@ -153,7 +152,7 @@ def test_08_test_backend_options(request, backend):
     Validate that backend was correctly set in smb.conf.
     """
     running_backend = call('smb.getparm', f'{IDMAP_CFG}: backend', 'GLOBAL')
-    assert running_backend == backend.lower(), results['output']
+    assert running_backend == backend.lower()
 
     if backend == "RID":
         """
@@ -163,9 +162,7 @@ def test_08_test_backend_options(request, backend):
         changed is sufficient for now.
         """
         payload2 = {"options": {"sssd_compat": True}}
-        results = PUT("/idmap/id/1/", payload2)
-        assert results.status_code == 200, results.text
-        out = results.json()
+        out = call('idmap.update', 1, payload2)
         assert out['range_low'] != payload['range_low']
 
     elif backend == "AUTORID":
@@ -179,8 +176,7 @@ def test_08_test_backend_options(request, backend):
             "readonly": True,
             "ignore_builtin": True,
         }
-        results = PUT("/idmap/id/1/", payload3)
-        assert results.status_code == 200, results.text
+        call('idmap.update', 1, payload3)
 
     elif backend == "AD":
         payload3["options"] = {
@@ -188,8 +184,7 @@ def test_08_test_backend_options(request, backend):
             "unix_primary_group": True,
             "unix_nss_info": True,
         }
-        results = PUT("/idmap/id/1/", payload3)
-        assert results.status_code == 200, results.text
+        call('idmap.update', 1, payload3)
 
     elif backend == "LDAP":
         payload3["options"] = {
@@ -200,8 +195,7 @@ def test_08_test_backend_options(request, backend):
             "ssl": "ON",
             "readonly": True,
         }
-        results = PUT("/idmap/id/1/", payload3)
-        assert results.status_code == 200, results.text
+        call('idmap.update', 1, payload3)
         secret = payload3["options"].pop("ldap_user_dn_password")
         set_secret = True
 
@@ -218,8 +212,7 @@ def test_08_test_backend_options(request, backend):
             "ssl": "ON",
             "ldap_realm": True,
         }
-        results = PUT("/idmap/id/1/", payload3)
-        assert results.status_code == 200, results.text
+        call('idmap.update', 1, payload3)
         r = payload3["options"].pop("ldap_realm")
         payload3["options"]["realm"] = r
         secret = payload3["options"].pop("ldap_user_dn_password")
@@ -280,8 +273,9 @@ def test_08_test_backend_options(request, backend):
         secrets_dump = call('directoryservices.secrets.dump')
         assert secrets_dump == db_secrets
 
-
     # reset idmap backend to RID to ensure that winbindd is running
+    reset_systemd_svcs('winbind smbd')
+
     payload = {
         "name": "DS_TYPE_ACTIVEDIRECTORY",
         "range_low": "1000000001",
@@ -289,26 +283,19 @@ def test_08_test_backend_options(request, backend):
         "idmap_backend": 'RID',
         "options": {}
     }
-    sleep(5)
-    results = PUT("/idmap/id/1/", payload)
-    assert results.status_code == 200, results.text
+    call('idmap.update', 1, payload)
 
 
-def test_09_clear_idmap_cache(request):
-    depends(request, ["AD_IS_HEALTHY"])
-    results = GET("/idmap/clear_idmap_cache")
-    assert results.status_code == 200, results.text
-    job_id = results.json()
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+def test_clear_idmap_cache(do_ad_connection):
+    call('idmap.clear_idmap_cache', job=True)
 
 
-def test_10_idmap_overlap_fail(request):
+def test_idmap_overlap_fail(do_ad_connection):
     """
     It should not be possible to set an idmap range for a new
     domain that overlaps an existing one.
     """
-    depends(request, ["AD_IS_HEALTHY"])
+    assert_ad_healthy()
     payload = {
         "name": "canary",
         "range_low": "20000",
@@ -316,16 +303,16 @@ def test_10_idmap_overlap_fail(request):
         "idmap_backend": "RID",
         "options": {}
     }
-    results = POST("/idmap/", payload)
-    assert results.status_code == 422, results.text
+    with pytest.raises(ValidationErrors):
+        call('idmap.create', payload)
 
 
-def test_11_idmap_default_domain_name_change_fail(request):
+def test_idmap_default_domain_name_change_fail():
     """
     It should not be possible to change the name of a
     default idmap domain.
     """
-    depends(request, ["AD_IS_HEALTHY"])
+    assert_ad_healthy()
     payload = {
         "name": "canary",
         "range_low": "1000000000",
@@ -333,86 +320,49 @@ def test_11_idmap_default_domain_name_change_fail(request):
         "idmap_backend": "RID",
         "options": {}
     }
-    results = PUT("/idmap/id/1", payload)
-    assert results.status_code == 422, results.text
+    with pytest.raises(ValidationErrors):
+        call('idmap.create', payload)
 
 
-def test_12_idmap_low_high_range_inversion_fail(request):
+def test_idmap_low_high_range_inversion_fail(request):
     """
     It should not be possible to set an idmap low range
     that is greater than its high range.
     """
-    depends(request, ["AD_IS_HEALTHY"])
+    assert_ad_healthy()
     payload = {
         "name": "canary",
         "range_low": "2000000000",
         "range_high": "1900000000",
         "idmap_backend": "RID",
     }
-    results = POST("/idmap/", payload)
-    assert results.status_code == 422, results.text
+    with pytest.raises(ValidationErrors):
+        call('idmap.create', payload)
 
 
-@pytest.mark.dependency(name="CREATED_NEW_DOMAIN")
-def test_13_idmap_new_domain(request):
-    depends(request, ["AD_IS_HEALTHY"], scope="session")
-    global dom_id
-    cmd = 'midclt call idmap.get_next_idmap_range'
-    results = SSH_TEST(cmd, user, password)
-    assert results['result'] is True, results['output']
-    low, high = json.loads(results['stdout'].strip())
-
-    payload = {
-        "name": "canary",
-        "range_low": low,
-        "range_high": high,
-        "idmap_backend": "RID",
-        "options": {},
-    }
-    results = POST("/idmap/", payload)
-    assert results.status_code == 200, results.text
-    dom_id = results.json()['id']
-
-
-def test_14_idmap_new_domain_duplicate_fail(request):
+def test_idmap_new_domain_duplicate_fail(idmap_domain):
     """
     It should not be possible to create a new domain that
     has a name conflict with an existing one.
     """
-    depends(request, ["AD_IS_HEALTHY"], scope="session")
-    cmd = 'midclt call idmap.get_next_idmap_range'
-    results = SSH_TEST(cmd, user, password)
-    assert results['result'] is True, results['output']
-    low, high = json.loads(results['stdout'].strip())
-
+    low, high = call('idmap.get_next_idmap_range')
     payload = {
-        "name": "canary",
+        "name": idmap_domain["name"],
         "range_low": low,
         "range_high": high,
         "idmap_backend": "RID",
     }
-    results = POST("/idmap/", payload)
-    assert results.status_code == 422, results.text
+    with pytest.raises(ValidationErrors):
+        call('idmap.create', payload)
 
 
-def test_15_idmap_new_domain_autorid_fail(request):
+def test_idmap_new_domain_autorid_fail(idmap_domain):
     """
     It should only be possible to set AUTORID on
     default domain.
     """
-    depends(request, ["CREATED_NEW_DOMAIN"])
     payload = {
         "idmap_backend": "AUTORID",
     }
-    results = PUT(f"/idmap/id/{dom_id}", payload)
-    assert results.status_code == 422, f"[update: {dom_id}]: {results.text}"
-
-
-def test_16_idmap_delete_new_domain(request):
-    """
-    It should only be possible to set AUTORID on
-    default domain.
-    """
-    depends(request, ["CREATED_NEW_DOMAIN"])
-    results = DELETE(f"/idmap/id/{dom_id}")
-    assert results.status_code == 200, f"[delete: {dom_id}]: {results.text}"
+    with pytest.raises(ValidationErrors):
+        call('idmap.update', idmap_domain['id'], payload)

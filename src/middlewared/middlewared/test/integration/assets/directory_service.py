@@ -119,18 +119,12 @@ def active_directory(
             raise
 
         try:
-            domain_info = call('activedirectory.domain_info')
+            domain_info = call('directoryservices.summary')['domain_info']
         except Exception:
             # This is definitely unexpected and not recoverable
             fail('Failed to retrieve domain information')
 
-        try:
-            dc_info = call('activedirectory.lookup_dc', domain)
-        except Exception:
-            # This is definitely unexpected and not recoverable
-            fail('Failed to retrieve domain controller information')
-
-        u = f'{dc_info["Pre-Win2k Domain"]}\\{ADUSERNAME.lower()}'
+        u = f'{domain_info["pre-win2k_domain"]}\\{ADUSERNAME.lower()}'
 
         try:
             user_obj = call('user.get_user_obj', {'username': u, 'sid_info': True})
@@ -142,7 +136,6 @@ def active_directory(
             yield {
                 'config': config,
                 'domain_info': domain_info,
-                'dc_info': dc_info,
                 'user_obj': user_obj,
             }
         finally:

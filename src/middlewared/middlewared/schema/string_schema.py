@@ -44,7 +44,7 @@ class Str(EnumMixin, Attribute):
         if isinstance(value, int) and not isinstance(value, bool):
             value = str(value)
         if not isinstance(value, str):
-            raise Error(self.name, 'Not a string')
+            raise Error(self.name, f'[{value}]: Not a string')
         if not self.empty and not value.strip():
             raise Error(self.name, 'Empty value not allowed')
         return value

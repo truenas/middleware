@@ -20,7 +20,6 @@ from .openipmi import OpenIpmiService
 from .pseudo.libvirtd import LibvirtdService, LibvirtGuestService
 from .pseudo.misc import (
     CronService,
-    DSCacheService,
     KmipService,
     LoaderService,
     HostnameService,
@@ -43,7 +42,6 @@ from .pseudo.misc import (
 
 all_services = [
     CIFSService,
-    DSCacheService,
     FTPService,
     ISCSITargetService,
     MDNSService,

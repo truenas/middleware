@@ -1,7 +1,6 @@
-import os
 import threading
 
-from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.service_exception import CallError
 
 try:
     from samba.samba3 import param as s3param

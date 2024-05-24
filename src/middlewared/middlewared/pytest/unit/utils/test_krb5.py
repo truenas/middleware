@@ -3,6 +3,7 @@ import jsonschema
 import os
 import pytest
 
+from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices import krb5_constants, krb5, krb5_conf
 
 
@@ -168,6 +169,25 @@ def test__klist_impl(kerberos_data_dir):
     tkt = klist['tickets'][0]
 
     assert len(tkt['flags']) != 0
+
+
+def test__check_ticket(kerberos_data_dir):
+    """
+    We use gssapi library to perform basic validation of kerberos tickets
+    The ccache file we write as part of this test is valid and expired
+    so we check that it raises the expected error if exceptions are
+    requested otherwise check that it returns False. Tests of valid
+    tickets occur during full CI test runs.
+    """
+    ccache_path = os.path.join(kerberos_data_dir, CCACHE_NAME)
+
+    # first validate boolean-only response
+    assert krb5.check_ticket(ccache_path, False) is False
+
+    with pytest.raises(CallError) as ce:
+        krb5.check_ticket(ccache_path)
+
+    assert ce.value.errmsg == 'Kerberos ticket is expired'
 
 
 @pytest.mark.parametrize('params,expected,success', [

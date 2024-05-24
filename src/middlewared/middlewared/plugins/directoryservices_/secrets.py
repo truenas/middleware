@@ -2,9 +2,10 @@ import enum
 import json
 import struct
 
+from .all import registered_services_obj
 from base64 import b64encode, b64decode
 from middlewared.service import Service
-from middlewared.service_exception import MatchNotFound
+from middlewared.service_exception import CallError, MatchNotFound
 
 SECRETS_FILE = '/var/db/system/samba4/private/secrets.tdb'
 
@@ -105,6 +106,24 @@ class DomainSecrets(Service):
             f'SECRETS/GENERIC/IDMAP_LDAP_{domain.upper()}/{user_dn}',
             {'payload': b64encode(secret.encode() + b'\x00')}
         )
+
+    async def set_ipa_secret(self, domain, secret):
+        if not registered_services_obj.ipa or not registered_services_obj.ipa.is_enabled():
+            raise CallError('This endpoint may only be used when joined to IPA domain')
+
+        # The stored secret in secrets.tdb and our kerberos keytab for SMB
+        # must be kept in-sync
+        await self.__store(
+            f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', secret
+        )
+
+        # Password changed field must be initialized (but otherwise is not required)
+        await self.__store(
+            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", b64encode(b"2\x00")
+        )
+
+        # Ensure we back this info up into our sqlite database as well
+        await self.backup()
 
     async def get_ldap_idmap_secret(self, domain, user_dn):
         """

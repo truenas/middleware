@@ -211,11 +211,11 @@ def test_002_verify_user_exists_in_pwd(request):
     assert pw['pw_shell'] == UserAssets.TestUser01['query_response']['shell']
     assert pw['pw_gecos'] == UserAssets.TestUser01['query_response']['full_name']
     assert pw['pw_dir'] == VAR_EMPTY
+    assert pw['source'] == 'FILES'
+    assert pw['local'] is True
 
     # At this point, we're not an SMB user
-    assert pw['sid_info'] is not None
-    assert pw['sid_info']['domain_information']['online']
-    assert pw['sid_info']['domain_information']['activedirectory'] is False
+    assert pw['sid'] is not None
 
 
 def test_003_get_next_uid_again(request):
@@ -427,9 +427,9 @@ def test_031_create_user_with_homedir(request):
     assert pw['pw_uid'] == UserAssets.TestUser02['query_response']['uid']
     assert pw['pw_shell'] == UserAssets.TestUser02['query_response']['shell']
     assert pw['pw_gecos'] == UserAssets.TestUser02['query_response']['full_name']
-    assert pw['sid_info'] is not None
-    assert pw['sid_info']['domain_information']['online']
-    assert pw['sid_info']['domain_information']['activedirectory'] is False
+    assert pw['sid'] is not None
+    assert pw['local'] is True
+    assert pw['source'] == 'FILES'
 
     # verify smb user passdb entry
     assert qry['sid']

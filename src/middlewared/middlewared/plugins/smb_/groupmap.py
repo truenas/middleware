@@ -128,14 +128,20 @@ class SMBService(Service):
         groupmap = await self.groupmap_list()
         admin_group = (await self.middleware.call('smb.config'))['admin_group']
 
-        ad_state = await self.middleware.call('activedirectory.get_state')
-        if ad_state == 'HEALTHY':
+        ds_state = await self.middleware.call('directoryservices.status')
+        if ds_state['type'] == 'ACTIVEDIRECTORY' and ds_state['status'] == 'HEALTHY':
             try:
                 domain_info = await self.middleware.call('idmap.domain_info',
                                                          'DS_TYPE_ACTIVEDIRECTORY')
                 domain_sid = domain_info['sid']
             except Exception:
                 self.logger.warning('Failed to retrieve idmap domain info', exc_info=True)
+
+        match ds_state['type']:
+            case 'ACTIVEDIRECTORY':
+                ad_state = ds_state['status']
+            case _:
+                ad_state = 'DISABLED'
 
         """
         Administrators should only have local and domain admins, and a user-
@@ -418,9 +424,6 @@ class SMBService(Service):
         payload = {}
         to_add = []
         to_del = []
-
-        if await self.middleware.call('ldap.get_state') != "DISABLED":
-            return
 
         if not bypass_sentinel_check and not await self.middleware.call('smb.is_configured'):
             raise CallError(

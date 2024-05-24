@@ -1,4 +1,4 @@
-import enum
+import base64
 import errno
 import ipaddress
 import ldap as pyldap
@@ -11,30 +11,21 @@ from middlewared.schema import accepts, returns, Bool, Dict, Int, List, Str, Ref
 from middlewared.service import job, private, ConfigService, Service, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.plugins.directoryservices import DSStatus, SSL
+from middlewared.utils.directoryservices.constants import DSStatus
+from middlewared.plugins.directoryservices_.all import (
+    get_enabled_ds,
+    registered_services_obj
+)
 from middlewared.plugins.idmap import DSType
 from middlewared.plugins.ldap_.ldap_client import LdapClient
 from middlewared.plugins.ldap_ import constants
-from middlewared.utils.nss import pwd, grp
-from middlewared.utils.nss.nss_common import NssModule
+from middlewared.utils.directoryservices.constants import SSL
+from middlewared.utils.directoryservices.ldap_utils import hostnames_to_uris
+from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
+from middlewared.utils.directoryservices.krb5 import ktutil_list_impl
+from middlewared.utils.directoryservices.krb5_constants import krb5ccache
 from middlewared.validators import Range
-
-
-LDAP_DEPRECATED = "LDAP with SMB schema support"
-
-
-class SAMAccountType(enum.Enum):
-    SAM_DOMAIN_OBJECT = 0x0
-    SAM_GROUP_OBJECT = 0x10000000
-    SAM_NON_SECURITY_GROUP_OBJECT = 0x10000001
-    SAM_ALIAS_OBJECT = 0x20000000
-    SAM_NON_SECURITY_ALIAS_OBJECT = 0x20000001
-    SAM_USER_OBJECT = 0x30000000
-    SAM_NORMAL_USER_ACCOUNT = 0x30000000
-    SAM_MACHINE_ACCOUNT = 0x30000001
-    SAM_TRUST_ACCOUNT = 0x30000002
-    SAM_APP_BASIC_GROUP = 0x40000000
-    SAM_APP_QUERY_GROUP = 0x40000001
+from tempfile import NamedTemporaryFile
 
 
 class LDAPClient(Service):
@@ -129,29 +120,6 @@ class LDAPClient(Service):
                 self.logger.debug("Unable to parse results: %s", r)
 
         return res
-
-    @accepts(Dict(
-        'get-samba-domain',
-        Ref('ldap-configuration'),
-    ))
-    def get_samba_domains(self, data):
-        """
-        This returns a list of configured samba domains on the LDAP
-        server. This is used to determine whether the LDAP server has
-        The Samba LDAP schema. In this case, the SMB service can be
-        configured to use Samba's ldapsam passdb backend.
-        """
-        try:
-            results = LdapClient.search(
-                data['ldap-configuration'],
-                data['ldap-configuration']['basedn'],
-                pyldap.SCOPE_SUBTREE,
-                '(objectclass=sambaDomain)'
-            )
-        except Exception as e:
-            self._convert_exception(e)
-
-        return self.parse_results(results)
 
     @accepts(Dict(
         'get-root-dse',
@@ -327,7 +295,7 @@ class LDAPService(ConfigService):
         if data["kerberos_realm"] is not None:
             data["kerberos_realm"] = data["kerberos_realm"]["id"]
 
-        data['uri_list'] = await self.hostnames_to_uris(data)
+        data['uri_list'] = hostnames_to_uris(data['hostname'], data['ssl'] == 'ON')
 
         # The following portion of ldap_extend shifts ldap search base and map
         # parameter overrides into their own separate dictionaries
@@ -344,10 +312,12 @@ class LDAPService(ConfigService):
             for key in keys:
                 data[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][nss_type][key] = data.pop(key, None)
 
+        data['enumerate'] = not data.pop('disable_freenas_cache', True)
+
         return data
 
     @private
-    async def ldap_compress(self, data):
+    def ldap_compress(self, data):
         data['hostname'] = ','.join(data['hostname'])
         for key in ["ssl", "schema"]:
             data[key] = data[key].lower()
@@ -365,6 +335,7 @@ class LDAPService(ConfigService):
             for key in keys:
                 data[key] = attribute_maps[nss_type].get(key)
 
+        data['disable_freenas_cache'] = not data.pop('enumerate')
         return data
 
     @accepts(roles=['DIRECTORY_SERVICE_READ'])
@@ -376,36 +347,14 @@ class LDAPService(ConfigService):
         return await self.middleware.call('directoryservices.nss_info_choices', 'LDAP')
 
     @accepts(roles=['DIRECTORY_SERVICE_READ'])
-    @returns(List('ssl_choices', items=[Ref('ldap_ssl_choice', 'ssl')]))
+    @returns(List('ssl_choices', items=[
+        Str('ldap_ssl_choice', enum=[x.value for x in list(SSL)], default=SSL.USESSL.value, register=True)
+    ]))
     async def ssl_choices(self):
         """
         Returns list of SSL choices.
         """
-        return await self.middleware.call('directoryservices.ssl_choices', 'LDAP')
-
-    @private
-    async def hostnames_to_uris(self, data):
-        ret = []
-        for h in data['hostname']:
-            proto = 'ldaps' if SSL(data['ssl']) == SSL.USESSL else 'ldap'
-            parsed = urlparse(f"{proto}://{h}")
-            try:
-                port = parsed.port
-                host = parsed.netloc if not parsed.port else parsed.netloc.rsplit(':', 1)[0]
-            except ValueError:
-                """
-                ParseResult.port will raise a ValueError if the port is not an int
-                Ignore for now. ValidationError will be raised in common_validate()
-                """
-                host, port = h.rsplit(':', 1)
-
-            if port is None:
-                port = 636 if SSL(data['ssl']) == SSL.USESSL else 389
-
-            uri = f"{proto}://{host}:{port}"
-            ret.append(uri)
-
-        return ret
+        return [x.value for x in list(SSL)]
 
     @private
     async def common_validate(self, new, old, verrors):
@@ -563,12 +512,6 @@ class LDAPService(ConfigService):
                 )
                 return constants.SERVER_TYPE_GENERIC
 
-            default_naming_context = rootdse['defaultnamingcontext'][0]
-            data.update({'schema': 'RFC2307BIS'})
-            bases = data[constants.LDAP_SEARCH_BASES_SCHEMA_NAME]
-            bases[constants.SEARCH_BASE_USER] = f'cn=users,cn=accounts,{default_naming_context}'
-            bases[constants.SEARCH_BASE_GROUP] = f'cn=groups,cn=accounts,{default_naming_context}'
-            bases[constants.SEARCH_BASE_NETGROUP] = f'cn=ng,cn=compat,{default_naming_context}'
             return constants.SERVER_TYPE_FREEIPA
 
         elif 'domainControllerFunctionality' in rootdse:
@@ -594,7 +537,7 @@ class LDAPService(ConfigService):
 
     @accepts(Ref('ldap_update'))
     @job(lock="ldap_start_stop")
-    async def do_update(self, job, data):
+    def do_update(self, job, data):
         """
         `hostname` list of ip addresses or hostnames of LDAP servers with
         which to communicate in order of preference. Failover only occurs
@@ -668,12 +611,12 @@ class LDAPService(ConfigService):
         """
         verrors = ValidationErrors()
         must_reload = False
-        old = await self.config()
+        old = self.middleware.call_sync('ldap.config')
         new = old.copy()
         new_search_bases = data.pop(constants.LDAP_SEARCH_BASES_SCHEMA_NAME, {})
         new_attributes = data.pop(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME, {})
         if data['hostname'] is None:
-            del(data['hostname'])
+            data.pop('hostname')
 
         new.update(data)
         new[constants.LDAP_SEARCH_BASES_SCHEMA_NAME] | new_search_bases
@@ -681,32 +624,40 @@ class LDAPService(ConfigService):
         for nss_type in constants.LDAP_ATTRIBUTE_MAPS.keys():
             new[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][nss_type] | new_attributes.get(nss_type, {})
 
-        new['uri_list'] = await self.hostnames_to_uris(new)
-        await self.common_validate(new, old, verrors)
+        new['uri_list'] = hostnames_to_uris(new['hostname'], new['ssl'] == 'ON')
+        self.middleware.call_sync('ldap.common_validate', new, old, verrors)
         verrors.check()
 
         if data.get('certificate') and data['certificate'] != old['certificate']:
-            new_cert = await self.middleware.call('certificate.query',
-                                                  [('id', '=', data['certificate'])],
-                                                  {'get': True})
+            new_cert = self.middleware.call_sync('certificate.query',
+                                                 [('id', '=', data['certificate'])],
+                                                 {'get': True})
             new['cert_name'] = new_cert['name']
 
         if old != new:
             must_reload = True
             if new['enable']:
-                await self.ldap_validate(old, new, verrors)
+                self.middleware.call_sync('ldap.ldap_validate', old, new, verrors)
                 verrors.check()
 
-        await self.ldap_compress(new)
-        await self.middleware.call('datastore.update', self._config.datastore, new['id'], new, {'prefix': 'ldap_'})
+        self.ldap_compress(new)
+        self.middleware.call_sync('datastore.update', self._config.datastore, new['id'], new, {'prefix': 'ldap_'})
 
+        match new['server_type']:
+            case constants.SERVER_TYPE_FREEIPA:
+                ds_obj = registered_services_obj.ipa
+            case _:
+                ds_obj = registered_services_obj.ldap
+
+        ds_obj.update_config()
         if must_reload:
             if new['enable']:
-                await self.__start(job)
+                self.__start(job)
             else:
-                await self.__stop(job)
+                ds_obj.status = DSStatus.DISABLED.name
+                self.__stop(job)
 
-        return await self.config()
+        return self.middleware.call_sync('ldap.config')
 
     @private
     def port_is_listening(self, host, port, timeout=1):
@@ -734,7 +685,7 @@ class LDAPService(ConfigService):
         return ret
 
     @private
-    async def kinit(ldap_conf):
+    async def kinit(self, ldap_config):
         if await self.middleware.call(
             'kerberos.check_ticket',
             {'ccache': krb5ccache.SYSTEM.name},
@@ -766,11 +717,6 @@ class LDAPService(ConfigService):
             await self.kinit(ldap_config)
 
         await self.middleware.call('ldapclient.validate_credentials', client_conf)
-
-    @private
-    async def get_samba_domains(self, ldap_config=None):
-        client_conf = await self.ldap_conf_to_client_config(ldap_config)
-        return await self.middleware.call('ldapclient.get_samba_domains', {"ldap-configuration": client_conf})
 
     @private
     async def get_root_DSE(self, ldap_config=None):
@@ -813,205 +759,207 @@ class LDAPService(ConfigService):
         return await self.middleware.call('ldapclient.get_dn', payload)
 
     @private
-    async def started(self):
-        """
-        Returns False if disabled, True if healthy, raises exception if faulted.
-        """
-        verrors = ValidationErrors()
-        ldap = await self.config()
-        if not ldap['enable']:
-            return False
-
-        await self.common_validate(ldap, ldap, verrors)
-        try:
-            verrors.check()
-        except ValidationErrors:
-            await self.middleware.call(
-                'datastore.update', self._config.datastore, 1,
-                {'enable': False}, {'prefix': 'ldap_'}
-            )
-            raise CallError('Automatically disabling LDAP service due to invalid configuration.',
-                            errno.EINVAL)
-
-        """
-        Initialize state to "JOINING" until after booted.
-        """
-        if not await self.middleware.call('system.ready'):
-            await self.set_state(DSStatus['JOINING'])
-            return True
-
-        try:
-            await self.get_root_DSE(ldap)
-        except CallError:
-            raise
-        except Exception as e:
-            raise CallError(e)
-
-        if not await self.middleware.call('service.started', 'sssd'):
-            await self.middleware.call('etc.generate', 'ldap')
-            await self.middleware.call('service.start', 'sssd')
-
-        await self.set_state(DSStatus['HEALTHY'])
-        return True
-
-    @private
-    async def get_workgroup(self, ldap=None):
-        ret = None
-        smb = await self.middleware.call('smb.config')
-        if ldap is None:
-            ldap = await self.config()
-
-        ret = await self.middleware.call('ldap.get_samba_domains', ldap)
-        if len(ret) > 1:
-            self.logger.warning('Multiple Samba Domains detected in LDAP environment '
-                                'auto-configuration of workgroup map have failed: %s', ret)
-
-        ret = ret[0]['data']['sambaDomainName'][0] if ret else []
-
-        if ret and smb['workgroup'] != ret:
-            self.logger.debug(f'Updating SMB workgroup to match the LDAP domain name [{ret}]')
-            await self.middleware.call('smb.update', {'workgroup': ret})
-
-        return ret
-
-    @private
-    async def set_state(self, state):
-        return await self.middleware.call('directoryservices.set_state', {'ldap': state.name})
-
-    @accepts(roles=['DIRECTORY_SERVICE_READ'])
-    @returns(Ref('directoryservice_state'))
-    async def get_state(self):
-        """
-        Wrapper function for 'directoryservices.get_state'. Returns only the state of the
-        LDAP service.
-        """
-        return (await self.middleware.call('directoryservices.get_state'))['ldap']
-
-    @private
     def create_sssd_dirs(self):
         os.makedirs('/var/run/sssd-cache/mc', mode=0o755, exist_ok=True)
         os.makedirs('/var/run/sssd-cache/db', mode=0o755, exist_ok=True)
 
     @private
-    async def __start(self, job):
+    def setup_ipa_spns(self, job, ldap, ds):
+        # First set up the NFS SPN. This creates or resets the password for
+        # existing NFS service for our hostname. The resulting keytab will be
+        # inserted into our keytabs table.
+        resp = ds.set_spn(['NFS'])
+        self.insert_or_update_keytab(
+            IpaConfigName.IPA_NFS_KEYTAB.value, resp[0]['keytab']
+        )
+
+        try:
+            resp = ds.set_spn(['SMB'])
+        except FileNotFoundError:
+            # Special return code indicating that the IPA domain does not
+            # have required configuration to support SMB service. This is
+            # non-fatal because many IPA users may just wish to use NFS.
+            self.logger.warning(
+                "Failed to configure SMB service for TrueNAS server on IPA "
+                "domain due to lack of required domain configuration."
+            )
+
+            return
+
+        self.insert_or_update_keytab(
+            IpaConfigName.IPA_SMB_KEYTAB.value, resp[0]['keytab']
+        )
+
+    @private
+    def insert_or_update_keytab(self, name, data):
+        kt = self.middleware.call_sync('kerberos.keytab.query', [
+            ['name', '=', name]
+        ])
+        if not kt:
+            self.middleware.call_sync(
+                'datastore.insert', 'directoryservice.kerberoskeytab',
+                {'keytab_name': name, 'keytab_file': data}
+            )
+        else:
+            self.middleware.call_sync(
+                'datastore.update', 'directoryservice.kerberoskeytab', kt[0]['id'],
+                {'keytab_name': name, 'keytab_file': data}
+            )
+
+    @private
+    def do_ipa_setup(self, job, ldap, ds):
+        # Our best-guess at environment configuration to try to kinit
+        # User has provided us with hostnames of IPA severs that _should_
+        # also be KDCs for domain.
+        job.set_progress(5, 'Preparing to kinit to IPA domain')
+        self.logger.debug("XXX: extra config: %s", ds.ipa_extra_config)
+
+        username = f'{ds.ipa_extra_config["username"]}@{ds.ipa_extra_config["realm"]}'
+        self.middleware.call_sync('kerberos.do_kinit', {
+            'krb5_cred': {
+                'username': username,
+                'password': ldap['bindpw']
+            },
+            'kinit-options': {
+                'kdc_override': {
+                    'domain': ds.ipa_extra_config['realm'],
+                    'kdc': ds.ipa_extra_config['target_server'] 
+                }
+            }
+        })
+
+        # We have ticket, which means that our configuration
+        # is mostly correct. We _should_ be able to actually
+        # join FreeIPA now.
+        job.set_progress(15, 'Performing IPA join')
+        resp = ds.join(
+            ds.ipa_extra_config['host'],
+            ds.ipa_extra_config['domain'],
+            ds.ipa_extra_config['realm'],
+            ds.ipa_extra_config['target_server']
+        )
+        # resp includes `cacert` for domain and `keytab` for our host principal to use
+        # in future.
+
+        # insert the IPA host principal keytab into our database
+        job.set_progress(50, 'Updating TrueNAS configuration with IPA domain details.')
+        self.insert_or_update_keytab(IpaConfigName.IPA_HOST_KEYTAB, resp['keytab'])
+
+        # make sure database also has the IPA realm
+        ipa_realm = self.middleware.call_sync('kerberos.realm.query', [
+            ['realm', '=', ds.ipa_extra_config['realm']]
+        ])
+        if ipa_realm:
+            ipa_realm_id = ipa_realm[0]['id']
+        else:
+            ipa_realm_id = self.middleware.call_sync(
+                'datastore.insert', 'directoryservice.kerberosrealm',
+                {'krb_realm': ds.ipa_extra_config['realm']}
+            )
+
+        with NamedTemporaryFile() as f:
+            f.write(base64.b64decode(resp['keytab']))
+            f.flush()
+            krb_principal = ktutil_list_impl(f.name)[0]['principal']
+
+        # update our cacerts with IPA domain one:
+        existing_cacert = self.middleware.call_sync('certificateauthority.query', [
+            ['name', '=', IpaConfigName.IPA_CACERT.value]
+        ])
+        if existing_cacert:
+            if existing_cacert[0]['certificate'] != resp['cacert']:
+                self.logger.error(
+                    '[%s]: Stored CA certificate for IPA domain does not match '
+                    'certificate returned from the IPA LDAP server. Removing '
+                    'certificate from the IPA server configuration. This may '
+                    'prevent the IPA directory service from properly functioning '
+                    'and should be resolved by the TrueNAS administrator. '
+                    'An example of such adminstrative action would be to remove '
+                    'the possibly incorrect CA certificate from the TrueNAS '
+                    'server and re-join the IPA domain to ensure the correct '
+                    'CA certificate is installed after reviewing the issue with '
+                    'the person or team responsible for maintaining the IPA domain.',
+                    IpaConfigName.IPA_CACERT.value
+                )
+        else:
+            self.middleware.call_sync('certificateauthority.create', {
+                'name': IpaConfigName.IPA_CACERT.value,
+                'certificate': resp['cacert'],
+                'add_to_trusted_store': True,
+                'create_type': 'CA_CREATE_IMPORTED'
+            })
+
+        # make sure ldap service is updated to use realm and principal and
+        # clear out the bind account password since it is no longer needed. We
+        # don't insert the IPA cacert into the LDAP configuration since the
+        # certificate field is for certificate-based authentication and _not_
+        # providing certificate authority certificates
+        self.middleware.call_sync('datastore.update', 'directoryservice.ldap', ldap['id'], {
+            'ldap_kerberos_realm': ipa_realm_id,
+            'ldap_kerberos_principal': krb_principal,
+            'ldap_bindpw': ''
+        })
+
+        # update the stored LDAP config
+        ds.update_config()
+
+        # Finally, set up our SPN
+        self.setup_ipa_spns(job, ldap, ds)
+
+    @private
+    def __start(self, job):
         """
         Refuse to start service if the service is alreading in process of starting or stopping.
         If state is 'HEALTHY' or 'FAULTED', then stop the service first before restarting it to ensure
         that the service begins in a clean state.
         """
-        ldap_state = await self.middleware.call('ldap.get_state')
-        if ldap_state in ['LEAVING', 'JOINING']:
-            raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
-
         job.set_progress(0, 'Preparing to configure LDAP directory service.')
-        ldap = await self.config()
+        ds = get_enabled_ds()
+        if ds is None:
+            raise CallError('Directory sevice is not enabled')
 
-        await self.middleware.call('ldap.create_sssd_dirs')
+        ds.update_config()
+        ldap = ds.config
+        self.create_sssd_dirs()
+
+        if ds.name == 'ipa':
+            ds.setup_legacy()
+
+            # assume that if we have a kerberos principal then
+            # we're already properly joined to IPA domain
+            if not ldap['kerberos_principal']:
+                self.do_ipa_setup(job, ldap, ds)
+                ldap = ds.config
 
         if ldap['kerberos_realm']:
-            job.set_progress(5, 'Starting kerberos')
-            await self.middleware.call('kerberos.start')
+            job.set_progress(50, 'Starting kerberos service')
+            self.middleware.call_sync('kerberos.start')
 
-        job.set_progress(15, 'Generating configuration files')
-        await self.middleware.call('etc.generate', 'rc')
-        await self.middleware.call('etc.generate', 'ldap')
-        await self.middleware.call('etc.generate', 'pam')
+        job.set_progress(70, 'Generating configuration files')
+        ds.generate_etc()
 
-        job.set_progress(30, 'Starting sssd service')
-        await self.middleware.call('service.restart', 'sssd')
+        job.set_progress(70, 'Starting sssd service')
+        self.middleware.call_sync('service.restart', 'sssd')
 
-        await self.set_state(DSStatus['HEALTHY'])
+        job.set_progress(75, 'Filling backend user and group cache')
+        ds.fill_cache()
 
-        job.set_progress(80, 'Restarting dependent services')
-        cache_job = await self.middleware.call('directoryservices.cache.refresh')
-        await cache_job.wait()
-        await self.middleware.call('directoryservices.restart_dependent_services')
+        job.set_progress(85, 'Restarting dependent services')
+        self.middleware.call_sync('directoryservices.restart_dependent_services')
 
         job.set_progress(100, 'LDAP directory service started.')
+        # perform health check to reset state
+        ds.health_check()
 
     @private
-    async def __stop(self, job):
-        ldap_state = await self.middleware.call('ldap.get_state')
-        if ldap_state in ['LEAVING', 'JOINING']:
-            raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
-
+    def __stop(self, job):
         job.set_progress(0, 'Preparing to stop LDAP directory service.')
-        await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
-        await self.set_state(DSStatus['LEAVING'])
         job.set_progress(10, 'Rewriting configuration files.')
-        await self.middleware.call('etc.generate', 'rc')
-        await self.middleware.call('etc.generate', 'ldap')
-        await self.middleware.call('etc.generate', 'pam')
-
-        job.set_progress(50, 'Clearing directory service cache.')
-        await self.middleware.call('service.stop', 'dscache')
-
+        self.middleware.call_sync('etc.generate', 'rc')
+        self.middleware.call_sync('etc.generate', 'ldap')
+        self.middleware.call_sync('etc.generate', 'pam')
+        self.middleware.call_sync('etc.generate', 'nss')
+        self.middleware.call_sync('etc.generate', 'ipa')
         job.set_progress(80, 'Stopping sssd service.')
-        await self.middleware.call('service.stop', 'sssd')
-        await self.set_state(DSStatus['DISABLED'])
+        self.middleware.call_sync('service.stop', 'sssd')
         job.set_progress(100, 'LDAP directory service stopped.')
-
-    @private
-    @job(lock='fill_ldap_cache')
-    def fill_cache(self, job, force=False):
-        user_next_index = group_next_index = 100000000
-        if (self.middleware.call_sync('ldap.config'))['disable_freenas_cache']:
-            self.logger.debug('LDAP cache is disabled. Bypassing cache fill.')
-            return
-
-        pwd_list = pwd.getpwall(module=NssModule.SSS.name, as_dict=True)[NssModule.SSS.name]
-        grp_list = grp.getgrall(module=NssModule.SSS.name, as_dict=True)[NssModule.SSS.name]
-
-        for u in pwd_list:
-            entry = {
-                'id': user_next_index,
-                'uid': u['pw_uid'],
-                'username': u['pw_name'],
-                'unixhash': None,
-                'smbhash': None,
-                'group': {},
-                'home': u['pw_dir'],
-                'shell': '',
-                'full_name': u['pw_gecos'],
-                'builtin': False,
-                'email': '',
-                'password_disabled': False,
-                'locked': False,
-                'sudo_commands': [],
-                'sudo_commands_nopasswd': [],
-                'attributes': {},
-                'groups': [],
-                'sshpubkey': None,
-                'local': False,
-                'id_type_both': False,
-                'nt_name': None,
-                'smb': True,
-                'sid': None,
-            }
-            self.middleware.call_sync('directoryservices.cache.insert', self._config.namespace.upper(), 'USER', entry)
-            user_next_index += 1
-
-        for g in grp_list:
-            entry = {
-                'id': group_next_index,
-                'gid': g['gr_gid'],
-                'name': g['gr_name'],
-                'group': g['gr_name'],
-                'builtin': False,
-                'sudo_commands': [],
-                'sudo_commands_nopasswd': [],
-                'users': [],
-                'local': False,
-                'id_type_both': False,
-                'nt_name': None,
-                'smb': True,
-                'sid': None,
-            }
-            self.middleware.call_sync('directoryservices.cache.insert', self._config.namespace.upper(), 'GROUP', entry)
-            group_next_index += 1
-
-    @private
-    async def get_cache(self):
-        users = await self.middleware.call('directoryservices.cache.entries', self._config.namespace.upper(), 'USER')
-        groups = await self.middleware.call('directoryservices.cache.entries', self._config.namespace.upper(), 'GROUP')
-        return {"USERS": users, "GROUPS": groups}

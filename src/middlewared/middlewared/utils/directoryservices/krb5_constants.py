@@ -5,6 +5,8 @@ from middlewared.utils import MIDDLEWARE_RUN_DIR
 
 KRB_TKT_CHECK_INTERVAL = 1800
 
+KRB5_CONF_FILE = '/etc/krb5.conf'
+
 
 class KRB_Keytab(enum.Enum):
     SYSTEM = '/etc/krb5.keytab'

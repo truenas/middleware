@@ -1,6 +1,5 @@
 from middlewared.plugins.sysdataset import SYSDATASET_PATH
-from middlewared.schema import Bool, Dict, List, SID, Str, Int
-from middlewared.service import (accepts, filterable, private, periodic, CRUDService)
+from middlewared.service import (filterable, periodic, CRUDService)
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import run, filter_list
 from middlewared.plugins.smb import SMBCmd
@@ -91,10 +90,9 @@ class ShareSec(CRUDService):
         Parses security descriptor text returned from 'sharesec'.
         Optionally will resolve the SIDs in the SD to names.
         """
-        wb_is_running = True
-
         if len(sd) == 0:
             return {}
+
         parsed_share_sd = {'share_name': None, 'share_acl': []}
 
         sd_lines = sd.splitlines()
@@ -106,7 +104,7 @@ class ShareSec(CRUDService):
             m = RE_SHAREACLENTRY.match(i)
             if m is None:
                 self.logger.warning('%s: share contains unparseable entry: %s',
-                                    parsed_sd['share_name'], i)
+                                    parsed_share_sd['share_name'], i)
                 continue
 
             parsed_share_sd['share_acl'].append(m.groupdict())
@@ -130,7 +128,6 @@ class ShareSec(CRUDService):
             raise CallError(f'sharesec {action} failed with error: {sharesec.stderr.decode()}')
         return sharesec.stdout.decode()
 
-    @accepts(Str('share_name'))
     async def getacl(self, share_name):
         """
         View the ACL information for `share_name`. The share ACL is distinct from filesystem
@@ -162,12 +159,8 @@ class ShareSec(CRUDService):
         Convert aclentry in Securty Descriptor dictionary to string
         representation used by sharesec.
         """
-        if not ae['ae_who_sid'] and not ae['ae_who_name']:
-            raise CallError('ACL Entry must have ae_who_sid or ae_who_name.', errno.EINVAL)
-
         if not ae['ae_who_sid']:
-            name = f'{ae["ae_who_name"]["domain"]}\\{ae["ae_who_name"]["name"]}'
-            ae['ae_who_sid'] = (await self.middleware.call('idmap.name_to_sid', name))['sid']
+            raise CallError('ACL Entry must have ae_who_sid or ae_who_name.', errno.EINVAL)
 
         return f'{ae["ae_who_sid"]}:{ae["ae_type"]}/0x0/{ae["ae_perm"]}'
 

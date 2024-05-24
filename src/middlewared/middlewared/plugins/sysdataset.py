@@ -233,7 +233,8 @@ class SystemDatasetService(ConfigService):
         if new['pool'] != config['pool']:
             system_ready = await self.middleware.call('system.ready')
             try:
-                ad_enabled = (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY'
+                ds_state = await self.middleware.call('directoryservices.get_state')
+                ad_enabled = ds_state['activedirectory'] == 'HEALTHY'
             except Exception:
                 self.logger.error('Failed to retrieve activedirectory state', exc_info=True)
                 ad_enabled = False

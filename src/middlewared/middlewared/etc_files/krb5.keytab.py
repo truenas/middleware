@@ -5,6 +5,7 @@ import subprocess
 import stat
 
 from contextlib import suppress
+from middlewared.plugins.etc import FileShouldNotExist
 
 logger = logging.getLogger(__name__)
 kdir = "/etc/kerberos"
@@ -52,8 +53,7 @@ def write_keytab(db_keytabname, db_keytabfile):
 def render(service, middleware, render_ctx):
     keytabs = middleware.call_sync('kerberos.keytab.query')
     if not keytabs:
-        logger.trace('No keytabs in configuration database, skipping keytab generation')
-        return
+        raise FileShouldNotExist
 
     for keytab in keytabs:
         db_keytabfile = base64.b64decode(keytab['file'].encode())

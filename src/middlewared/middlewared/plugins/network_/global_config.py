@@ -278,11 +278,11 @@ class NetworkConfigurationService(ConfigService):
             rhost_changed = config['hostname'] != new_config['hostname']
 
         vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
-        if vhost_changed and await self.middleware.call('activedirectory.get_state') != "DISABLED":
+        if vhost_changed and await self.middleware.call('directoryservices.summary'):
             verrors.add(
                 'global_configuration_update.hostname_virtual',
-                'This parameter may not be changed after joining Active Directory (AD). '
-                'If it must be changed, the proper procedure is to leave the AD domain '
+                'This parameter may not be changed while bound to a directory service. '
+                'If it must be changed, the proper procedure is to leave the domain '
                 'and then alter the parameter before re-joining the domain.'
             )
 

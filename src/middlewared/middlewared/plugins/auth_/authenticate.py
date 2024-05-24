@@ -3,6 +3,7 @@ import pam
 from middlewared.plugins.account import unixhash_is_valid
 from middlewared.service import Service, private
 from middlewared.utils.crypto import check_unixhash
+from middlewared.utils.nss.nss_common import NssModule
 
 
 class AuthService(Service):
@@ -86,18 +87,28 @@ class AuthService(Service):
             )
             return None
 
-        if user_info['local']:
-            twofactor_id = user_info['id']
-            groups_key = 'local_groups'
-            account_flags = ['LOCAL']
-        else:
-            twofactor_id = user['sid_info']['sid']
-            groups_key = 'ds_groups'
-            account_flags = ['DIRECTORY_SERVICE']
-            if user['sid_info']['domain_information']['activedirectory']:
-                account_flags.append('ACTIVE_DIRECTORY')
-            else:
-                account_flags.append('LDAP')
+        match user['source']:
+            case NssModule.FILES.name:
+                # Local user
+                twofactor_id = user_info['id']
+                groups_key = 'local_groups'
+                account_flags = ['LOCAL']
+            case NssModule.WINBIND.name:
+                # Active directory user
+                twofactor_id = user['sid']
+                groups_key = 'ds_groups'
+                account_flags = ['DIRECTORY_SERVICE', 'ACTIVE_DIRECTORY']
+            case NssModule.SSS.name:
+                # This includes both OpenLDAP and IPA domains
+                # Since IPA domains may have cross-realm trusts with separate
+                # idmap configuration we will preferentially use the SID if it is
+                # available (since it should be static and universally unique)
+                twofactor_id = user['sid'] or user_info['id']
+                groups_key = 'ds_groups'
+                account_flags = ['DIRECTORY_SERVICE', 'LDAP']
+            case _:
+                self.logger.error('[%s]: unknown user source. Rejecting access.', user['source'])
+                return None
 
         # Two-factor authentication token is keyed by SID for activedirectory
         # users.

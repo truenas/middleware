@@ -1,6 +1,12 @@
 from middlewared.schema import Str, Ref, Int, Dict, Bool, accepts
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.utils.directoryservices.constants import (
+    DSStatus, DSType
+)
+from .all import get_enabled_ds
+
+CACHES = [svc.value.upper() for svc in DSType]
 
 
 class DSCache(Service):
@@ -10,7 +16,7 @@ class DSCache(Service):
         private = True
 
     @accepts(
-        Str('directory_service', required=True, enum=["ACTIVEDIRECTORY", "LDAP"]),
+        Str('directory_service', required=True, enum=CACHES),
         Str('idtype', enum=['USER', 'GROUP'], required=True),
         Dict('cache_entry', additional_attrs=True),
     )
@@ -33,7 +39,7 @@ class DSCache(Service):
         return True
 
     @accepts(
-        Str('directory_service', required=True, enum=["ACTIVEDIRECTORY", "LDAP"]),
+        Str('directory_service', required=True, enum=CACHES),
         Dict(
             'principal_info',
             Str('idtype', enum=['USER', 'GROUP']),
@@ -79,12 +85,12 @@ class DSCache(Service):
                     pwdobj = await self.middleware.call('user.get_user_obj', {
                         'get_groups': False, 'sid_info': True
                     } | who)
-                    if pwdobj['sid_info'] is None:
+                    if pwdobj['sid'] is None:
                         # This indicates that idmapping is significantly broken
                         return None
 
                     entry = await self.middleware.call('idmap.synthetic_user',
-                                                       ds.lower(), pwdobj, pwdobj['sid_info']['sid'])
+                                                       ds.lower(), pwdobj, pwdobj['sid'])
                     if entry is None:
                         return None
                 else:
@@ -94,12 +100,12 @@ class DSCache(Service):
                         who = {'gid': who_id}
 
                     grpobj = await self.middleware.call('group.get_group_obj', {'sid_info': True} | who)
-                    if grpobj['sid_info'] is None:
+                    if grpobj['sid'] is None:
                         # This indicates that idmapping is significantly broken
                         return None
 
                     entry = await self.middleware.call('idmap.synthetic_group',
-                                                       ds.lower(), grpobj, grpobj['sid_info']['sid'])
+                                                       ds.lower(), grpobj, grpobj['sid'])
                     if entry is None:
                         return None
 
@@ -121,7 +127,7 @@ class DSCache(Service):
         return entry
 
     @accepts(
-        Str('ds', required=True, enum=["ACTIVEDIRECTORY", "LDAP"]),
+        Str('ds', required=True, enum=CACHES),
         Str('idtype', required=True, enum=["USER", "GROUP"]),
     )
     async def entries(self, ds, idtype):
@@ -176,18 +182,20 @@ class DSCache(Service):
         return sorted(entries, key=lambda i: i['id'])
 
     @job(lock="dscache_refresh")
-    async def refresh(self, job):
+    def refresh(self, job):
         """
-        This is called from a cronjob every 24 hours and when a user clicks on the
-        UI button to 'rebuild directory service cache'.
+        This is called from a cronjob every 24 hours and when a user clicks on
+        the UI button to 'rebuild directory service cache'.
         """
-        for ds in ['activedirectory', 'ldap']:
-            await self.middleware.call('tdb.wipe', {'name': f'{ds}_user'})
-            await self.middleware.call('tdb.wipe', {'name': f'{ds}_group'})
+        if (enabled_ds := get_enabled_ds()) is None:
+            # No enabled directory services
+            return
 
-            ds_state = await self.middleware.call(f'{ds}.get_state')
-
-            if ds_state == 'HEALTHY':
-                await job.wrap(await self.middleware.call(f'{ds}.fill_cache', True))
-            elif ds_state != 'DISABLED':
-                self.logger.debug('Unable to refresh [%s] cache, state is: %s' % (ds, ds_state))
+        match enabled_ds.status:
+            case DSStatus.HEALTHY:
+                enabled_ds.fill_cache()
+            case _:
+                self.logger.debug(
+                    'Unable to refresh [%s] cache, state is: %s',
+                    enabled_ds.ds_type.name, enabled_ds.status.name
+                )

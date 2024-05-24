@@ -7,7 +7,6 @@ from middlewared.utils import filter_list
 import enum
 import json
 import subprocess
-import time
 
 
 class InfoLevel(enum.Enum):
