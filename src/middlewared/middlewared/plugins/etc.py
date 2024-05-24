@@ -68,6 +68,9 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
+        'docker': [
+            {'type': 'py', 'path': 'docker'},
+        ],
         'truenas_nvdimm': [
             {'type': 'py', 'path': 'truenas_nvdimm', 'checkpoint': 'post_init'},
         ],
