@@ -95,7 +95,9 @@ def test_disk_wipe_abort():
     if ha:
         # In HA systems fenced may be using the disk.  Obtain the PID
         # so that we can ignore it.
-        expected_pids.add(ssh('cat /run/middleware/fenced.pid'))
+        fenced_info = call('failover.fenced.run_info')
+        if fenced_info['running']:
+            expected_pids.add(str(fenced_info['pid']))
 
     # Obtain a disk to wipe
     disk = call("disk.get_unused")[0]["name"]
