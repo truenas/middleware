@@ -83,6 +83,7 @@ log {
   parser(p_tnaudit);
   rewrite(r_rewrite_success);
   destination(d_tnaudit_${svc.lower()});
+  flags(final);
 };
 %endif
 % endfor
@@ -141,6 +142,7 @@ log {
   rewrite(r_rewrite_sudo_accept);
   rewrite(r_rewrite_sudo_common);
   destination(d_tnaudit_sudo);
+  flags(final);
 };
 log {
   source(s_src);
@@ -151,5 +153,6 @@ log {
   rewrite(r_rewrite_sudo_reject);
   rewrite(r_rewrite_sudo_common);
   destination(d_tnaudit_sudo);
+  flags(final);
 };
 </%text>
