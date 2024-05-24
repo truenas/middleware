@@ -2,15 +2,14 @@
 
 # License: BSD
 
-import pytest
-import sys
-import os
 import secrets
+
+import pytest
+from middlewared.test.integration.utils import call
 from pytest_dependency import depends
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import DELETE, GET, POST, PUT, wait_on_job, SSH_TEST
-from auto_config import ha, password, user
+
+from auto_config import password, user
+from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job
 
 # genrated token_hex 32bit for
 pool_token_hex = secrets.token_hex(32)
@@ -28,7 +27,7 @@ child_dataset_url = child_dataset.replace('/', '%2F')
 def test_create_a_normal_pool(request):
     global pool_id, pool_disks
     # Get one disk for encryption testing
-    pool_disks = [POST('/disk/get_unused/', controller_a=ha).json()[0]['name']]
+    pool_disks = [call("disk.get_unused")[0]["name"]]
     payload = {
         'name': encrypted_pool_name,
         'encryption': False,
@@ -255,7 +254,7 @@ def test_make_sure_we_are_not_able_to_lock_key_encrypted_dataset(request):
     job_id = results.json()
     job_status = wait_on_job(job_id, 120)
     assert job_status['state'] == 'FAILED', str(job_status['results'])
-    assert 'Only datasets which are encrypted with passphrase can be locked' in job_status['results']['error'],\
+    assert 'Only datasets which are encrypted with passphrase can be locked' in job_status['results']['error'], \
         job_status['results']['error']
 
 
