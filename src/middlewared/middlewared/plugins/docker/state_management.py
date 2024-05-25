@@ -32,8 +32,12 @@ class DockerStateService(Service):
     async def after_start_check(self):
         if await self.middleware.call('service.started', 'docker'):
             await self.set_status(Status.RUNNING.value)
+            await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
         else:
             await self.set_status(Status.FAILED.value, 'Failed to start docker service')
+            await self.middleware.call('alert.oneshot_create', 'ApplicationsStartFailed', {
+                'error': 'Docker service could not be started'
+            })
 
     @private
     async def start_service(self):
