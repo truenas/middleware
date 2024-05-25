@@ -1,4 +1,4 @@
-from middlewared.service import private, Service
+from middlewared.service import CallError, private, Service
 
 from .state_utils import APPS_STATUS, Status, STATUS_DESCRIPTIONS
 
@@ -10,6 +10,41 @@ class DockerStateService(Service):
         private = True
 
     STATUS = APPS_STATUS(Status.PENDING, STATUS_DESCRIPTIONS[Status.PENDING])
+
+    @private
+    async def before_start_check(self):
+        try:
+            await self.middleware.call('docker.setup.validate_fs')
+        except CallError as e:
+            if e.errno != CallError.EDATASETISLOCKED:
+                await self.middleware.call(
+                    'alert.oneshot_create',
+                    'ApplicationsConfigurationFailed',
+                    {'error': e.errmsg},
+                )
+
+            await self.set_status(Status.FAILED.value, f'Could not validate applications setup ({e.errmsg})')
+            raise
+
+        await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
+
+    @private
+    async def after_start_check(self):
+        if await self.middleware.call('service.started', 'docker'):
+            await self.set_status(Status.RUNNING.value)
+        else:
+            await self.set_status(Status.FAILED.value, 'Failed to start docker service')
+
+    @private
+    async def start_service(self):
+        await self.set_status(Status.INITIALIZING.value)
+        try:
+            # TODO: Check license active
+            await self.before_start_check()
+            await self.middleware.call('service.start', 'docker')
+        except Exception as e:
+            await self.set_status(Status.FAILED.value, str(e))
+            raise
 
     @private
     async def set_status(self, new_status, extra=None):
