@@ -55,11 +55,9 @@ class DockerSetupService(Service):
         if not config['pool']:
             return
 
-        await self.pools(config)
-
-    @private
-    async def pools(self, config):
-        return await self.create_update_docker_datasets(config['dataset'])
+        await self.create_update_docker_datasets(config['dataset'])
+        await self.middleware.call('catalog.sync_all')
+        await self.middleware.call('service.start', 'docker')
 
     @private
     async def create_update_docker_datasets(self, docker_ds):
