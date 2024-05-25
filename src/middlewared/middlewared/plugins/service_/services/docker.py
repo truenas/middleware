@@ -10,6 +10,8 @@ class DockerService(SimpleService):
 
     async def before_start(self):
         # TODO: Add status updates here and start checks
+        # FIXME: We should have alerts as well in case of failure to validate
+        await self.middleware.call('docker.setup.validate_fs')
         for key, value in (
             ('vm.panic_on_oom', 0),
             ('vm.overcommit_memory', 1),
