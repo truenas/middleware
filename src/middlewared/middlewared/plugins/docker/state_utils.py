@@ -1,15 +1,39 @@
+import collections
+import enum
 import os
 import typing
 
 
-CATALOG_DATASET_NAME = 'catalogs'
-DATASET_DEFAULTS = {
+APPS_STATUS: collections.namedtuple = collections.namedtuple('Status', ['status', 'description'])
+CATALOG_DATASET_NAME: str = 'catalogs'
+DATASET_DEFAULTS: dict = {
     'aclmode': 'discard',
     'acltype': 'posix',
     'exec': 'on',
     'setuid': 'on',
     'casesensitivity': 'sensitive',
     'atime': 'off',
+}
+
+
+class Status(enum.Enum):
+    PENDING = 'PENDING'
+    RUNNING = 'RUNNING'
+    INITIALIZING = 'INITIALIZING'
+    STOPPING = 'STOPPING'
+    STOPPED = 'STOPPED'
+    UNCONFIGURED = 'UNCONFIGURED'
+    FAILED = 'FAILED'
+
+
+STATUS_DESCRIPTIONS = {
+    Status.PENDING: 'Application(s) state is to be determined yet',
+    Status.RUNNING: 'Application(s) are currently running',
+    Status.INITIALIZING: 'Application(s) are being initialized',
+    Status.STOPPING: 'Application(s) are being stopped',
+    Status.STOPPED: 'Application(s) have been stopped',
+    Status.UNCONFIGURED: 'Application(s) are not configured',
+    Status.FAILED: 'Application(s) have failed to start',
 }
 
 
