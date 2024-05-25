@@ -21,6 +21,8 @@ def docker_datasets(docker_ds: str) -> typing.List[str]:
     return [docker_ds] + [
         os.path.join(docker_ds, d) for d in (
             CATALOG_DATASET_NAME,
+            'docker',
+            'releases',
         )
     ]
 
@@ -40,3 +42,15 @@ def docker_dataset_update_props(props: dict) -> typing.Dict[str, str]:
         for attr, value in props.items()
         if attr not in ('casesensitivity', 'mountpoint', 'encryption')
     }
+
+
+def missing_required_datasets(existing_datasets: set, docker_ds: str) -> set:
+    diff = existing_datasets ^ set(docker_datasets(docker_ds))
+    if fatal_diff := diff.intersection(
+        set(docker_ds) | {
+            os.path.join(docker_ds, k) for k in ('docker', 'releases', CATALOG_DATASET_NAME)
+        }
+    ):
+        return fatal_diff
+
+    return set()
