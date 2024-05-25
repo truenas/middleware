@@ -20,6 +20,7 @@ class DockerService(SimpleService):
             await self.middleware.call('sysctl.set_value', key, value)
 
     async def start(self):
+        # FIXME: This probably needs to be blacklisted in failover service as well
         try:
             await super().start()
             timeout = 40

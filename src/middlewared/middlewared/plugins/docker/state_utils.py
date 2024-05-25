@@ -54,7 +54,7 @@ def docker_datasets(docker_ds: str) -> typing.List[str]:
 def docker_dataset_custom_props(ds: str) -> typing.Dict:
     props = {
         'ix-apps': {
-            'encryption': 'off'
+            'encryption': 'off',
         },
     }
     return props.get(ds, dict())
