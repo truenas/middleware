@@ -4,10 +4,12 @@ import uuid
 
 from datetime import datetime
 
-from middlewared.service import private, Service
+from middlewared.service import CallError, private, Service
 
-from .state_utils import DATASET_DEFAULTS, docker_datasets, docker_dataset_custom_props, docker_dataset_update_props
-from .utils import applications_ds_name
+from .state_utils import (
+    DATASET_DEFAULTS, docker_datasets, docker_dataset_custom_props, docker_dataset_update_props,
+    missing_required_datasets,
+)
 
 
 class DockerSetupService(Service):
@@ -15,6 +17,21 @@ class DockerSetupService(Service):
     class Config:
         namespace = 'docker.setup'
         private = True
+
+    @private
+    async def validate_fs(self):
+        config = await self.middleware.call('docker.config')
+        if not config['pool']:
+            raise CallError(f'{config["pool"]!r} pool not found.')
+
+        if missing_datasets := missing_required_datasets({
+            d['id'] for d in await self.middleware.call(
+                'zfs.dataset.query', [['id', 'in', docker_datasets(config['dataset'])]], {
+                    'extra': {'retrieve_properties': False, 'retrieve_children': False}
+                }
+            )
+        }, config['dataset']):
+            raise CallError(f'Missing "{", ".join(missing_datasets)}" dataset(s) required for starting docker.')
 
     @private
     async def status_change(self):
@@ -26,7 +43,7 @@ class DockerSetupService(Service):
 
     @private
     async def pools(self, config):
-        return await self.create_update_docker_datasets(applications_ds_name(config['pool']))
+        return await self.create_update_docker_datasets(config['dataset'])
 
     @private
     async def create_update_docker_datasets(self, docker_ds):
