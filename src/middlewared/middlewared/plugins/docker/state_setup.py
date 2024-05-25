@@ -33,6 +33,22 @@ class DockerSetupService(Service):
         }, config['dataset']):
             raise CallError(f'Missing "{", ".join(missing_datasets)}" dataset(s) required for starting docker.')
 
+        await self.create_update_docker_datasets(config['dataset'])
+
+        locked_datasets = [
+            d['id'] for d in filter(
+                lambda d: d['mountpoint'], await self.middleware.call('zfs.dataset.locked_datasets')
+            )
+            if d['mountpoint'].startswith(f'{config["dataset"]}/') or d['mountpoint'] in (
+                f'/mnt/{k}' for k in (config['dataset'], config['pool'])
+            )
+        ]
+        if locked_datasets:
+            raise CallError(
+                f'Please unlock following dataset(s) before starting docker: {", ".join(locked_datasets)}',
+                errno=CallError.EDATASETISLOCKED,
+            )
+
     @private
     async def status_change(self):
         config = await self.middleware.call('docker.config')
