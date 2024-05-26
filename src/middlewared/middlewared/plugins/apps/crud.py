@@ -80,7 +80,7 @@ class AppService(CRUDService):
 
     def normalise_and_validate_values(self, item_details, values, update, release_ds, release_data=None):
         dict_obj = self.middleware.call_sync(
-            'chart.release.validate_values', item_details, values, update, release_data,
+            'app.schema.validate_values', item_details, values, update, release_data,
         )
         return self.middleware.call_sync(
             'chart.release.get_normalized_values', dict_obj, values, update, {
