@@ -78,6 +78,19 @@ class DockerStateService(Service):
             else:
                 await self.set_status(Status.FAILED.value)
 
+    @private
+    async def validate(self, raise_error=True):
+        error_str = ''
+        if not (await self.middleware.call('docker.config'))['pool']:
+            error_str = 'No pool configured for Docker'
+        if not error_str and not await self.middleware.call('service.started', 'docker'):
+            error_str = 'Docker service is not running'
+
+        if error_str and raise_error:
+            raise CallError(error_str)
+
+        return error_str
+
 
 async def _event_system_ready(middleware, event_type, args):
     # we ignore the 'ready' event on an HA system since the failover event plugin
