@@ -1,12 +1,23 @@
 import itertools
-from typing import Union
+from typing import Tuple, Union
 
 from middlewared.service import ValidationErrors
-from middlewared.schema import Bool, Cron, Dict, Dir, File, HostPath, Int, IPAddr, List, NOT_PROVIDED, Path, Str, URI
+from middlewared.schema import (
+    Attribute, Bool, Cron, Dict, Dir, File, HostPath, Int, IPAddr, List, NOT_PROVIDED, Path, Str, URI,
+)
 from middlewared.validators import Match, Range, validate_schema
 
 
-mapping = {
+CONTEXT_KEY_NAME = 'ix_context'
+RESERVED_NAMES = [
+    ('ix_certificates', dict),
+    ('ix_certificateAuthorities', dict),
+    ('ix_externalInterfacesConfiguration', list),
+    ('ix_externalInterfacesConfigurationNames', list),
+    ('ix_volumes', list),
+    (CONTEXT_KEY_NAME, dict),
+]
+SCHEMA_MAPPING = {
     'string': Str,
     'int': Int,
     'boolean': Bool,
@@ -72,7 +83,7 @@ def update_conditional_defaults(dict_obj: Dict, variable_details: dict) -> Dict:
 
 def get_schema(variable_details: dict, update: bool, existing: Union[dict, object] = NOT_PROVIDED):
     schema_details = variable_details['schema']
-    schema_class = mapping[schema_details['type']]
+    schema_class = SCHEMA_MAPPING[schema_details['type']]
     cur_val = existing.get(variable_details['variable'], NOT_PROVIDED) if isinstance(existing, dict) else NOT_PROVIDED
 
     # Validation is ensured at chart level to ensure that we don't have enum for say boolean
@@ -129,3 +140,13 @@ def get_schema(variable_details: dict, update: bool, existing: Union[dict, objec
 
     result.insert(0, obj)
     return result
+
+
+def get_list_item_from_value(value: list, question_attr: List) -> Tuple[int,  Attribute]:
+    for index, attr in enumerate(question_attr.items):
+        try:
+            attr.validate(value)
+        except ValidationErrors:
+            pass
+        else:
+            return index, attr
