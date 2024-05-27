@@ -10,7 +10,6 @@ class BootService(Service):
         Dict(
             'options',
             Int('size'),
-            Int('swap_size'),
             Str('legacy_schema', enum=[None, 'BIOS_ONLY', 'EFI_ONLY'], null=True, default=None),
         )
     )
@@ -28,7 +27,6 @@ class BootService(Service):
         if not disk_details:
             raise CallError(f'Details for {dev} not found.')
 
-        swap_size = options.get('swap_size')
         commands = []
         partitions = []
         if options['legacy_schema'] == 'BIOS_ONLY':
@@ -44,8 +42,6 @@ class BootService(Service):
                 ('BIOS boot partition', 1048576),  # We allot 1MiB to bios boot partition
                 ('EFI System', 536870912)   # We allot 512MiB for EFI partition
             ])
-        if swap_size:
-            partitions.append(('Linux swap', swap_size))
         if options.get('size'):
             partitions.append(('Solaris /usr & Mac ZFS', options['size']))
 
@@ -81,13 +77,6 @@ class BootService(Service):
                     ['sgdisk', f'-a{int(4096 / disk_details["sectorsize"])}', '-n1:0:+260M', '-t1:EF00', f'/dev/{dev}'],
                 ))
 
-            if swap_size:
-                commands.append([
-                    'sgdisk',
-                    f'-n3:0:+{int(swap_size / 1024)}K',
-                    '-t3:8200', f'/dev/{dev}'
-                ])
-
             # Creating standard-size partitions first leads to better alignment and more compact disk usage
             # and can help to fit larger data partition.
             commands.extend([
@@ -98,13 +87,6 @@ class BootService(Service):
                 ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', '-n1:0:+1024K', '-t1:EF02', f'/dev/{dev}'],
                 ['sgdisk', '-n2:0:+524288K', '-t2:EF00', f'/dev/{dev}'],
             ))
-
-            if swap_size:
-                commands.append([
-                    'sgdisk',
-                    f'-n4:0:+{int(swap_size / 1024)}K',
-                    '-t4:8200', f'/dev/{dev}'
-                ])
 
             # Creating standard-size partitions first leads to better alignment and more compact disk usage
             # and can help to fit larger data partition.

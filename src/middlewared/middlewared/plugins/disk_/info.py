@@ -19,15 +19,10 @@ class DiskService(Service):
         return filter_list(parts, filters, options)
 
     @private
-    @accepts(
-        Str('disk'), Str('part_type', enum=['SWAP', 'ZFS'])
-    )
-    async def get_partition(self, disk, part_type):
-        if part_type == 'SWAP':
-            p_uuid = await self.middleware.call('disk.get_swap_part_type')
-        else:
-            p_uuid = await self.middleware.call('disk.get_zfs_part_type')
-        return await self.get_partition_with_uuids(disk, [p_uuid])
+    @accepts(Str('disk'))
+    async def get_partition(self, disk):
+        # Will retrieve zfs partition on disk if any
+        return await self.get_partition_with_uuids(disk, [await self.middleware.call('disk.get_zfs_part_type')])
 
     @private
     async def get_partition_with_uuids(self, disk, uuids):

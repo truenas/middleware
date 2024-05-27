@@ -23,7 +23,6 @@ class SystemAdvancedModel(sa.Model):
     adv_serialport = sa.Column(sa.String(120), default='ttyS0')
     adv_serialspeed = sa.Column(sa.String(120), default='9600')
     adv_powerdaemon = sa.Column(sa.Boolean(), default=False)
-    adv_swapondrive = sa.Column(sa.Integer(), default=2)
     adv_overprovision = sa.Column(sa.Integer(), nullable=True, default=None)
     adv_traceback = sa.Column(sa.Boolean(), default=True)
     adv_advancedmode = sa.Column(sa.Boolean(), default=False)
@@ -77,7 +76,6 @@ class SystemAdvancedService(ConfigService):
         Str('serialport', required=True),
         Str('anonstats_token', required=True),
         Str('serialspeed', enum=['9600', '19200', '38400', '57600', '115200'], required=True),
-        Int('swapondrive', validators=[Range(min_=0)], required=True),
         Int('overprovision', validators=[Range(min_=0)], null=True, required=True),
         Bool('traceback', required=True),
         Bool('uploadcrash', required=True),
@@ -105,9 +103,6 @@ class SystemAdvancedService(ConfigService):
 
         for k in filter(lambda k: data[k], ['syslog_tls_certificate_authority', 'syslog_tls_certificate']):
             data[k] = data[k]['id']
-
-        if data['swapondrive'] and (await self.middleware.call('system.product_type')) == 'ENTERPRISE':
-            data['swapondrive'] = 0
 
         data.pop('sed_passwd')
         data.pop('kmip_uid')

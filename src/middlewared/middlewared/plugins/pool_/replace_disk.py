@@ -73,7 +73,6 @@ class PoolService(Service):
             disk['devname']: {
                 'vdev': vdev,
                 'size': None,  # pool.format_disks checks size of disk
-                'create_swap': False,
             },
         })
 

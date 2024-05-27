@@ -229,7 +229,7 @@ class PoolService(CRUDService):
                     vdev['draid_spare_disks'] = t_vdev['draid_spare_disks']
                 vdevs.append(vdev)
                 for disk in t_vdev['disks']:
-                    disks[disk] = {'vdev': vdev_devs_list, 'create_swap': False}
+                    disks[disk] = {'vdev': vdev_devs_list}
 
         if topology.get('spares'):
             vdev_devs_list = []
@@ -239,7 +239,7 @@ class PoolService(CRUDService):
                 'devices': vdev_devs_list,
             })
             for disk in topology['spares']:
-                disks[disk] = {'vdev': vdev_devs_list, 'create_swap': False}
+                disks[disk] = {'vdev': vdev_devs_list}
 
         return disks, vdevs
 
