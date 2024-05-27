@@ -2,7 +2,7 @@
 Apps catalog integration
 
 Revision ID: 91724c382023
-Revises: 135a7e02cbec
+Revises: 0dc9c3f51393
 Create Date: 2024-05-19 16:25:17.935672+00:00
 """
 import sqlalchemy as sa
@@ -11,7 +11,7 @@ from alembic import op
 
 
 revision = '91724c382023'
-down_revision = '135a7e02cbec'
+down_revision = '0dc9c3f51393'
 branch_labels = None
 depends_on = None
 
