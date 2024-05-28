@@ -3,7 +3,7 @@ from collections import defaultdict
 from middlewared.plugins.disk_.utils import dev_to_ident, valid_zfs_partition_uuids
 from middlewared.service import accepts, private, Service
 from middlewared.service_exception import ValidationErrors
-from middlewared.schema import Bool
+from middlewared.schema import Bool, Dict, Str
 
 
 class DiskService(Service):
@@ -27,13 +27,13 @@ class DiskService(Service):
         return disks
 
     @private
-    async def get_unused_impl(self, jp=False):
-        """
-        `jp` boolean: (join partitions) will retrieve all partitions on the disk(s)
-        """
-        in_use_disks_imported = []
-        for guid, info in (await self.middleware.call('zfs.pool.query_imported_fast')).items():
-            in_use_disks_imported.extend(await self.middleware.call('zfs.pool.get_disks', info['name']))
+    async def details_impl(self, data):
+        # see `self.details` for arguments and their meaning
+        in_use_disks_imported = {}
+        for in_use_disk, info in (
+            await self.middleware.call('zpool.status', {'real_paths': True})
+        )['disks'].items():
+            in_use_disks_imported[in_use_disk] = info['pool_name']
 
         in_use_disks_exported = {}
         for i in await self.middleware.call('zfs.pool.find_import'):
@@ -45,7 +45,7 @@ class DiskService(Service):
             for slot, info in filter(lambda x: x[1], enc['elements']['Array Device Slot'].items()):
                 enc_info[info['dev']] = (int(slot), enc['id'])
 
-        unused = []
+        used, unused = [], []
         unsupported_md_devices_mapping = await self.middleware.call('disk.get_disks_to_unsupported_md_devices_mapping')
         serial_to_disk = defaultdict(list)
         sys_disks = await self.middleware.call('device.get_disks')
@@ -61,28 +61,6 @@ class DiskService(Service):
             i['enclosure_slot'] = enc_info.get(dname, ())
             serial_to_disk[(i['serial'], i['lunid'])].append(i)
 
-            if dname in in_use_disks_imported:
-                # exclude disks that are currently in use by imported zpool(s)
-                continue
-
-            # disk is "technically" not "in use" but the zpool is exported
-            # and can be imported so the disk would be "in use" if the zpool
-            # was imported so we'll mark this disk specially so that end-user
-            # can be warned appropriately
-            i['exported_zpool'] = in_use_disks_exported.get(dname)
-            # User might have unsupported md devices configured and a single disk might have multiple
-            # partitions which are being used by different md devices so this value will be a list or null
-            i['unsupported_md_devices'] = unsupported_md_devices_mapping.get(dname)
-
-            unused.append(i)
-
-        for i in unused:
-            # need to add a `duplicate_serial` key so that webUI can give an appropriate warning to end-user
-            # about disks with duplicate serial numbers (I'm looking at you USB "disks")
-            i['duplicate_serial'] = [
-                j['name'] for j in serial_to_disk[(i['serial'], i['lunid'])] if j['name'] != i['name']
-            ]
-
             # add enclosure information
             i['enclosure'] = {}
             if enc := i.pop('enclosure_slot'):
@@ -90,28 +68,91 @@ class DiskService(Service):
 
             # query partitions for the disk(s) if requested
             i['partitions'] = []
-            if jp:
+            if data['join_partitions']:
                 i['partitions'] = await self.middleware.call('disk.list_partitions', i['name'])
 
-            # backwards compatibility
+            # TODO: UI needs to remove dependency on `devname` since `name` is sufficient
             i['devname'] = i['name']
             try:
                 i['size'] = int(i['size'])
             except ValueError:
                 i['size'] = None
 
-        return unused
+            # disk is "technically" not "in use" but the zpool is exported
+            # and can be imported so the disk would be "in use" if the zpool
+            # was imported so we'll mark this disk specially so that end-user
+            # can be warned appropriately
+            i['exported_zpool'] = in_use_disks_exported.get(dname)
+
+            # disk is in use by a zpool that is currently imported
+            i['imported_zpool'] = in_use_disks_imported.get(dname)
+
+            # User might have unsupported md devices configured and a single disk might have multiple
+            # partitions which are being used by different md devices so this value will be a list or null
+            i['unsupported_md_devices'] = unsupported_md_devices_mapping.get(dname)
+            if any((
+                i['imported_zpool'] is not None,
+                i['exported_zpool'] is not None,
+            )):
+                used.append(i)
+            else:
+                unused.append(i)
+
+        for i in used + unused:
+            # need to add a `duplicate_serial` key so that webUI can give an appropriate warning to end-user
+            # about disks with duplicate serial numbers (I'm looking at you USB "disks")
+            i['duplicate_serial'] = [
+                j['name'] for j in serial_to_disk[(i['serial'], i['lunid'])] if j['name'] != i['name']
+            ]
+
+        return {'used': used, 'unused': unused}
 
     @accepts(Bool('join_partitions', default=False), roles=['REPORTING_READ'])
     async def get_unused(self, join_partitions):
         """
-        Return disks that are not in use by any zpool that is currently imported. It will
+        Return disks that are NOT in use by any zpool that is currently imported. It will
         also return disks that are in use by any zpool that is exported.
 
         `join_partitions`: Bool, when True will return all partitions currently written to disk
             NOTE: this is an expensive operation
         """
-        return await self.get_unused_impl(join_partitions)
+        return (await self.details_impl({'join_partitions': join_partitions}))['unused']
+
+    @accepts(Bool('join_partitions', default=False), roles=['REPORTING_READ'])
+    async def get_used(self, join_partitions):
+        """
+        Return disks that are in use by any zpool that is currently imported. It will
+        also return disks that are in use by any zpool that is exported.
+
+        `join_partitions`: Bool, when True will return all partitions currently written to disk
+            NOTE: this is an expensive operation
+        """
+        return (await self.details_impl({'join_partitions': join_partitions}))['used']
+
+    @accepts(
+        Dict(
+            'disk_details_args',
+            Bool('join_partitions', default=False),
+            Str('type', enum=['USED', 'UNUSED', 'BOTH'], default='BOTH'),
+        ),
+        roles=['REPORTING_READ'],
+    )
+    async def details(self, data):
+        """Return detailed information for all disks on the system.
+
+        `data`: dict
+            `join_partitions`: Bool, when True will return all partitions
+                currently written to disk (NOTE: this is expensive)
+            `type`: str, what type of disk information will be returned.
+                If `USED`, only disks that are IN USE will be returned.
+                If `UNUSED`, only disks that are NOT IN USE are returned.
+                If `BOTH`, used and unused disks will be returned.
+        """
+        results = await self.details_impl(data)
+        if data['type'] == 'BOTH':
+            return results
+        else:
+            return results[data['type'].lower()]
 
     @private
     async def get_reserved(self):
