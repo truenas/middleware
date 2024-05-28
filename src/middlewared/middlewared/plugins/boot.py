@@ -109,17 +109,13 @@ class BootService(Service):
             if zfs_part:
                 format_opts['size'] = zfs_part['size']
 
-        swap_part = await self.middleware.call('disk.get_partition', disks[0], 'SWAP')
-        if swap_part:
-            format_opts['swap_size'] = swap_part['size']
-
         format_opts['legacy_schema'] = await self.legacy_schema(disks[0])
 
         await self.middleware.call('boot.format', dev, format_opts)
 
         pool = await self.middleware.call('zfs.pool.query', [['name', '=', BOOT_POOL_NAME]], {'get': True})
 
-        zfs_dev_part = await self.middleware.call('disk.get_partition', dev, 'ZFS')
+        zfs_dev_part = await self.middleware.call('disk.get_partition', dev)
         extend_pool_job = await self.middleware.call(
             'zfs.pool.extend', BOOT_POOL_NAME, None, [{
                 'target': pool['groups']['data'][0]['guid'],
@@ -157,9 +153,6 @@ class BootService(Service):
         format_opts = {}
         await self.check_update_ashift_property()
         disks = list(await self.get_disks())
-        swap_part = await self.middleware.call('disk.get_partition', disks[0], 'SWAP')
-        if swap_part:
-            format_opts['swap_size'] = swap_part['size']
 
         format_opts['legacy_schema'] = await self.legacy_schema(disks[0])
 
@@ -167,7 +160,7 @@ class BootService(Service):
         await self.middleware.call('boot.format', dev, format_opts)
 
         job.set_progress(0, f'Replacing {label} with {dev}')
-        zfs_dev_part = await self.middleware.call('disk.get_partition', dev, 'ZFS')
+        zfs_dev_part = await self.middleware.call('disk.get_partition', dev)
         await self.middleware.call('zfs.pool.replace', BOOT_POOL_NAME, label, zfs_dev_part['name'])
 
         # We need to wait for pool resilver after replacing a device, otherwise grub might

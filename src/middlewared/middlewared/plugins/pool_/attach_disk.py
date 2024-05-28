@@ -54,7 +54,7 @@ class PoolService(Service):
         verrors.check()
 
         guid = vdev['guid'] if vdev['type'] in ['DISK', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3'] else vdev['children'][0]['guid']
-        disks = {options['new_disk']: {'create_swap': False}}
+        disks = {options['new_disk']: {'vdev': []}}
         await self.middleware.call('pool.format_disks', job, disks)
 
         devname = disks[options['new_disk']]['vdev'][0]
