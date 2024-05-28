@@ -764,9 +764,9 @@ class CoreService(Service):
     def get_oom_score_adj(self, pid):
         try:
             with open(f'/proc/{pid}/oom_score_adj', 'r') as f:
-                ret = f.read().strip()
-                if ret.isdigit():
-                    return int(ret)
+                return int(f.read().strip())
+        except ValueError:
+            self.logger.error("Value inside of /proc/%r/oom_score_adj is NOT a number.", pid)
         except Exception:
             self.logger.error("Unexpected error looking up process %r.", pid, exc_info=True)
         return None
