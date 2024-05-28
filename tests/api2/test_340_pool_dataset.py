@@ -3,18 +3,17 @@
 # License: BSD
 
 import errno
-import sys
-import os
+
 import pytest
-from pytest_dependency import depends
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job
-from auto_config import pool_name, user, password
 from middlewared.client import ClientException
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call
+from pytest_dependency import depends
+from test_011_user import UserAssets
+
+from auto_config import password, pool_name, user
+from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job
 
 dataset = f'{pool_name}/dataset1'
 dataset_url = dataset.replace('/', '%2F')
@@ -164,7 +163,7 @@ def test_13_strip_acl_from_dataset(request):
 
 
 def test_14_setting_various_quotas(request):
-    depends(request, ['shareuser'], scope='session')
+    depends(request, [UserAssets.ShareUser01['depends_name']], scope='session')
     user = group = 'shareuser'
     user_gid = GET('/group/?group=shareuser').json()[0]['gid']
     user_uid = GET('/user/?username=shareuser').json()[0]['uid']
@@ -405,14 +404,14 @@ def test_33_simplified_charts_api(request):
     USER2_TO_ADD = 8765310
     GROUP_TO_ADD = 1138
     NFS4_ACL_PAYLOAD = [
-       {'id_type': 'USER', 'id': USER_TO_ADD, 'access': 'MODIFY'},
-       {'id_type': 'GROUP', 'id': GROUP_TO_ADD, 'access': 'READ'},
-       {'id_type': 'USER', 'id': USER2_TO_ADD, 'access': 'FULL_CONTROL'},
+        {'id_type': 'USER', 'id': USER_TO_ADD, 'access': 'MODIFY'},
+        {'id_type': 'GROUP', 'id': GROUP_TO_ADD, 'access': 'READ'},
+        {'id_type': 'USER', 'id': USER2_TO_ADD, 'access': 'FULL_CONTROL'},
     ]
     ACL_PAYLOAD = [
-       {'id_type': 'USER', 'id': USER_TO_ADD, 'access': 'MODIFY'},
-       {'id_type': 'GROUP', 'id': GROUP_TO_ADD, 'access': 'READ'},
-       {'id_type': 'USER', 'id': USER_TO_ADD, 'access': 'FULL_CONTROL'},
+        {'id_type': 'USER', 'id': USER_TO_ADD, 'access': 'MODIFY'},
+        {'id_type': 'GROUP', 'id': GROUP_TO_ADD, 'access': 'READ'},
+        {'id_type': 'USER', 'id': USER_TO_ADD, 'access': 'FULL_CONTROL'},
     ]
 
     # TEST NFS4 ACL type
