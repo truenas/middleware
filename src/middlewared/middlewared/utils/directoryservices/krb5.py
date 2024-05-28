@@ -276,6 +276,9 @@ def extract_from_keytab(
         os.remove(tmp_keytab)
         raise RuntimeError(ktutil_op.stderr.decode())
 
+    if len(ktutil_list_impl(tmp_keytab)) != len(to_keep):
+        raise RuntimeError('Temporary keytab did not contain correct number of entries')
+
     with open(tmp_keytab, 'rb') as f:
         kt_bytes = f.read()
 
