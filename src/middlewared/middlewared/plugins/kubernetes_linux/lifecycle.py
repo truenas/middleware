@@ -226,11 +226,9 @@ class KubernetesService(Service):
                 errno=CallError.EDATASETISLOCKED,
             )
 
-        iface_errors = await self.middleware.call('kubernetes.validate_interfaces', config)
-        if iface_errors:
-            iface = iface_errors[1]
-            err_msg = iface_errors[-1]
-            raise CallError(f'Failed to setup {iface!r} with error: {err_msg}')
+        for _, iface, err_msg in await self.middleware.call('kubernetes.validate_interfaces', config):
+            if err_msg:
+                raise CallError(f'Failed to setup {iface!r} with error: {err_msg}')
 
         errors = await self.middleware.call('kubernetes.validate_config')
         if errors:
