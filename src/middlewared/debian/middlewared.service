@@ -22,6 +22,7 @@ RestartPreventExitStatus=SIGTERM
 # We don't want systemd to kill the middlewared process automatically on service stop, instead we rely on middlewared
 # to properly ensure that it shuts down cleanly on stop when SIGTERM is sent.
 SendSIGKILL=no
+OOMScoreAdjust=-1000
 
 [Install]
 WantedBy=multi-user.target

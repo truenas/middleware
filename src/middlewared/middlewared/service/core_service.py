@@ -756,6 +756,21 @@ class CoreService(Service):
     def threads_stacks(self):
         return get_threads_stacks()
 
+    @private
+    def get_pid(self):
+        return os.getpid()
+
+    @private
+    def get_oom_score_adj(self, pid):
+        try:
+            with open(f'/proc/{pid}/oom_score_adj', 'r') as f:
+                return int(f.read().strip())
+        except ValueError:
+            self.logger.error("Value inside of /proc/%r/oom_score_adj is NOT a number.", pid)
+        except Exception:
+            self.logger.error("Unexpected error looking up process %r.", pid, exc_info=True)
+        return None
+
     @no_authz_required
     @accepts(Str("method"), List("params", items=[List("params")]), Str("description", null=True, default=None))
     @job(lock=lambda args: f"bulk:{args[0]}")
