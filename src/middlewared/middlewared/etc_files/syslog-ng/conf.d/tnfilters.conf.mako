@@ -50,6 +50,11 @@ filter f_nfs_mountd {
   program("rpc.mountd") and level(debug..notice);
 };
 
+# Temporary SNMP filter: NAS-129124
+filter f_snmp {
+  program("snmpd") and match("unexpected header length" value("MESSAGE"));
+};
+
 filter f_truenas_exclude {
 % if not nfs_conf['mountd_log']:
   not filter(f_nfs_mountd) and
@@ -58,7 +63,9 @@ filter f_truenas_exclude {
   not filter(f_k3s) and
   not filter(f_containerd) and
   not filter(f_kube_router) and
-  not filter(f_app_mounts)
+  not filter(f_app_mounts) and
+  # Temporary SNMP filter: NAS-129124
+  not filter(f_snmp)
 };
 
 #####################
