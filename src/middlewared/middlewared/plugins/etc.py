@@ -443,7 +443,7 @@ class EtcService(Service):
                 changes = await self.middleware.run_in_thread(self.make_changes, outfile, entry, rendered)
 
                 if not changes:
-                    self.logger.debug(f'No new changes for {outfile}')
+                    self.logger.trace('No new changes for %s', outfile)
 
                 else:
                     output.append({
