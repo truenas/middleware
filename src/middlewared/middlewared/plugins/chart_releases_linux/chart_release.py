@@ -87,6 +87,7 @@ class ChartReleaseService(CRUDService):
             List('truenas_certificate_authorities', items=[Int('certificate_authority_id')]),
             *[List(r.value) for r in Resources],
         ),
+        Dict('stats', additional_attrs=True)
     )
 
     @filterable
