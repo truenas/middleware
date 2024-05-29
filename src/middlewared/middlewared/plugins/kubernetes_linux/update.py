@@ -399,9 +399,7 @@ class KubernetesService(ConfigService):
         interfaces = await self.route_interface_choices()
         for k in filter(lambda k: data[k], ('route_v4_interface', 'route_v6_interface')):
             iface = data[k]
-            try:
-                valid_iface = interfaces[iface]
-            except KeyError:
+            if iface not in interfaces:
                 errors.append(
                     (k, iface, f'{iface!r} is invalid. Valid interfaces are {", ".join([i for i in interfaces])!r}.')
                 )
@@ -411,10 +409,10 @@ class KubernetesService(ConfigService):
                 # this is particularly important when the interface that's
                 # configured for apps is a bridge (or lagg) for example
                 is_up, err_str = await self.middleware.run_in_thread(
-                    self.wait_on_interface_link_state_up, valid_iface
+                    self.wait_on_interface_link_state_up, iface
                 )
                 if not is_up:
-                    errors.append((k, valid_iface, err_str))
+                    errors.append((k, iface, err_str))
 
         return errors
 
