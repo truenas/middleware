@@ -131,6 +131,16 @@ class KerberosService(ConfigService):
         Bool('raise_error', default=True)
     )
     async def check_ticket(self, data, raise_error):
+        """
+        Perform very basic test that we have a valid kerberos ticket in the
+        specified ccache.
+
+        If `raise_error` is set (default), then a CallError is raised with
+        errno set to ENOKEY if ticket cannot be read or if ticket is expired.
+
+        returns True if ccache can be read and ticket is not expired, otherwise
+        returns False
+        """
         ccache_path = await self.ccache_path(data)
 
         klist = await run(['klist', '-s', '-c', ccache_path], check=False)
