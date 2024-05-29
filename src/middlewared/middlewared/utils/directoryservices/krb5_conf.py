@@ -304,7 +304,19 @@ class KRB5Conf():
             if len(value) == 0:
                 return None
 
-            return f'\t{parm} = {" ".join(value)}\n'
+            switch parm:
+                case 'kdc' | 'admin_server' | 'kpasswd_server':
+                    # some krb5.conf parameters may be specified multiple times
+                    # (MIT kerberos). Heimdal requires these to be placed on
+                    # single line.
+                    out = ''
+                    for srv in value:
+                        out + f'\t{parm} = {srv}\n'
+
+                    return out
+                case _:
+                    # most parameters take a space-delimited list
+                    return f'\t{parm} = {" ".join(value)}\n'
         else:
             return f'\t{parm} = {value}\n'
 
