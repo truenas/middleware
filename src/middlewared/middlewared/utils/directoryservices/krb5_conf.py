@@ -311,7 +311,7 @@ class KRB5Conf():
                     # single line.
                     out = ''
                     for srv in value:
-                        out + f'\t{parm} = {srv}\n'
+                        out += f'\t{parm} = {srv}\n'
 
                     return out
                 case _:
