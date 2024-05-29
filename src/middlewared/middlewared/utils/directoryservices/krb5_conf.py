@@ -358,7 +358,7 @@ class KRB5Conf():
         Write the stored krb5.conf file to the specified `path`
         """
         config = self.generate()
-        with NamedTemporaryFile(delete=False) as f:
+        with NamedTemporaryFile(delete=False, dir=os.path.dirname(path)) as f:
             f.write(config.encode())
             f.flush()
 
