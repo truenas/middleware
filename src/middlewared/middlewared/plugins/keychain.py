@@ -469,7 +469,7 @@ class KeychainCredentialService(CRUDService):
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             key = os.path.join(tmpdirname, "key")
-            subprocess.check_call(["ssh-keygen", "-t", "rsa", "-f", key, "-N", "", "-q"])
+            subprocess.check_call(["ssh-keygen", "-t", "ed25519", "-f", key, "-N", "", "-q"])
             with open(key) as f:
                 private_key = f.read()
             with open(f"{key}.pub") as f:
