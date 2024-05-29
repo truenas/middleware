@@ -146,7 +146,6 @@ class DSCache(Service):
         enabled_ds = None
         extra = options.get("extra", {})
         get_smb = 'SMB' in extra.get('additional_information', [])
-        options.pop('get', None)  # This needs to happen as otherwise `res` will become a list of keys of user attrs
 
         is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'name', 'group'])
         is_id_check = bool(filters and len(filters) == 1 and filters[0][0] in ['uid', 'gid'])

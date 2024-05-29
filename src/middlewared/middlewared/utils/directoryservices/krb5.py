@@ -254,7 +254,7 @@ def extract_from_keytab(
     if len(kt_list) == len(to_remove):
         # Let caller know that keytab would be empty. If we were to follow
         # through with this, caller would receive # keytab containing only
-        # `b'\x05\x02'`
+        # `b'\x05\x02' (KRB5_KT_VNO)`
         return None
 
     tmp_keytab = __tmp_krb5_keytab()

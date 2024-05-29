@@ -419,7 +419,7 @@ def test_12_keytab_restore(request):
     reset_systemd_svcs('winbind smbd')
 
     with active_directory():
-        call('activedirectory.started')
+        assert call('activedirectory.started') is True
 
         kt_id = call('kerberos.keytab.query', [['name', '=', 'AD_MACHINE_ACCOUNT']], {'get': True})['id']
 

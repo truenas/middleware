@@ -756,6 +756,11 @@ class LDAPService(ConfigService):
 
     @private
     async def validate_credentials(self, ldap_config=None):
+        """
+        This method validates that user-supplied credentials can be used to
+        successfully perform a bind to the specified LDAP server. If bind is
+        using GSSAPI, then we must first kinit.
+        """
         client_conf = await self.ldap_conf_to_client_config(ldap_config)
         if client_conf['bind_type'] == 'GSSAPI':
             await self.kinit(ldap_config)
