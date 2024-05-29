@@ -1,17 +1,13 @@
-import sys
 import time
-import os
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 
 import pytest
 from pytest_dependency import depends
 
-from auto_config import ha, vip, pool_name
+from auto_config import ha, pool_name
 from middlewared.client.client import ValidationErrors
 from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import fail
-from middlewared.test.integration.utils.client import client, host
+from middlewared.test.integration.utils.client import client
 
 
 def wait_for_standby(ws_client):
@@ -101,7 +97,7 @@ def test_002_create_permanent_zpool(request, ws_client):
         3. verify system dataset automagically migrated to this pool
     """
     depends(request, ['SYSDS'])
-    unused_disks = ws_client.call('disk.get_unused')
+    unused_disks = ws_client.call('disk.details')['unused']
     assert len(unused_disks) >= 2
 
     try:
@@ -134,8 +130,9 @@ def test_002_create_permanent_zpool(request, ws_client):
 def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(ws_client, pool_data):
     """
     This tests a few items related to zpool creation logic:
-    1. disk.get_unused should NOT show disks that are a part of a zpool that is
-        currently imported
+    1. disk.details()['unused'] should NOT show disks that are a part of a zpool that is
+        currently imported (inversely, disk.details()['used'] should show disks that are
+        currently in use by a zpool that is imported)
     2. make sure the system dataset doesn't migrate to the 2nd zpool that we create
         since it should only be migrating to the 1st zpool that is created
     3. after verifying system dataset doesn't migrate to the 2nd zpool, explicitly
@@ -162,9 +159,11 @@ def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(ws_client, p
         assert False, e
     else:
         pool_data[pool['name']] = pool
+        disk_deets = ws_client.call('disk.details')
         # disk should not show up in `exported_zpool` keys since it's still imported
-        unused_disks = ws_client.call('disk.get_unused', False)
-        assert not any((i['exported_zpool'] == pool['name'] for i in unused_disks))
+        assert not any((i['exported_zpool'] == pool['name'] for i in disk_deets['unused']))
+        # on the contrary, the disk should show up as being part of an imported zpool
+        assert any((i['imported_zpool'] == pool['name'] for i in disk_deets['used']))
 
         sysds = ws_client.call('systemdataset.config')
         assert pool['name'] != sysds['pool']
