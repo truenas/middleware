@@ -2,7 +2,6 @@ from middlewared.plugins.idmap_.utils import (
     IDType,
     SID_LOCAL_USER_PREFIX,
     SID_LOCAL_GROUP_PREFIX,
-    WBClient,
 )
 from middlewared.service import Service, private, job
 from middlewared.service_exception import CallError
