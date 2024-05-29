@@ -328,13 +328,13 @@ def test_03_kerberos_krbconf(do_ad_connection):
     output = parse_krb5_conf(parse_section, split='[', state=iter_state)
     assert iter_state['found'] is True, output
 
-    results = PUT("/kerberos/", {"libdefaults_aux": "scan_interfaces = true"})
+    results = PUT("/kerberos/", {"libdefaults_aux": "rdns = true"})
     assert results.status_code == 200, results.text
 
     iter_state = {
         'section': 'libdefaults',
         'found': False,
-        'to_check': 'scan_interfaces = true'
+        'to_check': 'rdns = true'
     }
     output = parse_krb5_conf(parse_section, split='[', state=iter_state)
     assert iter_state['found'] is True, output
