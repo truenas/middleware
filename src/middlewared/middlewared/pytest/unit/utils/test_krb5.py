@@ -249,7 +249,13 @@ def validate_realms_section(data):
                     data = line.split('=')
                     assert len(data) == 2, realm
                     key, val = data
-                    assert this[key.strip()] == val.strip().split()
+                    key = key.strip()
+
+                    match key:
+                        case 'kdc' | 'admin_server' | 'kpasswd_server':
+                            assert val.strip() in this[key]
+                        case _:
+                            raise ValueError(f'{key}: unexpected key in realm config')
 
             lidx += 1
 
