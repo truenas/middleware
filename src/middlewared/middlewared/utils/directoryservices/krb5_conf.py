@@ -304,7 +304,7 @@ class KRB5Conf():
             if len(value) == 0:
                 return None
 
-            switch parm:
+            match parm:
                 case 'kdc' | 'admin_server' | 'kpasswd_server':
                     # some krb5.conf parameters may be specified multiple times
                     # (MIT kerberos). Heimdal requires these to be placed on

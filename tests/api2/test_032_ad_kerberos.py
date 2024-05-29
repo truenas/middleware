@@ -150,10 +150,14 @@ def test_02_kerberos_keytab_and_realm(do_ad_connection):
             assert krb5conf_lines[idx + 2].lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][2]}"
             state['has_kdc'] = True
 
-        if entry.lstrip() == f"admin_server = {' '.join(SAMPLEDOM_REALM['admin_server'])}":
+        if entry.lstrip() == f"admin_server = {SAMPLEDOM_REALM['admin_server'][0]}":
+            assert krb5conf_lines[idx + 1].lstrip() == f"admin_server = {SAMPLEDOM_REALM['admin_server'][1]}"
+            assert krb5conf_lines[idx + 2].lstrip() == f"admin_server = {SAMPLEDOM_REALM['admin_server'][2]}"
             state['has_admin_server'] = True
 
-        if entry.lstrip() == f"kpasswd_server = {' '.join(SAMPLEDOM_REALM['kpasswd_server'])}":
+        if entry.lstrip() == f"kpasswd_server = {SAMPLEDOM_REALM['kpasswd_server'][0]}":
+            assert krb5conf_lines[idx + 1].lstrip() == f"kpasswd_server = {SAMPLEDOM_REALM['kpasswd_server'][1]}"
+            assert krb5conf_lines[idx + 2].lstrip() == f"kpasswd_server = {SAMPLEDOM_REALM['kpasswd_server'][2]}"
             state['has_kpasswd_server'] = True
 
 
