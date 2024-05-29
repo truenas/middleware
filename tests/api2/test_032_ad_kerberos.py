@@ -294,12 +294,7 @@ def test_03_kerberos_krbconf(do_ad_connection):
         if not sec.startswith(state['section']):
             return
 
-        pam_closed = False
         for entry in sec.splitlines():
-            if state['section'] == 'appdefaults' and not pam_closed:
-                pam_closed = entry.lstrip().startswith('}')
-                continue
-
             if entry.strip() == state['to_check']:
                 state['found'] = True
                 break
