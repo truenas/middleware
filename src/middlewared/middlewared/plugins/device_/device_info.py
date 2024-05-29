@@ -128,10 +128,11 @@ class DeviceService(Service):
 
     @private
     def get_disk_details(self, ctx, dev, get_partitions=False):
-        is_nvme = dev.sys_name.startswith('nvme')
         blocks = self.safe_retrieval(dev.attributes, 'size', None, asint=True)
         ident = serial = self.get_disk_serial(dev)
         model = descr = self.safe_retrieval(dev.properties, 'ID_MODEL', None)
+        vendor = self.safe_retrieval(dev.properties, 'ID_VENDOR', None)
+        is_nvme = dev.sys_name.startswith('nvme') or (vendor and vendor.lower().strip() == 'nvme')
         driver = self.safe_retrieval(dev.parent.properties, 'DRIVER', '') if not is_nvme else 'nvme'
         sectorsize = self.safe_retrieval(dev.attributes, 'queue/logical_block_size', None, asint=True)
 
@@ -148,6 +149,7 @@ class DeviceService(Service):
             'hctl': self.safe_retrieval(dev.parent.properties, 'DEVPATH', '').split('/')[-1],
             'size': size,
             'mediasize': mediasize,
+            'vendor': vendor,
             'ident': ident,
             'serial': serial,
             'model': model,
