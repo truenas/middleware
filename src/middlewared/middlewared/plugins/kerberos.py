@@ -462,7 +462,7 @@ class KerberosService(ConfigService):
 
     @private
     async def renew(self):
-        if not await self.check_ticket({'ccache': krb5ccache.SYSTEM.value}, False):
+        if not await self.check_ticket({'ccache': krb5ccache.SYSTEM.name}, False):
             self.logger.warning('Kerberos ticket is unavailable. Performing kinit.')
             return await self.start()
 
