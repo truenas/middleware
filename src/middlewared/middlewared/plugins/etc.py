@@ -252,7 +252,9 @@ class EtcService(Service):
             ]
         },
         'snmpd': [
-            {'type': 'mako', 'path': 'snmp/snmpd.conf', 'local_path': 'local/snmpd.conf'},
+            {'type': 'mako', 'path': 'snmp/snmpd.conf',
+                'local_path': 'local/snmpd.conf', 'owner': 'root', 'group': 'Debian-snmp', 'mode': 0o640
+            },
         ],
         'syslogd': {
             'ctx': [
