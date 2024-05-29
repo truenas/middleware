@@ -57,6 +57,13 @@ def test__ktutil_list_impl(kerberos_data_dir):
     entries = krb5.ktutil_list_impl(os.path.join(kerberos_data_dir, KEYTAB_NAME))
     assert len(entries) != 0
     slots = []
+
+    # The schema for what entries / types are expected for valid keytab entries
+    # returned from `ktutil_list_impl` is defined in the
+    # KTUTIL_LIST_OUTPUT_SCHEMA
+    #
+    # If for some reason, the output for this method is changed, then the
+    # aforementioned schema _must_ also be changed or this test will fail.
     jsonschema.validate(entries, krb5.KTUTIL_LIST_OUTPUT_SCHEMA)
     for entry in entries:
         assert entry['slot'] not in slots
