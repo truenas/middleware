@@ -17,7 +17,7 @@ ${'####'} Client connects to websocket endpoint and sends a `connect` message.
     {
         "id": "6841f242-840a-11e6-a437-00e04d680384",
         "msg": "method",
-        "method": "catalog_old.sync_all",
+        "method": "catalog.sync_all",
         "params": []
     }
 
@@ -50,7 +50,7 @@ Response:
     {
       "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
       "msg": "result",
-      "result": [{"id": 53, "method": "catalog_old.sync_all", "arguments": [], "logs_path": null, "logs_excerpt": null, "progress": {"percent": 100, "description": "Syncing TEST catalog", "extra": null}, "result": null, "error": null, "exception": null, "exc_info": null, "state": "SUCCESS", "time_started": {"$date": 1571300596053}, "time_finished": null}]
+      "result": [{"id": 53, "method": "catalog.sync_all", "arguments": [], "logs_path": null, "logs_excerpt": null, "progress": {"percent": 100, "description": "Syncing TEST catalog", "extra": null}, "result": null, "error": null, "exception": null, "exc_info": null, "state": "SUCCESS", "time_started": {"$date": 1571300596053}, "time_finished": null}]
     }
 
 ${'###'} Uploading / Downloading Files
