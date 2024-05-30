@@ -9,7 +9,6 @@ Homepage: http://www.truenas.com
 Package: truenas
 Architecture: all
 Depends: acl,
-         cifs-utils,
          console-setup,
          cpuid,
          gdb,
