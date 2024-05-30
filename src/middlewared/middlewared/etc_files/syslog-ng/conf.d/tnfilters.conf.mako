@@ -39,13 +39,6 @@ filter f_tnremote {
 
 # These filters are used for applications that have
 # special logging behavior
-filter f_k3s { program("k3s"); };
-filter f_containerd { program("containerd") or program("dockerd") };
-filter f_kube_router { program("kube-router"); };
-filter f_app_mounts {
-  program("systemd") and match("mount:" value("MESSAGE")) and match("docker" value("MESSAGE")); or
-  program("systemd") and match("mount:" value("MESSAGE")) and match("kubelet" value("MESSAGE"));
-};
 filter f_nfs_mountd {
   program("rpc.mountd") and level(debug..notice);
 };
@@ -70,10 +63,6 @@ filter f_truenas_exclude {
   not filter(f_nfs_mountd) and
 % endif
   not filter(f_tnaudit_all) and
-  not filter(f_k3s) and
-  not filter(f_containerd) and
-  not filter(f_kube_router) and
-  not filter(f_app_mounts) and
   not filter(f_scst) and
   # Temporary SNMP filter: NAS-129124
   not filter(f_snmp)
