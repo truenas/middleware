@@ -611,17 +611,6 @@ class ShellWorkerThread(threading.Thread):
                 command = ['/usr/bin/sudo', '-H', '-u', username] + command
 
             return command, not as_root
-        elif options.get('chart_release'):
-            command = [
-                '/usr/local/bin/k3s', 'kubectl', 'exec', '-n', options['chart_release']['namespace'],
-                f'pod/{options["pod_name"]}', '--container', options['container_name'], '-it', '--',
-                options.get('command', '/bin/bash'),
-            ]
-
-            if not as_root:
-                command = ['/usr/bin/sudo', '-H', '-u', username] + command
-
-            return command, not as_root
         else:
             return ['/usr/bin/login', '-p', '-f', username], False
 
@@ -803,13 +792,6 @@ class ShellApplication(object):
                 options = data.get('options', {})
                 if options.get('vm_id'):
                     options['vm_data'] = await self.middleware.call('vm.get_instance', options['vm_id'])
-                if options.get('chart_release_name'):
-                    if not options.get('pod_name') or not options.get('container_name'):
-                        raise CallError('Pod name and container name must be specified')
-
-                    options['chart_release'] = await self.middleware.call(
-                        'chart.release.get_instance', options['chart_release_name']
-                    )
 
                 # By default we want to run kubectl/virsh with user's privileges and assume all "permission denied"
                 # errors this can cause, unless the user has a sudo permission for all commands; in that case, let's
