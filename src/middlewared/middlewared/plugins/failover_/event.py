@@ -677,7 +677,6 @@ class FailoverEventsService(Service):
         self.run_call('service.restart', 'netdata')
         logger.info('Done restarting reporting metrics')
 
-        self.run_call('failover.events.start_apps')  # this method logs before and after already
         logger.info('Updating replication tasks')
         self.run_call('zettarepl.update_tasks')
         logger.info('Done updating replication tasks')
@@ -729,14 +728,6 @@ class FailoverEventsService(Service):
         self.FAILOVER_RESULT = 'SUCCESS'
 
         return self.FAILOVER_RESULT
-
-    async def start_apps(self):
-        if await self.middleware.call('kubernetes.license_active') and (
-            await self.middleware.call('kubernetes.config')
-        )['dataset']:
-            logger.info('Starting background task for bring up of apps')
-            self.middleware.create_task(self.middleware.call('kubernetes.start_service'))
-            logger.info('Done starting background task for bring up of apps')
 
     @job(lock=FAILOVER_LOCK_NAME)
     def vrrp_backup(self, job, fobj, ifname, event):
