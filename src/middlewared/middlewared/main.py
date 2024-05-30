@@ -5,7 +5,6 @@ from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
-from .plugins.kubernetes_linux.k8s.exceptions import ApiException
 from .restful import parse_credentials, authenticate, create_application, copy_multipart_to_pipe, RESTfulAPI
 from .role import ROLES, RoleManager
 from .settings import conf
@@ -227,12 +226,6 @@ class Application:
             # CallException and subclasses are the way to gracefully
             # send errors to the client
             self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
-        except ApiException as e:
-            self.send_error(message, errno.EINVAL, str(e) or repr(e), sys.exc_info())
-            k8s_logger.error('Exception while calling {}(*{})'.format(
-                message['method'],
-                self.middleware.dump_args(message.get('params', []), method_name=message['method'])
-            ), exc_info=True)
         except Exception as e:
             adapted = adapt_exception(e)
             if adapted:
