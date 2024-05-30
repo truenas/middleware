@@ -14,6 +14,7 @@ class DisabledReasonsEnum(str, Enum):
     NO_CRITICAL_INTERFACES = 'No network interfaces are marked critical for failover.'
     MISMATCH_DISKS = 'The quantity of disks do not match between the nodes.'
     MISMATCH_VERSIONS = 'TrueNAS software versions do not match between storage controllers.'
+    MISMATCH_NICS = 'NIC hardware does not match between nodes.'
     DISAGREE_VIP = 'Nodes Virtual IP states do not agree.'
     NO_LICENSE = 'Other node has no license.'
     NO_FAILOVER = 'Administratively Disabled.'
@@ -160,6 +161,10 @@ class FailoverDisabledReasonsService(Service):
             mismatch_disks = self.middleware.call_sync('failover.mismatch_disks')
             if mismatch_disks['missing_local'] or mismatch_disks['missing_remote']:
                 reasons.add(DisabledReasonsEnum.MISMATCH_DISKS.name)
+
+            local_nics = self.middleware.call_sync('interface.get_nics')
+            if local_nics != self.middleware.call_sync('failover.call_remote', 'interface.get_nics'):
+                reasons.add(DisabledReasonsEnum.MISMATCH_NICS.name)
         except Exception:
             reasons.add(DisabledReasonsEnum.NO_PONG.name)
 

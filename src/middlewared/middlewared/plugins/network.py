@@ -15,6 +15,8 @@ from .interface.netif import netif
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
 
+from os import scandir
+
 
 class NetworkAliasModel(sa.Model):
     __tablename__ = 'network_alias'
@@ -1936,6 +1938,13 @@ class InterfaceService(CRUDService):
                         list_of_ip.append(alias_dict)
 
         return list_of_ip
+    
+    @private
+    async def get_nics(self):
+        with scandir("/sys/class/net/") as nics:
+            res = set(nic.name for nic in nics)
+        ignore = set(await self.middleware.call('interface.internal_interfaces'))
+        return list(res - ignore)
 
 
 async def configure_http_proxy(middleware, *args, **kwargs):
