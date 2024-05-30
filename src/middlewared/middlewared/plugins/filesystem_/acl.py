@@ -5,7 +5,6 @@ import subprocess
 import stat as pystat
 from pathlib import Path
 
-from middlewared.plugins.chart_releases_linux.utils import is_ix_volume_path
 from middlewared.schema import Bool, Dict, Int, List, Str, Ref, UnixPerm, OROperator
 from middlewared.service import accepts, private, returns, job, CallError, ValidationErrors, Service
 from middlewared.utils.filesystem.directory import directory_is_empty
@@ -83,14 +82,6 @@ class FilesystemService(Service):
             verrors.add(
                 f'{schema}.path',
                 'Path component for is currently encrypted and locked'
-            )
-
-        apps_dataset = self.middleware.call_sync('kubernetes.config')['dataset']
-        if apps_dataset and st['realpath'].startswith(f'/mnt/{apps_dataset}')\
-                and not is_ix_volume_path(st['realpath'], apps_dataset):
-            verrors.add(
-                f'{schema}.path',
-                f'Changes to permissions of ix-applications dataset are not permitted: {path}.'
             )
 
         return loc
