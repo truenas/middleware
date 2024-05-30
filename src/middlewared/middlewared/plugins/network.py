@@ -1940,13 +1940,13 @@ class InterfaceService(CRUDService):
         return list_of_ip
     
     @private
-    async def get_nics(self) -> set:
+    def get_nic_names(self) -> set:
         """
         Get NICs without including internal_interfaces
         """
         with scandir("/sys/class/net/") as nics:
             res = set(nic.name for nic in nics)
-        ignore = set(await self.middleware.call('interface.internal_interfaces'))
+        ignore = set(self.middleware.call_sync('interface.internal_interfaces'))
         return res - ignore
 
 

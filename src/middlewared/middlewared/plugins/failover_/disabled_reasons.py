@@ -162,15 +162,15 @@ class FailoverDisabledReasonsService(Service):
             if mismatch_disks['missing_local'] or mismatch_disks['missing_remote']:
                 reasons.add(DisabledReasonsEnum.MISMATCH_DISKS.name)
 
-            local_nics = self.middleware.call_sync('interface.get_nics')
+            local_nics = self.middleware.call_sync('interface.get_nic_names')
             try:
-                remote_nics = self.middleware.call_sync('failover.call_remote', 'interface.get_nics')
+                remote_nics = self.middleware.call_sync('failover.call_remote', 'interface.get_nic_names')
                 if local_nics != remote_nics:
                     reasons.add(DisabledReasonsEnum.MISMATCH_NICS.name)
             except CallError as e:
                 if e.errno != CallError.ENOMETHOD:
                     raise
-                self.logger.warning('Unable to call interface.get_nics on remote. Skipping check.')
+                self.logger.warning('Unable to call interface.get_nic_names on remote. Skipping check.')
         except Exception:
             reasons.add(DisabledReasonsEnum.NO_PONG.name)
 
