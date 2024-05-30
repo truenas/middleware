@@ -1,6 +1,4 @@
-import os
-
-from middlewared.schema import Any, Str, Ref, Int, Dict, Bool, accepts
+from middlewared.schema import Str, Ref, Int, Dict, Bool, accepts
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError, MatchNotFound
 
@@ -144,12 +142,10 @@ class DSCache(Service):
 
         `objtype`: 'USERS' or 'GROUPS'
         """
-        res = []
         ds_state = await self.middleware.call('directoryservices.get_state')
         enabled_ds = None
         extra = options.get("extra", {})
         get_smb = 'SMB' in extra.get('additional_information', [])
-        options.pop('get', None)  # This needs to happen as otherwise `res` will become a list of keys of user attrs
 
         is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'name', 'group'])
         is_id_check = bool(filters and len(filters) == 1 and filters[0][0] in ['uid', 'gid'])

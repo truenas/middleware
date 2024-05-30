@@ -17,6 +17,8 @@ logging.getLogger('botocore').setLevel(logging.WARNING)
 logging.getLogger('websocket').setLevel(logging.WARNING)
 # issues garbage warnings
 logging.getLogger('googleapiclient').setLevel(logging.ERROR)
+# It's too verbose (when used to list remote datasets/snapshots)
+logging.getLogger('paramiko').setLevel(logging.INFO)
 # registered 'pbkdf2_sha256' handler: <class 'passlib.handlers.pbkdf2.pbkdf2_sha256'>
 logging.getLogger('passlib.registry').setLevel(logging.INFO)
 logging.getLogger('passlib.handlers').setLevel(logging.INFO)

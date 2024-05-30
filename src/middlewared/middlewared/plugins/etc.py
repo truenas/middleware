@@ -88,7 +88,7 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'group'},
                 {'type': 'mako', 'path': 'passwd', 'local_path': 'master.passwd'},
                 {'type': 'mako', 'path': 'shadow', 'group': 'shadow', 'mode': 0o0640},
-                {'type': 'mako', 'path': 'local/sudoers'},
+                {'type': 'mako', 'path': 'local/sudoers', 'mode': 0o440},
                 {'type': 'mako', 'path': 'aliases', 'local_path': 'mail/aliases'},
                 {'type': 'py', 'path': 'web_ui_root_login_alert'},
             ]
@@ -103,10 +103,18 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'fstab'},
             {'type': 'py', 'path': 'fstab_configure', 'checkpoint': 'post_init'}
         ],
-        'kerberos': [
-            {'type': 'mako', 'path': 'krb5.conf'},
-            {'type': 'py', 'path': 'krb5.keytab', 'mode': 0o600},
-        ],
+        'kerberos': {
+            'ctx': [
+                {'method': 'activedirectory.config'},
+                {'method': 'ldap.config'},
+                {'method': 'kerberos.config'},
+                {'method': 'kerberos.realm.query'}
+            ],
+            'entries': [
+                {'type': 'py', 'path': 'krb5.conf', 'mode': 0o644},
+                {'type': 'py', 'path': 'krb5.keytab', 'mode': 0o600},
+            ]
+        },
         'cron': [
             {'type': 'mako', 'path': 'cron.d/middlewared', 'checkpoint': 'pool_import'},
         ],
@@ -252,7 +260,9 @@ class EtcService(Service):
             ]
         },
         'snmpd': [
-            {'type': 'mako', 'path': 'snmp/snmpd.conf', 'local_path': 'local/snmpd.conf'},
+            {'type': 'mako', 'path': 'snmp/snmpd.conf',
+                'local_path': 'local/snmpd.conf', 'owner': 'root', 'group': 'Debian-snmp', 'mode': 0o640
+            },
         ],
         'syslogd': {
             'ctx': [
@@ -435,7 +445,7 @@ class EtcService(Service):
                 changes = await self.middleware.run_in_thread(self.make_changes, outfile, entry, rendered)
 
                 if not changes:
-                    self.logger.debug(f'No new changes for {outfile}')
+                    self.logger.trace('No new changes for %s', outfile)
 
                 else:
                     output.append({

@@ -3,10 +3,13 @@ logger = middleware.logger
 
 def generate_syslog_remote_destination(advanced_config):
     result = ""
-    if ":" in advanced_config["syslogserver"]:
-        host, port = advanced_config["syslogserver"].rsplit(":", 1)
+    syslog_server = advanced_config["syslogserver"]
+    if "]:" in syslog_server or (":" in syslog_server and not "]" in syslog_server): 
+        host, port = syslog_server.rsplit(":", 1)
     else:
-        host, port = advanced_config["syslogserver"], "514"
+        host, port = syslog_server, "514"
+
+    host = host.replace("[", "").replace("]", "")
 
     result += 'destination loghost { '
 
@@ -22,7 +25,7 @@ def generate_syslog_remote_destination(advanced_config):
             logger.warning("Syslog TLS certificate not available, skipping remote syslog destination")
             return ""
 
-        result += f"syslog(\"{host}\" port({port}) transport(\"tls\") "
+        result += f"syslog(\"{host}\" port({port}) transport(\"tls\") ip-protocol(6) "
         try:
             ca_dir = "/etc/certificates/CA"
             for filename in os.listdir(ca_dir):
@@ -56,7 +59,8 @@ def generate_syslog_remote_destination(advanced_config):
         result += "));"
     else:
         transport = advanced_config["syslog_transport"].lower()
-        result += f'{transport}("{host}" port({port}) localport(514));'
+        result += f"syslog(\"{host}\" port({port}) localport(514) transport(\"{transport}\") ip-protocol(6));"
+
 
     result += ' };\n'
     result += 'log { source(tn_remote_src_files); filter(f_tnremote); destination(loghost); };\n'

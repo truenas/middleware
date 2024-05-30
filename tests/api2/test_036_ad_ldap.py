@@ -122,7 +122,7 @@ def do_ldap_connection(request):
 
     res = make_ws_request(ip, {
         'msg': 'method',
-        'method': 'kerberos._klist_test',
+        'method': 'kerberos.check_ticket',
         'params': [],
     })
     error = res.get('error')
@@ -295,7 +295,7 @@ def test_05_kinit_as_ad_user(setup_nfs_share):
 
     res = make_ws_request(ip, {
         'msg': 'method',
-        'method': 'kerberos._klist_test',
+        'method': 'kerberos.check_ticket',
         'params': [kinit_opts],
     })
     error = res.get('error')

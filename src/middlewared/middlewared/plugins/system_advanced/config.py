@@ -134,13 +134,13 @@ class SystemAdvancedService(ConfigService):
 
         syslog_server = data.get('syslogserver')
         if syslog_server:
-            match = re.match(r"^[\w\.\-]+(\:\d+)?$", syslog_server)
+            match = re.match(r"^\[?[\w\.\-\:\%]+\]?(\:\d+)?$", syslog_server)
             if not match:
                 verrors.add(
                     f'{schema}.syslogserver',
                     'Invalid syslog server format'
                 )
-            elif ':' in syslog_server:
+            elif ']:' in syslog_server or (':' in syslog_server and not ']' in syslog_server):
                 port = int(syslog_server.split(':')[-1])
                 if port < 0 or port > 65535:
                     verrors.add(
