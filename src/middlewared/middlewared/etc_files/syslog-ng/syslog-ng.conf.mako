@@ -119,31 +119,6 @@ source tn_remote_src_files {
 ########################
 log {
   source(s_src);
-  filter(f_k3s);
-  destination { file("/var/log/k3s_daemon.log"); };
-  flags(final);
-};
-
-log {
-  source(s_src);
-  filter(f_containerd);
-  destination { file("/var/log/containerd.log"); };
-  flags(final);
-};
-log {
-  source(s_src);
-  filter(f_kube_router);
-  destination { file("/var/log/kube_router.log"); };
-  flags(final);
-};
-log {
-  source(s_src);
-  filter(f_app_mounts);
-  destination { file("/var/log/app_mounts.log"); };
-  flags(final);
-};
-log {
-  source(s_src);
   filter(f_scst);
   destination { file("/var/log/scst.log"); };
   flags(final);
