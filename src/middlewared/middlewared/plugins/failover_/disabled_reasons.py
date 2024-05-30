@@ -5,7 +5,7 @@
 from enum import Enum
 
 from middlewared.schema import accepts, returns, List, Str
-from middlewared.service import Service, pass_app, no_auth_required, private
+from middlewared.service import Service, CallError, pass_app, no_auth_required, private
 from middlewared.plugins.interface.netif import netif
 from middlewared.utils.zfs import query_imported_fast_impl
 
@@ -163,8 +163,14 @@ class FailoverDisabledReasonsService(Service):
                 reasons.add(DisabledReasonsEnum.MISMATCH_DISKS.name)
 
             local_nics = self.middleware.call_sync('interface.get_nics')
-            if local_nics != self.middleware.call_sync('failover.call_remote', 'interface.get_nics'):
-                reasons.add(DisabledReasonsEnum.MISMATCH_NICS.name)
+            try:
+                remote_nics = self.middleware.call_sync('failover.call_remote', 'interface.get_nics')
+                if local_nics != remote_nics:
+                    reasons.add(DisabledReasonsEnum.MISMATCH_NICS.name)
+            except CallError as e:
+                if e.errno != CallError.ENOMETHOD:
+                    raise
+                self.logger.warning('Unable to call interface.get_nics on remote. Skipping check.')
         except Exception:
             reasons.add(DisabledReasonsEnum.NO_PONG.name)
 

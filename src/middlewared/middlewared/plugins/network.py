@@ -1940,11 +1940,14 @@ class InterfaceService(CRUDService):
         return list_of_ip
     
     @private
-    async def get_nics(self):
+    async def get_nics(self) -> set:
+        """
+        Get NICs without including internal_interfaces
+        """
         with scandir("/sys/class/net/") as nics:
             res = set(nic.name for nic in nics)
         ignore = set(await self.middleware.call('interface.internal_interfaces'))
-        return list(res - ignore)
+        return res - ignore
 
 
 async def configure_http_proxy(middleware, *args, **kwargs):
