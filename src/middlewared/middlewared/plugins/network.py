@@ -1066,10 +1066,6 @@ class InterfaceService(CRUDService):
                         verrors.add(f'{schema_name}.failover_critical', msg)
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
-        k8s_config = self.middleware.call_sync('kubernetes.config')
-        k8s_networks = [
-            ipaddress.ip_network(k8s_config[k], strict=False) for k in ('cluster_cidr', 'service_cidr')
-        ] if k8s_config['dataset'] else []
         used_networks_ipv4 = []
         used_networks_ipv6 = []
         for iface in ifaces.values():
@@ -1083,7 +1079,7 @@ class InterfaceService(CRUDService):
         for i, alias in enumerate(data.get('aliases') or []):
             alias_network = ipaddress.ip_network(f'{alias["address"]}/{alias["netmask"]}', strict=False)
             if alias_network.version == 4:
-                used_networks = ((used_networks_ipv4, 'another interface'), (k8s_networks, 'Applications'))
+                used_networks = ((used_networks_ipv4, 'another interface'),)
             else:
                 used_networks = ((used_networks_ipv6, 'another interface'),)
 
@@ -1095,22 +1091,6 @@ class InterfaceService(CRUDService):
                             f'The network {alias_network} is already in use by {message}.'
                         )
                         break
-
-    async def _validate_kubernetes_node_ip(self, old, new, verrors):
-        node_ip = await self.middleware.call('kubernetes.node_ip')
-        if node_ip == '0.0.0.0':
-            return
-
-        aliases = {
-            k: [entry['address'] for entry in data.get('aliases', [])] for k, data in (('old', old), ('new', new))
-        }
-
-        if node_ip in aliases['old'] and node_ip not in aliases['new']:
-            verrors.add(
-                f'{old["id"]}.aliases',
-                f'{node_ip!r} is being consumed by Applications, please use a different node IP'
-                ' in applications configuration.'
-            )
 
     async def __convert_interface_datastore(self, data):
         return {
@@ -1259,7 +1239,6 @@ class InterfaceService(CRUDService):
         if await self.middleware.call('failover.licensed') and (new.get('ipv4_dhcp') or new.get('ipv6_auto')):
             verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
 
-        await self._validate_kubernetes_node_ip(iface, new, verrors)
         verrors.check()
 
         await self.__save_datastores()
@@ -1422,10 +1401,6 @@ class InterfaceService(CRUDService):
                 filters = [('type', '=', 'VLAN'), ('vlan_parent_interface', '=', iface['id'])]
                 if vlans := ', '.join([i['name'] for i in await self.middleware.call('interface.query', filters)]):
                     verrors.add(schema, f'The following VLANs depend on this interface: {vlans}')
-
-        config = await self.middleware.call('kubernetes.config')
-        if any(config[k] == oid for k in ('route_v4_interface', 'route_v6_interface')):
-            verrors.add(schema, 'Interface is in use by kubernetes')
 
         verrors.check()
 
