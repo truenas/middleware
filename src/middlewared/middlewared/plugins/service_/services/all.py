@@ -1,8 +1,6 @@
 from .cifs import CIFSService
 from .ftp import FTPService
 from .iscsitarget import ISCSITargetService
-from .kuberouter import KubeRouterService
-from .kubernetes import KubernetesService
 from .mdns import MDNSService
 from .netbios import NetBIOSService
 from .netdata import NetdataService
@@ -62,8 +60,6 @@ all_services = [
     IdmapService,
     OpenIpmiService,
     KeepalivedService,
-    KubernetesService,
-    KubeRouterService,
     OpenVmToolsService,
     LibvirtdService,
     LibvirtGuestService,
