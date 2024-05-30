@@ -27,9 +27,6 @@ logging.getLogger('passlib.utils.compat').setLevel(logging.INFO)
 logging.getLogger('pyroute2.ndb').setLevel(logging.CRITICAL)
 logging.getLogger('pyroute2.netlink').setLevel(logging.CRITICAL)
 logging.getLogger('pyroute2.netlink.nlsocket').setLevel(logging.CRITICAL)
-# It logs each call made to the k8s api server when in debug mode, so we set the level to warn
-logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARNING)
-logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARNING)
 logging.getLogger('urllib3').setLevel(logging.WARNING)
 # ACME is very verbose in logging the request it sends with headers etc, let's not pollute the logs
 # with that much information and raise the log level in this case
