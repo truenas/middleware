@@ -362,6 +362,20 @@ async def test__interfaces_service__update_mtu_options():
     m['datastore.insert'] = Mock(return_value=5)
     m['network.common.check_failover_disabled'] = Mock()
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     update_interface = INTERFACES[1]
 
     with pytest.raises(ValidationErrors) as ve:
