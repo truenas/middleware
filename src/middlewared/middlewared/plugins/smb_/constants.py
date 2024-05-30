@@ -60,8 +60,8 @@ class SMBBuiltin(enum.Enum):
 
 
 class SMBPath(enum.Enum):
-    GLOBALCONF = ('/etc/smb4.conf', 0o755, False)
-    STUBCONF = ('/usr/local/etc/smb4.conf', 0o755, False)
+    GLOBALCONF = ('/etc/smb4.conf', 0o644, False)
+    STUBCONF = ('/usr/local/etc/smb4.conf', 0o644, False)
     SHARECONF = ('/etc/smb4_share.conf', 0o755, False)
     STATEDIR = ('/var/db/system/samba4', 0o755, True)
     PRIVATEDIR = ('/var/db/system/samba4/private', 0o700, True)
