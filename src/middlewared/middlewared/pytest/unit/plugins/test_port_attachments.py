@@ -336,27 +336,6 @@ PORTS_IN_USE = [
         ]
     },
     {
-        'namespace': 'kubernetes',
-        'title': 'Kubernetes Service',
-        'ports': [
-            [
-                '0.0.0.0',
-                6443
-            ]
-        ],
-        'port_details': [
-            {
-                'description': None,
-                'ports': [
-                    [
-                        '0.0.0.0',
-                        6443
-                    ]
-                ]
-            }
-        ]
-    },
-    {
         'namespace': 'ftp',
         'title': 'FTP Service',
         'ports': [
