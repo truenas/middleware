@@ -1,7 +1,7 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Dict, Int, Patch, Str
-from middlewared.service import ConfigService, job, private
+from middlewared.service import CallError, ConfigService, job, private
 
 from .utils import applications_ds_name
 
@@ -46,6 +46,7 @@ class DockerService(ConfigService):
         """
         Update Docker service configuration.
         """
+        raise CallError('Configuring docker is disabled for now')
         old_config = await self.config()
         old_config.pop('dataset')
         config = old_config.copy()
