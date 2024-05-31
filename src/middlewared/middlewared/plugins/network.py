@@ -5,6 +5,7 @@ import socket
 from collections import defaultdict
 from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
+from os import scandir
 
 import middlewared.sqlalchemy as sa
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
@@ -14,8 +15,6 @@ from middlewared.validators import Range
 from .interface.netif import netif
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
-
-from os import scandir
 
 
 class NetworkAliasModel(sa.Model):
@@ -1941,10 +1940,8 @@ class InterfaceService(CRUDService):
     
     @private
     def get_nic_names(self) -> set:
-        """
-        Get NICs without including internal_interfaces
-        """
-        with scandir("/sys/class/net/") as nics:
+        """Get network interface names excluding internal interfaces"""
+        with scandir('/sys/class/net/') as nics:
             res = set(nic.name for nic in nics)
         ignore = set(self.middleware.call_sync('interface.internal_interfaces'))
         return res - ignore

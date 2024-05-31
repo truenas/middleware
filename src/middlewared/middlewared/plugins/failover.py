@@ -436,19 +436,20 @@ class FailoverService(ConfigService):
             self.logger.error('Unhandled exception in get_disks_local', exc_info=True)
 
     @private
-    def mismatch_nics(self):
+    async def mismatch_nics(self):
         """Determine if NICs match between both controllers."""
-        result = False
+        result = {'missing_local': list(), 'missing_remote': list()}
+        local_nics = await self.middleware.call('interface.get_nic_names')
         try:
-            local_nics = self.middleware.call_sync('interface.get_nic_names')
-            remote_nics = self.middleware.call_sync('failover.call_remote', 'interface.get_nic_names')
-            if local_nics != remote_nics:
-                result = True
-        except CallError as e:
-            if e.errno != CallError.ENOMETHOD:
-                raise
-            self.logger.warning('Unable to call interface.get_nic_names on remote. Skipping check.')
-
+            remote_nics = await self.middleware.call(
+                'failover.call_remote', 'interface.get_nic_names', [],
+                {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+            )
+        except Exception:
+            self.logger.error('Unhandled exception in get_nic_names on remote controller', exc_info=True)
+        else:
+            result['missing_local'] = sorted(remote_nics - local_nics)
+            result['missing_remote'] = sorted(local_nics - remote_nics)
         return result
 
     @private
