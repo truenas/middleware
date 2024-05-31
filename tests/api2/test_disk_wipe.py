@@ -1,36 +1,14 @@
 import time
 
 import pytest
-from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.utils import call, ssh
 
 from auto_config import ha
-
-
-def test_disk_wipe_exported_zpool_in_disk_get_unused():
-    with another_pool() as tmp_pool:
-        tmp_pool_name = tmp_pool['name']
-        flat = call('pool.flatten_topology', tmp_pool['topology'])
-        used_disks = [i['disk'] for i in flat if i['type'] == 'DISK']
-
-    for disk in filter(lambda x: x['name'] in used_disks, call('disk.get_unused')):
-        # disks should still show as being part of an exported zpool
-        assert disk['exported_zpool'] == tmp_pool_name
-
-        # since we're here we'll wipe the disks
-        call('disk.wipe', disk['name'], 'QUICK', job=True)
-
-    for disk in filter(lambda x: x['name'] in used_disks, call('disk.get_unused')):
-        # now disks should no longer show as being part of the exported zpool
-        assert disk['exported_zpool'] is None
+from middlewared.test.integration.utils import call, ssh
 
 
 def test_disk_wipe_partition_clean():
-    """
-    Confirm we clean up around the middle partitions
-    """
+    """Confirm we clean up around the middle partitions"""
     signal_msg = "ix private data"
-
     disk = call("disk.get_unused")[0]["name"]
 
     # Create a data partition

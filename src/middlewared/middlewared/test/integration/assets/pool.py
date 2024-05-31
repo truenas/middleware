@@ -60,7 +60,7 @@ def another_pool(data=None, topology=None):
         yield pool
     finally:
         try:
-            call("pool.export", pool["id"], job=True)
+            call("pool.export", pool["id"], {"destroy": True}, job=True)
         except ValidationErrors as e:
             if not any(error.errcode == errno.ENOENT for error in e.errors):
                 raise

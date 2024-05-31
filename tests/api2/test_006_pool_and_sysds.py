@@ -162,7 +162,7 @@ def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(ws_client, p
         disk_deets = ws_client.call('disk.details')
         # disk should not show up in `exported_zpool` keys since it's still imported
         assert not any((i['exported_zpool'] == pool['name'] for i in disk_deets['unused']))
-        # on the contrary, the disk should show up as being part of an imported zpool
+        # disk should show up in `imported_zpool` key
         assert any((i['imported_zpool'] == pool['name'] for i in disk_deets['used']))
 
         sysds = ws_client.call('systemdataset.config')
@@ -190,7 +190,7 @@ def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(ws_client, p
 def test_004_verify_pool_property_unused_disk_functionality(request, ws_client, pool_data):
     """
     This does a few things:
-    1. export the zpool without wiping the disk and verify that disk.get_unused
+    1. export the zpool without wiping the disk and verify that disk.get_used
         still shows the relevant disk as being part of an exported zpool
     2. clean up the pool by exporting and wiping the disks
     3. finally, if this is HA enable failover since all tests after this one
@@ -212,8 +212,8 @@ def test_004_verify_pool_property_unused_disk_functionality(request, ws_client, 
     try:
         # disk should show up in `exported_zpool` keys since zpool was exported
         # without wiping the disk
-        unused_disks = ws_client.call('disk.get_unused', False)
-        assert any((i['exported_zpool'] == zp_name for i in unused_disks))
+        used_disks = ws_client.call('disk.get_used')
+        assert any((i['exported_zpool'] == zp_name for i in used_disks))
 
         # pool should be available to be imported again
         available_pools = ws_client.call('pool.import_find', job=True)

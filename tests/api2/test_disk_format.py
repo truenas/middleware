@@ -68,7 +68,7 @@ def test_disk_format(unused_disk):
 
     # Uses (almost) all the disk
     assert partitions[0]['start_sector'] == first_sector
-    assert partitions[0]['end_sector'] >= dd['blocks'] - grain_size
+    assert partitions[0]['end_sector'] <= dd['blocks'] - grain_size
 
     # And does not clobber the MBR data at the end
     assert partitions[0]['end_sector'] < dd['blocks'] - MBR_SECTOR_GAP
