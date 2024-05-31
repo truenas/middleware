@@ -92,7 +92,7 @@ class TrueNASService(Service):
     @accepts(roles=['READONLY_ADMIN'])
     @returns(Bool('system_eula_accepted'))
     @cli_private
-    async def is_eula_accepted(self):
+    def is_eula_accepted(self):
         """
         Returns whether the EULA is accepted or not.
         """
@@ -100,7 +100,7 @@ class TrueNASService(Service):
 
     @accepts()
     @returns()
-    async def accept_eula(self):
+    def accept_eula(self):
         """
         Accept TrueNAS EULA.
         """
@@ -111,9 +111,9 @@ class TrueNASService(Service):
                 raise
 
     @private
-    async def unaccept_eula(self):
-        with open(EULA_PENDING_PATH, "w"):
-            pass
+    def unaccept_eula(self):
+        with open(EULA_PENDING_PATH, "w") as f:
+            os.fchmod(f.fileno(), 0o600)
 
     # TODO: Document this please
     @accepts()
