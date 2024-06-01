@@ -13,7 +13,7 @@ from middlewared.test.integration.utils import call, client
 USER_FIXTURE_TUPLE = collections.namedtuple('UserFixture', 'username password group_name')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='module')
 def unprivileged_user_fixture(request):
     suffix = ''.join([random.choice(string.ascii_lowercase + string.digits) for _ in range(8)])
     group_name = f'unprivileged_users_fixture_{suffix}'
