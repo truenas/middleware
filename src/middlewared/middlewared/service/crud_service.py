@@ -205,19 +205,24 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
     delete.audit_callback = True
 
     async def _get_crud_wrapper_func(self, func, action, event_type, oid=None):
+        def common_event_handling(action, rv, oid):
+            if self._config.event_send and (action == 'delete' or isinstance(rv, dict) and 'id' in rv):
+                event_kwargs = {'fields': rv} if isinstance(rv, dict) else {}
+                self.middleware.send_event(
+                    f'{self._config.namespace}.query', event_type, id=oid or rv['id'], **event_kwargs,
+                )
+
         if asyncio.iscoroutinefunction(func):
             async def nf(*args, **kwargs):
                 rv = await func(*args, **kwargs)
                 await self.middleware.call_hook(f'{self._config.namespace}.post_{action}', rv)
-                if self._config.event_send and (action == 'delete' or isinstance(rv, dict) and 'id' in rv):
-                    self.middleware.send_event(f'{self._config.namespace}.query', event_type, id=oid or rv['id'])
+                common_event_handling(action, rv, oid)
                 return rv
         else:
             def nf(*args, **kwargs):
                 rv = func(*args, **kwargs)
                 self.middleware.call_hook_sync(f'{self._config.namespace}.post_{action}', rv)
-                if self._config.event_send and (action == 'delete' or isinstance(rv, dict) and 'id' in rv):
-                    self.middleware.send_event(f'{self._config.namespace}.query', event_type, id=oid or rv['id'])
+                common_event_handling(action, rv, oid)
                 return rv
 
         copy_function_metadata(func, nf)

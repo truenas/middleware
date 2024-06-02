@@ -3,7 +3,7 @@ import contextlib
 import ipaddress
 import socket
 from collections import defaultdict
-from itertools import zip_longest
+from itertools import chain, repeat, zip_longest
 from ipaddress import ip_address, ip_interface
 from os import scandir
 
@@ -12,6 +12,7 @@ from middlewared.service import CallError, CRUDService, filterable, pass_app, pr
 from middlewared.utils import filter_list, run
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, ValidationErrors
 from middlewared.validators import Range
+from middlewared.plugins.network_.utils import find_interface_changes, retrieve_added_removed_interfaces
 from .interface.netif import netif
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
@@ -527,6 +528,7 @@ class InterfaceService(CRUDService):
 
         datastores['laggmembers'] = []
         for i in await self.middleware.call('datastore.query', 'network.lagginterfacemembers'):
+            i['lagg_interface'] = i['lagg_interfacegroup']['lagg_interface']['int_interface']
             i['lagg_interfacegroup'] = i['lagg_interfacegroup']['id']
             datastores['laggmembers'].append(i)
 
@@ -602,6 +604,7 @@ class InterfaceService(CRUDService):
         """
         Rollback pending interfaces changes.
         """
+        original_datastores = self._original_datastores
         if self._rollback_timer:
             self._rollback_timer.cancel()
         self._rollback_timer = None
@@ -616,6 +619,8 @@ class InterfaceService(CRUDService):
         await self.middleware.call_hook('interface.post_rollback')
 
         await self.sync()
+
+        await self.send_changed_events(original_datastores, await self.get_datastores())
 
     @private
     async def checkin_impl(self, clear_cache=True):
@@ -688,6 +693,8 @@ class InterfaceService(CRUDService):
                 await self.rollback()
             raise
 
+        await self.send_changed_events(self._original_datastores, await self.get_datastores())
+
         if options['rollback'] and options['checkin_timeout']:
             loop = asyncio.get_event_loop()
             self._rollback_timer = loop.call_later(
@@ -695,6 +702,26 @@ class InterfaceService(CRUDService):
             )
         else:
             self._original_datastores = {}
+
+    @private
+    async def send_changed_events(self, original_datastores, current_datastores):
+        if not original_datastores:
+            # If we didn't have any changes stored originally (edge-case), we don't really have to check
+            # anything as we're not going to send any events.
+            return
+
+        interfaces = {iface['id']: iface for iface in await self.middleware.call('interface.query')}
+        for iface_name, event_type in chain(
+            zip(find_interface_changes(original_datastores, current_datastores), repeat('CHANGED')),
+            zip(
+                retrieve_added_removed_interfaces(original_datastores, current_datastores, 'added'), repeat('ADDED')
+            ),
+            zip(
+                retrieve_added_removed_interfaces(original_datastores, current_datastores, 'removed'), repeat('REMOVED')
+            ),
+        ):
+            kwargs = {'fields': interfaces[iface_name]} if iface_name in interfaces else {}
+            self.middleware.send_event(f'{self._config.namespace}.query', event_type, id=iface_name, **kwargs)
 
     @accepts(Dict(
         'interface_create',
