@@ -26,7 +26,7 @@ def nvidia_configuration():
 
 
 def gpu_configuration(middleware):
-    available_gpus = middleware.call_sync('device.get_info', 'GPU')
+    available_gpus = middleware.call_sync('device.get_info', {'type': 'GPU'})
     if any(gpu['vendor'] == 'NVIDIA' and gpu['available_to_host'] for gpu in available_gpus):
         return nvidia_configuration()
 
@@ -34,7 +34,7 @@ def gpu_configuration(middleware):
 
 
 def render(service, middleware):
-    config = middleware.call_sync('kubernetes.config')
+    config = middleware.call_sync('docker.config')
     if not config['pool']:
         return
 

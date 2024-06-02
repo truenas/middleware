@@ -1,4 +1,5 @@
 from .cifs import CIFSService
+from .docker import DockerService
 from .ftp import FTPService
 from .iscsitarget import ISCSITargetService
 from .mdns import MDNSService
@@ -43,6 +44,7 @@ from .pseudo.misc import (
 
 all_services = [
     CIFSService,
+    DockerService,
     DSCacheService,
     FTPService,
     ISCSITargetService,
