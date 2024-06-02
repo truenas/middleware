@@ -112,3 +112,34 @@ class CatalogService(ConfigService):
         await self.middleware.call('datastore.update', self._config.datastore, OFFICIAL_LABEL, data)
 
         return await self.config()
+
+    @private
+    async def update_train_for_enterprise(self):
+        catalog = await self.middleware.call('catalog.get_instance', OFFICIAL_LABEL)
+        if await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE':
+            preferred_trains = []
+            # Logic coming from here
+            # https://github.com/truenas/middleware/blob/e7f2b29b6ff8fadcc9fdd8d7f104cbbf5172fc5a/src/middlewared
+            # /middlewared/plugins/catalogs_linux/update.py#L341
+            can_have_multiple_trains = not await self.middleware.call('system.is_ha_capable') and not (
+                await self.middleware.call('failover.hardware')
+            ).startswith('TRUENAS-R')
+            if OFFICIAL_ENTERPRISE_TRAIN not in catalog['preferred_trains'] and can_have_multiple_trains:
+                preferred_trains = catalog['preferred_trains'] + [OFFICIAL_ENTERPRISE_TRAIN]
+            elif not can_have_multiple_trains:
+                preferred_trains = [OFFICIAL_ENTERPRISE_TRAIN]
+
+            if preferred_trains:
+                await self.middleware.call(
+                    'datastore.update', self._config.datastore, OFFICIAL_LABEL, {
+                        'preferred_trains': preferred_trains,
+                    },
+                )
+
+
+async def enterprise_train_update(middleware, prev_product_type, *args, **kwargs):
+    await middleware.call('catalog.update_train_for_enterprise')
+
+
+async def setup(middleware):
+    middleware.register_hook('system.post_license_update', enterprise_train_update)
