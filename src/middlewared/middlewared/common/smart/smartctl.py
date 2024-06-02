@@ -27,7 +27,7 @@ async def get_smartctl_args(context, disk, smartoptions):
     if device is None:
         return
 
-    if device["vendor"].lower().strip() == "nvme":
+    if device["vendor"] and device["vendor"].lower().strip() == "nvme":
         return [f"/dev/{disk}", "-d", "nvme"] + smartoptions
 
     args = [f"/dev/{disk}"] + smartoptions
