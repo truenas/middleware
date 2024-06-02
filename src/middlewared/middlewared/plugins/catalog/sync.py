@@ -1,10 +1,10 @@
 import os
 
-from middlewared.schema import accepts, Str
-from middlewared.service import CallError, job, private, returns, Service
+from middlewared.schema import accepts
+from middlewared.service import job, private, returns, Service
 
 from .git_utils import pull_clone_repository
-from .utils import OFFICIAL_LABEL
+from .utils import OFFICIAL_LABEL, OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH
 
 
 class CatalogService(Service):
@@ -17,44 +17,26 @@ class CatalogService(Service):
 
     @accepts()
     @returns()
-    @job(lock='sync_catalogs')
-    async def sync_all(self, job):
-        """
-        Refresh all available catalogs from upstream.
-        """
-        filters = [] if await self.middleware.call('catalog.dataset_mounted') else [['id', '=', OFFICIAL_LABEL]]
-        catalogs = await self.middleware.call('catalog.query', filters)
-        catalog_len = len(catalogs)
-        for index, catalog in enumerate(catalogs):
-            job.set_progress((index / catalog_len) * 100, f'Syncing {catalog["id"]} catalog')
-            sync_job = await self.middleware.call('catalog.sync', catalog['id'])
-            await sync_job.wait()
-
-        self.SYNCED = True
-
-    @accepts(Str('label', required=True))
-    @returns()
-    @job(lock=lambda args: f'{args[0]}_catalog_sync')
-    async def sync(self, job, catalog_label):
+    @job(lock='official_catalog_sync')
+    async def sync(self, job):
         """
         Sync `label` catalog to retrieve latest changes from upstream.
         """
         try:
-            catalog = await self.middleware.call('catalog.get_instance', catalog_label)
-            if catalog_label != OFFICIAL_LABEL and not await self.middleware.call('catalog.dataset_mounted'):
-                raise CallError(
-                    'Cannot sync non-official catalogs when apps are not configured or catalog dataset is not mounted'
-                )
+            catalog = await self.middleware.call('catalog.config')
 
             job.set_progress(5, 'Updating catalog repository')
-            await self.middleware.call('catalog.update_git_repository', catalog)
+            await self.middleware.call('catalog.update_git_repository', {
+                **catalog,
+                'repository': OFFICIAL_CATALOG_REPO,
+                'branch': OFFICIAL_CATALOG_BRANCH,
+            })
             job.set_progress(15, 'Reading catalog information')
-            if catalog_label == OFFICIAL_LABEL:
-                # Update feature map cache whenever official catalog is updated
-                await self.middleware.call('catalog.get_feature_map', False)
-                await self.middleware.call('catalog.retrieve_recommended_apps', False)
+            # Update feature map cache whenever official catalog is updated
+            await self.middleware.call('catalog.get_feature_map', False)
+            await self.middleware.call('catalog.retrieve_recommended_apps', False)
 
-            await self.middleware.call('catalog.apps', catalog_label, {
+            await self.middleware.call('catalog.apps', {
                 'cache': False,
                 'cache_only': False,
                 'retrieve_all_trains': True,
@@ -62,12 +44,13 @@ class CatalogService(Service):
             })
         except Exception as e:
             await self.middleware.call(
-                'alert.oneshot_create', 'CatalogSyncFailed', {'catalog': catalog_label, 'error': str(e)}
+                'alert.oneshot_create', 'CatalogSyncFailed', {'catalog': OFFICIAL_LABEL, 'error': str(e)}
             )
             raise
         else:
-            await self.middleware.call('alert.oneshot_delete', 'CatalogSyncFailed', catalog_label)
-            job.set_progress(100, f'Synced {catalog_label!r} catalog')
+            await self.middleware.call('alert.oneshot_delete', 'CatalogSyncFailed', OFFICIAL_LABEL)
+            job.set_progress(100, f'Synced {OFFICIAL_LABEL!r} catalog')
+            self.SYNCED = True
 
     @private
     def update_git_repository(self, catalog):
@@ -78,6 +61,5 @@ class CatalogService(Service):
 
     @private
     async def initiate_first_time_sync(self):
-        await (await self.middleware.call('catalog.sync', OFFICIAL_LABEL)).wait()
+        await (await self.middleware.call('catalog.sync')).wait()
         self.SYNCED = True
-        await self.middleware.call('catalog.sync_all')

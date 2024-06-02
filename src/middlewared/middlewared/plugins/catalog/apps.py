@@ -63,18 +63,18 @@ class AppService(Service):
             for app in []
         ]
 
-        for catalog in self.middleware.call_sync('catalog.query'):
-            for train, train_data in self.middleware.call_sync('catalog.apps', catalog['label']).items():
-                if train not in catalog['preferred_trains']:
-                    continue
+        catalog = self.middleware.call_sync('catalog.config')
+        for train, train_data in self.middleware.call_sync('catalog.apps').items():
+            if train not in catalog['preferred_trains']:
+                continue
 
-                for app_data in train_data.values():
-                    results.append({
-                        'catalog': catalog['label'],
-                        'installed': (app_data['name'], catalog['label'], train) in installed_apps,
-                        'train': train,
-                        **app_data,
-                    })
+            for app_data in train_data.values():
+                results.append({
+                    'catalog': catalog['label'],
+                    'installed': (app_data['name'], catalog['label'], train) in installed_apps,
+                    'train': train,
+                    **app_data,
+                })
 
         return filter_list(results, filters, options)
 
