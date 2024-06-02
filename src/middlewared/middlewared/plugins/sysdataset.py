@@ -324,6 +324,14 @@ class SystemDatasetService(ConfigService):
     @accepts(Str('exclude_pool', default=None, null=True))
     @private
     def setup(self, exclude_pool):
+        self.middleware.call_hook_sync('sysdataset.setup', data={'in_progress': True})
+        try:
+            return self.setup_impl(exclude_pool)
+        finally:
+            self.middleware.call_hook_sync('sysdataset.setup', data={'in_progress': False})
+
+    @private
+    def setup_impl(self, exclude_pool):
         self.force_pool = None
         config = self.middleware.call_sync('systemdataset.config')
 
