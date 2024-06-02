@@ -2,6 +2,8 @@ import json
 import os
 import subprocess
 
+from middlewared.plugins.docker.state_utils import DOCKER_MOUNT_PATH
+
 
 def nvidia_configuration():
     # this needs to happen for nvidia gpu to work properly for docker containers
@@ -42,7 +44,7 @@ def render(service, middleware):
     subprocess.run(['systemctl', 'daemon-reload'], capture_output=True, check=True)
 
     os.makedirs('/etc/docker', exist_ok=True)
-    data_root = os.path.join('/mnt', config['dataset'], 'docker')
+    data_root = os.path.join(DOCKER_MOUNT_PATH, 'docker')
     with open('/etc/docker/daemon.json', 'w') as f:
         f.write(json.dumps({
             'data-root': data_root,

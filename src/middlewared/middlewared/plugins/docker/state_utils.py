@@ -5,7 +5,10 @@ import typing
 
 
 APPS_STATUS: collections.namedtuple = collections.namedtuple('Status', ['status', 'description'])
-CATALOG_DATASET_NAME: str = 'catalogs'
+CATALOG_DATASET_NAME: str = 'truenas_catalog'
+IX_APPS_DIR_NAME = '$ix-apps'
+DOCKER_MOUNT_PATH: str = os.path.join('/mnt', IX_APPS_DIR_NAME)
+
 DATASET_DEFAULTS: dict = {
     'aclmode': 'discard',
     'acltype': 'posix',
@@ -13,6 +16,8 @@ DATASET_DEFAULTS: dict = {
     'setuid': 'on',
     'casesensitivity': 'sensitive',
     'atime': 'off',
+    'canmount': 'noauto',
+    'mountpoint': IX_APPS_DIR_NAME,
 }
 
 
@@ -38,15 +43,16 @@ STATUS_DESCRIPTIONS = {
 
 
 def catalog_ds_path(docker_ds: str) -> str:
-    return os.path.join('/mnt', docker_ds, CATALOG_DATASET_NAME)
+    return os.path.join(DOCKER_MOUNT_PATH, CATALOG_DATASET_NAME)
 
 
 def docker_datasets(docker_ds: str) -> typing.List[str]:
     return [docker_ds] + [
         os.path.join(docker_ds, d) for d in (
             CATALOG_DATASET_NAME,
+            'apps_configs',
+            'apps_mounts',
             'docker',
-            'releases',
         )
     ]
 
