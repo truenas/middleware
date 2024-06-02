@@ -41,14 +41,6 @@ def upgrade():
         sa.PrimaryKeyConstraint('id', name=op.f('pk_services_docker')),
     )
 
-    # We will add the model which will be used for docker
-    op.create_table(
-        'services_docker',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('pool', sa.String(length=255), nullable=True),
-        sa.PrimaryKeyConstraint('id', name=op.f('pk_services_docker')),
-    )
-
 
 def downgrade():
     pass
