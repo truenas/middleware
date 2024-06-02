@@ -30,7 +30,6 @@ class CatalogService(Service):
         return self.middleware.call_sync('cache.has_key', get_cache_key(label))
 
     @accepts(
-        Str('label'),
         Dict(
             'options',
             Bool('cache', default=True),
@@ -67,7 +66,7 @@ class CatalogService(Service):
             }
         }
     ))
-    def apps(self, label, options):
+    def apps(self, options):
         """
         Retrieve apps details for `label` catalog.
 
@@ -84,12 +83,12 @@ class CatalogService(Service):
         `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
         of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
         """
-        catalog = self.middleware.call_sync('catalog.get_instance', label)
+        catalog = self.middleware.call_sync('catalog.config')
         all_trains = options['retrieve_all_trains']
         cache_available = False
 
         if options['cache']:
-            cache_key = get_cache_key(label)
+            cache_key = get_cache_key(catalog['label'])
             try:
                 orig_cached_data = self.middleware.call_sync('cache.get', cache_key)
             except KeyError:
@@ -118,7 +117,7 @@ class CatalogService(Service):
 
         if all_trains:
             # We can only safely say that the catalog is healthy if we retrieve data for all trains
-            self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', label)
+            self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', catalog['label'])
 
         trains = self.get_trains(catalog, options)
 
@@ -129,7 +128,7 @@ class CatalogService(Service):
             # happens after 24h - which means that for a small amount of time it's possible that user
             # come with a case where system is trying to access cached data but it has expired and it's
             # reading again from disk hence the extra 1 hour.
-            self.middleware.call_sync('cache.put', get_cache_key(label), trains, 90000)
+            self.middleware.call_sync('cache.put', get_cache_key(catalog['label']), trains, 90000)
 
         return trains
 
@@ -201,7 +200,7 @@ class CatalogService(Service):
             with contextlib.suppress(KeyError):
                 return self.middleware.call_sync('cache.get', cache_key)
 
-        data = retrieve_recommended_apps(self.middleware.call_sync('catalog.get_instance', OFFICIAL_LABEL)['location'])
+        data = retrieve_recommended_apps(self.middleware.call_sync('catalog.config')['location'])
         self.middleware.call_sync('cache.put', cache_key, data)
         return data
 

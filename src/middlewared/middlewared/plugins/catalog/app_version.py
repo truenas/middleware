@@ -19,7 +19,6 @@ class CatalogService(Service):
         Str('app_name'),
         Dict(
             'app_version_details',
-            Str('catalog', required=True),
             Str('train', required=True),
         ),
     )
@@ -50,14 +49,14 @@ class CatalogService(Service):
         """
         Retrieve information of `app_name` `app_version_details.catalog` catalog app.
         """
-        catalog = self.middleware.call_sync('catalog.get_instance', options['catalog'])
+        catalog = self.middleware.call_sync('catalog.config')
         app_location = os.path.join(get_train_path(catalog['location']), options['train'], app_name)
         if not os.path.exists(app_location):
             raise CallError(f'Unable to locate {app_name!r} at {app_location!r}', errno=errno.ENOENT)
         elif not os.path.isdir(app_location):
             raise CallError(f'{app_location!r} must be a directory')
 
-        train_data = self.middleware.call_sync('catalog.apps', options['catalog'], {
+        train_data = self.middleware.call_sync('catalog.apps', {
             'retrieve_all_trains': False,
             'trains': [options['train']],
         })
@@ -69,9 +68,8 @@ class CatalogService(Service):
         questions_context = self.middleware.call_sync('catalog.get_normalized_questions_context')
 
         app_details = get_app_details(app_location, train_data[options['train']][app_name], questions_context)
-        if options['catalog'] == OFFICIAL_LABEL:
-            recommended_apps = self.middleware.call_sync('catalog.retrieve_recommended_apps')
-            if options['train'] in recommended_apps and app_name in recommended_apps[options['train']]:
-                app_details['recommended'] = True
+        recommended_apps = self.middleware.call_sync('catalog.retrieve_recommended_apps')
+        if options['train'] in recommended_apps and app_name in recommended_apps[options['train']]:
+            app_details['recommended'] = True
 
         return app_details
