@@ -5,7 +5,7 @@ import sys
 import enum
 import errno
 
-from middlewared.client import Client, ClientException
+from truenas_api_client import Client, ClientException
 from middlewared.plugins.failover_.disabled_reasons import DisabledReasonsEnum
 
 BASE_NODE = 'Node status: '

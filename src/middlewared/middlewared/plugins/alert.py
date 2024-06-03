@@ -9,6 +9,8 @@ import uuid
 
 import html2text
 
+from truenas_api_client import ReserveFDException
+
 from middlewared.alert.base import (
     AlertCategory,
     alert_category_names,
@@ -24,7 +26,6 @@ from middlewared.alert.base import (
     ProThreadedAlertService,
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
-from middlewared.client.client import ReserveFDException
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Patch, returns, Ref, Str
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,

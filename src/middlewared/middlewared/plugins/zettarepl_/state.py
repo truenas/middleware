@@ -1,7 +1,8 @@
 from collections import defaultdict
 import re
 
-from middlewared.client import ejson
+from truenas_api_client import json as ejson
+
 from middlewared.service import periodic, Service
 from middlewared.utils.service.task_state import TaskStateMixin
 

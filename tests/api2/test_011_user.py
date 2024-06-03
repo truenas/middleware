@@ -7,7 +7,7 @@ import stat
 import pytest
 from pytest_dependency import depends
 
-from middlewared.client import ClientException
+from truenas_api_client import ClientException
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user as user_asset
 from middlewared.test.integration.assets.pool import dataset as dataset_asset

@@ -1,10 +1,10 @@
+from datetime import datetime
 import errno
 import os
 import shutil
 
-from datetime import datetime
+from truenas_api_client import json
 
-from middlewared.client import ejson as json
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.schema import Dict, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service

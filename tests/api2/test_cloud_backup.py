@@ -4,7 +4,7 @@ import types
 import boto3
 import pytest
 
-from middlewared.client import ClientException
+from truenas_api_client import ClientException
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.cloud_backup import task, run_task
 from middlewared.test.integration.assets.cloud_sync import credential

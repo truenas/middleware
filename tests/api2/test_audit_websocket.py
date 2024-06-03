@@ -3,7 +3,7 @@ from unittest.mock import ANY
 
 import pytest
 
-from middlewared.client import ClientException
+from truenas_api_client import ClientException
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client, user
 from middlewared.test.integration.assets.api_key import api_key

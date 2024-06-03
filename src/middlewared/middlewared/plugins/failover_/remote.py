@@ -13,7 +13,8 @@ import time
 from collections import defaultdict
 from functools import partial
 
-from middlewared.client import Client, ClientException, CALL_TIMEOUT
+from truenas_api_client import Client, ClientException, CALL_TIMEOUT
+
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str, Float, returns
 from middlewared.service import CallError, Service, private
 from middlewared.utils.threading import set_thread_name, start_daemon_thread

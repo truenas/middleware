@@ -1,16 +1,15 @@
-#!/usr/bin/env python3
 import asyncio
 import inspect
 import os
 import setproctitle
 
-from middlewared.client import Client
-from middlewared.utils.prctl import die_with_parent
+from truenas_api_client import Client
 
 from . import logger
 from .common.environ import environ_update
 from .utils import MIDDLEWARE_RUN_DIR
 from .utils.plugins import LoadPluginsMixin
+from .utils.prctl import die_with_parent
 from .utils.service.call import MethodNotFoundError, ServiceCallMixin
 
 

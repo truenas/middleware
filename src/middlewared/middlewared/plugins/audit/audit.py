@@ -9,6 +9,8 @@ import time
 import uuid
 import yaml
 
+from truenas_api_client import json as ejson
+
 from .utils import (
     AUDIT_DATASET_PATH,
     AUDIT_LIFETIME,
@@ -24,7 +26,6 @@ from .utils import (
 from .schema.middleware import AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS, AUDIT_EVENT_MIDDLEWARE_PARAM_SET
 from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
 from .schema.sudo import AUDIT_EVENT_SUDO_JSON_SCHEMAS, AUDIT_EVENT_SUDO_PARAM_SET
-from middlewared.client import ejson
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.schema import (
     accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str, UUID

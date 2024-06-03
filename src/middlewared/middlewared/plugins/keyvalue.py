@@ -1,4 +1,5 @@
-from middlewared.client import ejson as json
+from truenas_api_client import json
+
 from middlewared.schema import Any, Str, accepts, Dict
 from middlewared.service import Service
 import middlewared.sqlalchemy as sa

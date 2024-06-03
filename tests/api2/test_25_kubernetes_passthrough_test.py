@@ -8,7 +8,7 @@ sys.path.append(apifolder)
 
 from middlewared.test.integration.utils import call
 from middlewared.service_exception import CallError
-from middlewared.client.client import ClientException
+from truenas_api_client import ClientException
 from auto_config import ha, pool_name
 
 import pytest

@@ -10,7 +10,7 @@ import pytest
 from functions import GET, SSH_TEST, make_ws_request
 from auto_config import ha, user, password
 from pytest_dependency import depends
-from middlewared.client import ClientException
+from truenas_api_client import ClientException
 from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.utils import call, client
 from middlewared.test.integration.utils.client import truenas_server

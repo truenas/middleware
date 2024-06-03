@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.client.client import ValidationErrors
+from truenas_api_client import ValidationErrors
 from middlewared.test.integration.assets.crypto import (
     certificate_signing_request, get_cert_params, intermediate_certificate_authority, root_certificate_authority
 )
