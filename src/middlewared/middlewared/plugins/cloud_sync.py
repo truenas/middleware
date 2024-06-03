@@ -212,7 +212,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
 
         await run_script(job, env, cloud_sync["pre_script"], "Pre-script")
 
-        job.middleware.logger.debug("Running %r", args)
+        job.middleware.logger.trace("Running %r", args)
         proc = await Popen(
             args,
             stdout=subprocess.PIPE,
