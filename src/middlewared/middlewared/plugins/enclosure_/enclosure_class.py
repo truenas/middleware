@@ -115,7 +115,7 @@ class Enclosure:
                 # to using the parenthesis approach because that matches
                 # an entry in the enum by value
                 dmi_model = ControllerModels(model)
-            except KeyError:
+            except ValueError:
                 # this shouldn't ever happen because the instantiator of this class
                 # checks DMI before we even get here but better safe than sorry
                 logger.warning('Unexpected model: %r from dmi: %r', model, self.dmi)
