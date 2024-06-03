@@ -11,7 +11,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job
 from auto_config import pool_name, user, password
-from middlewared.client import ClientException
+from truenas_api_client import ClientException
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call

@@ -1,6 +1,5 @@
 from .apidocs import routes as apidocs_routes
 from .auth import is_ha_connection
-from .client import ejson as json
 from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue
@@ -75,6 +74,8 @@ import tracemalloc
 from anyio import create_connected_unix_datagram_socket
 import psutil
 from systemd.daemon import notify as systemd_notify
+
+from truenas_api_client import json
 
 from . import logger
 

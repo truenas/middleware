@@ -4,13 +4,13 @@ import enum
 import errno
 import os
 import re
+import ssl
 import subprocess
 import tempfile
 import urllib.parse
 
-import ssl
+from truenas_api_client import Client, ClientException
 
-from middlewared.client import Client, ClientException
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Password, Ref, returns, Str, ValidationErrors
 from middlewared.service import CRUDService, private

@@ -4,7 +4,7 @@ from time import sleep
 
 import dns.resolver
 import pytest
-from middlewared.client.client import \
+from truenas_api_client import \
     ValidationErrors as ClientValidationErrors
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.directory_service import (

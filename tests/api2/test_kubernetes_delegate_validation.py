@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.client.client import ValidationErrors
+from truenas_api_client import ValidationErrors
 from middlewared.service_exception import ValidationErrors as exception_validation_error
 from middlewared.test.integration.assets.nfs import nfs_share
 from middlewared.test.integration.assets.pool import another_pool

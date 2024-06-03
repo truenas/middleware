@@ -2,7 +2,7 @@ import contextlib
 import os
 import pytest
 
-from middlewared.client.client import ClientException, ValidationErrors
+from truenas_api_client import ClientException, ValidationErrors
 from middlewared.test.integration.assets.catalog import catalog
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, fail, ssh, mock

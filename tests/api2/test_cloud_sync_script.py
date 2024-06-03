@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.client import ClientException
+from truenas_api_client import ClientException
 from middlewared.test.integration.assets.cloud_sync import local_ftp_task, run_task
 from middlewared.test.integration.utils import call, ssh
 

@@ -71,7 +71,6 @@ setup(
             'configure_fips = middlewared.scripts.configure_fips:main',
             'setup_cgroups = middlewared.scripts.setup_cgroups:main',
             'middlewared = middlewared.main:main',
-            'midclt = middlewared.client.client:main',
             'midgdb = middlewared.scripts.gdb:main',
             'sedhelper = middlewared.scripts.sedhelper:main',
             'wait_to_hang_and_dump_core = middlewared.scripts.wait_to_hang_and_dump_core:main',

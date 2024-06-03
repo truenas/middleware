@@ -10,7 +10,7 @@ import netsnmpagent
 import pysnmp.hlapi  # noqa
 import pysnmp.smi
 
-from middlewared.client import Client
+from truenas_api_client import Client
 
 
 def get_kstat():

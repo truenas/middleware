@@ -4,7 +4,7 @@ import pytest
 from pytest_dependency import depends
 
 from auto_config import ha, pool_name
-from middlewared.client.client import ValidationErrors
+from truenas_api_client import ValidationErrors
 from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import fail
 from middlewared.test.integration.utils.client import client

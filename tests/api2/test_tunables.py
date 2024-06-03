@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.client import ValidationErrors
+from truenas_api_client import ValidationErrors
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.mock_binary import mock_binary
 

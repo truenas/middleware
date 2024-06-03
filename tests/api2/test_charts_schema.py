@@ -4,7 +4,7 @@ import time
 
 from pytest_dependency import depends
 
-from middlewared.client.client import ValidationErrors
+from truenas_api_client import ValidationErrors
 from middlewared.test.integration.assets.apps import chart_release
 from middlewared.test.integration.assets.catalog import catalog
 

@@ -3,7 +3,6 @@ from setuptools import setup
 
 install_requires = [
     'pytest-rerunfailures',
-    'websocket-client',
 ]
 
 setup(
@@ -11,7 +10,6 @@ setup(
     description='TrueNAS Middleware Daemon Integration Test Facilities',
     packages=[
         'middlewared',
-        'middlewared.client',
         'middlewared.test.integration.assets',
         'middlewared.test.integration.utils',
     ],

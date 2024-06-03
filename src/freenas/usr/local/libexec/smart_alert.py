@@ -2,7 +2,7 @@
 
 import os
 
-from middlewared.client import Client
+from truenas_api_client import Client
 
 
 def main():

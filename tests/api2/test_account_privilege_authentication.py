@@ -5,7 +5,7 @@ import logging
 import pytest
 import websocket
 
-from middlewared.client import ClientException
+from truenas_api_client import ClientException
 from middlewared.test.integration.assets.account import user, unprivileged_user as unprivileged_user_template
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, client, ssh, websocket_url
