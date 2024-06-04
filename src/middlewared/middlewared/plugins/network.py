@@ -5,6 +5,7 @@ import socket
 from collections import defaultdict
 from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
+from os import scandir
 
 import middlewared.sqlalchemy as sa
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
@@ -1936,6 +1937,14 @@ class InterfaceService(CRUDService):
                         list_of_ip.append(alias_dict)
 
         return list_of_ip
+    
+    @private
+    def get_nic_names(self) -> set:
+        """Get network interface names excluding internal interfaces"""
+        with scandir('/sys/class/net/') as nics:
+            res = set(nic.name for nic in nics)
+        ignore = set(self.middleware.call_sync('interface.internal_interfaces'))
+        return res - ignore
 
 
 async def configure_http_proxy(middleware, *args, **kwargs):

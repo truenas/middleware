@@ -436,6 +436,23 @@ class FailoverService(ConfigService):
             self.logger.error('Unhandled exception in get_disks_local', exc_info=True)
 
     @private
+    async def mismatch_nics(self):
+        """Determine if NICs match between both controllers."""
+        result = {'missing_local': list(), 'missing_remote': list()}
+        local_nics = await self.middleware.call('interface.get_nic_names')
+        try:
+            remote_nics = await self.middleware.call(
+                'failover.call_remote', 'interface.get_nic_names', [],
+                {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+            )
+        except Exception:
+            self.logger.error('Unhandled exception in get_nic_names on remote controller', exc_info=True)
+        else:
+            result['missing_local'] = sorted(remote_nics - local_nics)
+            result['missing_remote'] = sorted(local_nics - remote_nics)
+        return result
+
+    @private
     async def mismatch_disks(self):
         """On HA systems, the block device names can be different between the controllers.
         Because of this fact, we need to check the serials of each disk which should be the
