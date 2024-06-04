@@ -287,40 +287,49 @@ class PoolService(Service):
         except Exception:
             self.logger.error('Unhandled exception importing %r', vol_name, exc_info=True)
             return False
+        else:
+            self.logger.debug('Done importing %r with guid %r', vol_name, vol_guid)
 
         # normalize ZFS dataset properties on boot. Pool may be foreign to SCALE
         # (including those created on CORE)
         try:
+            self.logger.debug('Calling zfs.dataset.query on %r with guid %r', vol_name, vol_guid)
             ds = self.middleware.call_sync(
-                'pool.dataset.query',
+                'zfs.dataset.query',
                 [['id', '=', vol_name]],
                 {'get': True, 'extra': {'retrieve_children': False}}
-            )
+            )['properties']
         except Exception:
-            self.logger.warning('%r: failed to query properties of root-level dataset', vol_name, exc_info=True)
+            self.logger.warning('Unexpected failure querying root-level properties for %r', vol_name, exc_info=True)
             return True
-
-        if ds['acltype']['value'] == 'NFSV4':
-            opts = {'properties': {
-                'aclinherit': {'value': 'passthrough'},
-                'aclmode': {'value': 'passthrough'},
-            }}
         else:
-            opts = {'properties': {
-                'aclinherit': {'value': 'discard'},
-                'aclmode': {'value': 'discard'},
-            }}
+            self.logger.debug('Done calling zfs.dataset.query on %r with guid %r', vol_name, vol_guid)
 
-        opts['properties'].update({
-            'sharenfs': {'value': 'off'}, 'sharesmb': {'value': 'off'},
-        })
+        opts = {'properties': dict()}
+        if ds['acltype']['value'] == 'nfsv4':
+            if ds['aclinherit']['value'] != 'passthrough':
+                opts['properties'].update({'aclinherit': {'value': 'passthrough'}})
+            if ds['aclmode']['value'] != 'passthrough':
+                opts['properties'].update({'aclmode': {'value': 'passthrough'}})
+        else:
+            if ds['aclinherit']['value'] != 'discard':
+                opts['properties'].update({'aclinherit': {'value': 'discard'}})
+            if ds['aclmode']['value'] != 'discard':
+                opts['properties'].update({'aclmode': {'value': 'discard'}})
 
-        try:
-            self.middleware.call_sync('zfs.dataset.update', vol_name, opts)
-        except Exception:
-            self.logger.warning('%r: failed to normalize properties of root-level dataset', vol_name, exc_info=True)
+        if ds['sharenfs']['value'] != 'off':
+            opts['properties'].update({'sharenfs': {'value': 'discard'}})
+        if ds['sharesmb']['value'] != 'off':
+            opts['properties'].update({'sharesmb': {'value': 'discard'}})
 
-        self.logger.debug('SUCCESS importing %r with guid: %r', vol_name, vol_guid)
+        if opts['properties']:
+            try:
+                self.middleware.call_sync('zfs.dataset.update', vol_name, opts)
+            except Exception:
+                self.logger.warning('%r: failed to normalize properties of root-level dataset', vol_name, exc_info=True)
+            else:
+                self.logger.debug('Done calling zfs.dateset.update on %r', vol_name)
+
         return True
 
     @private
