@@ -283,7 +283,6 @@ class PoolService(Service):
                 self.logger.warning('%r: failed to normalize properties of root-level dataset', vol_name, exc_info=True)
             else:
                 self.logger.debug('Done calling zfs.dateset.update on %r', vol_name)
-        pass
 
     @private
     def import_on_boot_impl(self, vol_name, vol_guid, set_cachefile=False):
