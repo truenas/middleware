@@ -4,6 +4,20 @@ nut_get_all() {
   run -t $nut_timeout upsc -l || echo "ix-dummy-ups"
 }
 
+nut_get() {
+  if [ $1 == "ix-dummy-ups" ]; then
+    return 0;
+  fi
+
+  run -t $nut_timeout upsc "$1"
+
+  if [ "${nut_clients_chart}" -eq "1" ]; then
+    printf "ups.connected_clients: "
+    run -t $nut_timeout upsc -c "$1" | wc -l
+  fi
+}
+
+
 nut_ups_check() {
 
   # this should return:
@@ -13,10 +27,15 @@ nut_ups_check() {
   local x
 
   require_cmd upsc || return 1
-
-  nut_ups="$(nut_get_all)"
   nut_names=()
   nut_ids=()
+
+  if [ $(ps -aux | grep upsmon | wc -l) -le 1 ]; then
+    nut_ids["ix-dummy-ups"]="$(fixid "ix-dummy-ups")"
+    return 0
+  fi
+
+  nut_ups="$(nut_get_all)"
   for x in $nut_ups; do
     nut_get "$x" > /dev/null
     # shellcheck disable=SC2181
