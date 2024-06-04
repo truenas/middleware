@@ -29,7 +29,7 @@ def upgrade():
         batch_op.drop_column('builtin')
 
     # Now we will add our catalog
-    op.execute(
+    conn.execute(
         "INSERT INTO services_catalog (label, preferred_trains) VALUES ('TRUENAS', ?)", (json.dumps(['stable']),)
     )
 
