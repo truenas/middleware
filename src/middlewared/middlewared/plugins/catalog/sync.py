@@ -20,7 +20,7 @@ class CatalogService(Service):
     @job(lock='official_catalog_sync')
     async def sync(self, job):
         """
-        Sync `label` catalog to retrieve latest changes from upstream.
+        Sync truenas catalog to retrieve latest changes from upstream.
         """
         try:
             catalog = await self.middleware.call('catalog.config')
