@@ -14,23 +14,25 @@ clean:
 	rm -rf $(MWPATH2)*
 	rm -rf $(BUILD)
 
-install:
-	bash install-dev-tools
+install_self:
 	python3 setup.py install --single-version-externally-managed --record=/dev/null
+
+copy_systemd_service:
 	cp ./debian/middlewared.service /usr/lib/systemd/system/middlewared.service
 
-install_client:
-	python3 setup_client.py install --single-version-externally-managed --record=/dev/null
+install: install_self copy_systemd_service
 
-install_test:
-	bash install-dev-tools
-	python3 setup_test.py install --single-version-externally-managed --record=/dev/null
+install_test: install_self install_dev_tools
 
 migrate:
 	migrate
 
-reinstall: stop_service clean install install_client install_test migrate start_service
+install_dev_tools:
+	bash install-dev-tools
+
+reinstall: stop_service clean install migrate start_service
 
 # this is to be called in github actions running in a container (no systemd (pid 1))
 # so it's the same as `reinstall` but without the start/stop{_service} and migrate calls
-reinstall_container: clean install install_client install_test
+# FIXME: install_client is no more
+reinstall_container: clean install install_test
