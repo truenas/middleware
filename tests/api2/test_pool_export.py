@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.client import ClientException
+from truenas_api_client import ClientException
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, mock
 

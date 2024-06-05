@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import errno
 
-from concurrent.futures import ThreadPoolExecutor
-from middlewared.client import Client, ClientException
+from truenas_api_client import Client, ClientException
 
 # A particular Kioxia PM6 drive has shown us that it takes longer than
 # 60 seconds to unlock/setup SED. Specifically, the "sedutil-cli --initialSetup"

@@ -6,9 +6,10 @@ import types
 
 import requests
 
+from truenas_api_client import Client
+from truenas_api_client.utils import undefined
+
 from .pytest import fail
-from middlewared.client import Client
-from middlewared.client.utils import undefined
 
 __all__ = ["client", "host", "host_websocket_uri", "password", "session", "url", "websocket_url"]
 """

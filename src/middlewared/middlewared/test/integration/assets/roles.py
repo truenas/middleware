@@ -5,7 +5,8 @@ import random
 import pytest
 import string
 
-from middlewared.client.client import ClientException
+from truenas_api_client import ClientException
+
 from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.utils import call, client
 

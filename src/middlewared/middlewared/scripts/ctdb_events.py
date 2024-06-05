@@ -1,18 +1,18 @@
 #!/usr/bin/python3
-
+from copy import deepcopy
 import ctdb
 import errno
 import fcntl
 import json
 import os
+from pathlib import Path
 import time
 
-from copy import deepcopy
-from middlewared.client import Client
+from truenas_api_client import Client
+
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
 from middlewared.plugins.cluster_linux.ctdb_services import CTDB_SERVICE_DEFAULTS
 from middlewared.service import MIDDLEWARE_STARTED_SENTINEL_PATH
-from pathlib import Path
 
 CTDB_VOL_INFO_FILE = CTDBConfig.CTDB_VOL_INFO_FILE.value
 CTDB_RUNDIR = '/var/run/ctdb'

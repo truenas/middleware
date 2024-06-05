@@ -10,8 +10,9 @@ import urllib.parse
 
 from aiohttp import web
 
+from truenas_api_client import json
+
 from .auth import ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials
-from .client import ejson as json
 from .job import Job
 from .pipe import Pipes
 from .schema import Error as SchemaError

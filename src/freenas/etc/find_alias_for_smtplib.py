@@ -8,7 +8,7 @@ import requests
 import sys
 import syslog
 
-from middlewared.client import Client
+from truenas_api_client import Client
 
 ALIASES = re.compile(r'^(?P<from>[^#]\S*?):\s*(?P<to>\S+)$')
 

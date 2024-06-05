@@ -3,7 +3,7 @@ import logging
 
 import pytest
 
-from middlewared.client import ClientException
+from truenas_api_client import ClientException
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import client

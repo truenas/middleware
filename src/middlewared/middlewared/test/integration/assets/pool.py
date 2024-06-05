@@ -2,7 +2,8 @@ import contextlib
 import errno
 import time
 
-from middlewared.client import ValidationErrors
+from truenas_api_client import ValidationErrors
+
 from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.utils import call, fail, pool
 

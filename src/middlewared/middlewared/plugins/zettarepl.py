@@ -18,6 +18,7 @@ import types
 
 import paramiko.ssh_exception
 
+from truenas_api_client import Client, ClientException
 from zettarepl.dataset.create import create_dataset
 from zettarepl.dataset.list import list_datasets
 from zettarepl.definition.definition import (
@@ -42,7 +43,6 @@ from zettarepl.utils.logging import (
 )
 from zettarepl.zettarepl import create_zettarepl
 
-from middlewared.client import Client, ClientException
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, Service
 from middlewared.utils.cgroups import move_to_root_cgroups
