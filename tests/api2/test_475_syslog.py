@@ -46,26 +46,6 @@ def check_syslog(log_path, message, target_ip=None, target_user=user, target_pas
 
 @pytest.mark.parametrize('params', [
     {
-        'ident': 'k3s',
-        'msg': 'ZZZZ: k3s syslog filter test',
-        'path': '/var/log/k3s_daemon.log',
-    },
-    {
-        'ident': 'containerd',
-        'msg': 'ZZZZ: containerd syslog filter test',
-        'path': '/var/log/containerd.log',
-    },
-    {
-        'ident': 'dockerd',
-        'msg': 'ZZZZ: docker filter test',
-        'path': '/var/log/containerd.log',
-    },
-    {
-        'ident': 'kube-router',
-        'msg': 'ZZZZ: kube-router filter test',
-        'path': '/var/log/kube_router.log',
-    },
-    {
         'ident': 'systemd',
         'msg': 'ZZZZ: docker filter mount: test',
         'path': '/var/log/app_mounts.log',

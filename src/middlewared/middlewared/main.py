@@ -794,7 +794,7 @@ class ShellApplication(object):
                 if options.get('vm_id'):
                     options['vm_data'] = await self.middleware.call('vm.get_instance', options['vm_id'])
 
-                # By default we want to run kubectl/virsh with user's privileges and assume all "permission denied"
+                # By default we want to run virsh with user's privileges and assume all "permission denied"
                 # errors this can cause, unless the user has a sudo permission for all commands; in that case, let's
                 # run them straight with root privileges.
                 as_root = False
