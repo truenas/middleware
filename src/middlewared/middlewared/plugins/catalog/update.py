@@ -12,6 +12,7 @@ from .utils import (
     OFFICIAL_CATALOG_BRANCH, OFFICIAL_CATALOG_REPO, OFFICIAL_ENTERPRISE_TRAIN, OFFICIAL_LABEL, TMP_IX_APPS_CATALOGS
 )
 
+
 class CatalogModel(sa.Model):
     __tablename__ = 'services_catalog'
 
