@@ -65,16 +65,18 @@ class Enclosure:
             # if this isn't an R20 or MINI platform and this is the Virtual AHCI
             # enclosure, then we can ignore them
             self.should_ignore = True
-        elif all((
+        elif self.encid == '3000000000000002' and any((
             self.is_r20_series,
             (self.model in (
                 ControllerModels.MINI3XP.value,
                 ControllerModels.MINI3E.value,
             )),
-            self.encid == '3000000000000002'
         )):
-            # These platforms have 2x virtual AHCI enclosures but we only map the
-            # drives on 1 of them
+            # If this platform is a R20*, a MINI-3.0-X+, or MINI-3.0-E, there are
+            # 2x Virtual AHCI enclosure devices. However, the physical drive slots
+            # only get mapped to the Virtual AHCI enclosure of the 1st one. (i.e.
+            # the one whose enclosure id is "3000000000000001"). So we ignore the
+            # other enclosure device otherwise.
             self.should_ignore = True
         else:
             self.should_ignore = False
