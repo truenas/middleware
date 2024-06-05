@@ -72,8 +72,11 @@ class Enclosure:
                 ControllerModels.MINI3E.value,
             )),
         )):
-            # These platforms have 2x virtual AHCI enclosures but we only map the
-            # drives on 1 of them
+            # If this platform is a R20*, a MINI-3.0-X+, or MINI-3.0-E, there are
+            # 2x Virtual AHCI enclosure devices. However, the physical drive slots
+            # only get mapped to the Virtual AHCI enclosure of the 1st one. (i.e.
+            # the one whose enclosure id is "3000000000000001"). So we ignore the
+            # other enclosure device otherwise.
             self.should_ignore = True
         else:
             self.should_ignore = False
