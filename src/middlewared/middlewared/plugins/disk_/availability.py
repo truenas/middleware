@@ -46,7 +46,6 @@ class DiskService(Service):
                 enc_info[info['dev']] = (int(slot), enc['id'])
 
         used, unused = [], []
-        unsupported_md_devices_mapping = await self.middleware.call('disk.get_disks_to_unsupported_md_devices_mapping')
         serial_to_disk = defaultdict(list)
         sys_disks = await self.middleware.call('device.get_disks')
         uuids = valid_zfs_partition_uuids()
@@ -87,9 +86,6 @@ class DiskService(Service):
             # disk is in use by a zpool that is currently imported
             i['imported_zpool'] = in_use_disks_imported.get(dname)
 
-            # User might have unsupported md devices configured and a single disk might have multiple
-            # partitions which are being used by different md devices so this value will be a list or null
-            i['unsupported_md_devices'] = unsupported_md_devices_mapping.get(dname)
             if any((
                 i['imported_zpool'] is not None,
                 i['exported_zpool'] is not None,

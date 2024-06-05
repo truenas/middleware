@@ -10,8 +10,7 @@ class PoolService(Service):
         Format all disks, putting all ZFS partitions created into their respective vdevs.
         """
         await self.middleware.call('disk.sed_unlock_all')
-        await self.middleware.call('pool.remove_unsupported_md_devices_from_disks', disks)
-
+        
         formatted = 0
         len_disks = len(disks)
         async def format_disk(arg):

@@ -8,13 +8,6 @@ from middlewared.utils import run
 class DiskService(Service):
 
     @private
-    async def remove_degraded_mirrors(self):
-        available_mirrors = [mirror['real_path'] for mirror in await self.middleware.call('disk.get_swap_mirrors')]
-        for real_path in await self.middleware.run_in_thread(glob.glob, '/dev/md*'):
-            if real_path != '/dev/md' and real_path not in available_mirrors:
-                await run('mdadm', '--stop', real_path, encoding='utf8')
-
-    @private
     @lock('swaps_configure')
     @accepts(
         List('disks', items=[Str('disk')]),
@@ -53,18 +46,6 @@ class DiskService(Service):
             return
 
         swap_devices = await self.middleware.call('disk.get_swap_devices')
-        for mirror in await self.middleware.call('disk.get_swap_mirrors'):
-            if not set([p['disk'] for p in mirror['providers']]).intersection(set(disks)):
-                continue
-
-            devname = mirror['encrypted_provider'] or mirror['real_path']
-            if devname in swap_devices:
-                await run('swapoff', devname)
-            if mirror['encrypted_provider']:
-                await self.middleware.call(
-                    'disk.remove_encryption', mirror['encrypted_provider']
-                )
-            await self.middleware.call('disk.destroy_swap_mirror', mirror['name'])
 
         configure_swap = False
         for p in providers.values():
