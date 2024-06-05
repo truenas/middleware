@@ -52,7 +52,7 @@ class DockerService(ConfigService):
         config = old_config.copy()
         config.update(data)
 
-        if len(set(old_config.items()) ^ set(config.items())) > 0:
+        if old_config != config:
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
 
             await self.middleware.call('docker.setup.status_change')

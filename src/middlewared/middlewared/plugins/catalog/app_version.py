@@ -1,5 +1,6 @@
 import errno
 import os
+import stat
 
 from catalog_reader.train_utils import get_train_path
 
@@ -51,10 +52,11 @@ class CatalogService(Service):
         """
         catalog = self.middleware.call_sync('catalog.config')
         app_location = os.path.join(get_train_path(catalog['location']), options['train'], app_name)
-        if not os.path.exists(app_location):
+        try:
+            if not stat.S_ISDIR(os.stat(app_location).st_mode):
+                raise CallError(f'{app_location!r} must be a directory')
+        except FileNotFoundError:
             raise CallError(f'Unable to locate {app_name!r} at {app_location!r}', errno=errno.ENOENT)
-        elif not os.path.isdir(app_location):
-            raise CallError(f'{app_location!r} must be a directory')
 
         train_data = self.middleware.call_sync('catalog.apps', {
             'retrieve_all_trains': False,
