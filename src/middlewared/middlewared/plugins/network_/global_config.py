@@ -5,7 +5,7 @@ import signal
 
 import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, private
-from middlewared.schema import accepts, Patch, List, Dict, Int, Str, Bool, IPAddr, Ref, ValidationErrors
+from middlewared.schema import accepts, Patch, List, Dict, Int, Str, Bool, IPAddr, Ref, URI, ValidationErrors
 from middlewared.validators import Match, Hostname
 
 HOSTS_FILE_EARMARKER = '# STATIC ENTRIES'
@@ -49,7 +49,7 @@ class NetworkConfigurationService(ConfigService):
         IPAddr('nameserver1', required=True),
         IPAddr('nameserver2', required=True),
         IPAddr('nameserver3', required=True),
-        Str('httpproxy', required=True),
+        URI('httpproxy', required=True),
         List('hosts', required=True, items=[Str('host')]),
         List('domains', required=True, items=[Str('domain')]),
         Dict(
