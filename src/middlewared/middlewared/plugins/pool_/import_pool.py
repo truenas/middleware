@@ -278,6 +278,7 @@ class PoolService(Service):
 
         if opts['properties']:
             try:
+                self.logger.debug('Calling zfs.dateset.update on %r with opts %r', vol_name, opts['properties'])
                 self.middleware.call_sync('zfs.dataset.update', vol_name, opts)
             except Exception:
                 self.logger.warning('%r: failed to normalize properties of root-level dataset', vol_name, exc_info=True)
