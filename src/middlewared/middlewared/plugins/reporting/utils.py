@@ -8,7 +8,6 @@ from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from .netdata.graph_base import GraphBase
 
 
-K8S_PODS_COUNT = 20  # A default value has been assumed for now
 # https://learn.netdata.cloud/docs/netdata-agent/configuration/optimizing-metrics-database/
 # change-how-long-netdata-stores-metrics
 TIER_0_POINT_SIZE = 1
@@ -143,11 +142,6 @@ def get_metrics_approximation(
             'zfs.prefetch_data_hits_rate': 2,
             'zfs.hash_elements': 2,
             'zfs.hash_chains': 2,
-
-            # k8s pods stats
-            'k8s_cpu': K8S_PODS_COUNT,
-            'k8s_mem': K8S_PODS_COUNT,
-            'k8s_net': K8S_PODS_COUNT * 2,
 
             # cputemp
             'cputemp.temperatures': core_count,
