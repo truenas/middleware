@@ -579,6 +579,7 @@ class InterfaceService(CRUDService):
             await self.middleware.call('datastore.insert', 'network.lagginterface', i)
 
         for i in self._original_datastores['laggmembers']:
+            i.pop('lagg_interface', None)
             await self.middleware.call('datastore.insert', 'network.lagginterfacemembers', i)
 
         gw = self._original_datastores['ipv4gateway']
@@ -604,7 +605,9 @@ class InterfaceService(CRUDService):
         """
         Rollback pending interfaces changes.
         """
-        original_datastores = self._original_datastores
+        original_datastores = dict.copy(self._original_datastores)
+        current_datastores = await self.get_datastores()
+
         if self._rollback_timer:
             self._rollback_timer.cancel()
         self._rollback_timer = None
@@ -620,7 +623,7 @@ class InterfaceService(CRUDService):
 
         await self.sync()
 
-        await self.send_changed_events(original_datastores, await self.get_datastores())
+        await self.send_changed_events(original_datastores, current_datastores)
 
     @private
     async def checkin_impl(self, clear_cache=True):
@@ -1939,7 +1942,7 @@ class InterfaceService(CRUDService):
                         list_of_ip.append(alias_dict)
 
         return list_of_ip
-    
+
     @private
     def get_nic_names(self) -> set:
         """Get network interface names excluding internal interfaces"""

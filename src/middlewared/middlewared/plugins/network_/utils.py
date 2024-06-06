@@ -18,13 +18,16 @@ def get_interface_name(item: dict, key: str, interface_dict: dict) -> typing.Opt
         return get_iface_name('lagg_interface', item)
     elif key == 'laggmembers' and 'lagg_interface' in item:
         return item['lagg_interface']
+    elif key == 'alias' and 'alias_interface' in item:
+        return get_iface_name('alias_interface', item)
 
 
 def find_interface_changes(original_datastores: dict, current_datastores: dict) -> typing.List[str]:
     changed_interfaces = set()
     original_items_dict = {}
     current_items_dict = {}
-    current_ifaces = {iface['int_interface']: iface for iface in current_datastores.get('interfaces', [])}
+    current_ifaces = {iface['int_interface'] for iface in current_datastores.get('interfaces', [])}
+    current_ifaces_id = {iface['id']: iface for iface in current_datastores.get('interfaces', [])}
 
     for key in ('interfaces', 'alias', 'bridge', 'vlan', 'lagg', 'laggmembers'):
         original_items_dict[key] = {item['id']: item for item in original_datastores.get(key, [])}
@@ -32,7 +35,7 @@ def find_interface_changes(original_datastores: dict, current_datastores: dict) 
 
         for id_, item in current_items_dict[key].items():
             if id_ in original_items_dict[key] and item != original_items_dict[key][id_]:
-                if interface_name := get_interface_name(item, key, current_datastores['interfaces']):
+                if interface_name := get_interface_name(item, key, current_ifaces_id):
                     changed_interfaces.add(interface_name)
 
             if key != 'laggmembers':
@@ -41,17 +44,17 @@ def find_interface_changes(original_datastores: dict, current_datastores: dict) 
             # lagg members is special in the sense that if members have been added/removed, that also points out that
             # lagg interface has changed
             # So we will get added/removed lagg members and add the lagg interface to changed_interfaces
-            args = ['laggmembers', current_datastores['interfaces']]
-            for lagg_member in set(current_items_dict) - set(original_items_dict):
+            args = ['laggmembers', current_ifaces_id]
+            for lagg_member in set(current_items_dict[key]) - set(original_items_dict[key]):
                 if (
-                    (interface_name := get_interface_name(*([current_items_dict[lagg_member]] + args))) and
+                    (interface_name := get_interface_name(*([current_items_dict[key][lagg_member]] + args))) and
                     interface_name in current_ifaces
                 ):
                     changed_interfaces.add(interface_name)
 
-            for lagg_member in set(original_items_dict) - set(current_items_dict):
+            for lagg_member in set(original_items_dict[key]) - set(current_items_dict[key]):
                 if (
-                    (interface_name := get_interface_name(*([original_items_dict[lagg_member]] + args))) and
+                    (interface_name := get_interface_name(*([original_items_dict[key][lagg_member]] + args))) and
                     interface_name in current_ifaces
                 ):
                     changed_interfaces.add(interface_name)
