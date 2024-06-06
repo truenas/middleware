@@ -14,21 +14,16 @@ clean:
 	rm -rf $(MWPATH2)*
 	rm -rf $(BUILD)
 
-install_self:
+install:
 	python3 setup.py install --single-version-externally-managed --record=/dev/null
-
-copy_systemd_service:
 	cp ./debian/middlewared.service /usr/lib/systemd/system/middlewared.service
 
-install: install_self copy_systemd_service
-
-install_test: install_self install_dev_tools
+install_test:
+	python3 setup_test.py install --single-version-externally-managed --record=/dev/null
+	bash install-dev-tools
 
 migrate:
 	migrate
-
-install_dev_tools:
-	bash install-dev-tools
 
 reinstall: stop_service clean install migrate start_service
 
