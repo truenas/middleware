@@ -1,3 +1,4 @@
+from collections import defaultdict
 import sys
 import os
 apifolder = os.getcwd()
@@ -8,7 +9,7 @@ import pytest
 
 from functions import if_key_listed, SSH_TEST
 from auto_config import sshKey, user, password
-from middlewared.test.integration.utils import fail
+from middlewared.test.integration.utils import fail, ssh
 from middlewared.test.integration.utils.client import client, truenas_server
 
 
@@ -150,3 +151,27 @@ def test_008_check_root_dataset_settings(ws_client):
         for opt in fhs_entry['options']:
             if opt not in fs['mount_opts']:
                 assert opt in fs['mount_opts'], f'{opt}: mount option not present for {mp}: {fs["mount_opts"]}'
+
+
+def test_009_check_listening_ports():
+    listen = defaultdict(set)
+    for line in ssh("netstat -tuvpan | grep LISTEN").splitlines():
+        proto, _, _, local, _, _, process = line.split(maxsplit=6)
+        if proto == "tcp":
+            host, port = local.split(":", 1)
+            if host != "0.0.0.0":
+                continue
+        elif proto == "tcp6":
+            host, port = local.rsplit(":", 1)
+            if host != "::":
+                continue
+        else:
+            assert False, f"Unknown protocol {proto}"
+
+        port = int(port)
+        if port in [22, 80, 111, 443]:
+            continue
+
+        listen[int(port)].add(process.strip())
+
+    assert not listen, f"Invalid ports listening on 0.0.0.0: {dict(listen)}"
