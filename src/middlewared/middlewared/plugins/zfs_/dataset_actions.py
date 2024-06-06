@@ -51,13 +51,20 @@ class ZFSDatasetService(Service):
         except libzfs.ZFSException as e:
             raise CallError(f'Failed retrieving child datsets for {path} with error {e}')
 
-    @accepts(Str('name'), Dict('options', Bool('recursive', default=False)))
+    @accepts(
+        Str('name'),
+        Dict(
+            'options',
+            Bool('recursive', default=False),
+            Bool('force_mount', default=False),
+        )
+    )
     def mount(self, name, options):
         try:
             with libzfs.ZFS() as zfs:
                 dataset = zfs.get_dataset(name)
                 if options['recursive']:
-                    dataset.mount_recursive(ignore_errors=True)
+                    dataset.mount_recursive(ignore_errors=True, force_mount=options['force_mount'])
                 else:
                     dataset.mount()
         except libzfs.ZFSException as e:
