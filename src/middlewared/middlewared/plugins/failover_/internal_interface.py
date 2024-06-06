@@ -4,7 +4,6 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import ipaddress
-
 from pathlib import Path
 
 from pyroute2 import NDB
@@ -14,6 +13,8 @@ from middlewared.utils.functools_ import cache
 
 
 class InternalInterfaceService(Service):
+
+    http_site = None
 
     class Config:
         private = True
@@ -88,3 +89,9 @@ class InternalInterfaceService(Service):
             except KeyError:
                 # blackhole route already exists
                 pass
+
+        self.middleware.call_sync('failover.internal_interface.post_sync', internal_ip)
+
+    async def post_sync(self, internal_ip):
+        if self.http_site is None:
+            self.http_site = await self.middleware.start_tcp_site(internal_ip)

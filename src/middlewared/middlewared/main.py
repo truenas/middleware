@@ -890,6 +890,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.log_format = log_format
         self.app = None
         self.loop = None
+        self.runner = None
         self.__thread_id = threading.get_ident()
         multiprocessing.set_start_method('spawn')  # Spawn new processes for ProcessPool instead of forking
         self.__init_procpool()
@@ -1996,9 +1997,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         # Start up middleware worker process pool
         self.__procpool._start_executor_manager_thread()
 
-        runner = web.AppRunner(app, handle_signals=False, access_log=None)
-        await runner.setup()
-        await web.UnixSite(runner, os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared-internal.sock')).start()
+        self.runner = web.AppRunner(app, handle_signals=False, access_log=None)
+        await self.runner.setup()
+        await web.UnixSite(self.runner, os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared-internal.sock')).start()
 
         await self.__plugins_setup(setup_funcs)
 
@@ -2006,8 +2007,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self._setup_periodic_tasks()
 
         unix_socket_path = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.sock')
-        await web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True).start()
-        await web.UnixSite(runner, unix_socket_path).start()
+        await self.start_tcp_site('127.0.0.1')
+        await web.UnixSite(self.runner, unix_socket_path).start()
         os.chmod(unix_socket_path, 0o666)
 
         if self.trace_malloc:
@@ -2021,6 +2022,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self._console_write('loading completed\n')
 
         self.__notify_startup_complete()
+
+    async def start_tcp_site(self, host):
+        site = web.TCPSite(self.runner, host, 6000, reuse_address=True, reuse_port=True)
+        await site.start()
+        return site
 
     def terminate(self):
         self.logger.info('Terminating')
