@@ -109,7 +109,7 @@
 	fifo for all interfaces = no
 	compressed packets for all interfaces = auto
 	frames, collisions, carrier counters for all interfaces = auto
-	disable by default interfaces matching = lo fireqos* *-ifb kube-* veth*
+	disable by default interfaces matching = lo fireqos* *-ifb veth*
 	refresh interface speed every seconds = 1
 	refresh interface duplex every seconds = 1
 	refresh interface operstate every seconds = 1

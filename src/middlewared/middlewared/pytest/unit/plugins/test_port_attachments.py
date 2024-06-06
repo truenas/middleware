@@ -336,27 +336,6 @@ PORTS_IN_USE = [
         ]
     },
     {
-        'namespace': 'kubernetes',
-        'title': 'Kubernetes Service',
-        'ports': [
-            [
-                '0.0.0.0',
-                6443
-            ]
-        ],
-        'port_details': [
-            {
-                'description': None,
-                'ports': [
-                    [
-                        '0.0.0.0',
-                        6443
-                    ]
-                ]
-            }
-        ]
-    },
-    {
         'namespace': 'ftp',
         'title': 'FTP Service',
         'ports': [
@@ -638,7 +617,6 @@ async def test_port_validate_whitelist_namespace_logic(port, bindip, whitelist_n
     (9010, '0.0.0.0', False),
     (9010, '192.168.0.70', False),
     (9010, '192.168.0.71', True),
-    (6443, '192.168.0.71', False),
     (80, '::', True),
     (8080, '::', False),
     (8081, '::', True),

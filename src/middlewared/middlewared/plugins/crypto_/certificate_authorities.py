@@ -500,7 +500,7 @@ class CertificateAuthorityService(CRUDService):
             }
         """
         await self.get_instance(id_)
-        await self.middleware.call('certificateauthority.check_ca_dependencies', id_)
+        await self.middleware.call('certificateauthority.check_dependencies', id_)
 
         response = await self.middleware.call(
             'datastore.delete',
