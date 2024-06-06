@@ -357,12 +357,14 @@ class iSCSITargetService(CRUDService):
 
         # Attempt to cleanup initiators as the wizard may have created a single-use one
         try:
-            initiators = [group['initiator'] for group in target['groups']]
-            for initiator in initiators:
-                # Ensure not used elsewhere
-                targets = await self.middleware.call('iscsi.target.query', [['groups.*.initiator', '=', initiator]])
-                if not targets:
-                    await self.middleware.call('iscsi.initiator.delete', initiator)
+            target_initiators = {group['initiator'] for group in target['groups']}
+            # Ensure not used elsewhere
+            all_initiators = set()
+            for t in await self.middleware.call('iscsi.target.query', [], {'select': ['groups']}):
+                all_initiators.update([group['initiator'] for group in t['groups']])
+
+            for initiator in target_initiators - all_initiators:
+                await self.middleware.call('iscsi.initiator.delete', initiator)
         except Exception:
             self.logger.error('Failed to clean up target initiators for %r', target['name'], exc_info=True)
         return rv
