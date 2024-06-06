@@ -27,3 +27,18 @@ Adding a new third-party python module or upgrading an existing python module
 
 #. Ensure that the resulting diff is a small as possible. Use `constraints.txt` to pin down some indirect dependencies
    to the versions shipped with Debian.
+
+Upgrading all third-party python modules
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Run `requirements-update.py` script to automatically update all items from `requirements.txt` to their latest versions.
+
+Removing unused python modules
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Run `requirements-remove-unused.py` script **on the most recent TrueNAS build** to automatically remove
+`requirements.txt` entries that are were not used by that most recent build.
+
+This should be done when some of the python dependencies for TrueNAS components (middleware, CLI, etc.) were removed,
+or when apt mirrors were updated (providing official newer versions of the python packages we were previously building
+ourselves).
