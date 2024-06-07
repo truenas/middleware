@@ -49,7 +49,6 @@ import fcntl
 import functools
 import inspect
 import itertools
-import logging
 import multiprocessing
 import os
 import pickle
@@ -79,8 +78,6 @@ from truenas_api_client import json
 from . import logger
 
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
-
-k8s_logger = logging.getLogger('k8s_api')
 
 
 @dataclass
