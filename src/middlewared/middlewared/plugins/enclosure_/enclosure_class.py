@@ -7,11 +7,20 @@ import logging
 
 from middlewared.utils.scsi_generic import inquiry
 
-from .constants import MINI_MODEL_BASE, MINIR_MODEL_BASE
+from .constants import (
+    MINI_MODEL_BASE,
+    MINIR_MODEL_BASE,
+    SYSFS_SLOT_KEY,
+    MAPPED_SLOT_KEY,
+    SUPPORTS_IDENTIFY_KEY,
+    DISK_FRONT_KEY,
+    DISK_REAR_KEY,
+    DISK_INTERNAL_KEY,
+)
 from .element_types import ELEMENT_TYPES, ELEMENT_DESC
 from .enums import ControllerModels, ElementDescriptorsToIgnore, ElementStatusesToIgnore, JbodModels
 from .sysfs_disks import map_disks_to_enclosure_slots
-from .slot_mappings import get_slot_info, SYSFS_SLOT_KEY, MAPPED_SLOT_KEY, SUPPORTS_IDENTIFY_KEY
+from .slot_mappings import get_slot_info
 
 logger = logging.getLogger(__name__)
 
@@ -241,6 +250,7 @@ class Enclosure:
 
     def _parse_elements(self, elements):
         final = {}
+        disk_position_mapping = self.determine_disk_slot_positions()
         for slot, element in elements.items():
             try:
                 element_type = ELEMENT_TYPES[element['type']]
@@ -294,6 +304,9 @@ class Enclosure:
                 parsed[SUPPORTS_IDENTIFY_KEY] = self.disks_map[slot][SUPPORTS_IDENTIFY_KEY]
 
                 mapped_slot = self.disks_map[slot][MAPPED_SLOT_KEY]
+                # is this a front, rear or internal slot?
+                parsed.update(disk_position_mapping.get(mapped_slot, dict()))
+
                 parsed['original'] = {
                     'enclosure_id': self.encid,
                     'enclosure_sg': self.sg,
@@ -632,3 +645,40 @@ class Enclosure:
         Returns: int
         """
         return 4 if self.is_r30 else 0
+
+    def determine_disk_slot_positions(self):
+        """Determine the disk slot positions in the enclosure.
+        Is this a front slot, rear slot or internal slot?
+
+        NOTE: requested by UI team so that when a user clicks on
+        a slot in the UI for a given enclosure, it will update the
+        picture to the rear of the machine if the slot chosen is
+        a rear slot (ditto for internal or front slots)
+
+        Args:
+        Returns: dict
+        """
+        fs, rs, ins = self.front_slots, self.rear_slots, self.internal_slots
+        has_rear = has_internal = False
+        total = fs
+        if rs:
+            has_rear = True
+            total += rs
+        elif ins:
+            # NOTE: only 1 platform has internal slots
+            # and it DOES NOT have rear slots. If we
+            # ever have a platform that has both rear
+            # AND internal slots, this logic wont work
+            # and we'll need to fix it
+            has_internal = True
+            total += ins
+
+        rv = dict()
+        for slot in range(1, total + 1):
+            rv[slot] = {
+                DISK_FRONT_KEY: True if slot <= fs else False,
+                DISK_REAR_KEY: True if has_rear and slot > fs else False,
+                DISK_INTERNAL_KEY: True if has_internal and slot > fs else False,
+            }
+
+        return rv
