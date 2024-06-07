@@ -27,9 +27,6 @@ logging.getLogger('passlib.utils.compat').setLevel(logging.INFO)
 logging.getLogger('pyroute2.ndb').setLevel(logging.CRITICAL)
 logging.getLogger('pyroute2.netlink').setLevel(logging.CRITICAL)
 logging.getLogger('pyroute2.netlink.nlsocket').setLevel(logging.CRITICAL)
-# It logs each call made to the k8s api server when in debug mode, so we set the level to warn
-logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARNING)
-logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARNING)
 logging.getLogger('urllib3').setLevel(logging.WARNING)
 # ACME is very verbose in logging the request it sends with headers etc, let's not pollute the logs
 # with that much information and raise the log level in this case
@@ -39,9 +36,7 @@ logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(lo
 logging.getLogger('charset_normalizer').setLevel(logging.INFO)
 logging.TRACE = 6
 
-CONTAINER_IMAGES_LOGFILE = '/var/log/container_images.log'
 FAILOVER_LOGFILE = '/var/log/failover.log'
-K8S_API_LOGFILE = '/var/log/k8s_api.log'
 LOGFILE = '/var/log/middlewared.log'
 NETDATA_API_LOGFILE = '/var/log/netdata_api.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
@@ -83,9 +78,7 @@ class Logger:
         else:
             for name, filename, log_format in [
                 (None, LOGFILE, self.log_format),
-                ('container_images', CONTAINER_IMAGES_LOGFILE, self.log_format),
                 ('failover', FAILOVER_LOGFILE, self.log_format),
-                ('k8s_api', K8S_API_LOGFILE, self.log_format),
                 ('netdata_api', NETDATA_API_LOGFILE, self.log_format),
                 ('zettarepl', ZETTAREPL_LOGFILE,
                  '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s'),

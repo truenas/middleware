@@ -30,12 +30,8 @@ disable nut.target
 disable wsdd.service
 disable libvirtd.service
 disable winbind.service
-disable kubelet*
 disable nvidia-*
 disable libvirt*
-disable k3s*
-disable cni*
-disable kube-router*
 disable walinuxagent*
 disable serial-getty@*
 

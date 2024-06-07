@@ -1,13 +1,5 @@
 import os
-try:
-    import fastentrypoints
-except ImportError:
-    import sys
-    print("fastentrypoints module not found. entry points will be slower.", file=sys.stderr)
 from setuptools import find_packages, setup
-from setuptools.command.install import install
-
-from babel.messages import frontend as babel
 
 
 def get_assets(name):
@@ -27,16 +19,6 @@ def get_assets(name):
     return result
 
 
-class InstallWithBabel(install):
-    def run(self):
-        compiler = babel.compile_catalog(self.distribution)
-        option_dict = self.distribution.get_option_dict('compile_catalog')
-        compiler.domain = [option_dict['domain'][1]]
-        compiler.directory = option_dict['directory'][1]
-        compiler.run()
-        super().run()
-
-
 setup(
     name='middlewared',
     description='TrueNAS Middleware Daemon',
@@ -51,9 +33,7 @@ setup(
             ['alembic.ini'] +
             get_assets('assets') +
             get_assets('etc_files') +
-            get_assets('migration') +
-            get_assets('plugins/kubernetes_linux/migrations') +
-            get_assets('plugins/kubernetes_linux/app_migrations')
+            get_assets('migration')
         ),
     },
     include_package_data=True,
@@ -76,13 +56,5 @@ setup(
             'wait_to_hang_and_dump_core = middlewared.scripts.wait_to_hang_and_dump_core:main',
             'wait_on_disks = middlewared.scripts.wait_on_disks:main',
         ],
-    },
-    cmdclass={
-        'install': InstallWithBabel,
-
-        'compile_catalog': babel.compile_catalog,
-        'extract_messages': babel.extract_messages,
-        'init_catalog': babel.init_catalog,
-        'update_catalog': babel.update_catalog,
     },
 )

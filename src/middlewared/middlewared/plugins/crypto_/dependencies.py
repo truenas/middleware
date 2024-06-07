@@ -10,23 +10,3 @@ class CertificateService(Service):
             for i, svc in enumerate(deps):
                 deps_str += f'{i+1}) {svc}\n'
             raise CallError(f'Certificate is being used by following service(s):\n{deps_str}')
-
-
-class CertificateAuthorityService(Service):
-
-    class Config:
-        cli_namespace = 'system.certificate.authority'
-
-    @private
-    async def check_ca_dependencies(self, ca_id):
-        await self.middleware.call('certificateauthority.check_dependencies', ca_id)
-        chart_releases = await self.middleware.call(
-            'chart.release.query', [
-                ['resources.truenas_certificate_authorities', 'rin', ca_id]
-            ], {'extra': {'retrieve_resources': True}}
-        )
-        if chart_releases:
-            raise CallError(
-                'Certificate Authority cannot be deleted as it is being used by '
-                f'{", ".join([c["id"] for c in chart_releases])} chart release(s).'
-            )

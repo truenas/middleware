@@ -29,15 +29,10 @@ class PoolDatasetService(Service):
             if await self.middleware.call('service.started_or_enabled', k):
                 result[k] = v
 
-        check_services = {
-            'kubernetes': 'Applications',
-            **services
-        }
-
         result.update({
-            k: check_services[k] for k in map(
+            k: services[k] for k in map(
                 lambda a: a['service'], await self.middleware.call('pool.dataset.attachments', dataset)
-            ) if k in check_services
+            ) if k in services
         })
 
         if await self.middleware.call('pool.dataset.unlock_restarted_vms', dataset_instance):

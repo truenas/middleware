@@ -305,17 +305,6 @@ class EtcService(Service):
         'truecommand': [
             {'type': 'mako', 'path': 'wireguard/ix-truecommand.conf'},
         ],
-        'k3s': [
-            {'type': 'mako', 'path': 'containerd.env', 'checkpoint': None},
-            {'type': 'py', 'path': 'rancher/k3s/flags', 'checkpoint': None},
-            {'type': 'py', 'path': 'rancher/node/node_passwd', 'checkpoint': None},
-        ],
-        'cni': [
-            {'type': 'py', 'path': 'cni/multus', 'checkpoint': None},
-            {'type': 'py', 'path': 'cni/kube-router', 'checkpoint': None},
-            {'type': 'mako', 'path': 'cni/net.d/multus.d/multus.kubeconfig', 'checkpoint': None},
-            {'type': 'mako', 'path': 'cni/net.d/kube-router.d/kubeconfig', 'checkpoint': None},
-        ],
         'libvirt': [
             {'type': 'py', 'path': 'libvirt', 'checkpoint': None},
         ],

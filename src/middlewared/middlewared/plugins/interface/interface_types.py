@@ -18,7 +18,7 @@ class InterfaceService(Service):
 
     @private
     async def type(self, iface_state):
-        if iface_state['name'].startswith(('br', 'kube-bridge')):
+        if iface_state['name'].startswith(('br',)):
             return InterfaceType.BRIDGE
         elif iface_state['name'].startswith('bond'):
             return InterfaceType.LINK_AGGREGATION

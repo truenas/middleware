@@ -4,7 +4,6 @@ from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
-from .plugins.kubernetes_linux.k8s.exceptions import ApiException
 from .restful import parse_credentials, authenticate, create_application, copy_multipart_to_pipe, RESTfulAPI
 from .role import ROLES, RoleManager
 from .settings import conf
@@ -228,12 +227,6 @@ class Application:
             # CallException and subclasses are the way to gracefully
             # send errors to the client
             self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
-        except ApiException as e:
-            self.send_error(message, errno.EINVAL, str(e) or repr(e), sys.exc_info())
-            k8s_logger.error('Exception while calling {}(*{})'.format(
-                message['method'],
-                self.middleware.dump_args(message.get('params', []), method_name=message['method'])
-            ), exc_info=True)
         except Exception as e:
             adapted = adapt_exception(e)
             if adapted:
@@ -619,17 +612,6 @@ class ShellWorkerThread(threading.Thread):
                 command = ['/usr/bin/sudo', '-H', '-u', username] + command
 
             return command, not as_root
-        elif options.get('chart_release'):
-            command = [
-                '/usr/local/bin/k3s', 'kubectl', 'exec', '-n', options['chart_release']['namespace'],
-                f'pod/{options["pod_name"]}', '--container', options['container_name'], '-it', '--',
-                options.get('command', '/bin/bash'),
-            ]
-
-            if not as_root:
-                command = ['/usr/bin/sudo', '-H', '-u', username] + command
-
-            return command, not as_root
         else:
             return ['/usr/bin/login', '-p', '-f', username], False
 
@@ -811,15 +793,8 @@ class ShellApplication(object):
                 options = data.get('options', {})
                 if options.get('vm_id'):
                     options['vm_data'] = await self.middleware.call('vm.get_instance', options['vm_id'])
-                if options.get('chart_release_name'):
-                    if not options.get('pod_name') or not options.get('container_name'):
-                        raise CallError('Pod name and container name must be specified')
 
-                    options['chart_release'] = await self.middleware.call(
-                        'chart.release.get_instance', options['chart_release_name']
-                    )
-
-                # By default we want to run kubectl/virsh with user's privileges and assume all "permission denied"
+                # By default we want to run virsh with user's privileges and assume all "permission denied"
                 # errors this can cause, unless the user has a sudo permission for all commands; in that case, let's
                 # run them straight with root privileges.
                 as_root = False
@@ -915,6 +890,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.log_format = log_format
         self.app = None
         self.loop = None
+        self.runner = None
         self.__thread_id = threading.get_ident()
         multiprocessing.set_start_method('spawn')  # Spawn new processes for ProcessPool instead of forking
         self.__init_procpool()
@@ -2021,9 +1997,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         # Start up middleware worker process pool
         self.__procpool._start_executor_manager_thread()
 
-        runner = web.AppRunner(app, handle_signals=False, access_log=None)
-        await runner.setup()
-        await web.UnixSite(runner, os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared-internal.sock')).start()
+        self.runner = web.AppRunner(app, handle_signals=False, access_log=None)
+        await self.runner.setup()
+        await web.UnixSite(self.runner, os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared-internal.sock')).start()
 
         await self.__plugins_setup(setup_funcs)
 
@@ -2031,8 +2007,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self._setup_periodic_tasks()
 
         unix_socket_path = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.sock')
-        await web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True).start()
-        await web.UnixSite(runner, unix_socket_path).start()
+        await self.start_tcp_site('127.0.0.1')
+        await web.UnixSite(self.runner, unix_socket_path).start()
         os.chmod(unix_socket_path, 0o666)
 
         if self.trace_malloc:
@@ -2046,6 +2022,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self._console_write('loading completed\n')
 
         self.__notify_startup_complete()
+
+    async def start_tcp_site(self, host):
+        site = web.TCPSite(self.runner, host, 6000, reuse_address=True, reuse_port=True)
+        await site.start()
+        return site
 
     def terminate(self):
         self.logger.info('Terminating')

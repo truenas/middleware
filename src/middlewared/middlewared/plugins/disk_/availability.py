@@ -106,8 +106,7 @@ class DiskService(Service):
     @accepts(Bool('join_partitions', default=False), roles=['REPORTING_READ'])
     async def get_unused(self, join_partitions):
         """
-        Return disks that are NOT in use by any zpool that is currently imported. It will
-        also return disks that are in use by any zpool that is exported.
+        Return disks that are NOT in use by any zpool that is currently imported OR exported.
 
         `join_partitions`: Bool, when True will return all partitions currently written to disk
             NOTE: this is an expensive operation

@@ -237,69 +237,6 @@ class UsageService(Service):
             }
         }
 
-    async def gather_applications(self, context):
-        # We want to retrieve following information
-        # 1) No of installed chart releases
-        # 2) catalog items with versions installed
-        # 3) No of backups
-        # 4) No of automatic backups taken
-        # 5) List of docker images
-        # 6) Configured cluster cidr info
-        k8s_config = await self.middleware.call('kubernetes.config')
-        output = {
-            'chart_releases': 0,
-            # catalog -> train -> item -> versions
-            'catalog_items': defaultdict(
-                lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int))))
-            ),
-            'chart_releases_backups': {
-                'total_backups': 0,
-                'automatic_backups': 0,
-            },
-            'docker_images': set(),
-            'kubernetes_config': {
-                'cluster_cidr': k8s_config['cluster_cidr'],
-                'service_cidr': k8s_config['service_cidr'],
-            },
-            'custom_deployed_images': set(),
-            'chart_releases_images': set(),
-        }
-        catalogs = {c['label']: c for c in await self.middleware.call('catalog.query')}
-        official_label = await self.middleware.call('catalog.official_catalog_label')
-        chart_releases = await self.middleware.call('chart.release.query', [], {'extra': {'retrieve_resources': True}})
-        output['chart_releases'] = len(chart_releases)
-        for chart_release in chart_releases:
-            chart = chart_release['chart_metadata']
-            catalog = catalogs.get(chart_release['catalog'])
-            if not catalog:
-                # If the catalog was deleted, it's no use trying to log information below as we can't
-                # trace back to which item is really installed
-                continue
-            output['catalog_items'][catalog['repository']][catalog['branch']][
-                chart_release['catalog_train']][chart['name']][chart['version']] += 1
-            for reference in chart_release['resources']['container_images']:
-                parsed_tag = (
-                    await self.middleware.call('container.image.normalize_reference', reference)
-                )['complete_tag']
-                if chart_release['catalog'] == official_label and chart['name'] == 'ix-chart':
-                    output['custom_deployed_images'].add(parsed_tag)
-                else:
-                    output['chart_releases_images'].add(parsed_tag)
-
-        backups = await self.middleware.call('kubernetes.list_backups')
-        backup_update_prefix = await self.middleware.call('kubernetes.get_system_update_backup_prefix')
-        output['chart_releases_backups'].update({
-            'total_backups': len(backups),
-            'automatic_backups': len([b for b in backups if b.startswith(backup_update_prefix)]),
-        })
-        for image in await self.middleware.call('container.image.query'):
-            output['docker_images'].update(image['repo_tags'])
-
-        for key in ('docker_images', 'custom_deployed_images', 'chart_releases_images'):
-            output[key] = list(output[key])
-
-        return output
-
     async def gather_network(self, context):
         info = {'network': {'bridges': [], 'lags': [], 'phys': [], 'vlans': []}}
         for i in context['network']:
