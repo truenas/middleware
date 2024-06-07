@@ -7,11 +7,21 @@ import logging
 
 from middlewared.utils.scsi_generic import inquiry
 
-from .constants import MINI_MODEL_BASE, MINIR_MODEL_BASE
+from .constants import (
+    MINI_MODEL_BASE,
+    MINIR_MODEL_BASE,
+    SYSFS_SLOT_KEY,
+    MAPPED_SLOT_KEY,
+    SUPPORTS_IDENTIFY_KEY,
+    DISK_FRONT_KEY,
+    DISK_REAR_KEY,
+    DISK_TOP_KEY,
+    DISK_INTERNAL_KEY,
+)
 from .element_types import ELEMENT_TYPES, ELEMENT_DESC
 from .enums import ControllerModels, ElementDescriptorsToIgnore, ElementStatusesToIgnore, JbodModels
 from .sysfs_disks import map_disks_to_enclosure_slots
-from .slot_mappings import get_slot_info, SYSFS_SLOT_KEY, MAPPED_SLOT_KEY, SUPPORTS_IDENTIFY_KEY
+from .slot_mappings import get_slot_info
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +57,8 @@ class Enclosure:
             'pci': self.pci,  # the pci info (0:0:0:0)
             'rackmount': self.rackmount,  # requested by UI team
             'top_loaded': self.top_loaded,  # requested by UI team
+            'top_slots': self.top_slots,  # requested by UI team
+            'front_loaded': self.front_loaded,  # requested by UI team
             'front_slots': self.front_slots,  # requested by UI team
             'rear_slots': self.rear_slots,  # requested by UI team
             'internal_slots': self.internal_slots,  # requested by UI team
@@ -241,6 +253,7 @@ class Enclosure:
 
     def _parse_elements(self, elements):
         final = {}
+        disk_position_mapping = self.determine_disk_slot_positions()
         for slot, element in elements.items():
             try:
                 element_type = ELEMENT_TYPES[element['type']]
@@ -294,6 +307,9 @@ class Enclosure:
                 parsed[SUPPORTS_IDENTIFY_KEY] = self.disks_map[slot][SUPPORTS_IDENTIFY_KEY]
 
                 mapped_slot = self.disks_map[slot][MAPPED_SLOT_KEY]
+                # is this a front, rear or internal slot?
+                parsed.update(disk_position_mapping.get(mapped_slot, dict()))
+
                 parsed['original'] = {
                     'enclosure_id': self.encid,
                     'enclosure_sg': self.sg,
@@ -573,34 +589,62 @@ class Enclosure:
         ))
 
     @property
-    def front_slots(self):
-        """Determine the total number of front drive bays.
-
-        NOTE: The `front_slots` phrase is used all the same to
-        represent the drive bay slots for our platforms that are
-        "top loaded".
+    def top_slots(self):
+        """Determine the total number of top drive bays.
 
         Args:
         Returns: int
         """
-        if not self.model:
-            return 0
-        elif any((self.is_xseries, self.is_r30, self.is_12_bay_jbod)):
-            return 12
-        elif self.is_r20_series:
-            return 14
-        elif any((self.is_hseries, self.is_r10)):
-            return 16
-        elif any((self.is_fseries, self.is_mseries, self.is_24_bay_jbod)):
-            return 24
-        elif any((self.is_r40, self.is_r50_series)):
-            return 48
-        elif self.is_60_bay_jbod:
-            return 60
-        elif self.is_102_bay_jbod:
-            return 102
-        else:
-            return 0
+        if self.top_loaded:
+            if self.is_r40 or self.is_r50_series:
+                return 48
+            elif self.is_60_bay_jbod:
+                return 60
+            elif self.is_102_bay_jbod:
+                return 102
+            else:
+                return 0
+        return 0
+
+    @property
+    def front_loaded(self):
+        """Determine if the enclosure device has its disk slots loaded
+        from the front.
+
+        Args:
+        Returns: bool
+        """
+        return any((
+            self.is_xseries,
+            self.is_r30,
+            self.is_12_bay_jbod,
+            self.is_r20_series,
+            self.is_hseries,
+            self.is_r10,
+            self.is_fseries,
+            self.is_mseries,
+            self.is_24_bay_jbod
+        ))
+
+    @property
+    def front_slots(self):
+        """Determine the total number of front drive bays.
+
+        Args:
+        Returns: int
+        """
+        if self.front_loaded:
+            if any((self.is_xseries, self.is_r30, self.is_12_bay_jbod)):
+                return 12
+            elif self.is_r20_series:
+                return 14
+            elif any((self.is_hseries, self.is_r10)):
+                return 16
+            elif any((self.is_fseries, self.is_mseries, self.is_24_bay_jbod)):
+                return 24
+            else:
+                return 0
+        return 0
 
     @property
     def rear_slots(self):
@@ -632,3 +676,51 @@ class Enclosure:
         Returns: int
         """
         return 4 if self.is_r30 else 0
+
+    def determine_disk_slot_positions(self):
+        """Determine the disk slot positions in the enclosure.
+        Is this a front slot, rear slot or internal slot?
+
+        NOTE: requested by UI team so that when a user clicks on
+        a slot in the UI for a given enclosure, it will update the
+        picture to the rear of the machine if the slot chosen is
+        a rear slot (ditto for internal or front slots)
+
+        Args:
+        Returns: dict
+        """
+        fs, rs, ins, ts = self.front_slots, self.rear_slots, self.internal_slots, self.top_slots
+        has_rear = has_internal = False
+        has_front = has_top = False
+        if fs:
+            has_front = True
+            total = fs
+        elif ts:
+            has_top = True
+            total = ts
+        else:
+            # huh? shouldn't happen
+            return dict()
+
+        if rs:
+            has_rear = True
+            total += rs
+        elif ins:
+            # NOTE: only 1 platform has internal slots
+            # and it DOES NOT have rear slots. If we
+            # ever have a platform that has both rear
+            # AND internal slots, this logic wont work
+            # and we'll need to fix it
+            has_internal = True
+            total += ins
+
+        rv = dict()
+        for slot in range(1, total + 1):
+            rv[slot] = {
+                DISK_FRONT_KEY: True if has_front and slot <= fs else False,
+                DISK_TOP_KEY: True if has_top and slot <= ts else False,
+                DISK_REAR_KEY: True if has_rear and slot > (fs or ts) else False,
+                DISK_INTERNAL_KEY: True if has_internal and slot > (fs or ts) else False,
+            }
+
+        return rv

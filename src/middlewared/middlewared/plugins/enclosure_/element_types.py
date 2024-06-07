@@ -110,7 +110,7 @@ def temp(value_raw):
     if (temp := (value_raw & 0xff00) >> 8):
         # 8 bits represents -19C to +235C
         # value of 0 would imply -20C
-        return f'{temp -20}C'
+        return f'{temp - 20}C'
 
 
 def psu(value_raw):
