@@ -437,7 +437,7 @@ def get_slot_info(enc):
                     'id': {
                         '3000000000000001': {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: False}
-                            for i in range(1, 9)
+                            for i in range(1, 8)
                         }
                     }
                 }
