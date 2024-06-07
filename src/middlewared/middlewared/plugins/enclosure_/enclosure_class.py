@@ -491,6 +491,66 @@ class Enclosure:
         ))
 
     @property
+    def is_mini_3e(self):
+        """Determine if the enclosure device is a MINI-3.0-E.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_mini,
+            self.model == ControllerModels.MINI3E.value
+        ))
+
+    @property
+    def is_mini_3e_plus(self):
+        """Determine if the enclosure device is a MINI-3.0-E+.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_mini,
+            self.model == ControllerModels.MINI3EP.value
+        ))
+
+    @property
+    def is_mini_3_x(self):
+        """Determine if the enclosure device is a MINI-3.0-X.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_mini,
+            self.model == ControllerModels.MINI3X.value
+        ))
+
+    @property
+    def is_mini_3_x_plus(self):
+        """Determine if the enclosure device is a MINI-3.0-X+.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_mini,
+            self.model == ControllerModels.MINI3XP.value
+        ))
+
+    @property
+    def is_mini_3_xl_plus(self):
+        """Determine if the enclosure device is a MINI-3.0-XL+.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_mini,
+            self.model == ControllerModels.MINI3XLP.value
+        ))
+
+    @property
     def is_mini_r(self):
         """Determine if the enclosure device is a mini-r-series controller.
 
@@ -623,6 +683,7 @@ class Enclosure:
             self.is_r10,
             self.is_fseries,
             self.is_mseries,
+            self.is_mini,
             self.is_24_bay_jbod
         ))
 
@@ -634,7 +695,15 @@ class Enclosure:
         Returns: int
         """
         if self.front_loaded:
-            if any((self.is_xseries, self.is_r30, self.is_12_bay_jbod)):
+            if any((self.is_mini_3e, self.is_mini_3e_plus)):
+                return 6
+            elif self.is_mini_3_x:
+                return 7
+            elif self.is_mini_3_x_plus:
+                return 8
+            elif self.is_mini_3_xl_plus:
+                return 10
+            elif any((self.is_xseries, self.is_r30, self.is_12_bay_jbod)):
                 return 12
             elif self.is_r20_series:
                 return 14
