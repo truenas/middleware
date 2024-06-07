@@ -46,14 +46,14 @@ def check_syslog(log_path, message, target_ip=None, target_user=user, target_pas
 
 @pytest.mark.parametrize('params', [
     {
-        'ident': 'systemd',
-        'msg': 'ZZZZ: docker filter mount: test',
-        'path': '/var/log/app_mounts.log',
+        'ident': 'iscsi-scstd',
+        'msg': 'ZZZZ: random scst test',
+        'path': '/var/log/scst.log',
     },
     {
-        'ident': 'systemd',
-        'msg': 'ZZZZ: kubelet filter mount: test',
-        'path': '/var/log/app_mounts.log',
+        'ident': 'iscsi-scstd',
+        'msg': 'ZZZZ: random scst test',
+        'path': '/var/log/scst.log',  # This is just to make sure our exclude filter works as intended
     },
 ])
 def test_local_syslog_filter(request, params):
