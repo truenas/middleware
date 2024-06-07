@@ -15,6 +15,7 @@ from .constants import (
     SUPPORTS_IDENTIFY_KEY,
     DISK_FRONT_KEY,
     DISK_REAR_KEY,
+    DISK_TOP_KEY,
     DISK_INTERNAL_KEY,
 )
 from .element_types import ELEMENT_TYPES, ELEMENT_DESC
@@ -681,9 +682,19 @@ class Enclosure:
         Args:
         Returns: dict
         """
-        fs, rs, ins = self.front_slots, self.rear_slots, self.internal_slots
+        fs, rs, ins, ts = self.front_slots, self.rear_slots, self.internal_slots, self.top_slots
         has_rear = has_internal = False
-        total = fs
+        has_front = has_top = False
+        if fs:
+            has_front = True
+            total = fs
+        elif ts:
+            has_top = True
+            total = ts
+        else:
+            # huh? shouldn't happen
+            return dict()
+
         if rs:
             has_rear = True
             total += rs
@@ -699,9 +710,10 @@ class Enclosure:
         rv = dict()
         for slot in range(1, total + 1):
             rv[slot] = {
-                DISK_FRONT_KEY: True if slot <= fs else False,
-                DISK_REAR_KEY: True if has_rear and slot > fs else False,
-                DISK_INTERNAL_KEY: True if has_internal and slot > fs else False,
+                DISK_FRONT_KEY: True if has_front and slot <= fs else False,
+                DISK_TOP_KEY: True if has_top and slot <= ts else False,
+                DISK_REAR_KEY: True if has_rear and slot > (fs or ts) else False,
+                DISK_INTERNAL_KEY: True if has_internal and slot > (fs or ts) else False,
             }
 
         return rv
