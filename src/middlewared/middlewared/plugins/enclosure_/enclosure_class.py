@@ -590,6 +590,11 @@ class Enclosure:
 
     @property
     def top_slots(self):
+        """Determine the total number of top drive bays.
+
+        Args:
+        Returns: int
+        """
         if self.top_loaded:
             if self.is_r40 or self.is_r50_series:
                 return 48
@@ -603,6 +608,12 @@ class Enclosure:
 
     @property
     def front_loaded(self):
+        """Determine if the enclosure device has its disk slots loaded
+        from the front.
+
+        Args:
+        Returns: bool
+        """
         return any((
             self.is_xseries,
             self.is_r30,
@@ -618,10 +629,6 @@ class Enclosure:
     @property
     def front_slots(self):
         """Determine the total number of front drive bays.
-
-        NOTE: The `front_slots` phrase is used all the same to
-        represent the drive bay slots for our platforms that are
-        "top loaded".
 
         Args:
         Returns: int
