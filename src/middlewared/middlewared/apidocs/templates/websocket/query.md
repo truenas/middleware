@@ -60,7 +60,7 @@ Javascript:
 
 ${'####'} Connectives
 
-Queries with no explicitly defined logical connectives assume conjunction `AND`. The disjunction `OR` is also supported by using the syntax illustrated below. We can use `chart.release.query` with `OR` to filter chart releases by name. Note that the operand for the disjunction contains an array of conditions.
+Queries with no explicitly defined logical connectives assume conjunction `AND`. The disjunction `OR` is also supported by using the syntax illustrated below. We can use `disk.query` with `OR` to filter disks by name. Note that the operand for the disjunction contains an array of conditions.
 
 The following is a valid example.
 Javascript:
@@ -68,8 +68,8 @@ Javascript:
     :::javascript
     ["OR", 
       [
-        ["name","=", "firstchart"],
-        ["name","=", "secondchart"],
+        ["name","=", "first"],
+        ["name","=", "second"],
       ]
     ]
 

@@ -80,109 +80,6 @@ PORTS_IN_USE = [
         ]
     },
     {
-        'namespace': 'chart.release',
-        'title': 'Applications',
-        'ports': [
-            [
-                '0.0.0.0',
-                21027
-            ],
-            [
-                '0.0.0.0',
-                22000
-            ],
-            [
-                '0.0.0.0',
-                22000
-            ],
-            [
-                '0.0.0.0',
-                8384
-            ],
-            [
-                '0.0.0.0',
-                32400
-            ],
-            [
-                '0.0.0.0',
-                22601
-            ],
-            [
-                '0.0.0.0',
-                59372
-            ],
-            [
-                '0.0.0.0',
-                14831
-            ],
-            [
-                '0.0.0.0',
-                20489
-            ],
-            [
-                '::',
-                21028
-            ],
-        ],
-        'port_details': [
-            {
-                'description': '\'syncthing\' application',
-                'ports': [
-                    [
-                        '0.0.0.0',
-                        21027
-                    ],
-                    [
-                        '0.0.0.0',
-                        22000
-                    ],
-                    [
-                        '0.0.0.0',
-                        22000
-                    ],
-                    [
-                        '0.0.0.0',
-                        8384
-                    ],
-                    [
-                        '::',
-                        21028
-                    ],
-                ]
-            },
-            {
-                'description': '\'plex\' application',
-                'ports': [
-                    [
-                        '0.0.0.0',
-                        32400
-                    ],
-                    [
-                        '0.0.0.0',
-                        22601
-                    ],
-                    [
-                        '0.0.0.0',
-                        59372
-                    ],
-                    [
-                        '0.0.0.0',
-                        14831
-                    ]
-                ]
-            },
-            {
-                'description': '\'netdata\' application',
-                'ports': [
-                    [
-                        '0.0.0.0',
-                        20489
-                    ]
-                ]
-            },
-        ]
-    },
-    {
         'namespace': 'kmip',
         'title': 'KMIP Service',
         'ports': [
@@ -590,14 +487,10 @@ def get_port_service():
     (67, '192.168.0.12', 'system'),
     (24007, '0.0.0.0', 'gluster.fuse'),
     (24007, '192.168.0.12', 'gluster.fuse'),
-    (21027, '0.0.0.0', 'chart.release'),
-    (21027, '192.168.0.12', 'chart.release'),
     (68, '::', 'system'),
     (68, '2001:db8:3333:4444:5555:6666:7777:8888', 'system'),
     (24008, '::', 'gluster.fuse'),
     (24008, '2001:db8:3333:4444:5555:6666:7777:8888', 'gluster.fuse'),
-    (21028, '::', 'chart.release'),
-    (21028, '2001:db8:3333:4444:5555:6666:7777:8888', 'chart.release'),
 ])
 @pytest.mark.asyncio
 async def test_port_validate_whitelist_namespace_logic(port, bindip, whitelist_namespace):
