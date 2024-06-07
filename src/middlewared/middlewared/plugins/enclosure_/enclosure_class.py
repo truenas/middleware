@@ -56,6 +56,8 @@ class Enclosure:
             'pci': self.pci,  # the pci info (0:0:0:0)
             'rackmount': self.rackmount,  # requested by UI team
             'top_loaded': self.top_loaded,  # requested by UI team
+            'top_slots': self.top_slots,  # requested by UI team
+            'front_loaded': self.front_loaded,  # requested by UI team
             'front_slots': self.front_slots,  # requested by UI team
             'rear_slots': self.rear_slots,  # requested by UI team
             'internal_slots': self.internal_slots,  # requested by UI team
@@ -586,6 +588,33 @@ class Enclosure:
         ))
 
     @property
+    def top_slots(self):
+        if self.top_loaded:
+            if self.is_r40 or self.is_r50_series:
+                return 48
+            elif self.is_60_bay_jbod:
+                return 60
+            elif self.is_102_bay_jbod:
+                return 102
+            else:
+                return 0
+        return 0
+
+    @property
+    def front_loaded(self):
+        return any((
+            self.is_xseries,
+            self.is_r30,
+            self.is_12_bay_jbod,
+            self.is_r20_series,
+            self.is_hseries,
+            self.is_r10,
+            self.is_fseries,
+            self.is_mseries,
+            self.is_24_bay_jbod
+        ))
+
+    @property
     def front_slots(self):
         """Determine the total number of front drive bays.
 
@@ -596,24 +625,18 @@ class Enclosure:
         Args:
         Returns: int
         """
-        if not self.model:
-            return 0
-        elif any((self.is_xseries, self.is_r30, self.is_12_bay_jbod)):
-            return 12
-        elif self.is_r20_series:
-            return 14
-        elif any((self.is_hseries, self.is_r10)):
-            return 16
-        elif any((self.is_fseries, self.is_mseries, self.is_24_bay_jbod)):
-            return 24
-        elif any((self.is_r40, self.is_r50_series)):
-            return 48
-        elif self.is_60_bay_jbod:
-            return 60
-        elif self.is_102_bay_jbod:
-            return 102
-        else:
-            return 0
+        if self.front_loaded:
+            if any((self.is_xseries, self.is_r30, self.is_12_bay_jbod)):
+                return 12
+            elif self.is_r20_series:
+                return 14
+            elif any((self.is_hseries, self.is_r10)):
+                return 16
+            elif any((self.is_fseries, self.is_mseries, self.is_24_bay_jbod)):
+                return 24
+            else:
+                return 0
+        return 0
 
     @property
     def rear_slots(self):
