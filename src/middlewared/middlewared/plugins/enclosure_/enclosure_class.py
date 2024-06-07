@@ -697,10 +697,8 @@ class Enclosure:
         if self.front_loaded:
             if any((self.is_mini_3e, self.is_mini_3e_plus)):
                 return 6
-            elif self.is_mini_3_x:
+            elif any((self.is_mini_3_x, self.is_mini_3_x_plus)):
                 return 7
-            elif self.is_mini_3_x_plus:
-                return 8
             elif self.is_mini_3_xl_plus:
                 return 10
             elif any((self.is_xseries, self.is_r30, self.is_12_bay_jbod)):
