@@ -15,18 +15,23 @@ class ChartReleaseService(Service):
         namespace = 'chart.release'
 
     @private
-    async def retrieve_pod_with_containers(self, release_name):
+    async def retrieve_pod_with_containers(self, release_name, retrieve_active_pods=False):
         await self.middleware.call('kubernetes.validate_k8s_setup')
         release = await self.middleware.call(
             'chart.release.query', [['id', '=', release_name]], {'get': True, 'extra': {'retrieve_resources': True}}
         )
         choices = {}
-        for pod in release['resources']['pods']:
-            choices[pod['metadata']['name']] = []
+        for pod in filter(
+            lambda p: not retrieve_active_pods or (p and p.get('status', {}).get('phase') == 'Running'),
+            release['resources']['pods']
+        ):
+            containers = []
             for container in (
                 (pod['status'].get('containerStatuses') or []) + (pod['status'].get('initContainerStatuses') or [])
             ):
-                choices[pod['metadata']['name']].append(container['name'])
+                containers.append(container['name'])
+            if containers:
+                choices[pod['metadata']['name']] = containers
 
         return choices
 
@@ -42,7 +47,7 @@ class ChartReleaseService(Service):
         Output is a dictionary with names of pods as keys and containing names of containers which the pod
         comprises of.
         """
-        return await self.retrieve_pod_with_containers(release_name)
+        return await self.retrieve_pod_with_containers(release_name, True)
 
     @accepts(Str('release_name'))
     @returns(Dict(
