@@ -5,7 +5,6 @@ import re
 import pathlib
 from collections import OrderedDict
 
-from ixhardware import TRUENAS_UNKNOWN
 from libsg3.ses import EnclosureDevice
 
 from middlewared.schema import Dict, Int, Str, accepts
@@ -72,7 +71,7 @@ class EnclosureService(CRUDService):
     @filterable
     def query(self, filters, options):
         enclosures = []
-        if self.middleware.call_sync('truenas.get_chassis_hardware') == TRUENAS_UNKNOWN:
+        if not self.middleware.call_sync('truenas.is_ix_hardware'):
             # this feature is only available on hardware that ix sells
             return enclosures
 
