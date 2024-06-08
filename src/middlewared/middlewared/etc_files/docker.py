@@ -2,7 +2,8 @@ import json
 import os
 import subprocess
 
-from middlewared.plugins.docker.state_utils import DOCKER_MOUNT_PATH
+from middlewared.plugins.etc import FileShouldNotExist
+from middlewared.plugins.docker.state_utils import IX_APPS_MOUNT_PATH
 
 
 def nvidia_configuration():
@@ -38,13 +39,13 @@ def gpu_configuration(middleware):
 def render(service, middleware):
     config = middleware.call_sync('docker.config')
     if not config['pool']:
-        return
+        raise FileShouldNotExist()
 
     # We need to do this so that proxy changes are respected by systemd on docker daemon start
     subprocess.run(['systemctl', 'daemon-reload'], capture_output=True, check=True)
 
     os.makedirs('/etc/docker', exist_ok=True)
-    data_root = os.path.join(DOCKER_MOUNT_PATH, 'docker')
+    data_root = os.path.join(IX_APPS_MOUNT_PATH, 'docker')
     with open('/etc/docker/daemon.json', 'w') as f:
         f.write(json.dumps({
             'data-root': data_root,

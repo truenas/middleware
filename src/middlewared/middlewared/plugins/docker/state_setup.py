@@ -56,7 +56,7 @@ class DockerSetupService(Service):
             return
 
         await self.create_update_docker_datasets(config['dataset'])
-        await self.middleware.call('catalog.sync_all')
+        await self.middleware.call('catalog.sync')
         await self.middleware.call('service.start', 'docker')
 
     @private
@@ -89,9 +89,6 @@ class DockerSetupService(Service):
                         'name': dataset_name, 'type': 'FILESYSTEM', 'properties': create_props,
                     }
                 )
-                if create_props.get('mountpoint') != 'legacy':
-                    # since, legacy mountpoints should not be zfs mounted.
-                    await self.middleware.call('zfs.dataset.mount', dataset_name)
             elif any(val['value'] != update_props[name] for name, val in dataset[0]['properties'].items()):
                 await self.middleware.call(
                     'zfs.dataset.update', dataset_name, {

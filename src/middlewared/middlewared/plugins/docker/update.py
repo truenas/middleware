@@ -46,7 +46,7 @@ class DockerService(ConfigService):
         """
         Update Docker service configuration.
         """
-        raise CallError('Configuring docker is disabled for now')
+        # raise CallError('Configuring docker is disabled for now')
         old_config = await self.config()
         old_config.pop('dataset')
         config = old_config.copy()

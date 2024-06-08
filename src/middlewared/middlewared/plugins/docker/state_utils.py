@@ -7,7 +7,7 @@ import typing
 APPS_STATUS: collections.namedtuple = collections.namedtuple('Status', ['status', 'description'])
 CATALOG_DATASET_NAME: str = 'truenas_catalog'
 IX_APPS_DIR_NAME = '$ix-apps'
-DOCKER_MOUNT_PATH: str = os.path.join('/mnt', IX_APPS_DIR_NAME)
+IX_APPS_MOUNT_PATH: str = os.path.join('/mnt', IX_APPS_DIR_NAME)
 
 DATASET_DEFAULTS: dict = {
     'aclmode': 'discard',
@@ -17,7 +17,6 @@ DATASET_DEFAULTS: dict = {
     'casesensitivity': 'sensitive',
     'atime': 'off',
     'canmount': 'noauto',
-    'mountpoint': IX_APPS_DIR_NAME,
 }
 
 
@@ -42,16 +41,16 @@ STATUS_DESCRIPTIONS = {
 }
 
 
-def catalog_ds_path(docker_ds: str) -> str:
-    return os.path.join(DOCKER_MOUNT_PATH, CATALOG_DATASET_NAME)
+def catalog_ds_path() -> str:
+    return os.path.join(IX_APPS_MOUNT_PATH, CATALOG_DATASET_NAME)
 
 
 def docker_datasets(docker_ds: str) -> typing.List[str]:
     return [docker_ds] + [
         os.path.join(docker_ds, d) for d in (
             CATALOG_DATASET_NAME,
-            'apps_configs',
-            'apps_mounts',
+            'app_configs',
+            'app_mounts',
             'docker',
         )
     ]
@@ -61,6 +60,7 @@ def docker_dataset_custom_props(ds: str) -> typing.Dict:
     props = {
         'ix-apps': {
             'encryption': 'off',
+            'mountpoint': f'/{IX_APPS_DIR_NAME}',
         },
     }
     return props.get(ds, dict())
@@ -78,7 +78,9 @@ def missing_required_datasets(existing_datasets: set, docker_ds: str) -> set:
     diff = existing_datasets ^ set(docker_datasets(docker_ds))
     if fatal_diff := diff.intersection(
         set(docker_ds) | {
-            os.path.join(docker_ds, k) for k in ('docker', 'releases', CATALOG_DATASET_NAME)
+            os.path.join(docker_ds, k) for k in (
+                'app_configs', 'app_mounts', 'docker', CATALOG_DATASET_NAME,
+            )
         }
     ):
         return fatal_diff

@@ -13,6 +13,8 @@ class DockerService(SimpleService):
     async def before_start(self):
         await self.middleware.call('docker.state.set_status', Status.INITIALIZING.value)
         await self.middleware.call('docker.state.before_start_check')
+        if docker_ds := (await self.middleware.call('docker.config'))['dataset']:
+            await self.middleware.call('zfs.dataset.mount', docker_ds, {'recursive': True, 'force_mount': True})
         for key, value in (
             ('vm.panic_on_oom', 0),
             ('vm.overcommit_memory', 1),
@@ -45,4 +47,6 @@ class DockerService(SimpleService):
         await self.middleware.call('docker.state.set_status', Status.STOPPING.value)
 
     async def after_stop(self):
+        if docker_ds := (await self.middleware.call('docker.config'))['dataset']:
+            await self.middleware.call('zfs.dataset.umount', docker_ds, {'force': True})
         await self.middleware.call('docker.state.set_status', Status.STOPPED.value)
