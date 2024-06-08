@@ -11,6 +11,7 @@ Architecture: all
 Depends: acl,
          console-setup,
          cpuid,
+         docker.io,
          gdb,
          gssproxy,
          kdump-tools,
