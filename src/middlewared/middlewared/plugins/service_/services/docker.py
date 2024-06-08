@@ -57,6 +57,10 @@ class DockerService(SimpleService):
                 lambda: self.middleware.create_task(self.middleware.call('docker.state.after_start_check')),
             )
 
+    async def stop(self):
+        await super().stop()
+        await self._systemd_unit('docker.socket', 'stop')
+
     async def after_start(self):
         await self.middleware.call('docker.state.set_status', Status.RUNNING.value)
 
