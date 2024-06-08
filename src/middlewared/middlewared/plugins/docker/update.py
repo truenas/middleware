@@ -1,8 +1,9 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Dict, Int, Patch, Str
-from middlewared.service import CallError, ConfigService, job, private
+from middlewared.service import CallError, ConfigService, job, private, returns
 
+from .state_utils import Status
 from .utils import applications_ds_name
 
 
@@ -58,3 +59,14 @@ class DockerService(ConfigService):
             await self.middleware.call('docker.setup.status_change')
 
         return await self.config()
+
+    @accepts()
+    @returns(Dict(
+        Str('status', enum=[e.value for e in Status]),
+        Str('description'),
+    ))
+    async def status(self):
+        """
+        Returns the status of the docker service.
+        """
+        return await self.middleware.call('docker.state.get_status_dict')
