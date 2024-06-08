@@ -58,7 +58,7 @@ class DockerSetupService(Service):
 
         await self.create_update_docker_datasets(config['dataset'])
         await self.middleware.call('catalog.sync')
-        await self.middleware.call('service.start', 'docker')
+        await self.middleware.call('docker.state.start_service')
 
     @private
     async def create_update_docker_datasets(self, docker_ds):
