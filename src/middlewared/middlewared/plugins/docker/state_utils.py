@@ -6,7 +6,7 @@ import typing
 
 APPS_STATUS: collections.namedtuple = collections.namedtuple('Status', ['status', 'description'])
 CATALOG_DATASET_NAME: str = 'truenas_catalog'
-IX_APPS_DIR_NAME = '$ix-apps'
+IX_APPS_DIR_NAME = '.ix-apps'
 IX_APPS_MOUNT_PATH: str = os.path.join('/mnt', IX_APPS_DIR_NAME)
 
 DATASET_DEFAULTS: dict = {
