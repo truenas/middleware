@@ -40,6 +40,7 @@ class SNMPService(SystemServiceService):
 
     class Config:
         service = 'snmp'
+        service_verb = 'restart'
         datastore = 'services.snmp'
         datastore_prefix = 'snmp_'
         cli_namespace = 'service.snmp'
@@ -64,6 +65,7 @@ class SNMPService(SystemServiceService):
 
     @private
     def _is_snmp_running(self):
+        """ Internal helper function for use by this module """
         current_state = self.middleware.call_sync(
             'service.query', [["service", "=", "snmp"]], {"select": ["state"]}
         )[0]['state']
@@ -72,8 +74,9 @@ class SNMPService(SystemServiceService):
     @private
     def _get_authuser_secret(self) -> str:
         """
-        Get the auth user saved secret
-        Return decoded string
+        Get the auth user saved secret.
+        Internal helper function for use by this module.
+        Return decoded string.
         """
         secret = ""
         if not _SNMP_SYSTEM_USER['key']:
@@ -97,7 +100,8 @@ class SNMPService(SystemServiceService):
     @private
     def _set_authuser_secret(self, secret):
         """
-        Save the auth user secret
+        Save the auth user secret.
+        Internal helper function for use by this module.
         INPUT: ascii string (not encoded)
         """
         secret_c = Fernet(_SNMP_SYSTEM_USER['key']).encrypt(secret.encode())
@@ -105,14 +109,6 @@ class SNMPService(SystemServiceService):
             _SNMP_SYSTEM_USER['size'] = fd.write(secret_c)
 
         return
-
-    @private
-    def _is_snmpSystemUser_installed(self):
-        """
-        Returns True if the snmpSystemUser is present in the private config file
-        """
-        with open(SNMP_PRIV_CONF, 'r') as f:
-            return True if _SNMP_SYSTEM_USER['name'] in f.read() else False
 
     @private
     def get_snmp_users(self):
@@ -167,8 +163,40 @@ class SNMPService(SystemServiceService):
             f.write(create_v3_user)
 
     @private
+    def delete_snmp_user(self, user):
+        """
+        Delete the SNMPv3 user
+        RETURN: stdout message
+        NOTE: SNMP must be running for this to be successful
+              This removes the user from the SNMP db and private config _only_.
+              The proper method to delete a user is to call the snmp.update routine with
+              'v3' disabled and 'v3_username' cleared.
+        """
+
+        if not self._is_snmp_running():
+            return "SNMP not running"
+
+        if pwd := self._get_authuser_secret():
+            # snmpusm -v3 -l authPriv -u JoeUser -a MD5 -A "abcd1234" -x AES -X "A pass phrase" localhost delete JoeUser
+            cmd = ['snmpusm', '-v3', '-u', f'{_SNMP_SYSTEM_USER["name"]}',
+                   '-l', 'authNoPriv', '-a', f'{_SNMP_SYSTEM_USER["auth_type"]}', '-A', f'{pwd}',
+                   'localhost', 'delete', user]
+            try:
+                # This call will timeout if SNMP is not running
+                res = subprocess.run(cmd, capture_output=True)
+                retmsg = res.stdout.decode()
+            except Exception:
+                self.logger.warning("Failed to delete SNMPv3 user: %r", user)
+                retmsg = res.stderr.decode()
+
+        return retmsg
+
+    @private
     def get_defaults(self):
-        """ Get default config settings.  Fixup nullable strings """
+        """
+        Get default config settings.
+        Fixup nullable strings
+        """
         SNMPModel_defaults = {}
         prefix = self._config.datastore_prefix
         for attrib in SNMPModel.__dict__.keys():
@@ -183,8 +211,11 @@ class SNMPService(SystemServiceService):
         return SNMPModel_defaults
 
     @private
-    def reset_v3_settings(self, snmp):
-        """ Reset v3 settings to default """
+    def _reset_v3_settings(self, snmp):
+        """
+        Reset v3 settings to default
+        Internal helper function for use by this module
+        """
 
         # Restore the 'v3_*' settings to default.  We allow only one v3 user
         config_default = self.get_defaults()
@@ -197,6 +228,7 @@ class SNMPService(SystemServiceService):
     def _add_system_user(self):
         """
         Add the v3 system user.
+        For internal use by this module.
         NOTES: SNMP must be stopped before calling.
                The private config file is assumed to be in a regenerated state with no v3 users
         """
@@ -264,10 +296,17 @@ class SNMPService(SystemServiceService):
         """
         Update SNMP Service Configuration.
 
-        `v3` when set enables SNMP version 3.
+        --- Rules ---
+        Enabling v3:
+            requires v3_username, v3_authtype and v3_password
+        Disabling v3:
+            By itself will retain the v3 user settings and config in the 'private' config,
+            but remove the entry in the public config to block v3 access by that user.
+        Disabling v3 and clearing the v3_username:
+            This will do the actions described in 'Disabling v3' and take the extra step to
+            remove the user from the 'private' config.
 
-        `v3_username`, `v3_authtype`, `v3_password`, `v3_privproto` and `v3_privpassphrase` are only used when `v3`
-        is enabled.
+        The 'v3_*' settings are valid and enforced only when 'v3' is enabled
         """
         old = await self.config()
 
@@ -280,8 +319,9 @@ class SNMPService(SystemServiceService):
         if not new['v3'] and not new['community']:
             verrors.add('snmp_update.community', 'This field is required when SNMPv3 is disabled')
 
-        # If v3, then must supply a username and authtype
+        # If v3, then must supply a username, authtype and password
         if new['v3']:
+            # All _nearly_ the same, but different field IDs.
             if not new['v3_username']:
                 verrors.add('snmp_update.v3_username', 'This field is required when SNMPv3 is enabled')
             if not new['v3_authtype']:
@@ -302,16 +342,16 @@ class SNMPService(SystemServiceService):
 
         verrors.check()
 
-        # If the v3 username is deleted, then we clean our v3 user config
-        # We get to this check only if new['v3'] is disabled
-        if not all([new['v3'], new['v3_username']]):
-            new = self.reset_v3_settings(new)
+        if not any([new['v3'], new['v3_username']]) and old['v3_username']:
+            # v3 is disabled: Are we asked to delete the v3 user?
+            await self.middleware.call('snmp.delete_snmp_user', old['v3_username'])
+            new = self._reset_v3_settings(new)
 
         await self._update_service(old, new)
 
         # Manage update to SNMP v3 user
         if new['v3']:
-            # Are there _any_ changes in the v3 settings?
+            # v3 is enabled: Are there _any_ changes in the v3_* settings?
             new_set = set({k: v for k, v in new.items() if k.startswith('v3_')}.items())
             old_set = set({k: v for k, v in old.items() if k.startswith('v3_')}.items())
             v3_diffs = new_set ^ old_set
