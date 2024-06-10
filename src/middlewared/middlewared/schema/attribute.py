@@ -12,7 +12,7 @@ class Attribute:
 
     def __init__(
         self, name='', title=None, description=None, required=False, null=False, empty=True, private=False,
-        validators=None, register=False, hidden=False, editable=True, example=None, **kwargs
+        validators:list[function]=None, register=False, hidden=False, editable=True, example=None, **kwargs
     ):
         self.name = name
         self.has_default = 'default' in kwargs and kwargs['default'] is not NOT_PROVIDED
@@ -80,7 +80,7 @@ class Attribute:
         """
         raise NotImplementedError("Attribute must implement to_json_schema method")
 
-    def _to_json_schema_common(self, parent):
+    def _to_json_schema_common(self, parent) -> dict[str]:
         schema = {}
 
         schema['_name_'] = self.name

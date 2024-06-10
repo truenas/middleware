@@ -64,7 +64,7 @@ import threading
 import time
 import traceback
 import types
-from typing import Dict, Pattern, Union
+from typing import Pattern, Union
 import urllib.parse
 import uuid
 import tracemalloc
@@ -144,11 +144,11 @@ class Application:
         assert name in ('on_message', 'on_close')
         self.__callbacks[name].append(method)
 
-    def _send(self, data:Dict[str]):
+    def _send(self, data:dict[str]):
         serialized = json.dumps(data)
         asyncio.run_coroutine_threadsafe(self.response.send_str(serialized), loop=self.loop)
 
-    def _tb_error(self, exc_info:sys._OptExcInfo) -> Dict[str, Union[str, list]]:
+    def _tb_error(self, exc_info:sys._OptExcInfo) -> dict[str, Union[str, list]]:
         klass, exc, trace = exc_info
 
         frames = []
@@ -168,7 +168,7 @@ class Application:
             'repr': repr(exc_info[1]),
         }
 
-    def get_error_dict(self, errno:int, reason:str=None, exc_info:sys._OptExcInfo=None, etype:str=None, extra:list=None) -> Dict[str]:
+    def get_error_dict(self, errno:int, reason:str=None, exc_info:sys._OptExcInfo=None, etype:str=None, extra:list=None) -> dict[str]:
         error_extra = {}
         if self._py_exceptions and exc_info:
             error_extra['py_exception'] = binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()
@@ -181,7 +181,7 @@ class Application:
             'extra': extra,
         }, **error_extra)
 
-    def send_error(self, message, errno:int, reason:str=None, exc_info:sys._OptExcInfo=None, etype:str=None, extra:list=None):
+    def send_error(self, message:dict[str], errno:int, reason:str=None, exc_info:sys._OptExcInfo=None, etype:str=None, extra:list=None):
         self._send({
             'msg': 'result',
             'id': message['id'],
@@ -317,7 +317,7 @@ class Application:
 
         self.middleware.unregister_wsclient(self)
 
-    async def on_message(self, message):
+    async def on_message(self, message:dict[str]):
         # Run callbacks registered in plugins for on_message
         for method in self.__callbacks['on_message']:
             try:
@@ -867,6 +867,8 @@ class PreparedCall:
 class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     CONSOLE_ONCE_PATH = f'{MIDDLEWARE_RUN_DIR}/.middlewared-console-once'
+
+    mocks: dict[str, list[tuple[list, function]]]
 
     def __init__(
         self, loop_debug=False, loop_monitor=True, debug_level=None,

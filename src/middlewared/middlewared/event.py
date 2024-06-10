@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import json
 import threading
+from typing import Iterable
 
 from middlewared.role import RoleManager
 from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
@@ -9,12 +10,15 @@ from middlewared.settings import conf
 
 
 class Events:
+    _events: dict[str, dict[str]]
+    __events_private: set[str]
+
     def __init__(self, role_manager:RoleManager):
         self.role_manager = role_manager
         self._events = {}
         self.__events_private = set()
 
-    def register(self, name, description, private, returns, no_auth_required, no_authz_required, roles):
+    def register(self, name:str, description:str, private:bool, returns:bool, no_auth_required, no_authz_required, roles:Iterable[str]):
         if name in self._events:
             raise ValueError(f'Event {name!r} already registered.')
         self.role_manager.register_event(name, roles)
@@ -29,7 +33,7 @@ class Events:
         if private:
             self.__events_private.add(name)
 
-    def get_event(self, name):
+    def get_event(self, name:str) -> dict[str]:
         return self._events.get(name)
 
     def __contains__(self, name):
@@ -76,7 +80,7 @@ class EventSource(metaclass=EventSourceMetabase):
         self._cancel = asyncio.Event()
         self._cancel_sync = threading.Event()
 
-    def send_event(self, event_type, **kwargs):
+    def send_event(self, event_type:str, **kwargs):
         if conf.debug_mode and event_type in ('ADDED', 'CHANGED'):
             verrors = ValidationErrors()
             clean_and_validate_arg(verrors, self.RETURNS[0], kwargs.get('fields'))
