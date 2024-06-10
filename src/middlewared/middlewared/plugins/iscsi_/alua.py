@@ -295,6 +295,9 @@ class iSCSITargetAluaService(Service):
             try:
                 while self.standby_starting:
                     try:
+                        # Logout any targets that have no associated LUN (may have been BUSY during login)
+                        await self.middleware.call('iscsi.target.logout_empty_ha_targets')
+                        # Login any missing targets
                         before_iqns = await self.middleware.call('iscsi.target.logged_in_iqns')
                         await self.middleware.call('iscsi.target.login_ha_targets')
                         after_iqns = await self.middleware.call('iscsi.target.logged_in_iqns')
