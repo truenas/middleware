@@ -3,12 +3,13 @@ import contextlib
 import json
 import threading
 
+from middlewared.role import RoleManager
 from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
 from middlewared.settings import conf
 
 
 class Events:
-    def __init__(self, role_manager):
+    def __init__(self, role_manager:RoleManager):
         self.role_manager = role_manager
         self._events = {}
         self.__events_private = set()

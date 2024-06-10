@@ -64,7 +64,7 @@ import threading
 import time
 import traceback
 import types
-from typing import Pattern
+from typing import Dict, Pattern, Union
 import urllib.parse
 import uuid
 import tracemalloc
@@ -96,7 +96,7 @@ def real_crud_method(method):
 
 class Application:
 
-    def __init__(self, middleware, loop, request, response):
+    def __init__(self, middleware:'Middleware', loop:asyncio.AbstractEventLoop, request, response):
         self.middleware = middleware
         self.loop = loop
         self.request = request
@@ -124,7 +124,7 @@ class Application:
         self.__subscribed = {}
 
     @functools.cached_property
-    def origin(self):
+    def origin(self) -> Union[UnixSocketOrigin, TCPIPOrigin, None]:
         try:
             sock = self.request.transport.get_extra_info("socket")
         except AttributeError:
@@ -140,15 +140,15 @@ class Application:
         remote_addr, remote_port = get_remote_addr_port(self.request)
         return TCPIPOrigin(remote_addr, remote_port)
 
-    def register_callback(self, name, method):
+    def register_callback(self, name:str, method):
         assert name in ('on_message', 'on_close')
         self.__callbacks[name].append(method)
 
-    def _send(self, data):
+    def _send(self, data:Dict[str]):
         serialized = json.dumps(data)
         asyncio.run_coroutine_threadsafe(self.response.send_str(serialized), loop=self.loop)
 
-    def _tb_error(self, exc_info):
+    def _tb_error(self, exc_info:sys._OptExcInfo) -> Dict[str, Union[str, list]]:
         klass, exc, trace = exc_info
 
         frames = []
@@ -168,7 +168,7 @@ class Application:
             'repr': repr(exc_info[1]),
         }
 
-    def get_error_dict(self, errno, reason=None, exc_info=None, etype=None, extra=None):
+    def get_error_dict(self, errno:int, reason:str=None, exc_info:sys._OptExcInfo=None, etype:str=None, extra:list=None) -> Dict[str]:
         error_extra = {}
         if self._py_exceptions and exc_info:
             error_extra['py_exception'] = binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()
@@ -181,7 +181,7 @@ class Application:
             'extra': extra,
         }, **error_extra)
 
-    def send_error(self, message, errno, reason=None, exc_info=None, etype=None, extra=None):
+    def send_error(self, message, errno:int, reason:str=None, exc_info:sys._OptExcInfo=None, etype:str=None, extra:list=None):
         self._send({
             'msg': 'result',
             'id': message['id'],
@@ -1334,7 +1334,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def _call_prepare(
         self, name, serviceobj, methodobj, params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
-        in_event_loop=True,
+        in_event_loop:bool=True,
     ):
         """
         :param in_event_loop: Whether we are in the event loop thread.
@@ -1645,7 +1645,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         roles = roles or []
         self.events.register(name, description, private, returns, no_auth_required, no_authz_required, roles)
 
-    def send_event(self, name, event_type, **kwargs):
+    def send_event(self, name, event_type:str, **kwargs):
         should_send_event = kwargs.pop('should_send_event', None)
 
         if name not in self.events:
