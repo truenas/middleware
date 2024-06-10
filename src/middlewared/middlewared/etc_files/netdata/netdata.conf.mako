@@ -36,7 +36,7 @@
     lib = ${netdata_state_location}
 
 [logs]
-    access = off
+	access = off
 
 [plugins]
 	proc = yes

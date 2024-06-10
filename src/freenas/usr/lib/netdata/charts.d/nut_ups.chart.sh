@@ -1,5 +1,8 @@
 source /usr/lib/netdata/charts.d/nut.chart.sh
 
+nut_ups_update_every=60
+
+
 nut_get_all() {
   run -t $nut_timeout upsc -l || echo "ix-dummy-ups"
 }
@@ -16,7 +19,6 @@ nut_get() {
     run -t $nut_timeout upsc -c "$1" | wc -l
   fi
 }
-
 
 nut_ups_check() {
 
