@@ -95,7 +95,6 @@ def get_metrics_approximation(
             # meminfo
             'system.ram': 4,
             'mem.available': 1,
-            'system.swap': 2,
             'mem.committed': 1,
             'mem.writeback': 5,
             'mem.kernel': 5,

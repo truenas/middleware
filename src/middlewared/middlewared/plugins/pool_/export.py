@@ -128,7 +128,7 @@ class PoolService(Service):
 
         await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
 
-        job.set_progress(30, 'Removing pool disks from swap')
+        job.set_progress(30, 'Getting disks')
         disks = await self.middleware.call('pool.get_disks', oid)
 
         await self.middleware.call_hook('pool.pre_export', pool=pool['name'], options=options, job=job)
