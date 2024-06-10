@@ -595,7 +595,7 @@ class ShellWorkerThread(threading.Thread):
         super(ShellWorkerThread, self).__init__(daemon=True)
 
     def get_command(self, username, as_root, options):
-        allowed_options = ('chart_release', 'vm_id')
+        allowed_options = ('vm_id',)
         if all(options.get(k) for k in allowed_options):
             raise CallError(f'Only one option is supported from {", ".join(allowed_options)}')
 

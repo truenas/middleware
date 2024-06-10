@@ -3,7 +3,6 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from ixhardware import TRUENAS_UNKNOWN
 from libsg3.ses import EnclosureDevice
 
 from middlewared.schema import accepts, Dict, Str, Int
@@ -139,7 +138,7 @@ class Enclosure2Service(Service):
     @filterable
     def query(self, filters, options):
         enclosures = []
-        if self.middleware.call_sync('truenas.get_chassis_hardware') == TRUENAS_UNKNOWN:
+        if not self.middleware.call_sync('truenas.is_ix_hardware'):
             # this feature is only available on hardware that ix sells
             return enclosures
 

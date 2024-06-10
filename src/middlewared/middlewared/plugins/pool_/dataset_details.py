@@ -325,19 +325,7 @@ class PoolDatasetService(Service):
 
             results['vm'].append(vm)
 
-        # app
-        for app_name, paths in self.middleware.call_sync('chart.release.get_consumed_host_paths').items():
-            # We want to filter out any other paths which might be consumed to improve performance here
-            # and avoid unnecessary mount info calls i.e /proc /sys /etc/ etc
-            for path in filter(
-                lambda x: x.startswith('/mnt/') and 'ix-applications/' not in x,
-                paths
-            ):
-                results['app'].append({
-                    'name': app_name,
-                    'path': path,
-                    'mount_info': self.get_mount_info(path, mntinfo),
-                })
+        # FIXME: Add app details here, currently it would be an empty list
 
         return results
 

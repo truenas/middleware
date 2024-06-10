@@ -4,3 +4,7 @@ SUPPORTS_IDENTIFY_KEY = 'supports_identify_light'
 MINI_MODEL_BASE = 'MINI'
 MINIR_MODEL_BASE = f'{MINI_MODEL_BASE}R'
 HEAD_UNIT_DISK_SLOT_START_NUMBER = 1
+DISK_FRONT_KEY = 'is_front'
+DISK_REAR_KEY = 'is_rear'
+DISK_TOP_KEY = 'is_top'
+DISK_INTERNAL_KEY = 'is_internal'
