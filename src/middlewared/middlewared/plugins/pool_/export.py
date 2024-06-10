@@ -131,10 +131,6 @@ class PoolService(Service):
         job.set_progress(30, 'Removing pool disks from swap')
         disks = await self.middleware.call('pool.get_disks', oid)
 
-        # We don't want to configure swap immediately after removing those disks because we might get in a race
-        # condition where swap starts using the pool disks as the pool might not have been exported/destroyed yet
-        await self.middleware.call('disk.swaps_remove_disks', disks, {'configure_swap': False})
-
         await self.middleware.call_hook('pool.pre_export', pool=pool['name'], options=options, job=job)
 
         if pool['status'] == 'OFFLINE':

@@ -66,8 +66,6 @@ class PoolService(Service):
                 # If the disk we are replacing is still available, remove it from swap as well
                 swap_disks.append(from_disk)
 
-        await self.middleware.call('disk.swaps_remove_disks', swap_disks)
-
         vdev = []
         await self.middleware.call('pool.format_disks', job, {
             disk['devname']: {

@@ -45,8 +45,6 @@ class PoolService(Service):
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
-        if disk:
-            await self.middleware.call('disk.swaps_remove_disks', [disk])
 
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
 
@@ -91,12 +89,6 @@ class PoolService(Service):
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
         verrors.check()
-
-        disk = await self.middleware.call(
-            'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
-        )
-        if disk:
-            await self.middleware.call('disk.swaps_remove_disks', [disk])
 
         await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
 

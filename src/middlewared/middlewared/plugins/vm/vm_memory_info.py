@@ -60,11 +60,6 @@ class VMService(Service):
         # Use 90% of available memory to play safe
         free = int(psutil.virtual_memory().available * 0.9)
 
-        # swap used space is accounted for used physical memory because
-        # 1. processes (including VMs) can be swapped out
-        # 2. we want to avoid using swap
-        swap_used = psutil.swap_memory().used
-
         # Difference between current ARC total size and the minimum allowed
         arc_total = await self.middleware.call('sysctl.get_arcstats_size')
         arc_min = await self.middleware.call('sysctl.get_arc_min')
@@ -88,7 +83,7 @@ class VMService(Service):
                     if vm_max_mem > current_vm_mem:
                         vms_memory_used += vm_max_mem - current_vm_mem
 
-        return max(0, total_free - vms_memory_used - swap_used)
+        return max(0, total_free - vms_memory_used)
 
     @accepts(Int('vm_id'), roles=['VM_READ'])
     @returns(Dict(

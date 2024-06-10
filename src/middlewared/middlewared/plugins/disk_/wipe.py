@@ -183,7 +183,6 @@ class DiskService(Service):
           - FULL: write whole disk with zero's
           - FULL_RANDOM: write whole disk with random bytes
         """
-        await self.middleware.call('disk.swaps_remove_disks', [dev], options)
         event = threading.Event()
         try:
             await self.middleware.run_in_thread(self._wipe_impl, job, dev, mode, event)
