@@ -148,7 +148,7 @@ class PoolService(Service):
 
             async def unlabel(disk):
                 wipe_job = await self.middleware.call(
-                    'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
+                    'disk.wipe', disk, 'QUICK', False
                 )
                 await wipe_job.wait()
                 if wipe_job.error:

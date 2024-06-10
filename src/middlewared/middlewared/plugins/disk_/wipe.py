@@ -167,7 +167,6 @@ class DiskService(Service):
         Str('dev'),
         Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM'], required=True),
         Bool('synccache', default=True),
-        Ref('swap_removal_options'),
     )
     @returns()
     @job(
