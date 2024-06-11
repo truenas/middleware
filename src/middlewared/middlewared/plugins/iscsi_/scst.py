@@ -62,8 +62,19 @@ class iSCSITargetService(Service):
     def enable(self):
         pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).write_text('1\n')
 
-    def suspend(self, value):
+    def suspend(self, value=10):
         pathlib.Path(SCST_SUSPEND).write_text(f'{value}\n')
+
+    def clear_suspend(self):
+        """suspend could have been called several times, and will need to be decremented
+        several times to clean"""
+        p = pathlib.Path(SCST_SUSPEND)
+        if p.exists():
+            for i in range(30):
+                if p.read_text().split()[0] == '0':
+                    return True
+                p.write_text('-1\n')
+        return False
 
     def enabled(self):
         try:
