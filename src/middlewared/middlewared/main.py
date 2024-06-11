@@ -80,6 +80,9 @@ from . import logger
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
 
+# Type of the output of sys.exc_info()
+ExcInfoType = typing.Union[tuple[typing.Type[BaseException], BaseException, types.TracebackType], tuple[None, None, None]]
+
 @dataclass
 class LoopMonitorIgnoreFrame:
     regex: typing.Pattern
@@ -148,7 +151,7 @@ class Application:
         serialized = json.dumps(data)
         asyncio.run_coroutine_threadsafe(self.response.send_str(serialized), loop=self.loop)
 
-    def _tb_error(self, exc_info: sys._OptExcInfo) -> typing.Dict[str, typing.Union[str, list]]:
+    def _tb_error(self, exc_info: ExcInfoType) -> typing.Dict[str, typing.Union[str, list[dict]]]:
         klass, exc, trace = exc_info
 
         frames = []
@@ -168,7 +171,7 @@ class Application:
             'repr': repr(exc_info[1]),
         }
 
-    def get_error_dict(self, errno: int, reason: typing.Optional[str]=None, exc_info: typing.Optional[sys._OptExcInfo]=None, etype: typing.Optional[str]=None, extra: typing.Optional[list]=None) -> typing.Dict[str, typing.Any]:
+    def get_error_dict(self, errno: int, reason: typing.Optional[str]=None, exc_info: typing.Optional[ExcInfoType]=None, etype: typing.Optional[str]=None, extra: typing.Optional[list]=None) -> typing.Dict[str, typing.Any]:
         error_extra = {}
         if self._py_exceptions and exc_info:
             error_extra['py_exception'] = binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()
@@ -181,7 +184,7 @@ class Application:
             'extra': extra,
         }, **error_extra)
 
-    def send_error(self, message: typing.Dict[str, typing.Any], errno: int, reason: typing.Optional[str]=None, exc_info: typing.Optional[sys._OptExcInfo]=None, etype: typing.Optional[str]=None, extra: typing.Optional[list]=None):
+    def send_error(self, message: typing.Dict[str, typing.Any], errno: int, reason: typing.Optional[str]=None, exc_info: typing.Optional[ExcInfoType]=None, etype: typing.Optional[str]=None, extra: typing.Optional[list]=None):
         self._send({
             'msg': 'result',
             'id': message['id'],
