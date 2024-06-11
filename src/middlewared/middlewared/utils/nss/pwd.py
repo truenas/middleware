@@ -304,3 +304,40 @@ def getpwall(module=NssModule.ALL.name, as_dict=False):
         results[mod.name] = entries
 
     return results
+
+
+def iterpw(module=NssModule.FILES.name, as_dict=False):
+    """
+    Generator that yields password entries on server
+
+    `module` - NSS module from which to retrieve the entries
+    `as_dict` - yield password database entries as dictionaries
+
+    WARNING: users of this API should not create two generators for
+    same passwd database concurrently in the same thread due to NSS
+    modules storing the handle for the pwent in thread-local variable:
+
+    BAD:
+    iter1 = iterpw(NssModule.FILES.name, True)
+    iter2 = iterpw(NssModule.FILES.name, True)
+    for x in iter1:
+        for y in iter2
+
+    or call getpwall() during iteration
+
+    ALSO BAD:
+    iter1 = iterpw(NssModule.FILES.name, True)
+    for x in iter1:
+        pwd = getpwall()
+    """
+    if module == NssModule.ALL.name:
+        raise ValueError('Please select one of: FILES, WINBIND, SSS')
+
+    mod = NssModule[module]
+    __setpwent(mod)
+
+    try:
+        while user := __getpwent_impl(mod, as_dict):
+            yield user
+    finally:
+        __endpwent(mod)
