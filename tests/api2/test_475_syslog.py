@@ -45,7 +45,22 @@ def check_syslog(log_path, message, target_ip=ip, target_user=user, target_passw
 @pytest.mark.parametrize('params', [
     {
         'ident': 'k3s',
-        'msg': 'ZZZZ: k3s syslog filter test',
+        'msg': 'level=error: k3s syslog filter test',
+        'path': '/var/log/k3s_daemon.log',
+    },
+    {
+        'ident': 'k3s',
+        'msg': 'level=critical: k3s syslog filter test',
+        'path': '/var/log/k3s_daemon.log',
+    },
+    {
+        'ident': 'k3s',
+        'msg': 'level=alert: k3s syslog filter test',
+        'path': '/var/log/k3s_daemon.log',
+    },
+    {
+        'ident': 'k3s',
+        'msg': 'level=emerg: k3s syslog filter test',
         'path': '/var/log/k3s_daemon.log',
     },
     {

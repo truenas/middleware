@@ -26,5 +26,7 @@ destination d_console { usertty("root"); };
 #
 destination d_console_all { getvirtconsole(); };
 
-
 destination d_xconsole { pipe("/dev/xconsole"); };
+
+# Drop logs
+destination d_null { file("/dev/null"); };
