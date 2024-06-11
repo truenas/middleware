@@ -12,7 +12,7 @@ from middlewared.settings import conf
 class Events:
     def __init__(self, role_manager: RoleManager):
         self.role_manager = role_manager
-        self._events: typing.Dict[str, dict[str]] = {}
+        self._events: typing.Dict[str, dict[str, typing.Any]] = {}
         self.__events_private: typing.Set[str] = set()
 
     def register(self, name: str, description: str, private: bool, returns, no_auth_required, no_authz_required, roles: typing.Iterable[str]):
@@ -30,7 +30,7 @@ class Events:
         if private:
             self.__events_private.add(name)
 
-    def get_event(self, name: str) -> typing.Optional[dict[str]]:
+    def get_event(self, name: str) -> typing.Optional[dict[str, typing.Any]]:
         return self._events.get(name)
 
     def __contains__(self, name):

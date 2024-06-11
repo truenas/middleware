@@ -144,7 +144,7 @@ class Application:
         assert name in ('on_message', 'on_close')
         self.__callbacks[name].append(method)
 
-    def _send(self, data: typing.Dict[str]):
+    def _send(self, data: typing.Dict[str, typing.Any]):
         serialized = json.dumps(data)
         asyncio.run_coroutine_threadsafe(self.response.send_str(serialized), loop=self.loop)
 
@@ -168,7 +168,7 @@ class Application:
             'repr': repr(exc_info[1]),
         }
 
-    def get_error_dict(self, errno: int, reason: typing.Optional[str]=None, exc_info: typing.Optional[sys._OptExcInfo]=None, etype: typing.Optional[str]=None, extra: typing.Optional[list]=None) -> typing.Dict[str]:
+    def get_error_dict(self, errno: int, reason: typing.Optional[str]=None, exc_info: typing.Optional[sys._OptExcInfo]=None, etype: typing.Optional[str]=None, extra: typing.Optional[list]=None) -> typing.Dict[str, typing.Any]:
         error_extra = {}
         if self._py_exceptions and exc_info:
             error_extra['py_exception'] = binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()
@@ -181,7 +181,7 @@ class Application:
             'extra': extra,
         }, **error_extra)
 
-    def send_error(self, message: typing.Dict[str], errno: int, reason: typing.Optional[str]=None, exc_info: typing.Optional[sys._OptExcInfo]=None, etype: typing.Optional[str]=None, extra: typing.Optional[list]=None):
+    def send_error(self, message: typing.Dict[str, typing.Any], errno: int, reason: typing.Optional[str]=None, exc_info: typing.Optional[sys._OptExcInfo]=None, etype: typing.Optional[str]=None, extra: typing.Optional[list]=None):
         self._send({
             'msg': 'result',
             'id': message['id'],
@@ -317,7 +317,7 @@ class Application:
 
         self.middleware.unregister_wsclient(self)
 
-    async def on_message(self, message: typing.Dict[str]):
+    async def on_message(self, message: typing.Dict[str, typing.Any]):
         # Run callbacks registered in plugins for on_message
         for method in self.__callbacks['on_message']:
             try:

@@ -82,7 +82,7 @@ class Attribute:
         """
         raise NotImplementedError("Attribute must implement to_json_schema method")
 
-    def _to_json_schema_common(self, parent) -> typing.Dict[str]:
+    def _to_json_schema_common(self, parent) -> typing.Dict[str, typing.Any]:
         schema = {}
 
         schema['_name_'] = self.name
