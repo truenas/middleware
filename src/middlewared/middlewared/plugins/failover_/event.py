@@ -482,6 +482,15 @@ class FailoverEventsService(Service):
             handle_alua = self.run_call('iscsi.global.alua_enabled')
             logger.info('Done checking if ALUA is enabled')
             if handle_alua:
+                # We will suspend iSCSI and then close any existing iSCSI sessions
+                # to avoid inflight I/O interfering with the LUN replacement during
+                # become_active.  Suspending iSCSI means BUSY will be returned.
+                logger.info('Suspending iSCSI')
+                self.run_call('iscsi.scst.suspend', 30)
+                logger.info('Suspended iSCSI')
+                logger.info('Closing iSCSI sessions')
+                self.run_call('iscsi.alua.force_close_sessions')
+                logger.info('Closed iSCSI sessions')
                 logger.info('calling iscsi ALUA active elected')
                 self.run_call('iscsi.alua.active_elected')
                 logger.info('done calling iscsi ALUA active elected')
@@ -672,6 +681,11 @@ class FailoverEventsService(Service):
         logger.info('Starting failover background jobs')
         self.run_call('failover.events.background')
         logger.info('Done starting failover background jobs')
+
+        if handle_alua:
+            logger.info('Clearing iSCSI suspend')
+            if self.run_call('iscsi.scst.clear_suspend'):
+                logger.info('Cleared iSCSI suspend')
 
         # restart the remaining "non-critical" services
         logger.info('Restarting remaining services')
