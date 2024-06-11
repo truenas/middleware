@@ -2,6 +2,7 @@ import asyncio
 import itertools
 
 from middlewared.service import Service, job
+from middlewared.utils import run
 
 CHUNK_SIZE = 20
 RETRY_SECONDS = 5
@@ -190,6 +191,7 @@ class iSCSITargetAluaService(Service):
 
         self.logger.debug('Updating LUNs')
         await self.middleware.call('iscsi.scst.suspend', 10)
+        self.logger.debug('iSCSI suspended')
         for assoc in assocs:
             extent_id = assoc['extent']
             if extent_id in extents:
@@ -200,7 +202,8 @@ class iSCSITargetAluaService(Service):
         self.logger.debug('Updated LUNs')
         await self.middleware.call('iscsi.scst.set_node_optimized', thisnode)
         self.logger.debug('Switched optimized node')
-        await self.middleware.call('iscsi.scst.suspend', -1)
+        if await self.middleware.call('iscsi.scst.clear_suspend'):
+            self.logger.debug('iSCSI unsuspended')
 
     @job(lock='standby_after_start', transient=True, lock_queue_size=1)
     async def standby_after_start(self, job):
@@ -614,3 +617,13 @@ class iSCSITargetAluaService(Service):
             await asyncio.sleep(sleep_interval)
             retries -= 1
         self.logger.warning('Gave up waiting for ALUA to settle')
+
+    @job(lock='force_close_sessions', transient=True, lock_queue_size=1)
+    async def force_close_sessions(self, job):
+        job.set_progress(0, 'Start force-close of iSCSI sessions')
+        self.logger.debug('Start force-close of iSCSI sessions')
+
+        await run('scst_util.sh', 'force-close')
+
+        job.set_progress(100, 'Complete force-close of iSCSI sessions')
+        self.logger.debug('Complete force-close of iSCSI sessions')
