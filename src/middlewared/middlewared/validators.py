@@ -18,7 +18,13 @@ validate_filters = filters_obj.validate_filters
 validate_options = filters_obj.validate_options
 
 
-class Email:
+class ValidatorBase:
+    """The base validator class to be inherited by all validators"""
+    def __call__(self, *args, **kwargs):
+        raise NotImplementedError()
+
+
+class Email(ValidatorBase):
     def __init__(self, empty=False):
         assert isinstance(empty, bool)
         self.empty = empty
@@ -58,7 +64,7 @@ class Email:
                 raise ValueError("Missing domain part of email string (part after the '@').")
 
 
-class Exact:
+class Exact(ValidatorBase):
     def __init__(self, value):
         self.value = value
 
@@ -67,7 +73,7 @@ class Exact:
             raise ValueError(f"Should be {self.value!r}")
 
 
-class IpAddress:
+class IpAddress(ValidatorBase):
     def __call__(self, value):
         try:
             ipaddress.ip_address(value)
@@ -75,7 +81,7 @@ class IpAddress:
             raise ValueError('Not a valid IP address')
 
 
-class Netmask:
+class Netmask(ValidatorBase):
     def __init__(self, ipv4=True, ipv6=True, prefix_length=True):
         self.ipv4 = ipv4
         self.ipv6 = ipv6
@@ -100,7 +106,7 @@ class Netmask:
             raise ValueError('Not a valid netmask')
 
 
-class Time:
+class Time(ValidatorBase):
     def __call__(self, value):
         try:
             hours, minutes = value.split(':')
@@ -113,7 +119,7 @@ class Time:
                 raise ValueError('Time should be in 24 hour format like "18:00"')
 
 
-class Match:
+class Match(ValidatorBase):
     def __init__(self, pattern, flags=0, explanation=None):
         self.pattern = pattern
         self.flags = flags
@@ -129,7 +135,7 @@ class Match:
         return Match(self.pattern, self.flags, self.explanation)
 
 
-class NotMatch:
+class NotMatch(ValidatorBase):
     def __init__(self, pattern, flags=0, explanation=None):
         self.pattern = pattern
         self.flags = flags
@@ -153,7 +159,7 @@ class Hostname(Match):
         )
 
 
-class Or:
+class Or(ValidatorBase):
     def __init__(self, *validators):
         self.validators = validators
 
@@ -171,7 +177,7 @@ class Or:
         raise ValueError(" or ".join(errors))
 
 
-class Range:
+class Range(ValidatorBase):
     def __init__(self, min_=None, max_=None):
         self.min = min_
         self.max = max_
@@ -201,24 +207,24 @@ class Port(Range):
         super().__init__(min_=1, max_=65535)
 
 
-class QueryFilters:
+class QueryFilters(ValidatorBase):
     def __call__(self, value):
         validate_filters(value)
 
 
-class QueryOptions:
+class QueryOptions(ValidatorBase):
     def __call__(self, value):
         validate_options(value)
 
 
-class Unique:
+class Unique(ValidatorBase):
     def __call__(self, value):
         for item in value:
             if value.count(item) > 1:
                 raise ValueError(f"Duplicate values are not allowed: {item!r}")
 
 
-class IpInUse:
+class IpInUse(ValidatorBase):
     def __init__(self, middleware, exclude=None):
         self.middleware = middleware
         self.exclude = exclude or []
@@ -235,7 +241,7 @@ class IpInUse:
                 )
 
 
-class MACAddr:
+class MACAddr(ValidatorBase):
 
     SEPARATORS = [':', '-']
 
@@ -253,12 +259,12 @@ class MACAddr:
             raise ValueError('Please provide a valid MAC address')
 
 
-class ReplicationSnapshotNamingSchema:
+class ReplicationSnapshotNamingSchema(ValidatorBase):
     def __call__(self, value):
         validate_snapshot_naming_schema(value)
 
 
-class UUID:
+class UUID(ValidatorBase):
     def __call__(self, value):
         if value is None:
             return
@@ -269,7 +275,7 @@ class UUID:
             raise ValueError(f'Invalid UUID: {e}')
 
 
-class PasswordComplexity:
+class PasswordComplexity(ValidatorBase):
     def __init__(self, required_types, required_cnt=None):
         self.required_types = required_types
         self.required_cnt = required_cnt
@@ -350,7 +356,7 @@ def validate_schema(schema, data, additional_attrs=False, dict_kwargs=None):
     return verrors
 
 
-class URL:
+class URL(ValidatorBase):
     def __init__(self, **kwargs):
         kwargs.setdefault("empty", False)
         kwargs.setdefault("scheme", ["http", "https"])

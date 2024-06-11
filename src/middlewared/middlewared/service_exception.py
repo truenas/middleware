@@ -1,11 +1,11 @@
 import errno
 import subprocess
-from typing import Union
+import typing
 
 from truenas_api_client import ErrnoMixin
 
 
-def get_errname(code:int) -> str:
+def get_errname(code: int) -> str:
     return errno.errorcode.get(code) or ErrnoMixin._get_errname(code) or 'EUNKNOWN'
 
 
@@ -14,7 +14,7 @@ class CallException(ErrnoMixin, Exception):
 
 
 class CallError(CallException):
-    def __init__(self, errmsg:str, errno:int=errno.EFAULT, extra=None):
+    def __init__(self, errmsg: str, errno: int=errno.EFAULT, extra=None):
         self.errmsg = errmsg
         self.errno = errno
         self.extra = extra
@@ -30,7 +30,7 @@ class ValidationError(CallException):
     attribute of a middleware method is invalid/not allowed.
     """
 
-    def __init__(self, attribute, errmsg, errno:int=errno.EINVAL):
+    def __init__(self, attribute, errmsg, errno: int=errno.EINVAL):
         self.attribute = attribute
         self.errmsg = errmsg
         self.errno = errno
@@ -53,17 +53,17 @@ class ValidationErrors(CallException):
     CallException with a collection of ValidationError
     """
 
-    def __init__(self, errors:list[ValidationError]=None):
+    def __init__(self, errors: typing.List[ValidationError]=None):
         self.errors = errors or []
         super().__init__(self.errors)
 
-    def add(self, attribute, errmsg:str, errno:int=errno.EINVAL):
+    def add(self, attribute, errmsg: str, errno: int=errno.EINVAL):
         self.errors.append(ValidationError(attribute, errmsg, errno))
 
-    def add_validation_error(self, validation_error:ValidationError):
+    def add_validation_error(self, validation_error: ValidationError):
         self.errors.append(validation_error)
 
-    def add_child(self, attribute, child:'ValidationErrors'):
+    def add_child(self, attribute, child: 'ValidationErrors'):
         for e in child.errors:
             self.add(f"{attribute}.{e.attribute}", e.errmsg, e.errno)
 
@@ -71,7 +71,7 @@ class ValidationErrors(CallException):
         if self:
             raise self
 
-    def extend(self, errors:'ValidationErrors'):
+    def extend(self, errors: 'ValidationErrors'):
         for e in errors.errors:
             self.add(e.attribute, e.errmsg, e.errno)
 
@@ -93,7 +93,7 @@ class ValidationErrors(CallException):
         return item in [e.attribute for e in self.errors]
 
 
-def adapt_exception(e) -> Union[CallError, None]:
+def adapt_exception(e) -> typing.Union[CallError, None]:
     from .utils.shell import join_commandline
 
     if isinstance(e, subprocess.CalledProcessError):

@@ -2,7 +2,7 @@ import logging
 import logging.handlers
 import os
 import queue
-
+import typing
 from .logging.console_formatter import ConsoleLogFormatter
 
 # markdown debug is also considered useless
@@ -54,8 +54,8 @@ logging.Logger.trace = trace
 class Logger:
     """Pseudo-Class for Logger - Wrapper for logging module"""
     def __init__(
-        self, application_name:str, debug_level:str=None,
-        log_format:str='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s'
+        self, application_name: str, debug_level: typing.Optional[str]=None,
+        log_format: str='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s'
     ):
         self.application_name = application_name
         self.debug_level = debug_level or 'DEBUG'
@@ -64,7 +64,7 @@ class Logger:
     def getLogger(self):
         return logging.getLogger(self.application_name)
 
-    def configure_logging(self, output_option:str):
+    def configure_logging(self, output_option: str):
         """
         Configure the log output to file or console.
             `output_option` str: Default is `file`, can be set to `console`.
@@ -87,7 +87,7 @@ class Logger:
 
         logging.root.setLevel(getattr(logging, self.debug_level))
 
-    def setup_file_logger(self, name:str, filename:str, log_format:str):
+    def setup_file_logger(self, name: typing.Optional[str], filename: str, log_format: typing.Optional[str]):
         # Use `QueueHandler` to avoid blocking IO in asyncio main loop
         log_queue = queue.Queue()
         queue_handler = logging.handlers.QueueHandler(log_queue)
@@ -109,7 +109,7 @@ class Logger:
             pass
 
 
-def setup_logging(name:str, debug_level:str, log_handler:str):
+def setup_logging(name: str, debug_level: typing.Optional[str], log_handler: typing.Optional[str]):
     _logger = Logger(name, debug_level)
     _logger.getLogger()
 

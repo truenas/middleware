@@ -1,7 +1,7 @@
 import asyncio
 import copy
 import inspect
-from typing import Iterable
+import typing
 import warnings
 
 from middlewared.schema import Attribute
@@ -12,7 +12,7 @@ from .exceptions import Error
 from .utils import NOT_PROVIDED
 
 
-def clean_and_validate_arg(verrors:ValidationErrors, attr:Attribute, arg):
+def clean_and_validate_arg(verrors: ValidationErrors, attr: Attribute, arg):
     try:
         value = attr.clean(arg)
         attr.validate(value)
@@ -23,7 +23,7 @@ def clean_and_validate_arg(verrors:ValidationErrors, attr:Attribute, arg):
         verrors.extend(e)
 
 
-def validate_return_type(func, result, schemas:Iterable[Attribute]):
+def validate_return_type(func, result, schemas: typing.Iterable[Attribute]):
     if not schemas and result is None:
         return
     elif not schemas:

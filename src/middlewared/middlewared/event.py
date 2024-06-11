@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import json
 import threading
-from typing import Iterable
+import typing
 
 from middlewared.role import RoleManager
 from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
@@ -10,15 +10,12 @@ from middlewared.settings import conf
 
 
 class Events:
-    _events: dict[str, dict[str]]
-    __events_private: set[str]
-
-    def __init__(self, role_manager:RoleManager):
+    def __init__(self, role_manager: RoleManager):
         self.role_manager = role_manager
-        self._events = {}
-        self.__events_private = set()
+        self._events: typing.Dict[str, dict[str]] = {}
+        self.__events_private: typing.Set[str] = set()
 
-    def register(self, name:str, description:str, private:bool, returns:bool, no_auth_required, no_authz_required, roles:Iterable[str]):
+    def register(self, name: str, description: str, private: bool, returns, no_auth_required, no_authz_required, roles: typing.Iterable[str]):
         if name in self._events:
             raise ValueError(f'Event {name!r} already registered.')
         self.role_manager.register_event(name, roles)
@@ -33,7 +30,7 @@ class Events:
         if private:
             self.__events_private.add(name)
 
-    def get_event(self, name:str) -> dict[str]:
+    def get_event(self, name: str) -> typing.Optional[dict[str]]:
         return self._events.get(name)
 
     def __contains__(self, name):
@@ -80,7 +77,7 @@ class EventSource(metaclass=EventSourceMetabase):
         self._cancel = asyncio.Event()
         self._cancel_sync = threading.Event()
 
-    def send_event(self, event_type:str, **kwargs):
+    def send_event(self, event_type: str, **kwargs):
         if conf.debug_mode and event_type in ('ADDED', 'CHANGED'):
             verrors = ValidationErrors()
             clean_and_validate_arg(verrors, self.RETURNS[0], kwargs.get('fields'))

@@ -1,7 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Iterable
-
+import typing
 
 @dataclass()
 class Role:
@@ -12,7 +11,7 @@ class Role:
         receive permissions granted by all the included roles.
     :ivar full_admin: if `True` then this role will allow calling all methods.
     """
-    includes: list[str] = field(default_factory=list)
+    includes: typing.List[str] = field(default_factory=list)
     full_admin: bool = False
     builtin: bool = True
 
@@ -186,20 +185,14 @@ ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith
 
 
 class ResourceManager:
-    resource_title: str
-    resource_method: str
-    roles: dict[str, Role]
-    resources: dict[str, list[str]]
-    allowlists_for_roles: dict[str, list[dict[str, str]]]
+    def __init__(self, resource_title: str, resource_method: str, roles: typing.Dict[str, Role]):
+        self.resource_title: str = resource_title
+        self.resource_method: str = resource_method
+        self.roles: typing.Dict[str, Role] = roles
+        self.resources: typing.Dict[str, list[str]] = {}
+        self.allowlists_for_roles: typing.Dict[str, list[dict[str, str]]] = defaultdict(list)
 
-    def __init__(self, resource_title:str, resource_method:str, roles:dict[str, Role]):
-        self.resource_title = resource_title
-        self.resource_method = resource_method
-        self.roles = roles
-        self.resources = {}
-        self.allowlists_for_roles = defaultdict(list)
-
-    def register_resource(self, resource_name:str, roles:Iterable[str], exist_ok:bool):
+    def register_resource(self, resource_name: str, roles: typing.Iterable[str], exist_ok: bool):
         if resource_name in self.resources:
             if not exist_ok:
                 raise ValueError(f"{self.resource_title} {resource_name!r} is already registered in this role manager")
@@ -208,7 +201,7 @@ class ResourceManager:
 
         self.add_roles_to_resource(resource_name, roles)
 
-    def add_roles_to_resource(self, resource_name:str, roles:Iterable[str]):
+    def add_roles_to_resource(self, resource_name: str, roles: typing.Iterable[str]):
         if resource_name not in self.resources:
             raise ValueError(f"{self.resource_title} {resource_name!r} is not registered in this role manager")
 
@@ -221,7 +214,7 @@ class ResourceManager:
         for role in roles:
             self.allowlists_for_roles[role].append({"method": self.resource_method, "resource": resource_name})
 
-    def roles_for_resource(self, resource_name:str) -> list[str]:
+    def roles_for_resource(self, resource_name: str) -> typing.List[str]:
         roles = set(self.resources.get(resource_name, []))
 
         changed = True
@@ -238,27 +231,27 @@ class ResourceManager:
 
 
 class RoleManager:
-    def __init__(self, roles:dict[str, Role]):
+    def __init__(self, roles: typing.Dict[str, Role]):
         self.roles = roles
         self.methods = ResourceManager("Method", "CALL", self.roles)
         self.events = ResourceManager("Event", "SUBSCRIBE", self.roles)
 
-    def register_method(self, method_name:str, roles:Iterable[str], *, exist_ok:bool=False):
+    def register_method(self, method_name: str, roles: typing.Iterable[str], *, exist_ok: bool=False):
         self.methods.register_resource(method_name, roles, exist_ok)
 
-    def add_roles_to_method(self, method_name:str, roles:Iterable[str]):
+    def add_roles_to_method(self, method_name: str, roles: typing.Iterable[str]):
         self.methods.add_roles_to_resource(method_name, roles)
 
-    def register_event(self, event_name:str, roles:Iterable[str], *, exist_ok:bool=False):
+    def register_event(self, event_name: str, roles: typing.Iterable[str], *, exist_ok: bool=False):
         self.events.register_resource(event_name, roles, exist_ok)
 
-    def roles_for_role(self, role:str) -> set[str]:
+    def roles_for_role(self, role: str) -> typing.Set[str]:
         if role not in self.roles:
             return set()
 
         return set.union({role}, *[self.roles_for_role(included_role) for included_role in self.roles[role].includes])
 
-    def allowlist_for_role(self, role:str) -> list[dict[str, str]]:
+    def allowlist_for_role(self, role: str) -> typing.List[dict[str, str]]:
         if role in self.roles and self.roles[role].full_admin:
             return [{"method": "CALL", "resource": "*"}, {"method": "SUBSCRIBE", "resource": "*"}]
 
@@ -267,8 +260,8 @@ class RoleManager:
             for role in self.roles_for_role(role)
         ], [])
 
-    def roles_for_method(self, method_name:str) -> list[str]:
+    def roles_for_method(self, method_name: str) -> typing.List[str]:
         return self.methods.roles_for_resource(method_name)
 
-    def roles_for_event(self, event_name:str) -> list[str]:
+    def roles_for_event(self, event_name: str) -> typing.List[str]:
         return self.events.roles_for_resource(event_name)
