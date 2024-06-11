@@ -49,7 +49,9 @@ def initiator():
     try:
         yield initiator_config
     finally:
-        call('iscsi.initiator.delete', initiator_config['id'])
+        # Very likely that already cleaned up (by removing only target using it)
+        if call('iscsi.initiator.query', [['id', '=', initiator_config['id']]]):
+            call('iscsi.initiator.delete', initiator_config['id'])
 
 
 @contextlib.contextmanager
