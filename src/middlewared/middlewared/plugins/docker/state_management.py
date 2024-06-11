@@ -86,9 +86,9 @@ async def _event_system_ready(middleware, event_type, args):
         return
 
     if (await middleware.call('docker.config'))['pool']:
-        middleware.create_task(middleware.call('docker.start_service'))
+        middleware.create_task(middleware.call('docker.state.start_service'))
     else:
-        await middleware.call('docker.set_status', Status.UNCONFIGURED.value)
+        await middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 
 
 async def _event_system_shutdown(middleware, event_type, args):
