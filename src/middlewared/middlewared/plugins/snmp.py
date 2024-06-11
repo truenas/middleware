@@ -6,7 +6,7 @@ from contextlib import suppress
 from cryptography.fernet import Fernet
 from middlewared.common.ports import ServicePortDelegate
 from middlewared.schema import Bool, Dict, Int, Password, Str
-from middlewared.service import private, SystemServiceService, ValidationErrors
+from middlewared.service import private, SystemServiceService, ValidationErrors, CallError
 from middlewared.utils.crypto import generate_string
 from middlewared.validators import Email, Match, Or, Range
 
@@ -15,6 +15,111 @@ SNMP_PRIV_KEY = '/var/lib/private/snmp'
 _SNMP_SYSTEM_USER = {
     'name': 'snmpSystemUser', 'auth_type': 'SHA', 'key': None, 'size': 0
 }
+
+
+def _get_authuser_secret():
+    """
+    Get the auth user saved secret.
+    Internal helper function for use by this module.
+    Return decoded string.
+    """
+    secret = ""
+    if not _SNMP_SYSTEM_USER['key']:
+        # No system user key registered
+        return secret
+
+    try:
+        with open(SNMP_PRIV_KEY, 'rb') as fd:
+            secret_c = fd.read(_SNMP_SYSTEM_USER['size'])
+    except FileNotFoundError:
+        return secret
+
+    try:
+        secret = Fernet(_SNMP_SYSTEM_USER['key']).decrypt(secret_c).decode()
+    except TypeError:
+        return secret
+
+    return secret
+
+
+def _set_authuser_secret(secret):
+    """
+    Save the auth user secret.
+    Internal helper function for use by this module.
+    INPUT: ascii string (not encoded)
+    """
+    secret_c = Fernet(_SNMP_SYSTEM_USER['key']).encrypt(secret.encode())
+    with open(SNMP_PRIV_KEY, 'wb') as fd:
+        _SNMP_SYSTEM_USER['size'] = fd.write(secret_c)
+
+    return
+
+
+def add_snmp_user(snmp):
+    """
+    Build the createUser message and add it to the private config file.
+    NOTE: The SNMP daemon should be stopped before calling this routine and
+            the new user will be available after starting SNMP.
+    """
+    # The private config file must exist, i.e. SNMP must have been started at least once
+    if not os.path.exists(SNMP_PRIV_CONF):
+        return
+
+    # Build the 'createUser' message
+    create_v3_user = f"createUser {snmp['v3_username']} "
+
+    user_pwd = snmp['v3_password']
+    create_v3_user += f'{snmp["v3_authtype"]} "{user_pwd}" '
+
+    if snmp.get('v3_privproto'):
+        user_phrase = snmp['v3_privpassphrase']
+        create_v3_user += f'{snmp["v3_privproto"]} "{user_phrase}" '
+
+    create_v3_user += '\n'
+
+    # Example: createUser newPrivUser MD5 "abcd1234" DES "abcd1234"
+    with open(SNMP_PRIV_CONF, 'a') as f:
+        f.write(create_v3_user)
+
+
+def delete_snmp_user(user):
+    """
+    Delete the SNMPv3 user
+    RETURN: stdout message
+    NOTE: SNMP must be running for this call to succeed
+    """
+    if pwd := _get_authuser_secret():
+        # snmpusm -v3 -l authPriv -u JoeUser -a MD5 -A "abcd1234" -x AES -X "A pass phrase" localhost delete JoeUser
+        cmd = [
+            'snmpusm', '-v3', '-u', f'{_SNMP_SYSTEM_USER["name"]}',
+            '-l', 'authNoPriv', '-a', f'{_SNMP_SYSTEM_USER["auth_type"]}', '-A', f'{pwd}',
+            'localhost', 'delete', user
+        ]
+        # This call will timeout if SNMP is not running
+        subprocess.run(cmd, capture_output=True)
+    else:
+        raise CallError
+
+
+def _add_system_user():
+    """
+    Add the v3 system user.
+    For internal use by this module.
+    NOTES: SNMP must be stopped before calling.
+            The private config file is assumed to be in a regenerated state with no v3 users
+    """
+    _SNMP_SYSTEM_USER['key'] = Fernet.generate_key()
+    auth_pwd = generate_string(32)
+
+    priv_config = {
+        'v3_username': _SNMP_SYSTEM_USER['name'],
+        'v3_authtype': _SNMP_SYSTEM_USER['auth_type'],
+        'v3_password': f"{auth_pwd}"
+    }
+
+    add_snmp_user(priv_config)
+
+    _set_authuser_secret(auth_pwd)
 
 
 class SNMPModel(sa.Model):
@@ -64,64 +169,13 @@ class SNMPService(SystemServiceService):
     )
 
     @private
-    def _is_snmp_running(self):
-        """ Internal helper function for use by this module """
-        current_state = self.middleware.call_sync(
-            'service.query', [["service", "=", "snmp"]], {"select": ["state"]}
-        )[0]['state']
-        return True if current_state == 'RUNNING' else False
-
-    @private
-    def _get_authuser_secret(self) -> str:
-        """
-        Get the auth user saved secret.
-        Internal helper function for use by this module.
-        Return decoded string.
-        """
-        secret = ""
-        if not _SNMP_SYSTEM_USER['key']:
-            self.logger.warning("No system user key registered")
-            return secret
-
-        try:
-            with open(SNMP_PRIV_KEY, 'rb') as fd:
-                secret_c = fd.read(_SNMP_SYSTEM_USER['size'])
-        except FileNotFoundError:
-            self.logger.warning("Did not find %r", SNMP_PRIV_KEY)
-            return None
-
-        try:
-            secret = Fernet(_SNMP_SYSTEM_USER['key']).decrypt(secret_c).decode()
-        except TypeError:
-            self.logger.warning("Could not extract system user secret")
-
-        return secret
-
-    @private
-    def _set_authuser_secret(self, secret):
-        """
-        Save the auth user secret.
-        Internal helper function for use by this module.
-        INPUT: ascii string (not encoded)
-        """
-        secret_c = Fernet(_SNMP_SYSTEM_USER['key']).encrypt(secret.encode())
-        with open(SNMP_PRIV_KEY, 'wb') as fd:
-            _SNMP_SYSTEM_USER['size'] = fd.write(secret_c)
-
-        return
-
-    @private
     def get_snmp_users(self):
         """
         NOTE: This should be called with SNMP running
         Use snmpwalk and the SNMP system user to get the list
         """
         users = []
-        if not self._is_snmp_running():
-            self.logger.debug("SNMP is not RUNNING")
-            return users
-
-        if pwd := self._get_authuser_secret():
+        if pwd := _get_authuser_secret():
             # snmpwalk -v3 -u ixAuthUser -l authNoPriv -a MD5 -A "abcd1234" localhost iso.3.6.1.6.3.15.1.2.2.1.3
             cmd = ['snmpwalk', '-v3', '-u', f'{_SNMP_SYSTEM_USER["name"]}',
                    '-l', 'authNoPriv', '-a', f'{_SNMP_SYSTEM_USER["auth_type"]}', '-A', f'{pwd}',
@@ -132,64 +186,10 @@ class SNMPService(SystemServiceService):
                 users = [x.split()[-1].strip('\"') for x in res.stdout.decode().splitlines()]
             except Exception:
                 self.logger.warning("Failed to list snmp v3 users")
+        else:
+            self.logger.warning("SNMP system user is not configured.  Stop and restart SNMP or reboot.")
 
         return users
-
-    @private
-    def add_snmp_user(self, snmp):
-        """
-        Build the createUser message and add it to the private config file.
-        NOTE: The SNMP daemon should be stopped before calling this routine and
-              the new user will be available after starting SNMP.
-        """
-        # The private config file must exist, i.e. SNMP must have been started at least once
-        if not os.path.exists(SNMP_PRIV_CONF):
-            return
-
-        # Build the 'createUser' message
-        create_v3_user = f"createUser {snmp['v3_username']} "
-
-        user_pwd = snmp['v3_password']
-        create_v3_user += f'{snmp["v3_authtype"]} "{user_pwd}" '
-
-        if snmp.get('v3_privproto'):
-            user_phrase = snmp['v3_privpassphrase']
-            create_v3_user += f'{snmp["v3_privproto"]} "{user_phrase}" '
-
-        create_v3_user += '\n'
-
-        # Example: createUser newPrivUser MD5 "abcd1234" DES "abcd1234"
-        with open(SNMP_PRIV_CONF, 'a') as f:
-            f.write(create_v3_user)
-
-    @private
-    def delete_snmp_user(self, user):
-        """
-        Delete the SNMPv3 user
-        RETURN: stdout message
-        NOTE: SNMP must be running for this to be successful
-              This removes the user from the SNMP db and private config _only_.
-              The proper method to delete a user is to call the snmp.update routine with
-              'v3' disabled and 'v3_username' cleared.
-        """
-
-        if not self._is_snmp_running():
-            return "SNMP not running"
-
-        if pwd := self._get_authuser_secret():
-            # snmpusm -v3 -l authPriv -u JoeUser -a MD5 -A "abcd1234" -x AES -X "A pass phrase" localhost delete JoeUser
-            cmd = ['snmpusm', '-v3', '-u', f'{_SNMP_SYSTEM_USER["name"]}',
-                   '-l', 'authNoPriv', '-a', f'{_SNMP_SYSTEM_USER["auth_type"]}', '-A', f'{pwd}',
-                   'localhost', 'delete', user]
-            try:
-                # This call will timeout if SNMP is not running
-                res = subprocess.run(cmd, capture_output=True)
-                retmsg = res.stdout.decode()
-            except Exception:
-                self.logger.warning("Failed to delete SNMPv3 user: %r", user)
-                retmsg = res.stderr.decode()
-
-        return retmsg
 
     @private
     def get_defaults(self):
@@ -211,47 +211,18 @@ class SNMPService(SystemServiceService):
         return SNMPModel_defaults
 
     @private
-    def _reset_v3_settings(self, snmp):
-        """
-        Reset v3 settings to default
-        Internal helper function for use by this module
-        """
-
-        # Restore the 'v3_*' settings to default.  We allow only one v3 user
-        config_default = self.get_defaults()
-        default_v3_config = {k: v for (k, v) in config_default.items() if k.startswith('v3')}
-
-        snmp.update(default_v3_config)
-        return snmp
+    async def _is_snmp_running(self):
+        """ Internal helper function for use by this module """
+        current_state = await self.middleware.call(
+            'service.query', [["service", "=", "snmp"]], {"select": ["state"]}
+        )
+        return True if current_state[0]['state'] == 'RUNNING' else False
 
     @private
-    def _add_system_user(self):
-        """
-        Add the v3 system user.
-        For internal use by this module.
-        NOTES: SNMP must be stopped before calling.
-               The private config file is assumed to be in a regenerated state with no v3 users
-        """
-        if self._is_snmp_running():
-            self.logger.warning("Could not add system user.  SNMP is running")
-            return
-
-        _SNMP_SYSTEM_USER['key'] = Fernet.generate_key()
-        auth_pwd = generate_string(32)
-
-        priv_config = {'v3_username': _SNMP_SYSTEM_USER['name'],
-                       'v3_authtype': _SNMP_SYSTEM_USER['auth_type'],
-                       'v3_password': f"{auth_pwd}"}
-
-        self.add_snmp_user(priv_config)
-
-        self._set_authuser_secret(auth_pwd)
-
-    @private
-    def init_v3_user(self):
+    async def init_v3_user(self):
         """
         Purpose: Make sure we have configured the snmpAuthUser
-        This is called at init and in runtime if we need to repair the v3 users
+        This will generate the SNMP system user and, if we needed, repair the v3 user
         This will start and stop SNMP as needed.
         NOTE: This will raise CallError if SNMP is unable to be started
 
@@ -263,34 +234,33 @@ class SNMPService(SystemServiceService):
             5) Start SNMP to integrate the v3 users
             6) Restore SNMP to 'current' run state
         """
-
-        config = self.middleware.call_sync('snmp.config')
+        config = await self.middleware.call('snmp.config')
 
         # 1) Record current SNMP run state
-        snmp_service = self.middleware.call_sync("service.query", [("service", "=", "snmp")], {"get": True})
+        snmp_service = await self.middleware.call("service.query", [("service", "=", "snmp")], {"get": True})
 
         # 2) Stop SNMP and delete the private config file
-        self.middleware.call_sync("service.stop", "snmp")
+        await self.middleware.call("service.stop", "snmp")
         with suppress(FileNotFoundError):
-            os.remove(SNMP_PRIV_CONF)
+            await self.middleware.run_in_thread(os.remove, SNMP_PRIV_CONF)
 
         # 3) Start SNMP to regenerate a new config file without any v3 users
-        self.middleware.call_sync('service.start', 'snmp')
+        await self.middleware.call('service.start', 'snmp')
 
         # 4) Stop SNMP and add v3 user markers to the private config
-        self.middleware.call_sync("service.stop", "snmp")
-        self._add_system_user()
+        await self.middleware.call("service.stop", "snmp")
+        await self.middleware.run_in_thread(_add_system_user)
 
         # if configured, add the v3 user
         if config['v3_username']:
-            self.add_snmp_user(config)
+            await self.middleware.run_in_thread(add_snmp_user, config)
 
         # 5) Start SNMP to integrate the v3 users
-        self.middleware.call_sync('service.start', 'snmp')
+        await self.middleware.call('service.start', 'snmp')
 
         # 6) Restore SNMP to 'current' run state
         if snmp_service['state'] == "STOPPED":
-            self.middleware.call_sync("service.stop", "snmp")
+            await self.middleware.call("service.stop", "snmp")
 
     async def do_update(self, data):
         """
@@ -308,6 +278,10 @@ class SNMPService(SystemServiceService):
 
         The 'v3_*' settings are valid and enforced only when 'v3' is enabled
         """
+        # Make sure we have the SNMP system user
+        if not _SNMP_SYSTEM_USER['key']:
+            await self.init_v3_user()
+
         old = await self.config()
 
         new = old.copy()
@@ -342,10 +316,30 @@ class SNMPService(SystemServiceService):
 
         verrors.check()
 
+        # To delete the v3 user:
+        #   From the UI: In the following order, clear the username field, then uncheck the v3 checkbox
+        #   From midclt: set {'v3': False, 'v3_username': ''}
         if not any([new['v3'], new['v3_username']]) and old['v3_username']:
             # v3 is disabled: Are we asked to delete the v3 user?
-            await self.middleware.call('snmp.delete_snmp_user', old['v3_username'])
-            new = self._reset_v3_settings(new)
+            # Process to delete the SNMPv3 user
+            # 1) SNMP must be running
+            # 2) Delete the user with the snmpusm shell command
+            # 3) Clear the v3 settings in the config
+            # 3) Restore SNMP run state
+            snmp_service = await self.middleware.call("service.query", [("service", "=", "snmp")], {"get": True})
+            await self.middleware.call('service.start', 'snmp')
+            try:
+                await self.middleware.run_in_thread(delete_snmp_user, old['v3_username'])
+            except Exception:
+                verrors.add("Cannot delete user. Please stop and restart SNMP or reboot, then try again.")
+            else:
+                config_default = self.get_defaults()
+                default_v3_config = {k: v for (k, v) in config_default.items() if k.startswith('v3')}
+                new.update(default_v3_config)
+
+            # Restore original SNMP state
+            if 'STOPPED' in snmp_service['state']:
+                await self.middleware.call('service.stop', 'snmp')
 
         await self._update_service(old, new)
 
@@ -356,7 +350,7 @@ class SNMPService(SystemServiceService):
             old_set = set({k: v for k, v in old.items() if k.startswith('v3_')}.items())
             v3_diffs = new_set ^ old_set
             if any(v3_diffs):
-                await self.middleware.call('snmp.init_v3_user')
+                await self.init_v3_user()
 
         return await self.config()
 
@@ -372,5 +366,4 @@ class SNMPServicePortDelegate(ServicePortDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('snmp.init_v3_user')
     await middleware.call('port.register_attachment_delegate', SNMPServicePortDelegate(middleware))

@@ -9,6 +9,7 @@ from time import sleep
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.system import reset_systemd_svcs
 from pysnmp.hlapi import (CommunityData, ContextData, ObjectIdentity,
                           ObjectType, SnmpEngine, UdpTransportTarget, getCmd)
 from pytest_dependency import depends
@@ -152,6 +153,7 @@ def user_list_users(snmp_config):
     return [x.split()[-1].strip('\"') for x in res.splitlines()]
 
 
+@pytest.mark.dependency(name='SNMP_CONFIGURED', scope="module")
 def test_01_Configure_SNMP(initialize_for_snmp_tests):
     config = initialize_for_snmp_tests
 
@@ -170,7 +172,8 @@ def test_01_Configure_SNMP(initialize_for_snmp_tests):
 
 
 @pytest.mark.dependency(name='SNMP_ENABLED', scope="module")
-def test_02_Enable_SNMP_service_at_boot():
+def test_02_Enable_SNMP_service_at_boot(request):
+    depends(request, ["SNMP_CONFIGURED"], scope="module")
     id = call('service.update', 'snmp', {'enable': True})
     assert isinstance(id, int)
 
@@ -190,7 +193,8 @@ def test_04_checking_to_see_if_snmp_service_is_enabled_at_boot(request):
 
 
 @pytest.mark.dependency(name='SNMP_STARTED', scope="module")
-def test_05_starting_snmp_service():
+def test_05_starting_snmp_service(request):
+    depends(request, ["SNMP_CONFIGURED"], scope="module")
     call('service.start', 'snmp')
     # Make sure the custom agent is also running
     assert get_systemctl_status('snmp-agent') == "RUNNING"
@@ -352,6 +356,9 @@ def test_35_validate_SNMPv3_user_changes(request, key, value):
     This also tests a pass phrase that includes spaces.
     """
     depends(request, ["SNMPv3_USER_ADD"], scope="session")
+    # Reset the systemd restart counter
+    reset_systemd_svcs("snmpd snmp-agent")
+
     res = call('snmp.update', {key: value})
     assert value in res[key]
     assert get_systemctl_status('snmp-agent') == "RUNNING"
