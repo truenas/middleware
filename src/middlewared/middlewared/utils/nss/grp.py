@@ -301,3 +301,40 @@ def getgrall(module=NssModule.ALL.name, as_dict=False):
         results[mod.name] = entries
 
     return results
+
+
+def itergrp(module=NssModule.FILES.name, as_dict=False):
+    """
+    Generator that yields group entries on server
+
+    `module` - NSS module from which to retrieve the entries
+    `as_dict` - yield password database entries as dictionaries
+
+    WARNING: users of this API should not create two generators for
+    same passwd database concurrently in the same thread due to NSS
+    modules storing the handle for the pwent in thread-local variable:
+
+    BAD:
+    iter1 = itergrp(NssModule.FILES.name, True)
+    iter2 = itergrp(NssModule.FILES.name, True)
+    for x in iter1:
+        for y in iter2
+
+    or call getgrall() during iteration
+
+    ALSO BAD:
+    iter1 = itergrp(NssModule.FILES.name, True)
+    for x in iter1:
+        grp = getgrall()
+    """
+    if module == NssModule.ALL.name:
+        raise ValueError('Please select one of: FILES, WINBIND, SSS')
+
+    mod = NssModule[module]
+    __setgrent(mod)
+
+    try:
+        while group := __getgrent_impl(mod, as_dict):
+            yield group
+    finally:
+        __endgrent(mod)

@@ -95,3 +95,30 @@ def test__check_group_misses():
         with pytest.raises(KeyError) as ve:
             grp.getgrnam(name)
         assert 'name not found' in str(ve)
+
+
+def test___iter_pwd():
+    py_users = {u.pw_uid: u for u in py_pwd.getpwall()}
+
+    for entry in pwd.iterpw():
+        py_entry = py_users.pop(entry.pw_uid)
+
+        assert py_entry.pw_name == entry.pw_name
+        assert py_entry.pw_uid == entry.pw_uid
+        assert py_entry.pw_gid == entry.pw_gid
+        assert py_entry.pw_gecos == entry.pw_gecos
+        assert py_entry.pw_dir == entry.pw_dir
+        assert py_entry.pw_shell == entry.pw_shell
+
+    assert py_users == {}, str(py_users)
+
+
+def test___iter_grp():
+    py_groups = {g.gr_name: g for g in py_grp.getgrall()}
+
+    for entry in grp.itergrp():
+        py_entry = py_groups.pop(entry.gr_name)
+
+        assert py_entry.gr_name == entry.gr_name
+        assert py_entry.gr_gid == entry.gr_gid
+        assert py_entry.gr_mem == entry.gr_mem
