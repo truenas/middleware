@@ -32,8 +32,8 @@ def batched(iterable, n):
     last batch may be shorter than `n`.
 
     batched iter recipe from python 3.11 documentation. Python 3.12 adds a
-    cpython variant of this and so this method should be replaced when
-    TrueNAS python version upgrades to 3.12.
+    cpython variant of this to `itertools` and so this method should be
+    replaced when TrueNAS python version upgrades to 3.12.
     """
     if n < 1:
         raise ValueError('n must be at least one')
