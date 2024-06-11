@@ -29,6 +29,8 @@ class DisabledReasonsEnum(str, Enum):
     NO_CARRIER_ON_HEARTBEAT = 'Local heartbeat interface is down.'
     LOC_FIPS_REBOOT_REQ = 'This node needs to be rebooted to apply FIPS configuration'
     REM_FIPS_REBOOT_REQ = 'Other node needs to be rebooted to apply FIPS configuration'
+    LOC_SYSTEM_DATASET_MIGRATION_IN_PROGRESS = 'This node is currently configuring the system dataset'
+    REM_SYSTEM_DATASET_MIGRATION_IN_PROGRESS = 'Other node is currently configuring the system dataset'
 
 
 class FailoverDisabledReasonsService(Service):
@@ -38,6 +40,7 @@ class FailoverDisabledReasonsService(Service):
         namespace = 'failover.disabled'
 
     LAST_DISABLED_REASONS = None
+    SYSTEM_DATASET_SETUP_IN_PROGRESS = False
 
     @no_auth_required
     @accepts()
@@ -92,6 +95,9 @@ class FailoverDisabledReasonsService(Service):
             reasons.add(DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ.name)
         if reboot_info['other_node']['reboot_required']:
             reasons.add(DisabledReasonsEnum.REM_FIPS_REBOOT_REQ.name)
+
+        if self.SYSTEM_DATASET_SETUP_IN_PROGRESS:
+            reasons.add(DisabledReasonsEnum.LOC_SYSTEM_DATASET_MIGRATION_IN_PROGRESS.name)
 
         self.heartbeat_health(app, reasons)
 
@@ -165,6 +171,13 @@ class FailoverDisabledReasonsService(Service):
             mismatch_nics = self.middleware.call_sync('failover.mismatch_nics')
             if mismatch_nics['missing_local'] or mismatch_nics['missing_remote']:
                 reasons.add(DisabledReasonsEnum.MISMATCH_NICS.name)
+
+            if self.middleware.call_sync(
+                'failover.call_remote', 'failover.disabled.get_systemdataset_state', [],
+                {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+            ):
+                reasons.add(DisabledReasonsEnum.REM_SYSTEM_DATASET_MIGRATION_IN_PROGRESS.name)
+
         except Exception:
             reasons.add(DisabledReasonsEnum.NO_PONG.name)
 
@@ -178,7 +191,21 @@ class FailoverDisabledReasonsService(Service):
 
         return reasons
 
+    @private
+    async def update_systemdataset_state(self, in_progress):
+        self.SYSTEM_DATASET_SETUP_IN_PROGRESS = in_progress
+
+    @private
+    async def get_systemdataset_state(self):
+        return self.SYSTEM_DATASET_SETUP_IN_PROGRESS
+
+
+async def systemdataset_setup_hook(middleware, data):
+    await middleware.call('failover.disabled.update_systemdataset_state', data['in_progress'])
+
 
 async def setup(middleware):
-    middleware.event_register('failover.disabled.reasons', 'Sent when failover status reasons change.',
-                              no_auth_required=True)
+    middleware.event_register(
+        'failover.disabled.reasons', 'Sent when failover status reasons change.', no_auth_required=True
+    )
+    middleware.register_hook('sysdataset.setup', systemdataset_setup_hook)
