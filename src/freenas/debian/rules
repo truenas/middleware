@@ -5,6 +5,9 @@
 	dh $@
 
 override_dh_auto_install:
+	# NOTE: Once we update to Trixie or have ipmi-tool after version
+	# 1.8.19-4 (current Bookworm) we can stop downloading
+	# enterprise-numbers.txt from IANA during package build.
 	sh -c "\
 		mkdir -p debian/truenas-files/etc; \
 		cp -a etc debian/truenas-files/; \
@@ -17,6 +20,9 @@ override_dh_auto_install:
 		cp -a root debian/truenas-files/; \
 		chmod 700 debian/truenas-files/root; \
 		mkdir -p debian/truenas-files/conf/base/etc; \
+		mkdir -p debian/truenas-files/usr/share/misc; \
+		curl --url https://www.iana.org/assignments/enterprise-numbers.txt \
+		--output debian/truenas-files/usr/share/misc/enterprise-numbers.txt; \
 	"
 
 override_dh_fixperms:
