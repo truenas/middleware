@@ -2,6 +2,7 @@ import enum
 import errno
 import wbclient
 
+from middlewared.utils.itertools import batched
 from middlewared.service_exception import MatchNotFound
 
 
@@ -25,6 +26,7 @@ TRUENAS_IDMAP_MAX = 2147000000
 TRUENAS_IDMAP_DEFAULT_LOW = 90000001
 SID_LOCAL_USER_PREFIX = "S-1-22-1-"
 SID_LOCAL_GROUP_PREFIX = "S-1-22-2-"
+MAX_REQUEST_LENGTH = 100
 
 
 class IDType(enum.Enum):
@@ -103,11 +105,26 @@ class WBClient:
         dom = self.init_domain(name)
         return dom.groups()
 
+    def _batch_request(self, request_fn, list_in):
+        output = {'mapped': {}, 'unmapped': {}}
+        for chunk in batched(list_in, MAX_REQUEST_LENGTH):
+            results = request_fn(list(chunk))
+            output['mapped'] |= results['mapped']
+            output['unmapped'] |= results['unmapped']
+
+        return output
+
     def sids_to_users_and_groups(self, sidlist):
-        return self.ctx.uid_gid_objects_from_sids(sidlist)
+        return self._batch_request(
+            self.ctx.uid_gid_objects_from_sids,
+            sidlist
+        )
 
     def users_and_groups_to_sids(self, uidgids):
-        return self.ctx.uid_gid_objects_from_unix_ids(uidgids)
+        return self._batch_request(
+            self.ctx.uid_gid_objects_from_unix_ids,
+            uidgids
+        )
 
     def sid_to_uidgid_entry(self, sid):
         mapped = self.sids_to_users_and_groups([sid])['mapped']
