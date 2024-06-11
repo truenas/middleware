@@ -122,3 +122,5 @@ def test___iter_grp():
         assert py_entry.gr_name == entry.gr_name
         assert py_entry.gr_gid == entry.gr_gid
         assert py_entry.gr_mem == entry.gr_mem
+
+    assert py_groups == {}, str(py_groups)
