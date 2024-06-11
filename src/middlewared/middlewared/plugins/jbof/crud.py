@@ -868,7 +868,7 @@ class JBOFService(CRUDService):
             # We know all_count is > 0 because of the return above.
             all_count = len(jbofs)
             fail_count = len(failures)
-            percent = int((percent_available * (all_count - fail_count)) / all_count)
+            percent = (percent_available * (all_count - fail_count)) // all_count
             err = f'Failure connecting {fail_count} JBOFs: {", ".join(failures)}'
             self.logger.error(err)
             job.set_progress(percent, err)

@@ -20,14 +20,14 @@ def common_min_max_txg_snapshot_test(test_min_txg=False, test_max_txg=False):
 
         assert call('zfs.snapshot.query', [['dataset', '=', test_dataset]], {'count': True}) == len(created_snaps)
 
-        for i in range(int(total_snaps / 2) - 1):
+        for i in range((total_snaps // 2) - 1):
             new_list = created_snaps
             extra_args = {}
             if test_min_txg:
                 new_list = created_snaps[i:]
                 extra_args['min_txg'] = new_list[0]
             if test_max_txg:
-                new_list = new_list[:int(len(new_list) / 2)]
+                new_list = new_list[:len(new_list) // 2]
                 extra_args['max_txg'] = new_list[-1]
 
             assert call(

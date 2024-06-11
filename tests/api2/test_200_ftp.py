@@ -1134,13 +1134,13 @@ def test_060_bandwidth_limiter(request, testwho, ftp_setup_func):
                 f.write(os.urandom(1024 * FileSize))
 
             ElapsedTime = int(ftp_upload_binary_file(ftpObj, localfname, ftpfname))
-            xfer_rate = int(FileSize / ElapsedTime)
+            xfer_rate = FileSize // ElapsedTime
             # This typically will match exactly, but in actual testing this might vary
             assert (ulRate - 8) <= xfer_rate <= (ulRate + 20), \
                 f"Failed upload rate limiter: Expected {ulRate}, but sensed rate is {xfer_rate}"
 
             ElapsedTime = int(ftp_download_binary_file(ftpObj, ftpfname, localfname))
-            xfer_rate = int(FileSize / ElapsedTime)
+            xfer_rate = FileSize // ElapsedTime
             # Allow for variance
             assert (dlRate - 8) <= xfer_rate <= (dlRate + 20), \
                 f"Failed download rate limiter: Expected {dlRate}, but sensed rate is {xfer_rate}"
@@ -1203,7 +1203,7 @@ def test_070_resume_xfer(request, ftpConf, expect_to_pass):
         with open(src, 'rb') as file:
             ftp.voidcmd('TYPE I')
             with ftpObj.transfercmd(f'STOR {tgt}', None) as conn:
-                blksize = int(NumKiB / 8)
+                blksize = NumKiB // 8
                 for xfer in range(0, 8):
                     # Send some of the file
                     buf = file.read(1024 * blksize)
@@ -1214,7 +1214,7 @@ def test_070_resume_xfer(request, ftpConf, expect_to_pass):
         with open(tgt, 'wb') as file:
             ftp.voidcmd('TYPE I')
             with ftp.transfercmd(f'RETR {src}', None) as conn:
-                NumXfers = int(NumKiB / 8)
+                NumXfers = NumKiB // 8
                 for xfer in range(0, NumXfers):
                     # Receive and write some of the file
                     data = conn.recv(8192)

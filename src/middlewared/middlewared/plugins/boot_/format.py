@@ -53,10 +53,10 @@ class BootService(Service):
         total_partition_size = sum(map(lambda y: y[1], partitions))
         if disk_details['size'] < total_partition_size:
             partitions = [
-                '%s: %s blocks' % (p[0], '{:,}'.format(int(p[1] / disk_details['sectorsize']))) for p in partitions
+                '%s: %s blocks' % (p[0], '{:,}'.format(p[1] // disk_details['sectorsize'])) for p in partitions
             ]
             partitions.append(
-                'total of %s blocks' % '{:,}'.format(int(total_partition_size / disk_details['sectorsize']))
+                'total of %s blocks' % '{:,}'.format(total_partition_size // disk_details['sectorsize'])
             )
             disk_blocks = '{:,}'.format(disk_details["blocks"])
             raise CallError(
@@ -66,15 +66,15 @@ class BootService(Service):
                 'booting procedure.'
             )
 
-        zfs_part_size = f'+{int(options["size"]/1024)}K' if options.get('size') else 0
+        zfs_part_size = f'+{options["size"] // 1024}K' if options.get('size') else 0
         if options['legacy_schema']:
             if options['legacy_schema'] == 'BIOS_ONLY':
                 commands.extend((
-                    ['sgdisk', f'-a{int(4096 / disk_details["sectorsize"])}', '-n1:0:+512K', '-t1:EF02', f'/dev/{dev}'],
+                    ['sgdisk', f'-a{4096 // disk_details["sectorsize"]}', '-n1:0:+512K', '-t1:EF02', f'/dev/{dev}'],
                 ))
             elif options['legacy_schema'] == 'EFI_ONLY':
                 commands.extend((
-                    ['sgdisk', f'-a{int(4096 / disk_details["sectorsize"])}', '-n1:0:+260M', '-t1:EF00', f'/dev/{dev}'],
+                    ['sgdisk', f'-a{4096 // disk_details["sectorsize"]}', '-n1:0:+260M', '-t1:EF00', f'/dev/{dev}'],
                 ))
 
             # Creating standard-size partitions first leads to better alignment and more compact disk usage
@@ -84,7 +84,7 @@ class BootService(Service):
             ])
         else:
             commands.extend((
-                ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', '-n1:0:+1024K', '-t1:EF02', f'/dev/{dev}'],
+                ['sgdisk', f'-a{4096 // disk_details["sectorsize"]}', '-n1:0:+1024K', '-t1:EF02', f'/dev/{dev}'],
                 ['sgdisk', '-n2:0:+524288K', '-t2:EF00', f'/dev/{dev}'],
             ))
 
