@@ -234,9 +234,15 @@ class DSCache(Service):
         for user validation.
         """
         if username:
-            u = pwd.getpwnam(username)
+            try:
+                u = pwd.getpwnam(username)
+            except KeyError:
+                raise KeyError(f'{username}: user with this name does not exist') from None
         elif uid is not None:
-            u = pwd.getpwuid(uid)
+            try:
+                u = pwd.getpwuid(uid)
+            except KeyError:
+                raise KeyError(f'{uid}: user with this id does not exist') from None
         else:
             return {}
 
@@ -290,9 +296,15 @@ class DSCache(Service):
         for group validation.
         """
         if groupname:
-            g = grp.getgrnam(groupname)
+            try:
+                g = grp.getgrnam(groupname)
+            except KeyError:
+                raise KeyError(f'{groupname}: group with this name does not exist') from None
         elif gid is not None:
-            g = grp.getgrgid(gid)
+            try:
+                g = grp.getgrgid(gid)
+            except KeyError:
+                raise KeyError(f'{gid}: group with this id does not exist') from None
         else:
             return {}
 
