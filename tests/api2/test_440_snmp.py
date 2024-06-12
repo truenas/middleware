@@ -233,6 +233,9 @@ def test_15_validate_SNMPv3_private_user(request):
     The SNMP system user should always be available
     """
     depends(request, ["SNMP_STARTED"], scope="module")
+    # Reset the systemd restart counter
+    reset_systemd_svcs("snmpd snmp-agent")
+
     # Make sure the createUser command is not present
     res = ssh("tail -2 /var/lib/snmp/snmpd.conf")
     assert 'createUser' not in res
@@ -266,25 +269,6 @@ def test_15_validate_SNMPv3_private_user(request):
 def test_17_test_v3_validators(request, payload, attrib, errmsg):
     """
     All these configuration updates should fail.
-    These are the validation checks.
-
-        if not new['v3'] and not new['community']:
-            verrors.add('snmp_update.community', 'This field is required when SNMPv3 is disabled')
-
-        if new['v3_authtype'] and not new['v3_password']:
-            verrors.add(
-                'snmp_update.v3_password',
-                'This field is required when SNMPv3 auth type is specified',
-            )
-
-        if new['v3_password'] and len(new['v3_password']) < 8:
-            verrors.add('snmp_update.v3_password', 'Password must contain at least 8 characters')
-
-        if new['v3_privproto'] and not new['v3_privpassphrase']:
-            verrors.add(
-                'snmp_update.v3_privpassphrase',
-                'This field is requires when SNMPv3 private protocol is specified',
-            )
     """
     depends(request, ["SNMP_STARTED"], scope="module")
     with pytest.raises(ValidationErrors) as ve:
@@ -327,6 +311,8 @@ def test_30_validate_SNMPv3_user_retained_across_service_restart(request):
 
 def test_32_validate_SNMPv3_user_retained_across_v3_disable(request):
     depends(request, ["SNMPv3_USER_ADD"], scope="module")
+    # Reset the systemd restart counter
+    reset_systemd_svcs("snmpd snmp-agent")
 
     # Disable and check
     res = call('snmp.update', {'v3': False})
@@ -356,8 +342,6 @@ def test_35_validate_SNMPv3_user_changes(request, key, value):
     This also tests a pass phrase that includes spaces.
     """
     depends(request, ["SNMPv3_USER_ADD"], scope="session")
-    # Reset the systemd restart counter
-    reset_systemd_svcs("snmpd snmp-agent")
 
     res = call('snmp.update', {key: value})
     assert value in res[key]
