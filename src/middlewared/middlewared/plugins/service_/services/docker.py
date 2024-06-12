@@ -23,9 +23,7 @@ class DockerService(SimpleService):
                     'docker.state.set_status', Status.FAILED.value,
                     f'Failed to {"mount" if mount else "umount"} {docker_ds!r}: {e}',
                 )
-                self.middleware.logger.error(
-                    'Failed to %s %r', 'mount' if mount else 'umount', docker_ds, exc_info=True,
-                )
+                raise
 
     async def before_start(self):
         await self.middleware.call('docker.state.set_status', Status.INITIALIZING.value)
