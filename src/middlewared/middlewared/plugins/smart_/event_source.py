@@ -56,7 +56,7 @@ class SMARTTestEventSource(EventSource):
 
             if data:
                 # Check every percent
-                interval = int((data['end_monotime'] - data['start_monotime']) / 100)
+                interval = (data['end_monotime'] - data['start_monotime']) // 100
 
                 if time.monotonic() < data['end_monotime']:
                     # but not more often than every ten seconds

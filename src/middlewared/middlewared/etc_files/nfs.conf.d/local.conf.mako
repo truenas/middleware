@@ -11,7 +11,7 @@
     # man page for mountd says "The default is 1 thread, which is probably enough.",
     # but mount storms at restart benefit from additional mountd.  As such, we recommend
     # the number of mountd be 1/4 the number of nfsd.
-    num_mountd = max(int(num_nfsd / 4), 1)
+    num_mountd = max(num_nfsd // 4, 1)
     manage_gids = 'y' if config["userd_manage_gids"] else 'n'
 %>
 [nfsd]

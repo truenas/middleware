@@ -15,7 +15,7 @@ def test_disk_wipe_partition_clean():
     call('disk.format', disk)
     parts = call('disk.list_partitions', disk)
     seek_blk = parts[0]['start_sector']
-    blk_size = int(parts[0]['start'] / parts[0]['start_sector'])
+    blk_size = parts[0]['start'] // parts[0]['start_sector']
 
     # Write some private data into the start of the data partition
     ssh(

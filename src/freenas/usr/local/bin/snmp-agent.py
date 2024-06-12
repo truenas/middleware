@@ -460,21 +460,21 @@ if __name__ == "__main__":
             arc_efficiency = get_arc_efficiency(kstat)
 
             prefix = "kstat.zfs.misc.arcstats"
-            zfs_arc_size.update(int(kstat[f"{prefix}.size"] / 1024))
-            zfs_arc_meta.update(int(kstat[f"{prefix}.arc_meta_used"] / 1024))
-            zfs_arc_data.update(int(kstat[f"{prefix}.data_size"] / 1024))
+            zfs_arc_size.update(kstat[f"{prefix}.size"] // 1024)
+            zfs_arc_meta.update(kstat[f"{prefix}.arc_meta_used"] // 1024)
+            zfs_arc_data.update(kstat[f"{prefix}.data_size"] // 1024)
             zfs_arc_hits.update(int(kstat[f"{prefix}.hits"] % 2 ** 32))
             zfs_arc_misses.update(int(kstat[f"{prefix}.misses"] % 2 ** 32))
-            zfs_arc_c.update(int(kstat[f"{prefix}.c"] / 1024))
+            zfs_arc_c.update(kstat[f"{prefix}.c"] // 1024)
             zfs_arc_miss_percent.update(str(get_zfs_arc_miss_percent(kstat)).encode("ascii"))
             zfs_arc_cache_hit_ratio.update(str(arc_efficiency["cache_hit_ratio"]["per"][:-1]).encode("ascii"))
             zfs_arc_cache_miss_ratio.update(str(arc_efficiency["cache_miss_ratio"]["per"][:-1]).encode("ascii"))
 
             zfs_l2arc_hits.update(int(kstat[f"{prefix}.l2_hits"] % 2 ** 32))
             zfs_l2arc_misses.update(int(kstat[f"{prefix}.l2_misses"] % 2 ** 32))
-            zfs_l2arc_read.update(int(kstat[f"{prefix}.l2_read_bytes"] / 1024 % 2 ** 32))
-            zfs_l2arc_write.update(int(kstat[f"{prefix}.l2_write_bytes"] / 1024 % 2 ** 32))
-            zfs_l2arc_size.update(int(kstat[f"{prefix}.l2_asize"] / 1024))
+            zfs_l2arc_read.update(kstat[f"{prefix}.l2_read_bytes"] // 1024 % 2 ** 32)
+            zfs_l2arc_write.update(kstat[f"{prefix}.l2_write_bytes"] // 1024 % 2 ** 32)
+            zfs_l2arc_size.update(kstat[f"{prefix}.l2_asize"] // 1024)
 
             if zilstat_1_thread:
                 zfs_zilstat_ops1.update(zilstat_1_thread.value)

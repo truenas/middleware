@@ -384,7 +384,7 @@ class IdmapDomainService(CRUDService):
         range_size = sssd_config.get('range_size', 200000)
         range_low = sssd_config.get('range_low', 10001)
         range_max = sssd_config.get('range_max', 2000200000)
-        max_slices = int((range_max - range_low) / range_size)
+        max_slices = (range_max - range_low) // range_size
 
         data = sid.encode()
         hash_ = murmurhash3(data, len(data), seed)

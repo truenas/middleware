@@ -16,10 +16,10 @@ class DiskService(Service):
         if disk['hddstandby'] != 'ALWAYS ON':
             if int(disk['hddstandby']) <= 20:
                 # Values from 1 to 240 specify multiples of 5 seconds
-                idle = int(int(disk['hddstandby']) * 60 / 5)
+                idle = int(disk['hddstandby']) * 60 // 5
             else:
                 # values from 241 to 251 specify multiples of 30 minutes.
-                idle = 240 + int(int(disk['hddstandby']) / 30)
+                idle = 240 + int(disk['hddstandby']) // 30
         else:
             idle = 0
 
