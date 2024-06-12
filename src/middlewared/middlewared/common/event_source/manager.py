@@ -5,8 +5,10 @@ import functools
 import typing
 from uuid import uuid4
 
+if typing.TYPE_CHECKING:
+    from middlewared.main import Application, Middleware
+
 from middlewared.event import EventSource
-from middlewared.main import Application, Middleware
 from middlewared.schema import ValidationErrors
 from middlewared.service_exception import CallError, CallException
 

@@ -4,8 +4,10 @@ import json
 import threading
 import typing
 
-from middlewared.main import Middleware
-from middlewared.role import RoleManager
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
+    from middlewared.role import RoleManager
+    
 from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
 from middlewared.settings import conf
 
