@@ -7,6 +7,7 @@ from cryptography.fernet import Fernet
 from middlewared.common.ports import ServicePortDelegate
 from middlewared.schema import Bool, Dict, Int, Password, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors, CallError
+from middlewared.utils import run
 from middlewared.utils.crypto import generate_string
 from middlewared.validators import Email, Match, Or, Range
 
@@ -234,6 +235,9 @@ class SNMPService(SystemServiceService):
             5) Start SNMP to integrate the v3 users
             6) Restore SNMP to 'current' run state
         """
+        # This process results in a few SNMP restarts which can trigger the restart limit
+        await run(["systemctl", "reset-failed", "snmpd snmp-agent"])
+
         config = await self.middleware.call('snmp.config')
 
         # 1) Record current SNMP run state

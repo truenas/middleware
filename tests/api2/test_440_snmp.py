@@ -9,7 +9,7 @@ from time import sleep
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
-from middlewared.test.integration.utils.system import reset_systemd_svcs
+# from middlewared.test.integration.utils.system import reset_systemd_svcs
 from pysnmp.hlapi import (CommunityData, ContextData, ObjectIdentity,
                           ObjectType, SnmpEngine, UdpTransportTarget, getCmd)
 from pytest_dependency import depends
@@ -233,8 +233,6 @@ def test_15_validate_SNMPv3_private_user(request):
     The SNMP system user should always be available
     """
     depends(request, ["SNMP_STARTED"], scope="module")
-    # Reset the systemd restart counter
-    reset_systemd_svcs("snmpd snmp-agent")
 
     # Make sure the createUser command is not present
     res = ssh("tail -2 /var/lib/snmp/snmpd.conf")
@@ -312,7 +310,6 @@ def test_30_validate_SNMPv3_user_retained_across_service_restart(request):
 def test_32_validate_SNMPv3_user_retained_across_v3_disable(request):
     depends(request, ["SNMPv3_USER_ADD"], scope="module")
     # Reset the systemd restart counter
-    reset_systemd_svcs("snmpd snmp-agent")
 
     # Disable and check
     res = call('snmp.update', {'v3': False})
