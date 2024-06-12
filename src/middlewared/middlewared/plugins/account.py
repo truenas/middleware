@@ -1106,10 +1106,22 @@ class UserService(CRUDService):
             verrors.add('get_user_obj.username', '"username" and "uid" may not be simultaneously specified')
         verrors.check()
 
+        # NOTE: per request from UI team we are overriding default library
+        # KeyError message with a clearer one
+        #
+        # Many callers to user.get_user_obj may be catching KeyError and so
+        # changing exception type is something that should be approached
+        # carefully.
         if data['username']:
-            user_obj = pwd.getpwnam(data['username'], as_dict=True)
+            try:
+                user_obj = pwd.getpwnam(data['username'], as_dict=True)
+            except KeyError:
+                raise KeyError(f'{data["username"]}: user with this name does not exist') from None
         else:
-            user_obj = pwd.getpwuid(data['uid'], as_dict=True)
+            try:
+                user_obj = pwd.getpwuid(data['uid'], as_dict=True)
+            except KeyError:
+                raise KeyError(f'{data["uid"]}: user with this id does not exist') from None
 
         source = user_obj.pop('source')
         user_obj['local'] = source == 'FILES'
@@ -2072,10 +2084,22 @@ class GroupService(CRUDService):
             verrors.add('get_group_obj.groupname', '"groupname" and "gid" may not be simultaneously specified')
         verrors.check()
 
+        # NOTE: per request from UI team we are overriding default library
+        # KeyError message with a clearer one
+        #
+        # Many callers to group.get_group_obj may be catching KeyError and so
+        # changing exception type is something that should be approached
+        # carefully.
         if data['groupname']:
-            grp_obj = grp.getgrnam(data['groupname'], as_dict=True)
+            try:
+                grp_obj = grp.getgrnam(data['groupname'], as_dict=True)
+            except KeyError:
+                raise KeyError(f'{data["groupname"]}: group with this name does not exist') from None
         else:
-            grp_obj = grp.getgrgid(data['gid'], as_dict=True)
+            try:
+                grp_obj = grp.getgrgid(data['gid'], as_dict=True)
+            except KeyError:
+                raise KeyError(f'{data["gid"]}: group with this id does not exist') from None
 
         source = grp_obj.pop('source')
         grp_obj['local'] = source == 'FILES'
