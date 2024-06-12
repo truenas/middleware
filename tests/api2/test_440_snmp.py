@@ -9,7 +9,7 @@ from time import sleep
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
-# from middlewared.test.integration.utils.system import reset_systemd_svcs
+from middlewared.test.integration.utils.system import reset_systemd_svcs
 from pysnmp.hlapi import (CommunityData, ContextData, ObjectIdentity,
                           ObjectType, SnmpEngine, UdpTransportTarget, getCmd)
 from pytest_dependency import depends
@@ -309,7 +309,6 @@ def test_30_validate_SNMPv3_user_retained_across_service_restart(request):
 
 def test_32_validate_SNMPv3_user_retained_across_v3_disable(request):
     depends(request, ["SNMPv3_USER_ADD"], scope="module")
-    # Reset the systemd restart counter
 
     # Disable and check
     res = call('snmp.update', {'v3': False})
@@ -325,9 +324,11 @@ def test_32_validate_SNMPv3_user_retained_across_v3_disable(request):
 
 
 @pytest.mark.parametrize('key,value', [
+    ('reset', ''),  # Reset systemd counters
     ('v3_username', 'ixUser'),
     ('v3_authtype', 'SHA'),
     ('v3_password', 'SimplePassword'),
+    ('reset', ''),  # Reset systemd counters
     ('v3_privproto', 'DES'),
     ('v3_privpassphrase', 'Pass phrase with spaces'),
     # Restore original user name
@@ -337,17 +338,21 @@ def test_35_validate_SNMPv3_user_changes(request, key, value):
     """
     Make changes to the SNMPv3 user name, password, etc. and confirm user function.
     This also tests a pass phrase that includes spaces.
+    NOTE: We include systemd counter resets because these calls require the most restarts.
     """
     depends(request, ["SNMPv3_USER_ADD"], scope="session")
+    if key == 'reset':
+        # Reset the systemd restart counter
+        reset_systemd_svcs("snmpd snmp-agent")
+    else:
+        res = call('snmp.update', {key: value})
+        assert value in res[key]
+        assert get_systemctl_status('snmp-agent') == "RUNNING"
 
-    res = call('snmp.update', {key: value})
-    assert value in res[key]
-    assert get_systemctl_status('snmp-agent') == "RUNNING"
-
-    # Confirm user function after change
-    user_config = call('snmp.config')
-    res = user_list_users(user_config)
-    assert user_config['v3_username'] in res
+        # Confirm user function after change
+        user_config = call('snmp.config')
+        res = user_list_users(user_config)
+        assert user_config['v3_username'] in res
 
 
 def test_40_validate_SNMPv3_user_delete(request):
