@@ -472,8 +472,8 @@ if __name__ == "__main__":
 
             zfs_l2arc_hits.update(int(kstat[f"{prefix}.l2_hits"] % 2 ** 32))
             zfs_l2arc_misses.update(int(kstat[f"{prefix}.l2_misses"] % 2 ** 32))
-            zfs_l2arc_read.update(int(kstat[f"{prefix}.l2_read_bytes"] / 1024 % 2 ** 32))
-            zfs_l2arc_write.update(int(kstat[f"{prefix}.l2_write_bytes"] / 1024 % 2 ** 32))
+            zfs_l2arc_read.update(kstat[f"{prefix}.l2_read_bytes"] // 1024 % 2 ** 32)
+            zfs_l2arc_write.update(kstat[f"{prefix}.l2_write_bytes"] // 1024 % 2 ** 32)
             zfs_l2arc_size.update(kstat[f"{prefix}.l2_asize"] // 1024)
 
             if zilstat_1_thread:
