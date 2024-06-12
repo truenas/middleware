@@ -104,16 +104,15 @@ class iSCSITargetAluaService(Service):
         job.set_progress(0, 'Start ACTIVE node ALUA reset on election')
         self.logger.debug('Start ACTIVE node ALUA reset on election')
         if await self.middleware.call('iscsi.global.alua_enabled'):
-            if await self.middleware.call('failover.status') == 'MASTER':
-                # Just do the bare minimum here.
-                try:
-                    await self.middleware.call('dlm.eject_peer')
-                except Exception as e:
-                    self.logger.warning('active_elected job: %r', e)
-
-                job.set_progress(100, 'ACTIVE node ALUA reset completed')
-                self.logger.debug('ACTIVE node ALUA reset completed')
-                return
+            # Just do the bare minimum here.  This API will only be called
+            # on the new MASTER.
+            try:
+                await self.middleware.call('dlm.eject_peer')
+            except Exception as e:
+                self.logger.warning('active_elected job: %r', e)
+            job.set_progress(100, 'ACTIVE node ALUA reset completed')
+            self.logger.debug('ACTIVE node ALUA reset completed')
+            return
         job.set_progress(100, 'ACTIVE node ALUA reset NOOP')
         self.logger.debug('ACTIVE node ALUA reset NOOP')
 
