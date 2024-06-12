@@ -4,6 +4,7 @@ import json
 import threading
 import typing
 
+from middlewared.main import Middleware
 from middlewared.role import RoleManager
 from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
 from middlewared.settings import conf
@@ -68,7 +69,8 @@ class EventSource(metaclass=EventSourceMetabase):
     ACCEPTS = NotImplementedError
     RETURNS = NotImplementedError
 
-    def __init__(self, middleware, name, arg, send_event, unsubscribe_all):
+    def __init__(self, middleware: Middleware, name: str, arg: typing.Optional[str], send_event: typing.Callable[[str, dict[str, typing.Any]], None], 
+                 unsubscribe_all: typing.Callable[[typing.Optional[Exception]], typing.Awaitable[None]]):
         self.middleware = middleware
         self.name = name
         self.arg = arg

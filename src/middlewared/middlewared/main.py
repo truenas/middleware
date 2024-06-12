@@ -124,7 +124,7 @@ class Application:
           on_close(app)
         """
         self.__callbacks = defaultdict(list)
-        self.__subscribed = {}
+        self.__subscribed: typing.Dict[str, str] = {}
 
     @functools.cached_property
     def origin(self) -> typing.Union[UnixSocketOrigin, TCPIPOrigin, None]:
@@ -254,7 +254,7 @@ class Application:
 
         return self.authenticated_credentials.authorize('SUBSCRIBE', name)
 
-    async def subscribe(self, ident, name):
+    async def subscribe(self, ident: str, name: str):
         shortname, arg = self.middleware.event_source_manager.short_name_arg(name)
         if shortname in self.middleware.event_source_manager.event_sources:
             await self.middleware.event_source_manager.subscribe_app(self, self.__esm_ident(ident), shortname, arg)
@@ -266,16 +266,16 @@ class Application:
             'subs': [ident],
         })
 
-    async def unsubscribe(self, ident):
+    async def unsubscribe(self, ident: str):
         if ident in self.__subscribed:
             self.__subscribed.pop(ident)
         elif self.__esm_ident(ident) in self.middleware.event_source_manager.idents:
             await self.middleware.event_source_manager.unsubscribe(self.__esm_ident(ident))
 
-    def __esm_ident(self, ident):
+    def __esm_ident(self, ident: str):
         return self.session_id + ident
 
-    def send_event(self, name, event_type, **kwargs):
+    def send_event(self, name: str, event_type: str, **kwargs):
         if (
             not any(i == name or i == '*' for i in self.__subscribed.values()) and
             self.middleware.event_source_manager.short_name_arg(

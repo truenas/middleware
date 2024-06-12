@@ -1,26 +1,32 @@
 import asyncio
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 import errno
 import functools
+import typing
 from uuid import uuid4
 
 from middlewared.event import EventSource
+from middlewared.main import Application, Middleware
 from middlewared.schema import ValidationErrors
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, CallException
 
-IdentData = namedtuple("IdentData", ["subscriber", "name", "arg"])
 
+class IdentData(typing.NamedTuple):
+    subscriber: 'Subscriber'
+    name: str
+    arg: typing.Optional[str]
+    
 
 class Subscriber:
-    def send_event(self, event_type, **kwargs):
+    def send_event(self, event_type: str, **kwargs):
         raise NotImplementedError
 
-    def terminate(self, error):
+    def terminate(self, error: typing.Optional[Exception]):
         raise NotImplementedError
 
 
 class AppSubscriber(Subscriber):
-    def __init__(self, app, collection):
+    def __init__(self, app: Application, collection: str):
         self.app = app
         self.collection = collection
 
@@ -28,7 +34,7 @@ class AppSubscriber(Subscriber):
         self.app.send_event(self.collection, event_type, **kwargs)
 
     def terminate(self, error):
-        error_dict = {}
+        error_dict: typing.Dict[str, dict[str, typing.Any]] = {}
         if error:
             if isinstance(error, ValidationErrors):
                 error_dict['error'] = self.app.get_error_dict(
@@ -58,6 +64,9 @@ class InternalSubscriber(Subscriber):
             self.iterator.queue.put_nowait(None)
 
 
+IteratorItemType = tuple[str, dict[str, typing.Any]]
+IteratorQueueItemType = typing.Optional[tuple[bool, typing.Union[IteratorItemType, Exception]]]
+
 class InternalSubscriberIterator:
     def __init__(self):
         self.queue = asyncio.Queue()
@@ -65,8 +74,8 @@ class InternalSubscriberIterator:
     def __aiter__(self):
         return self
 
-    async def __anext__(self):
-        item = await self.queue.get()
+    async def __anext__(self) -> typing.Optional[IteratorItemType]:
+        item: IteratorQueueItemType = await self.queue.get()
 
         if item is None:
             raise StopAsyncIteration
@@ -79,15 +88,15 @@ class InternalSubscriberIterator:
 
 
 class EventSourceManager:
-    def __init__(self, middleware):
+    def __init__(self, middleware: Middleware):
         self.middleware = middleware
 
-        self.event_sources = {}
-        self.instances = defaultdict(dict)
-        self.idents = {}
-        self.subscriptions = defaultdict(lambda: defaultdict(set))
+        self.event_sources: typing.Dict[str, type[EventSource]] = {}
+        self.instances: typing.DefaultDict[str, dict[typing.Optional[str], EventSource]] = defaultdict(dict)
+        self.idents: typing.Dict[str, IdentData] = {}
+        self.subscriptions: typing.DefaultDict[str, defaultdict[typing.Optional[str], set[str]]] = defaultdict(lambda: defaultdict(set))
 
-    def short_name_arg(self, name):
+    def short_name_arg(self, name: str):
         if ':' in name:
             shortname, arg = name.split(':', 1)
         else:
@@ -95,13 +104,13 @@ class EventSourceManager:
             arg = None
         return shortname, arg
 
-    def get_full_name(self, name, arg):
+    def get_full_name(self, name: str, arg: typing.Optional[str]):
         if arg is None:
             return name
         else:
             return f'{name}:{arg}'
 
-    def register(self, name, event_source, roles):
+    def register(self, name: str, event_source: typing.Type[EventSource], roles: typing.Iterable[str]):
         if not issubclass(event_source, EventSource):
             raise RuntimeError(f"{event_source} is not EventSource subclass")
 
@@ -109,7 +118,7 @@ class EventSourceManager:
 
         self.middleware.role_manager.register_event(name, roles)
 
-    async def subscribe(self, subscriber, ident, name, arg):
+    async def subscribe(self, subscriber: Subscriber, ident: str, name: str, arg: typing.Optional[str]):
         if ident in self.idents:
             raise ValueError(f"Ident {ident} is already used")
 
@@ -133,7 +142,7 @@ class EventSourceManager:
         else:
             self.middleware.logger.trace("Re-using existing instance of event source %r:%r", name, arg)
 
-    async def unsubscribe(self, ident, error=None):
+    async def unsubscribe(self, ident: str, error: typing.Optional[CallException]=None):
         ident_data = self.idents.pop(ident)
         self.terminate(ident_data, error)
 
@@ -145,24 +154,24 @@ class EventSourceManager:
             instance = self.instances[ident_data.name].pop(ident_data.arg)
             await instance.cancel()
 
-    def terminate(self, ident, error=None):
+    def terminate(self, ident: IdentData, error: typing.Optional[Exception]=None):
         ident.subscriber.terminate(error)
 
-    async def subscribe_app(self, app, ident, name, arg):
+    async def subscribe_app(self, app: Application, ident: str, name: str, arg: typing.Optional[str]):
         await self.subscribe(AppSubscriber(app, self.get_full_name(name, arg)), ident, name, arg)
 
-    async def unsubscribe_app(self, app):
+    async def unsubscribe_app(self, app: Application):
         for ident, ident_data in list(self.idents.items()):
             if isinstance(ident_data.subscriber, AppSubscriber) and ident_data.subscriber.app == app:
                 await self.unsubscribe(ident)
 
-    async def iterate(self, name, arg):
+    async def iterate(self, name: str, arg: typing.Optional[str]):
         ident = str(uuid4())
         subscriber = InternalSubscriber()
         await self.subscribe(subscriber, ident, name, arg)
         return subscriber.iterator
 
-    def _send_event(self, name, arg, event_type, **kwargs):
+    def _send_event(self, name: str, arg: typing.Optional[str], event_type: str, **kwargs):
         for ident in list(self.subscriptions[name][arg]):
             try:
                 ident_data = self.idents[ident]
@@ -172,7 +181,7 @@ class EventSourceManager:
 
             ident_data.subscriber.send_event(event_type, **kwargs)
 
-    async def _unsubscribe_all(self, name, arg, error=None):
+    async def _unsubscribe_all(self, name: str, arg: typing.Optional[str], error: typing.Optional[Exception]=None):
         for ident in self.subscriptions[name][arg]:
             self.terminate(self.idents.pop(ident), error)
 

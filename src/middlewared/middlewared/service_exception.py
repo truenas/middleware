@@ -14,7 +14,7 @@ class CallException(ErrnoMixin, Exception):
 
 
 class CallError(CallException):
-    def __init__(self, errmsg: str, errno: int=errno.EFAULT, extra=None):
+    def __init__(self, errmsg: str, errno: int=errno.EFAULT, extra: typing.Optional[list]=None):
         self.errmsg = errmsg
         self.errno = errno
         self.extra = extra
