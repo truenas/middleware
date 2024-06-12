@@ -116,7 +116,7 @@ class CatalogService(ConfigService):
 
     @private
     async def update_train_for_enterprise(self):
-        catalog = await self.middleware.call('catalog.get_instance', OFFICIAL_LABEL)
+        catalog = await self.middleware.call('catalog.config')
         if await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE':
             preferred_trains = []
             # Logic coming from here
