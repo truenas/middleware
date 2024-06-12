@@ -519,6 +519,7 @@ class DirectoryServices(Service):
             job.set_progress(100, f'{failover_status}: skipping directory service setup due to failover status')
             return
 
+        self.middleware.call_sync('sevice.restart', 'idmap')
         ldap_enabled = self.middleware.call_sync('ldap.config')['enable']
         ad_enabled = self.middleware.call_sync('activedirectory.config')['enable']
         if not ldap_enabled and not ad_enabled:
