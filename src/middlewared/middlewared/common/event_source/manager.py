@@ -1,12 +1,10 @@
+from __future__ import annotations
 import asyncio
 from collections import defaultdict
 import errno
 import functools
 import typing
 from uuid import uuid4
-
-if typing.TYPE_CHECKING:
-    from middlewared.main import Application, Middleware
 
 from middlewared.event import EventSource
 from middlewared.schema import ValidationErrors

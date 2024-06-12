@@ -1,12 +1,9 @@
+from __future__ import annotations
 import asyncio
 import contextlib
 import json
 import threading
 import typing
-
-if typing.TYPE_CHECKING:
-    from middlewared.main import Middleware
-    from middlewared.role import RoleManager
     
 from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
 from middlewared.settings import conf
