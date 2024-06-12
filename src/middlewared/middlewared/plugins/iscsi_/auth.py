@@ -123,7 +123,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
         if portals:
             usages.append(
-                f'Authorized access of {id_} is being used by portal(s): {", ".join(p["id"] for p in portals)}'
+                f'Authorized access of {id_} is being used by portal(s): {", ".join(str(p["id"]) for p in portals)}'
             )
         groups = await self.middleware.call(
             'datastore.query', 'services.iscsitargetgroups', [['iscsi_target_authgroup', '=', config['tag']]]
