@@ -3,7 +3,7 @@ import errno
 
 class Error(Exception):
 
-    def __init__(self, attribute, errmsg, errno=errno.EINVAL):
+    def __init__(self, attribute, errmsg: str, errno=errno.EINVAL):
         self.attribute = attribute
         self.errmsg = errmsg
         self.errno = errno
