@@ -1,3 +1,4 @@
+from __future__ import annotations
 import functools
 import importlib
 import inspect
@@ -5,13 +6,14 @@ import itertools
 import logging
 import os
 import sys
+import typing
 
 from middlewared.schema import Schemas
 
 logger = logging.getLogger(__name__)
 
 
-def load_modules(directory, base=None, depth=0):
+def load_modules(directory: str, base: typing.Optional[str]=None, depth=0):
     directory = os.path.normpath(directory)
     if base is None:
         middlewared_root = os.path.dirname(os.path.dirname(__file__))
@@ -132,7 +134,7 @@ class LoadPluginsMixin(SchemasMixin):
         # to make sure every schema is patched and references match
         self._resolve_methods(list(self._services.values()), self.get_events())
 
-    def add_service(self, service):
+    def add_service(self, service: Service):
         self._services[service._config.namespace] = service
         if service._config.namespace_alias:
             self._services_aliases[service._config.namespace_alias] = service

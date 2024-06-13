@@ -99,7 +99,7 @@ def real_crud_method(method):
 
 class Application:
 
-    def __init__(self, middleware: 'Middleware', loop: asyncio.AbstractEventLoop, request, response):
+    def __init__(self, middleware: 'Middleware', loop: asyncio.AbstractEventLoop, request: web.Request, response):
         self.middleware = middleware
         self.loop = loop
         self.request = request
@@ -867,13 +867,15 @@ class PreparedCall:
         self.job = job
 
 
+SetupFuncType = typing.Tuple[str, typing.Callable[['Middleware'], typing.Awaitable[None]]]
+
 class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     CONSOLE_ONCE_PATH = f'{MIDDLEWARE_RUN_DIR}/.middlewared-console-once'
 
     def __init__(
-        self, loop_debug=False, loop_monitor=True, debug_level=None,
-        log_handler=None, trace_malloc=False,
+        self, loop_debug=False, loop_monitor=True, debug_level: typing.Optional[str]=None,
+        log_handler=None, trace_malloc: typing.Sequence[int]=False,
         log_format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s',
     ):
         super().__init__()
@@ -906,10 +908,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
         self.__terminate_task = None
         self.jobs = JobsQueue(self)
-        self.mocks: typing.Dict[str, list[tuple[list, typing.Callable]]] = defaultdict(list)
-        self.tasks = set()
+        self.mocks: typing.DefaultDict[str, list[tuple[list, typing.Callable]]] = defaultdict(list)
+        self.tasks: typing.Set[asyncio.Task] = set()
 
-    def create_task(self, coro, *, name=None):
+    def create_task(self, coro: typing.Coroutine, *, name: typing.Optional[str]=None):
         task = self.loop.create_task(coro, name=name)
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
@@ -922,13 +924,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     async def __plugins_load(self):
 
-        setup_funcs = []
+        setup_funcs: typing.List[SetupFuncType] = []
 
-        def on_module_begin(mod):
+        def on_module_begin(mod: types.ModuleType):
             self._console_write(f'loaded plugin {mod.__name__}')
             self.__notify_startup_progress()
 
-        def on_module_end(mod):
+        def on_module_end(mod: types.ModuleType):
             if not hasattr(mod, 'setup'):
                 return
 
@@ -994,10 +996,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return setup_funcs
 
-    async def __plugins_setup(self, setup_funcs):
+    async def __plugins_setup(self, setup_funcs: typing.List[SetupFuncType]):
 
         # TODO: Rework it when we have order defined for setup functions
-        def sort_key(plugin__function):
+        def sort_key(plugin__function: SetupFuncType):
             plugin, function = plugin__function
 
             beginning = [
@@ -1639,8 +1641,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         """
         self.__event_subs[name].append(handler)
 
-    def event_register(self, name, description, *, private=False, returns=None, no_auth_required=False,
-                       no_authz_required=False, roles=None):
+    def event_register(self, name: str, description: str, *, private=False, returns=None, no_auth_required=False,
+                       no_authz_required=False, roles: typing.Optional[typing.Iterable[str]]=None):
         """
         All events middleware can send should be registered, so they are properly documented
         and can be browsed in documentation page without source code inspection.
@@ -1693,7 +1695,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         for thread_id, stack in get_threads_stacks().items():
             self.logger.debug('Thread %d stack:\n%s', thread_id, ''.join(stack))
 
-    def _tracemalloc_start(self, limit, interval):
+    def _tracemalloc_start(self, limit: int, interval: int):
         """
         Run an endless loop grabbing snapshots of allocated memory using
         the python's builtin "tracemalloc" module.

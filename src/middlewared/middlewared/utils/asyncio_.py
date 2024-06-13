@@ -1,7 +1,8 @@
 import asyncio
+from typing import Awaitable, Iterable, Optional
 
 
-async def asyncio_map(func, arguments, limit=None, *, semaphore=None):
+async def asyncio_map(func: Awaitable, arguments: Iterable, limit: Optional[int]=None, *, semaphore: Optional[asyncio.BoundedSemaphore]=None):
     if limit is not None and semaphore is not None:
         raise ValueError("`limit` and `semaphore` can not be specified simultaneously")
 

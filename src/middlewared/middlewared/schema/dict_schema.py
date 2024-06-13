@@ -1,5 +1,6 @@
 import copy
 import collections
+import typing
 
 from datetime import datetime, time
 
@@ -23,18 +24,18 @@ class Dict(Attribute):
             attrs = list(attrs[1:])
         else:
             name = ''
-        self.additional_attrs = kwargs.pop('additional_attrs', False)
-        self.conditional_defaults = kwargs.pop('conditional_defaults', {})
-        self.private_keys = kwargs.pop('private_keys', [])
-        self.strict = kwargs.pop('strict', False)
+        self.additional_attrs: bool = kwargs.pop('additional_attrs', False)
+        self.conditional_defaults: dict = kwargs.pop('conditional_defaults', {})
+        self.private_keys: list = kwargs.pop('private_keys', [])
+        self.strict: bool = kwargs.pop('strict', False)
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
-        self.update = kwargs.pop('update', False)
+        self.update: bool = kwargs.pop('update', False)
         if 'default' not in kwargs:
             kwargs['default'] = {}
         super(Dict, self).__init__(name, **kwargs)
 
-        self.attrs = {}
+        self.attrs: typing.Dict[str, Attribute] = {}
         for i in attrs:
             self.attrs[i.name] = i
 
@@ -119,7 +120,7 @@ class Dict(Attribute):
                 data[attr.name] = self._clean_attr(attr, NOT_PROVIDED, verrors)
         return data
 
-    def _clean_attr(self, attr, value, verrors):
+    def _clean_attr(self, attr: Attribute, value, verrors: ValidationErrors):
         try:
             return attr.clean(value)
         except Error as e:
