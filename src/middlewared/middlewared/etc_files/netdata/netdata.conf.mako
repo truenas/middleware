@@ -35,6 +35,9 @@
     home = ${netdata_cache_dataset}
     lib = ${netdata_state_location}
 
+[logs]
+	access = off
+
 [plugins]
 	proc = yes
 	diskspace = no
