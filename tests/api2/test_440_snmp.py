@@ -233,6 +233,8 @@ def test_15_validate_SNMPv3_private_user(request):
     The SNMP system user should always be available
     """
     depends(request, ["SNMP_STARTED"], scope="module")
+    # Reset the systemd restart counter
+    reset_systemd_svcs("snmpd snmp-agent")
 
     # Make sure the createUser command is not present
     res = ssh("tail -2 /var/lib/snmp/snmpd.conf")
@@ -283,6 +285,9 @@ def test_20_validate_SNMPv3_authPriv_user_add(request):
     Confirm we can add an SNMPv3 authPriv user
     """
     depends(request, ["SNMP_STARTED"], scope="module")
+    # Reset the systemd restart counter
+    reset_systemd_svcs("snmpd snmp-agent")
+
     call('snmp.update', SNMP_USER_CONFIG)
     assert get_systemctl_status('snmp-agent') == "RUNNING"
 
@@ -298,6 +303,9 @@ def test_25_validate_SNMPv3_user_function(request):
 
 def test_30_validate_SNMPv3_user_retained_across_service_restart(request):
     depends(request, ["SNMPv3_USER_ADD"], scope="module")
+    # Reset the systemd restart counter
+    reset_systemd_svcs("snmpd snmp-agent")
+
     res = call('service.stop', 'snmp')
     assert res is False
     res = call('service.start', 'snmp')
