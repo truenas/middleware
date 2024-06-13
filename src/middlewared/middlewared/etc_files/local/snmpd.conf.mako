@@ -1,6 +1,7 @@
 <%
     import os
-    from middlewared.plugins.snmp import _SNMP_SYSTEM_USER
+    from middlewared.plugins.snmp_.utils_snmp_user import SNMPSystem
+    system_user = SNMPSystem.SYSTEM_USER['name']
     uname = os.uname()
     hw_machine = uname.machine
     hw_model = middleware.call_sync("system.cpu_info")["cpu_model"]
@@ -18,7 +19,7 @@ sysObjectID 1.3.6.1.4.1.50536.3.${"1" if not middleware.call_sync("system.is_ent
 
 master agentx
 
-rwuser ${_SNMP_SYSTEM_USER['name']}
+rwuser ${system_user}
 
 % if config["v3"]:
 rwuser ${config["v3_username"]}

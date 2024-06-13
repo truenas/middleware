@@ -3,7 +3,6 @@ import threading
 import time
 import contextlib
 import pathlib
-from datetime import datetime, timedelta, timezone
 
 import libzfs
 import netsnmpagent
@@ -441,11 +440,11 @@ if __name__ == "__main__":
     agent.start()
 
     prev_zpool_info = {}
-    last_update_at = datetime.now(timezone.utc)
+    last_update_at = int(time.monotonic())
     while True:
         agent.check_and_process()
 
-        if datetime.now(timezone.utc) - last_update_at > timedelta(seconds=1):
+        if int(time.monotonic()) - last_update_at > 1:
             report_zfs_info(prev_zpool_info)
 
             if hdd_temp_table:
@@ -483,4 +482,4 @@ if __name__ == "__main__":
             if zilstat_10_thread:
                 zfs_zilstat_ops10.update(zilstat_10_thread.value)
 
-            last_update_at = datetime.now(timezone.utc)
+            last_update_at = int(time.monotonic())
