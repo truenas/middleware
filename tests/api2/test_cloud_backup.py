@@ -59,8 +59,6 @@ def cloud_backup_task(s3_credential):
             "password": "test",
             "keep_last": 100,
         }) as t:
-            call("cloud_backup.init", t["id"], job=True)
-
             yield types.SimpleNamespace(
                 local_dataset=local_dataset,
                 task=t,
@@ -134,8 +132,6 @@ def completed_cloud_backup_task(s3_credential):
             "password": "test",
             "keep_last": 100,
         }) as t:
-            call("cloud_backup.init", t["id"], job=True)
-
             run_task(t)
 
             snapshot = call("cloud_backup.list_snapshots", t["id"])[0]
@@ -170,16 +166,9 @@ def test_cloud_backup_restore(completed_cloud_backup_task, options, result):
         ]) == result
 
 
-def test_double_init_error(cloud_backup_task):
-    with pytest.raises(ClientException) as ve:
-        call("cloud_backup.init", cloud_backup_task.task["id"], job=True)
-
-    assert ve.value.error.rstrip().endswith("already initialized")
-
-
 @pytest.fixture(scope="module")
 def zvol():
-    with dataset("cloud_backup", {"type": "VOLUME", "volsize": 1024 * 1024}) as zvol:
+    with dataset("cloud_backup_zvol", {"type": "VOLUME", "volsize": 1024 * 1024}) as zvol:
         path = f"/dev/zvol/{zvol}"
         ssh(f"dd if=/dev/urandom of={path} bs=1M count=1")
 
@@ -200,8 +189,6 @@ def test_zvol_cloud_backup(s3_credential, zvol):
             "password": "test",
             "keep_last": 100,
         }) as t:
-            call("cloud_backup.init", t["id"], job=True)
-
             run_task(t)
 
 
@@ -249,3 +236,30 @@ def test_zvol_cloud_backup_runtime_validation(s3_credential, zvol):
     finally:
         if not exited:
             m.__exit__(None, None, None)
+
+
+def test_create_to_backend_with_a_different_password(cloud_backup_task):
+    with pytest.raises(ValidationErrors) as ve:
+        with task({
+            "path": cloud_backup_task.task["path"],
+            "credentials": cloud_backup_task.task["credentials"]["id"],
+            "attributes": cloud_backup_task.task["attributes"],
+            "password": "test2",
+            "keep_last": 100,
+        }):
+            pass
+
+    assert "cloud_backup_create.password" in ve.value
+
+
+def test_update_with_incorrect_password(cloud_backup_task):
+    with pytest.raises(ValidationErrors) as ve:
+        call("cloud_backup.update", cloud_backup_task.task["id"], {"password": "test2"})
+
+    assert "cloud_backup_update.password" in ve.value
+
+
+def test_sync_initializes_repo(cloud_backup_task):
+    clean()
+
+    call("cloud_backup.sync", cloud_backup_task.task["id"], job=True)

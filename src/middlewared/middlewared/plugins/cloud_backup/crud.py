@@ -8,6 +8,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
 from middlewared.validators import Range
+from .init import IncorrectPassword
 
 
 class CloudBackupModel(CloudTaskModelMixin, sa.Model):
@@ -89,6 +90,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
         cloud_backup["id"] = await self.middleware.call("datastore.insert", "tasks.cloud_backup",
                                                         {**cloud_backup, "job": None})
+
         await self.middleware.call("service.restart", "cron")
 
         return await self.get_instance(cloud_backup["id"])
@@ -130,6 +132,16 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         rv = await self.middleware.call("datastore.delete", "tasks.cloud_backup", id_)
         await self.middleware.call("service.restart", "cron")
         return rv
+
+    @private
+    async def _validate(self, app, verrors, name, data):
+        await super()._validate(app, verrors, name, data)
+
+        if not verrors:
+            try:
+                await self.middleware.call("cloud_backup.ensure_initialized", data)
+            except IncorrectPassword as e:
+                verrors.add(f"{name}.password", e.errmsg)
 
 
 class CloudBackupTaskFailedAlertClass(AlertClass, OneShotAlertClass):
