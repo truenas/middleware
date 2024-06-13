@@ -362,14 +362,14 @@ class OpenAPIResource(object):
                 schema['nullable'] = True
             schema['type'] = _type = _type[0]
         if _type == 'object':
-            for key, val in schema['properties'].items():
+            for key, val in schema.get('properties', {}).items():
                 schema['properties'][key] = self._convert_schema(val)
         elif _type == 'array':
             items = schema.get('items')
-            for i, item in enumerate(list(items)):
-                if item.get('type') == 'null':
-                    items.remove(item)
             if isinstance(items, list):
+                for i, item in enumerate(list(items)):
+                    if item.get('type') == 'null':
+                        items.remove(item)
                 if len(items) > 1:
                     schema['items'] = {'oneOf': items}
                 elif len(items) > 0:

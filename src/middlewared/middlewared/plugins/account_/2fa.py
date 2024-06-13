@@ -1,6 +1,8 @@
 import errno
 import pyotp
 
+from middlewared.api import api_method
+from middlewared.api.current import *
 from middlewared.schema import accepts, Bool, Dict, Int, Password, Ref, returns, Str
 from middlewared.service import CallError, no_authz_required, pass_app, private, Service
 from middlewared.plugins.system.product import PRODUCT_NAME
@@ -135,25 +137,11 @@ class UserService(Service):
         )
 
     @no_authz_required
-    @accepts(
-        Str('username'),
-        Dict(
-            '2fa_configuration_options',
-            Int('otp_digits', validators=[Range(min_=6, max_=8)], required=True),
-            Int('interval', validators=[Range(min_=5)], required=True),
-            update=True,
-        )
-    )
-    @returns(Ref('user_entry'))
+    @api_method(UserRenew2faSecretArgs, UserRenew2faSecretResult)
     @pass_app()
     async def renew_2fa_secret(self, app, username, twofactor_options):
         """
         Renew `username` user's two-factor authentication secret.
-
-        `2fa_configuration_options.otp_digits` represents number of allowed digits in the OTP.
-
-        `2fa_configuration_options.interval` is time duration in seconds specifying OTP expiration time
-        from it's creation time.
 
         NOTE: This username must match the authenticated username unless authenticated
         credentials have FULL_ADMIN role.

@@ -1,4 +1,10 @@
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
+from middlewared.api import api_method
+from middlewared.api.current import (CloudCredentialEntry,
+                                     CloudCredentialCreateArgs, CloudCredentialCreateResult,
+                                     CloudCredentialUpdateArgs, CloudCredentialUpdateResult,
+                                     CloudCredentialDeleteArgs, CloudCredentialDeleteResult,
+                                     CloudCredentialVerifyArgs, CloudCredentialVerifyResult)
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_schema
@@ -570,17 +576,9 @@ class CredentialsService(CRUDService):
 
         role_prefix = "CLOUD_SYNC"
 
-    ENTRY = Patch(
-        "cloud_sync_credentials_create",
-        "cloud_sync_credentials_entry",
-        ("add", Int("id")),
-    )
+        entry = CloudCredentialEntry
 
-    @accepts(Dict(
-        "cloud_sync_credentials_verify",
-        Str("provider", required=True),
-        Dict("attributes", additional_attrs=True, required=True),
-    ), roles=["CLOUD_SYNC_WRITE"])
+    @api_method(CloudCredentialVerifyArgs, CloudCredentialVerifyResult, roles=["CLOUD_SYNC_WRITE"])
     async def verify(self, data):
         """
         Verify if `attributes` provided for `provider` are authorized by the `provider`.
@@ -599,13 +597,7 @@ class CredentialsService(CRUDService):
             else:
                 return {"valid": False, "error": proc.stderr, "excerpt": lsjson_error_excerpt(proc.stderr)}
 
-    @accepts(Dict(
-        "cloud_sync_credentials_create",
-        Str("name", required=True),
-        Str("provider", required=True),
-        Dict("attributes", additional_attrs=True, required=True, private=True),
-        register=True,
-    ))
+    @api_method(CloudCredentialCreateArgs, CloudCredentialCreateResult)
     async def do_create(self, data):
         """
         Create Cloud Sync Credentials.
@@ -621,14 +613,7 @@ class CredentialsService(CRUDService):
         )
         return data
 
-    @accepts(
-        Int("id"),
-        Patch(
-            "cloud_sync_credentials_create",
-            "cloud_sync_credentials_update",
-            ("attr", {"update": True})
-        )
-    )
+    @api_method(CloudCredentialUpdateArgs, CloudCredentialUpdateResult)
     async def do_update(self, id_, data):
         """
         Update Cloud Sync Credentials of `id`.
@@ -651,7 +636,7 @@ class CredentialsService(CRUDService):
 
         return data
 
-    @accepts(Int("id"))
+    @api_method(CloudCredentialDeleteArgs, CloudCredentialDeleteResult)
     async def do_delete(self, id_):
         """
         Delete Cloud Sync Credentials of `id`.

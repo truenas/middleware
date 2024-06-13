@@ -590,7 +590,7 @@ class Job:
             'logs_path': self.logs_path,
             'logs_excerpt': self.logs_excerpt,
             'progress': self.progress,
-            'result': self.result if raw_result else self.middleware.dump_result(self.result, method=self.method),
+            'result': self.result if raw_result else self.middleware.dump_result(self.method, self.result, False),
             'error': self.error,
             'exception': self.exception,
             'exc_info': exc_info,

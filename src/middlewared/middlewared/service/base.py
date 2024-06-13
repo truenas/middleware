@@ -11,6 +11,7 @@ def service_config(klass, config):
         'datastore_extend_context': None,
         'datastore_primary_key': 'id',
         'datastore_primary_key_type': 'integer',
+        'entry': None,
         'event_register': True,
         'event_send': True,
         'service': None,
