@@ -97,6 +97,11 @@ class RcloneConfig:
                 "- .zfs/**",
             ]
 
+            if self.cloud_sync.get("path"):
+                if os.path.dirname(self.cloud_sync.get("path").rstrip("/")) == "/mnt":
+                    rclone_filter.append("- /ix-applications")
+                    rclone_filter.append("- /ix-applications/**")
+
             for item in self.cloud_sync.get("exclude") or []:
                 rclone_filter.append(f"- {item}")
 
