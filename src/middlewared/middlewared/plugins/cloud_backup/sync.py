@@ -1,7 +1,6 @@
 import asyncio
 from datetime import datetime
 import itertools
-import subprocess
 
 from middlewared.plugins.cloud.path import check_local_path
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
@@ -94,30 +93,6 @@ class CloudBackupService(Service):
         namespace = "cloud_backup"
 
     @item_method
-    @accepts(Int("id"))
-    @job()
-    def init(self, job_id, id_):
-        """
-        Initializes the repository for the cloud backup job `id`.
-        """
-        self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
-
-        cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id_)
-
-        restic_config = get_restic_config(cloud_backup)
-
-        try:
-            subprocess.run(
-                restic_config.cmd + ["init"],
-                env=restic_config.env,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-        except subprocess.CalledProcessError as e:
-            raise CallError(e.stderr)
-
-    @item_method
     @accepts(
         Int("id"),
         Dict(
@@ -142,6 +117,8 @@ class CloudBackupService(Service):
     async def _sync(self, cloud_backup, options, job):
         job.set_progress(0, "Starting")
         try:
+            await self.middleware.call("cloud_backup.ensure_initialized", cloud_backup)
+
             await restic(self.middleware, job, cloud_backup, options["dry_run"])
 
             job.set_progress(100, "Cleaning up")
