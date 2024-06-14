@@ -12,7 +12,6 @@ from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.system import reset_systemd_svcs
 from pysnmp.hlapi import (CommunityData, ContextData, ObjectIdentity,
                           ObjectType, SnmpEngine, UdpTransportTarget, getCmd)
-from pytest_dependency import depends
 
 
 from auto_config import ha, interface, password, user
@@ -153,7 +152,7 @@ def user_list_users(snmp_config):
     return [x.split()[-1].strip('\"') for x in res.splitlines()]
 
 
-@pytest.mark.dependency(name='SNMP_CONFIGURED', scope="module")
+@pytest.mark.dependency(name='SNMP_CONFIGURED')
 def test_01_Configure_SNMP(initialize_for_snmp_tests):
     config = initialize_for_snmp_tests
 
@@ -171,9 +170,8 @@ def test_01_Configure_SNMP(initialize_for_snmp_tests):
     })
 
 
-@pytest.mark.dependency(name='SNMP_ENABLED', scope="module")
-def test_02_Enable_SNMP_service_at_boot(request):
-    depends(request, ["SNMP_CONFIGURED"], scope="module")
+@pytest.mark.dependency(name='SNMP_ENABLED', depends=["SNMP_CONFIGURED"])
+def test_02_Enable_SNMP_service_at_boot():
     id = call('service.update', 'snmp', {'enable': True})
     assert isinstance(id, int)
 
@@ -186,28 +184,27 @@ def test_03_verify_snmp_does_not_leak_password_in_logs():
         ssh(f'grep -R "{PASSWORD}" /var/log/syslog')
 
 
-def test_04_checking_to_see_if_snmp_service_is_enabled_at_boot(request):
-    depends(request, ["SNMP_ENABLED"], scope="module")
+@pytest.mark.dependency(depends=["SNMP_ENABLED"])
+def test_04_checking_to_see_if_snmp_service_is_enabled_at_boot():
     res = call('service.query', [['service', '=', 'snmp']])
     assert res[0]['enable'] is True
 
 
-@pytest.mark.dependency(name='SNMP_STARTED', scope="module")
-def test_05_starting_snmp_service(request):
-    depends(request, ["SNMP_CONFIGURED"], scope="module")
+@pytest.mark.dependency(name='SNMP_STARTED', depends=["SNMP_ENABLED"])
+def test_05_starting_snmp_service():
     call('service.start', 'snmp')
     # Make sure the custom agent is also running
     assert get_systemctl_status('snmp-agent') == "RUNNING"
 
 
-def test_07_Validate_that_SNMP_service_is_running(request):
-    depends(request, ["SNMP_STARTED"], scope="module")
+@pytest.mark.dependency(depends=["SNMP_STARTED"])
+def test_07_Validate_that_SNMP_service_is_running():
     res = call('service.query', [['service', '=', 'snmp']])
     assert res[0]['state'] == 'RUNNING'
 
 
-def test_08_Validate_that_SNMP_settings_are_preserved(request):
-    depends(request, ["SNMP_STARTED"], scope="module")
+@pytest.mark.dependency(depends=["SNMP_STARTED"])
+def test_08_Validate_that_SNMP_settings_are_preserved():
     data = call('snmp.config')
     assert data['community'] == COMMUNITY
     assert data['traps'] == TRAPS
@@ -215,24 +212,24 @@ def test_08_Validate_that_SNMP_settings_are_preserved(request):
     assert data['location'] == LOCATION
 
 
-def test_09_get_sysname_reply_uses_same_ip(request):
-    depends(request, ["SNMP_STARTED"], scope="module")
+@pytest.mark.dependency(depends=["SNMP_STARTED"])
+def test_09_get_sysname_reply_uses_same_ip():
     validate_snmp_get_sysname_uses_same_ip(truenas_server.ip)
 
 
 @skip_ha_tests
-def test_10_ha_get_sysname_reply_uses_same_ip(request):
-    depends(request, ["SNMP_STARTED"], scope="module")
+@pytest.mark.dependency(depends=["SNMP_STARTED"])
+def test_10_ha_get_sysname_reply_uses_same_ip():
     validate_snmp_get_sysname_uses_same_ip(truenas_server.ip)
     validate_snmp_get_sysname_uses_same_ip(truenas_server.nodea_ip)
     validate_snmp_get_sysname_uses_same_ip(truenas_server.nodeb_ip)
 
 
-def test_15_validate_SNMPv3_private_user(request):
+@pytest.mark.dependency(depends=["SNMP_STARTED"])
+def test_15_validate_SNMPv3_private_user():
     """
     The SNMP system user should always be available
     """
-    depends(request, ["SNMP_STARTED"], scope="module")
     # Reset the systemd restart counter
     reset_systemd_svcs("snmpd snmp-agent")
 
@@ -250,6 +247,7 @@ def test_15_validate_SNMPv3_private_user(request):
     assert "snmpSystemUser" in res
 
 
+@pytest.mark.dependency(depends=["SNMP_STARTED"])
 @pytest.mark.parametrize('payload,attrib,errmsg', [
     ({'v3': False, 'community': ''},
      'snmp_update.community', 'This field is required when SNMPv3 is disabled'),
@@ -266,11 +264,10 @@ def test_15_validate_SNMPv3_private_user(request):
     ({'v3_privproto': 'AES'},
      'snmp_update.v3_privpassphrase', 'This field is required when SNMPv3 private protocol is specified'),
 ])
-def test_17_test_v3_validators(request, payload, attrib, errmsg):
+def test_17_test_v3_validators(payload, attrib, errmsg):
     """
     All these configuration updates should fail.
     """
-    depends(request, ["SNMP_STARTED"], scope="module")
     with pytest.raises(ValidationErrors) as ve:
         call('snmp.update', payload)
     if attrib:
@@ -279,12 +276,11 @@ def test_17_test_v3_validators(request, payload, attrib, errmsg):
         assert f"{errmsg}" in ve.value.errors[0].errmsg
 
 
-@pytest.mark.dependency(name='SNMPv3_USER_ADD', scope="module")
-def test_20_validate_SNMPv3_authPriv_user_add(request):
+@pytest.mark.dependency(name='SNMPv3_USER_ADD', depends=["SNMP_STARTED"])
+def test_20_validate_SNMPv3_authPriv_user_add():
     """
     Confirm we can add an SNMPv3 authPriv user
     """
-    depends(request, ["SNMP_STARTED"], scope="module")
     # Reset the systemd restart counter
     reset_systemd_svcs("snmpd snmp-agent")
 
@@ -295,14 +291,14 @@ def test_20_validate_SNMPv3_authPriv_user_add(request):
     assert SNMP_USER_NAME in res
 
 
-def test_25_validate_SNMPv3_user_function(request):
-    depends(request, ["SNMPv3_USER_ADD"], scope="module")
+@pytest.mark.dependency(depends=["SNMPv3_USER_ADD"])
+def test_25_validate_SNMPv3_user_function():
     res = user_list_users(SNMP_USER_CONFIG)
     assert SNMP_USER_NAME in res
 
 
-def test_30_validate_SNMPv3_user_retained_across_service_restart(request):
-    depends(request, ["SNMPv3_USER_ADD"], scope="module")
+@pytest.mark.dependency(depends=["SNMPv3_USER_ADD"])
+def test_30_validate_SNMPv3_user_retained_across_service_restart():
     # Reset the systemd restart counter
     reset_systemd_svcs("snmpd snmp-agent")
 
@@ -315,8 +311,8 @@ def test_30_validate_SNMPv3_user_retained_across_service_restart(request):
     assert SNMP_USER_NAME in res
 
 
-def test_32_validate_SNMPv3_user_retained_across_v3_disable(request):
-    depends(request, ["SNMPv3_USER_ADD"], scope="module")
+@pytest.mark.dependency(depends=["SNMPv3_USER_ADD"])
+def test_32_validate_SNMPv3_user_retained_across_v3_disable():
 
     # Disable and check
     res = call('snmp.update', {'v3': False})
@@ -331,6 +327,7 @@ def test_32_validate_SNMPv3_user_retained_across_v3_disable(request):
     assert SNMP_USER_NAME in res
 
 
+@pytest.mark.dependency(depends=["SNMPv3_USER_ADD"])
 @pytest.mark.parametrize('key,value', [
     ('reset', ''),  # Reset systemd counters
     ('v3_username', 'ixUser'),
@@ -342,13 +339,12 @@ def test_32_validate_SNMPv3_user_retained_across_v3_disable(request):
     # Restore original user name
     ('v3_username', SNMP_USER_NAME)
 ])
-def test_35_validate_SNMPv3_user_changes(request, key, value):
+def test_35_validate_SNMPv3_user_changes(key, value):
     """
     Make changes to the SNMPv3 user name, password, etc. and confirm user function.
     This also tests a pass phrase that includes spaces.
     NOTE: We include systemd counter resets because these calls require the most restarts.
     """
-    depends(request, ["SNMPv3_USER_ADD"], scope="session")
     if key == 'reset':
         # Reset the systemd restart counter
         reset_systemd_svcs("snmpd snmp-agent")
@@ -363,8 +359,8 @@ def test_35_validate_SNMPv3_user_changes(request, key, value):
         assert user_config['v3_username'] in res
 
 
-def test_40_validate_SNMPv3_user_delete(request):
-    depends(request, ["SNMPv3_USER_ADD"], scope="module")
+@pytest.mark.dependency(depends=["SNMPv3_USER_ADD"])
+def test_40_validate_SNMPv3_user_delete():
 
     # Make sure the user is currently present
     res = call('snmp.get_snmp_users')
