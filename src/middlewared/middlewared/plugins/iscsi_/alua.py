@@ -214,39 +214,6 @@ class iSCSITargetAluaService(Service):
         local_requires_reload = False
         remote_requires_reload = False
 
-        # First we ensure we're not joined to any lockspaces.  Zero things
-        await self.middleware.call('dlm.local_reset')
-        job.set_progress(5, 'Cleaned local lockspaces')
-
-        # Next ensure the ACTIVE lockspaces are reset
-        # It's OK if we wait here more or less indefinitely.
-        while self.standby_starting:
-            try:
-                await self.middleware.call('failover.call_remote', 'dlm.local_reset', [False])
-                break
-            except Exception:
-                await asyncio.sleep(RETRY_SECONDS)
-        if not self.standby_starting:
-            job.set_progress(10, 'Abandoned job.')
-            return
-        else:
-            job.set_progress(10, 'Asked to reset remote lockspaces')
-
-        max_retries = 120
-        while self.standby_starting and max_retries:
-            try:
-                if len(await self.middleware.call('failover.call_remote', 'dlm.lockspaces')) == 0:
-                    break
-                await asyncio.sleep(1)
-                max_retries -= 1
-            except Exception:
-                await asyncio.sleep(RETRY_SECONDS)
-        if not self.standby_starting:
-            job.set_progress(15, 'Abandoned job.')
-            return
-        else:
-            job.set_progress(15, 'Reset remote lockspaces')
-
         # We are the STANDBY node.  Tell the ACTIVE it can logout any HA targets it had left over.
         while self.standby_starting:
             try:
@@ -265,6 +232,7 @@ class iSCSITargetAluaService(Service):
             return
         else:
             job.set_progress(20, 'Logged out HA targets (remote node)')
+            self.logger.debug('Logged out HA targets (remote node)')
 
         # We may want to ensure that the iSCSI service on the remote node is fully
         # up.  Since we have switched it systemd_async_start asking get_unit_state
@@ -283,6 +251,27 @@ class iSCSITargetAluaService(Service):
             return
         else:
             job.set_progress(22, 'Remote iscsitarget is active')
+            self.logger.debug('Remote iscsitarget is active')
+
+        # Next turn off cluster_mode for all the extents.
+        # this will avoid "ignore dlm msg because seq mismatch" errors when we reconnect
+        # Rather than try to execute in parallel, we will take our time
+        while self.standby_starting:
+            try:
+                devices = await self.middleware.call('failover.call_remote', 'iscsi.scst.cluster_mode_devices_set')
+                if not devices:
+                    break
+                for device in devices:
+                    await self.middleware.call('failover.call_remote', 'iscsi.scst.set_device_cluster_mode', [device, 0])
+            except Exception as e:
+                # This is a fail-safe exception catch.  Should never occur.
+                self.logger.warning('standby_start job: %r', e, exc_info=True)
+                await asyncio.sleep(RETRY_SECONDS)
+        if not self.standby_starting:
+            job.set_progress(24, 'Abandoned job.')
+            return
+        else:
+            job.set_progress(24, 'Cleared cluster_mode on ACTIVE node')
 
         # Reload on ACTIVE node.  This will ensure the HA targets are available
         if self.standby_starting:
@@ -470,9 +459,17 @@ class iSCSITargetAluaService(Service):
                 self.logger.debug(f'Setting cluster_mode on ACTIVE node for {rextents}')
                 await self.middleware.call('failover.call_remote', 'iscsi.scst.set_devices_cluster_mode', [rextents, 1])
 
-                # Then ensure cluster_mode is enabled on the STANDBY node
-                self.logger.debug(f'Setting cluster_mode on STANDBY node for {lextents}')
-                await self.middleware.call('iscsi.scst.set_devices_cluster_mode', lextents, 1)
+                # Then ensure cluster_mode is enabled on the STANDBY node.  Retry if necessary.
+                retries = 10
+                while retries:
+                    try:
+                        self.logger.debug(f'Setting cluster_mode on STANDBY node for {lextents}')
+                        await self.middleware.call('iscsi.scst.set_devices_cluster_mode', lextents, 1)
+                        break
+                    except Exception as e:
+                        self.logger.warning(f'Failed to set cluster_mode on STANDBY node for {lextents}: %r', e, exc_info=True)
+                    retries -= 1
+                    await asyncio.sleep(1)
                 need_to_reload = True
         if need_to_reload:
             job.set_progress(90, 'Fixed cluster_mode')
@@ -626,3 +623,39 @@ class iSCSITargetAluaService(Service):
 
         job.set_progress(100, 'Complete force-close of iSCSI sessions')
         self.logger.debug('Complete force-close of iSCSI sessions')
+
+    @job(lock='reset_active', transient=True, lock_queue_size=1)
+    async def reset_active(self, job):
+        """Job to be run on the ACTIVE node before the STANDBY node will join."""
+        job.set_progress(0, 'Start logout HA targets')
+        self.logger.debug('Start logout HA targets')
+
+        # This is similar, but not identical to iscsi.target.logout_ha_targets
+        # The main difference is these are logged out in series, to allow e.g. cluster_mode settle
+        # This is also why it is a job. it may take longer to run.
+        iqns = await self.middleware.call('iscsi.target.active_ha_iqns')
+
+        # Check what's already logged in
+        existing = await self.middleware.call('iscsi.target.logged_in_iqns')
+
+        # Generate the set of things we want to logout (don't assume every IQN, just the HA ones)
+        todo = set()
+        for iqn in iqns.values():
+            if iqn in existing:
+                todo.add(iqn)
+
+        count = 0
+        remote_ip = await self.middleware.call('failover.remote_ip')
+        while todo and (await self.middleware.call('failover.status')) and (iqn := todo.pop()):
+            try:
+                await self.middleware.call('iscsi.target.logout_iqn', remote_ip, iqn)
+                count += 1
+            except Exception:
+                self.logger.warning('Failed to logout %r', iqn, exc_info=True)
+
+        self.logger.debug('Logged out %d HA targets', count)
+        job.set_progress(50, 'Logged out HA targets')
+
+        await self.middleware.call('dlm.eject_peer')
+        self.logger.debug('Ejected peer')
+        job.set_progress(10, 'Ejected peer')

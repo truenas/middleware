@@ -312,6 +312,7 @@ class DistributedLockManagerService(Service):
     async def local_reset(self, disable_iscsi=True):
         """Locally remove the PEER node from all lockspaces and reset cluster_mode to
         zero, WITHOUT talking to the peer node."""
+        self.logger.info('local_reset starting: %r', disable_iscsi)
         # First turn off all access to targets from outside.
         if disable_iscsi:
             await self.middleware.call('iscsi.scst.disable')
@@ -319,12 +320,26 @@ class DistributedLockManagerService(Service):
         # Locally eject the peer.  Will prevent remote comms below.
         await self.eject_peer()
 
+        # Wait for up to 10 seconds for things to settle
+        retries = 10
+        while retries and await self.middleware.call('dlm.peer_lockspaces'):
+            await asyncio.sleep(1)
+            self.logger.info('Waited for lockspace to settle')
+            retries -= 1
+
         # Finally turn off cluster mode locally on all extents
         try:
             DistributedLockManagerService.resetting = True
             await self.middleware.call('iscsi.scst.set_all_cluster_mode', 0)
         finally:
             DistributedLockManagerService.resetting = False
+        self.logger.info('local_reset done')
+
+    @private
+    async def is_local_reset_complete(self):
+        if await self.middleware.call('dlm.peer_lockspaces'):
+            return False
+        return await self.middleware.call('iscsi.scst.check_cluster_modes_clear')
 
 
 async def udev_dlm_hook(middleware, data):

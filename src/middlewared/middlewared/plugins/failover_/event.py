@@ -686,6 +686,8 @@ class FailoverEventsService(Service):
             logger.info('Clearing iSCSI suspend')
             if self.run_call('iscsi.scst.clear_suspend'):
                 logger.info('Cleared iSCSI suspend')
+            # Kick off a job to start clearing up HA targets from when we were STANDBY
+            self.run_call('iscsi.alua.reset_active')
 
         # restart the remaining "non-critical" services
         logger.info('Restarting remaining services')
