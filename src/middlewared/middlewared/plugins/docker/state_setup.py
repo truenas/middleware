@@ -8,7 +8,7 @@ from datetime import datetime
 from middlewared.service import CallError, private, Service
 
 from .state_utils import (
-    DATASET_DEFAULTS, docker_datasets, docker_dataset_custom_props, docker_dataset_update_props,
+    DATASET_DEFAULTS, docker_datasets, docker_dataset_custom_props, docker_dataset_update_props, IX_APPS_MOUNT_PATH,
     missing_required_datasets,
 )
 
@@ -80,7 +80,10 @@ class DockerSetupService(Service):
                 }
             )
             if not dataset:
-                test_path = os.path.join('/mnt', dataset_name)
+                base_ds_name = os.path.basename(dataset_name)
+                test_path = IX_APPS_MOUNT_PATH if base_ds_name == 'ix-apps' else os.path.join(
+                    IX_APPS_MOUNT_PATH, base_ds_name
+                )
                 with contextlib.suppress(FileNotFoundError):
                     await self.middleware.run_in_thread(
                         shutil.move, test_path, f'{test_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}',
