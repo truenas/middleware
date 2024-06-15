@@ -122,6 +122,19 @@ log {
 
 log {
   source(s_src);
+  filter(f_k3s_exclude);
+  destination(d_null);
+  flags(final);
+};
+
+log {
+  source(s_src);
+  filter(f_drop_systemd_containerd);
+  destination(d_null);
+};
+
+log {
+  source(s_src);
   filter(f_containerd);
   destination { file("/var/log/containerd.log"); };
   flags(final);
