@@ -26,11 +26,9 @@ class CatalogService(Service):
             catalog = await self.middleware.call('catalog.config')
 
             job.set_progress(5, 'Updating catalog repository')
-            await self.middleware.call('catalog.update_git_repository', {
-                **catalog,
-                'repository': OFFICIAL_CATALOG_REPO,
-                'branch': OFFICIAL_CATALOG_BRANCH,
-            })
+            await self.middleware.call(
+                'catalog.update_git_repository', catalog['location'], OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH
+            )
             job.set_progress(15, 'Reading catalog information')
             # Update feature map cache whenever official catalog is updated
             await self.middleware.call('catalog.get_feature_map', False)
@@ -53,8 +51,6 @@ class CatalogService(Service):
             self.SYNCED = True
 
     @private
-    def update_git_repository(self, catalog):
+    def update_git_repository(self, location, repository, branch):
         self.middleware.call_sync('network.general.will_perform_activity', 'catalog')
-        return pull_clone_repository(
-            catalog['repository'], os.path.dirname(catalog['location']), catalog['branch'],
-        )
+        return pull_clone_repository(repository, location, branch)

@@ -2,15 +2,12 @@ import os
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.plugins.docker.state_utils import catalog_ds_path
+from middlewared.plugins.docker.state_utils import catalog_ds_path, CATALOG_DATASET_NAME
 from middlewared.schema import accepts, Dict, List, Str
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.validators import Match
 
-from .git_utils import convert_repository_to_path
-from .utils import (
-    OFFICIAL_CATALOG_BRANCH, OFFICIAL_CATALOG_REPO, OFFICIAL_ENTERPRISE_TRAIN, OFFICIAL_LABEL, TMP_IX_APPS_CATALOGS
-)
+from .utils import OFFICIAL_ENTERPRISE_TRAIN, OFFICIAL_LABEL, TMP_IX_APPS_CATALOGS
 
 
 class CatalogModel(sa.Model):
@@ -49,16 +46,14 @@ class CatalogService(ConfigService):
     def extend(self, data, context):
         data.update({
             'id': data['label'],
-            'location': os.path.join(
-                context['catalog_dir'], convert_repository_to_path(OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH)
-            ),
+            'location': context['catalog_dir'],
         })
         return data
 
     @private
     async def extend_context(self, rows, extra):
         if await self.dataset_mounted():
-            catalog_dir = catalog_ds_path((await self.middleware.call('docker.config'))['dataset'])
+            catalog_dir = catalog_ds_path()
         else:
             # FIXME: This can eat lots of memory if it's a large catalog
             catalog_dir = TMP_IX_APPS_CATALOGS
@@ -72,7 +67,8 @@ class CatalogService(ConfigService):
         if docker_ds := (await self.middleware.call('docker.config'))['dataset']:
             return bool(await self.middleware.call(
                 'filesystem.mount_info', [
-                    ['mount_source', '=', os.path.join(docker_ds, 'catalogs')], ['fs_type', '=', 'zfs'],
+                    ['mount_source', '=', os.path.join(docker_ds, CATALOG_DATASET_NAME)],
+                    ['fs_type', '=', 'zfs'],
                 ],
             ))
 

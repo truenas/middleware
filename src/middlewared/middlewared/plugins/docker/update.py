@@ -1,8 +1,9 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Dict, Int, Patch, Str
-from middlewared.service import CallError, ConfigService, job, private
+from middlewared.service import CallError, ConfigService, job, private, returns
 
+from .state_utils import Status
 from .utils import applications_ds_name
 
 
@@ -53,8 +54,25 @@ class DockerService(ConfigService):
         config.update(data)
 
         if old_config != config:
-            await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
+            if not config['pool']:
+                try:
+                    await self.middleware.call('service.stop', 'docker')
+                except Exception as e:
+                    raise CallError(f'Failed to stop docker service: {e}')
+                await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 
+            await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
             await self.middleware.call('docker.setup.status_change')
 
         return await self.config()
+
+    @accepts()
+    @returns(Dict(
+        Str('status', enum=[e.value for e in Status]),
+        Str('description'),
+    ))
+    async def status(self):
+        """
+        Returns the status of the docker service.
+        """
+        return await self.middleware.call('docker.state.get_status_dict')
