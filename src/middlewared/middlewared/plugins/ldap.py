@@ -622,7 +622,7 @@ class LDAPService(ConfigService):
             if data['server_type'] == constants.SERVER_TYPE_ACTIVE_DIRECTORY:
                 verrors.add(
                     'ldap_update.hostname',
-                    'Active Directoy plugin must be used to join Active Directory domains.'
+                    'Active Directory plugin must be used to join Active Directory domains.'
                 )
 
     @private
