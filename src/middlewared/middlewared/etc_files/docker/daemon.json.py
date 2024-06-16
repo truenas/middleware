@@ -46,11 +46,10 @@ def render(service, middleware):
 
     os.makedirs('/etc/docker', exist_ok=True)
     data_root = os.path.join(IX_APPS_MOUNT_PATH, 'docker')
-    with open('/etc/docker/daemon.json', 'w') as f:
-        f.write(json.dumps({
-            'data-root': data_root,
-            'exec-opts': ['native.cgroupdriver=cgroupfs'],
-            'iptables': False,
-            'storage-driver': 'overlay2',
-            **gpu_configuration(middleware),
-        }))
+    return json.dumps({
+        'data-root': data_root,
+        'exec-opts': ['native.cgroupdriver=cgroupfs'],
+        'iptables': False,
+        'storage-driver': 'overlay2',
+        **gpu_configuration(middleware),
+    })
