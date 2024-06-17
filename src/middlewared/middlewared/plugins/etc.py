@@ -69,7 +69,7 @@ class EtcService(Service):
 
     GROUPS = {
         'docker': [
-            {'type': 'py', 'path': 'docker'},
+            {'type': 'py', 'path': 'docker/daemon.json'},
         ],
         'truenas_nvdimm': [
             {'type': 'py', 'path': 'truenas_nvdimm', 'checkpoint': 'post_init'},
