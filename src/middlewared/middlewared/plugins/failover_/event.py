@@ -406,10 +406,15 @@ class FailoverEventsService(Service):
             #           (maybe the event only gets triggered if the lagg goes down)
             #
             logger.info('Checking VIP failover groups')
-            _, backups = self.run_call(
+            _, backups, offline = self.run_call(
                 'failover.vip.check_failover_group', ifname, fobj['groups']
             )
             logger.info('Done checking VIP failover groups')
+
+            if offline:
+                # this isn't common but we're very verbose in this file so let's
+                # log the offline interfaces while we're here
+                logger.warning('Offline interfaces detected: %r', ', '.join(offline))
 
             # this means that we received a master event and the interface was
             # in a failover group. And in that failover group, there were other
@@ -743,9 +748,14 @@ class FailoverEventsService(Service):
         #   TODO: Not sure how keepalived and laggs operate so need to test this
         #           (maybe the event only gets triggered if the lagg goes down)
         #
-        masters, _ = self.run_call(
+        masters, _, offline = self.run_call(
             'failover.vip.check_failover_group', ifname, fobj['groups']
         )
+
+        if offline:
+            # this isn't common but we're very verbose in this file so let's
+            # log the offline interfaces while we're here
+            logger.warning('Offline interfaces detected: %r', ', '.join(offline))
 
         # this means that we received a BACKUP event and the interface was
         # in a failover group. And in that failover group, there were other
