@@ -31,8 +31,19 @@ class DetectVirtualIpStates(Service):
                 # group so we can break the loop early here
                 break
 
-        masters, backups = list(), list()
-        for i in await self.middleware.call('interface.query', [['id', 'in', failover_grp_ifaces]]):
+        masters, backups, offline = list(), list(), list()
+        filters = [['id', 'in', failover_grp_ifaces]]
+        for i in await self.middleware.call('interface.query', filters):
+            if i['state'].get('link_state') != 'LINK_STATE_UP':
+                # It's not common, but some users will configure interfaces
+                # for failover but they won't be online. In this scenario
+                # the interfaces will appear as "backup", but that's
+                # misleading since they technically are backup they're not
+                # actually participating in any VRRP negotiations. In this
+                # instance, we'll mark them as offline
+                offline.append(i['id'])
+                continue
+
             # We're checking any other interface that is in the same
             # failover group as `ifname`. For example, customers often
             # configure multiple physical interfaces for iSCSI MPIO.
@@ -53,7 +64,7 @@ class DetectVirtualIpStates(Service):
                 else:
                     backups.append(i['id'])
 
-        return masters, backups
+        return masters, backups, offline
 
     async def get_states(self, interfaces=None):
         masters, backups, inits = [], [], []
