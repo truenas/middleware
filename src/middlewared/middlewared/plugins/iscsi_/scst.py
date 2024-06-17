@@ -88,12 +88,16 @@ class iSCSITargetService(Service):
     def clear_suspend(self):
         """suspend could have been called several times, and will need to be decremented
         several times to clean"""
-        p = pathlib.Path(SCST_SUSPEND)
-        if p.exists():
+        try:
+            p = pathlib.Path(SCST_SUSPEND)
             for i in range(30):
-                if p.read_text().split()[0] == '0':
+                if p.read_text().strip() == '0':
                     return True
-                p.write_text('-1\n')
+                else:
+                    p.write_text('-1\n')
+        except FileNotFoundError:
+            pass
+
         return False
 
     def enabled(self):
