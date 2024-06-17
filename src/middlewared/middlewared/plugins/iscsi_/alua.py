@@ -284,13 +284,14 @@ class iSCSITargetAluaService(Service):
                     await self.middleware.call('failover.call_remote', 'iscsi.scst.set_device_cluster_mode', [device, 0], cr_opts)
             except Exception:
                 # This is a fail-safe exception catch.  Should never occur.
-                self.logger.warning('standby_start job', exc_info=True)
+                self.logger.warning('Unexpected failure while cleaning up ACTIVE cluster_mode', exc_info=True)
                 await asyncio.sleep(RETRY_SECONDS)
         if not self.standby_starting:
             job.set_progress(24, 'Abandoned job.')
             return
         else:
             job.set_progress(24, 'Cleared cluster_mode on ACTIVE node')
+            self.logger.debug('Cleared cluster_mode on ACTIVE node')
 
         # Reload on ACTIVE node.  This will ensure the HA targets are available
         if self.standby_starting:
