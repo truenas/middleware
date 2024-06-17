@@ -414,7 +414,7 @@ class FailoverEventsService(Service):
             if offline:
                 # this isn't common but we're very verbose in this file so let's
                 # log the offline interfaces while we're here
-                self.logger.warning('Offline interfaces detected: %r', ', '.join(offline))
+                logger.warning('Offline interfaces detected: %r', ', '.join(offline))
 
             # this means that we received a master event and the interface was
             # in a failover group. And in that failover group, there were other
@@ -755,7 +755,7 @@ class FailoverEventsService(Service):
         if offline:
             # this isn't common but we're very verbose in this file so let's
             # log the offline interfaces while we're here
-            self.logger.warning('Offline interfaces detected: %r', ', '.join(offline))
+            logger.warning('Offline interfaces detected: %r', ', '.join(offline))
 
         # this means that we received a BACKUP event and the interface was
         # in a failover group. And in that failover group, there were other
