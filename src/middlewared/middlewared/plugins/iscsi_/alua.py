@@ -170,10 +170,6 @@ class iSCSITargetAluaService(Service):
 
     async def become_active(self):
         self.logger.debug('Becoming active upon failover event starting')
-        # If we have not completed standby_after_start then we cannot just
-        # become ready, instead we will need to restart iscsitarget
-        if not self.standby_alua_ready:
-            raise ValueError('STANDBY node was not yet ready')
         iqn_basename = (await self.middleware.call('iscsi.global.config'))['basename']
         thisnode = await self.middleware.call('failover.node')
 
@@ -192,6 +188,14 @@ class iSCSITargetAluaService(Service):
             await self.activate_extents_job.wait()
             self.logger.debug('Waited for activate to complete')
             self.activate_extents_job = None
+
+        # If we have NOT completed standby_after_start then we cannot just
+        # become ready, instead we will need to restart iscsitarget
+        if not self.standby_alua_ready:
+            self.logger.debug('STANDBY node was not yet ready, skip become_active shortcut')
+            await self.middleware.call('service.restart', 'iscsitarget')
+            self.logger.debug('iscsitarget restarted')
+            return
 
         self.logger.debug('Updating LUNs')
         await self.middleware.call('iscsi.scst.suspend', 10)
