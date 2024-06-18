@@ -489,6 +489,23 @@ class iSCSITargetService(CRUDService):
         return results
 
     @private
+    def logged_in_empty_iqns(self):
+        """
+        :return: list of logged in iqns without any associated unsurfaced disks
+        """
+        results = []
+        p = pathlib.Path('/sys/devices/platform')
+        for targetname in p.glob('host*/session*/iscsi_session/session*/targetname'):
+            found = False
+            iqn = targetname.read_text().strip()
+            for _item in targetname.parent.glob('device/target*/*/scsi_disk'):
+                found = True
+                break
+            if not found:
+                results.append(iqn)
+        return results
+
+    @private
     def set_genhd_hidden_ips(self, ips):
         """
         Set the kernel parameter /sys/module/iscsi_tcp/parameters/genhd_hidden_ips to the
@@ -584,6 +601,44 @@ class iSCSITargetService(CRUDService):
 
         # Check what's already logged in
         existing = await self.middleware.call('iscsi.target.logged_in_iqns')
+
+        # Generate the set of things we want to logout (don't assume every IQN, just the HA ones)
+        todo = set()
+        for iqn in iqns.values():
+            if iqn in existing:
+                todo.add(iqn)
+
+        if todo:
+            remote_ip = await self.middleware.call('failover.remote_ip')
+
+            # Logout the targets (in parallel)
+            exceptions = await asyncio.gather(*[self.logout_iqn(remote_ip, iqn, no_wait) for iqn in todo], return_exceptions=True)
+            failures = []
+            for iqn, exc in zip(todo, exceptions):
+                if isinstance(exc, Exception):
+                    failures.append(str(exc))
+                else:
+                    self.logger.info('Successfully logged out from %r', iqn)
+
+            if failures:
+                err = f'Failure logging out from targets: {", ".join(failures)}'
+                if raise_error:
+                    raise CallError(err)
+                else:
+                    self.logger.error(err)
+
+    @private
+    async def logout_empty_ha_targets(self, no_wait=False, raise_error=False):
+        """
+        When called on a HA BACKUP node will attempt to login to all HA targets,
+        used in ALUA which are not currently associated with a LUN.
+
+        This can occur if they target is reporting as BUSY (i.e. suspended) during login.
+        """
+        iqns = await self.middleware.call('iscsi.target.active_ha_iqns')
+
+        # Check what's already logged in, but has no LUNs
+        existing = await self.middleware.call('iscsi.target.logged_in_empty_iqns')
 
         # Generate the set of things we want to logout (don't assume every IQN, just the HA ones)
         todo = set()
