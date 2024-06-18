@@ -193,23 +193,6 @@ NETDATA_ALL_METRICS = {
             }
         }
     },
-    'system.swap': {
-        'name': 'system.swap',
-        'family': 'swap',
-        'context': 'system.swap',
-        'units': 'MiB',
-        'last_updated': 1691150349,
-        'dimensions': {
-            'free': {
-                'name': 'free',
-                'value': 2044.9960938
-            },
-            'used': {
-                'name': 'used',
-                'value': 0
-            }
-        }
-    },
     'mem.committed': {
         'name': 'mem.committed',
         'family': 'system',
@@ -665,7 +648,4 @@ def test_memory_stats():
             safely_retrieve_dimension(NETDATA_ALL_METRICS, 'mem.kernel', 'VmallocUsed', 0), multiplier=1024 * 1024
         )
         assert memory_stats['extra']['mapped'] == 56082432 * 1024
-        assert memory_stats['swap']['used'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.swap', 'used', 0), multiplier=1024 * 1024,
-        )
         assert memory_stats['swap']['total'] == 2144333824 * 1024
