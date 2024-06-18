@@ -48,6 +48,9 @@
 [statsd]
 	enabled = no
 
+[logs]
+	access = off
+
 [plugin:proc]
 	netdata server resources = yes
 	/proc/diskstats = yes
