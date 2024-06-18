@@ -38,6 +38,23 @@ class iSCSITargetService(Service):
         else:
             return []
 
+    def cluster_mode_devices_set(self):
+        devices = []
+        scst_tgt_devices = pathlib.Path(SCST_DEVICES)
+        if scst_tgt_devices.exists():
+            for p in scst_tgt_devices.glob('*/cluster_mode'):
+                if p.read_text().splitlines()[0] == '1':
+                    devices.append(p.parent.name)
+        return devices
+
+    def check_cluster_modes_clear(self):
+        scst_tgt_devices = pathlib.Path(SCST_DEVICES)
+        if scst_tgt_devices.exists():
+            for p in scst_tgt_devices.glob('*/cluster_mode'):
+                if p.read_text().splitlines()[0] == '1':
+                    return False
+        return True
+
     def check_cluster_mode_paths_present(self, devices):
         for device in devices:
             if not pathlib.Path(f'{SCST_DEVICES}/{device}/cluster_mode').exists():
@@ -49,6 +66,9 @@ class iSCSITargetService(Service):
             return pathlib.Path(f'{SCST_DEVICES}/{device}/cluster_mode').read_text().splitlines()[0]
         except Exception:
             return "UNKNOWN"
+
+    async def set_device_cluster_mode(self, device, value):
+        await self.middleware.call('iscsi.scst.path_write', f'{SCST_DEVICES}/{device}/cluster_mode', f'{int(value)}\n')
 
     async def set_devices_cluster_mode(self, devices, value):
         text = f'{int(value)}\n'
@@ -62,8 +82,23 @@ class iSCSITargetService(Service):
     def enable(self):
         pathlib.Path(SCST_TARGETS_ISCSI_ENABLED_PATH).write_text('1\n')
 
-    def suspend(self, value):
+    def suspend(self, value=10):
         pathlib.Path(SCST_SUSPEND).write_text(f'{value}\n')
+
+    def clear_suspend(self):
+        """suspend could have been called several times, and will need to be decremented
+        several times to clean"""
+        try:
+            p = pathlib.Path(SCST_SUSPEND)
+            for i in range(30):
+                if p.read_text().strip() == '0':
+                    return True
+                else:
+                    p.write_text('-1\n')
+        except FileNotFoundError:
+            pass
+
+        return False
 
     def enabled(self):
         try:
