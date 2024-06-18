@@ -324,8 +324,9 @@ class DistributedLockManagerService(Service):
         retries = 10
         while retries and await self.middleware.call('dlm.peer_lockspaces'):
             await asyncio.sleep(1)
-            self.logger.info('Waited for lockspace to settle')
             retries -= 1
+        if retries != 10:
+            self.logger.info('Waited %d seconds for lockspace to settle', 10 - retries)
 
         # Finally turn off cluster mode locally on all extents
         try:
