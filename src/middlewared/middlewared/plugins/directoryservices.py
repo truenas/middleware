@@ -9,21 +9,11 @@ from middlewared.schema import accepts, Dict, List, OROperator, Ref, returns, St
 from middlewared.service import no_authz_required, Service, private, job
 from middlewared.plugins.smb_.constants import SMBCmd, SMBPath
 from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.utils.directoryservices.constants import (
+    DSStatus, DSType, NSS_Info
+)
 
 DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh']
-
-
-class DSStatus(enum.Enum):
-    DISABLED = enum.auto()
-    FAULTED = 1028  # MSG_WINBIND_OFFLINE
-    LEAVING = enum.auto()
-    JOINING = enum.auto()
-    HEALTHY = 1027  # MSG_WINBIND_ONLINE
-
-
-class DSType(enum.Enum):
-    AD = 'activedirectory'
-    LDAP = 'ldap'
 
 
 class SSL(enum.Enum):
@@ -38,18 +28,38 @@ class SASL_Wrapping(enum.Enum):
     SEAL = 'SEAL'
 
 
-class NSS_Info(enum.Enum):
-    SFU = ('SFU', [DSType.AD])
-    SFU20 = ('SFU20', [DSType.AD])
-    RFC2307 = ('RFC2307', [DSType.AD, DSType.LDAP])
-    RFC2307BIS = ('RFC2307BIS', [DSType.LDAP])
-    TEMPLATE = ('TEMPLATE', [DSType.AD])
-
-
 class DirectoryServices(Service):
     class Config:
         service = "directoryservices"
         cli_namespace = "directory_service"
+
+    @no_authz_required
+    @accepts()
+    @returns(Dict(
+        'directoryservices_status',
+        Str('type', enum=[x.value.upper() for x in DSType], null=True),
+        Ref('directoryservice_state', 'status')
+    ))
+    async def status(self):
+        """
+        Provide the type and status of the currently-enabled directory service
+        """
+        # Currently wrap around `get_state`. In upcoming PR we will get
+        # status more directly and deprecate the `get_state` method.
+        state = await self.get_state()
+        for ds in DSType:
+            if (status := state.get(ds.value, 'DISABLED')) == DSStatus.DISABLED.name:
+                continue
+
+            return {
+                'type': ds.value.upper(),
+                'status': status
+            }
+
+        return {
+            'type': None,
+            'status': None
+        }
 
     @no_authz_required
     @accepts()
@@ -76,6 +86,9 @@ class DirectoryServices(Service):
         except KeyError:
             ds_state = {}
             for srv in DSType:
+                if srv is DSType.IPA:
+                    # TODO: IPA join not implemented yet
+                    continue
                 try:
                     res = await self.middleware.call(f'{srv.value}.started')
                     ds_state[srv.value] = DSStatus.HEALTHY.name if res else DSStatus.DISABLED.name

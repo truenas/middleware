@@ -189,12 +189,10 @@ def test_07_enable_leave_activedirectory(request):
         pw = ad['user_obj']
 
         # Verify winbindd information
-        assert pw['sid_info'] is not None, str(ad)
-        assert not pw['sid_info']['sid'].startswith('S-1-22-1-'), str(ad)
-        assert pw['sid_info']['domain_information']['domain'] != 'LOCAL', str(ad)
-        assert pw['sid_info']['domain_information']['domain_sid'] is not None, str(ad)
-        assert pw['sid_info']['domain_information']['online'], str(ad)
-        assert pw['sid_info']['domain_information']['activedirectory'], str(ad)
+        assert pw['sid'] is not None, str(ad)
+        assert not pw['sid'].startswith('S-1-22-1-'), str(ad)
+        assert pw['local'] is False
+        assert pw['source'] == 'ACTIVEDIRECTORY'
 
         result = call('dnsclient.forward_lookup', {'names': [f'{hostname}.{AD_DOMAIN}']})
         assert len(result) != 0

@@ -162,12 +162,8 @@ class ShareSec(CRUDService):
         Convert aclentry in Securty Descriptor dictionary to string
         representation used by sharesec.
         """
-        if not ae['ae_who_sid'] and not ae['ae_who_name']:
-            raise CallError('ACL Entry must have ae_who_sid or ae_who_name.', errno.EINVAL)
-
         if not ae['ae_who_sid']:
-            name = f'{ae["ae_who_name"]["domain"]}\\{ae["ae_who_name"]["name"]}'
-            ae['ae_who_sid'] = (await self.middleware.call('idmap.name_to_sid', name))['sid']
+            raise CallError('ACL Entry must have ae_who_sid.', errno.EINVAL)
 
         return f'{ae["ae_who_sid"]}:{ae["ae_type"]}/0x0/{ae["ae_perm"]}'
 

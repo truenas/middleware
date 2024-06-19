@@ -3,7 +3,6 @@ import os
 from logging import getLogger
 from middlewared.utils import filter_list
 from middlewared.plugins.account import DEFAULT_HOME_PATH
-from middlewared.plugins.idmap_.utils import TRUENAS_IDMAP_MAX
 from middlewared.plugins.smb_.constants import LOGLEVEL_MAP, SMBPath
 from middlewared.plugins.directoryservices import DSStatus, SSL
 

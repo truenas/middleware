@@ -1,7 +1,7 @@
-import enum
 import errno
 import wbclient
 
+from .idmap_constants import IDType, MAX_REQUEST_LENGTH
 from middlewared.utils.itertools import batched
 from middlewared.service_exception import MatchNotFound
 
@@ -22,55 +22,30 @@ WBCErr = {
     wbclient.WBC_ERR_PWD_CHANGE_FAILED: errno.EFAULT
 }
 
-TRUENAS_IDMAP_MAX = 2147000000
-TRUENAS_IDMAP_DEFAULT_LOW = 90000001
-SID_LOCAL_USER_PREFIX = "S-1-22-1-"
-SID_LOCAL_GROUP_PREFIX = "S-1-22-2-"
-MAX_REQUEST_LENGTH = 100
-
-
-class IDType(enum.Enum):
-    USER = "USER"
-    GROUP = "GROUP"
-    BOTH = "BOTH"
-
-    def wbc_const(self):
-        if self == IDType.USER:
-            val = wbclient.ID_TYPE_UID
-        elif self == IDType.GROUP:
-            val = wbclient.ID_TYPE_GID
-        else:
-            val = wbclient.ID_TYPE_BOTH
-
-        return val
-
-    def wbc_str(self):
-        if self == IDType.USER:
-            val = "UID"
-        elif self == IDType.GROUP:
-            val = "GID"
-        else:
-            val = "BOTH"
-
-        return val
-
-    def parse_wbc_id_type(type_in):
-        if type_in == wbclient.ID_TYPE_UID:
-            return IDType.USER.value
-
-        if type_in == wbclient.ID_TYPE_GID:
-            return IDType.GROUP.value
-
-        if type_in == wbclient.ID_TYPE_BOTH:
-            return IDType.BOTH.value
-
-        raise ValueError(f'{type_in}: invalid winbind ID type')
-
-
 class WBClient:
     def __init__(self, **kwargs):
         self.ctx = wbclient.Ctx()
         self.dom = {}
+        self.separator = self.ctx.separator.decode()
+
+    def _pyuidgid_to_dict(self, entry):
+        return {
+            'id_type': IDType(entry.id_type).name,
+            'id': entry.id,
+            'name': f'{entry.domain}{self.separator}{entry.name}' if entry.name else None,
+            'sid': entry.sid
+        }
+
+    def _as_dict(self, results, do_unmapped=False):
+        for entry in list(results['mapped'].keys()):
+            new = self._pyuidgid_to_dict(results['mapped'][entry])
+            results['mapped'][entry] = new
+
+        for entry in list(results['unmapped'].keys()):
+            new = self._pyuidgid_to_dict(results['unmapped'][entry])
+            results['unmapped'][entry] = new
+
+        return results
 
     def init_domain(self, name='$thisdom'):
         domain = self.dom.get(name)
@@ -97,14 +72,6 @@ class WBClient:
         dom = self.init_domain(name)
         return dom.domain_info()
 
-    def users(self, name='$thisdom'):
-        dom = self.init_domain(name)
-        return dom.users()
-
-    def groups(self, name='$thisdom'):
-        dom = self.init_domain(name)
-        return dom.groups()
-
     def _batch_request(self, request_fn, list_in):
         output = {'mapped': {}, 'unmapped': {}}
         for chunk in batched(list_in, MAX_REQUEST_LENGTH):
@@ -114,26 +81,52 @@ class WBClient:
 
         return output
 
-    def sids_to_users_and_groups(self, sidlist):
-        return self._batch_request(
+    def sids_to_idmap_entries(self, sidlist):
+        """
+        Bulk conversion of SIDs to idmap entries
+
+        Returns dictionary:
+        {"mapped": {}, "unmapped": {}
+
+        `mapped` contains entries keyed by SID
+
+        sid: {
+            'id': uid or gid,
+            'id_type': string ("USER", "GROUP", "BOTH"),
+            'name': string,
+            'sid': sid string
+        }
+
+        `unmapped` contains enries keyed by SID as well
+        but they only map to the sid itself. This is simply
+        to facilitate faster lookups of failures.
+        """
+        data = self._batch_request(
             self.ctx.uid_gid_objects_from_sids,
             sidlist
         )
+        return self._as_dict(data)
 
-    def users_and_groups_to_sids(self, uidgids):
-        return self._batch_request(
+    def users_and_groups_to_idmap_entries(self, uidgids):
+        payload = [{
+            'id_type': IDType[entry["id_type"]].wbc_str(),
+            'id': entry['id']
+        } for entry in uidgids]
+
+        data = self._batch_request(
             self.ctx.uid_gid_objects_from_unix_ids,
-            uidgids
+            payload
         )
+        return self._as_dict(data, True)
 
-    def sid_to_uidgid_entry(self, sid):
+    def sid_to_idmap_entry(self, sid):
         mapped = self.sids_to_users_and_groups([sid])['mapped']
         if not mapped:
             raise MatchNotFound(sid)
 
         return mapped[sid]
 
-    def name_to_uidgid_entry(self, name):
+    def name_to_idmap_entry(self, name):
         try:
             entry = self.ctx.uid_gid_object_from_name(name)
         except wbclient.WBCError as e:
@@ -142,14 +135,14 @@ class WBClient:
 
             raise
 
-        return entry
+        return self._pyuidgid_to_dict(entry)
 
-    def uidgid_to_sid(self, data):
-        mapped = self.users_and_groups_to_sids([data])['mapped']
+    def uidgid_to_idmap_entry(self, data):
+        mapped = self.users_and_groups_to_idmap_entries([data])['mapped']
         if not mapped:
             raise MatchNotFound(str(data))
 
-        return mapped[f'{data["id_type"]}:{data["id"]}']
+        return mapped[f'{IDType[data["id_type"]].wbc_str()}:{data["id"]}']
 
     def all_domains(self):
         return self.ctx.all_domains()

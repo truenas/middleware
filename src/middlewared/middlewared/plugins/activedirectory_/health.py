@@ -9,7 +9,7 @@ from middlewared.schema import accepts, Bool, returns
 from middlewared.service import private, Service, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.directoryservices import DSStatus
-from middlewared.plugins.idmap_.utils import WBClient, WBCErr
+from middlewared.plugins.idmap_.idmap_winbind import WBClient, WBCErr
 from middlewared.utils import filter_list
 
 
