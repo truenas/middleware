@@ -122,7 +122,8 @@ class IpaCtlError(Exception):
             return self.text
 
         if error_code_map:
-            return error_code_map.get(self.error_code)
+            if (errmsg := error_code_map.get(self.error_code)) is not None:
+                return errmsg
 
         return f'Operation failed with unknown error: {self.error_code}'
 
