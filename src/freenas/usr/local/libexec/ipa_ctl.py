@@ -193,16 +193,36 @@ def parse_ldap_result(entry):
 
 
 def add_service(hostname: str, service_name: str):
+    """
+    Add a service for the specified hostname.
+
+    Returns the added kerberos principal name, example:
+
+    "nfs/truenas.walkerdom.test@WALKERDOM.TEST"
+    """
     res = api.Command.service_add(f'{service_name}/{hostname}')
     return res['value']
 
 
 def del_service(hostname: str, service_name: str):
+    """
+    Delete a service for the specified hostname in IPA domain.
+
+    Returns dictionary containing the deleted kerberos principal name, example:
+
+    {"service": "nfs/truenas.walkerdom.test@WALKERDOM.TEST"}
+    """
     res = api.Command.service_del(f'{service_name}/{hostname}')
     return {'service': res['value'][0]}
 
 
 def del_service_smb(hostname: str, realm: str):
+    """
+    Delete the SMB service principal for the specified hostname in
+    the specified realm.
+
+    Returns the kerberos principal name that was deleted.
+    """
     principal = f'cifs/{hostname}@{realm}'
     res = api.Command.service_del(principal)
     return res['value']
@@ -216,7 +236,7 @@ def get_keytab(
     """
     Generate a keytab for the specified `principal_name`
 
-    param: server_name - optionally specify name of FreeIPA server for operation.
+    param: server_name - optionally specify name (FQDN) of FreeIPA server for operation.
 
     get_password: set password in kerberos keytab to randomized string and include
     both keytab and password in output.
