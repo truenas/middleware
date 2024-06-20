@@ -30,7 +30,6 @@ class AppService(CRUDService):
         Dict(
             'app_create',
             Dict('values', additional_attrs=True, private=True),
-            Str('catalog', required=True),
             Str('catalog_app', required=True),
             Str(
                 'app_name', required=True, validators=[Match(
@@ -57,9 +56,7 @@ class AppService(CRUDService):
         if self.query([['id', '=', data['app_name']]]):
             raise CallError(f'Application with name {data["app_name"]} already exists', errno=errno.EEXIST)
 
-        catalog = self.middleware.call_sync('catalog.get_instance', data['catalog'])
         complete_app_details = self.middleware.call_sync('catalog.get_app_details', data['catalog_app'], {
-            'catalog': data['catalog'],
             'train': data['train'],
         })
         version = data['version']
@@ -72,23 +69,20 @@ class AppService(CRUDService):
         app_details = complete_app_details['versions'][version]
         self.middleware.call_sync('catalog.version_supported_error_check', app_details)
 
-        docker_config = self.middleware.call_sync('docker.config')
         app_dir = os.path.join(IX_APPS_MOUNT_PATH, 'app_configs', data['app_name'])
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
-        new_values = data['values']
-        new_values, context = self.normalise_and_validate_values(app_details, new_values, False, app_dir)
+        new_values, context = self.normalise_and_validate_values(app_details, data['values'], False, app_dir)
 
     def normalise_and_validate_values(self, item_details, values, update, app_dir, app_data=None):
         dict_obj = self.middleware.call_sync(
             'app.schema.validate_values', item_details, values, update, app_data,
         )
         return self.middleware.call_sync(
-            'chart.release.get_normalized_values', dict_obj, values, update, {
-                'release': {
+            'app.schema.normalize_values', dict_obj, values, update, {
+                'app': {
                     'name': app_dir.split('/')[-1],
-                    'dataset': app_dir,
-                    'path': os.path.join('/mnt', app_dir),
+                    'path': app_dir,
                 },
                 'actions': [],
             }
