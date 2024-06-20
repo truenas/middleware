@@ -386,13 +386,6 @@ class Application:
         elif message['msg'] == 'unsub':
             await self.unsubscribe(message['id'])
 
-        if message['msg'] == 'method' and isinstance(message.get('params'), list):
-            log_message = dict(
-                message, params=self.middleware.dump_args(message.get('params', []), method_name=message['method'])
-            )
-        else:
-            log_message = message
-
     def __getstate__(self):
         return {}
 
