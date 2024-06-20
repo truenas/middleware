@@ -111,7 +111,7 @@ class IpaCtlError(Exception):
         self.error_code_str = None
         self.op = op
         self.rpc_response = rpc_response
-        self.text = text.strip()
+        self.text = text
         self.errmsg = self.__get_errmsg(error_code_map)
 
     def __get_errmsg(self, error_code_map):
@@ -119,7 +119,7 @@ class IpaCtlError(Exception):
             return json.dumps(self.rpc_response)
 
         if self.text:
-            return self.text
+            return self.text.strip()
 
         if error_code_map:
             if (errmsg := error_code_map.get(self.error_code)) is not None:
@@ -304,7 +304,10 @@ def get_smb_service_keytab_and_password(hostname: str, realm: str):
     principal = f'cifs/{hostname}@{realm}'
     try:
         api.Command.service_show(principal)
-
+        # SMB kerberos principal already exists. Plain-text password
+        # must be set within the secrets.tdb file concurrently with
+        # generating a new keytab and so we have to forcibly regenerate
+        # configuration.
         api.Command.service_del(principal)
     except errors.NotFound:
         pass
@@ -452,6 +455,7 @@ def ipa_leave(
         '-h', hostname,
         '-s', ipa_server,
         '-b', base_dn,
+        '--unenroll',
     ]
     leave = subprocess.run(leave_cmd, check=False, capture_output=True)
     if leave.returncode != 0:
@@ -578,8 +582,8 @@ def main():
             # chance of error handling
             print(json.dumps(resp))
 
-        if e.rpc_resp:
-            print(json.dumps(e.rpc_resp), file=sys.stderr)
+        if e.rpc_response:
+            print(json.dumps(e.rpc_response), file=sys.stderr)
             sys.exit(ExitCode.JSON_ERROR)
 
         sys.exit(ExitCode.GENERIC)
