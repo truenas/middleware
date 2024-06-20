@@ -26,17 +26,6 @@ class SystemService(Service):
 
     @no_auth_required
     @accepts()
-    @returns(Bool('system_is_truenas_core'))
-    async def is_freenas(self):
-        """
-        FreeNAS is now TrueNAS CORE.
-
-        DEPRECATED: Use `system.product_type`
-        """
-        return (await self.product_type()) == 'CORE'
-
-    @no_auth_required
-    @accepts()
     @returns(Str('product_type'))
     async def product_type(self):
         """
