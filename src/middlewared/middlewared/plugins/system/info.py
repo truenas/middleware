@@ -135,10 +135,10 @@ class SystemService(Service):
         """
         Returns basic system information.
         """
-        time_info = await self.middleware.call('system.time_info')
+        time_info = await self.time_info()
         dmidecode = await self.middleware.call('system.dmidecode_info')
-        cpu_info = await self.middleware.call('system.cpu_info')
-        mem_info = await self.middleware.call('system.mem_info')
+        cpu_info = await self.cpu_info()
+        mem_info = await self.middleware.run_in_thread(self.mem_info)
         timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
 
         return {
