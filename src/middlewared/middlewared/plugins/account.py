@@ -1241,17 +1241,6 @@ class UserService(CRUDService):
         Set up local administrator (this method does not require authentication if local administrator is not already
         set up).
         """
-        if not app.authenticated:
-            if await self.middleware.call('system.environment') == 'EC2':
-                if 'ec2' not in options:
-                    raise CallError(
-                        'You need to specify instance ID when setting up local administrator on EC2 instance',
-                        errno.EACCES,
-                    )
-
-                if options['ec2']['instance_id'] != await self.middleware.call('ec2.instance_id'):
-                    raise CallError('Incorrect EC2 instance ID', errno.EACCES)
-
         if await self.middleware.call('user.has_local_administrator_set_up'):
             raise CallError('Local administrator is already set up', errno.EEXIST)
 
