@@ -241,6 +241,9 @@ class EtcService(Service):
         'nscd': [
             {'type': 'mako', 'path': 'nscd.conf'},
         ],
+        'nss': [
+            {'type': 'mako', 'path': 'nsswitch.conf'},
+        ],
         'wsd': [
             {'type': 'mako', 'path': 'local/wsdd.conf', 'checkpoint': 'post_init'},
         ],
