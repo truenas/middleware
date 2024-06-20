@@ -13,7 +13,7 @@ import os
 import subprocess
 import time
 
-from .krb5_constants import krb_tkt_flag, KRB_ETYPE
+from .krb5_constants import krb_tkt_flag, KRB_ETYPE, KRB_Keytab
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 from tempfile import NamedTemporaryFile
@@ -185,15 +185,98 @@ def klist_impl(ccache_path: str) -> list:
     return parse_klist_output(kl.stdout.decode())
 
 
-def gss_check_ticket(ccache_path: str, raise_error: Optional[bool] = True) -> bool:
+def gss_acquire_cred_user(
+    username: str,
+    password: str,
+    ccache_path: str | None = None,
+    lifetime: int | None = None
+) -> gssapi.Credentials:
+    """
+    Acquire GSSAPI credentials based on provided username + password combination
+    This relies on krb5.conf being properly configured for the kerberos realm.
+
+    If `ccache_path` is specified then the credentials are also written to the
+    specified ccache.
+
+    `lifetime` (seconds) may be used to override the defaults in krb5.conf.
+
+    Returns gssapi.Credentials
+
+    Raises:
+        gssapi.exceptions.MissingCredentialsError -- may be converted to KRBError
+        gssapi.exceptions.BadNameError -- user supplied invalid username
+    """
+    gss_name = gssapi.raw.import_name(username.encode(), gssapi.NameType.user)
+    cr = gssapi.raw.acquire_cred_with_password(
+        gss_name, password.encode(), lifetime=lifetime
+    )
+
+    if ccache_path is not None:
+        gssapi.raw.store_cred_into(
+            {'ccache': ccache_path},
+            cr.creds,
+            usage='initiate',
+            mech=gssapi.raw.MechType.kerberos,
+            set_default=True, overwrite=True
+        )
+
+    return gssapi.Credentials(cr.creds)
+
+
+def gss_acquire_cred_principal(
+    principal_name: str,
+    ccache_path: str | None = None,
+    lifetime: int | None = None,
+) -> gssapi.Credentials:
+    """
+    Acquire GSSAPI credentials based on provided specified kerberos principal
+    name. This relies on krb5.conf being properly configured for the kerberos realm,
+    /etc/krb5.keytab existing and it having an entry that matches the princpal name.
+
+    If `ccache_path` is specified then the credentials are also written to the
+    specified ccache.
+
+    `lifetime` (seconds) may be used to override the defaults in krb5.conf.
+
+    Returns gssapi.Credentials
+
+    Raises:
+        gssapi.exceptions.MissingCredentialsError -- may be converted to KRBError
+        gssapi.exceptions.BadNameError -- user supplied invalid kerberos principal name
+    """
+    gss_name = gssapi.Name(principal_name, gssapi.NameType.kerberos_principal)
+    store = {'client_keytab': KRB_Keytab.SYSTEM.value}
+    if ccache_path is not None:
+        store['ccache'] = ccache_path
+
+    cr = gssapi.Credentials(
+        name=gss_name,
+        store=store,
+        usage='initiate',
+        lifetime=lifetime,
+    )
+
+    if ccache_path is not None:
+        cr.store(set_default=True, overwrite=True)
+
+    return cr
+
+
+def gss_get_current_cred(
+    ccache_path: str,
+    raise_error: Optional[bool] = True
+) -> gssapi.Credentials | None:
     """
     Use gssapi library to inpsect the ticket in the specified ccache
+
+    Returns gssapi.Credentials and optionally (if raise_error is False)
+    None.
     """
     try:
         cred = gssapi.Credentials(store={'ccache': ccache_path}, usage='initiate')
     except gssapi.exceptions.MissingCredentialsError:
         if not raise_error:
-            return False
+            return None
 
         raise CallError(f'{ccache_path}: Credentials cache does not exist', errno.ENOENT)
 
@@ -201,23 +284,23 @@ def gss_check_ticket(ccache_path: str, raise_error: Optional[bool] = True) -> bo
         cred.inquire()
     except gssapi.exceptions.InvalidCredentialsError as e:
         if not raise_error:
-            return False
+            return None
 
         raise CallError(str(e))
 
     except gssapi.exceptions.ExpiredCredentialsError:
         if not raise_error:
-            return False
+            return None
 
-        raise CallError('Kerberos ticket is expired')
+        raise CallError('Kerberos ticket is expired', errno.ENOKEY)
 
     except Exception as e:
         if not raise_error:
-            return False
+            return None
 
         raise CallError(str(e))
 
-    return True
+    return cred
 
 
 def klist_check(ccache_path: str) -> bool:

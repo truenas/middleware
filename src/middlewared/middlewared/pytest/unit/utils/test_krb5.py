@@ -182,10 +182,10 @@ def test__check_ticket(kerberos_data_dir):
     ccache_path = os.path.join(kerberos_data_dir, CCACHE_NAME)
 
     # first validate boolean-only response
-    assert krb5.gss_check_ticket(ccache_path, False) is False
+    assert krb5.gss_get_current_cred(ccache_path, False) is None
 
     with pytest.raises(CallError) as ce:
-        krb5.gss_check_ticket(ccache_path)
+        krb5.gss_get_current_cred(ccache_path)
 
     assert ce.value.errmsg == 'Kerberos ticket is expired'
 
