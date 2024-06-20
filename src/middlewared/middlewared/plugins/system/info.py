@@ -8,7 +8,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, returns, Str
-from middlewared.service import no_auth_required, no_authz_required, pass_app, private, Service, throttle
+from middlewared.service import private, Service
 from middlewared.utils import sw_buildtime
 
 
@@ -79,7 +79,7 @@ class SystemService(Service):
             'datetime': datetime.fromtimestamp(current_time, timezone.utc),
         }
 
-    @no_authz_required
+    @private
     @accepts()
     @returns(Str('hostname'))
     async def hostname(self):
@@ -103,15 +103,12 @@ class SystemService(Service):
 
         return self.HOST_ID
 
-    @no_auth_required
-    @throttle(seconds=2, condition=throttle_condition)
-    @accepts()
+    @accepts(roles=['READONLY_ADMIN'])
     @returns(Datetime('system_build_time'))
-    @pass_app()
-    async def build_time(self, app):
-        """
-        Retrieve build time of the system.
-        """
+    async def build_time(self):
+        """Retrieve build time of the system."""
+        # NOTE: at time of writing, UI team is using this value
+        # for the "copyright" section
         buildtime = sw_buildtime()
         return datetime.fromtimestamp(int(buildtime)) if buildtime else buildtime
 
@@ -150,8 +147,8 @@ class SystemService(Service):
 
         return {
             'version': await self.middleware.call('system.version'),
-            'buildtime': await self.middleware.call('system.build_time'),
-            'hostname': await self.middleware.call('system.hostname'),
+            'buildtime': await self.build_time(),
+            'hostname': await self.hostname(),
             'physmem': mem_info['physmem_size'],
             'model': cpu_info['cpu_model'],
             'cores': cpu_info['core_count'],
