@@ -7,13 +7,17 @@
 # Tests that require access to a KDC are provided as part of API
 # test suite.
 
+import errno
+import gssapi
 import os
 import subprocess
 import time
 
 from .krb5_constants import krb_tkt_flag, KRB_ETYPE
+from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 # See lib/krb5/keytab/kt_file.c in MIT kerberos source
 KRB5_KT_VNO = b'\x05\x02'  # KRB v5 keytab version 2, (last changed in 2009)
@@ -179,6 +183,45 @@ def parse_klist_output(klistbuf: str) -> list:
 def klist_impl(ccache_path: str) -> list:
     kl = subprocess.run(['klist', '-ef', ccache_path], capture_output=True)
     return parse_klist_output(kl.stdout.decode())
+
+
+def gss_check_ticket(ccache_path: str, raise_error: Optional[bool] = True) -> bool:
+    """
+    Use gssapi library to inpsect the ticket in the specified ccache
+    """
+    try:
+        cred = gssapi.Credentials(store={'ccache': ccache_path}, usage='initiate')
+    except gssapi.exceptions.MissingCredentialsError:
+        if not raise_error:
+            return False
+
+        raise CallError(f'{ccache_path}: Credentials cache does not exist', errno.ENOENT)
+
+    try:
+        cred.inquire()
+    except gssapi.exceptions.InvalidCredentialsError as e:
+        if not raise_error:
+            return False
+
+        raise CallError(str(e))
+
+    except gssapi.exceptions.ExpiredCredentialsError:
+        if not raise_error:
+            return False
+
+        raise CallError('Kerberos ticket is expired')
+
+    except Exception as e:
+        if not raise_error:
+            return False
+
+        raise CallError(str(e))
+
+    return True
+
+
+def klist_check(ccache_path: str) -> bool:
+    return gss_check_ticket(ccache_path, False)
 
 
 def parse_keytab(keytab_output: list) -> list:
