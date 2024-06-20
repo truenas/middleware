@@ -22,6 +22,7 @@ from middlewared.utils.directoryservices.krb5_constants import (
     KRB_TKT_CHECK_INTERVAL,
 )
 from middlewared.utils.directoryservices.krb5 import (
+    check_ticket,
     extract_from_keytab,
     keytab_services,
     klist_impl,
@@ -130,7 +131,7 @@ class KerberosService(ConfigService):
         ),
         Bool('raise_error', default=True)
     )
-    async def check_ticket(self, data, raise_error):
+    def check_ticket(self, data, raise_error):
         """
         Perform very basic test that we have a valid kerberos ticket in the
         specified ccache.
@@ -141,10 +142,12 @@ class KerberosService(ConfigService):
         returns True if ccache can be read and ticket is not expired, otherwise
         returns False
         """
-        ccache_path = await self.ccache_path(data)
+        krb_ccache = krb5ccache[data['ccache']]
+        ccache_path = krb_ccache.value
+        if krb_ccache is krb5ccache.USER:
+            ccache_path += str(data['ccache_uid'])
 
-        klist = await run(['klist', '-s', '-c', ccache_path], check=False)
-        if klist.returncode == 0:
+        if check_ticket(ccache_path, False):
             return True
 
         if raise_error:
@@ -462,7 +465,9 @@ class KerberosService(ConfigService):
 
     @private
     async def renew(self):
-        if not await self.check_ticket({'ccache': krb5ccache.SYSTEM.name}, False):
+        if not await self.middleware.call('kerberos.check_ticket', {
+            'ccache': krb5ccache.SYSTEM.name
+        }, False):
             self.logger.warning('Kerberos ticket is unavailable. Performing kinit.')
             return await self.start()
 
@@ -949,6 +954,11 @@ class KerberosKeytabService(CRUDService):
                 {'prefix': self._config.datastore_prefix}
             )
 
+        if not ad['kerberos_principal']:
+            self.middleware.call_sync('datastore.update', 'directoryservice.activedirectory', 1, {
+                'ad_kerberos_principal': f'{ad["netbiosname"]}$@{ad["domainname"]}'
+            })
+
     @periodic(3600)
     @private
     async def check_updated_keytab(self):
@@ -964,7 +974,7 @@ class KerberosKeytabService(CRUDService):
         if not await self.middleware.call('system.ready'):
             return
 
-        if (await self.middleware.call('activedirectory.get_state')) == 'DISABLED':
+        if (await self.middleware.call('activedirectory.config'))['enable'] is False:
             return
 
         ts = await self.middleware.call('directoryservices.get_last_password_change')
