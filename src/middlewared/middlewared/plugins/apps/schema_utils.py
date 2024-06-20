@@ -38,7 +38,7 @@ SCHEMA_MAPPING = {
 def construct_schema(
     item_version_details: dict, new_values: dict, update: bool, old_values: Union[dict, object] = NOT_PROVIDED
 ) -> dict:
-    schema_name = f'chart_release_{"update" if update else "create"}'
+    schema_name = f'app_{"update" if update else "create"}'
     attrs = list(itertools.chain.from_iterable(
         get_schema(q, update, old_values) for q in item_version_details['schema']['questions']
     ))

@@ -4,17 +4,10 @@ from middlewared.service import Service
 from .schema_utils import construct_schema, get_list_item_from_value, NOT_PROVIDED, RESERVED_NAMES
 
 
-VALIDATION_REF_MAPPING = {  # FIXME: See which are no longer valid
-    'definitions/certificate': 'certificate',
-    'definitions/certificateAuthority': 'certificate_authority',
-    'validations/containerImage': 'container_image',
-    'validations/nodePort': 'port_available_on_node',
-    'validations/hostPath': 'custom_host_path',
-    'normalize/ixVolume': 'ix_mount_path',
-    'normalize/acl': 'acl_entries',
-    'validations/lockedHostPath': 'locked_host_path',
-    'validations/hostPathAttachments': 'host_path_attachments',
-}
+VALIDATION_REF_MAPPING = {}
+# FIXME: See which are no longer valid
+# https://github.com/truenas/middleware/blob/249ed505a121e5238e225a89d3a1fa60f2e55d27/src/middlewared/middlewared/
+# plugins/chart_releases_linux/validation.py#L13
 
 
 class AppSchemaService(Service):
@@ -23,13 +16,13 @@ class AppSchemaService(Service):
         namespace = 'app.schema'
         private = True
 
-    async def validate_values(self, app_version_details, new_values, update, release_data=None):
+    async def validate_values(self, app_version_details, new_values, update, app_data=None):
         for k in RESERVED_NAMES:
             new_values.pop(k[0], None)
 
         verrors, new_values, dict_obj, schema_name = (
             construct_schema(
-                app_version_details, new_values, update, (release_data or {}).get('config', NOT_PROVIDED)
+                app_version_details, new_values, update, (app_data or {}).get('config', NOT_PROVIDED)
             )
         ).values()
 
@@ -48,7 +41,7 @@ class AppSchemaService(Service):
                 parent_attr=dict_obj,
                 var_attr=dict_obj.attrs[key],
                 schema_name=f'{schema_name}.{questions[key]["variable"]}',
-                release_data=release_data,
+                app_data=app_data,
             )
 
         verrors.check()
@@ -56,7 +49,7 @@ class AppSchemaService(Service):
         return dict_obj
 
     async def validate_question(
-        self, verrors, parent_value, value, question, parent_attr, var_attr, schema_name, release_data=None
+        self, verrors, parent_value, value, question, parent_attr, var_attr, schema_name, app_data=None
     ):
         schema = question['schema']
 
@@ -65,7 +58,7 @@ class AppSchemaService(Service):
             for k in filter(lambda k: k in dict_attrs, value):
                 await self.validate_question(
                     verrors, value, value[k], dict_attrs[k],
-                    var_attr, var_attr.attrs[k], f'{schema_name}.{k}', release_data,
+                    var_attr, var_attr.attrs[k], f'{schema_name}.{k}', app_data,
                 )
 
         elif schema['type'] == 'list' and value:
@@ -74,7 +67,7 @@ class AppSchemaService(Service):
                 if attr:
                     await self.validate_question(
                         verrors, value, item, schema['items'][item_index],
-                        var_attr, attr, f'{schema_name}.{index}', release_data,
+                        var_attr, attr, f'{schema_name}.{index}', app_data,
                     )
 
         # FIXME: See if this is valid or not and port appropriately
@@ -85,7 +78,7 @@ class AppSchemaService(Service):
         for validator_def in filter(lambda k: k in VALIDATION_REF_MAPPING, schema.get('$ref', [])):
             await self.middleware.call(
                 f'app.schema.validate_{VALIDATION_REF_MAPPING[validator_def]}',
-                verrors, value, question, schema_name, release_data,
+                verrors, value, question, schema_name, app_data,
             )
 
         subquestions_enabled = (
@@ -99,7 +92,7 @@ class AppSchemaService(Service):
                     item_key, attr = sub_question['variable'], parent_attr.attrs[sub_question['variable']]
                     await self.validate_question(
                         verrors, parent_value, parent_value[sub_question['variable']], sub_question,
-                        parent_attr, attr, f'{schema_name}.{item_key}', release_data,
+                        parent_attr, attr, f'{schema_name}.{item_key}', app_data,
                     )
 
         return verrors

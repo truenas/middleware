@@ -2,8 +2,9 @@ import errno
 import os
 import textwrap
 
+from middlewared.plugins.docker.state_utils import IX_APPS_MOUNT_PATH
 from middlewared.schema import accepts, Dict, Str
-from middlewared.service import CallError, CRUDService, filterable, job, private
+from middlewared.service import CallError, CRUDService, filterable, job
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
 
@@ -49,7 +50,7 @@ class AppService(CRUDService):
             Str('version', default='latest'),
         )
     )
-    @job(lock=lambda args: f'app_create_{args[0]["release_name"]}')
+    @job(lock=lambda args: f'app_create_{args[0]["app_name"]}')
     def do_create(self, job, data):
         self.middleware.call_sync('docker.state.validate')
 
@@ -72,22 +73,22 @@ class AppService(CRUDService):
         self.middleware.call_sync('catalog.version_supported_error_check', app_details)
 
         docker_config = self.middleware.call_sync('docker.config')
-        release_ds = os.path.join(docker_config['dataset'], 'releases', data['app_name'])
+        app_dir = os.path.join(IX_APPS_MOUNT_PATH, 'app_configs', data['app_name'])
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
         new_values = data['values']
-        new_values, context = self.normalise_and_validate_values(app_details, new_values, False, release_ds)
+        new_values, context = self.normalise_and_validate_values(app_details, new_values, False, app_dir)
 
-    def normalise_and_validate_values(self, item_details, values, update, release_ds, release_data=None):
+    def normalise_and_validate_values(self, item_details, values, update, app_dir, app_data=None):
         dict_obj = self.middleware.call_sync(
-            'app.schema.validate_values', item_details, values, update, release_data,
+            'app.schema.validate_values', item_details, values, update, app_data,
         )
         return self.middleware.call_sync(
             'chart.release.get_normalized_values', dict_obj, values, update, {
                 'release': {
-                    'name': release_ds.split('/')[-1],
-                    'dataset': release_ds,
-                    'path': os.path.join('/mnt', release_ds),
+                    'name': app_dir.split('/')[-1],
+                    'dataset': app_dir,
+                    'path': os.path.join('/mnt', app_dir),
                 },
                 'actions': [],
             }
