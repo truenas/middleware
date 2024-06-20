@@ -22,7 +22,7 @@ from middlewared.utils.directoryservices.krb5_constants import (
     KRB_TKT_CHECK_INTERVAL,
 )
 from middlewared.utils.directoryservices.krb5 import (
-    check_ticket,
+    gss_check_ticket,
     extract_from_keytab,
     keytab_services,
     klist_impl,
@@ -147,7 +147,7 @@ class KerberosService(ConfigService):
         if krb_ccache is krb5ccache.USER:
             ccache_path += str(data['ccache_uid'])
 
-        if check_ticket(ccache_path, False):
+        if gss_check_ticket(ccache_path, False):
             return True
 
         if raise_error:

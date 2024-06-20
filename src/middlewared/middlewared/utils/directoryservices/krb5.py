@@ -185,7 +185,7 @@ def klist_impl(ccache_path: str) -> list:
     return parse_klist_output(kl.stdout.decode())
 
 
-def check_ticket(ccache_path: str, raise_error: Optional[bool] = True) -> bool:
+def gss_check_ticket(ccache_path: str, raise_error: Optional[bool] = True) -> bool:
     """
     Use gssapi library to inpsect the ticket in the specified ccache
     """
@@ -221,7 +221,7 @@ def check_ticket(ccache_path: str, raise_error: Optional[bool] = True) -> bool:
 
 
 def klist_check(ccache_path: str) -> bool:
-    return check_ticket(ccache_path, False)
+    return gss_check_ticket(ccache_path, False)
 
 
 def parse_keytab(keytab_output: list) -> list:
