@@ -1,18 +1,18 @@
-from typing import Any, List, Optional
+from typing import Any
 
-from middlewared.api.base import *
+from middlewared.api.base import BaseModel
 
 __all__ = ["QueryOptions", "QueryArgs"]
 
 
 class QueryOptions(BaseModel):
     relationships: bool = True
-    extend: Optional[str] = None
-    extend_context: Optional[str] = None
-    prefix: Optional[str] = None
+    extend: str | None = None
+    extend_context: str | None = None
+    prefix: str | None = None
     extra: dict = {}
-    order_by: List[str] = []
-    select: List[str] = []
+    order_by: list[str] = []
+    select: list[str] = []
     count: bool = False
     get: bool = False
     offset: int = 0
@@ -21,5 +21,5 @@ class QueryOptions(BaseModel):
 
 
 class QueryArgs(BaseModel):
-    filters: List[Any] = []  # FIXME: Add validation here
+    filters: list[Any] = []  # FIXME: Add validation here
     options: QueryOptions = QueryOptions()

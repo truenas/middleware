@@ -6,7 +6,7 @@ from pydantic.json_schema import SkipJsonSchema
 
 from middlewared.utils.lang import undefined
 
-__all__ = ["excluded", "excluded_field"]
+__all__ = ["Excluded", "excluded_field"]
 
 
 class ExcludedField(Any):
@@ -20,8 +20,7 @@ class ExcludedField(Any):
         return core_schema.with_info_after_validator_function(validate, handler(Any))
 
 
-def excluded():
-    return SkipJsonSchema[ExcludedField]
+Excluded = SkipJsonSchema[ExcludedField]
 
 
 def excluded_field():

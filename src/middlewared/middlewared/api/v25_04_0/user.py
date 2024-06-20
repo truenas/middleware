@@ -1,17 +1,15 @@
-from typing import List, Optional
-
 from annotated_types import Ge, Le
 from pydantic import EmailStr
 from typing_extensions import Annotated
 
-from middlewared.api.base import *
+from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LocalUsername, LocalUID,
+                                  LongString, NonEmptyString, Private, single_argument_result)
 
 __all__ = ["UserEntry", "UserCreateArgs", "UserCreateResult", "UserUpdateArgs", "UserUpdateResult",
            "UserRenew2faSecretArgs", "UserRenew2faSecretResult"]
 
 
 DEFAULT_HOME_PATH = "/var/empty"
-TRUENAS_IDMAP_DEFAULT_LOW = 90000001
 
 
 class UserEntry(BaseModel):
@@ -27,52 +25,52 @@ class UserEntry(BaseModel):
     builtin: bool
     smb: bool = True
     group: dict
-    groups: List[int] = []
+    groups: list[int] = []
     """Specifies whether the user should be allowed access to SMB shares. User will also automatically be added to
     the `builtin_users` group."""
     password_disabled: bool = False
     ssh_password_enabled: bool = False
     "Required if `password_disabled` is false."
-    sshpubkey: Optional[LongString] = None
+    sshpubkey: LongString | None = None
     locked: bool = False
-    sudo_commands: List[NonEmptyString] = []
-    sudo_commands_nopasswd: List[NonEmptyString] = []
-    email: Optional[EmailStr] = None
+    sudo_commands: list[NonEmptyString] = []
+    sudo_commands_nopasswd: list[NonEmptyString] = []
+    email: EmailStr | None = None
     id_type_both: bool
     local: bool
     immutable: bool
     twofactor_auth_configured: bool
-    nt_name: Optional[str]
-    sid: Optional[str]
-    roles: List[str]
+    nt_name: str | None
+    sid: str | None
+    roles: list[str]
 
 
 class UserCreate(UserEntry):
-    id: excluded() = excluded_field()
-    unixhash: excluded() = excluded_field()
-    smbhash: excluded() = excluded_field()
-    builtin: excluded() = excluded_field()
-    id_type_both: excluded() = excluded_field()
-    local: excluded() = excluded_field()
-    immutable: excluded() = excluded_field()
-    twofactor_auth_configured: excluded() = excluded_field()
-    nt_name: excluded() = excluded_field()
-    sid: excluded() = excluded_field()
-    roles: excluded() = excluded_field()
+    id: Excluded = excluded_field()
+    unixhash: Excluded = excluded_field()
+    smbhash: Excluded = excluded_field()
+    builtin: Excluded = excluded_field()
+    id_type_both: Excluded = excluded_field()
+    local: Excluded = excluded_field()
+    immutable: Excluded = excluded_field()
+    twofactor_auth_configured: Excluded = excluded_field()
+    nt_name: Excluded = excluded_field()
+    sid: Excluded = excluded_field()
+    roles: Excluded = excluded_field()
 
-    uid: Optional[Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]] = None
+    uid: LocalUID | None = None
     "UNIX UID. If not provided, it is automatically filled with the next one available."
 
     group_create: bool = False
-    group: Optional[int] = None
+    group: int | None = None
     "Required if `group_create` is `false`."
     home_create: bool = False
     home_mode: str = "700"
-    password: Private[Optional[str]] = None
+    password: Private[str | None] = None
 
 
 class UserUpdate(UserCreate, metaclass=ForUpdateMetaclass):
-    group_create: excluded() = excluded_field()
+    group_create: Excluded = excluded_field()
 
 
 class UserCreateArgs(BaseModel):

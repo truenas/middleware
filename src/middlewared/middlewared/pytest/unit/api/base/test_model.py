@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.api.base import (BaseModel, excluded, excluded_field, ForUpdateMetaclass, single_argument_args,
+from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args,
                                   single_argument_result)
 from middlewared.api.base.handler.accept import accept_params
 from middlewared.api.base.handler.result import serialize_result
@@ -14,7 +14,7 @@ class Object(BaseModel):
 
 
 class CreateObject(Object):
-    id: excluded() = excluded_field()
+    id: Excluded = excluded_field()
 
 
 class UpdateObject(CreateObject, metaclass=ForUpdateMetaclass):

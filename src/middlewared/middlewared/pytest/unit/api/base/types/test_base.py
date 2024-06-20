@@ -1,5 +1,3 @@
-from typing import List
-
 import pytest
 
 from middlewared.api.base import BaseModel, LongString
@@ -27,7 +25,7 @@ class LongStringMethodArgs(BaseModel):
 
 class LongStringDict(BaseModel):
     str: LongString
-    list: List[LongString]
+    list: list[LongString]
 
 
 def test_long_string():

@@ -1,7 +1,6 @@
 import asyncio
 import copy
 import errno
-import typing
 
 from pydantic import create_model, Field
 from typing_extensions import Annotated
@@ -53,7 +52,7 @@ def query_result(item):
         item.__name__.removesuffix("Entry") + "QueryResult",
         __base__=(BaseModel,),
         __module__=item.__module__,
-        result=Annotated[typing.Union[typing.List[item], item, int], Field()],
+        result=Annotated[list[item] | item | int, Field()],
     )
 
 

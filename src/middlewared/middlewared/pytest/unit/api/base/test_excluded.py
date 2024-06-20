@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.api.base import BaseModel, excluded, excluded_field
+from middlewared.api.base import BaseModel, Excluded, excluded_field
 from middlewared.api.base.handler.accept import accept_params
 from middlewared.service_exception import ValidationErrors
 
@@ -11,7 +11,7 @@ class Object(BaseModel):
 
 
 class CreateObject(Object):
-    id: excluded() = excluded_field()
+    id: Excluded = excluded_field()
 
 
 class CreateArgs(BaseModel):

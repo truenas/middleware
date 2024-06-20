@@ -1,6 +1,4 @@
-from typing import Optional
-
-from middlewared.api.base import *
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, Private
 
 __all__ = ["CloudCredentialEntry",
            "CloudCredentialCreateArgs", "CloudCredentialCreateResult",
@@ -17,7 +15,7 @@ class CloudCredentialEntry(BaseModel):
 
 
 class CloudCredentialCreate(CloudCredentialEntry):
-    id: excluded() = excluded_field()
+    id: Excluded = excluded_field()
 
 
 class CloudCredentialUpdate(CloudCredentialCreate, metaclass=ForUpdateMetaclass):
@@ -56,5 +54,5 @@ class CloudCredentialVerifyArgs(BaseModel):
 
 class CloudCredentialVerifyResult(BaseModel):
     valid: bool
-    error: Optional[str] = None
-    excerpt: Optional[str] = None
+    error: str | None = None
+    excerpt: str | None = None
