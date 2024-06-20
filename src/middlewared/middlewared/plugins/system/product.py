@@ -24,7 +24,6 @@ class SystemService(Service):
 
     PRODUCT_TYPE = None
 
-    @no_auth_required
     @accepts()
     @returns(Str('product_type'))
     async def product_type(self):
