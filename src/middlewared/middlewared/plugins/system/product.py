@@ -7,7 +7,6 @@ import os
 
 from datetime import date
 from licenselib.license import ContractType, Features, License
-from pathlib import Path
 
 from middlewared.plugins.truenas import EULA_PENDING_PATH
 from middlewared.schema import accepts, Bool, returns, Str
@@ -18,6 +17,7 @@ from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 LICENSE_FILE = '/data/license'
 LICENSE_FILE_MODE = 0o600
+PRODUCT_NAME = 'TrueNAS'
 
 
 class SystemService(Service):
@@ -71,15 +71,6 @@ class SystemService(Service):
     @private
     async def is_enterprise(self):
         return await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE'
-
-    @no_auth_required
-    @accepts()
-    @returns(Str('product_name'))
-    async def product_name(self):
-        """
-        Returns name of the product we are using.
-        """
-        return "TrueNAS"
 
     @no_authz_required
     @accepts()

@@ -47,7 +47,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
         sys.exit(1)
 
     with Client() as c:
-        sw_name = c.call('system.product_name')
+        sw_name = 'TrueNAS'
 
         margs = {}
         margs['extra_headers'] = dict(em)

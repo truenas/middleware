@@ -27,8 +27,7 @@ def setup(middleware):
         if ftp["banner"]:
             f.write(ftp["banner"] + "\n")
         else:
-            product_name = middleware.call_sync("system.product_name")
-            f.write(f"Welcome to {product_name} FTP Server\n")
+            f.write("Welcome to TrueNAS FTP Server\n")
 
 
 def render(service, middleware):

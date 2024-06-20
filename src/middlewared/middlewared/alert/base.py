@@ -8,6 +8,7 @@ import typing
 import html2text
 
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.plugins.system.product import PRODUCT_NAME
 from middlewared.utils.lang import undefined
 
 __all__ = ["UnavailableException",
@@ -360,14 +361,13 @@ class AlertService:
         raise NotImplementedError
 
     async def _format_alerts(self, alerts, gone_alerts, new_alerts):
-        product_name = await self.middleware.call("system.product_name")
         hostname = await self.middleware.call("system.hostname")
         if await self.middleware.call("system.is_enterprise"):
             node_map = await self.middleware.call("alert.node_map")
         else:
             node_map = None
 
-        html = format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts)
+        html = format_alerts(PRODUCT_NAME, hostname, node_map, alerts, gone_alerts, new_alerts)
 
         if self.html:
             return html
@@ -383,13 +383,12 @@ class ThreadedAlertService(AlertService):
         raise NotImplementedError
 
     def _format_alerts(self, alerts, gone_alerts, new_alerts):
-        product_name = self.middleware.call_sync("system.product_name")
         hostname = self.middleware.call_sync("system.hostname")
         if self.middleware.call_sync("system.is_enterprise"):
             node_map = self.middleware.call_sync("alert.node_map")
         else:
             node_map = None
-        return format_alerts(product_name, hostname, node_map, alerts, gone_alerts, new_alerts)
+        return format_alerts(PRODUCT_NAME, hostname, node_map, alerts, gone_alerts, new_alerts)
 
 
 class ProThreadedAlertService(ThreadedAlertService):
