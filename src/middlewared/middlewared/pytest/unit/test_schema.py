@@ -798,6 +798,7 @@ def test__schema_or_error_handler_attribute_name(schema, attribute):
     ('https:google.com', True),
     ('https:/google', True),
     ('https://www.google.com/search?q=truenas', False),
+    ('', False),
 ])
 def test__uri_schema(test_value, expected_error):
     @accepts(URI('uri'))

@@ -223,9 +223,10 @@ class URI(Str):
     def validate(self, value):
         super().validate(value)
         verrors = ValidationErrors()
-        uri = urlparse(value)
-        if not all(getattr(uri, k) for k in ('scheme', 'netloc')):
-            verrors.add(self.name, 'Not a valid URI')
+        if value:
+            uri = urlparse(value)
+            if not all(getattr(uri, k) for k in ('scheme', 'netloc')):
+                verrors.add(self.name, 'Not a valid URI')
         verrors.check()
 
 
