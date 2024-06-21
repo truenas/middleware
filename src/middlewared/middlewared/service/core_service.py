@@ -489,7 +489,10 @@ class CoreService(Service):
                     'examples': examples,
                     'item_method': True if item_method else hasattr(method, '_item_method'),
                     'no_auth_required': no_auth_required,
-                    'filterable': hasattr(method, '_filterable'),
+                    'filterable': hasattr(method, '_filterable') or (
+                        getattr(method, 'new_style_accepts', None) is not None and
+                        method.new_style_accepts.__name__ == "QueryArgs"
+                    ),
                     'filterable_schema': filterable_schema,
                     'pass_application': hasattr(method, '_pass_app'),
                     'extra_methods': method._rest_api_metadata['extra_methods'] if hasattr(

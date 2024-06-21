@@ -21,7 +21,7 @@ class UserEntry(BaseModel):
     home: NonEmptyString = DEFAULT_HOME_PATH
     shell: NonEmptyString = "/usr/bin/zsh"
     "Available choices can be retrieved with `user.shell_choices`."
-    full_name: NonEmptyString
+    full_name: str
     builtin: bool
     smb: bool = True
     group: dict
@@ -60,6 +60,7 @@ class UserCreate(UserEntry):
 
     uid: LocalUID | None = None
     "UNIX UID. If not provided, it is automatically filled with the next one available."
+    full_name: NonEmptyString
 
     group_create: bool = False
     group: int | None = None

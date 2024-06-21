@@ -806,6 +806,11 @@ class Resource(object):
                                 'message': 'Endpoint accepts multiple params, object/dict expected.',
                             })
                             return resp
+                        # These parameters were renamed as pydantic does not support `-` in parameter names
+                        if 'query-filters' in data:
+                            data['filters'] = data.pop('query-filters')
+                        if 'query-options' in data:
+                            data['options'] = data.pop('query-options')
                         method_args = []
                         for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
                             if p not in data and options['required']:
