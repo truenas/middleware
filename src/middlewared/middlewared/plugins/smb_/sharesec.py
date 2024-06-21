@@ -127,7 +127,6 @@ class ShareSec(CRUDService):
             raise CallError(f'sharesec {action} failed with error: {sharesec.stderr.decode()}')
         return sharesec.stdout.decode()
 
-    @accepts(Str('share_name'))
     async def getacl(self, share_name):
         """
         View the ACL information for `share_name`. The share ACL is distinct from filesystem
