@@ -303,10 +303,6 @@ def gss_get_current_cred(
     return cred
 
 
-def klist_check(ccache_path: str) -> bool:
-    return gss_check_ticket(ccache_path, False)
-
-
 def parse_keytab(keytab_output: list) -> list:
     """
     Internal parser for output of `klist -ket` for a kerberos keytab
