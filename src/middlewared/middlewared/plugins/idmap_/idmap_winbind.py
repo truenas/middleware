@@ -38,14 +38,17 @@ class WBClient:
             'sid': entry.sid
         }
 
-    def _as_dict(self, results):
+    def _as_dict(self, results, convert_unmapped=False):
         for entry in list(results['mapped'].keys()):
             new = self._pyuidgid_to_dict(results['mapped'][entry])
             results['mapped'][entry] = new
 
-        for entry in list(results['unmapped'].keys()):
-            new = self._pyuidgid_to_dict(results['unmapped'][entry])
-            results['unmapped'][entry] = new
+        # The unmapped entry value may be uidgid type or simply SID string
+        # in latter case we shouldn't try to convert
+        if convert_unmapped:
+            for entry in list(results['unmapped'].keys()):
+                new = self._pyuidgid_to_dict(results['unmapped'][entry])
+                results['unmapped'][entry] = new
 
         return results
 
@@ -122,7 +125,7 @@ class WBClient:
             self.ctx.uid_gid_objects_from_unix_ids,
             payload
         )
-        return self._as_dict(data)
+        return self._as_dict(data, True)
 
     def sid_to_idmap_entry(self, sid):
         mapped = self.sids_to_users_and_groups([sid])['mapped']
