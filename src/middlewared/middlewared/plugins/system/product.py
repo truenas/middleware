@@ -7,35 +7,23 @@ import os
 
 from datetime import date
 from licenselib.license import ContractType, Features, License
-from pathlib import Path
 
 from middlewared.plugins.truenas import EULA_PENDING_PATH
 from middlewared.schema import accepts, Bool, returns, Str
-from middlewared.service import no_auth_required, no_authz_required, private, Service, ValidationError
+from middlewared.service import no_authz_required, private, Service, ValidationError
 from middlewared.utils import sw_info
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
 LICENSE_FILE = '/data/license'
 LICENSE_FILE_MODE = 0o600
+PRODUCT_NAME = 'TrueNAS'
 
 
 class SystemService(Service):
 
     PRODUCT_TYPE = None
 
-    @no_auth_required
-    @accepts()
-    @returns(Bool('system_is_truenas_core'))
-    async def is_freenas(self):
-        """
-        FreeNAS is now TrueNAS CORE.
-
-        DEPRECATED: Use `system.product_type`
-        """
-        return (await self.product_type()) == 'CORE'
-
-    @no_auth_required
     @accepts()
     @returns(Str('product_type'))
     async def product_type(self):
@@ -71,15 +59,6 @@ class SystemService(Service):
     @private
     async def is_enterprise(self):
         return await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE'
-
-    @no_auth_required
-    @accepts()
-    @returns(Str('product_name'))
-    async def product_name(self):
-        """
-        Returns name of the product we are using.
-        """
-        return "TrueNAS"
 
     @no_authz_required
     @accepts()
@@ -124,20 +103,6 @@ class SystemService(Service):
         Returns whether software version of the system is stable.
         """
         return sw_info()['stable']
-
-    @no_auth_required
-    @accepts()
-    @returns(Str('product_running_environment', enum=['DEFAULT', 'EC2']))
-    async def environment(self):
-        """
-        Return environment in which product is running. Possible values:
-        - DEFAULT
-        - EC2
-        """
-        if os.path.exists('/.ec2'):
-            return 'EC2'
-
-        return 'DEFAULT'
 
     @private
     async def platform(self):
