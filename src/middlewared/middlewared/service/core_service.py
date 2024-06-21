@@ -556,6 +556,7 @@ class CoreService(Service):
         kwargs = kwargs or {}
         self.middleware.send_event(name, event_type, **kwargs)
 
+    @no_authz_required
     @accepts()
     def ping(self):
         """
