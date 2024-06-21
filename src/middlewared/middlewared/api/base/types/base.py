@@ -6,7 +6,7 @@ from typing_extensions import Annotated
 
 from middlewared.utils.lang import undefined
 
-__all__ = ["LongString", "NonEmptyString", "Private"]
+__all__ = ["LongString", "NonEmptyString", "Private", "PRIVATE_VALUE"]
 
 
 class LongStringWrapper:
@@ -51,6 +51,7 @@ LongString = Annotated[
 NonEmptyString = Annotated[str, Field(min_length=1)]
 
 PrivateType = TypeVar("PrivateType")
+PRIVATE_VALUE = "********"
 
 
 class Private(Generic[PrivateType]):
@@ -95,11 +96,13 @@ class Private(Generic[PrivateType]):
             validated_inner = handler(value)
             return cls(validated_inner)
 
-        def serialize(value: Private[PrivateType], info: core_schema.SerializationInfo) -> str | Private[PrivateType]:
+        def serialize(value: Private[PrivateType], info: core_schema.SerializationInfo) -> str | None:
             if value == undefined:
                 return undefined
             elif info.mode == "json":
-                return "********"
+                return PRIVATE_VALUE
+            elif value is None:
+                return None
             else:
                 return value.value
 

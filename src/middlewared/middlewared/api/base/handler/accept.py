@@ -3,7 +3,7 @@ from pydantic_core import ValidationError
 from middlewared.service_exception import CallError, ValidationErrors
 
 
-def accept_params(model, args, *, exclude_unset=False, expose_secrets=True, validate=True):
+def accept_params(model, args, *, exclude_unset=False, expose_secrets=True):
     if len(args) > len(model.model_fields):
         raise CallError(f"Too many arguments (expected {len(model.model_fields)}, found {len(args)})")
 
@@ -12,17 +12,14 @@ def accept_params(model, args, *, exclude_unset=False, expose_secrets=True, vali
         for field, value in zip(model.model_fields.keys(), args)
     }
 
-    if validate:
-        try:
-            instance = model(**args_as_dict)
-        except ValidationError as e:
-            verrors = ValidationErrors()
-            for error in e.errors():
-                verrors.add(".".join(map(str, error["loc"])), error["msg"])
+    try:
+        instance = model(**args_as_dict)
+    except ValidationError as e:
+        verrors = ValidationErrors()
+        for error in e.errors():
+            verrors.add(".".join(map(str, error["loc"])), error["msg"])
 
-            raise verrors from None
-    else:
-        instance = model.model_construct(**args_as_dict)
+        raise verrors from None
 
     if expose_secrets:
         mode = "python"

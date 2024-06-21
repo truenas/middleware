@@ -122,14 +122,14 @@ def test_invalid_call():
                     "authenticated": True,
                     "authorized": True,
                     "method": "user.create",
-                    "params": [{"username": "sergey"}],
+                    "params": [{"username": "sergey", "password": "********"}],
                     "description": "Create user sergey",
                 },
                 "success": False,
             }
         ]):
             with pytest.raises(ValidationErrors):
-                c.call("user.create", {"username": "sergey"})
+                c.call("user.create", {"username": "sergey", "password": "password"})
 
 
 def test_valid_call():

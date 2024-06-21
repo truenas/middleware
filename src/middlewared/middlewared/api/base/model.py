@@ -1,10 +1,12 @@
 import copy
+import typing
 
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, model_serializer
 from pydantic._internal._model_construction import ModelMetaclass
 from typing_extensions import Annotated
 
 from middlewared.utils.lang import undefined
+from .types.base import Private
 
 __all__ = ["BaseModel", "ForUpdateMetaclass", "single_argument_args", "single_argument_result"]
 
@@ -15,6 +17,21 @@ class BaseModel(PydanticBaseModel):
         strict=True,
         str_max_length=1024,
     )
+
+    @classmethod
+    def __pydantic_init_subclass__(cls, **kwargs: typing.Any) -> None:
+        for k, v in cls.model_fields.items():
+            if typing.get_origin(v.annotation) is typing.Union:
+                for option in typing.get_args(v.annotation):
+                    if typing.get_origin(option) is Private:
+                        def dump(t):
+                            return str(t).replace("typing.", "").replace("middlewared.api.base.types.base.", "")
+
+                        raise TypeError(
+                            f"Model {cls.__name__} has field {k} defined as {dump(v.annotation)}. {dump(option)} "
+                            "cannot be a member of an Optional or a Union, please make the whole field Private."
+                        )
+
 
 
 class ForUpdateMetaclass(ModelMetaclass):

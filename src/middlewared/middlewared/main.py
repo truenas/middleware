@@ -1,4 +1,4 @@
-from .api.base.handler.accept import accept_params
+from .api.base.handler.dump_params import dump_params
 from .api.base.handler.result import serialize_result
 from .apidocs import routes as apidocs_routes
 from .auth import is_ha_connection
@@ -1429,8 +1429,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 method = crud_method
 
         if hasattr(method, 'new_style_accepts'):
-            return accept_params(method.new_style_accepts, args, exclude_unset=True, expose_secrets=False,
-                                 validate=False)
+            return dump_params(method.new_style_accepts, args, False)
 
         if not hasattr(method, 'accepts'):
             return args
