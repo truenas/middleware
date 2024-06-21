@@ -1,6 +1,5 @@
 from middlewared.plugins.sysdataset import SYSDATASET_PATH
-from middlewared.schema import Bool, Dict, List, SID, Str, Int
-from middlewared.service import (accepts, filterable, private, periodic, CRUDService)
+from middlewared.service import (accepts, filterable, periodic, CRUDService)
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import run, filter_list
 from middlewared.plugins.smb import SMBCmd
@@ -89,9 +88,7 @@ class ShareSec(CRUDService):
     async def parse_share_sd(self, sd):
         """
         Parses security descriptor text returned from 'sharesec'.
-        Optionally will resolve the SIDs in the SD to names.
         """
-        wb_is_running = True
 
         if len(sd) == 0:
             return {}
@@ -106,7 +103,7 @@ class ShareSec(CRUDService):
             m = RE_SHAREACLENTRY.match(i)
             if m is None:
                 self.logger.warning('%s: share contains unparseable entry: %s',
-                                    parsed_sd['share_name'], i)
+                                    parsed_share_sd['share_name'], i)
                 continue
 
             parsed_share_sd['share_acl'].append(m.groupdict())
@@ -134,12 +131,8 @@ class ShareSec(CRUDService):
     async def getacl(self, share_name):
         """
         View the ACL information for `share_name`. The share ACL is distinct from filesystem
-        ACLs which can be viewed by calling `filesystem.getacl`. `ae_who_name` will appear
-        as `None` if the SMB service is stopped or if winbind is unable  to resolve the SID
-        to a name.
+        ACLs which can be viewed by calling `filesystem.getacl`.
 
-        If the `option` `resolve_sids` is set to `False` then the returned ACL will not
-        contain names.
         """
         if share_name.upper() == 'HOMES':
             share_filter = [['home', '=', True]]
@@ -176,20 +169,14 @@ class ShareSec(CRUDService):
     async def setacl(self, data, db_commit=True):
         """
         Set an ACL on `share_name`. Changes are written to samba's share_info.tdb file.
-        This only impacts SMB sessions. Either ae_who_sid or ae_who_name must be specified
+        This only impacts SMB sessions. ae_who_sid ust be specified
         for each ACL entry in the `share_acl`. If both are specified, then ae_who_sid will be used.
-        The SMB service must be started in order to convert ae_who_name to a SID if those are
-        used.
 
         `share_name` the name of the share
 
         `share_acl` a list of ACL entries (dictionaries) with the following keys:
 
         `ae_who_sid` who the ACL entry applies to expressed as a Windows SID
-
-        `ae_who_name` who the ACL entry applies to expressed as a name. `ae_who_name` must
-        be prefixed with the domain that the user is a member of. Local users will have the
-        netbios name of the SMB server as a prefix. Example `freenas\\smbusers`
 
         `ae_perm` string representation of the permissions granted to the user or group.
         `FULL` grants read, write, execute, delete, write acl, and change owner.
