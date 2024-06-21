@@ -116,6 +116,26 @@ class WBClient:
         return self._as_dict(data)
 
     def users_and_groups_to_idmap_entries(self, uidgids):
+        """
+        Bulk conversion of list of dictionaries containing the
+        following keys:
+
+        id_type : string. possible values "USER", "GROUP"
+        id : integer
+
+        Returns dictionary:
+        {"mapped": {}, "unmapped": {}
+
+        `mapped` contains entries keyed by string with either
+        UID:<xid>, or GID:<xid>
+
+        'UID:1000': {
+            'id': 1000,
+            'id_type': 'USER',
+            'name': 'bob',
+            'sid': sid string
+        }
+        """
         payload = [{
             'id_type': IDType[entry["id_type"]].wbc_str(),
             'id': entry['id']
@@ -146,6 +166,13 @@ class WBClient:
         return self._pyuidgid_to_dict(entry)
 
     def uidgid_to_idmap_entry(self, data):
+        """
+        Convert payload specified in `data` to a idmap entry. Wraps around
+        users_and_groups_to_idmap_entries. See above.
+
+        Raises:
+            MatchNotFound
+        """
         mapped = self.users_and_groups_to_idmap_entries([data])['mapped']
         if not mapped:
             raise MatchNotFound(str(data))
