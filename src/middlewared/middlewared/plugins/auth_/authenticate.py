@@ -1,6 +1,7 @@
 import pam
 
 from middlewared.plugins.account import unixhash_is_valid
+from middlewared.plugins.account_.constants import ADMIN_UID
 from middlewared.service import Service, private
 from middlewared.utils.crypto import check_unixhash
 
@@ -86,18 +87,39 @@ class AuthService(Service):
             )
             return None
 
-        if user_info['local']:
-            twofactor_id = user_info['id']
-            groups_key = 'local_groups'
-            account_flags = ['LOCAL']
-        else:
-            twofactor_id = user['sid_info']['sid']
-            groups_key = 'ds_groups'
-            account_flags = ['DIRECTORY_SERVICE']
-            if user['sid_info']['domain_information']['activedirectory']:
-                account_flags.append('ACTIVE_DIRECTORY')
-            else:
-                account_flags.append('LDAP')
+        match user['source']:
+            case 'LOCAL':
+                # Local user
+                twofactor_id = user_info['id']
+                groups_key = 'local_groups'
+                account_flags = ['LOCAL']
+            case 'ACTIVEDIRECTORY':
+                # Active directory user
+                twofactor_id = user['sid']
+                groups_key = 'ds_groups'
+                account_flags = ['DIRECTORY_SERVICE', 'ACTIVE_DIRECTORY']
+            case 'LDAP':
+                # This includes both OpenLDAP and IPA domains
+                # Since IPA domains may have cross-realm trusts with separate
+                # idmap configuration we will preferentially use the SID if it is
+                # available (since it should be static and universally unique)
+                twofactor_id = user['sid'] or user_info['id']
+                groups_key = 'ds_groups'
+                account_flags = ['DIRECTORY_SERVICE', 'LDAP']
+            case _:
+                self.logger.error('[%s]: unknown user source. Rejecting access.', user['source'])
+                return None
+
+        if user['local'] != user_info['local']:
+            # There is a disagreement between our expectation of user account source
+            # based on our database and what NSS _actually_ returned.
+            self.logger.error(
+                '%d: Rejecting access by user id due to potential collision between '
+                'local and directory service user account. TrueNAS configuration '
+                'expected a %s user account but received an account provided by %s.',
+                user['pw_uid'], 'local' if user_info['local'] else 'non-local', user['source']
+            )
+            return None
 
         # Two-factor authentication token is keyed by SID for activedirectory
         # users.
@@ -111,7 +133,17 @@ class AuthService(Service):
         if twofactor_enabled:
             account_flags.append('2FA')
 
-        if user['pw_uid'] in (0, 950):
+        if user['pw_uid'] in (0, ADMIN_UID):
+            if not user['local']:
+                # Although this should be covered in above check for mismatch in
+                # value of `local`, perform an extra explicit check for the case
+                # of root / root-equivalent accounts.
+                self.logger.error(
+                    'Rejecting admin account access due to collision with acccount provided '
+                    'by a directory service.'
+                )
+                return None
+
             account_flags.append('SYS_ADMIN')
 
         privileges = await self.middleware.call('privilege.privileges_for_groups', groups_key, groups)

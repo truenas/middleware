@@ -10,10 +10,11 @@ import stat
 import subprocess
 import time
 import warnings
+import wbclient
 from pathlib import Path
 from contextlib import suppress
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, returns, Str, LocalUsername
+from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, returns, SID, Str, LocalUsername
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, no_auth_required, no_authz_required, pass_app, private, filterable, job
 )
@@ -22,28 +23,21 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.utils.crypto import sha512_crypt
 from middlewared.utils.nss import pwd, grp
+from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
 from middlewared.validators import Email, Range
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.plugins.account_.constants import (
+    ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS
+)
 from middlewared.plugins.smb_.constants import SMBBuiltin
-from middlewared.plugins.idmap_.utils import (
+from middlewared.plugins.idmap_.idmap_constants import (
     TRUENAS_IDMAP_DEFAULT_LOW,
     SID_LOCAL_USER_PREFIX,
     SID_LOCAL_GROUP_PREFIX
 )
-
-ADMIN_UID = 950  # When googled, does not conflict with anything
-ADMIN_GID = 950
-SKEL_PATH = '/etc/skel/'
-# TrueNAS historically used /nonexistent as the default home directory for new
-# users. The nonexistent directory has caused problems when
-# 1) an admin chooses to create it from shell
-# 2) PAM checks for home directory existence
-# And so this default has been deprecated in favor of using /var/empty
-# which is an empty and immutable directory.
-LEGACY_DEFAULT_HOME_PATH = '/nonexistent'
-DEFAULT_HOME_PATH = '/var/empty'
-DEFAULT_HOME_PATHS = (DEFAULT_HOME_PATH, LEGACY_DEFAULT_HOME_PATH)
+from middlewared.plugins.idmap_ import idmap_winbind
+from middlewared.plugins.idmap_ import idmap_sss
 
 
 def pw_checkname(verrors, attribute, name):
@@ -1053,7 +1047,8 @@ class UserService(CRUDService):
         Int('pw_uid'),
         Int('pw_gid'),
         List('grouplist'),
-        Dict('sid_info'),
+        SID('sid', null=True),
+        Str('source', enum=['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']),
         Bool('local'),
         register=True,
     ))
@@ -1089,14 +1084,9 @@ class UserService(CRUDService):
         `grouplist` - optional list of group ids for groups of which this account is a member. If `get_groups`
         is not specified, this value will be null.
 
-        `sid_info - optional dictionary object containing details of SID and domain information. If `sid_info`
-        is not specified, this value will be null.
+        `sid` - optional SID value for the account that is present if `sid_info` is specified in payload.
 
-        NOTE: in some pathological scenarios this may make the operation hang until
-        the winbindd request timeout has been reached if the winbindd connection manager
-        has not yet marked the domain as offline. The TrueNAS middleware is more aggressive
-        about marking AD domains as FAULTED and so it may be advisable to first check the
-        Active Directory service state prior to batch operations using this option.
+        `source` - the source for the user account.
         """
         verrors = ValidationErrors()
         if not data['username'] and data['uid'] is None:
@@ -1123,40 +1113,66 @@ class UserService(CRUDService):
             except KeyError:
                 raise KeyError(f'{data["uid"]}: user with this id does not exist') from None
 
-        source = user_obj.pop('source')
-        user_obj['local'] = source == 'FILES'
+        match user_obj['source']:
+            case NssModule.FILES.name:
+                user_obj['source'] = 'LOCAL'
+            case NssModule.WINBIND.name:
+                user_obj['source'] = 'ACTIVEDIRECTORY'
+            case NssModule.SSS.name:
+                user_obj['source'] = 'LDAP'
+            case _:
+                self.logger.error('%s: unknown ID source.', user_obj['source'])
+                raise ValueError(f'{user_obj["source"]}: unknown ID source. Please file a bug report.')
+
+        user_obj['local'] = user_obj['source'] == 'LOCAL'
 
         if data['get_groups']:
             user_obj['grouplist'] = os.getgrouplist(user_obj['pw_name'], user_obj['pw_gid'])
 
         if data['sid_info']:
-            try:
-                if (idmap := self.middleware.call_sync('idmap.convert_unixids', [{
-                    'id_type': 'USER',
-                    'id': user_obj['pw_uid'],
-                }])['mapped']):
-                    sid = idmap[f'UID:{user_obj["pw_uid"]}']['sid']
-                else:
-                    sid = SID_LOCAL_USER_PREFIX + str(user_obj['pw_uid'])
-            except CallError as e:
-                # ENOENT means no winbindd entry for user
-                # ENOTCONN means winbindd is stopped / can't be started
-                # EAGAIN means the system dataset is hosed and needs to be fixed,
-                # but we need to let it through so that it's very clear in logs
-                if e.errno not in (errno.ENOENT, errno.ENOTCONN):
-                    self.logger.error('Failed to retrieve SID for uid: %d', user_obj['pw_uid'], exc_info=True)
-                sid = None
-            except Exception:
-                self.logger.error('Failed to retrieve SID for uid: %d', user_obj['pw_uid'], exc_info=True)
+            match user_obj['source']:
+                case 'LOCAL' | 'ACTIVEDIRECTORY':
+                    # winbind provides idmapping for local and AD users
+                    try:
+                        idmap_ctx = idmap_winbind.WBClient()
+                    except wbclient.WBCError as e:
+                        if e.error_code != wbclient.WBC_ERR_WINBIND_NOT_AVAILABLE:
+                            self.logger.error('Failed to retrieve SID for uid: %d',
+                                              user_obj['pw_uid'], exc_info=True)
+
+                        idmap_ctx = None
+                case 'LDAP':
+                    # SSSD provides ID mapping for IPA domains
+                    idmap_ctx = idmap_sss.SSSClient()
+                case _:
+                    self.logger.error('%s: unknown ID source.', user_obj['source'])
+                    raise ValueError(f'{user_obj["source"]}: unknown ID source. Please file a bug report.')
+
+            if idmap_ctx is not None:
+                try:
+                    sid = idmap_ctx.uidgid_to_idmap_entry({
+                        'id_type': 'USER',
+                        'id': user_obj['pw_uid']
+                    })['sid']
+                except MatchNotFound:
+                    if user_obj['source'] == 'LOCAL':
+                        # Local user that doesn't have passdb entry
+                        # we can simply apply default prefix
+                        sid = SID_LOCAL_USER_PREFIX + str(user_obj['pw_uid'])
+                    else:
+                        # This is a more odd situation. The user accout exists
+                        # in IPA but doesn't have a SID assigned to it.
+                        sid = None
+            else:
+                # We were unable to establish an idmap client context even
+                # though we were able to retrieve the user account info. This
+                # most likely means that we're dealing with a local account and
+                # winbindd is not running.
                 sid = None
 
-            if sid:
-                user_obj['sid_info'] = {
-                    'sid': sid,
-                    'domain_information': self.middleware.call_sync('idmap.parse_domain_info', sid)
-                }
-            else:
-                user_obj['sid_info'] = None
+            user_obj['sid'] = sid
+        else:
+            user_obj['sid'] = None
 
         return user_obj
 
@@ -2041,7 +2057,8 @@ class GroupService(CRUDService):
         Str('gr_name'),
         Int('gr_gid'),
         List('gr_mem'),
-        Dict('sid_info'),
+        SID('sid', null=True),
+        Str('source', enum=['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']),
         Bool('local'),
     ))
     def get_group_obj(self, data):
@@ -2060,11 +2077,14 @@ class GroupService(CRUDService):
 
         `gr_mem` - list of gids that are members of the group
 
-        `sid_info` - optional SMB information if `sid_info` is specified specified, otherwise
-        this field will be null.
-
         `local` - boolean indicating whether this group is local to the NAS or provided by a
         directory service.
+
+        `sid` - optional SID value for the account that is present if `sid_info` is specified in payload.
+
+        `source` - the name server switch module that provided the user. Options are:
+        FILES - local user in passwd file of server, WINBIND - user provided by winbindd, SSS - user
+        provided by SSSD.
         """
         verrors = ValidationErrors()
         if not data['groupname'] and data['gid'] is None:
@@ -2090,33 +2110,62 @@ class GroupService(CRUDService):
             except KeyError:
                 raise KeyError(f'{data["gid"]}: group with this id does not exist') from None
 
-        source = grp_obj.pop('source')
-        grp_obj['local'] = source == 'FILES'
+        grp_obj['local'] = grp_obj['source'] == NssModule.FILES.name
+        match grp_obj['source']:
+            case NssModule.FILES.name:
+                grp_obj['source'] = 'LOCAL'
+            case NssModule.WINBIND.name:
+                grp_obj['source'] = 'ACTIVEDIRECTORY'
+            case NssModule.SSS.name:
+                grp_obj['source'] = 'LDAP'
+            case _:
+                self.logger.error('%s: unknown ID source.', grp_obj['source'])
+                raise ValueError(f'{grp_obj["source"]}: unknown ID source. Please file a bug report.')
+
+        grp_obj['local'] = grp_obj['source'] == 'LOCAL'
 
         if data['sid_info']:
-            try:
-                if (idmap := self.middleware.call_sync('idmap.convert_unixids', [{
-                    'id_type': 'GROUP',
-                    'id': grp_obj['gr_gid'],
-                }])['mapped']):
-                    sid = idmap[f'GID:{grp_obj["gr_gid"]}']['sid']
-                else:
-                    sid = SID_LOCAL_GROUP_PREFIX + str(grp_obj['gr_gid'])
-            except CallError as e:
-                if e.errno not in (errno.ENOENT, errno.ENOTCONN):
-                    self.logger.error('Failed to retrieve SID for gid: %d', grp_obj['gr_gid'], exc_info=True)
-                sid = None
-            except Exception:
-                self.logger.error('Failed to retrieve SID for gid: %d', grp['gr_gid'], exc_info=True)
+            match grp_obj['source']:
+                case 'LOCAL' | 'ACTIVEDIRECTORY':
+                    # winbind provides idmapping for local and AD users
+                    try:
+                        idmap_ctx = idmap_winbind.WBClient()
+                    except wbclient.WBCError as e:
+                        # Library error from libwbclient.
+                        # Don't bother logging if winbind isn't running since
+                        # we have plenty of other places that are logging that
+                        # error condition
+                        if e.error_code != wbclient.WBC_ERR_WINBIND_NOT_AVAILABLE:
+                            self.logger.error('Failed to retrieve SID for gid: %d',
+                                              grp_obj['gr_gid'], exc_info=True)
+
+                        idmap_ctx = None
+                case 'LDAP':
+                    # SSSD provides ID mapping for IPA domains
+                    idmap_ctx = idmap_sss.SSSClient()
+                case _:
+                    self.logger.error('%s: unknown ID source.', grp_obj['source'])
+                    raise ValueError(f'{grp_obj["source"]}: unknown ID source. Please file a bug report.')
+
+            if idmap_ctx is not None:
+                try:
+                    sid = idmap_ctx.uidgid_to_idmap_entry({
+                        'id_type': 'GROUP',
+                        'id': grp_obj['gr_gid']
+                    })['sid']
+                except MatchNotFound:
+                    if grp_obj['source'] == 'LOCAL':
+                        # Local user that doesn't have groupmap entry
+                        # we can simply apply default prefix
+                        sid = SID_LOCAL_GROUP_PREFIX + str(grp_obj['gr_gid'])
+                    else:
+                        sid = None
+            else:
                 sid = None
 
-            if sid:
-                grp_obj['sid_info'] = {
-                    'sid': sid,
-                    'domain_information': self.middleware.call_sync('idmap.parse_domain_info', sid)
-                }
-            else:
-                grp_obj['sid_info'] = None
+            grp_obj['sid'] = sid
+        else:
+            grp_obj['sid'] = None
 
         return grp_obj
 

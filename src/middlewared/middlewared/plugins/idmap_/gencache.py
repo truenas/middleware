@@ -4,7 +4,6 @@ import wbclient
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
 from middlewared.plugins.tdb.utils import TDBError
-from .utils import SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 
 GENCACHE_FILE = '/var/run/samba-lock/gencache.tdb'
 

@@ -3,9 +3,7 @@ import os
 from logging import getLogger
 from middlewared.utils import filter_list
 from middlewared.plugins.account import DEFAULT_HOME_PATH
-from middlewared.plugins.idmap_.utils import TRUENAS_IDMAP_MAX
 from middlewared.plugins.smb_.constants import LOGLEVEL_MAP, SMBPath
-from middlewared.plugins.directoryservices import DSStatus, SSL
 
 LOGGER = getLogger(__name__)
 
@@ -140,26 +138,26 @@ def generate_smb_conf_dict(
         })
 
     if smb_service_config['enable_smb1']:
-       smbconf['server min protocol'] = 'NT1'
+        smbconf['server min protocol'] = 'NT1'
 
     if smb_service_config['syslog']:
-       smbconf['logging'] = f'syslog@{min(3, loglevelint)} file'
+        smbconf['logging'] = f'syslog@{min(3, loglevelint)} file'
 
     if smb_bindips := smb_service_config['bindip']:
-       allowed_ips = set(smb_bind_choices.values())
-       if (rejected := set(smb_bindips) - allowed_ips):
-           LOGGER.warning(
-               '%s: IP address(es) are no longer in use and should be removed '
-               'from SMB configuration.', rejected
-           )
+        allowed_ips = set(smb_bind_choices.values())
+        if (rejected := set(smb_bindips) - allowed_ips):
+            LOGGER.warning(
+                '%s: IP address(es) are no longer in use and should be removed '
+                'from SMB configuration.', rejected
+            )
 
-       if (final_ips := allowed_ips & set(smb_bindips)):
-           smbconf['interfaces'] = ' '.join(final_ips | {'127.0.0.1'})
-       else:
-           # We need to generate SMB configuration to prevent breaking
-           # winbindd
-           LOGGER.error('No specified SMB bind IP addresses are available')
-           smbconf['interfaces'] = '127.0.0.1'
+        if (final_ips := allowed_ips & set(smb_bindips)):
+            smbconf['interfaces'] = ' '.join(final_ips | {'127.0.0.1'})
+        else:
+            # We need to generate SMB configuration to prevent breaking
+            # winbindd
+            LOGGER.error('No specified SMB bind IP addresses are available')
+            smbconf['interfaces'] = '127.0.0.1'
 
     """
     The following are our default Active Directory related parameters
@@ -246,7 +244,6 @@ def generate_smb_conf_dict(
             f'{idmap_prefix} range': f'{i["range_low"]} - {i["range_high"]}',
         })
 
-        disable_starttls = False
         for k, v in i['options'].items():
             backend_parameter = 'realm' if k == 'cn_realm' else k
             match k:
@@ -255,8 +252,6 @@ def generate_smb_conf_dict(
                 case 'ldap_url':
                     value = f'{"ldaps://" if i["options"]["ssl"]  == "ON" else "ldap://"}{v}'
                 case 'ssl':
-                    if v != 'STARTTLS':
-                        disable_startls = True
                     continue
                 case _:
                     value = v

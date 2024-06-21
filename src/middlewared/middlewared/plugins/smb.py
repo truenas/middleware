@@ -38,7 +38,7 @@ from middlewared.plugins.smb_.util_net_conf import reg_delshare, reg_listshares,
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.plugins.smb_.utils import apply_presets, is_time_machine_share, smb_strip_comments
 from middlewared.plugins.tdb.utils import TDBError
-from middlewared.plugins.idmap_.utils import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
+from middlewared.plugins.idmap_.idmap_constants import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 from middlewared.utils import filter_list, run
 from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath

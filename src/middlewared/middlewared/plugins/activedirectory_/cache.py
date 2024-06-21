@@ -1,4 +1,4 @@
-from middlewared.plugins.idmap_.utils import (
+from middlewared.plugins.idmap_.idmap_constants import (
     IDType,
     SID_LOCAL_USER_PREFIX,
     SID_LOCAL_GROUP_PREFIX,
