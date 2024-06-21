@@ -22,6 +22,7 @@ WBCErr = {
     wbclient.WBC_ERR_PWD_CHANGE_FAILED: errno.EFAULT
 }
 
+
 class WBClient:
     def __init__(self, **kwargs):
         self.ctx = wbclient.Ctx()

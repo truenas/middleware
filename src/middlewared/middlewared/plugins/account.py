@@ -28,8 +28,7 @@ from middlewared.utils.privilege import credential_has_full_admin, privileges_gr
 from middlewared.validators import Email, Range
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.account_.constants import (
-    ADMIN_UID, ADMIN_GID, SKEL_PATH, LEGACY_DEFAULT_HOME_PATH,
-    DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS
+    ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
@@ -2131,7 +2130,7 @@ class GroupService(CRUDService):
             case NssModule.SSS.name:
                 grp_obj['source'] = 'LDAP'
             case _:
-                self.logger.error('%s: unknown ID source.', group_obj['source'])
+                self.logger.error('%s: unknown ID source.', grp_obj['source'])
                 raise ValueError(f'{grp_obj["source"]}: unknown ID source. Please file a bug report.')
 
         grp_obj['local'] = grp_obj['source'] == 'LOCAL'
@@ -2156,7 +2155,7 @@ class GroupService(CRUDService):
                     # SSSD provides ID mapping for IPA domains
                     idmap_ctx = idmap_sss.SSSClient()
                 case _:
-                    self.logger.error('%s: unknown ID source.', group_obj['source'])
+                    self.logger.error('%s: unknown ID source.', grp_obj['source'])
                     raise ValueError(f'{grp_obj["source"]}: unknown ID source. Please file a bug report.')
 
             if idmap_ctx is not None:

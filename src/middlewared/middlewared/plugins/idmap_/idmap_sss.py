@@ -1,7 +1,6 @@
 import pysss_nss_idmap as sssclient
 
 from .idmap_constants import IDType
-from middlewared.utils.itertools import batched
 from middlewared.service_exception import MatchNotFound
 
 
