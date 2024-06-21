@@ -15,8 +15,7 @@ from middlewared.plugins.directoryservices import DSStatus, SSL
 from middlewared.plugins.idmap import DSType
 from middlewared.plugins.ldap_.ldap_client import LdapClient
 from middlewared.plugins.ldap_ import constants
-from middlewared.utils.nss import pwd, grp
-from middlewared.utils.nss.nss_common import NssModule
+from middlewared.utils.directoryservices.krb5_constants import krb5ccache
 from middlewared.validators import Range
 
 
@@ -673,7 +672,7 @@ class LDAPService(ConfigService):
         new_search_bases = data.pop(constants.LDAP_SEARCH_BASES_SCHEMA_NAME, {})
         new_attributes = data.pop(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME, {})
         if data['hostname'] is None:
-            del(data['hostname'])
+            del data['hostname']
 
         new.update(data)
         new[constants.LDAP_SEARCH_BASES_SCHEMA_NAME] | new_search_bases
@@ -734,7 +733,7 @@ class LDAPService(ConfigService):
         return ret
 
     @private
-    async def kinit(ldap_conf):
+    async def kinit(self, ldap_config):
         if await self.middleware.call(
             'kerberos.check_ticket',
             {'ccache': krb5ccache.SYSTEM.name},
@@ -924,7 +923,7 @@ class LDAPService(ConfigService):
         await self.set_state(DSStatus['HEALTHY'])
 
         job.set_progress(80, 'Restarting dependent services')
-        cache_job = await self.middleware.call('directoryservices.cache.refresh')
+        cache_job = await self.middleware.call('directoryservices.cache.refresh_impl')
         await cache_job.wait()
         await self.middleware.call('directoryservices.restart_dependent_services')
 
@@ -945,75 +944,8 @@ class LDAPService(ConfigService):
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'nss')
 
-        job.set_progress(50, 'Clearing directory service cache.')
-        await self.middleware.call('service.stop', 'dscache')
-
         job.set_progress(80, 'Stopping sssd service.')
         await self.middleware.call('service.stop', 'sssd')
         await self.set_state(DSStatus['DISABLED'])
+        await self.middleware.call('directoryservices.cache.abort_refresh')
         job.set_progress(100, 'LDAP directory service stopped.')
-
-    @private
-    @job(lock='fill_ldap_cache')
-    def fill_cache(self, job, force=False):
-        user_next_index = group_next_index = 100000000
-        if (self.middleware.call_sync('ldap.config'))['disable_freenas_cache']:
-            self.logger.debug('LDAP cache is disabled. Bypassing cache fill.')
-            return
-
-        pwd_list = pwd.getpwall(module=NssModule.SSS.name, as_dict=True)[NssModule.SSS.name]
-        grp_list = grp.getgrall(module=NssModule.SSS.name, as_dict=True)[NssModule.SSS.name]
-
-        for u in pwd_list:
-            entry = {
-                'id': user_next_index,
-                'uid': u['pw_uid'],
-                'username': u['pw_name'],
-                'unixhash': None,
-                'smbhash': None,
-                'group': {},
-                'home': u['pw_dir'],
-                'shell': '',
-                'full_name': u['pw_gecos'],
-                'builtin': False,
-                'email': '',
-                'password_disabled': False,
-                'locked': False,
-                'sudo_commands': [],
-                'sudo_commands_nopasswd': [],
-                'attributes': {},
-                'groups': [],
-                'sshpubkey': None,
-                'local': False,
-                'id_type_both': False,
-                'nt_name': None,
-                'smb': True,
-                'sid': None,
-            }
-            self.middleware.call_sync('directoryservices.cache.insert', self._config.namespace.upper(), 'USER', entry)
-            user_next_index += 1
-
-        for g in grp_list:
-            entry = {
-                'id': group_next_index,
-                'gid': g['gr_gid'],
-                'name': g['gr_name'],
-                'group': g['gr_name'],
-                'builtin': False,
-                'sudo_commands': [],
-                'sudo_commands_nopasswd': [],
-                'users': [],
-                'local': False,
-                'id_type_both': False,
-                'nt_name': None,
-                'smb': True,
-                'sid': None,
-            }
-            self.middleware.call_sync('directoryservices.cache.insert', self._config.namespace.upper(), 'GROUP', entry)
-            group_next_index += 1
-
-    @private
-    async def get_cache(self):
-        users = await self.middleware.call('directoryservices.cache.entries', self._config.namespace.upper(), 'USER')
-        groups = await self.middleware.call('directoryservices.cache.entries', self._config.namespace.upper(), 'GROUP')
-        return {"USERS": users, "GROUPS": groups}

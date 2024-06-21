@@ -35,14 +35,10 @@ class ZFSSnapshot(CRUDService):
 
             kwargs['datasets'] = dataset_names
 
-        prefetch = True
-        if dataset_names != '*' and len(dataset_names) == 1 and not recursive:
-            prefetch = False
-
         try:
             with libzfs.ZFS() as zfs:
                 datasets = zfs.datasets_serialized(**kwargs)
-                return get_snapshot_count_cached(self.middleware, zfs, datasets, prefetch)
+                return get_snapshot_count_cached(self.middleware, zfs, datasets)
 
         except libzfs.ZFSException as e:
             raise CallError(str(e))

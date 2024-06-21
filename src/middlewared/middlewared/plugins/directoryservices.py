@@ -47,11 +47,11 @@ class DirectoryServices(Service):
         # status more directly and deprecate the `get_state` method.
         state = await self.get_state()
         for ds in DSType:
-            if (status := state.get(ds.value, 'DISABLED')) == DSStatus.DISABLED.name:
+            if (status := state.get(ds.value.lower(), 'DISABLED')) == DSStatus.DISABLED.name:
                 continue
 
             return {
-                'type': ds.value.upper(),
+                'type': ds.value,
                 'status': status
             }
 
@@ -89,8 +89,8 @@ class DirectoryServices(Service):
                     # TODO: IPA join not implemented yet
                     continue
                 try:
-                    res = await self.middleware.call(f'{srv.value}.started')
-                    ds_state[srv.value] = DSStatus.HEALTHY.name if res else DSStatus.DISABLED.name
+                    res = await self.middleware.call(f'{srv.value.lower()}.started')
+                    ds_state[srv.value.lower()] = DSStatus.HEALTHY.name if res else DSStatus.DISABLED.name
 
                 except CallError as e:
                     if e.errno == errno.EINVAL:
@@ -124,7 +124,7 @@ class DirectoryServices(Service):
         return await self.middleware.call('cache.put', 'DS_STATE', ds_state)
 
     @accepts()
-    @job()
+    @job(lock="directoryservices_refresh_cache", lock_queue_size=1)
     async def cache_refresh(self, job):
         """
         This method refreshes the directory services cache for users and groups that is
@@ -139,7 +139,7 @@ class DirectoryServices(Service):
         permissions and ACL related methods. Likewise, a cache refresh will not resolve issues
         with users being unable to authenticate to shares.
         """
-        return await job.wrap(await self.middleware.call('directoryservices.cache.refresh'))
+        return await job.wrap(await self.middleware.call('directoryservices.cache.refresh_impl'))
 
     @private
     @returns(List(
@@ -176,7 +176,7 @@ class DirectoryServices(Service):
         name='nss_info_choices'
     ))
     async def nss_info_choices(self, dstype):
-        ds = DSType(dstype.lower())
+        ds = DSType(dstype)
         ret = []
 
         for x in list(NSS_Info):

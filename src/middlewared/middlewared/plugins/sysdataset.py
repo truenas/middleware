@@ -19,6 +19,7 @@ from middlewared.service import CallError, ConfigService, ValidationErrors, job,
 from middlewared.service_exception import InstanceNotFound
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.utils.size import format_size
+from middlewared.utils.tdb import close_sysdataset_tdb_handles
 
 
 class SystemDatasetModel(sa.Model):
@@ -731,7 +732,7 @@ class SystemDatasetService(ConfigService):
                 for i in restart:
                     self.middleware.call_sync('service.stop', i)
 
-                self.middleware.call_sync('tdb.close_sysdataset_handles')
+                close_sysdataset_tdb_handles()
                 yield
             finally:
                 restart.reverse()

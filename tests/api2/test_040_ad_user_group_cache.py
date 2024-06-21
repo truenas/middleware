@@ -1,114 +1,93 @@
 #!/usr/bin/env python3
 
-# License: BSD
-
 import pytest
 import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, SSH_TEST, wait_on_job
-from auto_config import hostname, password, user
-from pytest_dependency import depends
-from middlewared.test.integration.assets.account import user as create_user
+from functions import SSH_TEST
+from auto_config import password, user
 from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import call
 
-try:
-    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer, AD_COMPUTER_OU
-except ImportError:
-    Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
-    pytestmark = pytest.mark.skip(reason=Reason)
 
 WINBIND_SEPARATOR = "\\"
 
 
 @pytest.fixture(scope="module")
 def do_ad_connection(request):
-    with active_directory(
-        AD_DOMAIN,
-        ADUSERNAME,
-        ADPASSWORD,
-        netbiosname=hostname,
-        createcomputer=AD_COMPUTER_OU,
-    ) as ad:
-        yield (request, ad)
+    with active_directory() as ad:
+        # make sure we are extra sure cache fill complete
+        cache_fill_job = call(
+            'core.get_jobs',
+            [['method', '=', 'directoryservices.cache.refresh_impl']],
+            {'order_by': ['-id'], 'get': True}
+        )
+        if cache_fill_job['state'] == 'RUNNING':
+            call('core.job_wait', cache_fill_job['id'], job=True)
+
+        users = set([x['username'] for x in call(
+            'user.query',
+            [['local', '=', False]],
+            {'extra': {'search_dscache': True}}
+        )])
+
+        groups = set([x['name'] for x in call(
+            'group.query',
+            [['local', '=', False]],
+            {'extra': {'search_dscache': True}}
+        )])
+
+        yield ad | {'users': users, 'groups': groups}
 
 
-@pytest.mark.dependency(name="AD_IS_HEALTHY")
-def test_03_enabling_activedirectory(do_ad_connection):
-    global WORKGROUP
+def get_ad_user_and_group(ad_connection):
+    WORKGROUP = ad_connection['dc_info']['Pre-Win2k Domain']
 
-    results = GET('/activedirectory/started/')
-    assert results.status_code == 200, results.text
+    domain_prefix = f'{WORKGROUP.upper()}{WINBIND_SEPARATOR}'
+    ad_user = ad_connection['user_obj']['pw_name']
+    ad_group = f'{domain_prefix}domain users'
 
-    results = GET("/smb")
-    assert results.status_code == 200, results.text
-    WORKGROUP = results.json()['workgroup']
+    user = call(
+        'user.query', [['username', '=', ad_user]],
+        {'extra': {'search_dscache': True}, 'get': True}
+    )
 
+    group = call(
+        'group.query', [['name', '=', ad_group]],
+        {'extra': {'search_dscache': True}, 'get': True}
+    )
 
-@pytest.mark.dependency(name="INITIAL_CACHE_FILL")
-def test_06_wait_for_cache_fill(request):
-    """
-    Local user/group cache fill is a backgrounded task.
-    Wait for it to successfully complete.
-    """
-    depends(request, ["AD_IS_HEALTHY"])
-    results = GET(f'/core/get_jobs/?method=activedirectory.fill_cache')
-    job_status = wait_on_job(results.json()[-1]['id'], 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    return (user, group)
 
 
-@pytest.mark.dependency(name="AD_USERS_CACHED")
-def test_07_check_for_ad_users(request):
+def test_check_for_ad_users(do_ad_connection):
     """
     This test validates that we can query AD users using
     filter-option {"extra": {"search_dscache": True}}
     """
-    depends(request, ["INITIAL_CACHE_FILL"], scope="session")
     cmd = "wbinfo -u"
     results = SSH_TEST(cmd, user, password)
     assert results['result'], str(results['output'])
-    wbinfo_entries = results['stdout'].splitlines()
+    wbinfo_entries = set(results['stdout'].splitlines())
 
-    results = GET('/user', payload={
-        'query-filters': [['local', '=', False]],
-        'query-options': {'extra': {"search_dscache": True}},
-    })
-    assert results.status_code == 200, results.text
-    assert len(results.json()) > 0, results.text
-    cache_names = [x['username'] for x in results.json()]
-
-    for entry in wbinfo_entries:
-        assert entry in cache_names, str(cache_names)
+    assert wbinfo_entries == do_ad_connection['users']
 
 
-@pytest.mark.dependency(name="AD_GROUPS_CACHED")
-def test_08_check_for_ad_groups(request):
+def test_check_for_ad_groups(do_ad_connection):
     """
     This test validates that we can query AD groups using
     filter-option {"extra": {"search_dscache": True}}
     """
-    depends(request, ["INITIAL_CACHE_FILL"], scope="session")
     cmd = "wbinfo -g"
     results = SSH_TEST(cmd, user, password)
     assert results['result'], str(results['output'])
-    wbinfo_entries = results['stdout'].splitlines()
+    wbinfo_entries = set(results['stdout'].splitlines())
 
-    results = GET('/group', payload={
-        'query-filters': [['local', '=', False]],
-        'query-options': {'extra': {"search_dscache": True}},
-    })
-    assert results.status_code == 200, results.text
-    assert len(results.json()) > 0, results.text
-    cache_names = [x['name'] for x in results.json()]
-
-    for entry in wbinfo_entries:
-        assert entry in cache_names, str(cache_names)
+    assert wbinfo_entries == do_ad_connection['groups']
 
 
-@pytest.mark.dependency(name="REBUILD_AD_CACHE")
-def test_09_check_directoryservices_cache_refresh(request):
+def test_check_directoryservices_cache_refresh(do_ad_connection):
     """
     This test validates that middleware can successfully rebuild the
     directory services cache from scratch using the public API.
@@ -116,50 +95,33 @@ def test_09_check_directoryservices_cache_refresh(request):
     This currently happens once per 24 hours. Result of failure here will
     be lack of users/groups visible in webui.
     """
-    depends(request, ["AD_USERS_CACHED", "AD_GROUPS_CACHED"], scope="session")
-    rebuild_ok = False
 
-    """
-    Cache resides in tdb files. Remove the files to clear cache.
-    """
+    # Cache resides in tdb files. Remove the files to clear cache.
     cmd = 'rm -f /root/tdb/persistent/*'
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
-    """
-    directoryservices.cache_refresh job causes us to rebuild / refresh
-    LDAP / AD users.
-    """
-    results = GET('/directoryservices/cache_refresh/')
-    assert results.status_code == 200, results.text
-    if results.status_code == 200:
-        refresh_job = results.json()
-        job_status = wait_on_job(refresh_job, 180)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-        if job_status['state'] == 'SUCCESS':
-            rebuild_ok = True
+    # directoryservices.cache_refresh job causes us to rebuild / refresh LDAP / AD users.
+    call('directoryservices.cache.refresh_impl', job=True)
 
-    """
-    Verify that the AD user / group cache was rebuilt successfully.
-    """
-    if rebuild_ok:
-        results = GET('/group', payload={
-            'query-filters': [['local', '=', False]],
-            'query-options': {'extra': {"search_dscache": True}},
-        })
-        assert results.status_code == 200, results.text
-        assert len(results.json()) > 0, results.text
+    users = set([x['username'] for x in call(
+        'user.query',
+        [['local', '=', False]],
+        {'extra': {'search_dscache': True}}
+    )])
 
-        results = GET('/user', payload={
-            'query-filters': [['local', '=', False]],
-            'query-options': {'extra': {"search_dscache": True}},
-        })
-        assert results.status_code == 200, results.text
-        assert len(results.json()) > 0, results.text
+    assert users == do_ad_connection['users']
+
+    groups = set([x['name'] for x in call(
+        'group.query',
+        [['local', '=', False]],
+        {'extra': {'search_dscache': True}}
+    )])
+
+    assert groups == do_ad_connection['groups']
 
 
-@pytest.mark.dependency(name="LAZY_INITIALIZATION_BY_NAME")
-def test_10_check_lazy_initialization_of_users_and_groups_by_name(request):
+def test_check_lazy_initialization_of_users_and_groups_by_name(do_ad_connection):
     """
     When users explicitly search for a directory service or other user
     by name or id we should hit pwd and grp modules and synthesize a
@@ -169,64 +131,31 @@ def test_10_check_lazy_initialization_of_users_and_groups_by_name(request):
     to only hit the cache. Code paths are slightly different for lookups
     by id or by name and so they are tested separately.
     """
-    depends(request, ["REBUILD_AD_CACHE"], scope="session")
-    global ad_user_id
-    global ad_domain_users_id
-    domain_prefix = f'{WORKGROUP.upper()}{WINBIND_SEPARATOR}'
-    ad_user = f'{domain_prefix}{ADUSERNAME.lower()}'
-    ad_group = f'{domain_prefix}domain users'
 
     cmd = 'rm -f /root/tdb/persistent/*'
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
-    if not results['result']:
-        return
+    ad_user, ad_group = get_ad_user_and_group(do_ad_connection)
 
-    results = GET('/user', payload={
-        'query-filters': [['username', '=', ad_user]],
-        'query-options': {'extra': {"search_dscache": True}},
-    })
-    assert results.status_code == 200, results.text
-    assert len(results.json()) > 0, results.text
-    if len(results.json()) == 0:
-        return
+    cache_names = set([x['username'] for x in call(
+        'user.query',
+        [['local', '=', False]],
+        {'extra': {'search_dscache': True}}
+    )])
 
-    ad_user_id = results.json()[0]['uid']
-    assert results.json()[0]['username'] == ad_user, results.text 
+    assert cache_names == {ad_user['username']}
 
-    results = GET('/group', payload={
-        'query-filters': [['name', '=', ad_group]],
-        'query-options': {'extra': {"search_dscache": True}},
-    })
-    assert results.status_code == 200, results.text
-    assert len(results.json()) > 0, results.text
-    if len(results.json()) == 0:
-        return
+    cache_names = set([x['name'] for x in call(
+        'group.query',
+        [['local', '=', False]],
+        {'extra': {'search_dscache': True}}
+    )])
 
-    ad_domain_users_id = results.json()[0]['gid']
-    assert results.json()[0]['name'] == ad_group, results.text 
-
-    """
-    The following two tests validate that cache insertion occured.
-    """
-    results = GET('/user', payload={
-        'query-filters': [['username', '=', ad_user], ['local', '=', False]],
-        'query-options': {'extra': {"search_dscache": True}},
-    })
-    assert results.status_code == 200, results.text
-    assert len(results.json()) == 1, results.text
-
-    results = GET('/group', payload={
-        'query-filters': [['name', '=', ad_group], ['local', '=', False]],
-        'query-options': {'extra': {"search_dscache": True}},
-    })
-    assert results.status_code == 200, results.text
-    assert len(results.json()) == 1, results.text
+    assert cache_names == {ad_group['name']}
 
 
-@pytest.mark.dependency(name="LAZY_INITIALIZATION_BY_ID")
-def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
+def test_check_lazy_initialization_of_users_and_groups_by_id(do_ad_connection):
     """
     When users explicitly search for a directory service or other user
     by name or id we should hit pwd and grp modules and synthesize a
@@ -236,54 +165,35 @@ def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
     to only hit the cache. Code paths are slightly different for lookups
     by id or by name and so they are tested separately.
     """
-    depends(request, ["LAZY_INITIALIZATION_BY_NAME"], scope="session")
+
+    ad_user, ad_group = get_ad_user_and_group(do_ad_connection)
 
     cmd = 'rm -f /root/tdb/persistent/*'
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
-    if not results['result']:
-        return
+    call(
+        'user.query', [['uid', '=', ad_user['uid']]],
+        {'extra': {'search_dscache': True, 'get': True}}
+    )
 
-    results = GET('/user', payload={
-        'query-filters': [['uid', '=', ad_user_id]],
-        'query-options': {'extra': {"search_dscache": True}},
-    })
-    assert results.status_code == 200, results.text
-    assert results.json()[0]['uid'] == ad_user_id, results.text 
+    call(
+        'group.query', [['gid', '=', ad_group['gid']]],
+        {'extra': {'search_dscache': True, 'get': True}}
+    )
 
-    results = GET('/group', payload={
-        'query-filters': [['gid', '=', ad_domain_users_id]],
-        'query-options': {'extra': {"search_dscache": True}},
-    })
-    assert results.status_code == 200, results.text
-    assert results.json()[0]['gid'] == ad_domain_users_id, results.text 
+    cache_names = set([x['username'] for x in call(
+        'user.query',
+        [['local', '=', False]],
+        {'extra': {'search_dscache': True}}
+    )])
 
-    """
-    The following two tests validate that cache insertion occured.
-    """
-    results = GET('/user', payload={
-        'query-filters': [['uid', '=', ad_user_id], ['local', '=', False]],
-        'query-options': {'extra': {"search_dscache": True}},
-    })
-    assert results.status_code == 200, results.text
-    assert len(results.json()) == 1, results.text
+    assert cache_names == {ad_user['username']}
 
-    results = GET('/group', payload={
-        'query-filters': [['gid', '=', ad_domain_users_id], ['local', '=', False]],
-        'query-options': {'extra': {"search_dscache": True}},
-    })
-    assert results.status_code == 200, results.text
-    assert len(results.json()) == 1, results.text
+    cache_names = set([x['name'] for x in call(
+        'group.query',
+        [['local', '=', False]],
+        {'extra': {'search_dscache': True}}
+    )])
 
-    with create_user({
-        'username': 'canary',
-        'full_name': 'canary',
-        'group_create': True,
-        'password': 'canary',
-        'smb': True
-    }) as u:
-        user_data = call('user.translate_username', 'canary')
-        assert u['id'] == user_data['id'], str(user_data)
-        assert u['uid'] == user_data['uid'], str(user_data)
-        assert user_data['local'] is True, str(user_data)
+    assert cache_names == {ad_group['name']}
