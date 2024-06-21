@@ -137,16 +137,15 @@ async def __event_system_shutdown(middleware, event_type, args):
             except Exception:
                 middleware.logger.error('Powering off %r VM failed', vm['name'], exc_info=True)
 
-    async with SHUTDOWN_LOCK:
-        await asyncio_map(
-            poweroff_stop_vm,
-            (await middleware.call('vm.query', [('status.state', 'in', ACTIVE_STATES)])), 16
-        )
-        middleware.logger.debug('VM(s) stopped successfully')
-        # We do this in vm.terminate as well, reasoning for repeating this here is that we don't want to
-        # stop libvirt on middlewared restarts, we only want that to happen if a shutdown has been initiated
-        # and we have cleanly exited
-        await middleware.call('vm.deinitialize_vms')
+    vms = await middleware.call('vm.query', [('status.state', 'in', ACTIVE_STATES)])
+    if vms:
+        async with SHUTDOWN_LOCK:  # FIXME: Why a global lock?? Not needed....
+            await asyncio_map(poweroff_stop_vm, vms, 16)
+            middleware.logger.debug('VM(s) stopped successfully')
+            # We do this in vm.terminate as well, reasoning for repeating this here is that we don't want to
+            # stop libvirt on middlewared restarts, we only want that to happen if a shutdown has been initiated
+            # and we have cleanly exited
+            await middleware.call('vm.deinitialize_vms')
 
 
 async def setup(middleware):
