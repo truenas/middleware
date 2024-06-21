@@ -29,6 +29,7 @@ class WBClient:
         self.separator = self.ctx.separator.decode()
 
     def _pyuidgid_to_dict(self, entry):
+        """ convert python wbclient uidgid object to dictionary """
         return {
             'id_type': IDType(entry.id_type).name,
             'id': entry.id,
@@ -61,14 +62,17 @@ class WBClient:
         return domain
 
     def ping_dc(self, name='$thisdom'):
+        """ perform wbinfo --ping-dc """
         dom = self.init_domain(name)
         return dom.ping_dc()
 
     def check_trust(self, name='$thisdom'):
+        """ perform wbinfo -t """
         dom = self.init_domain(name)
         return dom.check_secret()
 
     def domain_info(self, name='$thisdom'):
+        """ perform wbinfo --domain-info """
         dom = self.init_domain(name)
         return dom.domain_info()
 
