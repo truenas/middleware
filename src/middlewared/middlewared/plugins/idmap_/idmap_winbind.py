@@ -38,7 +38,7 @@ class WBClient:
             'sid': entry.sid
         }
 
-    def _as_dict(self, results, do_unmapped=False):
+    def _as_dict(self, results):
         for entry in list(results['mapped'].keys()):
             new = self._pyuidgid_to_dict(results['mapped'][entry])
             results['mapped'][entry] = new
