@@ -122,7 +122,7 @@ class WBClient:
             self.ctx.uid_gid_objects_from_unix_ids,
             payload
         )
-        return self._as_dict(data, True)
+        return self._as_dict(data)
 
     def sid_to_idmap_entry(self, sid):
         mapped = self.sids_to_users_and_groups([sid])['mapped']
