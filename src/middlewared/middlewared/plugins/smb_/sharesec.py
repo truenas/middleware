@@ -168,8 +168,7 @@ class ShareSec(CRUDService):
     async def setacl(self, data, db_commit=True):
         """
         Set an ACL on `share_name`. Changes are written to samba's share_info.tdb file.
-        This only impacts SMB sessions. ae_who_sid ust be specified
-        for each ACL entry in the `share_acl`. If both are specified, then ae_who_sid will be used.
+        This only impacts SMB sessions.
 
         `share_name` the name of the share
 
