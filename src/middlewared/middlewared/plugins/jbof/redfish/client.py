@@ -1,15 +1,17 @@
+import asyncio
 import enum
+import errno
 import json
 import logging
 import socket
 from urllib.parse import urlencode
 
+import aiohttp
 import requests
-from urllib3.exceptions import InsecureRequestWarning
-
+from middlewared.service import CallError
+from middlewared.utils import MIDDLEWARE_RUN_DIR, filter_list
 from truenas_api_client import Client
-
-from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
+from urllib3.exceptions import InsecureRequestWarning
 
 DEFAULT_REDFISH_TIMEOUT_SECS = 10
 HEADER = {'Content-Type': 'application/json', 'Vary': 'accept'}
@@ -29,8 +31,33 @@ class AuthMethod(enum.Enum):
     def choices():
         return [x.value for x in AuthMethod]
 
+    def authtype_to_enum(authtype):
+        if authtype in (AuthMethod.BASIC, AuthMethod.BASIC.value):
+            return AuthMethod.BASIC
+        elif authtype in (AuthMethod.SESSION, AuthMethod.SESSION.value):
+            return AuthMethod.SESSION
+        raise ValueError('Invalid auth method', authtype)
 
-class RedfishClient:
+
+class AbstractRedfishClient:
+
+    @property
+    def uuid(self):
+        return self.root['UUID']
+
+    @property
+    def product(self):
+        return self.root['Product']
+
+    def _members(self, data):
+        result = {}
+        for manager in data['Members']:
+            uri = manager[ODATA_ID]
+            result[uri.split('/')[-1]] = uri
+        return result
+
+
+class RedfishClient(AbstractRedfishClient):
 
     client_cache = {}
 
@@ -48,7 +75,7 @@ class RedfishClient:
         self.base_url = base_url.rstrip('/')
         self.username = username
         self.password = password
-        self.authtype = self.authtype_to_enum(authtype)
+        self.authtype = AuthMethod.authtype_to_enum(authtype)
         self.prefix = default_prefix
         self.verify = verify
         self.auth = None
@@ -112,21 +139,6 @@ class RedfishClient:
                 RedfishClient.cache_set(mgmt_ip, redfish)
 
             return redfish
-
-    @property
-    def uuid(self):
-        return self.root['UUID']
-
-    @property
-    def product(self):
-        return self.root['Product']
-
-    def _members(self, data):
-        result = {}
-        for manager in data['Members']:
-            uri = manager[ODATA_ID]
-            result[uri.split('/')[-1]] = uri
-        return result
 
     def _cached_fetch(self, cache_key, uri, use_cached=True):
         if use_cached and cache_key in self.cache:
@@ -199,18 +211,11 @@ class RedfishClient:
     def get_root_object(self):
         return self.get(self.prefix).json()
 
-    def authtype_to_enum(self, authtype):
-        if authtype in (AuthMethod.BASIC, AuthMethod.BASIC.value):
-            return AuthMethod.BASIC
-        elif authtype in (AuthMethod.SESSION, AuthMethod.SESSION.value):
-            return AuthMethod.SESSION
-        raise ValueError('Invalid auth method', authtype)
-
     def login(self, username=None, password=None, authtype=None):
         self.username = username if username else self.username
         self.password = password if password else self.password
         if authtype:
-            self.authtype = self.authtype_to_enum(authtype)
+            self.authtype = AuthMethod.authtype_to_enum(authtype)
 
         if self.authtype == AuthMethod.BASIC:
             self.get(self.login_url, auth=(self.username, self.password))
@@ -341,3 +346,240 @@ class RedfishClient:
         r = self.get(uri)
         if r.ok:
             return r.json().get('LinkStatus')
+
+
+class AsyncRedfishClient(AbstractRedfishClient):
+    """
+    Asynchronous Redfish client which supports multipath.
+
+    Various instantiation mechanisms are available, including `cache_get` where
+    objects will be cached for re-use.
+    """
+
+    # Cache where objects will be stored, keyed by JBOF UUID.
+    client_cache = {}
+
+    def __init__(
+        self,
+        base_urls,
+        username=None,
+        password=None,
+        authtype=AuthMethod.BASIC,
+        default_prefix=REDFISH_ROOT_PATH,
+        timeout=DEFAULT_REDFISH_TIMEOUT_SECS
+    ):
+        self.log_requests = False
+        self.base_urls = [base_url.rstrip('/') for base_url in base_urls]
+        self.username = username
+        self.password = password
+        self.authtype = AuthMethod.authtype_to_enum(authtype)
+        self.prefix = default_prefix
+        self.auth = None
+        self.auth_token = None
+        self.session_key = None
+        self.authorization_key = None
+        self.session_location = {}
+        self.timeout = aiohttp.ClientTimeout(total=timeout)
+        self.cache = {}
+        self.root = None
+        self._sessions = {}
+        # Implement a little value cache
+        self._attributes = {}
+
+    def _add_session(self, base_url, session):
+        """Add a session corresponding to the base_url"""
+        self._sessions[base_url] = session
+
+    async def _del_session(self, base_url, session):
+        """This is called when a session is no longer responding"""
+        if session:
+            # Don't attempt to logout.  The session is kaput
+            await session.close()
+        if base_url in self._sessions:
+            del self._sessions[base_url]
+
+    def sessions(self):
+        """Generator to yield the (base_url, session), good ones first"""
+        good = set(self._sessions.keys())
+        bad = set(self.base_urls) - good
+        for base_url in good:
+            yield base_url, self._sessions[base_url]
+        for base_url in bad:
+            yield base_url, None
+
+    def get_attribute(self, name, defval=None):
+        """Retrieve some data associated with the client."""
+        return self._attributes.get(name, defval)
+
+    def set_attribute(self, name, value):
+        """Associate some data with the client."""
+        self._attributes[name] = value
+
+    @classmethod
+    async def create(cls,
+                     base_urls,
+                     username=None,
+                     password=None,
+                     authtype=AuthMethod.BASIC,
+                     default_prefix=REDFISH_ROOT_PATH,
+                     timeout=DEFAULT_REDFISH_TIMEOUT_SECS):
+        """Async factory to create an AsyncRedfishClient object."""
+        self = cls(base_urls, username, password, authtype, default_prefix, timeout)
+        self.root = await self.get_root_object()
+
+        try:
+            self.login_url = self.root['Links']['Sessions']['@odata.id']
+        except KeyError:
+            self.login_url = '/redfish/v1/SessionService/Sessions'
+
+        return self
+
+    @classmethod
+    def cache_set(cls, key, value):
+        cls.client_cache[key] = value
+
+    @classmethod
+    def cache_unset(cls, key):
+        del cls.client_cache[key]
+
+    @classmethod
+    async def cache_get(cls, uuid, jbof_query=None):
+        """Fetch AsyncRedfishClient object from cache, creating if necessary."""
+        try:
+            return cls.client_cache[uuid]
+        except KeyError:
+            redfish, jbofs = None, list()
+            filters, options = [['uuid', '=', uuid]], dict()
+            if jbof_query is not None:
+                jbofs = jbof_query
+            else:
+                with Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True) as c:
+                    jbofs = c.call('jbof.query', filters)
+
+            for jbof in filter_list(jbofs, filters, options):
+                base_urls = []
+                for key in ['mgmt_ip1', 'mgmt_ip2']:
+                    if mgmt_ip := jbof.get(key):
+                        base_urls.append(f'https://{mgmt_ip}')
+                redfish = await cls.create(base_urls, jbof['mgmt_username'], jbof['mgmt_password'])
+                cls.cache_set(uuid, redfish)
+
+            return redfish
+
+    async def _login(self, base_url, username=None, password=None, authtype=None):
+        """Login using the specified path and credentials."""
+        self.username = username if username else self.username
+        self.password = password if password else self.password
+        if authtype:
+            self.authtype = AuthMethod.authtype_to_enum(authtype)
+
+        async with aiohttp.ClientSession(base_url, timeout=self.timeout) as session:
+            if self.authtype == AuthMethod.BASIC:
+                auth = aiohttp.BasicAuth(self.username, self.password)
+                async with session.get(self.login_url, ssl=False, auth=auth) as response:
+                    if not response.ok:
+                        raise InvalidCredentialsError('Could not authenticate credentials supplied')
+                newsession = aiohttp.ClientSession(base_url, timeout=self.timeout, raise_for_status=True, auth=auth)
+            elif self.authtype == AuthMethod.SESSION:
+                data = {'UserName': self.username, 'Password': self.password}
+                async with session.post(self.login_url, ssl=False, json=data) as response:
+                    if not response.ok:
+                        raise InvalidCredentialsError('Could not authenticate credentials supplied')
+                    auth_token = response.headers.get('X-Auth-Token')
+                    if auth_token:
+                        # Save the Location for logout purposes
+                        self.session_location[base_url] = response.headers.get('Location')
+                newsession = aiohttp.ClientSession(base_url, timeout=self.timeout, raise_for_status=True, headers={'X-Auth-Token': auth_token})
+            else:
+                raise ValueError('Invalid auth supplied:', authtype)
+        # Save the session for reuse
+        self._add_session(base_url, newsession)
+        return newsession
+
+    async def _logout(self, base_url, session):
+        if self.authtype == AuthMethod.BASIC:
+            self.auth = None
+        elif self.authtype == AuthMethod.SESSION:
+            if location := self.session_location.get(base_url):
+                async with session.delete(location, ssl=False) as response:
+                    if response.ok:
+                        del self.session_location[base_url]
+
+    async def get_root_object(self):
+        """Fetch the root object."""
+        # We're not going to try to be clever about which base_urls are used for this.
+        base_url_count = len(self.base_urls)
+        for index, base_url in enumerate(self.base_urls, 1):
+            try:
+                async with aiohttp.ClientSession(base_url, timeout=self.timeout, raise_for_status=True) as session:
+                    async with session.get(self.prefix, ssl=False) as response:
+                        return await response.json()
+            except asyncio.TimeoutError:
+                if index == base_url_count:
+                    raise CallError('Connection timed out', errno.ETIMEDOUT)
+                else:
+                    continue
+            except Exception:
+                continue
+
+        raise CallError('Failed to obtain root object', errno.EBADMSG)
+
+    async def get(self, uri):
+        if not uri.startswith(self.prefix):
+            uri = f'{self.prefix}{uri}'
+        # Iterate over the available paths
+        for base_url, session in self.sessions():
+            try:
+                if not session:
+                    session = await self._login(base_url)
+                async with session.get(uri, ssl=False) as response:
+                    if response.ok:
+                        return await response.json()
+            except asyncio.TimeoutError:
+                await self._del_session(base_url, session)
+                continue
+            except Exception:
+                await self._del_session(base_url, session)
+                continue
+        raise CallError(f'Failed to GET {uri}:', errno.EBADMSG)
+
+    async def post(self, uri, **kwargs):
+        if not uri.startswith(self.prefix):
+            uri = f'{self.prefix}{uri}'
+        payload = kwargs.get('data', {})
+        # Iterate over the available paths
+        for base_url, session in self.sessions():
+            try:
+                if not session:
+                    session = await self._login(base_url)
+                async with session.post(uri, ssl=False, json=payload) as response:
+                    if response.ok:
+                        return await response.json()
+            except asyncio.TimeoutError:
+                await self._del_session(base_url, session)
+                continue
+            except Exception:
+                await self._del_session(base_url, session)
+                continue
+        raise CallError(f'Failed to POST {uri}:', errno.EBADMSG)
+
+    async def close(self):
+        for base_url, session in self._sessions.items():
+            await self._logout(base_url, session)
+            await session.close()
+        self._sessions = {}
+
+    async def _cached_fetch(self, cache_key, uri, use_cached=True):
+        if use_cached and cache_key in self.cache:
+            return self.cache[cache_key]
+
+        r = await self.get(uri)
+        if r:
+            self.cache[cache_key] = self._members(r)
+            return self.cache[cache_key]
+
+    async def chassis(self, use_cached=True):
+        return await self._cached_fetch('chassis', '/Chassis', use_cached)
+
+    async def managers(self, use_cached=True):
+        return await self._cached_fetch('managers', '/Managers', use_cached)
