@@ -487,6 +487,7 @@ class IdmapDomainService(CRUDService):
                     ldap_enabled = False
                     ad_enabled = True
                 else:
+                    # IPA domain or LDAP
                     ldap_enabled = True
                     ad_enabled = False
             case _:

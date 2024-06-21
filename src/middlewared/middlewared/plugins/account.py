@@ -27,6 +27,10 @@ from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
 from middlewared.validators import Email, Range
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.plugins.account_.constants import (
+    ADMIN_UID, ADMIN_GID, SKEL_PATH, LEGACY_DEFAULT_HOME_PATH,
+    DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS
+)
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
     TRUENAS_IDMAP_DEFAULT_LOW,
@@ -35,19 +39,6 @@ from middlewared.plugins.idmap_.idmap_constants import (
 )
 from middlewared.plugins.idmap_ import idmap_winbind
 from middlewared.plugins.idmap_ import idmap_sss
-
-ADMIN_UID = 950  # When googled, does not conflict with anything
-ADMIN_GID = 950
-SKEL_PATH = '/etc/skel/'
-# TrueNAS historically used /nonexistent as the default home directory for new
-# users. The nonexistent directory has caused problems when
-# 1) an admin chooses to create it from shell
-# 2) PAM checks for home directory existence
-# And so this default has been deprecated in favor of using /var/empty
-# which is an empty and immutable directory.
-LEGACY_DEFAULT_HOME_PATH = '/nonexistent'
-DEFAULT_HOME_PATH = '/var/empty'
-DEFAULT_HOME_PATHS = (DEFAULT_HOME_PATH, LEGACY_DEFAULT_HOME_PATH)
 
 
 def pw_checkname(verrors, attribute, name):
@@ -1094,7 +1085,7 @@ class UserService(CRUDService):
         `grouplist` - optional list of group ids for groups of which this account is a member. If `get_groups`
         is not specified, this value will be null.
 
-        `sid` - optional SID value for the accoun that is present if `sid_info` is specified in payload.
+        `sid` - optional SID value for the account that is present if `sid_info` is specified in payload.
 
         `source` - the source for the user account.
         """
@@ -1131,6 +1122,7 @@ class UserService(CRUDService):
             case NssModule.SSS.name:
                 user_obj['source'] = 'LDAP'
             case _:
+                self.logger.error('%s: unknown ID source.', user_obj['source'])
                 raise ValueError(f'{user_obj["source"]}: unknown ID source. Please file a bug report.')
 
         user_obj['local'] = user_obj['source'] == 'LOCAL'
@@ -1154,13 +1146,8 @@ class UserService(CRUDService):
                     # SSSD provides ID mapping for IPA domains
                     idmap_ctx = idmap_sss.SSSClient()
                 case _:
-                    # We're not raising an exception here since it
-                    # can be a critical areai
-                    self.logger.error(
-                        '%s: unknown ID source. Please file a bug report.',
-                        user_obj['source']
-                    )
-                    idmap_ctx = None
+                    self.logger.error('%s: unknown ID source.', user_obj['source'])
+                    raise ValueError(f'{user_obj["source"]}: unknown ID source. Please file a bug report.')
 
             if idmap_ctx is not None:
                 try:
@@ -2105,7 +2092,7 @@ class GroupService(CRUDService):
         `local` - boolean indicating whether this group is local to the NAS or provided by a
         directory service.
 
-        `sid` - optional SID value for the accoun that is present if `sid_info` is specified in payload.
+        `sid` - optional SID value for the account that is present if `sid_info` is specified in payload.
 
         `source` - the name server switch module that provided the user. Options are:
         FILES - local user in passwd file of server, WINBIND - user provided by winbindd, SSS - user
@@ -2144,6 +2131,7 @@ class GroupService(CRUDService):
             case NssModule.SSS.name:
                 grp_obj['source'] = 'LDAP'
             case _:
+                self.logger.error('%s: unknown ID source.', group_obj['source'])
                 raise ValueError(f'{grp_obj["source"]}: unknown ID source. Please file a bug report.')
 
         grp_obj['local'] = grp_obj['source'] == 'LOCAL'
@@ -2168,13 +2156,8 @@ class GroupService(CRUDService):
                     # SSSD provides ID mapping for IPA domains
                     idmap_ctx = idmap_sss.SSSClient()
                 case _:
-                    # We're not raising an exception here since it
-                    # can be a critical areai
-                    self.logger.error(
-                        '%s: unknown ID source. Please file a bug report.',
-                        grp_obj['source']
-                    )
-                    idmap_ctx = None
+                    self.logger.error('%s: unknown ID source.', group_obj['source'])
+                    raise ValueError(f'{grp_obj["source"]}: unknown ID source. Please file a bug report.')
 
             if idmap_ctx is not None:
                 try:

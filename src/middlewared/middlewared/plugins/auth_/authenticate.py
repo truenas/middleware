@@ -1,6 +1,7 @@
 import pam
 
 from middlewared.plugins.account import unixhash_is_valid
+from middlewared.plugins.account_.constants import ADMIN_UID
 from middlewared.service import Service, private
 from middlewared.utils.crypto import check_unixhash
 
@@ -132,7 +133,7 @@ class AuthService(Service):
         if twofactor_enabled:
             account_flags.append('2FA')
 
-        if user['pw_uid'] in (0, 950):
+        if user['pw_uid'] in (0, ADMIN_UID):
             if not user['local']:
                 # Although this should be covered in above check for mismatch in
                 # value of `local`, perform an extra explicit check for the case

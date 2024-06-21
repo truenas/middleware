@@ -18,7 +18,12 @@ class SSSClient:
         {'S-1-5-21-3696504179-2855309571-923743039-1020': {'id': 565200020, 'type': 1}}
 
         Sample of what we return:
-        {'id_type': 'USER', 'id': 565200020, 'name': 'smbuser'}
+        {
+            'id_type': 'USER',
+            'id': 565200020,
+            'name': 'smbuser',
+            'sid': 'S-1-5-21-3696504179-2855309571-923743039-1020'
+        }
         """
         if not (sid_entry := sssclient.getsidbyusername(username)):
             return None
@@ -36,7 +41,24 @@ class SSSClient:
             'sid': sid
         }
 
-    def _groupname_to_sid(self, groupname):
+    def _groupname_to_entry(self, groupname):
+        """
+        Sample entry returned by pysss_nss_idmap
+
+        `getsidbygroupname`
+        {'smbuser': {'sid': 'S-1-5-21-3696504179-2855309571-923743039-1020', 'type': 1}}
+
+        `getidbysid`
+        {'S-1-5-21-3696504179-2855309571-923743039-1020': {'id': 565200020, 'type': 1}}
+
+        Sample of what we return:
+        {
+            'id_type': 'GROUP',
+            'id': 565200020,
+            'name': 'smbuser',
+            'sid': 'S-1-5-21-3696504179-2855309571-923743039-1020'
+        }
+        """
         if not (sid_entry := sssclient.getsidbygroupname(groupname)):
             return None
 
@@ -54,6 +76,7 @@ class SSSClient:
         }
 
     def _gid_to_entry(self, gid):
+        """ convert gid to idmap entry dict -- see above _groupname_to_entry()"""
         if not (sid_entry := sssclient.getsidbygid(gid)):
             return None
 
@@ -71,6 +94,7 @@ class SSSClient:
         }
 
     def _uid_to_entry(self, uid):
+        """ convert gid to idmap entry dict -- see above _username_to_entry()"""
         if not (sid_entry := sssclient.getsidbyuid(uid)):
             return None
 
@@ -88,6 +112,7 @@ class SSSClient:
         }
 
     def _sid_to_entry(self, sid):
+        """ convert sid to idmap entry dict -- see above _username_to_entry()"""
         if not (id_entry := sssclient.getidbysid(sid)):
             return None
 
@@ -102,6 +127,24 @@ class SSSClient:
         }
 
     def sids_to_idmap_entries(self, sidlist):
+        """
+        Bulk conversion of list of sids to idmap entries
+
+        sample output:
+        {
+          "mapped": {
+            "S-1-5-21-3696504179-2855309571-923743039-1020": {
+              "id_type": "USER",
+              "id": 565200020,
+              "name": "smbuser",
+              "sid": "S-1-5-21-3696504179-2855309571-923743039-1020"
+            }
+          }
+          "unmapped": {
+            "S-1-5-21-3696504179-2855309571-923743039-1022": "S-1-5-21-3696504179-2855309571-923743039-1020"
+          }
+        }
+        """
         out = {'mapped': {}, 'unmapped': {}}
         for sid in sidlist:
             if not (entry := self._sid_to_entry(sid)):
@@ -113,6 +156,24 @@ class SSSClient:
         return out
 
     def users_and_groups_to_idmap_entries(self, uidgids):
+        """
+        Bulk conversion of list of sids to idmap entries
+
+        sample output:
+        {
+          "mapped": {
+            "UID:565200020": {
+              "id_type": "USER",
+              "id": 565200020,
+              "name": "smbuser",
+              "sid": "S-1-5-21-3696504179-2855309571-923743039-1020"
+            }
+          }
+          "unmapped": {
+            "UID:565200020": None
+          }
+        }
+        """
         out = {'mapped': {}, 'unmapped': {}}
 
         for uidgid in uidgids:
@@ -137,21 +198,24 @@ class SSSClient:
         return out
 
     def sid_to_idmap_entry(self, sid):
+        """ convert a single sid to an idmap entry dict """
         if not (entry := self._sid_to_entry(sid)):
             raise MatchNotFound(sid)
 
         return entry
 
     def name_to_idmap_entry(self, name):
-        if entry := self._groupname_to_sid(name):
+        """ convert a single name (user or group) to an idmap entry dict """
+        if entry := self._groupname_to_entry(name):
             return entry
 
-        if entry := self._username_to_sid(name):
+        if entry := self._username_to_entryd(name):
             return entry
 
         raise MatchNotFound(name)
 
     def uidgid_to_idmap_entry(self, data):
+        """ convert a single name (user or group) to an idmap entry dict """
         mapped = self.users_and_groups_to_idmap_entries([data])['mapped']
         if not mapped:
             raise MatchNotFound(str(data))

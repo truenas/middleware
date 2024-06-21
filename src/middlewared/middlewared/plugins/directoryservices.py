@@ -7,7 +7,6 @@ import errno
 from base64 import b64decode
 from middlewared.schema import accepts, Dict, List, OROperator, Ref, returns, Str
 from middlewared.service import no_authz_required, Service, private, job
-from middlewared.plugins.smb_.constants import SMBCmd, SMBPath
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.directoryservices.constants import (
     DSStatus, DSType, NSS_Info
@@ -193,7 +192,6 @@ class DirectoryServices(Service):
         the secrets.tdb (our current running configuration), and what
         we have in our database.
         """
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         smb_config = await self.middleware.call('smb.config')
         if domain is None:
             domain = smb_config['workgroup']
@@ -305,7 +303,6 @@ class DirectoryServices(Service):
 
         if not self.middleware.call_sync('smb.is_configured'):
             raise CallError('Skipping directory service setup due to SMB service being unconfigured')
-
 
         failover_status = self.middleware.call_sync('failover.status')
         if failover_status not in ('SINGLE', 'MASTER'):
