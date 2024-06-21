@@ -804,6 +804,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'smb')
         await self.middleware.call('service.restart', 'idmap')
         await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('etc.generate', 'nss')
         if ret == neterr.JOINED:
             await self.set_state(DSStatus['HEALTHY'].name)
             job.set_progress(90, 'Restarting dependent services.')
@@ -845,6 +846,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('service.restart', 'idmap')
         job.set_progress(40, 'Reconfiguring pam and nss.')
         await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('etc.generate', 'nss')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(60, 'clearing caches.')
         await self.middleware.call('service.stop', 'dscache')
@@ -1180,6 +1182,7 @@ class ActiveDirectoryService(ConfigService):
 
         job.set_progress(60, 'Regenerating configuration.')
         await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('etc.generate', 'smb')
 
         job.set_progress(60, 'Restarting services.')

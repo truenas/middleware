@@ -916,6 +916,7 @@ class LDAPService(ConfigService):
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('etc.generate', 'nss')
 
         job.set_progress(30, 'Starting sssd service')
         await self.middleware.call('service.restart', 'sssd')
@@ -942,6 +943,7 @@ class LDAPService(ConfigService):
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
+        await self.middleware.call('etc.generate', 'nss')
 
         job.set_progress(50, 'Clearing directory service cache.')
         await self.middleware.call('service.stop', 'dscache')
