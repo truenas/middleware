@@ -412,7 +412,7 @@ class AuditService(ConfigService):
         payload = {}
         if new['quota'] != old_quota / _GIB:
             quota_val = "none" if new['quota'] == 0 else f'{new["quota"]}G'
-            payload['refquota'] = {'parsed': quota_val}
+            payload['quota'] = {'parsed': quota_val}
 
         if new['reservation'] != old_reservation / _GIB:
             reservation_val = "none" if new['reservation'] == 0 else f'{new["reservation"]}G'
