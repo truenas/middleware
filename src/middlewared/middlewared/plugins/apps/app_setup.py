@@ -1,5 +1,7 @@
 from middlewared.service import Service
 
+from .utils import IX_APPS_MOUNT_PATH
+
 
 class AppSetupService(Service):
 
