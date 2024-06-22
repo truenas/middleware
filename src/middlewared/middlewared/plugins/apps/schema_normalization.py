@@ -20,6 +20,18 @@ class AppSchemaService(Service):
         for method in REF_MAPPING.values():
             assert isinstance(getattr(self, f'normalize_{method}'), Callable) is True
 
+    async def normalise_and_validate_values(self, item_details, values, update, app_dir, app_data=None):
+        dict_obj = await self.middleware.call(
+            'app.schema.validate_values', item_details, values, update, app_data,
+        )
+        return await self.normalize_values(dict_obj, values, update, {
+            'app': {
+                'name': app_dir.split('/')[-1],
+                'path': app_dir,
+            },
+            'actions': [],
+        })
+
     async def normalize_values(self, dict_obj, values, update, context):
         for k in RESERVED_NAMES:
             # We reset reserved names from configuration as these are automatically going to

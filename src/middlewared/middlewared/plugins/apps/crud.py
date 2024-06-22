@@ -72,18 +72,14 @@ class AppService(CRUDService):
         app_dir = os.path.join(IX_APPS_MOUNT_PATH, 'app_configs', data['app_name'])
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
-        new_values, context = self.normalise_and_validate_values(app_details, data['values'], False, app_dir)
+        new_values, context = self.middleware.call_sync(
+            'app.schema.normalise_and_validate_values', app_details, data['values'], False, app_dir
+        )
 
-    def normalise_and_validate_values(self, item_details, values, update, app_dir, app_data=None):
-        dict_obj = self.middleware.call_sync(
-            'app.schema.validate_values', item_details, values, update, app_data,
-        )
-        return self.middleware.call_sync(
-            'app.schema.normalize_values', dict_obj, values, update, {
-                'app': {
-                    'name': app_dir.split('/')[-1],
-                    'path': app_dir,
-                },
-                'actions': [],
-            }
-        )
+        job.set_progress(25, 'Initial Validation completed')
+
+        # Now that we have completed validation for the app in question wrt values provided,
+        # we will now perform the following steps
+        # 1) Create relevant dir for app
+        # 2) Copy app version into app dir
+        # 3) Have docker compose deploy the app in question  # FIXME: Let's implement this later please
