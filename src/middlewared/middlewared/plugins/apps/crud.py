@@ -2,12 +2,12 @@ import errno
 import os
 import textwrap
 
-from middlewared.plugins.docker.state_utils import IX_APPS_MOUNT_PATH
 from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError, CRUDService, filterable, job
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
 
+from .utils import IX_APPS_MOUNT_PATH
 from .version_utils import get_latest_version_from_app_versions
 
 
@@ -15,7 +15,7 @@ class AppService(CRUDService):
     class Config:
         namespace = 'app'
         datastore_primary_key_type = 'string'
-        cli_namespace = 'apps'
+        cli_namespace = 'app'
         private = True  # FIXME: Remove this once we have schema defined
 
     @filterable
