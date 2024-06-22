@@ -379,7 +379,7 @@ class Application:
                 pong['id'] = message['id']
             self._send(pong)
         elif message['msg'] == 'sub':
-            if not self.can_subscribe(message['name']):
+            if not self.can_subscribe(message['name'].split(':', 1)[0]):
                 self.send_error(message, errno.EACCES, 'Not authorized')
             else:
                 await self.subscribe(message['id'], message['name'])
