@@ -6,7 +6,7 @@ from middlewared.utils import MIDDLEWARE_RUN_DIR
 OFFICIAL_ENTERPRISE_TRAIN = 'enterprise'
 OFFICIAL_LABEL = 'TRUENAS'
 OFFICIAL_CATALOG_REPO = 'https://github.com/truenas/apps'
-OFFICIAL_CATALOG_BRANCH = 'master'
+OFFICIAL_CATALOG_BRANCH = 'main'  # FIXME: Change this when perm issues for master have been resolved
 TMP_IX_APPS_CATALOGS = os.path.join(MIDDLEWARE_RUN_DIR, 'ix-apps/catalogs')
 
 
