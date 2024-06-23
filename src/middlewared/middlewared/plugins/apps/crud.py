@@ -7,6 +7,7 @@ from middlewared.service import CallError, CRUDService, filterable, job
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
 
+from .app_lifecycle_utils import add_context_to_values
 from .app_setup_utils import setup_install_app_dir
 from .utils import IX_APPS_MOUNT_PATH
 from .version_utils import get_latest_version_from_app_versions
@@ -86,6 +87,7 @@ class AppService(CRUDService):
         # 3) Have docker compose deploy the app in question  # FIXME: Let's implement this later please
         try:
             setup_install_app_dir(data['app_name'], app_details['location'])
+            new_values = add_context_to_values(data['app_name'], new_values, install=True)
         except Exception:
             job.set_progress(80, f'Failure occurred while installing {data["app_name"]!r}, cleaning up')
             # FIXME: See what kind of docker cleanup might be required here
