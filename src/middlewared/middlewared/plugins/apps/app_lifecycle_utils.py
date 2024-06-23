@@ -16,7 +16,7 @@ def get_rendered_templates_of_app(app_name: str, version: str) -> list[str]:
     result = []
     for entry in pathlib.Path(get_installed_app_rendered_dir_path(app_name, version)).iterdir():
         if entry.is_file() and entry.name.endswith('.yaml'):
-            result.append(entry.name)
+            result.append(entry.as_posix())
     return result
 
 
