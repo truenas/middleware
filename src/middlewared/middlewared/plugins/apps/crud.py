@@ -7,6 +7,7 @@ from middlewared.service import CallError, CRUDService, filterable, job
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
 
+from .app_setup_utils import setup_install_app_dir
 from .utils import IX_APPS_MOUNT_PATH
 from .version_utils import get_latest_version_from_app_versions
 
@@ -63,7 +64,7 @@ class AppService(CRUDService):
         if version == 'latest':
             version = get_latest_version_from_app_versions(complete_app_details['versions'])
 
-        if version not in complete_app_details['version']:
+        if version not in complete_app_details['versions']:
             raise CallError(f'Version {version} not found in {data["item"]} app', errno=errno.ENOENT)
 
         app_details = complete_app_details['versions'][version]
@@ -83,3 +84,13 @@ class AppService(CRUDService):
         # 1) Create relevant dir for app
         # 2) Copy app version into app dir
         # 3) Have docker compose deploy the app in question  # FIXME: Let's implement this later please
+        try:
+            setup_install_app_dir(data['app_name'], app_details['location'])
+        except Exception:
+            job.set_progress(80, f'Failure occurred while installing {data["app_name"]!r}, cleaning up')
+            # FIXME: See what kind of docker cleanup might be required here
+            # FIXME: Cleanup the app dir created
+        else:
+            job.set_progress(100, f'{data["app_name"]!r} installed successfully')
+            # return self.get_instance__sync(data['app_name'])
+            return {'app_name': data['app_name']}
