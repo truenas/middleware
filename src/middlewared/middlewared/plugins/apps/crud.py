@@ -7,7 +7,7 @@ from middlewared.service import CallError, CRUDService, filterable, job
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
 
-from .app_lifecycle_utils import add_context_to_values
+from .app_lifecycle_utils import add_context_to_values, update_app_config
 from .app_setup_utils import setup_install_app_dir
 from .utils import IX_APPS_MOUNT_PATH
 from .version_utils import get_latest_version_from_app_versions
@@ -58,6 +58,7 @@ class AppService(CRUDService):
         if self.query([['id', '=', data['app_name']]]):
             raise CallError(f'Application with name {data["app_name"]} already exists', errno=errno.EEXIST)
 
+        app_name = data['app_name']
         complete_app_details = self.middleware.call_sync('catalog.get_app_details', data['catalog_app'], {
             'train': data['train'],
         })
@@ -71,7 +72,7 @@ class AppService(CRUDService):
         app_details = complete_app_details['versions'][version]
         self.middleware.call_sync('catalog.version_supported_error_check', app_details)
 
-        app_dir = os.path.join(IX_APPS_MOUNT_PATH, 'app_configs', data['app_name'])
+        app_dir = os.path.join(IX_APPS_MOUNT_PATH, 'app_configs', app_name)
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
         new_values, context = self.middleware.call_sync(
@@ -86,13 +87,15 @@ class AppService(CRUDService):
         # 2) Copy app version into app dir
         # 3) Have docker compose deploy the app in question  # FIXME: Let's implement this later please
         try:
-            setup_install_app_dir(data['app_name'], app_details['location'])
-            new_values = add_context_to_values(data['app_name'], new_values, install=True)
-        except Exception:
+            setup_install_app_dir(app_name, app_details['location'])
+            new_values = add_context_to_values(app_name, new_values, install=True)
+            update_app_config(app_name, version, new_values)
+        except Exception as e:
             job.set_progress(80, f'Failure occurred while installing {data["app_name"]!r}, cleaning up')
             # FIXME: See what kind of docker cleanup might be required here
             # FIXME: Cleanup the app dir created
+            raise e from None
         else:
             job.set_progress(100, f'{data["app_name"]!r} installed successfully')
-            # return self.get_instance__sync(data['app_name'])
-            return {'app_name': data['app_name']}
+            # return self.get_instance__sync(app_name)
+            return {'app_name': app_name}

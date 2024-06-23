@@ -1,9 +1,15 @@
 import copy
 import pathlib
 import typing
+import yaml
 
-from .app_path_utils import get_installed_app_rendered_dir_path
+from middlewared.service_exception import CallError
+
+from .app_path_utils import (
+    get_installed_app_config_path, get_installed_app_rendered_dir_path, get_installed_app_version_path,
+)
 from .schema_utils import CONTEXT_KEY_NAME
+from .utils import run
 
 
 def get_rendered_templates_of_app(app_name: str, version: str) -> list[str]:
@@ -12,6 +18,25 @@ def get_rendered_templates_of_app(app_name: str, version: str) -> list[str]:
         if entry.is_file() and entry.name.endswith('.yaml'):
             result.append(entry.name)
     return result
+
+
+def write_new_app_config(app_name: str, version: str, values: dict[str, typing.Any]) -> None:
+    with open(get_installed_app_config_path(app_name, version), 'w') as f:
+        f.write(yaml.safe_dump(values))
+
+
+def render_compose_templates(app_version_path: str, values_file_path: str):
+    cp = run(['/usr/bin/apps_render_app', 'render', '--path', app_version_path, '--values', values_file_path])
+    if cp.returncode != 0:
+        # FIXME: We probably want to log app related issues to it's own logging file so as to not spam middleware
+        raise CallError(f'Failed to render compose templates: {cp.stderr}')
+
+
+def update_app_config(app_name: str, version: str, values: dict[str, typing.Any]) -> None:
+    write_new_app_config(app_name, version, values)
+    render_compose_templates(
+        get_installed_app_version_path(app_name, version), get_installed_app_config_path(app_name, version)
+    )
 
 
 def get_action_context(app_name: str) -> dict[str, typing.Any]:
