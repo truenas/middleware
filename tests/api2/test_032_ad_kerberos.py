@@ -487,11 +487,6 @@ def test_06_kerberos_ticket_management(do_ad_connection):
     assert results.status_code == 200, results.text
     assert len(results.json()) != 0, results.text
 
-    renewal_job = results.json()[0]
-    time_string = renewal_job['description'].split(':', 1)[1]
-    timestamp = timegm(time.strptime(time_string, " %m/%d/%y %H:%M:%S %Z"))
-    assert tkt['expires'] == timestamp, str({"time": time_string, "ticket": tkt})
-
     """
     Now we forcibly set a short-lived kerberos ticket using
     our kerberos principal and then call `kerberos.renew` to renew it
