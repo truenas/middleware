@@ -4,6 +4,9 @@ import subprocess
 from middlewared.plugins.docker.state_utils import IX_APPS_MOUNT_PATH  # noqa
 
 
+PROJECT_PREFIX = 'ix-'
+
+
 def run(*args, **kwargs) -> subprocess.CompletedProcess:
     shell = isinstance(args[0], str)
     if isinstance(args[0], list):
