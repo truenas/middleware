@@ -9,7 +9,7 @@ from copy import deepcopy
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Password, returns, Str
-from middlewared.service import ConfigService, private, ValidationErrors
+from middlewared.service import ConfigService, private, no_auth_required, ValidationErrors
 from middlewared.validators import Range
 from middlewared.utils import run
 
@@ -32,6 +32,7 @@ class SystemAdvancedModel(sa.Model):
     adv_anonstats = sa.Column(sa.Boolean(), default=True)
     adv_anonstats_token = sa.Column(sa.Text())
     adv_motd = sa.Column(sa.Text(), default='Welcome')
+    adv_login_banner = sa.Column(sa.Text(), default='')
     adv_boot_scrub = sa.Column(sa.Integer(), default=7)
     adv_fqdn_syslog = sa.Column(sa.Boolean(), default=False)
     adv_sed_user = sa.Column(sa.String(120), default='user')
@@ -71,6 +72,7 @@ class SystemAdvancedService(ConfigService):
         Bool('debugkernel', required=True),
         Bool('fqdn_syslog', required=True),
         Str('motd', required=True),
+        Str('login_banner', required=True, max_length=4096),
         Bool('powerdaemon', required=True),
         Bool('serialconsole', required=True),
         Str('serialport', required=True),
@@ -259,6 +261,12 @@ class SystemAdvancedService(ConfigService):
             if original_data['motd'] != config_data['motd']:
                 await self.middleware.call('etc.generate', 'motd')
 
+            if original_data['login_banner'] != config_data['login_banner']:
+                with open('/etc/login_banner', 'w', encoding='utf-8') as f:
+                    f.write(config_data['login_banner'])
+                    os.fchmod(f, 0o600)
+                await self.middleware.call('service.restart', 'ssh')
+
             if original_data['powerdaemon'] != config_data['powerdaemon']:
                 await self.middleware.call('service.restart', 'powerd')
 
@@ -310,3 +318,10 @@ class SystemAdvancedService(ConfigService):
             'datastore.config', 'system.advanced', {'prefix': self._config.datastore_prefix}
         ))['sed_passwd']
         return passwd if passwd else await self.middleware.call('kmip.sed_global_password')
+
+    @accepts()
+    @no_auth_required
+    @returns(Str())
+    def get_login_banner(self):
+        """Returns user set login banner"""
+        return self.middleware.call_sync('datastore.query', 'system.advanced')[0]['adv_login_banner']

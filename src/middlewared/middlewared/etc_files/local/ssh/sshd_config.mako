@@ -48,6 +48,8 @@
 	users = middleware.call_sync('user.query')
 	root_user = filter_list(users, [['username', '=', 'root']], {'get': True})
 
+	login_banner = middleware.call_sync('datastore.query', 'system.advanced')[0]['adv_login_banner']
+
 %>\
 Subsystem	sftp	internal-sftp -l ${ssh_config['sftp_log_level']} -f ${ssh_config['sftp_log_facility']}
 % if 'Protocol' not in ssh_config['options']:
@@ -117,4 +119,7 @@ Match User "${user['username']}"
 Match Group "${group}"
 	PasswordAuthentication yes
 % endfor
+% endif
+% if login_banner != "":
+Banner /etc/login_banner
 % endif
