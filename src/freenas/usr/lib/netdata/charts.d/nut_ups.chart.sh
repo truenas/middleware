@@ -32,7 +32,7 @@ nut_ups_check() {
   nut_names=()
   nut_ids=()
 
-  if [ $(ps -aux | grep upsmon | wc -l) -le 1 ]; then
+  if [ ! -f /run/nut/upsmon.pid ]; then
     nut_ids["ix-dummy-ups"]="$(fixid "ix-dummy-ups")"
     return 0
   fi
