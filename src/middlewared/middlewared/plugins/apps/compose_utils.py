@@ -4,7 +4,7 @@ import typing
 from middlewared.service_exception import CallError
 
 from .app_lifecycle_utils import get_rendered_templates_of_app
-from .utils import run
+from .utils import PROJECT_PREFIX, run
 
 
 def compose_action(
@@ -17,7 +17,7 @@ def compose_action(
     if not compose_files:
         raise CallError(f'No compose files found for app {app_name!r}')
 
-    args = [action]
+    args = ['-p', f'{PROJECT_PREFIX}{app_name}', action]
     if daemon:
         args.append('-d')
     if force_recreate:
