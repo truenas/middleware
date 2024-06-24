@@ -120,6 +120,6 @@ Match Group "${group}"
 	PasswordAuthentication yes
 % endfor
 % endif
-% if login_banner != "":
+% if login_banner != '':
 Banner /etc/login_banner
 % endif
