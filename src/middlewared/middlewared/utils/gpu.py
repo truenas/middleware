@@ -1,23 +1,27 @@
+import collections
 import pyudev
 import re
 import subprocess
 
 from middlewared.service_exception import CallError
 
+from .iommu import get_iommu_groups_info
+from .pci import SENSITIVE_PCI_DEVICE_TYPES
+
 
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
 
-# get capability classes for relevant pci devices from
-# https://github.com/pciutils/pciutils/blob/3d2d69cbc55016c4850ab7333de8e3884ec9d498/lib/header.h#L1429
-SENSITIVE_PCI_DEVICE_TYPES = {
-    '0x0604': 'PCI Bridge',
-    '0x0601': 'ISA Bridge',
-    '0x0500': 'RAM memory',
-    '0x0c05': 'SMBus',
-}
+
+def get_critical_devices_in_iommu_group_mapping(iommu_groups: dict) -> dict[str, set[str]]:
+    iommu_groups_mapping_with_critical_devices = collections.defaultdict(set)
+    for pci_slot, pci_details in iommu_groups.items():
+        if pci_details['critical']:
+            iommu_groups_mapping_with_critical_devices[pci_details['number']].add(pci_slot)
+
+    return iommu_groups_mapping_with_critical_devices
 
 
-def get_gpus():
+def get_gpus() -> list:
     cp = subprocess.Popen(['lspci', '-D'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = cp.communicate()
     if cp.returncode:
@@ -35,6 +39,9 @@ def get_gpus():
                 gpu_slots.append((line.strip(), k))
                 break
 
+    iommu_groups = get_iommu_groups_info(get_critical_info=True)
+    critical_iommu_mapping = get_critical_devices_in_iommu_group_mapping(iommu_groups)
+
     for gpu_line, key in gpu_slots:
         addr = gpu_line.split()[0]
         addr_re = RE_PCI_ADDR.match(addr)
@@ -51,17 +58,37 @@ def get_gpus():
             vendor = 'AMD'
 
         devices = []
-        critical = False
+        critical_reason = None
+        critical_devices = set()
+
+        # So we will try to mark those gpu's as critical which meet following criteria:
+        # 1) Have a device which belongs to sensitive pci devices group
+        # 2) Have a device which is in same iommu group as a device which belongs to sensitive pci devices group
+        if critical_iommu_mapping[iommu_groups.get(addr, {}).get('number')]:
+            critical_devices_based_on_iommu = {addr}
+        else:
+            critical_devices_based_on_iommu = set()
+
         for child in filter(lambda c: all(k in c for k in ('PCI_SLOT_NAME', 'PCI_ID')), gpu_dev.parent.children):
             devices.append({
                 'pci_id': child['PCI_ID'],
                 'pci_slot': child['PCI_SLOT_NAME'],
                 'vm_pci_slot': f'pci_{child["PCI_SLOT_NAME"].replace(".", "_").replace(":", "_")}',
             })
-            critical |= any(
-                k.lower() in child.get('ID_PCI_SUBCLASS_FROM_DATABASE', '').lower()
-                for k in SENSITIVE_PCI_DEVICE_TYPES.values()
-            )
+            for k in SENSITIVE_PCI_DEVICE_TYPES.values():
+                if k.lower() in child.get('ID_PCI_SUBCLASS_FROM_DATABASE', '').lower():
+                    critical_devices.add(child['PCI_SLOT_NAME'])
+                    break
+            if critical_iommu_mapping[iommu_groups.get(child['PCI_SLOT_NAME'], {}).get('number')]:
+                critical_devices_based_on_iommu.add(child['PCI_SLOT_NAME'])
+
+        if critical_devices:
+            critical_reason = f'Critical devices found: {", ".join(critical_devices)}'
+
+        if critical_devices_based_on_iommu:
+            critical_reason = f'{critical_reason}\n' if critical_reason else ''
+            critical_reason += ('Critical devices found in same IOMMU group: '
+                                f'{", ".join(critical_devices_based_on_iommu)}')
 
         gpus.append({
             'addr': {
@@ -71,7 +98,8 @@ def get_gpus():
             'description': gpu_line.split(f'{key}:')[-1].split('(rev')[0].strip(),
             'devices': devices,
             'vendor': vendor,
-            'uses_system_critical_devices': critical,
+            'uses_system_critical_devices': bool(critical_reason),
+            'critical_reason': critical_reason,
         })
 
     return gpus
