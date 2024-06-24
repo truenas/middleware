@@ -301,7 +301,10 @@ class BootService(Service):
     @private
     async def legacy_schema(self, disk):
         partitions = await self.middleware.call('disk.list_partitions', disk)
-        swap_types = await self.middleware.call('disk.get_valid_swap_partition_type_uuids')
+        swap_types = [
+            '516e7cb5-6ecf-11d6-8ff8-00022d09712b',  # used by freebsd
+            '0657fd6d-a4ab-43c4-84e5-0933c84b4f4f',  # used by linux
+        ]
         partitions_without_swap = [p for p in partitions if p['partition_type'] not in swap_types]
         if (
             await self.middleware.call('boot.get_boot_type') == 'EFI' and

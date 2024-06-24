@@ -167,7 +167,6 @@ class DiskService(Service):
         Str('dev'),
         Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM'], required=True),
         Bool('synccache', default=True),
-        Ref('swap_removal_options'),
     )
     @returns()
     @job(
@@ -175,7 +174,7 @@ class DiskService(Service):
         description=lambda dev, mode, *args: f'{mode.replace("_", " ").title()} wipe of disk {dev}',
         abortable=True,
     )
-    async def wipe(self, job, dev, mode, sync, options):
+    async def wipe(self, job, dev, mode, sync):
         """
         Performs a wipe of a disk `dev`.
         It can be of the following modes:
@@ -183,7 +182,6 @@ class DiskService(Service):
           - FULL: write whole disk with zero's
           - FULL_RANDOM: write whole disk with random bytes
         """
-        await self.middleware.call('disk.swaps_remove_disks', [dev], options)
         event = threading.Event()
         try:
             await self.middleware.run_in_thread(self._wipe_impl, job, dev, mode, event)

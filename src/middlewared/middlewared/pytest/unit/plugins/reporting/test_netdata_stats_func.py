@@ -193,23 +193,6 @@ NETDATA_ALL_METRICS = {
             }
         }
     },
-    'system.swap': {
-        'name': 'system.swap',
-        'family': 'swap',
-        'context': 'system.swap',
-        'units': 'MiB',
-        'last_updated': 1691150349,
-        'dimensions': {
-            'free': {
-                'name': 'free',
-                'value': 2044.9960938
-            },
-            'used': {
-                'name': 'used',
-                'value': 0
-            }
-        }
-    },
     'mem.committed': {
         'name': 'mem.committed',
         'family': 'system',
@@ -553,9 +536,7 @@ NETDATA_ALL_METRICS = {
 }
 MEM_INFO = '''Active:            67772 kB
 Inactive:        1379892 kB
-SwapCached:         1876 kB
 Mapped:            54768 kB
-SwapTotal:       2094076 kB
 '''
 
 
@@ -637,7 +618,6 @@ def test_memory_stats():
         assert memory_stats['classes']['page_tables'] == normalize_value(
             safely_retrieve_dimension(NETDATA_ALL_METRICS, 'mem.kernel', 'PageTables', 0), multiplier=1024 * 1024
         )
-        assert memory_stats['classes']['swap_cache'] == 1921024 * 1024
         assert memory_stats['classes']['slab_cache'] == normalize_value(
             safely_retrieve_dimension(NETDATA_ALL_METRICS, 'mem.kernel', 'Slab', 0), multiplier=1024 * 1024
         )
@@ -665,7 +645,4 @@ def test_memory_stats():
             safely_retrieve_dimension(NETDATA_ALL_METRICS, 'mem.kernel', 'VmallocUsed', 0), multiplier=1024 * 1024
         )
         assert memory_stats['extra']['mapped'] == 56082432 * 1024
-        assert memory_stats['swap']['used'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.swap', 'used', 0), multiplier=1024 * 1024,
-        )
-        assert memory_stats['swap']['total'] == 2144333824 * 1024
+        
