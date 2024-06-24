@@ -15,7 +15,6 @@ class Middleware(SchemasMixin, dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self['failover.licensed'] = AsyncMock(return_value=False)
-        self['system.is_freenas'] = AsyncMock(return_value=True)
 
         self.call_hook = AsyncMock()
         self.call_hook_inline = Mock()

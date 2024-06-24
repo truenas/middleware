@@ -1,5 +1,4 @@
 async def migrate(middleware):
-    is_freenas = await middleware.call('system.is_freenas')
     extents = await middleware.call(
         'iscsi.extent.query', [['vendor', '=', None]], {'select': ['id', 'vendor']}
     )
@@ -8,7 +7,7 @@ async def migrate(middleware):
             'datastore.update',
             'services.iscsitargetextent',
             extent['id'], {
-                'iscsi_target_extent_vendor': 'FreeNAS' if is_freenas else 'TrueNAS'
+                'iscsi_target_extent_vendor': 'TrueNAS'
             }
         )
 
