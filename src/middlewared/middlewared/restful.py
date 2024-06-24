@@ -807,9 +807,9 @@ class Resource(object):
                             })
                             return resp
                         # These parameters were renamed as pydantic does not support `-` in parameter names
-                        if 'query-filters' in data:
+                        if 'query-filters' in data and 'query-filters' not in params and 'filters' in params:
                             data['filters'] = data.pop('query-filters')
-                        if 'query-options' in data:
+                        if 'query-options' in data and 'query-options' not in params and 'options' in params:
                             data['options'] = data.pop('query-options')
                         method_args = []
                         for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
