@@ -263,8 +263,9 @@ class SystemAdvancedService(ConfigService):
 
             if original_data['login_banner'] != config_data['login_banner']:
                 with open('/etc/login_banner', 'w', encoding='utf-8') as f:
-                    f.write(config_data['login_banner'])
-                    os.fchmod(f, 0o600)
+                    f.write(config_data['login_banner']+'\n')
+                    os.fchmod(f.fileno(), 0o600)
+                await self.middleware.call('etc.generate', 'ssh')
                 await self.middleware.call('service.restart', 'ssh')
 
             if original_data['powerdaemon'] != config_data['powerdaemon']:
@@ -319,9 +320,9 @@ class SystemAdvancedService(ConfigService):
         ))['sed_passwd']
         return passwd if passwd else await self.middleware.call('kmip.sed_global_password')
 
-    @accepts()
+    @accepts(roles=['SYSTEM_ADVANCED_READ'])
     @no_auth_required
     @returns(Str())
-    def get_login_banner(self):
+    def login_banner(self):
         """Returns user set login banner"""
         return self.middleware.call_sync('datastore.query', 'system.advanced')[0]['adv_login_banner']
