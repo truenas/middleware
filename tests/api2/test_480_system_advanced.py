@@ -93,12 +93,26 @@ def test_10_system_advanced_check_motd_using_ssh(request):
     assert results['result'] is True, results
 
 
-def test_11_Setting_sysloglevel():
+def test_11_system_advanced_login_banner():
+    results = PUT('/system/advanced/', {
+        'login_banner': 'TrueNAS login banner.'
+    })
+    assert results.status_code == 200, results.text
+    results = GET('/system/advanced')
+    assert results.status_code == 200, results.text
+    data = results.json()
+    assert data['login_banner'] is True
+
+    results = SSH_TEST('cat /etc/ssh/sshd_config | grep Banner', user, password)
+    assert results['result'] is True, results
+
+
+def test_12_Setting_sysloglevel():
     results = PUT("/system/advanced/", {"sysloglevel": SYSLOGLEVEL})
     assert results.status_code == 200, results.text
 
 
-def test_12_Checking_sysloglevel_using_api():
+def test_13_Checking_sysloglevel_using_api():
     results = GET("/system/advanced/")
     assert results.status_code == 200, results.text
     data = results.json()
