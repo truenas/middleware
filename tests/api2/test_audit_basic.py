@@ -34,6 +34,7 @@ def initialize_for_smb_tests(request):
             }) as u:
                 yield {'dataset': ds, 'share': s, 'user': u}
 
+
 class AUDIT_CONFIG():
     defaults = {
         'retention': 7,
@@ -42,6 +43,7 @@ class AUDIT_CONFIG():
         'quota_fill_warning': 75,
         'quota_fill_critical': 95
     }
+
 
 @pytest.fixture(scope='module')
 def audit_config(request):
@@ -74,6 +76,12 @@ def test_audit_config_defaults(request):
         assert key in config['space'], str(config['space'])
 
     assert 'SMB' in config['enabled_services']
+
+
+def test_audit_config_dataset_defaults():
+    ds_config = call('audit.get_audit_dataset')
+    assert ds_config['org.freenas:quota_warning'] == AUDIT_CONFIG.defaults['quota_fill_warning']
+    assert ds_config['org.freenas:quota_critical'] == AUDIT_CONFIG.defaults['quota_fill_critical']
 
 
 def test_audit_config_updates(audit_config):

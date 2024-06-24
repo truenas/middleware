@@ -6,6 +6,9 @@ import re
 
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.filesystem.constants import ZFSCTL
+from middlewared.plugins.audit.utils import (
+    AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_DEFAULT_FILL_WARNING
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +30,13 @@ class TNUserProp(enum.Enum):
     def default(self):
         match self:
             case TNUserProp.QUOTA_WARN:
-                return 80
+                return AUDIT_DEFAULT_FILL_WARNING
             case TNUserProp.QUOTA_CRIT:
-                return 95
+                return AUDIT_DEFAULT_FILL_CRITICAL
             case TNUserProp.REFQUOTA_WARN:
-                return 80
+                return AUDIT_DEFAULT_FILL_WARNING
             case TNUserProp.REFQUOTA_CRIT:
-                return 95
+                return AUDIT_DEFAULT_FILL_CRITICAL
             case _:
                 raise ValueError(f'{self.value}: no default value is set')
 
