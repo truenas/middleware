@@ -63,4 +63,4 @@ class ProcessesEventSource(EventSource):
 
 
 def setup(middleware):
-    middleware.register_event_source("reporting.processes", ProcessesEventSource)
+    middleware.register_event_source("reporting.processes", ProcessesEventSource, roles=['REPORTING_READ'])
