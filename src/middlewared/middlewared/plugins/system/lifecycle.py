@@ -1,7 +1,7 @@
 import asyncio
 
 from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
-from middlewared.service import job, private, Service
+from middlewared.service import job, private, Service, no_auth_required, pass_app
 from middlewared.utils import Popen, run
 
 from .utils import lifecycle_conf, RE_KDUMP_CONFIGURED
@@ -13,14 +13,21 @@ class SystemService(Service):
     async def first_boot(self):
         return lifecycle_conf.SYSTEM_FIRST_BOOT
 
+    @no_auth_required
     @accepts()
     @returns(Str('system_boot_identifier'))
-    async def boot_id(self):
+    @pass_app()
+    async def boot_id(self, app):
         """
         Returns an unique boot identifier.
 
         It is supposed to be unique every system boot.
         """
+        # NOTE: this is used, at time of writing, by the UI
+        # team to handle caching of web page assets. This
+        # doesn't require authentication since our login page
+        # also has information that is cached. Security team
+        # is aware and the risk is minimal
         return lifecycle_conf.SYSTEM_BOOT_ID
 
     @accepts()
