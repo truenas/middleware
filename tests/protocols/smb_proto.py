@@ -125,6 +125,9 @@ class SMB(object):
             force_smb1=smb1,
         )
 
+    def get_smb_encryption(self):
+        return SMBEncryption(self._cred.get_smb_encryption()).name
+
     def disconnect(self):
         open_files = list(self._open_files.keys())
         try:

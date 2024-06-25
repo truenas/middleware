@@ -35,19 +35,21 @@ def test__smb_client_encrypt_default(smb_setup):
         share=smb_setup['share']['name'],
         username=SHAREUSER,
         password=PASSWD,
-        encrypt='DEFAULT'
+        encryption='DEFAULT'
     ) as c:
         # perform basic op to fully initialize SMB session
+        assert c.get_smb_encryption() == 'DEFAULT'
+
         c.ls('/')
         smb_status = call('smb.status')[0]
 
-        # check IPC
-        assert smb_status['encyption']['cipher'] == '-'
-        assert smb_status['cipher']['degree'] == 'none'
+        # check session
+        assert smb_status['encryption']['cipher'] == '-'
+        assert smb_status['encryption']['degree'] == 'partial'
 
         # check share
-        assert smb_status['share_connections'][0]['cipher'] == '-'
-        assert smb_status['share_connections'][0]['degree'] == 'none'
+        assert smb_status['share_connections'][0]['encryption']['cipher'] == '-'
+        assert smb_status['share_connections'][0]['encryption']['degree'] == 'none'
 
 
 def test__smb_client_encrypt_desired(smb_setup):
@@ -55,19 +57,21 @@ def test__smb_client_encrypt_desired(smb_setup):
         share=smb_setup['share']['name'],
         username=SHAREUSER,
         password=PASSWD,
-        encrypt='DESIRED'
+        encryption='DESIRED'
     ) as c:
+        assert c.get_smb_encryption() == 'DESIRED'
+
         # perform basic op to fully initialize SMB session
         c.ls('/')
         smb_status = call('smb.status')[0]
 
-        # check IPC
-        assert smb_status['encyption']['cipher'] == 'AES-128-GCM'
-        assert smb_status['cipher']['degree'] == 'partial'
+        # check session
+        assert smb_status['encryption']['cipher'] == 'AES-128-GCM'
+        assert smb_status['encryption']['degree'] == 'partial'
 
         # check share
-        assert smb_status['share_connections'][0]['cipher'] == 'AES-128-GCM'
-        assert smb_status['share_connections'][0]['degree'] == 'full'
+        assert smb_status['share_connections'][0]['encryption']['cipher'] == 'AES-128-GCM'
+        assert smb_status['share_connections'][0]['encryption']['degree'] == 'full'
 
 
 def test__smb_client_encrypt_required(smb_setup):
@@ -75,16 +79,18 @@ def test__smb_client_encrypt_required(smb_setup):
         share=smb_setup['share']['name'],
         username=SHAREUSER,
         password=PASSWD,
-        encrypt='REQUIRED'
+        encryption='REQUIRED'
     ) as c:
+        assert c.get_smb_encryption() == 'REQUIRED'
+
         # perform basic op to fully initialize SMB session
         c.ls('/')
         smb_status = call('smb.status')[0]
 
-        # check IPC
-        assert smb_status['encyption']['cipher'] == 'AES-128-GCM'
-        assert smb_status['cipher']['degree'] == 'partial'
+        # check session
+        assert smb_status['encryption']['cipher'] == 'AES-128-GCM'
+        assert smb_status['encryption']['degree'] == 'partial'
 
         # check share
-        assert smb_status['share_connections'][0]['cipher'] == 'AES-128-GCM'
-        assert smb_status['share_connections'][0]['degree'] == 'full'
+        assert smb_status['share_connections'][0]['encryption']['cipher'] == 'AES-128-GCM'
+        assert smb_status['share_connections'][0]['encryption']['degree'] == 'full'
