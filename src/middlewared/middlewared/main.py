@@ -24,7 +24,7 @@ from .utils.os import close_fds
 from .utils.plugins import LoadPluginsMixin
 from .utils.privilege import credential_has_full_admin
 from .utils.profile import profile_wrap
-from .utils.rate_limit import RateLimitCache
+from .utils.rate_limit.cache import RateLimitCache
 from .utils.service.call import ServiceCallMixin
 from .utils.syslog import syslog_message
 from .utils.threading import set_thread_name, IoThreadPoolExecutor, io_thread_pool_executor
@@ -359,10 +359,10 @@ class Application:
                     self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
                     error = True
 
-            auth_required = not hasattr(methodobj, '_no_auth_required')
             if not error:
+                auth_required = not hasattr(methodobj, '_no_auth_required')
                 if not auth_required:
-                    ip_added = RateLimitCache.add(message['method'], self.origin)
+                    ip_added = await RateLimitCache.add(message['method'], self.origin)
                     if ip_added is not None:
                         if any((
                             RateLimitCache.max_entries_reached,
@@ -375,8 +375,8 @@ class Application:
                             #       origin IP address
                             #   In either scenario, sleep a random delay and send an error
                             await self.__log_audit_message_for_method(message, methodobj, False, True, False)
-                            await RateLimitCache.sleep_random()
-                            self.send_error('Rate Limit Exceeded', errno.EBUSY)
+                            await RateLimitCache.random_sleep()
+                            self.send_error(message, errno.EBUSY, 'Rate Limit Exceeded')
                             error = True
                         else:
                             # was added to rate limit cache but rate limit thresholds haven't
