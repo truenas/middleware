@@ -18,6 +18,7 @@ HEADER = {'Content-Type': 'application/json', 'Vary': 'accept'}
 REDFISH_ROOT_PATH = '/redfish/v1'
 ODATA_ID = '@odata.id'
 LOGGER = logging.getLogger(__name__)
+REDFISH_SESSIONS = '/redfish/v1/SessionService/Sessions'
 
 
 class InvalidCredentialsError(Exception):
@@ -89,7 +90,7 @@ class RedfishClient(AbstractRedfishClient):
         try:
             self.login_url = self.root['Links']['Sessions']['@odata.id']
         except KeyError:
-            self.login_url = '/redfish/v1/SessionService/Sessions'
+            self.login_url = REDFISH_SESSIONS
 
         if username and password:
             self.login()
@@ -385,6 +386,7 @@ class AsyncRedfishClient(AbstractRedfishClient):
         self._sessions = {}
         # Implement a little value cache
         self._attributes = {}
+        self.logged = {}
 
     def _add_session(self, base_url, session):
         """Add a session corresponding to the base_url"""
@@ -430,7 +432,7 @@ class AsyncRedfishClient(AbstractRedfishClient):
         try:
             self.login_url = self.root['Links']['Sessions']['@odata.id']
         except KeyError:
-            self.login_url = '/redfish/v1/SessionService/Sessions'
+            self.login_url = REDFISH_SESSIONS
 
         return self
 
@@ -494,6 +496,11 @@ class AsyncRedfishClient(AbstractRedfishClient):
                 raise ValueError('Invalid auth supplied:', authtype)
         # Save the session for reuse
         self._add_session(base_url, newsession)
+        # Clear any silenced exception logging
+        try:
+            self.logged.remove(base_url)
+        except KeyError:
+            pass
         return newsession
 
     async def _logout(self, base_url, session):
@@ -503,7 +510,11 @@ class AsyncRedfishClient(AbstractRedfishClient):
             if location := self.session_location.get(base_url):
                 async with session.delete(location, ssl=False) as response:
                     if response.ok:
-                        del self.session_location[base_url]
+                        try:
+                            del self.session_location[base_url]
+                        except KeyError:
+                            # Should not occur, but protect in case parallel calls
+                            pass
 
     async def get_root_object(self):
         """Fetch the root object."""
@@ -536,9 +547,13 @@ class AsyncRedfishClient(AbstractRedfishClient):
                     if response.ok:
                         return await response.json()
             except asyncio.TimeoutError:
+                LOGGER.debug('Timed out GET %r: %r', base_url, uri)
                 await self._del_session(base_url, session)
                 continue
             except Exception:
+                if base_url not in self.logged:
+                    LOGGER.debug('Failed GET %r: %r', base_url, uri, exc_info=True)
+                    self.logged.add(base_url)
                 await self._del_session(base_url, session)
                 continue
         raise CallError(f'Failed to GET {uri}:', errno.EBADMSG)
@@ -556,9 +571,13 @@ class AsyncRedfishClient(AbstractRedfishClient):
                     if response.ok:
                         return await response.json()
             except asyncio.TimeoutError:
+                LOGGER.debug('Timed out POST %r: %r', base_url, uri)
                 await self._del_session(base_url, session)
                 continue
             except Exception:
+                if base_url not in self.logged:
+                    LOGGER.debug('Failed POST %r: %r', base_url, uri, exc_info=True)
+                    self.logged.add(base_url)
                 await self._del_session(base_url, session)
                 continue
         raise CallError(f'Failed to POST {uri}:', errno.EBADMSG)
