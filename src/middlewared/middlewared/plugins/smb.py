@@ -1686,11 +1686,32 @@ class SharingSMBService(SharingService):
                 'id': unix_entry['id']
             }
 
-            entry['ae_who_str'] = await self.middleware.call(
-                'idmap.id_to_name',
-                unix_entry['id'],
-                unix_entry['id_type']
-            )
+            try:
+                # Pass through user / group.query to force cache insertions if
+                # user / group enumeration is disabled for the directory service
+                match unix_entry['id_type']:
+                    case 'USER':
+                        name = (await self.middleware.call(
+                            'user.query', [['uid', '=', unix_entry['id']]],
+                            {'extra': {'additional_information': ['DS']}, 'get': True}
+                        ))['username']
+                    case _:
+                        name = (await self.middleware.call(
+                            'group.query', [['gid', '=', unix_entry['id']]],
+                            {'extra': {'additional_information': ['DS']}, 'get': True}
+                        ))['group']
+            except MatchNotFound:
+                # This is an unexpected situation since we managed to
+                # resolve the SID to an account on the NAS
+                self.logger.warning(
+                    'Failed to retrive name for %s with id %d',
+                    unix_entry['id_type'].lower(),
+                    unix_entry['id']
+                )
+
+                name = None
+
+            entry['ae_who_str'] = name
 
         return acl
 
