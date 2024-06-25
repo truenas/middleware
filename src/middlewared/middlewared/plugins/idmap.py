@@ -6,6 +6,7 @@ import wbclient
 
 from middlewared.schema import accepts, Bool, Dict, Int, Password, Patch, Ref, Str, LDAP_DN, OROperator
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors, filterable
+from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import SSL
 from middlewared.plugins.idmap_.idmap_constants import (
     IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX, TRUENAS_IDMAP_MAX
@@ -1081,35 +1082,48 @@ class IdmapDomainService(CRUDService):
         return filter_list(out, filters, options)
 
     @private
-    async def id_to_name(self, id_, id_type):
+    async def id_to_name(self, xid, id_type):
+        """
+        Helper method to retrieve the name for the specified uid or gid. This method
+        passes through user.query or group.query rather than user.get_user_obj or
+        group.get_group_obj because explicit request for a uid / gid will trigger
+        a directory service cache insertion if it does not already exist. This allows
+        some lazily fill cache if enumeration for directory services is disabled.
+        """
         idtype = IDType[id_type]
         idmap_timeout = 5.0
+        options = {'extra': {'additional_information': ['DS']}, 'get': True}
 
-        if idtype == IDType.GROUP or idtype == IDType.BOTH:
-            method = "group.get_group_obj"
-            to_check = {"gid": id_}
-            key = 'gr_name'
-        elif idtype == IDType.USER:
-            method = "user.get_user_obj"
-            to_check = {"uid": id_}
-            key = 'pw_name'
-        else:
-            raise CallError(f"Unsupported id_type: [{idtype.name}]")
+        match idtype:
+            # IDType.BOTH is possible return by nss_winbind / nss_sss
+            # and is special case when idmapping backend converts a SID
+            # to both a user and a group. For most practical purposes it
+            # can be treated interally as a group.
+            case IDType.GROUP | IDType.BOTH:
+                method = 'group.query'
+                filters = [['gid', '=', xid]]
+                key = 'group'
+            case IDType.USER:
+                method = 'user.query'
+                filters = [['uid', '=', xid]]
+                key = 'username'
+            case _:
+                raise CallError(f"Unsupported id_type: [{idtype.name}]")
 
         try:
             ret = await asyncio.wait_for(
-                self.middleware.create_task(self.middleware.call(method, to_check)),
+                self.middleware.create_task(self.middleware.call(method, filters, options)),
                 timeout=idmap_timeout
             )
             name = ret[key]
         except asyncio.TimeoutError:
             self.logger.debug(
-                "timeout encountered while trying to convert %s id %s "
+                "timeout encountered while trying to convert %s id %d "
                 "to name. This may indicate significant networking issue.",
-                id_type.lower(), id_
+                id_type.lower(), xid
             )
             name = None
-        except KeyError:
+        except MatchNotFound:
             name = None
 
         return name
