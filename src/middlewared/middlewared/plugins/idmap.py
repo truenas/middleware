@@ -1095,7 +1095,7 @@ class IdmapDomainService(CRUDService):
         options = {'extra': {'additional_information': ['DS']}, 'get': True}
 
         match idtype:
-            # IDType.BOTH is possibly return by nss_winbind / nss_sss
+            # IDType.BOTH is possible return by nss_winbind / nss_sss
             # and is special case when idmapping backend converts a SID
             # to both a user and a group. For most practical purposes it
             # can be treated interally as a group.
