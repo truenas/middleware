@@ -386,7 +386,7 @@ class AsyncRedfishClient(AbstractRedfishClient):
         self._sessions = {}
         # Implement a little value cache
         self._attributes = {}
-        self.logged = {}
+        self.logged = set()
 
     def _add_session(self, base_url, session):
         """Add a session corresponding to the base_url"""
