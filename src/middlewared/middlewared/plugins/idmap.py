@@ -6,6 +6,7 @@ import wbclient
 
 from middlewared.schema import accepts, Bool, Dict, Int, Password, Patch, Ref, Str, LDAP_DN, OROperator
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors, filterable
+from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import SSL
 from middlewared.plugins.idmap_.idmap_constants import (
     IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX, TRUENAS_IDMAP_MAX
@@ -1082,11 +1083,22 @@ class IdmapDomainService(CRUDService):
 
     @private
     async def id_to_name(self, xid, id_type):
+        """
+        Helper method to retrieve the name for the specified uid or gid. This method
+        passes through user.query or group.query rather than user.get_user_obj or
+        group.get_group_obj because explicit request for a uid / gid will trigger
+        a directory service cache insertion if it does not already exist. This allows
+        some lazily fill cache if enumeration for directory services is disabled.
+        """
         idtype = IDType[id_type]
         idmap_timeout = 5.0
         options = {'extra': {'additional_information': ['DS']}, 'get': True}
 
         match idtype:
+            # IDType.BOTH is possibly return by nss_winbind / nss_sss
+            # and is special case when idmapping backend converts a SID
+            # to both a user and a group. For most practical purposes it
+            # can be treated interally as a group.
             case IDType.GROUP | IDType.BOTH:
                 method = 'group.query'
                 filters = [['gid', '=', xid]]
