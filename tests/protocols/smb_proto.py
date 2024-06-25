@@ -51,6 +51,13 @@ class ACLControl(enum.IntFlag):
     SEC_DESC_SELF_RELATIVE          = 0x8000
 
 
+class SMBEncryption(enum.IntEnum):
+    """ Specify SMB encryption level for client. Used during negotiate """
+    DEFAULT = credentials.SMB_ENCRYPTION_DEFAULT
+    DESIRED = credentials.SMB_ENCRYPTION_DESIRED
+    REQUIRED = credentials.SMB_ENCRYPTION_REQUIRED
+
+
 class SMB(object):
     """
     Python implementation of basic SMB operations for protocol testing.
@@ -85,6 +92,7 @@ class SMB(object):
     def connect(self, **kwargs):
         host = kwargs.get("host", get_host_ip(SRVTarget.DEFAULT))
         share = kwargs.get("share")
+        encryption = SMBEncryption[kwargs.get("encryption", "DEFAULT")]
         username = kwargs.get("username")
         domain = kwargs.get("domain")
         password = kwargs.get("password")
@@ -94,6 +102,7 @@ class SMB(object):
         self._lp.load_default()
         self._cred = credentials.Credentials()
         self._cred.guess(self._lp)
+        self._cred.set_smb_encryption(encryption)
 
         if username is not None:
             self._cred.set_username(username)
@@ -115,6 +124,9 @@ class SMB(object):
             self._cred,
             force_smb1=smb1,
         )
+
+    def get_smb_encryption(self):
+        return SMBEncryption(self._cred.get_smb_encryption()).name
 
     def disconnect(self):
         open_files = list(self._open_files.keys())
