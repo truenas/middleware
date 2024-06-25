@@ -2,6 +2,12 @@ import asyncio
 import copy
 import errno
 
+from pydantic import create_model, Field
+from typing_extensions import Annotated
+
+from middlewared.api import api_method
+from middlewared.api.base.model import BaseModel
+from middlewared.api.current import QueryArgs, QueryOptions
 from middlewared.service_exception import CallError, InstanceNotFound
 from middlewared.schema import accepts, Any, Bool, convert_schema, Dict, Int, List, OROperator, Patch, Ref, returns
 from middlewared.utils import filter_list
@@ -23,6 +29,33 @@ def get_datastore_primary_key_schema(klass):
     })
 
 
+def get_instance_args(entry):
+    return create_model(
+        entry.__name__.removesuffix("Entry") + "GetInstanceArgs",
+        __base__=(BaseModel,),
+        id=Annotated[entry.model_fields["id"].annotation, Field()],
+        options=Annotated[QueryOptions, Field(default={})],
+    )
+
+
+def get_instance_result(entry):
+    return create_model(
+        entry.__name__.removesuffix("Entry") + "GetInstanceResult",
+        __base__=(BaseModel,),
+        __module__=entry.__module__,
+        result=Annotated[entry, Field()],
+    )
+
+
+def query_result(item):
+    return create_model(
+        item.__name__.removesuffix("Entry") + "QueryResult",
+        __base__=(BaseModel,),
+        __module__=item.__module__,
+        result=Annotated[list[item] | item | int, Field()],
+    )
+
+
 class CRUDServiceMetabase(ServiceBase):
 
     def __new__(cls, name, bases, attrs):
@@ -36,6 +69,19 @@ class CRUDServiceMetabase(ServiceBase):
                 ('TaskPathService', ('SharingTaskService',)),
             )
         ):
+            return klass
+
+        if klass._config.entry is not None:
+            # FIXME: This is to prevent `Method cloudsync.credentials.ENTRY is public but has no @accepts()`, remove
+            # eventually.
+            klass.ENTRY = None
+            # FIXME: Remove `wraps` handling when we get rid of `@filterable` in `CRUDService.query` definition
+            klass.query = api_method(QueryArgs, query_result(klass._config.entry))(
+                klass.query.wraps if hasattr(klass.query, "wraps") else klass.query
+            )
+            # FIXME: Remove `wraps` handling when we get rid of `@accepts` in `CRUDService.get_instance` definition
+            klass.get_instance = api_method(get_instance_args(klass._config.entry),
+                                            get_instance_result(klass._config.entry))(klass.get_instance.wraps)
             return klass
 
         namespace = klass._config.namespace.replace('.', '_')
@@ -127,12 +173,17 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             else:
                 roles = ['READONLY_ADMIN']
 
+            if self._config.entry is not None:
+                kwargs = dict(new_style_returns=self._config.entry)
+            else:
+                kwargs = dict(returns=Ref(self.ENTRY.name))
+
             self.middleware.event_register(
                 f'{self._config.namespace}.query',
                 f'Sent on {self._config.namespace} changes.',
                 private=self._config.private,
-                returns=Ref(self.ENTRY.name),
                 roles=roles,
+                **kwargs,
             )
 
     @private

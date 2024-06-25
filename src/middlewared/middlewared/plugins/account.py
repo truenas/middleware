@@ -14,7 +14,9 @@ import wbclient
 from pathlib import Path
 from contextlib import suppress
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, returns, SID, Str, LocalUsername
+from middlewared.api import api_method
+from middlewared.api.current import *
+from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, returns, SID, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, no_auth_required, no_authz_required, pass_app, private, filterable, job
 )
@@ -25,7 +27,7 @@ from middlewared.utils.crypto import sha512_crypt
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
-from middlewared.validators import Email, Range
+from middlewared.validators import Range
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS
@@ -155,28 +157,7 @@ class UserService(CRUDService):
         datastore_prefix = 'bsdusr_'
         cli_namespace = 'account.user'
         role_prefix = 'ACCOUNT'
-
-    # FIXME: Please see if dscache can potentially alter result(s) format, without ad, it doesn't seem to
-    ENTRY = Patch(
-        'user_create', 'user_entry',
-        ('rm', {'name': 'group'}),
-        ('rm', {'name': 'group_create'}),
-        ('rm', {'name': 'home_mode'}),
-        ('rm', {'name': 'home_create'}),
-        ('rm', {'name': 'password'}),
-        ('add', Dict('group', additional_attrs=True)),
-        ('add', Int('id')),
-        ('add', Bool('builtin')),
-        ('add', Bool('id_type_both')),
-        ('add', Bool('local')),
-        ('add', Bool('immutable')),
-        ('add', Bool('twofactor_auth_configured')),
-        ('add', Str('unixhash', private=True)),
-        ('add', Str('smbhash', private=True)),
-        ('add', Str('nt_name', null=True)),
-        ('add', Str('sid', null=True)),
-        ('add', List('roles', items=[Str('role')])),
-    )
+        entry = UserEntry
 
     @private
     async def user_extend_context(self, rows, extra):
@@ -259,7 +240,6 @@ class UserService(CRUDService):
 
         return user
 
-    @filterable
     async def query(self, filters, options):
         """
         Query users with `query-filters` and `query-options`. As a performance optimization, only local users
@@ -501,44 +481,10 @@ class UserService(CRUDService):
 
         return target
 
-    @accepts(Dict(
-        'user_create',
-        Int('uid', validators=[Range(0, TRUENAS_IDMAP_DEFAULT_LOW - 1)]),
-        LocalUsername('username', required=True),
-        Int('group'),
-        Bool('group_create', default=False),
-        Str('home', default=DEFAULT_HOME_PATH),
-        Str('home_mode', default='700'),
-        Bool('home_create', default=False),
-        Str('shell', default='/usr/bin/zsh'),
-        Str('full_name', required=True),
-        Str('email', validators=[Email()], null=True, default=None),
-        Password('password'),
-        Bool('password_disabled', default=False),
-        Bool('ssh_password_enabled', default=False),
-        Bool('locked', default=False),
-        Bool('smb', default=True),
-        List('sudo_commands', items=[Str('command', empty=False)]),
-        List('sudo_commands_nopasswd', items=[Str('command', empty=False)]),
-        Str('sshpubkey', null=True, max_length=None),
-        List('groups', items=[Int('group')]),
-        register=True,
-    ), audit='Create user', audit_extended=lambda data: data["username"])
-    @returns(Int('primary_key'))
+    @api_method(UserCreateArgs, UserCreateResult, audit='Create user', audit_extended=lambda data: data['username'])
     def do_create(self, data):
         """
         Create a new user.
-
-        If `uid` is not provided it is automatically filled with the next one available.
-
-        `group` is required if `group_create` is false.
-
-        `password` is required if `password_disabled` is false.
-
-        Available choices for `shell` can be retrieved with `user.shell_choices`.
-
-        `smb` specifies whether the user should be allowed access to SMB shares. User
-        will also automatically be added to the `builtin_users` group.
         """
         verrors = ValidationErrors()
 
@@ -679,18 +625,7 @@ class UserService(CRUDService):
 
         return pk
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'user_create',
-            'user_update',
-            ('attr', {'update': True}),
-            ('rm', {'name': 'group_create'}),
-        ),
-        audit='Update user',
-        audit_callback=True,
-    )
-    @returns(Int('primary_key'))
+    @api_method(UserUpdateArgs, UserUpdateResult, audit='Update user', audit_callback=True)
     @pass_app()
     def do_update(self, app, audit_callback, pk, data):
         """

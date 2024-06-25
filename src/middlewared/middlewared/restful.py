@@ -362,14 +362,14 @@ class OpenAPIResource(object):
                 schema['nullable'] = True
             schema['type'] = _type = _type[0]
         if _type == 'object':
-            for key, val in schema['properties'].items():
+            for key, val in schema.get('properties', {}).items():
                 schema['properties'][key] = self._convert_schema(val)
         elif _type == 'array':
             items = schema.get('items')
-            for i, item in enumerate(list(items)):
-                if item.get('type') == 'null':
-                    items.remove(item)
             if isinstance(items, list):
+                for i, item in enumerate(list(items)):
+                    if item.get('type') == 'null':
+                        items.remove(item)
                 if len(items) > 1:
                     schema['items'] = {'oneOf': items}
                 elif len(items) > 0:
@@ -806,6 +806,11 @@ class Resource(object):
                                 'message': 'Endpoint accepts multiple params, object/dict expected.',
                             })
                             return resp
+                        # These parameters were renamed as pydantic does not support `-` in parameter names
+                        if 'query-filters' in data and 'query-filters' not in params and 'filters' in params:
+                            data['filters'] = data.pop('query-filters')
+                        if 'query-options' in data and 'query-options' not in params and 'options' in params:
+                            data['options'] = data.pop('query-options')
                         method_args = []
                         for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
                             if p not in data and options['required']:

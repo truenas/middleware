@@ -1,3 +1,5 @@
+from .api.base.handler.dump_params import dump_params
+from .api.base.handler.result import serialize_result
 from .apidocs import routes as apidocs_routes
 from .auth import is_ha_connection
 from .common.event_source.manager import EventSourceManager
@@ -1426,19 +1428,27 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if crud_method := real_crud_method(method):
                 method = crud_method
 
+        if hasattr(method, 'new_style_accepts'):
+            return dump_params(method.new_style_accepts, args, False)
+
         if not hasattr(method, 'accepts'):
             return args
 
         return [method.accepts[i].dump(arg) if i < len(method.accepts) else arg
                 for i, arg in enumerate(args)]
 
-    def dump_result(self, result, method):
-        if not hasattr(method, 'returns'):
-            return result
+    def dump_result(self, method, result, expose_secrets):
+        if hasattr(method, "new_style_returns"):
+            return serialize_result(method.new_style_returns, result, expose_secrets)
 
-        return [
-            method.returns[i].dump(r) if i < len(method.returns) else r for i, r in enumerate([result])
-        ]
+        if not expose_secrets and hasattr(method, "returns") and method.returns:
+            schema = method.returns[0]
+            if isinstance(schema, OROperator):
+                result = schema.dump(result, False)
+            else:
+                result = schema.dump(result)
+
+        return result
 
     async def call_with_audit(self, method, serviceobj, methodobj, params, app, **kwargs):
         audit_callback_messages = []
@@ -1448,6 +1458,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                                       audit_callback=audit_callback_messages.append, **kwargs)
             success = True
 
+            expose_secrets = True
             if app and app.authenticated_credentials:
                 if app.authenticated_credentials.is_user_session and not (
                     credential_has_full_admin(app.authenticated_credentials) or
@@ -1456,12 +1467,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                         app.authenticated_credentials.has_role(f'{serviceobj._config.role_prefix}_WRITE')
                     )
                 ):
-                    if hasattr(methodobj, "returns") and methodobj.returns:
-                        schema = methodobj.returns[0]
-                        if isinstance(schema, OROperator):
-                            result = schema.dump(result, False)
-                        else:
-                            result = schema.dump(result)
+                    expose_secrets = False
+
+            result = self.dump_result(methodobj, result, expose_secrets)
         finally:
             await self.log_audit_message_for_method(method, methodobj, params, app, True, True, success,
                                                     audit_callback_messages)
@@ -1620,6 +1628,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                         'wildcard_subscription': False,
                         'accepts': n[1].ACCEPTS,
                         'returns': n[1].RETURNS,
+                        'new_style_returns': None,
                     }
                 ),
                 self.event_source_manager.event_sources.items()
@@ -1632,14 +1641,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         """
         self.__event_subs[name].append(handler)
 
-    def event_register(self, name, description, *, private=False, returns=None, no_auth_required=False,
-                       no_authz_required=False, roles=None):
+    def event_register(self, name, description, *, private=False, returns=None, new_style_returns=None,
+                       no_auth_required=False, no_authz_required=False, roles=None):
         """
         All events middleware can send should be registered, so they are properly documented
         and can be browsed in documentation page without source code inspection.
         """
         roles = roles or []
-        self.events.register(name, description, private, returns, no_auth_required, no_authz_required, roles)
+        self.events.register(name, description, private, returns, new_style_returns, no_auth_required,
+                             no_authz_required, roles)
 
     def send_event(self, name, event_type: str, **kwargs):
         should_send_event = kwargs.pop('should_send_event', None)

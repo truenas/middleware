@@ -15,6 +15,7 @@ from subprocess import run
 
 import middlewared.main
 
+from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.common.environ import environ_update
 from middlewared.job import Job
 from middlewared.pipe import Pipes
@@ -311,7 +312,7 @@ class CoreService(Service):
                 _typ = 'service'
 
             config = {k: v for k, v in list(v._config.__dict__.items())
-                      if not k.startswith(('_', 'process_pool', 'thread_pool'))}
+                      if not (k in ['entry', 'process_pool', 'thread_pool'] or k.startswith('_'))}
             if config['cli_description'] is None:
                 if v.__doc__:
                     config['cli_description'] = inspect.getdoc(v).split("\n")[0].strip()
@@ -438,6 +439,11 @@ class CoreService(Service):
 
                 method_schemas = {'accepts': None, 'returns': None}
                 for schema_type in method_schemas:
+                    if hasattr(method, 'new_style_accepts'):
+                        method_schemas['accepts'] = get_json_schema(method.new_style_accepts)
+                        method_schemas['returns'] = get_json_schema(method.new_style_returns)
+                        continue
+
                     args_descriptions_doc = doc or ''
                     if attr == 'update':
                         if do_create := getattr(svc, 'do_create', None):
@@ -459,13 +465,13 @@ class CoreService(Service):
                             d = None
 
                         for part in svc.parts:
-                            if hasattr(part, 'ENTRY'):
+                            if hasattr(part, 'ENTRY') and part.ENTRY is not None:
                                 filterable_schema = self.get_json_schema(
                                     [self.middleware._schemas[part.ENTRY.name]],
                                     d,
                                 )[0]
                                 break
-                    elif hasattr(svc, 'ENTRY'):
+                    elif hasattr(svc, 'ENTRY') and svc.ENTRY is not None:
                         d = None
                         if hasattr(svc, 'do_create'):
                             d = inspect.getdoc(svc.do_create)
@@ -483,7 +489,10 @@ class CoreService(Service):
                     'examples': examples,
                     'item_method': True if item_method else hasattr(method, '_item_method'),
                     'no_auth_required': no_auth_required,
-                    'filterable': hasattr(method, '_filterable'),
+                    'filterable': hasattr(method, '_filterable') or (
+                        getattr(method, 'new_style_accepts', None) is not None and
+                        method.new_style_accepts.__name__ == "QueryArgs"
+                    ),
                     'filterable_schema': filterable_schema,
                     'pass_application': hasattr(method, '_pass_app'),
                     'extra_methods': method._rest_api_metadata['extra_methods'] if hasattr(
@@ -541,7 +550,10 @@ class CoreService(Service):
                 'description': attrs['description'],
                 'wildcard_subscription': attrs['wildcard_subscription'],
                 'accepts': self.get_json_schema(list(filter(bool, attrs['accepts'])), attrs['description']),
-                'returns': self.get_json_schema(list(filter(bool, attrs['returns'])), attrs['description']),
+                'returns': (
+                    get_json_schema(attrs['new_style_returns']) if attrs['new_style_returns']
+                    else self.get_json_schema(list(filter(bool, attrs['returns'])), attrs['description'])
+                ),
             }
 
         return events

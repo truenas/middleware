@@ -15,7 +15,8 @@ class Events:
         self._events: typing.Dict[str, dict[str, typing.Any]] = {}
         self.__events_private: typing.Set[str] = set()
 
-    def register(self, name: str, description: str, private: bool, returns, no_auth_required, no_authz_required, roles: typing.Iterable[str]):
+    def register(self, name: str, description: str, private: bool, returns, new_style_returns, no_auth_required,
+                 no_authz_required, roles: typing.Iterable[str]):
         if name in self._events:
             raise ValueError(f'Event {name!r} already registered.')
         self.role_manager.register_event(name, roles)
@@ -23,6 +24,7 @@ class Events:
             'description': description,
             'accepts': [],
             'returns': [returns] if returns else [Any(name, null=True)],
+            'new_style_returns': new_style_returns,
             'no_auth_required': no_auth_required,
             'no_authz_required': no_authz_required,
             'roles': self.role_manager.roles_for_event(name),
