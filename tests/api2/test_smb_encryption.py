@@ -1,4 +1,7 @@
-from middlewared.test.integration.assets.account import user, group
+import os
+import pytest
+
+from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
@@ -7,10 +10,12 @@ from protocols import smb_connection
 
 SHAREUSER = 'smbuser420'
 PASSWD = 'abcd1234'
+SMB_NAME = 'enc_share'
+
 
 @pytest.fixture(scope='module')
 def smb_setup(request):
-    with make_dataset('smb-encrypt', data={'share_type': 'SMB'}) as ds:
+    with dataset('smb-encrypt', data={'share_type': 'SMB'}) as ds:
         with user({
             'username': SHAREUSER,
             'full_name': SHAREUSER,
