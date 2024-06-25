@@ -1,6 +1,6 @@
 from middlewared.service import periodic, Service
 
-from middlewared.utils.rate_limit import RateLimitCache
+from middlewared.utils.rate_limit.cache import RateLimitCache
 
 CLEAR_CACHE_INTERVAL = 600
 
@@ -22,4 +22,4 @@ class RateLimitService(Service):
         # store a maximum of amount of entries in the cache and
         # then refuse to honor any more requests for all consumers.
         # This is required for STIG purposes.
-        RateLimitCache.clear()
+        await RateLimitCache.clear()
