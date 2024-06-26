@@ -4,7 +4,9 @@ import string
 
 from passlib.hash import pbkdf2_sha256
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Patch
+from middlewared.api import api_method
+from middlewared.api.current import ApiKeyCreateArgs, ApiKeyCreateResult
+from middlewared.schema import accepts, Bool, Int, Patch
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.allowlist import Allowlist
@@ -44,21 +46,7 @@ class ApiKeyService(CRUDService):
         item.pop("key")
         return item
 
-    @accepts(
-        Dict(
-            "api_key_create",
-            Str("name", required=True, empty=False),
-            List("allowlist", items=[
-                Dict(
-                    "allowlist_item",
-                    Str("method", required=True, enum=["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE", "*"]),
-                    Str("resource", required=True),
-                    register=True,
-                ),
-            ]),
-            register=True,
-        )
-    )
+    @api_method(ApiKeyCreateArgs, ApiKeyCreateResult)
     async def do_create(self, data):
         """
         Creates API Key.
