@@ -17,7 +17,72 @@ truenas_server object is used by both websocket client and REST client for deter
 server to access for API calls. For HA, the `ip` attribute should be set to the virtual IP
 of the truenas server.
 """
-truenas_server = types.SimpleNamespace(ip=None, nodea_ip=None, nodeb_ip=None, server_type=None)
+class TrueNAS_Server:
+    __slots__ = (
+        '_ip',
+        '_nodea_ip',
+        '_nodeb_ip',
+        '_server_type',
+        '_client',
+    )
+
+    @property
+    def ip(self):
+        return self._ip
+
+    @ip.setter
+    def ip(self, new_ip: str):
+        """ set new IP and clear client connection """
+        self._ip = new_ip
+        if self._client:
+            self._client.close()
+            self._client = None
+
+    @property
+    def nodea_ip(self):
+        return self._nodea_ip
+
+    @nodea_ip.setter
+    def nodea_ip(self, ip: str):
+        self._nodea_ip = ip
+
+    @property
+    def nodeb_ip(self):
+        return self._nodeb_ip
+
+    @nodea_ip.setter
+    def nodeb_ip(self, ip: str):
+        self._nodeb_ip = ip
+
+    @property
+    def server_type(self):
+        return self._server_type
+
+    @server_type.setter
+    def server_type(self, server_type):
+        self._server_type = server_type
+
+    @property
+    def client(self):
+        if self._client is not None:
+            return self._client
+
+        if (addr := self.ip) is None:
+            raise RuntimeError('IP is not set')
+
+        uri = host_websocket_uri(addr)
+        cl = Client(uri, py_exceptions=True, lo_py_exceptions=True)
+        try:
+            cl.call('auth.login', 'root', password())
+        except Exception:
+            cl.close()
+            raise
+
+        self._client = cl
+        return self._client
+
+
+truenas_server = TrueNAS_Server()
 
 
 @contextlib.contextmanager
