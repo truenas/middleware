@@ -6,7 +6,7 @@ __all__ = ["call"]
 
 def call(*args, **kwargs):
     if not (client_kwargs := kwargs.pop("client_kwargs", {})) and truenas_server.ip:
-        return truenas_server.client.call(*args, **kwargs)
+        raise ValueError('went to optimized client') 
 
     with client(client_kwargs) as c:
         return c.call(*args, **kwargs)
