@@ -2,7 +2,6 @@
 import contextlib
 import os
 import socket
-import types
 
 import requests
 
@@ -17,7 +16,109 @@ truenas_server object is used by both websocket client and REST client for deter
 server to access for API calls. For HA, the `ip` attribute should be set to the virtual IP
 of the truenas server.
 """
-truenas_server = types.SimpleNamespace(ip=None, nodea_ip=None, nodeb_ip=None, server_type=None)
+
+
+class TrueNAS_Server:
+
+    __slots__ = (
+        '_ip',
+        '_nodea_ip',
+        '_nodeb_ip',
+        '_server_type',
+        '_client',
+    )
+
+    def __init__(self):
+        self._ip = None
+        self._nodea_ip = None
+        self._nodeb_ip = None
+        self._server_type = None
+        self._client = None
+
+    @property
+    def ip(self) -> str | None:
+        """
+        default target IP address for TrueNAS server
+
+        Will be virtual IP on TrueNAS HA but otherwise set through the
+        `MIDDLEWARE_TEST_IP` environmental variable in non-HA case.
+        """
+        return self._ip
+
+    @ip.setter
+    def ip(self, new_ip: str):
+        """ set new IP and clear client connection """
+        self._ip = new_ip
+        if self._client:
+            self._client.close()
+            self._client = None
+
+    @property
+    def nodea_ip(self) -> str | None:
+        """ IP address of first storage controller on HA. Will be `None` if not HA """
+        return self._nodea_ip
+
+    @nodea_ip.setter
+    def nodea_ip(self, ip: str):
+        self._nodea_ip = ip
+
+    @property
+    def nodeb_ip(self) -> str | None:
+        """ IP address of second storage controller on HA. Will be `None` if not HA """
+        return self._nodeb_ip
+
+    @nodeb_ip.setter
+    def nodeb_ip(self, ip: str):
+        self._nodeb_ip = ip
+
+    @property
+    def server_type(self) -> str | None:
+        """
+        Server type of target TrueNAS server
+
+        Returns
+            str - 'ENTERPRISE_HA' or 'STANDARD'
+            None - not configured
+        """
+        return self._server_type
+
+    @server_type.setter
+    def server_type(self, server_type: str):
+        if server_type not in ('ENTERPRISE_HA', 'STANDARD'):
+            raise ValueError(f'{server_type}: unknown server type')
+
+        self._server_type = server_type
+
+    @property
+    def client(self) -> Client:
+        """ websocket client connection to target TrueNAS server """
+        if self._client is not None:
+            try:
+                self._client.ping()
+                return self._client
+            except Exception:
+                # failed liveness check, perhaps server rebooted
+                # if target is truly broken we'll pick up error
+                # when trying to establish a new client connection
+                self._client.close()
+                self._client = None
+
+        if (addr := self.ip) is None:
+            raise RuntimeError('IP is not set')
+
+        uri = host_websocket_uri(addr)
+        cl = Client(uri, py_exceptions=True, log_py_exceptions=True)
+        try:
+            cl.call('auth.login', 'root', password())
+        except Exception:
+            cl.close()
+            raise
+
+        self._client = cl
+        return self._client
+
+
+truenas_server = TrueNAS_Server()
 
 
 @contextlib.contextmanager
@@ -33,7 +134,7 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
                 if auth_required:
                     assert logged_in
             yield c
-    except socket.timeout as e:
+    except socket.timeout:
         fail(f'socket timeout on URI: {uri!r} HOST_IP: {host_ip!r}')
 
 
