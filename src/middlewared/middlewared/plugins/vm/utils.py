@@ -33,3 +33,11 @@ def get_pci_device_class(pci_path: str) -> str:
             return r.read().strip()
 
     return ''
+
+
+def get_default_status() -> dict:
+    return {
+        'state': 'ERROR',
+        'pid': None,
+        'domain_state': 'ERROR',
+    }
