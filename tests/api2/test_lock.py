@@ -17,9 +17,9 @@ def test_no_lock():
         start = time.monotonic()
 
         with client() as c:
-            c1 = c.call("test.test1", background=True)
-            c2 = c.call("test.test1", background=True)
-            c.wait(c1)
+            c1 = c.call("test.test1", background=True, register_call=True)
+            c2 = c.call("test.test1", background=True, register_call=True)
+            c.wait(c1, timeout=10)
             c.wait(c2)
 
         assert time.monotonic() - start < 6
@@ -38,8 +38,8 @@ def test_async_lock():
         start = time.monotonic()
 
         with client() as c:
-            c1 = c.call("test.test1", background=True)
-            c2 = c.call("test.test1", background=True)
+            c1 = c.call("test.test1", background=True, register_call=True)
+            c2 = c.call("test.test1", background=True, register_call=True)
             c.wait(c1)
             c.wait(c2)
 
@@ -59,8 +59,8 @@ def test_threading_lock():
         start = time.monotonic()
 
         with client() as c:
-            c1 = c.call("test.test1", background=True)
-            c2 = c.call("test.test1", background=True)
+            c1 = c.call("test.test1", background=True, register_call=True)
+            c2 = c.call("test.test1", background=True, register_call=True)
             c.wait(c1)
             c.wait(c2)
 

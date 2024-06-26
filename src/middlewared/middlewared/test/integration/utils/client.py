@@ -1,25 +1,27 @@
 import contextlib
 import errno
 import os
+import logging
 import socket
 
 import requests
 
-from truenas_api_client import Client, ClientException
+from middlewared.service_exception import CallError
+from truenas_api_client import Client
 from truenas_api_client.utils import undefined
 
 from .pytest import fail
 
 __all__ = ["client", "host", "host_websocket_uri", "password", "session", "url", "websocket_url"]
+
+logger = logging.getLogger(__name__)
+
 """
 truenas_server object is used by both websocket client and REST client for determining which
 server to access for API calls. For HA, the `ip` attribute should be set to the virtual IP
 of the truenas server.
 """
-
-
 class TrueNAS_Server:
-
     __slots__ = (
         '_ip',
         '_nodea_ip',
@@ -96,7 +98,8 @@ class TrueNAS_Server:
             try:
                 self._client.ping()
                 return self._client
-            except Exception:
+            except Exception as e:
+                logger.warning('Re-connecting test client due to %r', e)
                 # failed liveness check, perhaps server rebooted
                 # if target is truly broken we'll pick up error
                 # when trying to establish a new client connection
@@ -160,8 +163,8 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
             if auth is not None:
                 try:
                     logged_in = c.call("auth.login", *auth)
-                except ClientException as e:
-                    if e.errno == errno.EBUSY and e.error == 'Rate Limit Exceeded':
+                except CallError as e:
+                    if e.errno == errno.EBUSY and e.errmsg == 'Rate Limit Exceeded':
                         # our "roles" tests (specifically common_checks() function)
                         # isn't designed very well since it's generating random users
                         # for every unique test_* function in every test file....
@@ -170,6 +173,8 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
                         # related tests to trip on our rate limiting functionality
                         truenas_server.client.call("rate.limit.cache_clear")
                         logged_in = c.call("auth.login", *auth)
+                    else:
+                        raise
                 if auth_required:
                     assert logged_in
             yield c
@@ -199,7 +204,7 @@ def host():
 
 
 def host_websocket_uri(host_ip=None):
-    return f"ws://{host_ip or host().ip}/websocket"
+    return f"ws://{host_ip or host().ip}/api/current"
 
 
 def password():

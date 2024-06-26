@@ -152,7 +152,7 @@ def test_25_verify_share_info_tdb_is_deleted(request):
 def test_27_restore_sharesec_with_flush_share_info(request, sharesec_user):
     depends(request, ["sharesec_acl_set"], scope="session")
     with client() as c:
-        c.call('smb.sharesec._flush_share_info')
+        c.call('smb.sharesec.flush_share_info')
 
     results = POST("/sharing/smb/getacl", {'share_name': share_info['name']})
     assert results.status_code == 200, results.text

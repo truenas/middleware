@@ -42,14 +42,14 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
             self.client = None
 
     def _run(self, name, args, job):
-        serviceobj, methodobj = self._method_lookup(name)
+        serviceobj, methodobj = self.get_method(name)
         return self._call(name, serviceobj, methodobj, args, job=job)
 
     def call_sync(self, method, *params, timeout=None, **kwargs):
         """
         Calls a method using middleware client
         """
-        serviceobj, methodobj = self._method_lookup(method)
+        serviceobj, methodobj = self.get_method(method)
 
         if serviceobj._config.process_pool and not hasattr(method, '_job'):
             if asyncio.iscoroutinefunction(methodobj):
@@ -61,7 +61,7 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
                     # process pool. If the process pool is already exhausted, it will lead to a deadlock.
                     # By executing a synchronous implementation of the same method in the same process pool we
                     # eliminate `Hold and wait` condition and prevent deadlock situation from arising.
-                    _, sync_methodobj = self._method_lookup(f'{method}__sync')
+                    _, sync_methodobj = self.get_method(f'{method}__sync')
                 except MethodNotFoundError:
                     # FIXME: Make this an exception in 22.MM
                     self.logger.warning('Service uses a process pool but has an asynchronous method: %r', method)

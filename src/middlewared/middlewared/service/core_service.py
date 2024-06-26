@@ -8,6 +8,7 @@ import socket
 import threading
 import time
 import traceback
+import uuid
 
 from collections import defaultdict
 from remote_pdb import RemotePdb
@@ -15,7 +16,12 @@ from subprocess import run
 
 import middlewared.main
 
+from middlewared.api import api_method
 from middlewared.api.base.jsonschema import get_json_schema
+from middlewared.api.current import (
+    CoreSetOptionsArgs, CoreSetOptionsResult, CoreSubscribeArgs, CoreSubscribeResult, CoreUnsubscribeArgs,
+    CoreUnsubscribeResult,
+)
 from middlewared.common.environ import environ_update
 from middlewared.job import Job
 from middlewared.pipe import Pipes
@@ -59,52 +65,6 @@ class CoreService(Service):
             raise CallError('Shell does not exist', errno.ENOENT)
 
         shell.resize(cols, rows)
-
-    @filterable
-    @filterable_returns(Dict(
-        'session',
-        Str('id'),
-        Str('socket_family'),
-        Str('address'),
-        Bool('authenticated'),
-        Int('call_count'),
-    ))
-    def sessions(self, filters, options):
-        """
-        Get currently open websocket sessions.
-        """
-        sessions = []
-        for i in self.middleware.get_wsclients().values():
-            try:
-                session_id = i.session_id
-                authenticated = i.authenticated
-                call_count = i._softhardsemaphore.counter
-                socket_family = socket.AddressFamily(i.request.transport.get_extra_info('socket').family).name
-                address = ''
-                if addr := i.request.headers.get('X-Real-Remote-Addr'):
-                    port = i.request.headers.get('X-Real-Remote-Port')
-                    address = f'{addr}:{port}' if all((addr, port)) else address
-                else:
-                    if (info := i.request.transport.get_extra_info('peername')):
-                        if isinstance(info, list) and len(info) == 2:
-                            address = f'{info[0]}:{info[1]}'
-            except AttributeError:
-                # underlying websocket connection can be ripped down in process
-                # of enumerating this information. This is non-fatal, so ignore it.
-                pass
-            except Exception:
-                self.logger.warning('Failed enumerating websocket session.', exc_info=True)
-                break
-            else:
-                sessions.append({
-                    'id': session_id,
-                    'socket_family': socket_family,
-                    'address': address,
-                    'authenticated': authenticated,
-                    'call_count': call_count,
-                })
-
-        return filter_list(sessions, filters, options)
 
     @accepts(Bool('debug_mode'))
     async def set_debug_mode(self, debug_mode):
@@ -720,7 +680,7 @@ class CoreService(Service):
         return await self._download(app, method, args, filename, buffered)
 
     async def _download(self, app, method, args, filename, buffered):
-        serviceobj, methodobj = self.middleware._method_lookup(method)
+        serviceobj, methodobj = self.middleware.get_method(method)
         job = await self.middleware.call_with_audit(
             method, serviceobj, methodobj, args, app=app,
             pipes=Pipes(output=self.middleware.pipe(buffered))
@@ -829,7 +789,7 @@ class CoreService(Service):
 
         `description` contains format string for job progress (e.g. "Deleting snapshot {0[dataset]}@{0[name]}")
         """
-        serviceobj, methodobj = self.middleware._method_lookup(method)
+        serviceobj, methodobj = self.middleware.get_method(method)
 
         if params:
             if mock := self.middleware._mock_method(method, params[0]):
@@ -926,3 +886,27 @@ class CoreService(Service):
             k: '\n'.join(v)
             for k, v in descriptions.items()
         }
+
+    @no_auth_required
+    @api_method(CoreSetOptionsArgs, CoreSetOptionsResult, rate_limit=False)
+    @pass_app()
+    async def set_options(self, app, options):
+        if "py_exceptions" in options:
+            app.py_exceptions = options["py_exceptions"]
+
+    @no_auth_required
+    @api_method(CoreSubscribeArgs, CoreSubscribeResult)
+    @pass_app()
+    async def subscribe(self, app, event):
+        if not self.middleware.can_subscribe(app, event):
+            raise CallError('Not authorized', errno.EACCES)
+
+        ident = str(uuid.uuid4())
+        await app.subscribe(ident, event)
+        return ident
+
+    @no_auth_required
+    @api_method(CoreUnsubscribeArgs, CoreUnsubscribeResult)
+    @pass_app()
+    async def unsubscribe(self, app, ident):
+        await app.unsubscribe(ident)

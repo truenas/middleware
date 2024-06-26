@@ -6,7 +6,6 @@ import itertools
 import logging
 import os
 import shutil
-import socket
 import stat
 import textwrap
 import time
@@ -21,13 +20,14 @@ from middlewared.service import (
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
-from middlewared.utils.contextlib import asyncnullcontext
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.update_.install import STARTING_INSTALLER
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE, can_update
 from middlewared.plugins.update_.utils_linux import mount_update
+from middlewared.utils.contextlib import asyncnullcontext
+from middlewared.utils.origin import TCPIPOrigin
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 
@@ -1122,18 +1122,9 @@ async def ha_permission(middleware, app):
         return
 
     # We only care for remote connections (IPv4), in the interlink
-    try:
-        sock = app.request.transport.get_extra_info('socket')
-    except AttributeError:
-        # app.request or app.request.transport can be None
-        return
-
-    if sock.family != socket.AF_INET:
-        return
-
-    remote_addr, remote_port = app.request.transport.get_extra_info('peername')
-    if is_ha_connection(remote_addr, remote_port):
-        await AuthService.session_manager.login(app, TrueNasNodeSessionManagerCredentials())
+    if isinstance(app.origin, TCPIPOrigin):
+        if is_ha_connection(app.origin.addr, app.origin.port):
+            await AuthService.session_manager.login(app, TrueNasNodeSessionManagerCredentials())
 
 
 async def interface_pre_sync_hook(middleware):

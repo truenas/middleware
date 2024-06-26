@@ -1,7 +1,7 @@
 import errno
 import pytest
 
-from truenas_api_client import ClientException
+from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.utils import call
 
@@ -17,11 +17,11 @@ def test_ui_crypto_profiles_readonly_role(role, endpoint, valid_role):
         if valid_role:
             c.call(endpoint)
         else:
-            with pytest.raises(ClientException) as ve:
+            with pytest.raises(CallError) as ve:
                 c.call(endpoint)
 
             assert ve.value.errno == errno.EACCES
-            assert ve.value.error == 'Not authorized'
+            assert ve.value.errmsg == 'Not authorized'
 
 
 @pytest.mark.parametrize('role,valid_role', (
@@ -39,8 +39,8 @@ def test_ui_crypto_domain_names_readonly_role(role, valid_role):
         if valid_role:
             c.call('webui.crypto.get_certificate_domain_names', default_certificate['id'])
         else:
-            with pytest.raises(ClientException) as ve:
+            with pytest.raises(CallError) as ve:
                 c.call('webui.crypto.get_certificate_domain_names', default_certificate['id'])
 
             assert ve.value.errno == errno.EACCES
-            assert ve.value.error == 'Not authorized'
+            assert ve.value.errmsg == 'Not authorized'

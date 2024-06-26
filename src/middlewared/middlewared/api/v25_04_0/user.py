@@ -101,4 +101,4 @@ class UserRenew2faSecretArgs(BaseModel):
     twofactor_options: TwofactorOptions
 
 
-UserRenew2faSecretResult = single_argument_result(UserEntry)
+UserRenew2faSecretResult = single_argument_result(UserEntry, "UserRenew2faSecretResult")

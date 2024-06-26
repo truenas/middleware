@@ -12,6 +12,7 @@ from aiohttp import web
 
 from truenas_api_client import json
 
+from .api.base.server.app import App
 from .auth import ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials
 from .job import Job
 from .pipe import Pipes
@@ -101,11 +102,12 @@ async def authenticate(middleware, request, credentials, method, resource):
 
 
 def create_application(request, credentials=None):
-    return Application(
-        request.headers.get('X-Real-Remote-Addr'),
-        request.headers.get('X-Real-Remote-Port'),
-        credentials,
-    )
+    try:
+        origin = TCPIPOrigin(request.headers['X-Real-Remote-Addr'], int(request.headers['X-Real-Remote-Port']))
+    except (KeyError, ValueError):
+        origin = TCPIPOrigin(*request.transport.get_extra_info('peername'))
+
+    return Application(origin, credentials)
 
 
 def normalize_query_parameter(value):
@@ -115,16 +117,13 @@ def normalize_query_parameter(value):
         return value
 
 
-class Application:
-    def __init__(self, host, remote_port, authenticated_credentials):
-        self.host = host
-        self.remote_port = remote_port
-        self.origin = TCPIPOrigin(self.host, self.remote_port)
-        self.websocket = False
-        self.rest = True
+class Application(App):
+    def __init__(self, origin, authenticated_credentials):
+        super().__init__(origin)
+        self.session_id = None
         self.authenticated = authenticated_credentials is not None
         self.authenticated_credentials = authenticated_credentials
-        self.session_id = None
+        self.rest = True
 
 
 class RESTfulAPI(object):
@@ -850,7 +849,7 @@ class Resource(object):
             method_args.insert(0, id_)
 
         try:
-            serviceobj, methodobj = self.middleware._method_lookup(methodname)
+            serviceobj, methodobj = self.middleware.get_method(methodname)
             if authorized:
                 result = await self.middleware.call_with_audit(methodname, serviceobj, methodobj, method_args,
                                                                **method_kwargs)

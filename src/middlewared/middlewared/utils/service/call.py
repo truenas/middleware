@@ -15,7 +15,7 @@ class MethodNotFoundError(CallError):
 
 
 class ServiceCallMixin:
-    def _method_lookup(self, name):
+    def get_method(self, name):
         if '.' not in name:
             raise CallError('Invalid method name', errno.EBADMSG)
 
