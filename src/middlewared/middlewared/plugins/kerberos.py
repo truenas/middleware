@@ -532,10 +532,18 @@ class KerberosService(ConfigService):
             if (cred := gss_get_current_cred(krb5ccache.SYSTEM.value, raise_error=False)) is None:
                 # We don't have kerberos ticket or it has already expired
                 # We can redo our kinit
+                ds = self.middleware.call_sync('directoryservices.status')
+                if ds['type'] is None:
+                    self.logger.debug(
+                        'Directory services are disabled. Exiting job to wait '
+                        'for renewal of kerberos ticket.'
+                    )
+                    break
+
                 self.logger.debug('Kerberos ticket check failed, getting new ticket')
                 self.middleware.call_sync('kerberos.start')
 
-            if cred.lifetime <= KRB_TKT_CHECK_INTERVAL:
+            elif cred.lifetime <= KRB_TKT_CHECK_INTERVAL:
                 self.middleware.call_sync('kerberos.start')
 
             time.sleep(KRB_TKT_CHECK_INTERVAL)
