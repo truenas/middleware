@@ -2,7 +2,6 @@
 import contextlib
 import os
 import socket
-import types
 
 import requests
 
@@ -18,6 +17,8 @@ server to access for API calls. For HA, the `ip` attribute should be set to the 
 of the truenas server.
 """
 class TrueNAS_Server:
+
+
     __slots__ = (
         '_ip',
         '_nodea_ip',
@@ -50,7 +51,7 @@ class TrueNAS_Server:
     def nodeb_ip(self):
         return self._nodeb_ip
 
-    @nodea_ip.setter
+    @nodeb_ip.setter
     def nodeb_ip(self, ip: str):
         self._nodeb_ip = ip
 
