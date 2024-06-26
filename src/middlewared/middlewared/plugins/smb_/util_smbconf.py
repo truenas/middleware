@@ -3,7 +3,7 @@ import os
 from logging import getLogger
 from middlewared.utils import filter_list
 from middlewared.plugins.account import DEFAULT_HOME_PATH
-from middlewared.plugins.smb_.constants import LOGLEVEL_MAP, SMBPath
+from middlewared.plugins.smb_.constants import LOGLEVEL_MAP, SMBEncryption, SMBPath
 
 LOGGER = getLogger(__name__)
 
@@ -114,6 +114,7 @@ def generate_smb_conf_dict(
         'server string': smb_service_config['description'],
         'log level': loglevelint,
         'logging': 'file',
+        'server smb encrypt': SMBEncryption[smb_service_config['encryption']].value,
     }
 
     """

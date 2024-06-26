@@ -70,6 +70,7 @@ class SMBModel(sa.Model):
     cifs_srv_next_rid = sa.Column(sa.Integer(), nullable=False)
     cifs_srv_secrets = sa.Column(sa.EncryptedText(), nullable=True)
     cifs_srv_multichannel = sa.Column(sa.Boolean, default=False)
+    cifs_srv_encryption = sa.Column(sa.String(120), nullable=True)
 
 
 class SMBService(ConfigService):
@@ -98,6 +99,7 @@ class SMBService(ConfigService):
         smb['netbiosname_local'] = smb['netbiosname']
         smb['netbiosalias'] = (smb['netbiosalias'] or '').split()
         smb['loglevel'] = LOGLEVEL_MAP.get(smb['loglevel'])
+        smb['encryption'] = smb['encryption'] or 'DEFAULT'
         smb.pop('secrets', None)
         return smb
 
@@ -499,6 +501,12 @@ class SMBService(ConfigService):
                 'Please provide a valid value for unixcharset'
             )
 
+        if new['enable_smb1'] and new['encryption'] == 'REQUIRED':
+            verrors.add(
+                'smb_update.encryption',
+                'Encryption may not be set to REQUIRED while SMB1 support is enabled.'
+            )
+
         for i in ('workgroup', 'netbiosname', 'netbiosalias'):
             """
             There are two cases where NetBIOS names must be rejected:
@@ -598,6 +606,7 @@ class SMBService(ConfigService):
         Str('dirmask'),
         Bool('ntlmv1_auth'),
         Bool('multichannel', default=False),
+        Str('encryption', enum=['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']),
         List('bindip', items=[IPAddr('ip')]),
         Str('smb_options', max_length=None),
         update=True,
@@ -631,6 +640,12 @@ class SMBService(ConfigService):
 
         `ntlmv1_auth` enables a legacy and insecure authentication method, which may be required for legacy or
         poorly-implemented SMB clients.
+
+        `encryption` set global server behavior with regard to SMB encrpytion. Options are DEFAULT (which
+        follows the upstream defaults -- currently identical to NEGOTIATE), NEGOTIATE encrypts SMB transport
+        only if requested by the SMB client, DESIRED encrypts SMB transport if supported by the SMB client,
+        REQUIRED only allows encrypted transport to the SMB server. Mandatory SMB encryption is not
+        compatible with SMB1 server support in TrueNAS.
 
         `smb_options` smb.conf parameters that are not covered by the above supported configuration options may be
         added as an smb_option. Not all options are tested or supported, and behavior of smb_options may change
@@ -698,6 +713,9 @@ class SMBService(ConfigService):
 
     @private
     async def compress(self, data):
+        if data['encryption'] == 'DEFAULT':
+            data['encryption'] = None
+
         data.pop('netbiosname_local', None)
         data.pop('netbiosname_b', None)
         data.pop('next_rid')
