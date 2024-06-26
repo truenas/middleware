@@ -357,7 +357,7 @@ class iSCSITargetService(CRUDService):
 
         # Attempt to cleanup initiators as the wizard may have created a single-use one
         try:
-            target_initiators = {group['initiator'] for group in target['groups']}
+            target_initiators = {group['initiator'] for group in target['groups'] if group['initiator'] is not None}
             # Ensure not used elsewhere
             all_initiators = set()
             for t in await self.middleware.call('iscsi.target.query', [], {'select': ['groups']}):
