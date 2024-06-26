@@ -58,7 +58,7 @@ def initialize_readonly_state(root: str):
     for mountpoint, key in mountpoints.items():
         try:
             st_mnt_id = stat_x.statx(mountpoint).stx_mnt_id
-            readonly_val = 'RO' in getmntinfo(st_mnt_id)[st_mnt_id]['super_opts']
+            readonly_val = 'RO' in getmntinfo(mnt_id=st_mnt_id)[st_mnt_id]['super_opts']
             for prefix in ("original_", "current_"):
                 setattr(readonly_state, f"{prefix}{key}", readonly_val)
         except (FileNotFoundError, KeyError) as e:
@@ -99,7 +99,8 @@ def set_readonly(root, readonly_desired_value=None, restore_state=None):
             # In the event this is called first with readonly set
             os.rename(os.path.join(root, "usr/local/bin/dpkg.bak"), os.path.join(root, "usr/local/bin/dpkg"))
 
-    for device_key, ds_name in filter(lambda i: i[0] in mountpoints_mapping, get_ds_conf().items()):
+    for device_key, ds_name in filter(lambda i: i[0] in mountpoints_mapping, get_ds_conf(root).items()):
+        # Do not change `readonly` property when we're running in the installer, and it was not set yet
         if (
             subprocess.run(
                 ["zfs", "get", "-H", "-o", "source", "readonly", ds_name],
@@ -114,6 +115,9 @@ def set_readonly(root, readonly_desired_value=None, restore_state=None):
         os.chmod(os.path.join(root, "usr/bin/dpkg"), 0o755)
         with contextlib.suppress(FileNotFoundError):
             # In the event this is called twice with readonly unset
+            # Basically `/usr/local/bin/dpkg` is a script we have written which explains that
+            # package management is disabled on TrueNAS but when dev tools are installed,
+            # we would like package management for the developer to work obviously
             os.rename(os.path.join(root, "usr/local/bin/dpkg"), os.path.join(root, "usr/local/bin/dpkg.bak"))
 
 
