@@ -152,9 +152,9 @@ def test_audit_export(request):
         st = call('filesystem.stat', report_path)
         assert st['size'] != 0, str(st)
 
-        job_id, path = call("core.download", "audit.download_report", [{
+        job_id, path = call("core.download", "audit.download_report", [[{
             "report_name": os.path.basename(report_path)
-        }], f"report.{backend.lower()}")
+        }]], f"report.{backend.lower()}")
         r = requests.get(f"{url()}{path}")
         r.raise_for_status()
         assert len(r.content) == st['size']
@@ -173,9 +173,9 @@ def test_audit_export_nonroot(request):
             st = c.call('filesystem.stat', report_path)
             assert st['size'] != 0, str(st)
 
-            job_id, path = c.call("core.download", "audit.download_report", [{
+            job_id, path = c.call("core.download", "audit.download_report", [[{
                 "report_name": os.path.basename(report_path)
-            }], f"report.{backend.lower()}")
+            }]], f"report.{backend.lower()}")
             r = requests.get(f"{url()}{path}")
             r.raise_for_status()
             assert len(r.content) == st['size']
