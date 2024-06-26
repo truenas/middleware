@@ -175,3 +175,7 @@ def test_009_check_listening_ports():
         listen[int(port)].add(process.strip())
 
     assert not listen, f"Invalid ports listening on 0.0.0.0: {dict(listen)}"
+
+
+def test_010_exit_early():
+    fail('exit early')
