@@ -708,7 +708,7 @@ class CoreService(Service):
     async def _download(self, app, method, args, filename, buffered):
         serviceobj, methodobj = self.middleware._method_lookup(method)
         job = await self.middleware.call_with_audit(
-            method, serviceobj, methodobj, *args, app=app,
+            method, serviceobj, methodobj, args, app=app,
             pipes=Pipes(output=self.middleware.pipe(buffered))
         )
         token = await self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id}, app=app)
