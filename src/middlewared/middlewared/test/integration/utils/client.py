@@ -16,8 +16,9 @@ truenas_server object is used by both websocket client and REST client for deter
 server to access for API calls. For HA, the `ip` attribute should be set to the virtual IP
 of the truenas server.
 """
-class TrueNAS_Server:
 
+
+class TrueNAS_Server:
 
     __slots__ = (
         '_ip',
@@ -99,7 +100,7 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
                 if auth_required:
                     assert logged_in
             yield c
-    except socket.timeout as e:
+    except socket.timeout:
         fail(f'socket timeout on URI: {uri!r} HOST_IP: {host_ip!r}')
 
 
