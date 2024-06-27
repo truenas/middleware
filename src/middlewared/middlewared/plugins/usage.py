@@ -266,7 +266,7 @@ class UsageService(Service):
             'system_hash': await self.middleware.call('system.host_id'),
             'usage_version': 1,
             'system': [{
-                'users': await self.middleware.call('user.query', [], {'count': True}),
+                'users': await self.middleware.call('user.query', [['local', '=', True]], {'count': True}),
                 'snapshots': context['total_snapshots'],
                 'zvols': context['total_zvols'],
                 'datasets': context['total_datasets'],

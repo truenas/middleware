@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import errno
 import pytest
 import sys
 import os
@@ -7,6 +8,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import SSH_TEST
 from auto_config import password, user
+from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import call
 
@@ -27,15 +29,11 @@ def do_ad_connection(request):
             call('core.job_wait', cache_fill_job['id'], job=True)
 
         users = set([x['username'] for x in call(
-            'user.query',
-            [['local', '=', False]],
-            {'extra': {'search_dscache': True}}
+            'user.query', [['local', '=', False]],
         )])
 
         groups = set([x['name'] for x in call(
-            'group.query',
-            [['local', '=', False]],
-            {'extra': {'search_dscache': True}}
+            'group.query', [['local', '=', False]],
         )])
 
         yield ad | {'users': users, 'groups': groups}
@@ -50,12 +48,12 @@ def get_ad_user_and_group(ad_connection):
 
     user = call(
         'user.query', [['username', '=', ad_user]],
-        {'extra': {'search_dscache': True}, 'get': True}
+        {'get': True}
     )
 
     group = call(
         'group.query', [['name', '=', ad_group]],
-        {'extra': {'search_dscache': True}, 'get': True}
+        {'get': True}
     )
 
     return (user, group)
@@ -63,8 +61,8 @@ def get_ad_user_and_group(ad_connection):
 
 def test_check_for_ad_users(do_ad_connection):
     """
-    This test validates that we can query AD users using
-    filter-option {"extra": {"search_dscache": True}}
+    This test validates that wbinfo -u output matches entries
+    we get through user.query
     """
     cmd = "wbinfo -u"
     results = SSH_TEST(cmd, user, password)
@@ -76,8 +74,8 @@ def test_check_for_ad_users(do_ad_connection):
 
 def test_check_for_ad_groups(do_ad_connection):
     """
-    This test validates that we can query AD groups using
-    filter-option {"extra": {"search_dscache": True}}
+    This test validates that wbinfo -g output matches entries
+    we get through group.query
     """
     cmd = "wbinfo -g"
     results = SSH_TEST(cmd, user, password)
@@ -105,17 +103,13 @@ def test_check_directoryservices_cache_refresh(do_ad_connection):
     call('directoryservices.cache.refresh_impl', job=True)
 
     users = set([x['username'] for x in call(
-        'user.query',
-        [['local', '=', False]],
-        {'extra': {'search_dscache': True}}
+        'user.query', [['local', '=', False]]
     )])
 
     assert users == do_ad_connection['users']
 
     groups = set([x['name'] for x in call(
-        'group.query',
-        [['local', '=', False]],
-        {'extra': {'search_dscache': True}}
+        'group.query', [['local', '=', False]],
     )])
 
     assert groups == do_ad_connection['groups']
@@ -139,17 +133,13 @@ def test_check_lazy_initialization_of_users_and_groups_by_name(do_ad_connection)
     ad_user, ad_group = get_ad_user_and_group(do_ad_connection)
 
     cache_names = set([x['username'] for x in call(
-        'user.query',
-        [['local', '=', False]],
-        {'extra': {'search_dscache': True}}
+        'user.query', [['local', '=', False]],
     )])
 
     assert cache_names == {ad_user['username']}
 
     cache_names = set([x['name'] for x in call(
-        'group.query',
-        [['local', '=', False]],
-        {'extra': {'search_dscache': True}}
+        'group.query', [['local', '=', False]],
     )])
 
     assert cache_names == {ad_group['name']}
@@ -172,28 +162,31 @@ def test_check_lazy_initialization_of_users_and_groups_by_id(do_ad_connection):
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
-    call(
-        'user.query', [['uid', '=', ad_user['uid']]],
-        {'extra': {'search_dscache': True, 'get': True}}
-    )
+    call('user.query', [['uid', '=', ad_user['uid']]], {'get': True})
 
-    call(
-        'group.query', [['gid', '=', ad_group['gid']]],
-        {'extra': {'search_dscache': True, 'get': True}}
-    )
+    call('group.query', [['gid', '=', ad_group['gid']]], {'get': True})
 
     cache_names = set([x['username'] for x in call(
-        'user.query',
-        [['local', '=', False]],
-        {'extra': {'search_dscache': True}}
+        'user.query', [['local', '=', False]],
     )])
 
     assert cache_names == {ad_user['username']}
 
     cache_names = set([x['name'] for x in call(
-        'group.query',
-        [['local', '=', False]],
-        {'extra': {'search_dscache': True}}
+        'group.query', [['local', '=', False]],
     )])
 
     assert cache_names == {ad_group['name']}
+
+@pytest.mark.parametrize('op_type', ('UPDATE', 'DELETE'))
+def test_update_delete_failures(do_ad_connection, op_type):
+    ad_user, ad_group = get_ad_user_and_group(do_ad_connection)
+
+    for acct, prefix in ((ad_user, 'user'), (ad_group, 'group')):
+        with pytest.raises(CallError) as ce:
+            if op_type == 'UPDATE':
+                call(f'{prefix}.update', acct['id'], {'smb': False})
+            else:
+                call(f'{prefix}.delete', acct['id'])
+
+        assert ce.value.errno == errno.EPERM

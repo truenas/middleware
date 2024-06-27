@@ -150,7 +150,7 @@ class SMBService(Service):
             admin_sid = None
             grp_obj = await self.middleware.call(
                 'group.query',
-                [('group', '=', admin_group)],
+                [('group', '=', admin_group), ('local', '=', True)],
                 {'extra': {'additional_information': ['SMB', 'DS']}}
             )
             if grp_obj:
@@ -431,9 +431,9 @@ class SMBService(Service):
         groupmap = await self.groupmap_list()
         must_remove_cache = False
 
-        groups = await self.middleware.call('group.query', [('builtin', '=', False), ('smb', '=', True)])
+        groups = await self.middleware.call('group.query', [('builtin', '=', False), ('local', '=', True), ('smb', '=', True)])
         g_dict = {x["gid"]: x for x in groups}
-        g_dict[545] = await self.middleware.call('group.query', [('gid', '=', 545)], {'get': True})
+        g_dict[545] = await self.middleware.call('group.query', [('gid', '=', 545), ('local', '=', True)], {'get': True})
 
         intersect = set(g_dict.keys()).intersection(set(groupmap["local"].keys()))
 

@@ -24,6 +24,7 @@ from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.utils.crypto import sha512_crypt
+from middlewared.utils.directoryservices.constants import DSType, DSStatus
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
@@ -34,6 +35,7 @@ from middlewared.plugins.account_.constants import (
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
+    BASE_SYNTHETIC_DATASTORE_ID,
     TRUENAS_IDMAP_DEFAULT_LOW,
     SID_LOCAL_USER_PREFIX,
     SID_LOCAL_GROUP_PREFIX
@@ -123,6 +125,30 @@ def validate_sudo_commands(commands):
     return verrors
 
 
+def filters_include_ds_accounts(filters):
+    """ Check for filters limiting to local accounts """
+    for f in filters:
+        if len(f) < 3:
+            # OR -- assume evaluation for this will result in including DS
+            continue
+
+        # Directory services do not provide builtin accounts
+        # local explicitly denotes not directory service
+        if f[0] in ('local', 'builtin'):
+            match f[1]:
+                case '=':
+                    if f[2] is True:
+                        return False
+                case '!=':
+                    if f[2] is False:
+                        return False
+
+                case _:
+                    pass
+
+    return True
+
+
 class UserModel(sa.Model):
     __tablename__ = 'account_bsdusers'
 
@@ -167,7 +193,7 @@ class UserService(CRUDService):
             [], {'prefix': 'bsdgrpmember_'}
         )
 
-        group_roles = await self.middleware.call('group.query', [], {'select': ['id', 'roles']})
+        group_roles = await self.middleware.call('group.query', [['local', '=', True]], {'select': ['id', 'roles']})
 
         for i in res:
             uid = i['user']['id']
@@ -251,9 +277,6 @@ class UserService(CRUDService):
         The following `additional_information` options are supported:
         `SMB` - include Windows SID and NT Name for user. If this option is not specified, then these
             keys will have `null` value.
-        `DS` - include users from Directory Service (LDAP or Active Directory) in results
-
-        `"extra": {"search_dscache": true}` is a legacy method of querying for directory services users.
         """
         ds_users = []
         options = options or {}
@@ -269,12 +292,7 @@ class UserService(CRUDService):
         datastore_options.pop('select', None)
 
         extra = options.get('extra', {})
-        dssearch = extra.pop('search_dscache', False)
         additional_information = extra.get('additional_information', [])
-
-        if 'DS' in additional_information:
-            dssearch = True
-            additional_information.remove('DS')
 
         username_sid = {}
         if 'SMB' in additional_information:
@@ -289,16 +307,24 @@ class UserService(CRUDService):
                 # broken
                 self.logger.error('Failed to retrieve passdb information', exc_info=True)
 
-        if dssearch:
-            ds_state = await self.middleware.call('directoryservices.get_state')
-            if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
-                ds_users = await self.middleware.call('directoryservices.cache.query', 'USER', filters, options.copy())
-                # For AD users, we will not have 2FA attribute normalized so let's do that
-                ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
-                for index, user in enumerate(filter(
-                    lambda u: not u['local'] and 'twofactor_auth_configured' not in u, ds_users)
-                ):
-                    ds_users[index]['twofactor_auth_configured'] = bool(ad_users_2fa_mapping.get(user['sid']))
+        if filters_include_ds_accounts(filters):
+            ds = await self.middleware.call('directoryservices.status')
+            if ds['type'] is not None and ds['status'] == DSStatus.HEALTHY.name:
+                ds_users = await self.middleware.call(
+                   'directoryservices.cache.query', 'USER', filters, options.copy()
+                )
+
+                match DSType(ds['type']):
+                    case DSType.AD:
+                        # For AD users, we will not have 2FA attribute normalized so let's do that
+                        ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
+                        for index, user in enumerate(filter(
+                            lambda u: not u['local'] and 'twofactor_auth_configured' not in u, ds_users)
+                        ):
+                            ds_users[index]['twofactor_auth_configured'] = bool(ad_users_2fa_mapping.get(user['sid']))
+                    case _:
+                        # FIXME - map twofactor_auth_configured hint for LDAP users
+                        pass
 
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
@@ -521,7 +547,10 @@ class UserService(CRUDService):
         group_created = False
 
         if create:
-            group = self.middleware.call_sync('group.query', [('group', '=', data['username'])])
+            group = self.middleware.call_sync('group.query', [
+                ('group', '=', data['username']),
+                ('local', '=', True)
+            ])
             if group:
                 group = group[0]
             else:
@@ -532,7 +561,9 @@ class UserService(CRUDService):
                     'sudo_commands_nopasswd': [],
                     'allow_duplicate_gid': False
                 }, False)
-                group = self.middleware.call_sync('group.query', [('id', '=', group)])[0]
+                group = self.middleware.call_sync('group.query', [
+                    ('id', '=', group), ('local', '=', True)
+                ])[0]
                 group_created = True
 
             data['group'] = group['id']
@@ -544,7 +575,7 @@ class UserService(CRUDService):
 
         if data['smb']:
             groups.append((self.middleware.call_sync(
-                'group.query', [('group', '=', 'builtin_users')], {'get': True},
+                'group.query', [('group', '=', 'builtin_users'), ('local', '=', True)], {'get': True},
             ))['id'])
 
         if data.get('uid') is None:
@@ -631,6 +662,23 @@ class UserService(CRUDService):
         """
         Update attributes of an existing user.
         """
+
+        if pk > BASE_SYNTHETIC_DATASTORE_ID:
+            # datastore ids for directory services are created by adding the
+            # posix ID to a base value so that we can use getpwuid / getgrgid to
+            # convert back to a username / group name
+            try:
+                username = self.middleware.call_sync(
+                    'user.get_user_obj', {'uid': pk - BASE_SYNTHETIC_DATASTORE_ID}
+                )['pw_name']
+            except KeyError:
+                username = 'UNKNOWN'
+
+            audit_callback(username)
+            raise CallError(
+                'Users provided by a directory service must be modified through the identity provider '
+                '(LDAP server or domain controller).', errno.EPERM
+            )
 
         user = self.middleware.call_sync('user.get_instance', pk)
         audit_callback(user['username'])
@@ -860,6 +908,23 @@ class UserService(CRUDService):
         The `delete_group` option deletes the user primary group if it is not being used by
         any other user.
         """
+        if pk > BASE_SYNTHETIC_DATASTORE_ID:
+            # datastore ids for directory services are created by adding the
+            # posix ID to a base value so that we can use getpwuid / getgrgid to
+            # convert back to a username / group name
+            try:
+                username = self.middleware.call_sync(
+                    'user.get_user_obj', {'uid': pk - BASE_SYNTHETIC_DATASTORE_ID}
+                )['pw_name']
+            except KeyError:
+                username = 'UNKNOWN'
+
+            audit_callback(username)
+            raise CallError(
+                'Users provided by a directory service must be deleted from the identity provider '
+                '(LDAP server or domain controller).', errno.EPERM
+            )
+
 
         user = self.middleware.call_sync('user.get_instance', pk)
         audit_callback(user['username'])
@@ -1196,21 +1261,64 @@ class UserService(CRUDService):
             raise CallError('Local administrator is already set up', errno.EEXIST)
 
         if username == 'admin':
-            if await self.middleware.call('user.query', [['uid', '=', ADMIN_UID]]):
+            # first check based on NSS to catch collisions with AD / LDAP users
+            try:
+                pwd_obj = await self.middleware.call('user.get_user_obj', {'uid': ADMIN_UID})
+                raise CallError(
+                    f'A {pwd_obj["source"].lower()} user with uid={ADMIN_UID} already exists, '
+                    'setting up local administrator is not possible',
+                    errno.EEXIST,
+                )
+            except KeyError:
+                pass
+
+            try:
+                pwd_obj = await self.middleware.call('user.get_user_obj', {'username': 'admin'})
+                raise CallError(f'"admin" {pwd_obj["source"].lower()} user already exists, '
+                                'setting up local administrator is not possible',
+                                errno.EEXIST)
+            except KeyError:
+                pass
+
+            try:
+                grp_obj = await self.middleware.call('group.get_group_obj', {'gid': ADMIN_GID})
+                raise CallError(
+                    f'A {grp_obj["source"].lower()} group with gid={ADMIN_GID} already exists, '
+                    'setting up local administrator is not possible',
+                    errno.EEXIST,
+                )
+            except KeyError:
+                pass
+
+            try:
+                grp_obj = await self.middleware.call('get.get_group_obj', {'groupname': 'admin'})
+                raise CallError(f'"admin" {grp_obj["source"].lower()} group already exists, '
+                                'setting up local administrator is not possible',
+                                errno.EEXIST)
+            except KeyError:
+                pass
+
+            # double-check our database in case we have for some reason failed to write to passwd
+            local_users = await self.middleware.call('user.query', [['local', '=', True]])
+            local_groups = await self.middleware.call('group.query', [['local', '=', True]])
+
+            if filter_list(local_users, [['uid', '=', ADMIN_UID]]):
                 raise CallError(
                     f'A user with uid={ADMIN_UID} already exists, setting up local administrator is not possible',
                     errno.EEXIST,
                 )
-            if await self.middleware.call('user.query', [['username', '=', 'admin']]):
+
+            if filter_list(local_users, [['username', '=', 'admin']]):
                 raise CallError('"admin" user already exists, setting up local administrator is not possible',
                                 errno.EEXIST)
 
-            if await self.middleware.call('group.query', [['gid', '=', ADMIN_GID]]):
+            if filter_list(local_groups, [['gid', '=', ADMIN_GID]]):
                 raise CallError(
                     f'A group with gid={ADMIN_GID} already exists, setting up local administrator is not possible',
                     errno.EEXIST,
                 )
-            if await self.middleware.call('group.query', [['group', '=', 'admin']]):
+
+            if filter_list(local_groups, [['group', '=', 'admin']]):
                 raise CallError('"admin" group already exists, setting up local administrator is not possible',
                                 errno.EEXIST)
 
@@ -1713,9 +1821,6 @@ class GroupService(CRUDService):
         The following `additional_information` options are supported:
         `SMB` - include Windows SID and NT Name for group. If this option is not specified, then these
             keys will have `null` value.
-        `DS` - include groups from Directory Service (LDAP or Active Directory) in results
-
-        `"extra": {"search_dscache": true}` is a legacy method of querying for directory services groups.
         """
         ds_groups = []
         options = options or {}
@@ -1731,16 +1836,11 @@ class GroupService(CRUDService):
         datastore_options.pop('select', None)
 
         extra = options.get('extra', {})
-        dssearch = extra.pop('search_dscache', False)
         additional_information = extra.get('additional_information', [])
 
-        if 'DS' in additional_information:
-            dssearch = True
-            additional_information.remove('DS')
-
-        if dssearch:
-            ds_state = await self.middleware.call('directoryservices.get_state')
-            if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
+        if filters_include_ds_accounts(filters):
+            ds = await self.middleware.call('directoryservices.status')
+            if ds['type'] is not None and ds['status'] == DSStatus.HEALTHY.name:
                 ds_groups = await self.middleware.call('directoryservices.cache.query', 'GROUP', filters, options)
 
         if 'SMB' in additional_information:
@@ -1848,6 +1948,24 @@ class GroupService(CRUDService):
         Update attributes of an existing group.
         """
 
+        if pk > BASE_SYNTHETIC_DATASTORE_ID:
+            # datastore ids for directory services are created by adding the
+            # posix ID to a base value so that we can use getpwuid / getgrgid to
+            # convert back to a username / group name
+            try:
+                groupname = self.middleware.call_sync(
+                    'group.get_group_obj', {'gid': pk - BASE_SYNTHETIC_DATASTORE_ID}
+                )['gr_name']
+            except KeyError:
+                groupname = 'UNKNOWN'
+
+
+            audit_callback(groupname)
+            raise CallError(
+                'Groups provided by a directory service must be modified through the identity provider '
+                '(LDAP server or domain controller).', errno.EPERM
+            )
+
         group = await self.get_instance(pk)
         audit_callback(group['name'])
 
@@ -1924,6 +2042,23 @@ class GroupService(CRUDService):
 
         The `delete_users` option deletes all users that have this group as their primary group.
         """
+
+        if pk > BASE_SYNTHETIC_DATASTORE_ID:
+            # datastore ids for directory services are created by adding the
+            # posix ID to a base value so that we can use getpwuid / getgrgid to
+            # convert back to a username / group name
+            try:
+                groupname = self.middleware.call_sync(
+                    'group.get_group_obj', {'gid': pk - BASE_SYNTHETIC_DATASTORE_ID}
+                )['gr_name']
+            except KeyError:
+                groupname = 'UNKNOWN'
+
+            audit_callback(groupname)
+            raise CallError(
+                'Groups provided by a directory service must be deleted from the identity provider '
+                '(LDAP server or domain controller).', errno.EPERM
+            )
 
         group = await self.get_instance(pk)
         audit_callback(group['name'] + (' and all its users' if options['delete_users'] else ''))
