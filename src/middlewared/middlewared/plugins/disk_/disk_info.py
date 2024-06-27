@@ -25,21 +25,15 @@ class DiskService(Service):
     def list_partitions(self, disk):
         parts = []
         try:
-            block_device = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
+            bd = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
         except pyudev.DeviceNotFoundByNameError:
             return parts
 
-        if not block_device.children:
+        if not bd.children:
             return parts
 
-        for p in filter(
-            lambda p: all(
-                p.get(k) for k in (
-                    'ID_PART_ENTRY_TYPE', 'ID_PART_ENTRY_UUID', 'ID_PART_ENTRY_NUMBER', 'ID_PART_ENTRY_SIZE'
-                )
-            ),
-            block_device.children
-        ):
+        req_keys = ('ID_PART_' + i for i in ('TYPE', 'UUID', 'NUMBER', 'SIZE'))
+        for p in filter(lambda p: all(p.get(k) for k in req_keys), bd.children):
             part_name = self.get_partition_for_disk(disk, p['ID_PART_ENTRY_NUMBER'])
             start_sector = int(p['ID_PART_ENTRY_OFFSET'])
             end_sector = int(p['ID_PART_ENTRY_OFFSET']) + int(p['ID_PART_ENTRY_SIZE']) - 1
