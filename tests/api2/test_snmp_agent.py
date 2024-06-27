@@ -1,16 +1,17 @@
 import re
 import subprocess
 import tempfile
+import time
 
 import pytest
 
-from middlewared.test.integration.utils import call, ssh, host
-
+from middlewared.test.integration.utils import call, host, ssh
 
 
 @pytest.fixture()
 def snmpd_running():
     call("service.start", "snmp")
+    time.sleep(2)
     yield
 
 
