@@ -118,5 +118,8 @@ class AppService(CRUDService):
         compose_action(app_name, version, 'down', remove_orphans=True)
         shutil.rmtree(get_installed_app_path(app_name))
 
+    @accepts(Str('app_name'))
     def do_delete(self, app_name):
-        pass
+        self.get_instance__sync(app_name)
+        self.delete_internal(app_name, get_version_in_use_of_app(app_name))
+        return True
