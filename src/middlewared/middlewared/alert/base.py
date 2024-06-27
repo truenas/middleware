@@ -272,15 +272,6 @@ class Alert:
         try:
             return self.klass.format(self.args)
         except Exception:
-            logger.debug("Alert class %r was unable to format args %r, falling back to default formatter",
-                         self.klass, self.args, exc_info=True)
-
-            if self.args:
-                try:
-                    return self.text % (tuple(self.args) if isinstance(self.args, list) else self.args)
-                except Exception:
-                    logger.error("Error formatting alert: %r, %r", self.text, self.args, exc_info=True)
-
             return self.text
 
 
