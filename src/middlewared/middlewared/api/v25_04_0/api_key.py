@@ -28,7 +28,9 @@ class ApiKeyCreateArgs(BaseModel):
 
 
 class ApiKeyCreateResult(ApiKeyCreate):
-    id: str
+    """Represents a record in the account.api_key table."""
+
+    id: int
     key: str
     created_at: datetime
 

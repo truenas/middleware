@@ -10,7 +10,6 @@ from middlewared.api.current import (
     ApiKeyCreateArgs, ApiKeyCreateResult, ApiKeyUpdateArgs,
     ApiKeyUpdateResult, ApiKeyDeleteArgs, ApiKeyDeleteResult
 )
-from middlewared.schema import accepts, Bool, Int, Patch
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.allowlist import Allowlist
@@ -29,17 +28,17 @@ class APIKeyModel(sa.Model):
 
 
 class ApiKey:
-    def __init__(self, api_key: dict):
+    def __init__(self, api_key: dict[str, list[dict[str, str]]]):
         self.api_key = api_key
         self.allowlist = Allowlist(self.api_key["allowlist"])
 
-    def authorize(self, method, resource):
+    def authorize(self, method: str, resource: str):
         return self.allowlist.authorize(method, resource)
 
 
 class ApiKeyService(CRUDService):
 
-    keys = {}
+    keys: dict[int, dict[str, list[dict[str, str]]]] = {}
 
     class Config:
         namespace = "api_key"
@@ -53,7 +52,7 @@ class ApiKeyService(CRUDService):
         return item
 
     @api_method(ApiKeyCreateArgs, ApiKeyCreateResult)
-    async def do_create(self, data):
+    async def do_create(self, data: dict):
         """
         Creates API Key.
 
@@ -109,7 +108,7 @@ class ApiKeyService(CRUDService):
         return self._serve(await self.get_instance(id_), key)
 
     @api_method(ApiKeyDeleteArgs, ApiKeyDeleteResult)
-    async def do_delete(self, id_):
+    async def do_delete(self, id_: int):
         """
         Delete API Key `id`.
         """
@@ -131,7 +130,7 @@ class ApiKeyService(CRUDService):
         }
 
     @private
-    async def load_key(self, id_):
+    async def load_key(self, id_: int):
         self.keys[id_] = await self.middleware.call(
             "datastore.query",
             "account.api_key",
