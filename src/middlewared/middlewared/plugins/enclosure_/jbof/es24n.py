@@ -8,6 +8,7 @@ from middlewared.plugins.enclosure_.jbof.utils import (fake_jbof_enclosure,
                                                        map_voltage_sensors)
 from middlewared.plugins.jbof.functions import get_sys_class_nvme
 
+ES24N_EXPECTED_URI = '/redfish/v1/Chassis/2U24'
 LOGGER = getLogger(__name__)
 
 
@@ -27,7 +28,7 @@ async def map_es24n(model, rclient, uri):
         for key, uri2 in urls.items():
             info = await rclient.get(uri2)
             if not info:
-                LOGGER.error('Unexpected failure fetching %r info', key, exc_info=True)
+                LOGGER.error('Unexpected failure fetching %r info', key)
                 return
             data[key] = info
     except Exception:
@@ -113,7 +114,7 @@ async def is_this_an_es24n(rclient):
     # FIXME: This function shouldn't exist and the OEM should fix
     # this at some point. When they do (hopefully) fix the model,
     # remove this function
-    expected_uri = '/redfish/v1/Chassis/2U24'
+    expected_uri = ES24N_EXPECTED_URI
     expected_model = JbofModels.ES24N.value
     try:
         info = await rclient.get(expected_uri)
