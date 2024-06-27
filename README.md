@@ -16,7 +16,7 @@ When submitting a pull-request, Jenkins will attempt to verify the changes to en
 
 Once whitelisted, the following commands may be used to interact with that service:
 
-    "ok to test" to accept this pull request for testing
+    "ok to test" to accept this pull request for testing.
     "test this please" for a one time test run
     "add to whitelist" to add the author to the whitelist
 
