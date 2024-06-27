@@ -92,7 +92,7 @@ class AuditService(ConfigService):
 
         for k, default in TNUserProp.quotas():
             try:
-                ds[k] = int(ds[k]["rawvalue"])
+                ds[k] = int(ds['properties'][k]["rawvalue"])
             except (KeyError, ValueError):
                 ds[k] = default
 
@@ -246,10 +246,14 @@ class AuditService(ConfigService):
 
         return filter_list(results, data['query-filters'], data['query-options'])
 
-    @accepts(Patch(
-        'audit_query', 'audit_export',
-        ('add', Str('export_format', enum=['CSV', 'JSON', 'YAML'], default='JSON')),
-    ), roles=['SYSTEM_AUDIT_READ'])
+    @accepts(
+        Patch(
+            'audit_query', 'audit_export',
+            ('add', Str('export_format', enum=['CSV', 'JSON', 'YAML'], default='JSON')),
+        ),
+        roles=['SYSTEM_AUDIT_READ'],
+        audit='Export Audit Data'
+    )
     @returns(Str('audit_file_path'))
     @job()
     def export(self, job, data):
@@ -305,10 +309,14 @@ class AuditService(ConfigService):
         job.set_progress(100, f'Audit report completed and available at {destination}')
         return os.path.join(target_dir, destination)
 
-    @accepts(Dict(
-        'audit_download',
-        Str('report_name', required=True),
-    ), roles=['SYSTEM_AUDIT_READ'])
+    @accepts(
+        Dict(
+            'audit_download',
+            Str('report_name', required=True),
+        ),
+        roles=['SYSTEM_AUDIT_READ'],
+        audit='Download Audit Data',
+    )
     @returns()
     @job(pipes=["output"])
     def download_report(self, job, data):
@@ -388,7 +396,7 @@ class AuditService(ConfigService):
         if new['quota'] and (old['quota'] != new['quota']):
             new_volsize = new['quota'] * _GIB
             used = new['space']['used_by_dataset'] + new['space']['used_by_snapshots']
-            if used / new_volsize > new['quota_fill_warning'] / 100:
+            if used // new_volsize > new['quota_fill_warning'] // 100:
                 verrors.add(
                     'audit_update.quota',
                     'Specified quota would result in the percentage used of the '
@@ -407,16 +415,17 @@ class AuditService(ConfigService):
         ds = await self.middleware.call('audit.get_audit_dataset')
         ds_props = ds['properties']
         old_reservation = ds_props['refreservation']['parsed'] or 0
-        old_quota = ds_props['quota']['parsed'] or 0
+        old_quota = ds_props['refquota']['parsed'] or 0
         old_warn = int(ds_props.get(QUOTA_WARN, {}).get('rawvalue', '0'))
         old_crit = int(ds_props.get(QUOTA_CRIT, {}).get('rawvalue', '0'))
 
         payload = {}
-        if new['quota'] != old_quota / _GIB:
+        if new['quota'] != old_quota // _GIB:
             quota_val = "none" if new['quota'] == 0 else f'{new["quota"]}G'
-            payload['quota'] = {'parsed': quota_val}
+            # Using refquota gives better fidelity with dataset settings
+            payload['refquota'] = {'parsed': quota_val}
 
-        if new['reservation'] != old_reservation / _GIB:
+        if new['reservation'] != old_reservation // _GIB:
             reservation_val = "none" if new['reservation'] == 0 else f'{new["reservation"]}G'
             payload['refreservation'] = {'parsed': reservation_val}
 
@@ -433,15 +442,18 @@ class AuditService(ConfigService):
             'zfs.dataset.update', ds['id'], {'properties': payload}
         )
 
-    @accepts(Dict(
-        'system_audit_update',
-        Int('retention', validators=[Range(1, 30)]),
-        Int('reservation', validators=[Range(0, 100)]),
-        Int('quota', validators=[Range(0, 100)]),
-        Int('quota_fill_warning', validators=[Range(5, 80)]),
-        Int('quota_fill_critical', validators=[Range(50, 95)]),
-        register=True
-    ))
+    @accepts(
+        Dict(
+            'system_audit_update',
+            Int('retention', validators=[Range(1, 30)]),
+            Int('reservation', validators=[Range(0, 100)]),
+            Int('quota', validators=[Range(0, 100)]),
+            Int('quota_fill_warning', validators=[Range(5, 80)]),
+            Int('quota_fill_critical', validators=[Range(50, 95)]),
+            register=True
+        ),
+        audit='Update Audit Configuration',
+    )
     async def update(self, data):
         """
         Update default audit settings.

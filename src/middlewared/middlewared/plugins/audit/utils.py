@@ -27,11 +27,13 @@ SQL_SAFE_FIELDS = (
 
 AuditBase = declarative_base()
 
+
 def audit_program(svc):
     if svc == 'SUDO':
         return 'sudo'
     else:
         return f'TNAUDIT_{svc}'
+
 
 def audit_custom_section(svc, section):
     """
@@ -40,6 +42,7 @@ def audit_custom_section(svc, section):
     if svc == 'SUDO' and section == 'log':
         return True
     return False
+
 
 def audit_file_path(svc):
     return f'{AUDIT_DATASET_PATH}/{svc}.db'
