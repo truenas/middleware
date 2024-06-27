@@ -1,15 +1,21 @@
 from datetime import datetime
 import random
 import string
+from typing import Any, TYPE_CHECKING
 
 from passlib.hash import pbkdf2_sha256
 
 from middlewared.api import api_method
-from middlewared.api.current import ApiKeyCreateArgs, ApiKeyCreateResult
+from middlewared.api.current import (
+    ApiKeyCreateArgs, ApiKeyCreateResult, ApiKeyUpdateArgs,
+    ApiKeyUpdateResult, ApiKeyDeleteArgs, ApiKeyDeleteResult
+)
 from middlewared.schema import accepts, Bool, Int, Patch
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.allowlist import Allowlist
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class APIKeyModel(sa.Model):
@@ -23,7 +29,7 @@ class APIKeyModel(sa.Model):
 
 
 class ApiKey:
-    def __init__(self, api_key):
+    def __init__(self, api_key: dict):
         self.api_key = api_key
         self.allowlist = Allowlist(self.api_key["allowlist"])
 
@@ -42,7 +48,7 @@ class ApiKeyService(CRUDService):
         cli_namespace = "auth.api_key"
 
     @private
-    async def item_extend(self, item):
+    async def item_extend(self, item: dict):
         item.pop("key")
         return item
 
@@ -70,16 +76,8 @@ class ApiKeyService(CRUDService):
 
         return self._serve(data, key)
 
-    @accepts(
-        Int("id", required=True),
-        Patch(
-            "api_key_create",
-            "api_key_update",
-            ("add", Bool("reset")),
-            ("attr", {"update": True}),
-        )
-    )
-    async def do_update(self, id_, data):
+    @api_method(ApiKeyUpdateArgs, ApiKeyUpdateResult)
+    async def do_update(self, id_, data: dict):
         """
         Update API Key `id`.
 
@@ -110,9 +108,7 @@ class ApiKeyService(CRUDService):
 
         return self._serve(await self.get_instance(id_), key)
 
-    @accepts(
-        Int("id")
-    )
+    @api_method(ApiKeyDeleteArgs, ApiKeyDeleteResult)
     async def do_delete(self, id_):
         """
         Delete API Key `id`.
@@ -144,7 +140,7 @@ class ApiKeyService(CRUDService):
         )
 
     @private
-    async def authenticate(self, key):
+    async def authenticate(self, key: str):
         try:
             key_id, key = key.split("-", 1)
             key_id = int(key_id)
@@ -161,7 +157,7 @@ class ApiKeyService(CRUDService):
 
         return ApiKey(db_key)
 
-    async def _validate(self, schema_name, data, id_=None):
+    async def _validate(self, schema_name: str, data: dict, id_=None):
         verrors = ValidationErrors()
 
         await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
@@ -171,12 +167,12 @@ class ApiKeyService(CRUDService):
     def _generate(self):
         return "".join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)])
 
-    def _serve(self, data, key):
+    def _serve(self, data: dict, key: Any | None):
         if key is None:
             return data
 
         return dict(data, key=f"{data['id']}-{key}")
 
 
-async def setup(middleware):
+async def setup(middleware: 'Middleware'):
     await middleware.call("api_key.load_keys")
