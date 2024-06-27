@@ -80,6 +80,7 @@ class DockerStateService(Service):
 
     @private
     async def validate(self, raise_error=True):
+        # When `raise_error` is unset, we return boolean true if there was no issue with the state
         error_str = ''
         if not (await self.middleware.call('docker.config'))['pool']:
             error_str = 'No pool configured for Docker'
@@ -89,7 +90,7 @@ class DockerStateService(Service):
         if error_str and raise_error:
             raise CallError(error_str)
 
-        return error_str
+        return bool(error_str) is False
 
 
 async def _event_system_ready(middleware, event_type, args):

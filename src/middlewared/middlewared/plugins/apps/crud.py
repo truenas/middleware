@@ -1,5 +1,7 @@
+import contextlib
 import errno
 import os
+import shutil
 import textwrap
 
 from middlewared.schema import accepts, Dict, Str
@@ -8,9 +10,12 @@ from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
 
 from .app_lifecycle_utils import add_context_to_values, update_app_config
+from .app_path_utils import get_installed_app_path
 from .app_setup_utils import setup_install_app_dir
+from .app_utils import get_version_in_use_of_app
 from .compose_utils import compose_action
-from .utils import IX_APPS_MOUNT_PATH
+from .docker.query import list_resources_by_project
+from .utils import IX_APPS_MOUNT_PATH, PROJECT_PREFIX
 from .version_utils import get_latest_version_from_app_versions
 
 
@@ -27,6 +32,14 @@ class AppService(CRUDService):
             return filter_list([], filters, options)
 
         apps = []
+        for app_name, app_resources in list_resources_by_project().items():
+            app_name = app_name[len(PROJECT_PREFIX):]
+            apps.append({
+                'name': app_name,
+                'id': app_name,
+                'resources': app_resources,
+            })
+
         return filter_list(apps, filters, options)
 
     @accepts(
@@ -86,7 +99,7 @@ class AppService(CRUDService):
         # we will now perform the following steps
         # 1) Create relevant dir for app
         # 2) Copy app version into app dir
-        # 3) Have docker compose deploy the app in question  # FIXME: Let's implement this later please
+        # 3) Have docker compose deploy the app in question
         try:
             setup_install_app_dir(app_name, app_details['location'])
             new_values = add_context_to_values(app_name, new_values, install=True)
@@ -94,10 +107,16 @@ class AppService(CRUDService):
             compose_action(app_name, version, 'up', daemon=True, force_recreate=True, remove_orphans=True)
         except Exception as e:
             job.set_progress(80, f'Failure occurred while installing {data["app_name"]!r}, cleaning up')
-            # FIXME: See what kind of docker cleanup might be required here
-            # FIXME: Cleanup the app dir created
+            with contextlib.suppress(Exception):
+                self.delete_internal(app_name, version)
             raise e from None
         else:
             job.set_progress(100, f'{data["app_name"]!r} installed successfully')
-            # return self.get_instance__sync(app_name)
-            return {'app_name': app_name}
+            return self.get_instance__sync(app_name)
+
+    def delete_internal(self, app_name, version):
+        compose_action(app_name, version, 'down', remove_orphans=True)
+        shutil.rmtree(get_installed_app_path(app_name))
+
+    def do_delete(self, app_name):
+        pass
