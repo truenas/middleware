@@ -124,7 +124,7 @@ def test__smb_client_server_encrypt(smb_setup, enc_param):
 
             # check session
             assert smb_status['encryption']['cipher'] == 'AES-128-GCM'
-            assert smb_status['encryption']['degree'] == 'partial'
+            assert smb_status['encryption']['degree'] == 'full'
 
             # check share
             assert smb_status['share_connections'][0]['encryption']['cipher'] == 'AES-128-GCM'
