@@ -31,6 +31,7 @@ BASE_SMB_CONFIG = {
     'admin_group': None,
     'next_rid': 0,
     'multichannel': False,
+    'encryption': 'DEFAULT',
     'netbiosname_local': 'TESTSERVER'
 }
 
@@ -43,6 +44,10 @@ SMB_NTLMV1 = BASE_SMB_CONFIG | {'ntlmv1_auth': True}
 SMB_SMB1 = BASE_SMB_CONFIG | {'enable_smb1': True}
 SMB_MULTICHANNEL = BASE_SMB_CONFIG | {'multichannel': True}
 SMB_OPTIONS = BASE_SMB_CONFIG | {'smb_options': 'canary = bob\n canary2 = bob2 \n #comment\n ;othercomment'}
+SMB_ENCRYPTION_NEGOTIATE = BASE_SMB_CONFIG | {'encryption': 'NEGOTIATE'}
+SMB_ENCRYPTION_DESIRED = BASE_SMB_CONFIG | {'encryption': 'DESIRED'}
+SMB_ENCRYPTION_REQUIRED = BASE_SMB_CONFIG | {'encryption': 'REQUIRED'}
+
 
 BASE_SMB_SHARE = {
     'id': 1,
@@ -194,6 +199,7 @@ def test__base_smb():
     assert conf['server multichannel support'] is False
     assert conf['idmap config * : backend'] == 'tdb'
     assert conf['idmap config * : range'] == '90000001 - 100000000'
+    assert conf['server smb encrypt'] == 'default'
 
 
 def test__syslog():
@@ -366,3 +372,27 @@ def test__ad_autorid():
     )
     assert conf['idmap config * : backend'] == 'autorid'
     assert conf['idmap config * : range'] == '10000 - 200000000'
+
+
+def test__encryption_negotiate():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, SMB_ENCRYPTION_NEGOTIATE, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['server smb encrypt'] == 'if_required'
+
+
+def test__encryption_desired():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, SMB_ENCRYPTION_DESIRED, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['server smb encrypt'] == 'desired'
+
+
+def test__encryption_required():
+    conf = generate_smb_conf_dict(
+        BASE_DS_STATUS, None, SMB_ENCRYPTION_REQUIRED, [],
+        BIND_IP_CHOICES, BASE_IDMAP
+    )
+    assert conf['server smb encrypt'] == 'required'
