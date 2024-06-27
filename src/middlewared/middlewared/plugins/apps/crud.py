@@ -95,7 +95,7 @@ class AppService(CRUDService):
             setup_install_app_dir(app_name, app_details['location'])
             new_values = add_context_to_values(app_name, new_values, install=True)
             update_app_config(app_name, version, new_values)
-            compose_action(app_name, version, 'up', daemon=True, force_recreate=True, remove_orphans=True)
+            compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:
             job.set_progress(80, f'Failure occurred while installing {data["app_name"]!r}, cleaning up')
             with contextlib.suppress(Exception):
