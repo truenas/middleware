@@ -23,5 +23,8 @@ def get_version_in_use_of_app(app_name: str) -> str:
 
 
 def get_app_metadata(app_name: str) -> dict[str, str]:
-    with open(get_installed_app_metadata_path(app_name), 'r') as f:
-        return yaml.safe_load(f)
+    try:
+        with open(get_installed_app_metadata_path(app_name), 'r') as f:
+            return yaml.safe_load(f)
+    except (FileNotFoundError, yaml.YAMLError):
+        return {}

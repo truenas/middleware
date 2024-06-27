@@ -1,5 +1,6 @@
 import os
 
+from .app_utils import get_app_metadata
 from .app_path_utils import get_app_parent_config_path
 from .docker.query import list_resources_by_project
 from .utils import PROJECT_PREFIX
@@ -14,23 +15,33 @@ def list_apps(specific_app: str | None = None) -> list[dict]:
     ).items():
         app_name = app_name[len(PROJECT_PREFIX):]
         app_names.add(app_name)
+        if not (app_metadata := get_app_metadata(app_name)):
+            # The app is malformed or something is seriously wrong with it
+            continue
+
         apps.append({
             'name': app_name,
             'id': app_name,
             'resources': app_resources,
             'state': 'RUNNING',
+            **app_metadata,
         })
 
     # We should now retrieve apps which are in stopped state
     with os.scandir(get_app_parent_config_path()) as scan:
         for entry in filter(lambda e: e.is_dir() and e.name not in app_names, scan):
+            app_names.add(entry.name)
+            if not (app_metadata := get_app_metadata(entry.name)):
+                # The app is malformed or something is seriously wrong with it
+                continue
+
             apps.append({
                 'name': entry.name,
                 'id': entry.name,
                 'resources': {},
                 'state': 'STOPPED',
+                **app_metadata,
             })
-            app_names.add(entry.name)
 
     return apps
 
