@@ -18,12 +18,23 @@ def compose_action(
         raise CallError(f'No compose files found for app {app_name!r}')
 
     args = ['-p', f'{PROJECT_PREFIX}{app_name}', action]
-    if daemon:
-        args.append('-d')
-    if force_recreate:
-        args.append('--force-recreate')
-    if remove_orphans:
-        args.append('--remove-orphans')
+
+    if action == 'up':
+        if daemon:
+            args.append('-d')
+        if force_recreate:
+            args.append('--force-recreate')
+        if remove_orphans:
+            args.append('--remove-orphans')
+    elif action == 'down':
+        if remove_orphans:
+            args.append('--remove-orphans')
+        args.append('-v')
+    elif action == 'stop':
+        # No additional flags needed for stop action
+        pass
+    else:
+        raise CallError(f'Invalid action {action!r} for app {app_name!r}')
 
     cp = run(['docker-compose'] + compose_files + args)
     if cp.returncode != 0:
