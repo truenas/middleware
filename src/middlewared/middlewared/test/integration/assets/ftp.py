@@ -36,7 +36,7 @@ def anonymous_ftp_server(config=None, dataset_name="anonftp"):
 @contextlib.contextmanager
 def ftp_server_with_user_account(config=None):
     config = config or {}
-    ftp_id = call("group.query", [["name", "=", "ftp"]], {"get": True})["id"]
+    ftp_id = call("group.query", [["name", "=", "ftp"], ['local', '=', True]], {"get": True})["id"]
 
     with dataset("ftptest") as ds:
         with user({

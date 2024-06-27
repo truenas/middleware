@@ -1455,7 +1455,7 @@ class SharingSMBService(SharingService):
         if not ad_enabled:
             local_smb_user_cnt = await self.middleware.call(
                 'user.query',
-                [['smb', '=', True]],
+                [['smb', '=', True], ['local', '=', True]],
                 {'count': True}
             )
             if local_smb_user_cnt == 0:
