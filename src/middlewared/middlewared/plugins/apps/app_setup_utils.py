@@ -17,4 +17,5 @@ def setup_install_app_dir(
         f.write(yaml.safe_dump({
             'catalog_app_name': to_install_app_name,
             'catalog_train': to_install_app_train,
+            'version': to_install_app_version,
         }))
