@@ -25,6 +25,11 @@ def write_new_app_config(app_name: str, version: str, values: dict[str, typing.A
         f.write(yaml.safe_dump(values))
 
 
+def get_current_app_config(app_name: str, version: str) -> dict:
+    with open(get_installed_app_config_path(app_name, version), 'r') as f:
+        return yaml.safe_load(f)
+
+
 def render_compose_templates(app_version_path: str, values_file_path: str):
     cp = run(['/usr/bin/apps_render_app', 'render', '--path', app_version_path, '--values', values_file_path])
     if cp.returncode != 0:
