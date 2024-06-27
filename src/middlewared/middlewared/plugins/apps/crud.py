@@ -92,7 +92,7 @@ class AppService(CRUDService):
         # 2) Copy app version into app dir
         # 3) Have docker compose deploy the app in question
         try:
-            setup_install_app_dir(app_name, app_details['location'])
+            setup_install_app_dir(app_name, app_details['location'], data['catalog_app'], data['train'])
             new_values = add_context_to_values(app_name, new_values, install=True)
             update_app_config(app_name, version, new_values)
             compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)

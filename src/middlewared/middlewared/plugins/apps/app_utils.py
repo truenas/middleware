@@ -1,9 +1,10 @@
+import yaml
 from collections import namedtuple
 from pathlib import Path
 
 from semantic_version import Version
 
-from .app_path_utils import get_installed_app_versions_dir_path
+from .app_path_utils import get_installed_app_metadata_path, get_installed_app_versions_dir_path
 
 
 app_details = namedtuple('app_details', ['name', 'version'])
@@ -19,3 +20,8 @@ def get_version_in_use_of_app(app_name: str) -> str:
     # This will treat the latest version available as the current one which is being used
     versions_path = Path(get_installed_app_versions_dir_path(app_name))
     return sorted([Version(v.name) for v in versions_path.iterdir() if v.is_dir()])[-1].__str__()
+
+
+def get_app_metadata(app_name: str) -> dict[str, str]:
+    with open(get_installed_app_metadata_path(app_name), 'r') as f:
+        return yaml.safe_load(f)
