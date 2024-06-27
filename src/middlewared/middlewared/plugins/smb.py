@@ -33,16 +33,17 @@ from middlewared.plugins.smb_.constants import (
     SMBSharePreset
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin  # noqa (imported so may be imported from here)
+from middlewared.plugins.smb_.sharesec import dup_share_acl, remove_share_acl
 from middlewared.plugins.smb_.util_param import smbconf_getparm, lpctx_validate_global_parm
 from middlewared.plugins.smb_.util_net_conf import reg_delshare, reg_listshares, reg_setparm
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.plugins.smb_.utils import apply_presets, is_time_machine_share, smb_strip_comments
-from middlewared.plugins.tdb.utils import TDBError
 from middlewared.plugins.idmap_.idmap_constants import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 from middlewared.utils import filter_list, run
 from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
+from middlewared.utils.tdb import TDBError
 
 
 class SMBModel(sa.Model):
@@ -891,7 +892,7 @@ class SharingSMBService(SharingService):
                 # Forcibly closes any existing SMB sessions.
                 await self.toggle_share(oldname, False)
                 try:
-                    await self.middleware.call('smb.sharesec.dup_share_acl', oldname, newname)
+                    await self.middleware.run_in_thread(dup_share_acl, oldname, newname)
                 except MatchNotFound:
                     pass
 
@@ -1051,7 +1052,7 @@ class SharingSMBService(SharingService):
         if share_name in share_list:
             await self.toggle_share(share_name, False)
             try:
-                await self.middleware.call('smb.sharesec.remove', share_name)
+                await self.middleware.run_in_thread(remove_share_acl, share_name)
             except RuntimeError as e:
                 # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
                 if e.args[0] != TDBError.NOEXIST:
@@ -1622,7 +1623,7 @@ class SharingSMBService(SharingService):
         verrors.check()
         if not normalized_acl:
             try:
-                await self.middleware.call('smb.sharesec.remove', data['share_name'])
+                await self.middleware.run_in_thread(remove_share_acl, data['share_name'])
             except RuntimeError as e:
                 # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
                 if e.args[0] != TDBError.NOEXIST:

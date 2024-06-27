@@ -849,7 +849,8 @@ class ActiveDirectoryService(ConfigService):
         if ret == neterr.JOINED:
             await self.set_state(DSStatus['HEALTHY'].name)
             job.set_progress(90, 'Restarting dependent services.')
-            await self.middleware.call('service.start', 'dscache')
+            cache_fill = await self.middleware.call('directoryservices.cache.refresh_impl')
+            await cache_fill.wait()
             await self.middleware.call('directoryservices.restart_dependent_services')
             if ad['verbose_logging']:
                 self.logger.debug('Successfully started AD service for [%s].', ad['domainname'])
@@ -890,7 +891,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'nss')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(60, 'clearing caches.')
-        await self.middleware.call('service.stop', 'dscache')
+        await self.middleware.call('directoryservices.cache.abort_refresh')
         await self.middleware.call('service.start', 'cifs')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(100, 'Active Directory stop completed.')

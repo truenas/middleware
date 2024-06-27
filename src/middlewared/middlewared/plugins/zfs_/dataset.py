@@ -92,12 +92,10 @@ class ZFSDatasetService(CRUDService):
                 datasets = list(datasets)
 
             if snapshots_count:
-                prefetch = not (len(kwargs.get('datasets', [])) == 1)
                 get_snapshot_count_cached(
                     self.middleware,
                     zfs,
                     datasets,
-                    prefetch,
                     True,
                     pop_snapshots_changed
                 )

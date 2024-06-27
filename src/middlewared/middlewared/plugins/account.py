@@ -292,7 +292,7 @@ class UserService(CRUDService):
         if dssearch:
             ds_state = await self.middleware.call('directoryservices.get_state')
             if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
-                ds_users = await self.middleware.call('directoryservices.cache.query', 'USERS', filters, options.copy())
+                ds_users = await self.middleware.call('directoryservices.cache.query', 'USER', filters, options.copy())
                 # For AD users, we will not have 2FA attribute normalized so let's do that
                 ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
                 for index, user in enumerate(filter(
@@ -1741,7 +1741,7 @@ class GroupService(CRUDService):
         if dssearch:
             ds_state = await self.middleware.call('directoryservices.get_state')
             if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
-                ds_groups = await self.middleware.call('directoryservices.cache.query', 'GROUPS', filters, options)
+                ds_groups = await self.middleware.call('directoryservices.cache.query', 'GROUP', filters, options)
 
         if 'SMB' in additional_information:
             try:

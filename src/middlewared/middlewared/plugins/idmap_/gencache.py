@@ -3,9 +3,17 @@ import wbclient
 
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
-from middlewared.plugins.tdb.utils import TDBError
+from middlewared.utils import filter_list
+from middlewared.utils.tdb import (
+    get_tdb_handle,
+    TDBDataType,
+    TDBError,
+    TDBOptions,
+    TDBPathType,
+)
 
 GENCACHE_FILE = '/var/run/samba-lock/gencache.tdb'
+GENCACHE_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
 
 
 class IDMAPCacheType(enum.Enum):
@@ -16,6 +24,45 @@ class IDMAPCacheType(enum.Enum):
     NAME2SID = 'NAME2SID'
 
 
+def fetch_gencache_entry(key: str) -> str:
+    with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
+        return hdl.get(key)
+
+
+def store_gencache_entry(key: str, val: str) -> None:
+    with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
+        return hdl.store(key, val)
+
+
+def remove_gencache_entry(key: str) -> None:
+    with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
+        return hdl.delete(key)
+
+
+def wipe_gencache_entries() -> None:
+    """ wrapper around tdb_wipe_all for file """
+    with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
+        return hdl.clear()
+
+
+def flush_gencache_entries() -> None:
+    """
+    delete all keys in gencache
+
+    This matches behavior of "net cache flush" which iterates and
+    deletes entries. If we fail due to corrupt TDB file then it will
+    be wiped.
+    """
+    with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
+        for entry in hdl.entries():
+            hdl.delete(entry['key'])
+
+
+def query_gencache_entries(filters: list, options: dict) -> list | dict:
+    with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
+        return filter_list(hdl.entries(), filters, options)
+
+
 class Gencache(Service):
 
     class Config:
@@ -23,38 +70,7 @@ class Gencache(Service):
         cli_private = True
         private = True
 
-    tdb_options = {
-        'backend': 'CUSTOM',
-        'data_type': 'BYTES'
-    }
-
-    async def __fetch(self, key):
-        return await self.middleware.call('tdb.fetch', {
-            'name': GENCACHE_FILE,
-            'key': key,
-            'tdb-options': self.tdb_options
-        })
-
-    async def __remove(self, key):
-        return await self.middleware.call('tdb.remove', {
-            'name': GENCACHE_FILE,
-            'key': key,
-            'tdb-options': self.tdb_options
-        })
-
-    async def __wipe(self):
-        return await self.middleware.call('tdb.wipe', {
-            'name': GENCACHE_FILE,
-            'tdb-options': self.tdb_options
-        })
-
-    async def __flush(self):
-        return await self.middleware.call('tdb.flush', {
-            'name': GENCACHE_FILE,
-            'tdb-options': self.tdb_options
-        })
-
-    async def __construct_gencache_key(self, data):
+    def __construct_gencache_key(self, data):
         cache_type = IDMAPCacheType[data['entry_type']]
         match cache_type:
             case IDMAPCacheType.UID2SID | IDMAPCacheType.GID2SID:
@@ -72,35 +88,35 @@ class Gencache(Service):
 
         return f'{cache_type.value}/{parsed_entry}'
 
-    async def get_idmap_cache_entry(self, data):
-        key = await self.__construct_gencache_key(data)
-        return await self.__fetch(key)
+    def get_idmap_cache_entry(self, data):
+        key = self.__construct_gencache_key(data)
+        return fetch_gencache_entry(key)
 
-    async def del_idmap_cache_entry(self, data):
-        key = await self.__construct_gencache_key(data)
+    def del_idmap_cache_entry(self, data):
+        key = self.__construct_gencache_key(data)
         try:
-            return await self.__remove(key)
+            return remove_gencache_entry(key)
         except RuntimeError as e:
             if len(e.args) == 0:
                 raise e from None
 
             match e.args[0]:
                 case TDBError.CORRUPT:
-                    await self.wipe()
+                    wipe_gencache_entries()
                     raise e from None
                 case TDBError.NOEXIST:
                     raise MatchNotFound(key) from None
                 case _:
                     raise e from None
 
-    async def flush(self):
+    def flush(self):
         """
         Perform equivalent of `net cache flush`.
         """
         try:
-            await self.__flush()
+            flush_gencache_entries()
         except RuntimeError as e:
             if len(e.args) == 0 or e.args[0] != TDBError.CORRUPT:
                 raise e from None
 
-            await self.__wipe()
+            wipe_gencache_entries()
