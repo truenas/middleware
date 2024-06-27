@@ -11,11 +11,11 @@ from middlewared.validators import Match, Range
 
 from .app_lifecycle_utils import add_context_to_values, update_app_config
 from .app_path_utils import get_installed_app_path
+from .app_query_utils import list_apps
 from .app_setup_utils import setup_install_app_dir
 from .app_utils import get_version_in_use_of_app
 from .compose_utils import compose_action
-from .docker.query import list_resources_by_project
-from .utils import IX_APPS_MOUNT_PATH, PROJECT_PREFIX
+from .utils import IX_APPS_MOUNT_PATH
 from .version_utils import get_latest_version_from_app_versions
 
 
@@ -31,16 +31,7 @@ class AppService(CRUDService):
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
 
-        apps = []
-        for app_name, app_resources in list_resources_by_project().items():
-            app_name = app_name[len(PROJECT_PREFIX):]
-            apps.append({
-                'name': app_name,
-                'id': app_name,
-                'resources': app_resources,
-            })
-
-        return filter_list(apps, filters, options)
+        return filter_list(list_apps(), filters, options)
 
     @accepts(
         Dict(
