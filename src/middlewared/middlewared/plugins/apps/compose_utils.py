@@ -8,8 +8,8 @@ from .utils import PROJECT_PREFIX, run
 
 
 def compose_action(
-    app_name: str, app_version: str, action: typing.Literal['up', 'down', 'stop'], *,
-    force_recreate: bool = False, remove_orphans: bool = False, daemon: bool = True,
+    app_name: str, app_version: str, action: typing.Literal['up', 'down'], *,
+    force_recreate: bool = False, remove_orphans: bool = False,
 ):
     compose_files = list(itertools.chain(
         *[('-f', item) for item in get_rendered_templates_of_app(app_name, app_version)]
@@ -20,8 +20,7 @@ def compose_action(
     args = ['-p', f'{PROJECT_PREFIX}{app_name}', action]
 
     if action == 'up':
-        if daemon:
-            args.append('-d')
+        args.append('-d')
         if force_recreate:
             args.append('--force-recreate')
         if remove_orphans:
@@ -30,9 +29,6 @@ def compose_action(
         if remove_orphans:
             args.append('--remove-orphans')
         args.append('-v')
-    elif action == 'stop':
-        # No additional flags needed for stop action
-        pass
     else:
         raise CallError(f'Invalid action {action!r} for app {app_name!r}')
 
