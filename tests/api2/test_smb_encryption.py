@@ -116,9 +116,11 @@ def test__smb_client_server_encrypt(smb_setup, enc_param):
             password=PASSWD,
             encryption='DEFAULT'
         ) as c:
-            # perform basic op to fully initialize SMB session
+            # check that client credential desired encryption is
+            # set to expected value
             assert c.get_smb_encryption() == 'DEFAULT'
 
+            # perform basic op to fully initialize SMB session
             c.ls('/')
             smb_status = call('smb.status')[0]
 
