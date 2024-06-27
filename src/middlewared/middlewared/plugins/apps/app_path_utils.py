@@ -11,6 +11,10 @@ def get_installed_app_path(app_name: str) -> str:
     return os.path.join(get_app_parent_config_path(), app_name)
 
 
+def get_installed_app_metadata_path(app_name: str) -> str:
+    return os.path.join(get_installed_app_path(app_name), 'metadata.yaml')
+
+
 def get_installed_app_versions_dir_path(app_name: str) -> str:
     return os.path.join(get_installed_app_path(app_name), 'versions')
 
