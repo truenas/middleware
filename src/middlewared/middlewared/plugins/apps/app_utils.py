@@ -28,3 +28,14 @@ def get_app_metadata(app_name: str) -> dict[str, str]:
             return yaml.safe_load(f)
     except (FileNotFoundError, yaml.YAMLError):
         return {}
+
+
+def update_app_metadata(
+    app_name: str, catalog_app_name: str, catalog_train: str, version: str,
+):
+    with open(get_installed_app_metadata_path(app_name), 'w') as f:
+        f.write(yaml.safe_dump({
+            'catalog_app_name': catalog_app_name,
+            'catalog_train': catalog_train,
+            'version': version,
+        }))
