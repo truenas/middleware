@@ -30,12 +30,10 @@ def get_app_metadata(app_name: str) -> dict[str, str]:
         return {}
 
 
-def update_app_metadata(
-    app_name: str, catalog_app_name: str, catalog_train: str, version: str,
-):
+def update_app_metadata(app_name: str, app_version_details: dict):
     with open(get_installed_app_metadata_path(app_name), 'w') as f:
         f.write(yaml.safe_dump({
-            'catalog_app_name': catalog_app_name,
-            'catalog_train': catalog_train,
-            'version': version,
+            'metadata': app_version_details['app_metadata'],
+            'catalog_app_last_updated': app_version_details['last_update'],
+            **{k: app_version_details[k] for k in ('version', 'human_version')}
         }))

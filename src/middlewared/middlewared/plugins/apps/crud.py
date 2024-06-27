@@ -74,14 +74,14 @@ class AppService(CRUDService):
         if version not in complete_app_details['versions']:
             raise CallError(f'Version {version} not found in {data["item"]} app', errno=errno.ENOENT)
 
-        app_details = complete_app_details['versions'][version]
-        self.middleware.call_sync('catalog.version_supported_error_check', app_details)
+        app_version_details = complete_app_details['versions'][version]
+        self.middleware.call_sync('catalog.version_supported_error_check', app_version_details)
 
         app_dir = os.path.join(IX_APPS_MOUNT_PATH, 'app_configs', app_name)
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
         new_values, context = self.middleware.call_sync(
-            'app.schema.normalise_and_validate_values', app_details, data['values'], False, app_dir
+            'app.schema.normalise_and_validate_values', app_version_details, data['values'], False, app_dir
         )
 
         job.set_progress(25, 'Initial Validation completed')
@@ -92,7 +92,7 @@ class AppService(CRUDService):
         # 2) Copy app version into app dir
         # 3) Have docker compose deploy the app in question
         try:
-            setup_install_app_dir(app_name, app_details['location'], data['catalog_app'], data['train'])
+            setup_install_app_dir(app_name, app_version_details)
             new_values = add_context_to_values(app_name, new_values, install=True)
             update_app_config(app_name, version, new_values)
             job.set_progress(60, 'App installation in progress, pulling images')
