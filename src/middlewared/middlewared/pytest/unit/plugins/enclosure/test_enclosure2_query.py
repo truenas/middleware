@@ -76,6 +76,7 @@ def test_enclosure2_query(enc2_data):
     e.middleware['datastore.query'] = Mock(return_value=enc2_mocked.labels)
     e.middleware['system.dmidecode_info'] = Mock(return_value=enc2_mocked.dmi)
     e.middleware['jbof.query'] = Mock(return_value=[])
+    e.middleware['enclosure2.map_jbof'] = Mock(return_value=[])
     e.get_ses_enclosures = Mock(return_value=enc2_mocked.ses)
     e.map_nvme = Mock(return_value=enc2_mocked.nvme)
     e.map_jbof = Mock(return_value=[])
