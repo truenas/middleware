@@ -1,8 +1,8 @@
 import os
 import shutil
-import yaml
 
-from .app_path_utils import get_app_parent_config_path, get_installed_app_metadata_path, get_installed_app_version_path
+from .app_path_utils import get_app_parent_config_path, get_installed_app_version_path
+from .app_utils import update_app_metadata
 
 
 def setup_install_app_dir(
@@ -13,9 +13,4 @@ def setup_install_app_dir(
     shutil.copytree(to_install_app_location, get_installed_app_version_path(app_name, to_install_app_version))
 
     # Now that we have copied the app version to the app dir, we will now update the app config
-    with open(get_installed_app_metadata_path(app_name), 'w') as f:
-        f.write(yaml.safe_dump({
-            'catalog_app_name': to_install_app_name,
-            'catalog_train': to_install_app_train,
-            'version': to_install_app_version,
-        }))
+    update_app_metadata(app_name, to_install_app_name, to_install_app_train, to_install_app_version)
