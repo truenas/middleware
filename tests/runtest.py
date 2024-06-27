@@ -312,7 +312,15 @@ def parse_test_name(test):
         return f"{filename}.py::{testname}"
     return test
 
-
+tests = ['api2/test_001_ssh.py',
+         'api2/test_002_system_license.py',
+         'api2/test_003_network_global.py',
+         'api2/test_005_interface.py',
+         'api2/test_006_pool_and_sysds.py',
+         'api2/test_007_early_settings.py',
+         'api2/test_audit_basic.py', 'api2/test_audit_audit.py']
+# Work around the new silly business that is parse_test_name
+tests = ['api2/' + s for s in tests]
 if tests:
     pytest_command.extend(list(map(parse_test_name, tests)))
 else:
