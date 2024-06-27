@@ -1,6 +1,7 @@
 import os
 import pytest
 
+from contextlib import contextmanager
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset
@@ -28,6 +29,16 @@ def smb_setup(request):
                     yield {'dataset': ds, 'share': s}
                 finally:
                     call('service.stop', 'cifs')
+
+
+@contextmanager
+def server_encryption(param):
+    call('smb.update', {'encryption': param})
+
+    try:
+        yield
+    finally:
+        call('smb.update', {'encryption': 'DEFAULT'})
 
 
 def test__smb_client_encrypt_default(smb_setup):
@@ -94,3 +105,27 @@ def test__smb_client_encrypt_required(smb_setup):
         # check share
         assert smb_status['share_connections'][0]['encryption']['cipher'] == 'AES-128-GCM'
         assert smb_status['share_connections'][0]['encryption']['degree'] == 'full'
+
+
+@pytest.mark.parametrize('enc_param', ('DESIRED', 'REQUIRED'))
+def test__smb_client_server_encrypt(smb_setup, enc_param):
+    with server_encryption(enc_param):
+        with smb_connection(
+            share=smb_setup['share']['name'],
+            username=SHAREUSER,
+            password=PASSWD,
+            encryption='DEFAULT'
+        ) as c:
+            # perform basic op to fully initialize SMB session
+            assert c.get_smb_encryption() == 'DEFAULT'
+
+            c.ls('/')
+            smb_status = call('smb.status')[0]
+
+            # check session
+            assert smb_status['encryption']['cipher'] == 'AES-128-GCM'
+            assert smb_status['encryption']['degree'] == 'partial'
+
+            # check share
+            assert smb_status['share_connections'][0]['encryption']['cipher'] == 'AES-128-GCM'
+            assert smb_status['share_connections'][0]['encryption']['degree'] == 'full'
