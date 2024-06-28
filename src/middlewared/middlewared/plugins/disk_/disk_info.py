@@ -1,3 +1,4 @@
+import contextlib
 import glob
 import os
 import pathlib
@@ -5,6 +6,31 @@ import pathlib
 import pyudev
 
 from middlewared.service import CallError, private, Service
+
+
+def get_partition_size_info(disk_name, s_offset, s_size):
+    """Kernel sysfs reports most disk files related to "size" in 512 bytes.
+    To properly calculate the starting SECTOR of partitions, you must
+    look at logical_block_size (again, reported in 512 bytes) and
+    do some calculations. It is _very_ important to do this properly
+    since almost all userspace tools that format disks expect partition
+    positions to be in sectors."""
+    lbs = start_sect = end_sect = sect_size = 0
+    with contextlib.suppress(FileNotFoundError, ValueError):
+        with open(f'/sys/block/{disk_name}/queue/logical_block_size') as f:
+            lbs = int(f.read().strip())
+
+    if not lbs:
+        # this should never happen
+        return lbs, start_sect, end_sect, sect_size
+
+    # important when dealing with 4kn drives
+    divisor = lbs // 512
+    start_sect = s_offset // divisor
+    sect_size = s_size // divisor
+    end_sect = sect_size + start_sect - 1
+
+    return lbs, start_sect, end_sect, sect_size
 
 
 class DiskService(Service):
@@ -32,11 +58,12 @@ class DiskService(Service):
         if not bd.children:
             return parts
 
-        req_keys = ('ID_PART_' + i for i in ('TYPE', 'UUID', 'NUMBER', 'SIZE'))
+        req_keys = ('ID_PART_ENTRY_' + i for i in ('TYPE', 'UUID', 'NUMBER', 'SIZE'))
         for p in filter(lambda p: all(p.get(k) for k in req_keys), bd.children):
             part_name = self.get_partition_for_disk(disk, p['ID_PART_ENTRY_NUMBER'])
-            start_sector = int(p['ID_PART_ENTRY_OFFSET'])
-            end_sector = int(p['ID_PART_ENTRY_OFFSET']) + int(p['ID_PART_ENTRY_SIZE']) - 1
+            lbs, start_sector, end_sector, sect_size = get_partition_size_info(
+                disk, int(p['ID_PART_ENTRY_OFFSET']), int(p['ID_PART_ENTRY_SIZE'])
+            )
             part = {
                 'name': part_name,
                 'partition_type': p['ID_PART_ENTRY_TYPE'],
@@ -44,10 +71,10 @@ class DiskService(Service):
                 'partition_uuid': p['ID_PART_ENTRY_UUID'],
                 'disk': disk,
                 'start_sector': start_sector,
-                'start': start_sector * 512,
+                'start': start_sector * lbs,  # bytes
                 'end_sector': end_sector,
-                'end': end_sector * 512,
-                'size': int(p['ID_PART_ENTRY_SIZE']) * 512,
+                'end': end_sector * lbs,  # bytes
+                'size': sect_size * lbs,  # bytes
                 'id': part_name,
                 'path': os.path.join('/dev', part_name),
                 'encrypted_provider': None,
