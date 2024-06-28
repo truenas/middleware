@@ -2,11 +2,10 @@ import string
 
 from annotated_types import Ge, Le
 from pydantic.functional_validators import AfterValidator
+from middlewared.plugins.idmap_.idmap_constants import TRUENAS_IDMAP_DEFAULT_LOW
 from typing_extensions import Annotated
 
 __all__ = ["LocalUsername", "LocalUID"]
-
-TRUENAS_IDMAP_DEFAULT_LOW = 90000001
 
 
 def validate_local_username(val):
