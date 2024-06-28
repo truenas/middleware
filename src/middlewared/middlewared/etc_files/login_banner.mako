@@ -1,5 +1,5 @@
 <%
-	login_banner = middleware.call_sync('system.advanced.login_banner')
+	login_banner = render_ctx['system.advanced.login_banner']
 	if login_banner == '':
 		raise FileShouldNotExist()
 %>\

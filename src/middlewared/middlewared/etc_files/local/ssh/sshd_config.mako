@@ -47,7 +47,7 @@
 
 	users = middleware.call_sync('user.query')
 	root_user = filter_list(users, [['username', '=', 'root']], {'get': True})
-	login_banner = middleware.call_sync('system.advanced.login_banner')
+	login_banner = render_ctx['system.advanced.login_banner']
 %>\
 Subsystem	sftp	internal-sftp -l ${ssh_config['sftp_log_level']} -f ${ssh_config['sftp_log_facility']}
 % if 'Protocol' not in ssh_config['options']:

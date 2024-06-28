@@ -291,6 +291,7 @@ class EtcService(Service):
                 {'method': 'ldap.config'},
                 {'method': 'auth.twofactor.config'},
                 {'method': 'interface.query'},
+                {'method': 'system.advanced.login_banner'},
             ],
             "entries": [
                 {'type': 'mako', 'path': 'local/ssh/sshd_config', 'checkpoint': 'interface_sync'},

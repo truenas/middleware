@@ -7,8 +7,7 @@ import sys
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET, SSH_TEST
-from auto_config import user, password
+from middlewared.test.integration.utils import call, ssh
 MOTD = 'FREENAS_MOTD'
 SYSLOGLEVEL = "F_CRIT"
 
@@ -19,101 +18,95 @@ def sysadv_dict():
 
 
 def test_01_system_advanced_get():
-    results = GET('/system/advanced/')
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict)
+    results = call('system.advanced.config')
+    assert results
+    assert isinstance(results, dict)
 
 
 def test_02_system_advanced_serial_port_choices(sysadv_dict):
-    results = GET('/system/advanced/serial_port_choices/')
-    assert results.status_code == 200, results.text
-    data = results.json()
-    sysadv_dict['serial_choices'] = [k for k in data]
-    assert isinstance(data, dict), data
-    assert len(data) > 0, data
+    results = call('system.advanced.serial_port_choices')
+    assert results
+    sysadv_dict['serial_choices'] = [k for k in results]
+    assert isinstance(results, dict)
+    assert len(results) > 0
 
 
 def test_03_system_advanced_set_serial_port(sysadv_dict):
-    results = PUT('/system/advanced/', {
+    results = call('system.advanced.update', {
         'serialconsole': True,
         'serialport': sysadv_dict['serial_choices'][0],
     })
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert isinstance(data, dict), data
+    assert results
+    assert isinstance(results, dict)
 
 
 def test_04_system_advanced_check_serial_port_using_api(sysadv_dict):
-    results = GET('/system/advanced/')
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert isinstance(data, dict)
-    assert data['serialport'] == sysadv_dict['serial_choices'][0]
+    results = call('system.advanced.config')
+    assert results
+    assert isinstance(results, dict)
+    assert results['serialport'] == sysadv_dict['serial_choices'][0]
 
 
 def test_05_system_advanced_check_serial_port_using_ssh(sysadv_dict, request):
     cmd = f'systemctl | grep "{sysadv_dict["serial_choices"][0]}"'
-    results = SSH_TEST(cmd, user, password)
+    results = ssh(cmd)
     assert results['result'] is True, results
 
 
 def test_06_system_advanced_disable_serial_port():
-    results = PUT('/system/advanced/', {
+    results = call('system.advanced.update', {
         'serialconsole': False,
     })
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert isinstance(data, dict), data
+    assert results
+    assert isinstance(results, dict)
 
 
 def test_07_system_advanced_check_disabled_serial_port_using_ssh(sysadv_dict, request):
-    results = SSH_TEST(f'cat /boot/loader.conf.local | grep "{sysadv_dict["serial_choices"][0]}"', user, password)
+    results = ssh(f'grep "{sysadv_dict["serial_choices"][0]}" /boot/loader.conf.local')
     assert results['result'] is False, results
 
 
 def test_08_system_advanced_set_motd():
-    results = PUT('/system/advanced/', {
-        'motd': MOTD
+    results = call('system.advanced.update', {
+        'motd': MOTD,
     })
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert isinstance(data, dict), data
+    assert results
+    assert isinstance(results, dict)
 
 
 def test_09_system_advanced_check_motd_using_api():
-    results = GET('/system/advanced/')
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert isinstance(data, dict)
-    assert data['motd'] == MOTD
+    results = call('system.advanced.config')
+    assert results
+    assert isinstance(results, dict)
+    assert results['motd'] == MOTD
 
 
 def test_10_system_advanced_check_motd_using_ssh(request):
-    results = SSH_TEST(f'cat /etc/motd | grep "{MOTD}"', user, password)
+    results = ssh(f'grep "{MOTD}" /etc/motd')
     assert results['result'] is True, results
 
 
 def test_11_system_advanced_login_banner():
-    results = PUT('/system/advanced/', {
+    results = call('system.advanced.update', {
         'login_banner': 'TrueNAS login banner.'
     })
-    assert results.status_code == 200, results.text
-    results = GET('/system/advanced')
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert data['login_banner'] is True
+    assert results
+    results = call('system.advanced.config')
+    assert results
+    assert results['login_banner'] == "TrueNAS login banner"
 
-    results = SSH_TEST('cat /etc/ssh/sshd_config | grep Banner', user, password)
+    results = ssh('grep Banner /etc/ssh/sshd_config')
     assert results['result'] is True, results
 
 
 def test_12_Setting_sysloglevel():
-    results = PUT("/system/advanced/", {"sysloglevel": SYSLOGLEVEL})
-    assert results.status_code == 200, results.text
+    results = call('system.advanced.update', {
+        'sysloglevel': SYSLOGLEVEL
+    })
+    assert results
 
 
 def test_13_Checking_sysloglevel_using_api():
-    results = GET("/system/advanced/")
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert data['sysloglevel'] == SYSLOGLEVEL
+    results = call('system.advanced.config')
+    assert results
+    assert results['sysloglevel'] == SYSLOGLEVEL
