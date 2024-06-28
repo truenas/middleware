@@ -13,7 +13,7 @@ import os
 import subprocess
 import time
 
-from .krb5_constants import krb_tkt_flag, KRB_ETYPE, KRB_Keytab
+from .krb5_constants import krb_tkt_flag, krb5ccache, KRB_ETYPE, KRB_Keytab
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 from tempfile import NamedTemporaryFile
@@ -301,6 +301,15 @@ def gss_get_current_cred(
         raise CallError(str(e))
 
     return cred
+
+
+def kerberos_ticket(fn):
+    """ Decorator to raise a CallError if no ccache or if ticket in ccache is expired """
+    def check_ticket(*args, **kwargs):
+        gss_get_current_cred(krb5ccache.SYSTEM.value)
+        return fn(*args, **kwargs)
+
+    return check_ticket
 
 
 def parse_keytab(keytab_output: list) -> list:

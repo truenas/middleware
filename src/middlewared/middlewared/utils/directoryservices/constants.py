@@ -41,3 +41,8 @@ class NSS_Info(enum.Enum):
     @property
     def valid_services(self):
         return self.value[1]
+
+
+class DomainJoinResponse(enum.Enum):
+    PERFORMED_JOIN = 'PERFORMED_JOIN'
+    ALREADY_JOINED = 'ALREADY_JOINED'

@@ -1,6 +1,5 @@
 import enum
 import os
-import typing
 
 from collections import defaultdict
 from collections.abc import Iterable

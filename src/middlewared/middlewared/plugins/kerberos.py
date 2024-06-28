@@ -8,11 +8,11 @@ import shutil
 import tempfile
 import time
 
-from middlewared.plugins.idmap import DSType
 from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Password, Ref, Datetime, Bool
 from middlewared.service import CallError, ConfigService, CRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
+from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5_constants import (
     KRB_Keytab,
     krb5ccache,
@@ -260,7 +260,7 @@ class KerberosService(ConfigService):
     @private
     @accepts(Dict(
         "get-kerberos-creds",
-        Str("dstype", required=True, enum=[x.name for x in DSType]),
+        Str("dstype", required=True, enum=[x.value for x in DSType]),
         OROperator(
             Dict(
                 'ad_parameters',
@@ -289,8 +289,8 @@ class KerberosService(ConfigService):
             return {'kerberos_principal': conf['kerberos_principal']}
 
         verrors = ValidationErrors()
-        dstype = DSType[data['dstype']]
-        if dstype is DSType.DS_TYPE_ACTIVEDIRECTORY:
+        dstype = DSType(data['dstype'])
+        if dstype is DSType.AD:
             for k in ['bindname', 'bindpw', 'domainname']:
                 if not conf.get(k):
                     verrors.add(f'conf.{k}', 'Parameter is required.')
