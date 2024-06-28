@@ -5,17 +5,17 @@
 
 from libsg3.ses import EnclosureDevice
 
-from middlewared.schema import accepts, Dict, Str, Int
+from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import Service, filterable
 from middlewared.service_exception import MatchNotFound, ValidationError
 from middlewared.utils import filter_list
 
 from .constants import SUPPORTS_IDENTIFY_KEY
+from .fseries_drive_identify import set_slot_status as fseries_set_slot_status
 from .jbof_enclosures import map_jbof
 from .map2 import combine_enclosures
 from .nvme2 import map_nvme
 from .r30_drive_identify import set_slot_status as r30_set_slot_status
-from .fseries_drive_identify import set_slot_status as fseries_set_slot_status
 from .ses_enclosures2 import get_ses_enclosures
 
 
@@ -49,14 +49,14 @@ class Enclosure2Service(Service):
             dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
         return get_ses_enclosures(dmi)
 
-    def map_jbof(self, jbof_qry=None):
+    async def map_jbof(self, jbof_qry=None):
         """This method serves as an endpoint to easily be able to test
         the JBOF mapping logic specifically without having to call enclosure2.query
         which includes the head-unit and all other attached JBO{D/F}s.
         """
         if jbof_qry is None:
-            jbof_qry = self.middleware.call_sync('jbof.query')
-        return map_jbof(jbof_qry)
+            jbof_qry = await self.middleware.call('jbof.query')
+        return await map_jbof(jbof_qry)
 
     def map_nvme(self, dmi=None):
         """This method serves as an endpoint to easily be able to test
@@ -147,8 +147,7 @@ class Enclosure2Service(Service):
             for label in self.middleware.call_sync('datastore.query', 'truenas.enclosurelabel')
         }
         dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
-        jbofs = self.middleware.call_sync('jbof.query')
-        for i in self.get_ses_enclosures(dmi) + self.map_nvme(dmi) + self.map_jbof(jbofs):
+        for i in self.get_ses_enclosures(dmi) + self.map_nvme(dmi) + self.middleware.call_sync('enclosure2.map_jbof'):
             if i.pop('should_ignore'):
                 continue
 

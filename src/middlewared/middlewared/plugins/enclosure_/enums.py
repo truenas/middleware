@@ -61,3 +61,73 @@ class JbofModels(Enum):
     # name is iX's model (ES24N)
     # while the value (VDS2249R2) is the OEM's model
     ES24N = 'VDS2249R2'
+
+
+# See SES-4 7.2.3 Status element format, Table 74 — ELEMENT STATUS CODE field
+@unique
+class ElementStatus(Enum):
+    UNSUPPORTED = 'Unsupported'
+    OK = 'OK'
+    CRITICAL = 'Critical'
+    NONCRITICAL = 'Noncritical'
+    UNRECOVERABLE = 'Unrecoverable'
+    NOT_INSTALLED = 'Not installed'
+    UNKNOWN = 'Unknown'
+    NOT_AVAILABLE = 'Not available'
+    NO_ACCESS_ALLOWED = 'No access allowed'
+
+
+# See SES-4 7.1 Element definitions overview, Table 71 — Element type codes
+@unique
+class ElementType(Enum):
+    UNSPECIFIED = 'Unspecified'
+    DEVICE_SLOT = 'Device Slot'
+    POWER_SUPPLY = 'Power Supply'
+    COOLING = 'Cooling'
+    TEMPERATURE_SENSORS = 'Temperature Sensors'
+    DOOR_LOCK = 'Door Lock'
+    AUDIBLE_ALARM = 'Audible Alarm'
+    ENCLOSURE_SERVICES_CONTROLLER_ELECTRONICS = 'Enclosure Services Controller Electronics'
+    SCC_CONTROLLER_ELECTRONICS = 'SCC Controller Electronics'
+    NONVOLATILE_CACHE = 'Nonvolatile Cache'
+    INVALID_OPERATION_REASON = 'Invalid Operation Reason'
+    UNINTERRUPTIBLE_POWER_SUPPLY = 'Uninterruptible Power Supply'
+    DISPLAY = 'Display'
+    KEY_PAD_ENTRY = 'Key Pad Entry'
+    ENCLOSURE = 'Enclosure'
+    SCSI_PORT_TRANSCEIVER = 'SCSI Port/Transciever'
+    LANGUAGE = 'Language'
+    COMMUNICATION_PORT = 'Communication Port'
+    VOLTAGE_SENSOR = 'Voltage Sensor'
+    CURRENT_SENSOR = 'Current Sensor'
+    SCSI_TARGET_PORT = 'SCSI Target Port'
+    SCSI_INITIATOR_PORT = 'SCSI Initiator Port'
+    SIMPLE_SUBENCLOSURE = 'Simple Subenclosure'
+    ARRAY_DEVICE_SLOT = 'Array Device Slot'
+    SAS_EXPANDER = 'SAS Expander'
+    SAS_CONNECTOR = 'SAS Connector'
+
+
+# See DSP0268_2023.1 4.16.3.1 Health (https://www.dmtf.org/dsp/DSP0268)
+@unique
+class RedfishStatusHealth(Enum):
+    CRITICAL = 'Critical'
+    OK = 'OK'
+    WARNING = 'Warning'
+
+
+# See DSP0268_2023.1 4.16.3.4 State (https://www.dmtf.org/dsp/DSP0268)
+@unique
+class RedfishStatusState(Enum):
+    ABSENT = 'Absent'
+    DEFERRING = 'Deferring'
+    DISABLED = 'Disabled'
+    ENABLED = 'Enabled'
+    INTEST = 'InTest'
+    QUALIFIED = 'Qualified'
+    QUIESCED = 'Quiesced'
+    STANDBY_OFFLINE = 'StandbyOffline'
+    STANDBY_SPARE = 'StandbySpare'
+    STARTING = 'Starting'
+    UNAVAILABLE_OFFLINE = 'UnavailableOffline'
+    UPDATING = 'Updating'
