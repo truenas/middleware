@@ -1,14 +1,16 @@
 import fnmatch
 import re
 
-ALLOW_LIST_FULL_ADMIN = {'method': '*', 'resource': '*'}
+from middlewared.api.current import AllowListItem, HttpVerb, NonEmptyString
+
+ALLOW_LIST_FULL_ADMIN: AllowListItem = {'method': '*', 'resource': '*'}
 
 
 class Allowlist:
-    def __init__(self, allowlist: list[dict[str, str]]):
-        self.exact: dict[str, set[str]] = {}
+    def __init__(self, allowlist: list[AllowListItem]):
+        self.exact: dict[HttpVerb, set[NonEmptyString]] = {}
         self.full_admin = ALLOW_LIST_FULL_ADMIN in allowlist
-        self.patterns: dict[str, list[re.Pattern]] = {}
+        self.patterns: dict[HttpVerb, list[re.Pattern]] = {}
         for entry in allowlist:
             method = entry["method"]
             resource = entry["resource"]
@@ -19,10 +21,10 @@ class Allowlist:
                 self.exact.setdefault(method, set())
                 self.exact[method].add(resource)
 
-    def authorize(self, method: str, resource: str):
+    def authorize(self, method: HttpVerb, resource: NonEmptyString):
         return self._authorize_internal("*", resource) or self._authorize_internal(method, resource)
 
-    def _authorize_internal(self, method: str, resource: str):
+    def _authorize_internal(self, method: HttpVerb, resource: NonEmptyString):
         if (exact := self.exact.get(method)) and resource in exact:
             return True
 

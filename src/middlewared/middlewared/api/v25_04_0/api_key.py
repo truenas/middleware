@@ -1,43 +1,48 @@
 from datetime import datetime
-from typing import Literal
+from typing import Literal, TypeAlias
+from typing_extensions import Annotated
 
-from middlewared.api.base import BaseModel, NonEmptyString
+from pydantic import ConfigDict, StringConstraints
 
-__all__ = [
-    "ApiKeyCreateArgs",
-    "ApiKeyCreateResult",
-    "ApiKeyUpdateArgs",
-    "ApiKeyUpdateResult",
-    "ApiKeyDeleteArgs",
-    "ApiKeyDeleteResult",
-]
+from middlewared.api.base import BaseModel, Excluded, excluded_field, NonEmptyString, Private
+
+
+HttpVerb: TypeAlias = Literal["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE", "*"]
 
 
 class AllowListItem(BaseModel):
-    method: Literal["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE", "*"]
+    method: HttpVerb
     resource: NonEmptyString
 
 
-class ApiKeyCreate(BaseModel):
-    name: NonEmptyString
+class ApiKeyEntry(BaseModel):
+    """Represents a record in the account.api_key table."""
+    #: This allows the model to be created from an instance of plugins/api_key.APIKeyModel
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
+    key: Private[str]
+    created_at: datetime
     allowlist: list[AllowListItem]
+
+
+class ApiKeyCreate(ApiKeyEntry):
+    id: Excluded = excluded_field()
+    key: Excluded = excluded_field()
+    created_at: Excluded = excluded_field()
 
 
 class ApiKeyCreateArgs(BaseModel):
     api_key_create: ApiKeyCreate
 
 
-class ApiKeyCreateResult(ApiKeyCreate):
-    """Represents a record in the account.api_key table."""
-
-    id: int
-    key: str
-    created_at: datetime
+class ApiKeyCreateResult(BaseModel):
+    result: ApiKeyEntry
 
 
 class ApiKeyUpdate(ApiKeyCreate):
     reset: bool
-    update: bool = True
 
 
 class ApiKeyUpdateArgs(BaseModel):
@@ -46,8 +51,7 @@ class ApiKeyUpdateArgs(BaseModel):
 
 
 class ApiKeyUpdateResult(BaseModel):
-    # Needs implemented
-    pass
+    result: ApiKeyEntry
 
 
 class ApiKeyDeleteArgs(BaseModel):
@@ -55,5 +59,4 @@ class ApiKeyDeleteArgs(BaseModel):
 
 
 class ApiKeyDeleteResult(BaseModel):
-    # Needs implemented
-    pass
+    result: Literal[True]

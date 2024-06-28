@@ -1,14 +1,16 @@
 from datetime import datetime
 import random
 import string
-from typing import Any, TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING
 
 from passlib.hash import pbkdf2_sha256
 
 from middlewared.api import api_method
 from middlewared.api.current import (
     ApiKeyCreateArgs, ApiKeyCreateResult, ApiKeyUpdateArgs,
-    ApiKeyUpdateResult, ApiKeyDeleteArgs, ApiKeyDeleteResult
+    ApiKeyUpdateResult, ApiKeyDeleteArgs, ApiKeyDeleteResult,
+    ApiKeyCreate, ApiKeyEntry, ApiKeyUpdate, HttpVerb,
+    NonEmptyString
 )
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -28,17 +30,17 @@ class APIKeyModel(sa.Model):
 
 
 class ApiKey:
-    def __init__(self, api_key: dict[str, list[dict[str, str]]]):
+    def __init__(self, api_key: ApiKeyEntry):
         self.api_key = api_key
         self.allowlist = Allowlist(self.api_key["allowlist"])
 
-    def authorize(self, method: str, resource: str):
+    def authorize(self, method: HttpVerb, resource: NonEmptyString) -> bool:
         return self.allowlist.authorize(method, resource)
 
 
 class ApiKeyService(CRUDService):
 
-    keys: dict[int, dict[str, list[dict[str, str]]]] = {}
+    keys: dict[int, ApiKeyEntry] = {}
 
     class Config:
         namespace = "api_key"
@@ -46,13 +48,8 @@ class ApiKeyService(CRUDService):
         datastore_extend = "api_key.item_extend"
         cli_namespace = "auth.api_key"
 
-    @private
-    async def item_extend(self, item: dict):
-        item.pop("key")
-        return item
-
     @api_method(ApiKeyCreateArgs, ApiKeyCreateResult)
-    async def do_create(self, data: dict):
+    async def do_create(self, data: ApiKeyCreate) -> ApiKeyEntry:
         """
         Creates API Key.
 
@@ -76,7 +73,7 @@ class ApiKeyService(CRUDService):
         return self._serve(data, key)
 
     @api_method(ApiKeyUpdateArgs, ApiKeyUpdateResult)
-    async def do_update(self, id_, data: dict):
+    async def do_update(self, id_: int, data: ApiKeyUpdate) -> ApiKeyEntry:
         """
         Update API Key `id`.
 
@@ -108,7 +105,7 @@ class ApiKeyService(CRUDService):
         return self._serve(await self.get_instance(id_), key)
 
     @api_method(ApiKeyDeleteArgs, ApiKeyDeleteResult)
-    async def do_delete(self, id_: int):
+    async def do_delete(self, id_: int) -> Literal[True]:
         """
         Delete API Key `id`.
         """
@@ -139,7 +136,7 @@ class ApiKeyService(CRUDService):
         )
 
     @private
-    async def authenticate(self, key: str):
+    async def authenticate(self, key: str) -> ApiKey | None:
         try:
             key_id, key = key.split("-", 1)
             key_id = int(key_id)
@@ -156,7 +153,7 @@ class ApiKeyService(CRUDService):
 
         return ApiKey(db_key)
 
-    async def _validate(self, schema_name: str, data: dict, id_=None):
+    async def _validate(self, schema_name: str, data: ApiKeyEntry, id_: int=None):
         verrors = ValidationErrors()
 
         await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
@@ -166,7 +163,7 @@ class ApiKeyService(CRUDService):
     def _generate(self):
         return "".join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)])
 
-    def _serve(self, data: dict, key: Any | None):
+    def _serve(self, data: ApiKeyEntry, key: str | None) -> ApiKeyEntry:
         if key is None:
             return data
 
