@@ -1,3 +1,5 @@
+import collections
+import contextlib
 import glob
 import os
 import pathlib
@@ -5,6 +7,65 @@ import pathlib
 import pyudev
 
 from middlewared.service import CallError, private, Service
+
+
+# The basic unit of a block I/O is a sector. A sector is
+# 512 (2 ** 9) bytes. In sysfs, the files (sector_t type)
+# `<disk>/<part>/start` and `<disk>/<part>/size` are
+# shown as a multiple of 512 bytes. Most user-space
+# tools (fdisk, parted, sfdisk, etc) treat the partition
+# offsets in sectors.
+BYTES_512 = 512
+PART_INFO_FIELDS = (
+    # queue/logical_block_size (reported as a multiple of BYTES_512)
+    'lbs',
+    # starting offset of partition in sectors
+    'start_sector',
+    # ending offset of partition in sectors
+    'end_sector',
+    # total partition size in sectors
+    'total_sectors',
+    # starting offset of partition in bytes
+    'start_byte',
+    # ending offset of partition in bytes
+    'end_byte',
+    # total size of partition in bytes
+    'total_bytes',
+)
+PART_INFO = collections.namedtuple('part_info', PART_INFO_FIELDS, defaults=(0,) * len(PART_INFO_FIELDS))
+
+
+def get_partition_size_info(disk_name, s_offset, s_size):
+    """Kernel sysfs reports most disk files related to "size" in 512 bytes.
+    To properly calculate the starting SECTOR of partitions, you must
+    look at logical_block_size (again, reported in 512 bytes) and
+    do some calculations. It is _very_ important to do this properly
+    since almost all userspace tools that format disks expect partition
+    positions to be in sectors."""
+    lbs = 0
+    with contextlib.suppress(FileNotFoundError, ValueError):
+        with open(f'/sys/block/{disk_name}/queue/logical_block_size') as f:
+            lbs = int(f.read().strip())
+
+    if not lbs:
+        # this should never happen
+        return PART_INFO()
+
+    # important when dealing with 4kn drives
+    divisor = lbs // BYTES_512
+    # sectors
+    start_sector = s_offset // divisor
+    total_sectors = s_size // divisor
+    end_sector = total_sectors + start_sector - 1
+    # bytes
+    start_byte = start_sector * lbs
+    end_byte = end_sector * lbs
+    total_bytes = total_sectors * lbs
+
+    return PART_INFO(*(
+        lbs, start_sector, end_sector, total_sectors,
+        start_byte, end_byte, total_bytes,
+    ))
 
 
 class DiskService(Service):
@@ -19,41 +80,34 @@ class DiskService(Service):
             if dev.get('DEVTYPE') not in ('disk', 'partition'):
                 return
 
-        return dev.attributes.asint('size') * 512
+        return dev.attributes.asint('size') * BYTES_512
 
     @private
     def list_partitions(self, disk):
         parts = []
         try:
-            block_device = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
+            bd = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
         except pyudev.DeviceNotFoundByNameError:
             return parts
 
-        if not block_device.children:
+        if not bd.children:
             return parts
 
-        for p in filter(
-            lambda p: all(
-                p.get(k) for k in (
-                    'ID_PART_ENTRY_TYPE', 'ID_PART_ENTRY_UUID', 'ID_PART_ENTRY_NUMBER', 'ID_PART_ENTRY_SIZE'
-                )
-            ),
-            block_device.children
-        ):
+        req_keys = ('ID_PART_ENTRY_' + i for i in ('TYPE', 'UUID', 'NUMBER', 'SIZE'))
+        for p in filter(lambda p: all(p.get(k) for k in req_keys), bd.children):
             part_name = self.get_partition_for_disk(disk, p['ID_PART_ENTRY_NUMBER'])
-            start_sector = int(p['ID_PART_ENTRY_OFFSET'])
-            end_sector = int(p['ID_PART_ENTRY_OFFSET']) + int(p['ID_PART_ENTRY_SIZE']) - 1
+            pinfo = get_partition_size_info(disk, int(p['ID_PART_ENTRY_OFFSET']), int(p['ID_PART_ENTRY_SIZE']))
             part = {
                 'name': part_name,
                 'partition_type': p['ID_PART_ENTRY_TYPE'],
                 'partition_number': int(p['ID_PART_ENTRY_NUMBER']),
                 'partition_uuid': p['ID_PART_ENTRY_UUID'],
                 'disk': disk,
-                'start_sector': start_sector,
-                'start': start_sector * 512,
-                'end_sector': end_sector,
-                'end': end_sector * 512,
-                'size': int(p['ID_PART_ENTRY_SIZE']) * 512,
+                'start_sector': pinfo.start_sector,
+                'start': pinfo.start_byte,
+                'end_sector': pinfo.end_sector,
+                'end': pinfo.end_byte,
+                'size': pinfo.total_bytes,
                 'id': part_name,
                 'path': os.path.join('/dev', part_name),
                 'encrypted_provider': None,
