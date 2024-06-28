@@ -11,15 +11,11 @@ from middlewared.schema import accepts, returns, Bool, Dict, Int, List, Str, Ref
 from middlewared.service import job, private, ConfigService, Service, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.plugins.directoryservices import DSStatus, SSL
-from middlewared.plugins.idmap import DSType
 from middlewared.plugins.ldap_.ldap_client import LdapClient
 from middlewared.plugins.ldap_ import constants
+from middlewared.utils.directoryservices.constants import DSStatus, DSType, SSL
 from middlewared.utils.directoryservices.krb5_constants import krb5ccache
 from middlewared.validators import Range
-
-
-LDAP_DEPRECATED = "LDAP with SMB schema support"
 
 
 class SAMAccountType(enum.Enum):
@@ -128,29 +124,6 @@ class LDAPClient(Service):
                 self.logger.debug("Unable to parse results: %s", r)
 
         return res
-
-    @accepts(Dict(
-        'get-samba-domain',
-        Ref('ldap-configuration'),
-    ))
-    def get_samba_domains(self, data):
-        """
-        This returns a list of configured samba domains on the LDAP
-        server. This is used to determine whether the LDAP server has
-        The Samba LDAP schema. In this case, the SMB service can be
-        configured to use Samba's ldapsam passdb backend.
-        """
-        try:
-            results = LdapClient.search(
-                data['ldap-configuration'],
-                data['ldap-configuration']['basedn'],
-                pyldap.SCOPE_SUBTREE,
-                '(objectclass=sambaDomain)'
-            )
-        except Exception as e:
-            self._convert_exception(e)
-
-        return self.parse_results(results)
 
     @accepts(Dict(
         'get-root-dse',
@@ -700,10 +673,24 @@ class LDAPService(ConfigService):
         await self.middleware.call('datastore.update', self._config.datastore, new['id'], new, {'prefix': 'ldap_'})
 
         if must_reload:
-            if new['enable']:
-                await self.__start(job)
-            else:
-                await self.__stop(job)
+            try:
+                if new['enable']:
+                    await self.__start(job)
+                else:
+                    await self.__stop(job)
+            except Exception:
+                # Failed during configuration change. Make sure we fail safe.
+                await self.middleware.call(
+                    'datastore.update', self._config.datastore, new['id'],
+                    {'enable': False}, {'prefix': 'ldap_'}
+                )
+                await self.middleware.call(
+                    'directoryservices.health.set_state',
+                    DSType.LDAP.value, DSStatus.DISABLED.name
+                )
+                await self.middleware.call('etc.generate', 'nss')
+                await self.middleware.call('etc.generate', 'pam')
+                raise
 
         return await self.config()
 
@@ -742,7 +729,7 @@ class LDAPService(ConfigService):
             return
 
         payload = {
-            'dstype': DSType.DS_TYPE_LDAP.name,
+            'dstype': DSType.LDAP.value,
             'conf': {
                 'binddn': ldap_config.get('binddn', ''),
                 'bindpw': ldap_config.get('bindpw', ''),
@@ -765,11 +752,6 @@ class LDAPService(ConfigService):
             await self.kinit(ldap_config)
 
         await self.middleware.call('ldapclient.validate_credentials', client_conf)
-
-    @private
-    async def get_samba_domains(self, ldap_config=None):
-        client_conf = await self.ldap_conf_to_client_config(ldap_config)
-        return await self.middleware.call('ldapclient.get_samba_domains', {"ldap-configuration": client_conf})
 
     @private
     async def get_root_DSE(self, ldap_config=None):
@@ -812,81 +794,6 @@ class LDAPService(ConfigService):
         return await self.middleware.call('ldapclient.get_dn', payload)
 
     @private
-    async def started(self):
-        """
-        Returns False if disabled, True if healthy, raises exception if faulted.
-        """
-        verrors = ValidationErrors()
-        ldap = await self.config()
-        if not ldap['enable']:
-            return False
-
-        await self.common_validate(ldap, ldap, verrors)
-        try:
-            verrors.check()
-        except ValidationErrors:
-            await self.middleware.call(
-                'datastore.update', self._config.datastore, 1,
-                {'enable': False}, {'prefix': 'ldap_'}
-            )
-            raise CallError('Automatically disabling LDAP service due to invalid configuration.',
-                            errno.EINVAL)
-
-        """
-        Initialize state to "JOINING" until after booted.
-        """
-        if not await self.middleware.call('system.ready'):
-            await self.set_state(DSStatus['JOINING'])
-            return True
-
-        try:
-            await self.get_root_DSE(ldap)
-        except CallError:
-            raise
-        except Exception as e:
-            raise CallError(e)
-
-        if not await self.middleware.call('service.started', 'sssd'):
-            await self.middleware.call('etc.generate', 'ldap')
-            await self.middleware.call('service.start', 'sssd')
-
-        await self.set_state(DSStatus['HEALTHY'])
-        return True
-
-    @private
-    async def get_workgroup(self, ldap=None):
-        ret = None
-        smb = await self.middleware.call('smb.config')
-        if ldap is None:
-            ldap = await self.config()
-
-        ret = await self.middleware.call('ldap.get_samba_domains', ldap)
-        if len(ret) > 1:
-            self.logger.warning('Multiple Samba Domains detected in LDAP environment '
-                                'auto-configuration of workgroup map have failed: %s', ret)
-
-        ret = ret[0]['data']['sambaDomainName'][0] if ret else []
-
-        if ret and smb['workgroup'] != ret:
-            self.logger.debug(f'Updating SMB workgroup to match the LDAP domain name [{ret}]')
-            await self.middleware.call('smb.update', {'workgroup': ret})
-
-        return ret
-
-    @private
-    async def set_state(self, state):
-        return await self.middleware.call('directoryservices.set_state', {'ldap': state.name})
-
-    @accepts(roles=['DIRECTORY_SERVICE_READ'])
-    @returns(Ref('directoryservice_state'))
-    async def get_state(self):
-        """
-        Wrapper function for 'directoryservices.get_state'. Returns only the state of the
-        LDAP service.
-        """
-        return (await self.middleware.call('directoryservices.get_state'))['ldap']
-
-    @private
     def create_sssd_dirs(self):
         os.makedirs('/var/run/sssd-cache/mc', mode=0o755, exist_ok=True)
         os.makedirs('/var/run/sssd-cache/db', mode=0o755, exist_ok=True)
@@ -898,46 +805,26 @@ class LDAPService(ConfigService):
         If state is 'HEALTHY' or 'FAULTED', then stop the service first before restarting it to ensure
         that the service begins in a clean state.
         """
-        ldap_state = await self.middleware.call('ldap.get_state')
-        if ldap_state in ['LEAVING', 'JOINING']:
-            raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
-
         job.set_progress(0, 'Preparing to configure LDAP directory service.')
+        await self.middleware.call('directoryservices.health.set_state', DSType.LDAP.value, DSStatus.JOINING.name)
         ldap = await self.config()
 
         await self.middleware.call('ldap.create_sssd_dirs')
 
-        if ldap['kerberos_realm']:
-            job.set_progress(5, 'Starting kerberos')
-            await self.middleware.call('kerberos.start')
+        if ldap['server_type'] == constants.SERVER_TYPE_FREEIPA:
+            ipa_config = await self.middleware.call('ldap.ipa_config')
+            await job.wrap(await self.middleware.call('directoryservices.connection.join_domain', 'IPA', ipa_config['domain']))
 
-        job.set_progress(15, 'Generating configuration files')
-        await self.middleware.call('etc.generate', 'rc')
-        await self.middleware.call('etc.generate', 'ldap')
-        await self.middleware.call('etc.generate', 'pam')
-        await self.middleware.call('etc.generate', 'nss')
+        cache_job_id = await self.middleware.call('directoryservices.connection.activate')
 
-        job.set_progress(30, 'Starting sssd service')
-        await self.middleware.call('service.restart', 'sssd')
-
-        await self.set_state(DSStatus['HEALTHY'])
-
-        job.set_progress(80, 'Restarting dependent services')
-        cache_job = await self.middleware.call('directoryservices.cache.refresh_impl')
-        await cache_job.wait()
-        await self.middleware.call('directoryservices.restart_dependent_services')
-
+        await job.wrap(await self.middlware.call('core.job_wait', cache_job_id))
+        await self.middleware.call('directoryservices.health.set_state', DSType.LDAP.value, DSStatus.HEALTHY.name)
         job.set_progress(100, 'LDAP directory service started.')
 
     @private
     async def __stop(self, job):
-        ldap_state = await self.middleware.call('ldap.get_state')
-        if ldap_state in ['LEAVING', 'JOINING']:
-            raise CallError(f'LDAP state is [{ldap_state}]. Please wait until directory service operation completes.', errno.EBUSY)
-
+        await self.middleware.call('directoryservices.health.set_state', DSType.LDAP.value, DSStatus.LEAVING.name)
         job.set_progress(0, 'Preparing to stop LDAP directory service.')
-        await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
-        await self.set_state(DSStatus['LEAVING'])
         job.set_progress(10, 'Rewriting configuration files.')
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'ldap')
@@ -946,6 +833,6 @@ class LDAPService(ConfigService):
 
         job.set_progress(80, 'Stopping sssd service.')
         await self.middleware.call('service.stop', 'sssd')
-        await self.set_state(DSStatus['DISABLED'])
+        await self.middleware.call('directoryservices.health.set_state', DSType.LDAP.value, DSStatus.DISABLED.name)
         await self.middleware.call('directoryservices.cache.abort_refresh')
         job.set_progress(100, 'LDAP directory service stopped.')

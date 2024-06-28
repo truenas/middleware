@@ -40,6 +40,7 @@ from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.plugins.smb_.utils import apply_presets, is_time_machine_share, smb_strip_comments
 from middlewared.plugins.idmap_.idmap_constants import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 from middlewared.utils import filter_list, run
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
@@ -659,8 +660,10 @@ class SMBService(ConfigService):
 
         verrors = ValidationErrors()
         # Skip this check if we're joining AD
-        ad_state = await self.middleware.call('activedirectory.get_state')
-        if ad_state in ['HEALTHY', 'FAULTED']:
+        ds = await self.middleware.call('directoryservices.status')
+        if ds['type'] == DSType.AD.value and ds['status'] in (
+            DSStatus.HEALTHY.name, DSStatus.FAULTED.name
+        ):
             for i in ('workgroup', 'netbiosname', 'netbiosalias'):
                 if old[i] != new[i]:
                     verrors.add(f'smb_update.{i}',
@@ -888,7 +891,8 @@ class SharingSMBService(SharingService):
         do_global_reload = await self.must_reload_globals(data)
 
         if do_global_reload:
-            if (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY':
+            ds = await self.middleware.call('directoryservices.status')
+            if ds['type'] == DSType.AD.value and ds['status'] == DSStatus.HEALTHY.name:
                 if data['home']:
                     await self.middleware.call('etc.generate', 'smb')
                     await self.middleware.call('idmap.clear_idmap_cache')
@@ -1043,7 +1047,8 @@ class SharingSMBService(SharingService):
             do_global_reload = True
 
         if do_global_reload:
-            if (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY':
+            ds = await self.middleware.call('directoryservices.status')
+            if ds['type'] == DSType.AD.value and ds['status'] == DSStatus.HEALTHY.name:
                 if new['home'] or old['home']:
                     await self.middleware.call('idmap.clear_idmap_cache')
 

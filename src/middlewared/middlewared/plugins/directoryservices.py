@@ -1,8 +1,5 @@
-import asyncio
 import enum
-import os
 import struct
-import errno
 
 from base64 import b64decode
 from middlewared.schema import accepts, Dict, List, OROperator, Ref, returns, Str
@@ -11,6 +8,7 @@ from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.directoryservices.constants import (
     DSStatus, DSType, NSS_Info
 )
+from middlewared.utils.directoryservices.health import DSHealthObj
 
 DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh']
 
@@ -36,38 +34,31 @@ class DirectoryServices(Service):
     @accepts()
     @returns(Dict(
         'directoryservices_status',
-        Str('type', enum=[x.value.upper() for x in DSType], null=True),
-        Ref('directoryservice_state', 'status')
+        Str('type', enum=[x.value for x in DSType], null=True),
+        Str('status', enum=[status.name for status in DSStatus], null=True)
     ))
-    async def status(self):
+    def status(self):
         """
         Provide the type and status of the currently-enabled directory service
         """
-        # Currently wrap around `get_state`. In upcoming PR we will get
-        # status more directly and deprecate the `get_state` method.
-        state = await self.get_state()
-        for ds in DSType:
-            if (status := state.get(ds.value.lower(), 'DISABLED')) == DSStatus.DISABLED.name:
-                continue
+        if not DSHealthObj.initialized:
+            try:
+                self.middlware.call_sync('directoryservices.health.check')
+            except Exception:
+                pass
 
-            return {
-                'type': ds.value,
-                'status': status
-            }
-
-        return {
-            'type': None,
-            'status': None
-        }
+        status = DSHealthObj.dump()
+        status.pop('status_msg')
+        return status
 
     @no_authz_required
     @accepts()
     @returns(Dict(
         'directory_services_states',
-        Ref('directoryservice_state', 'activedirectory'),
-        Ref('directoryservice_state', 'ldap')
+        Str(DSType.AD.value.lower(), enum=[status.name for status in DSStatus]),
+        Str(DSType.LDAP.value.lower(), enum=[status.name for status in DSStatus]),
     ))
-    async def get_state(self):
+    def get_state(self):
         """
         `DISABLED` Directory Service is disabled.
 
@@ -80,48 +71,16 @@ class DirectoryServices(Service):
 
         `HEALTHY` Directory Service is enabled, and last status check has passed.
         """
-        try:
-            return await self.middleware.call('cache.get', 'DS_STATE')
-        except KeyError:
-            ds_state = {}
-            for srv in DSType:
-                if srv is DSType.IPA:
-                    # TODO: IPA join not implemented yet
-                    continue
-                try:
-                    res = await self.middleware.call(f'{srv.value.lower()}.started')
-                    ds_state[srv.value.lower()] = DSStatus.HEALTHY.name if res else DSStatus.DISABLED.name
+        status = self.status()
+        output = {'activedirectory': DSStatus.DISABLED.name, 'ldap': DSStatus.DISABLED.name}
 
-                except CallError as e:
-                    if e.errno == errno.EINVAL:
-                        self.logger.warning('%s: setting service to DISABLED due to invalid config',
-                                            srv.value.upper(), exc_info=True)
-                        ds_state[srv.value] = DSStatus.DISABLED.name
-                    else:
-                        ds_state[srv.value] = DSStatus.FAULTED.name
+        match status['type']:
+            case DSType.AD.value:
+                output[DSType.AD.value.lower()] = status['status']
+            case DSType.LDAP.value | DSType.IPA.value:
+                output[DSType.LDAP.value.lower()] = status['status']
 
-                except Exception:
-                    ds_state[srv.value] = DSStatus.FAULTED.name
-
-            await self.middleware.call('cache.put', 'DS_STATE', ds_state, 60)
-            return ds_state
-
-    @private
-    async def set_state(self, new):
-        ds_state = {
-            'activedirectory': DSStatus.DISABLED.name,
-            'ldap': DSStatus.DISABLED.name,
-        }
-
-        try:
-            old_state = await self.middleware.call('cache.get', 'DS_STATE')
-            ds_state.update(old_state)
-        except KeyError:
-            self.logger.trace("No previous DS_STATE exists. Lazy initializing for %s", new)
-
-        ds_state.update(new)
-        self.middleware.send_event('directoryservices.status', 'CHANGED', fields=ds_state, roles=['DIRECTORY_SERVICE_READ'])
-        return await self.middleware.call('cache.put', 'DS_STATE', ds_state)
+        return output
 
     @accepts()
     @job(lock="directoryservices_refresh_cache", lock_queue_size=1)
@@ -216,70 +175,19 @@ class DirectoryServices(Service):
 
         return {"dbconfig": stored_ts, "secrets": passwd_ts}
 
-    async def __kerberos_start_retry(self, retries=10):
-        while retries > 0:
-            try:
-                await self.middleware.call('kerberos.start')
-                break
-            except CallError as e:
-                if e.errno == errno.EAGAIN:
-                    self.logger.debug("Failed to start kerberos. Retrying %d more times.",
-                                      retries)
-                else:
-                    self.logger.warning("Failed to start kerberos. Retrying %d more times.",
-                                        retries, exc_info=True)
-            await asyncio.sleep(1)
-            retries -= 1
-
     @private
     @job()
     async def initialize(self, job, data=None):
-        """
-        Ensure that secrets.tdb at a minimum exists. If it doesn't exist, try to restore
-        from a backup stored in our config file. If this fails, try to use what
-        auth info we have to recover the information. If we are in an LDAP
-        environment with a samba schema in use, we just need to write the password into
-        secrets.tdb.
-        """
-        if data is None:
-            ldap_conf = await self.middleware.call("ldap.config")
-            ldap_enabled = ldap_conf['enable']
-            ad_enabled = (await self.middleware.call("activedirectory.config"))['enable']
-        else:
-            ldap_enabled = data['ldap']
-            ad_enabled = data['activedirectory']
-            if ldap_enabled:
-                ldap_conf = await self.middleware.call("ldap.config")
-
-        workgroup = (await self.middleware.call("smb.config"))["workgroup"]
-        is_kerberized = ad_enabled
-
-        if not ldap_enabled and not ad_enabled:
+        # retrieve status to force initialization of status
+        if (await self.middleware.call('directoryservices.status'))['type'] is None:
             return
-
-        health_check = 'activedirectory.started' if ad_enabled else 'ldap.started'
-
-        has_secrets = await self.middleware.call('directoryservices.secrets.has_domain', workgroup)
-        if ad_enabled and not has_secrets:
-            self.logger.warning("Domain secrets database does not exist. "
-                                "Attempting to restore.")
-
-            if not await self.middleware.call("directoryservices.secrets.restore"):
-                self.logger.warning("Failed to restore domain secrets database. "
-                                    "Re-joining AD domain may be required.")
-
-        if ldap_enabled and ldap_conf['kerberos_realm']:
-            is_kerberized = True
 
         try:
             await self.middleware.call('idmap.gencache.flush')
         except Exception:
             self.logger.warning('Cache flush failed', exc_info=True)
 
-        if is_kerberized:
-            await self.__kerberos_start_retry()
-
-        await self.middleware.call(health_check)
+        await self.middleware.call('directoryservices.health.check')
 
     @private
     def restart_dependent_services(self):
@@ -311,18 +219,10 @@ class DirectoryServices(Service):
             return
 
         self.middleware.call_sync('service.restart', 'idmap')
-        ldap_enabled = self.middleware.call_sync('ldap.config')['enable']
-        ad_enabled = self.middleware.call_sync('activedirectory.config')['enable']
-        if not ldap_enabled and not ad_enabled:
-            job.set_progress(100, "No directory services enabled.")
-            return
 
-        # Started methods will transition us from JOINING to HEALTHY
-        # which allows the cache refresh to proceed
-        if ad_enabled:
-            self.middleware.call_sync('activedirectory.started')
-        else:
-            self.middleware.call_sync('ldap.started')
+        self.middlware.call_sync('directoryservices.health.check')
+        if DSHealthObj.dstype is None:
+            return
 
         job.set_progress(10, 'Refreshing cache'),
         cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh')

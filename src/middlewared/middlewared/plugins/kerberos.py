@@ -8,11 +8,11 @@ import shutil
 import tempfile
 import time
 
-from middlewared.plugins.idmap import DSType
 from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Password, Ref, Datetime, Bool
 from middlewared.service import CallError, ConfigService, CRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
+from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5_constants import (
     KRB_Keytab,
     krb5ccache,
@@ -260,7 +260,7 @@ class KerberosService(ConfigService):
     @private
     @accepts(Dict(
         "get-kerberos-creds",
-        Str("dstype", required=True, enum=[x.name for x in DSType]),
+        Str("dstype", required=True, enum=[x.value for x in DSType]),
         OROperator(
             Dict(
                 'ad_parameters',
@@ -289,8 +289,8 @@ class KerberosService(ConfigService):
             return {'kerberos_principal': conf['kerberos_principal']}
 
         verrors = ValidationErrors()
-        dstype = DSType[data['dstype']]
-        if dstype is DSType.DS_TYPE_ACTIVEDIRECTORY:
+        dstype = DSType(data['dstype'])
+        if dstype is DSType.AD:
             for k in ['bindname', 'bindpw', 'domainname']:
                 if not conf.get(k):
                     verrors.add(f'conf.{k}', 'Parameter is required.')
@@ -316,6 +316,22 @@ class KerberosService(ConfigService):
             'username': f'{bind_cn[1]}@{krb_realm["realm"]}',
             'password': conf['bindpw']
         }
+
+    @private
+    def _has_current_cred(self, credential, ccache_path):
+        if (current_cred := gss_get_current_cred(ccache_path, False)) is None:
+            return False 
+
+        if str(current_cred.name) == credential:
+            if current_cred.lifetime > KRB_TKT_CHECK_INTERVAL * 2:
+                return True
+
+        try:
+            os.unlink(ccache_path)
+        except FileNotFoundError:
+            pass
+
+        return False
 
     @private
     @accepts(Dict(
@@ -378,6 +394,10 @@ class KerberosService(ConfigService):
                                   creds['kerberos_principal'], ','.join(principals))
                 self.middleware.call_sync('etc.generate', 'kerberos')
 
+            if self._has_current_cred(creds['kerberos_principal'], ccache_path):
+                # we already have a ticket skip unnecessary ccache manipulation
+                return
+
             try:
                 gss_acquire_cred_principal(
                     creds['kerberos_principal'],
@@ -404,6 +424,10 @@ class KerberosService(ConfigService):
             except Exception as exc:
                 raise CallError(str(exc))
         else:
+            if self._has_current_cred(creds['username'], ccache_path):
+                # we already have a ticket skip unnecessary ccache manipulation
+                return
+
             try:
                 gss_acquire_cred_user(
                     creds['username'],
@@ -446,7 +470,7 @@ class KerberosService(ConfigService):
 
         if ad['enable']:
             payload = {
-                'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
+                'dstype': DSType.AD.value,
                 'conf': {
                     'bindname': ad['bindname'],
                     'bindpw': ad.get('bindpw', ''),
@@ -457,7 +481,7 @@ class KerberosService(ConfigService):
 
         if ldap['enable'] and ldap['kerberos_realm']:
             payload = {
-                'dstype': DSType.DS_TYPE_LDAP.name,
+                'dstype': DSType.LDAP.value,
                 'conf': {
                     'binddn': ldap['binddn'],
                     'bindpw': ldap['bindpw'],

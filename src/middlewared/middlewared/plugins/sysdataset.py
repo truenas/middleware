@@ -18,6 +18,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
 from middlewared.service_exception import InstanceNotFound
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 
@@ -233,13 +234,8 @@ class SystemDatasetService(ConfigService):
         verrors = ValidationErrors()
         if new['pool'] != config['pool']:
             system_ready = await self.middleware.call('system.ready')
-            try:
-                ad_enabled = (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY'
-            except Exception:
-                self.logger.error('Failed to retrieve activedirectory state', exc_info=True)
-                ad_enabled = False
-
-            if system_ready and ad_enabled:
+            ds = await self.middleware.call('directoryservices.status')
+            if system_ready and ds['type'] == DSType.AD.value and ds['status'] == DSStatus.HEALTHY.name:
                 verrors.add(
                     'sysdataset_update.pool',
                     'System dataset location may not be moved while the Active Directory service is enabled.',

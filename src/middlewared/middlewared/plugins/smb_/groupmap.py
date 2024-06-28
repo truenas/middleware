@@ -1,6 +1,7 @@
 from middlewared.service import Service, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import run
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.plugins.smb import SMBCmd, SMBBuiltin, SMBPath
 
 import os
@@ -128,8 +129,8 @@ class SMBService(Service):
         groupmap = await self.groupmap_list()
         admin_group = (await self.middleware.call('smb.config'))['admin_group']
 
-        ad_state = await self.middleware.call('activedirectory.get_state')
-        if ad_state == 'HEALTHY':
+        ds = await self.middleware.call('directoryservices.status')
+        if ds['type'] == DSType.AD.value and ds['status'] == DSStatus.HEALTHY.name:
             try:
                 domain_info = await self.middleware.call('idmap.domain_info',
                                                          'DS_TYPE_ACTIVEDIRECTORY')
@@ -418,9 +419,6 @@ class SMBService(Service):
         payload = {}
         to_add = []
         to_del = []
-
-        if await self.middleware.call('ldap.get_state') != "DISABLED":
-            return
 
         if not bypass_sentinel_check and not await self.middleware.call('smb.is_configured'):
             raise CallError(
