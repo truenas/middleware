@@ -299,6 +299,9 @@ class EtcService(Service):
                 {'type': 'py', 'path': 'local/ssh/config'},
             ]
         },
+        'login_banner': [
+            {'type': 'mako', 'path': 'login_banner', 'mode': 0o600}
+        ],
         'ntpd': [
             {'type': 'mako', 'path': 'chrony/chrony.conf'}
         ],

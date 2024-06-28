@@ -262,6 +262,7 @@ class SystemAdvancedService(ConfigService):
                 await self.middleware.call('etc.generate', 'motd')
 
             if original_data['login_banner'] != config_data['login_banner']:
+                await self.middleware.call('etc.generate', 'login_banner')
                 await self.middleware.call('service.reload', 'ssh')
 
             if original_data['powerdaemon'] != config_data['powerdaemon']:
