@@ -34,6 +34,8 @@ logging.getLogger('acme.client').setLevel(logging.WARNING)
 logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(logging.WARNING)
 # "Encoding detection: ascii is most likely the one."
 logging.getLogger('charset_normalizer').setLevel(logging.INFO)
+# Prevent debug docker logs
+logging.getLogger('docker.utils.config').setLevel(logging.ERROR)
 logging.TRACE = 6
 
 FAILOVER_LOGFILE = '/var/log/failover.log'
