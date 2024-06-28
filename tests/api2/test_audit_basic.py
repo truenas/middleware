@@ -42,7 +42,7 @@ class AUDIT_CONFIG():
 
 
 # def get_zfs(key, zfs_config):
-def get_zfs(type, key, zfs_config):
+def get_zfs(data_type, key, zfs_config):
     """ Get the equivalent ZFS value associated with the audit config setting """
 
     types = {
@@ -63,7 +63,7 @@ def get_zfs(type, key, zfs_config):
         }
     }
     # return zfs[key]
-    return types[type][key]
+    return types[data_type][key]
 
 
 @pytest.fixture(scope='class')
@@ -86,7 +86,7 @@ def initialize_for_smb_tests():
 
 @pytest.fixture(scope='class')
 def init_audit():
-    """ Provides the audit and dataset configs and cleans up afterwared """
+    """ Provides the audit and dataset configs and cleans up afterward """
     try:
         dataset = call('audit.get_audit_dataset')
         config = call('audit.config')
@@ -123,11 +123,11 @@ class TestAuditConfig:
         for key in [k for k in AUDIT_DATASET_CONFIG if AUDIT_DATASET_CONFIG[k] == 'zfs']:
             assert get_zfs('zfs', key, dataset) == config[key], f"config[{key}] = {config[key]}"
 
-    def test_audit_config_dataset_defaults(self):
+    def test_audit_config_dataset_defaults(self, init_audit):
         """ Confirm Audit dataset uses Audit default settings """
-        ds_config = call('audit.get_audit_dataset')
-        assert ds_config['org.freenas:quota_warning'] == AUDIT_CONFIG.defaults['quota_fill_warning']
-        assert ds_config['org.freenas:quota_critical'] == AUDIT_CONFIG.defaults['quota_fill_critical']
+        (unused, ds_config) = init_audit
+        assert ds_config['org.freenas:refquota_warning'] == AUDIT_CONFIG.defaults['quota_fill_warning']
+        assert ds_config['org.freenas:refquota_critical'] == AUDIT_CONFIG.defaults['quota_fill_critical']
 
     def test_audit_config_updates(self):
         """
@@ -157,7 +157,7 @@ class TestAuditConfig:
         assert get_zfs('zfs', 'refquota', audit_dataset) == 2*GiB  # noqa (allow 2*GiB)
 
         used_in_dataset = get_zfs('space', 'used_by_dataset', audit_dataset)
-        assert abs(new_config['space']['available'] - 2*GiB) == used_in_dataset  # noqa (allow 2*GiB)
+        assert 2*GiB - new_config['space']['available'] == used_in_dataset  # noqa (allow 2*GiB)
 
         new_config = call('audit.update', {'reservation': 1})
         assert new_config['reservation'] == 1
@@ -182,6 +182,15 @@ class TestAuditConfig:
 
 class TestAuditOps:
     def test_audit_query(self, initialize_for_smb_tests):
+        # If this test has been run more than once on this VM, then
+        # the audit DB _will_ record the creation.
+        # Let's get the starting count.
+        initial_ops_count = call('audit.query', {
+            'services': ['SMB'],
+            'query-filters': [['username', '=', SMBUSER]],
+            'query-options': {'count': True}
+        })
+
         share = initialize_for_smb_tests['share']
         with smb_connection(
             share=share['name'],
@@ -194,13 +203,17 @@ class TestAuditOps:
                 c.read(fd, 0, 3)
             c.close(fd, True)
 
-        sleep(10)
-        ops = call('audit.query', {
-            'services': ['SMB'],
-            'query-filters': [['username', '=', SMBUSER]],
-            'query-options': {'count': True}
-        })
-        assert ops > 0
+        retries = 2
+        ops_count = initial_ops_count
+        while retries > 0 and (ops_count - initial_ops_count) <= 0:
+            sleep(5)
+            ops_count = call('audit.query', {
+                'services': ['SMB'],
+                'query-filters': [['username', '=', SMBUSER]],
+                'query-options': {'count': True}
+            })
+            retries -= 1
+        assert ops_count > initial_ops_count, f"retries remaining = {retries}"
 
     def test_audit_export(self):
         for backend in ['CSV', 'JSON', 'YAML']:

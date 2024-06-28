@@ -39,8 +39,9 @@ from middlewared.validators import Range
 
 
 ALL_AUDITED = [svc[0] for svc in AUDITED_SERVICES]
-QUOTA_WARN = TNUserProp.QUOTA_WARN.value
-QUOTA_CRIT = TNUserProp.QUOTA_CRIT.value
+# We set the refquota limit
+QUOTA_WARN = TNUserProp.REFQUOTA_WARN.value
+QUOTA_CRIT = TNUserProp.REFQUOTA_CRIT.value
 _GIB = 1024 ** 3
 
 
