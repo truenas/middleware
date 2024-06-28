@@ -86,16 +86,14 @@ class AppService(Service):
         """
         return sorted(list(await self.middleware.call('catalog.retrieve_mapped_categories')))
 
-    @accepts(Str('app_name'), Str('catalog'), Str('train'))
+    @accepts(Str('app_name'), Str('train'))
     @returns(List(items=[Ref('available_apps')]))
     def similar(self, app_name, catalog, train):
         """
         Retrieve applications which are similar to `app_name`.
         """
         available_apps = self.available()
-        app = filter_list(
-            available_apps, [['name', '=', app_name], ['catalog', '=', catalog], ['train', '=', train]], {'get': True}
-        )
+        app = filter_list(available_apps, [['name', '=', app_name], ['train', '=', train]], {'get': True})
         similar_apps = {}
 
         # Calculate the number of common categories/tags between app and other apps
