@@ -483,7 +483,12 @@ def main():
     has_ticket_assert()
     ipa_config = parse_ipa_config()
 
-    initialize_ipa_connection()
+    match args.action:
+        case IpaOperation.GET_CACERT_FROM_LDAP.name | IpaOperation.JOIN.name:
+            pass
+        case _:
+            initialize_ipa_connection()
+
     resp = None
 
     try:

@@ -5,14 +5,15 @@ import gssapi
 import io
 import os
 import shutil
+import subprocess
 import tempfile
 import time
 
-from middlewared.plugins.idmap import DSType
 from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Password, Ref, Datetime, Bool
 from middlewared.service import CallError, ConfigService, CRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
+from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5_constants import (
     KRB_Keytab,
     krb5ccache,
@@ -25,6 +26,7 @@ from middlewared.utils.directoryservices.krb5 import (
     gss_get_current_cred,
     gss_acquire_cred_principal,
     gss_acquire_cred_user,
+    gss_dump_cred,
     extract_from_keytab,
     keytab_services,
     klist_impl,
@@ -98,15 +100,14 @@ class KerberosService(ConfigService):
         return path_out
 
     @private
-    def generate_stub_config(self, realm, kdc=None):
-        if os.path.exists('/etc/krb5.conf'):
-            return
-
+    def generate_stub_config(self, realm, kdc=None, libdefaultsaux=None):
+        aux = libdefaultsaux or []
         krbconf = KRB5Conf()
         libdefaults = {
             str(KRB_LibDefaults.DEFAULT_REALM): realm,
             str(KRB_LibDefaults.DNS_LOOKUP_REALM): 'false',
-            str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): f'FILE:{krb5ccache.SYSTEM.value}'
+            str(KRB_LibDefaults.FORWARDABLE): 'true',
+            str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): 'KEYRING:persistent:%{uid}'
         }
 
         realms = [{
@@ -119,8 +120,9 @@ class KerberosService(ConfigService):
         if kdc:
             realms[0]['kdc'].append(kdc)
             libdefaults[str(KRB_LibDefaults.DNS_LOOKUP_KDC)] = 'false'
+            libdefaults[str(KRB_LibDefaults.DNS_CANONICALIZE_HOSTNAME)] = 'false'
 
-        krbconf.add_libdefaults(libdefaults)
+        krbconf.add_libdefaults(libdefaults, '\n'.join(aux))
         krbconf.add_realms(realms)
         krbconf.write()
 
@@ -150,13 +152,13 @@ class KerberosService(ConfigService):
         if krb_ccache is krb5ccache.USER:
             ccache_path += str(data['ccache_uid'])
 
-        if gss_get_current_cred(ccache_path, False):
-            return True
+        if (cred := gss_get_current_cred(ccache_path, False)) is not None:
+            return gss_dump_cred(cred)
 
         if raise_error:
             raise CallError("Kerberos ticket is required.", errno.ENOKEY)
 
-        return False
+        return None
 
     @private
     async def _validate_param_type(self, data):
@@ -260,7 +262,7 @@ class KerberosService(ConfigService):
     @private
     @accepts(Dict(
         "get-kerberos-creds",
-        Str("dstype", required=True, enum=[x.name for x in DSType]),
+        Str("dstype", required=True, enum=[x.value for x in DSType]),
         OROperator(
             Dict(
                 'ad_parameters',
@@ -289,8 +291,8 @@ class KerberosService(ConfigService):
             return {'kerberos_principal': conf['kerberos_principal']}
 
         verrors = ValidationErrors()
-        dstype = DSType[data['dstype']]
-        if dstype is DSType.DS_TYPE_ACTIVEDIRECTORY:
+        dstype = DSType(data['dstype'])
+        if dstype is DSType.AD:
             for k in ['bindname', 'bindpw', 'domainname']:
                 if not conf.get(k):
                     verrors.add(f'conf.{k}', 'Parameter is required.')
@@ -318,6 +320,23 @@ class KerberosService(ConfigService):
         }
 
     @private
+    def _dump_current_cred(self, credential, ccache_path):
+        """ returns dump of kerberos ccache if valid and not about to expire """
+        if (current_cred := gss_get_current_cred(ccache_path, False)) is None:
+            return None
+
+        if str(current_cred.name) == credential:
+            if current_cred.lifetime > KRB_TKT_CHECK_INTERVAL * 2:
+                return gss_dump_cred(current_cred)
+
+        # We need to pass through kdestroy because ccache is in kernel keyring
+        kdestroy = subprocess.run(['kdestroy', '-c', ccache_path], check=False, capture_output=True)
+        if kdestroy.returncode != 0:
+            raise CallError(f'kdestroy failed with error: {kdestroy.stderr.decode()}')
+
+        return None
+
+    @private
     @accepts(Dict(
         'do_kinit',
         OROperator(
@@ -342,7 +361,11 @@ class KerberosService(ConfigService):
             ('add', {
                 'name': 'kdc_override',
                 'type': 'dict',
-                'args': [Str('domain', default=None), Str('kdc', default=None)]
+                'args': [
+                    Str('domain', default=None),
+                    Str('kdc', default=None),
+                    List('libdefaults_aux', default=None)
+                ]
             }),
         )
     ))
@@ -368,7 +391,7 @@ class KerberosService(ConfigService):
             if override['domain'] is None:
                 raise CallError('Domain missing from KDC override')
 
-            self.generate_stub_config(override['domain'], override['kdc'])
+            self.generate_stub_config(override['domain'], override['kdc'], override['libdefaults_aux'])
 
         if has_principal:
             principals = self.middleware.call_sync('kerberos.keytab.kerberos_principal_choices')
@@ -377,6 +400,9 @@ class KerberosService(ConfigService):
                                   'Regenerating kerberos keytab from configuration file.',
                                   creds['kerberos_principal'], ','.join(principals))
                 self.middleware.call_sync('etc.generate', 'kerberos')
+
+            if (current_cred := self._dump_current_cred(creds['kerberos_principal'], ccache_path)) is not None:
+                return
 
             try:
                 gss_acquire_cred_principal(
@@ -404,6 +430,13 @@ class KerberosService(ConfigService):
             except Exception as exc:
                 raise CallError(str(exc))
         else:
+            if (current_cred := self._dump_current_cred(creds['username'], ccache_path)) is not None:
+                # we already have a ticket skip unnecessary ccache manipulation
+                return current_cred
+
+            if not creds['password']:
+                raise CallError('Password is required')
+
             try:
                 gss_acquire_cred_user(
                     creds['username'],
@@ -446,7 +479,7 @@ class KerberosService(ConfigService):
 
         if ad['enable']:
             payload = {
-                'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
+                'dstype': DSType.AD.value,
                 'conf': {
                     'bindname': ad['bindname'],
                     'bindpw': ad.get('bindpw', ''),
@@ -457,7 +490,7 @@ class KerberosService(ConfigService):
 
         if ldap['enable'] and ldap['kerberos_realm']:
             payload = {
-                'dstype': DSType.DS_TYPE_LDAP.name,
+                'dstype': DSType.LDAP.value,
                 'conf': {
                     'binddn': ldap['binddn'],
                     'bindpw': ldap['bindpw'],
@@ -470,7 +503,7 @@ class KerberosService(ConfigService):
             return
 
         cred = await self.get_cred(payload)
-        await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
+        return await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
 
     @private
     @accepts(Patch(
@@ -518,12 +551,12 @@ class KerberosService(ConfigService):
         """
         await self.middleware.call('etc.generate', 'kerberos')
         try:
-            await asyncio.wait_for(self.middleware.create_task(self._kinit()), timeout=kinit_timeout)
+            cred = await asyncio.wait_for(self.middleware.create_task(self._kinit()), timeout=kinit_timeout)
         except asyncio.TimeoutError:
             raise CallError(f'Timed out hung kinit after [{kinit_timeout}] seconds')
 
         await self.middleware.call('kerberos.wait_for_renewal')
-        return await self.klist()
+        return cred
 
     @private
     @job(lock="kerberos_renew_watch", transient=True, lock_queue_size=1)

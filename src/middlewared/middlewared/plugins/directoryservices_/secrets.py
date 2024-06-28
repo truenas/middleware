@@ -92,6 +92,20 @@ class DomainSecrets(Service):
 
         return struct.unpack("<L", bytes_passwd_chng)[0]
 
+    def set_ipa_secret(self, domain, secret):
+        # The stored secret in secrets.tdb and our kerberos keytab for SMB must be kept in-sync
+        store_secrets_entry(
+            f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', secret
+        )
+
+        # Password changed field must be initialized (but otherwise is not required)
+        store_secrets_entry(
+            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", b64encode(b"2\x00")
+        )
+
+        # Ensure we back this info up into our sqlite database as well
+        self.backup()
+
     def set_ldap_idmap_secret(self, domain, user_dn, secret):
         """
         Some idmap backends (ldap and rfc2307) store credentials in secrets.tdb.

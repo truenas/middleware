@@ -2,6 +2,7 @@ import os
 
 from logging import getLogger
 from middlewared.utils import filter_list
+from middlewared.utils.directoryservices.constants import DSType
 from middlewared.plugins.account import DEFAULT_HOME_PATH
 from middlewared.plugins.smb_.constants import LOGLEVEL_MAP, SMBEncryption, SMBPath
 
@@ -9,29 +10,34 @@ LOGGER = getLogger(__name__)
 
 
 def generate_smb_conf_dict(
-    ds_state,
-    ds_config,
-    smb_service_config,
-    smb_shares,
-    smb_bind_choices,
-    idmap_settings
+    ds_type: DSType,
+    ds_config: dict | None,
+    smb_service_config: dict,
+    smb_shares: list,
+    smb_bind_choices: dict,
+    idmap_settings: list
 ):
     guest_enabled = any(filter_list(smb_shares, [['guestok', '=', True]]))
     fsrvp_enabled = any(filter_list(smb_shares, [['fsrvp', '=', True]]))
+    ad_idmap = None
+    ipa_domain = None
 
-    ad_enabled = ds_state['activedirectory'] != 'DISABLED'
-    if ad_enabled:
-        ad_idmap = filter_list(
-            idmap_settings,
-            [('name', '=', 'DS_TYPE_ACTIVEDIRECTORY')],
-            {'get': True}
-        )
-    else:
-        ad_idmap = None
+    match ds_type:
+        case DSType.AD:
+            ad_idmap = filter_list(
+                idmap_settings,
+                [('name', '=', 'DS_TYPE_ACTIVEDIRECTORY')],
+                {'get': True}
+            )
+        case DSType.IPA:
+            ipa_domain = ds_config['ipa_domain']
+            ipa_config = ds_config['ipa_config']
+        case _:
+            pass
 
     home_share = filter_list(smb_shares, [['home', '=', True]])
     if home_share:
-        if ad_enabled:
+        if ds_type is DSType.AD:
             home_path_suffix = '%D/%U'
         elif not home_share[0]['path_suffix']:
             home_path_suffix = '%U'
@@ -42,7 +48,6 @@ def generate_smb_conf_dict(
     else:
         home_path = DEFAULT_HOME_PATH
 
-    ldap_enabled = ds_state['ldap'] != 'DISABLED'
     loglevelint = int(LOGLEVEL_MAP.inv.get(smb_service_config['loglevel'], 1))
 
     """
@@ -98,7 +103,7 @@ def generate_smb_conf_dict(
         'fruit:nfs_aces': False,
         'fruit:zero_file_id': False,
         'restrict anonymous': 0 if guest_enabled else 2,
-        'winbind request timeout': 60 if ad_enabled else 2,
+        'winbind request timeout': 60 if ds_type is DSType.AD else 2,
         'passdb backend': f'tdbsam:{SMBPath.PASSDB_DIR.value[0]}/passdb.tdb',
         'workgroup': smb_service_config['workgroup'],
         'netbios name': smb_service_config['netbiosname_local'],
@@ -190,7 +195,7 @@ def generate_smb_conf_dict(
     whether AD users / groups will appear when full lists of users / groups
     via getpwent / getgrent. It does not impact getpwnam and getgrnam.
     """
-    if ad_enabled:
+    if ds_type is DSType.AD:
         ac = ds_config
         smbconf.update({
             'server role': 'member server',
@@ -214,6 +219,35 @@ def generate_smb_conf_dict(
         })
 
     """
+    The following parameters are based on what is performed when admin runs
+    command ipa-client-samba-install.
+
+    NOTE1: This requires us to have joined IPA domain through middleware
+    because we need to store the password associated with the SMB keytab in
+    samba's secrets.tdb file.
+
+    NOTE2: There is some chance that the IPA domain will not have SMB information
+    and in this situation we will omit from our smb.conf.
+    """
+    if ds_type is DSType.IPA and ipa_domain is not None:
+        # IPA SMB config is stored in remote IPA server and so we don't let
+        # users override the config. If this is a problem it should be fixed on
+        # the other end.
+        domain_short = ipa_domain['netbios_name']
+        range_low = ipa_domain['range_id_min']
+        range_high = ipa_domain['range_id_max']
+
+        smbconf.update({
+            'server role': 'member server',
+            'kerberos method': 'dedicated keytab',
+            'dedicated keytab file': 'FILE:/etc/smb.keytab',
+            'workgroup': ipa_domain['netbios_name'],
+            'realm': ipa_config['realm'],
+            f'idmap config {domain_short} : backend': 'sss',
+            f'idmap config {domain_short} : range': f'{range_low} - {range_high}',
+        })
+
+    """
     The following part generates the smb.conf parameters from our idmap plugin
     settings. This is primarily relevant for case where TrueNAS is joined to
     an Active Directory domain.
@@ -226,8 +260,9 @@ def generate_smb_conf_dict(
 
                 domain = '*'
             case 'DS_TYPE_ACTIVEDIRECTORY':
-                if not ad_enabled:
+                if ds_type is not DSType.AD:
                     continue
+
                 if i['idmap_backend'] == 'AUTORID':
                     domain = '*'
                 else:

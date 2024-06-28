@@ -1,8 +1,5 @@
 import enum
 
-from middlewared.utils import MIDDLEWARE_RUN_DIR
-
-
 KRB_TKT_CHECK_INTERVAL = 1800
 
 
@@ -11,9 +8,8 @@ class KRB_Keytab(enum.Enum):
 
 
 class krb5ccache(enum.Enum):
-    SYSTEM = f'{MIDDLEWARE_RUN_DIR}/krb5cc_0'
-    TEMP = f'{MIDDLEWARE_RUN_DIR}/krb5cc_middleware_temp'
-    USER = f'{MIDDLEWARE_RUN_DIR}/krb5cc_'
+    SYSTEM = 'KEYRING:persistent:0'
+    USER = 'KEYRING:persistent:'  # middleware appends UID number to this
 
 
 class krb_tkt_flag(enum.Enum):
@@ -72,6 +68,7 @@ class KRB_LibDefaults(enum.Enum):
     NOADDRESSES = ('noaddresses', 'boolan')
     EXTRA_ADDRESSES = ('extra_addresses', 'address')
     RDNS = ('rdns', 'boolean')
+    UDP_PREFERENCE_LIMIT = ('udp_preference_limit', 'number')
 
     def __str__(self):
         return self.value[0]

@@ -40,6 +40,7 @@ from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.plugins.smb_.utils import apply_presets, is_time_machine_share, smb_strip_comments
 from middlewared.plugins.idmap_.idmap_constants import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 from middlewared.utils import filter_list, run
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
@@ -115,12 +116,24 @@ class SMBService(ConfigService):
         if self.middleware.call_sync('failover.status') not in ('SINGLE', 'MASTER'):
             return {'netbiosname': 'TN_STANDBY'}
 
-        ds_state = self.middleware.call_sync('directoryservices.get_state')
-        ds_config = None
-        for svc, state in ds_state.items():
-            if state != 'DISABLED':
-                ds_config = self.middleware.call_sync(f'{svc}.config')
-                break
+        if (ds_type := self.middleware.call_sync('directoryservices.status')['type']) is not None:
+            ds_type = DSType(ds_type)
+
+        match ds_type:
+            case DSType.AD:
+                ds_config = self.middleware.call_sync('activedirectory.config')
+            case DSType.IPA:
+                ds_config = self.middleware.call_sync('ldap.config')
+                try:
+                    ipa_domain = self.middleware.call_sync('directoryservices.connection.ipa_get_smb_domain_info')
+                except Exception:
+                    ipa_domain = None
+                ipa_config = self.middleware.call_sync('ldap.ipa_config')
+                ds_config |= {'ipa_domain': ipa_domain, 'ipa_config': ipa_config}
+            case DSType.LDAP:
+                ds_config = self.middleware.call_sync('ldap.config')
+            case _:
+                ds_config = None
 
         idmap_config = self.middleware.call_sync('idmap.query')
         smb_config = self.middleware.call_sync('smb.config')
@@ -128,7 +141,7 @@ class SMBService(ConfigService):
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
 
         return generate_smb_conf_dict(
-            ds_state, ds_config, smb_config, smb_shares, bind_ip_choices, idmap_config
+            ds_type, ds_config, smb_config, smb_shares, bind_ip_choices, idmap_config
         )
 
     @private
@@ -659,8 +672,10 @@ class SMBService(ConfigService):
 
         verrors = ValidationErrors()
         # Skip this check if we're joining AD
-        ad_state = await self.middleware.call('activedirectory.get_state')
-        if ad_state in ['HEALTHY', 'FAULTED']:
+        ds = await self.middleware.call('directoryservices.status')
+        if ds['type'] == DSType.AD.value and ds['status'] in (
+            DSStatus.HEALTHY.name, DSStatus.FAULTED.name
+        ):
             for i in ('workgroup', 'netbiosname', 'netbiosalias'):
                 if old[i] != new[i]:
                     verrors.add(f'smb_update.{i}',
@@ -885,7 +900,8 @@ class SharingSMBService(SharingService):
         do_global_reload = await self.must_reload_globals(data)
 
         if do_global_reload:
-            if (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY':
+            ds = await self.middleware.call('directoryservices.status')
+            if ds['type'] == DSType.AD.value and ds['status'] == DSStatus.HEALTHY.name:
                 if data['home']:
                     await self.middleware.call('etc.generate', 'smb')
                     await self.middleware.call('idmap.clear_idmap_cache')
@@ -1040,7 +1056,8 @@ class SharingSMBService(SharingService):
             do_global_reload = True
 
         if do_global_reload:
-            if (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY':
+            ds = await self.middleware.call('directoryservices.status')
+            if ds['type'] == DSType.AD.value and ds['status'] == DSStatus.HEALTHY.name:
                 if new['home'] or old['home']:
                     await self.middleware.call('idmap.clear_idmap_cache')
 

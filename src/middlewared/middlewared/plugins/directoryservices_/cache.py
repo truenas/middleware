@@ -208,7 +208,7 @@ class DSCache(Service):
         if ds['type'] is None:
             return
 
-        if ds['status'] != 'HEALTHY':
+        if ds['status'] not in ('HEALTHY', 'JOINING'):
             self.logger.warning(
                 'Unable to refresh [%s] cache, state is: %s',
                 ds['type'], ds['status']

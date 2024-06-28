@@ -3,10 +3,9 @@
 import pytest
 import sys
 import os
-from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST, SSH_TEST
+from functions import SSH_TEST
 from middlewared.test.integration.assets.directory_service import ldap
 from middlewared.test.integration.utils import call
 from auto_config import ha, user, password
@@ -25,7 +24,7 @@ except ImportError:
 
 
 @pytest.fixture(scope="module")
-def do_freeipa_connection(request):
+def do_freeipa_connection():
     # Confirm DNS forward
     res = SSH_TEST(f"host {FREEIPA_HOSTNAME}", user, password)
     assert res['result'] is True, res
@@ -45,26 +44,30 @@ def do_freeipa_connection(request):
         FREEIPA_HOSTNAME,
         validate_certificates=False,
     ) as ldap_conn:
-        yield (request, ldap_conn)
+        yield ldap_conn
 
 
-@pytest.mark.dependency(name="setup_freeipa")
-def test_01_setup_and_enabling_freeipa(do_freeipa_connection):
-    results = GET("/ldap/get_state/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), str), results.text
-    assert results.json() == "HEALTHY", results.text
+    # Validate that our LDAP configuration alert goes away when it's disabled.
+    alerts = call('alert.list')
+    assert len(alerts) == 0
 
 
-def test_02_verify_ldap_enable_is_true(request):
-    depends(request, ["setup_freeipa"], scope="session")
-    results = GET("/ldap/")
-    assert results.json()["enable"] is True, results.text
+def test_setup_and_enabling_freeipa(do_freeipa_connection):
+    # We are intentionally using an expired password in order to force
+    # a legacy-style LDAP bind. We need this support to not break
+    # existing FreeIPA users on update. This should be reworked in FT.
+
+    ds = call('directoryservices.status')
+    assert ds['type'] == 'LDAP'
+    assert ds['status'] == 'HEALTHY'
+
+    alerts = call('alert.list')
+    assert len(alerts) == 1, str(alerts)
+    assert alerts[0]['klass'] == 'IPALegacyConfiguration'
+    assert 'Password has expired' in alerts[0]['formatted']
 
 
-@pytest.mark.dependency(name="FREEIPA_VALID_CONFIG")
-def test_05_verify_config(request):
-    depends(request, ["setup_freeipa"], scope="session")
+def test_verify_config(request):
     ldap_config = call('ldap.config')
     assert 'RFC2307BIS' == ldap_config['schema']
     assert ldap_config['search_bases']['base_user'] == 'cn=users,cn=accounts,dc=tn,dc=ixsystems,dc=net'
@@ -73,29 +76,21 @@ def test_05_verify_config(request):
     assert ldap_config['server_type'] == 'FREEIPA'
 
 
-@pytest.mark.dependency(name="FREEIPA_NSS_WORKING")
-def test_07_verify_that_the_freeipa_user_id_exist_on_the_nas(request):
+def test_verify_that_the_freeipa_user_id_exist_on_the_nas(do_freeipa_connection):
     """
     get_user_obj is a wrapper around the pwd module.
     """
-    depends(request, ["FREEIPA_VALID_CONFIG"], scope="session")
-    payload = {
-        "username": "ixauto_restricted",
-        "get_groups": True
-    }
-    results = POST("/user/get_user_obj/", payload)
-    assert results.status_code == 200, results.text
-    pwd_obj = results.json()
+    pwd_obj = call('user.get_user_obj', {'username': 'ixauto_restricted', 'get_groups': True})
+
     assert pwd_obj['pw_uid'] == 925000003
     assert pwd_obj['pw_gid'] == 925000003
     assert len(pwd_obj['grouplist']) >= 1, pwd_obj['grouplist']
 
 
-def test_10_verify_support_for_netgroups(request):
+def test_10_verify_support_for_netgroups(do_freeipa_connection):
     """
     'getent netgroup' should be able to retrieve netgroup
     """
-    depends(request, ["FREEIPA_NSS_WORKING"], scope="session")
     res = SSH_TEST("getent netgroup ixtestusers", user, password)
     assert res['result'] is True, f"Failed to find netgroup 'ixgroup', returncode={res['returncode']}"
 

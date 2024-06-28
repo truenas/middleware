@@ -4,6 +4,7 @@ import struct
 
 from middlewared.service import Service, job, private
 from middlewared.service_exception import CallError
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.sid import (
     db_id_to_rid,
     get_domain_rid,
@@ -120,8 +121,14 @@ class SMBService(Service):
             else:
                 self.logger.warning('%s: SMB admin group does not exist', admin_group)
 
-        ad_state = self.middleware.call_sync('activedirectory.get_state')
-        if ad_state == 'HEALTHY':
+        ds = await self.middleware.call('directoryservices.status')
+        match ds['type']:
+            case DSType.AD.value:
+                ad_state = ds['status']
+            case _:
+                ad_state = DSStatus.DISABLED.name
+
+        if ad_state == DSStatus.HEALTHY.name:
             try:
                 domain_info = self.middleware.call_sync('idmap.domain_info',
                                                         'DS_TYPE_ACTIVEDIRECTORY')
