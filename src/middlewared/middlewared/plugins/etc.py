@@ -297,11 +297,9 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'pam.d/sshd', 'local_path': 'pam.d/sshd_linux'},
                 {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600, 'checkpoint': 'pool_import'},
                 {'type': 'py', 'path': 'local/ssh/config'},
+                {'type': 'mako', 'path': 'login_banner', 'mode': 0o600},
             ]
         },
-        'login_banner': [
-            {'type': 'mako', 'path': 'login_banner', 'mode': 0o600}
-        ],
         'ntpd': [
             {'type': 'mako', 'path': 'chrony/chrony.conf'}
         ],

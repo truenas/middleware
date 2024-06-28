@@ -9,7 +9,7 @@ from copy import deepcopy
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Password, returns, Str
-from middlewared.service import ConfigService, private, no_auth_required, ValidationErrors
+from middlewared.service import ConfigService, private, no_authz_required, ValidationErrors
 from middlewared.validators import Range
 from middlewared.utils import run
 
@@ -262,7 +262,6 @@ class SystemAdvancedService(ConfigService):
                 await self.middleware.call('etc.generate', 'motd')
 
             if original_data['login_banner'] != config_data['login_banner']:
-                await self.middleware.call('etc.generate', 'login_banner')
                 await self.middleware.call('service.reload', 'ssh')
 
             if original_data['powerdaemon'] != config_data['powerdaemon']:
@@ -317,8 +316,8 @@ class SystemAdvancedService(ConfigService):
         ))['sed_passwd']
         return passwd if passwd else await self.middleware.call('kmip.sed_global_password')
 
-    @accepts(roles=['SYSTEM_ADVANCED_READ'])
-    @no_auth_required
+    @no_authz_required
+    @accepts()
     @returns(Str())
     def login_banner(self):
         """Returns user set login banner"""
