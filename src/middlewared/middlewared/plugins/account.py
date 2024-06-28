@@ -320,18 +320,13 @@ class UserService(CRUDService):
         )
 
     @private
-    def validate_homedir_mountinfo(self, verrors, schema, dev):
-        mntinfo = self.middleware.call_sync(
-            'filesystem.mount_info',
-            [['device_id.dev_t', '=', dev]],
-            {'get': True}
-        )
-
-        if 'RO' in mntinfo['mount_opts']:
+    def validate_homedir_mountinfo(self, verrors, schema, home_path):
+        sfs = self.middleware.call_sync('filesystem.statfs', home_path.as_posix())
+        if 'RO' in sfs['flags']:
             verrors.add(f'{schema}.home', 'Path has the ZFS readonly property set.')
             return False
 
-        if mntinfo['fs_type'] != 'zfs':
+        if sfs['fstype'] != 'zfs':
             verrors.add(f'{schema}.home', 'Path is not on a ZFS filesystem')
             return False
 
@@ -378,9 +373,9 @@ class UserService(CRUDService):
                 )
 
             if not verrors:
-                self.validate_homedir_mountinfo(verrors, schema, p.parent.stat().st_dev)
+                self.validate_homedir_mountinfo(verrors, schema, p.parent)
 
-        elif self.validate_homedir_mountinfo(verrors, schema, p.stat().st_dev):
+        elif self.validate_homedir_mountinfo(verrors, schema, p):
             if self.middleware.call_sync('filesystem.is_immutable', data['home']):
                 verrors.add(
                     f'{schema}.home',
