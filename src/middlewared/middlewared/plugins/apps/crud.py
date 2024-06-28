@@ -3,7 +3,7 @@ import errno
 import shutil
 import textwrap
 
-from middlewared.schema import accepts, Dict, Str
+from middlewared.schema import accepts, Dict, returns, Str
 from middlewared.service import CallError, CRUDService, filterable, job
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
@@ -34,6 +34,15 @@ class AppService(CRUDService):
             kwargs = {'specific_app': filters[0][2]}
 
         return filter_list(list_apps(**kwargs), filters, options)
+
+    @accepts(Str('app_name'))
+    @returns(Dict('app_config', additional_attrs=True))
+    def config(self, app_name):
+        """
+        Retrieve user specified configuration of `app_name`.
+        """
+        app = self.get_instance__sync(app_name)
+        return get_current_app_config(app_name, app['version'])
 
     @accepts(
         Dict(
