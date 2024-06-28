@@ -53,6 +53,11 @@
 		with open('/etc/login_banner', 'w', encoding='utf-8') as f:
 			f.write(login_banner+'\n')
 			os.fchmod(f.fileno(), 0o600)
+	else:
+		try:
+			os.remove('/etc/login_banner')
+		except FileNotFoundError:
+			pass
 
 %>\
 Subsystem	sftp	internal-sftp -l ${ssh_config['sftp_log_level']} -f ${ssh_config['sftp_log_facility']}
