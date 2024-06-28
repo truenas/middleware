@@ -93,19 +93,6 @@ class DiskService(Service):
         return '6a898cc3-1dd2-11b2-99a6-080020736631'
 
     @private
-    async def get_swap_part_type(self):
-        return '0657fd6d-a4ab-43c4-84e5-0933c84b4f4f'
-
-    @private
-    def get_swap_devices(self):
-        with open('/proc/swaps', 'r') as f:
-            data = f.read()
-        devices = []
-        for dev_line in filter(lambda l: l.startswith('/dev'), data.splitlines()):
-            devices.append(dev_line.split()[0])
-        return devices
-
-    @private
     def label_to_dev(self, label):
         label_path = os.path.join('/dev', label)
         if not os.path.exists(label_path):

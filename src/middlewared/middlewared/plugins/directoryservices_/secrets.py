@@ -5,8 +5,16 @@ import struct
 from base64 import b64encode, b64decode
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
+from middlewared.utils import filter_list
+from middlewared.utils.tdb import (
+    get_tdb_handle,
+    TDBDataType,
+    TDBOptions,
+    TDBPathType,
+)
 
 SECRETS_FILE = '/var/db/system/samba4/private/secrets.tdb'
+SECRETS_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
 
 
 # c.f. source3/include/secrets.h
@@ -26,10 +34,26 @@ class Secrets(enum.Enum):
     DOMAIN_GUID = 'SECRETS/DOMGUID'
     SERVER_GUID = 'SECRETS/GUID'
     LDAP_BIND_PW = 'SECRETS/LDAP_BIND_PW'
+    LDAP_IDMAP_SECRET = 'SECRETS/GENERIC/IDMAP_LDAP'
     LOCAL_SCHANNEL_KEY = 'SECRETS/LOCAL_SCHANNEL_KEY'
     AUTH_USER = 'SECRETS/AUTH_USER'
     AUTH_DOMAIN = 'SECRETS/AUTH_DOMAIN'
     AUTH_PASSWORD = 'SECRETS/AUTH_PASSWORD'
+
+
+def fetch_secrets_entry(key: str) -> str:
+    with get_tdb_handle(SECRETS_FILE, SECRETS_TDB_OPTIONS) as hdl:
+        return hdl.get(key)
+
+
+def store_secrets_entry(key: str, val: str) -> str:
+    with get_tdb_handle(SECRETS_FILE, SECRETS_TDB_OPTIONS) as hdl:
+        return hdl.store(key, val)
+
+
+def query_secrets_entries(filters: list, options: dict) -> list:
+    with get_tdb_handle(SECRETS_FILE, SECRETS_TDB_OPTIONS) as hdl:
+        return filter_list(hdl.entries(), filters, options)
 
 
 class DomainSecrets(Service):
@@ -39,51 +63,23 @@ class DomainSecrets(Service):
         cli_private = True
         private = True
 
-    tdb_options = {
-        'backend': 'CUSTOM',
-        'data_type': 'BYTES'
-    }
-
-    async def __fetch(self, key):
-        return await self.middleware.call('tdb.fetch', {
-            'name': SECRETS_FILE,
-            'key': key,
-            'tdb-options': self.tdb_options
-        })
-
-    async def __store(self, key, value):
-        return await self.middleware.call('tdb.store', {
-            'name': SECRETS_FILE,
-            'key': key,
-            'value': value,
-            'tdb-options': self.tdb_options
-        })
-
-    async def __entries(self, filters, options):
-        return await self.middleware.call('tdb.entries', {
-            'name': SECRETS_FILE,
-            'query-filters': filters,
-            'query-options': options,
-            'tdb-options': self.tdb_options
-        })
-
-    async def has_domain(self, domain):
+    def has_domain(self, domain):
         """
         Check whether running version of secrets.tdb has our machine account password
         """
         try:
-            await self.__fetch(f"{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}")
+            fetch_secrets_entry(f"{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}")
         except MatchNotFound:
             return False
 
         return True
 
-    async def last_password_change(self, domain):
+    def last_password_change(self, domain):
         """
         Retrieve the last password change timestamp for the specified domain.
         Raises MatchNotFound if entry is not present in secrets.tdb
         """
-        encoded_change_ts = await self.__fetch(
+        encoded_change_ts = fetch_secrets_entry(
             f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}"
         )
         try:
@@ -96,34 +92,34 @@ class DomainSecrets(Service):
 
         return struct.unpack("<L", bytes_passwd_chng)[0]
 
-    async def set_ldap_idmap_secret(self, domain, user_dn, secret):
+    def set_ldap_idmap_secret(self, domain, user_dn, secret):
         """
         Some idmap backends (ldap and rfc2307) store credentials in secrets.tdb.
         This method is used by idmap plugin to write the password.
         """
-        await self.__store(
-            f'SECRETS/GENERIC/IDMAP_LDAP_{domain.upper()}/{user_dn}',
-            {'payload': b64encode(secret.encode() + b'\x00')}
+        store_secrets_entry(
+            f'{Secrets.LDAP_IDMAP_SECRET.value}_{domain.upper()}/{user_dn}',
+            b64encode(secret.encode() + b'\x00')
         )
 
-    async def get_ldap_idmap_secret(self, domain, user_dn):
+    def get_ldap_idmap_secret(self, domain, user_dn):
         """
         Retrieve idmap secret for the specifed domain and user dn.
         """
-        return await self.__fetch(f'SECRETS/GENERIC/IDMAP_LDAP_{domain.upper()}/{user_dn}')
+        return fetch_secrets_entry(f'{Secrets.LDAP_IDMAP_SECRET.value}_{domain.upper()}/{user_dn}')
 
-    async def get_machine_secret(self, domain):
-        return await self.__fetch(f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}')
+    def get_machine_secret(self, domain):
+        return fetch_secrets_entry(f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}')
 
-    async def get_salting_principal(self, realm):
-        return await self.__fetch(f'{Secrets.SALTING_PRINCIPAL.value}/DES/{realm.upper()}')
+    def get_salting_principal(self, realm):
+        return fetch_secrets_entry(f'{Secrets.SALTING_PRINCIPAL.value}/DES/{realm.upper()}')
 
-    async def dump(self):
+    def dump(self):
         """
         Dump contents of secrets.tdb. Values are base64-encoded
         """
-        entries = await self.__entries([], {})
-        return {entry['key']: entry['val'] for entry in entries}
+        entries = query_secrets_entries([], {})
+        return {entry['key']: entry['value'] for entry in entries}
 
     async def get_db_secrets(self):
         """
@@ -159,7 +155,7 @@ class DomainSecrets(Service):
         db_secrets = await self.get_db_secrets()
         id_ = db_secrets.pop('id')
 
-        if not (secrets := (await self.dump())):
+        if not (secrets := (await self.middleware.call('directoryservices.secrets.dump'))):
             self.logger.warning("Unable to parse secrets")
             return
 
@@ -193,6 +189,6 @@ class DomainSecrets(Service):
 
         self.logger.debug('Restoring secrets.tdb for %s', netbios_name)
         for key, value in server_secrets.items():
-            await self.__store(key, {'payload': value})
+            await self.middleware.run_in_thread(store_secrets_entry, key, value)
 
         return True

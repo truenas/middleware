@@ -128,12 +128,8 @@ class PoolService(Service):
 
         await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
 
-        job.set_progress(30, 'Removing pool disks from swap')
+        job.set_progress(30, 'Running pre-export actions')
         disks = await self.middleware.call('pool.get_disks', oid)
-
-        # We don't want to configure swap immediately after removing those disks because we might get in a race
-        # condition where swap starts using the pool disks as the pool might not have been exported/destroyed yet
-        await self.middleware.call('disk.swaps_remove_disks', disks, {'configure_swap': False})
 
         await self.middleware.call_hook('pool.pre_export', pool=pool['name'], options=options, job=job)
 
@@ -152,7 +148,7 @@ class PoolService(Service):
 
             async def unlabel(disk):
                 wipe_job = await self.middleware.call(
-                    'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
+                    'disk.wipe', disk, 'QUICK', False
                 )
                 await wipe_job.wait()
                 if wipe_job.error:

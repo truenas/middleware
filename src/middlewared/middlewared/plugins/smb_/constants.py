@@ -40,6 +40,13 @@ class SMBCmd(enum.Enum):
     WBINFO = 'wbinfo'
 
 
+class SMBEncryption(enum.Enum):
+    DEFAULT = 'default'
+    NEGOTIATE = 'if_required'
+    DESIRED = 'desired'
+    REQUIRED = 'required'
+
+
 class SMBBuiltin(enum.Enum):
     ADMINISTRATORS = ('builtin_administrators', 'S-1-5-32-544')
     GUESTS = ('builtin_guests', 'S-1-5-32-546')

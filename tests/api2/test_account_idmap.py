@@ -28,11 +28,6 @@ def test_uid_idmapping():
         assert entry['id'] == u['uid']
         assert entry['name'] == 'Unix User\\idmap_user'
 
-        # This test validates that our winbindd cache
-        # is not populated with special unix account sid
-        pdb_sid = call('idmap.name_to_sid', 'idmap_user')['sid']
-        assert pdb_sid != UNIX_SID
-
         results = call('idmap.convert_unixids', [{
             'id_type': 'USER',
             'id': u['uid'],
@@ -42,15 +37,8 @@ def test_uid_idmapping():
         entry = results['mapped'][f'UID:{u["uid"]}']
         assert entry['id_type'] == 'USER'
         assert entry['id'] == u['uid']
-        assert entry['sid'] == pdb_sid
+        pdb_sid = entry['sid']
 
         user_obj = call('user.get_user_obj', {'uid': u['uid'], 'sid_info': True})
-        assert 'sid_info' in user_obj
-        sid_info = user_obj['sid_info']
-        assert sid_info['sid'] == pdb_sid
-
-        assert 'domain_information' in sid_info
-        domain_info = sid_info['domain_information']
-        assert domain_info['online']
-        assert not domain_info['activedirectory']
-        assert pdb_sid.startswith(domain_info['domain_sid'])
+        assert 'sid' in user_obj
+        assert user_obj['sid'] == pdb_sid

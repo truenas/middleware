@@ -1,34 +1,45 @@
 from middlewared.plugins.sysdataset import SYSDATASET_PATH
-from middlewared.service import (accepts, filterable, periodic, CRUDService)
+from middlewared.service import filterable, periodic, CRUDService
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import run, filter_list
+from middlewared.utils.tdb import (
+    get_tdb_handle,
+    TDBDataType,
+    TDBOptions,
+    TDBPathType,
+)
 from middlewared.plugins.smb import SMBCmd
 
-import enum
 import errno
 import os
 import re
 
 RE_SHAREACLENTRY = re.compile(r"^ACL:(?P<ae_who_sid>.+):(?P<ae_type>.+)\/0x0\/(?P<ae_perm>.+)$")
 LOCAL_SHARE_INFO_FILE = os.path.join(SYSDATASET_PATH, 'samba4', 'share_info.tdb')
+SHARE_INFO_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
 
 
-class SIDType(enum.IntEnum):
-    """
-    Defined in MS-SAMR (2.2.2.3) and lsa.idl
-    Samba's group mapping database will primarily contain SID_NAME_ALIAS entries (local groups)
-    """
-    NONE = 0
-    USER = 1
-    DOM_GROUP = 2
-    DOMAIN = 3
-    ALIAS = 4
-    WELL_KNOWN_GROUP = 5
-    DELETED = 6
-    INVALID = 7
-    UNKNOWN = 8
-    COMPUTER = 9
-    LABEL = 10
+def fetch_share_acl(share_name: str) -> str:
+    """ fetch base64-encoded NT ACL for SMB share """
+    with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
+        return hdl.get(f'SECDESC/{share_name.lower()}')
+
+
+def store_share_acl(share_name: str, val: str) -> None:
+    """ write base64-encoded NT ACL for SMB share to server running configuration """
+    with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
+        return hdl.store(f'SECDESC/{share_name.lower()}', val)
+
+
+def remove_share_acl(share_name: str) -> None:
+    """ remove ACL from share causing default entry of S-1-1-0 FULL_CONTROL """
+    with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
+        hdl.delete(f'SECDESC/{share_name.lower()}')
+
+
+def dup_share_acl(src: str, dst: str) -> None:
+    val = fetch_share_acl(src)
+    store_share_acl(dst, val)
 
 
 class ShareSec(CRUDService):
@@ -38,52 +49,19 @@ class ShareSec(CRUDService):
         cli_namespace = 'sharing.smb.sharesec'
         private = True
 
-    tdb_options = {
-        'backend': 'CUSTOM',
-        'data_type': 'BYTES'
-    }
-
-    async def fetch(self, share_name):
-        return await self.middleware.call('tdb.fetch', {
-            'name': LOCAL_SHARE_INFO_FILE,
-            'key': f'SECDESC/{share_name.lower()}',
-            'tdb-options': self.tdb_options
-        })
-
-    async def store(self, share_name, val):
-        await self.middleware.call('tdb.store', {
-            'name': LOCAL_SHARE_INFO_FILE,
-            'key': f'SECDESC/{share_name.lower()}',
-            'value': {'payload': val},
-            'tdb-options': self.tdb_options
-        })
-
-    async def remove(self, share_name):
-        return await self.middleware.call('tdb.remove', {
-            'name': LOCAL_SHARE_INFO_FILE,
-            'key': f'SECDESC/{share_name.lower()}',
-            'tdb-options': self.tdb_options
-        })
-
     @filterable
-    async def entries(self, filters, options):
+    def entries(self, filters, options):
         # TDB file contains INFO/version key that we don't want to return
         try:
-            entries = await self.middleware.call('tdb.entries', {
-                'name': LOCAL_SHARE_INFO_FILE,
-                'query-filters': [['key', '^', 'SECDESC/']],
-                'tdb-options': self.tdb_options
-            })
+            with get_tdb_handle(LOCAL_SHARE_INFO_FILE, SHARE_INFO_TDB_OPTIONS) as hdl:
+                return filter_list(
+                    hdl.entries(),
+                    filters + [['key', '^', 'SECDESC/']],
+                    options
+                )
         except FileNotFoundError:
-            # If samba has never started or user manually deleted file
-            # it may not exist yet.
-            entries = []
-
-        return filter_list(entries, filters, options)
-
-    async def dup_share_acl(self, src, dst):
-        val = await self.fetch(src)
-        await self.store(dst, val)
+            # File may not have been created yet or overzealous admin may have deleted
+            return []
 
     async def parse_share_sd(self, sd):
         """
@@ -201,7 +179,7 @@ class ShareSec(CRUDService):
         if not db_commit:
             return
 
-        new_acl_blob = await self.fetch(data['share_name'])
+        new_acl_blob = await self.middleware.run_in_thread(fetch_share_acl, data['share_name'])
 
         await self.middleware.call('datastore.update', 'sharing.cifs_share', config_share['id'],
                                    {'cifs_share_acl': new_acl_blob})
@@ -221,7 +199,7 @@ class ShareSec(CRUDService):
                 )
             elif share['share_acl']:
                 share_name = 'HOMES' if share['home'] else share['name']
-                await self.store(share_name, share['share_acl'])
+                await self.middleware.run_in_thread(store_share_acl, share_name, share['share_acl'])
 
     @periodic(3600, run_on_start=False)
     def check_share_info_tdb(self):
@@ -243,7 +221,7 @@ class ShareSec(CRUDService):
         fakes a single S-1-1-0:ALLOW/0x0/FULL entry in the absence of an entry for a
         share in share_info.tdb.
         """
-        if not (entries := await self.entries()):
+        if not (entries := (await self.middleware.call('smb.sharesec.entries'))):
             return
 
         shares = await self.middleware.call('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
@@ -258,5 +236,5 @@ class ShareSec(CRUDService):
                     'datastore.update',
                     'sharing.cifs_share',
                     s['id'],
-                    {'cifs_share_acl': share_acl[0]['val']}
+                    {'cifs_share_acl': share_acl[0]['value']}
                 )

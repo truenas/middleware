@@ -33,16 +33,17 @@ from middlewared.plugins.smb_.constants import (
     SMBSharePreset
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin  # noqa (imported so may be imported from here)
+from middlewared.plugins.smb_.sharesec import dup_share_acl, remove_share_acl
 from middlewared.plugins.smb_.util_param import smbconf_getparm, lpctx_validate_global_parm
 from middlewared.plugins.smb_.util_net_conf import reg_delshare, reg_listshares, reg_setparm
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.plugins.smb_.utils import apply_presets, is_time_machine_share, smb_strip_comments
-from middlewared.plugins.tdb.utils import TDBError
 from middlewared.plugins.idmap_.idmap_constants import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 from middlewared.utils import filter_list, run
 from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
+from middlewared.utils.tdb import TDBError
 
 
 class SMBModel(sa.Model):
@@ -70,6 +71,7 @@ class SMBModel(sa.Model):
     cifs_srv_next_rid = sa.Column(sa.Integer(), nullable=False)
     cifs_srv_secrets = sa.Column(sa.EncryptedText(), nullable=True)
     cifs_srv_multichannel = sa.Column(sa.Boolean, default=False)
+    cifs_srv_encryption = sa.Column(sa.String(120), nullable=True)
 
 
 class SMBService(ConfigService):
@@ -98,6 +100,7 @@ class SMBService(ConfigService):
         smb['netbiosname_local'] = smb['netbiosname']
         smb['netbiosalias'] = (smb['netbiosalias'] or '').split()
         smb['loglevel'] = LOGLEVEL_MAP.get(smb['loglevel'])
+        smb['encryption'] = smb['encryption'] or 'DEFAULT'
         smb.pop('secrets', None)
         return smb
 
@@ -499,6 +502,12 @@ class SMBService(ConfigService):
                 'Please provide a valid value for unixcharset'
             )
 
+        if new['enable_smb1'] and new['encryption'] == 'REQUIRED':
+            verrors.add(
+                'smb_update.encryption',
+                'Encryption may not be set to REQUIRED while SMB1 support is enabled.'
+            )
+
         for i in ('workgroup', 'netbiosname', 'netbiosalias'):
             """
             There are two cases where NetBIOS names must be rejected:
@@ -598,6 +607,7 @@ class SMBService(ConfigService):
         Str('dirmask'),
         Bool('ntlmv1_auth'),
         Bool('multichannel', default=False),
+        Str('encryption', enum=['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']),
         List('bindip', items=[IPAddr('ip')]),
         Str('smb_options', max_length=None),
         update=True,
@@ -631,6 +641,12 @@ class SMBService(ConfigService):
 
         `ntlmv1_auth` enables a legacy and insecure authentication method, which may be required for legacy or
         poorly-implemented SMB clients.
+
+        `encryption` set global server behavior with regard to SMB encrpytion. Options are DEFAULT (which
+        follows the upstream defaults -- currently identical to NEGOTIATE), NEGOTIATE encrypts SMB transport
+        only if requested by the SMB client, DESIRED encrypts SMB transport if supported by the SMB client,
+        REQUIRED only allows encrypted transport to the SMB server. Mandatory SMB encryption is not
+        compatible with SMB1 server support in TrueNAS.
 
         `smb_options` smb.conf parameters that are not covered by the above supported configuration options may be
         added as an smb_option. Not all options are tested or supported, and behavior of smb_options may change
@@ -698,6 +714,9 @@ class SMBService(ConfigService):
 
     @private
     async def compress(self, data):
+        if data['encryption'] == 'DEFAULT':
+            data['encryption'] = None
+
         data.pop('netbiosname_local', None)
         data.pop('netbiosname_b', None)
         data.pop('next_rid')
@@ -891,7 +910,7 @@ class SharingSMBService(SharingService):
                 # Forcibly closes any existing SMB sessions.
                 await self.toggle_share(oldname, False)
                 try:
-                    await self.middleware.call('smb.sharesec.dup_share_acl', oldname, newname)
+                    await self.middleware.run_in_thread(dup_share_acl, oldname, newname)
                 except MatchNotFound:
                     pass
 
@@ -1051,7 +1070,7 @@ class SharingSMBService(SharingService):
         if share_name in share_list:
             await self.toggle_share(share_name, False)
             try:
-                await self.middleware.call('smb.sharesec.remove', share_name)
+                await self.middleware.run_in_thread(remove_share_acl, share_name)
             except RuntimeError as e:
                 # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
                 if e.args[0] != TDBError.NOEXIST:
@@ -1622,7 +1641,7 @@ class SharingSMBService(SharingService):
         verrors.check()
         if not normalized_acl:
             try:
-                await self.middleware.call('smb.sharesec.remove', data['share_name'])
+                await self.middleware.run_in_thread(remove_share_acl, data['share_name'])
             except RuntimeError as e:
                 # TDB library sets arg0 to TDB errno and arg1 to TDB strerr
                 if e.args[0] != TDBError.NOEXIST:

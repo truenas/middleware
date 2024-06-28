@@ -6,20 +6,34 @@ import wbclient
 
 from middlewared.schema import accepts, Bool, Dict, Int, Password, Patch, Ref, Str, LDAP_DN, OROperator
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors, filterable
+from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import SSL
 from middlewared.plugins.idmap_.idmap_constants import (
-    IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX, TRUENAS_IDMAP_MAX
+    BASE_SYNTHETIC_DATASTORE_ID, IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX, TRUENAS_IDMAP_MAX
 )
 from middlewared.plugins.idmap_.idmap_winbind import (WBClient, WBCErr)
 from middlewared.plugins.idmap_.idmap_sss import SSSClient
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
+from middlewared.utils.tdb import (
+    get_tdb_handle,
+    TDBDataType,
+    TDBOptions,
+    TDBPathType,
+)
 from middlewared.validators import Range
-from middlewared.plugins.smb import SMBPath
 try:
     from pysss_murmur import murmurhash3
 except ImportError:
     murmurhash3 = None
+
+WINBIND_IDMAP_FILE = '/var/run/samba-lock/gencache.tdb'
+WINBIND_IDMAP_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
+
+
+def clear_winbind_cache():
+    with get_tdb_handle(WINBIND_IDMAP_FILE, WINBIND_IDMAP_TDB_OPTIONS) as hdl:
+        return hdl.clear()
 
 
 """
@@ -402,10 +416,7 @@ class IdmapDomainService(CRUDService):
         await self.middleware.call('service.stop', 'idmap')
 
         try:
-            await self.middleware.call('tdb.wipe', {
-                'name': f'{SMBPath.CACHE_DIR.platform()}/winbindd_cache.tdb',
-                'tdb-options': {'data_type': 'STRING', 'backend': 'CUSTOM'}
-            })
+            await self.middleware.run_in_thread(clear_winbind_cache)
 
         except FileNotFoundError:
             self.logger.debug("Failed to remove winbindd_cache.tdb. File not found.")
@@ -1081,72 +1092,84 @@ class IdmapDomainService(CRUDService):
         return filter_list(out, filters, options)
 
     @private
-    async def id_to_name(self, id_, id_type):
+    async def id_to_name(self, xid, id_type):
+        """
+        Helper method to retrieve the name for the specified uid or gid. This method
+        passes through user.query or group.query rather than user.get_user_obj or
+        group.get_group_obj because explicit request for a uid / gid will trigger
+        a directory service cache insertion if it does not already exist. This allows
+        some lazily fill cache if enumeration for directory services is disabled.
+        """
         idtype = IDType[id_type]
         idmap_timeout = 5.0
+        options = {'extra': {'additional_information': ['DS']}, 'get': True}
 
-        if idtype == IDType.GROUP or idtype == IDType.BOTH:
-            method = "group.get_group_obj"
-            to_check = {"gid": id_}
-            key = 'gr_name'
-        elif idtype == IDType.USER:
-            method = "user.get_user_obj"
-            to_check = {"uid": id_}
-            key = 'pw_name'
-        else:
-            raise CallError(f"Unsupported id_type: [{idtype.name}]")
+        match idtype:
+            # IDType.BOTH is possible return by nss_winbind / nss_sss
+            # and is special case when idmapping backend converts a SID
+            # to both a user and a group. For most practical purposes it
+            # can be treated interally as a group.
+            case IDType.GROUP | IDType.BOTH:
+                method = 'group.query'
+                filters = [['gid', '=', xid]]
+                key = 'group'
+            case IDType.USER:
+                method = 'user.query'
+                filters = [['uid', '=', xid]]
+                key = 'username'
+            case _:
+                raise CallError(f"Unsupported id_type: [{idtype.name}]")
 
         try:
             ret = await asyncio.wait_for(
-                self.middleware.create_task(self.middleware.call(method, to_check)),
+                self.middleware.create_task(self.middleware.call(method, filters, options)),
                 timeout=idmap_timeout
             )
             name = ret[key]
         except asyncio.TimeoutError:
             self.logger.debug(
-                "timeout encountered while trying to convert %s id %s "
+                "timeout encountered while trying to convert %s id %d "
                 "to name. This may indicate significant networking issue.",
-                id_type.lower(), id_
+                id_type.lower(), xid
             )
             name = None
-        except KeyError:
+        except MatchNotFound:
             name = None
 
         return name
 
     @private
-    async def get_idmap_info(self, ds, id_):
-        low_range = None
-        id_type_both = False
-
-        if ds == 'ldap':
-            return (0, id_type_both)
-
+    async def has_id_type_both(self, xid):
+        """
+        Check whether xid comes from domain that returns ID_TYPE_BOTH from idmap
+        backend. In this case the xid is both a user and a group with special
+        behavior in OS.
+        """
         domains = await self.query()
-
         for d in domains:
-            if ds == 'activedirectory' and d['name'] == 'DS_TYPE_LDAP':
+            if d['name'] == 'DS_TYPE_LDAP':
                 continue
 
-            if id_ in range(d['range_low'], d['range_high']):
-                low_range = d['range_low']
-                id_type_both = d['idmap_backend'] in ['AUTORID', 'RID']
-                break
+            if xid >= d['range_low'] and xid <= d['range_high']:
+                # currently in AD case these are only two supported backends that provide
+                # this special ID type
+                return d['idmap_backend'] in ['AUTORID', 'RID']
 
-        return (low_range, id_type_both)
+        return False
 
     @private
-    async def synthetic_user(self, ds, passwd, sid):
-        if passwd['local']:
-            return None
+    async def synthetic_user(self, passwd, sid):
+        match passwd['source']:
+            case 'LOCAL':
+                # local user, should be retrieved via user.query
+                return None
+            case 'ACTIVEDIRECTORY':
+                id_type_both = await self.has_id_type_both(passwd['pw_uid'])
+            case _:
+                id_type_both = False
 
-        idmap_info = await self.get_idmap_info(ds, passwd['pw_uid'])
-        if idmap_info[0] is None:
-            return None
-
-        rid = int(sid.rsplit('-', 1)[1])
         return {
-            'id': 100000 + idmap_info[0] + rid,
+            'id': BASE_SYNTHETIC_DATASTORE_ID + passwd['pw_uid'],
             'uid': passwd['pw_uid'],
             'username': passwd['pw_name'],
             'unixhash': None,
@@ -1165,23 +1188,24 @@ class IdmapDomainService(CRUDService):
             'groups': [],
             'sshpubkey': None,
             'local': False,
-            'id_type_both': idmap_info[1],
+            'id_type_both': id_type_both,
             'smb': True,
             'sid': sid
         }
 
     @private
-    async def synthetic_group(self, ds, grp, sid):
-        if grp['local']:
-            return None
+    async def synthetic_group(self, grp, sid):
+        match grp['source']:
+            case 'LOCAL':
+                # local group, should be retrieved via group.query
+                return None
+            case 'ACTIVEDIRECTORY':
+                id_type_both = await self.has_id_type_both(grp['gr_gid'])
+            case _:
+                id_type_both = False
 
-        idmap_info = await self.get_idmap_info(ds, grp['gr_gid'])
-        if idmap_info[0] is None:
-            return None
-
-        rid = int(sid.rsplit('-', 1)[1])
         return {
-            'id': 100000 + idmap_info[0] + rid,
+            'id': BASE_SYNTHETIC_DATASTORE_ID + grp['gr_gid'],
             'gid': grp['gr_gid'],
             'name': grp['gr_name'],
             'group': grp['gr_name'],
@@ -1190,7 +1214,7 @@ class IdmapDomainService(CRUDService):
             'sudo_commands_nopasswd': [],
             'users': [],
             'local': False,
-            'id_type_both': idmap_info[1],
+            'id_type_both': id_type_both,
             'smb': True,
             'sid': sid
         }

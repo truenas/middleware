@@ -15,6 +15,7 @@ from middlewared.service import job, private, ConfigService, ValidationError, Va
 from middlewared.service_exception import CallError, MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
+from middlewared.utils.directoryservices.krb5_error import KRB5ErrCode, KRB5Error
 from middlewared.plugins.directoryservices import DSStatus
 from middlewared.plugins.idmap import DSType
 from middlewared.validators import Range
@@ -111,7 +112,7 @@ class ActiveDirectoryService(ConfigService):
         else:
             ad['nss_info'] = 'TEMPLATE'
 
-        if ad.get('kerberos_realm') and type(ad['kerberos_realm']) == dict:
+        if ad.get('kerberos_realm') and type(ad['kerberos_realm']) is dict:
             ad['kerberos_realm'] = ad['kerberos_realm']['id']
 
         return ad
@@ -458,57 +459,92 @@ class ActiveDirectoryService(ConfigService):
 
             try:
                 await self.validate_credentials(new, domain_info['KDC server'])
-            except CallError as e:
+            except KRB5Error as e:
+                # initially assume the validation error will be
+                # about the actual password used
                 if new['kerberos_principal']:
-                    method = "activedirectory.kerberos_principal"
+                    key = 'activedirectory.kerberos_principal'
                 else:
-                    method = "activedirectory.bindpw"
+                    key = 'activedirectory.bindpw'
 
-                try:
-                    msg = e.errmsg.split(":")[-1:][0].strip()
-                except Exception:
-                    raise e
+                match e.krb5_code:
+                    case KRB5ErrCode.KRB5_LIBOS_CANTREADPWD:
+                        if key == 'activedirectory.kerberos_principal':
+                            msg = 'Kerberos keytab is no longer valid.'
+                        else:
+                            msg = f'Active Directory account password for user {new["bindname"]} is expired.'
+                    case KRB5ErrCode.KRB5KDC_ERR_CLIENT_REVOKED:
+                        msg = 'Active Directory account is locked.'
+                    case KRB5ErrCode.KRB5_CC_NOTFOUND:
+                        if key == 'activedirectory.kerberos_principal':
+                            # When we kinit we try to regenerate keytab if the principal
+                            # isn't present in it. If we hit this point it means that user
+                            # has been tweaking the system-managed keytab in interesting ways.
+                            choices = await self.middleware.call(
+                                'kerberos.keytab.kerberos_principal_choices'
+                            )
+                            msg = (
+                                'System keytab lacks an entry for the specified kerberos principal. '
+                                f'Please select a valid kerberos principal from available choices: {", ".join(choices)}'
+                            )
+                        else:
+                            # This error shouldn't occur if we're trying to get ticket
+                            # with username + password combination
+                            msg = str(e)
+                    case KRB5ErrCode.KRB5KDC_ERR_POLICY:
+                        msg = (
+                            'Active Directory security policy rejected request to obtain kerberos ticket. '
+                            'This may occur if the bind account has been configured to deny interactive '
+                            'logons or require two-factor authentication. Depending on organizational '
+                            'security policies, one may be required to pre-generate a kerberos keytab '
+                            'and upload to TrueNAS server for use during join process.'
+                        )
+                    case KRB5ErrCode.KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN:
+                        # We're dealing with a missing account
+                        if key == "activedirectory.bindpw":
+                            key = "activedirectory.bindname"
 
-                if msg == 'Cannot read password while getting initial credentials':
-                    # non-interactive kinit fails with KRB5_LIBOS_CANTREADPWD if password is expired
-                    # rather than prompting for password change
-                    if method == 'activedirectory.kerberos_principal':
-                        msg = 'Kerberos keytab is no longer valid.'
+                        msg = (
+                            'Client\'s credentials were not found on remote domain controller. The most '
+                            'common reasons for the domain controller to return this response is due to a '
+                            'typo in the service account name or the service or the computer account being '
+                            'deleted from Active Directory.'
+                        )
+                    case KRB5ErrCode.KRB5KRB_AP_ERR_SKEW:
+                        # Domain permitted clock skew may be more restrictive than our basic
+                        # check of no greater than 3 minutes.
+                        key = 'activedirectory.domainname'
+                        msg = (
+                            'The time offset between the TrueNAS server and the active directory domain '
+                            'controller exceeds the maximum value permitted by the Active Directory '
+                            'configuration. This may occur if NTP is improperly configured on the '
+                            'TrueNAS server or if the hardware clock on the TrueNAS server is configured '
+                            'for a local timezone instead of UTC.'
+                        )
+                    case KRB5ErrCode.KRB5KDC_ERR_PREAUTH_FAILED:
+                        if new['kerberos_principal']:
+                            msg = (
+                                'Kerberos principal credentials are no longer valid. Rejoining active directory '
+                                'may be required.'
+                            )
+                        else:
+                            msg = 'Preauthentication failed. This typically indicates an incorrect bind password.'
+                    case _:
+                        # Catchall for more kerberos errors. We can expand if needed.
+                        msg = str(e)
+
+                raise ValidationError(key, msg)
+            except CallError as e:
+                # This may be an encapsulated GSSAPI library error
+                if e.errno == errno.EINVAL:
+                    # special errno set if GSSAPI BadName exception raised
+                    if new['kerberos_principal']:
+                        raise ValidationError('activedirectory.kerberos_principal', 'Not a valid principal name')
                     else:
-                        msg = f'Active Directory account password for user {new["bindname"]} is expired.'
+                        raise ValidationError('activedirectory.bindname', 'Not a valid username')
 
-                elif msg == "Client's credentials have been revoked while getting initial credentials":
-                    # KRB5KDC_ERR_CLIENT_REVOKED means that the account has been locked in AD
-                    msg = 'Active Directory account is locked.'
-
-                elif msg == 'KDC policy rejects request while getting initial credentials':
-                    # KRB5KDC_ERR_POLICY
-                    msg = (
-                        'Active Directory security policy rejected request to obtain kerberos ticket. '
-                        'This may occur if the bind account has been configured to deny interactive '
-                        'logons or require two-factor authentication. Depending on organizational '
-                        'security policies, one may be required to pre-generate a kerberos keytab '
-                        'and upload to TrueNAS server for use during join process.'
-                    )
-                elif msg.endswith('not found in Kerberos database while getting initial credentials'):
-                    # KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN
-                    if method == "activedirectory.bindpw":
-                        method = "activedirectory.bindname"
-
-                    msg = (
-                        "Client's credentials were not found on remote domain controller. The most "
-                        "common reasons for the domain controller to return this response is due to a "
-                        "typo in the service account name or the service or the computer account being "
-                        "deleted from Active Directory."
-                    )
-
-                if not msg:
-                    # failed to parse, re-raise original error message
-                    raise
-
-                raise ValidationError(
-                    method, f'Failed to validate bind credentials: {msg}'
-                )
+                # No meaningful way to convert into a ValidationError, simply re-raise
+                raise e from None
 
         elif not new['enable'] and new.get('bindpw'):
             raise ValidationError(
@@ -545,13 +581,14 @@ class ActiveDirectoryService(ConfigService):
 
             try:
                 await self.__start(job)
-            except Exception:
+            except Exception as e:
                 self.logger.error('Failed to start active directory service. Disabling.')
                 await self.set_state(DSStatus['DISABLED'].name)
                 await self.middleware.call(
                     'datastore.update', self._config.datastore, new['id'],
                     {'enable': False}, {'prefix': 'ad_'}
                 )
+                raise e
 
         elif not new['enable'] and old['enable']:
             await self.__stop(job, new)
@@ -773,6 +810,10 @@ class ActiveDirectoryService(ConfigService):
                     'kerberos_principal': machine_acct,
                 }
             })
+            # remove admin ticket
+            await self.middleware.call('kerberos.kdestroy')
+
+            # remove stub krb5.conf to allow overriding with fix on KDC
             await self.middleware.run_in_thread(os.unlink, '/etc/krb5.conf')
             await self.middleware.call('kerberos.do_kinit', {
                 'krb5_cred': cred,
@@ -793,7 +834,7 @@ class ActiveDirectoryService(ConfigService):
             # We are already joined to AD. User may have disabled then re-renabled the plugin
             # Check whether we have valid kerberos principal
             if not ad['kerberos_principal']:
-                if not await self.middleware.call('kerberos.keytab.query', [['AD_MACHINE_ACCOUNT']]):
+                if not await self.middleware.call('kerberos.keytab.query', [['name', '=', 'AD_MACHINE_ACCOUNT']]):
                     # Force writing of keytab based on stored secrets to our config file.
                     await self.middleware.call('activedirectory.check_machine_account_keytab', ad['domainname'])
 
@@ -808,7 +849,8 @@ class ActiveDirectoryService(ConfigService):
         if ret == neterr.JOINED:
             await self.set_state(DSStatus['HEALTHY'].name)
             job.set_progress(90, 'Restarting dependent services.')
-            await self.middleware.call('service.start', 'dscache')
+            cache_fill = await self.middleware.call('directoryservices.cache.refresh_impl')
+            await cache_fill.wait()
             await self.middleware.call('directoryservices.restart_dependent_services')
             if ad['verbose_logging']:
                 self.logger.debug('Successfully started AD service for [%s].', ad['domainname'])
@@ -849,7 +891,7 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('etc.generate', 'nss')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(60, 'clearing caches.')
-        await self.middleware.call('service.stop', 'dscache')
+        await self.middleware.call('directoryservices.cache.abort_refresh')
         await self.middleware.call('service.start', 'cifs')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(100, 'Active Directory stop completed.')

@@ -1,1 +1,1 @@
-from .client import AuthMethod, RedfishClient, InvalidCredentialsError # noqa
+from .client import AsyncRedfishClient, AuthMethod, InvalidCredentialsError, RedfishClient  # noqa

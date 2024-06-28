@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import errno
+import gssapi
 import io
 import os
 import shutil
@@ -11,24 +12,26 @@ from middlewared.plugins.idmap import DSType
 from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Password, Ref, Datetime, Bool
 from middlewared.service import CallError, ConfigService, CRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list, run
+from middlewared.utils import run
 from middlewared.utils.directoryservices.krb5_constants import (
     KRB_Keytab,
     krb5ccache,
-    krb_tkt_flag,
     KRB_AppDefaults,
     KRB_LibDefaults,
     KRB_ETYPE,
     KRB_TKT_CHECK_INTERVAL,
 )
 from middlewared.utils.directoryservices.krb5 import (
-    gss_check_ticket,
+    gss_get_current_cred,
+    gss_acquire_cred_principal,
+    gss_acquire_cred_user,
     extract_from_keytab,
     keytab_services,
     klist_impl,
     ktutil_list_impl
 )
 from middlewared.utils.directoryservices.krb5_conf import KRB5Conf
+from middlewared.utils.directoryservices.krb5_error import KRB5Error
 
 
 class KerberosModel(sa.Model):
@@ -85,7 +88,7 @@ class KerberosService(ConfigService):
 
     @private
     @accepts(Ref('kerberos-options'))
-    async def ccache_path(self, data):
+    def ccache_path(self, data):
         krb_ccache = krb5ccache[data['ccache']]
 
         path_out = krb_ccache.value
@@ -147,7 +150,7 @@ class KerberosService(ConfigService):
         if krb_ccache is krb5ccache.USER:
             ccache_path += str(data['ccache_uid'])
 
-        if gss_check_ticket(ccache_path, False):
+        if gss_get_current_cred(ccache_path, False):
             return True
 
         if raise_error:
@@ -343,12 +346,12 @@ class KerberosService(ConfigService):
             }),
         )
     ))
-    async def do_kinit(self, data):
+    def do_kinit(self, data):
         ccache = krb5ccache[data['kinit-options']['ccache']]
         creds = data['krb5_cred']
         has_principal = 'kerberos_principal' in creds
         ccache_uid = data['kinit-options']['ccache_uid']
-        ccache_path = await self.ccache_path({
+        ccache_path = self.ccache_path({
             'ccache': data['kinit-options']['ccache'],
             'ccache_uid': data['kinit-options']['ccache_uid']
         })
@@ -360,53 +363,76 @@ class KerberosService(ConfigService):
             if ccache_uid == 0:
                 raise CallError('User-specific ccache not permitted for uid 0')
 
-        cmd = ['kinit', '-V', '-r', str(data['kinit-options']['renewal_period']), '-c', ccache_path]
-        lifetime = data['kinit-options']['lifetime']
-
-        if lifetime != 0:
-            minutes = f'{lifetime}m'
-            cmd.extend(['-l', minutes])
-
         if data['kinit-options']['kdc_override']['kdc'] is not None:
             override = data['kinit-options']['kdc_override']
             if override['domain'] is None:
                 raise CallError('Domain missing from KDC override')
 
-            await self.middleware.call(
-                'kerberos.generate_stub_config',
-                override['domain'], override['kdc']
-            )
+            self.generate_stub_config(override['domain'], override['kdc'])
 
         if has_principal:
-            principals = await self.middleware.call('kerberos.keytab.kerberos_principal_choices')
+            principals = self.middleware.call_sync('kerberos.keytab.kerberos_principal_choices')
             if creds['kerberos_principal'] not in principals:
                 self.logger.debug('Selected kerberos principal [%s] not available in keytab principals: %s. '
                                   'Regenerating kerberos keytab from configuration file.',
                                   creds['kerberos_principal'], ','.join(principals))
-                await self.middleware.call('etc.generate', 'kerberos')
+                self.middleware.call_sync('etc.generate', 'kerberos')
 
-            cmd.extend(['-k', creds['kerberos_principal']])
-            kinit = await run(cmd, check=False)
-            if kinit.returncode != 0:
-                errmsg = kinit.stderr.decode()
-                err = errno.EAGAIN if 'Resource temporarily unavailable' in errmsg else errno.EFAULT
+            try:
+                gss_acquire_cred_principal(
+                    creds['kerberos_principal'],
+                    ccache_path=ccache_path,
+                    lifetime=data['kinit-options']['lifetime'] or None
+                )
+            except gssapi.exceptions.BadNameError:
+                raise CallError(
+                    f'{creds["kerberos_principal"]}: not a valid kerberos principal name',
+                    errno.EINVAL
+                )
+            except gssapi.exceptions.MissingCredentialsError as exc:
+                if exc.min_code & 0xFF:
+                    # this is in krb5 lib error table
+                    raise KRB5Error(
+                        gss_major=exc.maj_code,
+                        gss_minor=exc.min_code,
+                        errmsg=exc.gen_message()
+                    )
 
-                raise CallError(f"kinit with principal [{creds['kerberos_principal']}] "
-                                f"failed: {errmsg}", err)
-            return
+                # Error may be in different error table. Convert to CallError
+                # for now, but we may special handling in future.
+                raise CallError(str(exc))
+            except Exception as exc:
+                raise CallError(str(exc))
+        else:
+            try:
+                gss_acquire_cred_user(
+                    creds['username'],
+                    creds['password'],
+                    ccache_path=ccache_path,
+                    lifetime=data['kinit-options']['lifetime'] or None
+                )
+            except gssapi.exceptions.BadNameError:
+                raise CallError(
+                    f'{creds["username"]}: not a valid kerberos user name',
+                    errno.EINVAL
+                )
+            except gssapi.exceptions.MissingCredentialsError as exc:
+                if exc.min_code & 0xFF:
+                    # this is in krb5 lib error table
+                    raise KRB5Error(
+                        gss_major=exc.maj_code,
+                        gss_minor=exc.min_code,
+                        errmsg=exc.gen_message()
+                    )
 
-        cmd.append(creds['username'])
-        kinit = await run(cmd, input=creds['password'].encode(), check=False)
+                # Error may be in different error table. Convert to CallError
+                # for now, but we may special handling in future.
+                raise CallError(str(exc))
+            except Exception as exc:
+                raise CallError(str(exc))
 
-        if kinit.returncode != 0:
-            errmsg = kinit.stderr.decode()
-            err = errno.EAGAIN if 'Resource temporarily unavailable' in errmsg else errno.EFAULT
-            raise CallError(f"kinit with password failed: {errmsg}", err)
-
-        if ccache == krb5ccache.USER:
-            await self.middleware.run_in_thread(os.chown, ccache_path, ccache_uid, -1)
-
-        return
+            if ccache == krb5ccache.USER:
+                os.chown(ccache_path, ccache_uid, -1)
 
     @private
     async def _kinit(self):
@@ -444,7 +470,7 @@ class KerberosService(ConfigService):
             return
 
         cred = await self.get_cred(payload)
-        await self.do_kinit({'krb5_cred': cred})
+        await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
 
     @private
     @accepts(Patch(
@@ -462,52 +488,6 @@ class KerberosService(ConfigService):
             )
         except asyncio.TimeoutError:
             raise CallError(f'Attempt to list kerberos tickets timed out after {data["timeout"]} seconds')
-
-    @private
-    async def renew(self):
-        if not await self.middleware.call('kerberos.check_ticket', {
-            'ccache': krb5ccache.SYSTEM.name
-        }, False):
-            self.logger.warning('Kerberos ticket is unavailable. Performing kinit.')
-            return await self.start()
-
-        tgt_info = await self.klist()
-        if not tgt_info:
-            return await self.start()
-
-        current_time = time.time()
-
-        ticket = filter_list(
-            tgt_info['tickets'],
-            [['client', '=', tgt_info['default_principal']], ['server', '^', 'krbtgt']],
-            {'get': True}
-        )
-
-        remaining = ticket['expires'] - current_time
-        if remaining < 0:
-            self.logger.warning('Kerberos ticket expired. Performing kinit.')
-            return await self.start()
-
-        if remaining > KRB_TKT_CHECK_INTERVAL:
-            return tgt_info
-
-        if krb_tkt_flag.RENEWABLE.name not in ticket['flags']:
-            self.logger.debug("Kerberos ticket is not renewable. Performing kinit.")
-            return await self.start()
-
-        if (2 * KRB_TKT_CHECK_INTERVAL) + current_time > ticket['renew_until']:
-            # getting close to time when we can no longer renew. Better to kinit again.
-            return await self.start()
-
-        try:
-            kinit = await asyncio.wait_for(self.middleware.create_task(run(['kinit', '-R'], check=False)), timeout=15)
-            if kinit.returncode != 0:
-                raise CallError(f'kinit -R failed with error: {kinit.stderr.decode()}')
-        except asyncio.TimeoutError:
-            raise CallError('Attempt to renew kerberos TGT failed after 15 seconds.')
-
-        self.logger.debug('Successfully renewed kerberos TGT')
-        return await self.klist()
 
     @private
     @accepts(Ref('kerberos-options'))
@@ -547,27 +527,26 @@ class KerberosService(ConfigService):
 
     @private
     @job(lock="kerberos_renew_watch", transient=True, lock_queue_size=1)
-    async def wait_for_renewal(self, job):
-        klist = await self.klist()
-
+    def wait_for_renewal(self, job):
         while True:
-            now = time.time()
+            if (cred := gss_get_current_cred(krb5ccache.SYSTEM.value, raise_error=False)) is None:
+                # We don't have kerberos ticket or it has already expired
+                # We can redo our kinit
+                ds = self.middleware.call_sync('directoryservices.status')
+                if ds['type'] is None:
+                    self.logger.debug(
+                        'Directory services are disabled. Exiting job to wait '
+                        'for renewal of kerberos ticket.'
+                    )
+                    break
 
-            ticket = filter_list(
-                klist['tickets'],
-                [['client', '=', klist['default_principal']], ['server', '^', 'krbtgt']],
-                {'get': True}
-            )
+                self.logger.debug('Kerberos ticket check failed, getting new ticket')
+                self.middleware.call_sync('kerberos.start')
 
-            timestr = time.strftime("%m/%d/%y %H:%M:%S UTC", time.gmtime(ticket['expires']))
-            job.set_description(f'Waiting to renew kerberos ticket. Current ticket expires: {timestr}')
+            elif cred.lifetime <= KRB_TKT_CHECK_INTERVAL:
+                self.middleware.call_sync('kerberos.start')
 
-            if (ticket['expires'] - (now + KRB_TKT_CHECK_INTERVAL)) > 0:
-                await asyncio.sleep(KRB_TKT_CHECK_INTERVAL)
-                klist = await self.klist()
-                continue
-
-            klist = await self.renew()
+            time.sleep(KRB_TKT_CHECK_INTERVAL)
 
 
 class KerberosRealmModel(sa.Model):

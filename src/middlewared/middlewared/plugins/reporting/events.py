@@ -38,15 +38,9 @@ class RealtimeEventSource(EventSource):
                 Int('cache'),
                 Int('page_tables'),
                 Int('slab_cache'),
-                Int('swap_cache'),
                 Int('unused'),
             ),
             Dict('extra', additional_attrs=True),
-            Dict(
-                'swap',
-                Int('total'),
-                Int('used'),
-            )
         ),
         Dict('virtual_memory', additional_attrs=True),
         Dict(

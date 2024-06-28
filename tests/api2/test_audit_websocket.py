@@ -122,6 +122,37 @@ def test_invalid_call():
                     "authenticated": True,
                     "authorized": True,
                     "method": "user.create",
+                    "params": [{"username": "sergey", "password": "********"}],
+                    "description": "Create user sergey",
+                },
+                "success": False,
+            }
+        ]):
+            with pytest.raises(ValidationErrors):
+                c.call("user.create", {"username": "sergey", "password": "password"})
+
+
+def test_typo_in_secret_credential_name():
+    with client() as c:
+        with expect_audit_log([
+            {
+                "service_data": {
+                    "vers": {
+                        "major": 0,
+                        "minor": 1,
+                    },
+                    "origin": ANY,
+                    "protocol": "WEBSOCKET",
+                    "credentials": {
+                        "credentials": "LOGIN_PASSWORD",
+                        "credentials_data": {"username": "root"},
+                    },
+                },
+                "event": "METHOD_CALL",
+                "event_data": {
+                    "authenticated": True,
+                    "authorized": True,
+                    "method": "user.create",
                     "params": [{"username": "sergey"}],
                     "description": "Create user sergey",
                 },
@@ -129,7 +160,7 @@ def test_invalid_call():
             }
         ]):
             with pytest.raises(ValidationErrors):
-                c.call("user.create", {"username": "sergey"})
+                c.call("user.create", {"username": "sergey", "passwrod": "password"})
 
 
 def test_valid_call():

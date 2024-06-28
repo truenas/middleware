@@ -303,10 +303,20 @@ pytest_command = [
 if testexpr:
     pytest_command.extend(['-k', testexpr])
 
+def parse_test_name(test):
+    test = test.removeprefix("api2/")
+    test = test.removeprefix("api2.")
+    if ".py" not in test and test.count(".") == 1:
+        # Test name from Jenkins
+        filename, testname = test.split(".")
+        return f"{filename}.py::{testname}"
+    return test
+
+
 if tests:
-    pytest_command.extend(tests)
+    pytest_command.extend(list(map(parse_test_name, tests)))
 else:
-    pytest_command.append(f"api2/{testName}")
+    pytest_command.append(f"api2/{parse_test_name(testName)}")
 
 proc_returncode = call(pytest_command)
 

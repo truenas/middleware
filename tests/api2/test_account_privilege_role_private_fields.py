@@ -36,15 +36,16 @@ def certificateauthority():
 def cloudbackup():
     with local_ftp_credential() as credential:
         with dataset("cloud_backup") as local_dataset:
-            with cloud_backup_task({
-                "path": f"/mnt/{local_dataset}",
-                "credentials": credential["id"],
-                "attributes": {
-                    "folder": "",
-                },
-                "password": "test",
-            }) as task:
-                yield task["id"]
+            with mock("cloud_backup.ensure_initialized", return_value=None):
+                with cloud_backup_task({
+                    "path": f"/mnt/{local_dataset}",
+                    "credentials": credential["id"],
+                    "attributes": {
+                        "folder": "",
+                    },
+                    "password": "test",
+                }) as task:
+                    yield task["id"]
 
 
 @contextlib.contextmanager

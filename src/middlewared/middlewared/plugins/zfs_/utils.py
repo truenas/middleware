@@ -6,6 +6,17 @@ import re
 
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.filesystem.constants import ZFSCTL
+from middlewared.plugins.audit.utils import (
+    AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_DEFAULT_FILL_WARNING
+)
+from middlewared.utils.tdb import (
+    get_tdb_handle,
+    TDBBatchAction,
+    TDBBatchOperation,
+    TDBDataType,
+    TDBOptions,
+    TDBPathType,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +25,8 @@ __all__ = ["zvol_name_to_path", "zvol_path_to_name", "get_snapshot_count_cached"
 LEGACY_USERPROP_PREFIX = 'org.freenas'
 USERPROP_PREFIX = 'org.truenas'
 ZD_PARTITION = re.compile(r'zd[0-9]+p[0-9]+$')
+SNAP_COUNT_TDB_NAME = 'snapshot_count'
+SNAP_COUNT_TDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.JSON)
 
 
 class TNUserProp(enum.Enum):
@@ -27,13 +40,13 @@ class TNUserProp(enum.Enum):
     def default(self):
         match self:
             case TNUserProp.QUOTA_WARN:
-                return 80
+                return AUDIT_DEFAULT_FILL_WARNING
             case TNUserProp.QUOTA_CRIT:
-                return 95
+                return AUDIT_DEFAULT_FILL_CRITICAL
             case TNUserProp.REFQUOTA_WARN:
-                return 80
+                return AUDIT_DEFAULT_FILL_WARNING
             case TNUserProp.REFQUOTA_CRIT:
-                return 95
+                return AUDIT_DEFAULT_FILL_CRITICAL
             case _:
                 raise ValueError(f'{self.value}: no default value is set')
 
@@ -160,7 +173,7 @@ def unlocked_zvols_fast(options=None, data=None):
     return zvols
 
 
-def get_snapshot_count_cached(middleware, lz, datasets, prefetch=False, update_datasets=False, remove_snapshots_changed=False):
+def get_snapshot_count_cached(middleware, lz, datasets, update_datasets=False, remove_snapshots_changed=False):
     """
     Try retrieving snapshot count for dataset from cache if the
     `snapshots_changed` timestamp hasn't changed. If it has,
@@ -173,13 +186,11 @@ def get_snapshot_count_cached(middleware, lz, datasets, prefetch=False, update_d
     lz - libzfs handle, e.g. libzfs.ZFS()
     zhdl - iterable containing dataset information as returned by
         libzfs.datasets_serialized
-    prefetch - bool - optional performance enhancement to grab entire
-        tdb contents prior to iteration. This reduces count of middleware calls.
     update_datasets - bool - optional - insert `snapshot_count` key into datasets passed
         into this method
     remove_snapshots_changed - bool - remove the snapshots_changed key from dataset properties
         after processing. This is to hide the fact that we had to retrieve this property to
-        determie whether to return cached value.
+        determine whether to return cached value.
 
     Returns:
     -------
@@ -197,6 +208,10 @@ def get_snapshot_count_cached(middleware, lz, datasets, prefetch=False, update_d
         return None
 
     def entry_get_cnt(zhdl):
+        """
+        Retrieve snapshot count in most efficient way possible. If dataset is mounted, then
+        retrieve from st_nlink otherwise, iter snapshots from dataset handle
+        """
         if mp := get_mountpoint(zhdl):
             try:
                 st = os.stat(f'{mp}/.zfs/snapshot')
@@ -208,15 +223,11 @@ def get_snapshot_count_cached(middleware, lz, datasets, prefetch=False, update_d
 
         return len(lz.snapshots_serialized(['name'], datasets=[zhdl['name']], recursive=False))
 
-    def get_entry_prefetch(key, tdb_entries):
-        return tdb_entries.get(key, {'changed_ts': None, 'cnt': -1})
-
-    def get_entry_fetch(key, tdb_entries):
+    def get_entry_fetch(key):
+        """ retrieve cached snapshot count from persistent key-value store """
         try:
-            entry = middleware.call_sync('tdb.fetch', {
-                'name': 'snapshot_count',
-                'key': key,
-            })
+            with get_tdb_handle(SNAP_COUNT_TDB_NAME, SNAP_COUNT_TDB_OPTIONS) as hdl:
+                entry = hdl.get(key)
         except MatchNotFound:
             entry = {
                 'changed_ts': None,
@@ -224,7 +235,7 @@ def get_snapshot_count_cached(middleware, lz, datasets, prefetch=False, update_d
             }
         return entry
 
-    def process_entry(out, zhdl, tdb_entries, batch_ops, get_entry_fn):
+    def process_entry(out, zhdl, batch_ops):
         """
         This method processes the dataset entry and
         sets new value in tdb file if necessary. Since
@@ -245,7 +256,7 @@ def get_snapshot_count_cached(middleware, lz, datasets, prefetch=False, update_d
         changed_ts = zhdl['properties']['snapshots_changed']['parsed']
         cache_key = f'SNAPCNT%{zhdl["name"]}'
 
-        entry = get_entry_fn(cache_key, tdb_entries)
+        entry = get_entry_fetch(cache_key)
 
         if entry['changed_ts'] != changed_ts:
             entry['cnt'] = entry_get_cnt(zhdl)
@@ -256,11 +267,11 @@ def get_snapshot_count_cached(middleware, lz, datasets, prefetch=False, update_d
             # want cache insertion with NULL key to avoid
             # collisions
             if changed_ts:
-                batch_ops.append({
-                    'action': 'SET',
-                    'key': cache_key,
-                    'val': entry
-                })
+                batch_ops.append(TDBBatchOperation(
+                    action=TDBBatchAction.SET,
+                    key=cache_key,
+                    value=entry
+                ))
 
         out[zhdl['name']] = entry['cnt']
         if update_datasets:
@@ -269,27 +280,22 @@ def get_snapshot_count_cached(middleware, lz, datasets, prefetch=False, update_d
         if remove_snapshots_changed:
             zhdl['properties'].pop('snapshots_changed', None)
 
-    def iter_datasets(out, datasets_in, tdb_entries, batch_ops, get_entry_fn):
+    def iter_datasets(out, datasets_in, batch_ops):
         for ds in datasets_in:
-            process_entry(out, ds, tdb_entries, batch_ops, get_entry_fn)
-            iter_datasets(out, ds.get('children', []), tdb_entries, batch_ops, get_entry_fn)
+            process_entry(out, ds, batch_ops)
+            iter_datasets(out, ds.get('children', []), batch_ops)
 
-    tdb_entries = {}
     out = {}
     batch_ops = []
-    get_entry_fn = get_entry_fetch
-    if prefetch:
-        tdb_entries = {
-            x['key']: x['val']
-            for x in middleware.call_sync('tdb.entries', {'name': 'snapshot_count'})
-        }
-        get_entry_fn = get_entry_prefetch
 
-    iter_datasets(out, datasets, tdb_entries, batch_ops, get_entry_fn)
+    iter_datasets(out, datasets, batch_ops)
+
     if batch_ops:
+        # Commit changes to snapshot counts under a transaction lock
         try:
-            middleware.call_sync('tdb.batch_ops', {'name': 'snapshot_count', 'ops': batch_ops})
+            with get_tdb_handle(SNAP_COUNT_TDB_NAME, SNAP_COUNT_TDB_OPTIONS) as hdl:
+                hdl.batch_op(batch_ops)
         except Exception:
-            pass
+            logger.warning('Failed to update cached snapshot counts', exc_info=True)
 
     return out

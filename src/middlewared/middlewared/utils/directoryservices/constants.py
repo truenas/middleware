@@ -10,9 +10,9 @@ class DSStatus(enum.Enum):
 
 
 class DSType(enum.Enum):
-    AD = 'activedirectory'
-    IPA = 'ipa'
-    LDAP = 'ldap'
+    AD = 'ACTIVEDIRECTORY'
+    IPA = 'IPA'
+    LDAP = 'LDAP'
 
 
 class SASL_Wrapping(enum.Enum):
