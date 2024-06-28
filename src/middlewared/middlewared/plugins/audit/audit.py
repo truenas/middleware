@@ -396,7 +396,7 @@ class AuditService(ConfigService):
         if new['quota'] and (old['quota'] != new['quota']):
             new_volsize = new['quota'] * _GIB
             used = new['space']['used_by_dataset'] + new['space']['used_by_snapshots']
-            if used // new_volsize > new['quota_fill_warning'] // 100:
+            if used / new_volsize > new['quota_fill_warning'] / 100:
                 verrors.add(
                     'audit_update.quota',
                     'Specified quota would result in the percentage used of the '
@@ -420,6 +420,7 @@ class AuditService(ConfigService):
         old_crit = int(ds_props.get(QUOTA_CRIT, {}).get('rawvalue', '0'))
 
         payload = {}
+        # Using floor division for conversion from bytes to GiB
         if new['quota'] != old_quota // _GIB:
             quota_val = "none" if new['quota'] == 0 else f'{new["quota"]}G'
             # Using refquota gives better fidelity with dataset settings
