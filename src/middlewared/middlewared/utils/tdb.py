@@ -304,6 +304,9 @@ class TDBHandle:
                     )
                 self.full_path = name
             case _:
+                if not os.path.exists(self.path_type.value):
+                    os.makedirs(self.path_type.value, mode=0o700, exist_ok=True)
+
                 self.full_path = f'{self.path_type.value}/{name}.tdb'
 
         self.hdl = tdb.Tdb(self.full_path, 0, tdb_flags, open_flags, open_mode)
