@@ -48,7 +48,11 @@
 	users = middleware.call_sync('user.query')
 	root_user = filter_list(users, [['username', '=', 'root']], {'get': True})
 
-	login_banner = middleware.call_sync('datastore.query', 'system.advanced')[0]['adv_login_banner']
+	login_banner = middleware.call_sync('system.advanced.login_banner')
+	if login_banner != '':
+		with open('/etc/login_banner', 'w', encoding='utf-8') as f:
+			f.write(login_banner+'\n')
+			os.fchmod(f.fileno(), 0o600)
 
 %>\
 Subsystem	sftp	internal-sftp -l ${ssh_config['sftp_log_level']} -f ${ssh_config['sftp_log_facility']}

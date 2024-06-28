@@ -262,11 +262,8 @@ class SystemAdvancedService(ConfigService):
                 await self.middleware.call('etc.generate', 'motd')
 
             if original_data['login_banner'] != config_data['login_banner']:
-                with open('/etc/login_banner', 'w', encoding='utf-8') as f:
-                    f.write(config_data['login_banner']+'\n')
-                    os.fchmod(f.fileno(), 0o600)
                 await self.middleware.call('etc.generate', 'ssh')
-                await self.middleware.call('service.restart', 'ssh')
+                await self.middleware.call('service.reload', 'ssh')
 
             if original_data['powerdaemon'] != config_data['powerdaemon']:
                 await self.middleware.call('service.restart', 'powerd')
@@ -325,4 +322,4 @@ class SystemAdvancedService(ConfigService):
     @returns(Str())
     def login_banner(self):
         """Returns user set login banner"""
-        return self.middleware.call_sync('datastore.query', 'system.advanced')[0]['adv_login_banner']
+        return self.middleware.call_sync('datastore.config', 'system.advanced')['adv_login_banner']

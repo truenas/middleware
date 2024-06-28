@@ -1,7 +1,7 @@
 """Add login_banner column
 
 Revision ID: 1307a8e6a8b6
-Revises: 91724c382023
+Revises: d8bfbf4e277e
 Create Date: 2024-06-24 12:57:36.048308+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '1307a8e6a8b6'
-down_revision = '91724c382023'
+down_revision = 'd8bfbf4e277e'
 branch_labels = None
 depends_on = None
 
