@@ -29,7 +29,11 @@ class AppService(CRUDService):
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
 
-        return filter_list(list_apps(), filters, options)
+        kwargs = {}
+        if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
+            kwargs = {'specific_app': filters[0][2]}
+
+        return filter_list(list_apps(**kwargs), filters, options)
 
     @accepts(
         Dict(
