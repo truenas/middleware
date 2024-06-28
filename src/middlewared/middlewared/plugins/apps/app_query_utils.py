@@ -28,8 +28,13 @@ def list_apps(specific_app: str | None = None) -> list[dict]:
         })
 
     # We should now retrieve apps which are in stopped state
+    if specific_app and specific_app in app_names:
+        return apps
+
     with os.scandir(get_app_parent_config_path()) as scan:
-        for entry in filter(lambda e: e.is_dir() and e.name not in app_names, scan):
+        for entry in filter(
+            lambda e: e.is_dir() and ((specific_app and e.name == specific_app) or e.name not in app_names), scan
+        ):
             app_names.add(entry.name)
             if not (app_metadata := get_app_metadata(entry.name)):
                 # The app is malformed or something is seriously wrong with it
