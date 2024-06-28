@@ -93,7 +93,7 @@ def target_login_test_linux(portal_ip, target_name, check_surfaced_luns=None):
         run_on_runner(iscsiadm + ['-m', 'node', '--targetname', target_name, '--portal', portal_ip, '--login'])
         logged_in = True
         if check_surfaced_luns is not None:
-            retries = 10
+            retries = 20
             pattern = f'ip-{portal_ip}:3260-iscsi-{target_name}-lun-*'
             by_path = Path('/dev/disk/by-path')
             while retries:
