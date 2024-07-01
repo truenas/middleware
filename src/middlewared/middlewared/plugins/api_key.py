@@ -30,7 +30,7 @@ class APIKeyModel(sa.Model):
 
 
 class ApiKey:
-    def __init__(self, api_key: ApiKeyEntry):
+    def __init__(self, api_key: dict):
         self.api_key = api_key
         self.allowlist = Allowlist(self.api_key["allowlist"])
 
@@ -40,7 +40,7 @@ class ApiKey:
 
 class ApiKeyService(CRUDService):
 
-    keys: dict[int, ApiKeyEntry] = {}
+    keys: dict[int, dict] = {}
 
     class Config:
         namespace = "api_key"
@@ -49,7 +49,7 @@ class ApiKeyService(CRUDService):
         cli_namespace = "auth.api_key"
 
     @api_method(ApiKeyCreateArgs, ApiKeyCreateResult)
-    async def do_create(self, data: ApiKeyCreate) -> ApiKeyEntry:
+    async def do_create(self, data: dict) -> dict:
         """
         Creates API Key.
 
@@ -73,7 +73,7 @@ class ApiKeyService(CRUDService):
         return self._serve(data, key)
 
     @api_method(ApiKeyUpdateArgs, ApiKeyUpdateResult)
-    async def do_update(self, id_: int, data: ApiKeyUpdate) -> ApiKeyEntry:
+    async def do_update(self, id_: int, data: dict) -> dict:
         """
         Update API Key `id`.
 
@@ -153,7 +153,7 @@ class ApiKeyService(CRUDService):
 
         return ApiKey(db_key)
 
-    async def _validate(self, schema_name: str, data: ApiKeyEntry, id_: int=None):
+    async def _validate(self, schema_name: str, data: dict, id_: int=None):
         verrors = ValidationErrors()
 
         await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
@@ -163,7 +163,7 @@ class ApiKeyService(CRUDService):
     def _generate(self):
         return "".join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)])
 
-    def _serve(self, data: ApiKeyEntry, key: str | None) -> ApiKeyEntry:
+    def _serve(self, data: dict, key: str | None) -> dict:
         if key is None:
             return data
 

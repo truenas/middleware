@@ -9,7 +9,7 @@ from middlewared.utils.lang import undefined
 __all__ = ["Excluded", "excluded_field"]
 
 
-class ExcludedField:
+class ExcludedField(Any):
     @classmethod
     def __get_pydantic_core_schema__(
         cls, source_type: Any, handler: GetCoreSchemaHandler

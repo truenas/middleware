@@ -1,13 +1,13 @@
 import fnmatch
 import re
 
-from middlewared.api.current import AllowListItem, HttpVerb, NonEmptyString
+from middlewared.api.current import HttpVerb, NonEmptyString
 
-ALLOW_LIST_FULL_ADMIN: AllowListItem = {'method': '*', 'resource': '*'}
+ALLOW_LIST_FULL_ADMIN = {'method': '*', 'resource': '*'}
 
 
 class Allowlist:
-    def __init__(self, allowlist: list[AllowListItem]):
+    def __init__(self, allowlist: list[dict]):
         self.exact: dict[HttpVerb, set[NonEmptyString]] = {}
         self.full_admin = ALLOW_LIST_FULL_ADMIN in allowlist
         self.patterns: dict[HttpVerb, list[re.Pattern]] = {}
