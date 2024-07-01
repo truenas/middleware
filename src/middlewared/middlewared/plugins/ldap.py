@@ -812,7 +812,8 @@ class LDAPService(ConfigService):
         await self.middleware.call('ldap.create_sssd_dirs')
 
         if ldap['server_type'] == constants.SERVER_TYPE_FREEIPA:
-            await job.wrap(await self.middleware.call('directoryservices.connection.domain_join', 'IPA'))
+            ipa_config = await self.middleware.call('ldap.ipa_config')
+            await job.wrap(await self.middleware.call('directoryservices.connection.join_domain', 'IPA', ipa_config['domain']))
 
         cache_job_id = await self.middleware.call('directoryservices.connection.activate')
 

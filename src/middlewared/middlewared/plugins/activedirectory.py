@@ -600,7 +600,7 @@ class ActiveDirectoryService(ConfigService):
         """
         ad = await self.config()
         join_resp = await job.wrap(await self.middleware.call(
-            'directoryservices.connection.domain_join', DSType.AD.value, ad['domainname']
+            'directoryservices.connection.join_domain', DSType.AD.value, ad['domainname']
         ))
         if DomainJoinResponse(join_resp) is DomainJoinResponse.PERFORMED_JOIN:
             await self.set_ntp_servers()
