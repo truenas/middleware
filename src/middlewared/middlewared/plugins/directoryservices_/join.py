@@ -144,9 +144,9 @@ class DomainHealth(
 
         match ds_type:
             case DSType.AD:
-                self._ad_grant_privileges(self)
+                self._ad_grant_privileges()
             case DSType.IPA:
-                self._ipa_grant_privileges(self)
+                self._ipa_grant_privileges()
             case _:
                 raise ValueError(f'{ds_type}: unexpected directory sevice type')
 
