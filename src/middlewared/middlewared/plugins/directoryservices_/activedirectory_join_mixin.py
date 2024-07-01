@@ -15,7 +15,7 @@ from middlewared.utils.directoryservices.krb5 import (
     kerberos_ticket,
 )
 from middlewared.utils.directoryservices.krb5_constants import krb5ccache
-from time import time
+from time import sleep, time
 
 
 class ADJoinMixin:
@@ -27,6 +27,21 @@ class ADJoinMixin:
         self.middleware.call_sync('service.stop', 'idmap')
         self.middleware.call_sync('service.start', 'idmap', {'silent': False})
         self.middleware.call_sync('kerberos.start')
+        self._ad_wait_wbclient()
+
+    def _ad_wait_wbclient(self, job):
+        waited = 0
+        client = WBClient()
+        while waited <= 60:
+            if client.domain_info()['online']:
+                return
+
+            job.set_progress(10, 'Waiting for domain to come online')
+            self.logger.debug('Waiting for domain to come online')
+            sleep(1)
+            waited += 1
+
+        raise CallError('Timed out while waiting for domain to come online')
 
     def _ad_domain_info(self, domain: str, retry: bool = True) -> dict:
         """
@@ -289,8 +304,6 @@ class ADJoinMixin:
 
         # Ensure smb4.conf has correct workgorup.
         self.middleware.call_sync('etc.generate', 'smb')
-        with open('/etc/smb4.conf', 'r') as f:
-            self.logger.debug("XXX: %s", f.read())
 
         self._ad_join_impl(job, ad_config)
         machine_acct = f'{ad_config["netbiosname"].upper()}$@{ad_config["domainname"]}'
@@ -329,4 +342,3 @@ class ADJoinMixin:
         self.middleware.call_sync('etc.generate', 'kerberos')
 
         self.middleware.call_sync('service.update', 'cifs', {'enable': True})
-        self.middleware.call_sync('directoryservices.secrets.backup')
