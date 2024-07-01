@@ -566,7 +566,7 @@ class PoolService(CRUDService):
                 # will log errors if there are any so it won't crash here (this matches CORE behavior)
                 await (await self.middleware.call('disk.resize', log_disks, True)).wait()
 
-        await self.middleware.call('pool.format_disks', job, disks)
+        await self.middleware.call('pool.format_disks', job, disks, 0, 30)
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -713,7 +713,7 @@ class PoolService(CRUDService):
             disks, vdevs = await self._process_topology('pool_update', data, pool)
 
         if disks and vdevs:
-            await self.middleware.call('pool.format_disks', job, disks)
+            await self.middleware.call('pool.format_disks', job, disks, 0, 80)
 
             job.set_progress(90, 'Extending ZFS Pool')
             extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)

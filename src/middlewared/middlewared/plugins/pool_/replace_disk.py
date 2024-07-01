@@ -69,7 +69,7 @@ class PoolService(Service):
                 'vdev': vdev,
                 'size': None,  # pool.format_disks checks size of disk
             },
-        })
+        }, 0, 25)
 
         try:
             job.set_progress(30, 'Replacing disk')
