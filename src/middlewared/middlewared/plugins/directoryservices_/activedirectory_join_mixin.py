@@ -278,7 +278,7 @@ class ADJoinMixin:
                 )
 
             self.middleware.call_sync(
-                'datastore.update', 'directoryservices.activedirectory', ad_config['id'],
+                'datastore.update', 'directoryservice.activedirectory', ad_config['id'],
                 {"kerberos_realm": realm_id}, {'prefix': 'ad_'}
             )
             ad_config['kerberos_realm'] = realm_id
@@ -298,7 +298,7 @@ class ADJoinMixin:
 
         self._ad_join_impl(job, dc_info['pre-win2k_domain'])
         machine_acct = f'{ad_config["netbiosname"].upper()}$@{ad_config["domainname"]}'
-        self.middleware.call_sync('datastore.update', 'directoryservices.activedirectory', ad_config['id'], {
+        self.middleware.call_sync('datastore.update', 'directoryservice.activedirectory', ad_config['id'], {
             'kerberos_principal': machine_acct,
             'site': site,
             'kerberos_realm': ad_config['kerberos_realm']
@@ -333,4 +333,4 @@ class ADJoinMixin:
         self.middleware.call_sync('etc.generate', 'kerberos')
 
         self.middleware.call_sync('service.update', 'cifs', {'enable': True})
-        self.middleware.call_sync("directoryservices.secrets.backup")
+        self.middleware.call_sync('directoryservices.secrets.backup')
