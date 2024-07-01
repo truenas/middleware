@@ -29,7 +29,7 @@ class ADJoinMixin:
         self.middleware.call_sync('kerberos.start')
         self._ad_wait_wbclient()
 
-    def _ad_wait_wbclient(self, job):
+    def _ad_wait_wbclient(self) -> None:
         waited = 0
         client = WBClient()
         while waited <= 60:
@@ -252,7 +252,7 @@ class ADJoinMixin:
         except Exception as e:
             # We failed to set up DNS / keytab cleanly
             # roll back and present user with error
-            self._ad_leave(DSType.AD, conf['domainname'])
+            self._ad_leave(job, DSType.AD, conf['domainname'])
             self.middleware.call_sync('idmap.gencache.flush')
             raise e from None
 
