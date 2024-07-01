@@ -830,11 +830,10 @@ class ActiveDirectoryService(ConfigService):
             except MatchNotFound:
                 pass
 
-        if left_successfully:
-            try:
-                await self.middleware.call("directoryservices.secrets.backup")
-            except Exception:
-                self.logger.debug("Failed to remove stale secrets entries.", exc_info=True)
+        try:
+            await self.middleware.call("directoryservices.secrets.backup")
+        except Exception:
+            self.logger.debug("Failed to remove stale secrets entries.", exc_info=True)
 
         job.set_progress(30, 'Clearing local Active Directory settings.')
         payload = {
