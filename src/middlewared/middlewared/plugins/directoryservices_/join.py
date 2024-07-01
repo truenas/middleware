@@ -122,7 +122,7 @@ class DomainHealth(
                 )
                 return DomainJoinResponse.ALREADY_JOINED.value
 
-        match DSType:
+        match ds_type:
             case DSType.AD:
                 do_join_fn = self._ad_join
             case DSType.IPA:
