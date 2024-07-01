@@ -237,7 +237,7 @@ class ADJoinMixin:
         except Exception as e:
             # We failed to set up DNS / keytab cleanly
             # roll back and present user with error
-            self._ad_leave(ds_type, domain)
+            self._ad_leave(DSType.AD, conf['domainname'])
             self.middleware.call_sync('idmap.gencache.flush')
             raise e from None
 

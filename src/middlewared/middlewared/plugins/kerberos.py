@@ -446,7 +446,7 @@ class KerberosService(ConfigService):
 
         if ad['enable']:
             payload = {
-                'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
+                'dstype': DSType.AD.value,
                 'conf': {
                     'bindname': ad['bindname'],
                     'bindpw': ad.get('bindpw', ''),
@@ -457,7 +457,7 @@ class KerberosService(ConfigService):
 
         if ldap['enable'] and ldap['kerberos_realm']:
             payload = {
-                'dstype': DSType.DS_TYPE_LDAP.name,
+                'dstype': DSType.LDAP.value,
                 'conf': {
                     'binddn': ldap['binddn'],
                     'bindpw': ldap['bindpw'],
