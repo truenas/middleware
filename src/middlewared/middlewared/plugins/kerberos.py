@@ -356,6 +356,8 @@ class KerberosService(ConfigService):
             'ccache_uid': data['kinit-options']['ccache_uid']
         })
 
+        current_cred = gss_get_current_cred(ccache_path, False)
+
         if ccache == krb5ccache.USER:
             if has_principal:
                 raise CallError('User-specific ccache not permitted with keytab-based kinit')
@@ -377,6 +379,16 @@ class KerberosService(ConfigService):
                                   'Regenerating kerberos keytab from configuration file.',
                                   creds['kerberos_principal'], ','.join(principals))
                 self.middleware.call_sync('etc.generate', 'kerberos')
+
+            if current_cred and str(current_cred.name) == creds['kerberos_principal']:
+                if current_cred.lifetime > KRB_TKT_CHECK_INTERVAL * 2:
+                    # we already have a ticket skip unnecessary ccache manipulation
+                    return
+
+                self.middleware.call_sync('kerberos.kdestroy', {
+                    'ccache': data['kinit-options']['ccache'],
+                    'ccache_uid': data['kinit-options'].get('ccache_uid')
+                })
 
             try:
                 gss_acquire_cred_principal(
@@ -404,6 +416,16 @@ class KerberosService(ConfigService):
             except Exception as exc:
                 raise CallError(str(exc))
         else:
+            if current_cred and str(current_cred.name) == creds['username']:
+                if current_cred.lifetime > KRB_TKT_CHECK_INTERVAL * 2:
+                    # we already have a ticket skip unnecessary ccache manipulation
+                    return
+
+                self.middleware.call_sync('kerberos.kdestroy', {
+                    'ccache': data['kinit-options']['ccache'],
+                    'ccache_uid': data['kinit-options'].get('ccache_uid')
+                })
+
             try:
                 gss_acquire_cred_user(
                     creds['username'],
