@@ -131,7 +131,7 @@ class PoolService(CRUDService):
 
     @private
     @accepts(Str('pool_name'))
-    @returns(Ref('pool_entry'))
+    @returns(Patch('pool_entry', 'pool_normalize', ('rm', {'name': 'id'}), ('rm', {'name': 'guid'})))
     async def pool_normalize_info(self, pool_name):
         """
         Returns the current state of 'pool_name' including all vdevs, properties and datasets.
