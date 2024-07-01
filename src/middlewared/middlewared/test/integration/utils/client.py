@@ -103,6 +103,8 @@ class TrueNAS_Server:
                 self._client.close()
                 self._client = None
 
+        host()  # Has to be called in order for `truenas_server` global variable to be correctly initialized when
+                # running `runtest.py` with a single test name
         if (addr := self.ip) is None:
             raise RuntimeError('IP is not set')
 

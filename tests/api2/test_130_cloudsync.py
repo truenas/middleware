@@ -1,11 +1,9 @@
-#!/usr/bin/env python3
-
 import pytest
 import sys
 import os
 import time
 import urllib.parse
-from pytest_dependency import depends
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
@@ -35,12 +33,12 @@ def task():
     return {}
 
 
-def test_01_create_dataset(request):
+def test_01_create_dataset():
     result = POST("/pool/dataset/", {"name": dataset})
     assert result.status_code == 200, result.text
 
 
-def test_02_create_cloud_credentials(request, credentials):
+def test_02_create_cloud_credentials(credentials):
     result = POST("/cloudsync/credentials/", {
         "name": "Test",
         "provider": "S3",
@@ -53,7 +51,7 @@ def test_02_create_cloud_credentials(request, credentials):
     credentials.update(result.json())
 
 
-def test_03_update_cloud_credentials(request, credentials):
+def test_03_update_cloud_credentials(credentials):
     result = PUT(f"/cloudsync/credentials/id/{credentials['id']}/", {
         "name": "Test",
         "provider": "S3",
@@ -65,7 +63,7 @@ def test_03_update_cloud_credentials(request, credentials):
     assert result.status_code == 200, result.text
 
 
-def test_04_create_cloud_sync(request, credentials, task):
+def test_04_create_cloud_sync(credentials, task):
     result = POST("/cloudsync/", {
         "description": "Test",
         "direction": "PULL",
@@ -89,7 +87,7 @@ def test_04_create_cloud_sync(request, credentials, task):
     task.update(result.json())
 
 
-def test_05_update_cloud_sync(request, credentials, task):
+def test_05_update_cloud_sync(credentials, task):
     result = PUT(f"/cloudsync/id/{task['id']}/", {
         "description": "Test",
         "direction": "PULL",
@@ -112,7 +110,7 @@ def test_05_update_cloud_sync(request, credentials, task):
     assert result.status_code == 200, result.text
 
 
-def test_06_run_cloud_sync(request, task):
+def test_06_run_cloud_sync(task):
     result = POST(f"/cloudsync/id/{task['id']}/sync/")
     assert result.status_code == 200, result.text
     for i in range(120):
@@ -134,7 +132,7 @@ def test_06_run_cloud_sync(request, task):
     assert False, state
 
 
-def test_07_restore_cloud_sync(request, task):
+def test_07_restore_cloud_sync(task):
     result = POST(f"/cloudsync/id/{task['id']}/restore/", {
         "transfer_mode": "COPY",
         "path": dataset_path,
@@ -145,22 +143,22 @@ def test_07_restore_cloud_sync(request, task):
     assert result.status_code == 200, result.text
 
 
-def test_96_delete_cloud_credentials_error(request, credentials):
+def test_96_delete_cloud_credentials_error(credentials):
     result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
     assert result.status_code == 422
     assert "This credential is used by cloud sync task" in result.json()["message"]
 
 
-def test_97_delete_cloud_sync(request, task):
+def test_97_delete_cloud_sync(task):
     result = DELETE(f"/cloudsync/id/{task['id']}/")
     assert result.status_code == 200, result.text
 
 
-def test_98_delete_cloud_credentials(request, credentials):
+def test_98_delete_cloud_credentials(credentials):
     result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
     assert result.status_code == 200, result.text
 
 
-def test_99_destroy_dataset(request):
+def test_99_destroy_dataset():
     result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
     assert result.status_code == 200, result.text
