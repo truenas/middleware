@@ -65,23 +65,23 @@ def initialize_readonly_state(root: str):
             raise ValueError(f"Unable to determine readonly state for {mountpoint!r}: {e}")
 
 
-def set_readonly(root, readonly_desired_value=None, restore_state=None):
+def toggle_readonly(root, desired_value=None, restore_original_state=None):
     global readonly_state
 
-    if readonly_desired_value is not None and restore_state is not None:
+    if desired_value is not None and restore_original_state is not None:
         raise ValueError("Both readonly_all_mountpoints and restore_state cannot be set at the same time")
 
-    if readonly_desired_value is None and restore_state is None:
+    if desired_value is None and restore_original_state is None:
         raise ValueError("Either readonly_all_mountpoints or restore_state must be set")
 
-    if restore_state is not None:
+    if restore_original_state is not None:
         mountpoints_mapping = {
             k.split("_")[-1]: v for k, v in readonly_state.__dict__.items() if k.startswith("original_")
         }
     else:
         mountpoints_mapping = {
-            "root": readonly_desired_value,
-            "usr": readonly_desired_value,
+            "root": desired_value,
+            "usr": desired_value,
         }
 
     for key, value in filter(lambda i: i[0].startswith("current_"), readonly_state.__dict__.items()):
@@ -165,7 +165,7 @@ def update_zfs_default(root):
 
     new_config = "\n".join(lines) + "\n"
     if new_config != original_config:
-        set_readonly(root, readonly_desired_value=False)
+        toggle_readonly(root, desired_value=False)
         with open(zfs_config_path, "w") as f:
             f.write(new_config)
 
@@ -257,7 +257,7 @@ def update_pci_initramfs_config(root, database):
             original_config = json.loads(f.read())
 
     if initramfs_config != original_config:
-        set_readonly(root, readonly_desired_value=False)
+        toggle_readonly(root, desired_value=False)
 
         with open(initramfs_config_path, "w") as f:
             f.write(json.dumps(initramfs_config))
@@ -291,7 +291,7 @@ def update_zfs_module_config(root, database):
         existing_config = None
 
     if existing_config != config:
-        set_readonly(root, readonly_desired_value=False)
+        toggle_readonly(root, desired_value=False)
 
         if config is None:
             os.unlink(config_path)
@@ -330,14 +330,14 @@ if __name__ == "__main__":
             update_pci_initramfs_config(root, database),
             update_zfs_module_config(root, database),
         )):
-            set_readonly(root, readonly_desired_value=False)
+            toggle_readonly(root, desired_value=False)
             subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
     except Exception:
         logger.error("Failed to update initramfs", exc_info=True)
         exit(2)
     finally:
         if root is not None:
-            set_readonly(root, restore_state=True)
+            toggle_readonly(root, restore_original_state=True)
 
     # We give out an exit code of 1 when initramfs has been updated as we require a reboot of the system for the
     # changes to have an effect. This caters to the case of uploading a database. Otherwise, we give an exit code
