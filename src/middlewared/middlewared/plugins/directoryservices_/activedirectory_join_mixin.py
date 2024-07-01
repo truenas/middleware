@@ -125,7 +125,7 @@ class ADJoinMixin:
         self.middleware.call_sync('kerberos.keytab.store_ad_keytab')
 
     @kerberos_ticket
-    def _ad_test_join(self, ds_type: DSType, workgroup: str):
+    def _ad_test_join(self, ds_type: DSType, domain: str):
         """
         Test to see whether we're currently joined to an AD domain.
         """

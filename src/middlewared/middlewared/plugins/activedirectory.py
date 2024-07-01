@@ -607,7 +607,7 @@ class ActiveDirectoryService(ConfigService):
             await self.set_ntp_servers()
 
         cache_job_id = await self.middleware.call('directoryservices.connection.activate')
-        await job.wrap(await self.middlware.call('core.job_wait', cache_job_id))
+        await job.wrap(await self.middleware.call('core.job_wait', cache_job_id))
         await self.middleware.call('directoryservices.health.set_state', DSType.AD.value, DSStatus.HEALTHY.name)
         await self.middleware.call('directoryservices.restart_dependent_services')
 
