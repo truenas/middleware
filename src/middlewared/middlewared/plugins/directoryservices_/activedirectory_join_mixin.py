@@ -172,8 +172,8 @@ class ADJoinMixin:
         # sure we have it backed up in our config.
         self.middleware.call_sync('directoryservices.secrets.backup')
 
-        # Force an update to stale cache
-        self._ad_activate(job)
+        # start up AD service
+        self._ad_activate()
 
         # get our domain from winbind
         dom = wbclient.Ctx().domain()
@@ -203,14 +203,12 @@ class ADJoinMixin:
                     "TrueNAS API.", exc_info=True
                 )
 
-    def _ad_join_impl(self, job: Job):
+    def _ad_join_impl(self, job: Job, conf: dict):
         """
         Join an active directory domain. Requires admin kerberos ticket.
         If post-join operations fail, then we attempt to roll back changes on
         the DC.
         """
-        conf = self.middleware.call_sync('activedirectory.config')
-
         cmd = [
             SMBCmd.NET.value,
             '--use-kerberos', 'required',
@@ -292,7 +290,7 @@ class ADJoinMixin:
         # Ensure smb4.conf has correct workgorup.
         self.middleware.call_sync('etc.generate', 'smb')
 
-        self._ad_join_impl(job, dc_info['pre-win2k_domain'])
+        self._ad_join_impl(job, ad_config)
         machine_acct = f'{ad_config["netbiosname"].upper()}$@{ad_config["domainname"]}'
         self.middleware.call_sync('datastore.update', 'directoryservice.activedirectory', ad_config['id'], {
             'kerberos_principal': machine_acct,
