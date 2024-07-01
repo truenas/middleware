@@ -133,7 +133,7 @@ class DomainHealth(
                     'support domain join functionality.'
                 )
 
-        do_join_fn(ds_type, domain)
+        do_join_fn(job, ds_type, domain)
         return DomainJoinResponse.PERFORMED_JOIN.value
 
     @job(lock="directoryservices_join_leave")
