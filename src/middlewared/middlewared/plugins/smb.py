@@ -611,7 +611,7 @@ class SMBService(ConfigService):
         List('bindip', items=[IPAddr('ip')]),
         Str('smb_options', max_length=None),
         update=True,
-    ))
+    ), audit='Update SMB configuration')
     @pass_app(rest=True)
     async def do_update(self, app, data):
         """
@@ -806,7 +806,8 @@ class SharingSMBService(SharingService):
                 List('ignore_list', default=NOT_PROVIDED)
             ),
             register=True
-        )
+        ),
+        audit='Create SMB share', audit_extended=lambda data: data['name']
     )
     @pass_app(rest=True)
     async def do_create(self, app, data):
@@ -954,17 +955,19 @@ class SharingSMBService(SharingService):
             'sharingsmb_create',
             'sharingsmb_update',
             ('attr', {'update': True})
-        )
+        ),
+        audit='Update SMB share',
+        audit_callback=True,
     )
     @pass_app(rest=True)
-    async def do_update(self, app, id_, data):
+    async def do_update(self, app, audit_callback, id_, data):
         """
         Update SMB Share of `id`.
         """
-        ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
+        old = await self.get_instance(id_)
+        audit_callback(old['name'])
 
         verrors = ValidationErrors()
-        old = await self.query([('id', '=', id_)], {'get': True, 'extra': {'ha_mode': ha_mode.name}})
         old_audit = old['audit']
 
         new = old.copy()
@@ -1056,13 +1059,15 @@ class SharingSMBService(SharingService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'))
-    async def do_delete(self, id_):
+    @accepts(Int('id'), audit='Delete SMB share', audit_callback=True)
+    async def do_delete(self, audit_callback, id_):
         """
         Delete SMB Share of `id`. This will forcibly disconnect SMB clients
         that are accessing the share.
         """
         share = await self.get_instance(id_)
+        audit_callback(share['name'])
+
         result = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
         share_name = 'homes' if share['home'] else share['name']
@@ -1548,7 +1553,7 @@ class SharingSMBService(SharingService):
             ),
         ], default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}]),
         register=True
-    ), roles=['SHARING_SMB_WRITE'])
+    ), roles=['SHARING_SMB_WRITE'], audit='Setacl SMB share', audit_extended=lambda data: data['share_name'])
     @returns(Ref('smb_share_acl'))
     async def setacl(self, data):
         """
@@ -1653,7 +1658,10 @@ class SharingSMBService(SharingService):
             })
         return await self.getacl({'share_name': data['share_name']})
 
-    @accepts(Dict('smb_getacl', Str('share_name', required=True)), roles=['SHARING_SMB_READ'])
+    @accepts(Dict(
+        'smb_getacl',
+        Str('share_name', required=True)
+    ), roles=['SHARING_SMB_READ'], audit='Setacl SMB share', audit_extended=lambda data: data['share_name'])
     @returns(Ref('smb_share_acl'))
     async def getacl(self, data):
         verrors = ValidationErrors()

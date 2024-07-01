@@ -145,6 +145,7 @@ class SMBService(Service):
         service = 'cifs'
         service_verb = 'restart'
 
+    @private
     @accepts(
         Dict(
             'get_remote_acl',
