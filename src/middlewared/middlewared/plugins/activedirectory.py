@@ -598,6 +598,7 @@ class ActiveDirectoryService(ConfigService):
         Start AD service. In 'UNIFIED' HA configuration, only start AD service
         on active storage controller.
         """
+        await self.middleware.call('directoryservices.health.set_state', DSType.AD.value, DSStatus.JOINING.name)
         ad = await self.config()
         join_resp = await job.wrap(await self.middleware.call(
             'directoryservices.connection.join_domain', DSType.AD.value, ad['domainname']
@@ -607,6 +608,7 @@ class ActiveDirectoryService(ConfigService):
 
         cache_job_id = await self.middleware.call('directoryservices.connection.activate')
         await job.wrap(await self.middlware.call('core.job_wait', cache_job_id))
+        await self.middleware.call('directoryservices.health.set_state', DSType.AD.value, DSStatus.HEALTHY.name)
         await self.middleware.call('directoryservices.restart_dependent_services')
 
     async def __stop(self, job, config):
