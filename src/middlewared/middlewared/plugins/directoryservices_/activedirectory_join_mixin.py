@@ -203,16 +203,12 @@ class ADJoinMixin:
                     "TrueNAS API.", exc_info=True
                 )
 
-    @kerberos_ticket
-    def _ad_join_impl(self, job: Job, ds_type: DSType, domain: str):
+    def _ad_join_impl(self, job: Job):
         """
         Join an active directory domain. Requires admin kerberos ticket.
         If post-join operations fail, then we attempt to roll back changes on
         the DC.
         """
-        if ds_type is not DSType.AD:
-            raise ValueError(f'{ds_type}: unexpected directory service type')
-
         conf = self.middleware.call_sync('activedirectory.config')
 
         cmd = [
@@ -239,7 +235,7 @@ class ADJoinMixin:
         # we've now successfully joined AD and can proceed with post-join
         # operations
         try:
-            return self._ad_post_join_actions()
+            return self._ad_post_join_actions(job)
         except Exception as e:
             # We failed to set up DNS / keytab cleanly
             # roll back and present user with error
