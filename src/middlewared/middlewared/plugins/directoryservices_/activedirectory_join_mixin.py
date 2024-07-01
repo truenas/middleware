@@ -31,7 +31,7 @@ class ADJoinMixin:
 
     def _ad_wait_wbclient(self) -> None:
         waited = 0
-        client = WBClient()
+        client = wbclient.WBClient()
         while waited <= 60:
             if client.domain_info()['online']:
                 return
