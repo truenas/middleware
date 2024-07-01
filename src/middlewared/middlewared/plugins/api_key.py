@@ -9,8 +9,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     ApiKeyCreateArgs, ApiKeyCreateResult, ApiKeyUpdateArgs,
     ApiKeyUpdateResult, ApiKeyDeleteArgs, ApiKeyDeleteResult,
-    ApiKeyCreate, ApiKeyEntry, ApiKeyUpdate, HttpVerb,
-    NonEmptyString
+    HttpVerb, NonEmptyString
 )
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
