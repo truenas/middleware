@@ -604,11 +604,12 @@ class ActiveDirectoryService(ConfigService):
             'directoryservices.connection.join_domain', DSType.AD.value, ad['domainname']
         ))
         if DomainJoinResponse(join_resp) is DomainJoinResponse.PERFORMED_JOIN:
+            await self.middleware.call('directoryservices.connection.grant_privileges', DSType.AD.value, ad['domainname']) 
             await self.set_ntp_servers()
 
+        await self.middleware.call('directoryservices.health.set_state', DSType.AD.value, DSStatus.HEALTHY.name)
         cache_job_id = await self.middleware.call('directoryservices.connection.activate')
         await job.wrap(await self.middleware.call('core.job_wait', cache_job_id))
-        await self.middleware.call('directoryservices.health.set_state', DSType.AD.value, DSStatus.HEALTHY.name)
         await self.middleware.call('directoryservices.restart_dependent_services')
 
     async def __stop(self, job, config):

@@ -136,6 +136,20 @@ class DomainHealth(
         do_join_fn(job, ds_type, domain)
         return DomainJoinResponse.PERFORMED_JOIN.value
 
+    def grant_privileges(self, ds_type_str: str, domain: str) -> None:
+        ds_type = DSType(ds_type_str)
+
+        if not self._test_is_joined(ds_type, domain):
+            raise CallError('TrueNAS is not joined to domain')
+
+        match ds_type:
+            case DSType.AD:
+                self._ad_grant_privileges(self)
+            case DSType.IPA:
+                self._ipa_grant_privileges(self)
+            case _:
+                raise ValueError(f'{ds_type}: unexpected directory sevice type')
+
     @job(lock="directoryservices_join_leave")
     @kerberos_ticket
     def leave_domain(self, job: Job, ds_type_str: str, domain: str) -> None:

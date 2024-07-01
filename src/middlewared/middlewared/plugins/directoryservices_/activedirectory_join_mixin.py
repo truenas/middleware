@@ -181,6 +181,35 @@ class ADJoinMixin:
             f'Please review logs at {log_path} and file a bug report.'
         )
 
+
+    def _ad_grant_privileges(self) -> None:
+        """ Grant domain admins ability to manage TrueNAS """
+
+        dom = wbclient.Ctx().domain()
+
+        existing_privileges = self.middleware.call_sync(
+            'privilege.query',
+            [["name", "=", dom.dns_name.upper()]]
+        )
+
+        if existing_privileges:
+            return
+
+        try:
+            self.middleware.call_sync('privilege.create', {
+                'name': dom.dns_name.upper(),
+                'ds_groups': [f'{dom.sid}-512'],
+                'allowlist': [{'method': '*', 'resource': '*'}],
+                'web_shell': True
+            })
+        except Exception:
+            # This should be non-fatal since admin can simply fix via
+            # our webui
+            self.logger.warning(
+                'Failed to grant domain administrators access to the '
+                'TrueNAS API.', exc_info=True
+            )
+
     def _ad_post_join_actions(self, job: Job):
         self._ad_set_spn()
         # The password in secrets.tdb has been replaced so make
@@ -189,34 +218,6 @@ class ADJoinMixin:
 
         # start up AD service
         self._ad_activate()
-
-        # get our domain from winbind
-        dom = wbclient.Ctx().domain()
-
-        existing_privileges = self.middleware.call_sync(
-            'privilege.query',
-            [["name", "=", dom.dns_name.upper()]]
-        )
-
-        # By this point we are healthy and can set our status as such
-        self.status = DSStatus.HEALTHY.name
-
-        if not existing_privileges:
-            # grant the domain admins group full admin rights to NAS
-            try:
-                self.middleware.call_sync('privilege.create', {
-                    'name': dom.dns_name.upper(),
-                    'ds_groups': [f'{dom.sid}-512'],
-                    'allowlist': [{'method': '*', 'resource': '*'}],
-                    'web_shell': True
-                })
-            except Exception:
-                # This should be non-fatal since admin can simply fix via
-                # our webui
-                self.logger.warning(
-                    "Failed to grant domain administrators access to "
-                    "TrueNAS API.", exc_info=True
-                )
 
     def _ad_join_impl(self, job: Job, conf: dict):
         """
