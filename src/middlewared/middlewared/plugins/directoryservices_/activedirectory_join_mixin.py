@@ -322,7 +322,7 @@ class ADJoinMixin:
         self.middleware.call_sync('kerberos.do_kinit', {
             'krb5_cred': cred,
             'kinit-options': {
-                'kdc_override': {'domain': ad_config['domainname'], 'kdc': domain_info['KDC server']}
+                'kdc_override': {'domain': ad_config['domainname'], 'kdc': domain_info['kdc_server']}
             }
         })
         self.middleware.call_sync('kerberos.wait_for_renewal')
