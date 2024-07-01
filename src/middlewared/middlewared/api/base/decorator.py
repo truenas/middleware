@@ -1,13 +1,22 @@
 import asyncio
 import functools
+from typing import Callable
 
 from .handler.accept import accept_params
+from ..base.model import BaseModel
 from middlewared.schema.processor import calculate_args_index
 
 __all__ = ["api_method"]
 
 
-def api_method(accepts, returns, audit=None, audit_callback=False, audit_extended=None, roles=None):
+def api_method(
+    accepts: type[BaseModel],
+    returns: type[BaseModel],
+    audit: str | None = None,
+    audit_callback: bool = False,
+    audit_extended: Callable[..., str] | None = None,
+    roles: list[str] | None = None,
+):
     """
     Mark a `Service` class method as a public API method.
 
@@ -25,6 +34,9 @@ def api_method(accepts, returns, audit=None, audit_callback=False, audit_extende
 
     `roles` is a list of user roles that will gain access to this method.
     """
+    if list(returns.model_fields.keys()) != ["result"]:
+        raise TypeError("`returns` model must only have one field called `result`")
+
     def wrapper(func):
         args_index = calculate_args_index(func, audit_callback)
 

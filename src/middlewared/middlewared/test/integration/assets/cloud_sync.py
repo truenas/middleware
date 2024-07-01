@@ -43,9 +43,9 @@ def task(data):
 
 
 @contextlib.contextmanager
-def local_ftp_credential():
+def local_ftp_credential_data():
     with anonymous_ftp_server(dataset_name="cloudsync_remote") as ftp:
-        with credential({
+        yield {
             "provider": "FTP",
             "attributes": {
                 "host": "localhost",
@@ -53,7 +53,13 @@ def local_ftp_credential():
                 "user": ftp.username,
                 "pass": ftp.password,
             },
-        }) as c:
+        }
+
+
+@contextlib.contextmanager
+def local_ftp_credential():
+    with local_ftp_credential_data() as data:
+        with credential(data) as c:
             yield c
 
 

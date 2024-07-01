@@ -1,4 +1,5 @@
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, Private
+from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, Private,
+                                  single_argument_args, single_argument_result)
 
 __all__ = ["CloudCredentialEntry",
            "CloudCredentialCreateArgs", "CloudCredentialCreateResult",
@@ -47,11 +48,13 @@ class CloudCredentialDeleteResult(BaseModel):
     result: bool
 
 
+@single_argument_args("cloud_sync_credentials_create")
 class CloudCredentialVerifyArgs(BaseModel):
     provider: str
     attributes: Private[dict]
 
 
+@single_argument_result
 class CloudCredentialVerifyResult(BaseModel):
     valid: bool
     error: str | None = None
