@@ -31,9 +31,9 @@ class ADJoinMixin:
 
     def _ad_wait_wbclient(self) -> None:
         waited = 0
-        client = wbclient.WBClient()
+        ctx = wbclient.Ctx()
         while waited <= 60:
-            if client.domain_info()['online']:
+            if ctx.domain.domain_info()['online']:
                 return
 
             job.set_progress(10, 'Waiting for domain to come online')
