@@ -80,3 +80,22 @@ async def map_jbof(jbof_query):
             result.extend(ans)
 
     return result
+
+
+async def set_slot_status(ident, slot, status):
+    # For the time being we're assume that all models are using the same
+    # redfish mechanism.  If this changes add a model parameter to the
+    # function so that we can dispatch here as required.
+    rclient = await AsyncRedfishClient.cache_get(ident)
+    uri = rclient.get_attribute(JBOF_URI_ATTR)
+    if not uri:
+        _, uri = await get_enclosure_model(rclient)
+    fulluri = f'{uri}/Drives/{slot}'
+
+    match status:
+        case 'CLEAR':
+            await rclient.post(fulluri, data={'LocationIndicatorActive': False})
+        case 'IDENT':
+            await rclient.post(fulluri, data={'LocationIndicatorActive': True})
+        case _:
+            raise ValueError('Unsupported slot status', status)

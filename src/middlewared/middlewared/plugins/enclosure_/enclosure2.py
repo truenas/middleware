@@ -13,6 +13,7 @@ from middlewared.utils import filter_list
 from .constants import SUPPORTS_IDENTIFY_KEY
 from .fseries_drive_identify import set_slot_status as fseries_set_slot_status
 from .jbof_enclosures import map_jbof
+from .jbof_enclosures import set_slot_status as _jbof_set_slot_status
 from .map2 import combine_enclosures
 from .nvme2 import map_nvme
 from .r30_drive_identify import set_slot_status as r30_set_slot_status
@@ -114,6 +115,8 @@ class Enclosure2Service(Service):
                 # mseries, and some rseries have mapped nvme enclosures but they
                 # don't support drive LED identification
                 return
+        elif enc_info['model'] == 'ES24N':
+            return self.middleware.call_sync('enclosure2.jbof_set_slot_status', data['enclosure_id'], data['slot'], data['status'])
 
         sgdev, origslot, supported = self.get_original_disk_slot(data['slot'], enc_info)
         if sgdev is None:
@@ -134,6 +137,9 @@ class Enclosure2Service(Service):
                 encdev.set_control(str(origslot), action)
         except OSError:
             self.logger.warning(f'Failed to {data["status"]} slot {data["slot"]} on enclosure {enc_info["id"]}')
+
+    async def jbof_set_slot_status(self, ident, slot, status):
+        return await _jbof_set_slot_status(ident, slot, status)
 
     @filterable
     def query(self, filters, options):
