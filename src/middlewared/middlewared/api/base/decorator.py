@@ -1,5 +1,6 @@
 import asyncio
 import functools
+from typing import Callable
 
 from .handler.accept import accept_params
 from ..base.model import BaseModel
@@ -12,8 +13,8 @@ def api_method(
     accepts: type[BaseModel],
     returns: type[BaseModel],
     audit: str | None = None,
-    audit_callback=False,
-    audit_extended=None,
+    audit_callback: bool = False,
+    audit_extended: Callable[..., str] | None = None,
     roles: list[str] | None = None,
 ):
     """
