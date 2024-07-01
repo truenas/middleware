@@ -291,12 +291,14 @@ class EtcService(Service):
                 {'method': 'ldap.config'},
                 {'method': 'auth.twofactor.config'},
                 {'method': 'interface.query'},
+                {'method': 'system.advanced.login_banner'},
             ],
             "entries": [
                 {'type': 'mako', 'path': 'local/ssh/sshd_config', 'checkpoint': 'interface_sync'},
                 {'type': 'mako', 'path': 'pam.d/sshd', 'local_path': 'pam.d/sshd_linux'},
                 {'type': 'mako', 'path': 'local/users.oath', 'mode': 0o0600, 'checkpoint': 'pool_import'},
                 {'type': 'py', 'path': 'local/ssh/config'},
+                {'type': 'mako', 'path': 'login_banner', 'mode': 0o600},
             ]
         },
         'ntpd': [
