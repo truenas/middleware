@@ -289,6 +289,8 @@ class ADJoinMixin:
 
         # Ensure smb4.conf has correct workgorup.
         self.middleware.call_sync('etc.generate', 'smb')
+        with open('/etc/smb4.conf', 'r') as f:
+            self.logger.debug("XXX: %s", f.read())
 
         self._ad_join_impl(job, ad_config)
         machine_acct = f'{ad_config["netbiosname"].upper()}$@{ad_config["domainname"]}'
