@@ -19,13 +19,11 @@ def sysadv_dict():
 
 def test_system_advanced_get():
     results = call('system.advanced.config')
-    assert isinstance(results, dict)
 
 
 def test_system_advanced_serial_port_choices(sysadv_dict):
     results = call('system.advanced.serial_port_choices')
     sysadv_dict['serial_choices'] = [k for k in results]
-    assert isinstance(results, dict)
     assert len(results) > 0
 
 
@@ -34,30 +32,26 @@ def test_system_advanced_set_serial_port(sysadv_dict):
         'serialconsole': True,
         'serialport': sysadv_dict['serial_choices'][0],
     })
-    assert isinstance(results, dict)
 
 
 def test_system_advanced_check_serial_port_using_api(sysadv_dict):
     results = call('system.advanced.config')
-    assert isinstance(results, dict)
     assert results['serialport'] == sysadv_dict['serial_choices'][0]
 
 
 def test_system_advanced_check_serial_port_using_ssh(sysadv_dict, request):
     cmd = f'systemctl | grep "{sysadv_dict["serial_choices"][0]}"'
     results = ssh(cmd)
-    assert results['result'] is True, results
 
 
 def test_system_advanced_disable_serial_port():
     results = call('system.advanced.update', {
         'serialconsole': False,
     })
-    assert isinstance(results, dict)
 
 
 def test_system_advanced_check_disabled_serial_port_using_ssh(sysadv_dict, request):
-    results = ssh(f'grep "{sysadv_dict["serial_choices"][0]}" /boot/loader.conf.local')
+    results = ssh(f'grep "{sysadv_dict["serial_choices"][0]}" /boot/loader.conf.local', complete_response=True)
     assert results['result'] is False, results
 
 
@@ -65,17 +59,15 @@ def test_system_advanced_set_motd():
     results = call('system.advanced.update', {
         'motd': MOTD,
     })
-    assert isinstance(results, dict)
 
 
 def test_system_advanced_check_motd_using_api():
     results = call('system.advanced.config')
-    assert isinstance(results, dict)
     assert results['motd'] == MOTD
 
 
 def test_system_advanced_check_motd_using_ssh(request):
-    results = ssh(f'grep "{MOTD}" /etc/motd')
+    results = ssh(f'grep "{MOTD}" /etc/motd', complete_response=True)
     assert results['result'] is True, results
 
 
@@ -84,7 +76,7 @@ def test_system_advanced_login_banner():
         'login_banner': 'TrueNAS login banner.'
     })
     results = call('system.advanced.config')
-    assert results['login_banner'] == "TrueNAS login banner"
+    assert results['login_banner'] == "TrueNAS login banner."
     results = ssh('grep Banner /etc/ssh/sshd_config')
     assert results['result'] is True, results
 
