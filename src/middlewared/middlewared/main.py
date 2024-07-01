@@ -1438,6 +1438,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 for i, arg in enumerate(args)]
 
     def dump_result(self, method, result, expose_secrets):
+        if isinstance(result, Job):
+            return result
+
         if hasattr(method, "new_style_returns"):
             return serialize_result(method.new_style_returns, result, expose_secrets)
 

@@ -8,6 +8,8 @@ from middlewared.validators import Range
 
 from .enums import Status, StatusReason
 
+
+CONNECTING_STATUS_REASON = 'Waiting for connection from Truecommand.'
 TRUECOMMAND_UPDATE_LOCK = asyncio.Lock()
 
 
@@ -41,7 +43,7 @@ class TruecommandService(ConfigService):
         Int('id', required=True),
         Password('api_key', required=True, null=True),
         Str('status', required=True, enum=[s.value for s in Status]),
-        Str('status_reason', required=True, enum=[s.value for s in StatusReason]),
+        Str('status_reason', required=True, enum=[s.value for s in StatusReason] + [CONNECTING_STATUS_REASON]),
         Str('remote_url', required=True, null=True),
         IPAddr('remote_ip_address', required=True, null=True),
         Bool('enabled', required=True),
@@ -61,7 +63,7 @@ class TruecommandService(ConfigService):
                 if await self.middleware.call('truecommand.wireguard_connection_health'):
                     await self.set_status(Status.CONNECTED.value)
                 else:
-                    status_reason = 'Waiting for connection from Truecommand.'
+                    status_reason = CONNECTING_STATUS_REASON
         else:
             if self.STATUS != Status.DISABLED:
                 await self.set_status(Status.DISABLED.value)
