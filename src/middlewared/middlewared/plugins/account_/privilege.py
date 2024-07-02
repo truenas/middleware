@@ -430,9 +430,9 @@ class PrivilegeService(CRUDService):
     @private
     async def always_has_root_password_enabled(self, users=None, groups=None):
         if users is None:
-            users = await self.middleware.call('user.query')
+            users = await self.middleware.call('user.query', [['local', '=', True]])
         if groups is None:
-            groups = await self.middleware.call('group.query')
+            groups = await self.middleware.call('group.query', [['local', '=', True]])
 
         root_user = filter_list(
             users,
@@ -458,9 +458,9 @@ class PrivilegeService(CRUDService):
     async def local_administrators(self, exclude_user_ids=None, users=None, groups=None):
         exclude_user_ids = exclude_user_ids or []
         if users is None:
-            users = await self.middleware.call('user.query')
+            users = await self.middleware.call('user.query', [['local', '=', True]])
         if groups is None:
-            groups = await self.middleware.call('group.query')
+            groups = await self.middleware.call('group.query', [['local', '=', True]])
 
         local_administrator_privilege = await self.middleware.call(
             'datastore.query',

@@ -96,12 +96,12 @@ class DirectoryServices(Service):
                     if e.errno == errno.EINVAL:
                         self.logger.warning('%s: setting service to DISABLED due to invalid config',
                                             srv.value.upper(), exc_info=True)
-                        ds_state[srv.value] = DSStatus.DISABLED.name
+                        ds_state[srv.value.lower()] = DSStatus.DISABLED.name
                     else:
-                        ds_state[srv.value] = DSStatus.FAULTED.name
+                        ds_state[srv.value.lower()] = DSStatus.FAULTED.name
 
                 except Exception:
-                    ds_state[srv.value] = DSStatus.FAULTED.name
+                    ds_state[srv.value.lower()] = DSStatus.FAULTED.name
 
             await self.middleware.call('cache.put', 'DS_STATE', ds_state, 60)
             return ds_state

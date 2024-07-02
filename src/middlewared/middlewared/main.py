@@ -796,7 +796,7 @@ class ShellApplication(object):
                 try:
                     user = await self.middleware.call(
                         'user.query',
-                        [['username', '=', token['username']]],
+                        [['username', '=', token['username']], ['local', '=', True]],
                         {'get': True},
                     )
                 except MatchNotFound:
@@ -806,7 +806,9 @@ class ShellApplication(object):
                     if 'ALL' in user['sudo_commands'] or 'ALL' in user['sudo_commands_nopasswd']:
                         as_root = True
                     else:
-                        for group in await self.middleware.call('group.query', [['id', 'in', user['groups']]]):
+                        for group in await self.middleware.call('group.query', [
+                            ['id', 'in', user['groups']], ['local', '=', True]
+                        ]):
                             if 'ALL' in group['sudo_commands'] or 'ALL' in group['sudo_commands_nopasswd']:
                                 as_root = True
                                 break

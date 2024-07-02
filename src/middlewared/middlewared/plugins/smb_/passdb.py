@@ -238,5 +238,5 @@ class SMBService(Service):
                 "This may indicate system dataset setup failure."
             )
 
-        conf_users = await self.middleware.call('user.query', [("smb", "=", True)])
+        conf_users = await self.middleware.call('user.query', [("smb", "=", True), ('local', '=', True)])
         await self.passdb_sync_impl(conf_users)

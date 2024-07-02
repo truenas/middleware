@@ -1102,7 +1102,6 @@ class IdmapDomainService(CRUDService):
         """
         idtype = IDType[id_type]
         idmap_timeout = 5.0
-        options = {'extra': {'additional_information': ['DS']}, 'get': True}
 
         match idtype:
             # IDType.BOTH is possible return by nss_winbind / nss_sss
@@ -1122,7 +1121,7 @@ class IdmapDomainService(CRUDService):
 
         try:
             ret = await asyncio.wait_for(
-                self.middleware.create_task(self.middleware.call(method, filters, options | {'order_by': [key]})),
+                self.middleware.create_task(self.middleware.call(method, filters, {'get': True, 'order_by': [key]})),
                 timeout=idmap_timeout
             )
             name = ret[key]

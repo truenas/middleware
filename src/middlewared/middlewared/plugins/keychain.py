@@ -637,7 +637,7 @@ class KeychainCredentialService(CRUDService):
             except Exception as e:
                 raise CallError(f"Semi-automatic SSH connection setup failed: {e!r}")
 
-            user = c.call("user.query", [["username", "=", data["username"]]], {"get": True})
+            user = c.call("user.query", [["username", "=", data["username"]], ['local', '=', True]], {"get": True})
             user_update = {}
             if user["shell"] == "/usr/sbin/nologin":
                 user_update["shell"] = "/usr/bin/bash"
@@ -679,7 +679,7 @@ class KeychainCredentialService(CRUDService):
         service = self.middleware.call_sync("service.query", [("service", "=", "ssh")], {"get": True})
         ssh = self.middleware.call_sync("ssh.config")
         try:
-            user = self.middleware.call_sync("user.query", [("username", "=", data["username"])], {"get": True})
+            user = self.middleware.call_sync("user.query", [("username", "=", data["username"]), ("local", "=", True)], {"get": True})
         except MatchNotFound:
             raise CallError(f"User {data['username']} does not exist")
 

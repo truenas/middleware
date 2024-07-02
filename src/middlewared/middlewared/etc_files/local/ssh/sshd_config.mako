@@ -45,7 +45,7 @@
 	if not ad['enable']:
 		ldap_enabled = render_ctx["ldap.config"]["enable"]
 
-	users = middleware.call_sync('user.query')
+	users = middleware.call_sync('user.query', [['local', '=', True]])
 	root_user = filter_list(users, [['username', '=', 'root']], {'get': True})
 
 %>\
