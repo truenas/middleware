@@ -1122,7 +1122,7 @@ class IdmapDomainService(CRUDService):
 
         try:
             ret = await asyncio.wait_for(
-                self.middleware.create_task(self.middleware.call(method, filters, options)),
+                self.middleware.create_task(self.middleware.call(method, filters, options | {'order_by': [key]})),
                 timeout=idmap_timeout
             )
             name = ret[key]
