@@ -1921,7 +1921,7 @@ class InterfaceService(CRUDService):
             for nic in filter(lambda x: x.is_symlink() and x.name not in ignore, nics):
                 res.add(nic.name)
 
-        return res - ignore
+        return res
 
 
 async def configure_http_proxy(middleware, *args, **kwargs):
