@@ -9,7 +9,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     ApiKeyCreateArgs, ApiKeyCreateResult, ApiKeyUpdateArgs,
     ApiKeyUpdateResult, ApiKeyDeleteArgs, ApiKeyDeleteResult,
-    HttpVerb, NonEmptyString
+    HttpVerb
 )
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -33,7 +33,7 @@ class ApiKey:
         self.api_key = api_key
         self.allowlist = Allowlist(self.api_key["allowlist"])
 
-    def authorize(self, method: HttpVerb, resource: NonEmptyString) -> bool:
+    def authorize(self, method: HttpVerb, resource: str) -> bool:
         return self.allowlist.authorize(method, resource)
 
 
