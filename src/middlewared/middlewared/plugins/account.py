@@ -1953,7 +1953,7 @@ class GroupService(CRUDService):
             # posix ID to a base value so that we can use getpwuid / getgrgid to
             # convert back to a username / group name
             try:
-                groupname = (self.middleware.call(
+                groupname = (await self.middleware.call(
                     'group.get_group_obj', {'gid': pk - BASE_SYNTHETIC_DATASTORE_ID}
                 ))['gr_name']
             except KeyError:
@@ -2048,7 +2048,7 @@ class GroupService(CRUDService):
             # posix ID to a base value so that we can use getpwuid / getgrgid to
             # convert back to a username / group name
             try:
-                groupname = (self.middleware.call(
+                groupname = (await self.middleware.call(
                     'group.get_group_obj', {'gid': pk - BASE_SYNTHETIC_DATASTORE_ID}
                 ))['gr_name']
             except KeyError:
