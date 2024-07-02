@@ -439,17 +439,24 @@ class FailoverService(ConfigService):
     async def mismatch_nics(self):
         """Determine if NICs match between both controllers."""
         result = {'missing_local': list(), 'missing_remote': list()}
-        local_nics = await self.middleware.call('interface.get_nic_names') or set()
+        try:
+            local_nics = await self.middleware.call('interface.get_nic_names')
+        except Exception:
+            self.logger.error('Unhandled exception in get_nic_names on local controller', exc_info=True)
+            return result
+
         try:
             remote_nics = await self.middleware.call(
                 'failover.call_remote', 'interface.get_nic_names', [],
                 {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
-            ) or set()
+            )
         except Exception:
             self.logger.error('Unhandled exception in get_nic_names on remote controller', exc_info=True)
         else:
-            result['missing_local'] = sorted(remote_nics - local_nics)
-            result['missing_remote'] = sorted(local_nics - remote_nics)
+            if remote_nics is not None:
+                result['missing_local'] = sorted(remote_nics - local_nics)
+                result['missing_remote'] = sorted(local_nics - remote_nics)
+
         return result
 
     @private
