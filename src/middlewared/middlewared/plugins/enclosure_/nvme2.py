@@ -239,11 +239,12 @@ def map_nvme(dmi):
         # all nvme systems which we need to handle separately
         return map_r30_or_fseries(model, ctx)
     elif model in (
+        ControllerModels.M30.value,
+        ControllerModels.M40.value,
         ControllerModels.M50.value,
         ControllerModels.M60.value,
         ControllerModels.R50BM.value,
     ):
-        # M50, M60 and R50BM use same plx nvme bridge
         return map_plx_nvme(model, ctx)
     else:
         return []

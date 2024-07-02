@@ -44,6 +44,8 @@ def get_nvme_slot_info(model):
         ControllerModels.F60.value,
         ControllerModels.F100.value,
         ControllerModels.F130.value,
+        ControllerModels.M30.value,
+        ControllerModels.M40.value,
         ControllerModels.M50.value,
         ControllerModels.M60.value,
         ControllerModels.R30.value,
@@ -67,6 +69,23 @@ def get_nvme_slot_info(model):
                         'f130_nvme_enclosure': {
                             i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
                             for i in range(1, 25)
+                        },
+                        # ALL m-series platforms have 4 rear nvme drive bays.
+                        # The R50BM platform does as well and uses same plx
+                        # nvme bridge. HOWEVER, the m30 and the gen1/2 m40's do
+                        # NOT have the pcie switch that connects those 4 drive
+                        # bays but the gen3 M40 with 192GB RAM does. Since we
+                        # don't have (at time of writing) a proper way to track
+                        # generational m40's, we will always return 4 nvme drive
+                        # bays for all m-series platforms and they will be empty
+                        # on the platforms that can't physically support these drives
+                        'm30_nvme_enclosure': {
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
+                            for i, j in zip(range(1, 5), range(25, 29))
+                        },
+                        'm40_nvme_enclosure': {
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
+                            for i, j in zip(range(1, 5), range(25, 29))
                         },
                         'm50_nvme_enclosure': {
                             i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
