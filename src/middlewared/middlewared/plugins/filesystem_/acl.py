@@ -799,6 +799,7 @@ class FilesystemService(Service):
                         'nfs4_ace',
                         Str('tag', enum=['owner@', 'group@', 'everyone@', 'USER', 'GROUP']),
                         Int('id', null=True, validators=[Range(min_=-1, max_=2147483647)]),
+                        Str('who'),
                         Str('type', enum=['ALLOW', 'DENY']),
                         Dict(
                             'perms',
@@ -838,6 +839,7 @@ class FilesystemService(Service):
                         Bool('default', default=False),
                         Str('tag', enum=['USER_OBJ', 'GROUP_OBJ', 'USER', 'GROUP', 'OTHER', 'MASK']),
                         Int('id', default=-1, validators=[Range(min_=-1, max_=2147483647)]),
+                        Str('who'),
                         Dict(
                             'perms',
                             Bool('READ', default=False),
@@ -869,6 +871,69 @@ class FilesystemService(Service):
     @returns()
     @job(lock="perm_change")
     def setacl(self, job, data):
+        """
+        Set ACL of a given path. Takes the following parameters:
+        `path` full path to directory or file.
+
+        `dacl` ACL entries. Formatting depends on the underlying `acltype`. NFS4ACL requires
+        NFSv4 entries. POSIX1e requires POSIX1e entries.
+
+        `uid` the desired UID of the file user. If set to None (the default), then user is not changed.
+
+        `gid` the desired GID of the file group. If set to None (the default), then group is not changed.
+
+        `recursive` apply the ACL recursively
+
+        `traverse` traverse filestem boundaries (ZFS datasets)
+
+        `strip` convert ACL to trivial. ACL is trivial if it can be expressed as a file mode without
+        losing any access rules.
+
+        `canonicalize` reorder ACL entries so that they are in concanical form as described
+        in the Microsoft documentation MS-DTYP 2.4.5 (ACL). This only applies to NFSv4 ACLs.
+
+        The following notes about ACL entries are necessarily terse. If more detail is requried
+        please consult relevant TrueNAS documentation.
+
+        Notes about NFSv4 ACL entry fields:
+
+        `tag` refers to the type of principal to whom the ACL entries applies. USER and GROUP have
+        conventional meanings. `owner@` refers to the owning user of the file, `group@` refers to the owning
+        group of the file, and `everyone@` refers to ALL users (including the owning user and group)..
+
+        `id` refers to the numeric user id or group id associatiated with USER or GROUP entries.
+
+        `who` a user or group name may be specified in lieu of numeric ID for USER or GROUP entries
+
+        `type` may be ALLOW or DENY. Deny entries take precedence over allow when the ACL is evaluated.
+
+        `perms` permissions allowed or denied by the entry. May be set as a simlified BASIC type or
+        more complex type detailing specific permissions.
+
+        `flags` inheritance flags determine how this entry will be presented (if at all) on newly-created
+        files or directories within the specified path. Only valid for directories.
+
+        Notes about posix1e ACL entry fields:
+
+        `default` the ACL entry is in the posix default ACL (will be copied to new files and directories)
+        created within the directory where it is set. These are _NOT_ evaluated when determining access for
+        the file on which they're set. If default is false then the entry applies to the posix access ACL,
+        which is used to determine access to the directory, but is not inherited on new files / directories.
+
+        `tag` the type of principal to whom the ACL entry apples. USER and GROUP have conventional meanings
+        USER_OBJ refers to the owning user of the file and is also denoted by "user" in conventional POSIX
+        UGO permissions. GROUP_OBJ refers to the owning group of the file and is denoted by "group" in the
+        same. OTHER refers to POSIX other, which applies to all users and groups who are not USER_OBJ or
+        GROUP_OBJ. MASK sets maximum permissions granted to all USER and GROUP entries. A valid POSIX1 ACL
+        entry contains precisely one USER_OBJ, GROUP_OBJ, OTHER, and MASK entry for the default and access
+        list.
+
+        `id` refers to the numeric user id or group id associatiated with USER or GROUP entries.
+
+        `who` a user or group name may be specified in lieu of numeric ID for USER or GROUP entries
+
+        `perms` - object containing posix permissions.
+        """
         verrors = ValidationErrors()
         data['loc'] = self._common_perm_path_validate("filesystem.setacl", data, verrors)
         verrors.check()
@@ -878,6 +943,33 @@ class FilesystemService(Service):
         else:
             path_acltype = self.path_get_acltype(data['path'])
             acltype = ACLType[path_acltype]
+
+        for idx, entry in enumerate(data['dacl']):
+            if entry.get('who') in (None, ''):
+                continue
+
+            if entry.get('id') is not None:
+                continue
+
+            # We're using user.query and group.query to intialize cache entries if required
+            match entry['tag']:
+                case 'USER':
+                    method = 'user.query'
+                    filters = [['username', '=', entry['who']]]
+                    key = 'uid'
+                case 'GROUP':
+                    method = 'group.query'
+                    filters = [['group', '=', entry['who']]]
+                    key = 'gid'
+                case _:
+                    raise ValidationError(
+                        f'filesystem.setacl.{idx}.who',
+                        'Name may only be specified for USER and GROUP entries'
+                    )
+            try:
+                entry['id'] = self.middleware.call_sync(method, filters, {'get': True})[key]
+            except MatchNotFound:
+                raise ValidationError(f'filesystem.setacl.{idx}.who', f'{entry["who"]}: account does not exist')
 
         if acltype == ACLType.NFS4:
             return self.setacl_nfs4(job, data)

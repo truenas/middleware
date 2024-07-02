@@ -2,9 +2,9 @@ import enum
 
 
 class ACLType(enum.Enum):
-    NFS4 = (['tag', 'id', 'perms', 'flags', 'type'], ["owner@", "group@", "everyone@"])
-    POSIX1E = (['default', 'tag', 'id', 'perms'], ["USER_OBJ", "GROUP_OBJ", "OTHER", "MASK"])
-    DISABLED = ([], [])
+    NFS4 = (('tag', 'perms', 'flags', 'type'), ("owner@", "group@", "everyone@"))
+    POSIX1E = (('default', 'tag', 'perms'), ("USER_OBJ", "GROUP_OBJ", "OTHER", "MASK"))
+    DISABLED = ((), ())
 
     def _validate_id(self, id_, special):
         if id_ is None or id_ < 0:
@@ -29,24 +29,38 @@ class ACLType(enum.Enum):
 
     def validate(self, theacl):
         errors = []
-        ace_keys = self.value[0]
+        ace_keys = set(self.value[0])
+        id_keys = set(('who', 'id'))
 
         if self != ACLType.NFS4 and theacl.get('nfs41flags'):
             errors.append(f"NFS41 ACL flags are not valid for ACLType [{self.name}]")
 
         for idx, entry in enumerate(theacl['dacl']):
-            extra = set(entry.keys()) - set(ace_keys)
-            missing = set(ace_keys) - set(entry.keys())
+            entry_keys = set(entry.keys())
+            extra = entry_keys - ace_keys - id_keys
+            missing = ace_keys - entry_keys
+
             if extra:
                 errors.append(
                     (idx, f"ACL entry contains invalid extra key(s): {extra}", None)
                 )
+                continue
             if missing:
                 errors.append(
                     (idx, f"ACL entry is missing required keys(s): {missing}", None)
                 )
+                continue
 
-            if extra or missing:
+            if not ace_keys & id_keys:
+                errors.append(
+                    (idx, 'Numeric ID "id" or account name "who" must be specified', None)
+                )
+                continue
+
+            if len(ace_keys & id_keys) == 2:
+                errors.append(
+                    (idx, 'Numeric ID "id" and account name "who" may not be specified simultaneously', None)
+                )
                 continue
 
             self._validate_entry(idx, entry, errors)
