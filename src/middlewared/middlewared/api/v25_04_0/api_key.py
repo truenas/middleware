@@ -17,8 +17,6 @@ class AllowListItem(BaseModel):
 
 class ApiKeyEntry(BaseModel):
     """Represents a record in the account.api_key table."""
-    #: This allows the model to be created from an instance of plugins/api_key.APIKeyModel
-    model_config = ConfigDict(from_attributes=True)
 
     id: int
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
