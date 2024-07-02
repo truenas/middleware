@@ -11,6 +11,7 @@ from middlewared.service_exception import MatchNotFound, ValidationError
 from middlewared.utils import filter_list
 
 from .constants import SUPPORTS_IDENTIFY_KEY
+from .enums import JbofModels
 from .fseries_drive_identify import set_slot_status as fseries_set_slot_status
 from .jbof_enclosures import map_jbof
 from .jbof_enclosures import set_slot_status as _jbof_set_slot_status
@@ -115,7 +116,7 @@ class Enclosure2Service(Service):
                 # mseries, and some rseries have mapped nvme enclosures but they
                 # don't support drive LED identification
                 return
-        elif enc_info['model'] == 'ES24N':
+        elif enc_info['model'] == JbofModels.ES24N.name:
             return self.middleware.call_sync('enclosure2.jbof_set_slot_status', data['enclosure_id'], data['slot'], data['status'])
 
         sgdev, origslot, supported = self.get_original_disk_slot(data['slot'], enc_info)
