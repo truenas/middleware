@@ -76,7 +76,7 @@ class EtcService(Service):
         ],
         'shadow': {
             'ctx': [
-                {'method': 'user.query'},
+                {'method': 'user.query', 'args': [[['local', '=', True]]]},
             ],
             'entries': [
                 {'type': 'mako', 'path': 'shadow', 'group': 'shadow', 'mode': 0o0640},
@@ -84,8 +84,8 @@ class EtcService(Service):
         },
         'user': {
             'ctx': [
-                {'method': 'user.query'},
-                {'method': 'group.query'},
+                {'method': 'user.query', 'args': [[['local', '=', True]]]},
+                {'method': 'group.query', 'args': [[['local', '=', True]]]},
             ],
             'entries': [
                 {'type': 'mako', 'path': 'group'},
