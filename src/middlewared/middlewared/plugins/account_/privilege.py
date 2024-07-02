@@ -51,7 +51,11 @@ class PrivilegeService(CRUDService):
         Str("name", required=True, empty=False),
         List("local_groups", items=[Ref("group_entry")]),
         List("ds_groups", items=[Ref("group_entry")]),
-        List("allowlist", items=[Ref("allowlist_item")]),
+        List("allowlist", items=[Dict(
+            "allowlist_item",
+            Str("method", required=True, enum=["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE", "*"]),
+            Str("resource", required=True),
+        )]),
         List("roles", items=[Str("role")]),
         Bool("web_shell", required=True),
     )
