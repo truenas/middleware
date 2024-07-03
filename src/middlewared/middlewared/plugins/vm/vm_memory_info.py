@@ -64,7 +64,7 @@ class VMService(Service):
         arc_total = await self.middleware.call('sysctl.get_arcstats_size')
         arc_min = await self.middleware.call('sysctl.get_arc_min')
         arc_shrink = max(0, arc_total - arc_min)
-        total_free = free + arc_shrink if overcommit else free
+        total_free = free + arc_shrink
 
         vms_memory_used = 0
         if overcommit is False:
