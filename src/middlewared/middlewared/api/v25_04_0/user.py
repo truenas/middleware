@@ -2,8 +2,8 @@ from annotated_types import Ge, Le
 from pydantic import EmailStr
 from typing_extensions import Annotated
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LocalUsername, LocalUID,
-                                  LongString, NonEmptyString, Private, single_argument_result)
+from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LocalUsername, RemoteUsername,
+                                  LocalUID, LongString, NonEmptyString, Private, single_argument_result)
 
 __all__ = ["UserEntry", "UserCreateArgs", "UserCreateResult", "UserUpdateArgs", "UserUpdateResult",
            "UserRenew2faSecretArgs", "UserRenew2faSecretResult"]
@@ -15,9 +15,9 @@ DEFAULT_HOME_PATH = "/var/empty"
 class UserEntry(BaseModel):
     id: int
     uid: int
-    username: LocalUsername
-    unixhash: Private[str]
-    smbhash: Private[str]
+    username: LocalUsername | RemoteUsername
+    unixhash: Private[str | None]
+    smbhash: Private[str | None]
     home: NonEmptyString = DEFAULT_HOME_PATH
     shell: NonEmptyString = "/usr/bin/zsh"
     "Available choices can be retrieved with `user.shell_choices`."
