@@ -18,7 +18,7 @@ def validate_username(
     valid_chars: str = DEFAULT_VALID_CHARS,
     valid_start_chars : str | None = DEFAULT_VALID_START,
     max_length: int | None = DEFAULT_MAX_LENGTH
-):
+) -> str:
     val_len = len(val)
     assert val_len > 0, 'Username must be at least 1 character in length'
     if max_length is not None:
@@ -31,7 +31,7 @@ def validate_username(
     return val
 
 
-def validate_local_username(val):
+def validate_local_username(val: str) -> str:
     # see man 8 useradd, specifically the CAVEATS section
     # NOTE: we are ignoring the man page's recommendation for insistence
     # upon the starting character of a username be a lower-case letter.
@@ -39,7 +39,7 @@ def validate_local_username(val):
     return validate_username(val)
 
 
-def validate_remote_username(val):
+def validate_remote_username(val: str) -> str:
     # Restrictions on names returned by nss_winbind are more lax than we place
     # on our local usernames. \\ is used as a separator for domain and username
     return validate_username(val, DEFAULT_VALID_CHARS + '\\', None, None)
