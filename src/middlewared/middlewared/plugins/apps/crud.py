@@ -11,7 +11,7 @@ from middlewared.validators import Match, Range
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
-from .app_setup_utils import setup_install_app_dir
+from .ix_apps.setup import setup_install_app_dir
 from .app_utils import get_version_in_use_of_app
 from .compose_utils import compose_action
 from .version_utils import get_latest_version_from_app_versions
