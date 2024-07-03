@@ -26,6 +26,22 @@ class CatalogService(Service):
     CATEGORIES_SET = set()
 
     @private
+    def train_to_apps_version_mapping(self):
+        mapping = {}
+        for train, train_data in self.apps({
+            'cache': True,
+            'cache_only': True,
+        }).items():
+            mapping[train] = {}
+            for app_data in train_data.values():
+                mapping[train][app_data['name']] = {
+                    'version': app_data['latest_version'],
+                    'app_version': app_data['latest_app_version'],
+                }
+
+        return mapping
+
+    @private
     def cached(self, label):
         return self.middleware.call_sync('cache.has_key', get_cache_key(label))
 
