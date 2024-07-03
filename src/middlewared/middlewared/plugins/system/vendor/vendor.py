@@ -1,3 +1,4 @@
+import json
 import os
 
 from middlewared.api import api_method
@@ -15,7 +16,7 @@ class VendorService(Service):
         try:
             with open(SENTINEL_FILE_PATH, 'r') as file:
                 if contents := file.read():
-                    return contents
+                    return json.loads(contents).get('name')
         except FileNotFoundError:
             return None
 
