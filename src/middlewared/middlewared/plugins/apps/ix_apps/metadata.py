@@ -1,10 +1,7 @@
 import yaml
 from collections import namedtuple
-from pathlib import Path
 
-from semantic_version import Version
-
-from .path import get_installed_app_metadata_path, get_installed_app_versions_dir_path
+from .path import get_collective_metadata_path, get_installed_app_metadata_path
 
 
 app_details = namedtuple('app_details', ['name', 'version'])
@@ -31,3 +28,8 @@ def update_app_metadata(app_name: str, app_version_details: dict):
             'catalog_app_last_updated': app_version_details['last_update'],
             **{k: app_version_details[k] for k in ('version', 'human_version')}
         }))
+
+
+def get_collective_metadata() -> dict[str, dict]:
+    with open(get_collective_metadata_path(), 'r') as f:
+        return yaml.safe_load(f.read())

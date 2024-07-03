@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass
 
-from .metadata import get_app_metadata
+from .metadata import get_collective_metadata
 from .path import get_app_parent_config_path
 from .docker.query import list_resources_by_project
 from .utils import PROJECT_PREFIX
@@ -24,13 +24,14 @@ class VolumeMount:
 def list_apps(specific_app: str | None = None) -> list[dict]:
     apps = []
     app_names = set()
+    metadata = get_collective_metadata()
     # This will only give us apps which are running or in deploying state
     for app_name, app_resources in list_resources_by_project(
         project_name=f'{PROJECT_PREFIX}{specific_app}' if specific_app else None,
     ).items():
         app_name = app_name[len(PROJECT_PREFIX):]
         app_names.add(app_name)
-        if not (app_metadata := get_app_metadata(app_name)):
+        if app_name not in metadata:
             # The app is malformed or something is seriously wrong with it
             continue
 
@@ -42,7 +43,7 @@ def list_apps(specific_app: str | None = None) -> list[dict]:
             'state': 'DEPLOYING' if any(
                 c['state'] == 'starting' for c in workloads['container_details']
             ) else 'RUNNING',
-            **app_metadata,
+            **metadata[app_name],
         })
 
     if specific_app and specific_app in app_names:
@@ -54,7 +55,7 @@ def list_apps(specific_app: str | None = None) -> list[dict]:
             lambda e: e.is_dir() and ((specific_app and e.name == specific_app) or e.name not in app_names), scan
         ):
             app_names.add(entry.name)
-            if not (app_metadata := get_app_metadata(entry.name)):
+            if entry.name not in metadata:
                 # The app is malformed or something is seriously wrong with it
                 continue
 
@@ -63,7 +64,7 @@ def list_apps(specific_app: str | None = None) -> list[dict]:
                 'id': entry.name,
                 'active_workloads': get_default_workload_values(),
                 'state': 'STOPPED',
-                **app_metadata,
+                **metadata[entry.name],
             })
 
     return apps
