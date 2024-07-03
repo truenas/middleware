@@ -21,10 +21,18 @@ class AppService(CRUDService):
         namespace = 'app'
         datastore_primary_key_type = 'string'
         cli_namespace = 'app'
-        private = True  # FIXME: Remove this once we have schema defined
+
+    ENTRY = Dict(
+        'app_query',
+        # TODO: Fill this in
+        additional_attrs=True,
+    )
 
     @filterable
     def query(self, filters, options):
+        """
+        Query all apps with `query-filters` and `query-options`.
+        """
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
 
