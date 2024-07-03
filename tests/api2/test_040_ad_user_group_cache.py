@@ -28,15 +28,21 @@ def do_ad_connection(request):
         if cache_fill_job['state'] == 'RUNNING':
             call('core.job_wait', cache_fill_job['id'], job=True)
 
-        users = set([x['username'] for x in call(
+        users = [x['username'] for x in call(
             'user.query', [['local', '=', False]],
-        )])
+        )]
 
-        groups = set([x['name'] for x in call(
+        set_users = set(users)
+        assert len(set_users) == len(users)
+
+        groups = [x['name'] for x in call(
             'group.query', [['local', '=', False]],
-        )])
+        )]
 
-        yield ad | {'users': users, 'groups': groups}
+        set_groups = set(groups)
+        assert len(set_groups) == len(groups)
+
+        yield ad | {'users': set_users, 'groups': set_groups}
 
 
 def get_ad_user_and_group(ad_connection):
@@ -131,6 +137,12 @@ def test_check_lazy_initialization_of_users_and_groups_by_name(do_ad_connection)
     assert results['result'] is True, results['output']
 
     ad_user, ad_group = get_ad_user_and_group(do_ad_connection)
+
+    assert ad_user['id_type_both'] is True
+    assert ad_user['immutable'] is True
+    assert ad_user['local'] is False
+    assert ad_group['id_type_both'] is True
+    assert ad_group['local'] is False
 
     cache_names = set([x['username'] for x in call(
         'user.query', [['local', '=', False]],

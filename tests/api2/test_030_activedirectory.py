@@ -340,6 +340,10 @@ def test_10_account_privilege_authentication(request, set_product_type):
 
     with active_directory(dns_timeout=15):
         call("system.general.update", {"ds_auth": True})
+        nusers = call("user.query", [["local", "=", False]], {"count": True})
+        assert nusers > 0
+        ngroups = call("group.query", [["local", "=", False]], {"count": True})
+        assert ngroups > 0
         try:
             # RID 513 is constant for "Domain Users"
             domain_sid = call("idmap.domain_info", AD_DOMAIN.split(".")[0])['sid']
@@ -347,7 +351,11 @@ def test_10_account_privilege_authentication(request, set_product_type):
                 "name": "AD privilege",
                 "local_groups": [],
                 "ds_groups": [f"{domain_sid}-513"],
-                "allowlist": [{"method": "CALL", "resource": "system.info"}],
+                "allowlist": [
+                    {"method": "CALL", "resource": "system.info"},
+                    {"method": "CALL", "resource": "user.query"},
+                    {"method": "CALL", "resource": "group.query"},
+                ],
                 "web_shell": False,
             }):
                 with client(auth=(f"limiteduser@{AD_DOMAIN}", ADPASSWORD)) as c:
@@ -356,6 +364,9 @@ def test_10_account_privilege_authentication(request, set_product_type):
 
                     assert 'DIRECTORY_SERVICE' in me['account_attributes']
                     assert 'ACTIVE_DIRECTORY' in me['account_attributes']
+
+                    assert len(c.call("user.query", [["local", "=", False]])) == nusers
+                    assert len(c.call("group.query", [["local", "=", False]])) == ngroups
 
                 assert "system.info" in methods
                 assert "pool.create" not in methods

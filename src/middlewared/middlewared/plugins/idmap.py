@@ -607,7 +607,7 @@ class IdmapDomainService(CRUDService):
     async def query(self, filters, options):
         extra = options.get("extra", {})
         more_info = extra.get("additional_information", [])
-        ret = await super().query(filters, options)
+        ret = await super().query()
         if 'DOMAIN_INFO' in more_info:
             for entry in ret:
                 try:
@@ -622,7 +622,7 @@ class IdmapDomainService(CRUDService):
 
                 entry.update({'domain_info': domain_info})
 
-        return ret
+        return filter_list(ret, filters, options)
 
     @accepts(Dict(
         'idmap_domain_create',
@@ -1188,6 +1188,9 @@ class IdmapDomainService(CRUDService):
             'sshpubkey': None,
             'local': False,
             'id_type_both': id_type_both,
+            'roles': [],
+            'two_factor_auth_configured': False,
+            'immutable': True,
             'smb': True,
             'sid': sid
         }
@@ -1214,6 +1217,7 @@ class IdmapDomainService(CRUDService):
             'users': [],
             'local': False,
             'id_type_both': id_type_both,
+            'roles': [],
             'smb': True,
             'sid': sid
         }
