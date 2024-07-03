@@ -123,6 +123,7 @@ class AppService(CRUDService):
 
             raise e from None
         else:
+            self.middleware.call_sync('app.metadata.generate').wait_sync()
             job.set_progress(100, f'{data["app_name"]!r} installed successfully')
             return self.get_instance__sync(app_name)
 
