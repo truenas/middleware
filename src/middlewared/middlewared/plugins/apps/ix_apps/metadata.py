@@ -31,5 +31,8 @@ def update_app_metadata(app_name: str, app_version_details: dict):
 
 
 def get_collective_metadata() -> dict[str, dict]:
-    with open(get_collective_metadata_path(), 'r') as f:
-        return yaml.safe_load(f.read())
+    try:
+        with open(get_collective_metadata_path(), 'r') as f:
+            return yaml.safe_load(f.read())
+    except FileNotFoundError:
+        return {}
