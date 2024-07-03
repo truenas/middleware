@@ -17,7 +17,7 @@ class VendorService(Service):
             with open(SENTINEL_FILE_PATH, 'r') as file:
                 if contents := file.read():
                     return json.loads(contents).get('name')
-        except FileNotFoundError:
+        except (FileNotFoundError, json.JSONDecodeError):
             return None
 
     @api_method(UnvendorArgs, UnvendorResult, private=True)
