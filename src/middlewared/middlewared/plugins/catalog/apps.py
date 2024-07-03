@@ -88,7 +88,7 @@ class AppService(Service):
 
     @accepts(Str('app_name'), Str('train'))
     @returns(List(items=[Ref('available_apps')]))
-    def similar(self, app_name, catalog, train):
+    def similar(self, app_name, train):
         """
         Retrieve applications which are similar to `app_name`.
         """
