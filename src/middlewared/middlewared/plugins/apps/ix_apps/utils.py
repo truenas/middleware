@@ -1,2 +1,2 @@
 from middlewared.plugins.apps.schema_utils import CONTEXT_KEY_NAME  # noqa
-from middlewared.plugins.apps.utils import PROJECT_PREFIX, run  # noqa
+from middlewared.plugins.apps.utils import IX_APPS_MOUNT_PATH, PROJECT_PREFIX, run  # noqa
