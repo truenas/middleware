@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from pkg_resources import parse_version
 
 from .docker.query import list_resources_by_project
 from .metadata import get_collective_metadata
@@ -21,7 +22,21 @@ class VolumeMount:
         return hash((self.source, self.destination, self.type))
 
 
-def list_apps(specific_app: str | None = None) -> list[dict]:
+def upgrade_available_for_app(
+    version_mapping: dict[str, dict[str, dict[str, str]]], app_metadata: dict
+) -> bool:
+    if version_mapping.get(app_metadata['train'], {}).get(app_metadata['name']):
+        return parse_version(app_metadata['version']) < parse_version(
+            version_mapping[app_metadata['train']][app_metadata['name']]['version']
+        )
+    else:
+        return False
+
+
+def list_apps(
+    train_to_apps_version_mapping: dict[str, dict[str, dict[str, str]]],
+    specific_app: str | None = None
+) -> list[dict]:
     apps = []
     app_names = set()
     metadata = get_collective_metadata()
@@ -49,12 +64,14 @@ def list_apps(specific_app: str | None = None) -> list[dict]:
             elif container['state'] == 'running':
                 state = 'RUNNING'
 
+        app_metadata = metadata[app_name]
         apps.append({
             'name': app_name,
             'id': app_name,
             'active_workloads': workloads,
             'state': state,
-            **metadata[app_name],
+            'upgrade_available': upgrade_available_for_app(train_to_apps_version_mapping, app_metadata['metadata']),
+            **app_metadata,
         })
 
     if specific_app and specific_app in app_names:
@@ -70,12 +87,14 @@ def list_apps(specific_app: str | None = None) -> list[dict]:
                 # The app is malformed or something is seriously wrong with it
                 continue
 
+            app_metadata = metadata[entry.name]
             apps.append({
                 'name': entry.name,
                 'id': entry.name,
                 'active_workloads': get_default_workload_values(),
                 'state': 'STOPPED',
-                **metadata[entry.name],
+                'upgrade_available': upgrade_available_for_app(train_to_apps_version_mapping, app_metadata['metadata']),
+                **app_metadata,
             })
 
     return apps

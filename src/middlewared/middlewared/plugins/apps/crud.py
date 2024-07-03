@@ -40,7 +40,8 @@ class AppService(CRUDService):
         if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
             kwargs = {'specific_app': filters[0][2]}
 
-        return filter_list(list_apps(**kwargs), filters, options)
+        available_apps_mapping = self.middleware.call_sync('catalog.train_to_apps_version_mapping')
+        return filter_list(list_apps(available_apps_mapping, **kwargs), filters, options)
 
     @accepts(Str('app_name'))
     @returns(Dict('app_config', additional_attrs=True))
