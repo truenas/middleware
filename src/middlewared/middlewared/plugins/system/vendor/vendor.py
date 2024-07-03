@@ -15,10 +15,11 @@ class VendorService(Service):
                 if contents := file.read():
                     return contents
         except FileNotFoundError:
-            # Do anything here?
-            pass
+            return None
 
     @private
     def unvendor(self):
-        if os.path.isfile(SENTINEL_FILE_PATH):
+        try:
             os.remove(SENTINEL_FILE_PATH)
+        except FileNotFoundError:
+            return None
