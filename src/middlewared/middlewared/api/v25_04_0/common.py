@@ -2,7 +2,7 @@ from typing import Any
 
 from middlewared.api.base import BaseModel
 
-__all__ = ["QueryOptions", "QueryArgs", "NoArgs", "NoneReturn"]
+__all__ = ["QueryOptions", "QueryArgs"]
 
 
 class QueryOptions(BaseModel):
@@ -23,11 +23,3 @@ class QueryOptions(BaseModel):
 class QueryArgs(BaseModel):
     filters: list[Any] = []  # FIXME: Add validation here
     options: QueryOptions = QueryOptions()
-
-
-class NoArgs(BaseModel):
-    pass
-
-
-class NoneReturn(BaseModel):
-    result: None
