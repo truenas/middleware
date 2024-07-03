@@ -4,12 +4,10 @@ from typing_extensions import Annotated
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LocalUsername, LocalUID,
                                   LongString, NonEmptyString, Private, single_argument_result)
+from middlewared.plugins.account_.constants import DEFAULT_HOME_PATH
 
 __all__ = ["UserEntry", "UserCreateArgs", "UserCreateResult", "UserUpdateArgs", "UserUpdateResult",
            "UserRenew2faSecretArgs", "UserRenew2faSecretResult"]
-
-
-DEFAULT_HOME_PATH = "/var/empty"
 
 
 class UserEntry(BaseModel):
