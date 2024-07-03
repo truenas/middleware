@@ -14,7 +14,7 @@ class AppMetadataService(Service):
         private = True
 
     @job(lock='app_metadata_generate', lock_queue_size=1)
-    def generate(self):
+    def generate(self, job):
         metadata = {}
         with os.scandir(get_app_parent_config_path()) as scan:
             for entry in filter(lambda e: e.is_dir(), scan):
@@ -26,3 +26,5 @@ class AppMetadataService(Service):
 
         with open(get_collective_metadata_path(), 'w') as f:
             f.write(yaml.safe_dump(metadata))
+
+        job.set_progress(100, 'Updated metadata configuration for apps')
