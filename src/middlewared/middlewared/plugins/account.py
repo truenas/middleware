@@ -927,6 +927,9 @@ class UserService(CRUDService):
         if user['builtin']:
             raise CallError('Cannot delete a built-in user', errno.EINVAL)
 
+        if user['immutable']:
+            raise CallError('Cannot delete an immutable user', errno.EINVAL)
+
         self.middleware.call_sync('privilege.before_user_delete', user)
 
         if options['delete_group'] and not user['group']['bsdgrp_builtin']:
