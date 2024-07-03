@@ -9,7 +9,6 @@ from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
 
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
-from .ix_apps.metadata import get_version_in_use_of_app
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
