@@ -1,13 +1,21 @@
 from datetime import datetime
 import random
 import string
+from typing import Literal, TYPE_CHECKING
 
 from passlib.hash import pbkdf2_sha256
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Patch
+from middlewared.api import api_method
+from middlewared.api.current import (
+    ApiKeyCreateArgs, ApiKeyCreateResult, ApiKeyUpdateArgs,
+    ApiKeyUpdateResult, ApiKeyDeleteArgs, ApiKeyDeleteResult,
+    HttpVerb
+)
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.allowlist import Allowlist
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class APIKeyModel(sa.Model):
@@ -21,17 +29,17 @@ class APIKeyModel(sa.Model):
 
 
 class ApiKey:
-    def __init__(self, api_key):
+    def __init__(self, api_key: dict):
         self.api_key = api_key
         self.allowlist = Allowlist(self.api_key["allowlist"])
 
-    def authorize(self, method, resource):
+    def authorize(self, method: HttpVerb, resource: str) -> bool:
         return self.allowlist.authorize(method, resource)
 
 
 class ApiKeyService(CRUDService):
 
-    keys = {}
+    keys: dict[int, dict] = {}
 
     class Config:
         namespace = "api_key"
@@ -39,27 +47,8 @@ class ApiKeyService(CRUDService):
         datastore_extend = "api_key.item_extend"
         cli_namespace = "auth.api_key"
 
-    @private
-    async def item_extend(self, item):
-        item.pop("key")
-        return item
-
-    @accepts(
-        Dict(
-            "api_key_create",
-            Str("name", required=True, empty=False),
-            List("allowlist", items=[
-                Dict(
-                    "allowlist_item",
-                    Str("method", required=True, enum=["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE", "*"]),
-                    Str("resource", required=True),
-                    register=True,
-                ),
-            ]),
-            register=True,
-        )
-    )
-    async def do_create(self, data):
+    @api_method(ApiKeyCreateArgs, ApiKeyCreateResult)
+    async def do_create(self, data: dict) -> dict:
         """
         Creates API Key.
 
@@ -82,16 +71,8 @@ class ApiKeyService(CRUDService):
 
         return self._serve(data, key)
 
-    @accepts(
-        Int("id", required=True),
-        Patch(
-            "api_key_create",
-            "api_key_update",
-            ("add", Bool("reset")),
-            ("attr", {"update": True}),
-        )
-    )
-    async def do_update(self, id_, data):
+    @api_method(ApiKeyUpdateArgs, ApiKeyUpdateResult)
+    async def do_update(self, id_: int, data: dict) -> dict:
         """
         Update API Key `id`.
 
@@ -122,10 +103,8 @@ class ApiKeyService(CRUDService):
 
         return self._serve(await self.get_instance(id_), key)
 
-    @accepts(
-        Int("id")
-    )
-    async def do_delete(self, id_):
+    @api_method(ApiKeyDeleteArgs, ApiKeyDeleteResult)
+    async def do_delete(self, id_: int) -> Literal[True]:
         """
         Delete API Key `id`.
         """
@@ -147,7 +126,7 @@ class ApiKeyService(CRUDService):
         }
 
     @private
-    async def load_key(self, id_):
+    async def load_key(self, id_: int):
         self.keys[id_] = await self.middleware.call(
             "datastore.query",
             "account.api_key",
@@ -156,7 +135,7 @@ class ApiKeyService(CRUDService):
         )
 
     @private
-    async def authenticate(self, key):
+    async def authenticate(self, key: str) -> ApiKey | None:
         try:
             key_id, key = key.split("-", 1)
             key_id = int(key_id)
@@ -173,7 +152,7 @@ class ApiKeyService(CRUDService):
 
         return ApiKey(db_key)
 
-    async def _validate(self, schema_name, data, id_=None):
+    async def _validate(self, schema_name: str, data: dict, id_: int=None):
         verrors = ValidationErrors()
 
         await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
@@ -183,12 +162,12 @@ class ApiKeyService(CRUDService):
     def _generate(self):
         return "".join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)])
 
-    def _serve(self, data, key):
+    def _serve(self, data: dict, key: str | None) -> dict:
         if key is None:
             return data
 
         return dict(data, key=f"{data['id']}-{key}")
 
 
-async def setup(middleware):
+async def setup(middleware: 'Middleware'):
     await middleware.call("api_key.load_keys")
