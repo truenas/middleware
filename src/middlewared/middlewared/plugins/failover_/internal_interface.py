@@ -95,3 +95,12 @@ class InternalInterfaceService(Service):
     async def post_sync(self, internal_ip):
         if self.http_site is None:
             self.http_site = await self.middleware.start_tcp_site(internal_ip)
+
+
+async def setup(middleware):
+    # on HA systems, we bind ourselves on 127.0.0.1:6000, however
+    # often times developers/CI/CD do `systemctl restart middlewared`
+    # which will tear down the local listening socket so we need to
+    # be sure and set it up everytime middleware starts. This is a
+    # NO-OP otherwise.
+    await middleware.call('failover.internal_interface.pre_sync')
