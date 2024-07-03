@@ -69,6 +69,11 @@ class AppService(CRUDService):
     )
     @job(lock=lambda args: f'app_create_{args[0]["app_name"]}')
     def do_create(self, job, data):
+        """
+        Create an app with `app_name` using `catalog_app` with `train` and `version`.
+
+        TODO: Add support for advanced mode which will enable users to use their own compose files
+        """
         self.middleware.call_sync('docker.state.validate')
 
         if self.query([['id', '=', data['app_name']]]):
@@ -110,8 +115,13 @@ class AppService(CRUDService):
             compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:
             job.set_progress(80, f'Failure occurred while installing {data["app_name"]!r}, cleaning up')
-            with contextlib.suppress(Exception):
-                self.delete_internal(app_name, version)
+            for method, args, kwargs in (
+                (compose_action, (app_name, version, 'down'), {'remove_orphans': True}),
+                (shutil.rmtree, (get_installed_app_path(app_name),), {}),
+            ):
+                with contextlib.suppress(Exception):
+                    method(*args, **kwargs)
+
             raise e from None
         else:
             job.set_progress(100, f'{data["app_name"]!r} installed successfully')
@@ -126,6 +136,9 @@ class AppService(CRUDService):
     )
     @job(lock=lambda args: f'app_update_{args[0]}')
     def do_update(self, job, app_name, data):
+        """
+        Update `app_name` app with new configuration.
+        """
         app = self.get_instance__sync(app_name)
         config = get_current_app_config(app_name, app['version'])
         config.update(data['values'])
@@ -151,12 +164,12 @@ class AppService(CRUDService):
         job.set_progress(100, f'Update completed for {app_name!r}')
         return self.get_instance__sync(app_name)
 
-    def delete_internal(self, app_name, version):
-        compose_action(app_name, version, 'down', remove_orphans=True)
-        shutil.rmtree(get_installed_app_path(app_name))
-
     @accepts(Str('app_name'))
     def do_delete(self, app_name):
-        self.get_instance__sync(app_name)
-        self.delete_internal(app_name, get_version_in_use_of_app(app_name))
+        """
+        Delete `app_name` app.
+        """
+        app_config = self.get_instance__sync(app_name)
+        compose_action(app_name, app_config['version'], 'down', remove_orphans=True)
+        shutil.rmtree(get_installed_app_path(app_name))
         return True
