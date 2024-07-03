@@ -3,7 +3,7 @@ import typing
 
 from middlewared.service_exception import CallError
 
-from .app_lifecycle_utils import get_rendered_templates_of_app
+from .ix_apps.lifecycle import get_rendered_templates_of_app
 from .utils import PROJECT_PREFIX, run
 
 
