@@ -1,6 +1,8 @@
 import os
 
-from middlewared.service import private, Service
+from middlewared.api import api_method
+from middlewared.api.current import NoArgs, NoneReturn, VendorNameResult
+from middlewared.service import Service
 
 
 SENTINEL_FILE_PATH = '/data/.vendor'
@@ -8,7 +10,7 @@ SENTINEL_FILE_PATH = '/data/.vendor'
 
 class VendorService(Service):
 
-    @private
+    @api_method(NoArgs, VendorNameResult, private=True)
     def name(self) -> str | None:
         try:
             with open(SENTINEL_FILE_PATH, 'r') as file:
@@ -17,7 +19,7 @@ class VendorService(Service):
         except FileNotFoundError:
             return None
 
-    @private
+    @api_method(NoArgs, NoneReturn, private=True)
     def unvendor(self):
         try:
             os.remove(SENTINEL_FILE_PATH)
