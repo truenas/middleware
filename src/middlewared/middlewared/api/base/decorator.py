@@ -16,9 +16,10 @@ def api_method(
     audit_callback: bool = False,
     audit_extended: Callable[..., str] | None = None,
     roles: list[str] | None = None,
+    private: bool = False,
 ):
     """
-    Mark a `Service` class method as a public API method.
+    Mark a `Service` class method as an API method.
 
     `accepts` and `returns` are classes derived from `BaseModel` that correspond to the method's call arguments and
     return value.
@@ -33,6 +34,8 @@ def api_method(
     that will be appended to the audit message to be logged.
 
     `roles` is a list of user roles that will gain access to this method.
+
+    `private` is `True` when the method should not be exposed in the public API. By default, the method is public.
     """
     if list(returns.model_fields.keys()) != ["result"]:
         raise TypeError("`returns` model must only have one field called `result`")
@@ -61,6 +64,7 @@ def api_method(
         wrapped.audit_callback = audit_callback
         wrapped.audit_extended = audit_extended
         wrapped.roles = roles or []
+        wrapped._private = private
 
         # FIXME: This is only here for backwards compatibility and should be removed eventually
         wrapped.accepts = []
