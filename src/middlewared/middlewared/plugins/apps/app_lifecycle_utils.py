@@ -5,7 +5,7 @@ import yaml
 
 from middlewared.service_exception import CallError
 
-from .app_path_utils import (
+from .ix_apps.path import (
     get_installed_app_config_path, get_installed_app_rendered_dir_path, get_installed_app_version_path,
 )
 from .schema_utils import CONTEXT_KEY_NAME

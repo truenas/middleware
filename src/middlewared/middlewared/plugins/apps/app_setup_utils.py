@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from .app_path_utils import get_app_parent_config_path, get_installed_app_version_path
+from .ix_apps.path import get_app_parent_config_path, get_installed_app_version_path
 from .app_utils import update_app_metadata
 
 
