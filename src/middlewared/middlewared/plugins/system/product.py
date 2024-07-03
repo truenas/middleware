@@ -24,7 +24,7 @@ class SystemService(Service):
 
     PRODUCT_TYPE = None
 
-    @accepts()
+    @accepts(roles=['READONLY_ADMIN'])
     @returns(Str('product_type'))
     async def product_type(self):
         """
