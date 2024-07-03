@@ -204,7 +204,7 @@ class TDBHandle:
         """
         self.hdl.clear()
 
-    def entries(self, include_keys: bool = True) -> Iterable[dict]:
+    def entries(self, include_keys: bool = True, key_prefix: str = None) -> Iterable[dict]:
         """
         Iterate entries in TDB file:
 
@@ -220,6 +220,9 @@ class TDBHandle:
             tdb_key = key.decode()
             if self.keys_null_terminated:
                 tdb_key = tdb_key[:-1]
+
+            if key_prefix and not tdb_key.startswith(key_prefix):
+                continue
 
             tdb_val = self.get(tdb_key)
             if include_keys:
