@@ -137,6 +137,7 @@
     missing_extents = []
     extents_io = {'vdisk_fileio': [], 'vdisk_blockio': []}
     for extent in extents.values():
+        extent['name'] = extent['name'].replace('.', '_').replace('/', '-')  # CORE ctl device names are incompatible with SCALE SCST
         if extent['locked']:
             middleware.logger.debug(
                 'Skipping generation of extent %r as the underlying resource is locked', extent['name']
@@ -160,7 +161,6 @@
                 missing_extents.append(extent['id'])
                 continue
 
-        extent['name'] = extent['name'].replace('.', '_')  # CORE ctl device names are incompatible with SCALE SCST
         extents_io[extents_io_key].append(extent)
         all_extent_names.append(extent['name'])
 
