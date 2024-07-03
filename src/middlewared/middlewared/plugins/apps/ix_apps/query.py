@@ -1,9 +1,9 @@
 import os
 from dataclasses import dataclass
 
+from .docker.query import list_resources_by_project
 from .metadata import get_collective_metadata
 from .path import get_app_parent_config_path
-from .docker.query import list_resources_by_project
 from .utils import PROJECT_PREFIX
 
 

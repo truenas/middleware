@@ -8,11 +8,11 @@ from middlewared.service import CallError, CRUDService, filterable, job
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
 
+from .compose_utils import compose_action
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
-from .compose_utils import compose_action
 from .version_utils import get_latest_version_from_app_versions
 
 
@@ -165,11 +165,15 @@ class AppService(CRUDService):
         return self.get_instance__sync(app_name)
 
     @accepts(Str('app_name'))
-    def do_delete(self, app_name):
+    @job(lock=lambda args: f'app_delete_{args[0]}')
+    def do_delete(self, job, app_name):
         """
         Delete `app_name` app.
         """
         app_config = self.get_instance__sync(app_name)
+        job.set_progress(20, f'Deleting {app_name!r} app')
         compose_action(app_name, app_config['version'], 'down', remove_orphans=True)
+        job.set_progress(80, 'Cleaning up resources')
         shutil.rmtree(get_installed_app_path(app_name))
+        job.set_progress(100, f'Deleted {app_name!r} app')
         return True
