@@ -36,13 +36,24 @@ def list_apps(specific_app: str | None = None) -> list[dict]:
             continue
 
         workloads = translate_resources_to_desired_workflow(app_resources)
+        # TODO: So when we stop an app, we remove all it's related resources and we wouldn't be in this for loop at all
+        #  however, when we stop docker service and start it again - the containers can be in exited state which means
+        #  we need to account for this.
+        #  This TODO however is for figuring out why app.start doesn't work with the compose actions we have in place
+        #  atm and should then we be maybe doing docker compose down on apps when stopping docker service
+        state = 'STOPPED'
+        for container in workloads['container_details']:
+            if container['state'] == 'starting':
+                state = 'DEPLOYING'
+                break
+            elif container['state'] == 'running':
+                state = 'RUNNING'
+
         apps.append({
             'name': app_name,
             'id': app_name,
             'active_workloads': workloads,
-            'state': 'DEPLOYING' if any(
-                c['state'] == 'starting' for c in workloads['container_details']
-            ) else 'RUNNING',
+            'state': state,
             **metadata[app_name],
         })
 
