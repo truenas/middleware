@@ -60,6 +60,7 @@ class DockerService(SimpleService):
 
     async def after_start(self):
         await self.middleware.call('docker.state.set_status', Status.RUNNING.value)
+        await self.middleware.call('catalog.sync')
 
     async def before_stop(self):
         await self.middleware.call('docker.state.set_status', Status.STOPPING.value)
@@ -67,3 +68,4 @@ class DockerService(SimpleService):
     async def after_stop(self):
         await self.mount_umount_ix_apps(False)
         await self.middleware.call('docker.state.set_status', Status.STOPPED.value)
+        await self.middleware.call('catalog.sync')
