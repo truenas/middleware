@@ -1,8 +1,8 @@
 from middlewared.schema import accepts, Str, returns
 from middlewared.service import Service
 
-from .app_utils import get_version_in_use_of_app
 from .compose_utils import compose_action
+from .ix_apps.metadata import get_version_in_use_of_app
 
 
 class AppService(Service):

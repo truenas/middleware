@@ -5,11 +5,10 @@ import yaml
 
 from middlewared.service_exception import CallError
 
-from .ix_apps.path import (
+from .path import (
     get_installed_app_config_path, get_installed_app_rendered_dir_path, get_installed_app_version_path,
 )
-from .schema_utils import CONTEXT_KEY_NAME
-from .utils import run
+from .utils import CONTEXT_KEY_NAME, run
 
 
 def get_rendered_templates_of_app(app_name: str, version: str) -> list[str]:

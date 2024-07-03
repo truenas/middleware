@@ -1,8 +1,8 @@
 import os
 import shutil
 
-from .ix_apps.path import get_app_parent_config_path, get_installed_app_version_path
-from .app_utils import update_app_metadata
+from .path import get_app_parent_config_path, get_installed_app_version_path
+from .metadata import update_app_metadata
 
 
 def setup_install_app_dir(app_name: str, app_version_details: dict):

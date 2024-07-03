@@ -1,8 +1,8 @@
 import os
 from dataclasses import dataclass
 
-from .app_utils import get_app_metadata
-from .ix_apps.path import get_app_parent_config_path
+from .metadata import get_app_metadata
+from .path import get_app_parent_config_path
 from .docker.query import list_resources_by_project
 from .utils import PROJECT_PREFIX
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from semantic_version import Version
 
-from .ix_apps.path import get_installed_app_metadata_path, get_installed_app_versions_dir_path
+from .path import get_installed_app_metadata_path, get_installed_app_versions_dir_path
 
 
 app_details = namedtuple('app_details', ['name', 'version'])
