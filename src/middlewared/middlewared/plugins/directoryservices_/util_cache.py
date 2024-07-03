@@ -1,6 +1,5 @@
 import enum
 import os
-import typing
 
 from collections import defaultdict
 from collections.abc import Iterable
@@ -32,7 +31,6 @@ from middlewared.utils.tdb import (
 )
 from threading import Lock
 from uuid import uuid4
-
 
 # Update progress of job every nth user / group, we expect possibly hundreds to
 # a few thousand users and groups, but some edge cases where they number in
@@ -157,6 +155,8 @@ class DSCacheFill:
             entry['id_type'] = idmap_entry['id_type']
             if dom_by_sid:
                 entry['domain_info'] = dom_by_sid[idmap_entry['sid'].rsplit('-', 1)[0]]
+            else:
+                entry['domain_info'] = None
 
         to_remove.reverse()
         for idx in to_remove:
@@ -236,6 +236,10 @@ class DSCacheFill:
         ):
             # Now iterate members of 100 for insertion
             for u in users:
+                if u['domain_info']:
+                    id_type_both = u['domain_info']['idmap_backend'] in ('AUTORID', 'RID')
+                else:
+                    id_type_both = False
 
                 user_data = u['nss']
                 entry = {
@@ -257,11 +261,14 @@ class DSCacheFill:
                     'attributes': {},
                     'groups': [],
                     'sshpubkey': None,
+                    'immutable': True,
+                    'two_factor_auth_configured': False,
                     'local': False,
-                    'id_type_both': u['id_type'] == 'BOTH',
+                    'id_type_both': id_type_both,
                     'nt_name': user_data.pw_name,
                     'smb': u['sid'] is not None,
                     'sid': u['sid'],
+                    'roles': []
                 }
 
                 if user_count % LOG_CACHE_ENTRY_INTERVAL == 0:
@@ -280,6 +287,11 @@ class DSCacheFill:
             dom_by_sid
         ):
             for g in groups:
+                if g['domain_info']:
+                    id_type_both = g['domain_info']['idmap_backend'] in ('AUTORID', 'RID')
+                else:
+                    id_type_both = False
+
                 group_data = g['nss']
                 entry = {
                     'id': BASE_SYNTHETIC_DATASTORE_ID + group_data.gr_gid,
@@ -291,10 +303,11 @@ class DSCacheFill:
                     'sudo_commands_nopasswd': [],
                     'users': [],
                     'local': False,
-                    'id_type_both': g['id_type'] == 'BOTH',
+                    'id_type_both': id_type_both,
                     'nt_name': group_data.gr_name,
                     'smb': g['sid'] is not None,
                     'sid': g['sid'],
+                    'roles': []
                 }
 
                 if group_count % LOG_CACHE_ENTRY_INTERVAL == 0:
@@ -371,4 +384,4 @@ def query_cache_entries(
     options: dict
 ) -> list:
     with get_tdb_handle(DSCacheFile[id_type.name].value, CACHE_OPTIONS) as handle:
-        return filter_list(handle.entries(include_keys=False), filters, options)
+        return filter_list(handle.entries(include_keys=False, key_prefix='ID_'), filters, options)
