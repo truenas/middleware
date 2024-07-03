@@ -3,6 +3,10 @@ import os
 from .utils import IX_APPS_MOUNT_PATH
 
 
+def get_collective_metadata_path() -> str:
+    return os.path.join(IX_APPS_MOUNT_PATH, 'metadata.yaml')
+
+
 def get_app_parent_config_path() -> str:
     return os.path.join(IX_APPS_MOUNT_PATH, 'app_configs')
 
