@@ -388,7 +388,7 @@ class CoreService(Service):
                     continue
 
                 # Skip private methods
-                if hasattr(method, '_private'):
+                if hasattr(method, '_private') and method._private is True:
                     continue
                 if target == 'CLI' and hasattr(method, '_cli_private'):
                     continue
