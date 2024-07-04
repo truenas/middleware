@@ -53,22 +53,25 @@ class PoolService(Service):
         )
         verrors.check()
 
+        job.set_progress(3, 'Completed validation')
+
         guid = vdev['guid'] if vdev['type'] in ['DISK', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3'] else vdev['children'][0]['guid']
         disks = {options['new_disk']: {'vdev': []}}
-        await self.middleware.call('pool.format_disks', job, disks)
-
+        job.set_progress(5, 'Formatting disks')
+        await self.middleware.call('pool.format_disks', job, disks, 5, 20)
+        job.set_progress(22, 'Extending pool')
         devname = disks[options['new_disk']]['vdev'][0]
         extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], None, [
             {'target': guid, 'type': 'DISK', 'path': devname}
         ])
-        await job.wrap(extend_job)
+        await extend_job.wait(raise_error=True)
 
         if vdev['type'] in ('RAIDZ1', 'RAIDZ2', 'RAIDZ3'):
             while True:
                 expand = await self.middleware.call('zfs.pool.expand_state', pool['name'])
 
                 if expand['state'] is None:
-                    job.set_progress(0, 'Waiting for expansion to start')
+                    job.set_progress(25, 'Waiting for expansion to start')
                     await asyncio.sleep(1)
                     continue
 
@@ -81,6 +84,6 @@ class PoolService(Service):
                 else:
                     message = 'Expanding'
 
-                job.set_progress(min(expand['percentage'], 100), message)
+                job.set_progress(max(min(expand['percentage'], 95), 25), message)
 
                 await asyncio.sleep(10 if expand['total_secs_left'] > 60 else 1)
