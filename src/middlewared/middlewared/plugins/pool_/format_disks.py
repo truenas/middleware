@@ -1,5 +1,3 @@
-import asyncio
-
 from middlewared.service import private, Service
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -15,7 +13,6 @@ class PoolService(Service):
 
         formatted = 0
         len_disks = len(disks)
-        percentage_lock = asyncio.Lock()
         current_percentage = base_percentage
         single_disk_percentage = (upper_percentage - base_percentage) / len_disks
 
@@ -23,10 +20,9 @@ class PoolService(Service):
             nonlocal formatted, current_percentage
             disk, config = arg
             await self.middleware.call('disk.format', disk)
-            async with percentage_lock:
-                formatted += 1
-                current_percentage += single_disk_percentage
-                job.set_progress(current_percentage, f'Formatting disks ({formatted}/{len_disks})')
+            formatted += 1
+            current_percentage += single_disk_percentage
+            job.set_progress(current_percentage, f'Formatting disks ({formatted}/{len_disks})')
 
         await asyncio_map(format_disk, disks.items(), limit=16)
 
