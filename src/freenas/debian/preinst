@@ -7,7 +7,8 @@ for file in \
     /usr/lib/netdata/conf.d/charts.d.conf \
     /lib/systemd/system/smartmontools.service \
     /usr/share/spice-html5/spice_auto.html \
-    /usr/share/spice-html5/spice.css
+    /usr/share/spice-html5/spice.css \
+    /etc/logrotate.d/netdata
 do
     dpkg-divert --add --package truenas-files --rename --divert "/var/trash/$(echo "$file" | sed "s/\//_/g")" "$file"
 done
