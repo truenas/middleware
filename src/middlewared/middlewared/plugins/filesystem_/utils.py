@@ -7,7 +7,7 @@ class ACLType(enum.Enum):
     DISABLED = ((), ())
 
     def _validate_id(self, id_, special):
-        if id_ is None or id_ < 0:
+        if id_ is None or id_ == -1:
             return True if special else False
 
         return False if special else True
@@ -22,7 +22,7 @@ class ACLType(enum.Enum):
                 'tag'
             ))
 
-        if not self._validate_id(entry['id'], is_special):
+        if not self._validate_id(entry.get('who') or entry.get('id'), is_special):
             errors.append(
                 (idx, 'ACL entry has invalid id for tag type.', 'id')
             )
@@ -51,17 +51,20 @@ class ACLType(enum.Enum):
                 )
                 continue
 
-            if not ace_keys & id_keys:
+            if not entry_keys & id_keys:
                 errors.append(
                     (idx, 'Numeric ID "id" or account name "who" must be specified', None)
                 )
                 continue
 
-            if len(ace_keys & id_keys) == 2:
-                errors.append(
-                    (idx, 'Numeric ID "id" and account name "who" may not be specified simultaneously', None)
-                )
-                continue
+            if len(entry_keys & id_keys) == 2:
+                if entry['id'] not in (None, -1):
+                    errmsg = (
+                        f'Numeric ID "id" ({entry["id"]}) and account name "who" ({entry["who"]}) '
+                        'may not be specified simultaneously'
+                    )
+                    errors.append((idx, errmsg, None))
+                    continue
 
             self._validate_entry(idx, entry, errors)
 

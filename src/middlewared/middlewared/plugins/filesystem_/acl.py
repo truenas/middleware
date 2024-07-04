@@ -945,7 +945,7 @@ class FilesystemService(Service):
             acltype = ACLType[path_acltype]
 
         for idx, entry in enumerate(data['dacl']):
-            if entry.get('who') in (None, ''):
+            if (who := entry.pop('who', None)) in (None, ''):
                 continue
 
             if entry.get('id') is not None:
@@ -971,6 +971,7 @@ class FilesystemService(Service):
             except MatchNotFound:
                 raise ValidationError(f'filesystem.setacl.{idx}.who', f'{entry["who"]}: account does not exist')
 
+        self.logger.debug("XXX: ACL: %s", data['dacl'])
         if acltype == ACLType.NFS4:
             return self.setacl_nfs4(job, data)
         elif acltype == ACLType.POSIX1E:

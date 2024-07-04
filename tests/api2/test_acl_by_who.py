@@ -11,13 +11,13 @@ permset_nfsv4_full = {"BASIC": "FULL_CONTROL"}
 flagset_nfsv4_inherit = {"BASIC": "INHERIT"}
 
 
-@pytest.fixture(scopy='module')
+@pytest.fixture(scope='module')
 def posix_acl_dataset():
     with dataset('posix') as ds:
         yield ds
 
 
-@pytest.fixture(scopy='module')
+@pytest.fixture(scope='module')
 def nfsv4_acl_dataset():
     with dataset('nfs4', data={'share_type': 'SMB'}) as ds:
         yield ds
@@ -29,6 +29,7 @@ def test__posix_by_who(posix_acl_dataset):
     the_acl.extend([
         {'tag': 'USER', 'who': 'root', 'perms': permset_posix_full, 'default': False},
         {'tag': 'GROUP', 'who': 'root', 'perms': permset_posix_full, 'default': False},
+        {'tag': 'MASK', 'id': -1, 'perms': permset_posix_full, 'default': False},
     ])
 
     call('filesystem.setacl', {'path': target, 'dacl': the_acl}, job=True)
@@ -78,7 +79,7 @@ def test__nfsv4_by_who(nfsv4_acl_dataset):
 
 
 def test__acl_validation_errors_posix(posix_acl_dataset):
-    target = os.path.join('/mnt', ds)
+    target = os.path.join('/mnt', posix_acl_dataset)
     the_acl = call('filesystem.getacl', target)['acl']
 
     new_acl = deepcopy(the_acl)
