@@ -7,13 +7,11 @@ import enum
 import json
 import os
 import re
-import uuid
 from subprocess import PIPE, Popen, TimeoutExpired, run
 from time import sleep
 from urllib.parse import urlparse
 
 import requests
-import websocket
 
 from auto_config import password, user
 from middlewared.test.integration.utils import host
@@ -324,12 +322,23 @@ def vm_start(vm_name):
         return True
 
 
-def ping_host(host, count):
-    process = run(['ping', '-c', f'{count}', host])
-    if process.returncode != 0:
-        return False
+def ping_host(host, count, timeout=None):
+    # this function assumes we're running on linux
+    cmd = ['ping', f'-c{count}']
+    if timeout is not None:
+        cmd.append(f'-W{timeout}')
+    cmd.append(host)
+
+    process = run(cmd, check=False, capture_output=True)
+    if timeout is not None:
+        # could be that the system was rebooted and the
+        # caller specified a `timeout` waiting on the
+        # system to actually disappear off network OR
+        # they're waiting for the system to reappear on
+        # network
+        return b'100% packet loss' not in process.stdout
     else:
-        return True
+        return process.returncode == 0
 
 
 def wait_on_job(job_id, max_timeout):
@@ -345,22 +354,3 @@ def wait_on_job(job_id, max_timeout):
         if timeout >= max_timeout:
             return {'state': 'TIMEOUT', 'results': job_results.json()[0]}
         timeout += 5
-
-
-def make_ws_request(ip, payload):
-    # create connection
-    ws = websocket.create_connection(f'ws://{ip}:80/websocket')
-
-    # setup features
-    ws.send(json.dumps({'msg': 'connect', 'version': '1', 'support': ['1'], 'features': []}))
-    ws.recv()
-
-    # login
-    id = str(uuid.uuid4())
-    ws.send(json.dumps({'id': id, 'msg': 'method', 'method': 'auth.login', 'params': list(authentication)}))
-    ws.recv()
-
-    # return the request
-    payload.update({'id': id})
-    ws.send(json.dumps(payload))
-    return json.loads(ws.recv())

@@ -1,10 +1,5 @@
-#!/usr/bin/env python3
-
-# Author: Eric Turgeon
-# License: BSD
-# Location for tests into REST API of FreeNAS
-
 import contextlib
+import errno
 import ipaddress
 import os
 import urllib.parse
@@ -12,19 +7,18 @@ from copy import copy
 from time import sleep
 
 import pytest
+from pytest_dependency import depends
+
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.account import group as create_group
 from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.filesystem import directory
 from middlewared.test.integration.utils import call, mock, ssh
 from middlewared.test.integration.utils.client import truenas_server
-from middlewared.test.integration.utils.system import \
-    reset_systemd_svcs as reset_svcs
-from pytest_dependency import depends
+from middlewared.test.integration.utils.system import reset_systemd_svcs as reset_svcs
 
 from auto_config import hostname, password, pool_name, user
-from functions import (DELETE, GET, POST, PUT, SSH_TEST, make_ws_request,
-                       wait_on_job)
+from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job
 from protocols import SSH_NFS, nfs_share
 
 MOUNTPOINT = f"/tmp/nfs-{hostname}"
@@ -153,28 +147,17 @@ def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=None):
     assert do_what in ['start', 'stop'], f"Requested invalid service state: {do_what}"
     test_res = {'start': True, 'stop': False}
 
-    payload = {
-        'msg': 'method', 'method': f'service.{do_what}',
-        'params': ['nfs', {'silent': False}]
-    }
-    res = make_ws_request(truenas_server.ip, payload)
-    if expect_to_pass:
-        assert res.get('error') is None, res
-        sleep(1)
+    try:
+        call(f'service.{do_what}', 'nfs', {'silent': False})
+    except Exception as e:
+        if expect_to_pass:
+            assert False, f'Unexpected failure {do_what}ing nfs: {e!r}'
+        if fail_check is not None:
+            assert fail_check in str(e)
     else:
-        assert res.get('error') is not None, res
-        if fail_check:
-            assert fail_check in res.get('error')['reason']
-
-    # Confirm requested state
-    if expect_to_pass:
-        payload = {
-            'msg': 'method', 'method': 'service.started',
-            'params': ['nfs']
-        }
-        res = make_ws_request(truenas_server.ip, payload)
-        assert res.get('error') is None, res
-        assert res['result'] == test_res[do_what], f"Expected {test_res[do_what]} for NFS started result, but found {res['result']}"
+        if expect_to_pass:
+            res = call('service.started', 'nfs')
+            assert res == test_res[do_what], f'Expected {test_res[do_what]} for NFS started result, but found {res}'
 
 
 def confirm_nfsd_processes(expected):
@@ -233,9 +216,7 @@ def confirm_rpc_port(rpc_name, port_num):
 
 
 class NFS_CONFIG:
-    '''
-    This is used to restore the NFS config to it's original state
-    '''
+    '''This is used to restore the NFS config to it's original state'''
     default_nfs_config = {}
 
 
@@ -247,24 +228,9 @@ def save_nfs_config():
     but it also might require refactoring of the tests.
     This is called at the start of test_01_creating_the_nfs_server.
     '''
-    exclude = ['id', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd']
-    get_conf_cmd = {'msg': 'method', 'method': 'nfs.config', 'params': []}
-    res = make_ws_request(truenas_server.ip, get_conf_cmd)
-    assert res.get('error') is None, res
-    NFS_CONFIG.default_nfs_config = res['result']
-    [NFS_CONFIG.default_nfs_config.pop(key) for key in exclude]
-
-
-def restore_nfs_config():
-    '''
-    Restore the NFS configuration to the settings saved by save_nfs_config.
-    This should be called _before_ NFS is shutdown to ensure the NFS conf file in /etc
-    matches the DB settings.
-    This is called at the start of stopping_nfs_service.
-    '''
-    set_conf_cmd = {'msg': 'method', 'method': 'nfs.update', 'params': [NFS_CONFIG.default_nfs_config]}
-    res = make_ws_request(truenas_server.ip, set_conf_cmd)
-    assert res.get('error') is None, res
+    exclude = ('id', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd')
+    for k, v in filter(lambda x: x[0] not in exclude, call('nfs.config').items()):
+        NFS_CONFIG.default_nfs_config[k] = v
 
 
 @contextlib.contextmanager
@@ -449,15 +415,24 @@ def test_12_perform_server_side_copy(request):
 
 
 @pytest.mark.parametrize('nfsd,cores,expected', [
-    (50, 1, {'nfsd': 50, 'mountd': 12, 'managed': False}),   # User specifies number of nfsd, expect: 50 nfsd, 12 mountd
-    (None, 12, {'nfsd': 12, 'mountd': 3, 'managed': True}),  # Dynamic, expect 12 nfsd and 3 mountd
-    (None, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),    # Dynamic, expect 4 nfsd and 1 mountd
-    (None, 2, {'nfsd': 2, 'mountd': 1, 'managed': True}),    # Dynamic, expect 2 nfsd and 1 mountd
-    (None, 1, {'nfsd': 1, 'mountd': 1, 'managed': True}),    # Dynamic, expect 1 nfsd and 1 mountd
-    (0, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),       # Should be trapped by validator: Illegal input
-    (257, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),     # Should be trapped by validator: Illegal input
-    (None, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),  # Dynamic, max nfsd via calculation is 32
-    (-1, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),    # -1 is a flag to set bindip and confirm 'managed' stays True
+    # User specifies number of nfsd, expect: 50 nfsd, 12 mountd
+    (50, 1, {'nfsd': 50, 'mountd': 12, 'managed': False}),
+    # Dynamic, expect 12 nfsd and 3 mountd
+    (None, 12, {'nfsd': 12, 'mountd': 3, 'managed': True}),
+    # Dynamic, expect 4 nfsd and 1 mountd
+    (None, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),
+    # Dynamic, expect 2 nfsd and 1 mountd
+    (None, 2, {'nfsd': 2, 'mountd': 1, 'managed': True}),
+    # Dynamic, expect 1 nfsd and 1 mountd
+    (None, 1, {'nfsd': 1, 'mountd': 1, 'managed': True}),
+    # Should be trapped by validator: Illegal input
+    (0, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),
+    # Should be trapped by validator: Illegal input
+    (257, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),
+    # Dynamic, max nfsd via calculation is 32
+    (None, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),
+    # -1 is a flag to set bindip and confirm 'managed' stays True,
+    (-1, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),
 ])
 def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
     """
@@ -1367,35 +1342,32 @@ def test_45_check_setting_runtime_debug(request):
     """
     This validates that the private NFS debugging API works correctly.
     """
-    disabled = {"NFS": ["NONE"], "NFSD": ["NONE"], "NLM": ["NONE"], "RPC": ["NONE"]}
-    enabled = {"NFS": ["PROC", "XDR", "CLIENT", "MOUNT", "XATTR_CACHE"],
-               "NFSD": ["ALL"],
-               "NLM": ["CLIENT", "CLNTLOCK", "SVC"],
-               "RPC": ["CALL", "NFS", "TRANS"]}
+    disabled = {
+        "NFS": ["NONE"],
+        "NFSD": ["NONE"],
+        "NLM": ["NONE"],
+        "RPC": ["NONE"]
+    }
+    enabled = {
+        "NFS": ["PROC", "XDR", "CLIENT", "MOUNT", "XATTR_CACHE"],
+        "NFSD": ["ALL"],
+        "NLM": ["CLIENT", "CLNTLOCK", "SVC"],
+        "RPC": ["CALL", "NFS", "TRANS"]
+    }
     failure = {"RPC": ["CALL", "NFS", "TRANS", "NONE"]}
 
     try:
-        get_payload = {'msg': 'method', 'method': 'nfs.get_debug', 'params': []}
-        res = make_ws_request(truenas_server.ip, get_payload)
-        assert res['result'] == disabled, res
+        assert call('nfs.get_debug') == disabled
+        assert call('nfs.set_debug', enabled)
+        assert call('nfs.get_debug') == enabled
 
-        set_payload = {'msg': 'method', 'method': 'nfs.set_debug', 'params': [enabled]}
-        make_ws_request(truenas_server.ip, set_payload)
-        res = make_ws_request(truenas_server.ip, get_payload)
-        assert set(res['result']['NFS']) == set(enabled['NFS']), f"Mismatch on NFS: {res}"
-        assert set(res['result']['NFSD']) == set(enabled['NFSD']), f"Mismatch on NFSD: {res}"
-        assert set(res['result']['NLM']) == set(enabled['NLM']), f"Mismatch on NLM: {res}"
-        assert set(res['result']['RPC']) == set(enabled['RPC']), f"Mismatch on RPC: {res}"
-
-        # Test failure case.  This should generate an ValueError exception on the system
-        set_payload['params'] = [failure]
-        res = make_ws_request(truenas_server.ip, set_payload)
-        assert res['error']['errname'] == "EINVAL", res['error']['errname']
+        with pytest.raises(Exception) as ve:
+            # This should generate an ValueError exception on the system
+            call('nfs.set_debug', failure)
+        assert ve.value.errno == errno.EINVAL
     finally:
-        set_payload['params'] = [disabled]
-        make_ws_request(truenas_server.ip, set_payload)
-        res = make_ws_request(truenas_server.ip, get_payload)
-        assert res['result'] == disabled, res
+        assert call('nfs.set_debug', disabled)
+        assert call('nfs.get_debug') == disabled
 
 
 def test_46_set_bind_ip():
@@ -1656,7 +1628,7 @@ def test_54_v4_domain(request):
 
 def test_70_stopping_nfs_service(request):
     # Restore original settings before we stop
-    restore_nfs_config()
+    call('nfs.update', NFS_CONFIG.default_nfs_config)
     payload = {"service": "nfs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
@@ -1676,16 +1648,9 @@ def test_72_check_adjusting_threadpool_mode(request):
     This request will fail if NFS server (or NFS client) is
     still running.
     """
-    supported_modes = ["AUTO", "PERCPU", "PERNODE", "GLOBAL"]
-    payload = {'msg': 'method', 'method': None, 'params': []}
-
-    for m in supported_modes:
-        payload.update({'method': 'nfs.set_threadpool_mode', 'params': [m]})
-        make_ws_request(truenas_server.ip, payload)
-
-        payload.update({'method': 'nfs.get_threadpool_mode', 'params': []})
-        res = make_ws_request(truenas_server.ip, payload)
-        assert res['result'] == m, res
+    for m in ('AUTO', 'PERCPU', 'PERNODE', 'GLOBAL'):
+        call('nfs.set_threadpool_mode', m)
+        assert call('nfs.get_threadpool_mode') == m
 
 
 def test_74_disable_nfs_service_at_boot(request):
@@ -1717,9 +1682,7 @@ def test_80_start_nfs_service_with_missing_or_empty_exports(request, exports):
 
     with nfs_config() as nfs_conf:
         # Start NFS
-        payload = {'msg': 'method', 'method': 'service.start', 'params': ['nfs']}
-        res = make_ws_request(truenas_server.ip, payload)
-        assert res['result'] is True, f"Expected start success: {res}"
+        call('service.start', 'nfs', {'silent': False})
         sleep(1)
         confirm_nfsd_processes(nfs_conf['servers'])
 
@@ -1747,18 +1710,8 @@ def test_82_files_in_exportsd(request, expect_NFS_start):
 
     # Simple helper function for this test
     def set_immutable_state(want_immutable=True):
-        payload = {
-            'msg': 'method', 'method': 'filesystem.set_immutable',
-            'params': [want_immutable, '/etc/exports.d']
-        }
-        res = make_ws_request(truenas_server.ip, payload)
-        assert res.get('error') is None, res
-        payload = {
-            'msg': 'method', 'method': 'filesystem.is_immutable',
-            'params': ['/etc/exports.d']
-        }
-        res = make_ws_request(truenas_server.ip, payload)
-        assert res['result'] is want_immutable, f"Expected mutable filesystem: {res}"
+        call('filesystem.set_immutable', want_immutable, '/etc/exports.d')
+        assert call('filesystem.is_immutable', '/etc/exports.d') is want_immutable
 
     try:
         # Setup the test
@@ -1786,9 +1739,7 @@ def test_82_files_in_exportsd(request, expect_NFS_start):
         set_nfs_service_state('stop')
 
         # If NFS start is blocked, then an alert should have been raised
-        payload = {'msg': 'method', 'method': 'alert.list', 'params': []}
-        res = make_ws_request(truenas_server.ip, payload)
-        alerts = res['result']
+        alerts = call('alert.list')
         if not expect_NFS_start:
             # Find alert
             assert any(alert["klass"] == "NFSblockedByExportsDir" for alert in alerts), alerts

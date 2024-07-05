@@ -9,7 +9,7 @@ import sys
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, make_ws_request
+from functions import GET
 from middlewared.test.integration.utils import call
 
 
