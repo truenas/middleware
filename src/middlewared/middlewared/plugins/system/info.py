@@ -15,10 +15,6 @@ from middlewared.utils import sw_buildtime
 RE_CPU_MODEL = re.compile(r'^model name\s*:\s*(.*)', flags=re.M)
 
 
-def throttle_condition(middleware, app, *args, **kwargs):
-    return app is None or (app and app.authenticated), None
-
-
 class SystemService(Service):
     CPU_INFO = {'cpu_model': None, 'core_count': None, 'physical_core_count': None}
     HOST_ID = None
