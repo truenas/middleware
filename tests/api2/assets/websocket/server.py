@@ -1,50 +1,52 @@
 from time import sleep
 
-from functions import make_ws_request, ping_host
+from middlewared.test.integration.utils.client import client
+from functions import ping_host
 
 
 def reboot(ip, service_name=None):
     """Reboot the TrueNAS at the specified IP.
     Return when it has rebooted."""
-    # Reboot
-    payload = {
-        'msg': 'method', 'method': 'system.reboot',
-        'params': []
-    }
-    res = make_ws_request(ip, payload)
-    assert res.get('error') is None, res
-    # Wait for server to disappear
-    sleep(5)
-    TotalWait = 120  # 3 min
-    while TotalWait > 0 and ping_host(ip, 1) is True:
-        sleep(1)
-        TotalWait -= 1
-    assert ping_host(ip, 1) is not True
-    # Wait for server to return
-    sleep(10)
-    TotalWait = 120  # 3 min
-    while TotalWait > 0 and ping_host(ip, 1) is not True:
-        sleep(1)
-        TotalWait -= 1
-    assert ping_host(ip, 1) is True
-    # ip returns before websocket connection is ready
-    # Wait a few more seconds
-    sleep(10)
+    with client(host_ip=ip) as c:
+        # we call this method to "reboot" the system
+        # because it causes the system to go offline
+        # immediately (kernel panic). We don't care
+        # about clean shutdowns here, we're more
+        # interested in the box rebooting as quickly
+        # as possible.
+        c.call('failover.become_passive')
+
+    # Wait for server to reappear
+    ping_count, reappear_time = 1, 120
+    reappeared = ping_host(ip, ping_count, reappear_time)
+    assert reappeared, f'TrueNAS at IP: {ip!r} did not come back online after {reappear_time!r} seconds'
+
+    # TrueNAS network comes back before websocket
+    # server is fully operational so account for this
+    api_ready_time = 30
+    for i in range(api_ready_time):
+        try:
+            with client(host_ip=ip) as c:
+                if c.call('system.ready'):
+                    break
+        except Exception:
+            pass
+        else:
+            sleep(1)
+    else:
+        assert False, f'TrueNAS at ip: {ip!r} failed to respond after {reappear_time + api_ready_time!r} seconds'
 
     if service_name:
-        TotalWait = 60  # 1 min
-        payload = {
-            'msg': 'method', 'method': 'service.query',
-            'params': [[["service", "=", service_name]], {'get': True}]
-        }
-        while TotalWait > 0:
+        total_wait = 60
+        for i in range(total_wait):
             try:
-                res = make_ws_request(ip, payload)
-                if res.get('error') is None:
-                    if res['result']['state'] == 'RUNNING':
-                        return
+                with client(host_ip=ip) as c:
+                    rv = c.call('service.query', [['service', '=', service_name]], {'get': True})
+                    if rv['state'] == 'RUNNING':
+                        break
             except Exception:
                 pass
-            sleep(1)
-            TotalWait -= 1
-        assert False, f"Failed to detect {service_name} as running following reboot"
+            else:
+                sleep(1)
+        else:
+            assert False, f'Service: {service_name!r} on IP: {ip!r} not running following reboot'

@@ -24,6 +24,7 @@ from .utils.os import close_fds
 from .utils.plugins import LoadPluginsMixin
 from .utils.privilege import credential_has_full_admin
 from .utils.profile import profile_wrap
+from .utils.rate_limit.cache import RateLimitCache
 from .utils.service.call import ServiceCallMixin
 from .utils.syslog import syslog_message
 from .utils.threading import set_thread_name, IoThreadPoolExecutor, io_thread_pool_executor
@@ -84,6 +85,7 @@ SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
 # Type of the output of sys.exc_info()
 ExcInfoType = typing.Union[tuple[typing.Type[BaseException], BaseException, types.TracebackType], tuple[None, None, None]]
+
 
 @dataclass
 class LoopMonitorIgnoreFrame:
@@ -356,19 +358,45 @@ class Application:
                 except CallError as e:
                     self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
                     error = True
-            if not error and not hasattr(methodobj, '_no_auth_required'):
-                if not self.authenticated:
+
+            if not error:
+                auth_required = not hasattr(methodobj, '_no_auth_required')
+                if not auth_required:
+                    ip_added = await RateLimitCache.add(message['method'], self.origin)
+                    if ip_added is not None:
+                        if any((
+                            RateLimitCache.max_entries_reached,
+                            RateLimitCache.rate_limit_exceeded(message['method'], ip_added),
+                        )):
+                            # 1 of 2 things happened:
+                            #   1. we've hit maximum amount of entries for global rate limit
+                            #       cache (this is an edge-case and something bad is going on)
+                            #   2. OR this endpoint has been hit too many times by the same
+                            #       origin IP address
+                            #   In either scenario, sleep a random delay and send an error
+                            await self.__log_audit_message_for_method(message, methodobj, False, True, False)
+                            await RateLimitCache.random_sleep()
+                            self.send_error(message, errno.EBUSY, 'Rate Limit Exceeded')
+                            error = True
+                        else:
+                            # was added to rate limit cache but rate limit thresholds haven't
+                            # been met so no error
+                            error = False
+                    else:
+                        # the origin of the request for the unauthenticated method is an
+                        # internal call or comes from the other controller on an HA system
+                        error = False
+                elif auth_required and not self.authenticated:
                     await self.__log_audit_message_for_method(message, methodobj, False, False, False)
                     self.send_error(message, ErrnoMixin.ENOTAUTHENTICATED, 'Not authenticated')
                     error = True
-
-                # Some methods require authentication to the NAS (a valid account)
-                # but not explicit authorization. In this case the authorization
-                # check is bypassed as long as it is a user session. API keys
-                # explicitly whitelist particular methods and are used for targeted
-                # purposes, and so authorization is _always_ enforced.
                 elif self.authenticated_credentials.is_user_session and hasattr(methodobj, '_no_authz_required'):
-                    pass
+                    # Some methods require authentication to the NAS (a valid account)
+                    # but not explicit authorization. In this case the authorization
+                    # check is bypassed as long as it is a user session. API keys
+                    # explicitly whitelist particular methods and are used for targeted
+                    # purposes, and so authorization is _always_ enforced.
+                    error = False
                 elif not self.authenticated_credentials.authorize('CALL', message['method']):
                     await self.__log_audit_message_for_method(message, methodobj, True, False, False)
                     self.send_error(message, errno.EACCES, 'Not authorized')
@@ -857,11 +885,10 @@ class ShellApplication(object):
         await self.middleware.run_in_thread(worker_kill_impl)
 
 
-class PreparedCall:
-    def __init__(self, args=None, executor=None, job=None):
-        self.args = args
-        self.executor = executor
-        self.job = job
+class PreparedCall(typing.NamedTuple):
+    args: list[typing.Any] | None = None
+    executor: typing.Any | None = None
+    job: Job | None = None
 
 
 class Middleware(LoadPluginsMixin, ServiceCallMixin):
@@ -1389,9 +1416,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return PreparedCall(args=args, executor=executor)
 
-    async def _call(
-        self, name, serviceobj, methodobj, params, **kwargs,
-    ):
+    async def _call(self, name, serviceobj, methodobj, params, **kwargs):
         prepared_call = self._call_prepare(name, serviceobj, methodobj, params, **kwargs)
 
         if prepared_call.job:

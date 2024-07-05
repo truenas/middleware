@@ -1,19 +1,13 @@
-#!/usr/bin/env python3
-
 import errno
-import sys
-import os
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 
 import pytest
-from functions import GET, SSH_TEST, make_ws_request
-from auto_config import ha, user, password
 from pytest_dependency import depends
+
+from functions import SSH_TEST
+from auto_config import ha, user, password
 from truenas_api_client import ClientException
 from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.utils import call, client
-from middlewared.test.integration.utils.client import truenas_server
 
 
 @pytest.fixture(scope='module')
@@ -73,35 +67,18 @@ def test_04_check_hactl_enable(request):
 
 
 def test_05_check_hactl_disable(request):
-    # integration tests run against the master node (at least they should...)
     depends(request, ['hactl_enable'])
     rv = SSH_TEST('hactl disable', user, password)
     output = rv['stdout'].strip()
     if ha:
         assert 'Failover disabled.' in output, output
-
-        rv = make_ws_request(truenas_server.ip, {'msg': 'method', 'method': 'failover.config', 'params': []})
-        assert isinstance(rv['result'], dict), rv['result']
-        assert rv['result']['disabled'] is True, rv['result']
-
+        assert call('failover.config')['disabled'] is True
         rv = SSH_TEST('hactl enable', user, password)
         output = rv['stdout'].strip()
         assert 'Failover enabled.' in output, output
-
-        rv = make_ws_request(truenas_server.ip, {'msg': 'method', 'method': 'failover.config', 'params': []})
-        assert isinstance(rv['result'], dict), rv['result']
-        assert rv['result']['disabled'] is False, rv['result']
+        assert call('failover.config')['disabled'] is False
     else:
         assert 'Not an HA node' in output, output
-
-
-def test_06_test_failover_get_ips():
-    results = GET('/failover/get_ips', controller_a=ha)
-    assert results.status_code == 200, results.text
-    rv = results.json()
-    assert (isinstance(rv, list)), rv
-    if ha:
-        assert rv
 
 
 if ha:
