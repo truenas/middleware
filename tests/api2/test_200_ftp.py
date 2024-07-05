@@ -952,7 +952,7 @@ def test_050_passive_ports(request, testing, ftpConfig, expect_to_pass):
         try:
             with ftp_configure(ftpConfig):
                 assert expect_to_pass is True
-        except AssertionError as e:
+        except Exception as e:
             assert expect_to_pass is False, f"{e['error']}"
     else:
         with ftp_anon_ds_and_srvr_conn('anonftpDS', ftpConfig) as ftpdata:
