@@ -29,7 +29,8 @@ def admin():
         try:
             yield admin
         finally:
-            call("user.delete", admin["id"])
+            call("datastore.delete", "account.bsdusers", admin["id"])
+            call("etc.generate", "user")
 
 
 def test_installer_admin_has_local_administrator_privilege(admin):
