@@ -1,6 +1,8 @@
 from middlewared.service import filterable, Service, job, private
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import run, filter_list
+from middlewared.utils.sid import db_id_to_rid
+from middlewared.plugins.idmap_.idmap_constants import IDType
 from middlewared.plugins.smb import SMBCmd, SMBPath
 
 import os
@@ -92,8 +94,7 @@ class SMBService(Service):
 
         if user['pdb'] is None:
             cmd = [SMBCmd.PDBEDIT.value, '-d', '0', '-a', username]
-
-            next_rid = await self.middleware.call('smb.get_next_rid', 'USER', user.get('id'))
+            next_rid = db_id_to_rid(IDType.USER, user['id'])
             cmd.extend(['-U', str(next_rid)])
 
             cmd.append('-t')

@@ -30,12 +30,14 @@ from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
 from middlewared.validators import Range
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.utils.sid import db_id_to_rid, DomainRid
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, ADMIN_GID, SKEL_PATH, DEFAULT_HOME_PATH, DEFAULT_HOME_PATHS
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID,
+    IDType,
     TRUENAS_IDMAP_DEFAULT_LOW,
     SID_LOCAL_USER_PREFIX,
     SID_LOCAL_GROUP_PREFIX
@@ -203,6 +205,7 @@ class UserService(CRUDService):
                 memberships[uid] = [i['group']['id']]
 
         return {
+            'server_sid': await self.middleware.call('smb.local_server_sid'),
             'memberships': memberships,
             'user_2fa_mapping': ({
                 entry['user']['id']: bool(entry['secret']) for entry in await self.middleware.call(
@@ -239,11 +242,15 @@ class UserService(CRUDService):
 
             user_roles |= set(entry)
 
+        if user['smb']:
+            sid = f'{ctx["server_sid"]}-{db_id_to_rid(IDType.USER, user["id"])}'
+        else:
+            sid = None
+
         user.update({
             'local': True,
             'id_type_both': False,
-            'nt_name': None,
-            'sid': None,
+            'sid': sid,
             'roles': list(user_roles)
         })
         return user
@@ -253,7 +260,6 @@ class UserService(CRUDService):
         to_remove = [
             'local',
             'id_type_both',
-            'nt_name',
             'sid',
             'immutable',
             'home_create',
@@ -268,15 +274,10 @@ class UserService(CRUDService):
 
     async def query(self, filters, options):
         """
-        Query users with `query-filters` and `query-options`. As a performance optimization, only local users
-        will be queried by default.
+        Query users with `query-filters` and `query-options`.
 
-        Expanded information may be requested by specifying the extra option
-        `"extra": {"additional_information": []}`.
-
-        The following `additional_information` options are supported:
-        `SMB` - include Windows SID and NT Name for user. If this option is not specified, then these
-            keys will have `null` value.
+        If users provided by Active Directory or LDAP are not desired, then
+        a "local", "=", False should be added to filters.
         """
         ds_users = []
         options = options or {}
@@ -291,27 +292,11 @@ class UserService(CRUDService):
         datastore_options.pop('offset', None)
         datastore_options.pop('select', None)
 
-        extra = options.get('extra', {})
-        additional_information = extra.get('additional_information', [])
-
-        username_sid = {}
-        if 'SMB' in additional_information:
-            try:
-                for u in await self.middleware.call("smb.passdb_list", True):
-                    username_sid.update({u['Unix username']: {
-                        'nt_name': u['NT username'],
-                        'sid': u['User SID'],
-                    }})
-            except Exception:
-                # Failure to retrieve passdb list often means that system dataset is
-                # broken
-                self.logger.error('Failed to retrieve passdb information', exc_info=True)
-
         if filters_include_ds_accounts(filters):
             ds = await self.middleware.call('directoryservices.status')
             if ds['type'] is not None and ds['status'] == DSStatus.HEALTHY.name:
                 ds_users = await self.middleware.call(
-                   'directoryservices.cache.query', 'USER', filters, options.copy()
+                    'directoryservices.cache.query', 'USER', filters, options.copy()
                 )
 
                 match DSType(ds['type']):
@@ -329,17 +314,6 @@ class UserService(CRUDService):
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
         )
-
-        if username_sid:
-            for entry in result:
-                smb_entry = username_sid.get(entry['username'], {
-                    'nt_name': '',
-                    'sid': '',
-                })
-                if smb_entry['sid']:
-                    smb_entry['nt_name'] = smb_entry['nt_name'] or entry['username']
-
-                entry.update(smb_entry)
 
         return await self.middleware.run_in_thread(
             filter_list, result + ds_users, filters, options
@@ -919,7 +893,6 @@ class UserService(CRUDService):
                 'Users provided by a directory service must be deleted from the identity provider '
                 '(LDAP server or domain controller).', errno.EPERM
             )
-
 
         user = self.middleware.call_sync('user.get_instance', pk)
         audit_callback(user['username'])
@@ -1738,7 +1711,6 @@ class GroupService(CRUDService):
         ('add', Bool('builtin')),
         ('add', Bool('id_type_both')),
         ('add', Bool('local')),
-        ('add', Str('nt_name', null=True)),
         ('add', Str('sid', null=True)),
         ('add', List('roles', items=[Str('role')])),
         register=True
@@ -1770,7 +1742,9 @@ class GroupService(CRUDService):
             else:
                 mem[gid] = [uid]
 
-        return {"memberships": mem, "privileges": privileges}
+        server_sid = await self.middleware.call('smb.local_server_sid')
+
+        return {"memberships": mem, "privileges": privileges, "server_sid": server_sid}
 
     @private
     async def group_extend(self, group, ctx):
@@ -1783,11 +1757,21 @@ class GroupService(CRUDService):
             if {'method': '*', 'resource': '*'} in privilege_mappings['allowlist']:
                 privilege_mappings['roles'].append('FULL_ADMIN')
 
+        match group['group']:
+            case 'builtin_administrators':
+                sid = f'{ctx["server_sid"]}-{DomainRid.ADMINS}'
+            case 'builtin_guests':
+                sid = f'{ctx["server_sid"]}-{DomainRid.GUESTS}'
+            case _:
+                if group['smb']:
+                    sid = f'{ctx["server_sid"]}-{db_id_to_rid(IDType.GROUP, group["id"])}'
+                else:
+                    sid = None
+
         group.update({
             'local': True,
             'id_type_both': False,
-            'nt_name': None,
-            'sid': None,
+            'sid': sid,
             'roles': privilege_mappings['roles']
         })
         return group
@@ -1798,7 +1782,6 @@ class GroupService(CRUDService):
             'name',
             'local',
             'id_type_both',
-            'nt_name',
             'sid',
             'roles'
         ]
@@ -1811,14 +1794,7 @@ class GroupService(CRUDService):
     @filterable
     async def query(self, filters, options):
         """
-        Query groups with `query-filters` and `query-options`. As a performance optimization, only local groups
-        will be queried by default.
-
-        Expanded information may be requested by specifying the extra option `"extra": {"additional_information": []}`.
-
-        The following `additional_information` options are supported:
-        `SMB` - include Windows SID and NT Name for group. If this option is not specified, then these
-            keys will have `null` value.
+        Query groups with `query-filters` and `query-options`.
         """
         ds_groups = []
         options = options or {}
@@ -1833,40 +1809,14 @@ class GroupService(CRUDService):
         datastore_options.pop('offset', None)
         datastore_options.pop('select', None)
 
-        extra = options.get('extra', {})
-        additional_information = extra.get('additional_information', [])
-
         if filters_include_ds_accounts(filters):
             ds = await self.middleware.call('directoryservices.status')
             if ds['type'] is not None and ds['status'] == DSStatus.HEALTHY.name:
                 ds_groups = await self.middleware.call('directoryservices.cache.query', 'GROUP', filters, options)
 
-        if 'SMB' in additional_information:
-            try:
-                smb_groupmap = await self.middleware.call("smb.groupmap_list")
-            except Exception:
-                # If system dataset has failed to properly initialize / is broken
-                # then looking up groupmaps will fail.
-                self.logger.error('Failed to retrieve SMB groupmap.', exc_info=True)
-                smb_groupmap = {
-                    'local': {},
-                    'local_builtins': {}
-                }
-
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
         )
-
-        if 'SMB' in additional_information:
-            for entry in result:
-                smb_data = smb_groupmap['local'].get(entry['gid'])
-                if not smb_data:
-                    smb_data = smb_groupmap['local_builtins'].get(entry['gid'], {'nt_name': '', 'sid': ''})
-
-                entry.update({
-                    'nt_name': smb_data['nt_name'],
-                    'sid': smb_data['sid'],
-                })
 
         return await self.middleware.run_in_thread(
             filter_list, result + ds_groups, filters, options
@@ -1925,8 +1875,7 @@ class GroupService(CRUDService):
             await self.middleware.call('service.reload', 'user')
 
         if data['smb']:
-            gm_job = await self.middleware.call('smb.synchronize_group_mappings')
-            await gm_job.wait()
+            await self.middleware.call('smb.add_groupmap', group | {'id': pk})
 
         return pk
 
@@ -1957,7 +1906,6 @@ class GroupService(CRUDService):
             except KeyError:
                 groupname = 'UNKNOWN'
 
-
             audit_callback(groupname)
             raise CallError(
                 'Groups provided by a directory service must be modified through the identity provider '
@@ -1966,8 +1914,6 @@ class GroupService(CRUDService):
 
         group = await self.get_instance(pk)
         audit_callback(group['name'])
-
-        groupmap_changed = False
 
         if data.get('gid') == group['gid']:
             data.pop('gid')  # Only check for duplicate GID if we are updating it
@@ -1984,13 +1930,15 @@ class GroupService(CRUDService):
         if 'name' in data and data['name'] != group['group']:
             group['group'] = group.pop('name')
             if new_smb:
-                groupmap_changed = True
+                # group renamed. We can simply add over top since group_mapping.tdb is keyed
+                # by SID value
+                await self.middleware.call('smb.add_groupmap', group)
         else:
             group.pop('name', None)
             if new_smb and not old_smb:
-                groupmap_changed = True
+                await self.middleware.call('smb.add_groupmap', group)
             elif old_smb and not new_smb:
-                groupmap_changed = True
+                await self.middleware.call('smb.del_groupmap', group['id'])
 
         group = await self.group_compress(group)
         await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
@@ -2025,11 +1973,6 @@ class GroupService(CRUDService):
                 )
 
         await self.middleware.call('service.reload', 'user')
-
-        if groupmap_changed:
-            gm_job = await self.middleware.call('smb.synchronize_group_mappings')
-            await gm_job.wait()
-
         return pk
 
     @accepts(Int('id'), Dict('options', Bool('delete_users', default=False)), audit='Delete group', audit_callback=True)
@@ -2080,8 +2023,7 @@ class GroupService(CRUDService):
         await self.middleware.call('datastore.delete', 'account.bsdgroups', pk)
 
         if group['smb']:
-            gm_job = await self.middleware.call('smb.synchronize_group_mappings')
-            await gm_job.wait()
+            await self.middleware.call('smb.del_groupmap', group['id'])
 
         await self.middleware.call('service.reload', 'user')
         try:
@@ -2100,13 +2042,12 @@ class GroupService(CRUDService):
         """
         Get the next available/free gid.
         """
-        used_gids = (
-            {
-                group['bsdgrp_gid']
-                for group in await self.middleware.call('datastore.query', 'account.bsdgroups')
-            } |
-            set((await self.middleware.call('privilege.used_local_gids')).keys())
-        )
+        used_gids = {
+            group['bsdgrp_gid']
+            for group in await self.middleware.call('datastore.query', 'account.bsdgroups')
+        }
+        used_gids |= set((await self.middleware.call('privilege.used_local_gids')).keys())
+
         # We should start gid from 3000 to avoid potential conflicts - Reference: NAS-117892
         next_gid = 3000
         while next_gid in used_gids:

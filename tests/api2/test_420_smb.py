@@ -247,69 +247,14 @@ def test_043_recyclebin_functional_test_subdir(request, smb_config):
                 assert val == b'boo'
 
 
-@pytest.mark.dependency(name="SID_CHANGED")
 def test_056_netbios_name_change_check_sid(request):
-    """
-    This test changes the netbios name of the server and then
-    verifies that this results in the server's domain SID changing.
-    The new SID is stored in a global variable so that we can
-    perform additional tests to verify that SIDs are rewritten
-    properly in group_mapping.tdb. old_netbiosname is stored so
-    that we can reset configuration to what it was prior to the test.
-
-    Test failure here shows that we failed to write our new SID
-    to the configuration database.
-    """
-    depends(request, ["smb_initialized"], scope="session")
-    global new_sid
-    global old_netbiosname
-
-    smb_config = call('smb.config')
-    old_netbiosname = smb_config['netbiosname']
-    old_sid = smb_config['cifs_SID']
-
+    """ changing netbiosname should not alter our local sid value """
+    old_sid = call('smb.config')['cifs_SID']
     new_sid = call('smb.update', {'netbiosname': 'nb_new'})['cifs_SID']
-    assert new_sid != old_sid
 
-
-@pytest.mark.dependency(name="SID_TEST_GROUP")
-def test_057_create_new_smb_group_for_sid_test(request):
-    """
-    Create testgroup and verify that groupmap entry generated
-    with new SID.
-    """
-    def check_groupmap_for_entry(groupmaps, nt_name):
-        for entry in groupmaps:
-            if entry['nt_name'] == nt_name:
-                return entry
-
-        return None
-
-    depends(request, ["SID_CHANGED"], scope="session")
-    global smb_group_id
-
-    with group({'name': 'testsidgroup', 'smb': True}):
-        groupmaps = call('smb.groupmap_list')
-
-        test_entry = check_groupmap_for_entry(
-            groupmaps['local'].values(),
-            'testsidgroup'
-        )
-        assert test_entry is not None, groupmaps['local'].values()
-        domain_sid = test_entry['sid'].rsplit("-", 1)[0]
-        assert domain_sid == new_sid, groupmaps['local'].values()
-
-        call('smb.update', {'netbiosname': old_netbiosname})
-
-        groupmaps = call('smb.groupmap_list')
-        test_entry = check_groupmap_for_entry(
-            groupmaps['local'].values(),
-            'testsidgroup'
-        )
-
-        assert test_entry is not None, groupmaps['local'].values()
-        domain_sid = test_entry['sid'].rsplit("-", 1)[0]
-        assert domain_sid != new_sid, groupmaps['local'].values()
+    assert new_sid == old_sid
+    localsid = call('smb.groupmap_list')['localsid']
+    assert new_sid == localsid
 
 
 AUDIT_FIELDS = [

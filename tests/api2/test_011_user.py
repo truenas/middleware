@@ -190,8 +190,7 @@ def test_001_create_and_verify_testuser():
     assert results['result'] is False, str(results['output'])
 
     # non-smb users shouldn't show up in smb's passdb
-    assert not qry['sid']
-    assert not qry['nt_name']
+    assert qry['sid'] is None
 
 
 def test_002_verify_user_exists_in_pwd(request):
@@ -285,7 +284,6 @@ def test_006_verify_converted_smbuser_passdb_entry_exists(request):
     )
     assert qry
     assert qry['sid']
-    assert qry['nt_name']
 
 
 def test_007_add_smbuser_to_sudoers(request):
@@ -433,7 +431,6 @@ def test_031_create_user_with_homedir(request):
 
     # verify smb user passdb entry
     assert qry['sid']
-    assert qry['nt_name']
 
     # verify homedir acl is stripped
     st_info = call('filesystem.stat', UserAssets.TestUser02['query_response']['home'])
@@ -564,8 +561,7 @@ def test_042_disable_smb_user(request):
         {'get': True, 'extra': {'additional_information': ['SMB']}}
     )
     assert qry
-    assert qry['sid'] == ''
-    assert qry['nt_name'] == ''
+    assert qry['sid'] is None
 
 
 def test_043_raise_validation_error_on_homedir_collision(request):

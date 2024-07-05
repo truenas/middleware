@@ -10,14 +10,14 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.service_exception import MatchNotFound
-from threading import Lock
+from threading import RLock
 
 FD_CLOSED = -1
 # Robust mutex support was added to libtdb after py-tdb was written and flags
 # weren't updated. See lib/tdb/include/tdb.h
 MUTEX_LOCKING = 4096
 
-TDB_LOCKS = defaultdict(Lock)
+TDB_LOCKS = defaultdict(RLock)
 TDBOptions = namedtuple('TdbFileOptions', ['backend', 'data_type'])
 TDB_HANDLES = {}
 
@@ -291,6 +291,12 @@ class TDBHandle:
             case 'secrets.tdb':
                 tdb_flags = tdb.DEFAULT
                 open_flags = os.O_RDWR
+                open_mode = 0o600
+            case 'group_mapping.tdb' | 'group_mapping_rejects.tdb':
+                tdb_flags = tdb.DEFAULT
+                open_flags = os.O_RDWR
+                self.keys_null_terminated = True
+                open_flags = os.O_CREAT | os.O_RDWR
                 open_mode = 0o600
             case _:
                 tdb_flags = tdb.DEFAULT

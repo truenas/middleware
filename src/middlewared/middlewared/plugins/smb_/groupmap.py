@@ -1,19 +1,46 @@
-from middlewared.service import Service, job, private
-from middlewared.service_exception import CallError
-from middlewared.utils import run
-from middlewared.plugins.smb import SMBCmd, SMBBuiltin, SMBPath
-
 import os
-import json
 import tdb
 import struct
 
-# This follows JSON output version for net_groupmap.c
-# Output format may change between this and final version accepted
-# upstream, but Samba project has standardized on following version format
-GROUPMAP_JSON_VERSION = {"major": 0, "minor": 1}
-WINBINDD_AUTO_ALLOCATED = ['S-1-5-32-544', 'S-1-5-32-545', 'S-1-5-32-546']
+from middlewared.service import Service, job, private
+from middlewared.service_exception import CallError
+from middlewared.utils.sid import (
+    db_id_to_rid,
+    get_domain_rid,
+    lsa_sidtype,
+    sid_is_valid,
+    BASE_RID_USER,
+    DomainRid
+)
+from middlewared.utils.tdb import (
+    get_tdb_handle,
+    TDBDataType,
+    TDBPathType,
+    TDBOptions,
+)
+from middlewared.plugins.idmap_.idmap_constants import IDType
+from middlewared.plugins.smb_.constants import SMBBuiltin, SMBPath
+from middlewared.plugins.smb_.util_groupmap import (
+    delete_groupmap_entry,
+    insert_groupmap_entries,
+    list_foreign_group_memberships,
+    query_groupmap_entries,
+    GroupmapFile,
+    GroupmapEntryType,
+    SMBGroupMap,
+    SMBGroupMembership,
+)
+
+WINBINDD_AUTO_ALLOCATED = ('S-1-5-32-544', 'S-1-5-32-545', 'S-1-5-32-546')
 WINBINDD_WELL_KNOWN_PADDING = 100
+
+WINBIND_IDMAP_CACHE = f'{SMBPath.CACHE_DIR.platform()}/winbindd_cache.tdb'
+WINBIND_IDMAP_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
+
+
+def clear_winbind_idmap_cache():
+    with get_tdb_handle(WINBIND_IDMAP_CACHE, WINBIND_IDMAP_TDB_OPTIONS) as hdl:
+        return hdl.clear()
 
 
 class SMBService(Service):
@@ -23,97 +50,30 @@ class SMBService(Service):
         service_verb = 'restart'
 
     @private
-    async def json_check_version(self, version):
-        if version == GROUPMAP_JSON_VERSION:
-            return
+    def add_groupmap(self, group):
+        server_sid = self.middleware.call_sync('smb.local_server_sid')
+        rid = db_id_to_rid(IDType.GROUP, group['id'])
+        entry = SMBGroupMap(
+            sid=f'{server_sid}-{rid}',
+            gid=group['gid'],
+            sid_type=lsa_sidtype.ALIAS,
+            name=group['group'],
+            comment=''
+        )
+        insert_groupmap_entries(GroupmapFile.DEFAULT, [entry])
 
-        raise CallError(
-            "Unexpected JSON version returned from Samba utils: "
-            f"[{version}]. Expected version was: [{GROUPMAP_JSON_VERSION}]. "
-            "Behavior is undefined with a version mismatch and so refusing "
-            "to perform groupmap operation. Please file a bug report at "
-            "jira.ixsystems.com with this traceback."
+    @private
+    def del_groupmap(self, db_id):
+        server_sid = self.middleware.call_sync('smb.local_server_sid')
+        rid = db_id_to_rid(IDType.GROUP, db_id)
+        delete_groupmap_entry(
+            GroupmapFile.DEFAULT,
+            GroupmapEntryType.GROUP_MAPPING,
+            entry_sid=f'{server_sid}-{rid}',
         )
 
     @private
-    async def groupmap_listmem(self, sid):
-        payload = json.dumps({"alias": sid})
-        lm = await run([
-            SMBCmd.NET.value, "--json", "groupmap", "listmem", payload
-        ], check=False)
-
-        # Command will return ENOENT when fails with STATUS_NO_SUCH_ALIAS
-        if lm.returncode == 2:
-            return []
-        elif lm.returncode != 0:
-            raise CallError(f"Failed to list membership of alias [{sid}]: "
-                            f"{lm.stderr.decode()}")
-
-        output = json.loads(lm.stdout.decode())
-        await self.json_check_version(output['version'])
-
-        return [x["sid"] for x in output['members']]
-
-    @private
-    async def groupmap_addmem(self, alias, member):
-        payload = f'data={json.dumps({"alias": alias, "member": member})}'
-        am = await run([
-            SMBCmd.NET.value, "--json", "groupmap", "addmem", payload,
-        ], check=False)
-        if am.returncode != 0:
-            raise CallError(
-                f"Failed to add [{member}] to [{alias}]: {am.stderr.decode()}"
-            )
-
-    @private
-    async def diff_membership(self, actual, expected):
-        """
-        Generate a diff between expected members of an alias vs
-        actual members. This is used for batch operation to add
-        or remove memberships. Since these memberships affect
-        how nss_winbind generates passwd entries, and also rights
-        evaluation in samba (for instance when a non-owner tries
-        to change ownership of a file), it is important that
-        we have no unexpected entries here.
-        """
-        out = {"ADDMEM": [], "DELMEM": []}
-
-        actual_set = set(actual)
-        expected_set = set(expected)
-
-        out["ADDMEM"] = [{"sid": x} for x in expected_set - actual_set]
-        out["DELMEM"] = [{"sid": x} for x in actual_set - expected_set]
-
-        return out
-
-    @private
-    async def update_payload_with_diff(self, payload, alias, diff, ad):
-        async def add_to_payload(payload, alias, key, members):
-            idx = next((i for i, x in enumerate(payload[key]) if x["alias"] == alias), None)
-            if not idx:
-                payload[key].append({
-                    "alias": alias,
-                    "members": members,
-                })
-            else:
-                payload[key][idx]["members"].append(members)
-
-        if diff.get("ADDMEM"):
-            await add_to_payload(payload, alias, "ADDMEM", diff["ADDMEM"])
-
-        """
-        If AD is FAULTED or in process of joining or leaving AD,
-        then we may not have an accurate picture of what should be
-        in the alias member list. In this case, defer member removal
-        until next groupmap synchronization.
-        """
-        if ad in ["HEALTHY", "DISABLED"] and diff.get("DELMEM"):
-            await add_to_payload(payload, alias, "DELMEM", diff["DELMEM"])
-
-        return
-
-    @private
-    async def sync_foreign_groups(self):
+    def sync_foreign_groups(self):
         """
         Domain Users, and Domain Admins must have S-1-5-32-545 and S-1-5-32-544
         added to their respective Unix tokens for correct behavior in AD domain.
@@ -122,66 +82,44 @@ class SMBService(Service):
         when newly creating these groups (if they don't exist), but can get
         lost, resulting in unexpected / erratic permissions behavior.
         """
-        domain_sid = None
-        payload = {"ADDMEM": [], "DELMEM": []}
         # second groupmap listing is to ensure we have accurate / current info.
-        groupmap = await self.groupmap_list()
-        admin_group = (await self.middleware.call('smb.config'))['admin_group']
+        entries = []
 
-        ad_state = await self.middleware.call('activedirectory.get_state')
+        groupmap = self.groupmap_list()
+        localsid = groupmap['localsid']
+
+        admins = [f'{localsid}-{DomainRid.ADMINS}']
+        guests = [f'{localsid}-{DomainRid.GUESTS}']
+
+        # Samba has special behavior if DomainRid.USERS is set for local domain
+        # and so we map the builtin_users account to a normal sid then make it
+        # a member of S-1-5-32-545
+        users = [groupmap['local'][545]['sid']]
+
+        if (admin_group := self.middleware.call_sync('smb.config')['admin_group']):
+            if (found := self.middleware.call_sync('group.query', [('group', '=', admin_group)])):
+                admins.append(found[0]['sid'])
+            else:
+                self.logger.warning('%s: SMB admin group does not exist', admin_group)
+
+        ad_state = self.middleware.call_sync('activedirectory.get_state')
         if ad_state == 'HEALTHY':
             try:
-                domain_info = await self.middleware.call('idmap.domain_info',
-                                                         'DS_TYPE_ACTIVEDIRECTORY')
+                domain_info = self.middleware.call_sync('idmap.domain_info',
+                                                        'DS_TYPE_ACTIVEDIRECTORY')
                 domain_sid = domain_info['sid']
+
+                # add domain account SIDS
+                admins.append(f'{domain_sid}-{DomainRid.ADMINS}')
+                users.append(f'{domain_sid}-{DomainRid.USERS}')
+                guests.append(f'{domain_sid}-{DomainRid.GUESTS}')
             except Exception:
                 self.logger.warning('Failed to retrieve idmap domain info', exc_info=True)
 
-        """
-        Administrators should only have local and domain admins, and a user-
-        designated "admin group" (if specified).
-        """
-        admins = await self.groupmap_listmem("S-1-5-32-544")
-        expected = [groupmap['local_builtins'][544]['sid']]
-        if domain_sid:
-            expected.append(f'{domain_sid}-512')
-
-        if admin_group:
-            admin_sid = None
-            grp_obj = await self.middleware.call(
-                'group.query',
-                [('group', '=', admin_group), ('local', '=', True)],
-                {'extra': {'additional_information': ['SMB', 'DS']}}
-            )
-            if grp_obj:
-                admin_sid = grp_obj[0]['sid']
-
-            if admin_sid:
-                expected.append(admin_sid)
-
-        diff = await self.diff_membership(admins, expected)
-        await self.update_payload_with_diff(payload, "S-1-5-32-544", diff, ad_state)
-
-        # Users should only have local users and domain users
-        users = await self.groupmap_listmem("S-1-5-32-545")
-        if domain_sid:
-            expected.append(f'{domain_sid}-513')
-
-        diff = await self.diff_membership(users, expected)
-        await self.update_payload_with_diff(payload, "S-1-5-32-545", diff, ad_state)
-
-        guests = await self.groupmap_listmem("S-1-5-32-546")
-        expected = [
-            groupmap['local_builtins'][546]['sid'],
-            f'{groupmap["localsid"]}-501'
-        ]
-        if domain_sid:
-            expected.append(f'{domain_sid}-514')
-
-        diff = await self.diff_membership(guests, expected)
-        await self.update_payload_with_diff(payload, "S-1-5-32-546", diff, ad_state)
-
-        await self.batch_groupmap(payload)
+        entries.append(SMBGroupMembership(sid=SMBBuiltin.ADMINISTRATORS.sid, members=tuple(set(admins))))
+        entries.append(SMBGroupMembership(sid=SMBBuiltin.USERS.sid, members=tuple(set(users))))
+        entries.append(SMBGroupMembership(sid=SMBBuiltin.GUESTS.sid, members=tuple(set(guests))))
+        insert_groupmap_entries(GroupmapFile.DEFAULT, entries)
 
     @private
     def initialize_idmap_tdb(self, low_range):
@@ -290,29 +228,21 @@ class SMBService(Service):
         return must_reload
 
     @private
-    async def groupmap_list(self):
+    def groupmap_list(self):
         """
-        Convert JSON groupmap output to dict to get O(1) lookups by `gid`
-
         Separate out the groupmap output into builtins, locals, and invalid entries.
         Invalid entries are ones that aren't from our domain, or are mapped to gid -1.
         Latter occurs when group mapping is lost. In case of invalid entries, we store
         list of SIDS to be removed. SID is necessary and sufficient for groupmap removal.
         """
-        rv = {"builtins": {}, "local": {}, "local_builtins": {}, "invalid": []}
+        rv = {"builtins": {}, "local": {}, "local_builtins": {}}
 
-        localsid = await self.middleware.call('smb.get_system_sid')
-        if localsid is None:
-            raise CallError("Unable to retrieve local system SID. Group mapping failure.")
+        localsid = self.middleware.call_sync('smb.local_server_sid')
+        legacy_entries = []
 
-        out = await run([SMBCmd.NET.value, '--json', 'groupmap', 'list', '{"verbose": true}'], check=False)
-        if out.returncode != 0:
-            raise CallError(f'groupmap list failed with error {out.stderr.decode()}')
-
-        gm = json.loads(out.stdout.decode())
-        await self.json_check_version(gm['version'])
-
-        for g in gm['groupmap']:
+        for g in query_groupmap_entries(GroupmapFile.DEFAULT, [
+            ['entry_type', '=', GroupmapEntryType.GROUP_MAPPING.name]
+        ], {}):
             gid = g['gid']
             key = 'invalid'
             if gid == -1:
@@ -324,6 +254,10 @@ class SMBService(Service):
             elif g['sid'].startswith(localsid) and g['gid'] in (544, 546):
                 key = 'local_builtins'
             elif g['sid'].startswith(localsid):
+                if int(get_domain_rid(g['sid'])) < BASE_RID_USER:
+                    legacy_entries.append(g)
+                    continue
+
                 key = 'local'
 
             if key == 'invalid' or rv[key].get(gid):
@@ -332,168 +266,121 @@ class SMBService(Service):
 
             rv[key][gid] = g
 
-        rv["localsid"] = localsid
+        rv['localsid'] = localsid
+
+        for entry in legacy_entries:
+            # keep copy of legacy groupmap entries so that we can rewrite our share_info.tdb file
+            gm = SMBGroupMap(
+                sid=entry['sid'],
+                gid=entry['gid'],
+                sid_type=lsa_sidtype.ALIAS,
+                name=entry['name'],
+                comment=entry['comment']
+            )
+            insert_groupmap_entries(GroupmapFile.REJECT, [gm])
+
+            try:
+                delete_groupmap_entry(
+                    GroupmapFile.DEFAULT,
+                    GroupmapEntryType.GROUP_MAPPING,
+                    entry_sid=entry['sid'],
+                )
+            except Exception:
+                self.logger.debug('Failed to delete legacy entry', exc_info=True)
+
         return rv
 
     @private
-    async def sync_builtins(self, groupmap):
-        idmap_backend = await self.middleware.call("smb.getparm", "idmap config * : backend", "GLOBAL")
-        idmap_range = await self.middleware.call("smb.getparm", "idmap config * : range", "GLOBAL")
-        payload = {"ADD": [{"groupmap": []}], "MOD": [{"groupmap": []}], "DEL": [{"groupmap": []}]}
-        must_reload = False
+    def groupmap_listmem(self, sid):
+        if not sid_is_valid(sid):
+            raise ValueError(f'{sid}: not a valid SID')
+
+        data = list_foreign_group_memberships(GroupmapFile.DEFAULT, sid)
+        assert data.sid == sid
+
+        return data.members
+
+    @private
+    def sync_builtins(self, to_add):
+        idmap_backend = self.middleware.call_sync("smb.getparm", "idmap config * : backend", "GLOBAL")
+        idmap_range = self.middleware.call_sync("smb.getparm", "idmap config * : range", "GLOBAL")
 
         if idmap_backend != "tdb":
             """
             idmap_autorid and potentially other allocating idmap backends may be used for
             the default domain. We do not want to touch how these are allocated.
             """
-            return must_reload
+            return False
 
         low_range = int(idmap_range.split("-")[0].strip())
-        sid_lookup = {x["sid"]: x for x in groupmap.values()}
-
         for b in (SMBBuiltin.ADMINISTRATORS, SMBBuiltin.USERS, SMBBuiltin.GUESTS):
-            sid = b.value[1]
-            rid = int(sid.split('-')[-1])
-            gid = low_range + (rid - 544)
-            entry = sid_lookup.get(sid, None)
-            if entry and entry['gid'] == gid:
-                # Value is correct, nothing to do.
-                continue
+            gid = low_range + b.rid - 544
+            to_add.append(SMBGroupMap(
+                sid=b.sid,
+                gid=gid,
+                sid_type=lsa_sidtype.ALIAS,
+                name=b.nt_name,
+                comment=''
+            ))
 
-            # If group type is incorrect, it entry must be deleted before re-adding.
-            elif entry and entry['gid'] != gid and entry['group_type_int'] != 4:
-                payload['DEL'][0]['groupmap'].append({
-                    'sid': str(sid),
-                })
-                payload['ADD'][0]['groupmap'].append({
-                    'sid': str(sid),
-                    'gid': gid,
-                    'group_type_str': 'local',
-                    'nt_name': b.value[0][8:].capitalize()
-                })
-            elif entry and entry['gid'] != gid:
-                payload['MOD'][0]['groupmap'].append({
-                    'sid': str(sid),
-                    'gid': gid,
-                    'group_type_str': 'local',
-                    'nt_name': b.value[0][8:].capitalize()
-                })
-            else:
-                payload['ADD'][0]['groupmap'].append({
-                    'sid': str(sid),
-                    'gid': gid,
-                    'group_type_str': 'local',
-                    'nt_name': b.value[0][8:].capitalize()
-                })
-
-        await self.batch_groupmap(payload)
-        if (await self.middleware.call('smb.validate_groupmap_hwm', low_range)):
-            must_reload = True
-
-        return must_reload
+        return self.validate_groupmap_hwm(low_range)
 
     @private
-    async def batch_groupmap(self, data):
-        for op in ["ADD", "MOD", "DEL"]:
-            if data.get(op) is not None and len(data[op]) == 0:
-                data.pop(op)
-
-        payload = json.dumps(data)
-        out = await run([SMBCmd.NET.value, '--json', 'groupmap', 'batch', payload], check=False)
-        if out.returncode != 0:
-            raise CallError(f'Batch operation for [{data}] failed with error {out.stderr.decode()}')
-
-    @private
-    @job(lock="groupmap_sync")
-    async def synchronize_group_mappings(self, job, bypass_sentinel_check=False):
+    @job(lock="groupmap_sync",  lock_queue_size=1)
+    def synchronize_group_mappings(self, job, bypass_sentinel_check=False):
         """
         This method does the following:
-        1) prepares payload for a batch groupmap operation. These are added to two arrays:
-           "to_add" and "to_del". Missing entries are added, invalid entries are deleted.
-        2) we synchronize S-1-5-32-544, S-1-5-32-545, and S-1-5-32-546 separately
-        3) we add any required group mappings for the SIDs in (2) above.
-        4) we flush various caches if required.
+        1) ensures that group_mapping.tdb has all required groupmap entries
+        2) ensures that builtin SIDs S-1-5-32-544, S-1-5-32-545, and S-1-5-32-546
+           exist and are deterministically mapped to expected GIDs
+        3) ensures that all expected foreign aliases for builtin SIDs above exist.
+        4) flush various caches if required.
         """
-        payload = {}
-        to_add = []
-        to_del = []
+        entries = []
 
-        if await self.middleware.call('ldap.get_state') != "DISABLED":
-            return
-
-        if not bypass_sentinel_check and not await self.middleware.call('smb.is_configured'):
+        if not bypass_sentinel_check and not self.middleware.call_sync('smb.is_configured'):
             raise CallError(
                 "SMB server configuration is not complete. "
                 "This may indicate system dataset setup failure."
             )
 
-        groupmap = await self.groupmap_list()
-        must_remove_cache = False
+        groupmap = self.groupmap_list()
 
-        groups = await self.middleware.call('group.query', [('builtin', '=', False), ('local', '=', True), ('smb', '=', True)])
-        g_dict = {x["gid"]: x for x in groups}
-        g_dict[545] = await self.middleware.call('group.query', [('gid', '=', 545), ('local', '=', True)], {'get': True})
+        groups = self.middleware.call_sync('group.query', [('local', '=', True), ('smb', '=', True)])
+        groups.append(self.middleware.call_sync('group.query', [('gid', '=', 545), ('local', '=', True)], {'get': True}))
+        gid_set = {x["gid"] for x in groups}
 
-        intersect = set(g_dict.keys()).intersection(set(groupmap["local"].keys()))
+        for group in groups:
+            entries.append(SMBGroupMap(
+                sid=group['sid'],
+                gid=group['gid'],
+                sid_type=lsa_sidtype.ALIAS,
+                name=group['group'],
+                comment=''
+            ))
 
-        set_to_add = set(g_dict.keys()) - set(groupmap["local"].keys())
-        set_to_del = set(groupmap["local"].keys()) - set(g_dict.keys())
-        set_to_mod = set([x for x in intersect if groupmap['local'][x]['nt_name'] != g_dict[x]['group']])
+        for entry in groupmap['local'].values():
+            # delete entries that don't map to a local account
+            if entry['gid'] in gid_set:
+                continue
 
-        to_add = [{
-            "dbid": g_dict[x]["id"],
-            "gid": g_dict[x]["gid"],
-            "nt_name": g_dict[x]["group"],
-            "group_type_str": "local"
-        } for x in set_to_add]
+            try:
+                delete_groupmap_entry(
+                    GroupmapFile.DEFAULT,
+                    GroupmapEntryType.GROUP_MAPPING,
+                    sid=entry['sid'],
+                )
+            except Exception:
+                self.logger.warning('%s: failed to remove group mapping', entry['sid'], exc_info=True)
 
-        to_mod = [{
-            "gid": g_dict[x]["gid"],
-            "nt_name": g_dict[x]["group"],
-            "sid": groupmap["local"][x]["sid"],
-            "group_type_str": "local"
-        } for x in set_to_mod]
+        must_remove_cache = self.sync_builtins(entries)
+        insert_groupmap_entries(GroupmapFile.DEFAULT, entries)
 
-        to_del = [{
-            "sid": groupmap["local"][x]["sid"]
-        } for x in set_to_del]
-
-        for sid in groupmap['invalid']:
-            to_del.append({"sid": sid})
-
-        for gid in (544, 546):
-            if not groupmap["local_builtins"].get(gid):
-                builtin = SMBBuiltin.by_rid(gid)
-                rid = 512 + (gid - 544)
-                sid = f'{groupmap["localsid"]}-{rid}'
-                to_add.append({
-                    "gid": gid,
-                    "nt_name": f"local_{builtin.name.lower()}",
-                    "group_type_str": "local",
-                    "sid": sid,
-                })
-
-        if to_add:
-            payload["ADD"] = [{"groupmap": to_add}]
-
-        if to_mod:
-            payload["MOD"] = [{"groupmap": to_mod}]
-
-        if to_del:
-            payload["DEL"] = [{"groupmap": to_del}]
-
-        await self.middleware.call('smb.fixsid')
-        must_remove_cache = await self.sync_builtins(groupmap['builtins'])
-        await self.batch_groupmap(payload)
-        await self.sync_foreign_groups()
+        self.sync_foreign_groups()
 
         if must_remove_cache:
-            await self.middleware.call('tdb.wipe', {
-                'name': f'{SMBPath.CACHE_DIR.platform()}/winbindd_cache.tdb',
-                'tdb-options': {'data_type': 'STRING', 'backend': 'CUSTOM'}
-            })
+            clear_winbind_idmap_cache()
             try:
-                await self.middleware.call('idmap.gencache.flush')
+                self.middleware.call_sync('idmap.gencache.flush')
             except Exception:
                 self.logger.warning('Failed to flush caches after groupmap changes.', exc_info=True)

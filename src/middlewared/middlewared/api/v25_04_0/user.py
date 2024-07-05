@@ -40,7 +40,6 @@ class UserEntry(BaseModel):
     local: bool
     immutable: bool
     twofactor_auth_configured: bool
-    nt_name: str | None
     sid: str | None
     roles: list[str]
 
@@ -54,7 +53,6 @@ class UserCreate(UserEntry):
     local: Excluded = excluded_field()
     immutable: Excluded = excluded_field()
     twofactor_auth_configured: Excluded = excluded_field()
-    nt_name: Excluded = excluded_field()
     sid: Excluded = excluded_field()
     roles: Excluded = excluded_field()
 

@@ -368,7 +368,7 @@ class SMBService(ConfigService):
             self.logger.warning("Failed to set immutable flag on /var/empty", exc_info=True)
 
         job.set_progress(30, 'Setting up server SID.')
-        await self.middleware.call('smb.set_sid', data['cifs_SID'])
+        await self.middleware.call('smb.set_system_sid')
 
         """
         If the ldap passdb backend is being used, then the remote LDAP server
@@ -697,11 +697,8 @@ class SMBService(ConfigService):
             await self.apply_aapl_changes()
 
         if old['netbiosname_local'] != new_config['netbiosname_local']:
-            new_sid = await self.middleware.call("smb.get_system_sid")
-            await self.middleware.call("smb.set_database_sid", new_sid)
-            new_config["cifs_SID"] = new_sid
+            await self.middleware.call('smb.set_system_sid')
             await self.middleware.call('idmap.gencache.flush')
-            await self.middleware.call("smb.synchronize_group_mappings")
             srv = (await self.middleware.call("network.configuration.config"))["service_announcement"]
             await self.middleware.call("network.configuration.toggle_announcement", srv)
 
