@@ -955,11 +955,11 @@ class FilesystemService(Service):
             match entry['tag']:
                 case 'USER':
                     method = 'user.query'
-                    filters = [['username', '=', entry['who']]]
+                    filters = [['username', '=', who]]
                     key = 'uid'
                 case 'GROUP':
                     method = 'group.query'
-                    filters = [['group', '=', entry['who']]]
+                    filters = [['group', '=', who]]
                     key = 'gid'
                 case _:
                     raise ValidationError(
