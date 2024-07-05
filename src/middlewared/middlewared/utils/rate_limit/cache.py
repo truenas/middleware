@@ -86,11 +86,11 @@ class RateLimit:
                 RL_CACHE[key] = RateLimitObject(num_times_called=0, last_reset=monotonic())
             return ip
 
-    async def pop(self, method_name: str, ip: str) -> None:
+    async def cache_pop(self, method_name: str, ip: str) -> None:
         """Pop (remove) an entry from the cache."""
         RL_CACHE.pop(self.cache_key(method_name, ip), None)
 
-    async def clear(self) -> None:
+    async def cache_clear(self) -> None:
         """Clear all entries from the cache."""
         RL_CACHE.clear()
 
@@ -98,11 +98,14 @@ class RateLimit:
         """Sleep a random amount of seconds."""
         await sleep(round(uniform(RateLimitConfig.sleep_start, RateLimitConfig.sleep_end), 2))
 
+    async def cache_get(self) -> RL_CACHE:
+        """Return the global cache."""
+        return RL_CACHE
+
     @property
     def max_entries_reached(self) -> bool:
         """Return a boolean indicating if the total number of entries
         in the global cache has reached `self.max_cache_entries`."""
         return len(RL_CACHE) == RateLimitConfig.max_cache_entries
-
 
 RateLimitCache = RateLimit()
