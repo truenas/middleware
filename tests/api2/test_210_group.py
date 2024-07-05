@@ -283,7 +283,7 @@ def test_27_full_groupmap_check(request):
         gid, sid = i
         entry = gm['builtins'][gid]
         assert entry['sid'] == sid, str(entry)
-        assert entry['unix_group'] == f'BUILTIN\\{entry["nt_name"].lower()}', str(entry)
+        assert entry['unix_group'] == gid, str(entry)
         assert entry['group_type_int'] == 4, str(entry)
         assert int(gid) == entry['gid'], str(entry)
 
