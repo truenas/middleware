@@ -8,6 +8,7 @@ from middlewared.test.integration.assets.cloud_sync import (
 from middlewared.test.integration.assets.ftp import anonymous_ftp_server, ftp_server_with_user_account
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, pool, ssh
+from middlewared.test.integration.utils.client import truenas_server
 
 import sys
 import os
@@ -217,26 +218,22 @@ def test_state_persist():
 
 
 if ha:
-    def get_controllers_ips():
-        return os.environ.get('controller1_ip'), os.environ.get('controller2_ip')
-
     def test_state_failover():
         assert call("failover.status") == "MASTER"
+
+        ha_ips = truenas_server.ha_ips()
 
         with dataset("test_cloudsync_state_failover") as ds:
             with local_ftp_task({"path": f"/mnt/{ds}"}) as task:
                 call("cloudsync.sync", task["id"], job=True)
                 time.sleep(5)  # Job sending is not synchronous, allow it to propagate
 
-                ctrl1_ip, ctrl2_ip = get_controllers_ips()
-                assert all((ctrl1_ip, ctrl2_ip)), 'Unable to determine both HA controller IP addresses'
-
                 file1_path = call("cloudsync.get_instance", task["id"])["job"]["logs_path"]
-                file1_contents = ssh(f'cat {file1_path}', ip=ctrl1_ip)
+                file1_contents = ssh(f'cat {file1_path}', ip=ha_ips['active'])
                 assert file1_contents
 
                 file2_path = call("failover.call_remote", "cloudsync.get_instance", [task["id"]])["job"]["logs_path"]
-                file2_contents = ssh(f'cat {file2_path}', ip=ctrl2_ip)
+                file2_contents = ssh(f'cat {file2_path}', ip=ha_ips['standby'])
                 assert file2_contents
 
                 assert file1_contents == file2_contents
