@@ -1,11 +1,11 @@
-# -*- coding=utf-8 -*-
 import contextlib
+import errno
 import os
 import socket
 
 import requests
 
-from truenas_api_client import Client
+from truenas_api_client import Client, ClientException
 from truenas_api_client.utils import undefined
 
 from .pytest import fail
@@ -103,8 +103,10 @@ class TrueNAS_Server:
                 self._client.close()
                 self._client = None
 
-        host()  # Has to be called in order for `truenas_server` global variable to be correctly initialized when
-                # running `runtest.py` with a single test name
+        # Has to be called in order for `truenas_server` global variable to be correctly initialized when
+        # running `runtest.py` with a single test name
+        host()
+
         if (addr := self.ip) is None:
             raise RuntimeError('IP is not set')
 
@@ -132,7 +134,18 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
     try:
         with Client(uri, py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions) as c:
             if auth is not None:
-                logged_in = c.call("auth.login", *auth)
+                try:
+                    logged_in = c.call("auth.login", *auth)
+                except ClientException as e:
+                    if e.errno == errno.EBUSY and e.error == 'Rate Limit Exceeded':
+                        # our "roles" tests (specifically common_checks() function)
+                        # isn't designed very well since it's generating random users
+                        # for every unique test_* function in every test file....
+                        # TODO: we should probably fix that issue at some point but
+                        # this is easiest path forward to not cause a bunch of roles
+                        # related tests to trip on our rate limiting functionality
+                        truenas_server.client.call("rate.limit.cache_clear")
+                        logged_in = c.call("auth.login", *auth)
                 if auth_required:
                     assert logged_in
             yield c
