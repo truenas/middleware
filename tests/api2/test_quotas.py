@@ -20,13 +20,6 @@ class QuotaConfig:
     drq_value: int = dq_value + 10000
     # temp dataset name
     ds_name: str = 'temp_quota_ds_name'
-    # temp user info
-    user_info: dict = {
-        'username': 'test_quota_user',
-        'full_name': 'Test Quota User',
-        'password': 'test1234',
-        'group_create': True,
-    }
 
 
 @pytest.fixture(scope='module')
@@ -37,13 +30,19 @@ def temp_ds():
 
 @pytest.fixture(scope='module')
 def temp_user(temp_ds):
-    with user(QuotaConfig.user_info) as u:
+    user_info = {
+        'username': 'test_quota_user',
+        'full_name': 'Test Quota User',
+        'password': 'test1234',
+        'group_create': True,
+    }
+    with user(user_info) as u:
         uid = call('user.get_instance', u['id'])['uid']
-        grp = call('group.query', [['group', '=', u['name']]])
+        grp = call('group.query', [['group', '=', u['username']]])
         yield {'uid': uid, 'gid': grp['gid'], 'user': u['username'], 'group': grp['group']}
 
 
-@pytest.mark.parametrize('id', ['0', 'root'])
+@pytest.mark.parametrize('id_', ['0', 'root'])
 @pytest.mark.parametrize(
     'quota_type,error', [
         (['USER', 'user quota on uid']),
