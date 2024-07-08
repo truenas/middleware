@@ -1365,7 +1365,7 @@ def test_45_check_setting_runtime_debug(request):
         with pytest.raises(Exception) as ve:
             # This should generate an ValueError exception on the system
             call('nfs.set_debug', failure)
-            assert ve.value.errno == errno.EINVAL, ve
+        assert ve.value.errno == errno.EINVAL, ve
     finally:
         assert call('nfs.set_debug', disabled)
         debug_values = call('nfs.get_debug')
