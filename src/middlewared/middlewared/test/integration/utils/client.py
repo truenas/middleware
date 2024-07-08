@@ -121,6 +121,30 @@ class TrueNAS_Server:
         self._client = cl
         return self._client
 
+    def ha_ips(self) -> dict:
+        if self.server_type == 'STANDARD':
+            raise ValueError('Not an HA server')
+
+        elif self.server_type is None:
+            raise RuntimeError('TrueNAS server object not initialized')
+
+        failover_node = self.client.call('failover.node')
+        if failover_node not in ('A', 'B'):
+            raise RuntimeError(f'{failover_node}: unexpected failover node')
+
+        if failover_node == 'A':
+            active_controller = self.nodea_ip
+            standby_controller = self.nodeb_ip
+        else:
+            active_controller = self.nodeb_ip
+            standby_controller = self.nodea_ip
+
+        assert all((active_controller, standby_controller)), 'Unable to determine both HA controller IP addresses'
+        return {
+            'active': active_controller,
+            'standby': standby_controller
+        }
+
 
 truenas_server = TrueNAS_Server()
 
