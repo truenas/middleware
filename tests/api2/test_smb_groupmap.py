@@ -62,6 +62,7 @@ def test__new_group():
         groupmap = call('smb.groupmap_list')
         assert str(new['gid']) in groupmap['local']
 
+
 @pytest.mark.parametrize('name,gid,sid', [
     ('Administrators', 90000001, 'S-1-5-32-544'),
     ('Users', 90000002, 'S-1-5-32-545'),
