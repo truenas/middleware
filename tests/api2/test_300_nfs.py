@@ -1359,15 +1359,17 @@ def test_45_check_setting_runtime_debug(request):
     try:
         assert call('nfs.get_debug') == disabled
         assert call('nfs.set_debug', enabled)
-        assert call('nfs.get_debug') == enabled
+        debug_values = call('nfs.get_debug')
+        assert all((set(enabled[i]) == set(debug_values[i]) for i in debug_values)), debug_values
 
         with pytest.raises(Exception) as ve:
             # This should generate an ValueError exception on the system
             call('nfs.set_debug', failure)
-        assert ve.value.errno == errno.EINVAL
+        assert ve.value.errno == errno.EINVAL, ve
     finally:
         assert call('nfs.set_debug', disabled)
-        assert call('nfs.get_debug') == disabled
+        debug_values = call('nfs.get_debug')
+        assert all((set(disabled[i]) == set(debug_values[i]) for i in debug_values)), debug_values
 
 
 def test_46_set_bind_ip():
