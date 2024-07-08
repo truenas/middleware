@@ -16,7 +16,7 @@ def generate_ups_config(middleware):
 
     ups_group = middleware.call_sync('group.query', [['group', '=', UPS_USER]], {'get': True})
     os.chown(UPS_VARPATH, 0, ups_group['gid'])
-    os.chmod(UPS_VARPATH, 0o770)
+    os.chmod(UPS_VARPATH, 0o775)
 
 
 def render(service, middleware):

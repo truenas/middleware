@@ -1,14 +1,12 @@
 source /usr/lib/netdata/charts.d/nut.chart.sh
 
-nut_ups_update_every=60
-
 
 nut_get_all() {
-  run -t $nut_timeout upsc -l || echo "ix-dummy-ups"
+  run -t $nut_timeout upsc -l || echo "skip-get-values"
 }
 
 nut_get() {
-  if [ $1 == "ix-dummy-ups" ]; then
+  if [ $1 == "skip-get-values" ]; then
     return 0;
   fi
 
@@ -33,7 +31,6 @@ nut_ups_check() {
   nut_ids=()
 
   if [ ! -f /run/nut/upsmon.pid ]; then
-    nut_ids["ix-dummy-ups"]="$(fixid "ix-dummy-ups")"
     return 0
   fi
 
@@ -73,6 +70,10 @@ nut_ups_update() {
   # do all the work to collect / calculate the values
   # for each dimension
   # remember: KEEP IT SIMPLE AND SHORT
+  if [ ! -f /run/nut/upsmon.pid ]; then
+    return 0
+  fi
+
   nut_ups_check
   nut_ups_create
   nut_update $@
