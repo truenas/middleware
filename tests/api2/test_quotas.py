@@ -38,7 +38,7 @@ def temp_user(temp_ds):
     }
     with user(user_info) as u:
         uid = call('user.get_instance', u['id'])['uid']
-        grp = call('group.query', [['group', '=', u['username']]])
+        grp = call('group.query', [['group', '=', u['username']]], {'get': True})
         yield {'uid': uid, 'gid': grp['gid'], 'user': u['username'], 'group': grp['group']}
 
 
@@ -69,7 +69,7 @@ def test_quotas(temp_ds, temp_user):
     group, gid = temp_user['group'], temp_user['gid']
     uq_value = QuotaConfig.uq_value
     gq_value = QuotaConfig.gq_value
-    dq_value = QuotaConfig.ds_value
+    dq_value = QuotaConfig.dq_value
     drq_value = QuotaConfig.drq_value
 
     call('pool.dataset.set_quota', temp_ds, [
