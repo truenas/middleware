@@ -36,6 +36,7 @@ except ImportError:
 WINBIND_IDMAP_FILE = '/var/run/samba-lock/gencache.tdb'
 WINBIND_IDMAP_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
 
+
 def clear_winbind_cache():
     with get_tdb_handle(WINBIND_IDMAP_FILE, WINBIND_IDMAP_TDB_OPTIONS) as hdl:
         return hdl.clear()

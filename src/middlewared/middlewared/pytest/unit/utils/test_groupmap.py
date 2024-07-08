@@ -27,10 +27,10 @@ def groupmap_dir():
 @pytest.fixture(scope='module')
 def local_sid():
     try:
-       yield random_sid()
+        yield random_sid()
     finally:
-       # cleanup our tdb handles
-       close_sysdataset_tdb_handles()
+        # cleanup our tdb handles
+        close_sysdataset_tdb_handles()
 
 
 def test__insert_groupmap(groupmap_dir, local_sid):

@@ -326,7 +326,7 @@ class SMBService(Service):
         return self.validate_groupmap_hwm(low_range)
 
     @private
-    @job(lock="groupmap_sync",  lock_queue_size=1)
+    @job(lock="groupmap_sync", lock_queue_size=1)
     def synchronize_group_mappings(self, job, bypass_sentinel_check=False):
         """
         This method does the following:
