@@ -159,7 +159,7 @@ class AppService(CRUDService):
         ) | {'catalog_app_last_updated': app['catalog_app_last_updated']}  # FIXME: We should already have this
 
         new_values, context = self.middleware.call_sync(
-            'app.schema.normalise_and_validate_values', app_version_details, data['values'], False,
+            'app.schema.normalise_and_validate_values', app_version_details, config, False,
             get_installed_app_path(app_name),
         )
 
