@@ -1,6 +1,6 @@
 from pkg_resources import parse_version
 
-from middlewared.schema import accepts, Dict, Str, returns
+from middlewared.schema import accepts, Dict, List, Str, returns
 from middlewared.service import CallError, private, Service, ValidationErrors
 
 from .version_utils import get_latest_version_from_app_versions
@@ -20,9 +20,18 @@ class AppService(Service):
         )
     )
     @returns(Dict(
-        Str('latest_version'),
-        Str('latest_human_version'),
-        Str('upgrade_version')
+        Str('latest_version', description='Latest version available for the app'),
+        Str('latest_human_version', description='Latest human readable version available for the app'),
+        Str('upgrade_version', description='Version user has requested to be upgraded at'),
+        Str('upgrade_human_version', description='Human readable version user has requested to be upgraded at'),
+        Str('changelog', max_length=None, null=True, description='Changelog for the upgrade version'),
+        List('available_versions_for_upgrade', items=[
+            Dict(
+                'version_info',
+                Str('version', description='Version of the app'),
+                Str('human_version', description='Human readable version of the app'),
+            )
+        ], description='List of available versions for upgrade'),
     ))
     async def upgrade_summary(self, app_name, options):
         """
@@ -31,6 +40,20 @@ class AppService(Service):
         app = await self.middleware.call('app.get_instance', app_name)
         if app['upgrade_available'] is False:
             raise CallError(f'No upgrade available for {app_name!r}')
+
+        versions_config = await self.get_versions(app, options)
+        return {
+            'latest_version': versions_config['latest_version']['version'],
+            'latest_human_version': versions_config['latest_version']['human_version'],
+            'upgrade_version': versions_config['specified_version']['version'],
+            'upgrade_human_version': versions_config['specified_version']['human_version'],
+            'changelog': versions_config['specified_version']['changelog'],
+            'available_versions_for_upgrade': [
+                {'version': v['version'], 'human_version': v['human_version']}
+                for v in versions_config['versions'].values()
+                if parse_version(v['version']) > parse_version(app['version'])
+            ],
+        }
 
     @private
     async def get_versions(self, app, options):
@@ -56,5 +79,5 @@ class AppService(Service):
         return {
             'specified_version': app_details['versions'][new_version],
             'versions': app_details['versions'],
-            'latest_version': get_latest_version_from_app_versions(app_details['versions']),
+            'latest_version': app_details['versions'][get_latest_version_from_app_versions(app_details['versions'])],
         }
