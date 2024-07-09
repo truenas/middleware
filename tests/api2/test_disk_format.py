@@ -31,25 +31,25 @@ def get_parted_info(disk_path):
     # By the time this is called, the disk has been formatted
     # but the kernel might not have been made fully aware of the changes
     # so let's retry a bit before failing
-    for i in range(5):
-        parted_bytes = json.loads(ssh(f'parted {disk_path} unit b p --json'))['disk']
-        if parted_bytes.get('partitions') is None:
+    for i in range(10):
+        pbytes = json.loads(ssh(f'parted {disk_path} unit b p --json'))['disk']
+        if pbytes.get('partitions') is None:
             time.sleep(1)
         else:
             break
     else:
-        assert False, f'parted tool failed to find partitions (in bytes) on {disk_path!r}'
+        assert False, f'parted tool failed to find partitions (in bytes) on {disk_path!r} ({pbytes!r})'
 
-    for i in range(5):
-        parted_sectors = json.loads(ssh(f'parted {disk_path} unit s p --json'))['disk']
-        if parted_bytes.get('partitions') is None:
+    for i in range(10):
+        psectors = json.loads(ssh(f'parted {disk_path} unit s p --json'))['disk']
+        if psectors.get('partitions') is None:
             time.sleep(1)
         else:
             break
     else:
-        assert False, f'parted tool failed to find partitions (in sectors) on {disk_path!r}'
+        assert False, f'parted tool failed to find partitions (in sectors) on {disk_path!r} ({psectors!r})'
 
-    return parted_bytes, parted_sectors
+    return pbytes, psectors
 
 
 def test_disk_format_and_wipe():
@@ -76,22 +76,22 @@ def test_disk_format_and_wipe():
     assert len(parted_sectors['partitions']) == len(partitions), parted_sectors['partitions']
 
     # validate our API shows proper start/end sizes in bytes
-    pb_byte = parted_bytes['partitions'][0]
-    assert int(pb_byte['size'].split('B')[0]) == partition['size']
-    assert int(pb_byte['start'].split('B')[0]) == partition['start']
-    assert int(pb_byte['end'].split('B')[0]) == partition['end']
+    pbyte = parted_bytes['partitions'][0]
+    assert int(pbyte['size'].split('B')[0]) == partition['size']
+    assert int(pbyte['start'].split('B')[0]) == partition['start']
+    assert int(pbyte['end'].split('B')[0]) == partition['end']
 
     # validate our API shows proper start/end sizes in sectors
-    pb_sect = parted_sectors['partitions'][0]
-    assert int(pb_sect['start_sector'].split('s')[0]) == partition['start_sector']
-    assert int(pb_sect['end_sector'].split('s')[0]) == partition['end_sector']
+    psect = parted_sectors['partitions'][0]
+    assert int(psect['start'].split('s')[0]) == partition['start_sector']
+    assert int(psect['end'].split('s')[0]) == partition['end_sector']
 
     # verify wipe disk should removes partition labels
-    call('disk.wipe', partition['disk'])
+    call('disk.wipe', partition['disk'], 'QUICK', job=True)
     # the partitions are removed
-    new_parts = call('disk.list_partitions', partitions['disk'])
+    new_parts = call('disk.list_partitions', partition['disk'])
     assert len(new_parts) == 0, new_parts
 
     # sanity check, make sure parted doesn't see partitions either
-    parted_parts = json.loads(ssh(f'parted {partition["path"]} unit s p --json'))['disk']
-    assert 'partitions' not in parted_parts, parted_parts
+    pbytes = json.loads(ssh(f'parted /dev/{unused[0]["name"]} unit b p --json'))['disk']
+    assert pbytes.get('partitions') is None, repr(pbytes)
