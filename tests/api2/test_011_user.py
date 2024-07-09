@@ -718,3 +718,9 @@ def test_061_check_smb_configured_sentinel():
 
     assert call('smb.is_configured')
     call('smb.synchronize_passdb', job=True)
+
+
+def test_099_cleanup_share_user():
+    # we have a test that asserts there are no smb accounts created
+    # by the time it runs so clean up this account
+    call('user.delete', UserAssets.ShareUser01['query_response']['id'])
