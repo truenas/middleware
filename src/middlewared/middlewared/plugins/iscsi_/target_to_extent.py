@@ -1,7 +1,9 @@
-import middlewared.sqlalchemy as sa
+import asyncio
 
-from middlewared.schema import accepts, Bool, Dict, Int, Patch
-from middlewared.service import CallError, CRUDService, private, ValidationErrors
+import middlewared.sqlalchemy as sa
+from middlewared.schema import Bool, Dict, Int, Patch, accepts
+from middlewared.service import (CallError, CRUDService, ValidationErrors,
+                                 private)
 
 
 class iSCSITargetToExtentModel(sa.Model):
@@ -141,6 +143,11 @@ class iSCSITargetToExtentService(CRUDService):
             'datastore.delete', self._config.datastore, id_
         )
 
+        # Reload the target, so that the LUN is removed from what is being offered ... including
+        # on the internal target, if this is an ALUA system.
+        await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
+
+        # Next, perform any necessary fixup on the STANDBY system if ALUA is enabled.
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
             target_name = (await self.middleware.call('iscsi.target.query',
                                                       [['id', '=', associated_target['target']]],
@@ -148,6 +155,17 @@ class iSCSITargetToExtentService(CRUDService):
             extent_name = (await self.middleware.call('iscsi.extent.query',
                                                       [['id', '=', associated_target['extent']]],
                                                       {'select': ['name'], 'get': True}))['name']
+
+            # Check that the HA target is no longer offering the LUN that we just deleted.  Wait a short period
+            # if necessary (though this should not be required).
+            retries = 5
+            iqn = await self.middleware.call('iscsi.target.ha_iqn', target_name)
+            while retries:
+                if associated_target['lunid'] not in await self.middleware.call('iscsi.target.iqn_ha_luns', iqn):
+                    break
+                retries -= 1
+                await asyncio.sleep(1)
+
             try:
                 # iscsi.alua.removed_target_extent includes a local service reload
                 await self.middleware.call('failover.call_remote', 'iscsi.alua.removed_target_extent', [target_name, associated_target['lunid'], extent_name])
@@ -157,7 +175,6 @@ class iSCSITargetToExtentService(CRUDService):
                     # Better to continue than to raise the exception
                 await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
             await self.middleware.call('iscsi.alua.wait_for_alua_settled')
-        await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
         return result
 
