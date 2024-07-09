@@ -5,7 +5,7 @@ from .compose_utils import compose_action
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
 from .ix_apps.metadata import update_app_metadata
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
-from .ix_apps.rollback import get_rollback_versions
+from .ix_apps.rollback import clean_newer_versions, get_rollback_versions
 
 
 class AppService(Service):
@@ -62,6 +62,7 @@ class AppService(Service):
         try:
             compose_action(app_name, options['app_version'], 'up', force_recreate=True, remove_orphans=True)
         finally:
+            clean_newer_versions(app_name, options['app_version'])
             self.middleware.call_sync('app.metadata.generate').wait_sync()
 
         job.set_progress(100, f'Rollback completed for {app_name!r} app to {options["app_version"]!r} version')
