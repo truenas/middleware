@@ -124,12 +124,7 @@ def active_directory(
             # This is definitely unexpected and not recoverable
             fail('Failed to retrieve domain information')
 
-        try:
-            dc_info = call('activedirectory.lookup_dc', domain)
-        except Exception:
-            # This is definitely unexpected and not recoverable
-            fail('Failed to retrieve domain controller information')
-
+        dc_info = call('activedirectory.lookup_dc', domain)
         u = f'{dc_info["Pre-Win2k Domain"]}\\{ADUSERNAME.lower()}'
 
         try:
