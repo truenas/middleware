@@ -11,13 +11,16 @@ SENTINEL_FILE_PATH = '/data/.vendor'
 
 class VendorService(Service):
 
+    class Config:
+        namespace = 'system.vendor'
+        cli_namespace = 'system.vendor'
+
     @api_method(VendorNameArgs, VendorNameResult, private=True)
     def name(self) -> str | None:
         try:
             with open(SENTINEL_FILE_PATH, 'r') as file:
-                if contents := file.read():
-                    return json.loads(contents).get('name')
-        except (FileNotFoundError, json.JSONDecodeError):
+                return json.load(file).get('name')
+        except:
             return None
 
     @api_method(UnvendorArgs, UnvendorResult, private=True)
