@@ -1053,6 +1053,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 'replication',
                 # Migrate network interfaces ASAP
                 'network',
+                # catalog needs to be initialized before docker setup funcs are executed
+                'catalog',
             ]
             try:
                 return beginning.index(plugin)
