@@ -34,7 +34,7 @@ def main():
             # Start a transient service
             subprocess.run([
                 "systemd-run",
-                *systemd_opts, "--no-ask-password",
+                *systemd_opts,
                 "/bin/bash",
                 "-c",
                 " ".join([wsocat_path, *wsocat_opts, local_server, remote_server])
