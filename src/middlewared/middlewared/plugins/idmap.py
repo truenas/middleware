@@ -1082,7 +1082,7 @@ class IdmapDomainService(CRUDService):
         SSSD for it. This should be possible for local user accounts.
         """
         if sid.startswith((SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX)):
-            return self.__unixsid_to_entry(sid)
+            return self.__unixsid_to_entry(sid, separator)
 
         if not sid.startswith(server_sid):
             return None
