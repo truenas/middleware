@@ -118,17 +118,6 @@ def generate_smb_conf_dict(
     }
 
     """
-    When guest access is enabled on _any_ SMB share we have to change the
-    behavior of when the server maps to the guest account. `Bad User` here means
-    that attempts to authenticate as a user that does not exist on the server
-    will be automatically mapped to the guest account. This can lead to unexpected
-    access denied errors, but many legacy users depend on this functionality and
-    so we canot remove it.
-    """
-    if guest_enabled:
-        smbconf['map to guest'] = 'Bad User'
-
-    """
     If fsrvp is enabled on any share, then we need to have samba fork off an
     fssd daemon to handle snapshot management requests.
     """

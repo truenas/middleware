@@ -92,11 +92,17 @@ class SMB(object):
     def connect(self, **kwargs):
         host = kwargs.get("host", get_host_ip(SRVTarget.DEFAULT))
         share = kwargs.get("share")
+        guest = kwargs.get("guest", False)
         encryption = SMBEncryption[kwargs.get("encryption", "DEFAULT")]
         username = kwargs.get("username")
         domain = kwargs.get("domain")
         password = kwargs.get("password")
         smb1 = kwargs.get("smb1", False)
+
+        if guest and username:
+            raise ValueError("Both guest and username specified")
+        elif not guest and not username:
+            raise ValueError("Either guest or username must be specified")
 
         self._lp = s3param.get_context()
         self._lp.load_default()
@@ -105,11 +111,14 @@ class SMB(object):
         self._cred.set_smb_encryption(encryption)
 
         if username is not None:
+            self._cred.guess(self._lp)
             self._cred.set_username(username)
-        if password is not None:
-            self._cred.set_password(password)
-        if domain is not None:
-            self._cred.set_domain(domain)
+            if password is not None:
+                self._cred.set_password(password)
+            if domain is not None:
+                self._cred.set_domain(domain)
+        else:
+            self._cred.set_anonymous()
 
         self._host = host
         self._share = share
