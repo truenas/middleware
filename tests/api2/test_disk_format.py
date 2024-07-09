@@ -1,4 +1,5 @@
-import pytest
+import json
+import time
 
 from middlewared.test.integration.utils import call, ssh
 
@@ -20,74 +21,77 @@ Verification is based on 'parted' documentation (https://people.redhat.com/msnit
           optimal_io_size=0.  Such a device might be a single SAS 4K device.
           So worst case we lose < 1MB of space at the start of the disk.
 """
-
 # Some 'constants'
 MBR_SECTOR_GAP = 34
 ONE_MB = 1048576
 DATA_TYPE_UUID = "6a898cc3-1dd2-11b2-99a6-080020736631"
 
 
-# Currently, we use the same 'unused' disk for all tests
-@pytest.fixture(scope='module')
-def unused_disk():
-    disk = call('disk.get_unused')[0]
-    dd = call('device.get_disk', disk['name'])
+def get_parted_info(disk_path):
+    # By the time this is called, the disk has been formatted
+    # but the kernel might not have been made fully aware of the changes
+    # so let's retry a bit before failing
+    for i in range(5):
+        parted_bytes = json.loads(ssh(f'parted {disk_path} unit b p --json'))['disk']
+        if parted_bytes.get('partitions') is None:
+            time.sleep(1)
+        else:
+            break
+    else:
+        assert False, f'parted tool failed to find partitions (in bytes) on {disk_path!r}'
 
-    # Calculate expected values using the 'heuristic'
-    alignment_offset = int(ssh(f"cat /sys/block/{disk['name']}/alignment_offset"))
-    optimal_io_size = int(ssh(f"cat /sys/block/{disk['name']}/queue/optimal_io_size"))
-    minimum_io_size = int(ssh(f"cat /sys/block/{disk['name']}/queue/minimum_io_size"))
+    for i in range(5):
+        parted_sectors = json.loads(ssh(f'parted {disk_path} unit s p --json'))['disk']
+        if parted_bytes.get('partitions') is None:
+            time.sleep(1)
+        else:
+            break
+    else:
+        assert False, f'parted tool failed to find partitions (in sectors) on {disk_path!r}'
 
-    grain_size = 0
-    if all((optimal_io_size == 0, alignment_offset == 0, minimum_io_size % 2 == 0)):
-        # Alignment value in units of sectors
-        grain_size = ONE_MB / dd['sectorsize']
-    elif optimal_io_size != 0:
-        grain_size = optimal_io_size
-
-    first_sector = alignment_offset if alignment_offset != 0 else grain_size
-
-    return (disk, dd, grain_size, first_sector)
+    return parted_bytes, parted_sectors
 
 
-def test_disk_format(unused_disk):
+def test_disk_format_and_wipe():
     """Generate a single data partition"""
-    disk, dd, grain_size, first_sector = unused_disk
-    assert grain_size != 0, 'ERROR: Cannot run this test without a non-zero grain_size'
-
-    call('disk.format', disk['name'])
-
-    partitions = call('disk.list_partitions', disk['name'])
-    assert len(partitions) == 1
+    # get an unused disk and format it
+    unused = call('disk.get_unused')
+    assert unused, 'Need at least 1 unused disk'
+    call('disk.format', unused[0]['name'])
+    partitions = call('disk.list_partitions', unused[0]['name'])
+    assert partitions, partitions
 
     # The first and only partition should be data
-    assert partitions[0]['partition_type'] == DATA_TYPE_UUID
+    assert len(partitions) == 1, partitions
+    partition = partitions[0]
+    assert partition['partition_type'] == DATA_TYPE_UUID
 
-    # Should be a modulo of grain_size
-    assert partitions[0]['size'] % grain_size == 0
+    # we used libparted to format a drive so let's
+    # validate our API matches parted output (NOTE:
+    # we check both bytes and sectors)
+    parted_bytes, parted_sectors = get_parted_info(f'/dev/{unused[0]["name"]}')
 
-    # Uses (almost) all the disk
-    assert partitions[0]['start_sector'] == first_sector
-    assert partitions[0]['end_sector'] <= dd['blocks'] - grain_size
+    # sanity check (make sure parted shows same number of partitions)
+    assert len(parted_bytes['partitions']) == len(partitions), parted_bytes['partitions']
+    assert len(parted_sectors['partitions']) == len(partitions), parted_sectors['partitions']
 
-    # And does not clobber the MBR data at the end
-    assert partitions[0]['end_sector'] < dd['blocks'] - MBR_SECTOR_GAP
+    # validate our API shows proper start/end sizes in bytes
+    pb_byte = parted_bytes['partitions'][0]
+    assert int(pb_byte['size'].split('B')[0]) == partition['size']
+    assert int(pb_byte['start'].split('B')[0]) == partition['start']
+    assert int(pb_byte['end'].split('B')[0]) == partition['end']
 
-    # Hand-wavy test
-    assert partitions[0]['size'] > disk['size'] * 0.99
+    # validate our API shows proper start/end sizes in sectors
+    pb_sect = parted_sectors['partitions'][0]
+    assert int(pb_sect['start_sector'].split('s')[0]) == partition['start_sector']
+    assert int(pb_sect['end_sector'].split('s')[0]) == partition['end_sector']
 
+    # verify wipe disk should removes partition labels
+    call('disk.wipe', partition['disk'])
+    # the partitions are removed
+    new_parts = call('disk.list_partitions', partitions['disk'])
+    assert len(new_parts) == 0, new_parts
 
-def test_disk_format_removes_existing_partition_table(unused_disk):
-    """
-    Confirm we can repartion
-    """
-    assert unused_disk[2] != 0, 'ERROR: Should not run this test without a non-zero grain_size'
-    disk = unused_disk[0]
-
-    partitions = call('disk.list_partitions', disk['name'])
-    assert len(partitions) == 1
-
-    # format removes existing partition labels and creates a new (data) partition
-    call('disk.format', disk['name'])
-    partitions = call('disk.list_partitions', disk['name'])
-    assert len(partitions) == 1
+    # sanity check, make sure parted doesn't see partitions either
+    parted_parts = json.loads(ssh(f'parted {partition["path"]} unit s p --json'))['disk']
+    assert 'partitions' not in parted_parts, parted_parts
