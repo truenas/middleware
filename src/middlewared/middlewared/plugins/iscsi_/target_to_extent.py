@@ -168,7 +168,7 @@ class iSCSITargetToExtentService(CRUDService):
                 retries -= 1
                 await asyncio.sleep(1)
             if not lun_removed:
-                self.logger.warning('Failed to remove lun %r of target %r from internal target', associated_target['lunid'], target_name, exc_info=True)
+                self.logger.warning('Failed to remove lun %r from internal target %r', associated_target['lunid'], iqn, exc_info=True)
 
             try:
                 # iscsi.alua.removed_target_extent includes a local service reload
