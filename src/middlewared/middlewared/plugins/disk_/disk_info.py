@@ -59,7 +59,7 @@ def get_partition_size_info(disk_name, s_offset, s_size):
     end_sector = total_sectors + start_sector - 1
     # bytes
     start_byte = start_sector * lbs
-    end_byte = end_sector * lbs
+    end_byte = (end_sector * lbs) + lbs - 1
     total_bytes = total_sectors * lbs
 
     return PART_INFO(*(
