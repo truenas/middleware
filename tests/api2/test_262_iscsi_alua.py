@@ -96,9 +96,9 @@ class TestFixtureConfiguredALUA:
                 verify_luns(s, lun_list)
                 verify_capacity(s, mb * MB)
             # Node B
-            with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn) as s:
+            with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn, lun) as s:
                 verify_luns(s, lun_list)
-                verify_capacity(s, 100 * MB)
+                verify_capacity(s, mb * MB)
 
     def test_alua_luns(self, alua_configured):
         """Test whether an ALUA target reacts correctly to having a LUN added
