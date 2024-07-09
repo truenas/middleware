@@ -13,7 +13,7 @@ class VendorService(Service):
 
     class Config:
         namespace = 'system.vendor'
-        cli_namespace = 'system.vendor'
+        cli_private = True
 
     @api_method(VendorNameArgs, VendorNameResult, private=True)
     def name(self) -> str | None:
