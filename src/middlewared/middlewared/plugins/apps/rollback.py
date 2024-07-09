@@ -38,7 +38,7 @@ class AppService(Service):
 
         rollback_version = self.middleware.call_sync(
             'catalog.app_version_details', get_installed_app_version_path(app_name, options['app_version'])
-        ) | {'catalog_app_last_updated': ''}  # FIXME: This should likely have version key as well
+        )
         config = get_current_app_config(app_name, options['app_version'])
         new_values, context = self.middleware.call_sync(
             'app.schema.normalise_and_validate_values', rollback_version, config, False,

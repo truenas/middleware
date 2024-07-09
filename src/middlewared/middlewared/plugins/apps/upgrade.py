@@ -51,9 +51,7 @@ class AppService(Service):
         with upgrade_config(app_name, upgrade_version) as version_path:
             config = get_current_app_config(app_name, app['version'])
             config.update(options['values'])
-            app_version_details = self.middleware.call_sync('catalog.app_version_details', version_path) | {
-                'catalog_app_last_updated': app['catalog_app_last_updated']
-            }  # FIXME: We should already have this
+            app_version_details = self.middleware.call_sync('catalog.app_version_details', version_path)
             new_values, context = self.middleware.call_sync(
                 'app.schema.normalise_and_validate_values', app_version_details, config, False,
                 get_installed_app_path(app_name),

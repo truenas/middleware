@@ -10,6 +10,7 @@ from middlewared.validators import Match, Range
 
 from .compose_utils import compose_action
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
+from .ix_apps.metadata import update_app_metadata
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
@@ -117,8 +118,13 @@ class AppService(CRUDService):
         # 3) Have docker compose deploy the app in question
         try:
             setup_install_app_dir(app_name, app_version_details)
+            app_version_details = self.middleware.call_sync(
+                'catalog.app_version_details', get_installed_app_version_path(app_name, version)
+            )
+            update_app_metadata(app_name, app_version_details)
             new_values = add_context_to_values(app_name, new_values, install=True)
             update_app_config(app_name, version, new_values)
+
             job.set_progress(60, 'App installation in progress, pulling images')
             compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:
@@ -156,7 +162,7 @@ class AppService(CRUDService):
         # the app in question
         app_version_details = self.middleware.call_sync(
             'catalog.app_version_details', get_installed_app_version_path(app_name, app['version'])
-        ) | {'catalog_app_last_updated': app['catalog_app_last_updated']}  # FIXME: We should already have this
+        )
 
         new_values, context = self.middleware.call_sync(
             'app.schema.normalise_and_validate_values', app_version_details, config, False,
