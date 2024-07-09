@@ -1,8 +1,10 @@
 from pkg_resources import parse_version
 
-from middlewared.schema import accepts, Dict, List, Str, returns
-from middlewared.service import CallError, private, Service, ValidationErrors
+from middlewared.schema import accepts, Dict, List, Str, Ref, returns
+from middlewared.service import CallError, job, private, Service, ValidationErrors
 
+from .compose_utils import compose_action
+from .ix_apps.upgrade import upgrade_config
 from .version_utils import get_latest_version_from_app_versions
 
 
@@ -11,6 +13,40 @@ class AppService(Service):
     class Config:
         namespace = 'app'
         cli_namespace = 'app'
+
+    @accepts(
+        Str('app_name'),
+        Dict(
+            'options',
+            Dict('values', additional_attrs=True, private=True),
+            Str('app_version', empty=False, default='latest'),
+        )
+    )
+    @returns(Ref('app_query'))
+    @job(lock=lambda args: f'app_upgrade_{args[0]}')
+    def upgrade(self, job, app_name, options):
+        """
+        Upgrade `app_name` app to `app_version`.
+        """
+        app = self.middleware.call_sync('app.get_instance', app_name)
+        if app['upgrade_available'] is False:
+            raise CallError(f'No upgrade available for {app_name!r}')
+
+        job.set_progress(0, f'Retrieving versions for {app_name!r} app')
+        versions_config = self.middleware.call_sync('app.get_versions', app, options)
+        upgrade_version = versions_config['specified_version']
+
+        job.set_progress(
+            30, f'Upgrading {app_name!r} app to {upgrade_version["version"]!r} version'
+        )
+        # In order for upgrade to complete, following must happen
+        # 1) New version should be copied over to app config's dir
+        # 2) Metadata should be updated to reflect new version
+        # 3) Docker should be notified to recreate resources and to let upgrade to commence
+        # 4) Finally update collective metadata config to reflect new version
+        upgrade_config(app_name, upgrade_version)
+        self.middleware.call_sync('app.metadata.generate').wait_sync()
+        return self.middleware.call_sync('app.get_instance', app_name)
 
     @accepts(
         Str('app_name'),
