@@ -48,6 +48,7 @@ def get_action_context(app_name: str) -> dict[str, typing.Any]:
     return copy.deepcopy({
         'operation': None,
         'is_install': False,
+        'is_rollback': False,
         'is_update': False,
         'is_upgrade': False,
         'upgrade_metadata': {},
@@ -57,10 +58,10 @@ def get_action_context(app_name: str) -> dict[str, typing.Any]:
 
 def add_context_to_values(
     app_name: str, values: dict[str, typing.Any], *, install: bool = False, update: bool = False, upgrade: bool = False,
-    upgrade_metadata: dict[str, typing.Any] = None,
+    upgrade_metadata: dict[str, typing.Any] = None, rollback: bool = False,
 ) -> dict[str, typing.Any]:
-    assert install or update or upgrade, 'At least one of install, update, or upgrade must be True.'
-    assert sum([install, update, upgrade]) <= 1, 'Only one of install, update, or upgrade can be True.'
+    assert install or update or upgrade or rollback, 'At least one of install, update, rollback or upgrade must be True'
+    assert sum([install, rollback, update, upgrade]) <= 1, 'Only one of install, update, or upgrade can be True.'
     if upgrade:
         assert upgrade_metadata is not None, 'upgrade_metadata must be specified if upgrade is True.'
 
@@ -68,6 +69,7 @@ def add_context_to_values(
 
     operation_map = {
         'INSTALL': install,
+        'ROLLBACK': rollback,
         'UPDATE': update,
         'UPGRADE': upgrade,
     }
