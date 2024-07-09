@@ -4,6 +4,8 @@ from middlewared.schema import accepts, Dict, List, Str, Ref, returns
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 
 from .compose_utils import compose_action
+from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
+from .ix_apps.path import get_installed_app_path
 from .ix_apps.upgrade import upgrade_config
 from .version_utils import get_latest_version_from_app_versions
 
@@ -37,15 +39,34 @@ class AppService(Service):
         upgrade_version = versions_config['specified_version']
 
         job.set_progress(
-            30, f'Upgrading {app_name!r} app to {upgrade_version["version"]!r} version'
+            20, f'Validating {app_name!r} app upgrade to {upgrade_version["version"]!r} version'
         )
         # In order for upgrade to complete, following must happen
         # 1) New version should be copied over to app config's dir
         # 2) Metadata should be updated to reflect new version
-        # 3) Docker should be notified to recreate resources and to let upgrade to commence
-        # 4) Finally update collective metadata config to reflect new version
-        upgrade_config(app_name, upgrade_version)
+        # 3) Necessary config changes should be added like context and new user specified values
+        # 4) New compose files should be rendered with the config changes
+        # 5) Docker should be notified to recreate resources and to let upgrade to commence
+        # 6) Finally update collective metadata config to reflect new version
+        with upgrade_config(app_name, upgrade_version) as version_path:
+            config = get_current_app_config(app_name, app['version'])
+            config.update(options['values'])
+            app_version_details = self.middleware.call_sync('catalog.app_version_details', version_path) | {
+                'catalog_app_last_updated': app['catalog_app_last_updated']
+            }  # FIXME: We should already have this
+            new_values, context = self.middleware.call_sync(
+                'app.schema.normalise_and_validate_values', app_version_details, config, False,
+                get_installed_app_path(app_name),
+            )
+            new_values = add_context_to_values(app_name, new_values, upgrade=True)
+            update_app_config(app_name, upgrade_version['version'], new_values)
+
+            job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
+
+        compose_action(app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True)
+
         self.middleware.call_sync('app.metadata.generate').wait_sync()
+        job.set_progress(100, 'Upgraded app successfully')
         return self.middleware.call_sync('app.get_instance', app_name)
 
     @accepts(

@@ -11,7 +11,7 @@ def upgrade_config(app_name: str, upgrade_version: dict):
     shutil.rmtree(version_path, ignore_errors=True)
     shutil.copytree(upgrade_version['location'], version_path)
     try:
-        yield
+        yield version_path
     except Exception:
         shutil.rmtree(version_path, ignore_errors=True)
         raise
