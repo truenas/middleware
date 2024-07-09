@@ -73,11 +73,11 @@ class DockerStateService(Service):
         if not (await self.middleware.call('docker.config'))['pool']:
             await self.set_status(Status.UNCONFIGURED.value)
         else:
-            await self.middleware.call('catalog.sync')
             if await self.middleware.call('service.started', 'docker'):
                 await self.set_status(Status.RUNNING.value)
             else:
                 await self.set_status(Status.FAILED.value)
+            await self.middleware.call('catalog.sync')
 
     @private
     async def validate(self, raise_error=True):
