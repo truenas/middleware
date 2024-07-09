@@ -14,7 +14,8 @@ PASSWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in r
 
 
 def test__smb_simple_share_validation():
-    assert call('user.query', [['smb', '=', True]], {'count': True}) == 0
+    existing_smb_users = [x['username'] for x in call('user.query', [['smb', '=', True]])]
+    assert len(existing_smb_users) == 0, str(existing_smb_users)
 
     with pytest.raises(ValidationErrors):
         call('sharing.smb.share_precheck')
