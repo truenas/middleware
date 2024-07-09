@@ -159,12 +159,16 @@ class iSCSITargetToExtentService(CRUDService):
             # Check that the HA target is no longer offering the LUN that we just deleted.  Wait a short period
             # if necessary (though this should not be required).
             retries = 5
+            lun_removed = False
             iqn = await self.middleware.call('iscsi.target.ha_iqn', target_name)
             while retries:
                 if associated_target['lunid'] not in await self.middleware.call('iscsi.target.iqn_ha_luns', iqn):
+                    lun_removed = True
                     break
                 retries -= 1
                 await asyncio.sleep(1)
+            if not lun_removed:
+                self.logger.warning('Failed to remove lun %r of target %r from internal target', associated_target['lunid'], target_name, exc_info=True)
 
             try:
                 # iscsi.alua.removed_target_extent includes a local service reload
