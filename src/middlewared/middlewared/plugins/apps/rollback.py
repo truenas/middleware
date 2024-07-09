@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Dict, Ref, returns, Str
+from middlewared.schema import accepts, Dict, List, Ref, returns, Str
 from middlewared.service import job, Service, ValidationErrors
 
 from .compose_utils import compose_action
@@ -67,3 +67,12 @@ class AppService(Service):
         job.set_progress(100, f'Rollback completed for {app_name!r} app to {options["app_version"]!r} version')
 
         return self.middleware.call_sync('app.get_instance', app_name)
+
+    @accepts(Str('app_name'))
+    @returns(List('rollback_versions', items=[Str('version')]))
+    def rollback_versions(self, app_name):
+        """
+        Retrieve versions available for rollback for `app_name` app.
+        """
+        app = self.middleware.call_sync('app.get_instance', app_name)
+        return get_rollback_versions(app, app['version'])
