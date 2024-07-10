@@ -18,6 +18,10 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
+from assets.websocket.iscsi import (alua_enabled, initiator, initiator_portal,
+                                    portal, read_capacity16, target,
+                                    target_extent_associate, verify_capacity,
+                                    verify_luns)
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call
@@ -152,66 +156,6 @@ def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None):
 
 
 @contextlib.contextmanager
-def initiator(comment='Default initiator', initiators=[]):
-    payload = {
-        'comment': comment,
-        'initiators': initiators,
-    }
-    results = POST("/iscsi/initiator/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    initiator_config = results.json()
-
-    try:
-        yield initiator_config
-    finally:
-        results = DELETE(f"/iscsi/initiator/id/{initiator_config['id']}/")
-        assert results.status_code == 200, results.text
-        assert results.json(), results.text
-
-
-@contextlib.contextmanager
-def portal(listen=[{'ip': '0.0.0.0'}], comment='Default portal', discovery_authmethod='NONE'):
-    payload = {
-        'listen': listen,
-        'comment': comment,
-        'discovery_authmethod': discovery_authmethod
-    }
-    results = POST("/iscsi/portal/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    portal_config = results.json()
-
-    try:
-        yield portal_config
-    finally:
-        results = DELETE(f"/iscsi/portal/id/{portal_config['id']}/")
-        assert results.status_code == 200, results.text
-        assert results.json(), results.text
-
-
-@contextlib.contextmanager
-def target(target_name, groups, alias=None):
-    payload = {
-        'name': target_name,
-        'groups': groups,
-    }
-    if alias:
-        payload.update({'alias': alias})
-    results = POST("/iscsi/target/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    target_config = results.json()
-
-    try:
-        yield target_config
-    finally:
-        results = DELETE(f"/iscsi/target/id/{target_config['id']}/", True)
-        assert results.status_code == 200, results.text
-        assert results.json(), results.text
-
-
-@contextlib.contextmanager
 def file_extent(pool_name, dataset_name, file_name, filesize=MB_512, extent_name='extent', serial=None):
     payload = {
         'type': 'FILE',
@@ -325,42 +269,6 @@ def zvol_extent(zvol, extent_name='zvol_extent'):
 
 
 @contextlib.contextmanager
-def target_extent_associate(target_id, extent_id, lun_id=0):
-    alua_enabled = call('iscsi.global.alua_enabled')
-    payload = {
-        'target': target_id,
-        'lunid': lun_id,
-        'extent': extent_id
-    }
-    results = POST("/iscsi/targetextent/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    associate_config = results.json()
-    if alua_enabled:
-        # Give a little time for the STANDBY target to surface
-        sleep(2)
-
-    try:
-        yield associate_config
-    finally:
-        results = DELETE(f"/iscsi/targetextent/id/{associate_config['id']}/", True)
-        assert results.status_code == 200, results.text
-        assert results.json(), results.text
-    if alua_enabled:
-        sleep(2)
-
-
-@contextlib.contextmanager
-def initiator_portal():
-    with initiator() as initiator_config:
-        with portal() as portal_config:
-            yield {
-                'initiator': initiator_config,
-                'portal': portal_config,
-            }
-
-
-@contextlib.contextmanager
 def configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name, alias=None, filesize=MB_512, extent_name='extent'):
     portal_id = config['portal']['id']
     with target(target_name, [{'portal': portal_id}], alias) as target_config:
@@ -467,23 +375,6 @@ def isns_enabled(delay=5):
             sleep(delay)
 
 
-@contextlib.contextmanager
-def alua_enabled(delay=10):
-    payload = {'alua': True}
-    results = PUT("/iscsi/global", payload)
-    assert results.status_code == 200, results.text
-    if delay:
-        sleep(delay)
-    try:
-        yield
-    finally:
-        payload = {'alua': False}
-        results = PUT("/iscsi/global", payload)
-        assert results.status_code == 200, results.text
-        if delay:
-            sleep(delay)
-
-
 def TUR(s):
     """
     Perform a TEST UNIT READY.
@@ -538,71 +429,6 @@ def _verify_inquiry(s):
     data = r.result
     assert data['t10_vendor_identification'].decode('utf-8').startswith("TrueNAS"), str(data)
     assert data['product_identification'].decode('utf-8').startswith("iSCSI Disk"), str(data)
-
-
-def _extract_luns(rl):
-    """
-    Return a list of LUNs.
-
-    :param rl: a ReportLuns instance (response)
-    :return result a list of int LUNIDs
-
-    Currently the results from pyscsi.ReportLuns.unmarshall_datain are (a) subject
-    to change & (b) somewhat lacking for our purposes.  Therefore we will parse
-    the datain here in a manner more useful for us.
-    """
-    result = []
-    # First 4 bytes are LUN LIST LENGTH
-    lun_list_length = int.from_bytes(rl.datain[:4], "big")
-    # Next 4 Bytes are RESERVED
-    # Remaining bytes are LUNS (8 bytes each)
-    luns = rl.datain[8:]
-    assert len(luns) >= lun_list_length
-    for i in range(0, lun_list_length, 8):
-        lun = luns[i: i + 8]
-        addr_method = (lun[0] >> 6) & 0x3
-        assert addr_method == 0, f"Unsupported Address Method: {addr_method}"
-        if addr_method == 0:
-            # peripheral device addressing method, don't care about bus.
-            result.append(lun[1])
-    return result
-
-
-def _verify_luns(s, expected_luns):
-    """
-    Verify that the supplied SCSI has the expected LUNs.
-
-    :param s: a pyscsi.SCSI instance
-    :param expected_luns: a list of int LUNIDs
-    """
-    TUR(s)
-    # REPORT LUNS
-    rl = s.reportluns()
-    data = rl.result
-    assert isinstance(data, dict), data
-    assert 'luns' in data, data
-    # Check that we only have LUN 0
-    luns = _extract_luns(rl)
-    assert len(luns) == len(expected_luns), luns
-    assert set(luns) == set(expected_luns), luns
-
-
-def _read_capacity16(s):
-    # READ CAPACITY (16)
-    data = s.readcapacity16().result
-    return (data['returned_lba'] + 1 - data['lowest_aligned_lba']) * data['block_length']
-
-
-def _verify_capacity(s, expected_capacity):
-    """
-    Verify that the supplied SCSI has the expected capacity.
-
-    :param s: a pyscsi.SCSI instance
-    :param expected_capacity: an int
-    """
-    TUR(s)
-    returned_size = _read_capacity16(s)
-    assert returned_size == expected_capacity
 
 
 def get_target(targetid):
@@ -705,14 +531,14 @@ def test_02_read_capacity16(request):
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
                             with iscsi_scsi_connection(ip, iqn) as s:
-                                _verify_capacity(s, MB_100)
+                                verify_capacity(s, MB_100)
                     # 512 MB file extent
                     with file_extent(pool_name, dataset_name, file_name, MB_512) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
                             with iscsi_scsi_connection(ip, iqn) as s:
-                                _verify_capacity(s, MB_512)
+                                verify_capacity(s, MB_512)
                 # 100 MB zvol extent
                 with zvol_dataset(zvol, MB_100):
                     with zvol_extent(zvol) as extent_config:
@@ -720,7 +546,7 @@ def test_02_read_capacity16(request):
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
                             with iscsi_scsi_connection(ip, iqn) as s:
-                                _verify_capacity(s, MB_100)
+                                verify_capacity(s, MB_100)
                 # 512 MB zvol extent
                 with zvol_dataset(zvol):
                     with zvol_extent(zvol) as extent_config:
@@ -728,7 +554,7 @@ def test_02_read_capacity16(request):
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
                             with iscsi_scsi_connection(ip, iqn) as s:
-                                _verify_capacity(s, MB_512)
+                                verify_capacity(s, MB_512)
 
 
 def target_test_readwrite16(ip, iqn):
@@ -936,8 +762,8 @@ def test_07_report_luns(request):
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             with iscsi_scsi_connection(ip, iqn) as s:
-                                _verify_luns(s, [0])
-                                _verify_capacity(s, MB_100)
+                                verify_luns(s, [0])
+                                verify_capacity(s, MB_100)
                             # Now create a 512 MB zvol and associate with LUN 1
                             with zvol_dataset(zvol):
                                 with zvol_extent(zvol) as extent_config:
@@ -945,16 +771,16 @@ def test_07_report_luns(request):
                                     with target_extent_associate(target_id, extent_id, 1):
                                         # Connect to LUN 0
                                         with iscsi_scsi_connection(ip, iqn, 0) as s0:
-                                            _verify_luns(s0, [0, 1])
-                                            _verify_capacity(s0, MB_100)
+                                            verify_luns(s0, [0, 1])
+                                            verify_capacity(s0, MB_100)
                                         # Connect to LUN 1
                                         with iscsi_scsi_connection(ip, iqn, 1) as s1:
-                                            _verify_luns(s1, [0, 1])
-                                            _verify_capacity(s1, MB_512)
+                                            verify_luns(s1, [0, 1])
+                                            verify_capacity(s1, MB_512)
                             # Check again now that LUN 1 has been removed again.
                             with iscsi_scsi_connection(ip, iqn) as s:
-                                _verify_luns(s, [0])
-                                _verify_capacity(s, MB_100)
+                                verify_luns(s, [0])
+                                verify_capacity(s, MB_100)
 
 
 def target_test_snapshot_single_login(ip, iqn, dataset_id):
@@ -2448,20 +2274,20 @@ def test_25_resize_target_zvol(request):
             with iscsi_scsi_connection(ip, iqn) as s:
                 TUR(s)
                 s.blocksize = 512
-                assert MB_100 == _read_capacity16(s)
+                assert MB_100 == read_capacity16(s)
                 # Have checked using tcpdump/wireshark that a SCSI Asynchronous Event Notification
                 # gets sent 0x2A09: "CAPACITY DATA HAS CHANGED"
                 zvol_resize(zvol, MB_256)
-                assert MB_256 == _read_capacity16(s)
+                assert MB_256 == read_capacity16(s)
                 # But we can do better (in terms of test) ... turn AEN off,
                 # which means we will get a CHECK CONDITION on the next resize
                 SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password, ip)
                 zvol_resize(zvol, MB_512)
                 expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
-                assert MB_512 == _read_capacity16(s)
+                assert MB_512 == read_capacity16(s)
                 # Try to shrink the ZVOL again.  Expect an error (422)
                 zvol_resize(zvol, MB_256, 422)
-                assert MB_512 == _read_capacity16(s)
+                assert MB_512 == read_capacity16(s)
 
 
 def test_26_resize_target_file(request):
@@ -2483,17 +2309,17 @@ def test_26_resize_target_file(request):
                 extent_id = config['extent']['id']
                 TUR(s)
                 s.blocksize = 512
-                assert MB_100 == _read_capacity16(s)
+                assert MB_100 == read_capacity16(s)
                 file_extent_resize(extent_id, MB_256)
-                assert MB_256 == _read_capacity16(s)
+                assert MB_256 == read_capacity16(s)
                 # Turn AEN off so that we will get a CHECK CONDITION on the next resize
                 SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password, ip)
                 file_extent_resize(extent_id, MB_512)
                 expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
-                assert MB_512 == _read_capacity16(s)
+                assert MB_512 == read_capacity16(s)
                 # Try to shrink the file again.  Expect an error (422)
                 file_extent_resize(extent_id, MB_256, 422)
-                assert MB_512 == _read_capacity16(s)
+                assert MB_512 == read_capacity16(s)
 
 
 @skip_multi_initiator
@@ -2564,7 +2390,7 @@ def test_28_portal_access(request):
                 with iscsi_scsi_connection(ip, iqn) as s:
                     TUR(s)
                     s.blocksize = 512
-                    assert MB_100 == _read_capacity16(s)
+                    assert MB_100 == read_capacity16(s)
                 # Now, if we are in a HA config turn on ALUA and test
                 # the specific IP addresses
                 if ha:
@@ -2582,12 +2408,12 @@ def test_28_portal_access(request):
                         with iscsi_scsi_connection(controller1_ip, iqn) as s:
                             TUR(s)
                             s.blocksize = 512
-                            assert MB_100 == _read_capacity16(s)
+                            assert MB_100 == read_capacity16(s)
 
                         with iscsi_scsi_connection(controller2_ip, iqn) as s:
                             TUR(s)
                             s.blocksize = 512
-                            assert MB_100 == _read_capacity16(s)
+                            assert MB_100 == read_capacity16(s)
 
 
 def test_29_multiple_extents():
@@ -2612,11 +2438,11 @@ def test_29_multiple_extents():
                                 with iscsi_scsi_connection(ip, iqn, 0) as s:
                                     TUR(s)
                                     s.blocksize = 512
-                                    assert MB_100 == _read_capacity16(s)
+                                    assert MB_100 == read_capacity16(s)
                                 with iscsi_scsi_connection(ip, iqn, 1) as s:
                                     TUR(s)
                                     s.blocksize = 512
-                                    assert MB_256 == _read_capacity16(s)
+                                    assert MB_256 == read_capacity16(s)
 
                                 # Now try to create another extent using the same serial number
                                 # We expect this to fail.
@@ -2804,13 +2630,13 @@ def test_32_multi_lun_targets(request):
 
     def test_target_sizes(ipaddr):
         with iscsi_scsi_connection(ipaddr, iqn1, 0) as s:
-            _verify_capacity(s, MB_100)
+            verify_capacity(s, MB_100)
         with iscsi_scsi_connection(ipaddr, iqn1, 1) as s:
-            _verify_capacity(s, MB_200)
+            verify_capacity(s, MB_200)
         with iscsi_scsi_connection(ipaddr, iqn2, 0) as s:
-            _verify_capacity(s, MB_256)
+            verify_capacity(s, MB_256)
         with iscsi_scsi_connection(ipaddr, iqn2, 1) as s:
-            _verify_capacity(s, MB_512)
+            verify_capacity(s, MB_512)
 
     with initiator_portal() as config:
         with configured_target(config, name1, 'FILE', extent_size=MB_100) as config1:
