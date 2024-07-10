@@ -31,7 +31,7 @@ class AppService(Service):
         verrors = ValidationErrors()
         if options['app_version'] == app['version']:
             verrors.add('options.app_version', 'Cannot rollback to same version')
-        elif options['app_version'] not in get_rollback_versions(app, app['version']):
+        elif options['app_version'] not in get_rollback_versions(app_name, app['version']):
             verrors.add('options.app_version', 'Specified version is not available for rollback')
 
         verrors.check()
@@ -76,4 +76,4 @@ class AppService(Service):
         Retrieve versions available for rollback for `app_name` app.
         """
         app = self.middleware.call_sync('app.get_instance', app_name)
-        return get_rollback_versions(app, app['version'])
+        return get_rollback_versions(app_name, app['version'])

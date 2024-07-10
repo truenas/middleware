@@ -56,7 +56,7 @@ class AppService(Service):
                 'app.schema.normalise_and_validate_values', app_version_details, config, False,
                 get_installed_app_path(app_name),
             )
-            new_values = add_context_to_values(app_name, new_values, upgrade=True)
+            new_values = add_context_to_values(app_name, new_values, upgrade=True, upgrade_metadata={})
             update_app_config(app_name, upgrade_version['version'], new_values)
 
             job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
