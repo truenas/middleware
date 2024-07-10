@@ -1,5 +1,4 @@
 import contextlib
-import errno
 import ipaddress
 import os
 import urllib.parse
@@ -7,7 +6,6 @@ from copy import copy
 from time import sleep
 
 import pytest
-from pytest_dependency import depends
 
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.account import group as create_group
@@ -285,6 +283,7 @@ def nfs_config(options=None):
 
 
 # Enable NFS server
+@pytest.mark.dependency(name='NFS_INIT')
 def test_01_init_the_nfs_config():
     # initialize default_nfs_config for later restore
     save_nfs_config()
@@ -311,14 +310,14 @@ def test_01_init_the_nfs_config():
 
 
 @pytest.mark.dependency(name='NFS_DATASET_CREATED')
-def test_02_creating_dataset_nfs(request):
+def test_02_creating_dataset_nfs():
     payload = {"name": dataset}
     results = POST("/pool/dataset/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_03_changing_dataset_permissions_of_nfs_dataset(request):
-    depends(request, ["NFS_DATASET_CREATED"], scope="session")
+@pytest.mark.dependency(depends=['NFS_DATASET_CREATED'])
+def test_03_changing_dataset_permissions_of_nfs_dataset():
     payload = {
         "acl": [],
         "mode": "777",
@@ -331,14 +330,13 @@ def test_03_changing_dataset_permissions_of_nfs_dataset(request):
     job_id = results.json()
 
 
-def test_04_verify_the_job_id_is_successfull(request):
+def test_04_verify_the_job_id_is_successfull():
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-@pytest.mark.dependency(name='NFSID_SHARE_CREATED')
-def test_05_creating_a_nfs_share_on_nfs_PATH(request):
-    depends(request, ["NFS_DATASET_CREATED"], scope="session")
+@pytest.mark.dependency(name='NFSID_SHARE_CREATED', depends=['NFS_DATASET_CREATED'])
+def test_05_creating_a_nfs_share_on_nfs_PATH():
     global nfsid
     paylaod = {"comment": "My Test Share",
                "path": NFS_PATH,
@@ -348,34 +346,34 @@ def test_05_creating_a_nfs_share_on_nfs_PATH(request):
     nfsid = results.json()['id']
 
 
-def test_06_starting_nfs_service_at_boot(request):
+def test_06_starting_nfs_service_at_boot():
     results = PUT("/service/id/nfs/", {"enable": True})
     assert results.status_code == 200, results.text
 
 
-def test_07_checking_to_see_if_nfs_service_is_enabled_at_boot(request):
+def test_07_checking_to_see_if_nfs_service_is_enabled_at_boot():
     results = GET("/service?service=nfs")
     assert results.json()[0]["enable"] is True, results.text
 
 
 @pytest.mark.dependency(name='NFS_SERVICE_STARTED')
-def test_08_starting_nfs_service(request):
+def test_08_starting_nfs_service():
     set_nfs_service_state('start')
 
 
-def test_09_checking_to_see_if_nfs_service_is_running(request):
+def test_09_checking_to_see_if_nfs_service_is_running():
     results = GET("/service?service=nfs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-def test_10_confirm_state_directory(request):
+@pytest.mark.dependency(depends=['NFS_SERVICE_STARTED'])
+def test_10_confirm_state_directory():
     """
     By default, the NFS state directory is at /var/lib/nfs.
     To support HA systems, we moved this to the system dataset
     at /var/db/system/nfs.  In support of this we updated the
     NFS conf file settings
     """
-    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
 
     # Make sure the conf file has the expected settings
     nfs_state_dir = '/var/db/system/nfs'
@@ -394,7 +392,7 @@ def test_10_confirm_state_directory(request):
 
 
 @pytest.mark.parametrize('vers', [3, 4])
-def test_11_perform_basic_nfs_ops(request, vers):
+def test_11_perform_basic_nfs_ops(vers):
     with SSH_NFS(truenas_server.ip, NFS_PATH, vers=vers, user=user, password=password, ip=truenas_server.ip) as n:
         n.create('testfile')
         n.mkdir('testdir')
@@ -409,11 +407,12 @@ def test_11_perform_basic_nfs_ops(request, vers):
         assert 'testfile' not in contents
 
 
-def test_12_perform_server_side_copy(request):
+def test_12_perform_server_side_copy():
     with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, user=user, password=password, ip=truenas_server.ip) as n:
         n.server_side_copy('ssc1', 'ssc2')
 
 
+@pytest.mark.dependency(depends=['NFS_SERVICE_STARTED'])
 @pytest.mark.parametrize('nfsd,cores,expected', [
     # User specifies number of nfsd, expect: 50 nfsd, 12 mountd
     (50, 1, {'nfsd': 50, 'mountd': 12, 'managed': False}),
@@ -434,7 +433,7 @@ def test_12_perform_server_side_copy(request):
     # -1 is a flag to set bindip and confirm 'managed' stays True,
     (-1, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),
 ])
-def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
+def test_19_updating_the_nfs_service(nfsd, cores, expected):
     """
     This test verifies that service can be updated in general,
     and also that the 'servers' key can be altered.
@@ -450,7 +449,6 @@ def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
 
     The number of mountd will be 1/4 the number of nfsd.
     """
-    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
 
     with mock("system.cpu_info", return_value={"core_count": cores}):
 
@@ -485,38 +483,51 @@ def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
                 assert ve.value.errors == [ValidationError('nfs_update.servers', 'Should be between 1 and 256', 22)]
 
 
-def test_20_update_nfs_share(request):
-    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
+@pytest.mark.dependency(depends=['NFSID_SHARE_CREATED'])
+def test_20_update_nfs_share():
     nfsid = GET('/sharing/nfs?comment=My Test Share').json()[0]['id']
     payload = {"security": []}
     results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_21_checking_to_see_if_nfs_service_is_enabled(request):
+def test_21_checking_to_see_if_nfs_service_is_enabled():
     results = GET("/service?service=nfs")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
-networks_to_test = [
-    # IPv4
-    (["192.168.0.0/24", "192.168.1.0/24"], True),       # Non overlap
-    (["192.168.0.0/16", "192.168.1.0/24"], False),      # Ranges overlap
-    (["192.168.0.0/24", "192.168.0.211/32"], False),    # Ranges overlap
-    (["192.168.0.0/64"], False),    # Invalid range
-    (["bogus_network"], False),     # Invalid
-    (["192.168.27.211"], True),     # Non-CIDR format
-    # IPv6
-    (["2001:0db8:85a3:0000:0000:8a2e::/96", "2001:0db8:85a3:0000:0000:8a2f::/96"], True),            # Non overlap
-    (["2001:0db8:85a3:0000:0000:8a2e::/96", "2001:0db8:85a3:0000:0000:8a2f::/88"], False),           # Ranges overlap
-    (["2001:0db8:85a3:0000:0000:8a2e::/96", "2001:0db8:85a3:0000:0000:8a2e:0370:7334/128"], False),  # Ranges overlap
-    (["2001:0db8:85a3:0000:0000:8a2e:0370:7334/256"], False),   # Invalid range
-    (["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], True),        # Non-CIDR format
-]
-
-
-@pytest.mark.parametrize("networklist,ExpectedToPass", networks_to_test)
-def test_31_check_nfs_share_network(request, networklist, ExpectedToPass):
+@pytest.mark.dependency(depends=['NFSID_SHARE_CREATED', 'NFS_SERVICE_STARTED'])
+@pytest.mark.parametrize(
+    "networklist,ExpectedToPass", [
+        # IPv4
+        (["192.168.0.0/24", "192.168.1.0/24"], True),
+        (["192.168.0.0/16", "192.168.1.0/24"], False),
+        (["192.168.0.0/24", "192.168.0.211/32"], False),
+        (["192.168.0.0/64"], False),
+        (["bogus_network"], False),
+        (["192.168.27.211"], True),  # auto-converted to CIDR: 192.168.27.211/32
+        # IPv6
+        (["2001:0db8:85a3:0000:0000:8a2e::/96", "2001:0db8:85a3:0000:0000:8a2f::/96"], True),
+        (["2001:0db8:85a3:0000:0000:8a2e::/96", "2001:0db8:85a3:0000:0000:8a2f::/88"], False),
+        (["2001:0db8:85a3:0000:0000:8a2e::/96", "2001:0db8:85a3:0000:0000:8a2e:0370:7334/128"], False),
+        (["2001:0db8:85a3:0000:0000:8a2e:0370:7334/256"], False),
+        (["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], True),  # auto-converted to CIDR with /128
+    ],
+    ids=[
+        "IPv4 - non-overlap",
+        "IPv4 - overlap wide",
+        "IPv4 - overlap narrow",
+        "IPv4 - invalid range",
+        "IPv4 - invalid format",
+        "IPv4 - auto-convert to CIDR",
+        "IPv6 - non-overlap",
+        "IPv6 - overlap wide",
+        "IPv6 - overlap narrow",
+        "IPv6 - invalid range",
+        "IPv6 - auto-convert to CIDR",
+    ]
+)
+def test_31_check_nfs_share_network(networklist, ExpectedToPass):
     """
     Verify that adding a network generates an appropriate line in exports
     file for same path. Sample:
@@ -525,7 +536,6 @@ def test_31_check_nfs_share_network(request, networklist, ExpectedToPass):
         192.168.0.0/24(sec=sys,rw,subtree_check)\
         192.168.1.0/24(sec=sys,rw,subtree_check)
     """
-    depends(request, ["NFSID_SHARE_CREATED", "NFS_SERVICE_STARTED"], scope="session")
 
     results = PUT(f"/sharing/nfs/id/{nfsid}/", {'networks': networklist})
     if ExpectedToPass:
@@ -559,39 +569,44 @@ def test_31_check_nfs_share_network(request, networklist, ExpectedToPass):
     assert exports_networks[0] == '*', str(parsed)
 
 
-# Parameters for test_32
-hostnames_to_test = [
-    # Valid hostnames (IP addresses) and netgroup
-    (["192.168.0.69", "192.168.0.70", "@fakenetgroup"], True),
-    # Valid wildcarded hostnames
-    (["asdfnm-*", "?-asdfnm-*", "asdfnm[0-9]", "nmix?-*dev[0-9]"], True),
-    # Valid wildcarded hostname with valid 'domains'
-    (["asdfdm-*.example.com", "?-asdfdm-*.ixsystems.com",
-      "asdfdm[0-9].example.com", "dmix?-*dev[0-9].ixsystems.com"], True),
-    # Invalid hostnames
-    (["-asdffail", "*.asdffail.com", "*.*.com", "bozofail.?.*"], False),
-    (["bogus/name"], False),
-    (["192.168.1.0/24"], False),
-    # Mix of valid and invalid hostnames
-    (["asdfdm[0-9].example.com", "-asdffail",
-      "devteam-*.ixsystems.com", "*.asdffail.com"], False),
-    # Duplicate names (not allowed)
-    (["192.168.1.0", "192.168.1.0"], False),
-    (["ixsystems.com", "ixsystems.com"], False),
-    # Mixing 'everybody' and named host
-    (["ixsystems.com", "*"], False),    # Test NAS-123042, export collision, same path and entry
-    (["*", "*.ixsystems.com"], False),  # Test NAS-123042, export collision, same path and entry
-    # Invalid IP address
-    (["192.168.1.o"], False),
-    # Hostname with spaces
-    (["bad host"], False),
-    # IPv6
-    (["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], True)
-]
-
-
-@pytest.mark.parametrize("hostlist,ExpectedToPass", hostnames_to_test)
-def test_32_check_nfs_share_hosts(request, hostlist, ExpectedToPass):
+@pytest.mark.dependency(depends=['NFSID_SHARE_CREATED', 'NFS_SERVICE_STARTED'])
+@pytest.mark.parametrize(
+    "hostlist,ExpectedToPass", [
+        (["192.168.0.69", "192.168.0.70", "@fakenetgroup"], True),
+        (["asdfnm-*", "?-asdfnm-*", "asdfnm[0-9]", "nmix?-*dev[0-9]"], True),
+        (["asdfdm-*.example.com", "?-asdfdm-*.ixsystems.com",
+          "asdfdm[0-9].example.com", "dmix?-*dev[0-9].ixsystems.com"], True),
+        (["-asdffail", "*.asdffail.com", "*.*.com", "bozofail.?.*"], False),
+        (["bogus/name"], False),
+        (["192.168.1.0/24"], False),
+        (["asdfdm[0-9].example.com", "-asdffail",
+          "devteam-*.ixsystems.com", "*.asdffail.com"], False),
+        (["192.168.1.0", "192.168.1.0"], False),
+        (["ixsystems.com", "ixsystems.com"], False),
+        (["ixsystems.com", "*"], True),
+        (["*", "*.ixsystems.com"], True),
+        (["192.168.1.o"], False),
+        (["bad host"], False),
+        (["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], True)
+    ],
+    ids=[
+        "Valid - IPv4 address, netgroup",
+        "Valid - wildcard names,ranges",
+        "Valid - wildcard domains,ranges",
+        "Invalid - names,domains (not resolvable)",
+        "Invalid - name (path)",
+        "Invalid - name (network format)",
+        "Mix - valid and invalid names",
+        "Invalid - duplicate address",
+        "Invalid - duplicate domain",
+        "Valid - mix name and everybody",
+        "Valid - mix everybody and wildcard name",
+        "Invalid - character in address",
+        "Invalid - name with spaces",
+        "Valid - IPv6 address"
+    ]
+)
+def test_32_check_nfs_share_hosts(hostlist, ExpectedToPass):
     """
     Verify that adding a network generates an appropriate line in exports
     file for same path. Sample:
@@ -610,7 +625,6 @@ def test_32_check_nfs_share_hosts(request, hostlist, ExpectedToPass):
     - Dashes are allowed, but a level cannot start or end with a dash, '-'
     - Only the left most level may contain special characters: '*','?' and '[]'
     """
-    depends(request, ["NFSID_SHARE_CREATED", "NFS_SERVICE_STARTED"], scope="session")
     results = PUT(f"/sharing/nfs/id/{nfsid}/", {'hosts': hostlist})
     if ExpectedToPass:
         assert results.status_code == 200, results.text
@@ -639,13 +653,13 @@ def test_32_check_nfs_share_hosts(request, hostlist, ExpectedToPass):
     assert len(exports_hosts) == 1, str(parsed)
 
 
-def test_33_check_nfs_share_ro(request):
+@pytest.mark.dependency(depends=['NFSID_SHARE_CREATED'])
+def test_33_check_nfs_share_ro():
     """
     Verify that toggling `ro` will cause appropriate change in
     exports file. We also verify with write tests on a local mount.
     """
 
-    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     # Make sure we end up in the original state with 'rw'
     try:
         # Confirm 'rw' initial state and create a file and dir
@@ -693,7 +707,8 @@ def test_33_check_nfs_share_ro(request):
             n.rmdir("testdir_should_pass")
 
 
-def test_34_check_nfs_share_maproot(request):
+@pytest.mark.dependency(depends=['NFSID_SHARE_CREATED'])
+def test_34_check_nfs_share_maproot():
     """
     root squash is always enabled, and so maproot accomplished through
     anonuid and anongid
@@ -702,7 +717,6 @@ def test_34_check_nfs_share_maproot(request):
     "/mnt/dozer/NFSV4"\
         *(sec=sys,rw,anonuid=65534,anongid=65534,subtree_check)
     """
-    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
 
     call('sharing.nfs.update', nfsid, {
         'maproot_user': 'nobody',
@@ -759,7 +773,8 @@ def test_34_check_nfs_share_maproot(request):
     assert not any(filter(lambda x: x.startswith('anon'), params)), str(parsed)
 
 
-def test_35_check_nfs_share_mapall(request):
+@pytest.mark.dependency(depends=['NFSID_SHARE_CREATED'])
+def test_35_check_nfs_share_mapall():
     """
     mapall is accomplished through anonuid and anongid and
     setting 'all_squash'.
@@ -768,7 +783,6 @@ def test_35_check_nfs_share_mapall(request):
     "/mnt/dozer/NFSV4"\
         *(sec=sys,rw,all_squash,anonuid=65534,anongid=65534,subtree_check)
     """
-    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
 
     call('sharing.nfs.update', nfsid, {
         'mapall_user': 'nobody',
@@ -796,7 +810,8 @@ def test_35_check_nfs_share_mapall(request):
     assert 'all_squash' not in params, str(parsed)
 
 
-def test_36_check_nfsdir_subtree_behavior(request):
+@pytest.mark.dependency(depends=['NFSID_SHARE_CREATED'])
+def test_36_check_nfsdir_subtree_behavior():
     """
     If dataset mountpoint is exported rather than simple dir,
     we disable subtree checking as an optimization. This check
@@ -808,7 +823,6 @@ def test_36_check_nfsdir_subtree_behavior(request):
     "/mnt/dozer/NFSV4/foobar"\
         *(sec=sys,rw,subtree_check)
     """
-    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
 
     with directory(f'{NFS_PATH}/sub1') as tmp_path:
         with nfs_share(tmp_path, {'hosts': ['127.0.0.1']}):
@@ -843,8 +857,6 @@ class Test37WithFixture:
 
         # Characteristics of expected error messages
         err_strs = [
-            ["Another share", "everybody"],
-            ["exported to everybody", "another share"],
             ["Another share", "same path"],
             ["This or another", "overlaps"],
             ["Another NFS share already exports"],
@@ -860,9 +872,7 @@ class Test37WithFixture:
                 startIdList = [item.get('id') for item in contents]
 
                 # Create the dirs
-                dirs = ["everybody_1", "everybody_2",
-                        "limited_1", "limited_2",
-                        "dir_1", "dir_2"]
+                dirs = ["everybody_1", "everybody_2", "limited_1", "dir_1", "dir_2"]
                 subdirs = ["subdir1", "subdir2", "subdir3"]
                 try:
                     for dir in dirs:
@@ -895,33 +905,53 @@ class Test37WithFixture:
 
     # Parameters for test_37
     # Directory (dataset share VOL0), isHost, HostOrNet, ExpectedToPass, ErrFormat
-    dirs_to_export = [
-        ("everybody_1", True, ["*"], True, None),                    # 0: Host - Test NAS-120957
-        ("everybody_2", True, ["*"], True, None),                    # 1: Host - Test NAS-120957, allow non-related paths to same hosts
-        ("everybody_2", False, ["192.168.1.0/22"], False, 2),        # 2: Network - Already exported to everybody in test 1
-        ("limited_1", True, ["127.0.0.1"], True, None),              # 3: Host - Test NAS-123042, allow export of subdirs
-        ("limited_2", True, ["127.0.0.1"], True, None),              # 4: Host - Test NAS-120957, NAS-123042
-        ("limited_2", True, ["127.0.0.1"], False, 3),                # 4: Host - Test NAS-127220, exact repeat to host
-        ("limited_2", True, ["*"], False, 1),                        # 5: Host - Test NAS-123042, export collision, same path, different entry
-        ("dir_1", True, ["*.example.com"], True, None),              # 6: Host - Setup for test 7: Host with wildcard
-        ("dir_1", True, ["*.example.com"], False, 2),                # 7: Host - Already exported in test 6
-        ("dir_1/subdir1", True, ["192.168.0.0"], True, None),        # 8: Host - Setup for test 9: Host as IP address
-        ("dir_1/subdir1", True, ["192.168.0.0"], False, 3),          # 9: Host - Alread exported in test 8
-        ("dir_1/subdir2", False, ["2001:0db8:85a3:0000:0000:8a2e::/96"], True, None),    # 10: Network - Setup for test 11: IPv6 network range
-        ("dir_1/subdir2", True, ["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], False, 3),  # 11: Host - IPv6 network overlap
-        ("dir_1/subdir3", True, ["192.168.27.211"], True, None),     # 12: Host - Test NAS-124269, setup for test 13
-        ("dir_1/subdir3", False, ["192.168.24.0/22"], False, 3),     # 13: Network - Test NAS-124269, trap network overlap
-        ("limited_2/subdir2", True, ["127.0.0.1"], True, None),      # 14: Host - Test NAS-123042, allow export of subdirs
-        ("limited_1/subdir2", True, ["*"], True, None),              # 15: Host - Test NAS-123042, everybody
-        ("limited_1/subdir2", True, ["*"], False, 4),                # 16: Host - Test NAS-127220, exact repeat to everybody
-        ("dir_2/subdir2", False, ["192.168.1.0/24"], True, None),    # 17: Network - Setup for test 17: Wide network range
-        ("dir_2/subdir2", False, ["192.168.1.0/32"], False, 3),      # 18: Network - Test NAS-123042 - export collision, overlaping networks
-        ("limited_1/subdir3", True, ["192.168.1.0", "*.ixsystems.com"], True, None),  # 19: Host - Test NAS-123042
-        ("dir_1/symlink2subdir3", True, ["192.168.0.0"], False, 5),  # 20: Host - Block exporting symlinks
-    ]
-
-    @pytest.mark.parametrize("dirname,isHost,HostOrNet,ExpectedToPass, ErrFormat", dirs_to_export)
-    def test_37_check_nfsdir_subtree_share(self, request, dataset_and_dirs, dirname, isHost, HostOrNet, ExpectedToPass, ErrFormat):
+    @pytest.mark.parametrize(
+        "dirname,isHost,HostOrNet,ExpectedToPass, ErrFormat", [
+            ("everybody_1", True, ["*"], True, None),
+            ("everybody_2", True, ["*"], True, None),
+            ("everybody_2", False, ["192.168.1.0/22"], True, None),
+            ("limited_1", True, ["127.0.0.1"], True, None),
+            ("limited_1", False, ["192.168.1.0/22"], True, None),
+            ("limited_1", True, ["127.0.0.1"], False, 0),
+            ("limited_1", False, ["192.168.1.0/22"], False, 2),
+            ("dir_1", True, ["*.example.com"], True, None),
+            ("dir_1", True, ["*.example.com"], False, 0),
+            ("dir_1/subdir2", False, ["2001:0db8:85a3:0000:0000:8a2e::/96"], True, None),
+            ("dir_1/subdir2", True, ["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], True, None),
+            ("dir_1/subdir2", False, ["2001:0db8:85a3:0000:0000:8a2e:0370:7334/112"], False, 1),
+            ("dir_1/subdir3", True, ["192.168.27.211"], True, None),
+            ("dir_1/subdir3", False, ["192.168.24.0/22"], True, None),
+            ("limited_1/subdir2", True, ["*"], True, None),
+            ("limited_1/subdir2", True, ["*"], False, 2),
+            ("dir_2/subdir2", False, ["192.168.1.0/24"], True, None),
+            ("dir_2/subdir2", False, ["192.168.1.0/32"], False, 1),
+            ("limited_1/subdir3", True, ["192.168.1.0", "*.ixsystems.com"], True, None),
+            ("dir_1/symlink2subdir3", True, ["192.168.0.0"], False, 3),
+        ],
+        ids=[
+            "NAS-120957: host - everybody",
+            "NAS-120957: host - non-related paths",
+            "NAS-129577: network with everybody on same path",
+            "NAS-123042: host - export subdirs",
+            "NAS-123042: network - export subdirs",
+            "NAS-127220: host - already exported",
+            "NAS-127220: network - already exported",
+            "NAS-120616: host - wildcards",
+            "NAS-127220: host - wildcard already exported",
+            "NAS-123042: network - IPv6 network range",
+            "NAS-129577: host - IPv6 allow host overlap with network",
+            "NAS-123042: network - IPv6 overlap with network",
+            "NAS-123042: host - export sub-subdirs",
+            "NAS-129522: network - allow overlap with host",
+            "NAS-123042: host - everybody on sub-subdir",
+            "NAS-127220: host - everybody already exported sub-subdir",
+            "NAS-123042: network - export sub-subdirs",
+            "NAS-123042: network - overlaping networks sub-subdir",
+            "NAS-123042: host - two hosts, same sub-subdir",
+            "Block exporting symlinks"
+        ]
+    )
+    def test_37_check_nfsdir_subtree_share(self, dataset_and_dirs, dirname, isHost, HostOrNet, ExpectedToPass, ErrFormat):
         """
         Sharing subtrees to the same host can cause problems for
         NFSv3.  This check makes sure a share creation follows
@@ -961,7 +991,8 @@ class Test37WithFixture:
                 assert this_substr in errStr
 
 
-def test_38_check_nfs_allow_nonroot_behavior(request):
+@pytest.mark.dependency(depends=['NFSID_SHARE_CREATED'])
+def test_38_check_nfs_allow_nonroot_behavior():
     """
     If global configuration option "allow_nonroot" is set, then
     we append "insecure" to each exports line.
@@ -996,8 +1027,6 @@ def test_38_check_nfs_allow_nonroot_behavior(request):
             if f"{truenas_server.ip}:2049" == line.split()[3]:
                 rv = (line, line.split()[4].split(':')[1])
         return rv
-
-    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
 
     # Verify that NFS server configuration is as expected
     with nfs_config() as nfs_conf_orig:
@@ -1055,7 +1084,7 @@ def test_38_check_nfs_allow_nonroot_behavior(request):
     assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
 
-def test_39_check_nfs_service_protocols_parameter(request):
+def test_39_check_nfs_service_protocols_parameter():
     """
     This test verifies that changing the `protocols` option generates expected
     changes in nfs kernel server config.  In most cases we will also confirm
@@ -1142,12 +1171,12 @@ def test_39_check_nfs_service_protocols_parameter(request):
     confirm_nfs_version(['3', '4'])
 
 
-def test_40_check_nfs_service_udp_parameter(request):
+@pytest.mark.dependency(depends=['NFS_SERVICE_STARTED'])
+def test_40_check_nfs_service_udp_parameter():
     """
     This test verifies the udp config is NOT in the DB and
     that it is NOT in the etc file.
     """
-    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
 
     # The 'udp' setting should have been removed
     nfs_conf = call('nfs.config')
@@ -1157,7 +1186,8 @@ def test_40_check_nfs_service_udp_parameter(request):
     assert s.get('nfsd', {}).get('udp') is None, s
 
 
-def test_41_check_nfs_service_ports(request):
+@pytest.mark.dependency(name='NFS_INIT')
+def test_41_check_nfs_service_ports():
     """
     This test verifies that the custom ports we specified in
     earlier NFS tests are set in the relevant files and are active.
@@ -1175,7 +1205,8 @@ def test_41_check_nfs_service_ports(request):
         confirm_rpc_port('nlockmgr', config_db["rpclockd_port"])
 
 
-def test_42_check_nfs_client_status(request):
+@pytest.mark.dependency(depends=['NFSID_SHARE_CREATED'])
+def test_42_check_nfs_client_status():
     """
     This test checks the function of API endpoints to list NFSv3 and
     NFSv4 clients by performing loopback mounts on the remote TrueNAS
@@ -1184,7 +1215,6 @@ def test_42_check_nfs_client_status(request):
     sessions) we only verify that count is non-zero for NFSv3.
     """
 
-    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     with SSH_NFS(truenas_server.ip, NFS_PATH, vers=3, user=user, password=password, ip=truenas_server.ip):
         results = GET('/nfs/get_nfs3_clients/', payload={
             'query-filters': [],
@@ -1202,7 +1232,9 @@ def test_42_check_nfs_client_status(request):
         assert results.json() == 1, results.text
 
 
-def test_43_check_nfsv4_acl_support(request):
+@pytest.mark.timeout(600)
+@pytest.mark.dependency(depends=['NFS_SERVICE_STARTED'])
+def test_43_check_nfsv4_acl_support():
     """
     This test validates reading and setting NFSv4 ACLs through an NFSv4
     mount in the following manner for NFSv4.2, NFSv4.1 & NFSv4.0:
@@ -1214,7 +1246,6 @@ def test_43_check_nfsv4_acl_support(request):
     4) For NFSv4.1 or NFSv4.2, repeat same process for each of the
        supported acl_flags.
     """
-    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
     acl_nfs_path = f'/mnt/{pool_name}/test_nfs4_acl'
     test_perms = {
         "READ_DATA": True,
@@ -1317,7 +1348,7 @@ def test_43_check_nfsv4_acl_support(request):
                                     assert not nfs41_flags[flag], nfs41_flags
 
 
-def test_44_check_nfs_xattr_support(request):
+def test_44_check_nfs_xattr_support():
     """
     Perform basic validation of NFSv4.2 xattr support.
     Mount path via NFS 4.2, create a file and dir,
@@ -1338,7 +1369,7 @@ def test_44_check_nfs_xattr_support(request):
                 assert xattr_val == "the_contents2"
 
 
-def test_45_check_setting_runtime_debug(request):
+def test_45_check_setting_runtime_debug():
     """
     This validates that the private NFS debugging API works correctly.
     """
@@ -1365,7 +1396,7 @@ def test_45_check_setting_runtime_debug(request):
         with pytest.raises(Exception) as ve:
             # This should generate an ValueError exception on the system
             call('nfs.set_debug', failure)
-        assert ve.value.errno == errno.EINVAL, ve
+        assert "Cannot specify another value with NONE" in str(ve.value), ve
     finally:
         assert call('nfs.set_debug', disabled)
         debug_values = call('nfs.get_debug')
@@ -1407,7 +1438,8 @@ def test_46_set_bind_ip():
         assert truenas_server.ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
 
 
-def test_48_syslog_filters(request):
+@pytest.mark.dependency(depends=['NFSID_SHARE_CREATED'])
+def test_48_syslog_filters():
     """
     This test checks the function of the mountd_log setting to filter
     rpc.mountd messages that have priority DEBUG to NOTICE.
@@ -1415,7 +1447,6 @@ def test_48_syslog_filters(request):
     then check the syslog for rpc.mountd messages.  Outside of SSH_NFS
     we test the umount case.
     """
-    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     with nfs_config():
 
         # The effect is much more clear if there are many mountd.
@@ -1463,6 +1494,7 @@ def test_48_syslog_filters(request):
         assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
 
 
+@pytest.mark.dependency(depends=['NFSID_SHARE_CREATED'])
 @pytest.mark.parametrize('type,data', [
     ('InvalidAssignment', [
         {'maproot_user': 'baduser'}, 'maproot_user', 'User not found: baduser'
@@ -1489,14 +1521,13 @@ def test_48_syslog_filters(request):
         'mapall_group', 'missingroup'
     ]),
 ])
-def test_50_nfs_invalid_user_group_mapping(request, type, data):
+def test_50_nfs_invalid_user_group_mapping(type, data):
     '''
     Verify we properly trap and handle invalid user and group mapping
     Two conditions:
         1) Catch invalid assignments
         2) Catch invalid settings at NFS start
     '''
-    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
 
     ''' Local helper routine '''
     def run_missing_usrgrp_test(usrgrp, tmp_path, share, usrgrpInst):
@@ -1571,7 +1602,7 @@ def test_50_nfs_invalid_user_group_mapping(request, type, data):
     (True, 'y'),
     (False, 'n')
 ])
-def test_52_manage_gids(request, state, expected):
+def test_52_manage_gids(state, expected):
     '''
     The nfsd_manage_gids setting is called "Support > 16 groups" in the webui.
     It is that and, to a greater extent, defines the GIDs that are used for permissions.
@@ -1604,7 +1635,8 @@ def test_52_manage_gids(request, state, expected):
         assert s['mountd']['manage-gids'] == expected, str(s)
 
 
-def test_54_v4_domain(request):
+@pytest.mark.dependency(depends=['NFS_SERVICE_STARTED'])
+def test_54_v4_domain():
     '''
     The v4_domain configuration item maps to the 'Domain' setting in
     the [General] section of /etc/idmapd.conf.
@@ -1613,7 +1645,6 @@ def test_54_v4_domain(request):
         with a unique username<->UID and groupname<->GID mapping.
         (Default: Host's fully-qualified DNS domain name)
     '''
-    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
 
     with nfs_config() as nfs_db:
         # By default, v4_domain is not set
@@ -1628,7 +1659,7 @@ def test_54_v4_domain(request):
         assert s['General'].get('Domain') == 'ixsystems.com', f"'Domain' failed to be updated in idmapd.conf: {s}"
 
 
-def test_70_stopping_nfs_service(request):
+def test_70_stopping_nfs_service():
     # Restore original settings before we stop
     call('nfs.update', NFS_CONFIG.default_nfs_config)
     payload = {"service": "nfs"}
@@ -1637,41 +1668,40 @@ def test_70_stopping_nfs_service(request):
     sleep(1)
 
 
-def test_71_checking_to_see_if_nfs_service_is_stop(request):
+def test_71_checking_to_see_if_nfs_service_is_stop():
     results = GET("/service?service=nfs")
     assert results.json()[0]["state"] == "STOPPED", results.text
 
 
-def test_72_check_adjusting_threadpool_mode(request):
+def test_72_check_adjusting_threadpool_mode():
     """
     Verify that NFS thread pool configuration can be adjusted
     through private API endpoints.
 
-    This request will fail if NFS server (or NFS client) is
-    still running.
+    This will fail if NFS server (or NFS client) is still running.
     """
     for m in ('AUTO', 'PERCPU', 'PERNODE', 'GLOBAL'):
         call('nfs.set_threadpool_mode', m)
         assert call('nfs.get_threadpool_mode') == m
 
 
-def test_74_disable_nfs_service_at_boot(request):
+def test_74_disable_nfs_service_at_boot():
     results = PUT("/service/id/nfs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_75_checking_nfs_disable_at_boot(request):
+def test_75_checking_nfs_disable_at_boot():
     results = GET("/service?service=nfs")
     assert results.json()[0]['enable'] is False, results.text
 
 
-def test_76_destroying_smb_dataset(request):
+def test_76_destroying_smb_dataset():
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.parametrize('exports', ['missing', 'empty'])
-def test_80_start_nfs_service_with_missing_or_empty_exports(request, exports):
+def test_80_start_nfs_service_with_missing_or_empty_exports(exports):
     '''
     NAS-123498: Eliminate conditions on exports for service start
     The goal is to make the NFS server behavior similar to the other protocols
@@ -1700,7 +1730,7 @@ def test_80_start_nfs_service_with_missing_or_empty_exports(request, exports):
 
 
 @pytest.mark.parametrize('expect_NFS_start', [False, True])
-def test_82_files_in_exportsd(request, expect_NFS_start):
+def test_82_files_in_exportsd(expect_NFS_start):
     '''
     Any files in /etc/exports.d are potentially dangerous, especially zfs.exports.
     We implemented protections against rogue exports files.
