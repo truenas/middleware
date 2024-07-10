@@ -64,7 +64,7 @@ class AppService(Service):
         try:
             compose_action(app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True)
         finally:
-            self.middleware.call_sync('app.metadata.generate').wait_sync()
+            self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
 
         job.set_progress(100, 'Upgraded app successfully')
         return self.middleware.call_sync('app.get_instance', app_name)
