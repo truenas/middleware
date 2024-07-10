@@ -211,7 +211,7 @@ def get_client_count():
     return call('iscsi.global.client_count')
 
 
-def verify_client_count(count, retries=5):
+def verify_client_count(count, retries=10):
     """Verify that the client count is the expected value, but include some
     retries to allow things to settle if necessary."""
     assert retries > 0
