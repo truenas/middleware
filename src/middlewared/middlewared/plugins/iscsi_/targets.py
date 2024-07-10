@@ -4,14 +4,12 @@ import os
 import pathlib
 import re
 import subprocess
-
-import middlewared.sqlalchemy as sa
-
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Str
-from middlewared.service import CallError, CRUDService, private, ValidationErrors
-from middlewared.utils import UnexpectedFailure, run
 from collections import defaultdict
 
+import middlewared.sqlalchemy as sa
+from middlewared.schema import Bool, Dict, Int, IPAddr, List, Patch, Str, accepts
+from middlewared.service import CallError, CRUDService, ValidationErrors, private
+from middlewared.utils import UnexpectedFailure, run
 from .utils import AUTHMETHOD_LEGACY_MAP
 
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
@@ -782,3 +780,21 @@ class iSCSITargetService(CRUDService):
         for targetname in sys_platform.glob('host*/session*/iscsi_session/session*/targetname'):
             if targetname.read_text().startswith(iqn_prefix):
                 targetname.parent.joinpath(param).write_text(text)
+
+    @private
+    async def ha_iqn(self, name):
+        """Return the IQN of the specified internal target."""
+        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+        return f'{global_basename}:HA:{name}'
+
+    @private
+    def iqn_ha_luns(self, iqn):
+        """Return a list of (integer) LUNs which are offered by the specified IQN."""
+        result = []
+        try:
+            with os.scandir(f'/sys/kernel/scst_tgt/targets/iscsi/{iqn}/luns') as entries:
+                for entry in filter(lambda x: x.name.isnumeric(), entries):
+                    result.append(int(entry.name))
+        except FileNotFoundError:
+            pass
+        return result
