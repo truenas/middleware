@@ -18,9 +18,7 @@ from middlewared.test.integration.utils.client import truenas_server
 from auto_config import ha, pool_name
 from protocols import iscsi_scsi_connection
 
-if not ha:
-    pytest.skip("skipping ALUA tests", allow_module_level=True)
-
+pytestmark = pytest.mark.skipif(not ha, reason='Tests applicable to HA only')
 
 SERVICE_NAME = 'iscsitarget'
 MB = 1024 * 1024
