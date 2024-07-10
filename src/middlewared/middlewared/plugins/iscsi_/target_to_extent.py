@@ -2,8 +2,7 @@ import asyncio
 
 import middlewared.sqlalchemy as sa
 from middlewared.schema import Bool, Dict, Int, Patch, accepts
-from middlewared.service import (CallError, CRUDService, ValidationErrors,
-                                 private)
+from middlewared.service import CallError, CRUDService, ValidationErrors, private
 
 
 class iSCSITargetToExtentModel(sa.Model):

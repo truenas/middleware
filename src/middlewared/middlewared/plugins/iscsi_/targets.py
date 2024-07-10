@@ -7,12 +7,9 @@ import subprocess
 from collections import defaultdict
 
 import middlewared.sqlalchemy as sa
-from middlewared.schema import (Bool, Dict, Int, IPAddr, List, Patch, Str,
-                                accepts)
-from middlewared.service import (CallError, CRUDService, ValidationErrors,
-                                 private)
+from middlewared.schema import Bool, Dict, Int, IPAddr, List, Patch, Str, accepts
+from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from middlewared.utils import UnexpectedFailure, run
-
 from .utils import AUTHMETHOD_LEGACY_MAP
 
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
