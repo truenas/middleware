@@ -14,7 +14,7 @@ from pytest_dependency import depends
 from assets.websocket.server import reboot
 from middlewared.test.integration.assets.account import user as ftp_user
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
 from auto_config import password, pool_name, user
@@ -398,6 +398,31 @@ def ftp_get_users():
     return whodata['connections']
 
 
+# For resume xfer test
+def upload_partial(ftp, src, tgt, NumKiB=128):
+    with open(src, 'rb') as file:
+        ftp.voidcmd('TYPE I')
+        with ftp.transfercmd(f'STOR {os.path.basename(tgt)}', None) as conn:
+            blksize = NumKiB // 8
+            for xfer in range(0, 8):
+                # Send some of the file
+                buf = file.read(1024 * blksize)
+                assert buf, "Unexpected local read error"
+                conn.sendall(buf)
+
+
+def download_partial(ftp, src, tgt, NumKiB=128):
+    with open(tgt, 'wb') as file:
+        ftp.voidcmd('TYPE I')
+        with ftp.transfercmd(f'RETR {os.path.basename(src)}', None) as conn:
+            NumXfers = NumKiB // 8
+            for xfer in range(0, NumXfers):
+                # Receive and write some of the file
+                data = conn.recv(8192)
+                assert data, "Unexpected receive error"
+                file.write(data)
+
+
 def ftp_upload_binary_file(ftpObj, source, target, offset=None):
     """
     Upload a file to the FTP server
@@ -416,7 +441,7 @@ def ftp_upload_binary_file(ftpObj, source, target, offset=None):
         if offset:
             fp.seek(offset)
         start = timer()
-        ftpObj.storbinary(f'STOR {target}', fp, rest=offset)
+        ftpObj.storbinary(f'STOR {os.path.basename(target)}', fp, rest=offset)
         et = timer() - start
         return et
 
@@ -437,7 +462,7 @@ def ftp_download_binary_file(ftpObj, source, target, offset=None):
 
     with open(target, opentype) as fp:
         start = timer()
-        ftpObj.retrbinary(f'RETR {source}', fp.write, rest=offset)
+        ftpObj.retrbinary(f'RETR {os.path.basename(source)}', fp.write, rest=offset)
         et = timer() - start
         return et
 
@@ -464,7 +489,7 @@ def ftp_create_local_file(LocalPathName="", content=None):
         elif isinstance(content, int):
             f.write(os.urandom(1024 * content))
         else:
-            assert True, f"Cannot create with with content: '{content}'"
+            assert True, f"Cannot create with content: '{content}'"
     # Confirm existence
     assert os.path.exists(LocalPathName)
     localsize = os.path.getsize(LocalPathName)
@@ -472,6 +497,34 @@ def ftp_create_local_file(LocalPathName="", content=None):
     res = subprocess.run(["sha256sum", LocalPathName], capture_output=True)
     local_chksum = res.stdout.decode().split()[0]
     return (localsize, local_chksum)
+
+
+def ftp_create_remote_file(RemotePathName="", content=None):
+    '''
+    Create a remote file
+    INPUT:
+        If 'content' is:
+        - None, then create with touch
+        - 'int', then it represents the size in KiB to fill with random data
+        - 'str', then write that to the file
+        If 'content is not None, 'int' or 'str', then assert
+    RETURN:
+        tuple: (size_in_bytes, sha256_checksum)
+    '''
+    assert RemotePathName != "", "empty file name"
+    if content is None:
+        ssh(f'touch {RemotePathName}')
+    elif isinstance(content, int):
+        ssh(f"dd if=/dev/urandom of={RemotePathName} bs=1K count={content}", complete_response=True)
+    elif isinstance(content, str):
+        ssh(f'echo "{content}" > {RemotePathName}')
+    else:
+        assert True, f"Cannot create with content: '{content}'"
+
+    # Get and return the details
+    remotesize = ssh(f"du -b {RemotePathName}").split()[0]
+    remote_chksum = ssh(f"sha256sum {RemotePathName}").split()[0]
+    return (remotesize, remote_chksum)
 
 
 def ftp_init_dirs_and_files(items=None):
@@ -1111,109 +1164,96 @@ def test_065_umask(request, fmask, f_expect, dmask, d_expect):
                 os.remove(localfile)
 
 
-@pytest.mark.parametrize('ftpConf,expect_to_pass', [
-    ({}, False),
-    ({'resume': True}, True)
-])
-def test_070_resume_xfer(request, ftpConf, expect_to_pass):
-    depends(request, ["init_dflt_config"], scope="session")
+@pytest.mark.dependency(depends=['init_dflt_config'])
+@pytest.mark.parametrize(
+    'ftpConf,expect_to_pass', [
+        ({}, False),
+        ({'resume': True}, True)
+    ],
+    ids=[
+        "resume xfer: blocked",
+        "resume xfer: allowed"
+    ]
+)
+@pytest.mark.parametrize(
+    'direction,create_src,xfer_partial,xfer_remainder', [
+        ('upload', ftp_create_local_file, upload_partial, ftp_upload_binary_file),
+        ('download', ftp_create_remote_file, download_partial, ftp_download_binary_file)
+    ],
+    ids=[
+        "upload",
+        "download"
+    ]
+)
+def test_070_resume_xfer(
+    ftpConf, expect_to_pass, direction, create_src, xfer_partial, xfer_remainder
+):
 
-    def upload_partial(ftp, src, tgt, NumKiB=128):
-        with open(src, 'rb') as file:
+    # # ---------- helper functions ---------
+    def get_tgt_size(ftp, tgt, direction):
+        if direction == 'upload':
             ftp.voidcmd('TYPE I')
-            with ftpObj.transfercmd(f'STOR {tgt}', None) as conn:
-                blksize = NumKiB // 8
-                for xfer in range(0, 8):
-                    # Send some of the file
-                    buf = file.read(1024 * blksize)
-                    assert buf, "Unexpected local read error"
-                    conn.sendall(buf)
+            return ftp.size(os.path.basename(tgt))
+        else:
+            return os.path.getsize(tgt)
 
-    def download_partial(ftp, src, tgt, NumKiB=128):
-        with open(tgt, 'wb') as file:
-            ftp.voidcmd('TYPE I')
-            with ftp.transfercmd(f'RETR {src}', None) as conn:
-                NumXfers = NumKiB // 8
-                for xfer in range(0, NumXfers):
-                    # Receive and write some of the file
-                    data = conn.recv(8192)
-                    assert data, "Unexpected receive error"
-                    file.write(data)
-
-    with ftp_anon_ds_and_srvr_conn('anonftpDS', ftpConf, withConn=False, mode='777') as ftpdata:
-        localfname = "/tmp/localfile"
-        remotefname = "remotefile"
-        remotepath = f"{ftpdata.ftpConf['anonpath']}/{remotefname}"
-        processing = None if not expect_to_pass else "upload"
-
-        try:
-            # Create a 1MB local binary file.  Use the same file for the download test
-            localsize, local_chksum = ftp_create_local_file(localfname, 1024)
-
-            ftpObj = ftp_connect(truenas_server.ip)
-            ftpObj.login()
-            upload_partial(ftpObj, localfname, remotefname, 768)
-            # Quit to simulate loss of connection
-            try:
-                ftpObj.quit()
-            except error_temp:
-                pass
-            ftpObj = None
-            sleep(1)
-
-            # Attempt resume to complete the upload
-            ftpObj = ftp_connect(truenas_server.ip)
-            ftpObj.login()
-            ftpObj.voidcmd('TYPE I')
-            # Get current 'remote' size
-            remotesize = ftpObj.size(remotefname)
-            # This call will fail if 'resume' is not allowed
-            ftp_upload_binary_file(ftpObj, localfname, remotefname, remotesize)
-
-            # Check result
-            remotesize = ftpObj.size(remotefname)
-            results = SSH_TEST(f"sha256sum {remotepath}", user, password)
-            assert results['result'] is True, results
-            remote_chksum = results['stdout'].split()[0]
-            assert remotesize == localsize
-            assert remote_chksum == local_chksum
-
-            processing = "download"
-            download_partial(ftpObj, remotefname, localfname, 768)
-            # Quit to simulate loss of connection
-            try:
-                ftpObj.quit()
-            except error_temp:
-                pass
-            ftpObj = None
-            sleep(1)
-
-            # Attempt resume to complete the download
-            ftpObj = ftp_connect(truenas_server.ip)
-            ftpObj.login()
-            ftpObj.voidcmd('TYPE I')
-            localsize = os.path.getsize(localfname)
-            # This call will fail if 'resume' is not allowed
-            ftp_download_binary_file(ftpObj, remotefname, localfname, localsize)
-
-            localsize = os.path.getsize(localfname)
-            res = subprocess.run(["sha256sum", localfname], capture_output=True)
+    def get_tgt_chksum(tgt, direction):
+        if direction == 'upload':
+            return ssh(f"sha256sum {tgt}").split()[0]
+        else:
+            res = subprocess.run(["sha256sum", tgt], capture_output=True)
             assert res.returncode == 0
-            local_chksum = res.stdout.decode().split()[0]
-            assert results['result'] is True, results
-            assert remotesize == localsize
-            assert remote_chksum == local_chksum
-            try:
-                ftpObj.quit()
-            except error_temp:
-                pass
+            return res.stdout.decode().split()[0]
 
-        except all_errors as e:
-            assert not expect_to_pass, f"Unexpected failure in resumed {processing} test: {e}"
-        finally:
-            # Clean up
-            if os.path.exists(localfname):
-                os.remove(localfname)
+    try:
+        # Run test
+        with ftp_anon_ds_and_srvr_conn('anonftpDS', ftpConf, withConn=False, mode='777') as ftpdata:
+            src_path = {'upload': "/tmp", 'download': f"{ftpdata.ftpConf['anonpath']}"}
+            tgt_path = {'upload': f"{ftpdata.ftpConf['anonpath']}", "download": "/tmp"}
+
+            # xfer test
+            try:
+                # Create a 1MB source binary file.
+                src_pathname = '/'.join([src_path[direction], 'srcfile'])
+                tgt_pathname = '/'.join([tgt_path[direction], 'tgtfile'])
+                src_size, src_chksum = create_src(src_pathname, 1024)
+
+                ftpObj = ftp_connect(truenas_server.ip)
+                ftpObj.login()
+                xfer_partial(ftpObj, src_pathname, tgt_pathname, 768)
+
+                # Quit to simulate loss of connection
+                try:
+                    ftpObj.quit()
+                except error_temp:
+                    # May generate a quit error that we ignore for this test
+                    pass
+                ftpObj = None
+                sleep(1)
+
+                # Attempt resume to complete the upload
+                ftpObj = ftp_connect(truenas_server.ip)
+                ftpObj.login()
+                xfer_remainder(ftpObj, src_pathname, tgt_pathname, get_tgt_size(ftpObj, tgt_pathname, direction))
+            except all_errors as e:
+                assert not expect_to_pass, f"Unexpected failure in resumed {direction} test: {e}"
+                if not expect_to_pass:
+                    assert "Restart not permitted" in str(e), str(e)
+
+            if expect_to_pass:
+                # Check upload result
+                tgt_size = get_tgt_size(ftpObj, tgt_pathname, direction)
+                assert int(tgt_size) == int(src_size), \
+                    f"Failed {direction} size test. Expected {src_size}, found {tgt_size}"
+                tgt_chksum = get_tgt_chksum(tgt_pathname, direction)
+                assert src_chksum == tgt_chksum, \
+                    f"Failed {direction} checksum test. Expected {src_chksum}, found {tgt_chksum}"
+
+    finally:
+        try:
+            [os.remove(file) for file in ['/tmp/srcfile', '/tmp/tgtfile']]
+        except OSError:
+            pass
 
 
 class UserTests:
