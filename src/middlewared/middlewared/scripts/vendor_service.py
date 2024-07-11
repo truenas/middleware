@@ -10,9 +10,9 @@ def main():
         if vendor_name == "HexOS":
             url = "wss://api.hexos.com"
             systemd_opts = (
+                "--unit=websocat",
                 "--description=websocat daemon for HexOS",
                 "--on-active=10",
-                "--service-type=simple",
                 "--uid=www-data",
                 f"--setenv=URL={url}",
             )
