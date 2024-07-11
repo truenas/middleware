@@ -1,4 +1,4 @@
-from middlewared.test.integration.utils import call, ssh, fail
+from middlewared.test.integration.utils import call, ssh
 
 
 SENTINEL_FILE_PATH = "/data/.vendor"
@@ -12,5 +12,3 @@ def test_name_is_none():
     # system.vendor.name should successfully return None
     vendor_name = call("system.vendor.name")
     assert vendor_name is None
-
-    fail("Success - Done testing.")
