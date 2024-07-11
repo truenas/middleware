@@ -38,8 +38,8 @@ def test__db_id_to_rid(id_type, db_id, expected_rid, valid):
     ('S-1-2-0', False),  # technically valid SID but we don't permit it
     ('S-1-5-21-3510196835-1033636670-2319939847-200108-200108', False),
     ('S-1-5-21-3510196835-200108', False),
-    ('S-1-5-21-3510196835-1033636670-231993009847-200108', False),
-    ('S-1-5-21-351019683b-1033636670-231993009847-200108', False),
+    ('S-1-5-21-3510196835-1033636670-231993008847-200108', False),
+    ('S-1-5-21-351019683b-1033636670-2319939847-200108', False),
 ])
 def test__sid_is_valid(sid, valid):
     assert sid_is_valid(sid) is valid

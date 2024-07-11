@@ -79,6 +79,12 @@ def test__insert_groupmap(groupmap_dir, local_sid):
         f'{local_sid}-2000010'
     )
 
+    entry = query_groupmap_entries(GroupmapFile.DEFAULT, [
+        ['entry_type', '=', GroupmapEntryType.GROUP_MAPPING.name],
+    ], {'get': True})
+
+    assert entry['name'] == 'larry'
+
     delete_groupmap_entry(
         GroupmapFile.DEFAULT,
         GroupmapEntryType.GROUP_MAPPING,
@@ -136,6 +142,12 @@ def test__insert_group_membership(groupmap_dir, local_sid):
         GroupmapEntryType.MEMBERSHIP,
         'S-1-5-32-544'
     )
+
+    entry = query_groupmap_entries(GroupmapFile.DEFAULT, [
+        ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
+    ], {'get': True})
+
+    assert res['sid'] == 'S-1-5-32-545'
 
     delete_groupmap_entry(
         GroupmapFile.DEFAULT,

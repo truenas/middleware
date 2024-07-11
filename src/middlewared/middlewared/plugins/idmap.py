@@ -13,6 +13,7 @@ from middlewared.plugins.idmap_.idmap_constants import (
 )
 from middlewared.plugins.idmap_.idmap_winbind import (WBClient, WBCErr)
 from middlewared.plugins.idmap_.idmap_sss import SSSClient
+from middlewared.plugins.smb_.constants import SMBBuiltin
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
 from middlewared.utils.sid import (
@@ -1081,8 +1082,8 @@ class IdmapDomainService(CRUDService):
         Attempt to resolve SID to an ID entry without querying winbind or
         SSSD for it. This should be possible for local user accounts.
         """
-        if sid.startswith((SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX)):
-            return self.__unixsid_to_entry(sid, separator)
+        if (entry := self.__unixsid_to_entry(sid, separator)) is not None:
+            return entry
 
         if not sid.startswith(server_sid):
             return None
@@ -1090,15 +1091,15 @@ class IdmapDomainService(CRUDService):
         rid = get_domain_rid(sid)
         if rid == DomainRid.ADMINS:
             return {
-                'name': f'{netbiosname}{separator}builtin_administrators',
-                'id': 544,
+                'name': f'{netbiosname}{separator}{SMBBuiltin.ADMINISTRATORS.nt_name}',
+                'id': SMBBuiltin.ADMINISTRATORS.rid,
                 'id_type': IDType.GROUP.value,
                 'sid': sid,
             }
         elif rid == DomainRid.GUESTS:
             return {
-                'name': f'{netbiosname}{separator}builtin_guests',
-                'id': 546,
+                'name': f'{netbiosname}{separator}{SMBBuiltin.GUESTS.nt_name}',
+                'id': SMBBuiltin.GUESTS.rid,
                 'id_type': IDType.GROUP.value,
                 'sid': sid,
             }

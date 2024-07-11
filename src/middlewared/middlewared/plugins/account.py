@@ -277,7 +277,7 @@ class UserService(CRUDService):
         Query users with `query-filters` and `query-options`.
 
         If users provided by Active Directory or LDAP are not desired, then
-        a "local", "=", False should be added to filters.
+        "local", "=", True should be added to filters.
         """
         ds_users = []
         options = options or {}

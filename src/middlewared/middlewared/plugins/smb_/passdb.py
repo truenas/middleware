@@ -94,8 +94,8 @@ class SMBService(Service):
 
         if user['pdb'] is None:
             cmd = [SMBCmd.PDBEDIT.value, '-d', '0', '-a', username]
-            next_rid = db_id_to_rid(IDType.USER, user['id'])
-            cmd.extend(['-U', str(next_rid)])
+            rid = db_id_to_rid(IDType.USER, user['id'])
+            cmd.extend(['-U', str(rid)])
 
             cmd.append('-t')
 

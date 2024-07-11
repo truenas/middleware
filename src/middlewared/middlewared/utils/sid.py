@@ -109,7 +109,7 @@ def sid_is_valid(sid: str) -> bool:
     return True
 
 
-def get_domain_rid(sid: str) -> str:
+def get_domain_rid(sid: str) -> int:
     """ get rid component of the specified SID """
     if not sid_is_valid(sid):
         raise ValueError(f'{sid}: not a valid SID')
