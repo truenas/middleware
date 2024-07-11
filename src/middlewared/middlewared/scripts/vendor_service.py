@@ -1,7 +1,16 @@
+import hashlib
 import subprocess
 import sys
 
 from truenas_api_client import Client
+
+
+def get_hostid():
+    try:
+        with open("/etc/hostid", "rb") as f:
+            return hashlib.file_digest(f, "sha256").hexdigest()
+    except:
+        pass
 
 
 def main():
@@ -27,8 +36,13 @@ def main():
             )
             local_server = "ws://127.0.0.1:6000/websocket"
 
-            hostid_hash = subprocess.check_output("sha256sum /etc/hostid", shell=True, text=True).partition(" ")[0]
-            ip_address = subprocess.check_output("ip -o -4 route get 8.8.8.8", shell=True, text=True).partition("src")[-1].split()[0]
+            hostid_hash = get_hostid()
+            if hostid_hash is None:
+                return
+
+            ip_output = subprocess.check_output("ip -o -4 route get 8.8.8.8", shell=True, text=True)
+            ip_address = ip_output.partition("src")[-1].split()[0]
+
             remote_server = f"{url}/server/{hostid_hash}/{ip_address}"
 
             # Start a transient service
