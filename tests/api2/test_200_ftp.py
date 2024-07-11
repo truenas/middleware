@@ -3,7 +3,7 @@ import copy
 import json
 import os
 import subprocess
-from ftplib import all_errors
+from ftplib import all_errors, error_temp
 from time import sleep
 from timeit import default_timer as timer
 from types import SimpleNamespace
@@ -1154,7 +1154,10 @@ def test_070_resume_xfer(request, ftpConf, expect_to_pass):
             ftpObj.login()
             upload_partial(ftpObj, localfname, remotefname, 768)
             # Quit to simulate loss of connection
-            ftpObj.quit()
+            try:
+                ftpObj.quit()
+            except error_temp:
+                pass
             ftpObj = None
             sleep(1)
 
@@ -1178,7 +1181,10 @@ def test_070_resume_xfer(request, ftpConf, expect_to_pass):
             processing = "download"
             download_partial(ftpObj, remotefname, localfname, 768)
             # Quit to simulate loss of connection
-            ftpObj.quit()
+            try:
+                ftpObj.quit()
+            except error_temp:
+                pass
             ftpObj = None
             sleep(1)
 
@@ -1197,7 +1203,10 @@ def test_070_resume_xfer(request, ftpConf, expect_to_pass):
             assert results['result'] is True, results
             assert remotesize == localsize
             assert remote_chksum == local_chksum
-            ftpObj.quit()
+            try:
+                ftpObj.quit()
+            except error_temp:
+                pass
 
         except all_errors as e:
             assert not expect_to_pass, f"Unexpected failure in resumed {processing} test: {e}"
