@@ -1572,9 +1572,6 @@ class SharingSMBService(SharingService):
         verrors = ValidationErrors()
 
         normalized_acl = []
-        idmaps = await self.middleware.call('idmap.convert_unixids', [
-            entry['ae_who_id'] for entry in data['share_acl'] if entry.get('ae_who_id')
-        ])
         for idx, entry in enumerate(data['share_acl']):
             sid = None
 
@@ -1601,15 +1598,24 @@ class SharingSMBService(SharingService):
                     normalized_acl.append(normalized_entry)
                 continue
 
-            idmap_entry = idmaps['mapped'].get(f'{IDType[entry["ae_who_id"]["id_type"]].wbc_str()}:{entry["ae_who_id"]["id"]}')
-            if not idmap_entry:
+            match entry['ae_who_id']['id_type']:
+                case 'USER':
+                    method = 'user.query'
+                    key = 'uid'
+                case 'GROUP' | 'BOTH':
+                    method = 'group.query'
+                    key = 'gid'
+                case _:
+                    raise ValueError(f'{entry["ae_who_id"]["id_type"]}: unexpected ID type')
+
+            sid = (await self.middleware.call(method, [[key, '=', entry['ae_who_id']['id']]], {'get': True}))['sid']
+            if sid is None:
                 verrors.add(
                     f'sharing_smb_setacl.share_acl.{idx}.ae_who_id',
                     'User or group does must exist and be an SMB account.'
                 )
                 continue
 
-            sid = idmap_entry['sid']
             if sid.startswith((SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX)):
                 verrors.add(
                     f'sharing_smb_setacl.share_acl.{idx}.ae_who_id',
