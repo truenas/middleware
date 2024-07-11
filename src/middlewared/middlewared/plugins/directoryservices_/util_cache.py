@@ -264,7 +264,6 @@ class DSCacheFill:
                     'twofactor_auth_configured': False,
                     'local': False,
                     'id_type_both': id_type_both,
-                    'nt_name': user_data.pw_name,
                     'smb': u['sid'] is not None,
                     'sid': u['sid'],
                     'roles': []
@@ -303,7 +302,6 @@ class DSCacheFill:
                     'users': [],
                     'local': False,
                     'id_type_both': id_type_both,
-                    'nt_name': group_data.gr_name,
                     'smb': g['sid'] is not None,
                     'sid': g['sid'],
                     'roles': []

@@ -13,8 +13,15 @@ from middlewared.plugins.idmap_.idmap_constants import (
 )
 from middlewared.plugins.idmap_.idmap_winbind import (WBClient, WBCErr)
 from middlewared.plugins.idmap_.idmap_sss import SSSClient
+from middlewared.plugins.smb_.constants import SMBBuiltin
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
+from middlewared.utils.sid import (
+    get_domain_rid,
+    BASE_RID_GROUP,
+    BASE_RID_USER,
+    DomainRid,
+)
 from middlewared.utils.tdb import (
     get_tdb_handle,
     TDBDataType,
@@ -954,11 +961,14 @@ class IdmapDomainService(CRUDService):
         unmapped = {}
         to_check = []
 
+        server_sid = self.middleware.call_sync('smb.local_server_sid')
+        netbiosname = self.middleware.call_sync('smb.config')['netbiosname']
+
         for sid in sidlist:
             try:
-                entry = self.__unixsid_to_name(sid, client.separator)
-            except KeyError:
-                # This is a Unix Sid, but account doesn't exist
+                entry = self.__local_sid_to_entry(server_sid, netbiosname, sid, client.separator)
+            except (KeyError, ValidationErrors):
+                # This is a Unix SID or a local SID, but account doesn't exist
                 unmapped.update({sid: sid})
                 continue
 
@@ -1044,7 +1054,7 @@ class IdmapDomainService(CRUDService):
 
         return output
 
-    def __unixsid_to_name(self, sid, separator='\\'):
+    def __unixsid_to_entry(self, sid, separator):
         if not sid.startswith((SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX)):
             return None
 
@@ -1066,6 +1076,59 @@ class IdmapDomainService(CRUDService):
             'id_type': IDType.GROUP.name,
             'sid': sid
         }
+
+    def __local_sid_to_entry(self, server_sid, netbiosname, sid, separator):
+        """
+        Attempt to resolve SID to an ID entry without querying winbind or
+        SSSD for it. This should be possible for local user accounts.
+        """
+        if (entry := self.__unixsid_to_entry(sid, separator)) is not None:
+            return entry
+
+        if not sid.startswith(server_sid):
+            return None
+
+        rid = get_domain_rid(sid)
+        if rid == DomainRid.ADMINS:
+            return {
+                'name': f'{netbiosname}{separator}{SMBBuiltin.ADMINISTRATORS.nt_name}',
+                'id': SMBBuiltin.ADMINISTRATORS.rid,
+                'id_type': IDType.GROUP.value,
+                'sid': sid,
+            }
+        elif rid == DomainRid.GUESTS:
+            return {
+                'name': f'{netbiosname}{separator}{SMBBuiltin.GUESTS.nt_name}',
+                'id': SMBBuiltin.GUESTS.rid,
+                'id_type': IDType.GROUP.value,
+                'sid': sid,
+            }
+        elif rid > BASE_RID_GROUP:
+            id_type = IDType.GROUP.name
+            method = 'group.get_instance'
+            xid_key = 'gid'
+            name_key = 'name'
+            db_id = rid - BASE_RID_GROUP
+        elif rid > BASE_RID_USER:
+            id_type = IDType.USER.name
+            method = 'user.get_instance'
+            xid_key = 'uid'
+            name_key = 'username'
+            db_id = rid - BASE_RID_USER
+        else:
+            # Log an error message and fall through to winbind or sssd to resolve it
+            self.logger.warning('%s: unexpected local SID value', sid)
+            return None
+
+        entry = self.middleware.call_sync(method, db_id)
+
+        return {
+            'name': f'{netbiosname}{separator}{entry[name_key]}',
+            'id': entry[xid_key],
+            'id_type': id_type,
+            'sid': sid
+        }
+
 
     @private
     @filterable

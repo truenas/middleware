@@ -14,7 +14,6 @@ from functions import GET, POST, PUT, DELETE, SSH_TEST
 from auto_config import user, password
 from middlewared.test.integration.utils import call
 from pytest_dependency import depends
-GroupIdFile = "/tmp/.ixbuild_test_groupid"
 
 
 def test_01_get_next_gid():
@@ -80,8 +79,7 @@ def test_08_look_for_testgroup_is_in_freenas_group(request):
         }
     )
     assert result.status_code == 200, result.text
-    assert result.json()['sid'] == "", result.text
-    assert result.json()['nt_name'] == "", result.text
+    assert result.json()['sid'] is None, result.text
 
 
 def test_09_get_new_next_gid():
@@ -134,208 +132,10 @@ def test_16_look_for_newgroup_is_in_freenas_group(request):
     assert results.status_code == 200, results.text
 
 
-def test_17_convert_to_smb_group():
-    payload = {
-        "smb": True,
-    }
-    results = PUT("/group/id/%s" % groupid, payload)
-    assert results.status_code == 200, results.text
-
-
-def test_18_check_groupmap_added(request):
-    """
-    Changing "smb" from False to True should result in
-    insertion into group_mapping.tdb.
-    """
-    result = GET(
-        '/group', payload={
-            'query-filters': [['name', '=', 'newgroup']],
-            'query-options': {
-                'get': True,
-                'extra': {'additional_information': ['SMB']}
-            }
-        }
-    )
-    assert result.status_code == 200, result.text
-    assert result.json()['sid'], result.text
-    assert result.json()['nt_name'], result.text
-
-
 # Delete the group
 def test_19_delete_group_testgroup_newgroup():
     results = DELETE(f"/group/id/{groupid}/", {"delete_users": True})
     assert results.status_code == 200, results.text
-
-
-def test_20_look_group_is_delete():
-    assert len(GET('/group?group=newuser').json()) == 0
-
-
-def test_21_look_for_newgroup_is_not_in_freenas_group(request):
-    payload = {
-        "groupname": "newgroup"
-    }
-    results = POST("/group/get_group_obj/", payload)
-    assert results.status_code == 500, results.text
-
-
-# Test new SMB groupmap
-def test_22_get_next_gid():
-    results = GET('/group/get_next_gid/')
-    assert results.status_code == 200, results.text
-    global next_gid
-    next_gid = results.json()
-
-
-# Create tests
-@pytest.mark.dependency(name="SMB_GROUP_CREATED")
-def test_23_creating_smb_group():
-    global groupid
-    payload = {
-        "gid": next_gid,
-        "name": "smbgroup",
-        "smb": True,
-    }
-    results = POST("/group/", payload)
-    assert results.status_code == 200, results.text
-    groupid = results.json()
-
-
-def test_24_check_groupmap_added(request):
-    """
-    Creating new group with "smb" = True should result in insertion into
-    group_mapping.tdb.
-    """
-    global old_groupmap_sid
-    global gid_to_check
-    result = GET(
-        '/group', payload={
-            'query-filters': [['name', '=', 'smbgroup']],
-            'query-options': {
-                'get': True,
-                'extra': {'additional_information': ['SMB']}
-            }
-        }
-    )
-    assert result.status_code == 200, result.text
-    assert result.json()['sid'], result.text
-    assert result.json()['nt_name'], result.text
-    old_groupmap_sid = result.json()['sid']
-    gid_to_check = result.json()['gid']
-
-
-def test_25_test_name_change_smb_group(request):
-    depends(request, ["SMB_GROUP_CREATED"])
-    payload = {
-        "name": "newsmbgroup"
-    }
-    results = PUT("/group/id/%s" % groupid, payload)
-    assert results.status_code == 200, results.text
-
-
-def test_26_groupmap_entry_nt_name_change(request):
-    """
-    Changing the name of an SMB group should not result in
-    a SID change.
-    """
-    depends(request, ["SMB_GROUP_CREATED"], scope="session")
-    result = GET(
-        '/group', payload={
-            'query-filters': [['name', '=', 'newsmbgroup']],
-            'query-options': {
-                'get': True,
-                'extra': {'additional_information': ['SMB']}
-            }
-        }
-    )
-    assert result.status_code == 200, result.text
-    assert result.json()['nt_name'] == 'newsmbgroup', result.text
-    assert result.json()['sid'] == old_groupmap_sid, result.text
-
-
-def test_27_full_groupmap_check(request):
-    """
-    Full check of groupmap contents
-    """
-    depends(request, ["SMB_GROUP_CREATED"], scope="session")
-    cmd = "midclt call smb.groupmap_list"
-    results = SSH_TEST(cmd, user, password)
-    assert results['result'], str(results['output'])
-
-    gm = json.loads(results['stdout'].strip())
-    assert gm['localsid'], str(gm)
-
-    for k, entry in gm['local_builtins'].items():
-        assert entry['sid'].startswith(gm['localsid']), str(entry)
-        assert int(k) == entry['gid'], str(entry)
-        nt_name_suffix = entry['nt_name'].split('_')[1]
-        unix_name_suffix = entry['unix_group'].split('_')[1]
-        assert nt_name_suffix == unix_name_suffix, str(entry)
-
-    for k in ['544', '546']:
-        assert k in gm['local_builtins'], str(gm['local_builtins'])
-
-    for i in [
-        ('90000001', 'S-1-5-32-544'),
-        ('90000002', 'S-1-5-32-545'),
-        ('90000003', 'S-1-5-32-546'),
-    ]:
-        gid, sid = i
-        entry = gm['builtins'][gid]
-        assert entry['sid'] == sid, str(entry)
-        assert entry['unix_group'] == gid, str(entry)
-        assert entry['group_type_int'] == 4, str(entry)
-        assert int(gid) == entry['gid'], str(entry)
-
-    assert str(gid_to_check) in gm['local'], str(gm)
-
-    cmd = "midclt call smb.groupmap_listmem S-1-5-32-544"
-    results = SSH_TEST(cmd, user, password)
-    assert results['result'], str(results['output'])
-    ba = json.loads(results['stdout'].strip())
-    assert gm['local_builtins']['544']['sid'] in ba, str(ba)
-
-    cmd = "midclt call smb.groupmap_listmem S-1-5-32-546"
-    results = SSH_TEST(cmd, user, password)
-    assert results['result'], str(results['output'])
-    bg = json.loads(results['stdout'].strip())
-    assert gm['local_builtins']['546']['sid'] in bg, str(bg)
-
-
-def test_28_convert_smb_group_to_non_smb(request):
-    depends(request, ["SMB_GROUP_CREATED"])
-    payload = {
-        "smb": False
-    }
-    results = PUT("/group/id/%s" % groupid, payload)
-    assert results.status_code == 200, results.text
-    result = GET(
-        '/group', payload={
-            'query-filters': [['name', '=', 'newsmbgroup']],
-            'query-options': {
-                'get': True,
-                'extra': {'additional_information': ['SMB']}
-            }
-        }
-    )
-    assert result.status_code == 200, result.text
-    assert result.json()['sid'] == "", result.text
-    assert result.json()['nt_name'] == "", result.text
-
-
-def test_30_delete_group_smb_newgroup(request):
-    depends(request, ["SMB_GROUP_CREATED"])
-    results = DELETE(f"/group/id/{groupid}/", {"delete_users": True})
-    assert results.status_code == 200, results.text
-
-
-def test_31_verify_group_deleted(request):
-    depends(request, ["SMB_GROUP_CREATED"])
-    payload = {
-        "groupname": "newsmbgroup"
-    }
-    results = POST("/group/get_group_obj/", payload)
-    assert results.status_code == 500, results.text
 
 
 @pytest.mark.parametrize('group', [

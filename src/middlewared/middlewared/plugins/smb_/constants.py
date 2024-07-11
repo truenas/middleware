@@ -52,6 +52,18 @@ class SMBBuiltin(enum.Enum):
     GUESTS = ('builtin_guests', 'S-1-5-32-546')
     USERS = ('builtin_users', 'S-1-5-32-545')
 
+    @property
+    def nt_name(self):
+        return self.value[0][8:].capitalize()
+
+    @property
+    def sid(self):
+        return self.value[1]
+
+    @property
+    def rid(self):
+        return int(self.value[1].split('-')[-1])
+
     def unix_groups():
         return [x.value[0] for x in SMBBuiltin]
 

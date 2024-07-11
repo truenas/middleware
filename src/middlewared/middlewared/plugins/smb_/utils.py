@@ -1,4 +1,14 @@
 from .constants import SMBSharePreset
+from secrets import randbits
+
+
+def random_sid():
+    """ See MS-DTYP 2.4.2 SID """
+    subauth_1 = randbits(32)
+    subauth_2 = randbits(32)
+    subauth_3 = randbits(32)
+
+    return f'S-1-5-21-{subauth_1}-{subauth_2}-{subauth_3}'
 
 
 def smb_strip_comments(auxparam_in):
