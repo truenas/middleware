@@ -592,7 +592,7 @@ class AuthService(Service):
 
         return {**user, 'attributes': attributes, 'two_factor_config': twofactor_config}
 
-    @no_auth_required
+    @no_authz_required
     @accepts(
         Str('key'),
         Any('value'),
