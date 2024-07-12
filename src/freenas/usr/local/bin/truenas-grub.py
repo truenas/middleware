@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # so we can sacrifice it to achieve consistent behavior between multipath-capable and non-multipath-capable
     # devices and avoid mapping actual hardware devices and virtual block devices.
     config = [
-        'GRUB_DISTRIBUTOR="TrueNAS Scale"',
+        f'GRUB_DISTRIBUTOR="{vendor}"',
         'GRUB_TIMEOUT=10',
         'GRUB_DISABLE_RECOVERY="true"',
         'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 amd_iommu=on iommu=pt '
