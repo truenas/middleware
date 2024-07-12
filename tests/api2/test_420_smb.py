@@ -10,7 +10,7 @@ sys.path.append(apifolder)
 from protocols import smb_connection
 from utils import create_dataset
 from auto_config import pool_name
-from middlewared.test.integration.assets.account import user, group
+from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset as make_dataset
 from middlewared.test.integration.utils import call, ssh
@@ -34,24 +34,33 @@ def smb_info():
         }, get_instance=False):
             with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
                 'purpose': 'NO_PRESET',
-                'guestok': True,
             }) as s:
                 try:
                     call('smb.update', {
-                        'enable_smb1': True,
                         'guest': SHAREUSER
                     })
+                    call('service.update', 'cifs', {'enable': True})
                     call('service.start', 'cifs')
                     yield {'dataset': ds, 'share': s}
                 finally:
                     call('smb.update', {
-                        'enable_smb1': False,
                         'guest': 'nobody'
                     })
                     call('service.stop', 'cifs')
+                    call('service.update', 'cifs', {'enable': False})
 
 
-@pytest.fixture(scope='function'):
+@pytest.fixture(scope='function')
+def enable_guest(smb_info):
+    smb_id = smb_info['share']['id']
+    call('sharing.smb.update', smb_id, {'guestok': True})
+    try:
+        yield
+    finally:
+        call('sharing.smb.update', smb_id, {'guestok': False})
+
+
+@pytest.fixture(scope='function')
 def enable_aapl():
     reset_systemd_svcs('smbd')
     call('smb.update', {'aapl_extensions': True})
@@ -62,16 +71,27 @@ def enable_aapl():
         call('smb.update', {'aapl_extensions': False})
 
 
-@pytest.fixture(scope='function'):
-def enable_recycle_bin():
-    smb_id = call('sharing.smb.query', [['name', '=', SMB_NAME]], {'get': True})['id']
+@pytest.fixture(scope='function')
+def enable_smb1():
+    reset_systemd_svcs('smbd')
+    call('smb.update', {'enable_smb1': True})
+
+    try:
+        yield
+    finally:
+        call('smb.update', {'enable_smb1': False})
+
+
+@pytest.fixture(scope='function')
+def enable_recycle_bin(smb_info):
+    smb_id = smb_info['share']['id']
     call('sharing.smb.update', smb_id, {'recyclebin': True})
 
     try:
         yield
     finally:
         call('sharing.smb.update', smb_id, {'recyclebin': False})
-    
+
 
 @pytest.mark.parametrize('proto,runas', [
     ('SMB1', 'GUEST'),
@@ -79,8 +99,7 @@ def enable_recycle_bin():
     ('SMB1', SHAREUSER),
     ('SMB2', SHAREUSER)
 ])
-def test__basic_smb_ops(smb_info, proto, runas):
-    proto, runas = params
+def test__basic_smb_ops(enable_smb1, enable_guest, proto, runas):
     with smb_connection(
         share=SMB_NAME,
         username=runas,
@@ -111,9 +130,10 @@ def test__basic_smb_ops(smb_info, proto, runas):
         assert c.ls('/') == []
 
 
-def test__change_sharing_smd_home_to_true_and_set_guestok_to_false(smb_info):
+def test__change_sharing_smd_home_to_true(smb_info):
+    reset_systemd_svcs('smbd')
     smb_id = smb_info['share']['id']
-    share = call('sharing.smb.update', smb_id, {'home': True, "guestok": False})
+    share = call('sharing.smb.update', smb_id, {'home': True})
     try:
         share_path = call('smb.getparm', 'path', 'homes')
         assert share_path == f'{share["path_local"]}/%U'
@@ -179,7 +199,7 @@ def do_recycle_ops(c, has_subds=False):
 
 
 def test__recyclebin_functional_test(enable_recycle_bin, smb_info):
-    with create_dataset(f'{smb_info["ds"]}/subds', {'share_type': 'SMB'}):
+    with create_dataset(f'{smb_info["dataset"]}/subds', {'share_type': 'SMB'}):
         with smb_connection(
             share=SMB_NAME,
             username=SHAREUSER,
@@ -193,7 +213,7 @@ def test__recyclebin_functional_test(enable_recycle_bin, smb_info):
     {'global': {'aapl_extensions': True}, 'share': {'aapl_name_mangling': False}},
     {'global': {'aapl_extensions': False}, 'share': {}},
 ])
-def test__recyclebin_functional_test_subdir(smb_info):
+def test__recyclebin_functional_test_subdir(smb_info, smb_config):
     tmp_ds = f"{pool_name}/recycle_test"
     tmp_ds_path = f'/mnt/{tmp_ds}/subdir'
     tmp_share_name = 'recycle_test'

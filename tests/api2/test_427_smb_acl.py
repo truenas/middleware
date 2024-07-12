@@ -25,6 +25,7 @@ from utils import create_dataset
 SMB_USER = "smbacluser"
 SMB_PWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
 TEST_DATA = {}
+OWNER_RIGHTS_SID = 'S-1-3-4'
 
 
 permset = {
@@ -194,10 +195,9 @@ def test_005_test_map_modify(request):
 def test_006_test_preserve_dynamic_id_mapping(request):
     depends(request, ["SMB_SERVICE_STARTED"], scope="session")
 
-    def _find_owner_rights(acl):
+    def _find_owner_rights(acl, owner_rights_id):
         for entry in acl:
-            assert entry['who'] is not None, str(acl)
-            if 'owner rights' in entry['who']:
+            if entry['id'] == owner_rights_id:
                 return True
 
         return False
@@ -220,10 +220,18 @@ def test_006_test_preserve_dynamic_id_mapping(request):
             res = subprocess.run(cmd, capture_output=True)
             assert res.returncode == 0, res.stderr.decode() or res.stdout.decode()
 
+            # Since winbindd is by default not in nsswitch when we're standalone
+            # the GID won't resolve to name
+            res = call('idmap.convert_sids', [OWNER_RIGHTS_SID])
+            assert OWNER_RIGHTS_SID in res['mapped']
+            assert res['mapped'][OWNER_RIGHTS_SID]['id_type'] == 'GROUP'
+            assert res['mapped'][OWNER_RIGHTS_SID]['name'].endswith('Owner Rights')
+            owner_rights_id = res['mapped'][OWNER_RIGHTS_SID]['id']
+
             # verify "owner rights" entry is present
             # verify "owner rights" entry is still present
             the_acl = call('filesystem.getacl', path, False, True)['acl']
-            has_owner_rights = _find_owner_rights(the_acl)
+            has_owner_rights = _find_owner_rights(the_acl, owner_rights_id)
             assert has_owner_rights is True, str(the_acl)
 
             # force re-sync of group mapping database (and winbindd_idmap.tdb)
@@ -231,7 +239,7 @@ def test_006_test_preserve_dynamic_id_mapping(request):
 
             # verify "owner rights" entry is still present
             the_acl = call('filesystem.getacl', path, False, True)['acl']
-            has_owner_rights = _find_owner_rights(the_acl)
+            has_owner_rights = _find_owner_rights(the_acl, owner_rights_id)
             assert has_owner_rights is True, str(the_acl)
 
 
