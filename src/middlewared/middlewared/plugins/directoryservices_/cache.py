@@ -117,14 +117,12 @@ class DSCache(Service):
                         return None
 
                 self._insert(data['idtype'], entry)
-                entry['nt_name'] = entry[name_key]
             except KeyError:
                 entry = None
 
         if entry and not options['smb']:
             # caller has not requested SMB information and so we should strip it
             entry['sid'] = None
-            entry['nt_name'] = None
 
         if entry is not None:
             entry['roles'] = []
@@ -173,7 +171,6 @@ class DSCache(Service):
         if not get_smb:
             for entry in entries:
                 entry['sid'] = None
-                entry['nt_name'] = None
 
         return sorted(entries, key=lambda i: i['id'])
 
