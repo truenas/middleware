@@ -82,12 +82,26 @@ class SMBService(Service):
         when newly creating these groups (if they don't exist), but can get
         lost, resulting in unexpected / erratic permissions behavior.
         """
-        # second groupmap listing is to ensure we have accurate / current info.
-        entries = []
-
+        # fresh groupmap listing is to ensure we have accurate / current info.
         groupmap = self.groupmap_list()
         localsid = groupmap['localsid']
 
+        entries = [
+            SMBGroupMembership(
+                sid=f'{localsid}-{DomainRid.ADMINS}',
+                members=(SMBBuiltin.ADMINISTRATORS.sid,)
+            ),
+            SMBGroupMembership(
+                sid=f'{localsid}-{DomainRid.GUESTS}',
+                members=(SMBBuiltin.GUESTS.sid,)
+            ),
+            SMBGroupMembership(
+                sid=groupmap['local'][545]['sid'],
+                members=(SMBBuiltin.USERS.sid,)
+            ),
+        ]
+
+        # We keep separate list of what members we expect for these groups
         admins = [f'{localsid}-{DomainRid.ADMINS}']
         guests = [f'{localsid}-{DomainRid.GUESTS}']
 
@@ -98,6 +112,10 @@ class SMBService(Service):
 
         if (admin_group := self.middleware.call_sync('smb.config')['admin_group']):
             if (found := self.middleware.call_sync('group.query', [('group', '=', admin_group)])):
+                entries.append(SMBGroupMembership(
+                    sid=found[0]['sid'],
+                    members=(SMBBuiltin.ADMINISTRATORS.sid,)
+                ))
                 admins.append(found[0]['sid'])
             else:
                 self.logger.warning('%s: SMB admin group does not exist', admin_group)
@@ -108,18 +126,51 @@ class SMBService(Service):
                 domain_info = self.middleware.call_sync('idmap.domain_info',
                                                         'DS_TYPE_ACTIVEDIRECTORY')
                 domain_sid = domain_info['sid']
-
                 # add domain account SIDS
+                entries.append((SMBGroupMembership(
+                    sid=f'{domain_sid}-{DomainRid.ADMINS}',
+                    members=(SMBBuiltin.ADMINISTRATORS.sid,)
+                )))
                 admins.append(f'{domain_sid}-{DomainRid.ADMINS}')
+                entries.append((SMBGroupMembership(
+                    sid=f'{domain_sid}-{DomainRid.USERS}',
+                    members=(SMBBuiltin.USERS.sid,)
+                )))
                 users.append(f'{domain_sid}-{DomainRid.USERS}')
+                entries.append((SMBGroupMembership(
+                    sid=f'{domain_sid}-{DomainRid.GUESTS}',
+                    members=(SMBBuiltin.GUESTS.sid,)
+                )))
                 guests.append(f'{domain_sid}-{DomainRid.GUESTS}')
             except Exception:
                 self.logger.warning('Failed to retrieve idmap domain info', exc_info=True)
 
-        entries.append(SMBGroupMembership(sid=SMBBuiltin.ADMINISTRATORS.sid, members=tuple(set(admins))))
-        entries.append(SMBGroupMembership(sid=SMBBuiltin.USERS.sid, members=tuple(set(users))))
-        entries.append(SMBGroupMembership(sid=SMBBuiltin.GUESTS.sid, members=tuple(set(guests))))
         insert_groupmap_entries(GroupmapFile.DEFAULT, entries)
+
+        # double-check that we have expected memberships now and no extras
+        unexpected_memberof_entries = query_groupmap_entries(GroupmapFile.DEFAULT, [
+            ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
+            ['sid', 'nin', admins + guests + users]
+        ], {})
+
+        for entry in unexpected_memberof_entries:
+            self.logger.error(
+                '%s: unexpected account present in group mapping configuration for groups '
+                'with the following sid %s. This grants the account privileges beyond what '
+                'would normally be granted by the backend in TrueNAS potentially indicating '
+                'an underlying security issue with. This mapping entry will be automatically '
+                'removed to restore the TrueNAS to its expected configuration.',
+                entry['sid'], entry['members']
+            )
+
+            try:
+                delete_groupmap_entry(
+                    GroupmapFile.DEFAULT,
+                    GroupmapEntryType.MEMBERSHIP,
+                    entry_sid=entry['sid'],
+                )
+            except Exception:
+                self.logger.error('Failed to remove unexpected groupmap entry', exc_info=True)
 
     @private
     def initialize_idmap_tdb(self, low_range):
@@ -306,10 +357,7 @@ class SMBService(Service):
         if not sid_is_valid(sid):
             raise ValueError(f'{sid}: not a valid SID')
 
-        data = list_foreign_group_memberships(GroupmapFile.DEFAULT, sid)
-        assert data.sid == sid
-
-        return data.members
+        return list_foreign_group_memberships(GroupmapFile.DEFAULT, sid)
 
     @private
     def sync_builtins(self, to_add):

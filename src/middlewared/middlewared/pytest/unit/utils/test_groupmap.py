@@ -107,62 +107,56 @@ def test__insert_groupmap(groupmap_dir, local_sid):
 def test__insert_group_membership(groupmap_dir, local_sid):
     entries = [
         SMBGroupMembership(
-            sid='S-1-5-32-544',
-            members=(f'{local_sid}-2000010', f'{local_sid}-2000011')
+            sid=f'{local_sid}-2000010',
+            members=('S-1-5-32-544',)
         ),
         SMBGroupMembership(
-            sid='S-1-5-32-545',
-            members=(f'{local_sid}-2000012', f'{local_sid}-2000013')
+            sid=f'{local_sid}-2000011',
+            members=('S-1-5-32-544',)
+        ),
+        SMBGroupMembership(
+            sid=f'{local_sid}-2000012',
+            members=('S-1-5-32-545',)
+        ),
+        SMBGroupMembership(
+            sid=f'{local_sid}-2000013',
+            members=('S-1-5-32-545',)
         ),
     ]
     insert_groupmap_entries(GroupmapFile.DEFAULT, entries)
 
     res = query_groupmap_entries(GroupmapFile.DEFAULT, [
         ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
-        ['sid', '=', 'S-1-5-32-544']
-    ], {'get': True})
-
-    assert res['sid'] == 'S-1-5-32-544'
-    assert set(res['members']) == set((f'{local_sid}-2000010', f'{local_sid}-2000011'))
+    ], {})
+    for entry in res:
+        if entry['sid'] in (f'{local_sid}-2000010', f'{local_sid}-2000011'):
+            assert set(entry['members']) == {'S-1-5-32-544'}
+        elif entry['sid'] in (f'{local_sid}-2000012', f'{local_sid}-2000013'):
+            assert set(entry['members']) == {'S-1-5-32-545'}
+        else:
+            raise ValueError(f'Unexpected entry: {entry}')
 
     res = list_foreign_group_memberships(GroupmapFile.DEFAULT, 'S-1-5-32-544')
-    assert res.sid == 'S-1-5-32-544'
-    assert set(res.members) == set((f'{local_sid}-2000010', f'{local_sid}-2000011'))
+    assert set(res) == {f'{local_sid}-2000010', f'{local_sid}-2000011'}
 
-    res = query_groupmap_entries(GroupmapFile.DEFAULT, [
-        ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
-        ['sid', '=', 'S-1-5-32-545']
-    ], {'get': True})
+    res = list_foreign_group_memberships(GroupmapFile.DEFAULT, 'S-1-5-32-545')
+    assert set(res) == {f'{local_sid}-2000012', f'{local_sid}-2000013'}
 
-    assert res['sid'] == 'S-1-5-32-545'
-    assert set(res['members']) == set((f'{local_sid}-2000012', f'{local_sid}-2000013'))
 
-    delete_groupmap_entry(
-        GroupmapFile.DEFAULT,
-        GroupmapEntryType.MEMBERSHIP,
-        'S-1-5-32-544'
-    )
-
-    entry = query_groupmap_entries(GroupmapFile.DEFAULT, [
-        ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
-    ], {'get': True})
-
-    assert res['sid'] == 'S-1-5-32-545'
-
-    delete_groupmap_entry(
-        GroupmapFile.DEFAULT,
-        GroupmapEntryType.MEMBERSHIP,
-        'S-1-5-32-545'
-    )
-
-    with pytest.raises(MatchNotFound):
-        query_groupmap_entries(GroupmapFile.DEFAULT, [
-            ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
-            ['sid', '=', 'S-1-5-32-544']
-        ], {'get': True})
+    for entry in entries:
+        delete_groupmap_entry(
+            GroupmapFile.DEFAULT,
+            GroupmapEntryType.MEMBERSHIP,
+            entry.sid
+        )
+        with pytest.raises(MatchNotFound):
+            query_groupmap_entries(GroupmapFile.DEFAULT, [
+                ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
+                ['sid', '=', entry.sid]
+            ], {'get': True})
 
     entries = query_groupmap_entries(GroupmapFile.DEFAULT, [
         ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
     ], {})
 
-    assert len(entries) == 0
+    assert len(entries) == 0, str(entries)

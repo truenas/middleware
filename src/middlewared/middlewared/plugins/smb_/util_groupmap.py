@@ -181,7 +181,7 @@ def delete_groupmap_entry(
         hdl.delete(tdb_key)
 
 
-def list_foreign_group_memberships(
+def foreign_group_memberships(
     groupmap_file: GroupmapFile,
     entry_sid: str
 ) -> SMBGroupMembership:
@@ -192,3 +192,18 @@ def list_foreign_group_memberships(
         tdb_key = f'{MEMBEROF_PREFIX}{entry_sid}'
         tdb_val = hdl.get(tdb_key)
         return _parse_memberof(tdb_key, tdb_val)
+
+
+def list_foreign_group_memberships(
+    groupmap_file: GroupmapFile,
+    alias_sid: str
+) -> list[str]:
+    if not isinstance(groupmap_file, GroupmapFile):
+        raise TypeError(f'{type(groupmap_file)}: expected GroupmapFile type.')
+
+    return [
+        entry['sid'] for entry in query_groupmap_entries(groupmap_file, [
+            ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
+            ['members', 'rin', alias_sid]
+        ], {})
+    ]
