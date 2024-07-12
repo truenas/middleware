@@ -13,7 +13,7 @@ RESERVED_NAMES = [
     ('ix_certificates', dict),
     ('ix_certificateAuthorities', dict),
     ('ix_externalInterfacesConfiguration', list),
-    ('ix_externalInterfacesConfigurationNames', list),
+    ('ix_externalInterfacesConfigurationNames', list),  # TODO: Fix the casing here please
     ('ix_volumes', list),
     (CONTEXT_KEY_NAME, dict),
 ]
