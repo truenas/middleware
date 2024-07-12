@@ -108,7 +108,7 @@ class SMBService(Service):
         # Samba has special behavior if DomainRid.USERS is set for local domain
         # and so we map the builtin_users account to a normal sid then make it
         # a member of S-1-5-32-545
-        users = [groupmap['local'][SMBBuiltin.USERS]['sid']]
+        users = [groupmap['local'][SMBBuiltin.USERS.rid]['sid']]
 
         if (admin_group := self.middleware.call_sync('smb.config')['admin_group']):
             if (found := self.middleware.call_sync('group.query', [('group', '=', admin_group)])):
