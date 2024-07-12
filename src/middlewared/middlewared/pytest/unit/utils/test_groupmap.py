@@ -34,6 +34,7 @@ def local_sid():
 
 
 def test__insert_groupmap(groupmap_dir, local_sid):
+    """ Test that we can properly insert and retrieve UNIXGROUP TDB entries """
     entries = [
         SMBGroupMap(
             sid=f'{local_sid}-2000010',
@@ -105,44 +106,53 @@ def test__insert_groupmap(groupmap_dir, local_sid):
 
 
 def test__insert_group_membership(groupmap_dir, local_sid):
+    """ test that we can insert, retrive, and delete MEMBEROF TDB entries """
+
+    # Create mutiple entries that are members of same set of groups
+    # so that we can test reverse lookups.
     entries = [
         SMBGroupMembership(
             sid=f'{local_sid}-2000010',
-            members=('S-1-5-32-544',)
+            groups=('S-1-5-32-544',)
         ),
         SMBGroupMembership(
             sid=f'{local_sid}-2000011',
-            members=('S-1-5-32-544',)
+            groups=('S-1-5-32-544',)
         ),
         SMBGroupMembership(
             sid=f'{local_sid}-2000012',
-            members=('S-1-5-32-545',)
+            groups=('S-1-5-32-545',)
         ),
         SMBGroupMembership(
             sid=f'{local_sid}-2000013',
-            members=('S-1-5-32-545',)
+            groups=('S-1-5-32-545',)
         ),
     ]
+
+    # Validate we can set multiple entries
     insert_groupmap_entries(GroupmapFile.DEFAULT, entries)
 
     res = query_groupmap_entries(GroupmapFile.DEFAULT, [
         ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
     ], {})
     for entry in res:
+        # Validate that the values are associated with expected keys
         if entry['sid'] in (f'{local_sid}-2000010', f'{local_sid}-2000011'):
-            assert set(entry['members']) == {'S-1-5-32-544'}
+            assert set(entry['groups']) == {'S-1-5-32-544'}
         elif entry['sid'] in (f'{local_sid}-2000012', f'{local_sid}-2000013'):
-            assert set(entry['members']) == {'S-1-5-32-545'}
+            assert set(entry['groups']) == {'S-1-5-32-545'}
         else:
             raise ValueError(f'Unexpected entry: {entry}')
 
+    # validate that the reverse lookups by SID also work correctly and return
+    # expected set of SIDs.
     res = list_foreign_group_memberships(GroupmapFile.DEFAULT, 'S-1-5-32-544')
     assert set(res) == {f'{local_sid}-2000010', f'{local_sid}-2000011'}
 
     res = list_foreign_group_memberships(GroupmapFile.DEFAULT, 'S-1-5-32-545')
     assert set(res) == {f'{local_sid}-2000012', f'{local_sid}-2000013'}
 
-
+    # Validate that deleting MEMBEROF entries works correctly
     for entry in entries:
         delete_groupmap_entry(
             GroupmapFile.DEFAULT,

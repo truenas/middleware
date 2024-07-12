@@ -89,15 +89,15 @@ class SMBService(Service):
         entries = [
             SMBGroupMembership(
                 sid=f'{localsid}-{DomainRid.ADMINS}',
-                members=(SMBBuiltin.ADMINISTRATORS.sid,)
+                groups=(SMBBuiltin.ADMINISTRATORS.sid,)
             ),
             SMBGroupMembership(
                 sid=f'{localsid}-{DomainRid.GUESTS}',
-                members=(SMBBuiltin.GUESTS.sid,)
+                groups=(SMBBuiltin.GUESTS.sid,)
             ),
             SMBGroupMembership(
                 sid=groupmap['local'][SMBBuiltin.USERS.rid]['sid'],
-                members=(SMBBuiltin.USERS.sid,)
+                groups=(SMBBuiltin.USERS.sid,)
             ),
         ]
 
@@ -114,7 +114,7 @@ class SMBService(Service):
             if (found := self.middleware.call_sync('group.query', [('group', '=', admin_group)])):
                 entries.append(SMBGroupMembership(
                     sid=found[0]['sid'],
-                    members=(SMBBuiltin.ADMINISTRATORS.sid,)
+                    groups=(SMBBuiltin.ADMINISTRATORS.sid,)
                 ))
                 admins.append(found[0]['sid'])
             else:
@@ -129,17 +129,17 @@ class SMBService(Service):
                 # add domain account SIDS
                 entries.append((SMBGroupMembership(
                     sid=f'{domain_sid}-{DomainRid.ADMINS}',
-                    members=(SMBBuiltin.ADMINISTRATORS.sid,)
+                    groups=(SMBBuiltin.ADMINISTRATORS.sid,)
                 )))
                 admins.append(f'{domain_sid}-{DomainRid.ADMINS}')
                 entries.append((SMBGroupMembership(
                     sid=f'{domain_sid}-{DomainRid.USERS}',
-                    members=(SMBBuiltin.USERS.sid,)
+                    groups=(SMBBuiltin.USERS.sid,)
                 )))
                 users.append(f'{domain_sid}-{DomainRid.USERS}')
                 entries.append((SMBGroupMembership(
                     sid=f'{domain_sid}-{DomainRid.GUESTS}',
-                    members=(SMBBuiltin.GUESTS.sid,)
+                    groups=(SMBBuiltin.GUESTS.sid,)
                 )))
                 guests.append(f'{domain_sid}-{DomainRid.GUESTS}')
             except Exception:
@@ -156,11 +156,11 @@ class SMBService(Service):
         for entry in unexpected_memberof_entries:
             self.logger.error(
                 '%s: unexpected account present in group mapping configuration for groups '
-                'with the following sid %s. This grants the account privileges beyond what '
+                'with the following sids %s. This grants the account privileges beyond what '
                 'would normally be granted by the backend in TrueNAS potentially indicating '
                 'an underlying security issue. This mapping entry will be automatically '
-                'removed to restore the TrueNAS to its expected configuration.',
-                entry['sid'], entry['members']
+                'removed to restore TrueNAS to its expected configuration.',
+                entry['sid'], entry['groups']
             )
 
             try:

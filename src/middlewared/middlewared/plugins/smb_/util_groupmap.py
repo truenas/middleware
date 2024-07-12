@@ -96,7 +96,7 @@ class SMBGroupMap:
 @dataclass(frozen=True)
 class SMBGroupMembership:
     sid: str
-    members: tuple[str]
+    groups: tuple[str]
 
 
 def _parse_unixgroup(tdb_key: str, tdb_val: str) -> SMBGroupMap:
@@ -148,8 +148,8 @@ def _parse_memberof(tdb_key: str, tdb_val: str) -> SMBGroupMembership:
     sid = tdb_key[len(MEMBEROF_PREFIX):]
     data = b64decode(tdb_val)
 
-    members = tuple(data[:-1].decode().split())
-    return SMBGroupMembership(sid, members)
+    groups = tuple(data[:-1].decode().split())
+    return SMBGroupMembership(sid, groups)
 
 
 def _groupmap_to_tdb_key_val(group_map: SMBGroupMap) -> tuple[str, str]:
@@ -167,7 +167,7 @@ def _groupmap_to_tdb_key_val(group_map: SMBGroupMap) -> tuple[str, str]:
 def _groupmem_to_tdb_key_val(group_mem: SMBGroupMembership) -> tuple[str, str]:
     """ convert a SMBGroupMembership object to TDB key-value pair for insertion into TDB file """
     tdb_key = f'{MEMBEROF_PREFIX}{group_mem.sid}'
-    data = ' '.join(set(group_mem.members)).encode() + b'\x00'
+    data = ' '.join(set(group_mem.groups)).encode() + b'\x00'
     return (tdb_key, b64encode(data))
 
 
@@ -279,6 +279,6 @@ def list_foreign_group_memberships(
     return [
         entry['sid'] for entry in query_groupmap_entries(groupmap_file, [
             ['entry_type', '=', GroupmapEntryType.MEMBERSHIP.name],
-            ['members', 'rin', alias_sid]
+            ['groups', 'rin', alias_sid]
         ], {})
     ]
