@@ -68,7 +68,7 @@ def list_apps(
         apps.append({
             'name': app_name,
             'id': app_name,
-            'active_workloads': workloads,
+            'active_workloads': get_default_workload_values() if state == 'STOPPED' else workloads,
             'state': state,
             'upgrade_available': upgrade_available_for_app(train_to_apps_version_mapping, app_metadata['metadata']),
             **app_metadata,
