@@ -235,7 +235,7 @@ class SMBService(Service):
         Latter occurs when group mapping is lost. In case of invalid entries, we store
         list of SIDS to be removed. SID is necessary and sufficient for groupmap removal.
         """
-        rv = {"builtins": {}, "local": {}, "local_builtins": {}}
+        rv = {"builtins": {}, "local": {}, "local_builtins": {}, "invalid": {}}
 
         localsid = self.middleware.call_sync('smb.local_server_sid')
         legacy_entries = []
@@ -292,6 +292,17 @@ class SMBService(Service):
 
     @private
     def groupmap_listmem(self, sid):
+        """
+        This method returns a list of SIDS that are members of the specified SID.
+
+        Samba's group mapping database can contain foreign group mappings for particular SID entries
+        This provides nesting for groups, and SID membership is evaluated when samba overrides
+        POSIX permissions for example when a user is a member of the S-1-5-32-544 (BUILTIN\\admininstrators)
+
+        Per MS-DTYP certain well-known SIDs / rids must be members of certain builtin groups. For
+        example, the administrators RID for a domain (remote and local) must be a member of S-1-5-32-544
+        otherwise domain admins won't have DACL override privileges.
+        """
         if not sid_is_valid(sid):
             raise ValueError(f'{sid}: not a valid SID')
 
@@ -302,6 +313,15 @@ class SMBService(Service):
 
     @private
     def sync_builtins(self, to_add):
+        """
+        builtin groups are automatically allocated by winbindd / idmap_tdb. We want these
+        mappings to be written deterministically so that if for some horrible reason an
+        end-users decides to write these GIDs to an ACL entry it is consistent between
+        TrueNAS servers and persistent across updates.
+        """
+
+        # Because the beginning range is determined by the range of IDs allocated for BUILTIN
+        # users we have to request from the samba running configuration
         idmap_backend = self.middleware.call_sync("smb.getparm", "idmap config * : backend", "GLOBAL")
         idmap_range = self.middleware.call_sync("smb.getparm", "idmap config * : range", "GLOBAL")
 
@@ -314,7 +334,9 @@ class SMBService(Service):
 
         low_range = int(idmap_range.split("-")[0].strip())
         for b in (SMBBuiltin.ADMINISTRATORS, SMBBuiltin.USERS, SMBBuiltin.GUESTS):
-            gid = low_range + b.rid - 544
+            offset = b.rid - SMBBuiltin.ADMINISTRATORS.rid
+
+            gid = low_range + offset
             to_add.append(SMBGroupMap(
                 sid=b.sid,
                 gid=gid,
@@ -337,6 +359,9 @@ class SMBService(Service):
         4) flush various caches if required.
         """
         entries = []
+        if (status := self.middleware.call_sync('failover.status')) not in ('SINGLE', 'MASTER'):
+            self.middleware.logger.debug('%s: skipping groupmap sync due to failover status', status)
+            return
 
         if not bypass_sentinel_check and not self.middleware.call_sync('smb.is_configured'):
             raise CallError(
