@@ -4,8 +4,8 @@
 	sudo_path = "/usr/bin/sudo"
 %>\
 CMDSCRIPT   "${sudo_path} /usr/local/bin/custom-upssched-cmd"
-PIPEFN      /var/run/nut/upssched.pipe
-LOCKFN      /var/run/nut/upssched.lock
+PIPEFN      /var/run/nut/private/upssched.pipe
+LOCKFN      /var/run/nut/private/upssched.lock
 
 AT NOCOMM   * EXECUTE NOTIFY-NOCOMM
 AT COMMBAD  * START-TIMER NOTIFY-COMMBAD 10
