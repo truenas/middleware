@@ -1,20 +1,11 @@
 import os
+import typing
 import yaml
-from collections import namedtuple
 
 from .path import get_collective_metadata_path, get_installed_app_metadata_path
 
 
-app_details = namedtuple('app_details', ['name', 'version'])
-
-
-def get_app_details_from_version_path(version_path: str) -> app_details:
-    # TODO: Remove this as well probably as we don't require it really
-    version_path = version_path.split('/')
-    return app_details(name=version_path[-3], version=version_path[-1])
-
-
-def get_app_metadata(app_name: str) -> dict[str, str]:
+def get_app_metadata(app_name: str) -> dict[str, typing.Any]:
     try:
         with open(get_installed_app_metadata_path(app_name), 'r') as f:
             return yaml.safe_load(f)
