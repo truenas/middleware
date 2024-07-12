@@ -3,7 +3,7 @@ import errno
 import shutil
 import textwrap
 
-from middlewared.schema import accepts, Bool, Dict, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
 from middlewared.service import CallError, CRUDService, filterable, job
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
@@ -25,7 +25,42 @@ class AppService(CRUDService):
 
     ENTRY = Dict(
         'app_query',
-        # TODO: Fill this in
+        Str('name'),
+        Str('id'),
+        Str('state'),
+        Bool('upgrade_available'),
+        Str('human_version'),
+        Str('version'),
+        Dict('metadata', additional_attrs=True),
+        Dict(
+            'active_workloads',
+            Int('containers'),
+            List('used_ports', items=[Dict(
+                'used_port',
+                Str('container_port'),
+                Str('protocol'),
+                List('host_ports', items=[Dict(
+                    'host_port',
+                    Str('host_port'),
+                    Str('host_ip'),
+                )]),
+            )]),
+            List('container_details', items=[Dict(
+                'container_detail',
+                Str('service_name'),
+                Str('image'),
+                List('port_config'),
+                Str('state'),
+                List('volume_mounts'),
+            )]),
+            List('volumes', items=[Dict(
+                'volume',
+                Str('source'),
+                Str('destination'),
+                Str('mode'),
+                Str('type'),
+            )]),
+        ),
         additional_attrs=True,
     )
 
