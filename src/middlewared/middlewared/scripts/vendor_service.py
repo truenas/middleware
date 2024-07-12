@@ -1,18 +1,9 @@
+from dotenv import load_dotenv
 import hashlib
-import os
 import subprocess
 import sys
 
 from truenas_api_client import Client
-
-
-def load_envvars(envvars_file: str):
-    try:
-        with open(envvars_file) as f:
-            env_vars = dict(line.strip().split("=", 1) for line in f if line.strip() and not line.startswith("#"))
-        os.environ.update(env_vars)
-    except (OSError, ValueError):
-        pass
 
 
 def get_hostid():
@@ -28,7 +19,8 @@ def main():
         vendor_name = client.call("system.vendor.name")
         if vendor_name == "HexOS":
             url = "wss://api.hexos.com"
-            load_envvars("/etc/default/websocat")
+            envvars_file = "/etc/default/websocat"
+            load_dotenv(dotenv_path=envvars_file, override=True)
 
             systemd_opts = (
                 "--unit=websocat",
