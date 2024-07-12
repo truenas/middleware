@@ -1,7 +1,6 @@
 import pytest
 import sys
 import os
-from pytest_dependency import depends
 import secrets
 import string
 import uuid
@@ -11,10 +10,11 @@ sys.path.append(apifolder)
 from protocols import smb_connection
 from utils import create_dataset
 from auto_config import pool_name
-from middlewared.test.integration.assets.account import user, group
+from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset as make_dataset
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.system import reset_systemd_svcs
 
 
 AUDIT_WAIT = 10
@@ -24,7 +24,7 @@ PASSWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in r
 
 
 @pytest.fixture(scope='module')
-def initialize_for_smb_tests(request):
+def smb_info():
     with make_dataset('smb-cifs', data={'share_type': 'SMB'}) as ds:
         with user({
             'username': SHAREUSER,
@@ -34,42 +34,72 @@ def initialize_for_smb_tests(request):
         }, get_instance=False):
             with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
                 'purpose': 'NO_PRESET',
-                'guestok': True,
             }) as s:
                 try:
                     call('smb.update', {
-                        'enable_smb1': True,
                         'guest': SHAREUSER
                     })
+                    call('service.update', 'cifs', {'enable': True})
                     call('service.start', 'cifs')
                     yield {'dataset': ds, 'share': s}
                 finally:
                     call('smb.update', {
-                        'enable_smb1': False,
                         'guest': 'nobody'
                     })
                     call('service.stop', 'cifs')
+                    call('service.update', 'cifs', {'enable': False})
 
 
-@pytest.mark.dependency(name="smb_initialized")
-def test_001_enable_smb1(initialize_for_smb_tests):
-    global smb_info
-    global smb_id
-    global test_420_ds_name
-    smb_info = initialize_for_smb_tests
+@pytest.fixture(scope='function')
+def enable_guest(smb_info):
     smb_id = smb_info['share']['id']
-    test_420_ds_name = smb_info['dataset']
+    call('sharing.smb.update', smb_id, {'guestok': True})
+    try:
+        yield
+    finally:
+        call('sharing.smb.update', smb_id, {'guestok': False})
 
 
-@pytest.mark.parametrize('params', [
+@pytest.fixture(scope='function')
+def enable_aapl():
+    reset_systemd_svcs('smbd')
+    call('smb.update', {'aapl_extensions': True})
+
+    try:
+        yield
+    finally:
+        call('smb.update', {'aapl_extensions': False})
+
+
+@pytest.fixture(scope='function')
+def enable_smb1():
+    reset_systemd_svcs('smbd')
+    call('smb.update', {'enable_smb1': True})
+
+    try:
+        yield
+    finally:
+        call('smb.update', {'enable_smb1': False})
+
+
+@pytest.fixture(scope='function')
+def enable_recycle_bin(smb_info):
+    smb_id = smb_info['share']['id']
+    call('sharing.smb.update', smb_id, {'recyclebin': True})
+
+    try:
+        yield
+    finally:
+        call('sharing.smb.update', smb_id, {'recyclebin': False})
+
+
+@pytest.mark.parametrize('proto,runas', [
     ('SMB1', 'GUEST'),
     ('SMB2', 'GUEST'),
     ('SMB1', SHAREUSER),
     ('SMB2', SHAREUSER)
 ])
-def test_012_test_basic_smb_ops(request, params):
-    depends(request, ["smb_initialized"], scope="session")
-    proto, runas = params
+def test__basic_smb_ops(enable_smb1, enable_guest, proto, runas):
     with smb_connection(
         share=SMB_NAME,
         username=runas,
@@ -100,14 +130,10 @@ def test_012_test_basic_smb_ops(request, params):
         assert c.ls('/') == []
 
 
-def test_018_setting_enable_smb1_to_false(request):
-    depends(request, ["smb_initialized"], scope="session")
-    call('smb.update', {"enable_smb1": False})
-
-
-def test_019_change_sharing_smd_home_to_true_and_set_guestok_to_false(request):
-    depends(request, ["smb_initialized"], scope="session")
-    share = call('sharing.smb.update', smb_id, {'home': True, "guestok": False})
+def test__change_sharing_smd_home_to_true(smb_info):
+    reset_systemd_svcs('smbd')
+    smb_id = smb_info['share']['id']
+    share = call('sharing.smb.update', smb_id, {'home': True})
     try:
         share_path = call('smb.getparm', 'path', 'homes')
         assert share_path == f'{share["path_local"]}/%U'
@@ -120,9 +146,8 @@ def test_019_change_sharing_smd_home_to_true_and_set_guestok_to_false(request):
     assert obey_pam_restrictions is False
 
 
-def test_034_change_timemachine_to_true(request):
-    depends(request, ["smb_initialized"], scope="session")
-    call('smb.update', {'aapl_extensions': True})
+def test__change_timemachine_to_true(enable_aapl, smb_info):
+    smb_id = smb_info['share']['id']
     call('sharing.smb.update', smb_id, {'timemachine': True})
     try:
         share_info = call('sharing.smb.query', [['id', '=', smb_id]], {'get': True})
@@ -135,15 +160,6 @@ def test_034_change_timemachine_to_true(request):
         assert 'fruit' in vfs_obj
     finally:
         call('sharing.smb.update', smb_id, {'timemachine': False})
-        call('smb.update', {'aapl_extensions': False})
-
-
-@pytest.mark.dependency(name="SMB_RECYCLE_CONFIGURED")
-def test_039_enable_recycle_bin(request):
-    depends(request, ["smb_initialized"], scope="session")
-    share_info = call('sharing.smb.update', smb_id, {'recyclebin': True})
-    vfs_obj = call('smb.getparm', 'vfs objects', share_info['name'])
-    assert 'recycle' in vfs_obj
 
 
 def do_recycle_ops(c, has_subds=False):
@@ -182,9 +198,8 @@ def do_recycle_ops(c, has_subds=False):
     assert c.ls(f'subds/.recycle/{SHAREUSER}/') == []
 
 
-def test_042_recyclebin_functional_test(request):
-    depends(request, ["SMB_RECYCLE_CONFIGURED"], scope="session")
-    with create_dataset(f'{test_420_ds_name}/subds', {'share_type': 'SMB'}):
+def test__recyclebin_functional_test(enable_recycle_bin, smb_info):
+    with create_dataset(f'{smb_info["dataset"]}/subds', {'share_type': 'SMB'}):
         with smb_connection(
             share=SMB_NAME,
             username=SHAREUSER,
@@ -198,12 +213,12 @@ def test_042_recyclebin_functional_test(request):
     {'global': {'aapl_extensions': True}, 'share': {'aapl_name_mangling': False}},
     {'global': {'aapl_extensions': False}, 'share': {}},
 ])
-def test_043_recyclebin_functional_test_subdir(request, smb_config):
-    depends(request, ["SMB_RECYCLE_CONFIGURED"], scope="session")
+def test__recyclebin_functional_test_subdir(smb_info, smb_config):
     tmp_ds = f"{pool_name}/recycle_test"
     tmp_ds_path = f'/mnt/{tmp_ds}/subdir'
     tmp_share_name = 'recycle_test'
 
+    reset_systemd_svcs('smbd')
     call('smb.update', smb_config['global'])
     # basic tests of recyclebin operations
     with create_dataset(tmp_ds, {'share_type': 'SMB'}):
@@ -247,7 +262,7 @@ def test_043_recyclebin_functional_test_subdir(request, smb_config):
                 assert val == b'boo'
 
 
-def test_056_netbios_name_change_check_sid(request):
+def test__netbios_name_change_check_sid():
     """ changing netbiosname should not alter our local sid value """
     old_sid = call('smb.config')['cifs_SID']
     new_sid = call('smb.update', {'netbiosname': 'nb_new'})['cifs_SID']
@@ -343,7 +358,7 @@ def do_audit_ops(svc):
     return call('auditbackend.query', 'SMB', [['event', '!=', 'AUTHENTICATION']])
 
 
-def test_060_audit_log(request):
+def test__audit_log(request):
     def get_event(event_list, ev_type):
         for e in event_list:
             if e['event'] == ev_type:
@@ -351,7 +366,6 @@ def test_060_audit_log(request):
 
         return None
 
-    depends(request, ["smb_initialized"], scope="session")
     with make_dataset('smb-audit', data={'share_type': 'SMB'}) as ds:
         with smb_share(os.path.join('/mnt', ds), 'SMB_AUDIT', {
             'purpose': 'NO_PRESET',
@@ -428,5 +442,5 @@ def test_060_audit_log(request):
     'local.replace',
     'local.crypto.md4'
 ])
-def test_065_local_torture(request, torture_test):
+def test__local_torture(request, torture_test):
     ssh(f'smbtorture //127.0.0.1 {torture_test}')
