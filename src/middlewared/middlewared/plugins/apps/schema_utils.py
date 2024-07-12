@@ -1,5 +1,4 @@
 import itertools
-from typing import Tuple, Union
 
 from middlewared.service import ValidationErrors
 from middlewared.schema import (
@@ -36,7 +35,7 @@ SCHEMA_MAPPING = {
 
 
 def construct_schema(
-    item_version_details: dict, new_values: dict, update: bool, old_values: Union[dict, object] = NOT_PROVIDED
+    item_version_details: dict, new_values: dict, update: bool, old_values: dict | object = NOT_PROVIDED
 ) -> dict:
     schema_name = f'app_{"update" if update else "create"}'
     attrs = list(itertools.chain.from_iterable(
@@ -81,7 +80,7 @@ def update_conditional_defaults(dict_obj: Dict, variable_details: dict) -> Dict:
     return dict_obj
 
 
-def get_schema(variable_details: dict, update: bool, existing: Union[dict, object] = NOT_PROVIDED):
+def get_schema(variable_details: dict, update: bool, existing: dict | object = NOT_PROVIDED) -> list:
     schema_details = variable_details['schema']
     schema_class = SCHEMA_MAPPING[schema_details['type']]
     cur_val = existing.get(variable_details['variable'], NOT_PROVIDED) if isinstance(existing, dict) else NOT_PROVIDED
@@ -142,7 +141,7 @@ def get_schema(variable_details: dict, update: bool, existing: Union[dict, objec
     return result
 
 
-def get_list_item_from_value(value: list, question_attr: List) -> Tuple[int,  Attribute]:
+def get_list_item_from_value(value: list, question_attr: List) -> tuple[int,  Attribute]:
     for index, attr in enumerate(question_attr.items):
         try:
             attr.validate(value)
