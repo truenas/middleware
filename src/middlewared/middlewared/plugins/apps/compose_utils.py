@@ -9,7 +9,7 @@ from .utils import PROJECT_PREFIX, run
 
 def compose_action(
     app_name: str, app_version: str, action: typing.Literal['up', 'down'], *,
-    force_recreate: bool = False, remove_orphans: bool = False,
+    force_recreate: bool = False, remove_orphans: bool = False, remove_images: bool = False,
 ):
     compose_files = list(itertools.chain(
         *[('-f', item) for item in get_rendered_templates_of_app(app_name, app_version)]
@@ -28,6 +28,8 @@ def compose_action(
     elif action == 'down':
         if remove_orphans:
             args.append('--remove-orphans')
+        if remove_images:
+            args.extend(['--rmi', 'all'])
         args.append('-v')
     else:
         raise CallError(f'Invalid action {action!r} for app {app_name!r}')

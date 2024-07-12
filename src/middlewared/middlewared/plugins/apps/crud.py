@@ -3,7 +3,7 @@ import errno
 import shutil
 import textwrap
 
-from middlewared.schema import accepts, Dict, returns, Str
+from middlewared.schema import accepts, Bool, Dict, returns, Str
 from middlewared.service import CallError, CRUDService, filterable, job
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
@@ -179,15 +179,22 @@ class AppService(CRUDService):
         job.set_progress(100, f'Update completed for {app_name!r}')
         return self.get_instance__sync(app_name)
 
-    @accepts(Str('app_name'))
+    @accepts(
+        Str('app_name'),
+        Dict(
+            'options',
+            Bool('remove_images', default=True),
+        )
+    )
     @job(lock=lambda args: f'app_delete_{args[0]}')
-    def do_delete(self, job, app_name):
+    def do_delete(self, job, app_name, options):
         """
         Delete `app_name` app.
         """
         app_config = self.get_instance__sync(app_name)
         job.set_progress(20, f'Deleting {app_name!r} app')
-        compose_action(app_name, app_config['version'], 'down', remove_orphans=True)
+        kwargs = {'remove_images': options['remove_images']}
+        compose_action(app_name, app_config['version'], 'down', remove_orphans=True, **kwargs)
         job.set_progress(80, 'Cleaning up resources')
         shutil.rmtree(get_installed_app_path(app_name))
         job.set_progress(100, f'Deleted {app_name!r} app')
