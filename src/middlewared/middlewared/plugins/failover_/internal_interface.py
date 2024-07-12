@@ -97,10 +97,16 @@ class InternalInterfaceService(Service):
             self.http_site = await self.middleware.start_tcp_site(internal_ip)
 
 
+async def __event_system_ready(middleware, event_type, args):
+    await middleware.call('failover.internal_interface.pre_sync')
+
+
 async def setup(middleware):
     # on HA systems, we bind ourselves on 127.0.0.1:6000, however
     # often times developers/CI/CD do `systemctl restart middlewared`
     # which will tear down the local listening socket so we need to
     # be sure and set it up everytime middleware starts. This is a
     # NO-OP otherwise.
-    await middleware.call('failover.internal_interface.pre_sync')
+    middleware.event_subscribe('system.ready', __event_system_ready)
+    if await middleware.call('system.ready'):
+        await middleware.call('failover.internal_interface.pre_sync')
