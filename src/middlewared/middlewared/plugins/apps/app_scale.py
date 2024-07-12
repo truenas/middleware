@@ -19,7 +19,9 @@ class AppService(Service):
         """
         app_config = self.middleware.call_sync('app.get_instance', app_name)
         job.set_progress(20, f'Stopping {app_name!r} app')
-        compose_action(app_name, app_config['version'], 'down', remove_orphans=True)
+        compose_action(
+            app_name, app_config['version'], 'down', remove_orphans=True, remove_images=False, remove_volumes=False,
+        )
         job.set_progress(100, f'Stopped {app_name!r} app')
 
     @accepts(Str('app_name'))

@@ -193,8 +193,10 @@ class AppService(CRUDService):
         """
         app_config = self.get_instance__sync(app_name)
         job.set_progress(20, f'Deleting {app_name!r} app')
-        kwargs = {'remove_images': options['remove_images']}
-        compose_action(app_name, app_config['version'], 'down', remove_orphans=True, **kwargs)
+        compose_action(
+            app_name, app_config['version'], 'down', remove_orphans=True,
+            remove_volumes=True, remove_images=options['remove_images'],
+        )
         job.set_progress(80, 'Cleaning up resources')
         shutil.rmtree(get_installed_app_path(app_name))
         job.set_progress(100, f'Deleted {app_name!r} app')
