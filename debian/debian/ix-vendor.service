@@ -5,7 +5,7 @@ After=middlewared.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-TimeoutStartSec=1200
+TimeoutStartSec=30
 ExecStart=/usr/bin/vendor_service
 StandardOutput=null
 
