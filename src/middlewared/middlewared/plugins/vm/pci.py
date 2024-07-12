@@ -1,18 +1,18 @@
 import collections
 import os
-import pathlib
 import re
 
 from pyudev import Context
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import private, Service, ValidationErrors
-from middlewared.utils.gpu import get_gpus, SENSITIVE_PCI_DEVICE_TYPES
+from middlewared.utils.gpu import get_gpus
+from middlewared.utils.iommu import get_iommu_groups_info
+from middlewared.utils.pci import get_pci_device_class, SENSITIVE_PCI_DEVICE_TYPES
 
-from .utils import convert_pci_id_to_vm_pci_slot, get_pci_device_class
+from .utils import convert_pci_id_to_vm_pci_slot
 
 
-RE_DEVICE_NAME = re.compile(r'(\w+):(\w+):(\w+).(\w+)')
 RE_DEVICE_PATH = re.compile(r'pci_(\w+)_(\w+)_(\w+)_(\w+)')
 
 
@@ -26,30 +26,6 @@ class VMDeviceService(Service):
     def iommu_enabled(self):
         """Returns "true" if iommu is enabled, "false" otherwise"""
         return os.path.exists('/sys/kernel/iommu_groups')
-
-    @private
-    def get_iommu_groups_info(self):
-        addresses = collections.defaultdict(list)
-        final = dict()
-        try:
-            for i in pathlib.Path('/sys/kernel/iommu_groups').glob('*/devices/*'):
-                if not i.is_dir() or not i.parent.parent.name.isdigit() or not RE_DEVICE_NAME.fullmatch(i.name):
-                    continue
-
-                iommu_group = int(i.parent.parent.name)
-                dbs, func = i.name.split('.')
-                dom, bus, slot = dbs.split(':')
-                addresses[iommu_group].append({
-                    'domain': f'0x{dom}',
-                    'bus': f'0x{bus}',
-                    'slot': f'0x{slot}',
-                    'function': f'0x{func}',
-                })
-                final[i.name] = {'number': iommu_group, 'addresses': addresses[iommu_group]}
-        except FileNotFoundError:
-            pass
-
-        return final
 
     @private
     def get_pci_device_default_data(self):
@@ -120,7 +96,7 @@ class VMDeviceService(Service):
     @private
     def get_all_pci_devices_details(self):
         result = dict()
-        iommu_info = self.get_iommu_groups_info()
+        iommu_info = get_iommu_groups_info()
         for i in Context().list_devices(subsystem='pci'):
             key = f"pci_{i.sys_name.replace(':', '_').replace('.', '_')}"
             result[key] = self.get_pci_device_details(i, iommu_info)
@@ -129,7 +105,7 @@ class VMDeviceService(Service):
     @private
     def get_single_pci_device_details(self, pcidev):
         result = dict()
-        iommu_info = self.get_iommu_groups_info()
+        iommu_info = get_iommu_groups_info()
         for i in filter(lambda x: x.sys_name == pcidev, Context().list_devices(subsystem='pci')):
             key = f"pci_{i.sys_name.replace(':', '_').replace('.', '_')}"
             result[key] = self.get_pci_device_details(i, iommu_info)
@@ -214,7 +190,7 @@ class VMDeviceService(Service):
 
         verrors.check()
 
-        iommu_groups = self.get_iommu_groups_info()
+        iommu_groups = get_iommu_groups_info()
         iommu_groups_mapping_with_group_no = collections.defaultdict(set)
         for pci_slot, pci_details in iommu_groups.items():
             iommu_groups_mapping_with_group_no[pci_details['number']].add(convert_pci_id_to_vm_pci_slot(pci_slot))

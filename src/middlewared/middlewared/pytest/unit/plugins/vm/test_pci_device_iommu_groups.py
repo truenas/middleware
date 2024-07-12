@@ -1,8 +1,7 @@
 from pathlib import PosixPath
 from unittest.mock import Mock, patch
 
-from middlewared.pytest.unit.middleware import Middleware
-from middlewared.plugins.vm.pci import VMDeviceService
+from middlewared.utils.iommu import get_iommu_groups_info
 
 
 DEVICES_PATH = [
@@ -86,6 +85,6 @@ IOMMU_GROUPS = {
 
 
 def test_iommu_groups():
-    with patch('middlewared.plugins.vm.pci.pathlib.PosixPath.is_dir', Mock(return_value=True)):
-        with patch('middlewared.plugins.vm.pci.pathlib.Path.glob', Mock(return_value=DEVICES_PATH)):
-            assert VMDeviceService(Middleware()).get_iommu_groups_info() == IOMMU_GROUPS
+    with patch('middlewared.utils.iommu.pathlib.PosixPath.is_dir', Mock(return_value=True)):
+        with patch('middlewared.utils.iommu.pathlib.Path.glob', Mock(return_value=DEVICES_PATH)):
+            assert get_iommu_groups_info() == IOMMU_GROUPS
