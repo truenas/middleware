@@ -1,7 +1,8 @@
-from dotenv import load_dotenv
 import hashlib
 import subprocess
 import sys
+
+from dotenv import dotenv_values
 
 from truenas_api_client import Client
 
@@ -20,7 +21,7 @@ def main():
         if vendor_name == "HexOS":
             url = "wss://api.hexos.com"
             envvars_file = "/etc/default/websocat"
-            load_dotenv(dotenv_path=envvars_file, override=True)
+            envvars = dotenv_values(envvars_file)
 
             systemd_opts = (
                 "--unit=websocat",
@@ -29,6 +30,7 @@ def main():
                 "--property=RestartSec=10",
                 "--uid=www-data",
                 f"--setenv=URL={url}",
+                *[f"--setenv={name}={value}" for name, value in envvars.items()]
             )
 
             wsocat_path = "/usr/local/libexec/wsocat"
