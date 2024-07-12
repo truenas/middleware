@@ -61,7 +61,7 @@ SAMPLE_OPTIONS = [
     'streams_xattr:store_stream_type=no',
     'strict locking=auto',
     '# oplocks=no  # breaks Time Machine',
-    ' level2 oplocks=no  #  breaks TM?',
+    ' level2 oplocks=no',
     '# spotlight=yes  # invalid without further config'
 ]
 
@@ -146,10 +146,14 @@ def test_007_renamed_shares_in_registry(request):
     assert len(reg_shares) == len(SHARES)
 
 
-def check_aux_param(param, share, expected):
+def check_aux_param(param, share, expected, fruit_enabled=False):
     val = call('smb.getparm', param, share)
     if param == 'vfs objects':
-        assert set(expected.split()) == set(val)
+        expected_objects = expected.split()
+        if fruit_enabled:
+            expected_objects.append('fruit')
+
+        assert set(expected_objects) == set(val)
     else:
         assert val == expected
 
@@ -241,7 +245,7 @@ def test_010_test_aux_param_on_update(request):
             continue
 
         aux, val = entry.split('=', 1)
-        check_aux_param(aux.strip(), new_name, val.strip())
+        check_aux_param(aux.strip(), new_name, val.strip(), True)
 
     """
     Verify comments aren't being stripped on update
