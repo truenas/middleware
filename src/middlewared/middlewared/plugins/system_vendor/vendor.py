@@ -20,12 +20,12 @@ class VendorService(Service):
         try:
             with open(SENTINEL_FILE_PATH, 'r') as file:
                 return json.load(file).get('name')
-        except:
+        except (OSError, json.JSONDecodeError, TypeError):
             return None
 
     @api_method(UnvendorArgs, UnvendorResult, private=True)
     def unvendor(self):
         try:
             os.remove(SENTINEL_FILE_PATH)
-        except FileNotFoundError:
+        except OSError:
             return None

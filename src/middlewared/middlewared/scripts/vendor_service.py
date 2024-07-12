@@ -11,7 +11,7 @@ def load_envvars(envvars_file: str):
         with open(envvars_file) as f:
             env_vars = dict(line.strip().split("=", 1) for line in f if line.strip() and not line.startswith("#"))
         os.environ.update(env_vars)
-    except:
+    except (OSError, ValueError):
         pass
 
 
@@ -19,7 +19,7 @@ def get_hostid():
     try:
         with open("/etc/hostid", "rb") as f:
             return hashlib.file_digest(f, "sha256").hexdigest()
-    except:
+    except OSError:
         pass
 
 
