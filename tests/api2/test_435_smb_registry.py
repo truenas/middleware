@@ -61,7 +61,7 @@ SAMPLE_OPTIONS = [
     'streams_xattr:store_stream_type=no',
     'strict locking=auto',
     '# oplocks=no  # breaks Time Machine',
-    ' level2 oplocks=no  #  breaks TM?',
+    ' level2 oplocks=no',
     '# spotlight=yes  # invalid without further config'
 ]
 

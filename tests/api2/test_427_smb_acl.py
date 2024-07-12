@@ -196,6 +196,7 @@ def test_006_test_preserve_dynamic_id_mapping(request):
 
     def _find_owner_rights(acl):
         for entry in acl:
+            assert entry['who'] is not None, str(acl)
             if 'owner rights' in entry['who']:
                 return True
 
