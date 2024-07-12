@@ -173,7 +173,7 @@ class AppService(CRUDService):
 
             raise e from None
         else:
-            self.middleware.call_sync('app.metadata.generate').wait_sync()
+            self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
             job.set_progress(100, f'{data["app_name"]!r} installed successfully')
             return self.get_instance__sync(app_name)
 
@@ -232,7 +232,10 @@ class AppService(CRUDService):
             app_name, app_config['version'], 'down', remove_orphans=True,
             remove_volumes=True, remove_images=options['remove_images'],
         )
-        job.set_progress(80, 'Cleaning up resources')
-        shutil.rmtree(get_installed_app_path(app_name))
+        try:
+            job.set_progress(80, 'Cleaning up resources')
+            shutil.rmtree(get_installed_app_path(app_name))
+        finally:
+            self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
         job.set_progress(100, f'Deleted {app_name!r} app')
         return True
