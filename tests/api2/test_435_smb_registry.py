@@ -145,10 +145,17 @@ def test__renamed_shares_in_registry(setup_for_tests):
     assert len(reg_shares) == len(SHARES)
 
 
-def check_aux_param(param, share, expected):
+def check_aux_param(param, share, expected, fruit_enable=False):
     val = call('smb.getparm', param, share)
     if param == 'vfs objects':
-        assert set(expected.split()) == set(val)
+        expected_vfs_objects = expected.split()
+        # We have to override someone's poor life choices and insert
+        # vfs_fruit so that they don't have mysteriously broken time
+        # machine shares
+        if fruit_enable:
+            expected_vfs_objects.append('fruit')
+
+        assert set(expected_vfs_objects) == set(val)
     else:
         assert val == expected
 
@@ -301,7 +308,7 @@ def test__test_aux_param_on_create(share_presets, setup_tm_share):
             continue
 
         aux, val = entry.split('=', 1)
-        check_aux_param(aux.strip(), share['name'], val.strip())
+        check_aux_param(aux.strip(), share['name'], val.strip(), True)
 
     """
     Verify comments aren't being stripped on update
