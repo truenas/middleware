@@ -1,3 +1,53 @@
+# Utilities that wrap around samba's group_mapping.tdb file
+#
+# test coverage provided by src/middlewared/middlewared/pytest/unit/utils/test_groupmap.py
+# sample tdb contents (via tdbdump)
+#
+# {
+# key(23) = "UNIXGROUP/S-1-5-32-546\00"
+# data(16) = "\83J]\05\04\00\00\00Guests\00\00"
+# }
+# {
+# key(58) = "UNIXGROUP/S-1-5-21-1137207236-3870220311-645177593-200042\00"
+# data(40) = "\B8\03\00\00\04\00\00\00truenas_sharing_administrators\00\00"
+# }
+# {
+# key(55) = "UNIXGROUP/S-1-5-21-1137207236-3870220311-645177593-512\00"
+# data(32) = " \02\00\00\04\00\00\00builtin_administrators\00\00"
+# }
+# {
+# key(58) = "UNIXGROUP/S-1-5-21-1137207236-3870220311-645177593-200090\00"
+# data(23) = "!\02\00\00\04\00\00\00builtin_users\00\00"
+# }
+# {
+# key(55) = "UNIXGROUP/S-1-5-21-1137207236-3870220311-645177593-514\00"
+# data(24) = "\22\02\00\00\04\00\00\00builtin_guests\00\00"
+# }
+# {
+# key(58) = "UNIXGROUP/S-1-5-21-1137207236-3870220311-645177593-200041\00"
+# data(41) = "\B7\03\00\00\04\00\00\00truenas_readonly_administrators\00\00"
+# }
+# {
+# key(54) = "MEMBEROF/S-1-5-21-1137207236-3870220311-645177593-512\00"
+# data(13) = "S-1-5-32-544\00"
+# }
+# {
+# key(23) = "UNIXGROUP/S-1-5-32-544\00"
+# data(24) = "\81J]\05\04\00\00\00Administrators\00\00"
+# }
+# {
+# key(57) = "MEMBEROF/S-1-5-21-1137207236-3870220311-645177593-200090\00"
+# data(13) = "S-1-5-32-545\00"
+# }
+# {
+# key(54) = "MEMBEROF/S-1-5-21-1137207236-3870220311-645177593-514\00"
+# data(13) = "S-1-5-32-546\00"
+# }
+# {
+# key(23) = "UNIXGROUP/S-1-5-32-545\00"
+# data(15) = "\82J]\05\04\00\00\00Users\00\00"
+# }
+
 import enum
 
 from base64 import b64decode, b64encode
@@ -50,7 +100,22 @@ class SMBGroupMembership:
 
 
 def _parse_unixgroup(tdb_key: str, tdb_val: str) -> SMBGroupMap:
-    """ parsing function to convert TDB key/value pair into SMBGroupMap """
+    """
+    parsing function to convert TDB key/value pair into SMBGroupMap
+
+    Sample TDB key:
+    "UNIXGROUP/S-1-5-21-1137207236-3870220311-645177593-200042\00"
+
+    Sample TDB value:
+    "\B8\03\00\00\04\00\00\00truenas_sharing_administrators\00\00"
+
+    first four bytes are gid, second four are sid type,
+    remainder are two null-terminated strings.
+
+    Returns a SMBGroupMap object in which `sid` attribute is populated with
+    value from key and remaining attributes are populated from
+    the TDB value.
+    """
     sid = tdb_key[len(UNIX_GROUP_KEY_PREFIX):]
     data = b64decode(tdb_val)
 
@@ -64,7 +129,22 @@ def _parse_unixgroup(tdb_key: str, tdb_val: str) -> SMBGroupMap:
 
 
 def _parse_memberof(tdb_key: str, tdb_val: str) -> SMBGroupMembership:
-    """ parsing function to convert TDB key/value pair into SMBGroupMembership """
+    """
+    parsing function to convert TDB key/value pair into SMBGroupMembership
+
+    Sample TDB key:
+    "MEMBEROF/S-1-5-21-1137207236-3870220311-645177593-512\00"
+
+    Sample TDB value:
+    "S-1-5-32-544 S-1-5-32-545\00"
+
+    TDB value is space-delimited list of alias SIDS of which the SID
+    specified in the TDB key is a member of.
+
+    Returns SMBGroupMembership object in which the `sid` attribute is set
+    based on the TDB key and the `members` attribute is a tuple of the sids
+    specified in TDB value.
+    """
     sid = tdb_key[len(MEMBEROF_PREFIX):]
     data = b64decode(tdb_val)
 
@@ -73,6 +153,7 @@ def _parse_memberof(tdb_key: str, tdb_val: str) -> SMBGroupMembership:
 
 
 def _groupmap_to_tdb_key_val(group_map: SMBGroupMap) -> tuple[str, str]:
+    """ convert a SMBGroupMap object to TDB key-value pair for insertion into TDB file """
     tdb_key = f'{UNIX_GROUP_KEY_PREFIX}{group_map.sid}'
     gid = ntohl(group_map.gid).to_bytes(4)
     sid_type = ntohl(group_map.sid_type).to_bytes(4)
@@ -84,6 +165,7 @@ def _groupmap_to_tdb_key_val(group_map: SMBGroupMap) -> tuple[str, str]:
 
 
 def _groupmem_to_tdb_key_val(group_mem: SMBGroupMembership) -> tuple[str, str]:
+    """ convert a SMBGroupMembership object to TDB key-value pair for insertion into TDB file """
     tdb_key = f'{MEMBEROF_PREFIX}{group_mem.sid}'
     data = ' '.join(set(group_mem.members)).encode() + b'\x00'
     return (tdb_key, b64encode(data))
@@ -181,23 +263,16 @@ def delete_groupmap_entry(
         hdl.delete(tdb_key)
 
 
-def foreign_group_memberships(
-    groupmap_file: GroupmapFile,
-    entry_sid: str
-) -> SMBGroupMembership:
-    if not isinstance(groupmap_file, GroupmapFile):
-        raise TypeError(f'{type(groupmap_file)}: expected GroupmapFile type.')
-
-    with get_tdb_handle(groupmap_file.value, GROUP_MAPPING_TDB_OPTIONS) as hdl:
-        tdb_key = f'{MEMBEROF_PREFIX}{entry_sid}'
-        tdb_val = hdl.get(tdb_key)
-        return _parse_memberof(tdb_key, tdb_val)
-
-
 def list_foreign_group_memberships(
     groupmap_file: GroupmapFile,
     alias_sid: str
 ) -> list[str]:
+    """
+    This performs equivalent of `net groupmap listsmem <sid>`. TDB entries associate
+    a SID with a list of groups of which it is a member. This function does the reverse
+    lookup by finding which groups are members of a given SID, and returns a list of
+    SIDs.
+    """
     if not isinstance(groupmap_file, GroupmapFile):
         raise TypeError(f'{type(groupmap_file)}: expected GroupmapFile type.')
 
