@@ -142,8 +142,8 @@ def _parse_memberof(tdb_key: str, tdb_val: str) -> SMBGroupMembership:
     specified in the TDB key is a member of.
 
     Returns SMBGroupMembership object in which the `sid` attribute is set
-    based on the TDB key and the `members` attribute is a tuple of the sids
-    specified in TDB value.
+    based on the TDB key and the `groups` attribute is a tuple of the sids
+    specified in TDB value (groups of which _this_ sid is a member of).
     """
     sid = tdb_key[len(MEMBEROF_PREFIX):]
     data = b64decode(tdb_val)
