@@ -96,7 +96,7 @@ class SMBService(Service):
                 members=(SMBBuiltin.GUESTS.sid,)
             ),
             SMBGroupMembership(
-                sid=groupmap['local'][545]['sid'],
+                sid=groupmap['local'][SMBBuiltin.USERS.rid]['sid'],
                 members=(SMBBuiltin.USERS.sid,)
             ),
         ]
@@ -108,7 +108,7 @@ class SMBService(Service):
         # Samba has special behavior if DomainRid.USERS is set for local domain
         # and so we map the builtin_users account to a normal sid then make it
         # a member of S-1-5-32-545
-        users = [groupmap['local'][545]['sid']]
+        users = [groupmap['local'][SMBBuiltin.USERS]['sid']]
 
         if (admin_group := self.middleware.call_sync('smb.config')['admin_group']):
             if (found := self.middleware.call_sync('group.query', [('group', '=', admin_group)])):
@@ -158,7 +158,7 @@ class SMBService(Service):
                 '%s: unexpected account present in group mapping configuration for groups '
                 'with the following sid %s. This grants the account privileges beyond what '
                 'would normally be granted by the backend in TrueNAS potentially indicating '
-                'an underlying security issue with. This mapping entry will be automatically '
+                'an underlying security issue. This mapping entry will be automatically '
                 'removed to restore the TrueNAS to its expected configuration.',
                 entry['sid'], entry['members']
             )
