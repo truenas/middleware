@@ -11,7 +11,9 @@ def get_rollback_versions(app_name: str, current_version: str) -> list[str]:
     rollback_versions = []
     with os.scandir(get_installed_app_versions_dir_path(app_name)) as scan:
         for entry in filter(
-            lambda e: e.name != current_version and e.is_dir() and RE_VERSION.findall(e.name), scan
+            lambda e: e.name != current_version and e.is_dir() and RE_VERSION.findall(e.name) and (
+                parse_version(e.name) < parse_version(current_version)
+            ), scan
         ):
             rollback_versions.append(entry.name)
 
