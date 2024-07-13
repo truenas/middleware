@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from middlewared.test.integration.assets.roles import unprivileged_user_fixture  # noqa
@@ -9,8 +10,20 @@ pytest.register_assert_rewrite("middlewared.test")
 
 @pytest.fixture(autouse=True)
 def fail_fixture():
+    # We need to flag test as having failed
     if failed[0] is not None:
-        pytest.exit(failed[0], 1)
+        pytest.exit(failed[0], pytest.ExitCode.TESTS_FAILED)
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_sessionfinish(session, exitstatus):
+    # This is called after test run is finished, right before returning
+    # exit to the system. At this point we introduce a custom error code
+    # to indicate to jenkins that the junit results shouldn't be trusted
+    # due to an early abort of the run (but we still want to present to
+    # developer
+    if failed[0] is not None:
+        session.exitstatus = os.EX_SOFTWARE
 
 
 @pytest.fixture(autouse=True)
