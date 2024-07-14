@@ -1,12 +1,16 @@
+import os
 from collections.abc import Callable
 
-from middlewared.schema import Cron, Dict, List
+from middlewared.schema import Cron, Dict, List, Str
 from middlewared.service import Service
 
+from .ix_apps.path import get_app_volume_path
 from .schema_utils import get_list_item_from_value, RESERVED_NAMES
 
 
-REF_MAPPING = {}
+REF_MAPPING = {
+    'normalize/ix_volume': 'ix_volume',
+}
 
 
 class AppSchemaService(Service):
@@ -66,4 +70,39 @@ class AppSchemaService(Service):
                 f'app.schema.normalize_{REF_MAPPING[ref]}', question_attr, value, complete_config, context
             )
 
+        return value
+
+    async def normalize_ix_volume(self, attr, value, complete_config, context):
+        # Let's allow ix volume attr to be a string as well making it easier to define a volume in questions.yaml
+        assert isinstance(attr, (Dict, Str)) is True
+
+        if isinstance(attr, Dict):
+            vol_data = {'name': value['dataset_name'], 'properties': value.get('properties') or {}}
+            acl_dict = value.get('acl_entries', {})
+        else:
+            vol_data = {'name': value, 'properties': {}}
+            acl_dict = None
+
+        ds_name = vol_data['name']
+
+        action_dict = next((d for d in context['actions'] if d['method'] == 'update_volumes'), None)
+        if not action_dict:
+            context['actions'].append({
+                'method': 'update_volumes',
+                'args': [context['app']['name'], [vol_data]],
+            })
+        elif ds_name not in [v['name'] for v in action_dict['args'][-1]]:
+            action_dict['args'][-1].append(vol_data)
+        else:
+            # We already have this in action dict, let's not add a duplicate
+            return value
+
+        host_path = os.path.join(get_app_volume_path(context['app']['name']), ds_name)
+        complete_config['ix_volumes'][ds_name] = host_path
+
+        if acl_dict:
+            # TODO: Complete me
+            pass
+            # acl_dict['path'] = host_path
+            # await self.normalize_acl(Dict(), acl_dict, complete_config, context)
         return value

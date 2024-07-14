@@ -11,6 +11,14 @@ def get_app_parent_config_path() -> str:
     return os.path.join(IX_APPS_MOUNT_PATH, 'app_configs')
 
 
+def get_app_parent_volume_path() -> str:
+    return os.path.join(IX_APPS_MOUNT_PATH, 'app_mounts')
+
+
+def get_app_volume_path(app_name: str) -> str:
+    return os.path.join(get_app_parent_volume_path(), app_name)
+
+
 def get_installed_app_path(app_name: str) -> str:
     return os.path.join(get_app_parent_config_path(), app_name)
 

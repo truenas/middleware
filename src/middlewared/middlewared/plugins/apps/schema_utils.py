@@ -13,7 +13,7 @@ RESERVED_NAMES = [
     ('ix_certificateAuthorities', dict),
     ('ix_externalInterfacesConfiguration', list),
     ('ix_externalInterfacesConfigurationNames', list),  # TODO: Fix the casing here please
-    ('ix_volumes', list),
+    ('ix_volumes', dict),
     (CONTEXT_KEY_NAME, dict),
 ]
 SCHEMA_MAPPING = {
