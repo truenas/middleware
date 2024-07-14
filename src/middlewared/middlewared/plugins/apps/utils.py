@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from middlewared.plugins.docker.state_utils import IX_APPS_MOUNT_PATH  # noqa
+from middlewared.plugins.docker.state_utils import DATASET_DEFAULTS, IX_APPS_MOUNT_PATH  # noqa
 
 
 PROJECT_PREFIX = 'ix-'
