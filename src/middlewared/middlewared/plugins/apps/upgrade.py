@@ -52,7 +52,7 @@ class AppService(Service):
             config = get_current_app_config(app_name, app['version'])
             config.update(options['values'])
             app_version_details = self.middleware.call_sync('catalog.app_version_details', version_path)
-            new_values, context = self.middleware.call_sync(
+            new_values = self.middleware.call_sync(
                 'app.schema.normalize_and_validate_values', app_version_details, config, False,
                 get_installed_app_path(app_name),
             )

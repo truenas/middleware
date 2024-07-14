@@ -28,13 +28,19 @@ class AppSchemaService(Service):
         dict_obj = await self.middleware.call(
             'app.schema.validate_values', item_details, values, update, app_data,
         )
-        return await self.normalize_values(dict_obj, values, update, {
+        new_values, context = await self.normalize_values(dict_obj, values, update, {
             'app': {
                 'name': app_dir.split('/')[-1],
                 'path': app_dir,
             },
             'actions': [],
         })
+        await self.perform_actions(context)
+        return new_values
+
+    async def perform_actions(self, context):
+        for action in sorted(context['actions'], key=lambda d: 0 if d['method'] == 'update_volumes' else 1):
+            await self.middleware.call(f'app.schema.action.{action["method"]}', *action['args'])
 
     async def normalize_values(self, dict_obj, values, update, context):
         for k in RESERVED_NAMES:

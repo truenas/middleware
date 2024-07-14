@@ -40,7 +40,7 @@ class AppService(Service):
             'catalog.app_version_details', get_installed_app_version_path(app_name, options['app_version'])
         )
         config = get_current_app_config(app_name, options['app_version'])
-        new_values, context = self.middleware.call_sync(
+        new_values = self.middleware.call_sync(
             'app.schema.normalize_and_validate_values', rollback_version, config, False,
             get_installed_app_path(app_name),
         )
