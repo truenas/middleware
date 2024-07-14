@@ -24,7 +24,7 @@ class AppSchemaService(Service):
         for method in REF_MAPPING.values():
             assert isinstance(getattr(self, f'normalize_{method}'), Callable) is True
 
-    async def normalise_and_validate_values(self, item_details, values, update, app_dir, app_data=None):
+    async def normalize_and_validate_values(self, item_details, values, update, app_dir, app_data=None):
         dict_obj = await self.middleware.call(
             'app.schema.validate_values', item_details, values, update, app_data,
         )

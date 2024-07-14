@@ -140,7 +140,7 @@ class AppService(CRUDService):
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
         new_values, context = self.middleware.call_sync(
-            'app.schema.normalise_and_validate_values', app_version_details, data['values'], False,
+            'app.schema.normalize_and_validate_values', app_version_details, data['values'], False,
             get_installed_app_path(app_name)
         )
 
@@ -200,7 +200,7 @@ class AppService(CRUDService):
         )
 
         new_values, context = self.middleware.call_sync(
-            'app.schema.normalise_and_validate_values', app_version_details, config, False,
+            'app.schema.normalize_and_validate_values', app_version_details, config, False,
             get_installed_app_path(app_name),
         )
 

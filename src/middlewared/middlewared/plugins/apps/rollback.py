@@ -41,7 +41,7 @@ class AppService(Service):
         )
         config = get_current_app_config(app_name, options['app_version'])
         new_values, context = self.middleware.call_sync(
-            'app.schema.normalise_and_validate_values', rollback_version, config, False,
+            'app.schema.normalize_and_validate_values', rollback_version, config, False,
             get_installed_app_path(app_name),
         )
         new_values = add_context_to_values(app_name, new_values, rollback=True)
