@@ -9,6 +9,7 @@ from .schema_utils import get_list_item_from_value, RESERVED_NAMES
 
 
 REF_MAPPING = {
+    'normalize/acl': 'acl',
     'normalize/ix_volume': 'ix_volume',
 }
 
@@ -107,8 +108,25 @@ class AppSchemaService(Service):
         complete_config['ix_volumes'][ds_name] = host_path
 
         if acl_dict:
-            # TODO: Complete me
-            pass
-            # acl_dict['path'] = host_path
-            # await self.normalize_acl(Dict(), acl_dict, complete_config, context)
+            acl_dict['path'] = host_path
+            await self.normalize_acl(Dict(), acl_dict, complete_config, context)
+        return value
+
+    async def normalize_acl(self, attr, value, complete_config, context):
+        assert isinstance(attr, Dict) is True
+
+        if not value or any(not value[k] for k in ('entries', 'path')):
+            return value
+
+        if (action_dict := next((d for d in context['actions'] if d['method'] == 'apply_acls'), None)) is None:
+            context['actions'].append({
+                'method': 'apply_acls',
+                'args': [{value['path']: value}],
+            })
+        elif value['path'] not in action_dict['args'][-1]:
+            action_dict['args'][-1][value['path']] = value
+        else:
+            # We already have this in action dict, let's not add a duplicate
+            return value
+
         return value
