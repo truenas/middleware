@@ -1,7 +1,7 @@
 import os
 from collections.abc import Callable
 
-from middlewared.schema import Cron, Dict, List, Str
+from middlewared.schema import Cron, Dict, Int, List, Str
 from middlewared.service import Service
 
 from .ix_apps.path import get_app_volume_path
@@ -9,6 +9,8 @@ from .schema_utils import get_list_item_from_value, RESERVED_NAMES
 
 
 REF_MAPPING = {
+    'definitions/certificate': 'certificate',
+    'definitions/certificate_authority': 'certificate_authorities',
     'normalize/acl': 'acl',
     'normalize/ix_volume': 'ix_volume',
 }
@@ -76,6 +78,28 @@ class AppSchemaService(Service):
             value = await self.middleware.call(
                 f'app.schema.normalize_{REF_MAPPING[ref]}', question_attr, value, complete_config, context
             )
+
+        return value
+
+    async def normalize_certificate(self, attr, value, complete_config, context):
+        assert isinstance(attr, Int) is True
+
+        if not value:
+            return value
+
+        complete_config['ix_certificates'][value] = await self.middleware.call('certificate.get_instance', value)
+
+        return value
+
+    async def normalize_certificate_authorities(self, attr, value, complete_config, context):
+        assert isinstance(attr, Int) is True
+
+        if not value:
+            return value
+
+        complete_config['ix_certificate_authorities'][value] = await self.middleware.call(
+            'certificateauthority.get_instance', value
+        )
 
         return value
 
