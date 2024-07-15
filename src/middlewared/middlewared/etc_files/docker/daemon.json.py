@@ -49,7 +49,7 @@ def render(service, middleware):
     return json.dumps({
         'data-root': data_root,
         'exec-opts': ['native.cgroupdriver=cgroupfs'],
-        'iptables': False,
+        'iptables': True,  # FIXME: VMs connectivity would be broken
         'storage-driver': 'overlay2',
         **gpu_configuration(middleware),
     })

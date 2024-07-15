@@ -9,6 +9,7 @@ from apps_validation.json_schema_utils import VERSION_VALIDATION_SCHEMA
 from catalog_reader.app import get_app_version_details as get_catalog_app_version_details
 from catalog_reader.questions import normalize_questions
 
+from middlewared.plugins.apps.schema_utils import construct_schema
 from middlewared.plugins.update_.utils import can_update
 from middlewared.service import CallError
 from middlewared.utils import sw_info
@@ -18,8 +19,6 @@ RE_VERSION_PATTERN = re.compile(r'(\d{2}\.\d{2}(?:\.\d)*)')  # We are only inter
 
 
 def get_app_default_values(version_details: dict) -> dict:
-    # FIXME: This needs to be done obviously
-    return {}
     return construct_schema(version_details, {}, False)['new_values']
 
 
