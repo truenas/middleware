@@ -132,7 +132,7 @@ class AppService(CRUDService):
             version = get_latest_version_from_app_versions(complete_app_details['versions'])
 
         if version not in complete_app_details['versions']:
-            raise CallError(f'Version {version} not found in {data["item"]} app', errno=errno.ENOENT)
+            raise CallError(f'Version {version} not found in {data["catalog_app"]} app', errno=errno.ENOENT)
 
         app_version_details = complete_app_details['versions'][version]
         self.middleware.call_sync('catalog.version_supported_error_check', app_version_details)
