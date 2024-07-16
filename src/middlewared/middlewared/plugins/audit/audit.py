@@ -558,6 +558,7 @@ class AuditService(ConfigService):
         try:
             await self.middleware.call('audit.update_audit_dataset', audit_config)
         except Exception:
+            await self.middleware.call('alert.oneshot_create', 'AuditSetup', None)
             self.logger.error('Failed to apply auditing dataset configuration.', exc_info=True)
 
     @private

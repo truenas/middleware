@@ -129,6 +129,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
             try:
                 conn.setup()
             except Exception:
+                self.middleware.call_sync('alert.oneshot_create', 'AuditBackendSetup', {"service": svc})
                 self.logger.error(
                     '%s: failed to set up auditing database connection.',
                     svc, exc_info=True
