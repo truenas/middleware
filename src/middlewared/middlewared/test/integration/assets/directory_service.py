@@ -221,8 +221,8 @@ def clear_ipa_info():
 @contextlib.contextmanager
 def ipa(
     basedn=FREEIPA_BASEDN,
-    binddn=FREEIPA_ADMINDN,
-    bindpw=FREEIPA_ADMINPW,
+    binddn=FREEIPA_ADMIN_BINDDN,
+    bindpw=FREEIPA_ADMIN_BINDPW,
     hostname=FREEIPA_HOSTNAME,
     nameserver=FREEIPA_IP,
     **kwargs
