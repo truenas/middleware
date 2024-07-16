@@ -1,8 +1,17 @@
 from logging import getLogger
 
-from middlewared.plugins.enclosure_.enums import (ElementStatus,
-                                                  RedfishStatusHealth,
-                                                  RedfishStatusState)
+from middlewared.plugins.enclosure_.constants import (
+    DISK_FRONT_KEY,
+    DISK_REAR_KEY,
+    DISK_TOP_KEY,
+    DISK_INTERNAL_KEY,
+    SUPPORTS_IDENTIFY_KEY,
+)
+from middlewared.plugins.enclosure_.enums import (
+    ElementStatus,
+    RedfishStatusHealth,
+    RedfishStatusState
+)
 from middlewared.plugins.enclosure_.slot_mappings import get_jbof_slot_info
 
 LOGGER = getLogger(__name__)
@@ -28,7 +37,6 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements={})
     # can get rid of duplicate logic in this module and in that class
     fake_enclosure = {
         'id': uuid,
-        'dmi': uuid,
         'model': model,
         'should_ignore': False,
         'sg': None,
@@ -62,12 +70,22 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements={})
             value_raw = 0x5000000
 
         mapped_slot = disks_map['versions']['DEFAULT']['model'][model][slot]['mapped_slot']
+        light = disks_map['versions']['DEFAULT']['id'][model][slot][SUPPORTS_IDENTIFY_KEY]
+        dfk = disks_map['versions']['DEFAULT']['id'][model][slot][DISK_FRONT_KEY]
+        drk = disks_map['versions']['DEFAULT']['id'][model][slot][DISK_REAR_KEY]
+        dtk = disks_map['versions']['DEFAULT']['id'][model][slot][DISK_TOP_KEY]
+        dik = disks_map['versions']['DEFAULT']['id'][model][slot][DISK_INTERNAL_KEY]
         fake_enclosure['elements']['Array Device Slot'][mapped_slot] = {
             'descriptor': f'Disk #{slot}',
             'status': status,
             'value': None,
             'value_raw': value_raw,
             'dev': device,
+            SUPPORTS_IDENTIFY_KEY: light,
+            DISK_FRONT_KEY: dfk,
+            DISK_REAR_KEY: drk,
+            DISK_TOP_KEY: dtk,
+            DISK_INTERNAL_KEY: dik,
             'original': {
                 'enclosure_id': uuid,
                 'enclosure_sg': None,
@@ -125,7 +143,7 @@ def map_redfish_psu_to_value(psu):
 
 def map_redfish_psu(psu):
     """Utility function to map a Redfish PSU data to our enclosure services format"""
-    # Redfish Data Model Specification https://www.dmtf.org/dsp/DSP0268 
+    # Redfish Data Model Specification https://www.dmtf.org/dsp/DSP0268
     # DSP0268_2024.1 6.103 PowerSupply 1.6.0
     # DSP0268_2023.2 6.103 PowerSupply 1.5.2
     # DSP0268_2023.1 6.97 PowerSupply 1.5.1
@@ -135,8 +153,12 @@ def map_redfish_psu(psu):
     # Example data from redfish
     # {'@odata.id': '/redfish/v1/Chassis/2U24/PowerSubsystem/PowerSupplies/PSU1',
     #  '@odata.type': '#PowerSupply.v1_5_1.PowerSupply',
-    #  'Actions': {'#PowerSupply.Reset': {'ResetType@Redfish.AllowableValues': ['On','ForceOff'],
-    #                                     'target': '/redfish/v1/Chassis/2U24/PowerSubsystem/PowerSupplies/PSU1/Actions/PowerSupply.Reset'}},
+    #  'Actions': {
+    #       '#PowerSupply.Reset': {
+    #           'ResetType@Redfish.AllowableValues': ['On','ForceOff'],
+    #           'target': '/redfish/v1/Chassis/2U24/PowerSubsystem/PowerSupplies/PSU1/Actions/PowerSupply.Reset'
+    #       }
+    #   },
     #  'FirmwareVersion': 'A00',
     #  'Id': 'PSU1',
     #  'LineInputStatus': 'Normal',
