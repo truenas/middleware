@@ -4,6 +4,7 @@ import stat
 from .activedirectory_health_mixin import ADHealthMixin
 from .ipa_health_mixin import IPAHealthMixin
 from .kerberos_health_mixin import KerberosHealthMixin
+from .ldap_health_mixin import LDAPHealthMixin
 from middlewared.plugins.ldap_.constants import SERVER_TYPE_FREEIPA
 from middlewared.service import Service
 from middlewared.service_exception import CallError
@@ -19,6 +20,7 @@ class DomainHealth(
     ADHealthMixin,
     IPAHealthMixin,
     KerberosHealthMixin,
+    LDAPHealthMixin,
 ):
 
     class Config:

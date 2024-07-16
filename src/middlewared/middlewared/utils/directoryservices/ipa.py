@@ -1,9 +1,9 @@
 import os
 
-from .ipa_constants import IPAPath
 from configparser import RawConfigParser
 from io import StringIO
 from tempfile import NamedTemporaryFile
+from .ipa_constants import IPAPath
 
 
 def generate_ipa_default_config(

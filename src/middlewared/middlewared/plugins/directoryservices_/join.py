@@ -2,6 +2,7 @@ import ipaddress
 
 from .activedirectory_join_mixin import ADJoinMixin
 from .ipa_join_mixin import IPAJoinMixin
+from .ldap_join_mixin import LDAPJoinMixin
 from middlewared.job import Job
 from middlewared.plugins.ldap_.constants import SERVER_TYPE_FREEIPA
 from middlewared.service import job, Service
@@ -15,6 +16,7 @@ class DomainConnection(
     Service,
     ADJoinMixin,
     IPAJoinMixin,
+    LDAPJoinMixin,
 ):
 
     class Config:

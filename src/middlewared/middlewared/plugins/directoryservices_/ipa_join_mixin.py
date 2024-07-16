@@ -3,6 +3,7 @@ import json
 import os
 import subprocess
 
+from dataclasses import as_dict
 from functools import cache
 from middlewared.job import Job
 from middlewared.plugins.ldap_.constants import SERVER_TYPE_FREEIPA
@@ -15,10 +16,12 @@ from middlewared.utils.directoryservices.ipactl_constants import (
     IpaOperation,
 )
 from middlewared.utils.directoryservices.krb5 import kerberos_ticket, ktutil_list_impl
+from middlewared.utils.lang import undefined
 from middlewared.service_exception import CallError
 from tempfile import NamedTemporaryFile
 
 IPACTL = ipa_constants.IPACmd.IPACTL.value
+
 
 
 def _parse_ipa_response(resp: subprocess.CompletedProcess) -> dict:
@@ -43,6 +46,19 @@ def _parse_ipa_response(resp: subprocess.CompletedProcess) -> dict:
 
 
 class IPAJoinMixin:
+    __ipa_smb_domain = undefined
+
+    def _ipa_leave(self) -> None:
+        """
+        This method is currently left unimplemented because it is not
+        currently exposed in public APIs, but will be as part of general
+        directory services redesign in future TrueNAS release.
+        """
+        raise CallError(
+            'Functionality to automatically leave an IPA domain has not yet '
+            'been implemented'
+        )
+
     def _ipa_activate(self) -> None:
         for etc_file in DSType.IPA.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
@@ -211,13 +227,18 @@ class IPAJoinMixin:
             self.middleware.call_sync('directoryservices.secrets.backup')
 
     @kerberos_ticket
-    @cache
-    def ipa_get_smb_domain_info(self):
+    def ipa_get_smb_domain_info(self) -> dict | None:
         """
         This information shouldn't change during normal course of
         operations in a FreeIPA domain. Cache a copy of it for future
         reference.
         """
+        if self.__ipa_smb_domain is None:
+            return None
+
+        elif self.__ipa_smb_domain is not undefined:
+            return as_dict(self.__ipa_smb_domain)
+
         if self.middleware.call_sync('directoryservices.status')['type'] != DSType.IPA.value:
             raise CallError('Not joined to IPA domain')
 
@@ -226,7 +247,18 @@ class IPAJoinMixin:
         ], check=False, capture_output=True)
 
         resp = _parse_ipa_response(getdom)
-        return resp[0] if resp else {}
+        if not resp:
+            self.__ipa_smb_domain = None
+            return None
+
+        self.__ipa_smb_domain = ipa_constants.IPASmbDomain(
+            netbios_name=resp[0]['netbios_name'],
+            domain_sid=resp[0]['domain_sid'],
+            domain_name=resp[0]['domain_name'],
+            range_id_min=resp[0]['range_min_id'],
+            range_id_max=resp[0]['range_max_id']
+        )
+        return as_dict(self.__ipa_smb_domain)
 
     @cache
     def _ipa_get_cacert(self) -> str:
@@ -294,6 +326,7 @@ class IPAJoinMixin:
         """
         ldap_config = self.middleware.call_sync('ldap.config')
         ipa_config = self.middleware.call_sync('ldap.ipa_config', ldap_config)
+        self.__ipa_smb_domain = undefined
 
         job.set_progress(15, 'Performing IPA join')
         resp = self._ipa_join_impl(

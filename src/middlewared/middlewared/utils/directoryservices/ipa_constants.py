@@ -1,4 +1,5 @@
 import enum
+from dataclasses import dataclass
 
 
 class IpaConfigName(enum.StrEnum):
@@ -28,3 +29,12 @@ class IPACmd(enum.Enum):
     """ Scripts and commands that are relevant to an IPA domain """
     IPACTL = '/usr/local/libexec/ipa_ctl.py'
     IPA = '/bin/ipa'
+
+
+@dataclass(frozen=True)
+class IPASmbDomain:
+    netbios_name: str
+    domain_sid: str
+    domain_name: str
+    range_id_min: int
+    range_id_max: int
