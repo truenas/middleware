@@ -231,6 +231,17 @@ class IPAJoinMixin:
         This information shouldn't change during normal course of
         operations in a FreeIPA domain. Cache a copy of it for future
         reference.
+
+        There are three possible states for this.
+
+        1. we've never checked before. In this case __ipa_smb_domain will be an
+           `undefined` object
+
+        2. we've checked but the IPA LDAP schema contains no SMB-related information
+           for some reason. In this case __ipa_smb_domain will be set to None
+
+        3. we've checked and have SMB domain info in which case we've stored an
+           IPASmbDomain instance and return it in dictionary form
         """
         if self.__ipa_smb_domain is None:
             return None
