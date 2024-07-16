@@ -7,13 +7,17 @@ import contextlib
 import urllib.parse
 
 import pytest
-from pytest_dependency import depends
+
+from auto_config import pool_name
+from functions import POST, DELETE, wait_on_job
+from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.utils import ssh
+from protocols import SMB
 from samba import ntstatus, NTSTATUSError
 
-from auto_config import pool_name, password, user
-from functions import POST, DELETE, SSH_TEST, wait_on_job
-from protocols import SMB
 
+SMB_PASSWORD = 'Abcd1234'
+SMB_USER = 'smbuser999'
 
 
 def passphrase_encryption():
@@ -115,28 +119,46 @@ def smb_connection(**kwargs):
         c.disconnect()
 
 
+@pytest.fixture(scope='module')
+def smb_user():
+    with user({
+        'username': SMB_USER,
+        'full_name': 'doug',
+        'group_create': True,
+        'password': SMB_PASSWORD,
+        'smb': True
+    }, get_instance=True) as u:
+        yield u
+
+
 @pytest.mark.dependency(name="create_dataset")
 @pytest.mark.parametrize("toggle_attachments", [True, False])
-def test_pool_dataset_unlock_smb(request, toggle_attachments):
-    depends(request, ["smb_001"], scope="session")
+def test_pool_dataset_unlock_smb(smb_user, toggle_attachments):
     # Prepare test SMB share
     with dataset("normal") as normal:
         with smb_share("normal", f"/mnt/{normal}"):
             # Create an encrypted SMB share, unlocking which might lead to SMB service interruption
             with dataset("encrypted", passphrase_encryption()) as encrypted:
                 with smb_share("encrypted", f"/mnt/{encrypted}"):
-                    cmd = f"touch /mnt/{encrypted}/secret"
-                    results = SSH_TEST(cmd, user, password)
-                    assert results['result'] is True, results['output']
+                    ssh(f"touch /mnt/{encrypted}/secret")
                     results = POST("/service/start/", {"service": "cifs"})
                     assert results.status_code == 200, results.text
                     lock_dataset(encrypted)
                     # Mount test SMB share
-                    with smb_connection(share="normal") as normal_connection:
+                    with smb_connection(
+                        share="normal",
+                        username=SMB_USER,
+                        password=SMB_PASSWORD
+                    ) as normal_connection:
                         # Locked share should not be mountable
                         with pytest.raises(NTSTATUSError) as e:
-                            with smb_connection(host=ip, share="encrypted"):
+                            with smb_connection(
+                                share="encrypted",
+                                username=SMB_USER,
+                                password=SMB_PASSWORD
+                            ):
                                 pass
+
                         assert e.value.args[0] == ntstatus.NT_STATUS_BAD_NETWORK_NAME
 
                         conn = normal_connection.show_connection()
@@ -148,12 +170,20 @@ def test_pool_dataset_unlock_smb(request, toggle_attachments):
 
                     if toggle_attachments:
                         # We should be able to mount encrypted share
-                        with smb_connection(share="encrypted") as encrypted_connection:
+                        with smb_connection(
+                            share="encrypted",
+                            username=SMB_USER,
+                            password=SMB_PASSWORD
+                        ) as encrypted_connection:
                             assert [x["name"] for x in encrypted_connection.ls("")] == ["secret"]
                     else:
                         # We should still not be able to mount encrypted share as we did not reload attachments
                         with pytest.raises(NTSTATUSError) as e:
-                            with smb_connection(share="encrypted"):
+                            with smb_connection(
+                                share="encrypted",
+                                username=SMB_USER,
+                                password=SMB_PASSWORD
+                            ):
                                 pass
 
                         assert e.value.args[0] == ntstatus.NT_STATUS_BAD_NETWORK_NAME
