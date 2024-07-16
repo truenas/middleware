@@ -37,6 +37,7 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements={})
     # can get rid of duplicate logic in this module and in that class
     fake_enclosure = {
         'id': uuid,
+        'dmi': uuid,
         'model': model,
         'should_ignore': False,
         'sg': None,
