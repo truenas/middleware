@@ -554,6 +554,8 @@ class AuditService(ConfigService):
                     'cleanup may be required', ds['id'], exc_info=True
                 )
 
+        # Dismiss any existing AuditSetup one-shot alerts
+        await self.middleware.call('alert.oneshot_delete', 'AuditSetup', None)
         audit_config = await self.middleware.call('audit.config')
         try:
             await self.middleware.call('audit.update_audit_dataset', audit_config)

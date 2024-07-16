@@ -4,40 +4,6 @@ from middlewared.test.integration.utils import call, ssh, mock
 from time import sleep
 
 
-def setup_test(alert_class, alert_key, path):
-    restore_val = None
-    match alert_class:
-        case 'AuditBackendSetup':
-            # A file in the dataset: set it immutable
-            ssh(f'chattr +i {path}')
-            lsattr = ssh(f'lsattr {path}')
-            assert lsattr[4] == 'i', lsattr
-            restore_val = path
-        case 'AuditDatasetCleanup':
-            # Directly tweak the zfs settings
-            call(
-                "zfs.dataset.update",
-                "boot-pool/ROOT/24.10.0-MASTER-20240709-021413/audit",
-                {"properties": {"org.freenas:refquota_warning": {"parsed": "70"}}}
-            )
-        case _:
-            pass
-
-    return restore_val
-
-
-def restore_test(alert_key, restore_val=()):
-    match alert_key:
-        case 'SMB':
-            # Remove immutable flag from file
-            assert restore_val != ""
-            ssh(f'chattr -i {restore_val}')
-            lsattr = ssh(f'lsattr {restore_val}')
-            assert lsattr[4] == '-', lsattr
-        case _:
-            pass
-
-
 @pytest.fixture(scope='function')
 def setup_state(request):
     """
@@ -50,18 +16,48 @@ def setup_state(request):
     if alert_key is not None:
         path += f"/{alert_key}.db"
     alert_class = request.param[1]
-    restore_data = ()
+    restore_data = None
     try:
+        # Remove any pre-existing alert cruft
         call('alert.oneshot_delete', alert_class, alert_key if alert_key is None else {'service': alert_key})
 
         alerts = call("alert.list")
         class_alerts = [alert for alert in alerts if alert['klass'] == alert_class]
         assert len(class_alerts) == 0, class_alerts
-        restore_data = setup_test(alert_class, alert_key, path)
+        match alert_class:
+            case 'AuditBackendSetup':
+                # A file in the dataset: set it immutable
+                ssh(f'chattr +i {path}')
+                lsattr = ssh(f'lsattr {path}')
+                assert lsattr[4] == 'i', lsattr
+                restore_data = path
+            case 'AuditDatasetCleanup':
+                # Directly tweak the zfs settings
+                call(
+                    "zfs.dataset.update",
+                    "boot-pool/ROOT/24.10.0-MASTER-20240709-021413/audit",
+                    {"properties": {"org.freenas:refquota_warning": {"parsed": "70"}}}
+                )
+            case _:
+                pass
         yield request.param
     finally:
-        restore_test(alert_key, restore_data)
-        call('alert.oneshot_delete', alert_class, alert_key if alert_key is None else {'service': alert_key})
+        match alert_class:
+            case 'AuditBackendSetup':
+                # Remove immutable flag from file
+                assert restore_data != ""
+                ssh(f'chattr -i {restore_data}')
+                lsattr = ssh(f'lsattr {restore_data}')
+                assert lsattr[4] == '-', lsattr
+                # Restore backend file descriptors and dismiss alerts
+                call('auditbackend.setup')
+            case 'AuditSetup':
+                # Dismiss alerts
+                call('audit.setup')
+            case _:
+                pass
+        # call('alert.oneshot_delete', alert_class, alert_key if alert_key is None else {'service': alert_key})
+        sleep(1)
         alerts = call("alert.list")
         class_alerts = [alert for alert in alerts if alert['klass'] == alert_class]
         assert len(class_alerts) == 0, class_alerts
@@ -111,17 +107,17 @@ def test_audit_setup_alert(setup_state):
 def test_audit_health_monitor_alert():
     with mock("auditbackend.query", """
         from middlewared.service import private
-        from middlewared.schema import accepts, Str, List, Dict
+        from middlewared.schema import accepts, List, Dict, Str
         @private
         @accepts(
             Str('db_name', required=True),
             List('query-filters'),
-            Dict('query-options')
+            Dict('query-options', additional_attrs=True)
         )
         async def mock(self, db_name, filters, options):
             raise CallError('TEST_SERVICE: connection to audit database is not initialized.')
     """):
         alert = call("alert.run_source", "AuditServiceHealth")[0]
-        assert alert['source'] == 'AuditServiceHealth', alert
-        assert alert['text'].startswith("Failed to perform audit query"), alert
-        assert "connection to audit database is not initialized" in alert['args']['verrs'], alert
+        assert alert['source'] == 'AuditServiceHealth', f"Received source: {alert['source']}"
+        assert alert['text'].startswith("Failed to perform audit query"), f"Received text: {alert['text']}"
+        assert "connection to audit database is not initialized" in alert['args']['verrs'], f"Received args: {alert['args']}"

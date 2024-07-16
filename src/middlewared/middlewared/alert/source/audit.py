@@ -40,8 +40,7 @@ class AuditServiceHealthAlertSource(AlertSource):
         try:
             await self.middleware.call(
                 'audit.query', {
-                    "query-filters": [["event", "=", "AUTHENTICATION"]],
-                    "query-options": {"offset": -1}
+                    "query-options": {"count": True}
                 }
             )
         except Exception as e:
