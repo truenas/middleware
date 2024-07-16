@@ -3,11 +3,6 @@ import pytest
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
 
-from auto_config import ha
-pytestmark = [
-    pytest.mark.skipif(ha, reason='Skipping for HA testing'),
-]
-
 
 def test_waits_for_device_removal():
     with another_pool(topology=(4, lambda disks: {

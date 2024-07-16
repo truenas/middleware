@@ -5,11 +5,6 @@ from middlewared.test.integration.assets.disk import fake_disks
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call
 
-from auto_config import ha
-pytestmark = [
-    pytest.mark.skipif(ha, reason='Skipping for HA testing'),
-]
-
 
 def test_pool_create_too_small_spare():
     disk = call("disk.get_unused")[0]["name"]
