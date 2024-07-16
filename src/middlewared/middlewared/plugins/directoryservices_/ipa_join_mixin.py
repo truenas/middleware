@@ -255,8 +255,8 @@ class IPAJoinMixin:
             netbios_name=resp[0]['netbios_name'],
             domain_sid=resp[0]['domain_sid'],
             domain_name=resp[0]['domain_name'],
-            range_id_min=resp[0]['range_min_id'],
-            range_id_max=resp[0]['range_max_id']
+            range_id_min=resp[0]['range_id_min'],
+            range_id_max=resp[0]['range_id_max']
         )
         return asdict(self.__ipa_smb_domain)
 
