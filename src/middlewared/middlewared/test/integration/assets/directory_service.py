@@ -37,6 +37,27 @@ except ImportError:
     LDAPBINDPASSWORD=None
     LDAPHOSTNAME=None
 
+try:
+    from config import (
+        FREEIPA_IP,
+        FREEIPA_BASEDN,
+        FREEIPA_BINDDN,
+        FREEIPA_BINDPW,
+        FREEIPA_ADMIN,
+        FREEIPA_ADMINDN,
+        FREEIPA_ADMINPW,
+        FREEIPA_HOSTNAME,
+    )
+except ImportError:
+    FREEIPA_IP = None
+    FREEIPA_BASEDN = None
+    FREEIPA_BINDDN = None
+    FREEIPA_BINDPW = None
+    FREEIPA_ADMIN = None
+    FREEIPA_ADMINDN = None
+    FREEIPA_ADMINPW = None
+    FREEIPA_HOSTNAME = None
+
 
 logger = logging.getLogger(__name__)
 
@@ -191,3 +212,38 @@ def ldap(
         }
     finally:
         clear_ldap_info()
+
+
+def clear_ipa_info():
+    clear_ldap_info()
+    keytabs = call('kerberos.keytab.query')
+    for kt in keytabs:
+        call('kerberos.keytab.delete', kt['id'])
+
+
+@contextlib.contextmanager
+def ipa(
+    basedn=FREEIPA_BASEDN,
+    binddn=FREEIPA_ADMINDN,
+    bindpw=FREEIPA_ADMINPW,
+    hostname=FREEIPA_HOSTNAME,
+    nameserver=FREEIPA_IP,
+    **kwargs
+):
+    with override_nameservers(nameserver):
+        try:
+            config = call('ldap.update', {
+                "basedn": basedn,
+                "binddn": binddn,
+                "bindpw": bindpw,
+                "hostname": [hostname],
+                "ssl": "ON",
+                "auxiliary_parameters": "",
+                "validate_certificates": False,
+                "enable": True,
+                **kwargs
+            }, job=True)
+            del(config['bindpw'])
+            yield config
+        finally:
+            clear_ipa_info()
