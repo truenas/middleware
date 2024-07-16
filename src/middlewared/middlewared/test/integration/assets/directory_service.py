@@ -42,9 +42,8 @@ try:
         FREEIPA_BASEDN,
         FREEIPA_BINDDN,
         FREEIPA_BINDPW,
-        FREEIPA_ADMIN,
-        FREEIPA_ADMINDN,
-        FREEIPA_ADMINPW,
+        FREEIPA_ADMIN_BINDDN,
+        FREEIPA_ADMIN_BINDPW,
         FREEIPA_HOSTNAME,
     )
 except ImportError:
@@ -52,9 +51,8 @@ except ImportError:
     FREEIPA_BASEDN = None
     FREEIPA_BINDDN = None
     FREEIPA_BINDPW = None
-    FREEIPA_ADMIN = None
-    FREEIPA_ADMINDN = None
-    FREEIPA_ADMINPW = None
+    FREEIPA_ADMIN_BINDDN = None
+    FREEIPA_ADMIN_BINDPW = None
     FREEIPA_HOSTNAME = None
 
 
