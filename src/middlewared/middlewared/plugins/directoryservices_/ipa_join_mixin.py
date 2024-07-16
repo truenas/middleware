@@ -3,7 +3,7 @@ import json
 import os
 import subprocess
 
-from dataclasses import as_dict
+from dataclasses import asdict
 from functools import cache
 from middlewared.job import Job
 from middlewared.plugins.ldap_.constants import SERVER_TYPE_FREEIPA
@@ -237,7 +237,7 @@ class IPAJoinMixin:
             return None
 
         elif self.__ipa_smb_domain is not undefined:
-            return as_dict(self.__ipa_smb_domain)
+            return asdict(self.__ipa_smb_domain)
 
         if self.middleware.call_sync('directoryservices.status')['type'] != DSType.IPA.value:
             raise CallError('Not joined to IPA domain')
@@ -258,7 +258,7 @@ class IPAJoinMixin:
             range_id_min=resp[0]['range_min_id'],
             range_id_max=resp[0]['range_max_id']
         )
-        return as_dict(self.__ipa_smb_domain)
+        return asdict(self.__ipa_smb_domain)
 
     @cache
     def _ipa_get_cacert(self) -> str:
