@@ -3,7 +3,15 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from .constants import SYSFS_SLOT_KEY, MAPPED_SLOT_KEY, SUPPORTS_IDENTIFY_KEY
+from .constants import (
+    DISK_FRONT_KEY,
+    DISK_TOP_KEY,
+    DISK_REAR_KEY,
+    DISK_INTERNAL_KEY,
+    SYSFS_SLOT_KEY,
+    MAPPED_SLOT_KEY,
+    SUPPORTS_IDENTIFY_KEY
+)
 from .enums import ControllerModels, JbodModels, JbofModels
 
 
@@ -17,8 +25,15 @@ def get_jbof_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
-                            for i in range(1, 25)
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: i,
+                                SUPPORTS_IDENTIFY_KEY: True,
+                                DISK_FRONT_KEY: True,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: False,
+                                DISK_INTERNAL_KEY: False
+                            } for i in range(1, 25)
                         },
                     }
                 }
@@ -59,16 +74,37 @@ def get_nvme_slot_info(model):
                 'DEFAULT': {
                     'id': {
                         'f60_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
-                            for i in range(1, 25)
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: i,
+                                SUPPORTS_IDENTIFY_KEY: True,
+                                DISK_FRONT_KEY: True,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: False,
+                                DISK_INTERNAL_KEY: False
+                            } for i in range(1, 25)
                         },
                         'f100_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
-                            for i in range(1, 25)
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: i,
+                                SUPPORTS_IDENTIFY_KEY: True,
+                                DISK_FRONT_KEY: True,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: False,
+                                DISK_INTERNAL_KEY: False
+                            } for i in range(1, 25)
                         },
                         'f130_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
-                            for i in range(1, 25)
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: i,
+                                SUPPORTS_IDENTIFY_KEY: True,
+                                DISK_FRONT_KEY: True,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: False,
+                                DISK_INTERNAL_KEY: False
+                            } for i in range(1, 25)
                         },
                         # ALL m-series platforms have 4 rear nvme drive bays.
                         # The R50BM platform does as well and uses same plx
@@ -80,36 +116,94 @@ def get_nvme_slot_info(model):
                         # bays for all m-series platforms and they will be empty
                         # on the platforms that can't physically support these drives
                         'm30_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
-                            for i, j in zip(range(1, 5), range(25, 29))
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: j,
+                                SUPPORTS_IDENTIFY_KEY: False,
+                                DISK_FRONT_KEY: False,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: False,
+                                DISK_INTERNAL_KEY: False
+                            } for i, j in zip(range(1, 5), range(25, 29))
                         },
                         'm40_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
-                            for i, j in zip(range(1, 5), range(25, 29))
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: j,
+                                SUPPORTS_IDENTIFY_KEY: False,
+                                DISK_FRONT_KEY: False,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: True,
+                                DISK_INTERNAL_KEY: False
+                            } for i, j in zip(range(1, 5), range(25, 29))
                         },
                         'm50_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
-                            for i, j in zip(range(1, 5), range(25, 29))
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: j,
+                                SUPPORTS_IDENTIFY_KEY: False,
+                                DISK_FRONT_KEY: False,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: True,
+                                DISK_INTERNAL_KEY: False
+                            } for i, j in zip(range(1, 5), range(25, 29))
                         },
                         'm60_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
-                            for i, j in zip(range(1, 5), range(25, 29))
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: j,
+                                SUPPORTS_IDENTIFY_KEY: False,
+                                DISK_FRONT_KEY: False,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: True,
+                                DISK_INTERNAL_KEY: False
+                            } for i, j in zip(range(1, 5), range(25, 29))
                         },
                         'r30_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
-                            for i in range(1, 17)
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: i,
+                                SUPPORTS_IDENTIFY_KEY: True,
+                                DISK_FRONT_KEY: True if i <= 12 else False,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: False,
+                                # at time of writing, r30 is only platform with "internal"
+                                # drive slots
+                                DISK_INTERNAL_KEY: True if i > 12 else False,
+                            } for i in range(1, 17)
                         },
                         'r50_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
-                            for i, j in zip(range(1, 4), range(25, 28))
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: j,
+                                SUPPORTS_IDENTIFY_KEY: False,
+                                DISK_FRONT_KEY: False,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: True,
+                                DISK_INTERNAL_KEY: False
+                            } for i, j in zip(range(1, 4), range(25, 28))
                         },
                         'r50b_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
-                            for i, j in zip(range(1, 3), range(25, 27))
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: j,
+                                SUPPORTS_IDENTIFY_KEY: False,
+                                DISK_FRONT_KEY: False,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: True,
+                                DISK_INTERNAL_KEY: False
+                            } for i, j in zip(range(1, 3), range(25, 27))
                         },
                         'r50bm_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j, SUPPORTS_IDENTIFY_KEY: False}
-                            for i, j in zip(range(1, 5), range(25, 29))
+                            i: {
+                                SYSFS_SLOT_KEY: i,
+                                MAPPED_SLOT_KEY: j,
+                                SUPPORTS_IDENTIFY_KEY: False,
+                                DISK_FRONT_KEY: False,
+                                DISK_TOP_KEY: False,
+                                DISK_REAR_KEY: True,
+                                DISK_INTERNAL_KEY: False
+                            } for i, j in zip(range(1, 5), range(25, 29))
                         },
                     }
                 }

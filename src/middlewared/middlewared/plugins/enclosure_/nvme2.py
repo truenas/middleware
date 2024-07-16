@@ -8,6 +8,13 @@ import re
 
 from pyudev import Context, Devices, DeviceNotFoundAtPathError
 
+from .constants import (
+    DISK_FRONT_KEY,
+    DISK_REAR_KEY,
+    DISK_TOP_KEY,
+    DISK_INTERNAL_KEY,
+    SUPPORTS_IDENTIFY_KEY
+)
 from .enums import ControllerModels
 from .slot_mappings import get_nvme_slot_info
 
@@ -70,12 +77,22 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info=None):
             value_raw = 0x5000000
 
         mapped_slot = disks_map['versions']['DEFAULT']['id'][dmi][slot]['mapped_slot']
+        light = disks_map['versions']['DEFAULT']['id'][dmi][slot][SUPPORTS_IDENTIFY_KEY]
+        dfk = disks_map['versions']['DEFAULT']['id'][dmi][slot][DISK_FRONT_KEY]
+        drk = disks_map['versions']['DEFAULT']['id'][dmi][slot][DISK_REAR_KEY]
+        dtk = disks_map['versions']['DEFAULT']['id'][dmi][slot][DISK_TOP_KEY]
+        dik = disks_map['versions']['DEFAULT']['id'][dmi][slot][DISK_INTERNAL_KEY]
         fake_enclosure['elements']['Array Device Slot'][mapped_slot] = {
             'descriptor': f'Disk #{slot}',
             'status': status,
             'value': None,
             'value_raw': value_raw,
             'dev': device,
+            SUPPORTS_IDENTIFY_KEY: light,
+            DISK_FRONT_KEY: dfk,
+            DISK_REAR_KEY: drk,
+            DISK_TOP_KEY: dtk,
+            DISK_INTERNAL_KEY: dik,
             'original': {
                 'enclosure_id': dmi,
                 'enclosure_sg': None,
