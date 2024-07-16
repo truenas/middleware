@@ -229,6 +229,6 @@ class ADHealthMixin:
         except Exception as e:
             faulted_reason = str(e)
             raise ADHealthError(
-                ADHealthCheckFailReason.AD_TRUST_FAILURE,
+                ADHealthCheckFailReason.AD_NETLOGON_FAILURE,
                 faulted_reason
             )

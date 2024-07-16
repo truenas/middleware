@@ -41,7 +41,6 @@ class LDAPHealthMixin:
         if ldap_config['kerberos_realm']:
             self._health_check_krb5()
 
-
         # Verify that our stored credentials are sufficient to authenticate
         # to LDAP server via python-ldap
         try:

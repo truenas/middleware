@@ -2,7 +2,6 @@
 import contextlib
 import logging
 import os
-import shlex
 import sys
 
 from middlewared.test.integration.utils import call, fail
@@ -32,10 +31,10 @@ try:
         LDAPHOSTNAME,
     )
 except ImportError:
-    LDAPBASEDN=None
-    LDAPBINDDN=None
-    LDAPBINDPASSWORD=None
-    LDAPHOSTNAME=None
+    LDAPBASEDN = None
+    LDAPBINDDN = None
+    LDAPBINDPASSWORD = None
+    LDAPHOSTNAME = None
 
 try:
     from config import (
@@ -61,7 +60,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['override_nameservers', "smb_mount"]
+__all__ = ['active_directory', 'ldap', 'override_nameservers', 'ipa']
 
 if ha and "hostname_virtual" in os.environ:
     hostname = os.environ["hostname_virtual"]
@@ -206,7 +205,7 @@ def ldap(
     }, job=True)
 
     try:
-        del(config['bindpw'])
+        config['bindpw'] = None
         yield {
             'config': config,
         }
@@ -243,7 +242,7 @@ def ipa(
                 "enable": True,
                 **kwargs
             }, job=True)
-            del(config['bindpw'])
+            config['bindpw'] = None
             yield config
         finally:
             clear_ipa_info()

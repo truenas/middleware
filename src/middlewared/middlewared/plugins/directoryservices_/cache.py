@@ -81,8 +81,6 @@ class DSCache(Service):
             """
             try:
                 if data['idtype'] == 'USER':
-                    name_key = 'username'
-
                     if data.get('who') is not None:
                         who = {'username': data['who']}
                     else:
@@ -100,7 +98,6 @@ class DSCache(Service):
                     if entry is None:
                         return None
                 else:
-                    name_key = 'group'
                     if data.get('who') is not None:
                         who = {'groupname': data.get('who')}
                     else:

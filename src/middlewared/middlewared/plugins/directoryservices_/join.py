@@ -59,7 +59,11 @@ class DomainConnection(
         this can be enhanced to be a periodic job that can also perform dynamic DNS updates.
 
         Args:
-            `fqdn` should be the fully qualified domain name of the TrueNAS server.
+            `fqdn` - should be the fully qualified domain name of the TrueNAS server.
+
+            `do_ptr` - set associated PTR record when registering fqdn. Not all domains will
+            have a reverse zone configured and so detection should be done prior to calling
+            this method.
 
         Returns:
             None

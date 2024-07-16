@@ -1,5 +1,5 @@
 import pytest
-from middlewared.test.integration.assets.directory_service import ipa, override_nameservers
+from middlewared.test.integration.assets.directory_service import ipa
 from middlewared.test.integration.utils import call
 
 

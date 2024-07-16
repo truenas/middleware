@@ -3,7 +3,7 @@ import struct
 
 from base64 import b64decode
 from middlewared.schema import accepts, Dict, List, OROperator, returns, Str
-from middlewared.service import no_authz_required, Service, periodic, private, job
+from middlewared.service import no_authz_required, Service, private, job
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.directoryservices.constants import (
     DSStatus, DSType, NSS_Info

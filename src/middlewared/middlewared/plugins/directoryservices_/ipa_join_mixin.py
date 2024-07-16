@@ -23,7 +23,6 @@ from tempfile import NamedTemporaryFile
 IPACTL = ipa_constants.IPACmd.IPACTL.value
 
 
-
 def _parse_ipa_response(resp: subprocess.CompletedProcess) -> dict:
     """
     ipactl returns JSON-encoded data and depending on failure
@@ -48,7 +47,7 @@ def _parse_ipa_response(resp: subprocess.CompletedProcess) -> dict:
 class IPAJoinMixin:
     __ipa_smb_domain = undefined
 
-    def _ipa_leave(self) -> None:
+    def _ipa_leave(self, job: Job, ds_type: DSType, domain: str):
         """
         This method is currently left unimplemented because it is not
         currently exposed in public APIs, but will be as part of general
@@ -90,7 +89,7 @@ class IPAJoinMixin:
     def _ipa_grant_privileges(self) -> None:
         """ Grant domain admins ability to manage TrueNAS """
 
-        ipa_config = self.middleware.call_sync('ldap.ipa_config', ldap_config)
+        ipa_config = self.middleware.call_sync('ldap.ipa_config')
 
         existing_privileges = self.middleware.call_sync(
             'privilege.query',
@@ -133,7 +132,7 @@ class IPAJoinMixin:
         try:
             self.middleware.call_sync('privilege.create', {
                 'name': ipa_config['domain'].upper(),
-                'ds_groups': [admins_group['gid']],
+                'ds_groups': [admins_grp['gid']],
                 'allowlist': [{'method': '*', 'resource': '*'}],
                 'web_shell': True
             })
