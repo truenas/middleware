@@ -591,6 +591,7 @@ def main():
             print(json.dumps(e.rpc_response), file=sys.stderr)
             sys.exit(ExitCode.JSON_ERROR)
 
+        print(f'{e.op} - {e.errmsg}', file=sys.stderr)
         sys.exit(ExitCode.GENERIC)
     except Exception as e:
         print(str(e), file=sys.stderr)

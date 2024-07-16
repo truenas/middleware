@@ -181,8 +181,11 @@ class IPAJoinMixin:
             except FileNotFoundError:
                 continue
 
-            resp = _parse_ipa_response(setspn)
-            output.append(resp | {'keytab_type': spn_type})
+            try:
+                resp = _parse_ipa_response(setspn)
+                output.append(resp | {'keytab_type': spn_type})
+            except Exception:
+                self.logger.error('%s: failed to create keytab', op.name, exc_info=True)
 
         return output
 

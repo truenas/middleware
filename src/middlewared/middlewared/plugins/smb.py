@@ -128,7 +128,16 @@ class SMBService(ConfigService):
                     ipa_domain = self.middleware.call_sync('directoryservices.connection.ipa_get_smb_domain_info')
                 except Exception:
                     ipa_domain = None
-                ipa_config = self.middleware.call_sync('ldap.ipa_config')
+                try:
+                    ipa_config = self.middleware.call_sync('ldap.ipa_config')
+                except Exception:
+                    self.middleware.logger.warning(
+                        'Failed to retrieve IPA configuration. Disabling IPA SMB support',
+                        exc_info=True
+                    )
+                    ipa_config = {}
+                    ipa_domain = None
+
                 ds_config |= {'ipa_domain': ipa_domain, 'ipa_config': ipa_config}
             case DSType.LDAP:
                 ds_config = self.middleware.call_sync('ldap.config')

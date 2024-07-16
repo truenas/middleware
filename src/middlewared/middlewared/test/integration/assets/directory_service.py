@@ -42,9 +42,8 @@ try:
         FREEIPA_BASEDN,
         FREEIPA_BINDDN,
         FREEIPA_BINDPW,
-        FREEIPA_ADMIN,
-        FREEIPA_ADMINDN,
-        FREEIPA_ADMINPW,
+        FREEIPA_ADMIN_BINDDN,
+        FREEIPA_ADMIN_BINDPW,
         FREEIPA_HOSTNAME,
     )
 except ImportError:
@@ -52,9 +51,8 @@ except ImportError:
     FREEIPA_BASEDN = None
     FREEIPA_BINDDN = None
     FREEIPA_BINDPW = None
-    FREEIPA_ADMIN = None
-    FREEIPA_ADMINDN = None
-    FREEIPA_ADMINPW = None
+    FREEIPA_ADMIN_BINDDN = None
+    FREEIPA_ADMIN_BINDPW = None
     FREEIPA_HOSTNAME = None
 
 
@@ -223,8 +221,8 @@ def clear_ipa_info():
 @contextlib.contextmanager
 def ipa(
     basedn=FREEIPA_BASEDN,
-    binddn=FREEIPA_ADMINDN,
-    bindpw=FREEIPA_ADMINPW,
+    binddn=FREEIPA_ADMIN_BINDDN,
+    bindpw=FREEIPA_ADMIN_BINDPW,
     hostname=FREEIPA_HOSTNAME,
     nameserver=FREEIPA_IP,
     **kwargs
@@ -246,3 +244,4 @@ def ipa(
             yield config
         finally:
             clear_ipa_info()
+            pass

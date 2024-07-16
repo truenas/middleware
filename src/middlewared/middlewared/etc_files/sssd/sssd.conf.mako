@@ -47,7 +47,11 @@
 
     elif ds_type == DSType.IPA.value:
         ldap = middleware.call_sync('ldap.config')
-        ipa_info = middleware.call_sync('ldap.ipa_config')
+        try:
+            ipa_info = middleware.call_sync('ldap.ipa_config')
+        except Exception:
+            middleware.logger.debug("Failed to retrieve IPA config", exc_info=True)
+            raise FileShouldNotExist
     else:
         raise FileShouldNotExist
 
