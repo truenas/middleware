@@ -3,10 +3,6 @@ import pytest
 from time import sleep
 from middlewared.test.integration.assets.pool import another_pool_topologies, another_pool
 from middlewared.test.integration.utils import call
-from auto_config import ha
-pytestmark = [
-    pytest.mark.skipif(ha, reason='Skipping for HA testing'),
-]
 
 
 def disks(topology):
