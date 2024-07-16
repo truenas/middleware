@@ -6,7 +6,7 @@ from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.directoryservices import DSStatus, DSType
 from middlewared.utils.directoryservices.health import DSHealthObj, IPAHealthError, KRB5HealthError
 
-log = logging.getLogger("activedirectory_check_alertmod")
+log = logging.getLogger("ipa_check_alertmod")
 
 
 class IPADomainBindAlertClass(AlertClass):

@@ -4,7 +4,7 @@ from middlewared.plugins.etc import FileShouldNotExist
 from middlewared.utils import filter_list
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5_conf import KRB5Conf
-from middlewared.utils.directoryservices.krb5_constants import KRB_LibDefaults
+from middlewared.utils.directoryservices.krb5_constants import KRB_LibDefaults, PERSISTENT_KEYRING_PREFIX
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ def generate_krb5_conf(
 
     appdefaults = {}
     libdefaults = {
-        str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): 'KEYRING:persistent:%{uid}',
+        str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): PERSISTENT_KEYRING_PREFIX + '%{uid}',
         str(KRB_LibDefaults.DNS_LOOKUP_REALM): 'true',
         str(KRB_LibDefaults.FORWARDABLE): 'true',
         str(KRB_LibDefaults.DNS_LOOKUP_KDC): 'true',

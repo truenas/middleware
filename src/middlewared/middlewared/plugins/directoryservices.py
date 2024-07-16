@@ -9,7 +9,6 @@ from middlewared.utils.directoryservices.constants import (
     DSStatus, DSType, NSS_Info
 )
 from middlewared.utils.directoryservices.health import DSHealthObj
-from middlewared.utils.directoryservices.krb5 import get_persistent_keyring_session
 
 DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh']
 
@@ -189,11 +188,6 @@ class DirectoryServices(Service):
             self.logger.warning('Cache flush failed', exc_info=True)
 
         await self.middleware.call('directoryservices.health.check')
-
-    @private
-    @periodic(86400)
-    def persistent_keyring_session(self):
-        return get_persistent_keyring_session()
 
     @private
     def restart_dependent_services(self):

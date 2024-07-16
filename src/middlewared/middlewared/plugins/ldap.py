@@ -691,9 +691,9 @@ class LDAPService(ConfigService):
                     'directoryservices.health.set_state',
                     ds_type.value, DSStatus.DISABLED.name
                 )
-                await self.middleware.call('etc.generate', 'nss')
-                await self.middleware.call('etc.generate', 'pam')
-                await self.middleware.call('etc.generate', 'ldap')
+
+                for etc_file in ds_type.etc_files:
+                    await self.middleware.call('etc.generate', etc_file)
                 raise
 
         return await self.config()
@@ -885,9 +885,10 @@ class LDAPService(ConfigService):
     @private
     async def __start(self, job, ds_type):
         """
-        Refuse to start service if the service is alreading in process of starting or stopping.
-        If state is 'HEALTHY' or 'FAULTED', then stop the service first before restarting it to ensure
-        that the service begins in a clean state.
+        This is the private start method for the LDAP / IPA directory service
+
+        If it successfully completes then cache will be built and SSSD configured and running. On failure
+        the directory service will be disabled.
         """
         job.set_progress(0, 'Preparing to configure LDAP directory service.')
         await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.JOINING.name)
@@ -895,7 +896,7 @@ class LDAPService(ConfigService):
 
         await self.middleware.call('ldap.create_sssd_dirs')
 
-        # If user has an IPA host keytab then we assum that we're properly joined to IPA
+        # If user has an IPA host keytab then we assume that we're properly joined to IPA
         if ds_type is DSType.IPA and not await self.has_ipa_host_keytab():
             ipa_config = await self.ipa_config(ldap)
             try:
@@ -926,10 +927,8 @@ class LDAPService(ConfigService):
         await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.LEAVING.name)
         job.set_progress(0, 'Preparing to stop LDAP directory service.')
         job.set_progress(10, 'Rewriting configuration files.')
-        await self.middleware.call('etc.generate', 'rc')
-        await self.middleware.call('etc.generate', 'ldap')
-        await self.middleware.call('etc.generate', 'pam')
-        await self.middleware.call('etc.generate', 'nss')
+        for etc_file in ds_type.etc_files:
+            await self.middleware.call('etc.generate', etc_file)
 
         job.set_progress(80, 'Stopping sssd service.')
         await self.middleware.call('service.stop', 'sssd')

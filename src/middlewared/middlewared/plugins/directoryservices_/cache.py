@@ -2,7 +2,7 @@ from middlewared.schema import Str, Ref, Int, Dict, Bool, accepts
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.directoryservices.constants import (
-    DSType
+    DSStatus, DSType
 )
 from middlewared.plugins.idmap_.idmap_constants import IDType
 from middlewared.plugins.idmap_.idmap_winbind import WBClient
@@ -208,7 +208,7 @@ class DSCache(Service):
         if ds['type'] is None:
             return
 
-        if ds['status'] not in ('HEALTHY', 'JOINING'):
+        if ds['status'] not in (DSStatus.HEALTHY.name, DSStatus.JOINING.name):
             self.logger.warning(
                 'Unable to refresh [%s] cache, state is: %s',
                 ds['type'], ds['status']

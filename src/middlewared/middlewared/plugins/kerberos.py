@@ -21,6 +21,7 @@ from middlewared.utils.directoryservices.krb5_constants import (
     KRB_LibDefaults,
     KRB_ETYPE,
     KRB_TKT_CHECK_INTERVAL,
+    PERSISTENT_KEYRING_PREFIX,
 )
 from middlewared.utils.directoryservices.krb5 import (
     gss_get_current_cred,
@@ -101,13 +102,21 @@ class KerberosService(ConfigService):
 
     @private
     def generate_stub_config(self, realm, kdc=None, libdefaultsaux=None):
+        """
+        This method generates a temporary krb5.conf file that is used for the purpose
+        of validating credentials and performing domain joins. During the domain join
+        process it is important to hard-code a single KDC because our new account may
+        not have replicated to other KDCs yet. Once we have joined a domain and inserted
+        proper realm configuration this temporary config will be removed by a call
+        to etc.generate kerberos.
+        """
         aux = libdefaultsaux or []
         krbconf = KRB5Conf()
         libdefaults = {
             str(KRB_LibDefaults.DEFAULT_REALM): realm,
             str(KRB_LibDefaults.DNS_LOOKUP_REALM): 'false',
             str(KRB_LibDefaults.FORWARDABLE): 'true',
-            str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): 'KEYRING:persistent:%{uid}'
+            str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): PERSISTENT_KEYRING_PREFIX + '%{uid}'
         }
 
         realms = [{

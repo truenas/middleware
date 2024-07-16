@@ -14,6 +14,16 @@ class DSType(enum.Enum):
     IPA = 'IPA'
     LDAP = 'LDAP'
 
+    @property
+    def etc_files(self):
+        match self:
+            case DSType.AD:
+                return ('pam', 'nss', 'smb', 'kerberos')
+            case DSType.IPA:
+                return ('ldap', 'ipa', 'pam', 'nss', 'smb', 'kerberos')
+            case DSType.LDAP:
+                return ('ldap', 'pam', 'nss', 'kerberos')
+
 
 class SASL_Wrapping(enum.Enum):
     PLAIN = 'PLAIN'

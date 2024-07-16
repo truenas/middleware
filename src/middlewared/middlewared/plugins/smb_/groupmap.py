@@ -121,7 +121,7 @@ class SMBService(Service):
             else:
                 self.logger.warning('%s: SMB admin group does not exist', admin_group)
 
-        ds = await self.middleware.call('directoryservices.status')
+        ds = self.middleware.call_sync('directoryservices.status')
         match ds['type']:
             case DSType.AD.value:
                 ad_state = ds['status']

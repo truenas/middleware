@@ -96,17 +96,6 @@ KTUTIL_LIST_OUTPUT_SCHEMA = {
 }
 
 
-def get_persistent_keyring_session(uid: int = 0) -> int:
-    keyctl = subprocess.run(
-        ['/bin/keyctl', 'get_persistent', '@s', str(uid)],
-        capture_output=True, check=False
-    )
-    if keyctl.returncode != 0:
-        raise RuntimeError(keyctl.stderr.decode())
-
-    return int(keyctl.stdout.decode().strip())
-
-
 def __tmp_krb5_keytab() -> str:
     """
     Create a temporary keytab file with appropriate header

@@ -622,7 +622,6 @@ class ActiveDirectoryService(ConfigService):
             config['id'], {'ad_enable': False}
         )
 
-        job.set_progress(5, 'Stopping Active Directory monitor')
         await self.middleware.call('etc.generate', 'hostname')
         job.set_progress(10, 'Stopping kerberos service')
         await self.middleware.call('kerberos.stop')

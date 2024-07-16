@@ -21,7 +21,7 @@ from time import sleep, time
 class ADJoinMixin:
 
     def _ad_activate(self) -> None:
-        for etc_file in ('pam', 'nss', 'smb', 'kerberos'):
+        for etc_file in DSType.AD.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
 
         self.middleware.call_sync('service.stop', 'idmap')
@@ -166,7 +166,7 @@ class ADJoinMixin:
         # that our credentials are wrong or the computer account doesn't
         # exist
         for err_str in (
-            'join to domain is not valid',
+            'Join to domain is not valid',
             '0xfffffff6',
             'LDAP_INVALID_CREDENTIALS',
             'The name provided is not a properly formed account name',

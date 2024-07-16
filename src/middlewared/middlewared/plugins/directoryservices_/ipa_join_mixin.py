@@ -44,7 +44,7 @@ def _parse_ipa_response(resp: subprocess.CompletedProcess) -> dict:
 
 class IPAJoinMixin:
     def _ipa_activate(self) -> None:
-        for etc_file in ('ldap', 'ipa', 'pam', 'nss', 'smb', 'kerberos'):
+        for etc_file in DSType.IPA.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
 
         self.middleware.call_sync('service.stop', 'sssd')
@@ -69,6 +69,64 @@ class IPAJoinMixin:
             self.middleware.call_sync(
                 'datastore.insert', 'directoryservice.kerberoskeytab',
                 {'keytab_name': kt_name, 'keytab_file': keytab_data}
+            )
+
+    def _ipa_grant_privileges(self) -> None:
+        """ Grant domain admins ability to manage TrueNAS """
+
+        ipa_config = self.middleware.call_sync('ldap.ipa_config', ldap_config)
+
+        existing_privileges = self.middleware.call_sync(
+            'privilege.query',
+            [["name", "=", ipa_config['domain'].upper()]]
+        )
+
+        if existing_privileges:
+            return
+
+        try:
+            admins_grp = self.middleware.call_sync('group.get_group_obj', {
+                'groupname': 'admins',
+                'sid_info': True
+            })
+        except Exception:
+            self.logger.debug(
+                'Failed to look up admins group for IPA domain. API access for admin '
+                'accounts will have to be manually configured', exc_info=True
+            )
+            return
+
+        match admins_grp['source']:
+            case 'LDAP':
+                pass
+            case 'LOCAL':
+                self.logger.warning(
+                    'Local "admins" group collides with name of group provided '
+                    'by IPA domain, which prevents the IPA group from being '
+                    'automatically granted API access.'
+                )
+                return
+            case _:
+                self.logger.warning(
+                    '%s: unexpected source for "admins" group, which prevents '
+                    'the IPA group from being automatically granted API access.',
+                    admins_grp['source']
+                )
+                return
+
+        try:
+            self.middleware.call_sync('privilege.create', {
+                'name': ipa_config['domain'].upper(),
+                'ds_groups': [admins_group['gid']],
+                'allowlist': [{'method': '*', 'resource': '*'}],
+                'web_shell': True
+            })
+        except Exception:
+            # This should be non-fatal since admin can simply fix via
+            # our webui
+            self.logger.warning(
+                'Failed to grant domain administrators access to the '
+                'TrueNAS API.', exc_info=True
             )
 
     @kerberos_ticket

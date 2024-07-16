@@ -6,7 +6,7 @@ import dns.resolver
 import pytest
 from truenas_api_client import \
     ValidationErrors as ClientValidationErrors
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.directory_service import (
     active_directory, override_nameservers)
 from middlewared.test.integration.assets.pool import dataset
@@ -15,7 +15,6 @@ from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.system import reset_systemd_svcs
-from pytest_dependency import depends
 
 from auto_config import ha
 from protocols import smb_connection, smb_share

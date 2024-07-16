@@ -8,6 +8,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, Password, Patch, Ref, S
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors, filterable
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import SSL
+from middlewared.utils.directoryservices.constants import DSType as DirectoryServiceType
 from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID, IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX, TRUENAS_IDMAP_MAX
 )
@@ -982,7 +983,7 @@ class IdmapDomainService(CRUDService):
         # winbind are both running when we are joined to an IPA
         # domain. Former provides authoritative SID<->XID resolution
         # IPA accounts. The latter is authoritative for local accounts.
-        if self.middleware.call_sync('directoryservices.status')['type'] == 'IPA':
+        if self.middleware.call_sync('directoryservices.status')['type'] == DirectoryServiceType.IPA.value:
             if to_check:
                 sss_ctx = SSSClient()
                 results = sss_ctx.sids_to_idmap_entries(to_check)
@@ -1013,9 +1014,10 @@ class IdmapDomainService(CRUDService):
         if not id_list:
             return output
 
-        if self.middleware.call_sync('directoryservices.status')['type'] == 'IPA':
+        if self.middleware.call_sync('directoryservices.status')['type'] == DirectoryServiceType.IPA.value:
+
             try:
-                dom_info = self.middleware.call_sync('directoryservices.connection.ipa__geet_smb_domain_info')
+                dom_info = self.middleware.call_sync('directoryservices.connection.ipa_get_smb_domain_info')
             except Exception:
                 dom_info = None
 

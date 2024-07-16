@@ -1,6 +1,7 @@
 import enum
 
 KRB_TKT_CHECK_INTERVAL = 1800
+PERSISTENT_KEYRING_PREFIX = 'KEYRING:persistent:'
 
 
 class KRB_Keytab(enum.Enum):
@@ -8,8 +9,8 @@ class KRB_Keytab(enum.Enum):
 
 
 class krb5ccache(enum.Enum):
-    SYSTEM = 'KEYRING:persistent:0'
-    USER = 'KEYRING:persistent:'  # middleware appends UID number to this
+    SYSTEM = f'{PERSISTENT_KEYRING_PREFIX}0'
+    USER = PERSISTENT_KEYRING_PREFIX  # middleware appends UID number to this
 
 
 class krb_tkt_flag(enum.Enum):
