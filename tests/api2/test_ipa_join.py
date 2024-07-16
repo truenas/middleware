@@ -16,10 +16,11 @@ def test_setup_and_enabling_freeipa(do_freeipa_connection):
     assert ds['type'] == 'IPA'
     assert ds['status'] == 'HEALTHY'
 
-    alerts = call('alert.list')
+    alerts = [alert['klass'] for alert in call('alert.list')]
+
     # There's a one-shot alert that gets fired if we are an IPA domain
     # connected via legacy mechanism.
-    assert len(alerts) == 0, str(alerts)
+    assert 'IPALegacyConfiguration' not in alerts
 
     assert config['kerberos_realm'], str(config)
     assert config['kerberos_principal'], str(config)
