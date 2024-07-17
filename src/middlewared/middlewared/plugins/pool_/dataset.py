@@ -302,9 +302,7 @@ class PoolDatasetService(CRUDService):
                     if smb_attachments := [share for share in ds_attachments if share['type'] == "SMB Share"]:
                         share_names = [smb_share['attachments'] for smb_share in smb_attachments]
                         for key in (k for k in keys if data.get(k)):
-                            self.logger.debug(f"[MCG DEBUG] cur_dataset is {'valid' if cur_dataset else None}")
                             if cur_dataset and (cur_dataset[key]['value'] == data.get(key)):
-                                self.logger.debug(f"[MCG DEBUG] cur_dataset[{key}]['value']={cur_dataset[key]['value']}, data.get(key)={data.get(key)}")
                                 continue
                             verrors.add(
                                 f'{schema}.{key}',
