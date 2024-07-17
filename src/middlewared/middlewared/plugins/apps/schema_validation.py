@@ -136,6 +136,7 @@ class AppSchemaService(Service):
             #  them to the same value however in this case we will still get an error raised by docker.
             return
 
-        # FIXME: Once we have port attachment delegate in place, please validate ports being used by the system overall
-        if value in await self.middleware.call('app.used_ports'):
+        if value in await self.middleware.call('app.used_ports') or value in await self.middleware.call(
+            'port.ports_mapping', 'app'
+        ):
             verrors.add(schema_name, 'Port is already in use.')
