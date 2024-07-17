@@ -1,8 +1,9 @@
 import pytest
+
 from middlewared.test.integration.assets.directory_service import ipa, FREEIPA_ADMIN_BINDPW
 from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client
-from middlewared.test.integraiton.utils.client import truenas_server
+from middlewared.test.integration.utils.client import truenas_server
 
 
 @pytest.fixture(scope="module")
