@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import enum
 import json
 import logging
-import os
 import typing
 
 import html2text
@@ -154,6 +153,7 @@ class DismissableAlertClass:
 
 class AlertCategory(enum.Enum):
     APPLICATIONS = "APPLICATIONS"
+    AUDIT = "Audit"
     CERTIFICATES = "CERTIFICATES"
     CLUSTERING = "CLUSTERING"
     DIRECTORY_SERVICE = "DIRECTORY_SERVICE"
@@ -172,6 +172,7 @@ class AlertCategory(enum.Enum):
 
 alert_category_names = {
     AlertCategory.APPLICATIONS: "Applications",
+    AlertCategory.AUDIT: "Audit",
     AlertCategory.CERTIFICATES: "Certificates",
     AlertCategory.CLUSTERING: "Clustering",
     AlertCategory.DIRECTORY_SERVICE: "Directory Service",

@@ -126,9 +126,12 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         - after audit database deletion or rename
         """
         for svc, conn in self.connections.items():
+            # Dismiss any existing AuditSetup one-shot alerts
+            self.middleware.call_sync('alert.oneshot_delete', 'AuditBackendSetup', {"service": svc})
             try:
                 conn.setup()
             except Exception:
+                self.middleware.call_sync('alert.oneshot_create', 'AuditBackendSetup', {"service": svc})
                 self.logger.error(
                     '%s: failed to set up auditing database connection.',
                     svc, exc_info=True
