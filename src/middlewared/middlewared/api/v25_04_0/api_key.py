@@ -2,9 +2,9 @@ from datetime import datetime
 from typing import Literal, TypeAlias
 from typing_extensions import Annotated
 
-from pydantic import ConfigDict, StringConstraints
+from pydantic import StringConstraints
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, NonEmptyString, Private
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, Private
 
 
 HttpVerb: TypeAlias = Literal["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE", "*"]
@@ -16,13 +16,14 @@ class AllowListItem(BaseModel):
 
 
 class ApiKeyEntry(BaseModel):
-    """Represents a record in the account.api_key table."""
-
     id: int
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
-    key: Private[str]
     created_at: datetime
     allowlist: list[AllowListItem]
+
+
+class ApiKeyEntryWithKey(ApiKeyEntry):
+    key: Private[str]
 
 
 class ApiKeyCreate(ApiKeyEntry):
@@ -36,10 +37,10 @@ class ApiKeyCreateArgs(BaseModel):
 
 
 class ApiKeyCreateResult(BaseModel):
-    result: ApiKeyEntry
+    result: ApiKeyEntryWithKey
 
 
-class ApiKeyUpdate(ApiKeyCreate):
+class ApiKeyUpdate(ApiKeyCreate, metaclass=ForUpdateMetaclass):
     reset: bool
 
 
@@ -49,7 +50,7 @@ class ApiKeyUpdateArgs(BaseModel):
 
 
 class ApiKeyUpdateResult(BaseModel):
-    result: ApiKeyEntry
+    result: ApiKeyEntryWithKey
 
 
 class ApiKeyDeleteArgs(BaseModel):

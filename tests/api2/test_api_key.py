@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
-
 import contextlib
 import os
+
 import pytest
+
 import sys
 sys.path.append(os.getcwd())
 from functions import POST, GET, DELETE, SSH_TEST
@@ -31,7 +31,7 @@ def user():
         assert results.status_code == 200, results.text
 
 
-def test_root_api_key_websocket(request):
+def test_root_api_key_websocket():
     """We should be able to call a method with root API key using Websocket."""
     ip = truenas_server.ip
     with api_key([{"method": "*", "resource": "*"}]) as key:
@@ -53,7 +53,7 @@ def test_root_api_key_websocket(request):
             c.call("service.update", "cifs", {"enable": False})
 
 
-def test_allowed_api_key_websocket(request):
+def test_allowed_api_key_websocket():
     """We should be able to call a method with API key that allows that call using Websocket."""
     ip = truenas_server.ip
     with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
@@ -64,7 +64,7 @@ def test_allowed_api_key_websocket(request):
         assert 'uptime' in str(results['stdout'])
 
 
-def test_denied_api_key_websocket(request):
+def test_denied_api_key_websocket():
     """We should not be able to call a method with API key that does not allow that call using Websocket."""
     ip = truenas_server.ip
     with api_key([{"method": "CALL", "resource": "system.info_"}]) as key:
@@ -74,10 +74,8 @@ def test_denied_api_key_websocket(request):
         assert results['result'] is False
 
 
-def test_denied_api_key_noauthz(request):
+def test_denied_api_key_noauthz():
     with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
-        auth_token = None
-
         with client(auth=None) as c:
             assert c.call("auth.login_with_api_key", key)
 
