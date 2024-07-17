@@ -10,6 +10,7 @@ from .schema_utils import construct_schema, get_list_item_from_value, NOT_PROVID
 VALIDATION_REF_MAPPING = {
     'definitions/certificate': 'certificate',
     'definitions/certificateAuthority': 'certificate_authority',
+    'definitions/port': 'port_available_on_node',
     'normalize/acl': 'acl_entries',
 }
 # FIXME: See which are no longer valid
@@ -128,3 +129,13 @@ class AppSchemaService(Service):
                 verrors.add(schema_name, f'{value["path"]}: path contains existing data and `force` was not specified')
         except FileNotFoundError:
             verrors.add(schema_name, f'{value["path"]}: path does not exist')
+
+    async def validate_port_available_on_node(self, verrors, value, question, schema_name, app_data):
+        if app_data and value in [p['port'] for p in app_data['used_ports']]:
+            # TODO: This still leaves a case where user has multiple ports in a single app and mixes
+            #  them to the same value however in this case we will still get an error raised by docker.
+            return
+
+        # FIXME: Once we have port attachment delegate in place, please validate ports being used by the system overall
+        if value in await self.middleware.call('app.used_ports'):
+            verrors.add(schema_name, 'Port is already in use.')
