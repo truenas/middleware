@@ -1,12 +1,32 @@
 import pytest
-from middlewared.test.integration.assets.directory_service import ipa
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.assets.directory_service import ipa, FREEIPA_ADMIN_BINDPW
+from middlewared.test.integration.assets.product import product_type
+from middlewared.test.integration.utils import call, client
+from middlewared.test.integraiton.utils.client import truenas_server
 
 
 @pytest.fixture(scope="module")
 def do_freeipa_connection():
     with ipa() as config:
         yield config
+
+
+@pytest.fixture(scope="function")
+def override_product():
+    if truenas_server.server_type == 'ENTERPRISE_HA':
+        yield
+    else:
+        with product_type():
+           yield
+
+
+@pytest.fixture(scope="function")
+def enable_ds_auth(override_product):
+    sys_config = call('system.general.update', {'ds_auth': True})
+    try:
+        yield sys_config
+    finally:
+       call('system.general.update', {'ds_auth': False})
 
 
 def test_setup_and_enabling_freeipa(do_freeipa_connection):
@@ -53,14 +73,27 @@ def test_smb_keytab_exists(do_freeipa_connection):
     call('filesystem.stat', '/etc/ipa/smb.keytab')
 
 
-def test_admin_privilege(do_freeipa_connection):
+def test_admin_privilege(do_freeipa_connection, enable_ds_auth):
     ipa_config = call('ldap.ipa_config')
 
     priv = call('privilege.query', [['name', '=', ipa_config['domain']]], {'get': True})
     admins_grp = call('group.get_group_obj', {'groupname': 'admins', 'sid_info': True})
+
+    ipa_users_cnt = call('user.query', [['local', '=', False]], {'count': True})
+    assert ipa_users_cnt != 0
+
+    ipa_groups_cnt = call('group.query', [['local', '=', False]], {'count': True})
+    assert ipa_groups_cnt != 0
 
     assert len(priv['ds_groups']) == 1
     assert priv['ds_groups'][0]['gid'] == admins_grp['gr_gid']
     assert priv['ds_groups'][0]['sid'] == admins_grp['sid']
 
     assert priv['roles'] == ['FULL_ADMIN']
+
+    with client(auth=('ipaadmin', FREEIPA_ADMIN_BINDPW)) as c:
+        me = c.call('auth.me')
+
+        assert 'DIRECTORY_SERVICE' in me['account_attributes']
+        assert 'LDAP' in me['account_attributes']
+        assert me['privilege']['roles'] == ['FULL_ADMIN']
