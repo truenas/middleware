@@ -1,4 +1,5 @@
 from middlewared.common.attachment.certificate import CertificateCRUDServiceAttachmentDelegate
+from middlewared.service import Service
 
 from .ix_apps.metadata import get_collective_config
 
@@ -27,6 +28,32 @@ class AppCertificateAttachmentDelegate(CertificateCRUDServiceAttachmentDelegate)
                 self.middleware.logger.error(
                     'Failed to redeploy %r app: %s', apps[index], status['error']
                 )
+
+
+class AppCertificateService(Service):
+
+    class Config:
+        namespace = 'app.certificate'
+        private = True
+
+    async def get_apps_consuming_outdated_certs(self, filters=None):
+        apps_having_outdated_certs = []
+        filters = filters or []
+        certs = {c['id']: c for c in await self.middleware.call('certificate.query')}
+        config = await self.middleware.run_in_thread(get_collective_config)
+        apps = {app['name']: app for app in await self.middleware.call('app.query', filters)}
+        for app_name, app_config in config.items():
+            if app_name not in apps or not app_config.get('ix_certificates'):
+                continue
+
+            if any(
+                cert['certificate'] != certs[cert_id]['certificate']
+                for cert_id, cert in app_config['ix_certificates'].items()
+                if cert_id in certs
+            ):
+                apps_having_outdated_certs.append(app_name)
+
+        return apps
 
 
 async def setup(middleware):
