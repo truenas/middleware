@@ -144,9 +144,6 @@ class DSCache(Service):
         if ds['type'] is None:
             return []
 
-        extra = options.get("extra", {})
-        get_smb = 'SMB' in extra.get('additional_information', [])
-
         is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'name', 'group'])
         is_id_check = bool(filters and len(filters) == 1 and filters[0][0] in ['uid', 'gid'])
 
@@ -159,16 +156,12 @@ class DSCache(Service):
             entry = self._retrieve({
                 'idtype': id_type,
                 key: filters[0][2],
-            }, {'smb': get_smb})
+            }, {'smb': True})
 
             return [entry] if entry else []
 
         # options must be omitted to defer pagination logic to caller
         entries = query_cache_entries(IDType[id_type], filters, {})
-        if not get_smb:
-            for entry in entries:
-                entry['sid'] = None
-
         return sorted(entries, key=lambda i: i['id'])
 
     def idmap_online_check_wait_wbclient(self, job):

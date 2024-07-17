@@ -120,7 +120,7 @@ class SSSClient:
 
         return {
             'id_type': IDType(id_entry[sid]['type']).name,
-            'id': id_entry[id_entry[sid]]['id'],
+            'id': id_entry[sid]['id'],
             'name': name_entry[sid]['name'],
             'sid': sid
         }

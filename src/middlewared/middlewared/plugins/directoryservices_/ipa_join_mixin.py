@@ -430,3 +430,7 @@ class IPAJoinMixin:
 
         self.register_dns(ipa_config['host'])
         self._ipa_setup_services(job)
+        job.set_progress(75, 'Activating IPA service.')
+        self._ipa_activate()
+        job.set_progress(75, 'Granting IPA admins access to TrueNAS.')
+        self._ipa_grant_privileges()
