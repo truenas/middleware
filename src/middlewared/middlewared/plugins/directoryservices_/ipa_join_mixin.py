@@ -132,7 +132,7 @@ class IPAJoinMixin:
         try:
             self.middleware.call_sync('privilege.create', {
                 'name': ipa_config['domain'].upper(),
-                'ds_groups': [admins_grp['gid']],
+                'ds_groups': [admins_grp['gr_gid']],
                 'allowlist': [{'method': '*', 'resource': '*'}],
                 'web_shell': True
             })
@@ -174,10 +174,7 @@ class IPAJoinMixin:
             (IpaOperation.SET_NFS_PRINCIPAL, ipa_constants.IpaConfigName.IPA_NFS_KEYTAB)
         ):
             try:
-                setspn = subprocess.run([
-                    IPACTL,
-                    '-a', IpaOperation.SET_SMB_PRINCIPAL.name
-                ], check=False, capture_output=True)
+                setspn = subprocess.run([IPACTL, '-a', op.name], check=False, capture_output=True)
             except FileNotFoundError:
                 continue
 
@@ -430,3 +427,4 @@ class IPAJoinMixin:
 
         self.register_dns(ipa_config['host'])
         self._ipa_setup_services(job)
+        self._ipa_grant_privileges()
