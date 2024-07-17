@@ -18,15 +18,14 @@ class AppMetadataService(Service):
     def generate(self, job):
         config = {}
         metadata = {}
-        apps = {app['id']: app for app in self.middleware.call_sync('app.query')}
         with os.scandir(get_app_parent_config_path()) as scan:
-            for entry in filter(lambda e: e.is_dir() and e.name in apps, scan):
+            for entry in filter(lambda e: e.is_dir(), scan):
                 if not (app_metadata := get_app_metadata(entry.name)):
                     # The app is malformed or something is seriously wrong with it
                     continue
 
                 metadata[entry.name] = app_metadata
-                config[entry.name] = get_current_app_config(entry.name, apps[entry.name]['version'])
+                config[entry.name] = get_current_app_config(entry.name, app_metadata['version'])
 
         with open(get_collective_metadata_path(), 'w') as f:
             f.write(yaml.safe_dump(metadata))
