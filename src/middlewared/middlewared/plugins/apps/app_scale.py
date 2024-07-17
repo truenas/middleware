@@ -35,3 +35,13 @@ class AppService(Service):
         job.set_progress(20, f'Starting {app_name!r} app')
         compose_action(app_name, app_config['version'], 'up', force_recreate=True, remove_orphans=True)
         job.set_progress(100, f'Started {app_name!r} app')
+
+    @accepts(Str('app_name'))
+    @returns()
+    @job(lock=lambda args: f'app_redeploy_{args[0]}')
+    async def redeploy(self, job, app_name):
+        """
+        Redeploy `app_name` app.
+        """
+        app = await self.middleware.call('app.get_instance', app_name)
+        return await self.middleware.call('app.update_internal', job, app, {'values': {}}, 'Redeployment')
