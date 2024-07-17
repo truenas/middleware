@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Dict, List, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
 from middlewared.service import job, Service, ValidationErrors
 
 from .compose_utils import compose_action
@@ -19,6 +19,7 @@ class AppService(Service):
         Dict(
             'options',
             Str('app_version', empty=False, required=True),
+            Bool('rollback_snapshot', default=True),
         )
     )
     @returns(Ref('app_query'))
@@ -40,9 +41,9 @@ class AppService(Service):
             'catalog.app_version_details', get_installed_app_version_path(app_name, options['app_version'])
         )
         config = get_current_app_config(app_name, options['app_version'])
-        new_values, context = self.middleware.call_sync(
-            'app.schema.normalise_and_validate_values', rollback_version, config, False,
-            get_installed_app_path(app_name),
+        new_values = self.middleware.call_sync(
+            'app.schema.normalize_and_validate_values', rollback_version, config, False,
+            get_installed_app_path(app_name), app,
         )
         new_values = add_context_to_values(app_name, new_values, rollback=True)
         update_app_config(app_name, options['app_version'], new_values)
@@ -56,10 +57,26 @@ class AppService(Service):
         # 2) Compose files should be rendered
         # 3) Metadata should be updated to reflect new version
         # 4) Docker should be notified to recreate resources and to let rollback commence
-        # 5) Finally update collective metadata config to reflect new version
+        # 5) Roll back ix_volume dataset's snapshots if available
+        # 6) Finally update collective metadata config to reflect new version
         update_app_metadata(app_name, rollback_version)
-        job.set_progress(40, f'Rolling back {app_name!r} app to {options["app_version"]!r} version')
         try:
+            if options['rollback_snapshot'] and (
+                app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name)
+            ):
+                snap_name = f'{app_volume_ds}@{options["app_version"]}'
+                if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
+                    job.set_progress(40, f'Rolling back {app_name!r} app to {options["app_version"]!r} version')
+
+                    self.middleware.call_sync(
+                        'zfs.snapshot.rollback', snap_name, {
+                            'force': True,
+                            'recursive': True,
+                            'recursive_clones': True,
+                            'recursive_rollback': True,
+                        }
+                    )
+
             compose_action(app_name, options['app_version'], 'up', force_recreate=True, remove_orphans=True)
         finally:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)

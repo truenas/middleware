@@ -10,10 +10,8 @@ from middlewared.validators import Match, Range, validate_schema
 CONTEXT_KEY_NAME = 'ix_context'
 RESERVED_NAMES = [
     ('ix_certificates', dict),
-    ('ix_certificateAuthorities', dict),
-    ('ix_externalInterfacesConfiguration', list),
-    ('ix_externalInterfacesConfigurationNames', list),  # TODO: Fix the casing here please
-    ('ix_volumes', list),
+    ('ix_certificate_authorities', dict),
+    ('ix_volumes', dict),
     (CONTEXT_KEY_NAME, dict),
 ]
 SCHEMA_MAPPING = {

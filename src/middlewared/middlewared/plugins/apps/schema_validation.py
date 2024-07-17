@@ -1,10 +1,18 @@
+from pathlib import Path
+
 from middlewared.schema import Dict
 from middlewared.service import Service
+from middlewared.utils import filter_list
 
 from .schema_utils import construct_schema, get_list_item_from_value, NOT_PROVIDED, RESERVED_NAMES
 
 
-VALIDATION_REF_MAPPING = {}
+VALIDATION_REF_MAPPING = {
+    'definitions/certificate': 'certificate',
+    'definitions/certificateAuthority': 'certificate_authority',
+    'definitions/port': 'port_available_on_node',
+    'normalize/acl': 'acl_entries',
+}
 # FIXME: See which are no longer valid
 # https://github.com/truenas/middleware/blob/249ed505a121e5238e225a89d3a1fa60f2e55d27/src/middlewared/middlewared/
 # plugins/chart_releases_linux/validation.py#L13
@@ -96,3 +104,38 @@ class AppSchemaService(Service):
                     )
 
         return verrors
+
+    async def validate_certificate(self, verrors, value, question, schema_name, app_data):
+        if not value:
+            return
+
+        if not filter_list(await self.middleware.call('app.certificate_choices'), [['id', '=', value]]):
+            verrors.add(schema_name, 'Unable to locate certificate.')
+
+    async def validate_certificate_authority(self, verrors, value, question, schema_name, app_data):
+        if not value:
+            return
+
+        if not filter_list(
+            await self.middleware.call('app.certificate_authority_choices'), [['id', '=', value]]
+        ):
+            verrors.add(schema_name, 'Unable to locate certificate authority.')
+
+    def validate_acl_entries(self, verrors, value, question, schema_name, app_data):
+        try:
+            if value.get('path') and not value.get('options', {}).get('force') and next(
+                Path(value['path']).iterdir(), None
+            ):
+                verrors.add(schema_name, f'{value["path"]}: path contains existing data and `force` was not specified')
+        except FileNotFoundError:
+            verrors.add(schema_name, f'{value["path"]}: path does not exist')
+
+    async def validate_port_available_on_node(self, verrors, value, question, schema_name, app_data):
+        if app_data and value in [p['port'] for p in app_data['used_ports']]:
+            # TODO: This still leaves a case where user has multiple ports in a single app and mixes
+            #  them to the same value however in this case we will still get an error raised by docker.
+            return
+
+        # FIXME: Once we have port attachment delegate in place, please validate ports being used by the system overall
+        if value in await self.middleware.call('app.used_ports'):
+            verrors.add(schema_name, 'Port is already in use.')
