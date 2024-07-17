@@ -117,7 +117,7 @@ class AppSchemaService(Service):
             return
 
         if not filter_list(
-                await self.middleware.call('app.certificate_authority_choices'), [['id', '=', value]]
+            await self.middleware.call('app.certificate_authority_choices'), [['id', '=', value]]
         ):
             verrors.add(schema_name, 'Unable to locate certificate authority.')
 
