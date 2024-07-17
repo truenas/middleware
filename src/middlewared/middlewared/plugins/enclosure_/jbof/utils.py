@@ -71,11 +71,11 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements={})
             value_raw = 0x5000000
 
         mapped_slot = disks_map['versions']['DEFAULT']['model'][model][slot]['mapped_slot']
-        light = disks_map['versions']['DEFAULT']['id'][model][slot][SUPPORTS_IDENTIFY_KEY]
-        dfk = disks_map['versions']['DEFAULT']['id'][model][slot][DISK_FRONT_KEY]
-        drk = disks_map['versions']['DEFAULT']['id'][model][slot][DISK_REAR_KEY]
-        dtk = disks_map['versions']['DEFAULT']['id'][model][slot][DISK_TOP_KEY]
-        dik = disks_map['versions']['DEFAULT']['id'][model][slot][DISK_INTERNAL_KEY]
+        light = disks_map['versions']['DEFAULT']['model'][model][slot][SUPPORTS_IDENTIFY_KEY]
+        dfk = disks_map['versions']['DEFAULT']['model'][model][slot][DISK_FRONT_KEY]
+        drk = disks_map['versions']['DEFAULT']['model'][model][slot][DISK_REAR_KEY]
+        dtk = disks_map['versions']['DEFAULT']['model'][model][slot][DISK_TOP_KEY]
+        dik = disks_map['versions']['DEFAULT']['model'][model][slot][DISK_INTERNAL_KEY]
         fake_enclosure['elements']['Array Device Slot'][mapped_slot] = {
             'descriptor': f'Disk #{slot}',
             'status': status,
