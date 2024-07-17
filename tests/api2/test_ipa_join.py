@@ -49,6 +49,14 @@ def test_setup_and_enabling_freeipa(do_freeipa_connection):
     assert config['kerberos_principal'].startswith('host/')
 
 
+def test_accounts_cache(do_freeipa_connection):
+    ipa_users_cnt = call('user.query', [['local', '=', False]], {'count': True})
+    assert ipa_users_cnt != 0
+
+    ipa_groups_cnt = call('group.query', [['local', '=', False]], {'count': True})
+    assert ipa_groups_cnt != 0
+
+
 @pytest.mark.parametrize('keytab_name', [
     'IPA_MACHINE_ACCOUNT',
     'IPA_NFS_KEYTAB',
@@ -78,12 +86,6 @@ def test_admin_privilege(do_freeipa_connection, enable_ds_auth):
 
     priv = call('privilege.query', [['name', '=', ipa_config['domain']]], {'get': True})
     admins_grp = call('group.get_group_obj', {'groupname': 'admins', 'sid_info': True})
-
-    ipa_users_cnt = call('user.query', [['local', '=', False]], {'count': True})
-    assert ipa_users_cnt != 0
-
-    ipa_groups_cnt = call('group.query', [['local', '=', False]], {'count': True})
-    assert ipa_groups_cnt != 0
 
     assert len(priv['ds_groups']) == 1
     assert priv['ds_groups'][0]['gid'] == admins_grp['gr_gid']
