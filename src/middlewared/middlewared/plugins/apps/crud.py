@@ -202,7 +202,7 @@ class AppService(CRUDService):
 
         new_values = self.middleware.call_sync(
             'app.schema.normalize_and_validate_values', app_version_details, config, False,
-            get_installed_app_path(app_name),
+            get_installed_app_path(app_name), app
         )
 
         job.set_progress(25, 'Initial Validation completed')
