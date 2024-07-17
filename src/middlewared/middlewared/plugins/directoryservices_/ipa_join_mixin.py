@@ -132,8 +132,8 @@ class IPAJoinMixin:
         try:
             self.middleware.call_sync('privilege.create', {
                 'name': ipa_config['domain'].upper(),
-                'ds_groups': [admins_grp['gr_gid']],
-                'allowlist': [{'method': '*', 'resource': '*'}],
+                'ds_groups': [admins_grp['sid']],
+                'roles': ['FULL_ADMIN'],
                 'web_shell': True
             })
         except Exception:

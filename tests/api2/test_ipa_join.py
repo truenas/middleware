@@ -51,3 +51,16 @@ def test_system_keytab_has_nfs_principal(do_freeipa_connection):
 
 def test_smb_keytab_exists(do_freeipa_connection):
     call('filesystem.stat', '/etc/ipa/smb.keytab')
+
+
+def test_admin_privilege(do_freeipa_connection):
+    ipa_config = call('ldap.ipa_config')
+
+    priv = call('privilege.query', [['name', '=', ipa_config['domain']]], {'get': True})
+    admins_grp = call('group.get_group_obj', {'groupname': 'admins', 'sid_info': True})
+
+    assert len(priv['ds_groups']) == 1
+    assert priv['ds_groups'][0]['gid'] == admins_grp['gr_gid']
+    assert priv['ds_groups'][0]['sid'] == admins_grp['sid']
+
+    assert priv['roles'] == ['FULL_ADMIN']
