@@ -226,6 +226,8 @@ class CatalogService(Service):
             'timezones': await self.middleware.call('system.general.timezone_choices'),
             'system.general.config': await self.middleware.call('system.general.config'),
             'unused_ports': await self.middleware.call('port.get_unused_ports'),
+            'certificates': await self.middleware.call('app.certificate_choices'),
+            'certificate_authorities': await self.middleware.call('app.certificate_authority_choices'),
         }
 
     @private
