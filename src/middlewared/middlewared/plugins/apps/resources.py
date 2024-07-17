@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, List, Ref, returns
+from middlewared.schema import accepts, Int, List, Ref, returns
 from middlewared.service import Service
 
 
@@ -28,3 +28,16 @@ class AppService(Service):
         return await self.middleware.call(
             'certificateauthority.query', [['revoked', '=', False], ['parsed', '=', True]], {'select': ['name', 'id']}
         )
+
+    @accepts()
+    @returns(List(items=[Int('used_port')]))
+    async def used_ports(self):
+        """
+        Returns ports in use by applications.
+        """
+        return sorted(list(set({
+            host_port['host_port']
+            for app in await self.middleware.call('app.query')
+            for port_entry in app['active_workloads']['used_ports']
+            for host_port in port_entry['host_ports']
+        })))
