@@ -47,7 +47,8 @@ class AppService(Service):
         # 3) Necessary config changes should be added like context and new user specified values
         # 4) New compose files should be rendered with the config changes
         # 5) Docker should be notified to recreate resources and to let upgrade to commence
-        # 6) Finally update collective metadata config to reflect new version
+        # 6) Update collective metadata config to reflect new version
+        # 7) Finally create ix-volumes snapshot for rollback
         with upgrade_config(app_name, upgrade_version) as version_path:
             config = get_current_app_config(app_name, app['version'])
             config.update(options['values'])
@@ -65,6 +66,18 @@ class AppService(Service):
             compose_action(app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True)
         finally:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+
+        job.set_progress(50, 'Created snapshot for upgrade')
+        if app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name):
+            snap_name = f'{app_volume_ds}@{app["version"]}'
+            if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
+                self.middleware.call_sync('zfs.snapshot.delete', snap_name, {'recursive': True})
+
+            self.middleware.call_sync(
+                'zfs.snapshot.create', {
+                    'dataset': app_volume_ds, 'name': app['version'], 'recursive': True
+                }
+            )
 
         job.set_progress(100, 'Upgraded app successfully')
         return self.middleware.call_sync('app.get_instance', app_name)

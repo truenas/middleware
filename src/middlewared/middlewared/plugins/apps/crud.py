@@ -1,10 +1,11 @@
 import contextlib
 import errno
+import os
 import shutil
 import textwrap
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
-from middlewared.service import CallError, CRUDService, filterable, job
+from middlewared.service import CallError, CRUDService, filterable, InstanceNotFound, job, private
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
 
@@ -219,6 +220,7 @@ class AppService(CRUDService):
         Dict(
             'options',
             Bool('remove_images', default=True),
+            Bool('remove_ix_volumes', default=False),
         )
     )
     @job(lock=lambda args: f'app_delete_{args[0]}')
@@ -235,7 +237,18 @@ class AppService(CRUDService):
         try:
             job.set_progress(80, 'Cleaning up resources')
             shutil.rmtree(get_installed_app_path(app_name))
+            if options['remove_ix_volumes'] and (apps_volume_ds := self.get_app_volume_ds(app_name)):
+                self.middleware.call_sync('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
         finally:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
         job.set_progress(100, f'Deleted {app_name!r} app')
         return True
+
+    @private
+    def get_app_volume_ds(self, app_name):
+        # This will return volume dataset of app if it exists, otherwise null
+        apps_volume_ds = os.path.join(
+            self.middleware.call_sync('docker.config')['dataset'], 'app_mounts', app_name
+        )
+        with contextlib.suppress(InstanceNotFound):
+            return self.middleware.call_sync('pool.dataset.get_instance_quick', apps_volume_ds)['id']
