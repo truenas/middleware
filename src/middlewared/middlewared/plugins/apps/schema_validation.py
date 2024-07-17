@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from middlewared.schema import Dict
 from middlewared.service import Service
 from middlewared.utils import filter_list
@@ -8,6 +10,7 @@ from .schema_utils import construct_schema, get_list_item_from_value, NOT_PROVID
 VALIDATION_REF_MAPPING = {
     'definitions/certificate': 'certificate',
     'definitions/certificateAuthority': 'certificate_authority',
+    'normalize/acl': 'acl_entries',
 }
 # FIXME: See which are no longer valid
 # https://github.com/truenas/middleware/blob/249ed505a121e5238e225a89d3a1fa60f2e55d27/src/middlewared/middlewared/
@@ -116,3 +119,12 @@ class AppSchemaService(Service):
                 await self.middleware.call('app.certificate_authority_choices'), [['id', '=', value]]
         ):
             verrors.add(schema_name, 'Unable to locate certificate authority.')
+
+    def validate_acl_entries(self, verrors, value, question, schema_name, app_data):
+        try:
+            if value.get('path') and not value.get('options', {}).get('force') and next(
+                Path(value['path']).iterdir(), None
+            ):
+                verrors.add(schema_name, f'{value["path"]}: path contains existing data and `force` was not specified')
+        except FileNotFoundError:
+            verrors.add(schema_name, f'{value["path"]}: path does not exist')
