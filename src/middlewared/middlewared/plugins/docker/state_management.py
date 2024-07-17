@@ -49,6 +49,8 @@ class DockerStateService(Service):
         except Exception as e:
             await self.set_status(Status.FAILED.value, str(e))
             raise
+        else:
+            await self.middleware.call('app.certificate.redeploy_apps_consuming_outdated_certs')
 
     @private
     async def set_status(self, new_status, extra=None):

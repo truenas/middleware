@@ -2,7 +2,7 @@ import os
 import typing
 import yaml
 
-from .path import get_collective_metadata_path, get_installed_app_metadata_path
+from .path import get_collective_config_path, get_collective_metadata_path, get_installed_app_metadata_path
 
 
 def get_app_metadata(app_name: str) -> dict[str, typing.Any]:
@@ -19,6 +19,14 @@ def update_app_metadata(app_name: str, app_version_details: dict):
             'metadata': app_version_details['app_metadata'],
             **{k: app_version_details[k] for k in ('version', 'human_version')}
         }))
+
+
+def get_collective_config() -> dict[str, dict]:
+    try:
+        with open(get_collective_config_path(), 'r') as f:
+            return yaml.safe_load(f.read())
+    except FileNotFoundError:
+        return {}
 
 
 def get_collective_metadata() -> dict[str, dict]:

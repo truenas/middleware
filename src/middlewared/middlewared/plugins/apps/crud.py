@@ -190,7 +190,13 @@ class AppService(CRUDService):
         """
         Update `app_name` app with new configuration.
         """
-        app = self.get_instance__sync(app_name)
+        app = self.update_internal(job, self.get_instance__sync(app_name), data)
+        self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+        return app
+
+    @private
+    def update_internal(self, job, app, data, progress_keyword='Update'):
+        app_name = app['id']
         config = get_current_app_config(app_name, app['version'])
         config.update(data['values'])
         # We use update=False because we want defaults to be populated again if they are not present in the payload
@@ -212,7 +218,7 @@ class AppService(CRUDService):
         job.set_progress(60, 'Configuration updated, updating docker resources')
         compose_action(app_name, app['version'], 'up', force_recreate=True, remove_orphans=True)
 
-        job.set_progress(100, f'Update completed for {app_name!r}')
+        job.set_progress(100, f'{progress_keyword} completed for {app_name!r}')
         return self.get_instance__sync(app_name)
 
     @accepts(

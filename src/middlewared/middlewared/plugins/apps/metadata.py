@@ -3,8 +3,9 @@ import yaml
 
 from middlewared.service import job, Service
 
+from .ix_apps.lifecycle import get_current_app_config
 from .ix_apps.metadata import get_app_metadata
-from .ix_apps.path import get_app_parent_config_path, get_collective_metadata_path
+from .ix_apps.path import get_app_parent_config_path, get_collective_config_path, get_collective_metadata_path
 
 
 class AppMetadataService(Service):
@@ -15,6 +16,7 @@ class AppMetadataService(Service):
 
     @job(lock='app_metadata_generate', lock_queue_size=1)
     def generate(self, job):
+        config = {}
         metadata = {}
         with os.scandir(get_app_parent_config_path()) as scan:
             for entry in filter(lambda e: e.is_dir(), scan):
@@ -23,8 +25,12 @@ class AppMetadataService(Service):
                     continue
 
                 metadata[entry.name] = app_metadata
+                config[entry.name] = get_current_app_config(entry.name, app_metadata['version'])
 
         with open(get_collective_metadata_path(), 'w') as f:
             f.write(yaml.safe_dump(metadata))
+
+        with open(get_collective_config_path(), 'w') as f:
+            f.write(yaml.safe_dump(config))
 
         job.set_progress(100, 'Updated metadata configuration for apps')
