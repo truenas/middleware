@@ -1,6 +1,7 @@
 from middlewared.plugins.smb_.registry_base import RegObj, RegistrySchema
 from middlewared.plugins.smb_.utils import apply_presets
 from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
+from middlewared.utils.directoryservices.constants import DSType
 
 
 FRUIT_CATIA_MAPS = [
@@ -222,9 +223,9 @@ class ShareSchema(RegistrySchema):
         if not val:
             return
 
-        ad_enabled = entry.middleware.call_sync("activedirectory.get_state") != "DISABLED"
+        ds = entry.middleware.call_sync("directoryservices.status")
         data_out.update({
-            "recycle:repository": {"parsed": ".recycle/%D/%U" if ad_enabled else ".recycle/%U"},
+            "recycle:repository": {"parsed": ".recycle/%D/%U" if ds["type"] == DSType.AD.value else ".recycle/%U"},
             "recycle:keeptree": {"parsed": True},
             "recycle:versions": {"parsed": True},
             "recycle:touch": {"parsed": True},

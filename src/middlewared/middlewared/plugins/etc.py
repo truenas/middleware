@@ -106,10 +106,19 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'fstab'},
             {'type': 'py', 'path': 'fstab_configure', 'checkpoint': 'post_init'}
         ],
+        'ipa': {
+            'ctx': [
+                {'method': 'directoryservices.status'}
+            ],
+            'entries': [
+                {'type': 'py', 'path': 'ipa/default_conf'},
+                {'type': 'py', 'path': 'ipa/ca.crt'},
+                {'type': 'py', 'path': 'ipa/smb.keytab', 'mode': 0o600}
+            ]
+        },
         'kerberos': {
             'ctx': [
-                {'method': 'activedirectory.config'},
-                {'method': 'ldap.config'},
+                {'method': 'directoryservices.status'},
                 {'method': 'kerberos.config'},
                 {'method': 'kerberos.realm.query'}
             ],

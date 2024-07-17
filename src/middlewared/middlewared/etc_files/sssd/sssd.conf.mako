@@ -2,9 +2,12 @@
 # NSLCD.CONF(5)		The configuration file for LDAP nameservice daemon
 #
 <%
-        from middlewared.plugins.ldap_ import constants
-        from middlewared.plugins.ldap_ import utils
+    from middlewared.plugins.etc import FileShouldNotExist
+    from middlewared.plugins.ldap_ import constants, utils
+    from middlewared.utils.directoryservices.constants import DSType
 
+    ds_type = middleware.call_sync('directoryservices.status')['type']
+    if ds_type == DSType.LDAP.value:
         ldap = middleware.call_sync('ldap.config')
         kerberos_realm = None
         aux = []
@@ -29,8 +32,7 @@
             )['realm']
 
         ldap_enabled = ldap['enable']
-        if ldap_enabled:
-            domain = kerberos_realm or ldap['hostname'][0]
+        domain = kerberos_realm or ldap['hostname'][0]
 
         ldap_enabled = ldap['enable']
         for param in ldap['auxiliary_parameters'].splitlines():
@@ -43,8 +45,18 @@
                 except Exception:
                     pass
 
+    elif ds_type == DSType.IPA.value:
+        ldap = middleware.call_sync('ldap.config')
+        try:
+            ipa_info = middleware.call_sync('ldap.ipa_config')
+        except Exception:
+            middleware.logger.debug("Failed to retrieve IPA config", exc_info=True)
+            raise FileShouldNotExist
+    else:
+        raise FileShouldNotExist
+
 %>
-% if ldap_enabled:
+% if ds_type == DSType.LDAP.value:
 [sssd]
 domains = ${domain}
 services = nss, pam
@@ -84,4 +96,19 @@ ${'\n    '.join(map_params)}
 % if aux:
 ${'\n    '.join(aux)}
 % endif
+% elif ds_type == DSType.IPA.value:
+[sssd]
+domains = ${ipa_info['domain']}
+services = nss, pam
+
+[domain/${ipa_info['domain']}]
+id_provider = ipa
+ipa_server = _srv_, ${ipa_info['target_server']}
+ipa_domain = ${ipa_info['realm'].lower()}
+ipa_hostname = ${ipa_info['host'].lower()}
+auth_provider = ipa
+access_provider = ipa
+cache_credentials = True
+ldap_tls_cacert = /etc/ipa/ca.crt
+enumerate = ${not ldap['disable_freenas_cache']}
 % endif

@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 
 import pytest
 
@@ -8,27 +7,21 @@ from middlewared.test.integration.assets.pool import dataset
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-# from functions import make_ws_request
-from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
+from functions import SSH_TEST
 from auto_config import hostname, password, user
-from calendar import timegm
 from contextlib import contextmanager
 from base64 import b64decode
 from protocols import nfs_share
-from pytest_dependency import depends
+from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.utils import call
 from middlewared.test.integration.assets.directory_service import active_directory
-from middlewared.test.integration.utils.client import truenas_server
 
-"""
 try:
-    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer, AD_COMPUTER_OU
+    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, AD_COMPUTER_OU
 except ImportError:
-    Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
-    pytestmark = pytest.mark.skip(reason=Reason)
-"""
-pytestmark = pytest.mark.skip(reason='Pending refactor staged in yet to be opened PR')
+    pytestmark = pytest.mark.skip(reason='Missing AD configuration')
 
-SAMPLE_KEYTAB = "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"
+SAMPLE_KEYTAB = "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"  # noqa
 
 SAMPLEDOM_NAME = "CANARY.FUN"
 SAMPLEDOM_REALM = {
@@ -63,14 +56,7 @@ def get_export_sec(exports_config):
 def regenerate_exports():
     # NFS service isn't running for these tests
     # and so exports aren't updated. Force the update.
-    ip = truenas_server.ip
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'etc.generate',
-        'params': ['nfsd'],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
+    call('etc.generate', 'nfsd')
 
 
 def check_export_sec(expected):
@@ -99,38 +85,25 @@ def parse_krb5_conf(fn, split=None, state=None):
 
 @contextmanager
 def add_kerberos_keytab(ktname):
-    payload = {
+    kt = call('kerberos.keytab.create', {
         "name": ktname,
         "file": SAMPLE_KEYTAB
-    }
-    results = POST("/kerberos/keytab/", payload)
-    assert results.status_code == 200, results.text
-    kt_id = results.json()['id']
-
+    })
     try:
-        yield results.json()
+        yield kt
     finally:
-        results = DELETE(f'/kerberos/keytab/id/{kt_id}')
-        assert results.status_code == 200, results.text
-
-    results = GET(f'/kerberos/keytab/?name={ktname}')
-    assert results.status_code == 200, results.text
-    assert len(results.json()) == 0, results.text
+        call('kerberos.keytab.delete', kt['id'])
 
 
 @contextmanager
 def add_kerberos_realm(realm_name):
-    results = POST("/kerberos/realm/",{
+    realm = call('kerberos.realm.create', {
         'realm': realm_name,
     })
-    assert results.status_code == 200, results.text
-    realm_id = results.json()['id']
-
     try:
-        yield results.json()
+        yield realm
     finally:
-        results = DELETE(f'/kerberos/realm/id/{realm_id}')
-        assert results.status_code == 200, results.text
+        call('kerberos.realm.delete', realm['id'])
 
 
 @pytest.fixture(scope="function")
@@ -145,8 +118,8 @@ def do_ad_connection(request):
         yield (request, ad)
 
 
-def test_02_kerberos_keytab_and_realm(do_ad_connection):
-    ip = truenas_server.ip
+def test_kerberos_keytab_and_realm(do_ad_connection):
+
     def krb5conf_parser(krb5conf_lines, idx, entry, state):
         if entry.lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][0]}":
             assert krb5conf_lines[idx + 1].lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][1]}"
@@ -163,10 +136,7 @@ def test_02_kerberos_keytab_and_realm(do_ad_connection):
             assert krb5conf_lines[idx + 2].lstrip() == f"kpasswd_server = {SAMPLEDOM_REALM['kpasswd_server'][2]}"
             state['has_kpasswd_server'] = True
 
-
-    results = GET('/activedirectory/started/')
-    assert results.status_code == 200, results.text
-
+    call('directoryservices.status')['status'] == 'HEALTHY'
     """
     The keytab in this case is a b64encoded keytab file.
     AD_MACHINE_ACCOUNT is automatically generated during domain
@@ -178,46 +148,22 @@ def test_02_kerberos_keytab_and_realm(do_ad_connection):
     can be determined by printing contents of system keytab and
     verifying that we were able to get a kerberos ticket.
     """
-    results = GET('/kerberos/keytab/?name=AD_MACHINE_ACCOUNT')
-    assert results.status_code == 200, results.text
-    assert len(results.json()) == 1, results.text
-    assert results.json()[0]['file'] != "", "AD_MACHINE_ACCOUNT file empty"
-    errstr = ""
-    try:
-        b64decode(results.json()[0]['file'])
-    except Exception as e:
-        errstr = e.args[0]
-
-        assert errstr == "", f"b64decode of keytab failed with: {errstr}"
+    kt = call('kerberos.keytab.query', [['name', '=', 'AD_MACHINE_ACCOUNT']], {'get': True})
+    b64decode(kt['file'])
 
     """
     kerberos_principal_choices lists unique keytab principals in
     the system keytab. AD_MACHINE_ACCOUNT should add more than
     one principal.
     """
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'kerberos.keytab.kerberos_principal_choices',
-        'params': [],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
-
-    orig_kt_len = len(res['result'])
-    assert orig_kt_len != 0, res['result']
+    orig_kt = call('kerberos.keytab.kerberos_principal_choices')
+    assert orig_kt != []
 
     """
     kerberos.check_ticket performs a platform-independent verification
     of kerberos ticket.
     """
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'kerberos.check_ticket',
-        'params': [],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
-    assert res['result'] is True
+    call('kerberos.check_ticket')
 
     """
     Test uploading b64encoded sample kerberos keytab included
@@ -225,41 +171,25 @@ def test_02_kerberos_keytab_and_realm(do_ad_connection):
     upload, validate that it was uploaded, and verify that the
     keytab is read back correctly.
     """
-    with add_kerberos_keytab("KT2") as new_keytab:
-        results = GET('/kerberos/keytab/?name=KT2')
-        assert results.status_code == 200, results.text
-        assert len(results.json()) == 1, results.text
-        assert results.json()[0]['file'] != "", "second keytab file empty"
-        errstr = ""
-        try:
-             b64decode(results.json()[0]['file'])
-        except Exception as e:
-             errstr = e.args[0]
-
-        assert errstr == "", f"b64decode of keytab failed with: {errstr}"
-        assert results.json()[0]['file'] == SAMPLE_KEYTAB, results.text
+    with add_kerberos_keytab('KT2'):
+        kt2 = call('kerberos.keytab.query', [['name', '=', 'KT2']], {'get': True})
+        b64decode(kt2['file'])
+        assert kt2['file'] == SAMPLE_KEYTAB
 
     """
     AD Join should automatically add a kerberos realm
     for the AD domain.
     """
-    results = GET(f'/kerberos/realm/?realm={AD_DOMAIN.upper()}')
-    assert results.status_code == 200, results.text
-    assert len(results.json()) == 1, results.text
+    call('kerberos.realm.query', [['realm', '=', AD_DOMAIN.upper()]], {'get': True})
 
     with add_kerberos_realm(SAMPLEDOM_NAME) as new_realm:
         payload = SAMPLEDOM_REALM.copy()
         payload.pop("realm")
-        results = PUT(f"/kerberos/realm/id/{new_realm['id']}/", payload)
-        assert results.status_code == 200, results.text
+        call('kerberos.realm.update', new_realm['id'], payload)
 
-        results = GET(f'/kerberos/realm/?realm={SAMPLEDOM_NAME}')
-        assert results.status_code == 200, results.text
-        assert len(results.json()) == 1, results.text
-
-        res = results.json()[0].copy()
-        res.pop("id")
-        assert res == SAMPLEDOM_REALM, results.json()
+        r = call('kerberos.realm.query', [['realm', '=', SAMPLEDOM_NAME]], {'get': True})
+        r.pop('id')
+        assert r == SAMPLEDOM_REALM
 
         # Verify realms properly added to krb5.conf
         iter_state = {
@@ -273,12 +203,10 @@ def test_02_kerberos_keytab_and_realm(do_ad_connection):
         assert iter_state['has_admin_server'] is True, output
         assert iter_state['has_kpasswd_server'] is True, output
 
-    results = GET(f'/kerberos/realm/?realm={SAMPLEDOM_NAME}')
-    assert results.status_code == 200, results.text
-    assert len(results.json()) == 0, results.text
+    assert len(call('kerberos.realm.query', [['realm', '=', SAMPLEDOM_NAME]])) == 0
 
 
-def test_03_kerberos_krbconf(do_ad_connection):
+def test_kerberos_krbconf(do_ad_connection):
     def parser_1(unused, idx, sec, state):
         if not sec.startswith("appdefaults"):
             return
@@ -306,8 +234,8 @@ def test_03_kerberos_krbconf(do_ad_connection):
     Test of more complex auxiliary parameter parsing that allows
     users to override our defaults.
     """
-    results = PUT("/kerberos/", {"appdefaults_aux": APPDEFAULTS_PAM_OVERRIDE})
-    assert results.status_code == 200, results.text
+
+    call('kerberos.update', {'appdefaults_aux': APPDEFAULTS_PAM_OVERRIDE})
 
     iter_state = {
         'has_forwardable': False,
@@ -319,8 +247,7 @@ def test_03_kerberos_krbconf(do_ad_connection):
     assert iter_state['has_forwardable'] is True, output
     assert iter_state['has_ticket_lifetime'] is True, output
 
-    results = PUT("/kerberos/", {"appdefaults_aux": "encrypt = true"})
-    assert results.status_code == 200, results.text
+    call('kerberos.update', {'appdefaults_aux': 'encrypt = true'})
 
     iter_state = {
         'section': 'appdefaults',
@@ -331,8 +258,7 @@ def test_03_kerberos_krbconf(do_ad_connection):
     output = parse_krb5_conf(parse_section, split='[', state=iter_state)
     assert iter_state['found'] is True, output
 
-    results = PUT("/kerberos/", {"libdefaults_aux": "rdns = true"})
-    assert results.status_code == 200, results.text
+    call('kerberos.update', {'libdefaults_aux': 'rdns = true'})
 
     iter_state = {
         'section': 'libdefaults',
@@ -342,90 +268,39 @@ def test_03_kerberos_krbconf(do_ad_connection):
     output = parse_krb5_conf(parse_section, split='[', state=iter_state)
     assert iter_state['found'] is True, output
 
-    # reset to defaults
-    results = PUT("/kerberos/", {"appdefaults_aux": "", "libdefaults_aux": ""})
-    assert results.status_code == 200, results.text
+
+def test_invalid_aux():
+    call('kerberos.update', {'appdefaults_aux': '', 'libdefaults_aux': ''})
 
     # check that parser raises validation errors
-    results = PUT("/kerberos/", {"appdefaults_aux": "canary = true"})
-    assert results.status_code == 422, results.text
+    with pytest.raises(ValidationErrors):
+        call('kerberos.update', {'appdefaults_aux': 'canary = true'})
 
-    results = PUT("/kerberos/", {"libdefaults_aux": "canary = true"})
-    assert results.status_code == 422, results.text
+    with pytest.raises(ValidationErrors):
+        call('kerberos.update', {'libdefaults_aux': 'canary = true'})
 
 
-def test_04_kerberos_nfs4(do_ad_connection):
-    ip = truenas_server.ip
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'kerberos.keytab.has_nfs_principal',
-        'params': [],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
-    assert res['result'] is False
+def test_kerberos_nfs4(do_ad_connection):
+    assert call('kerberos.keytab.has_nfs_principal') is True
 
     with dataset('AD_NFS') as ds:
-        with nfs_share(f'/mnt/{ds}', options={'comment': 'KRB Test Share'}) as share:
-            payload = {"protocols": ["NFSV3", "NFSV4"]}
-            results = PUT("/nfs/", payload)
-            assert results.status_code == 200, results.text
+        with nfs_share(f'/mnt/{ds}', options={'comment': 'KRB Test Share'}):
+            call('nfs.update', {"protocols": ["NFSV3", "NFSV4"]})
 
             """
             First NFS exports check. In this situation we are joined to
-            AD and therefore have a keytab. We do not at this point have
-            an NFS SPN entry. Expected security with v4 is:
-            "V4: / -sec=sys"
+            AD and therefore have a keytab with NFS entry
+
+            Expected security is:
+            "V4: / -sec=sys:krb5:krb5i:krb5p"
             """
-            check_export_sec('sec=sys')
+            check_export_sec('sec=sys:krb5:krb5i:krb5p')
 
-            payload = {"v4_krb": True}
-            results = PUT("/nfs/", payload)
-            assert results.status_code == 200, results.text
-
-            """
-            Force AD plugin to add NFS spns for further testing.
-            This should still be possible because the initial domain
-            join involved obtaining a kerberos ticket with elevated
-            privileges.
-            """
-            results = GET("/smb/")
-            assert results.status_code == 200, results.text
-            netbios_name = results.json()['netbiosname_local']
-
-            res = make_ws_request(ip, {
-                'msg': 'method',
-                'method': 'activedirectory.add_nfs_spn',
-                'params': [netbios_name, AD_DOMAIN],
-            })
-            error = res.get('error')
-            assert error is None, str(error)
-
-            job_id = res['result']
-            job_status = wait_on_job(job_id, 180)
-            assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-            res = make_ws_request(ip, {
-                'msg': 'method',
-                'method': 'kerberos.keytab.has_nfs_principal',
-                'params': [],
-            })
-            error = res.get('error')
-            assert error is None, str(error)
-            assert res['result'] is True
-
-            res = make_ws_request(ip, {
-                'msg': 'method',
-                'method': 'smb.getparm',
-                'params': ['winbind use default domain', 'GLOBAL'],
-            })
-            error = res.get('error')
-            assert error is None, str(error)
-            assert res['result'] is True
+            call('nfs.update', {"v4_krb": True})
 
             """
             Second NFS exports check. We now have an NFS SPN entry
-            Expected security with is:
+            Expected security is:
             "V4: / -sec=krb5:krb5i:krb5p"
             """
             check_export_sec('sec=krb5:krb5i:krb5p')
@@ -435,44 +310,28 @@ def test_04_kerberos_nfs4(do_ad_connection):
             disabling v4_krb because we still have an nfs
             service principal in our keytab.
             """
-            payload = {"v4_krb": False}
-            results = PUT("/nfs/", payload)
-            assert results.status_code == 200, results.text
-            v4_krb_enabled = results.json()['v4_krb_enabled']
-            assert v4_krb_enabled is True, results.text
+            data = call('nfs.update', {'v4_krb': False})
+            assert data['v4_krb_enabled'] is True, str(data)
 
             """
             Third NFS exports check. We now have an NFS SPN entry
             but v4_krb is disabled.
-            Expected security with is:
+            Expected security is:
             "V4: / -sec=sys:krb5:krb5i:krb5p"
             """
             check_export_sec('sec=sys:krb5:krb5i:krb5p')
 
 
-def test_05_verify_nfs_krb_disabled(request):
+def test_verify_nfs_krb_disabled():
     """
     This test checks that we no longer are flagged as having
     v4_krb_enabled now that we are not joined to AD.
     """
-    results = GET("/nfs")
-    assert results.status_code == 200, results.text
-    v4_krb_enabled = results.json()['v4_krb_enabled']
-    assert v4_krb_enabled is False, results.text
+    assert call('nfs.config')['v4_krb_enabled'] is False
 
 
-def test_06_kerberos_ticket_management(do_ad_connection):
-    ip = truenas_server.ip
-
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'kerberos.klist',
-        'params': [],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
-
-    klist_out = res['result']
+def test_kerberos_ticket_management(do_ad_connection):
+    klist_out = call('kerberos.klist')
     assert klist_out['default_principal'].startswith(hostname.upper()), str(klist_out)
     assert klist_out['ticket_cache']['type'] == 'FILE'
     assert klist_out['ticket_cache']['name'] == '/var/run/middleware/krb5cc_0'
@@ -486,12 +345,11 @@ def test_06_kerberos_ticket_management(do_ad_connection):
     assert to_check is not None, str(klist_out)
     assert 'RENEWABLE' in to_check['flags']
 
-    results = GET('/core/get_jobs/?method=kerberos.wait_for_renewal')
-    assert results.status_code == 200, results.text
-    assert len(results.json()) != 0, results.text
+    call('core.get_jobs', [
+        ['method', '=', 'kerberos.wait_for_renewal'],
+        ['state', '=', 'RUNNING']
+    ], {'get': True})
 
 
-def test_44_check_ad_machine_account_deleted_after_ad_leave(request):
-    results = GET('/kerberos/keytab/?name=AD_MACHINE_ACCOUNT')
-    assert results.status_code == 200, results.text
-    assert len(results.json()) == 0
+def test_check_ad_machine_account_deleted_after_ad_leave():
+    assert len(call('kerberos.keytab.query')) == 0

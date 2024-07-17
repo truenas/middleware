@@ -14,6 +14,16 @@ class DSType(enum.Enum):
     IPA = 'IPA'
     LDAP = 'LDAP'
 
+    @property
+    def etc_files(self):
+        match self:
+            case DSType.AD:
+                return ('pam', 'nss', 'smb', 'kerberos')
+            case DSType.IPA:
+                return ('ldap', 'ipa', 'pam', 'nss', 'smb', 'kerberos')
+            case DSType.LDAP:
+                return ('ldap', 'pam', 'nss', 'kerberos')
+
 
 class SASL_Wrapping(enum.Enum):
     PLAIN = 'PLAIN'
@@ -41,3 +51,8 @@ class NSS_Info(enum.Enum):
     @property
     def valid_services(self):
         return self.value[1]
+
+
+class DomainJoinResponse(enum.Enum):
+    PERFORMED_JOIN = 'PERFORMED_JOIN'
+    ALREADY_JOINED = 'ALREADY_JOINED'

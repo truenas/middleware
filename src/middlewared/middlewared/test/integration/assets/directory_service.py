@@ -2,7 +2,6 @@
 import contextlib
 import logging
 import os
-import shlex
 import sys
 
 from middlewared.test.integration.utils import call, fail
@@ -32,15 +31,34 @@ try:
         LDAPHOSTNAME,
     )
 except ImportError:
-    LDAPBASEDN=None
-    LDAPBINDDN=None
-    LDAPBINDPASSWORD=None
-    LDAPHOSTNAME=None
+    LDAPBASEDN = None
+    LDAPBINDDN = None
+    LDAPBINDPASSWORD = None
+    LDAPHOSTNAME = None
+
+try:
+    from config import (
+        FREEIPA_IP,
+        FREEIPA_BASEDN,
+        FREEIPA_BINDDN,
+        FREEIPA_BINDPW,
+        FREEIPA_ADMIN_BINDDN,
+        FREEIPA_ADMIN_BINDPW,
+        FREEIPA_HOSTNAME,
+    )
+except ImportError:
+    FREEIPA_IP = None
+    FREEIPA_BASEDN = None
+    FREEIPA_BINDDN = None
+    FREEIPA_BINDPW = None
+    FREEIPA_ADMIN_BINDDN = None
+    FREEIPA_ADMIN_BINDPW = None
+    FREEIPA_HOSTNAME = None
 
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['override_nameservers', "smb_mount"]
+__all__ = ['active_directory', 'ldap', 'override_nameservers', 'ipa']
 
 if ha and "hostname_virtual" in os.environ:
     hostname = os.environ["hostname_virtual"]
@@ -185,9 +203,44 @@ def ldap(
     }, job=True)
 
     try:
-        del(config['bindpw'])
+        config['bindpw'] = None
         yield {
             'config': config,
         }
     finally:
         clear_ldap_info()
+
+
+def clear_ipa_info():
+    clear_ldap_info()
+    keytabs = call('kerberos.keytab.query')
+    for kt in keytabs:
+        call('kerberos.keytab.delete', kt['id'])
+
+
+@contextlib.contextmanager
+def ipa(
+    basedn=FREEIPA_BASEDN,
+    binddn=FREEIPA_ADMIN_BINDDN,
+    bindpw=FREEIPA_ADMIN_BINDPW,
+    hostname=FREEIPA_HOSTNAME,
+    nameserver=FREEIPA_IP,
+    **kwargs
+):
+    with override_nameservers(nameserver):
+        try:
+            config = call('ldap.update', {
+                "basedn": basedn,
+                "binddn": binddn,
+                "bindpw": bindpw,
+                "hostname": [hostname],
+                "ssl": "ON",
+                "auxiliary_parameters": "",
+                "validate_certificates": False,
+                "enable": True,
+                **kwargs
+            }, job=True)
+            config['bindpw'] = None
+            yield config
+        finally:
+            clear_ipa_info()

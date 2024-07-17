@@ -483,7 +483,12 @@ def main():
     has_ticket_assert()
     ipa_config = parse_ipa_config()
 
-    initialize_ipa_connection()
+    match args.action:
+        case IpaOperation.GET_CACERT_FROM_LDAP.name | IpaOperation.JOIN.name:
+            pass
+        case _:
+            initialize_ipa_connection()
+
     resp = None
 
     try:
@@ -586,6 +591,7 @@ def main():
             print(json.dumps(e.rpc_response), file=sys.stderr)
             sys.exit(ExitCode.JSON_ERROR)
 
+        print(f'{e.op} - {e.errmsg}', file=sys.stderr)
         sys.exit(ExitCode.GENERIC)
     except Exception as e:
         print(str(e), file=sys.stderr)

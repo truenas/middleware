@@ -8,6 +8,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, Password, Patch, Ref, S
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors, filterable
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import SSL
+from middlewared.utils.directoryservices.constants import DSType as DirectoryServiceType
 from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID, IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX, TRUENAS_IDMAP_MAX
 )
@@ -982,7 +983,7 @@ class IdmapDomainService(CRUDService):
         # winbind are both running when we are joined to an IPA
         # domain. Former provides authoritative SID<->XID resolution
         # IPA accounts. The latter is authoritative for local accounts.
-        if self.middleware.call_sync('ldap.config')['enable']:
+        if self.middleware.call_sync('directoryservices.status')['type'] == DirectoryServiceType.IPA.value:
             if to_check:
                 sss_ctx = SSSClient()
                 results = sss_ctx.sids_to_idmap_entries(to_check)
@@ -1013,34 +1014,37 @@ class IdmapDomainService(CRUDService):
         if not id_list:
             return output
 
-        if self.middleware.call_sync('ldap.config')['enable']:
-            idmap = self.middleware.call_sync('idmap.query', [
-                ['name', '=', 'DS_TYPE_LDAP']
-            ], {'get': True})
+        if self.middleware.call_sync('directoryservices.status')['type'] == DirectoryServiceType.IPA.value:
 
-            sss_ctx = SSSClient()
-            results = sss_ctx.users_and_groups_to_idmap_entries(id_list)
-            if not results['unmapped']:
-                # short-circuit
-                return results
+            try:
+                dom_info = self.middleware.call_sync('directoryservices.connection.ipa_get_smb_domain_info')
+            except Exception:
+                dom_info = None
 
-            output['mapped'] = results['mapped']
-            id_list = []
-            for entry in results['unmapped'].keys():
-                id_type, xid = entry.split(':')
-                xid = int(xid)
+            if dom_info:
+                sss_ctx = SSSClient()
+                results = sss_ctx.users_and_groups_to_idmap_entries(id_list)
+                if not results['unmapped']:
+                    # short-circuit
+                    return results
 
-                if xid >= idmap['range_low'] and xid <= idmap['range_high']:
-                    # ID is provided by SSSD but does not have a SID allocated
-                    # do not include in list to look up via winbind since
-                    # we do not want to introduce potential for hanging for
-                    # the winbind request timeout.
-                    continue
+                output['mapped'] = results['mapped']
+                id_list = []
+                for entry in results['unmapped'].keys():
+                    id_type, xid = entry.split(':')
+                    xid = int(xid)
 
-                id_list.append({
-                    'id_type': 'USER' if id_type == 'UID' else 'GROUP',
-                    'id': int(xid)
-                })
+                    if xid >= dom_info['range_id_min'] and xid <= dom_info['range_id_max']:
+                        # ID is provided by SSSD but does not have a SID allocated
+                        # do not include in list to look up via winbind since
+                        # we do not want to introduce potential for hanging for
+                        # the winbind request timeout.
+                        continue
+
+                    id_list.append({
+                        'id_type': 'USER' if id_type == 'UID' else 'GROUP',
+                        'id': int(xid)
+                    })
 
         if id_list:
             try:

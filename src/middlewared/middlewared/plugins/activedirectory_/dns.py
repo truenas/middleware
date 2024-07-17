@@ -127,11 +127,11 @@ class ActiveDirectoryService(Service):
         return validated_ips
 
     @private
-    async def get_ipaddresses(self, ad, smb, smb_ha_mode):
+    async def get_ipaddresses(self, ad, smb, is_ha):
         if not ad['allow_dns_updates']:
             return None
 
-        if smb_ha_mode == 'UNIFIED' and not smb['bindip']:
+        if is_ha and not smb['bindip']:
             bindip = await self.middleware.call('smb.bindip_choices')
         else:
             bindip = smb['bindip']
@@ -143,12 +143,15 @@ class ActiveDirectoryService(Service):
         })
 
     @private
-    async def register_dns(self, ad, smb, smb_ha_mode):
+    async def register_dns(self):
+        ad = await self.middleware.call('activedirectory.config')
+        smb = await self.middleware.call('smb.config')
+        is_ha = await self.middleware.call('failover.licensed')
+
         if not ad['allow_dns_updates']:
             return None
 
-        await self.middleware.call('kerberos.check_ticket')
-        if not (to_register := await self.get_ipaddresses(ad, smb, smb_ha_mode)):
+        if not (to_register := await self.get_ipaddresses(ad, smb, is_ha)):
             raise CallError(
                 'No server IP addresses passed DNS validation. '
                 'This may indicate an improperly configured reverse zone. '

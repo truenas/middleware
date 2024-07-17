@@ -13,7 +13,7 @@ import os
 import subprocess
 import time
 
-from .krb5_constants import krb_tkt_flag, KRB_ETYPE, KRB_Keytab
+from .krb5_constants import krb_tkt_flag, krb5ccache, KRB_ETYPE, KRB_Keytab
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 from tempfile import NamedTemporaryFile
@@ -301,6 +301,37 @@ def gss_get_current_cred(
         raise CallError(str(e))
 
     return cred
+
+
+def gss_dump_cred(cred: gssapi.Credentials) -> dict:
+    if not isinstance(cred, gssapi.Credentials):
+        raise TypeError(f'{type(cred)}: not gssapi.Credentials type')
+
+    match cred.name.name_type:
+        case gssapi.NameType.user:
+            name_type_str = 'USER'
+        case gssapi.NameType.kerberos_principal:
+            name_type_str = 'KERBEROS_PRINCIPAL'
+        case _:
+            # We only expect to have USER and KERBEROS principals
+            # we'll dump the OID
+            name_type_str = f'UNEXPECTED NAME TYPE: {cred.name.name_type}'
+
+    return {
+        'name': str(cred.name),
+        'name_type': name_type_str,
+        'name_type_oid': cred.name.name_type.dotted_form,
+        'lifetime': cred.lifetime,
+    }
+
+
+def kerberos_ticket(fn):
+    """ Decorator to raise a CallError if no ccache or if ticket in ccache is expired """
+    def check_ticket(*args, **kwargs):
+        gss_get_current_cred(krb5ccache.SYSTEM.value)
+        return fn(*args, **kwargs)
+
+    return check_ticket
 
 
 def parse_keytab(keytab_output: list) -> list:

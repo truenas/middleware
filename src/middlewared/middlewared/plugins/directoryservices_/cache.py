@@ -2,7 +2,7 @@ from middlewared.schema import Str, Ref, Int, Dict, Bool, accepts
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.directoryservices.constants import (
-    DSType
+    DSStatus, DSType
 )
 from middlewared.plugins.idmap_.idmap_constants import IDType
 from middlewared.plugins.idmap_.idmap_winbind import WBClient
@@ -81,8 +81,6 @@ class DSCache(Service):
             """
             try:
                 if data['idtype'] == 'USER':
-                    name_key = 'username'
-
                     if data.get('who') is not None:
                         who = {'username': data['who']}
                     else:
@@ -100,7 +98,6 @@ class DSCache(Service):
                     if entry is None:
                         return None
                 else:
-                    name_key = 'group'
                     if data.get('who') is not None:
                         who = {'groupname': data.get('who')}
                     else:
@@ -147,9 +144,6 @@ class DSCache(Service):
         if ds['type'] is None:
             return []
 
-        extra = options.get("extra", {})
-        get_smb = 'SMB' in extra.get('additional_information', [])
-
         is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'name', 'group'])
         is_id_check = bool(filters and len(filters) == 1 and filters[0][0] in ['uid', 'gid'])
 
@@ -162,16 +156,12 @@ class DSCache(Service):
             entry = self._retrieve({
                 'idtype': id_type,
                 key: filters[0][2],
-            }, {'smb': get_smb})
+            }, {'smb': True})
 
             return [entry] if entry else []
 
         # options must be omitted to defer pagination logic to caller
         entries = query_cache_entries(IDType[id_type], filters, {})
-        if not get_smb:
-            for entry in entries:
-                entry['sid'] = None
-
         return sorted(entries, key=lambda i: i['id'])
 
     def idmap_online_check_wait_wbclient(self, job):
@@ -208,7 +198,7 @@ class DSCache(Service):
         if ds['type'] is None:
             return
 
-        if ds['status'] != 'HEALTHY':
+        if ds['status'] not in (DSStatus.HEALTHY.name, DSStatus.JOINING.name):
             self.logger.warning(
                 'Unable to refresh [%s] cache, state is: %s',
                 ds['type'], ds['status']

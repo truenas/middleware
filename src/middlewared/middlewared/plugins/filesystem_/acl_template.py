@@ -2,6 +2,7 @@ from middlewared.service import CallError, CRUDService, ValidationErrors
 from middlewared.service import accepts, private, returns
 from middlewared.schema import Bool, Dict, Int, List, Str, Ref, Patch, OROperator
 from middlewared.plugins.smb import SMBBuiltin
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from .utils import ACLType
 
 import middlewared.sqlalchemy as sa
@@ -197,8 +198,8 @@ class ACLTemplateService(CRUDService):
         ba_id = int(SMBBuiltin.ADMINISTRATORS.value[1][9:])
         await self.append_builtins_internal((bu_id, ba_id), data)
 
-        ad_state = await self.middleware.call('activedirectory.get_state')
-        if ad_state != 'HEALTHY':
+        ds = await self.middleware.call('directoryservices.status')
+        if ds['type'] != DSType.AD.value or ds['status'] != DSStatus.HEALTHY.name:
             return
 
         domain_info = await self.middleware.call('idmap.domain_info', 'DS_TYPE_ACTIVEDIRECTORY')

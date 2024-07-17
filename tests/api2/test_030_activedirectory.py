@@ -6,7 +6,7 @@ import dns.resolver
 import pytest
 from truenas_api_client import \
     ValidationErrors as ClientValidationErrors
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.directory_service import (
     active_directory, override_nameservers)
 from middlewared.test.integration.assets.pool import dataset
@@ -15,10 +15,10 @@ from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.system import reset_systemd_svcs
-from pytest_dependency import depends
 
 from auto_config import ha
 from protocols import smb_connection, smb_share
+from truenas_api_client import ClientException
 
 if ha and "hostname_virtual" in os.environ:
     hostname = os.environ["hostname_virtual"]
@@ -62,6 +62,16 @@ def cleanup_forward_zone():
     remove_dns_entries(payload)
 
 
+def check_ad_started():
+    ds = call('directoryservices.status')
+    if ds['type'] is None:
+        return False
+
+    assert ds['type'] == 'ACTIVEDIRECTORY'
+    assert ds['status'] == 'HEALTHY'
+    return True
+
+
 def cleanup_reverse_zone():
     result = call('activedirectory.ipaddresses_to_register', {'hostname': f'{hostname}.{AD_DOMAIN}.', 'bindip': []}, False)
     ptr_table = {f'{ipaddress.ip_address(i).reverse_pointer}.': i for i in result}
@@ -103,10 +113,10 @@ def set_ad_nameserver(request):
         yield (request, ns)
 
 
-def test_02_cleanup_nameserver(set_ad_nameserver):
+def test_cleanup_nameserver(set_ad_nameserver):
     domain_info = call('activedirectory.domain_info', AD_DOMAIN)
 
-    cred = call('kerberos.get_cred', {'dstype': 'DS_TYPE_ACTIVEDIRECTORY',
+    cred = call('kerberos.get_cred', {'dstype': 'ACTIVEDIRECTORY',
                                       'conf': {'bindname': ADUSERNAME,
                                                'bindpw': ADPASSWORD,
                                                'domainname': AD_DOMAIN
@@ -127,20 +137,10 @@ def test_02_cleanup_nameserver(set_ad_nameserver):
     cleanup_reverse_zone()
 
 
-def test_03_get_activedirectory_data(request):
-    call('activedirectory.config')
+def test_enable_leave_activedirectory():
+    reset_systemd_svcs('winbind')
+    assert check_ad_started() is False
 
-
-def test_05_get_activedirectory_state(request):
-    assert 'DISABLED' == call('activedirectory.get_state')
-
-
-def test_06_get_activedirectory_started_before_starting_activedirectory(request):
-    assert call('activedirectory.started') is False
-
-
-@pytest.mark.dependency(name="ad_works")
-def test_07_enable_leave_activedirectory(request):
     if not ha:
         with pytest.raises(ValidationErrors):
             # At this point we are not enterprise licensed
@@ -179,11 +179,7 @@ def test_07_enable_leave_activedirectory(request):
 
         assert ve.value.errors[0].errmsg.startswith('Parameter may not be changed')
 
-        # Verify that AD state is reported as healthy
-        assert call('activedirectory.get_state') == 'HEALTHY'
-
-        # Verify that `started` endpoint works correctly
-        assert call('activedirectory.started') is True
+        assert check_ad_started() is True
 
         # Verify that idmapping is working
         pw = ad['user_obj']
@@ -205,7 +201,7 @@ def test_07_enable_leave_activedirectory(request):
         assert res['ds_groups'][0]['sid'].endswith('512')
         assert res['allowlist'][0] == {'method': '*', 'resource': '*'}
 
-    assert call('activedirectory.get_state') == 'DISABLED'
+    assert check_ad_started() is False
 
     secrets_has_domain = call('directoryservices.secrets.has_domain', short_name)
     assert secrets_has_domain is False
@@ -213,14 +209,12 @@ def test_07_enable_leave_activedirectory(request):
     with pytest.raises(KeyError):
         call('user.get_user_obj', {'username': AD_USER})
 
-    assert call('activedirectory.started') is False
-
     result = call('privilege.query', [['name', 'C=', AD_DOMAIN]])
     assert len(result) == 0, str(result)
 
 
-def test_08_activedirectory_smb_ops(request):
-    depends(request, ["ad_works"], scope="session")
+def test_activedirectory_smb_ops():
+    reset_systemd_svcs('winbind')
     with active_directory(dns_timeout=15) as ad:
         short_name = ad['dc_info']['Pre-Win2k Domain']
         machine_password_key = f'SECRETS/MACHINE_PASSWORD/{short_name}'
@@ -335,8 +329,8 @@ def test_08_activedirectory_smb_ops(request):
             assert acl['trivial'] is False, str(acl)
 
 
-def test_10_account_privilege_authentication(request, set_product_type):
-    depends(request, ["ad_works"], scope="session")
+def test_account_privilege_authentication(set_product_type):
+    reset_systemd_svcs('winbind smbd')
 
     with active_directory(dns_timeout=15):
         call("system.general.update", {"ds_auth": True})
@@ -389,52 +383,34 @@ def test_10_account_privilege_authentication(request, set_product_type):
             call("system.general.update", {"ds_auth": False})
 
 
-def test_11_secrets_restore(request):
-    depends(request, ["ad_works"], scope="session")
-    reset_systemd_svcs('winbind smbd')
+def test_secrets_restore():
 
     with active_directory():
-        assert call('activedirectory.started') is True
-        ssh('rm /var/db/system/samba4/private/secrets.tdb')
-        call('service.restart', 'idmap')
-
-        with pytest.raises(CallError) as ce:
-            call('activedirectory.started')
-
-        # WBC_ERR_WINBIND_NOT_AVAILABLE gets converted to ENOTCONN
-        assert 'WBC_ERR_WINBIND_NOT_AVAILABLE' in ce.value.errmsg
-
-        call('directoryservices.secrets.restore')
-        call('service.restart', 'idmap')
-        call('activedirectory.started')
-
-        # break it again and restore via connection check
         reset_systemd_svcs('winbind smbd')
+        assert check_ad_started() is True
+
         ssh('rm /var/db/system/samba4/private/secrets.tdb')
-        call('service.restart', 'idmap')
-        with pytest.raises(CallError) as ce:
-            call('activedirectory.started')
 
-        # WBC_ERR_WINBIND_NOT_AVAILABLE gets converted to ENOTCONN
-        assert 'WBC_ERR_WINBIND_NOT_AVAILABLE' in ce.value.errmsg
+        with pytest.raises(ClientException):
+            call('directoryservices.health.check')
 
-        call('activedirectory.validate_domain')
-        call('service.restart', 'idmap')
-        call('activedirectory.started')
+        call('directoryservices.health.recover')
+
+        assert check_ad_started() is True
 
 
-def test_12_keytab_restore(request):
-    depends(request, ["ad_works"], scope="session")
-    reset_systemd_svcs('winbind smbd')
+def test_keytab_restore():
 
     with active_directory():
-        assert call('activedirectory.started') is True
+        reset_systemd_svcs('winbind smbd')
+        assert check_ad_started() is True
 
         kt_id = call('kerberos.keytab.query', [['name', '=', 'AD_MACHINE_ACCOUNT']], {'get': True})['id']
 
         # delete our keytab from datastore
         call('datastore.delete', 'directoryservice.kerberoskeytab', kt_id)
-        call('activedirectory.validate_domain')
+
+        call('directoryservices.health.recover')
 
         # verify that it was recreated during health check
         call('kerberos.keytab.query', [['name', '=', 'AD_MACHINE_ACCOUNT']], {'get': True})

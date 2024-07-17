@@ -1,35 +1,39 @@
 import logging
 
+from middlewared.plugins.etc import FileShouldNotExist
 from middlewared.utils import filter_list
+from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5_conf import KRB5Conf
-from middlewared.utils.directoryservices.krb5_constants import (
-    KRB_LibDefaults, krb5ccache
-)
+from middlewared.utils.directoryservices.krb5_constants import KRB_LibDefaults, PERSISTENT_KEYRING_PREFIX
 
 logger = logging.getLogger(__name__)
 
 
 def generate_krb5_conf(
     middleware: object,
-    directory_service: str,
-    ds_config: dict,
+    directory_service: dict,
     krb_config: dict,
     realms: list
 ):
+    if not realms:
+        raise FileShouldNotExist
+
     krbconf = KRB5Conf()
     krbconf.add_realms(realms)
 
     appdefaults = {}
     libdefaults = {
-        str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): 'FILE:' + krb5ccache.SYSTEM.value,
+        str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): PERSISTENT_KEYRING_PREFIX + '%{uid}',
         str(KRB_LibDefaults.DNS_LOOKUP_REALM): 'true',
+        str(KRB_LibDefaults.FORWARDABLE): 'true',
         str(KRB_LibDefaults.DNS_LOOKUP_KDC): 'true',
     }
 
     default_realm = None
 
-    match directory_service:
-        case 'ACTIVEDIRECTORY':
+    match directory_service['type']:
+        case DSType.AD.value:
+            ds_config = middleware.call_sync('activedirectory.config')
             default_realm = filter_list(realms, [['id', '=', ds_config['kerberos_realm']]])
             if not default_realm:
                 logger.error(
@@ -47,10 +51,10 @@ def generate_krb5_conf(
                         {'krb_realm': ds_config['domainname']}
                     )
 
-                    default_realm = middleware.call_sync('kerberos.realm.get_instance', realm_id)
+                    default_realm = middleware.call_sync('kerberos.realm.get_instance', realm_id)['realm']
                 else:
-                    default_realm = default_realm[0]
-                    realm_id = default_realm['id']
+                    realm_id = default_realm[0]['id']
+                    default_realm = default_realm[0]['realm']
 
                 # set the kerberos realm in AD form to correct value
                 middleware.call_sync(
@@ -58,19 +62,26 @@ def generate_krb5_conf(
                     ds_config['id'], {'ad_kerberos_realm': realm_id}
                 )
             else:
-                default_realm = default_realm[0]
+                default_realm = default_realm[0]['realm']
+        case DSType.IPA.value:
+            default_realm = middleware.call_sync('ldap.ipa_config')['realm']
 
-        case 'LDAP':
+            # This matches defaults from ipa-client-install
+            libdefaults.update({
+                str(KRB_LibDefaults.RDNS): 'false',
+                str(KRB_LibDefaults.DNS_CANONICALIZE_HOSTNAME): 'false',
+            })
+        case DSType.LDAP.value:
+            ds_config = middleware.call_sync('ldap.config')
             if ds_config['kerberos_realm']:
                 default_realm = filter_list(realms, [['id', '=', ds_config['kerberos_realm']]])
                 if default_realm:
-                    default_realm = default_realm[0]
-
+                    default_realm = default_realm[0]['realm']
         case _:
             pass
 
     if default_realm:
-        libdefaults[str(KRB_LibDefaults.DEFAULT_REALM)] = default_realm['realm']
+        libdefaults[str(KRB_LibDefaults.DEFAULT_REALM)] = default_realm
 
     krbconf.add_libdefaults(libdefaults, krb_config['libdefaults_aux'])
     krbconf.add_appdefaults(appdefaults, krb_config['appdefaults_aux'])
@@ -79,24 +90,9 @@ def generate_krb5_conf(
 
 
 def render(service, middleware, render_ctx):
-    if render_ctx['activedirectory.config']['enable']:
-        return generate_krb5_conf(
-            middleware, 'ACTIVEDIRECTORY',
-            render_ctx['activedirectory.config'],
-            render_ctx['kerberos.config'],
-            render_ctx['kerberos.realm.query']
-        )
-
-    elif render_ctx['ldap.config']['enable']:
-        return generate_krb5_conf(
-            middleware, 'LDAP',
-            render_ctx['ldap.config'],
-            render_ctx['kerberos.config'],
-            render_ctx['kerberos.realm.query']
-        )
-
     return generate_krb5_conf(
-        middleware, None, None,
+        middleware,
+        render_ctx['directoryservices.status'],
         render_ctx['kerberos.config'],
         render_ctx['kerberos.realm.query']
     )
