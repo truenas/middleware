@@ -190,8 +190,9 @@ class AppService(CRUDService):
         """
         Update `app_name` app with new configuration.
         """
-        app = self.get_instance__sync(app_name)
-        return self.update_internal(job, app, data)
+        app = self.update_internal(job, self.get_instance__sync(app_name), data)
+        self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+        return app
 
     @private
     def update_internal(self, job, app, data, progress_keyword='Update'):
