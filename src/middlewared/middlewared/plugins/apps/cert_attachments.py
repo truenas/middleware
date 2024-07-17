@@ -53,7 +53,12 @@ class AppCertificateService(Service):
             ):
                 apps_having_outdated_certs.append(app_name)
 
-        return apps
+        return apps_having_outdated_certs
+
+    async def redeploy_apps_consuming_outdated_certs(self):
+        return await self.middleware.call(
+            'core.bulk', 'app.redeploy', [[r] for r in await self.get_apps_consuming_outdated_certs()]
+        )
 
 
 async def setup(middleware):

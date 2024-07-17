@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Str, returns
-from middlewared.service import job, Service
+from middlewared.service import CallError, job, Service
 
 from .compose_utils import compose_action
 
@@ -44,4 +44,8 @@ class AppService(Service):
         Redeploy `app_name` app.
         """
         app = await self.middleware.call('app.get_instance', app_name)
+        stop_job = await self.middleware.call('app.stop', app_name)
+        await stop_job.wait()
+        if stop_job.error:
+            raise CallError(f'Failed to redeploy app: {stop_job.error}')
         return await self.middleware.call('app.update_internal', job, app, {'values': {}}, 'Redeployment')
