@@ -177,7 +177,7 @@ class FilesystemService(Service):
             raise CallError(f'{path}: path already exists.', errno.EEXIST)
 
         realpath = os.path.realpath(path)
-        if not realpath.startswith(('/mnt/', '/root/.ssh', '/home/admin/.ssh')):
+        if not realpath.startswith(('/mnt/', '/root/.ssh', '/home/admin/.ssh', '/home/truenas_admin/.ssh')):
             raise CallError(f'{path}: path not permitted', errno.EPERM)
 
         os.mkdir(path, mode=mode)

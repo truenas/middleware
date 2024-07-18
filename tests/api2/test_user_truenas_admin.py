@@ -13,34 +13,34 @@ from middlewared.test.integration.utils import call, client, host, mock, url
 
 
 @pytest.fixture(scope="module")
-def admin():
+def truenas_admin():
     assert call("user.query", [["uid", "=", 950]]) == []
-    assert call("user.query", [["username", "=", "admin"]]) == []
+    assert call("user.query", [["username", "=", "truenas_admin"]]) == []
 
     with root_with_password_disabled() as context:
         context.client.call("datastore.update", "account.bsdusers", context.root_id, {"bsdusr_unixhash": "*"})
-        context.client.call("user.setup_local_administrator", "admin", "admin")
-        call("system.info", client_kwargs=dict(auth=("admin", "admin")))
+        context.client.call("user.setup_local_administrator", "truenas_admin", "password")
+        call("system.info", client_kwargs=dict(auth=("truenas_admin", "password")))
         # Quickly restore root password before anyone notices
         context.client.call("datastore.update", "account.bsdusers", context.root_id, context.root_backup)
         context.client.call("etc.generate", "user")
 
-        admin = call("user.query", [["username", "=", "admin"]], {"get": True})
+        truenas_admin = call("user.query", [["username", "=", "truenas_admin"]], {"get": True})
         try:
-            yield admin
+            yield truenas_admin
         finally:
-            call("datastore.delete", "account.bsdusers", admin["id"])
+            call("datastore.delete", "account.bsdusers", truenas_admin["id"])
             call("etc.generate", "user")
 
 
-def test_installer_admin_has_local_administrator_privilege(admin):
-    with client(auth=("admin", "admin")) as c:
+def test_installer_admin_has_local_administrator_privilege(truenas_admin):
+    with client(auth=("truenas_admin", "password")) as c:
         c.call("system.info")
 
 
-def test_can_set_admin_authorized_key(admin):
+def test_can_set_admin_authorized_key(truenas_admin):
     with ssh_keypair() as keypair:
-        call("user.update", admin["id"], {
+        call("user.update", truenas_admin["id"], {
             "sshpubkey": keypair["attributes"]["public_key"],
         })
         try:
@@ -55,7 +55,7 @@ def test_can_set_admin_authorized_key(admin):
                     "-o", "StrictHostKeyChecking=no",
                     "-o", "UserKnownHostsFile=/dev/null",
                     "-o", "VerifyHostKeyDNS=no",
-                    f"admin@{host().ip}",
+                    f"truenas_admin@{host().ip}",
                     "uptime",
                 ], capture_output=True, check=True, timeout=30)
 
@@ -64,19 +64,19 @@ def test_can_set_admin_authorized_key(admin):
                 r.raise_for_status()
                 tar_io = io.BytesIO(r.content)
                 with tarfile.TarFile(fileobj=tar_io) as tar:
-                    member = tar.getmember("admin_authorized_keys")
+                    member = tar.getmember("truenas_admin_authorized_keys")
                     assert member.uid == 950
                     assert member.gid == 950
-                    assert member.uname == "admin"
-                    assert member.gname == "admin"
+                    assert member.uname == "truenas_admin"
+                    assert member.gname == "truenas_admin"
                     assert tar.extractfile(member).read().decode() == keypair["attributes"]["public_key"]
         finally:
-            call("user.update", admin["id"], {
+            call("user.update", truenas_admin["id"], {
                 "sshpubkey": "",
             })
 
 
-def test_admin_user_alert(admin):
+def test_admin_user_alert(truenas_admin):
     with mock("user.get_user_obj", args=[{"uid": 950}], return_value={
         "pw_name": "root", "pw_uid": 0, "pw_gid": 0, "pw_gecos": "root", "pw_dir": "/root", "pw_shell": "/usr/bin/zsh"
     }):
@@ -85,5 +85,5 @@ def test_admin_user_alert(admin):
         assert alerts[0]["klass"] == "AdminUserIsOverridden"
 
 
-def test_admin_user_no_alert(admin):
+def test_admin_user_no_alert(truenas_admin):
     assert not call("alert.run_source", "AdminUser")

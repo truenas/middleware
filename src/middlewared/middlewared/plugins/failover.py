@@ -372,6 +372,7 @@ class FailoverService(ConfigService):
         self.send_small_file('/data/license')
         self.send_small_file('/data/pwenc_secret')
         self.send_small_file('/home/admin/.ssh/authorized_keys')
+        self.send_small_file('/home/truenas_admin/.ssh/authorized_keys')
         self.send_small_file('/root/.ssh/authorized_keys')
         self.send_small_file(ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE)
         self.middleware.call_sync('failover.call_remote', 'failover.zpool.cachefile.setup', ['SYNC'])

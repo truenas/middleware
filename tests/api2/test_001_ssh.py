@@ -57,7 +57,7 @@ def test_002_firstboot_checks(ws_client):
 
     # verify posix mode, uid and gid for standard users
     stat_info = {
-        '/home/admin': {'mode': 0o40700, 'uid': 950, 'gid': 950},
+        '/home/truenas_admin': {'mode': 0o40700, 'uid': 950, 'gid': 950},
         '/root': {'mode': 0o40700, 'uid': 0, 'gid': 0},
     }
     for path, expected_stat in stat_info.items():

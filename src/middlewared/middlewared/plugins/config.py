@@ -16,12 +16,14 @@ from middlewared.utils.db import FREENAS_DATABASE
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
     'admin_authorized_keys': '/home/admin/.ssh/authorized_keys',
+    'truenas_admin_authorized_keys': '/home/truenas_admin/.ssh/authorized_keys',
     'root_authorized_keys': '/root/.ssh/authorized_keys',
 }
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
 UPLOADED_DB_PATH = '/data/uploaded.db'
 PWENC_UPLOADED = '/data/pwenc_secret_uploaded'
 ADMIN_KEYS_UPLOADED = '/data/admin_authorized_keys_uploaded'
+TRUENAS_ADMIN_KEYS_UPLOADED = '/data/truenas_admin_authorized_keys_uploaded'
 ROOT_KEYS_UPLOADED = '/data/root_authorized_keys_uploaded'
 DATABASE_NAME = os.path.basename(FREENAS_DATABASE)
 
@@ -45,6 +47,8 @@ class ConfigService(Service):
                     files['pwenc_secret'] = CONFIG_FILES['pwenc_secret']
                 if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['admin_authorized_keys']):
                     files['admin_authorized_keys'] = CONFIG_FILES['admin_authorized_keys']
+                if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['truenas_admin_authorized_keys']):
+                    files['truenas_admin_authorized_keys'] = CONFIG_FILES['truenas_admin_authorized_keys']
                 if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['root_authorized_keys']):
                     files['root_authorized_keys'] = CONFIG_FILES['root_authorized_keys']
                 for arcname, path in files.items():
@@ -159,6 +163,10 @@ class ConfigService(Service):
                     shutil.move(abspath, ADMIN_KEYS_UPLOADED)
                     send_to_remote.append(ADMIN_KEYS_UPLOADED)
 
+                if i.name == 'truenas_admin_authorized_keys':
+                    shutil.move(abspath, TRUENAS_ADMIN_KEYS_UPLOADED)
+                    send_to_remote.append(TRUENAS_ADMIN_KEYS_UPLOADED)
+
                 if i.name == 'root_authorized_keys':
                     shutil.move(abspath, ROOT_KEYS_UPLOADED)
                     send_to_remote.append(ROOT_KEYS_UPLOADED)
@@ -197,7 +205,7 @@ class ConfigService(Service):
             raise CallError('Unable to check credentials')
 
         if job.credentials.is_user_session and 'SYS_ADMIN' not in job.credentials.user['account_attributes']:
-            raise CallError('Configuration reset is limited to local SYS_ADMIN account ("root" or "admin")')
+            raise CallError('Configuration reset is limited to local SYS_ADMIN account ("root" or "truenas_admin")')
 
         job.set_progress(15, 'Replacing database file')
         shutil.copy('/data/factory-v1.db', FREENAS_DATABASE)
@@ -275,6 +283,9 @@ def setup(middleware):
 
         if os.path.exists(ADMIN_KEYS_UPLOADED):
             shutil.move(ADMIN_KEYS_UPLOADED, CONFIG_FILES['admin_authorized_keys'])
+
+        if os.path.exists(TRUENAS_ADMIN_KEYS_UPLOADED):
+            shutil.move(TRUENAS_ADMIN_KEYS_UPLOADED, CONFIG_FILES['truenas_admin_authorized_keys'])
 
         if os.path.exists(ROOT_KEYS_UPLOADED):
             shutil.move(ROOT_KEYS_UPLOADED, CONFIG_FILES['root_authorized_keys'])

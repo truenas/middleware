@@ -232,7 +232,7 @@ class UserService(CRUDService):
         # Get authorized keys
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
 
-        user['immutable'] = user['builtin'] or (user['username'] == 'admin' and user['home'] == '/home/admin')
+        user['immutable'] = user['builtin'] or (user['uid'] == ADMIN_UID)
         user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'][user['id']])
 
         user_roles = set()
@@ -707,7 +707,7 @@ class UserService(CRUDService):
         # root user and admin users are an exception to the rule
         if data.get('sshpubkey'):
             if not (
-                home in ['/home/admin', '/root'] or
+                user['uid'] in [0, ADMIN_UID] or
                 self.middleware.call_sync('filesystem.is_dataset_path', home)
             ):
                 verrors.add('user_update.sshpubkey', 'Home directory is not writable, leave this blank"')
@@ -1210,7 +1210,7 @@ class UserService(CRUDService):
 
     @no_auth_required
     @accepts(
-        Str('username', enum=['root', 'admin']),
+        Str('username', enum=['root', 'truenas_admin']),
         Password('password'),
         Dict(
             'options',
@@ -1231,7 +1231,7 @@ class UserService(CRUDService):
         if await self.middleware.call('user.has_local_administrator_set_up'):
             raise CallError('Local administrator is already set up', errno.EEXIST)
 
-        if username == 'admin':
+        if username == 'truenas_admin':
             # first check based on NSS to catch collisions with AD / LDAP users
             try:
                 pwd_obj = await self.middleware.call('user.get_user_obj', {'uid': ADMIN_UID})
@@ -1244,8 +1244,8 @@ class UserService(CRUDService):
                 pass
 
             try:
-                pwd_obj = await self.middleware.call('user.get_user_obj', {'username': 'admin'})
-                raise CallError(f'"admin" {pwd_obj["source"].lower()} user already exists, '
+                pwd_obj = await self.middleware.call('user.get_user_obj', {'username': username})
+                raise CallError(f'{username!r} {pwd_obj["source"].lower()} user already exists, '
                                 'setting up local administrator is not possible',
                                 errno.EEXIST)
             except KeyError:
@@ -1262,8 +1262,8 @@ class UserService(CRUDService):
                 pass
 
             try:
-                grp_obj = await self.middleware.call('group.get_group_obj', {'groupname': 'admin'})
-                raise CallError(f'"admin" {grp_obj["source"].lower()} group already exists, '
+                grp_obj = await self.middleware.call('group.get_group_obj', {'groupname': username})
+                raise CallError(f'{username!r} {grp_obj["source"].lower()} group already exists, '
                                 'setting up local administrator is not possible',
                                 errno.EEXIST)
             except KeyError:
@@ -1279,8 +1279,8 @@ class UserService(CRUDService):
                     errno.EEXIST,
                 )
 
-            if filter_list(local_users, [['username', '=', 'admin']]):
-                raise CallError('"admin" user already exists, setting up local administrator is not possible',
+            if filter_list(local_users, [['username', '=', username]]):
+                raise CallError(f'{username!r} user already exists, setting up local administrator is not possible',
                                 errno.EEXIST)
 
             if filter_list(local_groups, [['gid', '=', ADMIN_GID]]):
@@ -1289,8 +1289,8 @@ class UserService(CRUDService):
                     errno.EEXIST,
                 )
 
-            if filter_list(local_groups, [['group', '=', 'admin']]):
-                raise CallError('"admin" group already exists, setting up local administrator is not possible',
+            if filter_list(local_groups, [['group', '=', username]]):
+                raise CallError(f'{username!r} group already exists, setting up local administrator is not possible',
                                 errno.EEXIST)
 
         await run('truenas-set-authentication-method.py', check=True, encoding='utf-8', errors='ignore',
