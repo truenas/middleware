@@ -37,6 +37,6 @@ def compose_action(
         raise CallError(f'Invalid action {action!r} for app {app_name!r}')
 
     # TODO: We will likely have a configurable timeout on this end
-    cp = run(['docker-compose'] + compose_files + args, timeout=1200)
+    cp = run(['docker', 'compose'] + compose_files + args, timeout=1200)
     if cp.returncode != 0:
         raise CallError(f'Failed {action!r} action for {app_name!r} app: {cp.stderr}')
