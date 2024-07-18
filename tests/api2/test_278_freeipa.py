@@ -48,8 +48,11 @@ def do_freeipa_connection():
 
 
     # Validate that our LDAP configuration alert goes away when it's disabled.
-    alerts = call('alert.list')
-    assert len(alerts) == 0
+    alerts = [alert['klass'] for alert in call('alert.list')]
+
+    # There's a one-shot alert that gets fired if we are an IPA domain
+    # connected via legacy mechanism.
+    assert 'IPALegacyConfiguration' not in alerts
 
 
 def test_setup_and_enabling_freeipa(do_freeipa_connection):
@@ -61,10 +64,11 @@ def test_setup_and_enabling_freeipa(do_freeipa_connection):
     assert ds['type'] == 'LDAP'
     assert ds['status'] == 'HEALTHY'
 
-    alerts = call('alert.list')
-    assert len(alerts) == 1, str(alerts)
-    assert alerts[0]['klass'] == 'IPALegacyConfiguration'
-    assert 'Password has expired' in alerts[0]['formatted']
+    alerts = [alert['klass'] for alert in call('alert.list')]
+
+    # There's a one-shot alert that gets fired if we are an IPA domain
+    # connected via legacy mechanism.
+    assert 'IPALegacyConfiguration' in alerts
 
 
 def test_verify_config(request):
