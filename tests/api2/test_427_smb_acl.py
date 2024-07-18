@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import errno
 import pytest
 import sys
 import os
@@ -11,11 +12,13 @@ sys.path.append(apifolder)
 from auto_config import (
     pool_name,
 )
+from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.unittest import RegexString
 from protocols import SMB
 from pytest_dependency import depends
 from time import sleep
@@ -258,3 +261,33 @@ def test_007_test_disable_autoinherit(request):
             sd = c.get_sd('foo')
             assert 'SEC_DESC_DACL_PROTECTED' in sd['control']['parsed'], str(sd)
             c.disconnect()
+
+
+def test_008_test_prevent_smb_dataset_update(request):
+    """
+    Prevent changing acltype and xattr on dataset hosting SMB shares
+    """
+    ds_name = 'prevent_changes'
+    path = f'/mnt/{pool_name}/{ds_name}'
+    with create_dataset(f'{pool_name}/{ds_name}') as ds:
+        with smb_share(path, 'SMB_SHARE_1'):
+            # Create a second share for testing purposes
+            with smb_share(path, 'SMB_SHARE_2'):
+
+                # Confirm we ignore requests that don't involve changes
+                for setting in [{"xattr": "SA"}, {"acltype": "POSIX"}]:
+                    call('pool.dataset.update', ds, setting)
+
+                # Confirm we block requests that involve changes
+                for setting in [{"xattr": "ON"}, {"acltype": "OFF"}]:
+                    attrib = list(setting.keys())[0]
+                    with pytest.raises(ValidationErrors) as ve:
+                        call('pool.dataset.update', ds, setting)
+                    assert ve.value.errors == [
+                        ValidationError(
+                            f"pool_dataset_update.{attrib}",
+                            RegexString("This dataset is hosting SMB shares. .*"),
+                            errno.EINVAL,
+                        )
+                    ]
+                    assert "SMB_SHARE_2" in str(ve.value.errors[0]), ve.value.errors[0]
