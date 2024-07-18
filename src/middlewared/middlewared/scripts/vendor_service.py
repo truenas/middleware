@@ -1,6 +1,5 @@
 import hashlib
 import subprocess
-import sys
 
 from dotenv import dotenv_values
 
@@ -72,5 +71,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    finally:
-        sys.exit(0)  # Never fail
+    except Exception:
+        pass  # Never fail
