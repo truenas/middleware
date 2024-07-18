@@ -220,7 +220,7 @@ class DirectoryServices(Service):
 
         self.middleware.call_sync('service.restart', 'idmap')
 
-        self.middlware.call_sync('directoryservices.health.check')
+        self.middleware.call_sync('directoryservices.health.check')
         if DSHealthObj.dstype is None:
             return
 
@@ -234,7 +234,6 @@ class DirectoryServices(Service):
 
 
 async def __init_directory_services(middleware, event_type, args):
-    await middleware.call('directoryservices.persistent_keyring_session')
     await middleware.call('directoryservices.setup')
 
 
