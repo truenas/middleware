@@ -286,7 +286,7 @@ def test_008_test_prevent_smb_dataset_update(request):
                     assert ve.value.errors == [
                         ValidationError(
                             f"pool_dataset_update.{attrib}",
-                            RegexString(f"{attrib} may not be modified .*"),
+                            RegexString("This dataset is hosting SMB shares. .*"),
                             errno.EINVAL,
                         )
                     ]

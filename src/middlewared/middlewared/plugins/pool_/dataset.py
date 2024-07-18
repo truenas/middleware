@@ -306,10 +306,10 @@ class PoolDatasetService(CRUDService):
                                 continue
                             verrors.add(
                                 f'{schema}.{key}',
-                                f'{key} may not be modified on a dataset that hosts SMB shares. '
-                                f'Before {key} can be updated the following shares must be deleted: '
+                                'This dataset is hosting SMB shares. '
+                                f'Before {key} can be updated the following shares must be disabled: '
                                 f'{share_names[0]}. '
-                                'The shares may be recreated after the change.'
+                                'The shares may be re-enabled after the change.'
                             )
 
             # Prevent users from setting incorrect combinations of aclmode and acltype parameters
