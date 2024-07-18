@@ -1,101 +1,70 @@
-#!/usr/bin/env python3
-
 import pytest
-import sys
-import os
-import time
-from pytest_dependency import depends
-from auto_config import pool_name
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import GET, POST
 
-from middlewared.test.integration.assets.directory_service import ldap
+from middlewared.test.integration.assets.directory_service import ldap, LDAPUSER, LDAPPASSWORD
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client
 
-try:
-    from config import (
-        LDAPUSER,
-        LDAPPASSWORD
-    )
-except ImportError:
-    Reason = 'LDAP* variable are not setup in config.py'
-    pytestmark = pytest.mark.skipif(True, reason=Reason)
-
-dataset = f"{pool_name}/ldap-test"
-dataset_url = dataset.replace('/', '%2F')
-smb_name = "TestLDAPShare"
-smb_path = f"/mnt/{dataset}"
-VOL_GROUP = "root"
+pytestmark = [
+    pytest.mark.skipif(not LDAPUSER, reason='Missing LDAP configuration'),
+]
 
 
 @pytest.fixture(scope="module")
 def do_ldap_connection(request):
     with ldap() as ldap_conn:
         with product_type():
-            yield (request, ldap_conn)
-
-def test_01_get_ldap():
-    results = GET("/ldap/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
+            yield ldap_conn
 
 
-def test_02_verify_default_ldap_state_is_disabled():
-    results = GET("/ldap/get_state/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), str), results.text
-    assert results.json() == "DISABLED", results.text
+def test_ldap_initial_state():
+    ds = call("directoryservices.status")
+    assert ds["type"] is None
+    assert ds["status"] is None
+
+    ldap_config = call("ldap.config")
+    assert not ldap_config["enable"]
 
 
-def test_03_verify_ldap_enable_is_false():
-    results = GET("/ldap/")
-    assert results.json()["enable"] is False, results.text
+def test_ldap_schema_choices():
+    expected = {"RFC2307", "RFC2307BIS"}
 
-
-def test_04_get_ldap_schema_choices():
-    idmap_backend = {"RFC2307", "RFC2307BIS"}
-    results = GET("/ldap/schema_choices/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results.text
-    assert idmap_backend.issubset(set(results.json())), results.text
+    choices = call("ldap.schema_choices")
+    assert set(choices) == expected
 
 
 def test_05_get_ldap_ssl_choices():
-    idmap_backend = {"OFF", "ON", "START_TLS"}
-    results = GET("/ldap/ssl_choices/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results.text
-    assert idmap_backend.issubset(set(results.json())), results.text
+    expected = {"OFF", "ON", "START_TLS"}
+
+    choices = call("ldap.ssl_choices")
+    assert set(choices) == expected
 
 
-@pytest.mark.dependency(name="setup_ldap")
-def test_06_setup_and_enabling_ldap(do_ldap_connection):
-    results = GET("/ldap/get_state/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), str), results.text
-    assert results.json() == "HEALTHY", results.text
+def test_ldap_connection(do_ldap_connection):
+    ds = call("directoryservices.status")
+    assert ds["type"] == "LDAP"
+    assert ds["status"] == "HEALTHY"
+
+    ldap_config = call("ldap.config")
+    assert ldap_config["enable"]
+    assert ldap_config["server_type"] == "OPENLDAP"
 
 
-def test_08_verify_ldap_enable_is_true(request):
-    depends(request, ["setup_ldap"], scope="session")
-    results = GET("/ldap/")
-    assert results.json()["enable"] is True, results.text
-    assert results.json()["server_type"] == "OPENLDAP"
+def test_ldap_user_group_cache(do_ldap_connection):
+    assert call("user.query", [["local", "=", False]], {'count': True}) != 0
+    assert call("group.query", [["local", "=", False]], {'count': True}) != 0
 
 
-def test_09_account_privilege_authentication(request):
-    depends(request, ["setup_ldap"], scope="session")
+def test_account_privilege_authentication(do_ldap_connection):
 
     call("system.general.update", {"ds_auth": True})
     try:
-        gid = call("user.get_user_obj", {"username": LDAPUSER})["pw_gid"]
+        group = call("user.get_user_obj", {"username": LDAPUSER})
+        assert group["source"] == "LDAP"
         with privilege({
             "name": "LDAP privilege",
             "local_groups": [],
-            "ds_groups": [gid],
+            "ds_groups": [group["pw_gid"]],
             "allowlist": [{"method": "CALL", "resource": "system.info"}],
             "web_shell": False,
         }):
@@ -106,18 +75,3 @@ def test_09_account_privilege_authentication(request):
             assert "pool.create" not in methods
     finally:
         call("system.general.update", {"ds_auth": False})
-
-
-def test_11_verify_that_the_ldap_user_id_exist_on_the_nas(request):
-    """
-    get_user_obj is a wrapper around the pwd module.
-    This check verifies that the user is _actually_ created.
-    """
-    depends(request, ["setup_ldap"])
-    payload = {
-        "username": LDAPUSER
-    }
-    global ldap_id
-    results = POST("/user/get_user_obj/", payload)
-    assert results.status_code == 200, results.text
-    ldap_id = results.json()['pw_uid']
