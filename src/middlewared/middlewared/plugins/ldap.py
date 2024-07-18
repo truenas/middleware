@@ -937,3 +937,4 @@ class LDAPService(ConfigService):
         await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.DISABLED.name)
         await self.middleware.call('directoryservices.cache.abort_refresh')
         job.set_progress(100, 'LDAP directory service stopped.')
+        await self.middleware.call('alert.oneshot_delete', 'IPALegacyConfiguration')

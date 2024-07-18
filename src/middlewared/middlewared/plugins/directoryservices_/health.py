@@ -173,6 +173,11 @@ class DomainHealth(
                 if ds is current_ds:
                     DSHealthObj.update(None, None, None)
 
+                # We can get a mismatch here if LDAP server is IPA server and
+                # we're in compatiblity mode
+                elif ds is DSType.IPA and current_ds is DSType.LDAP:
+                    DSHealthObj.update(None, None, None)
+
                 return
 
         DSHealthObj.update(ds, status, status_msg)
