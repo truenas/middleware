@@ -4,6 +4,8 @@ from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.directoryservices.constants import (
     DSStatus, DSType
 )
+from middlewared.utils.nss.pwd import iterpw
+from middlewared.utils.nss.nss_common import NssModule
 from middlewared.plugins.idmap_.idmap_constants import IDType
 from middlewared.plugins.idmap_.idmap_winbind import WBClient
 from .util_cache import (
@@ -183,6 +185,26 @@ class DSCache(Service):
 
         raise CallError('Timed out while waiting for domain to come online')
 
+    def idmap_online_check_wait_sssd(self, job):
+        """
+        SSSD reports a domain as online before it will _actually_ return results
+        for NSS queries. Since we know that enumeration is enabled if this is called
+        then we can use getpwent call to determine whether the domain is in a state
+        where we can actually fill our caches.
+        """
+        waited = 0
+        while waited <= 60:
+            for pwd in iterpw(module=NssModule.SSS.name):
+                # We have an entry provided by sssd
+                return
+
+            job.set_progress(10, 'Waiting for domain to come online')
+            self.logger.debug('Waiting for domain to come online')
+            sleep(1)
+            waited += 1
+
+        raise CallError('Timed out while waiting for domain to come online')
+
     @job(lock="directoryservices_cache_fill", lock_queue_size=1)
     def refresh_impl(self, job):
         """
@@ -205,17 +227,21 @@ class DSCache(Service):
             )
             return
 
+        dom_by_sid = None
         ds_type = DSType(ds['type'])
-        if ds_type is DSType.AD:
-            self.idmap_online_check_wait_wbclient(job)
-            domain_info = self.middleware.call_sync(
-                'idmap.query',
-                [["domain_info", "!=", None]],
-                {'extra': {'additional_information': ['DOMAIN_INFO']}}
-            )
-            dom_by_sid = {dom['domain_info']['sid']: dom for dom in domain_info}
-        else:
-            dom_by_sid = None
+        match ds_type:
+            case DSType.AD:
+                self.idmap_online_check_wait_wbclient(job)
+                domain_info = self.middleware.call_sync(
+                    'idmap.query',
+                    [["domain_info", "!=", None]],
+                    {'extra': {'additional_information': ['DOMAIN_INFO']}}
+                )
+                dom_by_sid = {dom['domain_info']['sid']: dom for dom in domain_info}
+            case DSType.IPA | DSType.LDAP:
+                self.idmap_online_check_wait_sssd(job)
+            case _:
+                raise ValueError(f'{ds_type}: unexpected DSType')
 
         with DSCacheFill() as dc:
             job.set_progress(15, 'Filling cache')
