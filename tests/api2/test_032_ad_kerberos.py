@@ -333,8 +333,8 @@ def test_verify_nfs_krb_disabled():
 def test_kerberos_ticket_management(do_ad_connection):
     klist_out = call('kerberos.klist')
     assert klist_out['default_principal'].startswith(hostname.upper()), str(klist_out)
-    assert klist_out['ticket_cache']['type'] == 'FILE'
-    assert klist_out['ticket_cache']['name'] == '/var/run/middleware/krb5cc_0'
+    assert klist_out['ticket_cache']['type'] == 'KEYRING'
+    assert klist_out['ticket_cache']['name'].startswith('persistent:0')
     assert len(klist_out['tickets']) != 0
 
     to_check = None
