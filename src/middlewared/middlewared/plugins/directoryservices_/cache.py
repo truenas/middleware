@@ -178,8 +178,11 @@ class DSCache(Service):
             if client.domain_info()['online']:
                 return
 
-            job.set_progress(10, 'Waiting for domain to come online')
-            self.logger.debug('Waiting for domain to come online')
+            # only log every 10th iteration
+            if waited % 10 == 0:
+                job.set_progress(10, 'Waiting for domain to come online')
+                self.logger.debug('Waiting for domain to come online')
+
             sleep(1)
             waited += 1
 
@@ -198,8 +201,11 @@ class DSCache(Service):
                 # We have an entry provided by sssd
                 return
 
-            job.set_progress(10, 'Waiting for domain to come online')
-            self.logger.debug('Waiting for domain to come online')
+            # only log every 10th iteration
+            if waited % 10 == 0:
+                job.set_progress(10, 'Waiting for domain to come online')
+                self.logger.debug('Waiting for domain to come online')
+
             sleep(1)
             waited += 1
 
