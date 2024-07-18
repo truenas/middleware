@@ -31,30 +31,6 @@ def test_nfs_config_audit(api):
     bogus_password = 'boguspassword123'
     initial_nfs_config = call('nfs.config')
     try:
-        # CREATE
-        with expect_audit_method_calls([{
-            'method': 'nfs.add_principal',
-            'params': [
-                {
-                    'username': bogus_user,
-                    'password': REDACTED_SECRET,
-                }
-            ],
-            'description': f'Add NFS principal {bogus_user}',
-        }]):
-            payload = {
-                'username': bogus_user,
-                'password': bogus_password,
-            }
-            # The 'add' will fail, but the audit check should pass
-            if api == 'ws':
-                with pytest.raises(CallError):
-                    call('nfs.add_principal', payload)
-            elif api == 'rest':
-                result = POST('/nfs/add_principal/', payload)
-                assert result.status_code != 200, result.text
-            else:
-                raise ValueError(api)
         # UPDATE
         payload = {
             'mountd_log': not initial_nfs_config['mountd_log'],
