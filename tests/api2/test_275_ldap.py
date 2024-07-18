@@ -33,7 +33,7 @@ def test_ldap_schema_choices():
     assert set(choices) == expected
 
 
-def test_05_get_ldap_ssl_choices():
+def test_get_ldap_ssl_choices():
     expected = {"OFF", "ON", "START_TLS"}
 
     choices = call("ldap.ssl_choices")

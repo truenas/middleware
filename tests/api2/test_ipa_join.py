@@ -85,7 +85,9 @@ def test_smb_keytab_exists(do_freeipa_connection):
 def test_admin_privilege(do_freeipa_connection, enable_ds_auth):
     ipa_config = call('ldap.ipa_config')
 
-    priv = call('privilege.query', [['name', '=', ipa_config['domain']]], {'get': True})
+    priv_names = [priv['name'] for priv in call('privilege.query')]
+    assert ipa_config['domain'].upper() in priv_names
+
     admins_grp = call('group.get_group_obj', {'groupname': 'admins', 'sid_info': True})
 
     assert len(priv['ds_groups']) == 1

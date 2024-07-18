@@ -5,6 +5,7 @@ from middlewared.utils.directoryservices.constants import (
     DSStatus, DSType
 )
 from middlewared.utils.nss.pwd import iterpw
+from middlewared.utils.nss.grp import itergrp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.plugins.idmap_.idmap_constants import IDType
 from middlewared.plugins.idmap_.idmap_winbind import WBClient
@@ -191,14 +192,33 @@ class DSCache(Service):
     def idmap_online_check_wait_sssd(self, job):
         """
         SSSD reports a domain as online before it will _actually_ return results
-        for NSS queries. Since we know that enumeration is enabled if this is called
-        then we can use getpwent call to determine whether the domain is in a state
-        where we can actually fill our caches.
+        for NSS queries. This is because getpwent and getgrent iterate the SSSD
+        cache rather than reaching out to remote server. Since we know that
+        enumeration is enabled if this is called then we can use getpwent and getgrent
+        calls to determine whether the domain is in a state where we can actually
+        fill our caches. This does present some minor risk that our initial cache
+        fill on SSSD join will be incomplete, but there is no easy way to check
+        intern status of SSSD's cache fill and so getting some users and groups
+        initially and then retrieving remainder on next scheduled refresh is
+        a suitable compromise.
         """
         waited = 0
+        has_users = has_groups = False
+
         while waited <= 60:
-            for pwd in iterpw(module=NssModule.SSS.name):
-                # We have an entry provided by sssd
+            if not has_users:
+                for pwd in iterpw(module=NssModule.SSS.name):
+                    has_users = True
+                    break
+
+            if not has_groups:
+                for grp in itergrp(module=NssModule.SSS.name):
+                    has_groups = True
+                    break
+
+            if has_users and has_groups:
+                # allow SSSD a little more time to build cache
+                sleep(5)
                 return
 
             # only log every 10th iteration
