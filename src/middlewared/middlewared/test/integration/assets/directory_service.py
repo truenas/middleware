@@ -29,12 +29,16 @@ try:
         LDAPBINDDN,
         LDAPBINDPASSWORD,
         LDAPHOSTNAME,
+        LDAPUSER,
+        LDAPPASSWORD
     )
 except ImportError:
     LDAPBASEDN = None
     LDAPBINDDN = None
     LDAPBINDPASSWORD = None
     LDAPHOSTNAME = None
+    LDAPUSER = None
+    LDAPPASSWORD = None
 
 try:
     from config import (
