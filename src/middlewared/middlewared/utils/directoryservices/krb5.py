@@ -100,7 +100,6 @@ def __tmp_krb5_keytab() -> str:
     """
     Create a temporary keytab file with appropriate header
     """
-    tmpfile = NamedTemporaryFile(delete=False)
     with NamedTemporaryFile(delete=False) as tmpfile:
         tmpfile.write(KRB5_KT_VNO)
         tmpfile.flush()
