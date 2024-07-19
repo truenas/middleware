@@ -96,16 +96,11 @@ class UserService(Service):
         Translates `username` to a user object.
         """
         try:
-            user = await self.middleware.call('user.get_user_obj', {'username': username, 'sid_info': True})
+            user = await self.middleware.call('user.get_user_obj', {'username': username})
         except KeyError:
             raise CallError(f'User {username!r} does not exist', errno.ENOENT)
 
-        return await self.middleware.call(
-            'user.query', [['username', '=', user['pw_name']]], {
-                'get': True,
-                'extra': {'additional_information': ['SMB']},
-            }
-        )
+        return await self.middleware.call('user.query', [['username', '=', user['pw_name']]], {'get': True})
 
     @accepts(Str('username'))
     @returns()

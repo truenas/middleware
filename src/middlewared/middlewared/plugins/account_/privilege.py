@@ -232,11 +232,7 @@ class PrivilegeService(CRUDService):
         verrors.check()
 
     async def _groups(self):
-        groups = await self.middleware.call(
-            "group.query",
-            [],
-            {"extra": {"additional_information": ["DS", "SMB"]}},
-        )
+        groups = await self.middleware.call("group.query")
         by_gid = {group["gid"]: group for group in groups}
         by_sid = {
             group["sid"]: group
@@ -296,10 +292,7 @@ class PrivilegeService(CRUDService):
                     group = await self.middleware.call(
                         "group.query",
                         [["gid", "=", gid]],
-                        {
-                            "extra": {"additional_information": ["DS", "SMB"]},
-                            "get": True,
-                        },
+                        {"get": True},
                     )
                 except MatchNotFound:
                     if include_nonexistent:
