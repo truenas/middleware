@@ -6,6 +6,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
 from middlewared.service import CallError, ConfigService, periodic, private
+from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.validators import Range
 
 
@@ -116,9 +117,7 @@ class TwoFactorAuthService(ConfigService):
         users = []
         mapping = {
             user['sid']: user for user in self.middleware.call_sync(
-                'user.query', [['local', '=', False], ['sid', '!=', None]], {
-                    'extra': {'additional_information': ['DS', 'SMB']},
-                }
+                'user.query', [['local', '=', False], ['sid', '!=', None]]
             )
         }
         for config in self.middleware.call_sync(
@@ -155,7 +154,8 @@ class TwoFactorAuthService(ConfigService):
     @periodic(interval=86400, run_on_start=False)
     @private
     async def remove_expired_secrets(self):
-        if (await self.middleware.call('directoryservices.get_state'))['activedirectory'] != 'HEALTHY':
+        ds = await self.middleware.call('directoryservices.status')
+        if ds['type'] != DSType.AD.value or ds['status'] != DSStatus.HEALTHY.name:
             return
 
         ad_users = await self.get_ad_users()

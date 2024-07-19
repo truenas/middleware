@@ -304,15 +304,6 @@ class SMBService(ConfigService):
                                 load.stderr.decode())
 
     @private
-    async def ctdb_wait(self):
-        while True:
-            healthy = await self.middleware.call('ctdb.general.healthy')
-            if healthy:
-                return
-
-            await asyncio.sleep(1)
-
-    @private
     async def netif_wait(self, timeout=120):
         """
         Wait for for the ix-netif sentinel file
@@ -986,7 +977,7 @@ class SharingSMBService(SharingService):
         ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
 
         verrors = ValidationErrors()
-        old = await self.query([('id', '=', id_)], {'get': True, 'extra': {'ha_mode': ha_mode.name}})
+        old = await self.get_instance(id_)
         old_audit = old['audit']
 
         new = old.copy()
