@@ -28,7 +28,6 @@ class ApiKeyEntryWithKey(ApiKeyEntry):
 
 class ApiKeyCreate(ApiKeyEntry):
     id: Excluded = excluded_field()
-    key: Excluded = excluded_field()
     created_at: Excluded = excluded_field()
 
 
