@@ -43,7 +43,7 @@ class DirectoryServices(Service):
         """
         if not DSHealthObj.initialized:
             try:
-                self.middlware.call_sync('directoryservices.health.check')
+                self.middleware.call_sync('directoryservices.health.check')
             except Exception:
                 pass
 
