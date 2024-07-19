@@ -18,7 +18,7 @@ def override_product():
         yield
     else:
         with product_type():
-           yield
+            yield
 
 
 @pytest.fixture(scope="function")
@@ -27,7 +27,7 @@ def enable_ds_auth(override_product):
     try:
         yield sys_config
     finally:
-       call('system.general.update', {'ds_auth': False})
+        call('system.general.update', {'ds_auth': False})
 
 
 def test_setup_and_enabling_freeipa(do_freeipa_connection):
@@ -85,14 +85,17 @@ def test_smb_keytab_exists(do_freeipa_connection):
 def test_admin_privilege(do_freeipa_connection, enable_ds_auth):
     ipa_config = call('ldap.ipa_config')
 
-    priv = call('privilege.query', [['name', '=', ipa_config['domain']]], {'get': True})
+    priv_names = [priv['name'] for priv in call('privilege.query')]
+    assert ipa_config['domain'].upper() in priv_names
+
+    priv = call('privilege.query', [['name', '=', ipa_config['domain'].upper()]], {'get': True})
     admins_grp = call('group.get_group_obj', {'groupname': 'admins', 'sid_info': True})
 
     assert len(priv['ds_groups']) == 1
     assert priv['ds_groups'][0]['gid'] == admins_grp['gr_gid']
     assert priv['ds_groups'][0]['sid'] == admins_grp['sid']
 
-    assert priv['roles'] == ['FULL_ADMIN']
+    assert priv['roles'] == {'FULL_ADMIN'}
 
     with client(auth=('ipaadmin', FREEIPA_ADMIN_BINDPW)) as c:
         me = c.call('auth.me')

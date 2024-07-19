@@ -167,12 +167,7 @@ class DomainHealth(
                 if status_msg is None:
                     raise CallError('status_msg is required when setting state to FAULTED')
             case DSStatus.DISABLED:
-                # Only change current state if the specified DS matches
-                # our current running configuration
-                current_ds = DSHealthObj.dstype
-                if ds is current_ds:
-                    DSHealthObj.update(None, None, None)
-
+                DSHealthObj.update(None, None, None)
                 return
 
         DSHealthObj.update(ds, status, status_msg)

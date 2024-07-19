@@ -64,7 +64,12 @@ def generate_krb5_conf(
             else:
                 default_realm = default_realm[0]['realm']
         case DSType.IPA.value:
-            default_realm = middleware.call_sync('ldap.ipa_config')['realm']
+            try:
+                default_realm = middleware.call_sync('ldap.ipa_config')['realm']
+            except Exception:
+                # This can happen if we're simultaneously disabling IPA service
+                # while generating the krb5.conf file
+                default_realm = None
 
             # This matches defaults from ipa-client-install
             libdefaults.update({

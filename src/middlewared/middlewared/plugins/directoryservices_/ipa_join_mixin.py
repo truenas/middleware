@@ -132,8 +132,8 @@ class IPAJoinMixin:
         try:
             self.middleware.call_sync('privilege.create', {
                 'name': ipa_config['domain'].upper(),
-                'ds_groups': [admins_grp['gid']],
-                'allowlist': [{'method': '*', 'resource': '*'}],
+                'ds_groups': [admins_grp['gr_gid']],
+                'roles': ['FULL_ADMIN'],
                 'web_shell': True
             })
         except Exception:
@@ -174,10 +174,7 @@ class IPAJoinMixin:
             (IpaOperation.SET_NFS_PRINCIPAL, ipa_constants.IpaConfigName.IPA_NFS_KEYTAB)
         ):
             try:
-                setspn = subprocess.run([
-                    IPACTL,
-                    '-a', IpaOperation.SET_SMB_PRINCIPAL.name
-                ], check=False, capture_output=True)
+                setspn = subprocess.run([IPACTL, '-a', op.name], check=False, capture_output=True)
             except FileNotFoundError:
                 continue
 
@@ -432,5 +429,7 @@ class IPAJoinMixin:
         self._ipa_setup_services(job)
         job.set_progress(75, 'Activating IPA service.')
         self._ipa_activate()
-        job.set_progress(75, 'Granting IPA admins access to TrueNAS.')
-        self._ipa_grant_privileges()
+
+        # Wrap around cache fill because this forces a wait until IPA becomes ready
+        cache_fill = self.middleware.call_sync('directoryservices.cache.refresh_impl')
+        cache_fill.wait_sync()

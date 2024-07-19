@@ -13,7 +13,7 @@ from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.ldap_.ldap_client import LdapClient
 from middlewared.plugins.ldap_ import constants
-from middlewared.utils.directoryservices.constants import DSStatus, DSType, SSL
+from middlewared.utils.directoryservices.constants import DomainJoinResponse, DSStatus, DSType, SSL
 from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
 from middlewared.utils.directoryservices.krb5_constants import krb5ccache
 from middlewared.utils.directoryservices.krb5_error import KRB5Error
@@ -897,13 +897,16 @@ class LDAPService(ConfigService):
         ldap = await self.config()
 
         await self.middleware.call('ldap.create_sssd_dirs')
+        dom_join_resp = DomainJoinResponse.ALREADY_JOINED.value
 
         # If user has an IPA host keytab then we assume that we're properly joined to IPA
         if ds_type is DSType.IPA and not await self.has_ipa_host_keytab():
             ipa_config = await self.ipa_config(ldap)
             try:
                 await self.ipa_kinit(ipa_config, ldap['bindpw'])
-                await job.wrap(await self.middleware.call('directoryservices.connection.join_domain', 'IPA', ipa_config['domain']))
+                dom_join_resp = await job.wrap(await self.middleware.call(
+                    'directoryservices.connection.join_domain', 'IPA', ipa_config['domain']
+                ))
                 await self.middleware.call('alert.oneshot_delete', 'IPALegacyConfiguration')
             except KRB5Error as err:
                 # Kerberos error means we most likely have are an IPA client that is using legacy LDAP client
@@ -918,22 +921,39 @@ class LDAPService(ConfigService):
                 ds_type = DSType.LDAP
                 await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.JOINING.name)
 
-        cache_job_id = await self.middleware.call('directoryservices.connection.activate')
+        # We activate the IPA service while performing a domain join and so we should avoid
+        # going thorugh the activation routine a second time
+        match dom_join_resp:
+            case DomainJoinResponse.PERFORMED_JOIN.value:
+                # Change state to HEALTHY before performing final health check
+                # We must be HEALTHY priory to adding privileges otherwise attempt will fail
+                await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.HEALTHY.name)
+                await self.middleware.call('directoryservices.health.check')
+                await self.middleware.call(
+                    'directoryservices.connection.grant_privileges',
+                    DSType.IPA.value, ipa_config['domain']
+                )
+            case DomainJoinResponse.ALREADY_JOINED.value:
+                cache_job_id = await self.middleware.call('directoryservices.connection.activate')
+                await job.wrap(await self.middleware.call('core.job_wait', cache_job_id))
+                # Change state to HEALTHY before performing final health check
+                await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.HEALTHY.name)
+                # Force health check so that user gets immediate feedback if something
+                # went sideways while enabling
+                await self.middleware.call('directoryservices.health.check')
+            case _:
+                raise CallError(f'{dom_join_resp}: unexpected domain join response')
 
-        await job.wrap(await self.middleware.call('core.job_wait', cache_job_id))
-        await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.HEALTHY.name)
         job.set_progress(100, 'LDAP directory service started.')
 
     @private
     async def __stop(self, job, ds_type):
-        await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.LEAVING.name)
         job.set_progress(0, 'Preparing to stop LDAP directory service.')
-        job.set_progress(10, 'Rewriting configuration files.')
+        await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.DISABLED.name)
+        await self.middleware.call('service.stop', 'sssd')
         for etc_file in ds_type.etc_files:
             await self.middleware.call('etc.generate', etc_file)
 
-        job.set_progress(80, 'Stopping sssd service.')
-        await self.middleware.call('service.stop', 'sssd')
-        await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.DISABLED.name)
         await self.middleware.call('directoryservices.cache.abort_refresh')
+        await self.middleware.call('alert.oneshot_delete', 'IPALegacyConfiguration')
         job.set_progress(100, 'LDAP directory service stopped.')
