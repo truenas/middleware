@@ -67,7 +67,7 @@ def generate_krb5_conf(
             try:
                 default_realm = middleware.call_sync('ldap.ipa_config')['realm']
             except Exception:
-                # This can potenitally happen if we're simultaneously disabling IPA service
+                # This can happen if we're simultaneously disabling IPA service
                 # while generating the krb5.conf file
                 default_realm = None
 
