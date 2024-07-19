@@ -47,6 +47,11 @@ class ApiKeyService(CRUDService):
         datastore_extend = "api_key.item_extend"
         cli_namespace = "auth.api_key"
 
+    @private
+    async def item_extend(self, item):
+        item.pop("key")
+        return item
+
     @api_method(ApiKeyCreateArgs, ApiKeyCreateResult)
     async def do_create(self, data: dict) -> dict:
         """
