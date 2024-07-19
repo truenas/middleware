@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
 # License: BSD
 
-import pytest
+import os
+from tempfile import NamedTemporaryFile
+from time import sleep
 
-from middlewared.test.integration.utils import call
+import pytest
+from assets.websocket.service import ensure_service_enabled, ensure_service_started
+from auto_config import password, user
+from functions import send_file
+
+from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.client import truenas_server
+
+DUMMY_FAKEDATA_DEV = '/tmp/fakedata.dev'
+SHUTDOWN_MARKER_FILE = '/tmp/is_shutdown'
 
 first_ups_list = [
     'rmonitor',
@@ -24,6 +35,76 @@ second_ups_list = [
     'identifier',
     'monpwd'
 ]
+
+default_dummy_data = {
+    'battery.charge': 100,
+    'driver.parameter.pollinterval': 2,
+    'input.frequency': 49.9,
+    'input.frequency.nominal': 50.0,
+    'input.voltage': 230,
+    'input.voltage.nominal': 240,
+    'ups.status': 'OL',
+    'ups.timer.shutdown': -1,
+    'ups.timer.start': -1,
+}
+
+
+def remove_file(filepath):
+    ssh(f'rm {filepath}', check=False)
+
+
+def did_shutdown():
+    return ssh(f'cat {SHUTDOWN_MARKER_FILE}', check=False) == "done\n"
+
+
+def write_fake_data(data={}):
+    all_data = default_dummy_data | data
+    with NamedTemporaryFile() as f:
+        for k, v in all_data.items():
+            f.write(f'{k}: {v}\n'.encode('utf-8'))
+        f.flush()
+        os.fchmod(f.fileno(), 0o644)
+        results = send_file(f.name, DUMMY_FAKEDATA_DEV, user, password, truenas_server.ip)
+        assert results['result'], str(results['output'])
+
+
+def wait_for_alert(klass, retries=10):
+    assert retries > 0
+    while retries:
+        alerts = call('alert.list')
+        for alert in alerts:
+            if alert['klass'] == klass:
+                return alert
+
+
+@pytest.fixture(scope='module')
+def ups_running():
+    with ensure_service_enabled('ups'):
+        with ensure_service_started('ups'):
+            yield
+
+
+@pytest.fixture(scope='module')
+def dummy_ups_driver_configured():
+    write_fake_data()
+    remove_file(SHUTDOWN_MARKER_FILE)
+    old_config = call('ups.config')
+    del old_config['complete_identifier']
+    del old_config['id']
+    payload = {
+        'mode': 'MASTER',
+        'driver': 'dummy-ups',
+        'port': DUMMY_FAKEDATA_DEV,
+        'description': 'dummy-ups in dummy-once mode',
+        'shutdowncmd': f'echo done > {SHUTDOWN_MARKER_FILE}'
+    }
+    call('ups.update', payload)
+    try:
+        yield
+    finally:
+        call('ups.update', old_config)
+        remove_file(SHUTDOWN_MARKER_FILE)
+        remove_file(DUMMY_FAKEDATA_DEV)
 
 
 def test_01_get_ups_service_id():
@@ -186,3 +267,43 @@ def test_27_stop_ups_service():
 def test_28_look_UPS_service_status_is_stopped():
     results = call('service.query', [['id', '=', ups_id]], {'get': True})
     assert results['state'] == 'STOPPED', results
+
+
+def test_29_ups_online_to_online_lowbattery(ups_running, dummy_ups_driver_configured):
+    sleep(2)
+    assert 'UPSBatteryLow' not in [alert['klass'] for alert in call('alert.list')]
+    write_fake_data({'battery.charge': 20, 'ups.status': 'OL LB'})
+    alert = wait_for_alert('UPSBatteryLow')
+    assert alert
+    assert 'battery.charge: 20' in alert['formatted'], alert
+    assert not did_shutdown()
+
+
+def test_30_ups_online_to_onbatt(ups_running, dummy_ups_driver_configured):
+    assert 'UPSOnBattery' not in [alert['klass'] for alert in call('alert.list')]
+    write_fake_data({'battery.charge': 40, 'ups.status': 'OB'})
+    alert = wait_for_alert('UPSOnBattery')
+    assert alert
+    assert 'battery.charge: 40' in alert['formatted'], alert
+    assert not did_shutdown()
+
+
+def test_31_ups_onbatt_to_online(ups_running, dummy_ups_driver_configured):
+    assert 'UPSOnline' not in [alert['klass'] for alert in call('alert.list')]
+    write_fake_data({'battery.charge': 100, 'ups.status': 'OL'})
+    alert = wait_for_alert('UPSOnline')
+    assert alert
+    assert 'battery.charge: 100' in alert['formatted'], alert
+    assert not did_shutdown()
+
+
+def test_32_ups_online_to_onbatt_lowbattery(ups_running, dummy_ups_driver_configured):
+    assert 'UPSOnBattery' not in [alert['klass'] for alert in call('alert.list')]
+    write_fake_data({'battery.charge': 10, 'ups.status': 'OB LB'})
+    alert = wait_for_alert('UPSOnBattery')
+    assert alert
+    assert 'battery.charge: 10' in alert['formatted'], alert
+    alert = wait_for_alert('UPSBatteryLow')
+    assert alert
+    assert 'battery.charge: 10' in alert['formatted'], alert
+    assert did_shutdown()
