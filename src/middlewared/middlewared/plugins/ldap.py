@@ -923,12 +923,27 @@ class LDAPService(ConfigService):
 
         # We activate the IPA service while performing a domain join and so we should avoid
         # going thorugh the activation routine a second time
-        if dom_join_resp != DomainJoinResponse.PERFORMED_JOIN.value:
-            cache_job_id = await self.middleware.call('directoryservices.connection.activate')
-            await job.wrap(await self.middleware.call('core.job_wait', cache_job_id))
+        match dom_join_resp:
+            case DomainJoinResponse.PERFORMED_JOIN.value:
+                # Change state to HEALTHY before performing final health check
+                # We must be HEALTHY priory to adding privileges otherwise attempt will fail
+                await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.HEALTHY.name)
+                await self.middleware.call('directoryservices.health.check')
+                await self.middleware.call(
+                    'directoryservices.connection.grant_privileges',
+                    DSType.IPA.value, ipa_config['domain']
+                )
+            case DomainJoinResponse.ALREADY_JOINED.value:
+                cache_job_id = await self.middleware.call('directoryservices.connection.activate')
+                await job.wrap(await self.middleware.call('core.job_wait', cache_job_id))
+                # Change state to HEALTHY before performing final health check
+                await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.HEALTHY.name)
+                # Force health check so that user gets immediate feedback if something
+                # went sideways while enabling
+                await self.middleware.call('directoryservices.health.check')
+            case _:
+                raise CallError(f'{dom_join_response}: unexpected domain join response')
 
-        # We have completed all required setup for LDAP / IPA bind, set our state to healthy
-        await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.HEALTHY.name)
         job.set_progress(100, 'LDAP directory service started.')
 
     @private

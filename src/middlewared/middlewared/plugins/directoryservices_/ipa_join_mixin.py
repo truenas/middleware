@@ -433,6 +433,3 @@ class IPAJoinMixin:
         # Wrap around cache fill because this forces a wait until IPA becomes ready
         cache_fill = self.middleware.call_sync('directoryservices.cache.refresh_impl')
         cache_fill.wait_sync()
-
-        job.set_progress(75, 'Granting IPA admins access to TrueNAS.')
-        self._ipa_grant_privileges()
