@@ -942,7 +942,7 @@ class LDAPService(ConfigService):
                 # went sideways while enabling
                 await self.middleware.call('directoryservices.health.check')
             case _:
-                raise CallError(f'{dom_join_response}: unexpected domain join response')
+                raise CallError(f'{dom_join_resp}: unexpected domain join response')
 
         job.set_progress(100, 'LDAP directory service started.')
 
