@@ -3,7 +3,7 @@ import os
 from middlewared.schema import accepts, Dict, returns, Str
 from middlewared.service import Service
 
-from .list_utils import chart_release_can_be_migrated, get_backup_dir, K8s_BACKUP_NAME_PREFIX
+from .list_utils import release_migrate_error, get_backup_dir, K8s_BACKUP_NAME_PREFIX
 from .utils import get_k8s_ds
 
 
@@ -57,6 +57,7 @@ class K8stoDockerMigrationService(Service):
             backup_data = {
                 'name': backup_name,
                 'releases': [],
+                'skipped_releases': [],
                 'snapshot_name': snapshot['name'],
                 'created_on': self.middleware.call_sync(
                     'zfs.snapshot.get_instance', snapshot['name']
@@ -65,9 +66,25 @@ class K8stoDockerMigrationService(Service):
             }
 
             with os.scandir(backup_path) as entries:
-                for release in filter(lambda r: r.name in releases_datasets, entries):
-                    if chart_release_can_be_migrated(release.name, release.path, catalog_path, apps_mapping):
-                        backup_data['releases'].append(release.name)
+                for release in entries:
+                    if release.name not in releases_datasets:
+                        backup_data['skipped_releases'].append({
+                            'name': release.name,
+                            'error': 'Release dataset not found in releases dataset',
+                        })
+                        continue
+
+                    migrate_error = release_migrate_error(
+                        release.name, release.path, catalog_path, apps_mapping
+                    )
+                    if migrate_error:
+                        backup_data['skipped_releases'].append({
+                            'name': release.name,
+                            'error': migrate_error,
+                        })
+                        continue
+
+                    backup_data['releases'].append(release.name)
 
             for release in filter(lambda r: r in releases_datasets, os.listdir(backup_path)):
                 backup_data['releases'].append(release)
