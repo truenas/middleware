@@ -3,7 +3,7 @@ import os
 from middlewared.schema import accepts, Dict, returns, Str
 from middlewared.service import Service
 
-from .list_utils import get_backup_dir, K8s_BACKUP_NAME_PREFIX
+from .list_utils import chart_release_can_be_migrated, get_backup_dir, K8s_BACKUP_NAME_PREFIX
 from .utils import get_k8s_ds
 
 
@@ -35,6 +35,8 @@ class K8stoDockerMigrationService(Service):
         if not os.path.exists(backup_base_dir):
             return backup_config | {'error': f'Unable to locate {backup_base_dir!r} backups directory'}
 
+        self.middleware.call_sync('catalog.sync')
+
         backups = backup_config['backups']
         snapshots = self.middleware.call_sync(
             'zfs.snapshot.query', [['name', '^', f'{k8s_ds}@{K8s_BACKUP_NAME_PREFIX}']], {'select': ['name']}
@@ -43,6 +45,8 @@ class K8stoDockerMigrationService(Service):
             ds['id'].split('/', 3)[-1].split('/', 1)[0]
             for ds in self.middleware.call_sync('zfs.dataset.get_instance', f'{k8s_ds}/releases')['children']
         )
+        apps_mapping = self.middleware.call_sync('catalog.train_to_apps_version_mapping')
+        catalog_path = self.middleware.call_sync('catalog.config')['location']
 
         for snapshot in snapshots:
             backup_name = snapshot['name'].split('@', 1)[-1].split(K8s_BACKUP_NAME_PREFIX, 1)[-1]
@@ -62,7 +66,8 @@ class K8stoDockerMigrationService(Service):
 
             with os.scandir(backup_path) as entries:
                 for release in filter(lambda r: r.name in releases_datasets, entries):
-                    backup_data['releases'].append(release.name)
+                    if chart_release_can_be_migrated(release.name, release.path, catalog_path, apps_mapping):
+                        backup_data['releases'].append(release.name)
 
             for release in filter(lambda r: r in releases_datasets, os.listdir(backup_path)):
                 backup_data['releases'].append(release)
