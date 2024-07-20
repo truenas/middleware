@@ -23,17 +23,27 @@ def get_release_metadata(release_path: str) -> dict:
         return {}
 
 
-def release_migrate_error(
+def release_details(
     release_name: str, release_path: str, catalog_path: str, apps_mapping: dict
-) -> str | None:
+) -> dict:
+    config = {
+        'error': None,
+        'helm_secrets': [],
+        'release_secrets': [],
+        'train': None,
+        'app_name': None,
+        'release_name': release_name,
+    }
     if not (release_metadata := get_release_metadata(release_path)) or not all(
         k in release_metadata.get('metadata', {}).get('labels', {})
         for k in ('catalog', 'catalog_branch', 'catalog_train')
     ):
-        return 'Unable to parse release metadata'
+        return config | {'error': 'Unable to read release metadata'}
 
     metadata_labels = release_metadata['metadata']['labels']
     if metadata_labels['catalog'] != 'TRUENAS' or metadata_labels['catalog_branch'] != 'master':
-        return 'Release is not from TrueNAS catalog'
+        return config | {'error': 'Release is not from TrueNAS catalog'}
 
     train_path = get_train_path(catalog_path)
+
+    return config

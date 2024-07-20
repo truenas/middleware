@@ -3,7 +3,7 @@ import os
 from middlewared.schema import accepts, Dict, returns, Str
 from middlewared.service import Service
 
-from .list_utils import release_migrate_error, get_backup_dir, K8s_BACKUP_NAME_PREFIX
+from .list_utils import get_backup_dir, K8s_BACKUP_NAME_PREFIX, release_details
 from .utils import get_k8s_ds
 
 
@@ -74,17 +74,14 @@ class K8stoDockerMigrationService(Service):
                         })
                         continue
 
-                    migrate_error = release_migrate_error(
+                    config = release_details(
                         release.name, release.path, catalog_path, apps_mapping
                     )
-                    if migrate_error:
-                        backup_data['skipped_releases'].append({
-                            'name': release.name,
-                            'error': migrate_error,
-                        })
+                    if config['error']:
+                        backup_data['skipped_releases'].append(config)
                         continue
 
-                    backup_data['releases'].append(release.name)
+                    backup_data['releases'].append(config)
 
             for release in filter(lambda r: r in releases_datasets, os.listdir(backup_path)):
                 backup_data['releases'].append(release)
