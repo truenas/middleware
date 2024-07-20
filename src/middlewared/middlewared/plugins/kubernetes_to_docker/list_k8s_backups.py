@@ -1,7 +1,7 @@
 import os
 
 from middlewared.schema import accepts, Dict, returns, Str
-from middlewared.service import Service
+from middlewared.service import job, Service
 
 from .list_utils import get_backup_dir, get_default_release_details, K8s_BACKUP_NAME_PREFIX, release_details
 from .utils import get_k8s_ds
@@ -19,7 +19,8 @@ class K8stoDockerMigrationService(Service):
         Str('error', null=True),
         Dict('backups', additional_attrs=True),
     ))
-    def list_backups(self, kubernetes_pool):
+    @job(lock=lambda args: f'k8s_to_docker_list_backups_{args[0]}')
+    def list_backups(self, job, kubernetes_pool):
         """
         List existing kubernetes backups
         """
@@ -83,4 +84,5 @@ class K8stoDockerMigrationService(Service):
 
             backups[backup_name] = backup_data
 
+        job.set_progress(100, 'Retrieved backup config')
         return backup_config
