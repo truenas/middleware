@@ -1,5 +1,8 @@
+import contextlib
+
+from middlewared.plugins.docker.utils import applications_ds_name
 from middlewared.schema import accepts, Dict, returns, Str
-from middlewared.service import Service
+from middlewared.service import CallError, InstanceNotFound, job, Service
 
 
 class K8stoDockerMigrationService(Service):
@@ -12,11 +15,12 @@ class K8stoDockerMigrationService(Service):
         Str('kubernetes_pool'),
         Dict(
             'options',
-            Str('backup_name'),
+            Str('backup_name', required=True, empty=False),
         )
     )
     @returns()
-    def migrate(self, kubernetes_pool, options):
+    @job(lock='k8s_to_docker_migrate')
+    def migrate(self, job, kubernetes_pool, options):
         """
         Migrate kubernetes backups to docker.
         """
@@ -27,4 +31,44 @@ class K8stoDockerMigrationService(Service):
         # 4) Migrate the config of apps
         # 5) Create relevant filesystem bits for apps and handle cases like ix-volumes
         # 6) Redeploy apps
-        pass
+        backup_config_job = self.middleware.call_sync('k8s_to_docker.list_backups', kubernetes_pool)
+        backup_config_job.wait_sync()
+        if backup_config_job.error:
+            raise CallError(f'Failed to list backups: {backup_config_job.error}')
+
+        backups = backup_config_job.result
+        if backups['error']:
+            raise CallError(f'Failed to list backups for {kubernetes_pool!r}: {backups["error"]}')
+
+        if options['backup_name'] not in backups['backups']:
+            raise CallError(f'Backup {options["backup_name"]} not found')
+
+        backup_config = backups['backups'][options['backup_name']]
+        job.set_progress(10, f'Located {options["backup_name"]} backup')
+
+        if not backup_config['releases']:
+            raise CallError(f'No old apps found in {options["backup_name"]!r} backup which can be migrated')
+
+        # We will see if docker dataset exists on this pool and if it is there, we will error out
+        docker_ds = applications_ds_name(kubernetes_pool)
+        with contextlib.suppress(InstanceNotFound):
+            self.middleware.call_sync('pool.dataset.get_instance_quick', docker_ds)
+            raise CallError(f'Docker dataset {docker_ds!r} already exists on {kubernetes_pool!r}')
+
+        # For good measure we stop docker service and unset docker pool if any configured
+        self.middleware.call_sync('service.stop', 'docker')
+        job.set_progress(15, 'Un-configuring docker service if configured')
+        docker_job = self.middleware.call_sync('docker.update', {'pool': None})
+        docker_job.wait_sync()
+        if docker_job.error:
+            raise CallError(f'Failed to un-configure docker: {docker_job.error}')
+
+        # We will now configure docker service
+        docker_job = self.middleware.call_sync('docker.update', {'pool': kubernetes_pool})
+        docker_job.wait_sync()
+        if docker_job.error:
+            raise CallError(f'Failed to configure docker: {docker_job.error}')
+
+        # We will now iterate over each chart release which can be migrated and try to migrate it's config
+        # If we are able to migrate it's config, we will proceed with setting up relevant filesystem bits
+        # for the app and finally redeploy it
