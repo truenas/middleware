@@ -29,12 +29,12 @@ def list_secrets(secrets_dir: str) -> dict[str, dict[str, dict]]:
             if entry.name.startswith(HELM_SECRET_PREFIX):
                 if secrets['helm_secret']['secret_name'] is None or entry.name > secrets['helm_secret']['secret_name']:
                     secret_contents = get_secret_contents(entry.path, True).get('release', {})
-                    secrets['helm_secret'] = {
+                    secrets['helm_secret'].update({
                         'secret_name': entry.name,
                         **(secret_contents if all(
-                            k in secret_contents and k for k in ('chart_metadata', 'config', 'name')
+                            k in secret_contents and k for k in ('appVersion', 'config', 'name')
                         ) else {}),
-                    }
+                    })
             else:
                 secrets['release_secrets'][entry.name] = get_secret_contents(entry.path)
 
@@ -55,7 +55,9 @@ def get_secret_contents(secret_path: str, helm_secret: bool = False) -> dict:
                 v = json.loads(gzip.decompress(b64decode(b64decode(v))).decode())
                 for pop_k in ('manifest', 'info', 'version', 'namespace'):
                     v.pop(pop_k)
-                v['chart_metadata'] = v.pop('chart')['metadata']
+                chart = v.pop('chart')['metadata']
+                for add_k in ('appVersion', 'name'):
+                    v[add_k] = chart[add_k]
             else:
                 v = b64decode(v).decode()
 

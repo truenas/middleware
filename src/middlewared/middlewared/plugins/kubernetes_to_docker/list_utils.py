@@ -4,6 +4,7 @@ import yaml
 
 from catalog_reader.train_utils import get_train_path
 
+from .secrets_utils import list_secrets
 from .yaml import SerializedDatesFullLoader
 
 
@@ -23,17 +24,20 @@ def get_release_metadata(release_path: str) -> dict:
         return {}
 
 
-def release_details(
-    release_name: str, release_path: str, catalog_path: str, apps_mapping: dict
-) -> dict:
-    config = {
+def get_default_release_details(release_name: str) -> dict:
+    return {
         'error': None,
-        'helm_secrets': [],
-        'release_secrets': [],
+        'helm_secret': {},
+        'release_secrets': {},
         'train': None,
         'app_name': None,
         'release_name': release_name,
+        'migrate_file_path': None,
     }
+
+
+def release_details(release_name: str, release_path: str, catalog_path: str, apps_mapping: dict) -> dict:
+    config = get_default_release_details(release_name)
     if not (release_metadata := get_release_metadata(release_path)) or not all(
         k in release_metadata.get('metadata', {}).get('labels', {})
         for k in ('catalog', 'catalog_branch', 'catalog_train')
@@ -44,6 +48,35 @@ def release_details(
     if metadata_labels['catalog'] != 'TRUENAS' or metadata_labels['catalog_branch'] != 'master':
         return config | {'error': 'Release is not from TrueNAS catalog'}
 
-    train_path = get_train_path(catalog_path)
+    release_train = metadata_labels['catalog_train']
+    config['train'] = release_train
+    if release_train not in apps_mapping:
+        return config | {'error': 'Unable to locate release\'s train'}
+
+    secrets_dir = os.path.join(release_path, 'secrets')
+    try:
+        secrets = list_secrets(secrets_dir)
+    except FileNotFoundError:
+        return config | {'error': 'Unable to list release secrets'}
+
+    if secrets['helm_secret']['name'] is None:
+        return config | {'error': 'Unable to read helm secret details'}
+
+    config.update({
+        'app_name': secrets['helm_secret']['name'],
+        **secrets,
+    })
+
+    if config['app_name'] not in apps_mapping[release_train]:
+        return config | {'error': 'Unable to locate release\'s app'}
+
+    migrate_file_path = os.path.join(
+        get_train_path(catalog_path), release_train, config['app_name'],
+        apps_mapping[release_train][config['app_name']], 'migrate_from_k8s'
+    )
+    if os.path.exists(migrate_file_path):
+        config['migrate_file_path'] = migrate_file_path
+    else:
+        config['error'] = 'Unable to locate release\'s app\'s migration file'
 
     return config
