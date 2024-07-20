@@ -1,15 +1,40 @@
 import collections
-import pyudev
+import os
 import re
 import subprocess
 
-from middlewared.service_exception import CallError
+import pyudev
 
+from middlewared.service_exception import CallError
 from .iommu import get_iommu_groups_info
 from .pci import SENSITIVE_PCI_DEVICE_TYPES
 
 
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
+
+
+def get_nvidia_gpus(parse_info=False):
+    """Don't be so complicated. Return basic information about
+    NVIDIA devices (if any) that are connected.
+
+    If `parse_info` is true, open the "information" file that
+    exists in procfs which gives basic information about the
+    GPU."""
+    gpus = dict()
+    try:
+        with os.scandir('/proc/driver/nvidia/gpus') as gdir:
+            for i in filter(lambda x: x.is_dir(), gdir):
+                gpus[i.name] = dict()
+                if parse_info:
+                    with open(os.path.join(i.path, 'information'), 'r') as f:
+                        for line in f:
+                            k, v = line.split(':', 1)
+                            k = k.strip().lower().replace(' ', '_')
+                            gpus[i.name].update({k: v.strip()})
+    except (FileNotFoundError, ValueError):
+        pass
+
+    return gpus
 
 
 def get_critical_devices_in_iommu_group_mapping(iommu_groups: dict) -> dict[str, set[str]]:
