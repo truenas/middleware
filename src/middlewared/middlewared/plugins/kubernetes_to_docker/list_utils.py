@@ -23,16 +23,17 @@ def get_release_metadata(release_path: str) -> dict:
         return {}
 
 
-def chart_release_can_be_migrated(release_name: str, release_path: str, catalog_path: str, apps_mapping: dict) -> bool:
+def release_migrate_error(
+    release_name: str, release_path: str, catalog_path: str, apps_mapping: dict
+) -> str | None:
     if not (release_metadata := get_release_metadata(release_path)) or not all(
         k in release_metadata.get('metadata', {}).get('labels', {})
         for k in ('catalog', 'catalog_branch', 'catalog_train')
     ):
-        return False
+        return 'Unable to parse release metadata'
 
     metadata_labels = release_metadata['metadata']['labels']
     if metadata_labels['catalog'] != 'TRUENAS' or metadata_labels['catalog_branch'] != 'master':
-        return False
+        return 'Release is not from TrueNAS catalog'
 
     train_path = get_train_path(catalog_path)
-    return False
