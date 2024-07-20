@@ -34,9 +34,8 @@ INIT_DIRS_AND_FILES = {
               {'name': 'init_ro_file', 'contents': "RO data", 'perm': '-w'}],
 }
 
-#
+
 # ================= Utility Functions ==================
-#
 
 
 @pytest.fixture(scope='module')
@@ -96,8 +95,8 @@ def ftp_set_config(config={}):
         call('ftp.update', tmpconf)
 
 
-def parse_proftpd_conf():
-    results = SSH_TEST("cat /etc/proftpd/proftpd.conf", user, password)
+def parse_conf_file(file='proftpd'):
+    results = SSH_TEST(f"cat /etc/proftpd/{file}.conf", user, password)
     assert results['result'], str(results)
     lines = results['stdout'].splitlines()
 
@@ -124,8 +123,6 @@ def parse_proftpd_conf():
             # Trap TransferRate directive
             if "TransferRate" == line.split()[0]:
                 tmp = line.split()
-                # directive = [' '.join(tmp[:2])]
-                # value = [' '.join(tmp[2:])]
                 directive = ' '.join(tmp[:2])
                 value = ' '.join(tmp[2:])
             else:
@@ -153,7 +150,7 @@ def validate_proftp_conf():
     xlat = {True: "on", False: "off"}
     # Retrieve result from the database
     ftpConf = call('ftp.config')
-    parsed = parse_proftpd_conf()
+    parsed = parse_conf_file('proftpd')
 
     # Sanity spot check settings in proftpd.conf
     assert ftpConf['port'] == int(parsed['Port'][1])
@@ -193,7 +190,7 @@ def validate_proftp_conf():
             assert parsed['AllowGroup'][1] == 'root'
 
     # The banner is saved to a file
-    rv_motd = SSH_TEST("cat /var/run/proftpd/proftpd.motd", user, password)
+    rv_motd = SSH_TEST("cat /etc/proftpd/proftpd.motd", user, password)
     assert rv_motd['result'], str(rv_motd)
     motd = rv_motd['stdout'].strip()
     if ftpConf['banner']:
@@ -232,6 +229,8 @@ def validate_proftp_conf():
         assert ftpConf['anonuserdlbw'] == int(parsed['TransferRate RETR'][1])
 
     if ftpConf['tls']:
+        parsed = parsed | parse_conf_file('tls')
+
         # These two are 'fixed' settings in proftpd.conf.mako, but they are important
         assert parsed['TLSEngine'][1] == 'on'
         assert parsed['TLSProtocol'][1] == 'TLSv1.2 TLSv1.3'
@@ -246,7 +245,6 @@ def validate_proftp_conf():
                 ('common_name_required', 'CommonNameRequired'),
                 ('enable_diags', 'EnableDiags'),
                 ('export_cert_data', 'ExportCertData'),
-                # ('no_cert_request', 'NoCertRequest'),   <========================= proFTPd says this is no longer used
                 ('no_empty_fragments', 'NoEmptyFragments'),
                 ('no_session_reuse_required', 'NoSessionReuseRequired'),
                 ('stdenvvars', 'StdEnvVars'),
