@@ -74,6 +74,10 @@ def test_check_kerberos_ticket(do_freeipa_connection):
     assert tkt['name'].startswith(do_freeipa_connection['kerberos_principal'])
 
 
+def test_certificate(do_freeipa_connection):
+    call('certificateauthority.query', [['name', '=', 'IPA_DOMAIN_CACERT']], {'get': True})
+
+
 def test_system_keytab_has_nfs_principal(do_freeipa_connection):
     assert call('kerberos.keytab.has_nfs_principal')
 
@@ -95,11 +99,18 @@ def test_admin_privilege(do_freeipa_connection, enable_ds_auth):
     assert priv['ds_groups'][0]['gid'] == admins_grp['gr_gid']
     assert priv['ds_groups'][0]['sid'] == admins_grp['sid']
 
-    assert priv['roles'] == {'FULL_ADMIN'}
+    assert priv['roles'] == ['FULL_ADMIN']
 
     with client(auth=('ipaadmin', FREEIPA_ADMIN_BINDPW)) as c:
         me = c.call('auth.me')
 
         assert 'DIRECTORY_SERVICE' in me['account_attributes']
         assert 'LDAP' in me['account_attributes']
-        assert me['privilege']['roles'] == ['FULL_ADMIN']
+        assert me['privilege']['roles'] == set(priv['roles'])
+
+
+def test_dns_resolution(do_freeipa_connection):
+    ipa_config = do_freeipa_connection['ipa_config']
+
+    addresses = call('dnsclient.forward_lookup', {'names': [ipa_config['host']]})
+    assert len(addresses) != 0

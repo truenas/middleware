@@ -49,14 +49,71 @@ class IPAJoinMixin:
 
     def _ipa_leave(self, job: Job, ds_type: DSType, domain: str):
         """
-        This method is currently left unimplemented because it is not
-        currently exposed in public APIs, but will be as part of general
-        directory services redesign in future TrueNAS release.
+        Leave the IPA domain
         """
-        raise CallError(
-            'Functionality to automatically leave an IPA domain has not yet '
-            'been implemented'
-        )
+        ldap_config = self.middleware.call_sync('ldap.config')
+        ipa_config = self.middleware.call_sync('ldap.ipa_config', ldap_config)
+
+        if ipa_config['domain'] != domain:
+            raise CallError(f'{domain}: TrueNAS is joined to {ipa_config["domain"]}')
+
+        job.set_progress(0, 'Deleting NFS and SMB service principals.')
+        self._ipa_del_spn()
+
+        job.set_progress(10, 'Removing DNS entries.')
+        self.unregister_dns(ipa_config['host'], False)
+
+        # now leave IPA
+        job.set_progress(30, 'Leaving IPA domain.')
+        try:
+            join = subprocess.run([
+                IPACTL, '-a', IpaOperation.LEAVE.name
+            ], check=False, capture_output=True)
+            _parse_ipa_response(join)
+        except Exception:
+            self.logger.warning(
+                'Failed to disable TrueNAS machine account in IPA domain '
+                'further action by the IPA administrator to fully remove '
+                'the server from the domain.', exc_info=True
+            )
+
+        # At this point we can start removing local configuration
+        job.set_progress(50, 'Disabling LDAP service.')
+
+        # This disables the LDAP service and cancels any in progress cache
+        # jobs
+        ldap_update_job = self.middleware.call_sync('ldap.update', {
+            'binddn': '',
+            'bindpw': '',
+            'kerberos_principal': '',
+            'kerberos_realm': None,
+            'enable': False,
+        })
+
+        ldap_update_job.wait_sync()
+
+        job.set_progress(80, 'Removing kerberos configuration.')
+        if ldap_config['kerberos_realm']:
+            self.middleware.call_sync('kerberos.realm.delete', ldap_config['kerberos_realm'])
+
+        if (host_kt := self.middleware.call_sync('kerberos.keytab.query', [
+            ['name', '=', ipa_constants.IpaConfigName.IPA_HOST_KEYTAB.value]
+        ])):
+            self.middleware.call_sync('kerberos.keytab.delete', host_kt[0]['id'])
+
+        job.set_progress(90, 'Removing IPA certificate.')
+        if (ipa_cert := self.middleware.call_sync('certificateauthority.query', [
+            ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
+        ])):
+            self.middleware.call_sync('certificateauthority.delete', ipa_cert[0]['id'])
+
+        job.set_progress(95, 'Removing privileges.')
+        if (priv := self.middleware.call_sync('privilege.query', [
+            ['name', '=', ipa_config['domain'].upper()]
+        ])):
+            self.middleware.call_sync('privilege.delete', priv[0]['id'])
+
+        job.set_progress(100, 'IPA leave complete.')
 
     def _ipa_activate(self) -> None:
         for etc_file in DSType.IPA.etc_files:
@@ -185,6 +242,27 @@ class IPAJoinMixin:
                 self.logger.error('%s: failed to create keytab', op.name, exc_info=True)
 
         return output
+
+    @kerberos_ticket
+    def _ipa_del_spn(self):
+        """ internal method to delete service principals on remote IPA server
+
+        Perform remote operation and then delete keytab from datastore. At this point
+        the host keytab is not deleted because we need it to remove our DNS entries.
+        """
+        for op, spn_type in (
+            (IpaOperation.DEL_SMB_PRINCIPAL, ipa_constants.IpaConfigName.IPA_SMB_KEYTAB),
+            (IpaOperation.DEL_NFS_PRINCIPAL, ipa_constants.IpaConfigName.IPA_NFS_KEYTAB)
+        ):
+            setspn = subprocess.run([IPACTL, '-a', op.name], check=False, capture_output=True)
+            try:
+                _parse_ipa_response(setspn)
+            except Exception:
+                self.logger.warning('%s: failed to remove service principal from remote IPA server.',
+                                    op.name, exc_info=True)
+
+            if (kt := self.middleware.call_sync('kerberos.keytab.query', [['name', '=', spn_type]])):
+                self.middleware.call_sync('kerberos.keytab.delete', kt[0]['id'])
 
     @kerberos_ticket
     def _ipa_setup_services(self, job: Job):

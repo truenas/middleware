@@ -215,13 +215,6 @@ def ldap(
         clear_ldap_info()
 
 
-def clear_ipa_info():
-    clear_ldap_info()
-    keytabs = call('kerberos.keytab.query')
-    for kt in keytabs:
-        call('kerberos.keytab.delete', kt['id'])
-
-
 @contextlib.contextmanager
 def ipa(
     basedn=FREEIPA_BASEDN,
@@ -244,7 +237,11 @@ def ipa(
                 "enable": True,
                 **kwargs
             }, job=True)
+            ipa_config = call('ldap.ipa_config', config)
             config['bindpw'] = None
-            yield config
+            try:
+                yield config | {'ipa_config': ipa_config}
+            finally:
+                call('directoryservices.connection.leave_domain', 'IPA', ipa_config['domain'], job=True)
         finally:
-            clear_ipa_info()
+            clear_ldap_info()

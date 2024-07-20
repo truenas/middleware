@@ -51,6 +51,39 @@ class DomainConnection(
 
         return self.middleware.call_sync('directoryservices.cache.refresh_impl').id
 
+    def _create_nsupdate_payload(self, fqdn: str, cmd_type: str, do_ptr: bool = False):
+        if fqdn.startswith('localhost'):
+            raise CallError(f'{fqdn}: Invalid domain name.')
+
+        if not fqdn.endswith(dot):
+            fqdn += dot
+
+        payload = []
+        if self.middleware.call_sync('failover.licensed'):
+            master, backup, init = self.middleware.call_sync('failover.vip.get_states')
+            for master_iface in self.middleware.call_sync('interface.query', [["id", "in", master + backup]]):
+                for i in master_iface['failover_virtual_aliases']:
+                    addr = ipaddress.ip_address(i['address'])
+                    payload.append({
+                        'command': cmd_type,
+                        'name': fqdn,
+                        'address': str(addr),
+                        'do_ptr': do_ptr,
+                        'type': 'A' if addr.version == 4 else 'AAAA'
+                    })
+        else:
+            for i in self.middleware.call_sync('interface.ip_in_use'):
+                addr = ipaddress.ip_address(i['address'])
+                payload.append({
+                    'command': cmd_type,
+                    'name': fqdn,
+                    'address': str(addr),
+                    'do_ptr': do_ptr,
+                    'type': 'A' if addr.version == 4 else 'AAAA'
+                })
+
+        return payload
+
     @kerberos_ticket
     def register_dns(self, fqdn: str, do_ptr: bool = False):
         """
@@ -93,30 +126,32 @@ class DomainConnection(
         if not fqdn.endswith(dot):
             fqdn += dot
 
-        payload = []
-        if self.middleware.call_sync('failover.licensed'):
-            master, backup, init = self.middleware.call_sync('failover.vip.get_states')
-            for master_iface in self.middleware.call_sync('interface.query', [["id", "in", master + backup]]):
-                for i in master_iface['failover_virtual_aliases']:
-                    addr = ipaddress.ip_address(i['address'])
-                    payload.append({
-                        'command': 'ADD',
-                        'name': fqdn,
-                        'address': str(addr),
-                        'do_ptr': do_ptr,
-                        'type': 'A' if addr.version == 4 else 'AAAA'
-                    })
-        else:
-            for i in self.middleware.call_sync('interface.ip_in_use'):
-                addr = ipaddress.ip_address(i['address'])
-                payload.append({
-                    'command': 'ADD',
-                    'name': fqdn,
-                    'address': str(addr),
-                    'do_ptr': do_ptr,
-                    'type': 'A' if addr.version == 4 else 'AAAA'
-                })
+        payload = self._create_nsupdate_payload(fqdn, 'ADD', do_ptr)
+        self.middleware.call_sync('dns.nsupdate', {'ops': payload})
 
+    @kerberos_ticket
+    def unregister_dns(self, fqdn: str, do_ptr: bool = False):
+        if not isinstance(fqdn, str):
+            raise TypeError(f'{type(fqdn)}: must be a string')
+        elif dot not in fqdn:
+            raise ValueError(f'{fqdn}: missing domain component of name')
+
+        ds_type_str = self.middleware.call_sync('directoryservices.status')['type']
+        match ds_type_str:
+            case DSType.AD.value | DSType.IPA.value:
+                pass
+            case None:
+                raise CallError('Directory services must be enabled in order to unregister DNS')
+            case _:
+                raise CallError(f'{ds_type_str}: directory service type does not support DNS registration')
+
+        if fqdn.startswith('localhost'):
+            raise CallError(f'{fqdn}: Invalid domain name.')
+
+        if not fqdn.endswith(dot):
+            fqdn += dot
+
+        payload = self._create_nsupdate_payload(fqdn, 'DELETE', do_ptr)
         self.middleware.call_sync('dns.nsupdate', {'ops': payload})
 
     @kerberos_ticket

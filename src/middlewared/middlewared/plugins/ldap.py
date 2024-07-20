@@ -834,7 +834,12 @@ class LDAPService(ConfigService):
             domain = realm.lower()
             await self.middleware.call('network.configuration.update', {'domain': domain})
 
-        if nc['hostname'] == 'truenas':
+        if 'hostname_virtual' in nc:
+            hostname = nc['hostname_virtual']
+        else:
+            hostname = nc['hostname']
+
+        if hostname == 'truenas':
             raise CallError('Hostname should be changed from default value prior to joining IPA domain')
 
         if (await self.middleware.call('smb.config'))['netbiosname'] == 'truenas':
@@ -842,9 +847,9 @@ class LDAPService(ConfigService):
             # Unfortunately hostnames are more permissive than netbios names and so
             # there is some chance this will fail
             try:
-                await self.middleware.call('smb.update', {'netbiosname': nc['hostname']})
+                await self.middleware.call('smb.update', {'netbiosname': hostname})
             except Exception:
-                self.logger.warning('%: failed to update netbiosname', nc['hostnmae'], exc_info=True)
+                self.logger.warning('%: failed to update netbiosname', hostname, exc_info=True)
                 raise CallError('SMB netbios name should be changed from default value prior to joining IPA domain')
 
         username = conf['binddn'].split(',')[0].split('=')[1]
@@ -956,4 +961,11 @@ class LDAPService(ConfigService):
 
         await self.middleware.call('directoryservices.cache.abort_refresh')
         await self.middleware.call('alert.oneshot_delete', 'IPALegacyConfiguration')
+        if await self.middleware.call(
+            'kerberos.check_ticket',
+            {'ccache': krb5ccache.SYSTEM.name},
+            False
+        ):
+            await self.middleware.call('kerberos.kdestory')
+
         job.set_progress(100, 'LDAP directory service stopped.')
