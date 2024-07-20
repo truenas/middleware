@@ -87,6 +87,7 @@ class K8stoDockerMigrationService(Service):
         # If we are able to migrate it's config, we will proceed with setting up relevant filesystem bits
         # for the app and finally redeploy it
         release_details = []
+        dummy_job = type('dummy_job', (object,), {'set_progress': lambda *args: None})()
         for chart_release in backup_config['releases']:
             new_config = migrate_chart_release_config(chart_release)
             if isinstance(new_config, str) or not new_config:
@@ -95,3 +96,20 @@ class K8stoDockerMigrationService(Service):
                     'error': new_config,
                 })
                 continue
+
+            complete_app_details = self.middleware.call_sync('catalog.get_app_details', chart_release['app_name'], {
+                'train': chart_release['train'],
+            })
+
+            try:
+                self.middleware.call_sync(
+                    'app.create_internal', dummy_job, chart_release['release_name'],
+                    chart_release['app_version'], new_config, complete_app_details, True,
+                )
+            except Exception as e:
+                release_details.append({
+                    'name': chart_release['name'],
+                    'error': str(e),
+                })
+
+            # At this point we have just not instructed docker to start the app and ix volumes normalization is left
