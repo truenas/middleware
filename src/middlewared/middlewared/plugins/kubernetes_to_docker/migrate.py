@@ -4,6 +4,8 @@ from middlewared.plugins.docker.utils import applications_ds_name
 from middlewared.schema import accepts, Dict, returns, Str
 from middlewared.service import CallError, InstanceNotFound, job, Service
 
+from .migrate_config_utils import migrate_chart_release_config
+
 
 class K8stoDockerMigrationService(Service):
 
@@ -69,6 +71,27 @@ class K8stoDockerMigrationService(Service):
         if docker_job.error:
             raise CallError(f'Failed to configure docker: {docker_job.error}')
 
+        job.set_progress(25, f'Rolling back to {backup_config["snapshot_name"]!r} snapshot')
+        self.middleware.call_sync(
+            'zfs.snapshot.rollback', backup_config['snapshot_name'], {
+                'force': True,
+                'recursive': True,
+                'recursive_clones': True,
+                'recursive_rollback': True,
+            }
+        )
+        job.set_progress(30, 'Starting migrating old apps to new apps')
+
+        # FIXME: Update job progress on each chart release
         # We will now iterate over each chart release which can be migrated and try to migrate it's config
         # If we are able to migrate it's config, we will proceed with setting up relevant filesystem bits
         # for the app and finally redeploy it
+        release_details = []
+        for chart_release in backup_config['releases']:
+            new_config = migrate_chart_release_config(chart_release)
+            if isinstance(new_config, str) or not new_config:
+                release_details.append({
+                    'name': chart_release['name'],
+                    'error': new_config,
+                })
+                continue

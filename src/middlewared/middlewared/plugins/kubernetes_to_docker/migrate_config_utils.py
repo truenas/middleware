@@ -18,8 +18,13 @@ def migrate_chart_release_config(release_data: dict) -> dict | str:
             error = 'No output from migration script'
         else:
             try:
-                return yaml.safe_load(cp.stdout)
+                new_config = yaml.safe_load(cp.stdout)
             except yaml.YAMLError:
                 error = 'Failed to parse migrated config'
+            else:
+                if new_config:
+                    return new_config
+                else:
+                    error = 'No migrated config found'
 
         return f'Failed to migrate config: {error}'
