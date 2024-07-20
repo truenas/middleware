@@ -28,9 +28,12 @@ def list_secrets(secrets_dir: str) -> dict[str, dict[str, dict]]:
 
             if entry.name.startswith(HELM_SECRET_PREFIX):
                 if secrets['helm_secret']['secret_name'] is None or entry.name > secrets['helm_secret']['secret_name']:
+                    secret_contents = get_secret_contents(entry.path, True).get('release', {})
                     secrets['helm_secret'] = {
                         'secret_name': entry.name,
-                        **get_secret_contents(entry.path, True).get('release', {}),
+                        **(secret_contents if all(
+                            k in secret_contents and k for k in ('chart_metadata', 'config', 'name')
+                        ) else {}),
                     }
             else:
                 secrets['release_secrets'][entry.name] = get_secret_contents(entry.path)
@@ -50,6 +53,9 @@ def get_secret_contents(secret_path: str, helm_secret: bool = False) -> dict:
         with contextlib.suppress(binascii.Error, gzip.BadGzipFile, KeyError):
             if helm_secret:
                 v = json.loads(gzip.decompress(b64decode(b64decode(v))).decode())
+                for pop_k in ('manifest', 'info', 'version', 'namespace'):
+                    v.pop(pop_k)
+                v['chart_metadata'] = v.pop('chart')['metadata']
             else:
                 v = b64decode(v).decode()
 
