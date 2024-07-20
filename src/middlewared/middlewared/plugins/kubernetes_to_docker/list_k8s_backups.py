@@ -3,7 +3,7 @@ import os
 from middlewared.schema import accepts, Dict, returns, Str
 from middlewared.service import Service
 
-from .list_utils import get_backup_dir, K8s_BACKUP_NAME_PREFIX, release_details
+from .list_utils import get_backup_dir, get_default_release_details, K8s_BACKUP_NAME_PREFIX, release_details
 from .utils import get_k8s_ds
 
 
@@ -68,8 +68,7 @@ class K8stoDockerMigrationService(Service):
             with os.scandir(backup_path) as entries:
                 for release in entries:
                     if release.name not in releases_datasets:
-                        backup_data['skipped_releases'].append({
-                            'name': release.name,
+                        backup_data['skipped_releases'].append(get_default_release_details(release.name) | {
                             'error': 'Release dataset not found in releases dataset',
                         })
                         continue
@@ -79,12 +78,8 @@ class K8stoDockerMigrationService(Service):
                     )
                     if config['error']:
                         backup_data['skipped_releases'].append(config)
-                        continue
-
-                    backup_data['releases'].append(config)
-
-            for release in filter(lambda r: r in releases_datasets, os.listdir(backup_path)):
-                backup_data['releases'].append(release)
+                    else:
+                        backup_data['releases'].append(config)
 
             backups[backup_name] = backup_data
 
