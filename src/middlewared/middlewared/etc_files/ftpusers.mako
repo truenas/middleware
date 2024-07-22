@@ -1,8 +1,9 @@
 <%
+    # Disallow built-in users
     ftp = render_ctx['ftp.config']
-    users = [user["username"] for user in render_ctx['user.query']]
-
-    # Exclude root
-    ftpusers = [user for user in users if user != 'root']
+    disallowed_users = [user["username"] for user in render_ctx['user.query']]
 %>
-${"\n".join(ftpusers) + "\n"}
+#
+# List of users NOT allowed to login via FTP
+#
+${"\n".join(disallowed_users) + "\n"}

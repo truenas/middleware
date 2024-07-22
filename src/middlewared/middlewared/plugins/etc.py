@@ -189,12 +189,10 @@ class EtcService(Service):
                 {'method': 'network.configuration.config'}
             ],
             'entries': [
-                # {'type': 'mako', 'path': 'proftpd/proftpd.conf', 'local_path': 'local/proftpd.conf'},
                 {'type': 'mako', 'path': 'proftpd/proftpd.conf'},
                 {'type': 'mako', 'path': 'proftpd/proftpd.motd'},
                 {'type': 'mako', 'path': 'proftpd/tls.conf'},
                 {'type': 'mako', 'path': 'ftpusers'},
-                # {'type': 'py', 'path': 'local/proftpd'},
             ],
         },
         'kdump': [
