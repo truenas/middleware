@@ -182,11 +182,19 @@ class EtcService(Service):
         'pam_middleware': [
             {'type': 'mako', 'path': 'pam.d/middleware'},
         ],
-        'ftp': [
-            {'type': 'mako', 'path': 'proftpd/proftpd.conf',
-             'local_path': 'local/proftpd.conf'},
-            {'type': 'py', 'path': 'local/proftpd'},
-        ],
+        'ftp': {
+            'ctx': [
+                {'method': 'ftp.config'},
+                {'method': 'user.query', 'args': [[["builtin", "=", True], ["username", "!=", "ftp"]]]},
+                {'method': 'network.configuration.config'}
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'proftpd/proftpd.conf'},
+                {'type': 'mako', 'path': 'proftpd/proftpd.motd'},
+                {'type': 'mako', 'path': 'proftpd/tls.conf'},
+                {'type': 'mako', 'path': 'ftpusers'},
+            ],
+        },
         'kdump': [
             {'type': 'mako', 'path': 'default/kdump-tools'},
         ],

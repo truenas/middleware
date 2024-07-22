@@ -34,9 +34,8 @@ INIT_DIRS_AND_FILES = {
               {'name': 'init_ro_file', 'contents': "RO data", 'perm': '-w'}],
 }
 
-#
+
 # ================= Utility Functions ==================
-#
 
 
 @pytest.fixture(scope='module')
@@ -96,8 +95,8 @@ def ftp_set_config(config={}):
         call('ftp.update', tmpconf)
 
 
-def parse_proftpd_conf():
-    results = SSH_TEST("cat /etc/proftpd/proftpd.conf", user, password)
+def parse_conf_file(file='proftpd'):
+    results = SSH_TEST(f"cat /etc/proftpd/{file}.conf", user, password)
     assert results['result'], str(results)
     lines = results['stdout'].splitlines()
 
@@ -124,8 +123,6 @@ def parse_proftpd_conf():
             # Trap TransferRate directive
             if "TransferRate" == line.split()[0]:
                 tmp = line.split()
-                # directive = [' '.join(tmp[:2])]
-                # value = [' '.join(tmp[2:])]
                 directive = ' '.join(tmp[:2])
                 value = ' '.join(tmp[2:])
             else:
@@ -147,25 +144,21 @@ def validate_proftp_conf():
     Confirm FTP configuration settings
     NB: Avoid calling this for localuser* and anonuser* in the same test
     '''
-    def conv(key):
-        return parsed[key][1] if key in parsed else "off"
-
     xlat = {True: "on", False: "off"}
     # Retrieve result from the database
     ftpConf = call('ftp.config')
-    parsed = parse_proftpd_conf()
+    parsed = parse_conf_file('proftpd')
 
     # Sanity spot check settings in proftpd.conf
     assert ftpConf['port'] == int(parsed['Port'][1])
-    assert ftpConf['clients'] == int(parsed['MaxClients'][1])
+    assert ftpConf['clients'] == int(parsed['MaxClients'][1]), f"\nftpConf={ftpConf}\nparsed={parsed}"
     assert ftpConf['ipconnections'] == int(parsed['MaxConnectionsPerHost'][1])
     assert ftpConf['loginattempt'] == int(parsed['MaxLoginAttempts'][1])
     assert ftpConf['timeout'] == int(parsed['TimeoutIdle'][1])
     assert ftpConf['timeout_notransfer'] == int(parsed['TimeoutNoTransfer'][1])
 
-    # Some settings are present in the conf file only if 'on'
-    assert xlat[ftpConf['rootlogin']] == conv('RootLogin'), \
-        f"RootLogin expected {xlat[ftpConf['rootlogin']]} or no setting, but found {conv('RootLogin')}"
+    # Confirm that rootlogin has been removed.
+    assert ftpConf.get('rootlogin') is None
 
     if ftpConf['onlyanonymous']:
         assert 'User' in parsed
@@ -189,11 +182,11 @@ def validate_proftp_conf():
     if not (ftpConf['onlyanonymous'] or ftpConf['onlylocal']):
         assert 'DenyAll' in parsed
         assert 'LOGIN' == parsed['DenyAll'][0][1]['Limit']
-        if ftpConf['rootlogin']:
-            assert parsed['AllowGroup'][1] == 'root'
+        # Confirm rootlogin has been removed.
+        assert 'root' not in parsed['AllowGroup']
 
     # The banner is saved to a file
-    rv_motd = SSH_TEST("cat /var/run/proftpd/proftpd.motd", user, password)
+    rv_motd = SSH_TEST("cat /etc/proftpd/proftpd.motd", user, password)
     assert rv_motd['result'], str(rv_motd)
     motd = rv_motd['stdout'].strip()
     if ftpConf['banner']:
@@ -232,6 +225,8 @@ def validate_proftp_conf():
         assert ftpConf['anonuserdlbw'] == int(parsed['TransferRate RETR'][1])
 
     if ftpConf['tls']:
+        parsed = parsed | parse_conf_file('tls')
+
         # These two are 'fixed' settings in proftpd.conf.mako, but they are important
         assert parsed['TLSEngine'][1] == 'on'
         assert parsed['TLSProtocol'][1] == 'TLSv1.2 TLSv1.3'
@@ -246,7 +241,6 @@ def validate_proftp_conf():
                 ('common_name_required', 'CommonNameRequired'),
                 ('enable_diags', 'EnableDiags'),
                 ('export_cert_data', 'ExportCertData'),
-                # ('no_cert_request', 'NoCertRequest'),   <========================= proFTPd says this is no longer used
                 ('no_empty_fragments', 'NoEmptyFragments'),
                 ('no_session_reuse_required', 'NoSessionReuseRequired'),
                 ('stdenvvars', 'StdEnvVars'),
@@ -866,32 +860,20 @@ def test_020_login_attempts(request, NumFailedTries, expect_to_pass):
                 assert login_attempt < MaxTries, "Failed to limit login attempts"
 
 
-@pytest.mark.parametrize('setting', [True, False])
-def test_030_root_login(request, setting):
+def test_030_root_login(request):
     '''
-    Test the WebUI "Allow Root Login" setting.
-    In our DB the setting is "rootlogin" and "RootLogin" in proftpd.conf.
+    "Allow Root Login" setting has been removed.
+    Confirm we block root login.
     '''
     depends(request, ["init_dflt_config"], scope="session")
-    # Enable root login for the anonymous config
-    ftp_setup = {
-        "rootlogin": setting,
-    }
-    with ftp_anon_ds_and_srvr_conn('anonftpDS', ftp_setup) as ftpdata:
+    with ftp_anon_ds_and_srvr_conn('anonftpDS') as ftpdata:
         ftpObj = ftpdata.ftp
         try:
             res = ftpObj.login(user, password)
-            assert setting is True, f"Unexpected behavior: rootlogin={setting}, but login response is {res}"
+            assert True, f"Unexpected behavior: root login was supposed to fail, but login response is {res}"
 
-            # The following assume the login was successfull
-            assert res.startswith('230')
-            # local users should get the welcome message
-            assert ftpdata.motd.splitlines()[0] in res
-            ftpusers = ftp_get_users()
-            assert user == ftpusers[0]['user']
-        except all_errors as e:
-            # The 'False' setting is expected to fail
-            assert setting is False, f"Unexpected failure, rootlogin={setting}, but got {e}"
+        except all_errors:
+            pass
 
 
 @pytest.mark.parametrize('setting,ftpConfig', [
@@ -919,7 +901,7 @@ def test_031_anon_login(request, setting, ftpConfig):
             ftpusers = ftp_get_users()
             assert 'ftp' == ftpusers[0]['user']
         except all_errors as e:
-            assert setting is False, f"Unexpected failure, rootlogin={setting}, but got {e}"
+            assert setting is False, f"Unexpected failure, onlyanonymous={setting}, but got {e}"
 
 
 @pytest.mark.parametrize('localuser,expect_to_pass', [
