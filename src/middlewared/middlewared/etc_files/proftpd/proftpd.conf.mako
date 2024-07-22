@@ -7,8 +7,8 @@
     # Confirm necessary directories, files and permissions
     os.makedirs("/var/log/proftpd", exist_ok=True)
     os.makedirs("/var/run/proftpd", exist_ok=True)
-    open("/var/log/wtmp", "a+").close()
-    os.chmod("/var/log/wtmp", 0o644)
+    with open("/var/log/wtmp", "a+")as fd:
+        os.fchmod(fd.fileno(), 0o644)
 
     if ftp['anonpath']:
         anonpath = os.path.isdir(ftp['anonpath'])
@@ -81,9 +81,6 @@ AuthOrder mod_auth_unix.c
 % if not (ftp['onlyanonymous'] or ftp['onlylocal']):
 <Limit LOGIN>
     AllowGroup ftp
-    % if ftp['rootlogin']:
-        AllowGroup root
-    % endif
     DenyAll
 </Limit>
 % endif
@@ -92,9 +89,6 @@ AuthOrder mod_auth_unix.c
     RequireValidShell off
     % if ftp['defaultroot']:
         DefaultRoot ~ !root
-    % endif
-    % if ftp['rootlogin']:
-        RootLogin on
     % endif
     AllowOverwrite on
     % if ftp['resume']:

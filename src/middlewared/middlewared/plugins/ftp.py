@@ -15,7 +15,6 @@ class FTPModel(sa.Model):
     ftp_loginattempt = sa.Column(sa.Integer(), default=1)
     ftp_timeout = sa.Column(sa.Integer(), default=600)
     ftp_timeout_notransfer = sa.Column(sa.Integer(), default=300)
-    ftp_rootlogin = sa.Column(sa.Boolean(), default=False)
     ftp_onlyanonymous = sa.Column(sa.Boolean(), default=False)
     ftp_anonpath = sa.Column(sa.String(255), nullable=True, default=False)
     ftp_onlylocal = sa.Column(sa.Boolean(), default=False)
@@ -69,7 +68,6 @@ class FTPService(SystemServiceService):
         Int('loginattempt', validators=[Range(min_=0, max_=1000)], required=True),
         Int('timeout', validators=[Range(min_=0, max_=10000)], required=True),
         Int('timeout_notransfer', validators=[Range(min_=0, max_=10000)]),
-        Bool('rootlogin', required=True),
         Bool('onlyanonymous', required=True),
         Dir('anonpath', null=True, required=True),
         Bool('onlylocal', required=True),
@@ -136,9 +134,6 @@ class FTPService(SystemServiceService):
         `timeout_notransfer` is the maximum number of seconds a client is allowed to spend connected, after
         authentication, without issuing a command which results in creating an active or passive data connection
         (i.e. sending/receiving a file, or receiving a directory listing).
-
-        `rootlogin` is a boolean value which when configured to true enables login as root. This is generally
-        discouraged because of the security risks.
 
         `onlyanonymous` allows anonymous FTP logins with access to the directory specified by `anonpath`.
 

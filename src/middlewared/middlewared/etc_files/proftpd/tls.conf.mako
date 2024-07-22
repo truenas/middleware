@@ -1,6 +1,5 @@
 <%
     ftp = render_ctx['ftp.config']
-    ## certificate_valid = False
     cert = None
     tls_options = []
     if ftp['tls']:
