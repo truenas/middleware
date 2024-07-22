@@ -77,18 +77,26 @@ def test_simplified_apps_api_nfs4_acl(request):
         results = ssh(f'touch {ds_path}/canary', complete_response=True)
         assert results['result'] is True, results
 
+        acl_changed = call('filesystem.add_to_acl', {'path': ds_path, 'entries': nfs4_acl}, job=True)
+
+        assert acl_changed is False
+
         with pytest.raises(ClientException) as ve:
-            call('filesystem.add_to_acl', {'path': ds_path, 'entries': nfs4_acl}, job=True)
+            call('filesystem.add_to_acl', {'path': ds_path, 'entries': nfs4_acl + [
+                {'id_type': 'GROUP', 'id': AclIds.group_to_add, 'access': 'MODIFY'},
+            ]}, job=True)
 
         assert ve.value.errno == errno.EPERM
 
         # check behavior of using force option.
         # second call with `force` specified should succeed
-        call(
-            'filesystem.add_to_acl',
-            {'path': ds_path, 'entries': nfs4_acl, 'options': {'force': True}},
-            job=True
-        )
+        acl_changed = call('filesystem.add_to_acl', {
+            'path': ds_path,
+            'entries': nfs4_acl + [{'id_type': 'GROUP', 'id': AclIds.group_to_add, 'access': 'MODIFY'}],
+            'options': {'force': True}i
+        }, job=True)
+
+        assert acl_changed is True
 
         # we already added the entry earlier.
         # this check makes sure we're not adding duplicate entries.
