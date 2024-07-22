@@ -6,7 +6,6 @@ import time
 
 from dotenv import dotenv_values
 
-from middlewared.plugins.system_vendor.vendor import SENTINEL_FILE_PATH
 from truenas_api_client import Client
 
 
@@ -14,8 +13,6 @@ def get_hostid() -> str | None:
     try:
         with open("/etc/hostid", "rb") as f:
             return hashlib.file_digest(f, "sha256").hexdigest()
-    except FileNotFoundError:
-        pass
     except Exception:
         pass
 
