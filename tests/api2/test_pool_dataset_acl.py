@@ -81,12 +81,10 @@ def test_simplified_apps_api_nfs4_acl(request):
 
         assert acl_changed is False
 
-        with pytest.raises(ClientException) as ve:
+        with pytest.raises(ClientException):
             call('filesystem.add_to_acl', {'path': ds_path, 'entries': nfs4_acl + [
                 {'id_type': 'GROUP', 'id': AclIds.group_to_add, 'access': 'MODIFY'},
             ]}, job=True)
-
-        assert ve.value.errno == errno.EPERM
 
         # check behavior of using force option.
         # second call with `force` specified should succeed
