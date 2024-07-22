@@ -68,7 +68,6 @@ def get_client(max_tries=30):
             with Client() as c:
                 if c.call("system.ready"):
                     yield c
-                    break
         except Exception:
             time.sleep(1)
     else:
@@ -76,6 +75,7 @@ def get_client(max_tries=30):
 
 
 def main():
+    vendor_name = None
     with get_client() as client:
         vendor_name = client.call("system.vendor.name")
 
