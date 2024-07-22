@@ -264,12 +264,15 @@ def test__recyclebin_functional_test_subdir(smb_info, smb_config):
 
 def test__netbios_name_change_check_sid():
     """ changing netbiosname should not alter our local sid value """
-    old_sid = call('smb.config')['cifs_SID']
+    orig = call('smb.config')
     new_sid = call('smb.update', {'netbiosname': 'nb_new'})['cifs_SID']
 
-    assert new_sid == old_sid
-    localsid = call('smb.groupmap_list')['localsid']
-    assert new_sid == localsid
+    try:
+        assert new_sid == orig['cifs_SID']
+        localsid = call('smb.groupmap_list')['localsid']
+        assert new_sid == localsid
+    finally:
+        call('smb.update', {'netbiosname': orig['netbiosname']})
 
 
 AUDIT_FIELDS = [
