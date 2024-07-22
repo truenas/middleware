@@ -230,14 +230,14 @@ class IPAJoinMixin:
             (IpaOperation.SET_SMB_PRINCIPAL, ipa_constants.IpaConfigName.IPA_SMB_KEYTAB),
             (IpaOperation.SET_NFS_PRINCIPAL, ipa_constants.IpaConfigName.IPA_NFS_KEYTAB)
         ):
-            try:
-                setspn = subprocess.run([IPACTL, '-a', op.name], check=False, capture_output=True)
-            except FileNotFoundError:
-                continue
+            setspn = subprocess.run([IPACTL, '-a', op.name], check=False, capture_output=True)
 
             try:
                 resp = _parse_ipa_response(setspn)
                 output.append(resp | {'keytab_type': spn_type})
+            except FileNotFoundError:
+                self.logger.debug('IPA domain does not provide support for SMB protocol')
+                continue
             except Exception:
                 self.logger.error('%s: failed to create keytab', op.name, exc_info=True)
 
