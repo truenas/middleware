@@ -76,9 +76,11 @@ def test_simplified_apps_api_nfs4_acl(request):
         # presence of file in path should trigger failure if force is not set
         results = ssh(f'touch {ds_path}/canary', complete_response=True)
         assert results['result'] is True, results
+
         with pytest.raises(ClientException) as ve:
             call('filesystem.add_to_acl', {'path': ds_path, 'entries': nfs4_acl}, job=True)
-            assert ve.value.errno == errno.EPERM
+
+        assert ve.value.errno == errno.EPERM
 
         # check behavior of using force option.
         # second call with `force` specified should succeed
