@@ -72,9 +72,9 @@ class IPAJoinMixin:
             _parse_ipa_response(join)
         except Exception:
             self.logger.warning(
-                'Failed to disable TrueNAS machine account in IPA domain '
-                'further action by the IPA administrator to fully remove '
-                'the server from the domain.', exc_info=True
+                'Failed to disable TrueNAS machine account in the IPA domain. '
+                'Further action by the IPA administrator to fully remove '
+                'the server from the domain will be required.', exc_info=True
             )
 
         # At this point we can start removing local configuration
