@@ -1,9 +1,12 @@
+import contextlib
 import hashlib
 import subprocess
 import sys
+import time
 
 from dotenv import dotenv_values
 
+from middlewared.plugins.system_vendor.vendor import SENTINEL_FILE_PATH
 from truenas_api_client import Client
 
 
@@ -61,8 +64,22 @@ def start_hexos_websocat():
     ])
 
 
+@contextlib.contextmanager
+def get_client(max_tries=30):
+    for _ in range(max_tries):
+        try:
+            with Client() as c:
+                if c.call("system.ready"):
+                    yield c
+                    break
+        except Exception:
+            time.sleep(1)
+    else:
+        raise Exception(f"Failed to open client after {max_tries} attempts.")
+
+
 def main():
-    with Client() as client:
+    with get_client() as client:
         vendor_name = client.call("system.vendor.name")
 
     if vendor_name == "HexOS":
