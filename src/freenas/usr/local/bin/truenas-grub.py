@@ -2,6 +2,7 @@
 import math
 import psutil
 import os
+import json
 
 from middlewared.utils.serial import serial_port_choices
 from middlewared.utils.db import query_config_table
@@ -15,6 +16,13 @@ if __name__ == "__main__":
     advanced = query_config_table("system_advanced", prefix="adv_")
     kernel_extra_options = advanced.get("kernel_extra_options") or ""
 
+    # check for /data/.vendor
+    try:
+        with open("/data/.vendor", "r") as f:
+            vendor = json.loads(f.read()).get("name", "TrueNAS Scale")
+    except FileNotFoundError:
+        vendor = "TrueNAS Scale"
+
     # We need to allow tpm in grub as sedutil-cli requires it
     # `zfsforce=1` is needed because FreeBSD bootloader imports boot pool with hostid=0 while SCALE releases up to
     # 22.02-RC.2 use real hostid. We need to be able to boot both of these configurations.
@@ -24,7 +32,7 @@ if __name__ == "__main__":
     # so we can sacrifice it to achieve consistent behavior between multipath-capable and non-multipath-capable
     # devices and avoid mapping actual hardware devices and virtual block devices.
     config = [
-        'GRUB_DISTRIBUTOR="TrueNAS Scale"',
+        f'GRUB_DISTRIBUTOR="{vendor}"',
         'GRUB_TIMEOUT=10',
         'GRUB_DISABLE_RECOVERY="true"',
         'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 amd_iommu=on iommu=pt '
