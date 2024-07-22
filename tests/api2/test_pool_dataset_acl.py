@@ -93,7 +93,7 @@ def test_simplified_apps_api_nfs4_acl(request):
         acl_changed = call('filesystem.add_to_acl', {
             'path': ds_path,
             'entries': nfs4_acl + [{'id_type': 'GROUP', 'id': AclIds.group_to_add, 'access': 'MODIFY'}],
-            'options': {'force': True}i
+            'options': {'force': True}
         }, job=True)
 
         assert acl_changed is True
