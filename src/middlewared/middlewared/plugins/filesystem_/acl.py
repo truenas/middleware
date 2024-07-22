@@ -62,7 +62,8 @@ class FilesystemService(Service):
                         'Permissions changes in ZFS control directory (.zfs) are not permitted')
             return loc
 
-        if any(st['realpath'].startswith(prefix) for prefix in ('/home/admin/.ssh', '/root/.ssh')):
+        if any(st['realpath'].startswith(prefix)
+               for prefix in ('/home/admin/.ssh', '/home/truenas_admin/.ssh', '/root/.ssh')):
             return loc
 
         if not st['realpath'].startswith('/mnt/'):

@@ -9,7 +9,7 @@ class AdminUserIsOverriddenAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
     title = "Admin User Is Overridden"
-    text = "NSS query results are different for the locally set up `admin` user."
+    text = "NSS query results are different for the locally set up `%(username)s` user."
 
 
 class AdminUserAlertSource(AlertSource):
@@ -27,8 +27,6 @@ class AdminUserAlertSource(AlertSource):
                 "account.bsdusers",
                 [
                     ["uid", "=", ADMIN_UID],
-                    ["username", "=", "admin"],
-                    ["home", "=", "/home/admin"],
                 ],
                 {"get": True, "prefix": "bsdusr_"}
             )
@@ -43,4 +41,4 @@ class AdminUserAlertSource(AlertSource):
                 (user_obj["pw_gecos"] != admin["full_name"]) or
                 (user_obj["pw_dir"] != admin["home"])
         ):
-            return Alert(AdminUserIsOverriddenAlertClass)
+            return Alert(AdminUserIsOverriddenAlertClass, {"username": admin["username"]})
