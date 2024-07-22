@@ -240,7 +240,7 @@ def generate_smb_conf_dict(
         smbconf.update({
             'server role': 'member server',
             'kerberos method': 'dedicated keytab',
-            'dedicated keytab file': 'FILE:/etc/smb.keytab',
+            'dedicated keytab file': 'FILE:/etc/ipa/smb.keytab',
             'workgroup': ipa_domain['netbios_name'],
             'realm': ipa_config['realm'],
             f'idmap config {domain_short} : backend': 'sss',

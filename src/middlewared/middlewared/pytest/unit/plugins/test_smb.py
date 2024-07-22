@@ -439,7 +439,7 @@ def test__ipa_base():
     assert conf['workgroup'] == 'TN'
     assert conf['server role'] == 'member server'
     assert conf['kerberos method'] == 'dedicated keytab'
-    assert conf['dedicated keytab file'] == 'FILE:/etc/smb.keytab'
+    assert conf['dedicated keytab file'] == 'FILE:/etc/ipa/smb.keytab'
     assert conf['realm'] == 'TESTDOM.TEST'
     assert conf['idmap config TN : backend'] == 'sss'
     assert conf['idmap config TN : range'] == '925000000 - 925199999'
