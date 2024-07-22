@@ -13,24 +13,34 @@ from .pci import SENSITIVE_PCI_DEVICE_TYPES
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
 
 
-def get_nvidia_gpus(parse_info=False):
-    """Don't be so complicated. Return basic information about
-    NVIDIA devices (if any) that are connected.
+def parse_nvidia_info_file(fileobj):
+    gpu, bus_loc = dict(), None
+    for line in fileobj:
+        k, v = line.split(':', 1)
+        k, v = k.strip().lower().replace(' ', '_'), v.strip()
+        gpu[k] = v
+        if k == 'bus_location':
+            bus_loc = v
+    return gpu, bus_loc
 
-    If `parse_info` is true, open the "information" file that
-    exists in procfs which gives basic information about the
-    GPU."""
+
+def get_nvidia_gpus():
+    """Don't be so complicated. Return basic information about
+    NVIDIA devices (if any) that are connected."""
     gpus = dict()
     try:
         with os.scandir('/proc/driver/nvidia/gpus') as gdir:
             for i in filter(lambda x: x.is_dir(), gdir):
-                gpus[i.name] = dict()
-                if parse_info:
-                    with open(os.path.join(i.path, 'information'), 'r') as f:
-                        for line in f:
-                            k, v = line.split(':', 1)
-                            k = k.strip().lower().replace(' ', '_')
-                            gpus[i.name].update({k: v.strip()})
+                with open(os.path.join(i.path, 'information'), 'r') as f:
+                    gpu, bus_location = parse_nvidia_info_file(f)
+                    if bus_location is not None:
+                        gpus[bus_location] = gpu
+                    elif gpu:
+                        # maybe a line in the file changed but
+                        # we still got some information, just use
+                        # the procfs dirname as the key (which is
+                        # unique per gpu)
+                        gpus[i.name] = gpu
     except (FileNotFoundError, ValueError):
         pass
 
