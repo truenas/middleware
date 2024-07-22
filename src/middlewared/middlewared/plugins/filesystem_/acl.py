@@ -1073,12 +1073,6 @@ class FilesystemService(Service):
         self._common_perm_path_validate('filesystem.add_to_acl', data, verrors)
         verrors.check()
 
-        if not directory_is_empty(data['path']) and not data['options']['force']:
-            raise CallError(
-                f'{data["path"]}: path contains existing data '
-                'and `force` was not specified', errno.EPERM
-            )
-
         data['path'] = init_path
         current_acl = self.getacl(data['path'])
         acltype = ACLType[current_acl['acltype']]
@@ -1092,7 +1086,13 @@ class FilesystemService(Service):
 
         if not changed:
             job.set_progress(100, 'ACL already contains all requested entries.')
-            return
+            return changed
+
+        if not directory_is_empty(data['path']) and not data['options']['force']:
+            raise CallError(
+                f'{data["path"]}: path contains existing data '
+                'and `force` was not specified', errno.EPERM
+            )
 
         setacl_job = self.middleware.call_sync('filesystem.setacl', {
             'path': data['path'],
@@ -1101,7 +1101,8 @@ class FilesystemService(Service):
             'options': {'recursive': True}
         })
 
-        return job.wrap_sync(setacl_job)
+        job.wrap_sync(setacl_job)
+        return changed
 
     @private
     @accepts(Dict(
