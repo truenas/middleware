@@ -47,6 +47,10 @@ class RealtimeEventSource(EventSource):
             'zfs',
             Int('arc_max_size'),
             Int('arc_size'),
+            Int('arc_demand_data_hits'),
+            Int('arc_prefetch_data_hits'),
+            Int('arc_demand_metadata_hits'),
+            Int('arc_prefetch_metadata_hits'),
             Float('cache_hit_ratio'),
         ),
     )
