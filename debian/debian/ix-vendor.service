@@ -1,0 +1,13 @@
+[Unit]
+After=middlewared.service
+
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+TimeoutStartSec=30
+ExecStart=/usr/bin/vendor_service
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target
