@@ -310,6 +310,7 @@ HANDLER ${handler} {
 
 TARGET_DRIVER iscsi {
     enabled 1
+    link_local 0
 ## Currently SCST only supports one iSNS server
 % if global_config['isns_servers']:
     iSNSServer ${global_config['isns_servers'][0]}
