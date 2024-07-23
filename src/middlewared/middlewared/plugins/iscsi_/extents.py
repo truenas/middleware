@@ -475,8 +475,9 @@ class iSCSITargetExtentService(SharingService):
     async def remove_extent_file(self, data):
         if data['type'] == 'FILE':
             try:
-                if os.path.exists(data['path']):
-                    os.unlink(data['path'])
+                os.unlink(data['path'])
+            except FileNotFoundError:
+                pass
             except Exception as e:
                 return e
 
