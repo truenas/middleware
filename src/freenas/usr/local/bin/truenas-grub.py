@@ -16,12 +16,12 @@ if __name__ == "__main__":
     advanced = query_config_table("system_advanced", prefix="adv_")
     kernel_extra_options = advanced.get("kernel_extra_options") or ""
 
-    # check for /data/.vendor
+    vendor = "TrueNAS Scale"
     try:
         with open("/data/.vendor", "r") as f:
             vendor = json.loads(f.read()).get("name", "TrueNAS Scale")
-    except FileNotFoundError:
-        vendor = "TrueNAS Scale"
+    except Exception:
+        pass
 
     # We need to allow tpm in grub as sedutil-cli requires it
     # `zfsforce=1` is needed because FreeBSD bootloader imports boot pool with hostid=0 while SCALE releases up to
