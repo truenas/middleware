@@ -123,6 +123,9 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
         service_name = container['Config']['Labels'][COMPOSE_SERVICE_KEY]
         container_ports_config = []
         for container_port, host_config in container.get('NetworkSettings', {}).get('Ports', {}).items():
+            if not host_config:
+                # This will happen for ports which are not exposed on the host side
+                continue
             port_config = {
                 'container_port': container_port.split('/')[0],
                 'protocol': container_port.split('/')[1],
