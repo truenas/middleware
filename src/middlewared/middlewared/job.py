@@ -565,19 +565,24 @@ class Job:
             evalue = self.exc_info[1]
             if isinstance(evalue, ValidationError):
                 extra = [(evalue.attribute, evalue.errmsg, evalue.errno)]
+                errno = evalue.errno
                 etype = 'VALIDATION'
             elif isinstance(evalue, ValidationErrors):
                 extra = list(evalue)
+                errno = None
                 etype = 'VALIDATION'
             elif isinstance(evalue, CallError):
                 etype = etype.__name__
+                errno = evalue.errno
                 extra = evalue.extra
             else:
                 etype = etype.__name__
+                errno = None
                 extra = None
             exc_info = {
                 'repr': repr(evalue),
                 'type': etype,
+                'errno': errno,
                 'extra': extra,
             }
         return {
