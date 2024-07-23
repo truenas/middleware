@@ -61,45 +61,6 @@ class ActiveDirectoryService(Service):
         return spnlist
 
     @private
-    async def change_trust_account_pw(self):
-        """
-        Force an update of the AD machine account password. This can be used to
-        refresh the Kerberos principals in the server's system keytab.
-        """
-        await self.middleware.call("kerberos.check_ticket")
-        workgroup = (await self.middleware.call('smb.config'))['workgroup']
-        cmd = [
-            SMBCmd.NET.value,
-            '--use-kerberos', 'required',
-            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            '-w', workgroup,
-            'ads', 'changetrustpw',
-        ]
-        netads = await run(cmd, check=False)
-        if netads.returncode != 0:
-            raise CallError(
-                f"Failed to update trust password: [{netads.stderr.decode().strip()}] "
-                f"stdout: [{netads.stdout.decode().strip()}] "
-            )
-
-    @private
-    @job(lock="spn_manipulation")
-    async def add_nfs_spn(self, job, netbiosname, domain, check_health=True, update_keytab=False):
-        if check_health:
-            ad_state = await self.middleware.call('activedirectory.get_state')
-            if ad_state != DSStatus.HEALTHY.name:
-                raise CallError("Service Principal Names that are registered in Active Directory "
-                                "may only be manipulated when the Active Directory Service is Healthy. "
-                                f"Current state is: {ad_state}")
-
-        ok = await self.net_keytab_add_update_ads('nfs')
-        if not ok:
-            return False
-
-        await self.middleware.call('kerberos.keytab.store_ad_keytab')
-        return True
-
-    @private
     async def get_kerberos_servers(self, ad=None):
         """
         This returns at most 3 kerberos servers located in our AD site. This is to optimize
