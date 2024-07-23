@@ -8,9 +8,8 @@ import warnings
 import psutil
 
 from middlewared.auth import (SessionManagerCredentials, UserSessionManagerCredentials,
-                              UnixSocketSessionManagerCredentials, RootTcpSocketSessionManagerCredentials,
-                              LoginPasswordSessionManagerCredentials, ApiKeySessionManagerCredentials,
-                              TrueNasNodeSessionManagerCredentials)
+                              UnixSocketSessionManagerCredentials, LoginPasswordSessionManagerCredentials,
+                              ApiKeySessionManagerCredentials, TrueNasNodeSessionManagerCredentials)
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Password, Patch, Ref, returns, Str
 from middlewared.service import (
     Service, filterable, filterable_returns, filter_list, no_auth_required, no_authz_required,
@@ -18,7 +17,6 @@ from middlewared.service import (
 )
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
-from middlewared.utils.nginx import get_peer_process
 from middlewared.utils.origin import UnixSocketOrigin, TCPIPOrigin
 from middlewared.utils.crypto import generate_token
 
@@ -210,10 +208,7 @@ def is_internal_session(session):
     if isinstance(session.app.origin, UnixSocketOrigin) and session.app.origin.uid == 0:
         return True
 
-    if isinstance(session.app.authenticated_credentials, (
-        RootTcpSocketSessionManagerCredentials,
-        TrueNasNodeSessionManagerCredentials,
-    )):
+    if isinstance(session.app.authenticated_credentials, TrueNasNodeSessionManagerCredentials):
         return True
 
     return False
@@ -672,22 +667,6 @@ async def check_permission(middleware, app):
 
         await AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user))
         return
-
-    if isinstance(origin, TCPIPOrigin):
-        if not (origin.addr.startswith('127.') or origin.addr == '::1'):
-            return
-
-        # This is an expensive operation, but it is only performed for localhost TCP connections which are rare
-        if process := await middleware.run_in_thread(get_peer_process, origin.addr, origin.port):
-            try:
-                euid = (await middleware.run_in_thread(process.uids)).effective
-            except psutil.NoSuchProcess:
-                pass
-            else:
-                if euid == 0:
-                    user = await middleware.call('auth.authenticate_root')
-                    await AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials(user))
-                    return
 
 
 def setup(middleware):
