@@ -15,3 +15,11 @@ class UnvendorArgs(BaseModel):
 
 class UnvendorResult(BaseModel):
     result: None
+
+
+class IsVendoredArgs(BaseModel):
+    pass
+
+
+class IsVendoredResult(BaseModel):
+    result: None
