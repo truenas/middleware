@@ -284,7 +284,7 @@ class NetworkConfigurationService(ConfigService):
             if ds['type'] in (DSType.AD.value, DSType.IPA.value):
                 verrors.add(
                     'global_configuration_update.hostname_virtual',
-                    'This parameter may not be changed after joining a directory service '
+                    'This parameter may not be changed after joining a directory service. '
                     'If it must be changed, the proper procedure is to cleanly leave the domain '
                     'and then alter the parameter before re-joining the domain.'
                 )
