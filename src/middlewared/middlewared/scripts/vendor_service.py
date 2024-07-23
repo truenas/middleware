@@ -4,9 +4,20 @@ import subprocess
 import sys
 import time
 
-from dotenv import dotenv_values
-
 from truenas_api_client import Client
+
+
+def load_envvars(envvars_file: str):
+    try:
+        envvars = []
+        with open(envvars_file, "r") as f:
+            for line in f:
+                l = line.strip()
+                if l and not l.startswith("#"):
+                    envvars.append(l.split("=", 1))
+        return dict(envvars)
+    except (OSError, ValueError):
+        return dict()
 
 
 def get_hostid() -> str | None:
@@ -20,7 +31,7 @@ def get_hostid() -> str | None:
 def start_hexos_websocat():
     url = "wss://api.hexos.com"
     envvars_file = "/etc/default/websocat"
-    envvars = dotenv_values(envvars_file)
+    envvars = load_envvars(envvars_file)
 
     systemd_opts = (
         "--unit=websocat",
