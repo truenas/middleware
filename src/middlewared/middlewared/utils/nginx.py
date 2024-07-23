@@ -3,15 +3,6 @@ import psutil
 from psutil._common import addr
 
 
-def get_peer_process(remote_addr, remote_port):
-    for connection in psutil.net_connections(kind='tcp'):
-        if connection.laddr == addr(remote_addr, remote_port):
-            try:
-                return psutil.Process(connection.pid)
-            except psutil.ProcessNotFound:
-                return None
-
-
 def get_remote_addr_port(request):
     try:
         remote_addr, remote_port = request.transport.get_extra_info("peername")
