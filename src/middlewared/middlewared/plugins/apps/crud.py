@@ -163,6 +163,7 @@ class AppService(CRUDService):
 
         return self.create_internal(job, app_name, version, data['values'], complete_app_details)
 
+    @private
     def create_internal(self, job, app_name, version, user_values, complete_app_details, dry_run=False):
         app_version_details = complete_app_details['versions'][version]
         self.middleware.call_sync('catalog.version_supported_error_check', app_version_details)
