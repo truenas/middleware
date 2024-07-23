@@ -205,7 +205,9 @@ class iSCSITargetExtentService(SharingService):
         # This change is being made in conjunction with threads_num being specified in scst.conf
         if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
             zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
-            await self.middleware.call('zfs.dataset.update', zvolname, {'properties': {'volthreading': {'value': 'on'}}})
+            # Only try to set volthreading if the volume still exists.
+            if await self.middleware.call('pool.dataset.query', [['name', '=', zvolname], ['type', '=', 'VOLUME']]):
+                await self.middleware.call('zfs.dataset.update', zvolname, {'properties': {'volthreading': {'value': 'on'}}})
 
         try:
             return await self.middleware.call(
@@ -473,7 +475,8 @@ class iSCSITargetExtentService(SharingService):
     async def remove_extent_file(self, data):
         if data['type'] == 'FILE':
             try:
-                os.unlink(data['path'])
+                if os.path.exists(data['path']):
+                    os.unlink(data['path'])
             except Exception as e:
                 return e
 
