@@ -6,6 +6,7 @@ import signal
 import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, private
 from middlewared.schema import accepts, Patch, List, Dict, Int, Str, Bool, IPAddr, Ref, URI, ValidationErrors
+from middlewared.utils.directoryservices.constants import DSType
 from middlewared.validators import Match, Hostname
 
 HOSTS_FILE_EARMARKER = '# STATIC ENTRIES'
@@ -278,13 +279,15 @@ class NetworkConfigurationService(ConfigService):
             rhost_changed = config['hostname'] != new_config['hostname']
 
         vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
-        if vhost_changed and await self.middleware.call('activedirectory.get_state') != "DISABLED":
-            verrors.add(
-                'global_configuration_update.hostname_virtual',
-                'This parameter may not be changed after joining Active Directory (AD). '
-                'If it must be changed, the proper procedure is to leave the AD domain '
-                'and then alter the parameter before re-joining the domain.'
-            )
+        if vhost_changed:
+            ds = await self.middleware.call('directoryservices.status')
+            if ds['type'] in (DSType.AD.value, DSType.IPA.value):
+                verrors.add(
+                    'global_configuration_update.hostname_virtual',
+                    'This parameter may not be changed after joining a directory service. '
+                    'If it must be changed, the proper procedure is to cleanly leave the domain '
+                    'and then alter the parameter before re-joining the domain.'
+                )
 
         verrors.check()
 
