@@ -1,4 +1,3 @@
-import contextlib
 import hashlib
 import subprocess
 import sys
@@ -72,25 +71,34 @@ def start_hexos_websocat():
     ])
 
 
-@contextlib.contextmanager
-def get_client(max_tries=30):
-    for _ in range(max_tries):
+def get_vendor_name(max_tries=30):
+    """Wait for client to open and for system to be ready before returning system.vendor.name().
+
+    Wait one second after each failed attempt. Raise an exception after failing the maximum allowed number of attempts.
+
+    """
+    tries = max_tries
+    while tries > 0:
         try:
             with Client() as c:
-                if c.call("system.ready"):
-                    yield c
+                for _ in range(tries):
+                    if c.call("system.ready"):
+                        return c.call("system.vendor.name")
+                    else:
+                        time.sleep(1)
+                else:
+                    raise Exception(f"Failed to get vendor name after {max_tries} attempts: system not ready.")
         except Exception:
             time.sleep(1)
+        tries -= 1
     else:
         raise Exception(f"Failed to open client after {max_tries} attempts.")
 
 
 def main():
-    vendor_name = None
-    with get_client() as client:
-        vendor_name = client.call("system.vendor.name")
+    vendor_name = get_vendor_name()
 
-    if vendor_name == "HexOS":
+    if vendor_name.upper() == "HEXOS":
         start_hexos_websocat()
 
 
