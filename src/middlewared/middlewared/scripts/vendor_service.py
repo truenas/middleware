@@ -72,32 +72,9 @@ def start_hexos_websocat():
     ])
 
 
-def get_vendor_name(max_tries=30):
-    """Wait for client to open and for system to be ready before returning system.vendor.name().
-
-    Wait one second after each failed attempt. Raise an exception after failing the maximum allowed number of attempts.
-
-    """
-    tries = max_tries
-    while tries > 0:
-        try:
-            with Client() as c:
-                for _ in range(tries):
-                    if c.call("system.ready"):
-                        return c.call("system.vendor.name")
-                    else:
-                        time.sleep(1)
-                else:
-                    raise Exception(f"Failed to get vendor name after {max_tries} attempts: system not ready.")
-        except Exception:
-            time.sleep(1)
-        tries -= 1
-    else:
-        raise Exception(f"Failed to open client after {max_tries} attempts.")
-
-
 def main():
-    vendor_name = get_vendor_name()
+    with Client() as c:
+        vendor_name = c.call("system.vendor.name")
 
     if vendor_name == Vendors.HEXOS:
         start_hexos_websocat()
