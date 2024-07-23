@@ -228,6 +228,7 @@ class CatalogService(Service):
             'unused_ports': await self.middleware.call('port.get_unused_ports'),
             'certificates': await self.middleware.call('app.certificate_choices'),
             'certificate_authorities': await self.middleware.call('app.certificate_authority_choices'),
+            'ip_choices': await self.middleware.call('app.ip_choices'),
         }
 
     @private
