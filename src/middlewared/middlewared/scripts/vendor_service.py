@@ -3,6 +3,7 @@ import subprocess
 import sys
 import time
 
+from middlewared.utils.vendor import Vendors
 from truenas_api_client import Client
 
 
@@ -98,7 +99,7 @@ def get_vendor_name(max_tries=30):
 def main():
     vendor_name = get_vendor_name()
 
-    if vendor_name.upper() == "HEXOS":
+    if vendor_name == Vendors.HEXOS:
         start_hexos_websocat()
 
 
