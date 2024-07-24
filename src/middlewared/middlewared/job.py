@@ -419,7 +419,7 @@ class Job:
                 raise CallError(self.error)
         return self.result
 
-    def wait_sync(self, raise_error=False, timeout=None):
+    def wait_sync(self, timeout=None, raise_error=False, raise_error_forward_classes=(CallError,)):
         """
         Synchronous method to wait for a job in another thread.
         """
@@ -435,7 +435,7 @@ class Job:
             raise TimeoutError()
         if raise_error:
             if self.error:
-                if isinstance(self.exc_info[1], CallError):
+                if isinstance(self.exc_info[1], raise_error_forward_classes):
                     raise self.exc_info[1]
 
                 raise CallError(self.error)
