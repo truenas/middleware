@@ -1,12 +1,23 @@
-import contextlib
 import hashlib
 import subprocess
 import sys
 import time
 
-from dotenv import dotenv_values
-
+from middlewared.utils.vendor import Vendors
 from truenas_api_client import Client
+
+
+def load_envvars(envvars_file: str):
+    try:
+        envvars = []
+        with open(envvars_file, "r") as f:
+            for line in f:
+                l = line.strip()
+                if l and not l.startswith("#"):
+                    envvars.append(l.split("=", 1))
+        return dict(envvars)
+    except (OSError, ValueError):
+        return dict()
 
 
 def get_hostid() -> str | None:
@@ -20,7 +31,7 @@ def get_hostid() -> str | None:
 def start_hexos_websocat():
     url = "wss://api.hexos.com"
     envvars_file = "/etc/default/websocat"
-    envvars = dotenv_values(envvars_file)
+    envvars = load_envvars(envvars_file)
 
     systemd_opts = (
         "--unit=websocat",
@@ -61,25 +72,11 @@ def start_hexos_websocat():
     ])
 
 
-@contextlib.contextmanager
-def get_client(max_tries=30):
-    for _ in range(max_tries):
-        try:
-            with Client() as c:
-                if c.call("system.ready"):
-                    yield c
-        except Exception:
-            time.sleep(1)
-    else:
-        raise Exception(f"Failed to open client after {max_tries} attempts.")
-
-
 def main():
-    vendor_name = None
-    with get_client() as client:
-        vendor_name = client.call("system.vendor.name")
+    with Client() as c:
+        vendor_name = c.call("system.vendor.name")
 
-    if vendor_name == "HexOS":
+    if vendor_name == Vendors.HEXOS:
         start_hexos_websocat()
 
 

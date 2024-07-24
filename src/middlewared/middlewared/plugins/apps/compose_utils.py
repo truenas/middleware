@@ -24,6 +24,12 @@ def compose_action(
         args.append('-d')
         if force_recreate:
             args.append('--force-recreate')
+            # This needs to happen because --force-recreate doesn't recreate docker networks
+            # So for example, an app was running and then system has been rebooted - the docker network
+            # remains there but the relevant interfaces it created do not and if the app didn't had a restart
+            # policy of always, when attempting to start the app again - it will fail because the network
+            # is not recreated with compose up action and we need an explicit down
+            compose_action(app_name, app_version, 'down', remove_orphans=True)
         if remove_orphans:
             args.append('--remove-orphans')
     elif action == 'down':

@@ -33,9 +33,21 @@ def upgrade_available_for_app(
         return False
 
 
+def normalize_portal_uri(portal_uri: str, host_ip: str | None) -> str:
+    if not host_ip or '0.0.0.0' not in portal_uri:
+        return portal_uri
+
+    return portal_uri.replace('0.0.0.0', host_ip)
+
+
+def normalize_portal_uris(portals: dict[str, str], host_ip: str | None) -> dict[str, str]:
+    return {name: normalize_portal_uri(uri, host_ip) for name, uri in portals.items()}
+
+
 def list_apps(
     train_to_apps_version_mapping: dict[str, dict[str, dict[str, str]]],
-    specific_app: str | None = None
+    specific_app: str | None = None,
+    host_ip: str | None = None,
 ) -> list[dict]:
     apps = []
     app_names = set()
@@ -71,7 +83,7 @@ def list_apps(
             'active_workloads': get_default_workload_values() if state == 'STOPPED' else workloads,
             'state': state,
             'upgrade_available': upgrade_available_for_app(train_to_apps_version_mapping, app_metadata['metadata']),
-            **app_metadata,
+            **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
         })
 
     if specific_app and specific_app in app_names:
@@ -94,7 +106,7 @@ def list_apps(
                 'active_workloads': get_default_workload_values(),
                 'state': 'STOPPED',
                 'upgrade_available': upgrade_available_for_app(train_to_apps_version_mapping, app_metadata['metadata']),
-                **app_metadata,
+                **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
             })
 
     return apps
@@ -123,6 +135,9 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
         service_name = container['Config']['Labels'][COMPOSE_SERVICE_KEY]
         container_ports_config = []
         for container_port, host_config in container.get('NetworkSettings', {}).get('Ports', {}).items():
+            if not host_config:
+                # This will happen for ports which are not exposed on the host side
+                continue
             port_config = {
                 'container_port': container_port.split('/')[0],
                 'protocol': container_port.split('/')[1],

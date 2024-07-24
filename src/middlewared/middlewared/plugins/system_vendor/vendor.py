@@ -38,6 +38,8 @@ class VendorService(Service):
         except Exception:
             self.logger.exception('Unexpected error attempting to remove %r', SENTINEL_FILE_PATH)
 
+        self.middleware.call_sync('etc.generate', 'grub')
+
     @api_method(IsVendoredArgs, IsVendoredResult)
     def is_vendored(self):
         return os.path.isfile(SENTINEL_FILE_PATH)

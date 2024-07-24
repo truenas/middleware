@@ -1,5 +1,6 @@
 [Unit]
-After=middlewared.service
+# vendor_service.py must run after network routes are set up.
+After=ix-postinit.service
 
 
 [Service]
