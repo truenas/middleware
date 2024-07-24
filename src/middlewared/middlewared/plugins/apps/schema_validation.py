@@ -131,10 +131,12 @@ class AppSchemaService(Service):
             verrors.add(schema_name, f'{value["path"]}: path does not exist')
 
     async def validate_port_available_on_node(self, verrors, value, question, schema_name, app_data):
-        if app_data and value in [p['port'] for p in app_data['used_ports']]:
-            # TODO: This still leaves a case where user has multiple ports in a single app and mixes
-            #  them to the same value however in this case we will still get an error raised by docker.
-            return
+        for port_entry in (app_data['active_workloads']['used_ports'] if app_data else []):
+            for host_port in port_entry['host_ports']:
+                if value == host_port['host_port']:
+                    # TODO: This still leaves a case where user has multiple ports in a single app and mixes
+                    #  them to the same value however in this case we will still get an error raised by docker.
+                    return
 
         if value in await self.middleware.call('app.used_ports') or value in await self.middleware.call(
             'port.ports_mapping', 'app'

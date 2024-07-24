@@ -5,13 +5,13 @@ import shutil
 import textwrap
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
-from middlewared.service import CallError, CRUDService, filterable, InstanceNotFound, job, private
+from middlewared.service import CallError, CRUDService, filterable, InstanceNotFound, job, pass_app, private
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
 
 from .compose_utils import compose_action
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
-from .ix_apps.metadata import update_app_metadata
+from .ix_apps.metadata import update_app_metadata, update_app_metadata_for_portals
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
@@ -66,18 +66,25 @@ class AppService(CRUDService):
     )
 
     @filterable
-    def query(self, filters, options):
+    @pass_app(rest=True)
+    def query(self, app, filters, options):
         """
         Query all apps with `query-filters` and `query-options`.
+
+        `query-options.extra.host_ip` can be provided to override portal IP address if it is a wildcard.
         """
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
 
-        kwargs = {}
+        extra = options.get('extra', {})
+        kwargs = {
+            'host_ip': extra.get('host_ip') or self.middleware.call_sync('interface.websocket_local_ip', app=app)
+        }
         if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
             kwargs = {'specific_app': filters[0][2]}
 
         available_apps_mapping = self.middleware.call_sync('catalog.train_to_apps_version_mapping')
+
         return filter_list(list_apps(available_apps_mapping, **kwargs), filters, options)
 
     @accepts(Str('app_name'))
@@ -121,7 +128,7 @@ class AppService(CRUDService):
         """
         self.middleware.call_sync('docker.state.validate')
 
-        if self.query([['id', '=', data['app_name']]]):
+        if self.middleware.call_sync('app.query', [['id', '=', data['app_name']]]):
             raise CallError(f'Application with name {data["app_name"]} already exists', errno=errno.EEXIST)
 
         app_name = data['app_name']
@@ -157,9 +164,9 @@ class AppService(CRUDService):
             app_version_details = self.middleware.call_sync(
                 'catalog.app_version_details', get_installed_app_version_path(app_name, version)
             )
-            update_app_metadata(app_name, app_version_details)
             new_values = add_context_to_values(app_name, new_values, install=True)
             update_app_config(app_name, version, new_values)
+            update_app_metadata(app_name, app_version_details)
 
             job.set_progress(60, 'App installation in progress, pulling images')
             compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
@@ -215,6 +222,7 @@ class AppService(CRUDService):
 
         new_values = add_context_to_values(app_name, new_values, update=True)
         update_app_config(app_name, app['version'], new_values)
+        update_app_metadata_for_portals(app_name, app['version'])
         job.set_progress(60, 'Configuration updated, updating docker resources')
         compose_action(app_name, app['version'], 'up', force_recreate=True, remove_orphans=True)
 

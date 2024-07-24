@@ -406,20 +406,20 @@ class Job:
         for wrapped in self.wrapped:
             wrapped.set_progress(**self.progress)
 
-    async def wait(self, timeout=None, raise_error=False):
+    async def wait(self, timeout=None, raise_error=False, raise_error_forward_classes=(CallError,)):
         if timeout is None:
             await self._finished.wait()
         else:
             await asyncio.wait_for(self.middleware.create_task(self._finished.wait()), timeout)
         if raise_error:
             if self.error:
-                if isinstance(self.exc_info[1], CallError):
+                if isinstance(self.exc_info[1], raise_error_forward_classes):
                     raise self.exc_info[1]
 
                 raise CallError(self.error)
         return self.result
 
-    def wait_sync(self, raise_error=False, timeout=None):
+    def wait_sync(self, timeout=None, raise_error=False, raise_error_forward_classes=(CallError,)):
         """
         Synchronous method to wait for a job in another thread.
         """
@@ -435,7 +435,7 @@ class Job:
             raise TimeoutError()
         if raise_error:
             if self.error:
-                if isinstance(self.exc_info[1], CallError):
+                if isinstance(self.exc_info[1], raise_error_forward_classes):
                     raise self.exc_info[1]
 
                 raise CallError(self.error)
@@ -565,19 +565,24 @@ class Job:
             evalue = self.exc_info[1]
             if isinstance(evalue, ValidationError):
                 extra = [(evalue.attribute, evalue.errmsg, evalue.errno)]
+                errno = evalue.errno
                 etype = 'VALIDATION'
             elif isinstance(evalue, ValidationErrors):
                 extra = list(evalue)
+                errno = None
                 etype = 'VALIDATION'
             elif isinstance(evalue, CallError):
                 etype = etype.__name__
+                errno = evalue.errno
                 extra = evalue.extra
             else:
                 etype = etype.__name__
+                errno = None
                 extra = None
             exc_info = {
                 'repr': repr(evalue),
                 'type': etype,
+                'errno': errno,
                 'extra': extra,
             }
         return {
