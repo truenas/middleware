@@ -109,7 +109,7 @@ class AppSchemaService(Service):
             gpu['pci_slot']: gpu
             for gpu in await self.middleware.call('app.gpu_choices_internal') if not gpu['error']
         }
-        if not gpu_choices:
+        if not any(gpu['vendor'] != 'NVIDIA' for gpu in gpu_choices.values()):
             value['use_all_gpus'] = False
 
         for nvidia_gpu_pci_slot in list(value['nvidia_gpu_selection']):
