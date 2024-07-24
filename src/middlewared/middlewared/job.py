@@ -406,14 +406,14 @@ class Job:
         for wrapped in self.wrapped:
             wrapped.set_progress(**self.progress)
 
-    async def wait(self, timeout=None, raise_error=False):
+    async def wait(self, timeout=None, raise_error=False, raise_error_forward_classes=(CallError,)):
         if timeout is None:
             await self._finished.wait()
         else:
             await asyncio.wait_for(self.middleware.create_task(self._finished.wait()), timeout)
         if raise_error:
             if self.error:
-                if isinstance(self.exc_info[1], CallError):
+                if isinstance(self.exc_info[1], raise_error_forward_classes):
                     raise self.exc_info[1]
 
                 raise CallError(self.error)
