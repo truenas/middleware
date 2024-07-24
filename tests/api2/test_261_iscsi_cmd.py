@@ -16,10 +16,10 @@ from assets.websocket.iscsi import (alua_enabled, initiator, initiator_portal,
                                     portal, read_capacity16, target,
                                     target_extent_associate, verify_capacity,
                                     verify_luns)
-from middlewared.service_exception import ValidationError, ValidationErrors
+from middlewared.service_exception import InstanceNotFound, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.iscsi import target_login_test
 from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from pyscsi.pyscsi.scsi_sense import sense_ascq_dict
 from pytest_dependency import depends
@@ -156,7 +156,7 @@ def file_extent(pool_name, dataset_name, file_name, filesize=MB_512, extent_name
 
 
 @contextlib.contextmanager
-def zvol_dataset(zvol, volsize=MB_512):
+def zvol_dataset(zvol, volsize=MB_512, recursive=False, force=False):
     payload = {
         'name': zvol,
         'type': 'VOLUME',
@@ -168,7 +168,10 @@ def zvol_dataset(zvol, volsize=MB_512):
     try:
         yield dataset_config
     finally:
-        call('pool.dataset.delete', dataset_config['id'])
+        try:
+            call('pool.dataset.delete', dataset_config['id'], {'recursive': recursive, 'force': force})
+        except InstanceNotFound:
+            pass
 
 
 def modify_extent(ident, payload):
@@ -211,6 +214,10 @@ def get_client_count():
     return call('iscsi.global.client_count')
 
 
+def get_volthreading(zvolid):
+    return call('zfs.dataset.query', [['id', '=', zvolid]], {'get': True})['properties']['volthreading']['value']
+
+
 def verify_client_count(count, retries=10):
     """Verify that the client count is the expected value, but include some
     retries to allow things to settle if necessary."""
@@ -236,7 +243,10 @@ def zvol_extent(zvol, extent_name='zvol_extent'):
     try:
         yield extent_config
     finally:
-        call('iscsi.extent.delete', extent_config['id'], True, True)
+        try:
+            call('iscsi.extent.delete', extent_config['id'], True, True)
+        except InstanceNotFound:
+            pass
 
 
 @contextlib.contextmanager
@@ -2600,6 +2610,40 @@ def test_33_no_lun_zero():
                                 # With libiscsi we can also check that the expected LUNs are there
                                 with iscsi_scsi_connection(truenas_server.ip, iqn, 100) as s:
                                     verify_luns(s, [100, 101])
+
+
+def test_34_zvol_extent_volthreading():
+    """
+    Ensure that volthreading is on for regular zvols and off when they are being
+    used an iSCSI extent.
+    """
+    zvol_name = f"zvol_volthreading_test{digit}"
+    zvol = f'{pool_name}/{zvol_name}'
+    with zvol_dataset(zvol, MB_100, True, True):
+        assert get_volthreading(zvol) == 'on'
+        with zvol_extent(zvol, extent_name='zvolextent1'):
+            assert get_volthreading(zvol) == 'off'
+        assert get_volthreading(zvol) == 'on'
+
+
+@pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
+def test_35_delete_extent_no_dataset(extent_type):
+    """
+    Verify that even if a dataset that contains an extent has been deleted from
+    the command line, can still use the webui/API to delete the extent.
+    """
+    dataset_name = f'iscsids_{extent_type}_{digit}'
+    with dataset(dataset_name) as dspath:
+        DESTROY_CMD = f'zfs destroy -r {dspath}'
+        match extent_type:
+            case 'FILE':
+                with file_extent(pool_name, dataset_name, 'testfile', extent_name='fileextent1'):
+                    ssh(DESTROY_CMD)
+            case 'VOLUME':
+                zvol = f'{dspath}/zvol{digit}'
+                with zvol_dataset(zvol, MB_100, True, True):
+                    with zvol_extent(zvol, extent_name='zvolextent1'):
+                        ssh(DESTROY_CMD)
 
 
 def test_99_teardown(request):
