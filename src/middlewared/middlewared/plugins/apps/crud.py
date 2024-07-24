@@ -72,11 +72,14 @@ class AppService(CRUDService):
         Query all apps with `query-filters` and `query-options`.
 
         `query-options.extra.host_ip` can be provided to override portal IP address if it is a wildcard.
+
+        `query-options.extra.include_app_schema` can be provided to include app schema in the response.
         """
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
 
         extra = options.get('extra', {})
+        retrieve_app_schema = extra.get('include_app_schema', False)
         kwargs = {
             'host_ip': extra.get('host_ip') or self.middleware.call_sync('interface.websocket_local_ip', app=app)
         }
@@ -85,7 +88,18 @@ class AppService(CRUDService):
 
         available_apps_mapping = self.middleware.call_sync('catalog.train_to_apps_version_mapping')
 
-        return filter_list(list_apps(available_apps_mapping, **kwargs), filters, options)
+        apps = list_apps(available_apps_mapping, **kwargs)
+        if not retrieve_app_schema:
+            return filter_list(apps, filters, options)
+
+        questions_context = self.middleware.call_sync('catalog.get_normalized_questions_context')
+        for app in apps:
+            app['version_details'] = self.middleware.call_sync(
+                'catalog.app_version_details', get_installed_app_version_path(app['name'], app['version']),
+                questions_context,
+            )
+
+        return filter_list(apps, filters, options)
 
     @accepts(Str('app_name'))
     @returns(Dict('app_config', additional_attrs=True))
