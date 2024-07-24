@@ -1,5 +1,4 @@
 import json
-import shlex
 
 import pytest
 
@@ -10,7 +9,7 @@ from middlewared.test.integration.utils import ssh
 @pytest.mark.parametrize("url", ["127.0.0.1", "127.0.0.1:6000"])
 @pytest.mark.parametrize("root", [True, False])
 def test_tcp_connection_from_localhost(url, root):
-    cmd = f"midclt -u ws://{url}/websocket call auth.sessions '[[\"current\", \"=\", true]]' '{{\"get\": true}}'"
+    cmd = f"midclt -u ws://{url}/api/current call auth.sessions '[[\"current\", \"=\", true]]' '{{\"get\": true}}'"
     if root:
         assert json.loads(ssh(cmd))["credentials"] == "ROOT_TCP_SOCKET"
     else:

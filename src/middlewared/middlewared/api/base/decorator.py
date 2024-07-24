@@ -15,6 +15,7 @@ def api_method(
     audit: str | None = None,
     audit_callback: bool = False,
     audit_extended: Callable[..., str] | None = None,
+    rate_limit=True,
     roles: list[str] | None = None,
     private: bool = False,
 ):
@@ -32,6 +33,8 @@ def api_method(
 
     `audit_extended` is the function that takes the same arguments as the decorated function and returns the string
     that will be appended to the audit message to be logged.
+
+    `rate_limit` specifies whether the method calls should be rate limited when calling without authentication.
 
     `roles` is a list of user roles that will gain access to this method.
 
@@ -63,6 +66,7 @@ def api_method(
         wrapped.audit = audit
         wrapped.audit_callback = audit_callback
         wrapped.audit_extended = audit_extended
+        wrapped.rate_limit = rate_limit
         wrapped.roles = roles or []
         wrapped._private = private
 

@@ -5,8 +5,7 @@ import random
 import pytest
 import string
 
-from truenas_api_client import ClientException
-
+from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.utils import call, client
 
@@ -53,8 +52,10 @@ def common_checks(
                 with pytest.raises(Exception) as exc_info:
                     client.call(method, *method_args, **method_kwargs)
 
-                assert isinstance(exc_info.value, ClientException) is False or (
-                    exc_info.value.errno != errno.EACCES and exc_info.value.error != 'Not authorized'
+                assert not (
+                    isinstance(exc_info.value, CallError) and
+                    exc_info.value.errno == errno.EACCES and
+                    exc_info.value.errmsg == 'Not authorized'
                 )
 
             elif is_return_type_none:
@@ -62,7 +63,7 @@ def common_checks(
             else:
                 assert client.call(method, *method_args, **method_kwargs) is not None
         else:
-            with pytest.raises(ClientException) as ve:
+            with pytest.raises(CallError) as ve:
                 client.call(method, *method_args, **method_kwargs)
             assert ve.value.errno == errno.EACCES
-            assert ve.value.error == 'Not authorized'
+            assert ve.value.errmsg == 'Not authorized'

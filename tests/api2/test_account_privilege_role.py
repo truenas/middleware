@@ -1,13 +1,13 @@
 import errno
 import logging
+from time import sleep
 
 import pytest
 
-from truenas_api_client import ClientException
+from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import client
-from time import sleep
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ def test_can_read_with_read_or_write_role(role):
 def test_can_not_write_with_read_role():
     with dataset("test_snapshot_write1") as ds:
         with unprivileged_user_client(["SNAPSHOT_READ"]) as c:
-            with pytest.raises(ClientException) as ve:
+            with pytest.raises(CallError) as ve:
                 c.call("zfs.snapshot.create", {
                     "dataset": ds,
                     "name": "test",
@@ -52,7 +52,7 @@ def test_can_not_delete_with_write_role_with_separate_delete():
     with dataset("test_snapshot_delete2") as ds:
         with snapshot(ds, "test") as id:
             with unprivileged_user_client(["SNAPSHOT_WRITE"]) as c:
-                with pytest.raises(ClientException) as ve:
+                with pytest.raises(CallError) as ve:
                     c.call("zfs.snapshot.delete", id)
 
                 assert ve.value.errno == errno.EACCES
@@ -106,12 +106,12 @@ def test_readonly_can_call_method(method, params):
 
 def test_readonly_can_not_call_method():
     with unprivileged_user_client(["READONLY_ADMIN"]) as c:
-        with pytest.raises(ClientException) as ve:
+        with pytest.raises(CallError) as ve:
             c.call("user.create")
 
         assert ve.value.errno == errno.EACCES
 
-        with pytest.raises(ClientException) as ve:
+        with pytest.raises(CallError) as ve:
             # fails with EPERM if API access granted
             c.call("filesystem.mkdir", "/foo")
 
@@ -176,10 +176,10 @@ def test_foreign_job_access():
 
 def test_can_not_subscribe_to_event():
     with unprivileged_user_client() as unprivileged:
-        with pytest.raises(ValueError) as ve:
+        with pytest.raises(CallError) as ve:
             unprivileged.subscribe("alert.list", lambda *args, **kwargs: None)
 
-        assert ve.value.args[0]["errname"] == "EACCES"
+        assert ve.value.errno == errno.EACCES
 
 
 def test_can_subscribe_to_event():

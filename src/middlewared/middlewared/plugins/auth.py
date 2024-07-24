@@ -7,6 +7,7 @@ import warnings
 
 import psutil
 
+from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
 from middlewared.auth import (SessionManagerCredentials, UserSessionManagerCredentials,
                               UnixSocketSessionManagerCredentials, RootTcpSocketSessionManagerCredentials,
                               LoginPasswordSessionManagerCredentials, ApiKeySessionManagerCredentials,
@@ -108,12 +109,12 @@ class SessionManager:
         app.authenticated = True
         app.authenticated_credentials = credentials
 
-        app.register_callback("on_message", self._app_on_message)
-        app.register_callback("on_close", self._app_on_close)
+        app.register_callback(RpcWebSocketAppEvent.MESSAGE, self._app_on_message)
+        app.register_callback(RpcWebSocketAppEvent.CLOSE, self._app_on_close)
 
         if not is_internal_session(session):
             self.middleware.send_event("auth.sessions", "ADDED", fields=dict(id=app.session_id, **session.dump()))
-            await app.log_audit_message("AUTHENTICATION", {
+            await self.middleware.log_audit_message(app, "AUTHENTICATION", {
                 "credentials": dump_credentials(credentials),
                 "error": None,
             }, True)
@@ -203,7 +204,6 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
             data["username"] = self.user["username"]
 
         return data
-
 
 
 def is_internal_session(session):
@@ -311,7 +311,7 @@ class AuthService(Service):
 
         self.token_manager.destroy_by_session_id(id_)
 
-        await session.app.response.close()
+        await session.app.ws.close()
 
     @accepts(roles=['AUTH_SESSIONS_WRITE'])
     @returns()
@@ -454,7 +454,7 @@ class AuthService(Service):
         """
         user = await self.get_login_user(username, password, otp_token)
         if user is None:
-            await app.log_audit_message("AUTHENTICATION", {
+            await self.middleware.log_audit_message(app, "AUTHENTICATION", {
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
                     "credentials_data": {"username": username},
@@ -494,7 +494,7 @@ class AuthService(Service):
             await self.session_manager.login(app, ApiKeySessionManagerCredentials(api_key_object))
             return True
 
-        await app.log_audit_message("AUTHENTICATION", {
+        await self.middleware.log_audit_message(app, "AUTHENTICATION", {
             "credentials": {
                 "credentials": "API_KEY",
                 "credentials_data": {
@@ -516,7 +516,7 @@ class AuthService(Service):
         """
         token = self.token_manager.get(token_str, app.origin)
         if token is None:
-            await app.log_audit_message("AUTHENTICATION", {
+            await self.middleware.log_audit_message(app, "AUTHENTICATION", {
                 "credentials": {
                     "credentials": "TOKEN",
                     "credentials_data": {
@@ -528,7 +528,7 @@ class AuthService(Service):
             return False
 
         if token.attributes:
-            await app.log_audit_message("AUTHENTICATION", {
+            await self.middleware.log_audit_message(app, "AUTHENTICATION", {
                 "credentials": {
                     "credentials": "TOKEN",
                     "credentials_data": {

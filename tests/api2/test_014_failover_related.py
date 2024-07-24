@@ -5,7 +5,7 @@ from pytest_dependency import depends
 
 from functions import SSH_TEST
 from auto_config import ha, user, password
-from truenas_api_client import ClientException
+from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.utils import call, client
 
@@ -102,7 +102,7 @@ if ha:
             c.call('failover.config')
             c.call('failover.node')
             c.call('failover.upgrade_pending')
-            with pytest.raises(ClientException) as ce:
+            with pytest.raises(CallError) as ce:
                 c.call('failover.call_remote', 'user.update')
 
             assert ce.value.errno == errno.EACCES

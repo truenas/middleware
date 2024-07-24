@@ -1,7 +1,6 @@
 import errno
 
 import pytest
-from pytest_dependency import depends
 
 from middlewared.test.integration.utils import call, client
 
@@ -9,7 +8,6 @@ NOAUTH_METHOD = 'system.boot_id'
 SEP = '_##_'
 
 
-@pytest.mark.dependency(name='rate_limited')
 def test_unauth_requests_are_rate_limited():
     """Test that the truenas server rate limits a caller
     that is hammering an endpoint that requires no authentication."""
@@ -24,11 +22,8 @@ def test_unauth_requests_are_rate_limited():
                     c.call(NOAUTH_METHOD)
                 assert ve.value.errno == errno.EBUSY
 
-
-def test_rate_limit_global_cache_entries(request):
     """Test that middleware's rate limit plugin for interacting
     with the global cache behaves as intended."""
-    depends(request, ['rate_limited'])
     cache = call('rate.limit.cache_get')
     # the mechanism by which the rate limit chooses a unique key
     # for inserting into the dictionary is by using the api endpoint
@@ -48,9 +43,9 @@ def test_rate_limit_global_cache_entries(request):
     assert len(new_new_cache) == 0, new_new_cache
 
 
-def test_auth_requests_are_not_rate_limited():
+@pytest.mark.parametrize('method_name', [NOAUTH_METHOD, 'system.host_id'])
+def test_authorized_requests_are_not_rate_limited(method_name):
     """Test that the truenas server does NOT rate limit a caller
-    that hammers an endpoint when said caller has been authenticated
-    and that method requires authentication."""
+    that hammers an endpoint when said caller has been authenticated"""
     for i in range(1, 22):
-        assert call('system.host_id')
+        assert call(method_name)

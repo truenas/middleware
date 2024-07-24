@@ -1,5 +1,5 @@
 from middlewared.plugins.sysdataset import SYSDATASET_PATH
-from middlewared.service import filterable, periodic, CRUDService
+from middlewared.service import filterable, periodic, private, CRUDService
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import run, filter_list
 from middlewared.utils.tdb import (
@@ -184,7 +184,8 @@ class ShareSec(CRUDService):
         await self.middleware.call('datastore.update', 'sharing.cifs_share', config_share['id'],
                                    {'cifs_share_acl': new_acl_blob})
 
-    async def _flush_share_info(self):
+    @private
+    async def flush_share_info(self):
         """
         Write stored share acls to share_info.tdb. This should only be called
         if share_info.tdb contains default entries.
@@ -207,7 +208,7 @@ class ShareSec(CRUDService):
             if not self.middleware.call_sync('service.started', 'cifs'):
                 return
             else:
-                return self.middleware.call_sync('smb.sharesec._flush_share_info')
+                return self.middleware.call_sync('smb.sharesec.flush_share_info')
 
         self.middleware.call_sync('smb.sharesec.synchronize_acls')
 

@@ -3,8 +3,7 @@ from unittest.mock import ANY
 
 import pytest
 
-from truenas_api_client import ClientException
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client, user
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client, ssh
@@ -35,7 +34,7 @@ def test_unauthenticated_call():
                 "success": False,
             }
         ]):
-            with pytest.raises(ClientException):
+            with pytest.raises(CallError):
                 c.call("user.create", {"username": "sergey", "full_name": "Sergey"})
 
 
@@ -66,7 +65,7 @@ def test_unauthorized_call():
                 "success": False,
             }
         ]):
-            with pytest.raises(ClientException):
+            with pytest.raises(CallError):
                 c.call("user.create", {"username": "sergey", "full_name": "Sergey"})
 
 

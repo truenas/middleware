@@ -59,7 +59,7 @@ class RemoteClient:
 
     def connect_and_wait(self):
         try:
-            with Client(f'ws://{self.remote_ip}:6000/websocket', reserved_ports=True) as c:
+            with Client(f'ws://{self.remote_ip}:6000/api/current', reserved_ports=True) as c:
                 self.client = c
                 self.connected.set()
                 # Subscribe to all events on connection

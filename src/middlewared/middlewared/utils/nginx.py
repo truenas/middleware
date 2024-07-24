@@ -17,7 +17,7 @@ def get_remote_addr_port(request):
         remote_addr, remote_port = request.transport.get_extra_info("peername")
     except Exception:
         # request can be NoneType or request.transport could be NoneType as well
-        return '', ''
+        return "", ""
 
     if remote_addr in ["127.0.0.1", "::1"]:
         try:

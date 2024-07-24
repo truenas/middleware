@@ -5,7 +5,7 @@ import logging
 import pytest
 import websocket
 
-from truenas_api_client import ClientException
+from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import user, unprivileged_user as unprivileged_user_template
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, client, ssh, websocket_url
@@ -104,7 +104,7 @@ def test_websocket_auth_calls_allowed_method(unprivileged_user):
 
 def test_websocket_auth_fails_to_call_forbidden_method(unprivileged_user):
     with client(auth=(unprivileged_user.username, unprivileged_user.password)) as c:
-        with pytest.raises(ClientException) as ve:
+        with pytest.raises(CallError) as ve:
             c.call("pool.create")
 
         assert ve.value.errno == errno.EACCES
@@ -172,7 +172,7 @@ def test_token_auth_fails_to_call_forbidden_method(unprivileged_user_token):
     with client(auth=None) as c:
         assert c.call("auth.login_with_token", unprivileged_user_token)
 
-        with pytest.raises(ClientException) as ve:
+        with pytest.raises(CallError) as ve:
             c.call("pool.create")
 
         assert ve.value.errno == errno.EACCES
@@ -183,7 +183,7 @@ def test_drop_privileges(unprivileged_user_token):
         # This should drop privileges for the current root session
         assert c.call("auth.login_with_token", unprivileged_user_token)
 
-        with pytest.raises(ClientException) as ve:
+        with pytest.raises(CallError) as ve:
             c.call("pool.create")
 
         assert ve.value.errno == errno.EACCES

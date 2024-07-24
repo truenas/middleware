@@ -1,6 +1,6 @@
 import pytest
 
-from truenas_api_client import ClientException
+from middlewared.service_exception import CallError
 from middlewared.test.integration.utils import call, client
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset
@@ -48,7 +48,7 @@ def test_root_password_disabled():
                     assert not any(alert["klass"] == "WebUiRootLogin" for alert in alerts), alerts
 
                     # Root should not be able to log in with password anymore
-                    with pytest.raises(ClientException):
+                    with pytest.raises(CallError):
                         call("system.info", client_kwargs=dict(auth_required=False))
 
                     assert events[0][1]["fields"]["usernames"] == ["admin"]

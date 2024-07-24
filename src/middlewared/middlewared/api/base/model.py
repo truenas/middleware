@@ -1,4 +1,6 @@
 import copy
+import inspect
+from types import NoneType
 import typing
 
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, model_serializer
@@ -86,10 +88,19 @@ def single_argument_args(name):
     return wrapper
 
 
-def single_argument_result(klass):
+def single_argument_result(klass, klass_name=None):
+    if klass is None:
+        klass = NoneType
+
+    if klass.__module__ == "builtins":
+        if klass_name is None:
+            raise TypeError("You must specify class name when using `single_argument_result` for built-in types")
+    else:
+        klass_name = klass_name or klass.__name__
+
     return create_model(
-        klass.__name__,
+        klass_name,
         __base__=(BaseModel,),
-        __module__=klass.__module__,
+        __module__=inspect.getmodule(inspect.stack()[1][0]),
         **{"result": Annotated[klass, Field()]},
     )

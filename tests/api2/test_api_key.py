@@ -36,7 +36,7 @@ def test_root_api_key_websocket():
     ip = truenas_server.ip
     with api_key([{"method": "*", "resource": "*"}]) as key:
         with user():
-            cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
+            cmd = f"sudo -u testuser midclt -u ws://{ip}/api/current --api-key {key} call system.info"
             results = SSH_TEST(cmd, user_, password)
         assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         assert 'uptime' in str(results['stdout'])
@@ -58,7 +58,7 @@ def test_allowed_api_key_websocket():
     ip = truenas_server.ip
     with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
         with user():
-            cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
+            cmd = f"sudo -u testuser midclt -u ws://{ip}/api/current --api-key {key} call system.info"
             results = SSH_TEST(cmd, user_, password)
         assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
         assert 'uptime' in str(results['stdout'])
@@ -69,7 +69,7 @@ def test_denied_api_key_websocket():
     ip = truenas_server.ip
     with api_key([{"method": "CALL", "resource": "system.info_"}]) as key:
         with user():
-            cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
+            cmd = f"sudo -u testuser midclt -u ws://{ip}/api/current --api-key {key} call system.info"
             results = SSH_TEST(cmd, user_, password)
         assert results['result'] is False
 

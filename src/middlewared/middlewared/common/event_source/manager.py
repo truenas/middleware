@@ -1,12 +1,10 @@
 import asyncio
 from collections import defaultdict, namedtuple
-import errno
 import functools
 from uuid import uuid4
 
 from middlewared.event import EventSource
 from middlewared.schema import ValidationErrors
-from middlewared.service_exception import CallError
 
 IdentData = namedtuple("IdentData", ["subscriber", "name", "arg"])
 
@@ -28,20 +26,7 @@ class AppSubscriber(Subscriber):
         self.app.send_event(self.collection, event_type, **kwargs)
 
     def terminate(self, error):
-        error_dict = {}
-        if error:
-            if isinstance(error, ValidationErrors):
-                error_dict['error'] = self.app.get_error_dict(
-                    errno.EAGAIN, str(error), etype='VALIDATION', extra=list(error)
-                )
-            elif isinstance(error, CallError):
-                error_dict['error'] = self.app.get_error_dict(
-                    error.errno, str(error), extra=error.extra
-                )
-            else:
-                error_dict['error'] = self.app.get_error_dict(errno.EINVAL, str(error))
-
-        self.app._send({'msg': 'nosub', 'collection': self.collection, **error_dict})
+        self.app.notify_unsubscribed(self.collection, error)
 
 
 class InternalSubscriber(Subscriber):

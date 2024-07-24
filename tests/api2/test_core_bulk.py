@@ -2,10 +2,10 @@ from unittest.mock import ANY
 
 import pytest
 
-from truenas_api_client import ClientException
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.utils import call, mock
 from middlewared.test.integration.utils.audit import expect_audit_log
+from truenas_api_client import ClientException
 
 
 def test_core_bulk_reports_job_id():

@@ -2,12 +2,12 @@ from asyncio import sleep
 from dataclasses import dataclass
 from random import uniform
 from time import monotonic
-from typing import Self, TypedDict
+from typing import TypedDict
 
 from middlewared.auth import is_ha_connection
 from middlewared.utils.origin import TCPIPOrigin
 
-__all__ = ('RateLimitCache')
+__all__ = ['RateLimitCache']
 
 
 @dataclass(frozen=True)
@@ -39,7 +39,6 @@ class RateLimitObject(TypedDict):
 
 
 RL_CACHE: dict[str, RateLimitObject] = dict()
-
 
 
 class RateLimit:
@@ -107,5 +106,6 @@ class RateLimit:
         """Return a boolean indicating if the total number of entries
         in the global cache has reached `self.max_cache_entries`."""
         return len(RL_CACHE) == RateLimitConfig.max_cache_entries
+
 
 RateLimitCache = RateLimit()
