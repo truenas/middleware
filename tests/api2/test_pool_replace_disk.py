@@ -34,7 +34,7 @@ def test_pool_replace_disk(topology, i):
         }, job=True)
 
         # Sometimes the VM is slow so look 5 times with 1 second in between
-        for _ in range(5):
+        for _ in range(10):
             pool = call("pool.get_instance", pool["id"])
             if len(disks(pool["topology"])) == count:
                 break
