@@ -227,8 +227,9 @@ class SupportService(ConfigService):
         For SCALE Enterprise `token` and `type` attributes are not required.
         """
 
-        if await self.middleware.call('system.vendor.name'):
-            raise CallError('Support is not available for this product', errno.EINVAL)
+        vendor = await self.middleware.call('system.vendor.name')
+        if vendor:
+            raise CallError(f'Support is not available for this product ({vendor})', errno.EINVAL)
 
         await self.middleware.call('network.general.will_perform_activity', 'support')
 
