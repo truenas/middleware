@@ -1,5 +1,3 @@
-import pytest
-
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
 
