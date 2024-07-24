@@ -1,3 +1,5 @@
+from pystemd.systemd1 import Unit
+
 from middlewared.plugins.service_.services.base import SimpleService, systemd_unit
 from middlewared.plugins.service_.services.base_interface import ServiceInterface
 from middlewared.plugins.service_.services.base_state import ServiceState
@@ -30,6 +32,19 @@ class KmipService(PseudoServiceBase):
             (await self.middleware.call('kmip.config'))['enabled'],
             [],
         )
+
+
+class IncusService(SimpleService):
+    name = "incus"
+
+    systemd_unit = "incus"
+
+    async def stop(self):
+        await self._unit_action("Stop")
+        # incus.socket needs to be stopped in addition to the service
+        unit = Unit("incus.socket")
+        unit.load()
+        await self._unit_action("Stop", unit=unit)
 
 
 class LoaderService(PseudoServiceBase):

@@ -22,6 +22,7 @@ from .pseudo.libvirtd import LibvirtdService, LibvirtGuestService
 from .pseudo.misc import (
     CronService,
     KmipService,
+    IncusService,
     LoaderService,
     HostnameService,
     HttpService,
@@ -65,6 +66,7 @@ all_services = [
     LibvirtGuestService,
     CronService,
     KmipService,
+    IncusService,
     LoaderService,
     HostnameService,
     HttpService,
