@@ -71,11 +71,13 @@ class AppService(CRUDService):
         """
         Query all apps with `query-filters` and `query-options`.
 
-        `query-options.extra.host_ip` can be provided to override portal IP address if it is a wildcard.
+        `query-options.extra.host_ip` is a string which can be provided to override portal IP address
+        if it is a wildcard.
 
-        `query-options.extra.include_app_schema` can be provided to include app schema in the response.
+        `query-options.extra.include_app_schema` is a boolean which can be set to include app schema in the response.
 
-        `query-options.extra.retrieve_config` can be provided to retrieve app configuration used to install/manage app.
+        `query-options.extra.retrieve_config` is a boolean which can be set to retrieve app configuration
+        used to install/manage app.
         """
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
