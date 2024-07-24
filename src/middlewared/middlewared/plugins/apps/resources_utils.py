@@ -5,6 +5,7 @@ def get_gpu_base_dict() -> dict:
         'error': None,
         'vendor_specific_config': {},
         'gpu_details': {},
+        'pci_slot': None,
     }
 
 
@@ -16,6 +17,7 @@ def get_normalized_gpu_choices(all_gpus_info: list[dict], nvidia_gpus: dict) -> 
             'vendor': gpu_info['vendor'],
             'description': gpu_info['description'],
             'gpu_details': gpu_info,
+            'pci_slot': pci_slot,
         }
         gpus.append(gpu_config)
 
