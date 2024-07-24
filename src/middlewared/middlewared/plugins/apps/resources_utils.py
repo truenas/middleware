@@ -17,9 +17,11 @@ def get_normalized_gpu_choices(all_gpus_info: list[dict], nvidia_gpus: dict) -> 
             'description': gpu_info['description'],
             'gpu_details': gpu_info,
         }
+        gpus.append(gpu_config)
+
         if gpu_info['vendor'] == 'NVIDIA':
             if pci_slot not in nvidia_gpus:
-                gpus.append(gpu_config | {
+                gpu_config.update({
                     'error': 'Unable to locate GPU details from procfs',
                 })
                 continue
@@ -31,7 +33,7 @@ def get_normalized_gpu_choices(all_gpus_info: list[dict], nvidia_gpus: dict) -> 
             elif '?' in nvidia_gpu['gpu_uuid']:
                 error = 'Malformed GPU UUID found'
             if error:
-                gpus.append(gpu_config | {
+                gpu_config.update({
                     'error': error,
                     'nvidia_gpu_details': nvidia_gpu,
                 })
@@ -45,7 +47,7 @@ def get_normalized_gpu_choices(all_gpus_info: list[dict], nvidia_gpus: dict) -> 
             })
 
         if not gpu_info['available_to_host']:
-            gpus.append(gpu_config | {
+            gpu_config.update({
                 'error': 'GPU not available to host',
             })
 
