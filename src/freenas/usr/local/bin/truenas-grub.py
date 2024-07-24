@@ -6,6 +6,7 @@ import json
 
 from middlewared.utils.serial import serial_port_choices
 from middlewared.utils.db import query_config_table
+from middlewared.utils.vendor import Vendors
 
 
 def get_serial_ports():
@@ -16,10 +17,10 @@ if __name__ == "__main__":
     advanced = query_config_table("system_advanced", prefix="adv_")
     kernel_extra_options = advanced.get("kernel_extra_options") or ""
 
-    vendor = "TrueNAS Scale"
+    vendor = Vendors.TRUENAS_SCALE
     try:
         with open("/data/.vendor", "r") as f:
-            vendor = json.loads(f.read()).get("name", "TrueNAS Scale")
+            vendor = json.loads(f.read()).get("name", Vendors.TRUENAS_SCALE)
     except Exception:
         pass
 
