@@ -74,6 +74,8 @@ class AppService(CRUDService):
         `query-options.extra.host_ip` can be provided to override portal IP address if it is a wildcard.
 
         `query-options.extra.include_app_schema` can be provided to include app schema in the response.
+
+        `query-options.extra.retrieve_config` can be provided to retrieve app configuration used to install/manage app.
         """
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
@@ -81,7 +83,8 @@ class AppService(CRUDService):
         extra = options.get('extra', {})
         retrieve_app_schema = extra.get('include_app_schema', False)
         kwargs = {
-            'host_ip': extra.get('host_ip') or self.middleware.call_sync('interface.websocket_local_ip', app=app)
+            'host_ip': extra.get('host_ip') or self.middleware.call_sync('interface.websocket_local_ip', app=app),
+            'retrieve_config': extra.get('retrieve_config', False),
         }
         if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
             kwargs = {'specific_app': filters[0][2]}
