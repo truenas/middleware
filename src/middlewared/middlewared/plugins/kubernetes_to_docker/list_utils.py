@@ -49,7 +49,7 @@ def release_details(release_name: str, release_path: str, catalog_path: str, app
     if metadata_labels['catalog'] != 'TRUENAS' or metadata_labels['catalog_branch'] != 'master':
         return config | {'error': 'Release is not from TrueNAS catalog'}
 
-    release_train = metadata_labels['catalog_train']
+    release_train = metadata_labels['catalog_train'] if metadata_labels['catalog_train'] != 'charts' else 'stable'
     config['train'] = release_train
     if release_train not in apps_mapping:
         return config | {'error': 'Unable to locate release\'s train'}
