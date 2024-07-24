@@ -204,14 +204,27 @@ class CoreService(Service):
         Get information about long-running jobs.
         If authenticated session does not have the FULL_ADMIN role, only
         jobs owned by the current authenticated session will be returned.
+
+        `result` key will have sensitive values redacted by default for external
+        clients.
+
+        Redaction behavior may be explicitly specfied via the `extra`
+        query-option `raw_result`. If `raw_result` is True then unredacted result
+        is returned.
         """
+
+        # Get raw result by default for internal calls to core.get_jobs otherwise
+        # redact result by default
+
+        raw_result_default = False if app else True
+
         if app and credential_is_limited_to_own_jobs(app.authenticated_credentials):
             username = app.authenticated_credentials.user['username']
             jobs = list(self.middleware.jobs.for_username(username).values())
         else:
             jobs = list(self.middleware.jobs.all().values())
 
-        raw_result = options['extra'].get('raw_result', True)
+        raw_result = options['extra'].get('raw_result', raw_result_default)
         jobs = filter_list([
             i.__encode__(raw_result) for i in jobs
         ], filters, options)
