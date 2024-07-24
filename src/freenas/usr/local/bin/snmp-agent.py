@@ -2,13 +2,14 @@
 import threading
 import time
 import contextlib
-import pathlib
+import os
 
 import libzfs
 import netsnmpagent
 import pysnmp.hlapi  # noqa
 import pysnmp.smi
 
+from glob import iglob
 from truenas_api_client import Client
 
 
@@ -413,9 +414,9 @@ def get_list_of_zvols():
     zvols = set()
     root_dir = '/dev/zvol/'
     with contextlib.suppress(FileNotFoundError):  # no zvols
-        for zpool in pathlib.Path(root_dir).iterdir():
-            for zvol in filter(lambda x: '@' not in x.name, zpool.iterdir()):
-                zvol_normalized = zvol.as_posix().removeprefix(root_dir)
+        for zvol in iglob(root_dir + '**', recursive=True):
+            if not os.path.isdir(zvol) and '@' not in zvol:
+                zvol_normalized = zvol.removeprefix(root_dir)
                 zvol_normalized = zvol_normalized.replace('+', ' ')
                 zvols.add(zvol_normalized)
 

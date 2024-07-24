@@ -6,7 +6,10 @@ import pytest
 
 from time import sleep
 
+from contextlib import ExitStack
 from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.assets.pool import dataset, snapshot
+from middlewared.test.integration.assets.filesystem import directory, file
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.system import reset_systemd_svcs
@@ -14,7 +17,7 @@ from pysnmp.hlapi import (CommunityData, ContextData, ObjectIdentity,
                           ObjectType, SnmpEngine, UdpTransportTarget, getCmd)
 
 
-from auto_config import ha, interface, password, user
+from auto_config import ha, interface, password, user, pool_name
 from functions import async_SSH_done, async_SSH_start
 
 skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
@@ -97,6 +100,66 @@ def add_SNMPv3_user():
     yield
 
 
+@pytest.fixture(scope='function')
+def create_nested_structure():
+    """
+    Create the following structure:
+        tank -+-> dataset_1 -+-> dataset2 -+-> dataset_3
+              |-> zvol_1a    |-> zvol_2a   |-> zvol_3a
+              |-> zvol_1b    |-> zvol_2b   |-> zvol_3b
+              |-> file_1     |-> file_2    |-> file_3
+              |-> dir_1      |-> dir_2     |-> dir_3
+    TODO: Make this generic and move to assets
+    """
+    ds_path = ""
+    ds_list = []
+    zv_list = []
+    dir_list = []
+    file_list = []
+    with ExitStack() as es:
+
+        for i in range(1, 4):
+            preamble = f"{ds_path + '/' if i > 1 else ''}"
+            vol_path = f"{preamble}zvol_{i}"
+
+            # Create zvols
+            for c in crange('a', 'b'):
+                zv = es.enter_context(dataset(vol_path + c, {"type": "VOLUME", "volsize": 1048576}))
+                zv_list.append(zv)
+
+            # Create directories
+            d = es.enter_context(directory(f"/mnt/{pool_name}/{preamble}dir_{i}"))
+            dir_list.append(d)
+
+            # Create files
+            f = es.enter_context(file(f"/mnt/{pool_name}/{preamble}file_{i}", 1048576))
+            file_list.append(f)
+
+            # Create datasets
+            ds_path += f"{'/' if i > 1 else ''}dataset_{i}"
+            ds = es.enter_context(dataset(ds_path))
+            ds_list.append(ds)
+
+        yield {'zv': zv_list, 'ds': ds_list, 'dir': dir_list, 'file': file_list}
+
+
+def crange(c1, c2):
+    """
+    Generates the characters from `c1` to `c2`, inclusive.
+    Simple lowercase ascii only.
+    NOTE: Not safe for runtime code
+    """
+    ord_a = 97
+    ord_z = 122
+    c1_ord = ord(c1)
+    c2_ord = ord(c2)
+    assert c1_ord < c2_ord, f"'{c1}' must be 'less than' '{c2}'"
+    assert ord_a <= c1_ord <= ord_z
+    assert ord_a <= c2_ord <= ord_z
+    for c in range(c1_ord, c2_ord + 1):
+        yield chr(c)
+
+
 def get_systemctl_status(service):
     """ Return 'RUNNING' or 'STOPPED' """
     try:
@@ -167,6 +230,20 @@ def user_list_users(snmp_config):
     if add_cmd:
         cmd += add_cmd
     cmd += "localhost iso.3.6.1.6.3.15.1.2.2.1.3"
+
+    # This call will timeout if SNMP is not running
+    res = ssh(cmd)
+    return [x.split()[-1].strip('\"') for x in res.splitlines()]
+
+
+def v2c_snmpwalk(mib):
+    """
+    Run snmpwalk with v2c protocol
+    mib is the item to be gathered.  mib format examples:
+        iso.3.6.1.6.3.15.1.2.2.1.3
+        1.3.6.1.4.1.50536.1.2
+    """
+    cmd = f"snmpwalk -v2c -cpublic localhost {mib}"
 
     # This call will timeout if SNMP is not running
     res = ssh(cmd)
@@ -349,3 +426,18 @@ class TestSNMP:
             with pytest.raises(Exception) as ve:
                 res = user_list_users(SNMP_USER_CONFIG)
             assert "Unknown user name" in str(ve.value)
+
+    def test_zvol_reporting(self, create_nested_structure):
+        """
+        The TrueNAS snmp agent should list all zvols.
+        TrueNAS zvols can be created on any ZFS pool or dataset.
+        The snmp agent should list them all.
+        snmpwalk -v2c -cpublic localhost 1.3.6.1.4.1.50536.1.2.1.1.2
+        """
+        # The expectation is that the snmp agent should list exactly the six zvols.
+        created_items = create_nested_structure
+
+        # Include a snapshot of one of the zvols
+        with snapshot(created_items['zv'][0], "snmpsnap01"):
+            snmp_res = v2c_snmpwalk('1.3.6.1.4.1.50536.1.2.1.1.2')
+            assert all(v in created_items['zv'] for v in snmp_res), f"expected {created_items['zv']}, but found {snmp_res}"
