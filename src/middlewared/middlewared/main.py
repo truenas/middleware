@@ -558,7 +558,7 @@ class ShellWorkerThread(threading.Thread):
         super(ShellWorkerThread, self).__init__(daemon=True)
 
     def get_command(self, username, as_root, options):
-        allowed_options = ('vm_id', 'app_name')
+        allowed_options = ('vm_id', 'app_name', 'virt_instances_id')
         if all(options.get(k) for k in allowed_options):
             raise CallError(f'Only one option is supported from {", ".join(allowed_options)}')
 
@@ -577,6 +577,12 @@ class ShellWorkerThread(threading.Thread):
                 '/usr/bin/docker', 'exec', '-it', options['container_id'], options.get('command', '/bin/bash'),
             ]
 
+            if not as_root:
+                command = ['/usr/bin/sudo', '-H', '-u', username] + command
+
+            return command, not as_root
+        elif options.get('virt_instances_id'):
+            command = ['/usr/bin/incus', 'exec', options['virt_instances_id'], options.get('command', '/bin/bash')]
             if not as_root:
                 command = ['/usr/bin/sudo', '-H', '-u', username] + command
 

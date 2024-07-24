@@ -80,11 +80,12 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     def _get_systemd_unit_name(self):
         return f"{self.systemd_unit}.service".encode()
 
-    async def _unit_action(self, action, wait=True):
-        return await self.middleware.run_in_thread(self._unit_action_sync, action, wait, self.systemd_unit_timeout)
+    async def _unit_action(self, action, wait=True, unit=None):
+        return await self.middleware.run_in_thread(self._unit_action_sync, action, wait, self.systemd_unit_timeout, unit=unit)
 
-    def _unit_action_sync(self, action, wait, timeout):
-        unit = self._get_systemd_unit()
+    def _unit_action_sync(self, action, wait, timeout, unit=None):
+        if unit is None:
+            unit = self._get_systemd_unit()
         job = getattr(unit.Unit, action)(b"replace")
 
         if wait:
