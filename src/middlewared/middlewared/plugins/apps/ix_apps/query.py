@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from pkg_resources import parse_version
 
 from .docker.query import list_resources_by_project
-from .metadata import get_collective_metadata
+from .metadata import get_collective_config, get_collective_metadata
+from .lifecycle import get_current_app_config
 from .path import get_app_parent_config_path
 from .utils import PROJECT_PREFIX
 
@@ -40,6 +41,14 @@ def normalize_portal_uri(portal_uri: str, host_ip: str | None) -> str:
     return portal_uri.replace('0.0.0.0', host_ip)
 
 
+def get_config_of_app(app_data: dict, collective_config: dict, retrieve_config: bool) -> dict:
+    return {
+        'config': collective_config.get(app_data['name']) or (
+            get_current_app_config(app_data['name'], app_data['version']) if app_data['version'] else {}
+        )
+    } if retrieve_config else {}
+
+
 def normalize_portal_uris(portals: dict[str, str], host_ip: str | None) -> dict[str, str]:
     return {name: normalize_portal_uri(uri, host_ip) for name, uri in portals.items()}
 
@@ -48,10 +57,12 @@ def list_apps(
     train_to_apps_version_mapping: dict[str, dict[str, dict[str, str]]],
     specific_app: str | None = None,
     host_ip: str | None = None,
+    retrieve_config: bool = False,
 ) -> list[dict]:
     apps = []
     app_names = set()
     metadata = get_collective_metadata()
+    collective_config = get_collective_config() if retrieve_config else {}
     # This will only give us apps which are running or in deploying state
     for app_name, app_resources in list_resources_by_project(
         project_name=f'{PROJECT_PREFIX}{specific_app}' if specific_app else None,
@@ -77,14 +88,15 @@ def list_apps(
                 state = 'RUNNING'
 
         app_metadata = metadata[app_name]
-        apps.append({
+        app_data = {
             'name': app_name,
             'id': app_name,
             'active_workloads': get_default_workload_values() if state == 'STOPPED' else workloads,
             'state': state,
             'upgrade_available': upgrade_available_for_app(train_to_apps_version_mapping, app_metadata['metadata']),
             **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
-        })
+        }
+        apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
 
     if specific_app and specific_app in app_names:
         return apps
@@ -100,14 +112,15 @@ def list_apps(
                 continue
 
             app_metadata = metadata[entry.name]
-            apps.append({
+            app_data = {
                 'name': entry.name,
                 'id': entry.name,
                 'active_workloads': get_default_workload_values(),
                 'state': 'STOPPED',
                 'upgrade_available': upgrade_available_for_app(train_to_apps_version_mapping, app_metadata['metadata']),
                 **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
-            })
+            }
+            apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
 
     return apps
 
