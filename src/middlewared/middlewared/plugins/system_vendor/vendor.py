@@ -35,3 +35,5 @@ class VendorService(Service):
             pass
         except Exception:
             self.logger.exception('Unexpected error attempting to remove %r', SENTINEL_FILE_PATH)
+
+        self.middleware.call_sync('etc.generate', 'grub')
