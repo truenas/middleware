@@ -97,7 +97,7 @@ class K8stoDockerMigrationService(Service):
             new_config = migrate_chart_release_config(chart_release)
             if isinstance(new_config, str) or not new_config:
                 release_details.append({
-                    'name': chart_release['name'],
+                    'name': chart_release['release_name'],
                     'error': new_config,
                 })
                 continue

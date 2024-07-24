@@ -81,7 +81,4 @@ def release_details(release_name: str, release_path: str, catalog_path: str, app
     else:
         config['error'] = 'Unable to locate release\'s app\'s migration file'
 
-    if not os.access(migrate_file_path, os.X_OK):
-        config['error'] = 'Migration file is not executable'
-
     return config
