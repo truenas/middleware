@@ -71,9 +71,10 @@ def release_details(release_name: str, release_path: str, catalog_path: str, app
     if config['app_name'] not in apps_mapping[release_train]:
         return config | {'error': 'Unable to locate release\'s app'}
 
-    config['app_version'] = apps_mapping[release_train][config['app_name']]
+    config['app_version'] = apps_mapping[release_train][config['app_name']]['version']
     migrate_file_path = os.path.join(
-        get_train_path(catalog_path), release_train, config['app_name'], config['app_version'], 'migrate_from_k8s'
+        get_train_path(catalog_path), release_train, config['app_name'],
+        config['app_version'], 'migrations/migrate_from_kubernetes',
     )
     if os.path.exists(migrate_file_path):
         config['migrate_file_path'] = migrate_file_path
