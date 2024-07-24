@@ -14,6 +14,17 @@ logger = logging.getLogger(__name__)
 class UpdateService(Service):
     @private
     def install(self, job, path, options):
+        state = self.middleware.call_sync("boot.get_state")
+        if (
+            state["scan"] and
+            state["scan"]["function"] == "RESILVER" and
+            state["scan"]["state"] == "SCANNING"
+        ):
+            raise CallError(
+                f"One or more boot pool devices are currently being resilvered. The upgrade cannot continue "
+                "until the resilvering operation is finished."
+            )
+
         def progress_callback(progress, description):
             job.set_progress((0.5 + 0.5 * progress) * 100, description)
 
