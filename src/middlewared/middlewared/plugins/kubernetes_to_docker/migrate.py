@@ -1,5 +1,10 @@
 import contextlib
+import os.path
+import shutil
 
+from middlewared.plugins.apps.ix_apps.lifecycle import get_current_app_config
+from middlewared.plugins.apps.ix_apps.path import get_app_parent_volume_ds_name, get_installed_app_path
+from middlewared.plugins.docker.state_utils import DATASET_DEFAULTS
 from middlewared.plugins.docker.utils import applications_ds_name
 from middlewared.schema import accepts, Dict, returns, Str
 from middlewared.service import CallError, InstanceNotFound, job, Service
@@ -111,5 +116,41 @@ class K8stoDockerMigrationService(Service):
                     'name': chart_release['name'],
                     'error': str(e),
                 })
+                continue
 
+            app_config = get_current_app_config(chart_release['release_name'], chart_release['app_version'])
             # At this point we have just not instructed docker to start the app and ix volumes normalization is left
+            release_config = chart_release['helm_secret']['config']
+            snapshot = backup_config['snapshot_name'].split('@')[-1]
+            available_snapshots = set()
+            for ix_volume in release_config.get('ixVolumes', []):
+                ds_name = ix_volume.get('hostPath', '')[5]  # remove /mnt/
+                ds_snap = f'{ds_name}@{snapshot}'
+                if not self.middleware.call_sync('zfs.snapshot.query', [['id', '=', ds_snap]]):
+                    continue
+
+                available_snapshots.add(ds_snap)
+
+            if available_snapshots:
+                self.middleware.call_sync('app.schema.action.update_volumes', chart_release['release_name'], [])
+
+            try:
+                app_volume_ds = get_app_parent_volume_ds_name(kubernetes_pool, chart_release['release_name'])
+                for snapshot in available_snapshots:
+                    # We will do a zfs clone and promote here
+                    destination_ds = os.path.join(app_volume_ds, snapshot.split('@')[0].split('/')[-1])
+                    self.middleware.call_sync('zfs.snapshot.clone', {
+                        'snapshot': snapshot,
+                        'dataset_dst': destination_ds,
+                        'dataset_properties': {
+                            k: v for k, v in DATASET_DEFAULTS.items() if k not in ['casesensitivity']
+                        },
+                    })
+                    self.middleware.call_sync('zfs.dataset.promote', destination_ds)
+            except CallError as e:
+                release_details.append({
+                    'name': chart_release['name'],
+                    'error': f'Failed to clone and promote ix-volumes: {e}',
+                })
+                # We do this to make sure it does not show up as installed in the UI
+                shutil.rmtree(get_installed_app_path(chart_release['release_name']), ignore_errors=True)
