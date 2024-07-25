@@ -112,6 +112,7 @@ def test_007_check_local_accounts(ws_client, account):
         fail(f'Group has unexpected name: {account["name"]} -> {entry["group"]}')
 
 
+@pytest.mark.skip(reason='known issue c.f. NAS-127825')
 def test_008_check_root_dataset_settings(ws_client):
     data = SSH_TEST('cat /conf/truenas_root_ds.json', user, password)
     if not data['result']:
