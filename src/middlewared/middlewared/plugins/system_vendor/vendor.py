@@ -40,6 +40,6 @@ class VendorService(Service):
 
         self.middleware.call_sync('etc.generate', 'grub')
 
-    @api_method(IsVendoredArgs, IsVendoredResult)
+    @api_method(IsVendoredArgs, IsVendoredResult, private=True)
     def is_vendored(self):
         return os.path.isfile(SENTINEL_FILE_PATH)
