@@ -104,11 +104,11 @@ def add_SNMPv3_user():
 def create_nested_structure():
     """
     Create the following structure:
-        tank -+-> dataset_1 -+-> dataset2 -+-> dataset_3
-              |-> zvol_1a    |-> zvol_2a   |-> zvol_3a
-              |-> zvol_1b    |-> zvol_2b   |-> zvol_3b
-              |-> file_1     |-> file_2    |-> file_3
-              |-> dir_1      |-> dir_2     |-> dir_3
+        tank -+-> dataset_1 -+-> dataset_2 -+-> dataset_3
+              |-> zvol_1a    |-> zvol-L_2a  |-> zvol L_3a
+              |-> zvol_1b    |-> zvol-L_2b  |-> zvol L_3b
+              |-> file_1     |-> file_2     |-> file_3
+              |-> dir_1      |-> dir_2      |-> dir_3
     TODO: Make this generic and move to assets
     """
     ds_path = ""
@@ -116,11 +116,13 @@ def create_nested_structure():
     zv_list = []
     dir_list = []
     file_list = []
+    # Test '-' and ' ' in the name (we skip index 0)
+    zvol_name = ["bogus", "zvol", "zvol-L", "zvol L"]
     with ExitStack() as es:
 
         for i in range(1, 4):
             preamble = f"{ds_path + '/' if i > 1 else ''}"
-            vol_path = f"{preamble}zvol_{i}"
+            vol_path = f"{preamble}{zvol_name[i]}_{i}"
 
             # Create zvols
             for c in crange('a', 'b'):
@@ -233,7 +235,7 @@ def user_list_users(snmp_config):
 
     # This call will timeout if SNMP is not running
     res = ssh(cmd)
-    return [x.split()[-1].strip('\"') for x in res.splitlines()]
+    return [x.split(':')[-1].strip(' \"') for x in res.splitlines()]
 
 
 def v2c_snmpwalk(mib):
@@ -247,14 +249,14 @@ def v2c_snmpwalk(mib):
 
     # This call will timeout if SNMP is not running
     res = ssh(cmd)
-    return [x.split()[-1].strip('\"') for x in res.splitlines()]
+    return [x.split(':')[-1].strip(' \"') for x in res.splitlines()]
 
 
 # =====================================================================
 #                           Tests
 # =====================================================================
-@pytest.mark.usefixtures("initialize_and_start_snmp")
 class TestSNMP:
+
     def test_configure_SNMP(self, initialize_and_start_snmp):
         config = initialize_and_start_snmp
 

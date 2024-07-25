@@ -33,4 +33,4 @@ def mkfile(path, size=None):
             ssh(f"dd if=/dev/urandom of={path} bs={t} count={size // t}")
         yield path
     finally:
-        ssh(f"rm -rf {path}")
+        ssh(f"rm -f {path}")
