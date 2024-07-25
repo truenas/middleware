@@ -607,12 +607,20 @@ class JBOFService(CRUDService):
                     # Failed to connect any IPs => error
                     verrors.add(schema, f'Unable to communicate with the expansion shelf (node {node})')
                     return
+                elif len(connected_shelf_ips) > 1:
+                    # Too many connections exist (currently do not support multipath)
+                    verrors.add(schema, f'Too many connections wired to the expansion shelf (node {node})')
+                    return
                 self.logger.debug('Configured node %r: %r', node, connected_shelf_ips)
         else:
             connected_shelf_ips = await self.hardwire_node('', shelf_index, shelf_ip_to_mac)
             if not connected_shelf_ips:
                 # Failed to connect any IPs => error
                 verrors.add(schema, 'Unable to communicate with the expansion shelf')
+                return
+            elif len(connected_shelf_ips) > 1:
+                # Too many connections exist (currently do not support multipath)
+                verrors.add(schema, 'Too many connections wired to the expansion shelf')
                 return
             self.logger.debug('Configured node: %r', connected_shelf_ips)
 
