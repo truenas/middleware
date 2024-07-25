@@ -128,6 +128,6 @@ def test_004_remove_critical_failover_group(request):
             ValidationError(
                 'interface_update.failover_group',
                 'A failover group is required when configuring a critical failover interface.',
-                errno.EAGAIN
+                errno.EINVAL
             )
         ]
