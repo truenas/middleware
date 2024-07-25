@@ -252,9 +252,9 @@ class JBOFService(CRUDService):
         return response
 
     @accepts()
-    async def force_config(self):
+    async def reapply_config(self):
         """
-        Force the JBOF configuration to attached JBOFs.
+        Reapply the JBOF configuration to attached JBOFs.
 
         If an IOM is replaced in a JBOF, then it is expected to be configured to have
         the same redfish IP, user & password as was previously the case.
@@ -264,7 +264,7 @@ class JBOFService(CRUDService):
         """
         verrors = ValidationErrors()
         await self.middleware.call('jbof.hardwire_shelves')
-        await self.middleware.call('jbof.attach_drives', 'jbof.force_config', verrors)
+        await self.middleware.call('jbof.attach_drives', 'jbof.reapply_config', verrors)
         verrors.check()
 
     @private
