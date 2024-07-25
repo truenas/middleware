@@ -184,6 +184,7 @@ class CoreService(Service):
             'exc_info',
             Str('repr', null=True),
             Str('type', null=True),
+            Int('errno', null=True),
             Any('extra', null=True),
             null=True
         ),
