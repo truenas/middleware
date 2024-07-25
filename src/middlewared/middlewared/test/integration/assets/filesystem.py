@@ -14,13 +14,14 @@ def directory(path, options=None):
 
 
 @contextlib.contextmanager
-def file(path, size=None):
+def mkfile(path, size=None):
     """
     Create a simple file
     * path is the full-pathname. e.g. /mnt/tank/dataset/filename
     * If size is None then use 'touch',
       else create a random filled file of size bytes.
       Creation will be faster if size is a power of 2, e.g. 1024 or 1048576
+    TODO: sparse files, owner, permissions
     """
     try:
         if size is None:

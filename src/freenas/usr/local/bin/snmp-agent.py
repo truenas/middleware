@@ -9,7 +9,6 @@ import netsnmpagent
 import pysnmp.hlapi  # noqa
 import pysnmp.smi
 
-from glob import iglob
 from truenas_api_client import Client
 
 
@@ -412,13 +411,10 @@ def report_zfs_info(prev_zpool_info):
 
 def get_list_of_zvols():
     zvols = set()
-    root_dir = '/dev/zvol/'
     with contextlib.suppress(FileNotFoundError):  # no zvols
-        for zvol in iglob(root_dir + '**', recursive=True):
-            if not os.path.isdir(zvol) and '@' not in zvol:
-                zvol_normalized = zvol.removeprefix(root_dir)
-                zvol_normalized = zvol_normalized.replace('+', ' ')
-                zvols.add(zvol_normalized)
+        for root_dir, unused_dirs, files in os.walk('/dev/zvol/'):
+            for file in filter(lambda x: '@' not in x, files):
+                zvols.add(os.path.join(root_dir, file).removeprefix(root_dir).replace('+', ' '))
 
     return list(zvols)
 

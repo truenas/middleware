@@ -9,7 +9,7 @@ from time import sleep
 from contextlib import ExitStack
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.assets.filesystem import directory, file
+from middlewared.test.integration.assets.filesystem import directory, mkfile
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.system import reset_systemd_svcs
@@ -132,7 +132,7 @@ def create_nested_structure():
             dir_list.append(d)
 
             # Create files
-            f = es.enter_context(file(f"/mnt/{pool_name}/{preamble}file_{i}", 1048576))
+            f = es.enter_context(mkfile(f"/mnt/{pool_name}/{preamble}file_{i}", 1048576))
             file_list.append(f)
 
             # Create datasets
