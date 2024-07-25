@@ -96,6 +96,14 @@ class DomainHealth(
         if initial_status in (DSStatus.LEAVING, DSStatus.JOINING):
             self.logger.debug("Deferring health check due to status of %s", initial_status.name)
             return True
+        elif initial_status is None:
+            # Our directory service hasn't been initialized.
+            #
+            # We'll be optimistic and call it HEALTHY before we run the
+            # the actual health checks below. The reason for this is so that
+            # if we attempt to etc.generate files during health check a
+            # second call to directoryservices.status won't land us here again.
+            DSHealthObj.update(enabled_ds, DSStatus.HEALTHY, None)
 
         try:
             match enabled_ds:
