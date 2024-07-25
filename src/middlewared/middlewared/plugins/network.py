@@ -1049,6 +1049,12 @@ class InterfaceService(CRUDService):
                             f'{schema_name}.{i}',
                             f'{str(validation_attrs[i][0]) + str(validation_attrs[i][2])}',
                         )
+            else:
+                if data.get('failover_critical') and data.get('failover_group') is None:
+                    verrors.add(
+                        f'{schema_name}.failover_group',
+                        'A failover group is required when configuring a critical failover interface.'
+                    )
 
             # creating a "failover" lagg interface on HA systems and trying
             # to mark it "critical for failover" isn't allowed as it can cause
