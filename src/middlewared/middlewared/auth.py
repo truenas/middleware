@@ -59,10 +59,6 @@ class UnixSocketSessionManagerCredentials(UserSessionManagerCredentials):
     pass
 
 
-class RootTcpSocketSessionManagerCredentials(UserSessionManagerCredentials):
-    pass
-
-
 class LoginPasswordSessionManagerCredentials(UserSessionManagerCredentials):
     pass
 
