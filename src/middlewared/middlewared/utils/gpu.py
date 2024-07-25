@@ -2,6 +2,7 @@ import collections
 import os
 import re
 import subprocess
+from typing import TextIO
 
 import pyudev
 
@@ -13,9 +14,9 @@ from .pci import SENSITIVE_PCI_DEVICE_TYPES
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
 
 
-def parse_nvidia_info_file(fileobj):
+def parse_nvidia_info_file(file_obj: TextIO) -> tuple[dict, str]:
     gpu, bus_loc = dict(), None
-    for line in fileobj:
+    for line in file_obj:
         k, v = line.split(':', 1)
         k, v = k.strip().lower().replace(' ', '_'), v.strip()
         gpu[k] = v
@@ -24,7 +25,7 @@ def parse_nvidia_info_file(fileobj):
     return gpu, bus_loc
 
 
-def get_nvidia_gpus():
+def get_nvidia_gpus() -> dict[str, dict]:
     """Don't be so complicated. Return basic information about
     NVIDIA devices (if any) that are connected."""
     gpus = dict()

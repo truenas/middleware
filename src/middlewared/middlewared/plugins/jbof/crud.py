@@ -251,6 +251,22 @@ class JBOFService(CRUDService):
         response = await self.middleware.call('datastore.delete', self._config.datastore, id_)
         return response
 
+    @accepts()
+    async def reapply_config(self):
+        """
+        Reapply the JBOF configuration to attached JBOFs.
+
+        If an IOM is replaced in a JBOF, then it is expected to be configured to have
+        the same redfish IP, user & password as was previously the case.
+
+        This API can then be called to configure each JBOF with the expected data-plane
+        IP configuration, and then attach NVMe drives.
+        """
+        verrors = ValidationErrors()
+        await self.middleware.call('jbof.hardwire_shelves')
+        await self.middleware.call('jbof.attach_drives', 'jbof.reapply_config', verrors)
+        verrors.check()
+
     @private
     def get_mgmt_ips(self, mgmt_ip):
         redfish = RedfishClient.cache_get(mgmt_ip)
@@ -476,7 +492,7 @@ class JBOFService(CRUDService):
         await self.middleware.call('jbof.hardwire_shelf', mgmt_ip, shelf_index)
         await self.middleware.call('jbof.hardwire_host', mgmt_ip, shelf_index, schema, verrors)
         if not verrors:
-            await self.middleware.call('jbof.attach_drives', mgmt_ip, shelf_index, schema, verrors)
+            await self.middleware.call('jbof.attach_drives', schema, verrors)
 
     @private
     def fabric_interface_choices(self, mgmt_ip):
@@ -529,6 +545,25 @@ class JBOFService(CRUDService):
             self.logger.debug('Configured JBOF #%r', shelf_index)
 
     @private
+    async def hardwire_shelves(self):
+        """Apply the expected datapath IPs to all configured shelves."""
+        jbofs = await self.middleware.call('jbof.query')
+        if jbofs:
+            exceptions = await asyncio.gather(
+                *[self.middleware.call('jbof.hardwire_shelf', jbof['mgmt_ip1'], jbof['index']) for jbof in jbofs],
+                return_exceptions=True
+            )
+            failures = []
+            for jbof, exc in zip(jbofs, exceptions):
+                if isinstance(exc, Exception):
+                    failures.append(str(exc))
+                else:
+                    self.logger.info('Successfully hardwired JBOF %r (index %r)', jbof['description'], jbof['index'])
+
+            if failures:
+                self.logger.error(f'Failure hardwiring JBOFs: {", ".join(failures)}')
+
+    @private
     def unwire_shelf(self, mgmt_ip):
         redfish = RedfishClient.cache_get(mgmt_ip)
         for uri in redfish.fabric_ethernet_interfaces():
@@ -572,12 +607,20 @@ class JBOFService(CRUDService):
                     # Failed to connect any IPs => error
                     verrors.add(schema, f'Unable to communicate with the expansion shelf (node {node})')
                     return
+                elif len(connected_shelf_ips) > 1:
+                    # Too many connections exist (currently do not support multipath)
+                    verrors.add(schema, f'Too many connections wired to the expansion shelf (node {node})')
+                    return
                 self.logger.debug('Configured node %r: %r', node, connected_shelf_ips)
         else:
             connected_shelf_ips = await self.hardwire_node('', shelf_index, shelf_ip_to_mac)
             if not connected_shelf_ips:
                 # Failed to connect any IPs => error
                 verrors.add(schema, 'Unable to communicate with the expansion shelf')
+                return
+            elif len(connected_shelf_ips) > 1:
+                # Too many connections exist (currently do not support multipath)
+                verrors.add(schema, 'Too many connections wired to the expansion shelf')
                 return
             self.logger.debug('Configured node: %r', connected_shelf_ips)
 
@@ -660,8 +703,8 @@ class JBOFService(CRUDService):
         return list(connected_shelf_ips)
 
     @private
-    async def attach_drives(self, mgmt_ip, shelf_index, schema, verrors):
-        """Attach drives from the specified expansion shelf."""
+    async def attach_drives(self, schema, verrors):
+        """Attach drives from all configured JBOF expansion shelves."""
         if await self.middleware.call('failover.licensed'):
             # HA system
             if not await self.middleware.call('failover.remote_connected'):
@@ -673,12 +716,12 @@ class JBOFService(CRUDService):
                 verrors.add(schema, 'Unable to determine this controllers position in chassis')
                 return
 
-            await asyncio.gather(*[self.attach_drives_to_node(node, shelf_index) for node in ('A', 'B')])
+            await asyncio.gather(*[self.attach_drives_to_node(node) for node in ('A', 'B')])
         else:
-            await self.attach_drives_to_node('', shelf_index)
+            await self.attach_drives_to_node('')
 
     @private
-    async def attach_drives_to_node(self, node, shelf_index):
+    async def attach_drives_to_node(self, node):
         localnode = not node or node == await self.middleware.call('failover.node')
         configured_interfaces = await self.middleware.call('rdma.interface.query')
         if localnode:

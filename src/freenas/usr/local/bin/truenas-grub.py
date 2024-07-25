@@ -3,10 +3,13 @@ import math
 import psutil
 import os
 import json
+import logging
 
 from middlewared.utils.serial import serial_port_choices
 from middlewared.utils.db import query_config_table
+from middlewared.utils.vendor import Vendors
 
+logger = logging.getLogger(__name__)
 
 def get_serial_ports():
     return {e['start']: e['name'].replace('uart', 'ttyS') for e in serial_port_choices()}
@@ -16,12 +19,14 @@ if __name__ == "__main__":
     advanced = query_config_table("system_advanced", prefix="adv_")
     kernel_extra_options = advanced.get("kernel_extra_options") or ""
 
-    # check for /data/.vendor
+    vendor = Vendors.TRUENAS_SCALE
     try:
         with open("/data/.vendor", "r") as f:
-            vendor = json.loads(f.read()).get("name", "TrueNAS Scale")
+            vendor = json.loads(f.read()).get("name", Vendors.TRUENAS_SCALE)
     except FileNotFoundError:
-        vendor = "TrueNAS Scale"
+        pass
+    except Exception:
+        logger.error("Failed to parse /data/.vendor", exc_info=True)
 
     # We need to allow tpm in grub as sedutil-cli requires it
     # `zfsforce=1` is needed because FreeBSD bootloader imports boot pool with hostid=0 while SCALE releases up to
