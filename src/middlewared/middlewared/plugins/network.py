@@ -1026,6 +1026,12 @@ class InterfaceService(CRUDService):
                     'Failover needs to be disabled to perform network configuration changes.'
                 )
 
+            if data.get('failover_critical') and data.get('failover_group') is None:
+                verrors.add(
+                    f'{schema_name}.failover_group',
+                    'A failover group is required when configuring a critical failover interface.'
+                )
+
             # have to make sure that active, standby and virtual ip addresses are equal
             active_node_ips = len(data.get('aliases', []))
             standby_node_ips = len(data.get('failover_aliases', []))
