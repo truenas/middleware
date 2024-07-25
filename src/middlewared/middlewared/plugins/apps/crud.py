@@ -71,21 +71,40 @@ class AppService(CRUDService):
         """
         Query all apps with `query-filters` and `query-options`.
 
-        `query-options.extra.host_ip` can be provided to override portal IP address if it is a wildcard.
+        `query-options.extra.host_ip` is a string which can be provided to override portal IP address
+        if it is a wildcard.
+
+        `query-options.extra.include_app_schema` is a boolean which can be set to include app schema in the response.
+
+        `query-options.extra.retrieve_config` is a boolean which can be set to retrieve app configuration
+        used to install/manage app.
         """
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
 
         extra = options.get('extra', {})
+        retrieve_app_schema = extra.get('include_app_schema', False)
         kwargs = {
-            'host_ip': extra.get('host_ip') or self.middleware.call_sync('interface.websocket_local_ip', app=app)
+            'host_ip': extra.get('host_ip') or self.middleware.call_sync('interface.websocket_local_ip', app=app),
+            'retrieve_config': extra.get('retrieve_config', False),
         }
         if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
             kwargs = {'specific_app': filters[0][2]}
 
         available_apps_mapping = self.middleware.call_sync('catalog.train_to_apps_version_mapping')
 
-        return filter_list(list_apps(available_apps_mapping, **kwargs), filters, options)
+        apps = list_apps(available_apps_mapping, **kwargs)
+        if not retrieve_app_schema:
+            return filter_list(apps, filters, options)
+
+        questions_context = self.middleware.call_sync('catalog.get_normalized_questions_context')
+        for app in apps:
+            app['version_details'] = self.middleware.call_sync(
+                'catalog.app_version_details', get_installed_app_version_path(app['name'], app['version']),
+                questions_context,
+            )
+
+        return filter_list(apps, filters, options)
 
     @accepts(Str('app_name'))
     @returns(Dict('app_config', additional_attrs=True))
@@ -214,7 +233,7 @@ class AppService(CRUDService):
         )
 
         new_values = self.middleware.call_sync(
-            'app.schema.normalize_and_validate_values', app_version_details, config, False,
+            'app.schema.normalize_and_validate_values', app_version_details, config, True,
             get_installed_app_path(app_name), app
         )
 

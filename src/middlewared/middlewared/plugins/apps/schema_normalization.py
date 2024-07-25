@@ -11,6 +11,7 @@ from .schema_utils import get_list_item_from_value, RESERVED_NAMES
 REF_MAPPING = {
     'definitions/certificate': 'certificate',
     'definitions/certificate_authority': 'certificate_authorities',
+    'definitions/gpu_configuration': 'gpu_configuration',
     'normalize/acl': 'acl',
     'normalize/ix_volume': 'ix_volume',
 }
@@ -100,6 +101,20 @@ class AppSchemaService(Service):
         complete_config['ix_certificate_authorities'][value] = await self.middleware.call(
             'certificateauthority.get_instance', value
         )
+
+        return value
+
+    async def normalize_gpu_configuration(self, attr, value, complete_config, context):
+        gpu_choices = {
+            gpu['pci_slot']: gpu
+            for gpu in await self.middleware.call('app.gpu_choices_internal') if not gpu['error']
+        }
+        if not any(gpu['vendor'] != 'NVIDIA' for gpu in gpu_choices.values()):
+            value['use_all_gpus'] = False
+
+        for nvidia_gpu_pci_slot in list(value['nvidia_gpu_selection']):
+            if nvidia_gpu_pci_slot not in gpu_choices or gpu_choices[nvidia_gpu_pci_slot]['vendor'] != 'NVIDIA':
+                value['nvidia_gpu_selection'].pop(nvidia_gpu_pci_slot)
 
         return value
 
