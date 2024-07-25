@@ -1,10 +1,7 @@
-from collections import defaultdict
-import sys
-import os
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-
+import collections
 import json
+import os
+
 import pytest
 
 from functions import if_key_listed, SSH_TEST
@@ -155,7 +152,7 @@ def test_008_check_root_dataset_settings(ws_client):
 
 
 def test_009_check_listening_ports():
-    listen = defaultdict(set)
+    listen = collections.defaultdict(set)
     for line in ssh("netstat -tuvpan | grep LISTEN").splitlines():
         proto, _, _, local, _, _, process = line.split(maxsplit=6)
         if proto == "tcp":
