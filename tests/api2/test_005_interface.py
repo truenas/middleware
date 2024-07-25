@@ -4,8 +4,10 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
+import errno
 import pytest
 
+from middlewared.service_exception import ValidationError, ValidationErrors
 from auto_config import interface, ha, netmask
 from middlewared.test.integration.utils.client import client, truenas_server
 from middlewared.test.integration.utils import call
@@ -118,3 +120,14 @@ def test_002_configure_interface(request, ws_client, get_payload):
 
 def test_003_recheck_ipvx(request):
     assert int(call('tunable.get_sysctl', f'net.ipv6.conf.{interface}.autoconf')) == 0
+
+def test_004_remove_critical_failover_group(request):
+    with pytest.raises(ValidationErrors) as ve:
+        call('interface.update', interface, {'failover_group': None, 'failover_critical': True})
+        assert ve.value.errors == [
+            ValidationError(
+                'interface_update.failover_group',
+                'A failover group is required when configuring a critical failover interface.',
+                errno.EAGAIN
+            )
+        ]
