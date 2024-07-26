@@ -44,8 +44,4 @@ class AppService(Service):
         Redeploy `app_name` app.
         """
         app = await self.middleware.call('app.get_instance', app_name)
-        stop_job = await self.middleware.call('app.stop', app_name)
-        await stop_job.wait()
-        if stop_job.error:
-            raise CallError(f'Failed to redeploy app: {stop_job.error}')
         return await self.middleware.call('app.update_internal', job, app, {'values': {}}, 'Redeployment')
