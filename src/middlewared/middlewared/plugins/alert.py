@@ -239,6 +239,8 @@ class AlertService(Service):
 
         self.alerts = []
         if load:
+            alerts_uuids = set()
+            alerts_by_classes = defaultdict(list)
             for alert in await self.middleware.call("datastore.query", "system.alert"):
                 del alert["id"]
 
@@ -259,8 +261,15 @@ class AlertService(Service):
 
                 alert = Alert(**alert)
 
-                if not any(a.uuid == alert.uuid for a in self.alerts):
-                    self.alerts.append(alert)
+                if alert.uuid not in alerts_uuids:
+                    alerts_uuids.add(alert.uuid)
+                    alerts_by_classes[alert.klass.__name__].append(alert)
+
+            for alerts in alerts_by_classes.values():
+                if isinstance(alerts[0].klass, OneShotAlertClass):
+                    alerts = await alerts[0].klass.load(alerts)
+
+                self.alerts.extend(alerts)
         else:
             await self.flush_alerts()
 
