@@ -49,6 +49,7 @@ def iscsi_scsi_connect(host, iqn, lun=0, user=None, secret=None, target_user=Non
     else:
         device = init_device(device_str)
     s = SCSI(device)
+    s.blocksize = 512
     return s
 
 
