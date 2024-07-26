@@ -411,10 +411,11 @@ def report_zfs_info(prev_zpool_info):
 
 def get_list_of_zvols():
     zvols = set()
+    root_dir = '/dev/zvol'
     with contextlib.suppress(FileNotFoundError):  # no zvols
-        for root_dir, unused_dirs, files in os.walk('/dev/zvol/'):
+        for dir_path, unused_dirs, files in os.walk(root_dir):
             for file in filter(lambda x: '@' not in x, files):
-                zvols.add(os.path.join(root_dir, file).removeprefix(root_dir).replace('+', ' '))
+                zvols.add(os.path.join(dir_path, file).removeprefix(root_dir).replace('+', ' '))
 
     return list(zvols)
 
