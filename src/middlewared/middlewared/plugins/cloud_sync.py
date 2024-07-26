@@ -547,6 +547,10 @@ class CloudSyncTaskFailedAlertClass(AlertClass, OneShotAlertClass):
             alerts
         ))
 
+    async def load(self, alerts):
+        task_ids = {str(task["id"]) for task in await self.middleware.call("cloudsync.query")}
+        return [alert for alert in alerts if alert.key in task_ids]
+
 
 def lsjson_error_excerpt(error):
     excerpt = error.split("\n")[0]
