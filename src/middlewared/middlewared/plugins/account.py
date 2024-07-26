@@ -842,7 +842,14 @@ class UserService(CRUDService):
     def recreate_homedir_if_not_exists(self, user, group, mode):
         # sigh, nothing is stopping someone from removing the homedir
         # from the CLI so recreate the original directory in this case
-        if not os.path.isdir(user['home']):
+        if os.path.isdir(user['home']):
+            if user['home'].startswith('/mnt/'):
+                self.middleware.call_sync('filesystem.chown', {
+                    'path': user['home'],
+                    'uid': user['uid'],
+                    'gid': group['bsdgrp_gid'],
+                }).wait_sync(raise_error=True)
+        else:
             if os.path.exists(user['home']):
                 raise CallError(f'{user["home"]!r} already exists and is not a directory')
 

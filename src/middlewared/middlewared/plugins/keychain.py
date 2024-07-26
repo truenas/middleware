@@ -704,6 +704,8 @@ class KeychainCredentialService(CRUDService):
 
         # Write public key in user authorized_keys for SSH
         with open(f"{dotsshdir}/authorized_keys", "a+") as f:
+            os.fchmod(f.fileno(), 0o600)
+            os.fchown(f.fileno(), user["uid"], user["group"]["bsdgrp_gid"])
             f.seek(0)
             if data["public_key"] not in f.read():
                 f.write("\n" + data["public_key"] + "\n")

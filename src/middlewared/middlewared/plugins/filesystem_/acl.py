@@ -160,7 +160,7 @@ class FilesystemService(Service):
             verrors.add("filesystem.chown.uid",
                         "Please specify either user or group to change.")
 
-        loc = self._common_perm_path_validate("filesystem.chown", data, verrors)
+        self._common_perm_path_validate("filesystem.chown", data, verrors)
         verrors.check()
 
         if not options['recursive']:
@@ -246,7 +246,7 @@ class FilesystemService(Service):
         uid = -1 if data['uid'] is None else data.get('uid', -1)
         gid = -1 if data['gid'] is None else data.get('gid', -1)
 
-        loc = self._common_perm_path_validate("filesystem.setperm", data, verrors)
+        self._common_perm_path_validate("filesystem.setperm", data, verrors)
 
         current_acl = self.middleware.call_sync('filesystem.getacl', data['path'])
         acl_is_trivial = current_acl['trivial']
