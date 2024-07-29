@@ -78,6 +78,9 @@ def release_details(release_name: str, release_path: str, catalog_path: str, app
         config['app_version'], 'migrations/migrate_from_kubernetes',
     )
     if os.path.exists(migrate_file_path):
+        if not os.access(migrate_file_path, os.X_OK):
+            return config | {'error': 'Migration script is not executable'}
+
         config['migrate_file_path'] = migrate_file_path
     else:
         config['error'] = 'Unable to locate release\'s app\'s migration file'
