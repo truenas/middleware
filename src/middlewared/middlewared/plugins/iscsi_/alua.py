@@ -225,10 +225,12 @@ class iSCSITargetAluaService(Service):
         remote_requires_reload = False
 
         # We are the STANDBY node.  Tell the ACTIVE it can logout any HA targets it had left over.
+        prefix = await self.middleware.call('iscsi.target.ha_iqn_prefix')
         while self.standby_starting:
             try:
-                iqns = await self.middleware.call('failover.call_remote', 'iscsi.target.logged_in_iqns')
-                if not iqns:
+                iqns = (await self.middleware.call('failover.call_remote', 'iscsi.target.logged_in_iqns')).keys()
+                ha_iqns = list(filter(lambda iqn: iqn.startswith(prefix), iqns))
+                if not ha_iqns:
                     break
                 await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_targets')
                 # If we have logged out targets on the ACTIVE node, then we will want to regenerate
