@@ -76,6 +76,8 @@ class K8stoDockerMigrationService(Service):
         if docker_job.error:
             raise CallError(f'Failed to configure docker: {docker_job.error}')
 
+        self.middleware.call_sync('catalog.sync').wait_sync()
+
         job.set_progress(25, f'Rolling back to {backup_config["snapshot_name"]!r} snapshot')
         self.middleware.call_sync(
             'zfs.snapshot.rollback', backup_config['snapshot_name'], {
@@ -113,7 +115,7 @@ class K8stoDockerMigrationService(Service):
                 )
             except Exception as e:
                 release_details.append({
-                    'name': chart_release['name'],
+                    'name': chart_release['release_name'],
                     'error': str(e),
                 })
                 continue
@@ -124,7 +126,7 @@ class K8stoDockerMigrationService(Service):
             snapshot = backup_config['snapshot_name'].split('@')[-1]
             available_snapshots = set()
             for ix_volume in release_config.get('ixVolumes', []):
-                ds_name = ix_volume.get('hostPath', '')[5]  # remove /mnt/
+                ds_name = ix_volume.get('hostPath', '')[5:]  # remove /mnt/
                 ds_snap = f'{ds_name}@{snapshot}'
                 if not self.middleware.call_sync('zfs.snapshot.query', [['id', '=', ds_snap]]):
                     continue
@@ -135,7 +137,9 @@ class K8stoDockerMigrationService(Service):
                 self.middleware.call_sync('app.schema.action.update_volumes', chart_release['release_name'], [])
 
             try:
-                app_volume_ds = get_app_parent_volume_ds_name(kubernetes_pool, chart_release['release_name'])
+                app_volume_ds = get_app_parent_volume_ds_name(
+                    os.path.join(kubernetes_pool, 'ix-apps'), chart_release['release_name']
+                )
                 for snapshot in available_snapshots:
                     # We will do a zfs clone and promote here
                     destination_ds = os.path.join(app_volume_ds, snapshot.split('@')[0].split('/')[-1])
@@ -149,7 +153,7 @@ class K8stoDockerMigrationService(Service):
                     self.middleware.call_sync('zfs.dataset.promote', destination_ds)
             except CallError as e:
                 release_details.append({
-                    'name': chart_release['name'],
+                    'name': chart_release['release_name'],
                     'error': f'Failed to clone and promote ix-volumes: {e}',
                 })
                 # We do this to make sure it does not show up as installed in the UI
