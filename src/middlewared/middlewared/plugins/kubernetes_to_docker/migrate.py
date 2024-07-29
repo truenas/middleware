@@ -92,16 +92,24 @@ class K8stoDockerMigrationService(Service):
         # We will now iterate over each chart release which can be migrated and try to migrate it's config
         # If we are able to migrate it's config, we will proceed with setting up relevant filesystem bits
         # for the app and finally redeploy it
+        total_releases = len(backup_config['releases'])
+        app_percentage = ((70 - 30) / total_releases)
+        percentage = 30
         release_details = []
         migrate_context = {'gpu_choices': self.middleware.call_sync('app.gpu_choices_internal')}
         dummy_job = type('dummy_job', (object,), {'set_progress': lambda *args: None})()
         for chart_release in backup_config['releases']:
+            percentage += app_percentage
+            job.set_progress(percentage, f'Migrating {chart_release["release_name"]!r} app')
+
+            release_config = {
+                'name': chart_release['release_name'],
+                'error': 'Unable to complete migration',
+            }
+            release_details.append(release_config)
             new_config = migrate_chart_release_config(chart_release | migrate_context)
             if isinstance(new_config, str) or not new_config:
-                release_details.append({
-                    'name': chart_release['release_name'],
-                    'error': new_config,
-                })
+                release_config['error'] = f'Failed to migrate config: {new_config}'
                 continue
 
             complete_app_details = self.middleware.call_sync('catalog.get_app_details', chart_release['app_name'], {
@@ -114,10 +122,7 @@ class K8stoDockerMigrationService(Service):
                     chart_release['app_version'], new_config, complete_app_details, True,
                 )
             except Exception as e:
-                release_details.append({
-                    'name': chart_release['release_name'],
-                    'error': str(e),
-                })
+                release_config['error'] = f'Failed to create app: {e}'
                 continue
 
             # At this point we have just not instructed docker to start the app and ix volumes normalization is left
@@ -152,11 +157,22 @@ class K8stoDockerMigrationService(Service):
                     self.middleware.call_sync('zfs.dataset.promote', destination_ds)
                     self.middleware.call_sync('zfs.dataset.mount', destination_ds)
             except CallError as e:
-                release_details.append({
-                    'name': chart_release['release_name'],
-                    'error': f'Failed to clone and promote ix-volumes: {e}',
-                })
+                release_config['error'] = f'Failed to clone and promote ix-volumes: {e}'
                 # We do this to make sure it does not show up as installed in the UI
                 shutil.rmtree(get_installed_app_path(chart_release['release_name']), ignore_errors=True)
             else:
+                release_config['error'] = None
                 self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+
+        job.set_progress(75, 'Deploying migrated apps')
+
+        bulk_job = self.middleware.call_sync(
+            'core.bulk', 'app.redeploy', [
+                [r['release_name']] for r in filter(lambda r: r['error'] is None, release_details)
+            ]
+        )
+        for index, status in enumerate(bulk_job.wait()):
+            if status['error']:
+                release_details[index]['error'] = f'Failed to deploy app: {status["error"]}'
+
+        return release_details
