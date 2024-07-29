@@ -175,4 +175,6 @@ class K8stoDockerMigrationService(Service):
             if status['error']:
                 release_details[index]['error'] = f'Failed to deploy app: {status["error"]}'
 
+        job.set_progress(100, 'Migration completed')
+
         return release_details
