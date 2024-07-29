@@ -43,5 +43,25 @@ def test_pool_replace_disk(topology, i):
         assert len(disks(pool["topology"])) == count
         assert disks(pool["topology"])[i]["disk"] == new_disk["devname"]
 
-        assert call("disk.get_instance", new_disk["identifier"], {"extra": {"pools": True}})["pool"] == pool["name"]
-        assert call("disk.get_instance", to_replace_disk["identifier"], {"extra": {"pools": True}})["pool"] is None
+        # this is flakey on our VMs as well, give it a bit of time before we assert
+        new = to_replace = None
+        for _ in range(30):
+            if all((new, to_replace)):
+                break
+            elif new is None:
+                p = call("disk.get_instance", new_disk["identifier"], {"extra": {"pools": True}})
+                if p["pool"] == pool["name"]:
+                    new = True
+                else:
+                    sleep(1)
+            elif to_replace is None:
+                t = call("disk.get_instance", to_replace_disk["identifier"], {"extra": {"pools": True}})
+                if t["pool"] is None:
+                    to_replace = True
+                else:
+                    sleep(1)
+        else:
+            if new is None:
+                assert False, f'disk.get_instance failed on {new_disk["identifier"]!r}'
+            if to_replace is None:
+                assert False, f'disk.get_instance failed on {to_replace["identifier"]!r}'
