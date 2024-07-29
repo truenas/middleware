@@ -1459,18 +1459,24 @@ def test_48_syslog_filters():
         # Add dummy entries to avoid false positives
         for i in range(10):
             ssh(f'logger "====== {i}: NFS test_48_syslog_filters (with) ======"')
+
+        # Sometimes the mount messages in syslog can take over a minute to appear.
+        # Sometimes the messages are output nearly immediately.
+        # We have syslog already configured to output nearly immediately.
+        # This retry loop is to prevent false failures on the slow response condition
+        # and not time penalize the quick response condition
         with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, user=user, password=password, ip=truenas_server.ip):
-            num_tries = 10
+            # Increase num_tries if necessary
+            num_tries = tries_remaining = 12
             found = False
             res = ""
-            while not found and num_tries > 0:
-                numlines = 3 * (10 - num_tries) + 5
-                res = ssh(f"tail -{numlines} /var/log/syslog")
+            while not found and tries_remaining > 0:
+                res = ssh("tail -30 /var/log/syslog")
                 if "rpc.mountd" in res:
                     found = True
                     break
-                num_tries -= 1
-                sleep(10 - num_tries)
+                tries_remaining -= 1
+                sleep(num_tries - tries_remaining)
 
             assert found, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
 
