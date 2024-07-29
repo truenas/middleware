@@ -171,7 +171,11 @@ class K8stoDockerMigrationService(Service):
                 [r['release_name']] for r in filter(lambda r: r['error'] is None, release_details)
             ]
         )
-        for index, status in enumerate(bulk_job.wait()):
+        bulk_job.wait_sync()
+        if bulk_job.error:
+            raise CallError(f'Failed to redeploy apps: {bulk_job.error}')
+
+        for index, status in enumerate(bulk_job.result):
             if status['error']:
                 release_details[index]['error'] = f'Failed to deploy app: {status["error"]}'
 
