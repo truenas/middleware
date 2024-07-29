@@ -168,7 +168,7 @@ class K8stoDockerMigrationService(Service):
 
         bulk_job = self.middleware.call_sync(
             'core.bulk', 'app.redeploy', [
-                [r['release_name']] for r in filter(lambda r: r['error'] is None, release_details)
+                [r['name']] for r in filter(lambda r: r['error'] is None, release_details)
             ]
         )
         bulk_job.wait_sync()
