@@ -200,13 +200,23 @@ def zvol_resize(zvol, volsize):
     call('pool.dataset.update', zvol, payload)
 
 
-def get_iscsi_sessions(filters=None, check_length=None):
+def _get_iscsi_sessions(filters=None):
     if filters:
-        data = call('iscsi.global.sessions', filters)
+        return call('iscsi.global.sessions', filters)
     else:
-        data = call('iscsi.global.sessions')
+        return call('iscsi.global.sessions')
+
+
+def get_iscsi_sessions(filters=None, check_length=None):
     if isinstance(check_length, int):
+        for _ in range(10):
+            data = _get_iscsi_sessions(filters)
+            if len(data) == check_length:
+                return data
+            sleep(1)
         assert len(data) == check_length, data
+    else:
+        data = _get_iscsi_sessions(filters)
     return data
 
 
