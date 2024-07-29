@@ -1922,9 +1922,9 @@ class InterfaceService(CRUDService):
     @private
     def get_nic_names(self) -> set:
         """Get network interface names excluding internal interfaces"""
-        res, ignore = set(), set(self.middleware.call_sync('interface.internal_interfaces'))
+        res, ignore = set(), tuple(self.middleware.call_sync('interface.internal_interfaces'))
         with scandir('/sys/class/net/') as nics:
-            for nic in filter(lambda x: x.is_symlink() and x.name not in ignore, nics):
+            for nic in filter(lambda x: x.is_symlink() and not x.name.startswith(ignore), nics):
                 res.add(nic.name)
 
         return res
