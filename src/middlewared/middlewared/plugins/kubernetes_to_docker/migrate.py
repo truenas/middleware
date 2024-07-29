@@ -2,7 +2,6 @@ import contextlib
 import os.path
 import shutil
 
-from middlewared.plugins.apps.ix_apps.lifecycle import get_current_app_config
 from middlewared.plugins.apps.ix_apps.path import get_app_parent_volume_ds_name, get_installed_app_path
 from middlewared.plugins.docker.state_utils import DATASET_DEFAULTS
 from middlewared.plugins.docker.utils import applications_ds_name
@@ -120,7 +119,6 @@ class K8stoDockerMigrationService(Service):
                 })
                 continue
 
-            app_config = get_current_app_config(chart_release['release_name'], chart_release['app_version'])
             # At this point we have just not instructed docker to start the app and ix volumes normalization is left
             release_config = chart_release['helm_secret']['config']
             snapshot = backup_config['snapshot_name'].split('@')[-1]
@@ -159,3 +157,5 @@ class K8stoDockerMigrationService(Service):
                 })
                 # We do this to make sure it does not show up as installed in the UI
                 shutil.rmtree(get_installed_app_path(chart_release['release_name']), ignore_errors=True)
+            else:
+                self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
