@@ -151,9 +151,6 @@ for output, arg in myopts:
     elif output == '--show_locals':
         show_locals = True
 
-# [MCG] Allow print to console
-callargs.append('-s')
-
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
     print(error_msg)
@@ -303,7 +300,6 @@ pytest_command = [
     "--junitxml",
     'results/api_v2_tests_result.xml',
 ]
-testexpr = 'not test_03_changing_dataset_permissions_of_nfs_dataset and not test_04_verify_the_job_id_is_successfull and not test_06_starting_nfs_service_at_boot and not test_07_checking_to_see_if_nfs_service_is_enabled_at_boot and not test_09_checking_to_see_if_nfs_service_is_running and not test_10_confirm_state_directory and not test_11_perform_basic_nfs_ops and not test_12_perform_server_side_copy and not test_19_updating_the_nfs_service and not test_20_update_nfs_share and not test_21_checking_to_see_if_nfs_service_is_enabled and not test_31_check_nfs_share_network and not test_32_check_nfs_share_hosts and not test_33_check_nfs_share_ro and not test_34_check_nfs_share_maproot and not test_35_check_nfs_share_mapall and not test_36_check_nfsdir_subtree_behavior and not test_37_check_nfsdir_subtree_share and not test_38_check_nfs_allow_nonroot_behavior and not test_39_check_nfs_service_protocols_parameter and not test_40_check_nfs_service_udp_parameter and not test_41_check_nfs_service_ports and not test_42_check_nfs_client_status and not test_43_check_nfsv4_acl_support and not test_44_check_nfs_xattr_support and not test_45_check_setting_runtime_debug and not test_46_set_bind_ip and not test_50_nfs_invalid_user_group_mapping and not test_52_manage_gids and not test_54_v4_domain and not test_71_checking_to_see_if_nfs_service_is_stop and not test_72_check_adjusting_threadpool_mode and not test_74_disable_nfs_service_at_boot and not test_75_checking_nfs_disable_at_boot and not test_80_start_nfs_service_with_missing_or_empty_exports and not test_82_files_in_exportsd '
 if testexpr:
     pytest_command.extend(['-k', testexpr])
 
@@ -315,7 +311,6 @@ def parse_test_name(test):
         filename, testname = test.split(".")
         return f"{filename}.py::{testname}"
     return test
-
 
 tests = ['api2/test_001_ssh.py',
          'api2/test_002_system_license.py',

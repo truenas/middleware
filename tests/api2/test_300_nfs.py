@@ -1465,21 +1465,17 @@ def test_48_syslog_filters():
         # We have syslog already configured to output nearly immediately.
         # This retry loop is to prevent false failures on the slow response condition
         # and not time penalize the quick response condition
-        print(f"\n[MCG DEBUG] mount {NFS_PATH}")
         with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, user=user, password=password, ip=truenas_server.ip):
             # Increase num_tries if necessary
             num_tries = tries_remaining = 12
             found = False
             res = ""
-            print(f"[MCG DEBUG] start wait loop: found={found}, num_tries={num_tries} tries_remaining={tries_remaining}")
             while not found and tries_remaining > 0:
                 res = ssh("tail -30 /var/log/syslog")
                 if "rpc.mountd" in res:
                     found = True
-                    print(f"[MCG DEBUG] found={found}, tries_remaining={tries_remaining}")
                     break
                 tries_remaining -= 1
-                print(f"[MCG DEBUG] in loop: tries_remaining = {tries_remaining}.  sleep({num_tries - tries_remaining})")
                 sleep(num_tries - tries_remaining)
 
             assert found, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
