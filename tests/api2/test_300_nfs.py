@@ -1636,6 +1636,8 @@ def test_52_manage_gids(state, expected):
         if state is not None:
             sleep(3)  # In Cobia: Prevent restarting NFS too quickly.
             call("nfs.update", {"userd_manage_gids": state})
+            # Allow config file to be updated
+            sleep(1)
 
         s = parse_server_config()
         assert s['mountd']['manage-gids'] == expected, str(s)
@@ -1661,6 +1663,8 @@ def test_54_v4_domain():
         # Make a setting change and confirm
         db = call('nfs.update', {"v4_domain": "ixsystems.com"})
         assert db['v4_domain'] == 'ixsystems.com', f"v4_domain failed to be updated in nfs DB: {db}"
+        # Allow config file to be updated
+        sleep(1)
         s = parse_server_config("idmapd")
         assert s['General'].get('Domain') == 'ixsystems.com', f"'Domain' failed to be updated in idmapd.conf: {s}"
 
