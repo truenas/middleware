@@ -151,6 +151,7 @@ class K8stoDockerMigrationService(Service):
                         },
                     })
                     self.middleware.call_sync('zfs.dataset.promote', destination_ds)
+                    self.middleware.call_sync('zfs.dataset.mount', destination_ds)
             except CallError as e:
                 release_details.append({
                     'name': chart_release['release_name'],
