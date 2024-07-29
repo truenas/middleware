@@ -73,15 +73,12 @@ def release_details(release_name: str, release_path: str, catalog_path: str, app
         return config | {'error': 'Unable to locate release\'s app'}
 
     config['app_version'] = apps_mapping[release_train][config['app_name']]['version']
-    migrate_file_path = os.path.join(
-        get_train_path(catalog_ds_path()), release_train, config['app_name'],
-        config['app_version'], 'migrations/migrate_from_kubernetes',
+    migrate_tail_file_path = os.path.join(
+        release_train, config['app_name'], config['app_version'], 'migrations/migrate_from_kubernetes'
     )
-    if os.path.exists(migrate_file_path):
-        if not os.access(migrate_file_path, os.X_OK):
-            return config | {'error': 'Migration script is not executable'}
-
-        config['migrate_file_path'] = migrate_file_path
+    to_test_migrate_file_path = os.path.join(get_train_path(catalog_path), migrate_tail_file_path)
+    if os.path.exists(to_test_migrate_file_path):
+        config['migrate_file_path'] = os.path.join(get_train_path(catalog_ds_path()), migrate_tail_file_path)
     else:
         config['error'] = 'Unable to locate release\'s app\'s migration file'
 
