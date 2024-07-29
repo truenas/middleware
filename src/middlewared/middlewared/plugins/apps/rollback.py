@@ -45,7 +45,7 @@ class AppService(Service):
             'app.schema.normalize_and_validate_values', rollback_version, config, False,
             get_installed_app_path(app_name), app,
         )
-        new_values = add_context_to_values(app_name, new_values, rollback=True)
+        new_values = add_context_to_values(app_name, new_values, rollback_version['app_metadata'], rollback=True)
         update_app_config(app_name, options['app_version'], new_values)
 
         job.set_progress(
