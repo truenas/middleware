@@ -183,7 +183,7 @@ class AppService(CRUDService):
             app_version_details = self.middleware.call_sync(
                 'catalog.app_version_details', get_installed_app_version_path(app_name, version)
             )
-            new_values = add_context_to_values(app_name, new_values, install=True)
+            new_values = add_context_to_values(app_name, new_values, app_version_details['app_metadata'], install=True)
             update_app_config(app_name, version, new_values)
             update_app_metadata(app_name, app_version_details)
 
@@ -239,7 +239,7 @@ class AppService(CRUDService):
 
         job.set_progress(25, 'Initial Validation completed')
 
-        new_values = add_context_to_values(app_name, new_values, update=True)
+        new_values = add_context_to_values(app_name, new_values, app['metadata'], update=True)
         update_app_config(app_name, app['version'], new_values)
         update_app_metadata_for_portals(app_name, app['version'])
         job.set_progress(60, 'Configuration updated, updating docker resources')

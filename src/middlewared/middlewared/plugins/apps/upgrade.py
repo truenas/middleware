@@ -49,15 +49,19 @@ class AppService(Service):
         # 5) Docker should be notified to recreate resources and to let upgrade to commence
         # 6) Update collective metadata config to reflect new version
         # 7) Finally create ix-volumes snapshot for rollback
-        with upgrade_config(app_name, upgrade_version) as version_path:
+        with upgrade_config(app_name, upgrade_version):
             config = get_current_app_config(app_name, app['version'])
             config.update(options['values'])
-            app_version_details = self.middleware.call_sync('catalog.app_version_details', version_path)
             new_values = self.middleware.call_sync(
-                'app.schema.normalize_and_validate_values', app_version_details, config, False,
+                'app.schema.normalize_and_validate_values', upgrade_version, config, False,
                 get_installed_app_path(app_name), app,
             )
-            new_values = add_context_to_values(app_name, new_values, upgrade=True, upgrade_metadata={})
+            new_values = add_context_to_values(
+                app_name, new_values, upgrade_version['app_metadata'], upgrade=True, upgrade_metadata={
+                    'old_version_metadata': app['metadata'],
+                    'new_version_metadata': upgrade_version['app_metadata'],
+                }
+            )
             update_app_config(app_name, upgrade_version['version'], new_values)
 
             job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
