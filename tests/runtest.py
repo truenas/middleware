@@ -312,15 +312,7 @@ def parse_test_name(test):
         return f"{filename}.py::{testname}"
     return test
 
-tests = ['api2/test_001_ssh.py',
-         'api2/test_002_system_license.py',
-         'api2/test_003_network_global.py',
-         'api2/test_005_interface.py',
-         'api2/test_006_pool_and_sysds.py',
-         'api2/test_007_early_settings.py',
-         'api2/test_300_nfs.py']
-# Account for the parse strippage
-tests = ['api2/'+v for v in tests]
+
 if tests:
     pytest_command.extend(list(map(parse_test_name, tests)))
 else:
