@@ -546,7 +546,6 @@ def target_test_readwrite16(ip, iqn):
 
     with iscsi_scsi_connection(ip, iqn) as s:
         TUR(s)
-        s.blocksize = 512
 
         # First let's write zeros to the first 12 blocks using WRITE SAME (16)
         s.writesame16(0, 12, zeros)
@@ -571,7 +570,6 @@ def target_test_readwrite16(ip, iqn):
     # Drop the iSCSI connection and login again
     with iscsi_scsi_connection(ip, iqn) as s:
         TUR(s)
-        s.blocksize = 512
 
         # Check results using READ (16)
         for lba in range(0, 12):
@@ -773,7 +771,6 @@ def target_test_snapshot_single_login(ip, iqn, dataset_id):
 
     with iscsi_scsi_connection(ip, iqn) as s:
         TUR(s)
-        s.blocksize = 512
 
         # First let's write zeros to the first 12 blocks using WRITE SAME (16)
         s.writesame16(0, 12, zeros)
@@ -844,7 +841,6 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
 
     with iscsi_scsi_connection(ip, iqn) as s:
         TUR(s)
-        s.blocksize = 512
 
         # First let's write zeros to the first 12 blocks using WRITE SAME (16)
         s.writesame16(0, 12, zeros)
@@ -859,7 +855,6 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
 
         with iscsi_scsi_connection(ip, iqn) as s:
             TUR(s)
-            s.blocksize = 512
 
             # Now let's write DEADBEEF to a few LBAs using WRITE (16)
             for lba in deadbeef_lbas:
@@ -878,7 +873,6 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
 
             with iscsi_scsi_connection(ip, iqn) as s:
                 TUR(s)
-                s.blocksize = 512
 
                 # Do a WRITE for > 1 LBA
                 s.write16(10, 2, deadbeef * 2)
@@ -896,7 +890,6 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
 
         with iscsi_scsi_connection(ip, iqn) as s:
             TUR(s)
-            s.blocksize = 512
 
             # Check results using READ (16)
             for lba in range(0, 12):
@@ -911,7 +904,6 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
 
         with iscsi_scsi_connection(ip, iqn) as s:
             TUR(s)
-            s.blocksize = 512
             # Check results using READ (16)
             for lba in range(0, 12):
                 r = s.read16(lba, 1)
@@ -1475,6 +1467,37 @@ def _pr_expect_reservation_conflict(s):
             raise e
 
 
+def _check_target_rw_paths(s1, s2):
+    """
+    Check that the two supplied paths can read/write data, and they point at the same LUN.
+    """
+    zeros = bytearray(512)
+    deadbeef = bytearray.fromhex('deadbeef') * 128
+    abba = bytearray.fromhex('abbaabba') * 128
+
+    # First let's write zeros to the first 12 blocks using WRITE SAME (16)
+    s1.writesame16(0, 12, zeros)
+
+    # Check results using READ (16)
+    for s in (s1, s2):
+        for lba in range(0, 12):
+            r = s.read16(lba, 1)
+            assert r.datain == zeros, r.datain
+
+    # Update some blocks from each initiator using WRITE SAME
+    s1.writesame16(0, 6, deadbeef)
+    s2.writesame16(6, 6, abba)
+
+    # Check results using READ (16)
+    for s in (s1, s2):
+        for lba in range(0, 6):
+            r = s.read16(lba, 1)
+            assert r.datain == deadbeef, r.datain
+        for lba in range(6, 12):
+            r = s.read16(lba, 1)
+            assert r.datain == abba, r.datain
+
+
 def _check_persistent_reservations(s1, s2):
     #
     # First just do a some basic tests (register key, reserve, release, unregister key)
@@ -1602,11 +1625,9 @@ def test_18_persistent_reservation_two_initiators(request):
         with configured_target_to_zvol_extent(config, target_name, zvol):
             iqn = f'{basename}:{target_name}'
             with iscsi_scsi_connection(truenas_server.ip, iqn) as s1:
-                s1.blocksize = 512
                 TUR(s1)
                 initiator_name2 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:second"
                 with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_name2) as s2:
-                    s2.blocksize = 512
                     TUR(s2)
                     _check_persistent_reservations(s1, s2)
 
@@ -1740,6 +1761,17 @@ def _get_active_target_portal_group():
     return None
 
 
+def _wait_for_alua_settle(retries=20):
+    print("Checking ALUA status...")
+    while retries:
+        if call('iscsi.alua.settled'):
+            print("ALUA is settled")
+            break
+        retries -= 1
+        print("Waiting for ALUA to settle")
+        sleep(5)
+
+
 def _ha_reboot_master(delay=900):
     """
     Reboot the MASTER node and wait for both the new MASTER
@@ -1810,15 +1842,7 @@ def _ha_reboot_master(delay=900):
         raise RuntimeError('Failover never completed.')
 
     # Finally check the ALUA status
-    print("Checking ALUA status...")
-    retries = 12
-    while retries:
-        if call('iscsi.alua.settled'):
-            print("ALUA is settled")
-            break
-        retries -= 1
-        print("Waiting for ALUA to settle")
-        sleep(5)
+    _wait_for_alua_settle()
 
 
 def _ensure_alua_state(state):
@@ -1831,6 +1855,13 @@ def _ensure_alua_state(state):
 def test_19_alua_config(request):
     """
     Test various aspects of ALUA configuration.
+
+    When run against a HA system this test will perform TWO reboots to
+    test failover wrt iSCSI ALUA targets.
+
+    The second reboot was added to return the system to the original ACTIVE
+    node.  This means that subsequent tests will run on the same node that
+    the previous tests started on, thereby simplifying log analysis.
     """
     # First ensure ALUA is off
     _ensure_alua_state(False)
@@ -1858,6 +1889,7 @@ def test_19_alua_config(request):
 
                 with alua_enabled():
                     _ensure_alua_state(True)
+                    _wait_for_alua_settle()
 
                     # We will login to the target on BOTH controllers and make sure
                     # we see the same target.  Observe that we supply tpgs=1 as
@@ -1911,6 +1943,8 @@ def test_19_alua_config(request):
                             _verify_ha_report_target_port_groups(s1, tpgs, active_tpg)
                             _verify_ha_report_target_port_groups(s2, tpgs, active_tpg)
 
+                            _check_target_rw_paths(s1, s2)
+
                             # Let's failover
                             _ha_reboot_master()
                             expect_check_condition(s1, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
@@ -1925,6 +1959,60 @@ def test_19_alua_config(request):
 
                             _verify_ha_report_target_port_groups(s1, tpgs, new_active_tpg)
                             _verify_ha_report_target_port_groups(s2, tpgs, new_active_tpg)
+
+                            _check_target_rw_paths(s1, s2)
+
+                            # Create a new target
+                            with configured_target_to_zvol_extent(config, f'{target_name}b', zvol) as iscsi_config2:
+                                iqn2 = f'{basename}:{target_name}b'
+                                api_serial_number2 = iscsi_config2['extent']['serial']
+                                api_naa2 = iscsi_config2['extent']['naa']
+                                tpgs2 = {
+                                    CONTROLLER_A_TARGET_PORT_GROUP_ID: [1, 2],
+                                    CONTROLLER_B_TARGET_PORT_GROUP_ID: [32001, 32002]
+                                }
+                                # Wait until ALUA settles, so that we know the target is available on the STANDBY node.
+                                _wait_for_alua_settle()
+                                # Login to the target on each controller
+                                with iscsi_scsi_connection(truenas_server.nodea_ip, iqn2) as s3:
+                                    _verify_ha_inquiry(s3, api_serial_number2, api_naa2, 1)
+                                    initiator_name3 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:third"
+                                    with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn2, initiator_name=initiator_name3) as s4:
+                                        _verify_ha_inquiry(s4, api_serial_number2, api_naa2, 1)
+                                        _verify_ha_device_identification(s3, api_naa2, 2, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                                        _verify_ha_device_identification(s4, api_naa2, 32002, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+                                        _verify_ha_report_target_port_groups(s3, tpgs2, new_active_tpg)
+                                        _verify_ha_report_target_port_groups(s4, tpgs2, new_active_tpg)
+                                        _check_target_rw_paths(s3, s4)
+
+                                        # Reboot again (to failback to the original ACTIVE node)
+                                        _ha_reboot_master()
+                                        for s in [s1, s2, s3, s4]:
+                                            expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+
+                                        # After the 2nd reboot we will switch back to using the original active_tpg
+
+                                        # Check the new target again
+                                        _verify_ha_inquiry(s3, api_serial_number2, api_naa2, 1)
+                                        _verify_ha_inquiry(s4, api_serial_number2, api_naa2, 1)
+                                        _verify_ha_device_identification(s3, api_naa2, 2, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                                        _verify_ha_device_identification(s4, api_naa2, 32002, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+                                        _verify_ha_report_target_port_groups(s3, tpgs2, active_tpg)
+                                        _verify_ha_report_target_port_groups(s4, tpgs2, active_tpg)
+                                        _check_target_rw_paths(s3, s4)
+
+                                        # Check the original target
+                                        _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
+                                        _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
+                                        _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                                        _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+                                        _verify_ha_report_target_port_groups(s1, tpgs2, active_tpg)
+                                        _verify_ha_report_target_port_groups(s2, tpgs2, active_tpg)
+                                        _check_target_rw_paths(s1, s2)
+                            # Second target has been removed again
+                            _wait_for_alua_settle()
+                            _verify_ha_report_target_port_groups(s1, tpgs, active_tpg)
+                            _verify_ha_report_target_port_groups(s2, tpgs, active_tpg)
 
             # Ensure ALUA is off again
             _ensure_alua_state(False)
@@ -1987,11 +2075,9 @@ def test_21_alua_persistent_reservation_two_initiators(request):
                 iqn = f'{basename}:{target_name}'
                 # Login to the target on each controller
                 with iscsi_scsi_connection(truenas_server.nodea_ip, iqn) as s1:
-                    s1.blocksize = 512
                     TUR(s1)
                     initiator_name2 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:second"
                     with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn, initiator_name=initiator_name2) as s2:
-                        s2.blocksize = 512
                         TUR(s2)
                         _check_persistent_reservations(s1, s2)
                         # Do it all again, the other way around
@@ -2094,9 +2180,7 @@ def test_22_extended_copy(request, extent1, extent2):
                 with iscsi_scsi_connection(truenas_server.ip, iqn1) as s1:
                     with iscsi_scsi_connection(truenas_server.ip, iqn2) as s2:
                         s1.testunitready()
-                        s1.blocksize = 512
                         s2.testunitready()
-                        s2.blocksize = 512
                         _xcopy_test(s1, s2)
 
 
@@ -2120,13 +2204,9 @@ def test_23_ha_extended_copy(request, extent1, extent2):
                             with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn1) as sb1:
                                 with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn2) as sb2:
                                     sa1.testunitready()
-                                    sa1.blocksize = 512
                                     sa2.testunitready()
-                                    sa2.blocksize = 512
                                     sb1.testunitready()
-                                    sb1.blocksize = 512
                                     sb2.testunitready()
-                                    sb2.blocksize = 512
                                     _xcopy_test(sa1, sa2, sb1, sb2)
                                     # Now re-run the test using the other controller
                                     _xcopy_test(sb1, sb2, sa1, sa2)
@@ -2218,7 +2298,6 @@ def test_25_resize_target_zvol(request):
             iqn = f'{basename}:{target_name}'
             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 TUR(s)
-                s.blocksize = 512
                 assert MB_100 == read_capacity16(s)
                 # Have checked using tcpdump/wireshark that a SCSI Asynchronous Event Notification
                 # gets sent 0x2A09: "CAPACITY DATA HAS CHANGED"
@@ -2254,7 +2333,6 @@ def test_26_resize_target_file(request):
             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 extent_id = config['extent']['id']
                 TUR(s)
-                s.blocksize = 512
                 assert MB_100 == read_capacity16(s)
                 file_extent_resize(extent_id, MB_256)
                 assert MB_256 == read_capacity16(s)
@@ -2286,7 +2364,6 @@ def test_27_initiator_group(request):
             # Ensure we can access from all initiators
             for initiator_iqn in [initiator_iqn1, initiator_iqn2, initiator_iqn3]:
                 with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn) as s:
-                    s.blocksize = 512
                     TUR(s)
 
             # Now set the initiator id to the empty (Allow All Initiators) one
@@ -2295,7 +2372,6 @@ def test_27_initiator_group(request):
             set_target_initiator_id(config['target']['id'], config['initiator']['id'])
             for initiator_iqn in [initiator_iqn1, initiator_iqn2, initiator_iqn3]:
                 with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn) as s:
-                    s.blocksize = 512
                     TUR(s)
 
             # Now create another initiator group, which contains the first two
@@ -2305,12 +2381,10 @@ def test_27_initiator_group(request):
                 # First two initiators can connect to the target
                 for initiator_iqn in [initiator_iqn1, initiator_iqn2]:
                     with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn) as s:
-                        s.blocksize = 512
                         TUR(s)
                 # Third initiator cannot connect to the target
                 with pytest.raises(RuntimeError) as ve:
                     with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn3) as s:
-                        s.blocksize = 512
                         TUR(s)
                 assert 'Unable to connect to' in str(ve), ve
                 # Clear it again
@@ -2318,7 +2392,6 @@ def test_27_initiator_group(request):
 
             for initiator_iqn in [initiator_iqn1, initiator_iqn2, initiator_iqn3]:
                 with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn) as s:
-                    s.blocksize = 512
                     TUR(s)
 
 
@@ -2336,7 +2409,6 @@ def test_28_portal_access(request):
             with configured_target_to_zvol_extent(config1, target_name, zvol, volsize=MB_100):
                 with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                     TUR(s)
-                    s.blocksize = 512
                     assert MB_100 == read_capacity16(s)
                 # Now, if we are in a HA config turn on ALUA and test
                 # the specific IP addresses
@@ -2346,18 +2418,15 @@ def test_28_portal_access(request):
 
                         with pytest.raises(RuntimeError) as ve:
                             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
-                                s.blocksize = 512
                                 TUR(s)
                         assert 'Unable to connect to' in str(ve), ve
 
                         with iscsi_scsi_connection(truenas_server.nodea_ip, iqn) as s:
                             TUR(s)
-                            s.blocksize = 512
                             assert MB_100 == read_capacity16(s)
 
                         with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn) as s:
                             TUR(s)
-                            s.blocksize = 512
                             assert MB_100 == read_capacity16(s)
 
 
@@ -2382,11 +2451,9 @@ def test_29_multiple_extents():
                             with target_extent_associate(target_id, extent2_config['id'], 1):
                                 with iscsi_scsi_connection(truenas_server.ip, iqn, 0) as s:
                                     TUR(s)
-                                    s.blocksize = 512
                                     assert MB_100 == read_capacity16(s)
                                 with iscsi_scsi_connection(truenas_server.ip, iqn, 1) as s:
                                     TUR(s)
-                                    s.blocksize = 512
                                     assert MB_256 == read_capacity16(s)
 
                                 # Now try to create another extent using the same serial number
