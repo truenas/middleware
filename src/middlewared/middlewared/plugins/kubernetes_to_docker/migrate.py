@@ -93,7 +93,7 @@ class K8stoDockerMigrationService(Service):
         # If we are able to migrate it's config, we will proceed with setting up relevant filesystem bits
         # for the app and finally redeploy it
         release_details = []
-        migrate_context = {'gpu_choices': self.middleware.call_sync('app.gpu_choices')}
+        migrate_context = {'gpu_choices': self.middleware.call_sync('app.gpu_choices_internal')}
         dummy_job = type('dummy_job', (object,), {'set_progress': lambda *args: None})()
         for chart_release in backup_config['releases']:
             new_config = migrate_chart_release_config(chart_release | migrate_context)
