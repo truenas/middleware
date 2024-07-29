@@ -10,9 +10,7 @@ def migrate_chart_release_config(release_data: dict) -> dict | str:
         f.write(yaml.dump(release_data))
         f.flush()
 
-        # TODO: Probably no need to do /usr/bin/python3
-        # Catalog at this point would be in /var/run and we can't execute an executable there
-        cp = run(['/usr/bin/python3', release_data['migrate_file_path'], f.name])
+        cp = run([release_data['migrate_file_path'], f.name])
         if cp.returncode:
             return f'Failed to migrate config: {cp.stderr}'
 
