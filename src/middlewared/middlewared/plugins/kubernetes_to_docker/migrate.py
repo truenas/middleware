@@ -126,10 +126,10 @@ class K8stoDockerMigrationService(Service):
                 continue
 
             # At this point we have just not instructed docker to start the app and ix volumes normalization is left
-            release_config = chart_release['helm_secret']['config']
+            release_user_config = chart_release['helm_secret']['config']
             snapshot = backup_config['snapshot_name'].split('@')[-1]
             available_snapshots = set()
-            for ix_volume in release_config.get('ixVolumes', []):
+            for ix_volume in release_user_config.get('ixVolumes', []):
                 ds_name = ix_volume.get('hostPath', '')[5:]  # remove /mnt/
                 ds_snap = f'{ds_name}@{snapshot}'
                 if not self.middleware.call_sync('zfs.snapshot.query', [['id', '=', ds_snap]]):
