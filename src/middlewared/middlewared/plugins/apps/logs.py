@@ -1,3 +1,5 @@
+import errno
+
 import docker.errors
 from dateutil.parser import parse, ParserError
 from docker.models.containers import Container
@@ -41,7 +43,7 @@ class AppContainerLogsFollowTailEventSource(EventSource):
             raise CallError(f'App "{app_name}" is not running')
 
         if not any(c['id'] == container_id for c in app['active_workloads']['container_details']):
-            raise CallError(f'Container "{container_id}" not found in app "{app_name}"')
+            raise CallError(f'Container "{container_id}" not found in app "{app_name}"', errno=errno.ENOENT)
 
         docker_client = get_docker_client()
         try:
