@@ -166,6 +166,7 @@ class PoolDatasetService(CRUDService):
             ['pool', '!=', await self.middleware.call('boot.pool_name')],
             ['id', 'rnin', '/.system'],
             ['id', 'rnin', '/ix-applications/'],
+            ['id', 'rnin', '/ix-apps/'],
         ]
 
     @private

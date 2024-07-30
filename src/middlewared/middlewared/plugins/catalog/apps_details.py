@@ -63,7 +63,7 @@ class CatalogService(Service):
                     'name': 'chia',
                     'categories': ['storage', 'crypto'],
                     'app_readme': 'app readme here',
-                    'location': '/mnt/evo/ix-applications/catalogs/github_com_truenas_charts_git_master/charts/chia',
+                    'location': '/mnt/evo/ix-apps/catalogs/github_com_truenas_charts_git_master/charts/chia',
                     'healthy': True,
                     'healthy_error': None,
                     'latest_version': '1.2.0',

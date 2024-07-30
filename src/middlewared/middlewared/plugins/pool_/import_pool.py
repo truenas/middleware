@@ -129,9 +129,10 @@ class PoolService(Service):
         # Recursively reset dataset mountpoints for the zpool.
         recursive = True
         for child in await self.middleware.call('zfs.dataset.child_dataset_names', pool_name):
-            if child == os.path.join(pool_name, 'ix-applications'):
+            if child in (os.path.join(pool_name, k) for k in ('ix-applications', 'ix-apps')):
                 # We exclude `ix-applications` dataset since resetting it will
                 # cause PVC's to not mount because "mountpoint=legacy" is expected.
+                # We exclude `ix-apps` dataset since it has a custom mountpoint in place
                 continue
             try:
                 # Reset all mountpoints
