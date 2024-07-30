@@ -206,7 +206,7 @@ class ACLTemplateService(CRUDService):
         if 'ACTIVE_DIRECTORY' not in domain_info['domain_flags']['parsed']:
             self.logger.warning(
                 '%s: domain is not identified properly as an Active Directory domain.',
-                domain_info['alt_name']
+                domain_info['dns_name']
             )
             return
 
