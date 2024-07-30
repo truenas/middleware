@@ -20,7 +20,8 @@ class AppService(Service):
             'options',
             Str('app_version', empty=False, required=True),
             Bool('rollback_snapshot', default=True),
-        )
+        ),
+        roles=['APPS_WRITE'],
     )
     @returns(Ref('app_query'))
     @job(lock=lambda args: f'app_rollback_{args[0]}')
@@ -86,7 +87,7 @@ class AppService(Service):
 
         return self.middleware.call_sync('app.get_instance', app_name)
 
-    @accepts(Str('app_name'))
+    @accepts(Str('app_name'), roles=['APPS_READ'])
     @returns(List('rollback_versions', items=[Str('version')]))
     def rollback_versions(self, app_name):
         """

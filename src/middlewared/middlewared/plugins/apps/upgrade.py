@@ -22,7 +22,8 @@ class AppService(Service):
             'options',
             Dict('values', additional_attrs=True, private=True),
             Str('app_version', empty=False, default='latest'),
-        )
+        ),
+        roles=['APPS_WRITE'],
     )
     @returns(Ref('app_query'))
     @job(lock=lambda args: f'app_upgrade_{args[0]}')
@@ -91,7 +92,8 @@ class AppService(Service):
         Dict(
             'options',
             Str('app_version', empty=False, default='latest'),
-        )
+        ),
+        roles=['APPS_READ'],
     )
     @returns(Dict(
         Str('latest_version', description='Latest version available for the app'),

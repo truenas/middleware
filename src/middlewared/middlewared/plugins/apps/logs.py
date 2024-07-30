@@ -84,4 +84,6 @@ class AppContainerLogsFollowTailEventSource(EventSource):
 
 
 def setup(middleware):
-    middleware.register_event_source('app.container_log_follow', AppContainerLogsFollowTailEventSource)
+    middleware.register_event_source(
+        'app.container_log_follow', AppContainerLogsFollowTailEventSource, roles=['APPS_READ']
+    )
