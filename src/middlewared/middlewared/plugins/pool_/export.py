@@ -17,7 +17,7 @@ class PoolService(Service):
     def cleanup_after_export(self, poolinfo, opts):
         try:
             if all((opts['destroy'], opts['cascade'])) and (contents := os.listdir(poolinfo['path'])):
-                if len(contents) == 1 and contents[0] == 'ix-applications':
+                if len(contents) == 1 and contents[0] in ('ix-applications', 'ix-apps'):
                     # This means:
                     #   1. zpool was destroyed (disks were wiped)
                     #   2. end-user chose to delete all share configuration associated

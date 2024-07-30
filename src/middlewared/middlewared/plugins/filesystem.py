@@ -273,9 +273,9 @@ class FilesystemService(Service):
         if not path.is_dir():
             raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
 
-        # TODO: once new apps implementation is in-place remove this check
-        if 'ix-applications' in path.parts:
-            raise CallError('Ix-applications is a system managed dataset and its contents cannot be listed')
+        for ds in ('ix-applications', 'ix-apps'):
+            if ds in path.parts:
+                raise CallError(f'{ds!r} is a system managed dataset and its contents cannot be listed')
 
         file_type = None
         for filter_ in filters:

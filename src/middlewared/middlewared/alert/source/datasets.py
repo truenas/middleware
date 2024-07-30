@@ -22,9 +22,11 @@ class UnencryptedDatasetsAlertSource(AlertSource):
         unencrypted_datasets = []
         for dataset in await self.middleware.call('pool.dataset.query', [['encrypted', '=', True]]):
             for child in dataset['children']:
-                if child['name'] == f'{child["pool"]}/ix-applications' or child['name'].startswith(
-                    f'{child["pool"]}/ix-applications/'
-                ):
+                if child['name'] in (
+                    f'{child["pool"]}/ix-applications', f'{child["pool"]}/ix-apps'
+                ) or child['name'].startswith((
+                    f'{child["pool"]}/ix-applications/', f'{child["pool"]}/ix-apps/'
+                )):
                     continue
 
                 if not child['encrypted']:
