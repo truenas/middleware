@@ -36,7 +36,7 @@ class K8stoDockerMigrationService(Service):
         if not os.path.exists(backup_base_dir):
             return backup_config | {'error': f'Unable to locate {backup_base_dir!r} backups directory'}
 
-        self.middleware.call_sync('catalog.sync')
+        self.middleware.call_sync('catalog.sync').wait_sync()
 
         backups = backup_config['backups']
         snapshots = self.middleware.call_sync(
