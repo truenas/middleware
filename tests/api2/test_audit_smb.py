@@ -53,7 +53,7 @@ def test_smb_share_audit(smb_audit_dataset):
         with expect_audit_method_calls([{
             'method': 'sharing.smb.create',
             'params': [payload],
-            'description': f'SMB share create {smb_share_path}',
+            'description': f'SMB share create audit_share',
         }]):
             share_config = call('sharing.smb.create', payload)
 
@@ -67,7 +67,7 @@ def test_smb_share_audit(smb_audit_dataset):
                 share_config['id'],
                 payload,
             ],
-            'description': f'SMB share update {smb_share_path}',
+            'description': f'SMB share update audit_share',
         }]):
             share_config = call('sharing.smb.update', share_config['id'], payload)
 
@@ -78,6 +78,6 @@ def test_smb_share_audit(smb_audit_dataset):
             with expect_audit_method_calls([{
                 'method': 'sharing.smb.delete',
                 'params': [share_id],
-                'description': f'SMB share delete {smb_share_path}',
+                'description': f'SMB share delete audit_share',
             }]):
                 call('sharing.smb.delete', share_id)
