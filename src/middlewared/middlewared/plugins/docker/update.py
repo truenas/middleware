@@ -53,12 +53,12 @@ class DockerService(ConfigService):
         config.update(data)
 
         if old_config != config:
-            if not config['pool']:
-                try:
-                    await self.middleware.call('service.stop', 'docker')
-                except Exception as e:
-                    raise CallError(f'Failed to stop docker service: {e}')
-                await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
+            try:
+                await self.middleware.call('service.stop', 'docker')
+            except Exception as e:
+                raise CallError(f'Failed to stop docker service: {e}')
+
+            await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
             await self.middleware.call('docker.setup.status_change')
