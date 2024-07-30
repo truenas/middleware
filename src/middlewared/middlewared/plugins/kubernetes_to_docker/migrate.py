@@ -88,7 +88,6 @@ class K8stoDockerMigrationService(Service):
         )
         job.set_progress(30, 'Starting migrating old apps to new apps')
 
-        # FIXME: Update job progress on each chart release
         # We will now iterate over each chart release which can be migrated and try to migrate it's config
         # If we are able to migrate it's config, we will proceed with setting up relevant filesystem bits
         # for the app and finally redeploy it
