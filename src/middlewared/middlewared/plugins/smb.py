@@ -819,7 +819,7 @@ class SharingSMBService(SharingService):
             ),
             register=True
         ),
-        audit='Create SMB share', audit_extended=lambda data: data['name']
+        audit='SMB share create', audit_extended=lambda data: data['name']
     )
     @pass_app(rest=True)
     async def do_create(self, app, data):
@@ -969,7 +969,7 @@ class SharingSMBService(SharingService):
             'sharingsmb_update',
             ('attr', {'update': True})
         ),
-        audit='Update SMB share',
+        audit='SMB share update',
         audit_callback=True,
     )
     @pass_app(rest=True)
@@ -1073,7 +1073,7 @@ class SharingSMBService(SharingService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'), audit='Delete SMB share', audit_callback=True)
+    @accepts(Int('id'), audit='SMB share delete', audit_callback=True)
     async def do_delete(self, audit_callback, id_):
         """
         Delete SMB Share of `id`. This will forcibly disconnect SMB clients
