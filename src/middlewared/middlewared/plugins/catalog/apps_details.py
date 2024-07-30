@@ -58,28 +58,31 @@ class CatalogService(Service):
         'trains',
         additional_attrs=True,
         example={
-            'charts': {
-                'chia': {
-                    'name': 'chia',
-                    'categories': ['storage', 'crypto'],
-                    'app_readme': 'app readme here',
-                    'location': '/mnt/evo/ix-apps/catalogs/github_com_truenas_charts_git_master/charts/chia',
+            'stable': {
+                'plex': {
+                    'app_readme': '<h1>Plex</h1>',
+                    'categories': ['media'],
+                    'description': 'Plex is a media server that allows you to stream your media to any Plex client.',
                     'healthy': True,
                     'healthy_error': None,
-                    'latest_version': '1.2.0',
-                    'latest_app_version': '1.1.6',
-                    'last_update': '2023-02-01 22:55:31',
-                    'icon_url': 'https://www.chia.net/img/chia_logo.svg',
+                    'home': 'https://plex.tv',
+                    'location': '/mnt/.ix-apps/truenas_catalog/stable/plex',
+                    'latest_version': '1.0.0',
+                    'latest_app_version': '1.40.2.8395',
+                    'latest_human_version': '1.40.2.8395_1.0.0',
+                    'last_update': '2024-07-30 13:40:47+00:00',
+                    'name': 'plex',
                     'recommended': False,
-                    'title': 'Chia',
-                    'description': 'App description here',
-                    'maintainers': [],
-                    'tags': ['finance', 'crypto', 'blockchain'],
-                    'home': 'https://www.chia.net/',
-                    'screenshots': [],
-                    'sources': [],
-                }
-            }
+                    'title': 'Plex',
+                    'maintainers': [
+                        {'email': 'dev@ixsystems.com', 'name': 'truenas', 'url': 'https://www.truenas.com/'},
+                    ],
+                    'tags': ['plex', 'media', 'entertainment', 'movies', 'series', 'tv', 'streaming'],
+                    'screenshots': ['https://media.sys.truenas.net/apps/plex/screenshots/screenshot2.png'],
+                    'sources': ['https://plex.tv', 'https://hub.docker.com/r/plexinc/pms-docker'],
+                    'icon_url': 'https://media.sys.truenas.net/apps/plex/icons/icon.png'
+                },
+            },
         }
     ))
     def apps(self, options):
