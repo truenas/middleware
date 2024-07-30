@@ -23,6 +23,7 @@ class AppService(CRUDService):
         namespace = 'app'
         datastore_primary_key_type = 'string'
         cli_namespace = 'app'
+        role_prefix = 'APPS'
 
     ENTRY = Dict(
         'app_query',
@@ -106,7 +107,7 @@ class AppService(CRUDService):
 
         return filter_list(apps, filters, options)
 
-    @accepts(Str('app_name'))
+    @accepts(Str('app_name'), roles=['APPS_READ'])
     @returns(Dict('app_config', additional_attrs=True))
     def config(self, app_name):
         """

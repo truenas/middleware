@@ -53,6 +53,7 @@ class CatalogService(Service):
             Bool('retrieve_all_trains', default=True),
             List('trains', items=[Str('train_name')]),
         ),
+        roles=['CATALOG_READ']
     )
     @returns(Dict(
         'trains',

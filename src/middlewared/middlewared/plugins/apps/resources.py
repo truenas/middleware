@@ -12,7 +12,7 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @accepts()
+    @accepts(roles=['APPS_READ'])
     @returns(List(items=[Ref('certificate_entry')]))
     async def certificate_choices(self):
         """
@@ -23,7 +23,7 @@ class AppService(Service):
             {'select': ['name', 'id']}
         )
 
-    @accepts()
+    @accepts(roles=['APPS_READ'])
     @returns(List(items=[Ref('certificateauthority_entry')]))
     async def certificate_authority_choices(self):
         """
@@ -33,7 +33,7 @@ class AppService(Service):
             'certificateauthority.query', [['revoked', '=', False], ['parsed', '=', True]], {'select': ['name', 'id']}
         )
 
-    @accepts()
+    @accepts(roles=['APPS_READ'])
     @returns(List(items=[Int('used_port')]))
     async def used_ports(self):
         """
@@ -46,7 +46,7 @@ class AppService(Service):
             for host_port in port_entry['host_ports']
         })))
 
-    @accepts()
+    @accepts(roles=['APPS_READ'])
     @returns(Dict(Str('ip_choice')))
     async def ip_choices(self):
         """
@@ -57,15 +57,15 @@ class AppService(Service):
             for ip in await self.middleware.call('interface.ip_in_use', {'static': True, 'any': True})
         }
 
-    @accepts()
+    @accepts(roles=['APPS_READ'])
     @returns(Dict('gpu_choices', additional_attrs=True))
     async def gpu_choices(self):
         """
         Returns GPU choices which can be used by applications.
         """
         return {
-            gpu['description']: {
-                k: gpu[k] for k in ('vendor', 'description', 'vendor_specific_config')
+            gpu['pci_slot']: {
+                k: gpu[k] for k in ('vendor', 'description', 'vendor_specific_config', 'pci_slot')
             }
             for gpu in await self.gpu_choices_internal()
             if not gpu['error']

@@ -2,6 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 import typing
 
+
 @dataclass()
 class Role:
     """
@@ -93,6 +94,14 @@ ROLES = {
     'CERTIFICATE_AUTHORITY_READ': Role(),
     'CERTIFICATE_AUTHORITY_WRITE': Role(includes=['CERTIFICATE_AUTHORITY_READ']),
 
+    # Apps roles
+    'CATALOG_READ': Role(),
+    'CATALOG_WRITE': Role(includes=['CATALOG_READ']),
+    'DOCKER_READ': Role(includes=[]),
+    'DOCKER_WRITE': Role(includes=['DOCKER_READ']),
+    'APPS_READ': Role(includes=['CATALOG_READ']),
+    'APPS_WRITE': Role(includes=['CATALOG_WRITE', 'APPS_READ']),
+
     # iSCSI roles
     'SHARING_ISCSI_AUTH_READ': Role(),
     'SHARING_ISCSI_AUTH_WRITE': Role(includes=['SHARING_ISCSI_AUTH_READ']),
@@ -170,9 +179,6 @@ ROLES = {
                                     'FILESYSTEM_ATTRS_WRITE',
                                     'SERVICE_READ'],
                           builtin=False),
-    # Apps roles
-    'CATALOG_READ': Role(),
-    'CATALOG_WRITE': Role(includes=['CATALOG_READ']),
 
     # System settings
     'SYSTEM_GENERAL_READ': Role(),

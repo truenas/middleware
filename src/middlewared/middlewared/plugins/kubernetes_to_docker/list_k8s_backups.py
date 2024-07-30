@@ -13,7 +13,7 @@ class K8stoDockerMigrationService(Service):
         namespace = 'k8s_to_docker'
         cli_namespace = 'k8s_to_docker'
 
-    @accepts(Str('kubernetes_pool'))
+    @accepts(Str('kubernetes_pool'), roles=['DOCKER_READ'])
     @returns(Dict(
         'backups',
         Str('error', null=True),

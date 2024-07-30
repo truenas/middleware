@@ -10,7 +10,7 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @accepts(Str('app_name'))
+    @accepts(Str('app_name'), roles=['APPS_WRITE'])
     @returns()
     @job(lock=lambda args: f'app_stop_{args[0]}')
     def stop(self, job, app_name):
@@ -24,7 +24,7 @@ class AppService(Service):
         )
         job.set_progress(100, f'Stopped {app_name!r} app')
 
-    @accepts(Str('app_name'))
+    @accepts(Str('app_name'), roles=['APPS_WRITE'])
     @returns()
     @job(lock=lambda args: f'app_start_{args[0]}')
     def start(self, job, app_name):
@@ -36,7 +36,7 @@ class AppService(Service):
         compose_action(app_name, app_config['version'], 'up', force_recreate=True, remove_orphans=True)
         job.set_progress(100, f'Started {app_name!r} app')
 
-    @accepts(Str('app_name'))
+    @accepts(Str('app_name'), roles=['APPS_WRITE'])
     @returns()
     @job(lock=lambda args: f'app_redeploy_{args[0]}')
     async def redeploy(self, job, app_name):
