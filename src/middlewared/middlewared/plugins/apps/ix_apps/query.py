@@ -181,6 +181,7 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
             'port_config': container_ports_config,
             'state': state,
             'volume_mounts': [v.__dict__ for v in volume_mounts],
+            'id': container['Id'],
         })
         workloads['used_ports'].extend(container_ports_config)
         volumes.update(volume_mounts)
