@@ -48,3 +48,7 @@ class DockerFSAttachmentDelegate(FSAttachmentDelegate):
             await self.middleware.call('docker.state.start_service')
         except Exception:
             self.middleware.logger.error('Failed to start docker')
+
+
+async def setup(middleware):
+    await middleware.call('pool.dataset.register_attachment_delegate', DockerFSAttachmentDelegate(middleware))
