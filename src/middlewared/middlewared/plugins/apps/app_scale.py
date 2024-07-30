@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Str, returns
-from middlewared.service import CallError, job, Service
+from middlewared.service import job, Service
 
 from .compose_utils import compose_action
 

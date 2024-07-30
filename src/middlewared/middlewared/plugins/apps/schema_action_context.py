@@ -2,6 +2,7 @@ import os
 
 from middlewared.service import CallError, Service
 
+from .ix_apps.path import get_app_parent_volume_ds_name
 from .utils import DATASET_DEFAULTS
 
 
@@ -12,7 +13,9 @@ class AppSchemaActions(Service):
         private = True
 
     async def update_volumes(self, app_name, volumes):
-        app_volume_ds = os.path.join((await self.middleware.call('docker.config'))['dataset'], 'app_mounts', app_name)
+        app_volume_ds = get_app_parent_volume_ds_name(
+            (await self.middleware.call('docker.config'))['dataset'], app_name
+        )
 
         user_wants = {app_volume_ds: {'properties': {}}} | {os.path.join(app_volume_ds, v['name']): v for v in volumes}
         existing_datasets = {
