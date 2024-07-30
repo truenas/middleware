@@ -796,6 +796,7 @@ class PoolDatasetService(CRUDService):
             acl_job = await self.middleware.call('filesystem.setacl', {
                 'path': mountpoint,
                 'dacl': acl_to_set,
+                'options': {'skip_execute_check': True}
             })
             await acl_job.wait(raise_error=True)
 
