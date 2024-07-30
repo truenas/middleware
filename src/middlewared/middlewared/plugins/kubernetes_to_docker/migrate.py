@@ -5,7 +5,7 @@ import shutil
 from middlewared.plugins.apps.ix_apps.path import get_app_parent_volume_ds_name, get_installed_app_path
 from middlewared.plugins.docker.state_utils import DATASET_DEFAULTS
 from middlewared.plugins.docker.utils import applications_ds_name
-from middlewared.schema import accepts, Dict, returns, Str
+from middlewared.schema import accepts, Dict, List, returns, Str
 from middlewared.service import CallError, InstanceNotFound, job, Service
 
 from .migrate_config_utils import migrate_chart_release_config
@@ -24,7 +24,14 @@ class K8stoDockerMigrationService(Service):
             Str('backup_name', required=True, empty=False),
         )
     )
-    @returns()
+    @returns(List(
+        'app_migration_details',
+        items=[Dict(
+            'app_migration_detail',
+            Str('name'),
+            Str('error', null=True),
+        )]
+    ))
     @job(lock='k8s_to_docker_migrate')
     def migrate(self, job, kubernetes_pool, options):
         """
