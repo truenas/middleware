@@ -75,7 +75,7 @@ class AppContainerLogsFollowTailEventSource(EventSource):
     async def cancel(self):
         await super().cancel()
         if self.logs_stream:
-            self.logs_stream.close()
+            await self.middleware.run_in_thread(self.logs_stream.close)
 
     async def on_finish(self):
         self.logs_stream = None
