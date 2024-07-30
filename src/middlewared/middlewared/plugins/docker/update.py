@@ -20,6 +20,7 @@ class DockerService(ConfigService):
         datastore = 'services.docker'
         datastore_extend = 'docker.config_extend'
         cli_namespace = 'app.docker'
+        role_prefix = 'DOCKER'
 
     ENTRY = Dict(
         'docker_entry',
@@ -65,7 +66,7 @@ class DockerService(ConfigService):
 
         return await self.config()
 
-    @accepts()
+    @accepts(roles=['DOCKER_READ'])
     @returns(Dict(
         Str('status', enum=[e.value for e in Status]),
         Str('description'),

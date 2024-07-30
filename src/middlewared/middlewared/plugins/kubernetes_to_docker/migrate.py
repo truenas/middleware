@@ -22,7 +22,8 @@ class K8stoDockerMigrationService(Service):
         Dict(
             'options',
             Str('backup_name', required=True, empty=False),
-        )
+        ),
+        roles=['DOCKER_WRITE']
     )
     @returns(List(
         'app_migration_details',
