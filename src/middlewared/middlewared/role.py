@@ -97,7 +97,7 @@ ROLES = {
     # Apps roles
     'CATALOG_READ': Role(),
     'CATALOG_WRITE': Role(includes=['CATALOG_READ']),
-    'DOCKER_READ': Role(includes=['CONTAINER_READ']),
+    'DOCKER_READ': Role(includes=[]),
     'DOCKER_WRITE': Role(includes=['DOCKER_READ']),
     'APPS_READ': Role(includes=['CATALOG_READ']),
     'APPS_WRITE': Role(includes=['CATALOG_WRITE', 'APPS_READ']),
