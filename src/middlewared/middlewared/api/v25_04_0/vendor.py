@@ -22,4 +22,4 @@ class IsVendoredArgs(BaseModel):
 
 
 class IsVendoredResult(BaseModel):
-    result: None
+    result: bool
