@@ -12,6 +12,7 @@ import pyinotify
 from itertools import product
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
+from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.plugins.filesystem_ import chflags
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str, UnixPerm
 from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
@@ -273,10 +274,6 @@ class FilesystemService(Service):
         if not path.is_dir():
             raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
 
-        # TODO: once new apps implementation is in-place remove this check
-        if 'ix-applications' in path.parts:
-            raise CallError('Ix-applications is a system managed dataset and its contents cannot be listed')
-
         file_type = None
         for filter_ in filters:
             if filter_[0] not in ['type']:
@@ -301,7 +298,7 @@ class FilesystemService(Service):
             # prevent shares from being configured to point to
             # a path that doesn't exist on a zpool, we'll
             # filter these here.
-            filters.append(['is_mountpoint', '=', True])
+            filters.extend([['is_mountpoint', '=', True], ['name', '!=', IX_APPS_DIR_NAME]])
 
         with DirectoryIterator(path, file_type=file_type) as d_iter:
             return filter_list(d_iter, filters, options)

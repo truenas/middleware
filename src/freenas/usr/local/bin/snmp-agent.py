@@ -2,7 +2,7 @@
 import threading
 import time
 import contextlib
-import pathlib
+import os
 
 import libzfs
 import netsnmpagent
@@ -413,11 +413,9 @@ def get_list_of_zvols():
     zvols = set()
     root_dir = '/dev/zvol/'
     with contextlib.suppress(FileNotFoundError):  # no zvols
-        for zpool in pathlib.Path(root_dir).iterdir():
-            for zvol in filter(lambda x: '@' not in x.name, zpool.iterdir()):
-                zvol_normalized = zvol.as_posix().removeprefix(root_dir)
-                zvol_normalized = zvol_normalized.replace('+', ' ')
-                zvols.add(zvol_normalized)
+        for dir_path, unused_dirs, files in os.walk(root_dir):
+            for file in filter(lambda x: '@' not in x, files):
+                zvols.add(os.path.join(dir_path, file).removeprefix(root_dir).replace('+', ' '))
 
     return list(zvols)
 

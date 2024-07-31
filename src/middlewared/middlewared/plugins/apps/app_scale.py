@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Str, returns
-from middlewared.service import CallError, job, Service
+from middlewared.service import job, Service
 
 from .compose_utils import compose_action
 
@@ -10,7 +10,7 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @accepts(Str('app_name'))
+    @accepts(Str('app_name'), roles=['APPS_WRITE'])
     @returns()
     @job(lock=lambda args: f'app_stop_{args[0]}')
     def stop(self, job, app_name):
@@ -24,7 +24,7 @@ class AppService(Service):
         )
         job.set_progress(100, f'Stopped {app_name!r} app')
 
-    @accepts(Str('app_name'))
+    @accepts(Str('app_name'), roles=['APPS_WRITE'])
     @returns()
     @job(lock=lambda args: f'app_start_{args[0]}')
     def start(self, job, app_name):
@@ -36,7 +36,7 @@ class AppService(Service):
         compose_action(app_name, app_config['version'], 'up', force_recreate=True, remove_orphans=True)
         job.set_progress(100, f'Started {app_name!r} app')
 
-    @accepts(Str('app_name'))
+    @accepts(Str('app_name'), roles=['APPS_WRITE'])
     @returns()
     @job(lock=lambda args: f'app_redeploy_{args[0]}')
     async def redeploy(self, job, app_name):
@@ -44,8 +44,4 @@ class AppService(Service):
         Redeploy `app_name` app.
         """
         app = await self.middleware.call('app.get_instance', app_name)
-        stop_job = await self.middleware.call('app.stop', app_name)
-        await stop_job.wait()
-        if stop_job.error:
-            raise CallError(f'Failed to redeploy app: {stop_job.error}')
         return await self.middleware.call('app.update_internal', job, app, {'values': {}}, 'Redeployment')

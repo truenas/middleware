@@ -20,6 +20,7 @@ class DockerService(ConfigService):
         datastore = 'services.docker'
         datastore_extend = 'docker.config_extend'
         cli_namespace = 'app.docker'
+        role_prefix = 'DOCKER'
 
     ENTRY = Dict(
         'docker_entry',
@@ -53,19 +54,19 @@ class DockerService(ConfigService):
         config.update(data)
 
         if old_config != config:
-            if not config['pool']:
-                try:
-                    await self.middleware.call('service.stop', 'docker')
-                except Exception as e:
-                    raise CallError(f'Failed to stop docker service: {e}')
-                await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
+            try:
+                await self.middleware.call('service.stop', 'docker')
+            except Exception as e:
+                raise CallError(f'Failed to stop docker service: {e}')
+
+            await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
             await self.middleware.call('docker.setup.status_change')
 
         return await self.config()
 
-    @accepts()
+    @accepts(roles=['DOCKER_READ'])
     @returns(Dict(
         Str('status', enum=[e.value for e in Status]),
         Str('description'),

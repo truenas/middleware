@@ -53,12 +53,13 @@ def get_action_context(app_name: str) -> dict[str, typing.Any]:
         'is_upgrade': False,
         'upgrade_metadata': {},
         'app_name': app_name,
+        'app_metadata': {},
     })
 
 
 def add_context_to_values(
-    app_name: str, values: dict[str, typing.Any], *, install: bool = False, update: bool = False, upgrade: bool = False,
-    upgrade_metadata: dict[str, typing.Any] = None, rollback: bool = False,
+    app_name: str, values: dict[str, typing.Any], app_metadata: dict, *, install: bool = False, update: bool = False,
+    upgrade: bool = False, upgrade_metadata: dict[str, typing.Any] = None, rollback: bool = False,
 ) -> dict[str, typing.Any]:
     assert install or update or upgrade or rollback, 'At least one of install, update, rollback or upgrade must be True'
     assert sum([install, rollback, update, upgrade]) <= 1, 'Only one of install, update, or upgrade can be True.'
@@ -77,6 +78,7 @@ def add_context_to_values(
     for operation, _ in filter(lambda i: i[1], operation_map.items()):
         action_context.update({
             'operation': operation,
+            'app_metadata': app_metadata,
             f'is_{operation.lower()}': True,
             **({'upgrade_metadata': upgrade_metadata} if operation == 'UPGRADE' else {})
         })

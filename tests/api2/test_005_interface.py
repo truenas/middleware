@@ -124,10 +124,10 @@ def test_003_recheck_ipvx(request):
 def test_004_remove_critical_failover_group(request):
     with pytest.raises(ValidationErrors) as ve:
         call('interface.update', interface, {'failover_group': None, 'failover_critical': True})
-        assert ve.value.errors == [
-            ValidationError(
-                'interface_update.failover_group',
-                'A failover group is required when configuring a critical failover interface.',
-                errno.EINVAL
-            )
-        ]
+    assert ve.value.errors == [
+        ValidationError(
+            'interface_update.failover_group',
+            'A failover group is required when configuring a critical failover interface.',
+            errno.EINVAL
+        )
+    ]

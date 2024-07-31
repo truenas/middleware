@@ -21,6 +21,7 @@ class CatalogService(Service):
             'app_version_details',
             Str('train', required=True),
         ),
+        roles=['CATALOG_READ'],
     )
     @returns(Dict(
         # TODO: Make sure keys here are mapped appropriately

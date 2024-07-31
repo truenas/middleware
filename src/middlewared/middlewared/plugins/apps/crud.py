@@ -23,6 +23,7 @@ class AppService(CRUDService):
         namespace = 'app'
         datastore_primary_key_type = 'string'
         cli_namespace = 'app'
+        role_prefix = 'APPS'
 
     ENTRY = Dict(
         'app_query',
@@ -106,7 +107,7 @@ class AppService(CRUDService):
 
         return filter_list(apps, filters, options)
 
-    @accepts(Str('app_name'))
+    @accepts(Str('app_name'), roles=['APPS_READ'])
     @returns(Dict('app_config', additional_attrs=True))
     def config(self, app_name):
         """
@@ -161,14 +162,18 @@ class AppService(CRUDService):
         if version not in complete_app_details['versions']:
             raise CallError(f'Version {version} not found in {data["catalog_app"]} app', errno=errno.ENOENT)
 
+        return self.create_internal(job, app_name, version, data['values'], complete_app_details)
+
+    @private
+    def create_internal(self, job, app_name, version, user_values, complete_app_details, dry_run=False):
         app_version_details = complete_app_details['versions'][version]
         self.middleware.call_sync('catalog.version_supported_error_check', app_version_details)
 
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
         new_values = self.middleware.call_sync(
-            'app.schema.normalize_and_validate_values', app_version_details, data['values'], False,
-            get_installed_app_path(app_name)
+            'app.schema.normalize_and_validate_values', app_version_details, user_values, False,
+            get_installed_app_path(app_name), None, dry_run is False,
         )
 
         job.set_progress(25, 'Initial Validation completed')
@@ -183,14 +188,15 @@ class AppService(CRUDService):
             app_version_details = self.middleware.call_sync(
                 'catalog.app_version_details', get_installed_app_version_path(app_name, version)
             )
-            new_values = add_context_to_values(app_name, new_values, install=True)
+            new_values = add_context_to_values(app_name, new_values, app_version_details['app_metadata'], install=True)
             update_app_config(app_name, version, new_values)
             update_app_metadata(app_name, app_version_details)
 
             job.set_progress(60, 'App installation in progress, pulling images')
-            compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
+            if dry_run is False:
+                compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:
-            job.set_progress(80, f'Failure occurred while installing {data["app_name"]!r}, cleaning up')
+            job.set_progress(80, f'Failure occurred while installing {app_name!r}, cleaning up')
             for method, args, kwargs in (
                 (compose_action, (app_name, version, 'down'), {'remove_orphans': True}),
                 (shutil.rmtree, (get_installed_app_path(app_name),), {}),
@@ -200,9 +206,10 @@ class AppService(CRUDService):
 
             raise e from None
         else:
-            self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
-            job.set_progress(100, f'{data["app_name"]!r} installed successfully')
-            return self.get_instance__sync(app_name)
+            if dry_run is False:
+                self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+                job.set_progress(100, f'{app_name!r} installed successfully')
+                return self.get_instance__sync(app_name)
 
     @accepts(
         Str('app_name'),
@@ -239,7 +246,7 @@ class AppService(CRUDService):
 
         job.set_progress(25, 'Initial Validation completed')
 
-        new_values = add_context_to_values(app_name, new_values, update=True)
+        new_values = add_context_to_values(app_name, new_values, app['metadata'], update=True)
         update_app_config(app_name, app['version'], new_values)
         update_app_metadata_for_portals(app_name, app['version'])
         job.set_progress(60, 'Configuration updated, updating docker resources')

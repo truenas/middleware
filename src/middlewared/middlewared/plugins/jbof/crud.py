@@ -938,5 +938,13 @@ class JBOFService(CRUDService):
         return {'failed': failed, 'message': err}
 
 
+async def _clear_reboot_alerts(middleware, event_type, args):
+    await middleware.call('alert.oneshot_delete', 'JBOFTearDownFailure', None)
+
+
 async def setup(middleware):
     RedfishClient.setup()
+    # Deliberately do NOT handle the case where the system is already
+    # ready, as we only want the following to occur after a boot, not
+    # on a middlwared restart.
+    middleware.event_subscribe("system.ready", _clear_reboot_alerts)

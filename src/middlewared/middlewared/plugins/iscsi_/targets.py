@@ -595,15 +595,15 @@ class iSCSITargetService(CRUDService):
         When called on a HA BACKUP node will attempt to login to all internal HA targets,
         used in ALUA.
         """
-        iqns = await self.middleware.call('iscsi.target.active_ha_iqns')
+        ha_iqn_prefix_str = await self.middleware.call('iscsi.target.ha_iqn_prefix')
 
         # Check what's already logged in
         existing = await self.middleware.call('iscsi.target.logged_in_iqns')
 
         # Generate the set of things we want to logout (don't assume every IQN, just the HA ones)
         todo = set()
-        for iqn in iqns.values():
-            if iqn in existing:
+        for iqn in existing.keys():
+            if iqn.startswith(ha_iqn_prefix_str):
                 todo.add(iqn)
 
         if todo:
@@ -789,10 +789,15 @@ class iSCSITargetService(CRUDService):
                 targetname.parent.joinpath(param).write_text(text)
 
     @private
+    async def ha_iqn_prefix(self):
+        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+        return f'{global_basename}:HA:'
+
+    @private
     async def ha_iqn(self, name):
         """Return the IQN of the specified internal target."""
-        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
-        return f'{global_basename}:HA:{name}'
+        prefix = await self.middleware.call('iscsi.target.ha_iqn_prefix')
+        return f'{prefix}{name}'
 
     @private
     def iqn_ha_luns(self, iqn):

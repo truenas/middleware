@@ -120,6 +120,16 @@ class OneShotAlertClass:
         """
         raise NotImplementedError
 
+    async def load(self, alerts):
+        """
+        This is called on system startup. Returns only those `alerts` that are still applicable to this system (i.e.,
+        corresponsing resources still exist).
+
+        :param alerts: all the existing alerts of the class
+        :return: `alerts` that should exist on this system.
+        """
+        return alerts
+
 
 class SimpleOneShotAlertClass(OneShotAlertClass):
     """

@@ -143,16 +143,20 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     async def common_validate(self, new, old, verrors):
-        try:
-            if not (await self.middleware.call('activedirectory.netbiosname_is_ours', new['netbiosname'], new['domainname'], new['dns_timeout'])):
-                verrors.add(
-                    'activedirectory_update.netbiosname',
-                    f'NetBIOS name [{new["netbiosname"]}] appears to be in use by another computer in Active Directory DNS. '
-                    'Further investigation and DNS corrections will be required prior to using the aforementioned name to '
-                    'join Active Directory.'
-                )
-        except CallError:
-            pass
+        if new['enable']:
+            try:
+                if not (await self.middleware.call(
+                    'activedirectory.netbiosname_is_ours',
+                    new['netbiosname'], new['domainname'], new['dns_timeout'])
+                ):
+                    verrors.add(
+                        'activedirectory_update.netbiosname',
+                        f'NetBIOS name [{new["netbiosname"]}] appears to be in use by another computer in Active Directory DNS. '
+                        'Further investigation and DNS corrections will be required prior to using the aforementioned name to '
+                        'join Active Directory.'
+                    )
+            except CallError:
+                pass
 
         if new['kerberos_realm'] and new['kerberos_realm'] != old['kerberos_realm']:
             realm = await self.middleware.call('kerberos.realm.query', [("id", "=", new['kerberos_realm'])])

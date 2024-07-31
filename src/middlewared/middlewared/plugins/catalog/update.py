@@ -27,6 +27,7 @@ class CatalogService(ConfigService):
         datastore_primary_key_type = 'string'
         cli_namespace = 'app.catalog'
         namespace = 'catalog'
+        role_prefix = 'CATALOG'
 
     ENTRY = Dict(
             'catalog_create',

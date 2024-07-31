@@ -400,7 +400,6 @@ def check_path_resides_within_volume_sync(verrors, schema_name, path, vol_names)
     * path is within /mnt
     * path is located within one of the specified `vol_names`
     * path is not explicitly a `.zfs` or `.zfs/snapshot` directory
-    * path is not ix-applications dataset
     """
     if path_location(path).name == 'EXTERNAL':
         # There are some fields where we allow external paths
@@ -427,17 +426,3 @@ def check_path_resides_within_volume_sync(verrors, schema_name, path, vol_names)
                     "are not permitted paths. If a snapshot within this directory must "
                     "be accessed through the path-based API, then it should be called "
                     "directly, e.g. '/mnt/dozer/.zfs/snapshot/mysnap'.")
-
-    for check_path, svc_name in (('ix-applications', 'Applications'),):
-        in_use = False
-        if is_mountpoint and rp.name == check_path:
-            in_use = True
-        else:
-            # subtract 2 here to remove the '/' and 'mnt' parents
-            for i in range(0, len(rp.parents) - 2):
-                p = rp.parents[i]
-                if p.is_mount() and p.name == check_path:
-                    in_use = True
-                    break
-        if in_use:
-            verrors.add(schema_name, f'A path being used by {svc_name} is not allowed')
