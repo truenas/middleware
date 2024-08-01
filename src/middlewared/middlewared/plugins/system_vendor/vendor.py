@@ -2,7 +2,9 @@ import json
 import os
 
 from middlewared.api import api_method
-from middlewared.api.current import VendorNameArgs, VendorNameResult, UnvendorArgs, UnvendorResult
+from middlewared.api.current import (
+    VendorNameArgs, VendorNameResult, UnvendorArgs, UnvendorResult, IsVendoredArgs, IsVendoredResult
+)
 from middlewared.service import Service
 
 
@@ -37,3 +39,7 @@ class VendorService(Service):
             self.logger.exception('Unexpected error attempting to remove %r', SENTINEL_FILE_PATH)
 
         self.middleware.call_sync('etc.generate', 'grub')
+
+    @api_method(IsVendoredArgs, IsVendoredResult, private=True)
+    def is_vendored(self):
+        return os.path.isfile(SENTINEL_FILE_PATH)
