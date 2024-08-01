@@ -8,9 +8,17 @@ class AppFSAttachmentDelegate(FSAttachmentDelegate):
     async def query(self, path, enabled, options=None):
         apps_attached = []
         for app in await self.middleware.call('app.query'):
-            if not app['active_workloads']['volumes'] or (
-                app['state'] == 'STOPPED' if enabled else app['state'] != 'STOPPED'
-            ):
+            # We don't want to consider those apps which fit in the following criteria:
+            # - app has no volumes
+            # - app is stopped and we are looking for enabled apps
+            # - app is not stopped and we are looking for disabled apps
+            if not (skip_app := not app['active_workloads']['volumes']):
+                if enabled:
+                    skip_app |= app['state'] == 'STOPPED'
+                else:
+                    skip_app |= app['state'] != 'STOPPED'
+
+            if skip_app:
                 continue
 
             if await self.middleware.call(
