@@ -3,6 +3,8 @@ from string import ascii_letters, digits, punctuation
 
 from cryptit import cryptit
 
+from samba.crypto import md4_hash_blob
+
 
 def generate_string(string_size=8, punctuation_chars=False, extra_chars=None):
     """
@@ -52,3 +54,12 @@ def check_unixhash(passwd, unixhash):
     given `unixhash`.
     """
     return compare_digest(cryptit(passwd, unixhash), unixhash)
+
+
+def generate_nt_hash(passwd):
+    """
+    Generate an NT hash for SMB user password. This is required for
+    NTLM authentication for local users.
+    """
+    md4_hash_bytes = md4_hash_blob(passwd.encode('utf-16le'))
+    return md4_hash_bytes.hex().upper()

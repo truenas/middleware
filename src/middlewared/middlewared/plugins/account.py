@@ -1,7 +1,5 @@
-import binascii
 import errno
 import glob
-import hashlib
 import json
 import os
 import shlex
@@ -23,7 +21,7 @@ from middlewared.service import (
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
-from middlewared.utils.crypto import sha512_crypt
+from middlewared.utils.crypto import generate_nt_hash, sha512_crypt
 from middlewared.utils.directoryservices.constants import DSType, DSStatus
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
@@ -88,8 +86,7 @@ def unixhash_is_valid(unixhash):
 
 
 def nt_password(cleartext):
-    nthash = hashlib.new('md4', cleartext.encode('utf-16le')).digest()
-    return binascii.hexlify(nthash).decode().upper()
+    return generate_nt_hash(cleartext)
 
 
 def validate_sudo_commands(commands):
@@ -1468,7 +1465,6 @@ class UserService(CRUDService):
         password = data.pop('password')
         if password:
             data['unixhash'] = crypted_password(password)
-            # See http://samba.org.ru/samba/docs/man/manpages/smbpasswd.5.html
             data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}'
             data['smbhash'] += f':{nt_password(password)}:[U         ]:LCT-{int(time.time()):X}:'
         else:
