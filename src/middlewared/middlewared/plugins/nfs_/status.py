@@ -51,8 +51,24 @@ class NFSService(Service):
         """
         info = {}
         with suppress(FileNotFoundError):
+            # The data sent by the kernel isn't always 100% valid YAML 
+            # The "callback address" field is missing quotation marks.
+            # So, read the whole file in Python, then if we encounter that line, 
+            # add quotation marks before parsing as YAML.
+
             with open(f"/proc/fs/nfsd/clients/{id_}/info", "r") as f:
-                info = yaml.safe_load(f.read())
+                yaml_data = f.readlines()
+
+            safe_content = ""
+
+            for line in yaml_data:
+                if line.startswith("callback address") and not '"' in line:
+                    payload = line.split(':', 1)[1].strip()
+                    safe_content += f'callback address: "{payload}"\n'
+                else:
+                    safe_content += line
+
+            info = yaml.safe_load(safe_content)
 
         return info
 
