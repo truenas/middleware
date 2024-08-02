@@ -29,7 +29,7 @@ class AppService(CRUDService):
         'app_query',
         Str('name'),
         Str('id'),
-        Str('state'),
+        Str('state', enum=['STOPPED', 'DEPLOYING', 'RUNNING']),
         Bool('upgrade_available'),
         Str('human_version'),
         Str('version'),
@@ -52,7 +52,7 @@ class AppService(CRUDService):
                 Str('service_name'),
                 Str('image'),
                 List('port_config'),
-                Str('state'),
+                Str('state', enum=['running', 'starting', 'exited']),
                 List('volume_mounts'),
             )]),
             List('volumes', items=[Dict(
