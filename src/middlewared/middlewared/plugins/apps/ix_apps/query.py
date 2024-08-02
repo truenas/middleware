@@ -128,6 +128,7 @@ def get_default_workload_values() -> dict:
         'used_ports': [],
         'container_details': [],  # This would contain service name and image in use
         'volumes': [],  # This would be docker volumes
+        'images': [],
     }
 
 
@@ -140,10 +141,12 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
     # Container mounts
     workloads = get_default_workload_values()
     volumes = set()
+    images = set()
     workloads['containers'] = len(app_resources['containers'])
     for container in app_resources['containers']:
         service_name = container['Config']['Labels'][COMPOSE_SERVICE_KEY]
         container_ports_config = []
+        images.add(container['Config']['Image'])
         for container_port, host_config in container.get('NetworkSettings', {}).get('Ports', {}).items():
             if not host_config:
                 # This will happen for ports which are not exposed on the host side
@@ -186,5 +189,8 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
         workloads['used_ports'].extend(container_ports_config)
         volumes.update(volume_mounts)
 
-    workloads['volumes'] = [v.__dict__ for v in volumes]
+    workloads.update({
+        'images': list(images),
+        'volumes': [v.__dict__ for v in volumes],
+    })
     return workloads
