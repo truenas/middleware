@@ -1,4 +1,4 @@
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, periodic, Service
 
 from .state_utils import APPS_STATUS, Status, STATUS_DESCRIPTIONS
 
@@ -11,7 +11,6 @@ class DockerStateService(Service):
 
     STATUS = APPS_STATUS(Status.PENDING, STATUS_DESCRIPTIONS[Status.PENDING])
 
-    @private
     async def before_start_check(self):
         try:
             await self.middleware.call('docker.setup.validate_fs')
@@ -28,7 +27,6 @@ class DockerStateService(Service):
 
         await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
 
-    @private
     async def after_start_check(self):
         if await self.middleware.call('service.started', 'docker'):
             await self.set_status(Status.RUNNING.value)
@@ -39,7 +37,6 @@ class DockerStateService(Service):
                 'error': 'Docker service could not be started'
             })
 
-    @private
     async def start_service(self):
         await self.set_status(Status.INITIALIZING.value)
         try:
@@ -52,7 +49,6 @@ class DockerStateService(Service):
         else:
             await self.middleware.call('app.certificate.redeploy_apps_consuming_outdated_certs')
 
-    @private
     async def set_status(self, new_status, extra=None):
         assert new_status in Status.__members__
         new_status = Status(new_status)
@@ -62,11 +58,9 @@ class DockerStateService(Service):
         )
         self.middleware.send_event('docker.state', 'CHANGED', fields=await self.get_status_dict())
 
-    @private
     async def get_status_dict(self):
         return {'status': self.STATUS.status.value, 'description': self.STATUS.description}
 
-    @private
     async def initialize(self):
         if not await self.middleware.call('system.ready'):
             # Status will be automatically updated when system is ready
@@ -81,7 +75,6 @@ class DockerStateService(Service):
                 await self.set_status(Status.FAILED.value)
             await self.middleware.call('catalog.sync')
 
-    @private
     async def validate(self, raise_error=True):
         # When `raise_error` is unset, we return boolean true if there was no issue with the state
         error_str = ''
@@ -94,6 +87,16 @@ class DockerStateService(Service):
             raise CallError(error_str)
 
         return bool(error_str) is False
+
+    @periodic(interval=86400)
+    async def periodic_check(self):
+        if await self.validate(False) is False:
+            return
+
+        await (await self.middleware.call('catalog.sync')).wait()
+
+        await self.middleware.call('app.image.op.check_update')
+        # TODO: Add app upgrade alerts and account for update image check
 
 
 async def _event_system_ready(middleware, event_type, args):
