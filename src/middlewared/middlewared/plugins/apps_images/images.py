@@ -1,4 +1,5 @@
 from middlewared.plugins.apps.ix_apps.docker.images import list_images
+from middlewared.schema import Bool, Dict, Int, List, Str
 from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
 
@@ -9,6 +10,18 @@ class AppImageService(CRUDService):
         cli_namespace = 'app.image'
         namespace = 'app.image'
         role_prefix = 'APPS'
+
+    ENTRY = Dict(
+        'app_image_entry',
+        Str('id'),
+        List('repo_tags', items=[Str('repo_tag')]),
+        List('repo_digests', items=[Str('repo_digest')]),
+        Int('size'),
+        Bool('dangling'),
+        Str('created'),
+        Str('author'),
+        Str('comment'),
+    )
 
     @filterable
     def query(self, filters, options):
