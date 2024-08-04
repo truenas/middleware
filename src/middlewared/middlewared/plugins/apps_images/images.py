@@ -3,6 +3,8 @@ from middlewared.schema import Bool, Dict, Int, List, Str
 from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
 
+from .utils import parse_tags
+
 
 class AppImageService(CRUDService):
 
@@ -21,17 +23,28 @@ class AppImageService(CRUDService):
         Str('created'),
         Str('author'),
         Str('comment'),
+        List(
+            'parsed_repo_tags', items=[Dict(
+                'parsed_repo_tag',
+                Str('image'),
+                Str('tag'),
+                Str('registry'),
+                Str('complete_tag'),
+            )]
+        ),
     )
 
     @filterable
     def query(self, filters, options):
         """
         Query all docker images with `query-filters` and `query-options`.
+
+        `query-options.extra.parse_tags` is a boolean which when set will have normalized tags to be retrieved.
         """
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
 
-        # id, repo_tags, repo_digests, size, dangling, created, author, comment
+        parse_all_tags = options['extra'].get('parse_tags')
         images = []
         for image in list_images():
             config = {
@@ -40,6 +53,8 @@ class AppImageService(CRUDService):
                 )
             }
             config['dangling'] = len(config['repo_tags']) == 1 and config['repo_tags'][0] == '<none>:<none>'
+            if parse_all_tags:
+                config['parsed_repo_tags'] = parse_tags(config['repo_tags'])
             images.append(config)
 
         return filter_list(images, filters, options)
