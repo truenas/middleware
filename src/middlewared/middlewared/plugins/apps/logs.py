@@ -45,11 +45,11 @@ class AppContainerLogsFollowTailEventSource(EventSource):
         if not any(c['id'] == container_id for c in app['active_workloads']['container_details']):
             raise CallError(f'Container "{container_id}" not found in app "{app_name}"', errno=errno.ENOENT)
 
-        docker_client = get_docker_client()
-        try:
-            container = docker_client.containers.get(container_id)
-        except docker.errors.NotFound:
-            raise CallError(f'Container "{container_id}" not found')
+        with get_docker_client() as docker_client:
+            try:
+                container = docker_client.containers.get(container_id)
+            except docker.errors.NotFound:
+                raise CallError(f'Container "{container_id}" not found')
 
         return container
 
