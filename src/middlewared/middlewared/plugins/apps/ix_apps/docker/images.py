@@ -1,3 +1,5 @@
+import typing
+
 import docker.errors
 
 from middlewared.service import CallError
@@ -13,6 +15,27 @@ def list_images() -> list[dict]:
                 lambda i: convert_case_for_dict_or_list(i.attrs), client.images.list()
             )
         ]
+
+
+def pull_image(image_tag: str, callback: typing.Callable, username: str | None = None, password: str | None = None):
+    if username and not password:
+        raise CallError('Password is required when username is provided')
+
+    if password and not username:
+        raise CallError('Username is required when password is provided')
+
+    auth_config = {
+        'username': username,
+        'password': password,
+    } if username else None
+
+    with get_docker_client() as client:
+        try:
+            response = client.api.pull(image_tag, auth_config=auth_config, stream=True, decode=True)
+            for line in response:
+                callback(line)
+        except docker.errors.APIError as e:
+            raise CallError(f'Failed to pull {image_tag!r} image: {e!s}')
 
 
 def delete_image(image_id: str, force: bool = False):
