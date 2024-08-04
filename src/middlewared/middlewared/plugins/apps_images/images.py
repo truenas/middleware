@@ -78,6 +78,7 @@ class AppImageService(CRUDService):
         be used cautiously.
         """
         self.middleware.call_sync('docker.state.validate')
+        image = self.get_instance__sync(image_id)
         delete_image(image_id, options['force'])
-        # self.middleware.call_sync('app.image.op.remove_image_from_cache', image_id)
+        self.middleware.call_sync('app.image.op.remove_image_from_cache', image)
         return True
