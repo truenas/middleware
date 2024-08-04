@@ -17,7 +17,9 @@ def list_images() -> list[dict]:
         ]
 
 
-def pull_image(image_tag: str, callback: typing.Callable, username: str | None = None, password: str | None = None):
+def pull_image(
+    image_tag: str, callback: typing.Callable = None, username: str | None = None, password: str | None = None
+):
     if username and not password:
         raise CallError('Password is required when username is provided')
 
@@ -33,7 +35,8 @@ def pull_image(image_tag: str, callback: typing.Callable, username: str | None =
         try:
             response = client.api.pull(image_tag, auth_config=auth_config, stream=True, decode=True)
             for line in response:
-                callback(line)
+                if callback:
+                    callback(line)
         except docker.errors.APIError as e:
             raise CallError(f'Failed to pull {image_tag!r} image: {e!s}')
 
