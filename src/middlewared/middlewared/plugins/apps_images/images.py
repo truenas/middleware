@@ -1,5 +1,5 @@
-from middlewared.plugins.apps.ix_apps.docker.images import list_images
-from middlewared.schema import Bool, Dict, Int, List, Str
+from middlewared.plugins.apps.ix_apps.docker.images import delete_image, list_images
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
 
@@ -62,3 +62,22 @@ class AppImageService(CRUDService):
             images.append(config)
 
         return filter_list(images, filters, options)
+
+    @accepts(
+        Str('image_id'),
+        Dict(
+            'options',
+            Bool('force', default=False),
+        )
+    )
+    def do_delete(self, image_id, options):
+        """
+        Delete docker image `image_id`.
+
+        `options.force` when set will force delete the image regardless of the state of containers and should
+        be used cautiously.
+        """
+        self.middleware.call_sync('docker.state.validate')
+        delete_image(image_id, options['force'])
+        # self.middleware.call_sync('app.image.op.remove_image_from_cache', image_id)
+        return True
