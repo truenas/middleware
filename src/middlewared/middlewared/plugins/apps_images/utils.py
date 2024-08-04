@@ -12,7 +12,7 @@ DEFAULT_DOCKER_TAG = 'latest'
 DOCKER_CONTENT_DIGEST_HEADER = 'Docker-Content-Digest'
 
 # Taken from OCI: https://github.com/opencontainers/go-digest/blob/master/digest.go#L63
-DIGEST_RE = r"[a-z0-9]+(?:[.+_-])*:[a-zA-Z0-9=_-]+"
+DIGEST_RE = r'[a-z0-9]+(?:[.+_-])*:[a-zA-Z0-9=_-]+'
 
 
 DOCKER_AUTH_HEADER = 'WWW-Authenticate'
