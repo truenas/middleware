@@ -11,7 +11,7 @@ from .utils import normalize_reference
 class ContainerImagesService(Service, ContainerRegistryClientMixin):
 
     class Config:
-        namespace = 'app.image'
+        namespace = 'app.image.op'
         private = True
 
     IMAGE_CACHE = defaultdict(lambda: False)
