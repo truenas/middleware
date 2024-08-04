@@ -6,6 +6,7 @@ from middlewared.utils import filter_list
 class AppImageService(CRUDService):
 
     class Config:
+        cli_namespace = 'app.image'
         namespace = 'app.image'
         role_prefix = 'APPS'
 
@@ -17,4 +18,15 @@ class AppImageService(CRUDService):
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
 
-        return []
+        # id, repo_tags, repo_digests, size, dangling, created, author, comment
+        images = []
+        for image in list_images():
+            config = {
+                k if isinstance(k, str) else k[0]: image.get(k) if isinstance(k, str) else image.get(*k) for k in (
+                    'id', ('repo_tags', []), ('repo_digests', []), 'size', 'created', 'author', 'comment',
+                )
+            }
+            config['dangling'] = len(config['repo_tags']) == 1 and config['repo_tags'][0] == '<none>:<none>'
+            images.append(config)
+
+        return filter_list(images, filters, options)
