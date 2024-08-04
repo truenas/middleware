@@ -1,10 +1,14 @@
 import contextlib
+import logging
 from collections import defaultdict
 
 from middlewared.service import CallError, Service
 
 from .client import ContainerRegistryClientMixin
 from .utils import normalize_reference
+
+
+logger = logging.getLogger('docker_image')
 
 
 class ContainerImagesService(Service, ContainerRegistryClientMixin):
@@ -28,7 +32,7 @@ class ContainerImagesService(Service, ContainerRegistryClientMixin):
                 try:
                     await self.check_update_for_image(tag, image)
                 except CallError as e:
-                    self.logger.error(str(e))
+                    logger.error(str(e))
 
     async def retrieve_image_digest(self, reference: str):
         repo_digests = []

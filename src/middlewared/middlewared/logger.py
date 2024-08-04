@@ -39,6 +39,7 @@ logging.getLogger('docker.utils.config').setLevel(logging.ERROR)
 logging.getLogger('docker.auth').setLevel(logging.ERROR)
 logging.TRACE = 6
 
+DOCKER_IMAGE_LOGFILE = '/var/log/docker_image.log'
 FAILOVER_LOGFILE = '/var/log/failover.log'
 LOGFILE = '/var/log/middlewared.log'
 NETDATA_API_LOGFILE = '/var/log/netdata_api.log'
@@ -81,6 +82,7 @@ class Logger:
         else:
             for name, filename, log_format in [
                 (None, LOGFILE, self.log_format),
+                ('docker_image', DOCKER_IMAGE_LOGFILE, self.log_format),
                 ('failover', FAILOVER_LOGFILE, self.log_format),
                 ('netdata_api', NETDATA_API_LOGFILE, self.log_format),
                 ('zettarepl', ZETTAREPL_LOGFILE,
