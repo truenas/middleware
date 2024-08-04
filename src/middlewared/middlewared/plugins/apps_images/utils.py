@@ -1,7 +1,6 @@
 import re
 
 from collections import defaultdict
-from typing import Dict, List, Union
 
 from middlewared.service import CallError
 
@@ -16,7 +15,58 @@ DOCKER_CONTENT_DIGEST_HEADER = 'Docker-Content-Digest'
 DIGEST_RE = r"[a-z0-9]+(?:[.+_-])*:[a-zA-Z0-9=_-]+"
 
 
-def normalize_reference(reference: str) -> Dict:
+DOCKER_AUTH_HEADER = 'WWW-Authenticate'
+DOCKER_AUTH_URL = 'https://auth.docker.io/token'
+DOCKER_AUTH_SERVICE = 'registry.docker.io'
+DOCKER_MANIFEST_SCHEMA_V1 = 'application/vnd.docker.distribution.manifest.v1+json'
+DOCKER_MANIFEST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.v2+json'
+DOCKER_MANIFEST_LIST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.list.v2+json'
+DOCKER_RATELIMIT_URL = 'https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest'
+
+
+def parse_digest_from_schema(response: dict) -> list[str]:
+    """
+    Parses out the digest according to schemas specs:
+    https://docs.docker.com/registry/spec/manifest-v2-1/
+    """
+    media_type = response['response']['mediaType']
+    if media_type == DOCKER_MANIFEST_SCHEMA_V2:
+        digest_value = response['response']['config']['digest']
+        return [digest_value] if isinstance(digest_value, str) else digest_value
+    elif media_type == DOCKER_MANIFEST_LIST_SCHEMA_V2:
+        if manifests := response['response']['manifests']:
+            return [digest['digest'] for digest in manifests]
+    return []
+
+
+def parse_auth_header(header: str) -> dict[str, str]:
+    """
+    Parses header in format below:
+    'Bearer realm="https://ghcr.io/token",service="ghcr.io",scope="redis:pull"'
+
+    Returns:
+        {
+            'auth_url': 'https://ghcr.io/token',
+            'service': 'ghcr.io',
+            'scope': 'redis:pull'
+        }
+    """
+    adapter = {
+        'realm': 'auth_url',
+        'service': 'service',
+        'scope': 'scope',
+    }
+    results = {}
+    parts = header.split()
+    if len(parts) > 1:
+        for part in parts[1].split(','):
+            key_value = part.split('=')
+            if len(key_value) == 2 and key_value[0] in adapter:
+                results[adapter[key_value[0]]] = key_value[1].strip('"')
+    return results
+
+
+def normalize_reference(reference: str) -> dict:
     """
     Parses the reference for image, tag and repository.
 
@@ -67,8 +117,8 @@ def normalize_reference(reference: str) -> Dict:
 
 
 def get_chart_releases_consuming_image(
-    image_names: Union[list, set], chart_releases: list, get_mapping: bool = False
-) -> Union[dict, list]:
+    image_names: list | set, chart_releases: list, get_mapping: bool = False
+) -> dict | list:
     chart_releases_consuming_image = defaultdict(list) if get_mapping else set()
     images = {i['complete_tag']: i for i in map(normalize_reference, image_names)}
     for chart_release in chart_releases:
@@ -84,7 +134,7 @@ def get_chart_releases_consuming_image(
     return chart_releases_consuming_image if get_mapping else list(chart_releases_consuming_image)
 
 
-def parse_tags(references: List[str]) -> List[Dict[str, str]]:
+def parse_tags(references: list[str]) -> list[dict[str, str]]:
     return [normalize_reference(reference=reference) for reference in references]
 
 
