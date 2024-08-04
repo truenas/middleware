@@ -44,6 +44,7 @@ class AppImageService(CRUDService):
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
 
+        update_cache = self.middleware.call_sync('app.image.op.image_update_cache')
         parse_all_tags = options['extra'].get('parse_tags')
         images = []
         for image in list_images():
@@ -52,7 +53,10 @@ class AppImageService(CRUDService):
                     'id', ('repo_tags', []), ('repo_digests', []), 'size', 'created', 'author', 'comment',
                 )
             }
-            config['dangling'] = len(config['repo_tags']) == 1 and config['repo_tags'][0] == '<none>:<none>'
+            config.update({
+                'dangling': len(config['repo_tags']) == 1 and config['repo_tags'][0] == '<none>:<none>',
+                'update_available': any(update_cache[r] for r in config['repo_tags']),
+            })
             if parse_all_tags:
                 config['parsed_repo_tags'] = parse_tags(config['repo_tags'])
             images.append(config)

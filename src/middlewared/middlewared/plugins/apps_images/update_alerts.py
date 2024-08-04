@@ -1,5 +1,4 @@
 import contextlib
-
 from collections import defaultdict
 
 from middlewared.service import CallError, Service
@@ -23,8 +22,8 @@ class ContainerImagesService(Service, ContainerRegistryClientMixin):
         return normalize_reference(reference=reference)
 
     async def check_update(self):
-        images = await self.middleware.call('container.image.query')
-        for image in filter(lambda i: not i['system_image'], images):
+        images = await self.middleware.call('app.image.query')
+        for image in images:
             for tag in image['repo_tags']:
                 try:
                     await self.check_update_for_image(tag, image)
