@@ -679,7 +679,9 @@ class KeychainCredentialService(CRUDService):
         service = self.middleware.call_sync("service.query", [("service", "=", "ssh")], {"get": True})
         ssh = self.middleware.call_sync("ssh.config")
         try:
-            user = self.middleware.call_sync("user.query", [("username", "=", data["username"]), ("local", "=", True)], {"get": True})
+            user = self.middleware.call_sync(
+                "user.query", [("username", "=", data["username"]), ("local", "=", True)], {"get": True}
+            )
         except MatchNotFound:
             raise CallError(f"User {data['username']} does not exist")
 
@@ -704,6 +706,8 @@ class KeychainCredentialService(CRUDService):
 
         # Write public key in user authorized_keys for SSH
         with open(f"{dotsshdir}/authorized_keys", "a+") as f:
+            os.fchmod(f.fileno(), 0o600)
+            os.fchown(f.fileno(), user["uid"], user["group"]["bsdgrp_gid"])
             f.seek(0)
             if data["public_key"] not in f.read():
                 f.write("\n" + data["public_key"] + "\n")
