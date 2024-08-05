@@ -457,7 +457,7 @@ class PoolService(CRUDService):
         ),
         Bool('allow_duplicate_serials', default=False),
         register=True,
-    ))
+    ), audit='Pool create', audit_extended=lambda data: data['name'])
     @job(lock='pool_createupdate')
     async def do_create(self, job, data):
         """
@@ -680,7 +680,7 @@ class PoolService(CRUDService):
         ('rm', {'name': 'deduplication'}),
         ('rm', {'name': 'checksum'}),
         ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
-    ))
+    ), audit='Pool update')
     @job(lock='pool_createupdate')
     async def do_update(self, job, id_, data):
         """
