@@ -487,7 +487,7 @@ class PoolDatasetService(CRUDService):
         ),
         Bool('create_ancestors', default=False),
         register=True,
-    ))
+    ), audit='Pool dataset create', audit_extended=lambda data: data['name'])
     @pass_app(rest=True)
     async def do_create(self, app, data):
         """
@@ -823,8 +823,8 @@ class PoolDatasetService(CRUDService):
             )],
         )),
         ('attr', {'update': True}),
-    ))
-    async def do_update(self, id_, data):
+    ), audit='Pool dataset update', audit_callback=True)
+    async def do_update(self, audit_callback, id_, data):
         """
         Updates a dataset/zvol `id`.
 
@@ -852,6 +852,7 @@ class PoolDatasetService(CRUDService):
         else:
             data['type'] = dataset[0]['type']
             data['name'] = dataset[0]['name']
+            audit_callback(data['name'])
             if data['type'] == 'VOLUME':
                 data['volblocksize'] = dataset[0]['volblocksize']['value']
             await self.__common_validation(verrors, 'pool_dataset_update', data, 'UPDATE', cur_dataset=dataset[0])
@@ -954,8 +955,8 @@ class PoolDatasetService(CRUDService):
         'dataset_delete',
         Bool('recursive', default=False),
         Bool('force', default=False),
-    ))
-    async def do_delete(self, id_, options):
+    ), audit='Pool dataset delete', audit_callback=True)
+    async def do_delete(self, audit_callback, id_, options):
         """
         Delete dataset/zvol `id`.
 
@@ -984,6 +985,7 @@ class PoolDatasetService(CRUDService):
             )
 
         dataset = await self.get_instance(id_)
+        audit_callback(dataset['name'])
         if mountpoint := dataset_mountpoint(dataset):
             for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
                 attachments = await delegate.query(mountpoint, True)
