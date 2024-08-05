@@ -131,7 +131,8 @@ class FilesystemService(Service):
                 Bool('traverse', default=False)
             )
         ),
-        roles=['FILESYSTEM_ATTRS_WRITE']
+        roles=['FILESYSTEM_ATTRS_WRITE'],
+        audit='Filesystem change owner', audit_extended=lambda data: data['path']
     )
     @returns()
     @job(lock="perm_change")
@@ -208,7 +209,8 @@ class FilesystemService(Service):
                 Bool('traverse', default=False),
             )
         ),
-        roles=['FILESYSTEM_ATTRS_WRITE']
+        roles=['FILESYSTEM_ATTRS_WRITE'],
+        audit='Filesystem set permission', audit_extended=lambda data: data['path']
     )
     @returns()
     @job(lock="perm_change")
@@ -865,7 +867,7 @@ class FilesystemService(Service):
                 Bool('traverse', default=False),
                 Bool('canonicalize', default=True)
             )
-        ), roles=['FILESYSTEM_ATTRS_WRITE']
+        ), roles=['FILESYSTEM_ATTRS_WRITE'], audit='Filesystem set ACL', audit_extended=lambda data: data['path']
     )
     @returns()
     @job(lock="perm_change")
@@ -1053,7 +1055,7 @@ class FilesystemService(Service):
             'options',
             Bool('force', default=False),
         )
-    ), roles=['FILESYSTEM_ATTRS_WRITE'])
+    ), roles=['FILESYSTEM_ATTRS_WRITE'], audit='Filesystem add to ACL', audit_extended=lambda data: data['path'])
     @job()
     def add_to_acl(self, job, data):
         """

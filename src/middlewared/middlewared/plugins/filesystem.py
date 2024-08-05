@@ -67,7 +67,7 @@ class FilesystemService(Service):
             Bool('sparse'),
             register=True
         ),
-    ), roles=['FILESYSTEM_ATTRS_WRITE'])
+    ), roles=['FILESYSTEM_ATTRS_WRITE'], audit='Filesystem set ZFS attributes', audit_extended=lambda data: data['path'])
     @returns()
     def set_zfs_attributes(self, data):
         """
