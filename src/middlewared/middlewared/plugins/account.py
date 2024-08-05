@@ -1219,7 +1219,9 @@ class UserService(CRUDService):
                 Str('instance_id', required=True),
             ),
             update=True,
-        )
+        ),
+        audit='Set up local administrator:',
+        audit_extended=lambda *args: args[0]
     )
     @returns()
     @pass_app()
