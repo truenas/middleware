@@ -102,7 +102,7 @@ class UserService(Service):
 
         return await self.middleware.call('user.query', [['username', '=', user['pw_name']]], {'get': True})
 
-    @accepts(Str('username'))
+    @accepts(Str('username'), audit='Unset two-factor authentication secret:', audit_extended=lambda username: username)
     @returns()
     async def unset_2fa_secret(self, username):
         """
@@ -132,7 +132,12 @@ class UserService(Service):
         )
 
     @no_authz_required
-    @api_method(UserRenew2faSecretArgs, UserRenew2faSecretResult)
+    @api_method(
+        UserRenew2faSecretArgs,
+        UserRenew2faSecretResult,
+        audit='Renew two-factor authentication secret:',
+        audit_extended=lambda username,options: username
+    )
     @pass_app()
     async def renew_2fa_secret(self, app, username, twofactor_options):
         """
