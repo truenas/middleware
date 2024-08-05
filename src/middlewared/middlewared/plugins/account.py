@@ -214,7 +214,7 @@ class UserService(CRUDService):
 
     @private
     def _read_authorized_keys(self, homedir):
-        with suppress(FileNotFoundError):
+        with suppress(FileNotFoundError, UnicodeDecodeError):
             with open(f'{homedir}/.ssh/authorized_keys') as f:
                 return f.read().strip()
 
