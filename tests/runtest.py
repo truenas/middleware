@@ -9,6 +9,7 @@ from subprocess import run, call
 from sys import argv, exit
 import os
 import getopt
+import random
 import socket
 import sys
 import secrets
@@ -206,7 +207,12 @@ if ha:
     elif os.environ.get('virtual_ip'):
         vip = os.environ['virtual_ip']
     else:
-        for i in ip_interface(f'{ip}/{netmask}').network:
+        # reduce risk of trying to assign same VIP to two VMs
+        # starting at roughly the same time
+        vip_pool = list(ip_interface(f'{ip}/{netmask}').network)
+        random.shuffle(vip_pool)
+
+        for i in vip_pool:
             last_octet = int(i.compressed.split('.')[-1])
             if last_octet < 15 or last_octet >= 250:
                 # addresses like *.255, *.0 and any of them that
