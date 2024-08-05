@@ -8,6 +8,7 @@ from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
 
 TEST_USERNAME = 'testpasswduser'
@@ -17,6 +18,7 @@ TEST_PASSWORD = ''.join(secrets.choice(string.ascii_letters + string.digits) for
 TEST_PASSWORD_2 = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
 TEST_PASSWORD2 = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
 TEST_PASSWORD2_2 = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
+REDACTED = '********'
 
 
 def test_restricted_user_set_password():
@@ -29,12 +31,23 @@ def test_restricted_user_set_password():
         roles=['READONLY_ADMIN']
     ) as acct:
         with client(auth=(acct.username, acct.password)) as c:
-            # Password reset using existing password and current user should work
-            c.call('user.set_password', {
+            payload = {
                 'username': acct.username,
                 'old_password': acct.password,
                 'new_password': TEST_PASSWORD
-            })
+            }
+
+            # Password reset using existing password and current user should work
+            with expect_audit_method_calls([{
+                'method': 'user.set_password',
+                'params': [{
+                    'username': acct.username,
+                    'old_password': REDACTED,
+                    'new_password': REDACTED
+                }],
+                'description': f'Set account password {acct.username}',
+            }]):
+                c.call('user.set_password', payload)
 
             # Should be able to create new client session with new password
             with client(auth=(acct.username, TEST_PASSWORD)) as c2:
