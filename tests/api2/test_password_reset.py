@@ -18,6 +18,7 @@ TEST_PASSWORD = ''.join(secrets.choice(string.ascii_letters + string.digits) for
 TEST_PASSWORD_2 = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
 TEST_PASSWORD2 = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
 TEST_PASSWORD2_2 = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
+REDACTED = '********'
 
 
 def test_restricted_user_set_password():
@@ -39,7 +40,11 @@ def test_restricted_user_set_password():
             # Password reset using existing password and current user should work
             with expect_audit_method_calls([{
                 'method': 'user.set_password',
-                'params': [payload],
+                'params': [{
+                    'username': acct.username,
+                    'old_password': REDACTED,
+                    'new_password': REDACTED
+                }],
                 'description': f'Set account password {acct.username}',
             }]):
                 c.call('user.set_password', payload)
