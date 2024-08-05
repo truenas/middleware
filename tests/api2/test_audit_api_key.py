@@ -5,8 +5,9 @@ API_KEY_NAME = 'AUDIT_API_KEY'
 
 
 def test_api_key_audit():
-    payload = {'name': AUDIT_API_KEY, 'allowlist': [{'resource': '*', 'method': '*'}]}
+    payload = {'name': API_KEY_NAME, 'allowlist': [{'resource': '*', 'method': '*'}]}
     payload2 = {'allowlist': []}
+    audit_id = None
 
     try:
         with expect_audit_method_calls([{
@@ -14,19 +15,20 @@ def test_api_key_audit():
             'params': [payload],
             'description': f'Create API key {API_KEY_NAME}',
         }]):
-            call('api_key.create', payload)
+            api_key_id = call('api_key.create', payload)['id']
 
         with expect_audit_method_calls([{
             'method': 'api_key.update',
-            'params': [API_KEY_NAME, payload2],
+            'params': [api_key_id, payload2],
             'description': f'Update API key {API_KEY_NAME}',
         }]):
-            call('api_key.update', API_KEY_NAME, payload2)
+            call('api_key.update', api_key_id, payload2)
 
     finally:
-        with expect_audit_method_calls([{
-            'method': 'api_key.delete',
-            'params': [API_KEY_NAME],
-            'description': f'Delete API key {API_KEY_NAME}',
-        }]):
-            call('api_key.delete', API_KEY_NAME)
+        if audit_id:
+            with expect_audit_method_calls([{
+                'method': 'api_key.delete',
+                'params': [api_key_id],
+                'description': f'Delete API key {API_KEY_NAME}',
+            }]):
+                call('api_key.delete', api_key_id)
