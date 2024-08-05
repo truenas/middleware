@@ -116,11 +116,13 @@ class ServiceService(CRUDService):
             'service-update',
             Bool('enable', default=False),
         ),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE']
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE'],
+        audit='Update service configuration',
+        audit_callback=True,
     )
     @returns(Int('service_primary_key'))
     @pass_app(rest=True)
-    async def do_update(self, app, id_or_name, data):
+    async def do_update(self, app, audit_callback, id_or_name, data):
         """
         Update service entry of `id_or_name`.
 
@@ -136,6 +138,7 @@ class ServiceService(CRUDService):
             raise CallError(f'Service {id_or_name} not found.', errno.ENOENT)
 
         svc = svc[0]
+        audit_callback(svc['service'])
         if not app_has_write_privilege_for_service(app, svc['service']):
             raise CallError(f'{svc["service"]}: authenticated session lacks privilege to update service', errno.EPERM)
 
