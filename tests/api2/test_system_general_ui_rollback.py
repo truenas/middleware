@@ -36,13 +36,12 @@ def client_with_timeout(host_ip=None, tries=30):
 def test_system_general_ui_rollback():
     """This tests the following:
         1. change the port the nginx service binds to (our UI)
-        2. sleep a bit and allow the settings to be applied automatically
-        3. ensure communication with the API on the original port failsinal port fails
-        4. ensure communication with the API on the new port succeeds
-        5. check the time left before the changes are rolled back
-        6. sleep that amount of time (plus a few seconds for a buffer)
-        7. ensure communication with the API on the original port succeeds
-        8. if any above steps fail, revert the UI port settings via ssh"""
+        2. ensure communication with the API on the original port failsinal port fails
+        3. ensure communication with the API on the new port succeeds
+        4. check the time left before the changes are rolled back
+        5. sleep that amount of time (plus a few seconds for a buffer)
+        6. ensure communication with the API on the original port succeeds
+        7. if any above steps fail, revert the UI port settings via ssh"""
     try:
         # Step 1
         call(
@@ -51,26 +50,23 @@ def test_system_general_ui_rollback():
         )
 
         # Step 2
-        time.sleep(UI_DELAY + 5)
-
-        # Step 3
         try:
             assert call("core.ping") != "pong"
         except Exception:
             pass
 
-        # Step 4
+        # Step 3
         with client_with_timeout(host_ip=f"{truenas_server.ip}:{NEW_PORT}") as c:
             rollback_left = c.call("system.general.checkin_waiting")
-            # Step 5
+            # Step 4
             assert rollback_left < ROLLBACK
 
-        # Step 6
+        # Step 5
         time.sleep(rollback_left + 5)
-        # Step 7
+        # Step 6
         assert call("core.ping") == "pong"
     except Exception:
-        # Step 8
+        # Step 7
         fallback_ui_fix()
         raise
 
@@ -78,10 +74,9 @@ def test_system_general_ui_rollback():
 def test_system_general_ui_checkin():
     """This tests the following:
         1. change the port the nginx service binds to (our UI)
-        2. sleep a bit and allow the settings to be applied automatically
-        3. immediately checkin the UI port changes
-        4. ensure we don't have a checkin pending
-        5. revert any UI port settings via ssh"""
+        2. immediately checkin the UI port changes
+        3. ensure we don't have a checkin pending
+        4. revert any UI port settings via ssh"""
     try:
         # Step 1
         call(
@@ -90,13 +85,10 @@ def test_system_general_ui_checkin():
         )
 
         # Step 2
-        time.sleep(UI_DELAY + 5)
-
-        # Step 3
         with client_with_timeout(host_ip=f"{truenas_server.ip}:{NEW_PORT}") as c:
-            # Step 4
+            # Step 3
             c.call("system.general.checkin")
-            # Step 5
+            # Step 4
             assert c.call("system.general.checkin_waiting") is None
     finally:
         fallback_ui_fix()
