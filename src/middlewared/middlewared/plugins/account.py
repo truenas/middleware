@@ -214,9 +214,12 @@ class UserService(CRUDService):
 
     @private
     def _read_authorized_keys(self, homedir):
-        with suppress(FileNotFoundError, UnicodeDecodeError):
+        with suppress(FileNotFoundError):
             with open(f'{homedir}/.ssh/authorized_keys') as f:
-                return f.read().strip()
+                try:
+                    return f.read().strip()
+                except UnicodeDecodeError:
+                    self.logger.warning('Invalid encoding detected in authorized_keys file')
 
     @private
     async def user_extend(self, user, ctx):
