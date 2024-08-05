@@ -52,7 +52,7 @@ class ApiKeyService(CRUDService):
         item.pop("key")
         return item
 
-    @api_method(ApiKeyCreateArgs, ApiKeyCreateResult)
+    @api_method(ApiKeyCreateArgs, ApiKeyCreateResult, audit='Create API key', audit_extended=lambda data: data['name'])
     async def do_create(self, data: dict) -> dict:
         """
         Creates API Key.
@@ -76,8 +76,8 @@ class ApiKeyService(CRUDService):
 
         return self._serve(data, key)
 
-    @api_method(ApiKeyUpdateArgs, ApiKeyUpdateResult)
-    async def do_update(self, id_: int, data: dict) -> dict:
+    @api_method(ApiKeyUpdateArgs, ApiKeyUpdateResult, audit='Update API key', audit_callback=True)
+    async def do_update(self, audit_callback: callable, id_: int, data: dict) -> dict:
         """
         Update API Key `id`.
 
@@ -86,6 +86,7 @@ class ApiKeyService(CRUDService):
         reset = data.pop("reset", False)
 
         old = await self.get_instance(id_)
+        audit_callback(old['name'])
         new = old.copy()
 
         new.update(data)
@@ -108,11 +109,14 @@ class ApiKeyService(CRUDService):
 
         return self._serve(await self.get_instance(id_), key)
 
-    @api_method(ApiKeyDeleteArgs, ApiKeyDeleteResult)
-    async def do_delete(self, id_: int) -> Literal[True]:
+    @api_method(ApiKeyDeleteArgs, ApiKeyDeleteResult, audit='Delete API key', audit_callback=True)
+    async def do_delete(self, audit_callback: callable, id_: int) -> Literal[True]:
         """
         Delete API Key `id`.
         """
+        name = (await self.get_instance(id_))['name']
+        audit_callback(name)
+
         response = await self.middleware.call(
             "datastore.delete",
             self._config.datastore,
