@@ -120,7 +120,7 @@ class SSHService(SystemServiceService):
             ('rm', {'name': 'host_rsa_key_pub'}),
             ('rm', {'name': 'host_rsa_key_cert_pub'}),
             ('attr', {'update': True}),
-        )
+        ), audit='Update SSH configuration',
     )
     async def do_update(self, data):
         """
