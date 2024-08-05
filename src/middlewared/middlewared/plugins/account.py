@@ -1568,7 +1568,7 @@ class UserService(CRUDService):
         Str('username', required=True),
         Password('old_password', default=None),
         Password('new_password', required=True),
-    ))
+    ), audit='Set account password', audit_extended=lambda data: data['username'])
     @pass_app(require=True)
     async def set_password(self, app, data):
         """
