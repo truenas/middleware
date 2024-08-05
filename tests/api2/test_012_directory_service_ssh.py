@@ -1,14 +1,9 @@
-#!/usr/bin/env python3
-
-# Author: Eric Turgeon
-# License: BSD
-
 import pytest
-from pytest_dependency import depends
 from functions import SSH_TEST
 
 from middlewared.test.integration.assets.directory_service import active_directory, ldap
 from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME
@@ -41,10 +36,21 @@ def do_ldap_connection(request):
 def test_08_test_ssh_ad(do_ad_connection):
     userobj = do_ad_connection['user_obj']
     groupobj = call('group.get_group_obj', {'gid': userobj['pw_gid']})
-    call('ssh.update', {"password_login_groups": [groupobj['gr_name']]})
-    cmd = 'ls -la'
-    results = SSH_TEST(cmd, f'{ADUSERNAME}@{AD_DOMAIN}', ADPASSWORD)
-    call('ssh.update', {"password_login_groups": []})
+
+    payload = {"password_login_groups": [groupobj['gr_name']]}
+
+    try:
+        with expect_audit_method_calls([{
+            'method': 'ssh.update',
+            'params': [payload],
+            'description': 'Update SSH configuration'
+        }]):
+            call('ssh.update', payload)
+
+        results = SSH_TEST('ls -la', f'{ADUSERNAME}@{AD_DOMAIN}', ADPASSWORD)
+    finally:
+        call('ssh.update', {"password_login_groups": []})
+
     assert results['result'] is True, results
 
 
