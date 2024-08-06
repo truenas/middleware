@@ -843,7 +843,7 @@ class KerberosKeytabService(CRUDService):
     @accepts(Dict(
         'keytab_data',
         Str('name', required=True),
-    ), audit='Kerberos keytab upload:', audit_extended=lambda name, name)
+    ), audit='Kerberos keytab upload:', audit_extended=lambda name: name)
     @returns(Ref('kerberos_keytab_entry'))
     @job(lock='upload_keytab', pipes=['input'], check_pipes=True)
     async def upload_keytab(self, job, data):
