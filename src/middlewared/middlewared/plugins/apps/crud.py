@@ -165,7 +165,9 @@ class AppService(CRUDService):
         return self.create_internal(job, app_name, version, data['values'], complete_app_details)
 
     @private
-    def create_internal(self, job, app_name, version, user_values, complete_app_details, dry_run=False):
+    def create_internal(
+        self, job, app_name, version, user_values, complete_app_details, dry_run=False, migrated_app=False,
+    ):
         app_version_details = complete_app_details['versions'][version]
         self.middleware.call_sync('catalog.version_supported_error_check', app_version_details)
 
@@ -190,7 +192,7 @@ class AppService(CRUDService):
             )
             new_values = add_context_to_values(app_name, new_values, app_version_details['app_metadata'], install=True)
             update_app_config(app_name, version, new_values)
-            update_app_metadata(app_name, app_version_details)
+            update_app_metadata(app_name, app_version_details, True)
 
             job.set_progress(60, 'App installation in progress, pulling images')
             if dry_run is False:

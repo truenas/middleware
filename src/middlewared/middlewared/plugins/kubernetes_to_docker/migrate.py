@@ -126,7 +126,7 @@ class K8stoDockerMigrationService(Service):
             try:
                 self.middleware.call_sync(
                     'app.create_internal', dummy_job, chart_release['release_name'],
-                    chart_release['app_version'], new_config, complete_app_details, True,
+                    chart_release['app_version'], new_config, complete_app_details, True, True,
                 )
             except Exception as e:
                 release_config['error'] = f'Failed to create app: {e}'
