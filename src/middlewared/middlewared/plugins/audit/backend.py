@@ -276,8 +276,8 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         # Perform any final touchups via python filters
         return filter_list(
             self.serialize_results(self.__fetchmany(conn, qs), conn.table, options.get('select')),
-            python_filters['filters'],
-            python_filters['options']
+            python_filters['query-filters'],
+            python_filters['query-options']
         )
 
     @private
