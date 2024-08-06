@@ -2,6 +2,7 @@ import os
 import threading
 import time
 
+from contextlib import contextmanager
 from sqlalchemy import create_engine, inspect
 from sqlalchemy import and_, func, select
 from sqlalchemy.exc import DBAPIError
@@ -11,6 +12,7 @@ from sqlalchemy.sql.expression import nullsfirst, nullslast
 from middlewared.schema import accepts, Ref, Str
 from middlewared.service import periodic, private, Service
 from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.utils import filter_list
 
 from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_TABLES
 from middlewared.plugins.datastore.filter import FilterMixin
@@ -61,7 +63,8 @@ class SQLConn:
             self.connection.execute('PRAGMA journal_mode=WAL')
             self.dbfd = os.open(self.path, os.O_PATH)
 
-    def fetchall(self, query, params=None):
+    @contextmanager
+    def get_handle(self):
         with self.lock:
             if (st := os.fstat(self.dbfd)).st_nlink == 0:
                 raise RuntimeError(
@@ -76,6 +79,11 @@ class SQLConn:
             except FileNotFoundError:
                 raise RuntimeError(f'{self.path}: audit database was renamed.')
 
+            yield
+
+
+    def fetchall(self, query, params=None):
+        with self.get_handle():
             try:
                 cursor = self.connection.execute(query, params or [])
             except DBAPIError as e:
@@ -88,6 +96,25 @@ class SQLConn:
 
             try:
                 return cursor.fetchall()
+            finally:
+                cursor.close()
+
+    def fetchmany(self, query, params=None):
+        with self.get_handle():
+            try:
+                cursor = self.connection.execute(query, params or [])
+            except DBAPIError as e:
+                # We want to squash errors that are due to presence of missing
+                # table. See note for audit_table_exists() method.
+                if not str(e.orig).startswith('no such table'):
+                    raise
+
+                yield []
+
+            try:
+                for entries in cursor.fetchmany():
+                    yield entries
+
             finally:
                 cursor.close()
 
@@ -139,7 +166,6 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
     @private
     def serialize_results(self, results, table, select):
-        out = []
         for row in results:
             entry = {}
             for column in table.c:
@@ -149,9 +175,11 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
                 entry[column_name] = row[column]
 
-            out.append(entry)
+            yield entry
 
-        return out
+    def __fetchmany(self, conn, qs):
+        for entries in conn.fetchmany(qs):
+            yield entries
 
     def __fetchall(self, conn, qs):
         try:
@@ -224,15 +252,10 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         if options['limit']:
             qs = qs.limit(options['limit'])
 
-        result = self.__fetchall(conn, qs)
-
-        if options['get']:
-            try:
-                return result[0]
-            except IndexError:
-                raise MatchNotFound() from None
-
-        return self.serialize_results(result, conn.table, options.get('select'))
+        return filter_list(
+            self.serialize_results(self.__fetchmany(conn, qs), conn.table, options.get('select')),
+            filters, options
+        )
 
     @private
     @periodic(interval=86400)
