@@ -1,67 +1,68 @@
+from time import sleep
+
 import pytest
 
-from time import sleep
-from middlewared.test.integration.assets.pool import another_pool_topologies, another_pool
+from middlewared.test.integration.assets.pool import _2_disk_mirror_topology, _4_disk_raidz2_topology, another_pool
 from middlewared.test.integration.utils import call
 
 
-def disks(topology):
-    flat = call("pool.flatten_topology", topology)
-    return [vdev for vdev in flat if vdev["type"] == "DISK"]
+@pytest.mark.parametrize("topology", [_2_disk_mirror_topology, _4_disk_raidz2_topology])
+def test_pool_replace_disk(topology):
+    """This tests the following:
+        1. create a zpool based on the `topology`
+        2. flatten the newly created zpools topology
+        3. verify the zpool vdev size matches reality
+        4. choose 1st vdev from newly created zpool
+        5. choose 1st disk in vdev from step #4
+        6. choose 1st disk in disk.get_unused as replacement disk
+        7. call pool.replace using disk from step #5 with disk from step #6
+        8. validate that the disk being replaced still has zfs partitions
+        9. validate pool.get_instance topology info shows the replacement disk
+        10. validate disk.get_instance associates the replacement disk with the zpool
+    """
+    with another_pool(topology=topology) as pool:  # step 1
+        # step 2
+        flat_top = call("pool.flatten_topology", pool["topology"])
+        pool_top = [vdev for vdev in flat_top if vdev["type"] == "DISK"]
+        # step 3
+        assert len(pool_top) == topology[0]
 
-
-@pytest.mark.parametrize("topology", another_pool_topologies[1:])
-@pytest.mark.parametrize("i", list(range(0, max(topology[0] for topology in another_pool_topologies))))
-def test_pool_replace_disk(topology, i):
-    count = topology[0]
-    if i >= count:
-        return
-
-    with another_pool(topology=topology) as pool:
-        assert len(disks(pool["topology"])) == count
-
-        to_replace_vdev = disks(pool["topology"])[i]
-        to_replace_disk = call("disk.query", [["devname", "=", to_replace_vdev["disk"]]],
-                               {"get": True, "extra": {"pools": True}})
+        # step 4
+        to_replace_vdev = pool_top[0]
+        # step 5
+        to_replace_disk = call(
+            "disk.query", [["devname", "=", to_replace_vdev["disk"]]], {"get": True, "extra": {"pools": True}}
+        )
         assert to_replace_disk["pool"] == pool["name"]
 
+        # step 6
         new_disk = call("disk.get_unused")[0]
 
-        call("pool.replace", pool["id"], {
-            "label": to_replace_vdev["guid"],
-            "disk": new_disk["identifier"],
-            "force": True,
-        }, job=True)
+        # step 7
+        call("pool.replace", pool["id"], {"label": to_replace_vdev["guid"], "disk": new_disk["identifier"]}, job=True)
 
-        # Sometimes the VM is slow so look 10 times with 1 second in between
+        # step 8
+        assert call("disk.gptid_from_part_type", to_replace_disk["devname"], call("disk.get_zfs_part_type"))
+
+        # step 9
+        found = False
         for _ in range(10):
-            pool = call("pool.get_instance", pool["id"])
-            if len(disks(pool["topology"])) == count:
-                break
-            sleep(1)
+            if not found:
+                for i in call("pool.flatten_topology", call("pool.get_instance", pool["id"])["topology"]):
+                    if i["type"] == "DISK" and i["disk"] == new_disk["devname"]:
+                        found = True
+                        break
+                else:
+                    sleep(1)
 
-        assert len(disks(pool["topology"])) == count
-        assert disks(pool["topology"])[i]["disk"] == new_disk["devname"]
+        assert found, f'Failed to detect replacement disk {new_disk["devname"]!r} in zpool {pool["name"]!r}'
 
-        # this is flakey on our VMs as well, give it a bit of time before we assert
-        new = to_replace = None
+        # step 10 (NOTE: disk.sync_all takes awhile so we retry a few times here)
         for _ in range(30):
-            if all((new, to_replace)):
+            cmd = ("disk.get_instance", new_disk["identifier"], {"extra": {"pools": True}})
+            if call(*cmd)["pool"] == pool["name"]:
                 break
-            elif new is None:
-                p = call("disk.get_instance", new_disk["identifier"], {"extra": {"pools": True}})
-                if p["pool"] == pool["name"]:
-                    new = True
-                else:
-                    sleep(1)
-            elif to_replace is None:
-                t = call("disk.get_instance", to_replace_disk["identifier"], {"extra": {"pools": True}})
-                if t["pool"] is None:
-                    to_replace = True
-                else:
-                    sleep(1)
+            else:
+                sleep(1)
         else:
-            if new is None:
-                assert False, f'disk.get_instance failed on {new_disk["identifier"]!r}'
-            if to_replace is None:
-                assert False, f'disk.get_instance failed on {to_replace["identifier"]!r}'
+            assert False, f"{' '.join(cmd)} failed to update with pool information"
