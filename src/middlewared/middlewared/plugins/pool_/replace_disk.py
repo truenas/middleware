@@ -52,16 +52,12 @@ class PoolService(Service):
             if not options['force'] and not await self.middleware.call('disk.check_clean', disk['devname']):
                 verrors.add('options.force', 'Disk is not clean, partitions were found.')
 
-        if not (found := await self.middleware.call('pool.find_disk_from_topology', options['label'], pool, {
-            'include_siblings': True,
-        })):
+        if not await self.middleware.call(
+            'pool.find_disk_from_topology', options['label'], pool, {'include_siblings': True}
+        ):
             verrors.add('options.label', f'Label {options["label"]} not found.', errno.ENOENT)
 
         verrors.check()
-
-        from_disk = None
-        if found[1] and await self.middleware.run_in_thread(os.path.exists, found[1]['path']):
-            from_disk = await self.middleware.call('disk.label_to_disk', found[1]['path'].replace('/dev/', ''))
 
         vdev = []
         await self.middleware.call('pool.format_disks', job, {
@@ -77,9 +73,6 @@ class PoolService(Service):
             await self.middleware.call('zfs.pool.replace', pool['name'], options['label'], new_devname)
         except Exception:
             raise
-        else:
-            if from_disk:
-                await self.middleware.call('disk.wipe', from_disk, 'QUICK')
 
         if options['preserve_settings']:
             filters = [['zfs_guid', '=', options['label']]]
