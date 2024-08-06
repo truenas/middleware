@@ -566,7 +566,7 @@ class LDAPService(ConfigService):
 
         return constants.SERVER_TYPE_GENERIC
 
-    @accepts(Ref('ldap_update'))
+    @accepts(Ref('ldap_update'), audit='LDAP configuration update')
     @job(lock="ldap_start_stop")
     async def do_update(self, job, data):
         """

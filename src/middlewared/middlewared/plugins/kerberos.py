@@ -59,7 +59,7 @@ class KerberosService(ConfigService):
         Str('appdefaults_aux', max_length=None),
         Str('libdefaults_aux', max_length=None),
         update=True
-    ))
+    ), audit='Kerberos config update')
     async def do_update(self, data):
         """
         `appdefaults_aux` add parameters to "appdefaults" section of the krb5.conf file.
@@ -641,7 +641,9 @@ class KerberosRealmService(CRUDService):
             List('admin_server'),
             List('kpasswd_server'),
             register=True
-        )
+        ),
+        audit='Kerberos realm create:',
+        audit_extended=lambda data: data['realm']
     )
     async def do_create(self, data):
         """
@@ -677,15 +679,18 @@ class KerberosRealmService(CRUDService):
             "kerberos_realm_create",
             "kerberos_realm_update",
             ("attr", {"update": True})
-        )
+        ),
+        audit='Kerberos realm update:',
+        audit_callback=True
     )
-    async def do_update(self, id_, data):
+    async def do_update(self, audit_callback, id_, data):
         """
         Update a kerberos realm by id. This will be automatically populated during the
         domain join process in an Active Directory environment. Kerberos realm names
         are case-sensitive, but convention is to only use upper-case.
         """
         old = await self.get_instance(id_)
+        audit_callback(old['realm'])
         new = old.copy()
         new.update(data)
 
@@ -698,11 +703,13 @@ class KerberosRealmService(CRUDService):
         await self.middleware.call('etc.generate', 'kerberos')
         return await self.get_instance(id_)
 
-    @accepts(Int('id'))
-    async def do_delete(self, id_):
+    @accepts(Int('id'), audit='Kerberos realm delete:', audit_callback=True)
+    async def do_delete(self, audit_callback, id_):
         """
         Delete a kerberos realm by ID.
         """
+        realm_name = (await self.get_instance(id_))['realm']
+        audit_callback(realm_name)
         await self.middleware.call('datastore.delete', self._config.datastore, id_)
         await self.middleware.call('etc.generate', 'kerberos')
 
@@ -743,7 +750,9 @@ class KerberosKeytabService(CRUDService):
             Str('file', max_length=None),
             Str('name'),
             register=True
-        )
+        ),
+        audit='Kerberos keytab create:',
+        audit_extended=lambda data: data['name']
     )
     async def do_create(self, data):
         """
@@ -772,13 +781,16 @@ class KerberosKeytabService(CRUDService):
         Patch(
             'kerberos_keytab_create',
             'kerberos_keytab_update',
-        )
+        ),
+        audit='Kerberos keytab update:',
+        audit_callback=True
     )
-    async def do_update(self, id_, data):
+    async def do_update(self, audit_callback, id_, data):
         """
         Update kerberos keytab by id.
         """
         old = await self.get_instance(id_)
+        audit_callback(old['name'])
         new = old.copy()
         new.update(data)
 
@@ -796,13 +808,14 @@ class KerberosKeytabService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'))
-    async def do_delete(self, id_):
+    @accepts(Int('id'), audit='Kerberos keytab delete:', audit_callback=True)
+    async def do_delete(self, audit_callback, id_):
         """
         Delete kerberos keytab by id, and force regeneration of
         system keytab.
         """
         kt = await self.get_instance(id_)
+        audit_callback(kt['name'])
         if kt['name'] == 'AD_MACHINE_ACCOUNT':
             ad_config = await self.middleware.call('activedirectory.config')
             if ad_config['enable']:
@@ -830,7 +843,7 @@ class KerberosKeytabService(CRUDService):
     @accepts(Dict(
         'keytab_data',
         Str('name', required=True),
-    ))
+    ), audit='Kerberos keytab upload:', audit_extended=lambda name, name)
     @returns(Ref('kerberos_keytab_entry'))
     @job(lock='upload_keytab', pipes=['input'], check_pipes=True)
     async def upload_keytab(self, job, data):
