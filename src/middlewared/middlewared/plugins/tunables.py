@@ -105,7 +105,7 @@ class TunableService(CRUDService):
         Bool('enabled', default=True),
         Bool('update_initramfs', default=True),
         register=True
-    ))
+    ), audit='Tunable create')
     @job(lock='tunable_crud')
     async def do_create(self, job, data):
         """
@@ -183,7 +183,8 @@ class TunableService(CRUDService):
             ('rm', {'name': 'type'}),
             ('rm', {'name': 'var'}),
             ('attr', {'update': True}),
-        )
+        ),
+        audit='Tunable update'
     )
     @job(lock='tunable_crud')
     async def do_update(self, job, id_, data):
@@ -224,6 +225,7 @@ class TunableService(CRUDService):
 
         return await self.get_instance(id_)
 
+    @accepts(Int('id', required=True), audit='Tunable delete')
     @job(lock='tunable_crud')
     async def do_delete(self, job, id_):
         """
