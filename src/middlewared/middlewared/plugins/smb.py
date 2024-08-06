@@ -73,27 +73,35 @@ class SMBBuiltin(enum.Enum):
 
 
 class SMBPath(enum.Enum):
-    GLOBALCONF = ('/usr/local/etc/smb4.conf', '/etc/smb4.conf', 0o755, False)
-    SHARECONF = ('/usr/local/etc/smb4_share.conf', '/etc/smb4_share.conf', 0o755, False)
-    STATEDIR = ('/var/db/system/samba4', '/var/db/system/samba4', 0o755, True)
-    PRIVATEDIR = ('/var/db/system/samba4/private', '/var/db/system/samba4', 0o700, True)
-    LEGACYSTATE = ('/root/samba', '/root/samba', 0o755, True)
-    LEGACYPRIVATE = ('/root/samba/private', '/root/samba/private', 0o700, True)
-    MSG_SOCK = ('/var/db/system/samba4/private/msg.sock', '/var/db/system/samba4/msg.sock', 0o700, False)
-    RUNDIR = ('/var/run/samba4', '/var/run/samba', 0o755, True)
-    LOCKDIR = ('/var/run/samba4', '/var/run/samba-lock', 0o755, True)
-    LOGDIR = ('/var/log/samba4', '/var/log/samba4', 0o755, True)
-    IPCSHARE = ('/var/tmp', '/tmp', 0o1777, True)
-    WINBINDD_PRIVILEGED = ('/var/db/system/samba4/winbindd_privileged', '/var/db/system/samba4/winbindd_privileged', 0o750, True)
+    GLOBALCONF = ('/usr/local/etc/smb4.conf', 0o755, False)
+    SHARECONF = ('/usr/local/etc/smb4_share.conf', 0o755, False)
+    STATEDIR = ('/var/db/system/samba4', 0o755, True)
+    PRIVATEDIR = ('/var/db/system/samba4/private', 0o700, True)
+    LEGACYSTATE = ('/root/samba', 0o755, True)
+    LEGACYPRIVATE = ('/root/samba/private', 0o700, True)
+    MSG_SOCK = ('/var/db/system/samba4/private/msg.sock', 0o700, False)
+    RUNDIR = ('/var/run/samba4', True)
+    CACHEDIR = ('/var/run/samba-cache', 0o755, True)
+    PASSDB_DIR = ('/var/run/samba-cache/private', 0o700, True)
+    LOCKDIR = ('/var/run/samba4', 0o755, True)
+    LOGDIR = ('/var/log/samba4', 0o755, True)
+    IPCSHARE = ('/var/tmp', 0o1777, True)
+    WINBINDD_PRIVILEGED = ('/var/db/system/samba4/winbindd_privileged', 0o750, True)
+
+    @property
+    def path(self):
+        return self.value[0]
 
     def platform(self):
-        return self.value[1] if osc.IS_LINUX else self.value[0]
+        return self.value[0]
 
+    @property
     def mode(self):
-        return self.value[2]
+        return self.value[1]
 
+    @property
     def is_dir(self):
-        return self.value[3]
+        return self.value[2]
 
 
 class SMBSharePreset(enum.Enum):
@@ -375,12 +383,7 @@ class SMBService(SystemServiceService):
         await self.middleware.call('etc.generate', 'smb')
 
         for p in SMBPath:
-            if p == SMBPath.STATEDIR:
-                path = await self.middleware.call("smb.getparm", "state directory", "global")
-            elif p == SMBPath.PRIVATEDIR:
-                path = await self.middleware.call("smb.getparm", "privatedir", "global")
-            else:
-                path = p.platform()
+            path = p.path
 
             try:
                 if not await self.middleware.call('filesystem.acl_is_trivial', path):
@@ -394,10 +397,10 @@ class SMBService(SystemServiceService):
                 pass
 
             if not os.path.exists(path):
-                if p.is_dir():
-                    os.mkdir(path, p.mode())
+                if p.is_dir:
+                    os.mkdir(path, p.mode)
             else:
-                os.chmod(path, p.mode())
+                os.chmod(path, p.mode)
 
     @private
     async def import_conf_to_registry(self):
