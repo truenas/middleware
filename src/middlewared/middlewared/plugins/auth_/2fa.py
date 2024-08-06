@@ -62,7 +62,8 @@ class TwoFactorAuthService(ConfigService):
             'auth_twofactor_entry', 'auth_twofactor_update',
             ('rm', {'name': 'id'}),
             ('attr', {'update': True}),
-        )
+        ),
+        audit='Update two-factor authentication service configuration'
     )
     async def do_update(self, data):
         """
