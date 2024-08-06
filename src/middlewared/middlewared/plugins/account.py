@@ -1195,21 +1195,6 @@ class UserService(CRUDService):
 
     @no_auth_required
     @accepts(
-        Password('password'),
-        Dict('options')
-    )
-    @returns()
-    @pass_app()
-    async def set_root_password(self, app, password, options):
-        """
-        Deprecated method. Use `user.setup_local_administrator`
-        """
-        warnings.warn("`user.set_root_password` has been deprecated. Use `user.setup_local_administrator`",
-                      DeprecationWarning)
-        return await self.setup_local_administrator(app, 'root', password, options)
-
-    @no_auth_required
-    @accepts(
         Str('username', enum=['root', 'truenas_admin']),
         Password('password'),
         Dict(
