@@ -6,28 +6,19 @@ from middlewared.client import ValidationErrors
 from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.utils import call, fail, pool
 
-
-mirror_topology = (2, lambda disks: {
-    "data": [
-        {"type": "MIRROR", "disks": disks[0:2]}
-    ],
+_1_disk_stripe_topology = (1, lambda disks: {
+    "data": [{"type": "STRIPE", "disks": disks[0:1]}],
 })
-
+_2_disk_mirror_topology = (2, lambda disks: {
+    "data": [{"type": "MIRROR", "disks": disks[0:2]}],
+})
+_4_disk_raidz2_topology = (4, lambda disks: {
+    "data": [{"type": "RAIDZ2", "disks": disks[0:4]}],
+})
 another_pool_topologies = [
-    (1, lambda disks: {
-        "data": [
-            {"type": "STRIPE", "disks": disks[0:1]},
-        ],
-    }),
-    mirror_topology,
-    (4, lambda disks: {
-        "data": [
-            {
-                "type": "RAIDZ2",
-                "disks": disks[0:4]
-            }
-        ],
-    }),
+    _1_disk_stripe_topology,
+    _2_disk_mirror_topology,
+    _4_disk_raidz2_topology,
 ]
 
 
