@@ -59,7 +59,7 @@ class KerberosService(ConfigService):
         Str('appdefaults_aux', max_length=None),
         Str('libdefaults_aux', max_length=None),
         update=True
-    ), audit='Kerberos config update')
+    ), audit='Kerberos configuration update')
     async def do_update(self, data):
         """
         `appdefaults_aux` add parameters to "appdefaults" section of the krb5.conf file.
