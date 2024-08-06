@@ -1220,8 +1220,7 @@ class UserService(CRUDService):
             ),
             update=True,
         ),
-        audit='Set up local administrator:',
-        audit_extended=lambda *args: args[0]
+        audit='Set up local administrator',
     )
     @returns()
     @pass_app()
