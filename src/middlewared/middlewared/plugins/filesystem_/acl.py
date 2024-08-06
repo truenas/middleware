@@ -36,7 +36,7 @@ class FilesystemService(Service):
         if acltool.returncode != 0:
             raise CallError(f"acltool [{action}] on path {path} failed with error: [{acltool.stderr.decode().strip()}]")
 
-    def _common_perm_path_validate(self, schema, data, verrors):
+    def _common_perm_path_validate(self, schema, data, verrors, pool_mp_ok=False):
         loc = path_location(data['path'])
         if loc is FSLocation.EXTERNAL:
             verrors.add(f'{schema}.path', 'ACL operations on remote server paths are not possible')
@@ -74,10 +74,11 @@ class FilesystemService(Service):
             )
 
         elif len(Path(st['realpath']).resolve().parents) == 2:
-            verrors.add(
-                f'{schema}.path',
-                f'The specified path is a ZFS pool mountpoint "({path})" '
-            )
+            if not pool_mp_ok:
+                verrors.add(
+                    f'{schema}.path',
+                    f'The specified path is a ZFS pool mountpoint "({path})" '
+                )
 
         elif self.middleware.call_sync('pool.dataset.path_in_locked_datasets', st['realpath']):
             verrors.add(
@@ -1124,7 +1125,7 @@ class FilesystemService(Service):
         """
         init_path = data['path']
         verrors = ValidationErrors()
-        self._common_perm_path_validate('filesystem.add_to_acl', data, verrors)
+        self._common_perm_path_validate('filesystem.get_inherited_acl', data, verrors, True)
         verrors.check()
 
         current_acl = self.getacl(data['path'], False)
