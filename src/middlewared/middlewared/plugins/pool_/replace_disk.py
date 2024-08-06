@@ -1,5 +1,4 @@
 import errno
-import os
 
 from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import item_method, job, Service, ValidationErrors
@@ -46,11 +45,11 @@ class PoolService(Service):
         verrors = ValidationErrors()
         unused_disks = await self.middleware.call('disk.get_unused')
         if not (disk := list(filter(lambda x: x['identifier'] == options['disk'], unused_disks))):
-            verrors.add('options.disk', 'Disk not found.', errno.ENOENT)
+            verrors.add('options.disk', f'Disk {options["disk"]!r} not found.', errno.ENOENT)
         else:
             disk = disk[0]
             if not options['force'] and not await self.middleware.call('disk.check_clean', disk['devname']):
-                verrors.add('options.force', 'Disk is not clean, partitions were found.')
+                verrors.add('options.force', f'Disk {options["disk"]!r} is not clean, partitions were found.')
 
         if not await self.middleware.call(
             'pool.find_disk_from_topology', options['label'], pool, {'include_siblings': True}
