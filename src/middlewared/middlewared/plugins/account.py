@@ -1204,7 +1204,8 @@ class UserService(CRUDService):
                 Str('instance_id', required=True),
             ),
             update=True,
-        )
+        ),
+        audit='Set up local administrator',
     )
     @returns()
     @pass_app()
