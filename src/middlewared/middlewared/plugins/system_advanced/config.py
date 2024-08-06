@@ -203,7 +203,8 @@ class SystemAdvancedService(ConfigService):
             ('rm', {'name': 'isolated_gpu_pci_ids'}),
             ('add', Password('sed_passwd')),
             ('attr', {'update': True}),
-        )
+        ),
+        audit='System advanced update'
     )
     async def do_update(self, data):
         """
