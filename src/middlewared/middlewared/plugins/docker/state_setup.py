@@ -54,10 +54,10 @@ class DockerSetupService(Service):
     async def status_change(self):
         config = await self.middleware.call('docker.config')
         if not config['pool']:
+            await (await self.middleware.call('catalog.sync')).wait()
             return
 
         await self.create_update_docker_datasets(config['dataset'])
-        await self.middleware.call('catalog.sync')
         await self.middleware.call('docker.state.start_service')
 
     @private
