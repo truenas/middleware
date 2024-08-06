@@ -9,7 +9,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import nullsfirst, nullslast
 
-from middlewared.schema import accepts, Ref, Str
+from middlewared.schema import accepts, Dict, Ref, Str
 from middlewared.service import periodic, private, Service
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import filter_list
@@ -17,6 +17,8 @@ from middlewared.utils import filter_list
 from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_TABLES
 from middlewared.plugins.datastore.filter import FilterMixin
 from middlewared.plugins.datastore.schema import SchemaMixin
+
+AUDIT_FETCH_CHUNK_SIZE = 100
 
 
 class SQLConn:
@@ -112,7 +114,7 @@ class SQLConn:
                 yield []
 
             try:
-                for entries in cursor.fetchmany():
+                while entries := cursor.fetchmany(AUDIT_FETCH_CHUNK_SIZE):
                     yield entries
 
             finally:
@@ -166,20 +168,27 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
 
     @private
     def serialize_results(self, results, table, select):
-        for row in results:
-            entry = {}
-            for column in table.c:
-                column_name = str(column.name)
-                if select and column_name not in select:
-                    continue
+        for result in results:
+            for row in result:
+                entry = {}
+                for column in table.c:
+                    column_name = str(column.name)
+                    if select and column_name not in select:
+                        continue
 
-                entry[column_name] = row[column]
+                    entry[column_name] = row[column]
 
-            yield entry
+                yield entry
 
     def __fetchmany(self, conn, qs):
-        for entries in conn.fetchmany(qs):
-            yield entries
+        try:
+            for entries in conn.fetchmany(qs):
+                yield entries
+        except RuntimeError:
+            self.logger.critical('Failed to fetch information from audit database', exc_info=True)
+            conn.setup()
+            for entries in conn.fetchmany(qs):
+                yield entries
 
     def __fetchall(self, conn, qs):
         try:
@@ -194,17 +203,29 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
     @private
     @accepts(
         Str('db_name', enum=[svc[0] for svc in AUDITED_SERVICES], required=True),
-        Ref('query-filters'),
-        Ref('query-options')
+        Dict(
+            'python-filters',
+            Ref('query-filters'),
+            Ref('query-options')
+        ),
+        Dict(
+            'sql-filters',
+            Ref('query-filters'),
+            Ref('query-options')
+        )
     )
-    def query(self, db_name, filters, options):
+    def query(self, db_name, python_filters, sql_filters):
         """
         Query the specied auditable service's database based on the specified
-        `query-filters` and `query-options`. This is the private endpoint for the
-        audit backend and so it should generally not be used by websocket API
-        consumers except in special circumstances.
+        filters.
+
+        This separates out filtering at SQL level `sql-filters` as opposed to
+        results manipulation that is implemented in pure python on the SQL
+        query results via `python-filters`.
         """
         conn = self.connections[db_name]
+        filters = sql_filters['query-filters']
+        options = sql_filters['query-options']
         order_by = options.get('order_by', []).copy()
         from_ = conn.table
 
@@ -252,9 +273,11 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         if options['limit']:
             qs = qs.limit(options['limit'])
 
+        # Perform any final touchups via python filters
         return filter_list(
             self.serialize_results(self.__fetchmany(conn, qs), conn.table, options.get('select')),
-            filters, options
+            python_filters['filters'],
+            python_filters['options']
         )
 
     @private

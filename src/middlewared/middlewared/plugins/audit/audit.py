@@ -190,7 +190,9 @@ class AuditService(ConfigService):
         `success` - boolean value indicating whether the action generating the
         event message succeeded.
         """
-        sql_filters = data['query-options']['force_sql_filters']
+        sql_filters_enabled = data['query-options']['force_sql_filters']
+        python_filters = {'query-filters': [], 'query-options': {}}
+        sql_filters = {'query-filters': [], 'query-options': {}}
 
         verrors = ValidationErrors()
         if (select := data['query-options'].get('select')):
@@ -216,17 +218,24 @@ class AuditService(ConfigService):
 
         verrors.check()
 
-        if sql_filters:
-            filters = data['query-filters']
-            options = data['query-options']
+        if sql_filters_enabled:
+            sql_filters = {'query-filters': data['query-filters'], 'query-options': data['query-options']}
         else:
             # Check whether we can pass to SQL backend directly
             if requires_python_filtering(services_to_check, data['query-filters'], filters, data['query-options']):
-                options = {}
+                # we still want reduce results being fetched where possible
+                sql_filters['query-filters'] = filters
+
+                if filters != data['query-filters']:
+                    # we may have some filters that require additional work in python
+                    python_filters['query-filters'] = data['query-filters']
+
+                if len(services_to_check) == 1:
+                    # we can still do pagination directly in backend call
+                    python_filters['query-options'] = data['query-options']
             else:
-                options = data['query-options']
-                # set sql_filters so that we don't pass through filter_list
-                sql_filters = True
+                sql_filters = {'query-filters': filters, 'query-options': data['query-options']}
+                sql_filters_enabled = True
 
         if options.get('count'):
             results = 0
@@ -237,12 +246,12 @@ class AuditService(ConfigService):
         # however, strict ordering when multiple databases are queried is
         # a requirement for pagination and consistent results.
         for op in await asyncio.gather(*[
-            self.middleware.call('auditbackend.query', svc, filters, options)
+            self.middleware.call('auditbackend.query', svc, python_filters, sql_filters)
             for svc in ALL_AUDITED if svc in services_to_check
         ]):
             results += op
 
-        if sql_filters:
+        if sql_filters_enabled or len(services_to_check) == 1:
             return results
 
         return filter_list(results, data['query-filters'], data['query-options'])
