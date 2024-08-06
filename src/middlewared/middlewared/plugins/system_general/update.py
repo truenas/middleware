@@ -200,6 +200,7 @@ class SystemGeneralService(ConfigService):
             ('add', Int('ui_restart_delay', null=True)),
             ('attr', {'update': True}),
         ),
+        audit='System general update'
     )
     async def do_update(self, data):
         """
