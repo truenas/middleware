@@ -1,12 +1,10 @@
-import contextlib
 import os.path
 import shutil
 
 from middlewared.plugins.apps.ix_apps.path import get_app_parent_volume_ds_name, get_installed_app_path
 from middlewared.plugins.docker.state_utils import DATASET_DEFAULTS
-from middlewared.plugins.docker.utils import applications_ds_name
 from middlewared.schema import accepts, Dict, List, returns, Str
-from middlewared.service import CallError, InstanceNotFound, job, Service
+from middlewared.service import CallError, job, Service
 
 from .migrate_config_utils import migrate_chart_release_config
 
@@ -62,12 +60,6 @@ class K8stoDockerMigrationService(Service):
 
         if not backup_config['releases']:
             raise CallError(f'No old apps found in {options["backup_name"]!r} backup which can be migrated')
-
-        # We will see if docker dataset exists on this pool and if it is there, we will error out
-        docker_ds = applications_ds_name(kubernetes_pool)
-        with contextlib.suppress(InstanceNotFound):
-            self.middleware.call_sync('pool.dataset.get_instance_quick', docker_ds)
-            raise CallError(f'Docker dataset {docker_ds!r} already exists on {kubernetes_pool!r}')
 
         # For good measure we stop docker service and unset docker pool if any configured
         self.middleware.call_sync('service.stop', 'docker')
