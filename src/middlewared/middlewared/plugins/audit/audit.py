@@ -237,7 +237,7 @@ class AuditService(ConfigService):
                 sql_filters = {'query-filters': filters, 'query-options': data['query-options']}
                 sql_filters_enabled = True
 
-        if data['options'].get('count'):
+        if data['query-options'].get('count'):
             results = 0
         else:
             results = []
