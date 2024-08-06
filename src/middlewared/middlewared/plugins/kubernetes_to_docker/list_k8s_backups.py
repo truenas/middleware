@@ -49,6 +49,16 @@ class K8stoDockerMigrationService(Service):
         apps_mapping = self.middleware.call_sync('catalog.train_to_apps_version_mapping')
         catalog_path = self.middleware.call_sync('catalog.config')['location']
 
+        docker_config = self.middleware.call_sync('docker.config')
+        if docker_config['pool'] and docker_config['pool'] != kubernetes_pool:
+            return backup_config | {
+                'error': f'Docker pool if configured must be set only to {kubernetes_pool!r} or unset'
+            }
+
+        installed_apps = {}
+        if docker_config['pool'] == kubernetes_pool:
+            installed_apps = {app['id']: app for app in self.middleware.call_sync('app.query')}
+
         for snapshot in snapshots:
             backup_name = snapshot['name'].split('@', 1)[-1].split(K8s_BACKUP_NAME_PREFIX, 1)[-1]
             backup_path = os.path.join(backup_base_dir, backup_name)
@@ -75,7 +85,7 @@ class K8stoDockerMigrationService(Service):
                         continue
 
                     config = release_details(
-                        release.name, release.path, catalog_path, apps_mapping
+                        release.name, release.path, catalog_path, apps_mapping, installed_apps,
                     )
                     if config['error']:
                         backup_data['skipped_releases'].append(config)

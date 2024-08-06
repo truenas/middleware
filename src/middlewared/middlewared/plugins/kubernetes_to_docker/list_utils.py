@@ -38,7 +38,9 @@ def get_default_release_details(release_name: str) -> dict:
     }
 
 
-def release_details(release_name: str, release_path: str, catalog_path: str, apps_mapping: dict) -> dict:
+def release_details(
+    release_name: str, release_path: str, catalog_path: str, apps_mapping: dict, installed_apps: dict,
+) -> dict:
     config = get_default_release_details(release_name)
     if not (release_metadata := get_release_metadata(release_path)) or not all(
         k in release_metadata.get('metadata', {}).get('labels', {})
@@ -49,6 +51,9 @@ def release_details(release_name: str, release_path: str, catalog_path: str, app
     metadata_labels = release_metadata['metadata']['labels']
     if metadata_labels['catalog'] != 'TRUENAS' or metadata_labels['catalog_branch'] != 'master':
         return config | {'error': 'Release is not from TrueNAS catalog'}
+
+    if release_name in installed_apps:
+        return config | {'error': 'App with same name is already installed'}
 
     release_train = metadata_labels['catalog_train'] if metadata_labels['catalog_train'] != 'charts' else 'stable'
     config['train'] = release_train
