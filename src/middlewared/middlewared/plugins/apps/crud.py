@@ -192,7 +192,7 @@ class AppService(CRUDService):
             )
             new_values = add_context_to_values(app_name, new_values, app_version_details['app_metadata'], install=True)
             update_app_config(app_name, version, new_values)
-            update_app_metadata(app_name, app_version_details, True)
+            update_app_metadata(app_name, app_version_details, migrated_app)
 
             job.set_progress(60, 'App installation in progress, pulling images')
             if dry_run is False:
