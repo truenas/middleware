@@ -61,19 +61,22 @@ class K8stoDockerMigrationService(Service):
         if not backup_config['releases']:
             raise CallError(f'No old apps found in {options["backup_name"]!r} backup which can be migrated')
 
-        # For good measure we stop docker service and unset docker pool if any configured
-        self.middleware.call_sync('service.stop', 'docker')
-        job.set_progress(15, 'Un-configuring docker service if configured')
-        docker_job = self.middleware.call_sync('docker.update', {'pool': None})
-        docker_job.wait_sync()
-        if docker_job.error:
-            raise CallError(f'Failed to un-configure docker: {docker_job.error}')
+        docker_config = self.middleware.call_sync('docker.config')
+        if docker_config['pool'] and docker_config['pool'] != kubernetes_pool:
+            # For good measure we stop docker service and unset docker pool if any configured
+            self.middleware.call_sync('service.stop', 'docker')
+            job.set_progress(15, 'Un-configuring docker service if configured')
+            docker_job = self.middleware.call_sync('docker.update', {'pool': None})
+            docker_job.wait_sync()
+            if docker_job.error:
+                raise CallError(f'Failed to un-configure docker: {docker_job.error}')
 
-        # We will now configure docker service
-        docker_job = self.middleware.call_sync('docker.update', {'pool': kubernetes_pool})
-        docker_job.wait_sync()
-        if docker_job.error:
-            raise CallError(f'Failed to configure docker: {docker_job.error}')
+        if docker_config['pool'] is None or docker_config['pool'] != kubernetes_pool:
+            # We will now configure docker service
+            docker_job = self.middleware.call_sync('docker.update', {'pool': kubernetes_pool})
+            docker_job.wait_sync()
+            if docker_job.error:
+                raise CallError(f'Failed to configure docker: {docker_job.error}')
 
         self.middleware.call_sync('catalog.sync').wait_sync()
 
