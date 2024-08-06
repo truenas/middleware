@@ -432,8 +432,10 @@ class ReplicationService(CRUDService):
         return await self.get_instance(id_)
 
     @accepts(
-        Int("id")
-    ), audit="Replication task delete:", audit_callback=True)
+        Int("id"),
+        audit="Replication task delete:",
+        audit_callback=True
+    )
     async def do_delete(self, audit_callback, id_):
         """
         Delete a Replication Task with specific `id`
