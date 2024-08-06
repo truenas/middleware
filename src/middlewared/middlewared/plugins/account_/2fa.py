@@ -136,7 +136,7 @@ class UserService(Service):
         UserRenew2faSecretArgs,
         UserRenew2faSecretResult,
         audit='Renew two-factor authentication secret:',
-        audit_extended=lambda username,options: username
+        audit_extended=lambda username, options: username
     )
     @pass_app()
     async def renew_2fa_secret(self, app, username, twofactor_options):
