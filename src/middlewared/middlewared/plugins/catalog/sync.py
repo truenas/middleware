@@ -1,5 +1,3 @@
-import os
-
 from middlewared.schema import accepts
 from middlewared.service import job, private, returns, Service
 

@@ -3,7 +3,7 @@ import shutil
 
 from middlewared.plugins.apps.ix_apps.path import get_app_parent_volume_ds_name, get_installed_app_path
 from middlewared.plugins.docker.state_utils import DATASET_DEFAULTS
-from middlewared.schema import accepts, Dict, List, returns, Str
+from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, job, Service
 
 from .migrate_config_utils import migrate_chart_release_config
@@ -28,6 +28,7 @@ class K8stoDockerMigrationService(Service):
         items=[Dict(
             'app_migration_detail',
             Str('name'),
+            Bool('successfully_migrated'),
             Str('error', null=True),
         )]
     ))
@@ -108,6 +109,7 @@ class K8stoDockerMigrationService(Service):
             release_config = {
                 'name': chart_release['release_name'],
                 'error': 'Unable to complete migration',
+                'successfully_migrated': False,
             }
             release_details.append(release_config)
 
@@ -176,7 +178,10 @@ class K8stoDockerMigrationService(Service):
                 # We do this to make sure it does not show up as installed in the UI
                 shutil.rmtree(get_installed_app_path(chart_release['release_name']), ignore_errors=True)
             else:
-                release_config['error'] = None
+                release_config.update({
+                    'error': None,
+                    'successfully_migrated': True,
+                })
                 self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
 
         job.set_progress(75, 'Deploying migrated apps')
@@ -192,7 +197,10 @@ class K8stoDockerMigrationService(Service):
 
         for index, status in enumerate(bulk_job.result):
             if status['error']:
-                release_details[index]['error'] = f'Failed to deploy app: {status["error"]}'
+                release_details[index].update({
+                    'error': f'Failed to deploy app: {status["error"]}',
+                    'successfully_migrated': False,
+                })
 
         job.set_progress(100, 'Migration completed')
 
