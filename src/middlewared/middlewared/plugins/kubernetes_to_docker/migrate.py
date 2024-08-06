@@ -85,6 +85,7 @@ class K8stoDockerMigrationService(Service):
 
         self.middleware.call_sync('catalog.sync').wait_sync()
 
+        installed_apps = {app['id']: app for app in self.middleware.call_sync('app.query')}
         job.set_progress(25, f'Rolling back to {backup_config["snapshot_name"]!r} snapshot')
         self.middleware.call_sync(
             'zfs.snapshot.rollback', backup_config['snapshot_name'], {
@@ -114,6 +115,18 @@ class K8stoDockerMigrationService(Service):
                 'error': 'Unable to complete migration',
             }
             release_details.append(release_config)
+
+            if release_config['name'] in installed_apps:
+                # Ideally we won't come to this case at all, but this case will only be true in the following case
+                # User configured docker pool
+                # Installed X app with same name
+                # Unset docker pool
+                # Tried restoring backup on the same pool
+                # We will run into this case because when we were listing out chart releases which can be migrated
+                # we were not able to deduce installed apps at all as pool was unset atm and docker wasn't running
+                release_config['error'] = 'App with same name is already installed'
+                continue
+
             new_config = migrate_chart_release_config(chart_release | migrate_context)
             if isinstance(new_config, str) or not new_config:
                 release_config['error'] = f'Failed to migrate config: {new_config}'
