@@ -1,7 +1,7 @@
 from middlewared.service import Service, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import Popen, run
-from middlewared.plugins.smb import SMBCmd
+from middlewared.plugins.smb import SMBCmd, SMBPath
 
 import os
 import subprocess
@@ -35,7 +35,7 @@ class SMBService(Service):
         local users in an AD environment. Immediately return in ldap enviornment.
         """
         pdbentries = []
-        private_dir = await self.middleware.call('smb.getparm', 'privatedir', 'global')
+        private_dir = SMBPath.PASSDB_DIR.path
         if not os.path.exists(f'{private_dir}/passdb.tdb'):
             return pdbentries
 
@@ -146,9 +146,7 @@ class SMBService(Service):
         `conf_users` contains results of `user.query`. Since users will receive new
         SID values, we will need to flush samba's cache to ensure consistency.
         """
-        private_dir = await self.middleware.call('smb.getparm',
-                                                 'private dir',
-                                                 'global')
+        private_dir = SMBPath.PASSDB_DIR.path
         ts = int(time.time())
         old_path = f'{private_dir}/passdb.tdb'
         new_path = f'{private_dir}/passdb.{ts}.corrupted'
