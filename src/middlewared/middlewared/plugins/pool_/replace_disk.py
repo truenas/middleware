@@ -73,7 +73,6 @@ class PoolService(Service):
                             min_size = min(min_size, size)
 
         swap_disks = [disk['devname']]
-        from_disk = None
         if found[1] and await self.middleware.run_in_thread(os.path.exists, found[1]['path']):
             if from_disk := await self.middleware.call('disk.label_to_disk', found[1]['path'].replace('/dev/', '')):
                 # If the disk we are replacing is still available, remove it from swap as well
@@ -96,9 +95,6 @@ class PoolService(Service):
             await self.middleware.call('zfs.pool.replace', pool['name'], options['label'], new_devname)
         except Exception:
             raise
-        else:
-            if from_disk:
-                await self.middleware.call('disk.wipe', from_disk, 'QUICK')
         finally:
             # Needs to happen even if replace failed to put back disk that had been
             # removed from swap prior to replacement
