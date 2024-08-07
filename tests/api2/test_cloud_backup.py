@@ -109,6 +109,12 @@ def test_cloud_backup(cloud_backup_task):
     snapshots = call("cloud_backup.list_snapshots", cloud_backup_task.task["id"])
     assert all(snapshot["id"] != first_snapshot["id"] for snapshot in snapshots)
 
+    snapshot_to_delete = snapshots[0]
+    call("cloud_backup.delete_snapshot", cloud_backup_task.task["id"], snapshot_to_delete["id"], job=True)
+
+    snapshots = call("cloud_backup.list_snapshots", cloud_backup_task.task["id"])
+    assert all(snapshot["id"] != snapshot_to_delete["id"] for snapshot in snapshots)
+
 
 @pytest.fixture(scope="module")
 def completed_cloud_backup_task(s3_credential):
