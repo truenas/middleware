@@ -236,7 +236,9 @@ class ReplicationService(CRUDService):
             Bool("enabled", default=True),
             register=True,
             strict=True,
-        )
+        ),
+        audit="Replication task create:",
+        audit_extended=lambda data: data["name"]
     )
     @pass_app(require=True)
     async def do_create(self, app, data):
@@ -350,9 +352,9 @@ class ReplicationService(CRUDService):
         "replication_create",
         "replication_update",
         ("attr", {"update": True}),
-    ))
+    ), audit="Replication task update:", audit_callback=True)
     @pass_app(require=True)
-    async def do_update(self, app, id_, data):
+    async def do_update(self, app, audit_callback, id_, data):
         """
         Update a Replication Task with specific `id`
 
@@ -396,6 +398,7 @@ class ReplicationService(CRUDService):
         """
 
         old = await self.get_instance(id_)
+        audit_callback(old["name"])
 
         new = old.copy()
         if new["ssh_credentials"]:
@@ -429,9 +432,11 @@ class ReplicationService(CRUDService):
         return await self.get_instance(id_)
 
     @accepts(
-        Int("id")
+        Int("id"),
+        audit="Replication task delete:",
+        audit_callback=True
     )
-    async def do_delete(self, id_):
+    async def do_delete(self, audit_callback, id_):
         """
         Delete a Replication Task with specific `id`
 
@@ -447,6 +452,8 @@ class ReplicationService(CRUDService):
                 ]
             }
         """
+        task_name = (await self.get_instance(id_))["name"]
+        audit_callback(task_name)
 
         response = await self.middleware.call(
             "datastore.delete",

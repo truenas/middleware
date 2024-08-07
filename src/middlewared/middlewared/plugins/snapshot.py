@@ -91,7 +91,9 @@ class PeriodicSnapshotTaskService(CRUDService):
             Bool('allow_empty', default=True),
             Bool('enabled', default=True),
             register=True
-        )
+        ),
+        audit='Snapshot task create:',
+        audit_extended=lambda data: data['dataset']
     )
     async def do_create(self, data):
         """
@@ -164,8 +166,10 @@ class PeriodicSnapshotTaskService(CRUDService):
             ('add', {'name': 'fixate_removal_date', 'type': 'bool'}),
             ('attr', {'update': True})
         ),
+        audit='Snapshot task update:',
+        audit_callback=True,
     )
-    async def do_update(self, id_, data):
+    async def do_update(self, audit_callback, id_, data):
         """
         Update a Periodic Snapshot Task with specific `id`
 
@@ -204,6 +208,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         fixate_removal_date = data.pop('fixate_removal_date', False)
 
         old = await self.get_instance(id_)
+        audit_callback(old['dataset'])
         new = old.copy()
         new.update(data)
 
@@ -256,8 +261,10 @@ class PeriodicSnapshotTaskService(CRUDService):
             'options',
             Bool('fixate_removal_date', default=False),
         ),
+        audit='Snapshot task delete:',
+        audit_callback=True,
     )
-    async def do_delete(self, id_, options):
+    async def do_delete(self, audit_callback, id_, options):
         """
         Delete a Periodic Snapshot Task with specific `id`
 
@@ -273,6 +280,9 @@ class PeriodicSnapshotTaskService(CRUDService):
                 ]
             }
         """
+
+        dataset = (await self.get_instance(id_))['dataset']
+        audit_callback(dataset)
 
         for replication_task in await self.middleware.call('replication.query', [
             ['direction', '=', 'PUSH'],
