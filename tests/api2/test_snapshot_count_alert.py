@@ -33,7 +33,7 @@ def test_snapshot_total_count_alert(request):
 def test_snapshot_count_alert(request):
     with (
         dataset(DATASET_NAME) as ds,
-        smb_share(f"/mnt/{ds}", ds),
+        smb_share(f"/mnt/{ds}", DATASET_NAME),
         mock("pool.snapshottask.max_count", return_value=NUM_SNAPSHOTS)
     ):
             for i in range(NUM_SNAPSHOTS):
