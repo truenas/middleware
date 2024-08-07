@@ -39,6 +39,6 @@ def test_snapshot_count_alert(request):
 
             alert = call("alert.run_source", "SnapshotCount")[0]
             assert alert["text"] % alert["args"] == (
-                "Dataset tank/snapshot_count has more snapshots (11) than recommended (10). Performance or "
-                "functionality might degrade."
+                "SMB share tank/snapshot_count has more snapshots (11) than recommended (10). File Explorer may not "
+                "display all snapshots in the Previous Versions tab."
             )

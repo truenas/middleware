@@ -17,8 +17,8 @@ class SnapshotCountAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "Too Many Snapshots Exist For Dataset"
     text = (
-        "Dataset %(dataset)s has more snapshots (%(count)d) than recommended (%(max)d). Performance or functionality "
-        "might degrade."
+        "SMB share %(dataset)s has more snapshots (%(count)d) than recommended (%(max)d). File Explorer may not "
+        "display all snapshots in the Previous Versions tab."
     )
 
 
@@ -26,12 +26,11 @@ class SnapshotCountAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)
     run_on_backup_node = False
 
-    async def check(self):
-        max_ = await self.middleware.call("pool.snapshottask.max_count")
+    async def _check_total(self) -> Alert | None:
+        """Return an `Alert` if the total number of snapshots exceeds the limit."""
         max_total = await self.middleware.call("pool.snapshottask.max_total_count")
-
-        total = 0
         datasets = await self.middleware.call("zfs.snapshot.count")
+        total = 0
 
         for cnt in datasets.values():
             total += cnt
@@ -43,11 +42,28 @@ class SnapshotCountAlertSource(AlertSource):
                 key=None,
             )
 
-        for dataset in sorted(datasets.keys()):
-            count = datasets[dataset]
-            if count > max_:
-                return Alert(
-                    SnapshotCountAlertClass,
-                    {"dataset": dataset, "count": count, "max": max_},
-                    key=None,
-                )
+    async def _check_smb(self) -> list[Alert]:
+        """Return an `Alert` for every dataset shared over smb whose number of snapshots exceeds the limit."""
+        max_ = await self.middleware.call("pool.snapshottask.max_count")
+        datasets = await self.middleware.call("zfs.snapshot.count")
+        smb_shares = self.middleware.call("sharing.smb.query")
+        smb_paths = [share["path"].removeprefix("/mnt/") for share in smb_shares]
+        to_alert = list()
+
+        for path in sorted(smb_paths):
+            if path in datasets:
+                count = datasets[path]
+                if count > max_:
+                    to_alert.append(Alert(
+                        SnapshotCountAlertClass,
+                        {"dataset": path, "count": count, "max": max_},
+                        key=None,
+                    ))
+
+        return to_alert
+
+    async def check(self):
+        alerts = await self._check_smb()
+        if total_alert := await self._check_total():
+            alerts.append(total_alert)
+        return alerts or None
