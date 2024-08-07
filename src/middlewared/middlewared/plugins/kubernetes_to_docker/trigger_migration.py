@@ -44,6 +44,7 @@ class K8stoDockerMigrationService(Service):
         if not backups:
             self.logger.debug('No backups found with releases which can be migrated for %r pool', k8s_pool)
             await self.unset_kubernetes_pool()
+            return
 
         latest_backup = backups[-1]
         migrate_job = await self.middleware.call(
