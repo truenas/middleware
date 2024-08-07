@@ -46,7 +46,7 @@ class SnapshotCountAlertSource(AlertSource):
         """Return an `Alert` for every dataset shared over smb whose number of snapshots exceeds the limit."""
         max_ = await self.middleware.call("pool.snapshottask.max_count")
         datasets = await self.middleware.call("zfs.snapshot.count")
-        smb_shares = self.middleware.call("sharing.smb.query")
+        smb_shares = await self.middleware.call("sharing.smb.query")
         smb_paths = [share["path"].removeprefix("/mnt/") for share in smb_shares]
         to_alert = list()
 
