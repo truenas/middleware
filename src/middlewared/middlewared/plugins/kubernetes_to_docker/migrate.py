@@ -1,12 +1,10 @@
-import contextlib
 import os.path
 import shutil
 
 from middlewared.plugins.apps.ix_apps.path import get_app_parent_volume_ds_name, get_installed_app_path
 from middlewared.plugins.docker.state_utils import DATASET_DEFAULTS
-from middlewared.plugins.docker.utils import applications_ds_name
-from middlewared.schema import accepts, Dict, List, returns, Str
-from middlewared.service import CallError, InstanceNotFound, job, Service
+from middlewared.schema import accepts, Bool, Dict, List, returns, Str
+from middlewared.service import CallError, job, Service
 
 from .migrate_config_utils import migrate_chart_release_config
 
@@ -30,6 +28,7 @@ class K8stoDockerMigrationService(Service):
         items=[Dict(
             'app_migration_detail',
             Str('name'),
+            Bool('successfully_migrated'),
             Str('error', null=True),
         )]
     ))
@@ -63,28 +62,26 @@ class K8stoDockerMigrationService(Service):
         if not backup_config['releases']:
             raise CallError(f'No old apps found in {options["backup_name"]!r} backup which can be migrated')
 
-        # We will see if docker dataset exists on this pool and if it is there, we will error out
-        docker_ds = applications_ds_name(kubernetes_pool)
-        with contextlib.suppress(InstanceNotFound):
-            self.middleware.call_sync('pool.dataset.get_instance_quick', docker_ds)
-            raise CallError(f'Docker dataset {docker_ds!r} already exists on {kubernetes_pool!r}')
+        docker_config = self.middleware.call_sync('docker.config')
+        if docker_config['pool'] and docker_config['pool'] != kubernetes_pool:
+            # For good measure we stop docker service and unset docker pool if any configured
+            self.middleware.call_sync('service.stop', 'docker')
+            job.set_progress(15, 'Un-configuring docker service if configured')
+            docker_job = self.middleware.call_sync('docker.update', {'pool': None})
+            docker_job.wait_sync()
+            if docker_job.error:
+                raise CallError(f'Failed to un-configure docker: {docker_job.error}')
 
-        # For good measure we stop docker service and unset docker pool if any configured
-        self.middleware.call_sync('service.stop', 'docker')
-        job.set_progress(15, 'Un-configuring docker service if configured')
-        docker_job = self.middleware.call_sync('docker.update', {'pool': None})
-        docker_job.wait_sync()
-        if docker_job.error:
-            raise CallError(f'Failed to un-configure docker: {docker_job.error}')
-
-        # We will now configure docker service
-        docker_job = self.middleware.call_sync('docker.update', {'pool': kubernetes_pool})
-        docker_job.wait_sync()
-        if docker_job.error:
-            raise CallError(f'Failed to configure docker: {docker_job.error}')
+        if docker_config['pool'] is None or docker_config['pool'] != kubernetes_pool:
+            # We will now configure docker service
+            docker_job = self.middleware.call_sync('docker.update', {'pool': kubernetes_pool})
+            docker_job.wait_sync()
+            if docker_job.error:
+                raise CallError(f'Failed to configure docker: {docker_job.error}')
 
         self.middleware.call_sync('catalog.sync').wait_sync()
 
+        installed_apps = {app['id']: app for app in self.middleware.call_sync('app.query')}
         job.set_progress(25, f'Rolling back to {backup_config["snapshot_name"]!r} snapshot')
         self.middleware.call_sync(
             'zfs.snapshot.rollback', backup_config['snapshot_name'], {
@@ -112,8 +109,21 @@ class K8stoDockerMigrationService(Service):
             release_config = {
                 'name': chart_release['release_name'],
                 'error': 'Unable to complete migration',
+                'successfully_migrated': False,
             }
             release_details.append(release_config)
+
+            if release_config['name'] in installed_apps:
+                # Ideally we won't come to this case at all, but this case will only be true in the following case
+                # User configured docker pool
+                # Installed X app with same name
+                # Unset docker pool
+                # Tried restoring backup on the same pool
+                # We will run into this case because when we were listing out chart releases which can be migrated
+                # we were not able to deduce installed apps at all as pool was unset atm and docker wasn't running
+                release_config['error'] = 'App with same name is already installed'
+                continue
+
             new_config = migrate_chart_release_config(chart_release | migrate_context)
             if isinstance(new_config, str) or not new_config:
                 release_config['error'] = f'Failed to migrate config: {new_config}'
@@ -126,7 +136,7 @@ class K8stoDockerMigrationService(Service):
             try:
                 self.middleware.call_sync(
                     'app.create_internal', dummy_job, chart_release['release_name'],
-                    chart_release['app_version'], new_config, complete_app_details, True,
+                    chart_release['app_version'], new_config, complete_app_details, True, True,
                 )
             except Exception as e:
                 release_config['error'] = f'Failed to create app: {e}'
@@ -168,7 +178,10 @@ class K8stoDockerMigrationService(Service):
                 # We do this to make sure it does not show up as installed in the UI
                 shutil.rmtree(get_installed_app_path(chart_release['release_name']), ignore_errors=True)
             else:
-                release_config['error'] = None
+                release_config.update({
+                    'error': None,
+                    'successfully_migrated': True,
+                })
                 self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
 
         job.set_progress(75, 'Deploying migrated apps')
@@ -184,7 +197,10 @@ class K8stoDockerMigrationService(Service):
 
         for index, status in enumerate(bulk_job.result):
             if status['error']:
-                release_details[index]['error'] = f'Failed to deploy app: {status["error"]}'
+                release_details[index].update({
+                    'error': f'Failed to deploy app: {status["error"]}',
+                    'successfully_migrated': False,
+                })
 
         job.set_progress(100, 'Migration completed')
 
