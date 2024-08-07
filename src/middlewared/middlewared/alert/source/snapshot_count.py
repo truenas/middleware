@@ -57,7 +57,7 @@ class SnapshotCountAlertSource(AlertSource):
                     to_alert.append(Alert(
                         SnapshotCountAlertClass,
                         {"dataset": path, "count": count, "max": max_},
-                        key=None,
+                        key=path,
                     ))
 
         return to_alert
