@@ -74,12 +74,14 @@ class VMService(Service, VMSupervisorMixin):
     @accepts(
         Dict(
             'deinitialize_vms_options',
+            Bool('reload_ui', default=True),
             Bool('stop_libvirt', default=True),
         )
     )
     async def deinitialize_vms(self, options):
         await self.middleware.call('vm.close_libvirt_connection')
-        await self.middleware.call('service.reload', 'http')
+        if options['reload_ui']:
+            await self.middleware.call('service.reload', 'http')
         if options['stop_libvirt']:
             await self.middleware.call('service.stop', 'libvirtd')
 
@@ -101,7 +103,7 @@ class VMService(Service, VMSupervisorMixin):
     @private
     async def terminate(self):
         async with SHUTDOWN_LOCK:
-            await self.middleware.call('vm.deinitialize_vms', {'stop_libvirt': False})
+            await self.middleware.call('vm.close_libvirt_connection')
 
     @private
     async def terminate_timeout(self):
@@ -145,7 +147,7 @@ async def __event_system_shutdown(middleware, event_type, args):
             # We do this in vm.terminate as well, reasoning for repeating this here is that we don't want to
             # stop libvirt on middlewared restarts, we only want that to happen if a shutdown has been initiated
             # and we have cleanly exited
-            await middleware.call('vm.deinitialize_vms')
+            await middleware.call('vm.deinitialize_vms', {'reload_ui': False})
 
 
 async def setup(middleware):
