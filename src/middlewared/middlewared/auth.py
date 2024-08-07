@@ -79,6 +79,43 @@ class ApiKeySessionManagerCredentials(SessionManagerCredentials):
         }
 
 
+class TokenSessionManagerCredentials(SessionManagerCredentials):
+    def __init__(self, token_manager, token):
+        self.root_credentials = token.root_credentials()
+
+        self.token_manager = token_manager
+        self.token = token
+        self.is_user_session = self.root_credentials.is_user_session
+        if self.is_user_session:
+            self.user = self.root_credentials.user
+
+        self.allowlist = self.root_credentials.allowlist
+
+    def is_valid(self):
+        return self.token.is_valid()
+
+    def authorize(self, method, resource):
+        return self.token.parent_credentials.authorize(method, resource)
+
+    def has_role(self, role):
+        return self.token.parent_credentials.has_role(role)
+
+    def notify_used(self):
+        self.token.notify_used()
+
+    def logout(self):
+        self.token_manager.destroy(self.token)
+
+    def dump(self):
+        data = {
+            "parent": dump_credentials(self.token.parent_credentials),
+        }
+        if self.is_user_session:
+            data["username"] = self.user["username"]
+
+        return data
+
+
 class TrueNasNodeSessionManagerCredentials(SessionManagerCredentials):
     def authorize(self, method, resource):
         return True
@@ -94,3 +131,10 @@ class FakeApplication:
 
 def fake_app():
     return FakeApplication()
+
+
+def dump_credentials(credentials):
+    return {
+        "credentials": credentials.class_name(),
+        "credentials_data": credentials.dump(),
+    }
