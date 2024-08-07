@@ -1,5 +1,4 @@
 import errno
-import os
 
 from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import item_method, job, Service, ValidationErrors
@@ -46,11 +45,11 @@ class PoolService(Service):
         verrors = ValidationErrors()
         unused_disks = await self.middleware.call('disk.get_unused')
         if not (disk := list(filter(lambda x: x['identifier'] == options['disk'], unused_disks))):
-            verrors.add('options.disk', 'Disk not found.', errno.ENOENT)
+            verrors.add('options.disk', f'Disk {options["disk"]!r} not found.', errno.ENOENT)
         else:
             disk = disk[0]
             if not options['force'] and not await self.middleware.call('disk.check_clean', disk['devname']):
-                verrors.add('options.force', 'Disk is not clean, partitions were found.')
+                verrors.add('options.force', f'Disk {options["disk"]!r} is not clean, partitions were found.')
 
         if not (found := await self.middleware.call('pool.find_disk_from_topology', options['label'], pool, {
             'include_siblings': True,
@@ -73,7 +72,6 @@ class PoolService(Service):
                             min_size = min(min_size, size)
 
         swap_disks = [disk['devname']]
-        from_disk = None
         if found[1] and await self.middleware.run_in_thread(os.path.exists, found[1]['path']):
             if from_disk := await self.middleware.call('disk.label_to_disk', found[1]['path'].replace('/dev/', '')):
                 # If the disk we are replacing is still available, remove it from swap as well
@@ -96,9 +94,6 @@ class PoolService(Service):
             await self.middleware.call('zfs.pool.replace', pool['name'], options['label'], new_devname)
         except Exception:
             raise
-        else:
-            if from_disk:
-                await self.middleware.call('disk.wipe', from_disk, 'QUICK')
         finally:
             # Needs to happen even if replace failed to put back disk that had been
             # removed from swap prior to replacement
