@@ -29,8 +29,8 @@ class DockerEventService(Service):
             decode=True, filters={
                 'type': ['container'],
                 'event': [
-                    'create', 'destroy', 'detach', 'die', 'health_status', 'kill', 'unpause', 'update',
-                    'oom', 'pause', 'rename', 'resize', 'restart', 'start', 'stop', 'top',
+                    'create', 'destroy', 'detach', 'die', 'health_status', 'kill', 'unpause',
+                    'oom', 'pause', 'rename', 'resize', 'restart', 'start', 'stop', 'update',
                 ]
             }
         ):
