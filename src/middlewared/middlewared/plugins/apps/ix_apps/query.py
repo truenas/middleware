@@ -6,7 +6,7 @@ from .docker.query import list_resources_by_project
 from .metadata import get_collective_config, get_collective_metadata
 from .lifecycle import get_current_app_config
 from .path import get_app_parent_config_path
-from .utils import PROJECT_PREFIX
+from .utils import PROJECT_PREFIX, get_app_name_from_project_name
 
 
 COMPOSE_SERVICE_KEY: str = 'com.docker.compose.service'
@@ -71,7 +71,7 @@ def list_apps(
     for app_name, app_resources in list_resources_by_project(
         project_name=f'{PROJECT_PREFIX}{specific_app}' if specific_app else None,
     ).items():
-        app_name = app_name[len(PROJECT_PREFIX):]
+        app_name = get_app_name_from_project_name(app_name)
         app_names.add(app_name)
         if app_name not in metadata:
             # The app is malformed or something is seriously wrong with it
