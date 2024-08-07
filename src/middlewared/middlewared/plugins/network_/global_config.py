@@ -1,7 +1,4 @@
 import ipaddress
-import psutil
-import contextlib
-import signal
 
 import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, private
@@ -345,14 +342,7 @@ class NetworkConfigurationService(ConfigService):
                 except Exception:
                     self.logger.warning('Failed to generate resolv.conf on standby storage controller', exc_info=True)
 
-            def reload_cli():
-                for process in psutil.process_iter(['pid', 'cmdline']):
-                    cmdline = process.cmdline()
-                    if len(cmdline) >= 2 and cmdline[1] == '/usr/bin/cli':
-                        with contextlib.suppress(Exception):
-                            process.send_signal(signal.SIGUSR1)
-
-            await self.middleware.run_in_thread(reload_cli)
+            await self.middleware.call('system.reload_cli')
 
         # default gateways changed
         ipv4gw_changed = new_config['ipv4gateway'] != config['ipv4gateway']
