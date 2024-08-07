@@ -16,7 +16,11 @@ class AppEvents(Service):
         private = True
 
     async def process(self, app_name, container_event):
-        pass
+        # TODO: Remove select from here
+        if app := await self.middleware.call('app.query', [['id', '=', app_name]], {'select': ['id', 'state']}):
+            self.middleware.send_event(
+                'app.query', 'CHANGED', id=app_name, fields=app[0],
+            )
 
 
 async def app_event(middleware, event_type, args):
