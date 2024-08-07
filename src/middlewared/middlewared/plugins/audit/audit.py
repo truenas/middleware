@@ -129,7 +129,7 @@ class AuditService(ConfigService):
 
     @accepts(Dict(
         'audit_query',
-        List('services', items=[Str('db_name', enum=ALL_AUDITED)], default=ALL_AUDITED),
+        List('services', items=[Str('db_name', enum=ALL_AUDITED)], default=['MIDDLEWARE', 'SUDO']),
         Ref('query-filters'),
         Ref('query-options'),
         register=True

@@ -105,7 +105,7 @@ def parse_query_filters(
     can loosen these restrictions with appropriate levels of testing and
     validation in auditbackend plugin.
     """
-    services_to_check = set(services)
+    services_to_check = services_in = set(services)
     filters_out = []
 
     for f in filters:
@@ -122,7 +122,10 @@ def parse_query_filters(
 
             match f[1]:
                 case '=' | 'in':
-                    services_to_check = services_to_check & svcs
+                    if services_in == services_to_check:
+                        services_to_check = svcs
+                    else:
+                        services_to_check = services_to_check & svcs
                 case '!=' | 'nin':
                     services_to_check = services_to_check - svcs
                 case _:
