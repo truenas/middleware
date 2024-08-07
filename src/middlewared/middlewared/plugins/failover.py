@@ -73,7 +73,7 @@ class FailoverService(ConfigService):
         ('edit', {'name': 'master', 'method': lambda x: setattr(x, 'null', True)}),
         ('rm', {'name': 'id'}),
         ('attr', {'update': True}),
-    ))
+    ), audit='Failover config update')
     async def do_update(self, data):
         """
         Update failover state.
@@ -287,7 +287,7 @@ class FailoverService(ConfigService):
         """Get a list of IPs for which the webUI can be accessed."""
         return await self.middleware.call('system.general.get_ui_urls')
 
-    @accepts()
+    @accepts(audit='Failover become passive')
     @returns()
     def become_passive(self):
         """
@@ -324,7 +324,7 @@ class FailoverService(ConfigService):
                 # this shouldn't be reached but better safe than sorry
                 os.system('shutdown -r now')
 
-    @accepts(roles=['FAILOVER_WRITE'])
+    @accepts(roles=['FAILOVER_WRITE'], audit='Failover force master')
     @returns(Bool())
     async def force_master(self):
         """
@@ -678,7 +678,7 @@ class FailoverService(ConfigService):
         Str('train', empty=False),
         Bool('resume', default=False),
         Bool('resume_manual', default=False),
-    ), roles=['FAILOVER_WRITE'])
+    ), roles=['FAILOVER_WRITE'], audit='Failover upgrade')
     @returns(Bool())
     @job(lock='failover_upgrade', pipes=['input'], check_pipes=False)
     def upgrade(self, job, options):
