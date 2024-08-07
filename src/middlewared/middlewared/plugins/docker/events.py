@@ -1,3 +1,4 @@
+from middlewared.plugins.apps.ix_apps.docker.utils import get_docker_client, PROJECT_KEY
 from middlewared.service import Service
 
 
@@ -20,7 +21,24 @@ class DockerEventService(Service):
             raise
 
     def process(self):
-        pass
+        with get_docker_client() as docker_client:
+            self.process_internal(docker_client)
+
+    def process_internal(self, client):
+        for container_event in client.events(
+            decode=True, filters={
+                'type': ['container'],
+                'event': [
+                    'create', 'destroy', 'detach', 'die', 'health_status', 'kill', 'unpause', 'update',
+                    'oom', 'pause', 'rename', 'resize', 'restart', 'start', 'stop', 'top',
+                ]
+            }
+        ):
+            if not isinstance(container_event, dict):
+                continue
+
+            if project := container_event.get('Actor', {}).get('Attributes', {}).get(PROJECT_KEY):
+                self.middleware.send_event('docker.events', 'ADDED', id=project, fields=container_event)
 
 
 async def setup(middleware):
