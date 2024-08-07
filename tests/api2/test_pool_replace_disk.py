@@ -66,3 +66,27 @@ def test_pool_replace_disk(topology):
                 sleep(1)
         else:
             assert False, f"{' '.join(cmd)} failed to update with pool information"
+
+
+@pytest.mark.parametrize("swaps", [[0, 0], [2, 2], [2, 4]])
+def test_pool_replace_disk_swap(swaps):
+    unused = call("disk.get_unused")
+    if len(unused) < 3:
+        raise RuntimeError("At least 3 unused disks required to run this test")
+
+    test_disks = unused[:3]
+    sizes = {disk["name"]: disk["size"] for disk in test_disks}
+    assert len(set(sizes.values())) == 1, sizes
+
+    call("system.advanced.update", {"swapondrive": swaps[0]})
+    try:
+        with another_pool(topology=_2_disk_mirror_topology) as pool:
+            to_replace_vdev = [i for i in call("pool.flatten_topology", pool["topology"]) if i["type"] == "DISK"]
+            call("system.advanced.update", {"swapondrive": swaps[1]})
+            call("pool.replace", pool["id"], {
+                "label": to_replace_vdev[0]["guid"],
+                "disk": test_disks[2]["identifier"],
+                "force": True,
+            }, job=True)
+    finally:
+        call("system.advanced.update", {"swapondrive": 2})
