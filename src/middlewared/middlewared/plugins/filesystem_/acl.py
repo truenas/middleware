@@ -590,7 +590,7 @@ class FilesystemService(Service):
             self._strip_acl_nfs4(path)
 
         else:
-            if not options['skip_execute_check']:
+            if options['validate_effective_acl']:
                 uid_to_check = current_acl['uid'] if uid == -1 else uid
                 gid_to_check = current_acl['gid'] if gid == -1 else gid
 
@@ -746,7 +746,7 @@ class FilesystemService(Service):
             )
 
         if not do_strip:
-            if not options['skip_execute_check']:
+            if options['validate_effective_acl']:
                 try:
                     # check execute on parent paths
                     uid_to_check = current_acl['uid'] if uid == -1 else uid
@@ -869,7 +869,7 @@ class FilesystemService(Service):
                 Bool('recursive', default=False),
                 Bool('traverse', default=False),
                 Bool('canonicalize', default=True),
-                Bool('skip_execute_check', default=False)
+                Bool('validate_effective_acl', default=True)
             )
         ), roles=['FILESYSTEM_ATTRS_WRITE'], audit='Filesystem set ACL', audit_extended=lambda data: data['path']
     )
