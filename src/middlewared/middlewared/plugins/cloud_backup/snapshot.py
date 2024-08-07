@@ -3,8 +3,8 @@ import json
 import subprocess
 
 from middlewared.plugins.cloud_backup.restic import get_restic_config
-from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, returns, Str
-from middlewared.service import CallError, Service
+from middlewared.schema import accepts, Datetime, Dict, Int, List, returns, Str
+from middlewared.service import CallError, job, Service
 from middlewared.validators import NotMatch
 
 
@@ -99,3 +99,27 @@ class CloudBackupService(Service):
             contents.append(item)
 
         return contents
+
+    @accepts(Int("id"), Str("snapshot_id", validators=[NotMatch(r"^-")]))
+    @returns()
+    @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1)
+    def delete_snapshot(self, job, id_, snapshot_id):
+        """
+        Delete snapshot `snapshot_id` created by the cloud backup job `id`.
+        """
+        self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
+
+        cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id_)
+
+        restic_config = get_restic_config(cloud_backup)
+
+        try:
+            subprocess.run(
+                restic_config.cmd + ["forget", snapshot_id, "--prune"],
+                env=restic_config.env,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise CallError(e.stderr)
