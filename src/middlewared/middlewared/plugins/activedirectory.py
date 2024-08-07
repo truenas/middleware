@@ -257,7 +257,7 @@ class ActiveDirectoryService(ConfigService):
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
 
-    @accepts(Ref('activedirectory_update'))
+    @accepts(Ref('activedirectory_update'), audit='Active directory configuration update')
     @returns(Ref('activedirectory_update'))
     @job(lock="AD_start_stop")
     async def do_update(self, job, data):
@@ -776,7 +776,7 @@ class ActiveDirectoryService(ConfigService):
         out = json.loads(lookup.stdout.decode())
         return out
 
-    @accepts(Ref('kerberos_username_password'), roles=['DIRECTORY_SERVICE_WRITE'])
+    @accepts(Ref('kerberos_username_password'), roles=['DIRECTORY_SERVICE_WRITE'], audit='Active directory leave')
     @returns()
     @job(lock="AD_start_stop")
     async def leave(self, job, data):
