@@ -218,6 +218,8 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                 if wrapper is not None:
                     order_by[i] = wrapper(order_by[i])
 
+            qs = qs.order_by(*order_by)
+
         if options['offset']:
             qs = qs.offset(options['offset'])
 

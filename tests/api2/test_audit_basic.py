@@ -215,6 +215,24 @@ class TestAuditOps:
             retries -= 1
         assert ops_count > initial_ops_count, f"retries remaining = {retries}"
 
+    def test_audit_order_by(self):
+        entries_forward = call('audit.query', {'services': ['SMB'], 'query-options': {
+            'order_by': ['audit_id']
+        }})
+
+        entries_reverse = call('audit.query', {'services': ['SMB'], 'query-options': {
+            'order_by': ['-audit_id']
+        }})
+
+        head_forward_id = entries_forward[0]['audit_id']
+        tail_forward_id = entries_forward[-1]['audit_id']
+
+        head_reverse_id = entries_reverse[0]['audit_id']
+        tail_reverse_id = entries_reverse[-1]['audit_id']
+
+        assert head_forward_id == tail_reverse_id
+        assert tail_forward_id == head_reverse_id
+
     def test_audit_export(self):
         for backend in ['CSV', 'JSON', 'YAML']:
             report_path = call('audit.export', {'export_format': backend}, job=True)
