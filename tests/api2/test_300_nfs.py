@@ -1231,6 +1231,33 @@ def test_42_check_nfs_client_status():
         assert results.status_code == 200, results.text
         assert results.json() == 1, results.text
 
+    # NAS-130437: Confirm IPv6 support
+    try:
+        # Get the IPv6 equivalent of truenas_server.ip
+        ip_info = call(
+            'interface.query',
+            [["aliases.*.address", "=", truenas_server.ip]], {"get": True}
+        )
+        devname = ip_info['name']
+        aliases = ip_info['state']['aliases']
+
+        ipv6_addr = list(filter(lambda x: x['type'] == 'INET6', aliases))[0]['address']
+
+        ipv6_mp = '/mnt/nfs_ipv6'
+        ssh(f"mkdir -p {ipv6_mp}")
+
+        # zsh requires the 'server' part to be encapsulated in quotes due to square brackets
+        ssh(f'mount "[{ipv6_addr}%{devname}]":{NFS_PATH} {ipv6_mp}')
+
+        # Confirm we can process get_nfs4_clients that use IPv6 addresses
+        nfs4_client_list = call("nfs.get_nfs4_clients")
+        assert len(nfs4_client_list) == 1
+        assert ipv6_addr in nfs4_client_list[0]['info']['callback address']
+
+    finally:
+        ssh(f"umount -f {ipv6_mp}")
+        ssh(f"rmdir {ipv6_mp}")
+
 
 @pytest.mark.timeout(600)
 @pytest.mark.dependency(depends=['NFS_SERVICE_STARTED'])
