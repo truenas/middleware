@@ -162,7 +162,7 @@ class FilesystemService(Service):
             verrors.add("filesystem.chown.uid",
                         "Please specify either user or group to change.")
 
-        loc = self._common_perm_path_validate("filesystem.chown", data, verrors)
+        self._common_perm_path_validate("filesystem.chown", data, verrors)
         verrors.check()
 
         if not options['recursive']:
@@ -249,7 +249,7 @@ class FilesystemService(Service):
         uid = -1 if data['uid'] is None else data.get('uid', -1)
         gid = -1 if data['gid'] is None else data.get('gid', -1)
 
-        loc = self._common_perm_path_validate("filesystem.setperm", data, verrors)
+        self._common_perm_path_validate("filesystem.setperm", data, verrors)
 
         current_acl = self.middleware.call_sync('filesystem.getacl', data['path'])
         acl_is_trivial = current_acl['trivial']
@@ -590,13 +590,14 @@ class FilesystemService(Service):
             self._strip_acl_nfs4(path)
 
         else:
-            uid_to_check = current_acl['uid'] if uid == -1 else uid
-            gid_to_check = current_acl['gid'] if gid == -1 else gid
+            if not options['skip_execute_check']:
+                uid_to_check = current_acl['uid'] if uid == -1 else uid
+                gid_to_check = current_acl['gid'] if gid == -1 else gid
 
-            self.middleware.call_sync(
-                'filesystem.check_acl_execute',
-                path, data['dacl'], uid_to_check, gid_to_check, True
-            )
+                self.middleware.call_sync(
+                    'filesystem.check_acl_execute',
+                    path, data['dacl'], uid_to_check, gid_to_check, True
+                )
 
             self.setacl_nfs4_internal(path, data['dacl'], do_canon, verrors)
 
@@ -745,23 +746,24 @@ class FilesystemService(Service):
             )
 
         if not do_strip:
-            try:
-                # check execute on parent paths
-                uid_to_check = current_acl['uid'] if uid == -1 else uid
-                gid_to_check = current_acl['gid'] if gid == -1 else gid
+            if not options['skip_execute_check']:
+                try:
+                    # check execute on parent paths
+                    uid_to_check = current_acl['uid'] if uid == -1 else uid
+                    gid_to_check = current_acl['gid'] if gid == -1 else gid
 
-                self.middleware.call_sync(
-                    'filesystem.check_acl_execute',
-                    path, dacl, uid_to_check, gid_to_check, True
-                )
-            except CallError as e:
-                if e.errno != errno.EPERM:
-                    raise
+                    self.middleware.call_sync(
+                        'filesystem.check_acl_execute',
+                        path, dacl, uid_to_check, gid_to_check, True
+                    )
+                except CallError as e:
+                    if e.errno != errno.EPERM:
+                        raise
 
-                verrors.add(
-                    'filesystem_acl.path',
-                    e.errmsg
-                )
+                    verrors.add(
+                        'filesystem_acl.path',
+                        e.errmsg
+                    )
 
             aclstring = self.gen_aclstring_posix1e(dacl, recursive, verrors)
 
@@ -866,7 +868,8 @@ class FilesystemService(Service):
                 Bool('stripacl', default=False),
                 Bool('recursive', default=False),
                 Bool('traverse', default=False),
-                Bool('canonicalize', default=True)
+                Bool('canonicalize', default=True),
+                Bool('skip_execute_check', default=False)
             )
         ), roles=['FILESYSTEM_ATTRS_WRITE'], audit='Filesystem set ACL', audit_extended=lambda data: data['path']
     )
@@ -1123,7 +1126,6 @@ class FilesystemService(Service):
         Supports `directory` `option` that allows specifying whether the generated
         ACL is for a file or a directory.
         """
-        init_path = data['path']
         verrors = ValidationErrors()
         self._common_perm_path_validate('filesystem.get_inherited_acl', data, verrors, True)
         verrors.check()
