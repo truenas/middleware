@@ -747,7 +747,7 @@ class KerberosKeytabService(CRUDService):
     @accepts(
         Dict(
             'kerberos_keytab_create',
-            Str('file', max_length=None),
+            Str('file', max_length=None, private=True),
             Str('name'),
             register=True
         ),
