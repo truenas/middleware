@@ -793,10 +793,12 @@ class PoolDatasetService(CRUDService):
         created_ds = await self.get_instance(data['id'])
 
         if acl_to_set:
+            # We're potentially auto-inheriting an ACL containing nested
+            # security groups and so we need to skip the ACL validation
             acl_job = await self.middleware.call('filesystem.setacl', {
                 'path': mountpoint,
                 'dacl': acl_to_set,
-                'options': {'skip_execute_check': True}
+                'options': {'validate_effective_acl': False}
             })
             await acl_job.wait(raise_error=True)
 
