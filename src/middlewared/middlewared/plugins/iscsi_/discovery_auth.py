@@ -58,11 +58,14 @@ class iSCSIDiscoveryAuthService(CRUDService):
 
         verrors.check()
 
+        orig_peerusers = await self.middleware.call('iscsi.discoveryauth.mutual_chap_peerusers')
+
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix}
         )
 
+        await self.middleware.call('iscsi.discoveryauth.recalc_mutual_chap_alert', orig_peerusers)
         await self._service_change('iscsitarget', 'reload')
 
         return await self.get_instance(data['id'])
@@ -91,11 +94,14 @@ class iSCSIDiscoveryAuthService(CRUDService):
         await self.validate(new, 'iscsi_discoveryauth_update', verrors)
         verrors.check()
 
+        orig_peerusers = await self.middleware.call('iscsi.discoveryauth.mutual_chap_peerusers')
+
         await self.middleware.call(
             'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix}
         )
 
+        await self.middleware.call('iscsi.discoveryauth.recalc_mutual_chap_alert', orig_peerusers)
         await self._service_change('iscsitarget', 'reload')
 
         return await self.get_instance(id_)
@@ -110,9 +116,18 @@ class iSCSIDiscoveryAuthService(CRUDService):
         config = await self.get_instance(id_)
         audit_callback(_auth_summary(config))
 
+        orig_peerusers = await self.middleware.call('iscsi.discoveryauth.mutual_chap_peerusers')
+
         result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id_
         )
+
+        if not await self.middleware.call('iscsi.discoveryauth.query', [], {'count': True}):
+            # If we have cleared all the discovery auth, then don't need any alerts
+            await self.middleware.call('iscsi.discoveryauth.clear_alerts')
+        elif orig_peerusers and len(orig_peerusers) > 1:
+            # Have we eliminated the multiple mutual CHAP alert?
+            await self.middleware.call('iscsi.discoveryauth.recalc_mutual_chap_alert', orig_peerusers)
 
         await self._service_change('iscsitarget', 'reload')
         return result
@@ -222,6 +237,12 @@ class iSCSIDiscoveryAuthService(CRUDService):
                 os.remove(DISCOVERY_AUTH_UPGRADE_COMPLETE_SENTINEL)
         except FileNotFoundError:
             pass
+
+    @private
+    async def clear_alerts(self):
+        alerts = [alert for alert in await self.middleware.call('alert.list') if alert['klass'].startswith('ISCSIDiscoveryAuth')]
+        for alert in alerts:
+            await self.middleware.call("alert.oneshot_delete", alert['klass'], alert['args'])
 
 
 async def __event_system_ready(middleware, event_type, args):
