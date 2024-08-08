@@ -281,8 +281,8 @@ class PeriodicSnapshotTaskService(CRUDService):
             }
         """
 
-        dataset = (await self.get_instance(id_))['dataset']
-        audit_callback(dataset)
+        if (task := await self.query([['id','=', id_]])):
+            audit_callback(task[0]['dataset'])
 
         for replication_task in await self.middleware.call('replication.query', [
             ['direction', '=', 'PUSH'],
