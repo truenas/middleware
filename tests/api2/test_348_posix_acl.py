@@ -11,6 +11,7 @@ sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
 from auto_config import pool_name, user, password
 from pytest_dependency import depends
+from middlewared.test.integration.utils import call
 
 
 ACLTEST_DATASET = f'{pool_name}/posixacltest'
@@ -463,22 +464,16 @@ def test_14_recursive_with_traverse(request):
 
 def test_15_strip_acl_from_dataset(request):
     """
-    Strip ACL via pool.dataset.permission endpoint.
+    Strip ACL via filesystem.setperm endpoint.
     This should work even for POSIX1E ACLs.
     """
     depends(request, ["HAS_POSIX_ACLS"])
-    result = POST(
-        f'/pool/dataset/id/{DATASET_URL}/permission/', {
-            'acl': [],
-            'mode': '777',
-            'options': {'stripacl': True, 'recursive': True}
-        }
-    )
 
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    call('filesystem.setperm', {
+        'path': os.path.join('/mnt', ACLTEST_DATASET),
+        'mode': '777',
+        'options': {'stripacl': True, 'recursive': True}
+    }, job=True)
 
 
 """
