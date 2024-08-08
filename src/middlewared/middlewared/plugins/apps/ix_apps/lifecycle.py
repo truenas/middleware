@@ -1,4 +1,5 @@
 import copy
+import contextlib
 import pathlib
 import typing
 import yaml
@@ -10,6 +11,16 @@ from .path import (
     get_installed_custom_app_compose_file,
 )
 from .utils import CONTEXT_KEY_NAME, run
+
+
+def get_rendered_template_config_of_app(app_name: str, version: str) -> dict:
+    rendered_config = {}
+    for rendered_file in get_rendered_templates_of_app(app_name, version):
+        with contextlib.suppress(FileNotFoundError, yaml.YAMLError):
+            with open(rendered_file, 'r') as f:
+                rendered_config.update(yaml.safe_load(f.read()))
+
+    return rendered_config
 
 
 def get_rendered_templates_of_app(app_name: str, version: str) -> list[str]:
