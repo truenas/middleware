@@ -288,9 +288,10 @@ class SystemGeneralService(ConfigService):
         if ui_restart_delay is not None:
             await self.middleware.call('system.general.ui_restart', ui_restart_delay)
 
-        if any(config[k] != new_config[k] for k in ['ui_port', 'ui_httpsport', 'ui_httpsredirect', 'ui_address',
-                                                    'ui_v6address']):
-            await self.middleware.call('system.reload_cli')
+        for key in ('ui_port', 'ui_httpsport', 'ui_httpsredirect', 'ui_address', 'ui_v6address'):
+            if config[key] != new_config[key]:
+                await self.middleware.call('system.reload_cli')
+                break
 
         return await self.config()
 
