@@ -1,10 +1,9 @@
 import contextlib
 import shutil
-import yaml
 
 from catalog_reader.custom_app import get_version_details
 
-from middlewared.service import Service, ValidationErrors
+from middlewared.service import Service
 
 from .compose_utils import compose_action
 from .custom_app_utils import validate_payload

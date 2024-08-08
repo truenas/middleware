@@ -26,6 +26,7 @@ def update_app_metadata(
             'custom_app': custom_app,
             **{k: app_version_details[k] for k in ('version', 'human_version')},
             **get_portals_and_app_notes(app_name, app_version_details['version']),
+            # TODO: We should not try to get portals for custom apps for now
         }))
 
 
