@@ -295,6 +295,10 @@ class AppService(CRUDService):
         Delete `app_name` app.
         """
         app_config = self.get_instance__sync(app_name)
+        return self.delete_internal(job, app_name, app_config, options)
+
+    @private
+    def delete_internal(self, job, app_name, app_config, options):
         job.set_progress(20, f'Deleting {app_name!r} app')
         compose_action(
             app_name, app_config['version'], 'down', remove_orphans=True,
