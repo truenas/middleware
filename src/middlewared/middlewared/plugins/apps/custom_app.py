@@ -63,8 +63,8 @@ class AppCustomService(Service):
         version = app_version_details['version']
         try:
             update_progress(35, 'Setting up App directory')
-            setup_install_app_dir(app_name, app_version_details)
-            update_app_config(app_name, version, compose_config)
+            setup_install_app_dir(app_name, app_version_details, custom_app=True)
+            update_app_config(app_name, version, compose_config, custom_app=True)
             update_app_metadata(app_name, app_version_details, migrated=False, custom_app=True)
 
             update_progress(60, 'App installation in progress, pulling images')
