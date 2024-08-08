@@ -90,7 +90,7 @@ class AppService(CRUDService):
             'retrieve_config': extra.get('retrieve_config', False),
         }
         if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
-            kwargs = {'specific_app': filters[0][2]}
+            kwargs['specific_app'] = filters[0][2]
 
         available_apps_mapping = self.middleware.call_sync('catalog.train_to_apps_version_mapping')
 
