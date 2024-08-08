@@ -7,6 +7,7 @@ from catalog_reader.custom_app import get_version_details
 from middlewared.service import Service, ValidationErrors
 
 from .compose_utils import compose_action
+from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import update_app_config
 from .ix_apps.metadata import update_app_metadata
 from .ix_apps.path import get_installed_app_path
@@ -23,21 +24,7 @@ class AppCustomService(Service):
         """
         Create a custom app.
         """
-        verrors = ValidationErrors()
-        compose_keys = ('custom_compose_config', 'custom_compose_config_string')
-        if all(not data.get(k) for k in compose_keys):
-            verrors.add('app_create.custom_compose_config', 'This field is required')
-        elif all(data.get(k) for k in compose_keys):
-            verrors.add('app_create.custom_compose_config_string', 'Only one of these fields should be provided')
-
-        compose_config = data.get('custom_compose_config')
-        if data.get('custom_compose_config_string'):
-            try:
-                compose_config = yaml.YAMLError(data['custom_compose_config_string'])
-            except yaml.YAMLError:
-                verrors.add('app_create.custom_compose_config_string', 'Invalid YAML provided')
-
-        verrors.check()
+        compose_config = validate_payload(data, 'app_create')
 
         # For debug purposes
         job = job or type('dummy_job', (object,), {'set_progress': lambda *args: None})()
