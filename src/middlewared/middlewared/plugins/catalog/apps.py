@@ -17,7 +17,7 @@ class AppService(Service):
         return filter_list(
             await self.middleware.call(
                 'app.available', [
-                    ['last_update', '!=', None], ['name', '!=', 'ix-chart'],
+                    ['last_update', '!=', None], ['name', '!=', 'ix-app'],
                 ], {'order_by': ['-last_update']}
             ), filters, options
         )
