@@ -46,7 +46,7 @@ import concurrent.futures.process
 import concurrent.futures.thread
 import contextlib
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 import errno
 import fcntl
 import functools
@@ -1550,7 +1550,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 "addr": "127.0.0.1",
                 "user": "root",
                 "sess": app.session_id,
-                "time": datetime.now(datetime.UTC).strftime('%Y-%m-%d %H:%M:%S.%f'),
+                "time": datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S.%f'),
                 "svc": "MIDDLEWARE",
                 "svc_data": json.dumps({
                     "vers": {

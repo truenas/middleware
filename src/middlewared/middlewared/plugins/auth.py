@@ -1,6 +1,6 @@
 import asyncio
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import errno
 import time
 import warnings
@@ -162,7 +162,7 @@ class Session:
         return {
             "origin": str(self.app.origin),
             **dump_credentials(self.credentials),
-            "created_at": datetime.now(datetime.UTC) - timedelta(seconds=time.monotonic() - self.created_at),
+            "created_at": datetime.now(UTC) - timedelta(seconds=time.monotonic() - self.created_at),
         }
 
 

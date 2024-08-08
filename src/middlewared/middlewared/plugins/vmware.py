@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, UTC
 import errno
 import socket
 import ssl
@@ -702,7 +702,7 @@ class VMWareService(CRUDService):
         self.middleware.call_sync("datastore.update", "storage.vmwareplugin", id_, {
             "state": {
                 **state,
-                "datetime": datetime.now(datetime.UTC),
+                "datetime": datetime.now(UTC),
             },
         })
 

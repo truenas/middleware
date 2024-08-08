@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 from collections import OrderedDict
 import copy
-from datetime import datetime
+from datetime import datetime, UTC
 import enum
 from functools import partial
 import logging
@@ -289,7 +289,7 @@ class Job:
             'extra': None,
         }
         self.internal_data = {}
-        self.time_started = datetime.now(datetime.UTC)
+        self.time_started = datetime.now(UTC)
         self.time_finished = None
         self.loop = self.middleware.loop
         self.future = None
@@ -350,7 +350,7 @@ class Job:
         assert self.state not in (State.SUCCESS, State.FAILED, State.ABORTED)
         self.state = State.__members__[state]
         if self.state in (State.SUCCESS, State.FAILED, State.ABORTED):
-            self.time_finished = datetime.now(datetime.UTC)
+            self.time_finished = datetime.now(UTC)
 
     def set_description(self, description):
         """

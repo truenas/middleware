@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 import itertools
 
 from middlewared.plugins.cloud.path import check_local_path
@@ -21,7 +21,7 @@ async def restic(middleware, job, cloud_backup, dry_run):
         if local_path.startswith("/dev/zvol"):
             await middleware.call("cloud_backup.validate_zvol", local_path)
 
-            name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}-{datetime.now(datetime.UTC).strftime('%Y%m%d%H%M%S')}"
+            name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
             snapshot = (await middleware.call("zfs.snapshot.create", {
                 "dataset": zvol_path_to_name(local_path),
                 "name": name,

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.mock import mock
@@ -35,7 +35,7 @@ def test_does_not_set_zfs_guid_for_expired_disk():
     with mock_table_contents(
         "storage.disk",
         [
-            {**DISK_TEMPLATE, "disk_identifier": "{serial}1", "disk_name": "sda", "disk_expiretime": datetime.now(datetime.UTC)},
+            {**DISK_TEMPLATE, "disk_identifier": "{serial}1", "disk_name": "sda", "disk_expiretime": datetime.now(UTC)},
             {**DISK_TEMPLATE, "disk_identifier": "{serial}2", "disk_name": "sda"},
         ],
     ):
@@ -58,7 +58,7 @@ def test_does_not_return_expired_disks_with_same_guid():
     with mock_table_contents(
         "storage.disk",
         [
-            {**DISK_TEMPLATE, "disk_identifier": "{serial}1", "disk_name": "sda", "disk_expiretime": datetime.now(datetime.UTC),
+            {**DISK_TEMPLATE, "disk_identifier": "{serial}1", "disk_name": "sda", "disk_expiretime": datetime.now(UTC),
              "disk_zfs_guid": "guid1"},
             {**DISK_TEMPLATE, "disk_identifier": "{serial}2", "disk_name": "sda", "disk_zfs_guid": "guid1"},
         ]

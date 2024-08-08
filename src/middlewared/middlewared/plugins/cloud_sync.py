@@ -30,7 +30,7 @@ import configparser
 from Cryptodome import Random
 from Cryptodome.Cipher import AES
 from Cryptodome.Util import Counter
-from datetime import datetime
+from datetime import datetime, UTC
 import enum
 import json
 import logging
@@ -196,7 +196,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
                     cloud_sync["path"],
                 )
                 snapshot_name = (
-                    f"cloud_sync-{cloud_sync.get('id', 'onetime')}-{datetime.now(datetime.UTC).strftime('%Y%m%d%H%M%S')}"
+                    f"cloud_sync-{cloud_sync.get('id', 'onetime')}-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
                 )
 
                 snapshot = {"dataset": dataset["name"], "name": snapshot_name}

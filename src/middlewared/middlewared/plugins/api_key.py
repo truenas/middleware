@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import random
 import string
 from typing import Literal, TYPE_CHECKING
@@ -64,7 +64,7 @@ class ApiKeyService(CRUDService):
         key = self._generate()
         data["key"] = pbkdf2_sha256.encrypt(key)
 
-        data["created_at"] = datetime.now(datetime.UTC)
+        data["created_at"] = datetime.now(UTC)
 
         data["id"] = await self.middleware.call(
             "datastore.insert",

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import os
 import syslog
 import uuid
@@ -7,7 +7,7 @@ import uuid
 def syslog_message(message):
     data = f'<{syslog.LOG_USER | syslog.LOG_INFO}>'
 
-    data += f'{datetime.now(datetime.UTC).strftime("%b %d %H:%M:%S")} '
+    data += f'{datetime.now(UTC).strftime("%b %d %H:%M:%S")} '
 
     data += 'TNAUDIT_MIDDLEWARE: '
 
