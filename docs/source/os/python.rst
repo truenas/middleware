@@ -62,6 +62,7 @@ Why This Approach Was Taken
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following requirements were considered when designing this system:
+
 * Every PIP package should translate to an individual Debian package to allow seamless replacement of a Debian-shipped
   package with a custom-built package and vice versa.
 * Adding/removing PIP packages to the system should be easy as we have many of them, and we have to conform to STIG
