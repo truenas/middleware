@@ -4,7 +4,7 @@ import os
 import shutil
 import textwrap
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import (
     CallError, CRUDService, filterable, InstanceNotFound, job, pass_app, private, ValidationErrors
 )
@@ -118,6 +118,15 @@ class AppService(CRUDService):
         """
         app = self.get_instance__sync(app_name)
         return get_current_app_config(app_name, app['version'])
+
+    @accepts(Str('app_name'), roles=['APPS_WRITE'])
+    @returns(Ref('app_query'))
+    @job(lock=lambda args: f'app_start_{args[0]}')
+    async def convert_to_custom(self, job, app_name):
+        """
+        Convert `app_name` to a custom app.
+        """
+        return await self.middleware.call('app.custom.convert', job, app_name)
 
     @accepts(
         Dict(
