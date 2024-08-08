@@ -65,6 +65,7 @@ class AppService(CRUDService):
                 Str('mode'),
                 Str('type'),
             )]),
+            additional_attrs=True,
         ),
         additional_attrs=True,
     )
