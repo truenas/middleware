@@ -285,7 +285,7 @@ class ZettareplService(Service):
             self.logger.error("Error generating zettarepl definition", exc_info=True)
             self.middleware.call_sync("zettarepl.set_error", {
                 "state": "ERROR",
-                "datetime": datetime.utcnow(),
+                "datetime": datetime.now(datetime.UTC),
                 "error": make_sentence(str(e)),
             })
             raise CallError(f"Internal error: {e!r}")
@@ -351,7 +351,7 @@ class ZettareplService(Service):
                     error = f"Abnormal zettarepl process termination with code {process.exitcode}."
                     self.middleware.call_sync("zettarepl.set_state", k, {
                         "state": "ERROR",
-                        "datetime": datetime.utcnow(),
+                        "datetime": datetime.now(datetime.UTC),
                         "error": error,
                     })
                     task_id = k[len("replication_"):]
@@ -370,7 +370,7 @@ class ZettareplService(Service):
             self.logger.error("Error generating zettarepl definition", exc_info=True)
             self.middleware.call_sync("zettarepl.set_error", {
                 "state": "ERROR",
-                "datetime": datetime.utcnow(),
+                "datetime": datetime.now(datetime.UTC),
                 "error": make_sentence(str(e)),
             })
             return
@@ -655,7 +655,7 @@ class ZettareplService(Service):
         hold_tasks = {
             task_id: {
                 "state": "HOLD",
-                "datetime": datetime.utcnow(),
+                "datetime": datetime.now(datetime.UTC),
                 "reason": make_sentence(reason),
             }
             for task_id, reason in hold_tasks.items()
@@ -899,13 +899,13 @@ class ZettareplService(Service):
                         if isinstance(error, PeriodicSnapshotTaskDefinitionError):
                             definition_errors[f"periodic_snapshot_{error.task_id}"] = {
                                 "state": "ERROR",
-                                "datetime": datetime.utcnow(),
+                                "datetime": datetime.now(datetime.UTC),
                                 "error": make_sentence(str(error)),
                             }
                         if isinstance(error, ReplicationTaskDefinitionError):
                             definition_errors[f"replication_{error.task_id}"] = {
                                 "state": "ERROR",
-                                "datetime": datetime.utcnow(),
+                                "datetime": datetime.now(datetime.UTC),
                                 "error": make_sentence(str(error)),
                             }
 
@@ -916,19 +916,19 @@ class ZettareplService(Service):
                 if isinstance(message, PeriodicSnapshotTaskStart):
                     self.middleware.call_sync("zettarepl.set_state", f"periodic_snapshot_{message.task_id}", {
                         "state": "RUNNING",
-                        "datetime": datetime.utcnow(),
+                        "datetime": datetime.now(datetime.UTC),
                     })
 
                 if isinstance(message, PeriodicSnapshotTaskSuccess):
                     self.middleware.call_sync("zettarepl.set_state", f"periodic_snapshot_{message.task_id}", {
                         "state": "FINISHED",
-                        "datetime": datetime.utcnow(),
+                        "datetime": datetime.now(datetime.UTC),
                     })
 
                 if isinstance(message, PeriodicSnapshotTaskError):
                     self.middleware.call_sync("zettarepl.set_state", f"periodic_snapshot_{message.task_id}", {
                         "state": "ERROR",
-                        "datetime": datetime.utcnow(),
+                        "datetime": datetime.now(datetime.UTC),
                         "error": make_sentence(message.error),
                     })
 
@@ -942,14 +942,14 @@ class ZettareplService(Service):
                     ):
                         self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                             "state": "WAITING",
-                            "datetime": datetime.utcnow(),
+                            "datetime": datetime.now(datetime.UTC),
                             "reason": message.waiting_reason,
                         })
 
                 if isinstance(message, ReplicationTaskStart):
                     self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "RUNNING",
-                        "datetime": datetime.utcnow(),
+                        "datetime": datetime.now(datetime.UTC),
                     })
 
                     # Start fake job if none are already running
@@ -963,7 +963,7 @@ class ZettareplService(Service):
                 if isinstance(message, ReplicationTaskSnapshotStart):
                     self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "RUNNING",
-                        "datetime": datetime.utcnow(),
+                        "datetime": datetime.now(datetime.UTC),
                         "progress": {
                             "dataset": message.dataset,
                             "snapshot": message.snapshot,
@@ -983,7 +983,7 @@ class ZettareplService(Service):
                 if isinstance(message, ReplicationTaskSnapshotProgress):
                     self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "RUNNING",
-                        "datetime": datetime.utcnow(),
+                        "datetime": datetime.now(datetime.UTC),
                         "progress": {
                             "dataset": message.dataset,
                             "snapshot": message.snapshot,
@@ -1028,7 +1028,7 @@ class ZettareplService(Service):
                 if isinstance(message, ReplicationTaskSuccess):
                     self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "FINISHED",
-                        "datetime": datetime.utcnow(),
+                        "datetime": datetime.now(datetime.UTC),
                         "warnings": message.warnings,
                     })
 
@@ -1038,7 +1038,7 @@ class ZettareplService(Service):
                 if isinstance(message, ReplicationTaskError):
                     self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                         "state": "ERROR",
-                        "datetime": datetime.utcnow(),
+                        "datetime": datetime.now(datetime.UTC),
                         "error": make_sentence(message.error),
                     })
 

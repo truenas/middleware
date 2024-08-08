@@ -196,7 +196,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
                     cloud_sync["path"],
                 )
                 snapshot_name = (
-                    f"cloud_sync-{cloud_sync.get('id', 'onetime')}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+                    f"cloud_sync-{cloud_sync.get('id', 'onetime')}-{datetime.now(datetime.UTC).strftime('%Y%m%d%H%M%S')}"
                 )
 
                 snapshot = {"dataset": dataset["name"], "name": snapshot_name}

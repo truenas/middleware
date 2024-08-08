@@ -542,13 +542,13 @@ class SMARTTestService(CRUDService):
                 else:
                     expected_result_time = expected_result_time.astimezone(timezone.utc).replace(tzinfo=None)
             elif time_details := re.search(RE_TIME_SCSIPRINT_EXTENDED, result):
-                expected_result_time = datetime.utcnow() + timedelta(minutes=int(time_details.group(1)))
+                expected_result_time = datetime.now(datetime.UTC) + timedelta(minutes=int(time_details.group(1)))
             elif 'Self-test has begun' in result:
                 # nvmeprint.cpp does not print expected result time
-                expected_result_time = datetime.utcnow() + timedelta(minutes=1)
+                expected_result_time = datetime.now(datetime.UTC) + timedelta(minutes=1)
             elif 'Self Test has begun' in result:
                 # scsiprint.cpp does not always print expected result time
-                expected_result_time = datetime.utcnow() + timedelta(minutes=1)
+                expected_result_time = datetime.now(datetime.UTC) + timedelta(minutes=1)
 
             if expected_result_time:
                 output['expected_result_time'] = expected_result_time
@@ -716,7 +716,7 @@ class SMARTTestService(CRUDService):
     @job(abortable=True)
     async def wait(self, job, disk, expected_result_time):
         try:
-            start = datetime.utcnow()
+            start = datetime.now(datetime.UTC)
             if expected_result_time < start:
                 raise CallError(f'Invalid expected_result_time {expected_result_time.isoformat()}')
 

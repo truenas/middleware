@@ -58,7 +58,7 @@ class ZettareplService(Service):
         zettarepl_task = PeriodicSnapshotTask.from_data(None, self.middleware.call_sync(
             "zettarepl.periodic_snapshot_task_definition", task,
         ))
-        snapshot_owner = PeriodicSnapshotTaskSnapshotOwner(datetime.utcnow(), zettarepl_task)
+        snapshot_owner = PeriodicSnapshotTaskSnapshotOwner(datetime.now(datetime.UTC), zettarepl_task)
 
         task_snapshots = set()
         for snapshot in snapshots:
@@ -114,7 +114,7 @@ class ZettareplService(Service):
             for task in self.middleware.call_sync("pool.snapshottask.query", [["enabled", "=", True]])
         ]
         snapshot_owners = [
-            PeriodicSnapshotTaskSnapshotOwner(datetime.utcnow(), zettarepl_task)
+            PeriodicSnapshotTaskSnapshotOwner(datetime.now(datetime.UTC), zettarepl_task)
             for zettarepl_task in zettarepl_tasks
         ]
 

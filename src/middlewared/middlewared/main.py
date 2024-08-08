@@ -1550,7 +1550,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 "addr": "127.0.0.1",
                 "user": "root",
                 "sess": app.session_id,
-                "time": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
+                "time": datetime.now(datetime.UTC).strftime('%Y-%m-%d %H:%M:%S.%f'),
                 "svc": "MIDDLEWARE",
                 "svc_data": json.dumps({
                     "vers": {

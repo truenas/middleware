@@ -7,7 +7,7 @@ import uuid
 def syslog_message(message):
     data = f'<{syslog.LOG_USER | syslog.LOG_INFO}>'
 
-    data += f'{datetime.utcnow().strftime("%b %d %H:%M:%S")} '
+    data += f'{datetime.now(datetime.UTC).strftime("%b %d %H:%M:%S")} '
 
     data += 'TNAUDIT_MIDDLEWARE: '
 

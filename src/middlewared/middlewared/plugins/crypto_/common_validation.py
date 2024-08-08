@@ -111,7 +111,7 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
 
     if lifetime := data.get('lifetime'):
         try:
-            datetime.datetime.utcnow() + datetime.timedelta(days=lifetime)
+            datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=lifetime)
         except OverflowError:
             verrors.add(
                 f'{schema_name}.lifetime',

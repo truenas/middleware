@@ -64,7 +64,7 @@ class VMWareService(Service):
 
                 await self.middleware.call("vmware.disconnect", si)
 
-            if deleted or datetime.utcnow() - pending_snapshot_delete["datetime"] > PENDING_SNAPSHOT_DELETE_LIFETIME:
+            if deleted or datetime.now(datetime.UTC) - pending_snapshot_delete["datetime"] > PENDING_SNAPSHOT_DELETE_LIFETIME:
                 await self.middleware.call(
                     "datastore.delete",
                     "storage.vmwarependingsnapshotdelete",

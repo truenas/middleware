@@ -64,7 +64,7 @@ class ApiKeyService(CRUDService):
         key = self._generate()
         data["key"] = pbkdf2_sha256.encrypt(key)
 
-        data["created_at"] = datetime.utcnow()
+        data["created_at"] = datetime.now(datetime.UTC)
 
         data["id"] = await self.middleware.call(
             "datastore.insert",

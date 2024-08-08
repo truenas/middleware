@@ -24,8 +24,8 @@ def generate_builder(options: dict) -> typing.Union[x509.CertificateBuilder, x50
 
     # Lifetime represents no of days
     # Let's normalize lifetime value
-    not_valid_before = datetime.datetime.utcnow()
-    not_valid_after = datetime.datetime.utcnow() + datetime.timedelta(
+    not_valid_before = datetime.datetime.now(datetime.UTC)
+    not_valid_after = datetime.datetime.now(datetime.UTC) + datetime.timedelta(
         days=options.get('lifetime') or DEFAULT_LIFETIME_DAYS
     )
 

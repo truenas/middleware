@@ -32,7 +32,7 @@ class CertificateService(Service):
             progress += (100 / len(certs))
 
             if not (
-                datetime.datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - datetime.datetime.utcnow()
+                datetime.datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - datetime.datetime.now(datetime.UTC)
             ).days < cert.get('renew_days', 5):
                 continue
 

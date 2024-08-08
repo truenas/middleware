@@ -24,7 +24,7 @@ class CertificateAuthorityService(Service):
                 'datastore.update',
                 datastore,
                 cert['id'], {
-                    'revoked_date': datetime.datetime.utcnow()
+                    'revoked_date': datetime.datetime.now(datetime.UTC)
                 },
                 {'prefix': 'cert_'}
             )

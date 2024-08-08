@@ -476,7 +476,7 @@ class UpdateService(Service):
             subprocess.run(['zfs', 'destroy', f'{dataset}@{snapshot}'])
 
         current_version = self.middleware.call_sync('system.version_short')
-        snapshot = f'update--{datetime.utcnow().strftime("%Y-%m-%d-%H-%M")}--{PRODUCT}-{current_version}'
+        snapshot = f'update--{datetime.now(datetime.UTC).strftime("%Y-%m-%d-%H-%M")}--{PRODUCT}-{current_version}'
         subprocess.run(['zfs', 'snapshot', f'{dataset}@{snapshot}'])
 
 

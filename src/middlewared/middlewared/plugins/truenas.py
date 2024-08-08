@@ -160,7 +160,7 @@ class TrueNASService(Service):
 
         await self.middleware.call('datastore.update', 'truenas.customerinformation', customer_information["id"], {
             "data": json.dumps(data),
-            "updated_at": datetime.utcnow(),
+            "updated_at": datetime.now(datetime.UTC),
         })
 
         return customer_information
@@ -169,7 +169,7 @@ class TrueNASService(Service):
         result = await self.middleware.call('datastore.config', 'truenas.customerinformation')
         result["immutable_data"] = await self.__fetch_customer_information_immutable_data()
         result["data"] = json.loads(result["data"])
-        result["needs_update"] = datetime.utcnow() - result["updated_at"] > timedelta(days=365)
+        result["needs_update"] = datetime.now(datetime.UTC) - result["updated_at"] > timedelta(days=365)
         return result
 
     async def __fetch_customer_information_immutable_data(self):

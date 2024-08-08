@@ -43,9 +43,9 @@ class CryptoKeyService(Service):
             x509.NameAttribute(getattr(NameOID, k.upper()), v)
             for k, v in issuer.items() if v
         ])).last_update(
-            datetime.datetime.utcnow()
+            datetime.datetime.now(datetime.UTC)
         ).next_update(
-            datetime.datetime.utcnow() + datetime.timedelta(next_update, 300, 0)
+            datetime.datetime.now(datetime.UTC) + datetime.timedelta(next_update, 300, 0)
         )
 
         for cert in certs:

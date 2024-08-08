@@ -702,7 +702,7 @@ class VMWareService(CRUDService):
         self.middleware.call_sync("datastore.update", "storage.vmwareplugin", id_, {
             "state": {
                 **state,
-                "datetime": datetime.utcnow(),
+                "datetime": datetime.now(datetime.UTC),
             },
         })
 

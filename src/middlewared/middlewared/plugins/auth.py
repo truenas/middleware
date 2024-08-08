@@ -162,7 +162,7 @@ class Session:
         return {
             "origin": str(self.app.origin),
             **dump_credentials(self.credentials),
-            "created_at": datetime.utcnow() - timedelta(seconds=time.monotonic() - self.created_at),
+            "created_at": datetime.now(datetime.UTC) - timedelta(seconds=time.monotonic() - self.created_at),
         }
 
 
