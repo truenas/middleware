@@ -5,7 +5,9 @@ import shutil
 import textwrap
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
-from middlewared.service import CallError, CRUDService, filterable, InstanceNotFound, job, pass_app, private
+from middlewared.service import (
+    CallError, CRUDService, filterable, InstanceNotFound, job, pass_app, private, ValidationErrors
+)
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
 
@@ -119,8 +121,10 @@ class AppService(CRUDService):
     @accepts(
         Dict(
             'app_create',
+            Bool('custom_app', default=False),
             Dict('values', additional_attrs=True, private=True),
-            Str('catalog_app', required=True),
+            Str('custom_compose', null=True),
+            Str('catalog_app', required=False),
             Str(
                 'app_name', required=True, validators=[Match(
                     r'^[a-z]([-a-z0-9]*[a-z0-9])?$',
@@ -150,6 +154,15 @@ class AppService(CRUDService):
 
         if self.middleware.call_sync('app.query', [['id', '=', data['app_name']]]):
             raise CallError(f'Application with name {data["app_name"]} already exists', errno=errno.EEXIST)
+
+        if data['custom_app']:
+            self.middleware.call_sync('app.custom.create', data, job)
+            return
+
+        verrors = ValidationErrors()
+        if not data.get('catalog_app'):
+            verrors.add('app_create.catalog_app', 'This field is required')
+        verrors.check()
 
         app_name = data['app_name']
         complete_app_details = self.middleware.call_sync('catalog.get_app_details', data['catalog_app'], {
