@@ -250,16 +250,16 @@ class SystemGeneralService(ConfigService):
         verrors = await self.validate_general_settings(new_config, 'general_settings_update')
         verrors.check()
 
-        keys = new_config.keys()
-        for key in list(keys):
+        db_config = new_config.copy()
+        for key in list(new_config.keys()):
             if key.startswith('ui_'):
-                new_config['gui' + key[3:]] = new_config.pop(key)
+                db_config['gui' + key[3:]] = db_config.pop(key)
 
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
             config['id'],
-            new_config,
+            db_config,
             {'prefix': 'stg_'}
         )
 
@@ -288,6 +288,11 @@ class SystemGeneralService(ConfigService):
 
         if ui_restart_delay is not None:
             await self.middleware.call('system.general.ui_restart', ui_restart_delay)
+
+        for key in ('ui_port', 'ui_httpsport', 'ui_httpsredirect', 'ui_address', 'ui_v6address'):
+            if config[key] != new_config[key]:
+                await self.middleware.call('system.reload_cli')
+                break
 
         return await self.config()
 

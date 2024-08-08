@@ -142,7 +142,7 @@ class SystemGeneralService(Service):
                 if https_port != 443:
                     https_url += f':{https_port}'
 
-            if all_ip4 or all_ip6:
+            if (i['type'] == 'INET' and all_ip4) or (i['type'] == 'INET6' and all_ip6):
                 urls.add(http_url)
                 if https_url:
                     urls.add(https_url)
