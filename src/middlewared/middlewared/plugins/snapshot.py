@@ -283,6 +283,8 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         if (task := await self.query([['id','=', id_]])):
             audit_callback(task[0]['dataset'])
+        else:
+            audit_callback(f'Task id {id_} not found')
 
         for replication_task in await self.middleware.call('replication.query', [
             ['direction', '=', 'PUSH'],
