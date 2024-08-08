@@ -123,7 +123,7 @@ class AppService(CRUDService):
             'app_create',
             Bool('custom_app', default=False),
             Dict('values', additional_attrs=True, private=True),
-            Str('custom_compose', null=True),
+            Dict('custom_compose_config', additional_attrs=True, private=True),
             Str('catalog_app', required=False),
             Str(
                 'app_name', required=True, validators=[Match(
