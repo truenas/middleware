@@ -58,8 +58,8 @@ class AppService(Service):
 
         results = []
         installed_apps = [
-            (app['chart_metadata']['name'], app['catalog'], app['catalog_train'])
-            for app in []
+            (app['metadata']['name'], app['metadata']['train'])
+            for app in self.middleware.call_sync('app.query')
         ]
 
         catalog = self.middleware.call_sync('catalog.config')
@@ -70,7 +70,7 @@ class AppService(Service):
             for app_data in train_data.values():
                 results.append({
                     'catalog': catalog['label'],
-                    'installed': (app_data['name'], catalog['label'], train) in installed_apps,
+                    'installed': (app_data['name'], train) in installed_apps,
                     'train': train,
                     **app_data,
                 })
