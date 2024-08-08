@@ -7,6 +7,7 @@ from middlewared.service_exception import CallError
 
 from .path import (
     get_installed_app_config_path, get_installed_app_rendered_dir_path, get_installed_app_version_path,
+    get_installed_custom_app_compose_file,
 )
 from .utils import CONTEXT_KEY_NAME, run
 
@@ -36,11 +37,15 @@ def render_compose_templates(app_version_path: str, values_file_path: str):
         raise CallError(f'Failed to render compose templates: {cp.stderr}')
 
 
-def update_app_config(app_name: str, version: str, values: dict[str, typing.Any]) -> None:
+def update_app_config(app_name: str, version: str, values: dict[str, typing.Any], custom_app: bool = False) -> None:
     write_new_app_config(app_name, version, values)
-    render_compose_templates(
-        get_installed_app_version_path(app_name, version), get_installed_app_config_path(app_name, version)
-    )
+    if custom_app:
+        with open(get_installed_custom_app_compose_file(app_name, version), 'w') as f:
+            f.write(yaml.safe_dump(values))
+    else:
+        render_compose_templates(
+            get_installed_app_version_path(app_name, version), get_installed_app_config_path(app_name, version)
+        )
 
 
 def get_action_context(app_name: str) -> dict[str, typing.Any]:

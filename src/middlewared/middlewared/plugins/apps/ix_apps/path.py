@@ -47,5 +47,9 @@ def get_installed_app_config_path(app_name: str, version: str) -> str:
     return os.path.join(get_installed_app_version_path(app_name, version), 'user_config.yaml')
 
 
+def get_installed_custom_app_compose_file(app_name: str, version: str) -> str:
+    return os.path.join(get_installed_app_rendered_dir_path(app_name, version), 'docker-compose.yaml')
+
+
 def get_installed_app_rendered_dir_path(app_name: str, version: str) -> str:
     return os.path.join(get_installed_app_version_path(app_name, version), 'templates/rendered')
