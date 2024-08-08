@@ -31,7 +31,7 @@ async def resolve_hostname(middleware, verrors, name, hostname):
     try:
         aw = middleware.create_task(middleware.run_in_thread(resolve_host_name_thread, hostname))
         result = await asyncio.wait_for(aw, timeout=5)
-    except asyncio.futures.TimeoutError:
+    except TimeoutError:
         result = False
 
     if not result:
