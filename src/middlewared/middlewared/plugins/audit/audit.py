@@ -39,6 +39,9 @@ from middlewared.validators import Range
 
 
 ALL_AUDITED = [svc[0] for svc in AUDITED_SERVICES]
+BULK_AUDIT = ['SMB']
+NON_BULK_AUDIT = [svc for svc in ALL_AUDITED if svc not in BULK_AUDIT]
+
 # We set the refquota limit
 QUOTA_WARN = TNUserProp.REFQUOTA_WARN.value
 QUOTA_CRIT = TNUserProp.REFQUOTA_CRIT.value
@@ -129,7 +132,7 @@ class AuditService(ConfigService):
 
     @accepts(Dict(
         'audit_query',
-        List('services', items=[Str('db_name', enum=ALL_AUDITED)], default=['MIDDLEWARE', 'SUDO']),
+        List('services', items=[Str('db_name', enum=ALL_AUDITED)], default=NON_BULK_AUDIT),
         Ref('query-filters'),
         Ref('query-options'),
         register=True
