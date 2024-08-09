@@ -5,6 +5,12 @@ from middlewared.service import item_method, job, Service, ValidationErrors
 from middlewared.service_exception import MatchNotFound
 
 
+def find_disk_from_identifier(disks, ident):
+    for v in disks.values():
+        for info in filter(lambda x: x['identifier'] == ident, v):
+            return info
+
+
 class PoolService(Service):
 
     @item_method
@@ -43,13 +49,29 @@ class PoolService(Service):
         """
         pool = await self.middleware.call('pool.get_instance', oid)
         verrors = ValidationErrors()
-        unused_disks = await self.middleware.call('disk.get_unused')
-        if not (disk := list(filter(lambda x: x['identifier'] == options['disk'], unused_disks))):
+        disk = find_disk_from_identifier(await self.middleware.call('disk.details'), options['disk'])
+        if disk is None:
             verrors.add('options.disk', f'Disk {options["disk"]!r} not found.', errno.ENOENT)
-        else:
-            disk = disk[0]
-            if not options['force'] and not await self.middleware.call('disk.check_clean', disk['devname']):
-                verrors.add('options.force', f'Disk {options["disk"]!r} is not clean, partitions were found.')
+        verrors.check()
+
+        if disk['imported_zpool'] is not None:
+            verrors.add(
+                'options.disk',
+                f'Disk {options["disk"]!r} is in use by zpool {disk["imported_zpool"]!r}.',
+                errno.EBUSY
+            )
+        elif not options['force']:
+            msg = ' Force must be specified.'
+            if disk['exported_zpool'] is not None:
+                verrors.add(
+                    'options.force',
+                    f'Disk {options["disk"]!r} is associated to exported zpool {disk["exported_zpool"]!r}.{msg}'
+                )
+            elif not await self.middleware.call('disk.check_clean', disk['devname']):
+                verrors.add(
+                    'options.force',
+                    f'Disk {options["disk"]!r} is not clean, partitions were found.{msg}'
+                )
 
         if not await self.middleware.call(
             'pool.find_disk_from_topology', options['label'], pool, {'include_siblings': True}
