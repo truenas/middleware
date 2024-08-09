@@ -23,7 +23,7 @@ class AppService(Service):
         ),
         roles=['APPS_WRITE'],
     )
-    @returns(Ref('app_query'))
+    @returns(Ref('app_entry'))
     @job(lock=lambda args: f'app_rollback_{args[0]}')
     def rollback(self, job, app_name, options):
         """

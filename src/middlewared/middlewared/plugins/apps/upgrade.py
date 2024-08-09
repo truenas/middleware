@@ -25,7 +25,7 @@ class AppService(Service):
         ),
         roles=['APPS_WRITE'],
     )
-    @returns(Ref('app_query'))
+    @returns(Ref('app_entry'))
     @job(lock=lambda args: f'app_upgrade_{args[0]}')
     def upgrade(self, job, app_name, options):
         """

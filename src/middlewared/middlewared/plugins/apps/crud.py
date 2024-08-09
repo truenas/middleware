@@ -29,7 +29,7 @@ class AppService(CRUDService):
         role_prefix = 'APPS'
 
     ENTRY = Dict(
-        'app_query',
+        'app_entry',
         Str('name'),
         Str('id'),
         Str('state', enum=['STOPPED', 'DEPLOYING', 'RUNNING']),
@@ -49,14 +49,17 @@ class AppService(CRUDService):
                     Str('host_port'),
                     Str('host_ip'),
                 )]),
+                additional_attrs=True,
             )]),
             List('container_details', items=[Dict(
                 'container_detail',
+                Str('id'),
                 Str('service_name'),
                 Str('image'),
                 List('port_config'),
                 Str('state', enum=['running', 'starting', 'exited']),
                 List('volume_mounts'),
+                additional_attrs=True,
             )]),
             List('volumes', items=[Dict(
                 'volume',
@@ -64,7 +67,9 @@ class AppService(CRUDService):
                 Str('destination'),
                 Str('mode'),
                 Str('type'),
+                additional_attrs=True,
             )]),
+            additional_attrs=True,
         ),
         additional_attrs=True,
     )
@@ -120,7 +125,7 @@ class AppService(CRUDService):
         return get_current_app_config(app_name, app['version'])
 
     @accepts(Str('app_name'), roles=['APPS_WRITE'])
-    @returns(Ref('app_query'))
+    @returns(Ref('app_entry'))
     @job(lock=lambda args: f'app_start_{args[0]}')
     async def convert_to_custom(self, job, app_name):
         """
