@@ -60,6 +60,7 @@ class DockerService(SimpleService):
 
     async def after_start(self):
         await self.middleware.call('docker.state.set_status', Status.RUNNING.value)
+        self.middleware.create_task(self.middleware.call('docker.events.setup'))
         await self.middleware.call('catalog.sync')
 
     async def before_stop(self):

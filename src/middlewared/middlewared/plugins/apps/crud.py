@@ -25,6 +25,7 @@ class AppService(CRUDService):
     class Config:
         namespace = 'app'
         datastore_primary_key_type = 'string'
+        event_send = False
         cli_namespace = 'app'
         role_prefix = 'APPS'
 
@@ -221,6 +222,8 @@ class AppService(CRUDService):
             new_values = add_context_to_values(app_name, new_values, app_version_details['app_metadata'], install=True)
             update_app_config(app_name, version, new_values)
             update_app_metadata(app_name, app_version_details, migrated_app)
+            # At this point the app exists
+            self.middleware.send_event('app.query', 'ADDED', id=app_name)
 
             job.set_progress(60, 'App installation in progress, pulling images')
             if dry_run is False:
@@ -234,6 +237,7 @@ class AppService(CRUDService):
                 with contextlib.suppress(Exception):
                     method(*args, **kwargs)
 
+            self.middleware.send_event('app.query', 'REMOVED', id=app_name)
             raise e from None
         else:
             if dry_run is False:
@@ -290,6 +294,7 @@ class AppService(CRUDService):
             # TODO: Eventually we would want this to be executed for custom apps as well
             update_app_metadata_for_portals(app_name, app['version'])
         job.set_progress(60, 'Configuration updated, updating docker resources')
+        self.middleware.send_event('app.query', 'CHANGED', id=app_name)
         compose_action(app_name, app['version'], 'up', force_recreate=True, remove_orphans=True)
 
         job.set_progress(100, f'{progress_keyword} completed for {app_name!r}')
@@ -325,6 +330,9 @@ class AppService(CRUDService):
                 self.middleware.call_sync('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
         finally:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+
+        if options.get('send_event', True):
+            self.middleware.send_event('app.query', 'REMOVED', id=app_name)
         job.set_progress(100, f'Deleted {app_name!r} app')
         return True
 

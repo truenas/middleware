@@ -106,6 +106,7 @@ class AppImageService(CRUDService):
 
             job.set_progress((progress['current']/progress['total']) * 90, 'Pulling image')
 
+        self.middleware.call_sync('docker.state.validate')
         auth_config = data['auth_config'] or {}
         image_tag = data['image']
         pull_image(image_tag, callback, auth_config.get('username'), auth_config.get('password'))

@@ -61,6 +61,7 @@ class AppService(Service):
         # 5) Roll back ix_volume dataset's snapshots if available
         # 6) Finally update collective metadata config to reflect new version
         update_app_metadata(app_name, rollback_version)
+        self.middleware.send_event('app.query', 'CHANGED', id=app_name)
         try:
             if options['rollback_snapshot'] and (
                 app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name)

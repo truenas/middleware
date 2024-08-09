@@ -67,6 +67,7 @@ class AppService(Service):
 
             job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
 
+        self.middleware.send_event('app.query', 'CHANGED', id=app_name)
         try:
             compose_action(app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True)
         finally:
