@@ -20,6 +20,7 @@ class AppImageService(CRUDService):
         List('repo_digests', items=[Str('repo_digest')]),
         Int('size'),
         Bool('dangling'),
+        Bool('update_available'),
         Str('created'),
         Str('author'),
         Str('comment'),
@@ -30,8 +31,10 @@ class AppImageService(CRUDService):
                 Str('tag'),
                 Str('registry'),
                 Str('complete_tag'),
+                additional_attrs=True,
             )]
         ),
+        additional_attrs=True,
     )
 
     @filterable
