@@ -121,7 +121,7 @@ class AppService(CRUDService):
         return get_current_app_config(app_name, app['version'])
 
     @accepts(Str('app_name'), roles=['APPS_WRITE'])
-    @returns(Ref('app_query'))
+    @returns(Ref('app_entry'))
     @job(lock=lambda args: f'app_start_{args[0]}')
     async def convert_to_custom(self, job, app_name):
         """
