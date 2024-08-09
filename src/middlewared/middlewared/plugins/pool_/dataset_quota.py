@@ -1,7 +1,5 @@
-import errno
-
-from middlewared.schema import accepts, Bool, Dict, Int, List, OROperator, Ref, returns, Str, UnixPerm
-from middlewared.service import CallError, item_method, job, Service, ValidationErrors
+from middlewared.schema import accepts, Dict, Int, List, Ref, returns, Str
+from middlewared.service import item_method, Service, ValidationErrors
 from middlewared.utils import filter_list
 
 
