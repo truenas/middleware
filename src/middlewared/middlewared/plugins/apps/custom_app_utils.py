@@ -14,7 +14,7 @@ def validate_payload(data: dict, schema: str) -> dict:
     compose_config = data.get('custom_compose_config')
     if data.get('custom_compose_config_string'):
         try:
-            compose_config = yaml.YAMLError(data['custom_compose_config_string'])
+            compose_config = yaml.safe_load(data['custom_compose_config_string'])
         except yaml.YAMLError:
             verrors.add('app_create.custom_compose_config_string', 'Invalid YAML provided')
 
