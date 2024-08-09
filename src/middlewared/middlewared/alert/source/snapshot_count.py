@@ -1,5 +1,6 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
+from middlewared.utils.path import FSLocation, path_location
 
 
 class SnapshotTotalCountAlertClass(AlertClass):
@@ -46,6 +47,8 @@ class SnapshotCountAlertSource(AlertSource):
         to_alert = list()
 
         for share in await self.middleware.call("sharing.smb.query"):
+            if path_location(share["path"]) != FSLocation.LOCAL:
+                continue
             path = share["path"].removeprefix("/mnt/")
             count = snapshot_counts.get(path, 0)
             if count > max_:
