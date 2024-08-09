@@ -37,12 +37,13 @@ class AppCustomService(Service):
         job.set_progress(20, 'Removing existing app\'s docker resources')
         self.middleware.call_sync(
             'app.delete_internal', type('dummy_job', (object,), {'set_progress': lambda *args: None})(),
-            app_name, app, {'remove_images': False, 'remove_ix_volumes': False}
+            app_name, app, {'remove_images': False, 'remove_ix_volumes': False, 'send_event': False}
         )
 
         return self.create({
             'app_name': app_name,
             'custom_compose_config': rendered_config,
+            'send_event': False,
         }, job)
 
     def create(self, data, job=None, progress_base=0):
@@ -67,7 +68,8 @@ class AppCustomService(Service):
             update_app_config(app_name, version, compose_config, custom_app=True)
             update_app_metadata(app_name, app_version_details, migrated=False, custom_app=True)
 
-            self.middleware.send_event('app.query', 'ADDED', id=app_name)
+            if data.get('send_event', True):
+                self.middleware.send_event('app.query', 'ADDED', id=app_name)
             update_progress(60, 'App installation in progress, pulling images')
             compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:

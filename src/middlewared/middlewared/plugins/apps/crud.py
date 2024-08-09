@@ -331,7 +331,8 @@ class AppService(CRUDService):
         finally:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
 
-        self.middleware.send_event('app.query', 'REMOVED', id=app_name)
+        if options.get('send_event', True):
+            self.middleware.send_event('app.query', 'REMOVED', id=app_name)
         job.set_progress(100, f'Deleted {app_name!r} app')
         return True
 
