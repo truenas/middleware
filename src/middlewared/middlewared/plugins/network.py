@@ -217,24 +217,17 @@ class InterfaceService(CRUDService):
                 continue
 
             if retrieve_names_only:
-                data[name] = {
-                    'name': name,
-                }
+                data[name] = {'name': name}
                 continue
 
-            iface_extend_kwargs = {}
-            if ha_hardware:
-                vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
-                iface_extend_kwargs.update(dict(vrrp_config=vrrp_config))
             try:
-                data[name] = self.iface_extend(iface.asdict(**iface_extend_kwargs), configs, ha_hardware)
+                data[name] = self.iface_extend(iface.asdict(), configs, ha_hardware)
             except OSError:
                 self.logger.warn('Failed to get interface state for %s', name, exc_info=True)
+
         for name, config in filter(lambda x: x[0] not in data, configs.items()):
             if retrieve_names_only:
-                data[name] = {
-                    'name': name,
-                }
+                data[name] = {'name': name}
             else:
                 data[name] = self.iface_extend({
                     'name': config['int_interface'],
@@ -283,6 +276,7 @@ class InterfaceService(CRUDService):
                 'failover_aliases': [],
                 'failover_virtual_aliases': [],
             })
+            iface['state']['vrrp_config'] = []
 
         config = configs.get(iface['name'])
         if not config:
@@ -314,6 +308,12 @@ class InterfaceService(CRUDService):
                     'address': config['int_vip'],
                     'netmask': info[1]
                 })
+                for i in filter(lambda x: x['type'] != 'LINK', iface['state']['aliases']):
+                    if i['address'] == config['int_vip']:
+                        iface['state']['vrrp_config'].append({'address': config['int_vip'], 'state': 'MASTER'})
+                        break
+                else:
+                    iface['state']['vrrp_config'].append({'state': 'BACKUP'})
 
         if itype == InterfaceType.BRIDGE:
             filters = [('interface', '=', config['id'])]
@@ -398,6 +398,12 @@ class InterfaceService(CRUDService):
                         'address': alias['alias_vip'],
                         'netmask': 32 if _type == 'INET' else 128,
                     })
+                for i in filter(lambda x: x['type'] != 'LINK', iface['state']['aliases']):
+                    if i['address'] == alias['alias_vip']:
+                        iface['state']['vrrp_config'].append({'address': alias['alias_vip'], 'state': 'MASTER'})
+                        break
+                else:
+                    iface['state']['vrrp_config'].append({'state': 'BACKUP'})
 
         return iface
 

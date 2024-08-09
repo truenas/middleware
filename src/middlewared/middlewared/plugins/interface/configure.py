@@ -98,7 +98,6 @@ class InterfaceService(Service):
                 self.middleware.call_sync('service.start', 'keepalived')
             else:
                 self.middleware.call_sync('service.reload', 'keepalived')
-            iface.vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
