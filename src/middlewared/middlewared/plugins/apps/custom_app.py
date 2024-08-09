@@ -67,6 +67,7 @@ class AppCustomService(Service):
             update_app_config(app_name, version, compose_config, custom_app=True)
             update_app_metadata(app_name, app_version_details, migrated=False, custom_app=True)
 
+            self.middleware.send_event('app.query', 'ADDED', id=app_name)
             update_progress(60, 'App installation in progress, pulling images')
             compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:
@@ -78,6 +79,7 @@ class AppCustomService(Service):
                 with contextlib.suppress(Exception):
                     method(*args, **kwargs)
 
+            self.middleware.send_event('app.query', 'REMOVED', id=app_name)
             raise e from None
         else:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
