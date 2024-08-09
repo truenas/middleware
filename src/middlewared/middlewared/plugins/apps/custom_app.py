@@ -44,6 +44,7 @@ class AppCustomService(Service):
             'app_name': app_name,
             'custom_compose_config': rendered_config,
             'send_event': False,
+            'conversion': True,
         }, job)
 
     def create(self, data, job=None, progress_base=0):
@@ -51,8 +52,10 @@ class AppCustomService(Service):
         Create a custom app.
         """
         compose_config = validate_payload(data, 'app_create')
+        app_being_converted = data.get('conversion', False)
 
         def update_progress(percentage_done, message):
+            nonlocal progress_base
             job.set_progress(int((100 - progress_base) * (percentage_done / 100)) + progress_base, message)
 
         # For debug purposes
@@ -70,10 +73,18 @@ class AppCustomService(Service):
 
             if data.get('send_event', True):
                 self.middleware.send_event('app.query', 'ADDED', id=app_name)
-            update_progress(60, 'App installation in progress, pulling images')
+            if app_being_converted:
+                msg = 'App conversion in progress, pulling images'
+            else:
+                msg = 'App installation in progress, pulling images'
+            update_progress(60, msg)
             compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:
-            update_progress(80, f'Failure occurred while installing {app_name!r}, cleaning up')
+            update_progress(
+                80,
+                'Failure occurred while '
+                f'{"converting" if app_being_converted else "installing"} {app_name!r}, cleaning up'
+            )
             for method, args, kwargs in (
                 (compose_action, (app_name, version, 'down'), {'remove_orphans': True}),
                 (shutil.rmtree, (get_installed_app_path(app_name),), {}),
@@ -85,5 +96,7 @@ class AppCustomService(Service):
             raise e from None
         else:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
-            job.set_progress(100, f'{app_name!r} installed successfully')
+            job.set_progress(
+                100, f'{app_name!r} {"converted to custom app" if app_being_converted else "installed"} successfully'
+            )
             return self.middleware.call_sync('app.get_instance', app_name)
