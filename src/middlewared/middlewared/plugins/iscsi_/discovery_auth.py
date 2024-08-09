@@ -1,9 +1,6 @@
-import json
-import os
-
 import middlewared.sqlalchemy as sa
 
-from middlewared.plugins.iscsi_.constants import DISCOVERY_AUTH_UPGRADE_COMPLETE_SENTINEL
+from middlewared.alert.source.discovery_auth import UPGRADE_ALERTS
 from middlewared.schema import accepts, Dict, Int, Patch, Str
 from middlewared.service import CRUDService, private, ValidationErrors
 from middlewared.validators import Range
@@ -225,18 +222,17 @@ class iSCSIDiscoveryAuthService(CRUDService):
             await self.middleware.call("alert.oneshot_create", alert_name, {'peeruser': peerusers[0]})
 
     @private
-    def load_upgrade_alerts(self):
+    async def load_upgrade_alerts(self):
         """
         Load any events that may have been generated during an alembic migration.
         """
-        try:
-            with open(DISCOVERY_AUTH_UPGRADE_COMPLETE_SENTINEL, 'r') as f:
-                alerts = json.load(f)
-                for alert in alerts:
-                    self.middleware.call_sync("alert.oneshot_create", alert, alerts[alert])
-                os.remove(DISCOVERY_AUTH_UPGRADE_COMPLETE_SENTINEL)
-        except FileNotFoundError:
-            pass
+        for alert in UPGRADE_ALERTS:
+            try:
+                args = await self.middleware.call("keyvalue.get", alert)
+                await self.middleware.call("alert.oneshot_create", alert, args)
+                await self.middleware.call("keyvalue.delete", alert)
+            except KeyError:
+                pass
 
     @private
     async def clear_alerts(self):

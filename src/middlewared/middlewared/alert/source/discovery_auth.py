@@ -1,5 +1,7 @@
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 
+UPGRADE_ALERTS = ['ISCSIDiscoveryAuthMixed', 'ISCSIDiscoveryAuthMultipleCHAP', 'ISCSIDiscoveryAuthMultipleMutualCHAP']
+
 
 class ISCSIDiscoveryAuthMixedAlertClass(AlertClass, SimpleOneShotAlertClass):
     category = AlertCategory.SHARING
