@@ -197,10 +197,11 @@ def test_02_create_dataset(initialize_for_acl_tests):
 
 def test_04_basic_set_acl_for_dataset(request):
     depends(request, ["HAS_NFS4_ACLS"])
-    call('pool.dataset.permission', TEST_INFO['dataset'], {
-        'acl': default_acl,
-        'group': group,
-        'user': 'nobody'
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'uid': 65534,
+        'gid': 65534,
+        'dacl': default_acl
     }, job=True)
 
     acl_result = call('filesystem.getacl', TEST_INFO['dataset_path'],  True)
