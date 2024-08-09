@@ -42,6 +42,6 @@ class DockerEventService(Service):
 
 
 async def setup(middleware):
-    middleware.event_register('docker.events', 'Docker container events')
+    middleware.event_register('docker.events', 'Docker container events', roles=['DOCKER_READ'])
     # We are going to check in setup docker events if setting up events is relevant or not
     middleware.create_task(middleware.call('docker.events.setup'))
