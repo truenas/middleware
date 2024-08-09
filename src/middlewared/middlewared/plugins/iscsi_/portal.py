@@ -25,8 +25,6 @@ class ISCSIPortalModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     iscsi_target_portal_tag = sa.Column(sa.Integer(), default=1)
     iscsi_target_portal_comment = sa.Column(sa.String(120))
-    iscsi_target_portal_discoveryauthmethod = sa.Column(sa.String(120), default='None')
-    iscsi_target_portal_discoveryauthgroup = sa.Column(sa.Integer(), nullable=True)
 
 
 class ISCSIPortalIPModel(sa.Model):
@@ -70,10 +68,19 @@ class ISCSIPortalService(CRUDService):
                 'ip': portalip['ip'],
                 'port': context['global_config']['listen_port'],
             })
-        data['discovery_authmethod'] = AUTHMETHOD_LEGACY_MAP.get(
-            data.pop('discoveryauthmethod')
-        )
-        data['discovery_authgroup'] = data.pop('discoveryauthgroup')
+        # Temporary until new API being used: START
+        # data['discovery_authmethod'] = AUTHMETHOD_LEGACY_MAP.get(
+        #     data.pop('discoveryauthmethod')
+        # )
+        # data['discovery_authgroup'] = data.pop('discoveryauthgroup')
+        auths = await self.middleware.call('iscsi.discoveryauth.query')
+        if auths:
+            data['discovery_authmethod'] = auths[0]['authmethod']
+            data['discovery_authgroup'] = auths[0]['authgroup']
+        else:
+            data['discovery_authmethod'] = "NONE"
+            data['discovery_authgroup'] = None
+        # Temporary until new API being used: END
         return data
 
     @accepts()
@@ -127,6 +134,7 @@ class ISCSIPortalService(CRUDService):
                 ):
                     verrors.add(f'{schema}.listen', f'IP {i["ip"]} not configured on this system.')
 
+        # Temporary until new API being used: START
         if data['discovery_authgroup']:
             if not await self.middleware.call(
                 'datastore.query', 'services.iscsitargetauthcredential',
@@ -140,6 +148,7 @@ class ISCSIPortalService(CRUDService):
         elif data['discovery_authmethod'] in ('CHAP', 'CHAP_MUTUAL'):
             verrors.add(f'{schema}.discovery_authgroup', 'This field is required if discovery method is '
                                                          'set to CHAP or CHAP Mutual.')
+        # Temporary until new API being used: END
 
     @accepts(Dict(
         'iscsiportal_create',
@@ -170,8 +179,16 @@ class ISCSIPortalService(CRUDService):
         )) + 1
 
         listen = data.pop('listen')
-        data['discoveryauthgroup'] = data.pop('discovery_authgroup', None)
-        data['discoveryauthmethod'] = AUTHMETHOD_LEGACY_MAP.inv.get(data.pop('discovery_authmethod'), 'None')
+        # Temporary until new API being used: START
+        authgroup = data.pop('discovery_authgroup', None)
+        authmethod = AUTHMETHOD_LEGACY_MAP.inv.get(data.pop('discovery_authmethod'), 'None')
+        if authmethod in ['CHAP', 'CHAP_MUTUAL']:
+            filters = [['authmethod', '=', authmethod], ['authgroup', '=', authgroup]]
+            if not await self.middleware.call('iscsi.discoveryauth.query', filters):
+                await self.middleware.call('iscsi.discoveryauth.create', {'authmethod': authmethod,
+                                                                          'authgroup': authgroup})
+        # Temporary until new API being used: END
+
         pk = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix}
@@ -242,8 +259,12 @@ class ISCSIPortalService(CRUDService):
         verrors.check()
 
         listen = new.pop('listen')
-        new['discoveryauthgroup'] = new.pop('discovery_authgroup', None)
-        new['discoveryauthmethod'] = AUTHMETHOD_LEGACY_MAP.inv.get(new.pop('discovery_authmethod'), 'None')
+        # Temporary until new API being used: START
+        # new['discoveryauthgroup'] = new.pop('discovery_authgroup', None)
+        # new['discoveryauthmethod'] = AUTHMETHOD_LEGACY_MAP.inv.get(new.pop('discovery_authmethod'), 'None')
+        new.pop('discovery_authgroup')
+        new.pop('discovery_authmethod')
+        # Temporary until new API being used: END
 
         await self.__save_listen(pk, listen, old['listen'])
 
