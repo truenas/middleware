@@ -183,6 +183,7 @@ class IPMILanService(CRUDService):
             register=True
         ),
         roles=['IPMI_WRITE'],
+        audit='Update IPMI configuration'
     )
     def do_update(self, id_, data):
         """
