@@ -25,6 +25,7 @@ class AppService(CRUDService):
     class Config:
         namespace = 'app'
         datastore_primary_key_type = 'string'
+        event_send = False
         cli_namespace = 'app'
         role_prefix = 'APPS'
 
