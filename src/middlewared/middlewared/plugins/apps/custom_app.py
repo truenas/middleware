@@ -43,7 +43,6 @@ class AppCustomService(Service):
         return self.create({
             'app_name': app_name,
             'custom_compose_config': rendered_config,
-            'send_event': False,
             'conversion': True,
         }, job)
 
@@ -71,7 +70,7 @@ class AppCustomService(Service):
             update_app_config(app_name, version, compose_config, custom_app=True)
             update_app_metadata(app_name, app_version_details, migrated=False, custom_app=True)
 
-            if data.get('send_event', True):
+            if app_being_converted is False:
                 self.middleware.send_event('app.query', 'ADDED', id=app_name)
             if app_being_converted:
                 msg = 'App conversion in progress, pulling images'
