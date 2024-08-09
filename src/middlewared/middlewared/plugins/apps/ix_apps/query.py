@@ -26,7 +26,11 @@ class VolumeMount:
 def upgrade_available_for_app(
     version_mapping: dict[str, dict[str, dict[str, str]]], app_metadata: dict
 ) -> bool:
-    if version_mapping.get(app_metadata['train'], {}).get(app_metadata['name']):
+    # TODO: Eventually we would want this to work as well but this will always require middleware changes
+    #  depending on what new functionality we want introduced for custom app, so let's take care of this at that point
+    if (app_metadata['name'] == 'custom-app' and app_metadata['train'] == 'stable') is False and version_mapping.get(
+        app_metadata['train'], {}
+    ).get(app_metadata['name']):
         return parse_version(app_metadata['version']) < parse_version(
             version_mapping[app_metadata['train']][app_metadata['name']]['version']
         )

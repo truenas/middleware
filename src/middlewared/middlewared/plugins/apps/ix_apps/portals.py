@@ -1,10 +1,6 @@
-import contextlib
-
-import yaml
-
 from apps_validation.portals import IX_NOTES_KEY, IX_PORTAL_KEY, validate_portals_and_notes, ValidationErrors
 
-from .lifecycle import get_rendered_templates_of_app
+from .lifecycle import get_rendered_template_config_of_app
 
 
 def normalized_port_value(scheme: str, port: int) -> str:
@@ -12,12 +8,7 @@ def normalized_port_value(scheme: str, port: int) -> str:
 
 
 def get_portals_and_app_notes(app_name: str, version: str) -> dict:
-    rendered_config = {}
-    for rendered_file in get_rendered_templates_of_app(app_name, version):
-        with contextlib.suppress(FileNotFoundError, yaml.YAMLError):
-            with open(rendered_file, 'r') as f:
-                rendered_config.update(yaml.safe_load(f.read()))
-
+    rendered_config = get_rendered_template_config_of_app(app_name, version)
     portal_and_notes_config = {
         k: rendered_config[k]
         for k in (IX_NOTES_KEY, IX_PORTAL_KEY)

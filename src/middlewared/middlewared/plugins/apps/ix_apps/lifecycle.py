@@ -1,4 +1,5 @@
 import copy
+import contextlib
 import pathlib
 import typing
 import yaml
@@ -7,8 +8,19 @@ from middlewared.service_exception import CallError
 
 from .path import (
     get_installed_app_config_path, get_installed_app_rendered_dir_path, get_installed_app_version_path,
+    get_installed_custom_app_compose_file,
 )
 from .utils import CONTEXT_KEY_NAME, run
+
+
+def get_rendered_template_config_of_app(app_name: str, version: str) -> dict:
+    rendered_config = {}
+    for rendered_file in get_rendered_templates_of_app(app_name, version):
+        with contextlib.suppress(FileNotFoundError, yaml.YAMLError):
+            with open(rendered_file, 'r') as f:
+                rendered_config.update(yaml.safe_load(f.read()))
+
+    return rendered_config
 
 
 def get_rendered_templates_of_app(app_name: str, version: str) -> list[str]:
@@ -36,11 +48,15 @@ def render_compose_templates(app_version_path: str, values_file_path: str):
         raise CallError(f'Failed to render compose templates: {cp.stderr}')
 
 
-def update_app_config(app_name: str, version: str, values: dict[str, typing.Any]) -> None:
+def update_app_config(app_name: str, version: str, values: dict[str, typing.Any], custom_app: bool = False) -> None:
     write_new_app_config(app_name, version, values)
-    render_compose_templates(
-        get_installed_app_version_path(app_name, version), get_installed_app_config_path(app_name, version)
-    )
+    if custom_app:
+        with open(get_installed_custom_app_compose_file(app_name, version), 'w') as f:
+            f.write(yaml.safe_dump(values))
+    else:
+        render_compose_templates(
+            get_installed_app_version_path(app_name, version), get_installed_app_config_path(app_name, version)
+        )
 
 
 def get_action_context(app_name: str) -> dict[str, typing.Any]:

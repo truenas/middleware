@@ -4,12 +4,15 @@ import os
 import shutil
 import textwrap
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
-from middlewared.service import CallError, CRUDService, filterable, InstanceNotFound, job, pass_app, private
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
+from middlewared.service import (
+    CallError, CRUDService, filterable, InstanceNotFound, job, pass_app, private, ValidationErrors
+)
 from middlewared.utils import filter_list
 from middlewared.validators import Match, Range
 
 from .compose_utils import compose_action
+from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
 from .ix_apps.metadata import update_app_metadata, update_app_metadata_for_portals
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
@@ -116,11 +119,23 @@ class AppService(CRUDService):
         app = self.get_instance__sync(app_name)
         return get_current_app_config(app_name, app['version'])
 
+    @accepts(Str('app_name'), roles=['APPS_WRITE'])
+    @returns(Ref('app_query'))
+    @job(lock=lambda args: f'app_start_{args[0]}')
+    async def convert_to_custom(self, job, app_name):
+        """
+        Convert `app_name` to a custom app.
+        """
+        return await self.middleware.call('app.custom.convert', job, app_name)
+
     @accepts(
         Dict(
             'app_create',
+            Bool('custom_app', default=False),
             Dict('values', additional_attrs=True, private=True),
-            Str('catalog_app', required=True),
+            Dict('custom_compose_config', additional_attrs=True, private=True),
+            Str('custom_compose_config_string', private=True, max_length=2**31),
+            Str('catalog_app', required=False),
             Str(
                 'app_name', required=True, validators=[Match(
                     r'^[a-z]([-a-z0-9]*[a-z0-9])?$',
@@ -150,6 +165,14 @@ class AppService(CRUDService):
 
         if self.middleware.call_sync('app.query', [['id', '=', data['app_name']]]):
             raise CallError(f'Application with name {data["app_name"]} already exists', errno=errno.EEXIST)
+
+        if data['custom_app']:
+            return self.middleware.call_sync('app.custom.create', data, job)
+
+        verrors = ValidationErrors()
+        if not data.get('catalog_app'):
+            verrors.add('app_create.catalog_app', 'This field is required')
+        verrors.check()
 
         app_name = data['app_name']
         complete_app_details = self.middleware.call_sync('catalog.get_app_details', data['catalog_app'], {
@@ -218,6 +241,8 @@ class AppService(CRUDService):
         Dict(
             'app_update',
             Dict('values', additional_attrs=True, private=True),
+            Dict('custom_compose_config', additional_attrs=True, private=True),
+            Str('custom_compose_config_string', private=True, max_length=2**31),
         )
     )
     @job(lock=lambda args: f'app_update_{args[0]}')
@@ -232,25 +257,33 @@ class AppService(CRUDService):
     @private
     def update_internal(self, job, app, data, progress_keyword='Update'):
         app_name = app['id']
-        config = get_current_app_config(app_name, app['version'])
-        config.update(data['values'])
-        # We use update=False because we want defaults to be populated again if they are not present in the payload
-        # Why this is not dangerous is because the defaults will be added only if they are not present/configured for
-        # the app in question
-        app_version_details = self.middleware.call_sync(
-            'catalog.app_version_details', get_installed_app_version_path(app_name, app['version'])
-        )
+        if app['custom_app']:
+            if progress_keyword == 'Update':
+                new_values = validate_payload(data, 'app_update')
+            else:
+                new_values = get_current_app_config(app_name, app['version'])
+        else:
+            config = get_current_app_config(app_name, app['version'])
+            config.update(data['values'])
+            # We use update=False because we want defaults to be populated again if they are not present in the payload
+            # Why this is not dangerous is because the defaults will be added only if they are not present/configured
+            # for the app in question
+            app_version_details = self.middleware.call_sync(
+                'catalog.app_version_details', get_installed_app_version_path(app_name, app['version'])
+            )
 
-        new_values = self.middleware.call_sync(
-            'app.schema.normalize_and_validate_values', app_version_details, config, True,
-            get_installed_app_path(app_name), app
-        )
+            new_values = self.middleware.call_sync(
+                'app.schema.normalize_and_validate_values', app_version_details, config, True,
+                get_installed_app_path(app_name), app
+            )
+            new_values = add_context_to_values(app_name, new_values, app['metadata'], update=True)
 
         job.set_progress(25, 'Initial Validation completed')
 
-        new_values = add_context_to_values(app_name, new_values, app['metadata'], update=True)
-        update_app_config(app_name, app['version'], new_values)
-        update_app_metadata_for_portals(app_name, app['version'])
+        update_app_config(app_name, app['version'], new_values, custom_app=app['custom_app'])
+        if app['custom_app'] is False:
+            # TODO: Eventually we would want this to be executed for custom apps as well
+            update_app_metadata_for_portals(app_name, app['version'])
         job.set_progress(60, 'Configuration updated, updating docker resources')
         compose_action(app_name, app['version'], 'up', force_recreate=True, remove_orphans=True)
 
@@ -271,6 +304,10 @@ class AppService(CRUDService):
         Delete `app_name` app.
         """
         app_config = self.get_instance__sync(app_name)
+        return self.delete_internal(job, app_name, app_config, options)
+
+    @private
+    def delete_internal(self, job, app_name, app_config, options):
         job.set_progress(20, f'Deleting {app_name!r} app')
         compose_action(
             app_name, app_config['version'], 'down', remove_orphans=True,
