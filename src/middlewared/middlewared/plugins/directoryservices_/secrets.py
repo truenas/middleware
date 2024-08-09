@@ -1,10 +1,11 @@
 import enum
 import json
 import struct
+import subprocess
 
 from base64 import b64encode, b64decode
 from middlewared.service import Service
-from middlewared.service_exception import MatchNotFound
+from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import filter_list
 from middlewared.utils.tdb import (
     get_tdb_handle,
@@ -95,13 +96,20 @@ class DomainSecrets(Service):
     def set_ipa_secret(self, domain, secret):
         # The stored secret in secrets.tdb and our kerberos keytab for SMB must be kept in-sync
         store_secrets_entry(
-            f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', secret
+            f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}',  b64encode(b"2\x00")
         )
 
         # Password changed field must be initialized (but otherwise is not required)
         store_secrets_entry(
             f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", b64encode(b"2\x00")
         )
+
+        setsecret = subprocess.run(
+            ['net', 'changesecretpw', '-f', '-d', '5'],
+            capture_output=True, check=False, input=secret
+        )
+        if setsecret.returncode != 0:
+            raise CallError(f'Failed to set machine account secret: {setsecret.stdout.decode()}')
 
         # Ensure we back this info up into our sqlite database as well
         self.backup()
