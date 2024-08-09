@@ -13,6 +13,7 @@ class DockerModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     pool = sa.Column(sa.String(255), default=None, nullable=True)
     enable_image_updates = sa.Column(sa.Boolean(), default=True)
+    nvidia = sa.Column(sa.Boolean(), default=False)
 
 
 class DockerService(ConfigService):
@@ -29,6 +30,7 @@ class DockerService(ConfigService):
         Int('id', required=True),
         Str('dataset', required=True),
         Str('pool', required=True, null=True),
+        Bool('nvidia', required=True),
         update=True,
     )
 
@@ -71,6 +73,17 @@ class DockerService(ConfigService):
                 job.set_progress(60, 'Applying requested configuration')
                 await self.middleware.call('docker.setup.status_change')
 
+            if not old_config['nvidia'] and config['nvidia']:
+                await (
+                    await self.middleware.call(
+                        'nvidia.install',
+                        job_on_progress_cb=lambda encoded: job.set_progress(
+                            80 + int(encoded['progress']['percent'] * 0.2),
+                            encoded['progress']['description'],
+                        )
+                    )
+                ).wait(raise_error=True)
+
         job.set_progress(100, 'Requested configuration applied')
         return await self.config()
 
@@ -84,3 +97,11 @@ class DockerService(ConfigService):
         Returns the status of the docker service.
         """
         return await self.middleware.call('docker.state.get_status_dict')
+
+    @accepts(roles=['DOCKER_READ'])
+    @returns(Bool())
+    async def lacks_nvidia_drivers(self):
+        """
+        Returns true if an NVIDIA GPU is present, but NVIDIA drivers are not installed.
+        """
+        return await self.middleware.call('nvidia.present') and not await self.middleware.call('nvidia.installed')
