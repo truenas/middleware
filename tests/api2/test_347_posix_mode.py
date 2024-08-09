@@ -79,7 +79,7 @@ def setup_file(get_dataset):
 
 def get_mode_octal(path):
     mode = call('filesystem.stat', path)['mode']
-    server_mode = f"{stat.S_IMODE(mode):03o}"
+    return f"{stat.S_IMODE(mode):03o}"
 
 
 @pytest.mark.dependency(name="IS_TRIVIAL")
