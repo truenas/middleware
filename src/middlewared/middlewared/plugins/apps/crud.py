@@ -29,7 +29,7 @@ class AppService(CRUDService):
         role_prefix = 'APPS'
 
     ENTRY = Dict(
-        'app_query',
+        'app_entry',
         Str('name'),
         Str('id'),
         Str('state', enum=['STOPPED', 'DEPLOYING', 'RUNNING']),
