@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import contextlib
-import dataclasses
-import functools
 import json
 import logging
 import os
@@ -13,115 +11,11 @@ import textwrap
 import libzfs
 import pyudev
 
-from middlewared.utils.filesystem import stat_x
-from middlewared.utils.mount import getmntinfo
-
 
 logger = logging.getLogger(__name__)
 
 
-@dataclasses.dataclass
-class ReadonlyState:
-    original_root: bool = True
-    original_usr: bool = True
-    current_root: bool = True
-    current_usr: bool = True
-
-
-readonly_state = ReadonlyState()
-
-
-@functools.cache
-def get_ds_conf(root: str) -> dict[str, str]:
-    conf_file = os.path.join(root, "conf/truenas_root_ds.json")
-    try:
-        with open(conf_file, "r") as f:
-            conf = json.loads(f.read())
-    except FileNotFoundError:
-        raise ValueError(f"Unable to locate {conf_file!r}")
-
-    usr_ds = next((i for i in conf if i["fhs_entry"]["name"] == "usr"))["ds"]
-    return {
-        "root": usr_ds.rsplit("/", 1)[0],
-        "usr": usr_ds,
-    }
-
-
-def initialize_readonly_state(root: str):
-    global readonly_state
-
-    mountpoints = {
-        root: "root",
-        os.path.join(root, "usr"): "usr",
-    }
-
-    for mountpoint, key in mountpoints.items():
-        try:
-            st_mnt_id = stat_x.statx(mountpoint).stx_mnt_id
-            readonly_val = 'RO' in getmntinfo(mnt_id=st_mnt_id)[st_mnt_id]['super_opts']
-            for prefix in ("original_", "current_"):
-                setattr(readonly_state, f"{prefix}{key}", readonly_val)
-        except (FileNotFoundError, KeyError) as e:
-            raise ValueError(f"Unable to determine readonly state for {mountpoint!r}: {e}")
-
-
-def toggle_readonly(root, desired_value=None, restore_original_state=None):
-    global readonly_state
-
-    if desired_value is not None and restore_original_state is not None:
-        raise ValueError("Both readonly_all_mountpoints and restore_state cannot be set at the same time")
-
-    if desired_value is None and restore_original_state is None:
-        raise ValueError("Either readonly_all_mountpoints or restore_state must be set")
-
-    if restore_original_state is not None:
-        mountpoints_mapping = {
-            k.split("_")[-1]: v for k, v in readonly_state.__dict__.items() if k.startswith("original_")
-        }
-    else:
-        mountpoints_mapping = {
-            "root": desired_value,
-            "usr": desired_value,
-        }
-
-    for key, value in filter(lambda i: i[0].startswith("current_"), readonly_state.__dict__.items()):
-        key = key.split("_")[-1]
-        if mountpoints_mapping[key] == value:
-            mountpoints_mapping.pop(key)
-
-    if not mountpoints_mapping:
-        return
-
-    # Some initramfs scripts use (`dpkg --print-architecture` or similar calls)
-    if mountpoints_mapping.get("usr") is True:
-        os.chmod(os.path.join(root, "usr/bin/dpkg"), 0o644)
-        with contextlib.suppress(FileNotFoundError):
-            # In the event this is called first with readonly set
-            os.rename(os.path.join(root, "usr/local/bin/dpkg.bak"), os.path.join(root, "usr/local/bin/dpkg"))
-
-    for device_key, ds_name in filter(lambda i: i[0] in mountpoints_mapping, get_ds_conf(root).items()):
-        # Do not change `readonly` property when we're running in the installer, and it was not set yet
-        if (
-            subprocess.run(
-                ["zfs", "get", "-H", "-o", "source", "readonly", ds_name],
-                capture_output=True, text=True,
-            ).stdout.strip() == "local"
-        ):
-            readonly_value = mountpoints_mapping[device_key]
-            subprocess.run(["zfs", "set", f"readonly={'on' if readonly_value else 'off'}", ds_name])
-            setattr(readonly_state, f"current_{device_key}", readonly_value)
-
-    if mountpoints_mapping.get("usr") is False:
-        os.chmod(os.path.join(root, "usr/bin/dpkg"), 0o755)
-        with contextlib.suppress(FileNotFoundError):
-            # In the event this is called twice with readonly unset
-            # Basically `/usr/local/bin/dpkg` is a script we have written which explains that
-            # package management is disabled on TrueNAS but when dev tools are installed,
-            # we would like package management for the developer to work obviously
-            os.rename(os.path.join(root, "usr/local/bin/dpkg"), os.path.join(root, "usr/local/bin/dpkg.bak"))
-
-
-def update_zfs_default(root):
+def update_zfs_default(root, readonly_rootfs):
     with libzfs.ZFS() as zfs:
         existing_pools = [p.name for p in zfs.pools]
 
@@ -165,7 +59,7 @@ def update_zfs_default(root):
 
     new_config = "\n".join(lines) + "\n"
     if new_config != original_config:
-        toggle_readonly(root, desired_value=False)
+        readonly_rootfs.make_writeable()
         with open(zfs_config_path, "w") as f:
             f.write(new_config)
 
@@ -246,7 +140,7 @@ def update_pci_module_files(root, config):
     os.chmod(get_path("etc/initramfs-tools/scripts/init-top/truenas_bind_vfio.sh"), 0o755)
 
 
-def update_pci_initramfs_config(root, database):
+def update_pci_initramfs_config(root, readonly_rootfs, database):
     initramfs_config_path = os.path.join(root, "boot/initramfs_config.json")
     initramfs_config = {
         "pci_ids": get_current_gpu_pci_ids(database),
@@ -257,7 +151,7 @@ def update_pci_initramfs_config(root, database):
             original_config = json.loads(f.read())
 
     if initramfs_config != original_config:
-        toggle_readonly(root, desired_value=False)
+        readonly_rootfs.make_writeable()
 
         with open(initramfs_config_path, "w") as f:
             f.write(json.dumps(initramfs_config))
@@ -268,7 +162,7 @@ def update_pci_initramfs_config(root, database):
     return False
 
 
-def update_zfs_module_config(root, database):
+def update_zfs_module_config(root, readonly_rootfs, database):
     options = []
     for tunable in query_table("system_tunable", database, "tun_"):
         if tunable["type"] != "ZFS":
@@ -291,7 +185,7 @@ def update_zfs_module_config(root, database):
         existing_config = None
 
     if existing_config != config:
-        toggle_readonly(root, desired_value=False)
+        readonly_rootfs.make_writeable()
 
         if config is None:
             os.unlink(config_path)
@@ -305,39 +199,35 @@ def update_zfs_module_config(root, database):
 
 
 if __name__ == "__main__":
-    root = None
-    try:
-        p = argparse.ArgumentParser()
-        p.add_argument("chroot", nargs=1)
-        p.add_argument("--database", "-d", default="")
-        p.add_argument("--force", "-f", action="store_true")
-        args = p.parse_args()
-        root = args.chroot[0]
-        if root != "/":
-            sys.path.insert(0, os.path.join(root, "usr/lib/python3/dist-packages"))
+    p = argparse.ArgumentParser()
+    p.add_argument("chroot", nargs=1)
+    p.add_argument("--database", "-d", default="")
+    p.add_argument("--force", "-f", action="store_true")
+    args = p.parse_args()
+    root = args.chroot[0]
+    if root != "/":
+        sys.path.insert(0, os.path.join(root, "usr/lib/python3/dist-packages"))
 
-        initialize_readonly_state(root)
+    from middlewared.service_exception import CallError
+    from middlewared.utils.db import FREENAS_DATABASE, query_config_table, query_table
+    from middlewared.utils.gpu import get_gpus
+    from middlewared.utils.rootfs import ReadonlyRootfsManager
 
-        from middlewared.service_exception import CallError
-        from middlewared.utils.db import FREENAS_DATABASE, query_config_table, query_table
-        from middlewared.utils.gpu import get_gpus
+    with ReadonlyRootfsManager(root) as readonly_rootfs:
+        try:
+            database = args.database or os.path.join(root, FREENAS_DATABASE[1:])
 
-        database = args.database or os.path.join(root, FREENAS_DATABASE[1:])
-
-        if update_required := any((
-            args.force,
-            update_zfs_default(root),
-            update_pci_initramfs_config(root, database),
-            update_zfs_module_config(root, database),
-        )):
-            toggle_readonly(root, desired_value=False)
-            subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
-    except Exception:
-        logger.error("Failed to update initramfs", exc_info=True)
-        exit(2)
-    finally:
-        if root is not None:
-            toggle_readonly(root, restore_original_state=True)
+            if update_required := any((
+                args.force,
+                update_zfs_default(root, readonly_rootfs),
+                update_pci_initramfs_config(root, readonly_rootfs, database),
+                update_zfs_module_config(root, readonly_rootfs, database),
+            )):
+                readonly_rootfs.make_writeable()
+                subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
+        except Exception:
+            logger.error("Failed to update initramfs", exc_info=True)
+            exit(2)
 
     # We give out an exit code of 1 when initramfs has been updated as we require a reboot of the system for the
     # changes to have an effect. This caters to the case of uploading a database. Otherwise, we give an exit code
