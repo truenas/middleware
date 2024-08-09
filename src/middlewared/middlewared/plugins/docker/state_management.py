@@ -95,8 +95,10 @@ class DockerStateService(Service):
 
         await (await self.middleware.call('catalog.sync')).wait()
 
-        await self.middleware.call('app.image.op.check_update')
-        # TODO: Add app upgrade alerts and account for update image check
+        docker_config = await self.middleware.call('docker.config')
+        if docker_config['enable_image_updates']:
+            self.middleware.create_task(self.middleware.call('app.image.op.check_update'))
+        # TODO: Add app upgrade alerts
 
 
 async def _event_system_ready(middleware, event_type, args):
