@@ -12,8 +12,6 @@ import json
 import sqlalchemy as sa
 from alembic import op
 
-CHAP_TYPES = ['CHAP', 'CHAP Mutual']
-
 # revision identifiers, used by Alembic.
 revision = '208a066c65f7'
 down_revision = '81b8bae8fb11'
