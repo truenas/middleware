@@ -16,6 +16,7 @@ from .service_exception import (
     get_errname,
 )
 from .utils import MIDDLEWARE_RUN_DIR, sw_version
+from .utils.audit import audit_username_from_session
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.nginx import get_remote_addr_port
@@ -1547,8 +1548,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     "major": 0,
                     "minor": 1
                 },
-                "addr": "127.0.0.1",
-                "user": "root",
+                "addr": app.origin.repr() if isinstance(app.origin, TCPIPOrigin) else "127.0.0.1",
+                "user": audit_username_from_session(app.authenticated_credentials),
                 "sess": app.session_id,
                 "time": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
                 "svc": "MIDDLEWARE",

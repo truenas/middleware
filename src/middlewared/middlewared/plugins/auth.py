@@ -5,19 +5,18 @@ import errno
 import time
 import warnings
 
-import psutil
-
-from middlewared.auth import (SessionManagerCredentials, UserSessionManagerCredentials,
-                              UnixSocketSessionManagerCredentials, LoginPasswordSessionManagerCredentials,
-                              ApiKeySessionManagerCredentials, TrueNasNodeSessionManagerCredentials)
-from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Password, Patch, Ref, returns, Str
+from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionManagerCredentials,
+                              LoginPasswordSessionManagerCredentials, ApiKeySessionManagerCredentials,
+                              TrueNasNodeSessionManagerCredentials, TokenSessionManagerCredentials,
+                              dump_credentials)
+from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, Password, Patch, returns, Str
 from middlewared.service import (
     Service, filterable, filterable_returns, filter_list, no_auth_required, no_authz_required,
     pass_app, private, cli_private, CallError,
 )
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
-from middlewared.utils.origin import UnixSocketOrigin, TCPIPOrigin
+from middlewared.utils.origin import UnixSocketOrigin
 from middlewared.utils.crypto import generate_token
 
 
@@ -143,13 +142,6 @@ class SessionManager:
         self.logout(app)
 
 
-def dump_credentials(credentials):
-    return {
-        "credentials": credentials.class_name(),
-        "credentials_data": credentials.dump(),
-    }
-
-
 class Session:
     def __init__(self, manager, credentials, app):
         self.manager = manager
@@ -164,44 +156,6 @@ class Session:
             **dump_credentials(self.credentials),
             "created_at": datetime.utcnow() - timedelta(seconds=time.monotonic() - self.created_at),
         }
-
-
-class TokenSessionManagerCredentials(SessionManagerCredentials):
-    def __init__(self, token_manager, token):
-        root_credentials = token.root_credentials()
-
-        self.token_manager = token_manager
-        self.token = token
-        self.is_user_session = root_credentials.is_user_session
-        if self.is_user_session:
-            self.user = root_credentials.user
-
-        self.allowlist = root_credentials.allowlist
-
-    def is_valid(self):
-        return self.token.is_valid()
-
-    def authorize(self, method, resource):
-        return self.token.parent_credentials.authorize(method, resource)
-
-    def has_role(self, role):
-        return self.token.parent_credentials.has_role(role)
-
-    def notify_used(self):
-        self.token.notify_used()
-
-    def logout(self):
-        self.token_manager.destroy(self.token)
-
-    def dump(self):
-        data = {
-            "parent": dump_credentials(self.token.parent_credentials),
-        }
-        if self.is_user_session:
-            data["username"] = self.user["username"]
-
-        return data
-
 
 
 def is_internal_session(session):
@@ -650,7 +604,7 @@ async def check_permission(middleware, app):
             user = await middleware.call('auth.authenticate_root')
         else:
             try:
-                user_info =  (await middleware.call(
+                user_info = (await middleware.call(
                     'datastore.query',
                     'account.bsdusers',
                     [['uid', '=', origin.uid]],
