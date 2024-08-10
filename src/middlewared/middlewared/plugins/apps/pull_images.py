@@ -1,0 +1,55 @@
+from middlewared.plugins.apps_images.utils import normalize_reference
+from middlewared.schema import accepts, Bool, Dict, List, returns, Str
+from middlewared.service import job, private, Service
+
+from .compose_utils import compose_action
+
+
+class AppService(Service):
+
+    class Config:
+        namespace = 'app'
+        cli_namespace = 'app'
+
+    @accepts(Str('name'), roles=['APPS_READ'])
+    @returns(List('images', items=[Str('image')]))
+    async def outdated_docker_images(self, app_name):
+        """
+        Returns a list of outdated docker images for the specified app `name`.
+        """
+        app = await self.middleware.call('app.get_instance', app_name)
+        image_update_cache = await self.middleware.call('app.image.op.get_update_cache', True)
+        images = []
+        for image_tag in app['active_workloads']['images']:
+            if image_update_cache.get(normalize_reference(image_tag)['complete_tag']):
+                images.append(image_tag)
+
+        return images
+
+    @accepts(
+        Str('name'),
+        Dict(
+            'options',
+            Bool('redeploy', default=True),
+        ),
+        roles=['APPS_WRITE']
+    )
+    @returns()
+    @job(lock=lambda args: f'pull_images_{args[0]}')
+    def pull_images(self, job, app_name, options):
+        """
+        Pulls docker images for the specified app `name`.
+        """
+        app = self.middleware.call_sync('app.get_instance', app_name)
+        return self.pull_images_internal(app_name, app, options, job)
+
+    @private
+    def pull_images_internal(self, app_name, app, options, job=None):
+        job = job or type('dummy_job', (object,), {'set_progress': lambda *args: None})()
+        job.set_progress(20, 'Pulling app images')
+
+        compose_action(app_name, app['version'], action='pull')
+        job.set_progress(80 if options['redeploy'] else 100, 'Images pulled successfully')
+        if options['redeploy']:
+            self.middleware.call_sync('app.redeploy', app_name).wait_sync(raise_error=True)
+            job.set_progress(100, 'App redeployed successfully')

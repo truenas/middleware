@@ -6,7 +6,7 @@ from .docker.query import list_resources_by_project
 from .metadata import get_collective_config, get_collective_metadata
 from .lifecycle import get_current_app_config
 from .path import get_app_parent_config_path
-from .utils import PROJECT_PREFIX, get_app_name_from_project_name
+from .utils import get_app_name_from_project_name, normalize_reference, PROJECT_PREFIX
 
 
 COMPOSE_SERVICE_KEY: str = 'com.docker.compose.service'
@@ -24,16 +24,19 @@ class VolumeMount:
 
 
 def upgrade_available_for_app(
-    version_mapping: dict[str, dict[str, dict[str, str]]], app_metadata: dict
+    version_mapping: dict[str, dict[str, dict[str, str]]], app_metadata: dict, image_updates_available: bool = False,
 ) -> bool:
     # TODO: Eventually we would want this to work as well but this will always require middleware changes
     #  depending on what new functionality we want introduced for custom app, so let's take care of this at that point
-    if (app_metadata['name'] == 'custom-app' and app_metadata['train'] == 'stable') is False and version_mapping.get(
-        app_metadata['train'], {}
-    ).get(app_metadata['name']):
-        return parse_version(app_metadata['version']) < parse_version(
-            version_mapping[app_metadata['train']][app_metadata['name']]['version']
+    catalog_app_metadata = app_metadata['metadata']
+    if app_metadata['custom_app'] is False and version_mapping.get(
+        catalog_app_metadata['train'], {}
+    ).get(catalog_app_metadata['name']):
+        return parse_version(catalog_app_metadata['version']) < parse_version(
+            version_mapping[catalog_app_metadata['train']][catalog_app_metadata['name']]['version']
         )
+    elif app_metadata['custom_app'] and image_updates_available:
+        return True
     else:
         return False
 
@@ -62,8 +65,10 @@ def list_apps(
     specific_app: str | None = None,
     host_ip: str | None = None,
     retrieve_config: bool = False,
+    image_update_cache: dict | None = None,
 ) -> list[dict]:
     apps = []
+    image_update_cache = image_update_cache or {}
     app_names = set()
     metadata = get_collective_metadata()
     collective_config = get_collective_config() if retrieve_config else {}
@@ -89,12 +94,17 @@ def list_apps(
                 state = 'RUNNING'
 
         app_metadata = metadata[app_name]
+        active_workloads = get_default_workload_values() if state == 'STOPPED' else workloads
+        image_updates_available = any(
+            image_update_cache.get(normalize_reference(k)['complete_tag']) for k in active_workloads['images']
+        )
         app_data = {
             'name': app_name,
             'id': app_name,
-            'active_workloads': get_default_workload_values() if state == 'STOPPED' else workloads,
+            'active_workloads': active_workloads,
             'state': state,
-            'upgrade_available': upgrade_available_for_app(train_to_apps_version_mapping, app_metadata['metadata']),
+            'upgrade_available': upgrade_available_for_app(train_to_apps_version_mapping, app_metadata),
+            'image_updates_available': image_updates_available,
             **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
         }
         apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
@@ -118,7 +128,8 @@ def list_apps(
                 'id': entry.name,
                 'active_workloads': get_default_workload_values(),
                 'state': 'STOPPED',
-                'upgrade_available': upgrade_available_for_app(train_to_apps_version_mapping, app_metadata['metadata']),
+                'upgrade_available': upgrade_available_for_app(train_to_apps_version_mapping, app_metadata),
+                'image_updates_available': False,
                 **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
             }
             apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
