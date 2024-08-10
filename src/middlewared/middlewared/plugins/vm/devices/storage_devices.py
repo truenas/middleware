@@ -2,6 +2,7 @@ import errno
 import os
 
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
+from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.schema import Bool, Dict, Int, Str
 from middlewared.validators import Match
 
@@ -162,6 +163,8 @@ class DISK(StorageDevice):
                 verrors.add('attributes.path', 'Disk path is required.')
             elif not path.startswith('/dev/zvol/'):
                 verrors.add('attributes.path', 'Disk path must start with "/dev/zvol/"')
+            elif check_zvol_in_boot_pool_using_path(path):
+                verrors.add('attributes.path', 'Disk residing in boot pool cannot be consumed and is not supported')
             else:
                 zvol = self.middleware.call_sync(
                     'zfs.dataset.query', [['id', '=', zvol_path_to_name(path)]], {'extra': {'properties': []}}
