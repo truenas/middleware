@@ -638,7 +638,7 @@ class ShellWorkerThread(threading.Thread):
             return command, not as_root
         elif options.get('app'):
             command = [
-                '/usr/bin/docker', 'docker', 'exec', '-n', options['container_name'],
+                '/usr/bin/docker', 'docker', 'exec', '-n', options['container_id'],
                 '-it', options.get('command', '/bin/bash'),
             ]
 
@@ -827,6 +827,11 @@ class ShellApplication(object):
                 options = data.get('options', {})
                 if options.get('vm_id'):
                     options['vm_data'] = await self.middleware.call('vm.get_instance', options['vm_id'])
+                if options.get('app'):
+                    if not options.get('container_id'):
+                        raise CallError('Container id must be specified')
+                    if options['container_id'] not in await self.middleware.call('app.container_ids', options['app']):
+                        raise CallError('Provided container id is not valid')
 
                 # By default we want to run virsh with user's privileges and assume all "permission denied"
                 # errors this can cause, unless the user has a sudo permission for all commands; in that case, let's
