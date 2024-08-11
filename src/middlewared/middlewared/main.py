@@ -638,8 +638,7 @@ class ShellWorkerThread(threading.Thread):
             return command, not as_root
         elif options.get('app'):
             command = [
-                '/usr/bin/docker', 'docker', 'exec', '-n', options['container_id'],
-                '-it', options.get('command', '/bin/bash'),
+                '/usr/bin/docker', 'exec', '-it', options['container_id'], options.get('command', '/bin/bash'),
             ]
 
             if not as_root:
