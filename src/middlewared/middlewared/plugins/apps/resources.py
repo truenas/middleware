@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Dict, Int, List, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import private, Service
 
 from middlewared.utils.gpu import get_nvidia_gpus
@@ -11,6 +11,25 @@ class AppService(Service):
     class Config:
         namespace = 'app'
         cli_namespace = 'app'
+
+    @accepts(
+        Str('app_name'),
+        Dict(
+            'options',
+            Bool('alive_only', default=True),
+        ),
+        roles=['APPS_READ']
+    )
+    @returns(List(items=[Str('container_id')]))
+    async def container_ids(self, app_name, options):
+        """
+        Returns container IDs for `app_name`.
+        """
+        return [
+            c['id'] for c in (
+                await self.middleware.call('app.get_instance', app_name)
+            )['active_workloads']['container_details'] if (options['alive_only'] is False or c['state'] == 'running')
+        ]
 
     @accepts(roles=['APPS_READ'])
     @returns(List(items=[Ref('certificate_entry')]))
