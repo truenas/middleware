@@ -20,16 +20,31 @@ class AppService(Service):
         ),
         roles=['APPS_READ']
     )
-    @returns(List(items=[Str('container_id')]))
+    @returns(Dict(
+        additional_attrs=True,
+        example={
+            'afb901dc53a29016c385a9de43f089117e399622c042674f82c10c911848baba': {
+                'service_name': 'jellyfin',
+                'image': 'jellyfin/jellyfin:10.9.7',
+                'state': 'running',
+                'id': 'afb901dc53a29016c385a9de43f089117e399622c042674f82c10c911848baba',
+            }
+        }
+    ))
     async def container_ids(self, app_name, options):
         """
         Returns container IDs for `app_name`.
         """
-        return [
-            c['id'] for c in (
+        return {
+            c['id']: {
+                'service_name': c['service_name'],
+                'image': c['image'],
+                'state': c['state'],
+                'id': c['id'],
+            } for c in (
                 await self.middleware.call('app.get_instance', app_name)
             )['active_workloads']['container_details'] if (options['alive_only'] is False or c['state'] == 'running')
-        ]
+        }
 
     @accepts(roles=['APPS_READ'])
     @returns(List(items=[Ref('certificate_entry')]))
