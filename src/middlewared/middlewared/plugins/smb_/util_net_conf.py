@@ -1,10 +1,8 @@
 import errno
 import json
-import os
 import subprocess
 
-from middlewared.service_exception import CallError
-from .utils import smb_strip_comments
+from middlewared.service_exception import CallError, MatchNotFound
 from .constants import SMBCmd
 
 CONF_JSON_VERSION = {"major": 0, "minor": 1}
