@@ -393,4 +393,9 @@ class SSH_NFS(NFS):
         if do_umount['result'] is False:
             raise RuntimeError(do_umount['stderr'])
 
+        # Remove the mount dir
+        rmdir = SSH_TEST(f"rm -rf {self._localpath}", self._mount_user, self._mount_password, self._ip)
+        if rmdir['result'] is False:
+            raise RuntimeError(rmdir['stderr'])
+
         self._mounted = False
