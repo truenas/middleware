@@ -3,7 +3,7 @@
 Flatten the per-portal discovery auth to a system-wide discovery auth.
 
 Revision ID: 504a7bd32680
-Revises: 4b0b7ba46e63
+Revises: 5654da8713d1
 Create Date: 2024-08-12 15:53:48.342351+00:00
 
 """
@@ -15,7 +15,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '504a7bd32680'
-down_revision = '4b0b7ba46e63'
+down_revision = '5654da8713d1'
 branch_labels = None
 depends_on = None
 
