@@ -7,7 +7,7 @@ After=multi-user.target
 Type=oneshot
 RemainAfterExit=yes
 ExecStartPre=-midclt call core.notify_postinit
-ExecStart=midclt call -job initshutdownscript.execute_init_tasks POSTINIT
+ExecStart=midclt call --job initshutdownscript.execute_init_tasks POSTINIT
 StandardOutput=null
 StandardError=null
 

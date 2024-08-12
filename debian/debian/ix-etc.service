@@ -11,7 +11,7 @@ Before=local-fs.target systemd-modules-load.service
 Type=oneshot
 RemainAfterExit=yes
 TimeoutStartSec=300
-ExecStart=midclt call -job certificate.dhparam_setup
+ExecStart=midclt call --job certificate.dhparam_setup
 ExecStart=midclt call etc.generate_checkpoint initial
 StandardOutput=null
 
