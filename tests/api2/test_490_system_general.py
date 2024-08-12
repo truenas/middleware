@@ -39,9 +39,9 @@ def test_06_Setting_timezone():
 
 def test_07_Checking_timezone_using_api():
     results = call("system.general.config")
-    assert results['timezone'] == TIMEZONE
+    assert results["timezone"] == TIMEZONE
 
 
 def test_08_Checking_timezone_using_ssh(request):
-    results = ssh(f'diff /etc/localtime /usr/share/zoneinfo/{TIMEZONE}')
+    results = ssh(f"diff /etc/localtime /usr/share/zoneinfo/{TIMEZONE}")
     assert results == ""

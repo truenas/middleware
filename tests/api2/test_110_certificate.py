@@ -21,13 +21,13 @@ try:
         LDAPHOSTNAME,
     )
 except ImportError:
-    Reason = 'LDAP* variable are not setup in config.py'
+    Reason = "LDAP* variable are not setup in config.py"
     # comment pytestmark for development testing with --dev-test
     pytestmark = pytest.mark.skipif(True, reason=Reason)
 
 
 def test_01_get_certificate_query():
-    call('certificate.query')
+    call("certificate.query")
 
 
 def test_create_idmap_certificate():
@@ -62,17 +62,17 @@ def test_02_delete_used_certificate():
 
 def test_03_verify_certificate_delete_failed():
     while True:
-        get_job = call('core.get_jobs', [["id", "=", job_id]])
+        get_job = call("core.get_jobs", [["id", "=", job_id]])
         job_status = get_job[0]
-        if job_status['state'] in ('RUNNING', 'WAITING'):
+        if job_status["state"] in ("RUNNING", "WAITING"):
             sleep(5)
         else:
-            assert job_status['state'] == 'FAILED', get_job
+            assert job_status["state"] == "FAILED", get_job
             assert bool(re.search(
-                r'Certificate is being used by following service.*IDMAP', job_status['error'], flags=re.DOTALL
-            )) is True, job_status['error']
+                r"Certificate is being used by following service.*IDMAP", job_status["error"], flags=re.DOTALL
+            )) is True, job_status["error"]
             break
 
 
 def test_04_delete_idmap():
-    call('idmap.delete', [["id", "=", idmap_id]])
+    call("idmap.delete", [["id", "=", idmap_id]])
