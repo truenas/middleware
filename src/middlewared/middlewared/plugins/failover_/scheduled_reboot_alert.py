@@ -5,7 +5,7 @@
 
 import os
 
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 
 
 WATCHDOG_ALERT_FILE = "/data/sentinels/.watchdog-alert"

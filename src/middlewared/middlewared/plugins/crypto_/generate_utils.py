@@ -6,7 +6,7 @@ import typing
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 from middlewared.validators import IpAddress
 
 from .utils import DEFAULT_LIFETIME_DAYS
@@ -25,8 +25,8 @@ def generate_builder(options: dict) -> typing.Union[x509.CertificateBuilder, x50
 
     # Lifetime represents no of days
     # Let's normalize lifetime value
-    not_valid_before = now()
-    not_valid_after = now() + datetime.timedelta(
+    not_valid_before = time_now()
+    not_valid_after = time_now() + datetime.timedelta(
         days=options.get('lifetime') or DEFAULT_LIFETIME_DAYS
     )
 

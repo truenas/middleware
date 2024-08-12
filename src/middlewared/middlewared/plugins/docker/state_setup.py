@@ -4,7 +4,7 @@ import shutil
 import uuid
 
 from middlewared.service import CallError, private, Service
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 
 from .state_utils import (
     DATASET_DEFAULTS, docker_datasets, docker_dataset_custom_props, docker_dataset_update_props, IX_APPS_MOUNT_PATH,
@@ -85,7 +85,7 @@ class DockerSetupService(Service):
                 )
                 with contextlib.suppress(FileNotFoundError):
                     await self.middleware.run_in_thread(
-                        shutil.move, test_path, f'{test_path}-{str(uuid.uuid4())[:4]}-{now().isoformat()}',
+                        shutil.move, test_path, f'{test_path}-{str(uuid.uuid4())[:4]}-{time_now().isoformat()}',
                     )
                 await self.middleware.call(
                     'zfs.dataset.create', {

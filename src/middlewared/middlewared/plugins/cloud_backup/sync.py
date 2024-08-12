@@ -6,7 +6,7 @@ from middlewared.plugins.cloud_backup.restic import get_restic_config, run_resti
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int
 from middlewared.service import CallError, Service, item_method, job, private
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 
 
 async def restic(middleware, job, cloud_backup, dry_run):
@@ -21,7 +21,7 @@ async def restic(middleware, job, cloud_backup, dry_run):
         if local_path.startswith("/dev/zvol"):
             await middleware.call("cloud_backup.validate_zvol", local_path)
 
-            name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}-{now().strftime('%Y%m%d%H%M%S')}"
+            name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}-{time_now().strftime('%Y%m%d%H%M%S')}"
             snapshot = (await middleware.call("zfs.snapshot.create", {
                 "dataset": zvol_path_to_name(local_path),
                 "name": name,

@@ -8,7 +8,7 @@ from middlewared.async_validators import resolve_hostname
 from middlewared.schema import accepts, Any, Bool, Dict, Int, Str, Password, Patch
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 
 from pyVim import connect, task as VimTask
 from pyVmomi import vim, vmodl
@@ -414,7 +414,7 @@ class VMWareService(CRUDService):
         # Generate a helpful description that is visible on the VMWare side.  Since we
         # are going to be creating VMWare snaps, if one gets left dangling this will
         # help determine where it came from.
-        vmsnapdescription = f"{now().strftime('%Y-%m-%d %H:%M:%S')} TrueNAS Created Snapshot"
+        vmsnapdescription = f"{time_now().strftime('%Y-%m-%d %H:%M:%S')} TrueNAS Created Snapshot"
 
         # We keep track of snapshots per VMWare "task" because we are going to iterate
         # over all the VMWare tasks for a given ZFS filesystem, do all the VMWare snapshotting
@@ -702,7 +702,7 @@ class VMWareService(CRUDService):
         self.middleware.call_sync("datastore.update", "storage.vmwareplugin", id_, {
             "state": {
                 **state,
-                "datetime": now(),
+                "datetime": time_now(),
             },
         })
 

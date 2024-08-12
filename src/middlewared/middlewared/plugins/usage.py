@@ -9,7 +9,7 @@ import aiohttp
 
 from middlewared.service import Service
 from middlewared.utils.mount import getmntinfo
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 
 
 USAGE_URL = 'https://usage.truenas.com/submit'

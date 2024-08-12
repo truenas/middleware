@@ -1,6 +1,6 @@
 from middlewared.schema import accepts, Bool, Int, returns, Str
 from middlewared.service import item_method, job, private, Service
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 
 
 class PoolService(Service):

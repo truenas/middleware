@@ -8,7 +8,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import run
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 from middlewared.validators import Range
 
 
@@ -293,7 +293,7 @@ class PoolScrubService(CRUDService):
             self.logger.warning("Could not find last scrub of pool %r", name)
             last_scrub = datetime.min
 
-        if (now() - last_scrub).total_seconds() < (threshold - 1) * 86400:
+        if (time_now() - last_scrub).total_seconds() < (threshold - 1) * 86400:
             self.logger.debug('Pool %r last scrub %r', name, last_scrub)
             return False
 

@@ -9,7 +9,7 @@ from middlewared.plugins.truecommand.enums import Status as TrueCommandStatus
 from middlewared.schema import accepts, Bool, Dict, Patch, returns, Str
 from middlewared.service import cli_private, job, no_auth_required, private, Service
 from middlewared.utils.functools_ import cache
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 import middlewared.sqlalchemy as sa
 
 EULA_FILE = '/usr/local/share/truenas/eula.html'
@@ -161,7 +161,7 @@ class TrueNASService(Service):
 
         await self.middleware.call('datastore.update', 'truenas.customerinformation', customer_information["id"], {
             "data": json.dumps(data),
-            "updated_at": now(),
+            "updated_at": time_now(),
         })
 
         return customer_information
@@ -170,7 +170,7 @@ class TrueNASService(Service):
         result = await self.middleware.call('datastore.config', 'truenas.customerinformation')
         result["immutable_data"] = await self.__fetch_customer_information_immutable_data()
         result["data"] = json.loads(result["data"])
-        result["needs_update"] = now() - result["updated_at"] > timedelta(days=365)
+        result["needs_update"] = time_now() - result["updated_at"] > timedelta(days=365)
         return result
 
     async def __fetch_customer_information_immutable_data(self):

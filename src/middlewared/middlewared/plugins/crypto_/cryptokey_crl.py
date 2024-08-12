@@ -6,7 +6,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 
 from middlewared.service import Service
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 
 from .load_utils import load_private_key
 from .key_utils import retrieve_signing_algorithm
@@ -44,9 +44,9 @@ class CryptoKeyService(Service):
             x509.NameAttribute(getattr(NameOID, k.upper()), v)
             for k, v in issuer.items() if v
         ])).last_update(
-            now()
+            time_now()
         ).next_update(
-            now() + datetime.timedelta(next_update, 300, 0)
+            time_now() + datetime.timedelta(next_update, 300, 0)
         )
 
         for cert in certs:

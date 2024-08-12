@@ -4,7 +4,7 @@ from datetime import timedelta
 from middlewared.plugins.disk_.utils import dev_to_ident
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 
 
 RE_IDENT = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
@@ -39,7 +39,7 @@ class DiskService(Service, ServiceChangeMixin):
             new = True
             qs = await self.middleware.call('datastore.query', 'storage.disk', [('disk_name', '=', name)])
             for i in qs:
-                i['disk_expiretime'] = now() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
+                i['disk_expiretime'] = time_now() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
                 await self.middleware.call('datastore.update', 'storage.disk', i['disk_identifier'], i)
             disk = {'disk_identifier': ident}
 
@@ -147,12 +147,12 @@ class DiskService(Service, ServiceChangeMixin):
                 # 1. can't translate identitifer to device
                 # 2. or can't translate device to identifier
                 if not disk['disk_expiretime']:
-                    disk['disk_expiretime'] = now() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
+                    disk['disk_expiretime'] = time_now() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
                     self.middleware.call_sync(
                         'datastore.update', 'storage.disk', disk['disk_identifier'], disk, options
                     )
                     changed.add(disk['disk_identifier'])
-                elif disk['disk_expiretime'] < now():
+                elif disk['disk_expiretime'] < time_now():
                     # Disk expire time has surpassed, go ahead and remove it
                     if disk['disk_kmip_uid']:
                         self.middleware.call_sync(
@@ -174,7 +174,7 @@ class DiskService(Service, ServiceChangeMixin):
 
             if name not in sys_disks and not disk['disk_expiretime']:
                 # If for some reason disk is not identified as a system disk mark it to expire.
-                disk['disk_expiretime'] = now() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
+                disk['disk_expiretime'] = time_now() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
 
             if self._disk_changed(disk, original_disk):
                 self.middleware.call_sync('datastore.update', 'storage.disk', disk['disk_identifier'], disk, options)

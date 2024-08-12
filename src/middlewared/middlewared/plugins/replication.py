@@ -8,7 +8,7 @@ from middlewared.schema import accepts, Bool, Cron, Dataset, Dict, Int, List, Pa
 from middlewared.service import item_method, job, pass_app, private, CallError, CRUDService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 from middlewared.validators import Port, Range, ReplicationSnapshotNamingSchema, Unique
 
 
@@ -913,7 +913,7 @@ class ReplicationService(CRUDService):
 
     @private
     def new_snapshot_name(self, naming_schema):
-        return now().strftime(naming_schema)
+        return time_now().strftime(naming_schema)
 
     # Legacy pair support
     @private

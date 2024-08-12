@@ -10,7 +10,7 @@ from pathlib import Path
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.utils.filesystem.directory import directory_is_empty
-from middlewared.utils.time import now
+from middleware.src.middlewared.middlewared.utils.time_utils import time_now
 from middlewared.validators import Range
 
 from .utils import dataset_mountpoint, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
@@ -261,7 +261,7 @@ class PoolDatasetService(Service):
 
                     if not os.path.isdir(mount_path) or not directory_is_empty(mount_path):
                         # rename please
-                        shutil.move(mount_path, f'{mount_path}-{str(uuid.uuid4())[:4]}-{now().isoformat()}')
+                        shutil.move(mount_path, f'{mount_path}-{str(uuid.uuid4())[:4]}-{time_now().isoformat()}')
 
                 try:
                     self.middleware.call_sync('zfs.dataset.mount', name, {'recursive': True})
