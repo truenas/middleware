@@ -19,7 +19,7 @@ from middlewared.utils import Popen, run
 from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 from middlewared.validators import validate_schema
 
 import aiorwlock

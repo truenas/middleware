@@ -6,7 +6,7 @@ from acme import errors, messages
 
 from middlewared.service import Service, ValidationErrors
 from middlewared.service_exception import CallError
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 class ACMEService(Service):

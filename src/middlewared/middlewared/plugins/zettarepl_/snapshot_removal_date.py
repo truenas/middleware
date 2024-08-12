@@ -5,7 +5,7 @@ from dateutil.tz import tzlocal
 import isodate
 
 from middlewared.service import Service
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 from zettarepl.snapshot.list import list_snapshots
 from zettarepl.snapshot.name import parse_snapshot_name

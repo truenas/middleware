@@ -13,7 +13,7 @@ from middlewared.api.current import (
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.allowlist import Allowlist
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 

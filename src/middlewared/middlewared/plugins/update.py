@@ -3,7 +3,7 @@ from middlewared.service import job, private, CallError, Service
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.update_.utils import UPLOAD_LOCATION
 from middlewared.utils import PRODUCT
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 import enum
 import errno

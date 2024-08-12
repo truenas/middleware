@@ -11,7 +11,7 @@ from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed25519, ed448, r
 from OpenSSL import crypto
 from typing import Optional, Union
 
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 from .utils import RE_CERTIFICATE
 

@@ -50,7 +50,7 @@ from middlewared.utils.prctl import die_with_parent
 from middlewared.utils.size import format_size
 from middlewared.utils.string import make_sentence
 from middlewared.utils.threading import start_daemon_thread
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 INVALID_DATASETS = (

@@ -8,7 +8,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import CallError, CRUDService, job, private, skip_arg, ValidationErrors
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 from middlewared.validators import Email, Range
 
 from .common_validation import _validate_common_attributes, validate_cert_name

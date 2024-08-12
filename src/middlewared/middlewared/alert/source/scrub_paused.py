@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 class ScrubPausedAlertClass(AlertClass):

@@ -4,7 +4,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.plugins.system.product import PRODUCT_NAME
 from middlewared.utils import BRAND
 from middlewared.utils.mako import get_template
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 from middlewared.validators import Email
 
 from collections import deque

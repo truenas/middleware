@@ -2,7 +2,7 @@ import datetime
 
 from .generate_self_signed import generate_self_signed_certificate
 from middlewared.service import job, periodic, private, Service
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 class CertificateService(Service):

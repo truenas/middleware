@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from middlewared.service import periodic, private, Service
 import middlewared.sqlalchemy as sa
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 PENDING_SNAPSHOT_DELETE_INTERVAL = timedelta(hours=3)

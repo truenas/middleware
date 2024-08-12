@@ -8,7 +8,7 @@ from middlewared.async_validators import resolve_hostname
 from middlewared.schema import accepts, Any, Bool, Dict, Int, Str, Password, Patch
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 from pyVim import connect, task as VimTask
 from pyVmomi import vim, vmodl

@@ -37,7 +37,7 @@ from middlewared.validators import validate_schema
 from middlewared.utils import bisect
 from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
@@ -505,9 +505,9 @@ class AlertService(Service):
         product_type = await self.middleware.call("alert.product_type")
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
-        now_ = time_now()
+        now = time_now()
         for policy_name, policy in self.policies.items():
-            gone_alerts, new_alerts = policy.receive_alerts(now_, self.alerts)
+            gone_alerts, new_alerts = policy.receive_alerts(now, self.alerts)
 
             for alert_service_desc in await self.middleware.call("datastore.query", "system.alertservice",
                                                                  [["enabled", "=", True]]):

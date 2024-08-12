@@ -8,7 +8,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 from middlewared.utils import run
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 from middlewared.validators import Range
 
 

@@ -8,7 +8,7 @@ from middlewared.service import CallError, CRUDService, job, private, Validation
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import SSL
 from middlewared.utils.directoryservices.constants import DSType as DirectoryServiceType
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID, IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX, TRUENAS_IDMAP_MAX
 )

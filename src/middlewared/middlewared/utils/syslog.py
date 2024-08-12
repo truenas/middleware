@@ -2,7 +2,7 @@ import os
 import syslog
 import uuid
 
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 def syslog_message(message):

@@ -18,7 +18,7 @@ from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils.origin import UnixSocketOrigin
 from middlewared.utils.crypto import generate_token
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 class TokenManager:

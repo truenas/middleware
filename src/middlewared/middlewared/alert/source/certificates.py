@@ -2,7 +2,7 @@ from datetime import datetime
 
 from middlewared.alert.base import AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 class CertificateIsExpiringAlertClass(AlertClass):

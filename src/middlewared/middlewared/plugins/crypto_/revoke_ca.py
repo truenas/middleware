@@ -1,5 +1,5 @@
 from middlewared.service import periodic, private, Service
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 from .query_utils import get_ca_chain
 

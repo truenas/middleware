@@ -4,7 +4,7 @@ from datetime import timedelta
 from middlewared.plugins.disk_.utils import dev_to_ident
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 RE_IDENT = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')

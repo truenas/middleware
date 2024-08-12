@@ -15,7 +15,7 @@ import threading
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.pipe import Pipes
 from middlewared.utils.privilege import credential_is_limited_to_own_jobs
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 logger = logging.getLogger(__name__)

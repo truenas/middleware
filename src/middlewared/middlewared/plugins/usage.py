@@ -9,7 +9,7 @@ import aiohttp
 
 from middlewared.service import Service
 from middlewared.utils.mount import getmntinfo
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 USAGE_URL = 'https://usage.truenas.com/submit'
@@ -52,7 +52,7 @@ class UsageService(Service):
                 break
 
         event_loop = asyncio.get_event_loop()
-        now = now()
+        now = time_now()
         scheduled = (
             now.replace(hour=23, minute=59, second=59) - now
         ).total_seconds() + random.uniform(1, 86400)
@@ -428,7 +428,7 @@ class UsageService(Service):
 
 
 async def setup(middleware):
-    now = now()
+    now = time_now()
     event_loop = asyncio.get_event_loop()
 
     await middleware.call('network.general.register_activity', 'usage', 'Anonymous usage statistics')

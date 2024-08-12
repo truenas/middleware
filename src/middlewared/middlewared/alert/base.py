@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 import enum
 import json
 import logging
@@ -210,6 +210,9 @@ class AlertLevel(enum.Enum):
     EMERGENCY = 7
 
 
+DateTimeType: typing.TypeAlias = datetime
+
+
 class Alert:
     """
     Alert: a message about a single issues in the system (or a group of similar issues that can be potentially resolved
@@ -245,8 +248,8 @@ class Alert:
     klass: type[AlertClass]
     args: typing.Union[dict[str, typing.Any], list]
     key: typing.Any
-    datetime: datetime
-    last_occurrence: datetime
+    datetime: DateTimeType
+    last_occurrence: DateTimeType
     node: typing.Optional[str]
     dismissed: bool
     mail: typing.Optional[dict]

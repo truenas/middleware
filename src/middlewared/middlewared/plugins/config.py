@@ -10,7 +10,7 @@ import tempfile
 from middlewared.schema import accepts, Bool, Dict, returns
 from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 from middlewared.utils.db import FREENAS_DATABASE
 
 CONFIG_FILES = {

@@ -9,7 +9,7 @@ from middlewared.plugins.truecommand.enums import Status as TrueCommandStatus
 from middlewared.schema import accepts, Bool, Dict, Patch, returns, Str
 from middlewared.service import cli_private, job, no_auth_required, private, Service
 from middlewared.utils.functools_ import cache
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 import middlewared.sqlalchemy as sa
 
 EULA_FILE = '/usr/local/share/truenas/eula.html'

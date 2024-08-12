@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils import sw_buildtime
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 RE_CPU_MODEL = re.compile(r'^model name\s*:\s*(.*)', flags=re.M)

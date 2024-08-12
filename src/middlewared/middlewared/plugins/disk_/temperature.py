@@ -9,7 +9,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.disks import parse_smartctl_for_temperature_output
-from middlewared.plugins.disk_.utils import dev_to_ident
+from middlewared.utils.time_utils import time_now
 
 
 class DiskService(Service):
@@ -126,7 +126,7 @@ class DiskService(Service):
         # we only keep 7 days of historical data because we keep per second information
         # which adds up to lots of used disk space quickly depending on the size of the
         # system
-        start = now()
+        start = time_now()
         end = start + datetime.timedelta(days=min(days, 7))
         opts = {'start': round(start.timestamp()), 'end': round(end.timestamp())}
         final = dict()

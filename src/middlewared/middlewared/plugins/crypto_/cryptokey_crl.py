@@ -6,7 +6,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 
 from middlewared.service import Service
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 from .load_utils import load_private_key
 from .key_utils import retrieve_signing_algorithm

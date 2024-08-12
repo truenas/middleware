@@ -15,7 +15,7 @@ from middlewared.service import (
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 RE_TIME = re.compile(r'test will complete after ([a-z]{3} [a-z]{3} [0-9 ]+ \d\d:\d\d:\d\d \d{4})', re.IGNORECASE)

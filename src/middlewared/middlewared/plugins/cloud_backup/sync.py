@@ -6,7 +6,7 @@ from middlewared.plugins.cloud_backup.restic import get_restic_config, run_resti
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int
 from middlewared.service import CallError, Service, item_method, job, private
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 
 
 async def restic(middleware, job, cloud_backup, dry_run):

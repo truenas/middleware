@@ -6,7 +6,7 @@ import typing
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 from middlewared.validators import IpAddress
 
 from .utils import DEFAULT_LIFETIME_DAYS

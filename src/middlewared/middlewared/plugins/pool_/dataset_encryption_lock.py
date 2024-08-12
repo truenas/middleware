@@ -10,7 +10,7 @@ from pathlib import Path
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.utils.filesystem.directory import directory_is_empty
-from middleware.src.middlewared.middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import time_now
 from middlewared.validators import Range
 
 from .utils import dataset_mountpoint, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
