@@ -823,7 +823,7 @@ class LDAPService(ConfigService):
         elif conf['basedn']:
             # No realm in ldap config and so we need to guess at it
             realm = '.'.join(
-                [x.strip('dc=') for x in conf['basedn'].split(',')]
+                [x.strip().strip('dc=') for x in conf['basedn'].split(',')]
             ).upper()
         else:
             raise CallError('Unable to determine kerberos realm')
