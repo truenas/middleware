@@ -6,28 +6,24 @@
 
 import sys
 import os
+from middlewared.test.integration.utils import call, ssh
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import DELETE, GET, POST
 
 
 def delete_group_delete_users(delete_users):
-    results = POST("/user/", {
+    user_id = call("user.create", {
         "username": "test",
         "group_create": True,
         "full_name": "Test",
         "smb": False,
         "password_disabled": True,
     })
-    assert results.status_code == 200, results.text
-    user_id = results.json()
 
-    results = GET(f"/user/id/{user_id}")
-    assert results.status_code == 200, results.text
-    group_id = results.json()["group"]["id"]
+    results = call(f"user.query", [["id", "=", user_id]])
+    group_id = results["group"]["id"]
 
-    results = DELETE(f"/group/id/{group_id}", {"delete_users": delete_users})
-    assert results.status_code == 200, results.text
+    call("group.delete", group_id, {"delete_users": delete_users})
 
     return user_id, group_id
 
@@ -35,16 +31,14 @@ def delete_group_delete_users(delete_users):
 def test_01_delete_group_delete_users():
     user_id, group_id = delete_group_delete_users(True)
 
-    results = GET(f"/user/id/{user_id}")
-    assert results.status_code == 404, results.text
+    results = call(f"user.query", [["id", "=", user_id]])
+    assert results == []
 
 
 def test_01_delete_group_no_delete_users():
     user_id, group_id = delete_group_delete_users(False)
 
-    results = GET(f"/user/id/{user_id}")
-    assert results.status_code == 200, results.text
-    assert results.json()["group"]["bsdgrp_group"] in ["nogroup", "nobody"]
+    results = call(f"user.query", [["id", "=", user_id]])
+    assert results["group"]["bsdgrp_group"] in ["nogroup", "nobody"]
 
-    results = DELETE(f"/user/id/{user_id}")
-    assert results.status_code == 200, results.text
+    results = call("user.delete", user_id)

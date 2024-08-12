@@ -44,4 +44,4 @@ def test_07_Checking_timezone_using_api():
 
 def test_08_Checking_timezone_using_ssh(request):
     results = ssh(f'diff /etc/localtime /usr/share/zoneinfo/{TIMEZONE}')
-    assert results['result'] is True, results
+    assert results == ""
