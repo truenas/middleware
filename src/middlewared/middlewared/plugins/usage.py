@@ -188,6 +188,29 @@ class UsageService(Service):
             'data_without_backup_size': context['datasets_total_size_recursive'] - backed['total_size']
         }
 
+    async def gather_applications(self, context):
+        # We want to retrieve following information
+        # 1) No of installed apps
+        # 2) catalog items with versions installed
+        # 3) List of docker images
+        output = {
+            'apps': 0,
+            # train -> item -> versions
+            'catalog_items': defaultdict(lambda: defaultdict(lambda: defaultdict(int))),
+            'docker_images': set(),
+        }
+        apps = await self.middleware.call('app.query')
+        output['apps'] = len(apps)
+        for app in apps:
+            app_metadata = app['metadata']
+            output['catalog_items'][app_metadata['train']][app_metadata['name']][app['version']] += 1
+
+        for image in await self.middleware.call('app.image.query'):
+            output['docker_images'].update(image['repo_tags'])
+
+        output['docker_images'] = list(output['docker_images'])
+        return output
+
     def gather_filesystem_usage(self, context):
         return {
             'datasets': {'total_size': context['datasets_total_size']},

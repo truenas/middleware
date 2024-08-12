@@ -50,7 +50,7 @@ meanwhile) use `-job` parameter. At the end the job return value will be printed
 
 .. code-block:: text
 
-    root@truenas[~]# midclt call -job core.job_test '{"sleep": 5}'
+    root@truenas[~]# midclt call --job core.job_test '{"sleep": 5}'
     Status: (none)
     Total Progress: [########################################] 100.00%
     True

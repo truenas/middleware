@@ -18,7 +18,7 @@ ConditionPathExists=/data/freebsd-to-scale-update
 Type=oneshot
 RemainAfterExit=yes
 TimeoutStartSec=300
-ExecStart=midclt call -job update.freebsd_to_scale
+ExecStart=midclt call --job update.freebsd_to_scale
 StandardOutput=null
 
 [Install]

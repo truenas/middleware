@@ -1,5 +1,6 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
+from middlewared.utils.path import FSLocation, path_location
 
 
 class SnapshotTotalCountAlertClass(AlertClass):
@@ -17,8 +18,8 @@ class SnapshotCountAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "Too Many Snapshots Exist For Dataset"
     text = (
-        "Dataset %(dataset)s has more snapshots (%(count)d) than recommended (%(max)d). Performance or functionality "
-        "might degrade."
+        "SMB share %(dataset)s has more snapshots (%(count)d) than recommended (%(max)d). File Explorer may not "
+        "display all snapshots in the Previous Versions tab."
     )
 
 
@@ -26,28 +27,41 @@ class SnapshotCountAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)
     run_on_backup_node = False
 
-    async def check(self):
-        max_ = await self.middleware.call("pool.snapshottask.max_count")
+    async def _check_total(self, snapshot_counts: dict[str, int]) -> list[Alert]:
+        """Return an `Alert` if the total number of snapshots exceeds the limit."""
         max_total = await self.middleware.call("pool.snapshottask.max_total_count")
-
-        total = 0
-        datasets = await self.middleware.call("zfs.snapshot.count")
-
-        for cnt in datasets.values():
-            total += cnt
+        total = sum(snapshot_counts.values())
 
         if total > max_total:
-            return Alert(
+            return [Alert(
                 SnapshotTotalCountAlertClass,
                 {"count": total, "max": max_total},
                 key=None,
-            )
+            )]
 
-        for dataset in sorted(datasets.keys()):
-            count = datasets[dataset]
+        return []
+
+    async def _check_smb(self, snapshot_counts: dict[str, int]) -> list[Alert]:
+        """Return an `Alert` for every dataset shared over smb whose number of snapshots exceeds the limit."""
+        max_ = await self.middleware.call("pool.snapshottask.max_count")
+        to_alert = list()
+
+        for share in await self.middleware.call("sharing.smb.query"):
+            if path_location(share["path"]) != FSLocation.LOCAL:
+                continue
+            path = share["path"].removeprefix("/mnt/")
+            count = snapshot_counts.get(path, 0)
             if count > max_:
-                return Alert(
+                to_alert.append(Alert(
                     SnapshotCountAlertClass,
-                    {"dataset": dataset, "count": count, "max": max_},
-                    key=None,
-                )
+                    {"dataset": path, "count": count, "max": max_},
+                    key=path,
+                ))
+
+        return to_alert
+
+    async def check(self):
+        snapshot_counts = await self.middleware.call("zfs.snapshot.count")
+        alerts = await self._check_smb(snapshot_counts)
+        alerts.extend(await self._check_total(snapshot_counts))
+        return alerts

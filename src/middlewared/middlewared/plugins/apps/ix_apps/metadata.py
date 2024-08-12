@@ -15,14 +15,18 @@ def get_app_metadata(app_name: str) -> dict[str, typing.Any]:
         return {}
 
 
-def update_app_metadata(app_name: str, app_version_details: dict, migrated: bool | None = None):
+def update_app_metadata(
+    app_name: str, app_version_details: dict, migrated: bool | None = None, custom_app: bool = False,
+):
     migrated = get_app_metadata(app_name).get('migrated', False) if migrated is None else migrated
     with open(get_installed_app_metadata_path(app_name), 'w') as f:
         f.write(yaml.safe_dump({
             'metadata': app_version_details['app_metadata'],
             'migrated': migrated,
+            'custom_app': custom_app,
             **{k: app_version_details[k] for k in ('version', 'human_version')},
             **get_portals_and_app_notes(app_name, app_version_details['version']),
+            # TODO: We should not try to get portals for custom apps for now
         }))
 
 

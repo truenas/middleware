@@ -3,7 +3,7 @@ import os
 import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.docker.state_utils import catalog_ds_path, CATALOG_DATASET_NAME
-from middlewared.schema import accepts, Dict, List, Str
+from middlewared.schema import accepts, Dict, List, returns, Str
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.validators import Match
 
@@ -50,6 +50,14 @@ class CatalogService(ConfigService):
             'location': context['catalog_dir'],
         })
         return data
+
+    @accepts()
+    @returns(List('trains', items=[Str('train')]))
+    async def trains(self):
+        """
+        Retrieve available trains.
+        """
+        return list(await self.middleware.call('catalog.apps', {'cache': True, 'cache_only': True}))
 
     @private
     async def extend_context(self, rows, extra):

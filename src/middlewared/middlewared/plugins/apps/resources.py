@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Dict, Int, List, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import private, Service
 
 from middlewared.utils.gpu import get_nvidia_gpus
@@ -11,6 +11,58 @@ class AppService(Service):
     class Config:
         namespace = 'app'
         cli_namespace = 'app'
+
+    @accepts(
+        Str('app_name'),
+        Dict(
+            'options',
+            Bool('alive_only', default=True),
+        ),
+        roles=['APPS_READ']
+    )
+    @returns(Dict(
+        additional_attrs=True,
+        example={
+            'afb901dc53a29016c385a9de43f089117e399622c042674f82c10c911848baba': {
+                'service_name': 'jellyfin',
+                'image': 'jellyfin/jellyfin:10.9.7',
+                'state': 'running',
+                'id': 'afb901dc53a29016c385a9de43f089117e399622c042674f82c10c911848baba',
+            }
+        }
+    ))
+    async def container_ids(self, app_name, options):
+        """
+        Returns container IDs for `app_name`.
+        """
+        return {
+            c['id']: {
+                'service_name': c['service_name'],
+                'image': c['image'],
+                'state': c['state'],
+                'id': c['id'],
+            } for c in (
+                await self.middleware.call('app.get_instance', app_name)
+            )['active_workloads']['container_details'] if (options['alive_only'] is False or c['state'] == 'running')
+        }
+
+    @accepts(Str('app_name'), roles=['APPS_READ'])
+    @returns(Dict(
+        additional_attrs=True,
+        example={
+            'afb901dc53a29016c385a9de43f089117e399622c042674f82c10c911848baba': {
+                'service_name': 'jellyfin',
+                'image': 'jellyfin/jellyfin:10.9.7',
+                'state': 'running',
+                'id': 'afb901dc53a29016c385a9de43f089117e399622c042674f82c10c911848baba',
+            }
+        }
+    ))
+    async def container_console_choices(self, app_name):
+        """
+        Returns container console choices for `app_name`.
+        """
+        return await self.container_ids(app_name, {'alive_only': True})
 
     @accepts(roles=['APPS_READ'])
     @returns(List(items=[Ref('certificate_entry')]))

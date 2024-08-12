@@ -20,6 +20,7 @@ class AppImageService(CRUDService):
         List('repo_digests', items=[Str('repo_digest')]),
         Int('size'),
         Bool('dangling'),
+        Bool('update_available'),
         Str('created'),
         Str('author'),
         Str('comment'),
@@ -30,8 +31,10 @@ class AppImageService(CRUDService):
                 Str('tag'),
                 Str('registry'),
                 Str('complete_tag'),
+                additional_attrs=True,
             )]
         ),
+        additional_attrs=True,
     )
 
     @filterable
@@ -44,7 +47,7 @@ class AppImageService(CRUDService):
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
 
-        update_cache = self.middleware.call_sync('app.image.op.image_update_cache')
+        update_cache = self.middleware.call_sync('app.image.op.get_update_cache')
         parse_all_tags = options['extra'].get('parse_tags')
         images = []
         for image in list_images():
@@ -106,6 +109,7 @@ class AppImageService(CRUDService):
 
             job.set_progress((progress['current']/progress['total']) * 90, 'Pulling image')
 
+        self.middleware.call_sync('docker.state.validate')
         auth_config = data['auth_config'] or {}
         image_tag = data['image']
         pull_image(image_tag, callback, auth_config.get('username'), auth_config.get('password'))
@@ -128,5 +132,5 @@ class AppImageService(CRUDService):
         self.middleware.call_sync('docker.state.validate')
         image = self.get_instance__sync(image_id)
         delete_image(image_id, options['force'])
-        self.middleware.call_sync('app.image.op.remove_image_from_cache', image)
+        self.middleware.call_sync('app.image.op.remove_from_cache', image)
         return True

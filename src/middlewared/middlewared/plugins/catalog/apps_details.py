@@ -184,7 +184,7 @@ class CatalogService(Service):
                 # from our consumers perspective.
                 data[train][app].update({
                     **{k: v for k, v in get_app_details_base(False).items() if k not in data[train][app]},
-                    'location': os.path.join(catalog['location'], train, app),
+                    'location': os.path.join(get_train_path(catalog['location']), train, app),
                 })
                 if data[train][app]['last_update']:
                     data[train][app]['last_update'] = datetime.strptime(

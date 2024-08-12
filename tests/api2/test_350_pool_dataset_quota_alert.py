@@ -75,7 +75,7 @@ def test_dataset_quota_alert(request, datasets, expected_alerts):
         results = SSH_TEST("midclt call alert.initialize", user, password)
         assert results['result'] is True, results
 
-        results = SSH_TEST("midclt call -job core.bulk alert.process_alerts '[[]]'", user, password)
+        results = SSH_TEST("midclt call --job core.bulk alert.process_alerts '[[]]'", user, password)
         assert results['result'] is True, results
 
         result = GET("/alert/list/")

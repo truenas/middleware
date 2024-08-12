@@ -325,7 +325,16 @@ class PoolDatasetService(Service):
 
             results['vm'].append(vm)
 
-        # FIXME: Add app details here, currently it would be an empty list
+        for app in self.middleware.call_sync('app.query'):
+            for path_config in filter(
+                lambda p: p.get('source', '').startswith('/mnt/') and not p['source'].startswith('/mnt/.ix-'),
+                app['active_workloads']['volumes']
+            ):
+                results['app'].append({
+                    'name': app['name'],
+                    'path': path_config['source'],
+                    'mount_info': self.get_mount_info(path_config['source'], mntinfo),
+                })
 
         return results
 

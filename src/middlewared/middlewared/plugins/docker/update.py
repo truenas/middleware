@@ -1,6 +1,6 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Dict, Int, Patch, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import CallError, ConfigService, job, private, returns
 
 from .state_utils import Status
@@ -12,6 +12,7 @@ class DockerModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     pool = sa.Column(sa.String(255), default=None, nullable=True)
+    enable_image_updates = sa.Column(sa.Boolean(), default=True)
 
 
 class DockerService(ConfigService):
@@ -24,6 +25,7 @@ class DockerService(ConfigService):
 
     ENTRY = Dict(
         'docker_entry',
+        Bool('enable_image_updates', required=True),
         Int('id', required=True),
         Str('dataset', required=True),
         Str('pool', required=True, null=True),
@@ -54,16 +56,22 @@ class DockerService(ConfigService):
         config.update(data)
 
         if old_config != config:
-            try:
-                await self.middleware.call('service.stop', 'docker')
-            except Exception as e:
-                raise CallError(f'Failed to stop docker service: {e}')
+            if config['pool'] != old_config['pool']:
+                job.set_progress(20, 'Stopping Docker service')
+                try:
+                    await self.middleware.call('service.stop', 'docker')
+                except Exception as e:
+                    raise CallError(f'Failed to stop docker service: {e}')
 
-            await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
+                await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
-            await self.middleware.call('docker.setup.status_change')
 
+            if config['pool'] != old_config['pool']:
+                job.set_progress(60, 'Applying requested configuration')
+                await self.middleware.call('docker.setup.status_change')
+
+        job.set_progress(100, 'Requested configuration applied')
         return await self.config()
 
     @accepts(roles=['DOCKER_READ'])
