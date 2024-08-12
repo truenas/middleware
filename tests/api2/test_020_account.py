@@ -39,6 +39,6 @@ def test_01_delete_group_no_delete_users():
     user_id, group_id = delete_group_delete_users(False)
 
     results = call(f"user.query", [["id", "=", user_id]])
-    assert results["group"]["bsdgrp_group"] in ["nogroup", "nobody"]
+    assert results[0]["group"]["bsdgrp_group"] in ["nogroup", "nobody"]
 
     results = call("user.delete", user_id)

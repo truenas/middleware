@@ -75,4 +75,4 @@ def test_03_verify_certificate_delete_failed():
 
 
 def test_04_delete_idmap():
-    call("idmap.delete", [["id", "=", idmap_id]])
+    call("idmap.delete", idmap_id)
