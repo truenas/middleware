@@ -3,8 +3,10 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-import datetime
 import os
+
+from middlewared.utils.time import now
+
 
 WATCHDOG_ALERT_FILE = "/data/sentinels/.watchdog-alert"
 FENCED_ALERT_FILE = "/data/sentinels/.fenced-alert"
@@ -47,7 +49,7 @@ def setup_impl(middleware):
     if not middleware.call_sync("core.is_starting_during_boot") or not middleware.call_sync("failover.licensed"):
         return
 
-    now = datetime.datetime.now().strftime("%c")
+    now = now().strftime("%c")
     fqdn = get_fqdn(middleware)
     watchdog_time, fenced_time = get_sentinel_files_time_and_clean_them_up(middleware)
     if watchdog_time and (not fenced_time or watchdog_time > fenced_time):

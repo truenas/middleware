@@ -3,8 +3,8 @@ from middlewared.service import job, private, CallError, Service
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.update_.utils import UPLOAD_LOCATION
 from middlewared.utils import PRODUCT
+from middlewared.utils.time import now
 
-from datetime import datetime, UTC
 import enum
 import errno
 import os
@@ -476,7 +476,7 @@ class UpdateService(Service):
             subprocess.run(['zfs', 'destroy', f'{dataset}@{snapshot}'])
 
         current_version = self.middleware.call_sync('system.version_short')
-        snapshot = f'update--{datetime.now(UTC).strftime("%Y-%m-%d-%H-%M")}--{PRODUCT}-{current_version}'
+        snapshot = f'update--{now().strftime("%Y-%m-%d-%H-%M")}--{PRODUCT}-{current_version}'
         subprocess.run(['zfs', 'snapshot', f'{dataset}@{snapshot}'])
 
 

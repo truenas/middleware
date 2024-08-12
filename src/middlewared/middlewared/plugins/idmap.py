@@ -1,7 +1,6 @@
 import enum
 import asyncio
 import errno
-import datetime
 import wbclient
 
 from middlewared.schema import accepts, Bool, Dict, Int, Password, Patch, Ref, Str, LDAP_DN, OROperator
@@ -9,6 +8,7 @@ from middlewared.service import CallError, CRUDService, job, private, Validation
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import SSL
 from middlewared.utils.directoryservices.constants import DSType as DirectoryServiceType
+from middlewared.utils.time import now
 from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID, IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX, TRUENAS_IDMAP_MAX
 )
@@ -322,7 +322,7 @@ class IdmapDomainService(CRUDService):
     @private
     async def snapshot_samba4_dataset(self):
         sysdataset = (await self.middleware.call('systemdataset.config'))['basename']
-        ts = str(datetime.datetime.now(datetime.timezone.utc).timestamp())[:10]
+        ts = str(now(naive=False).timestamp())[:10]
         await self.middleware.call('zfs.snapshot.create', {'dataset': f'{sysdataset}/samba4',
                                                            'name': f'wbc-{ts}'})
 

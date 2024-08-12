@@ -1,13 +1,14 @@
-from datetime import datetime, UTC
 import os
 import syslog
 import uuid
+
+from middlewared.utils.time import now
 
 
 def syslog_message(message):
     data = f'<{syslog.LOG_USER | syslog.LOG_INFO}>'
 
-    data += f'{datetime.now(UTC).strftime("%b %d %H:%M:%S")} '
+    data += f'{now().strftime("%b %d %H:%M:%S")} '
 
     data += 'TNAUDIT_MIDDLEWARE: '
 

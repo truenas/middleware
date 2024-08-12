@@ -6,6 +6,7 @@ from acme import errors, messages
 
 from middlewared.service import Service, ValidationErrors
 from middlewared.service_exception import CallError
+from middlewared.utils.time import now
 
 
 class ACMEService(Service):
@@ -99,7 +100,7 @@ class ACMEService(Service):
                     # Polling for a maximum of 10 minutes while trying to finalize order
                     # Should we try .poll() instead first ? research please
                     return acme_client.poll_and_finalize(
-                        order, datetime.datetime.now() + datetime.timedelta(minutes=10)
+                        order, now() + datetime.timedelta(minutes=10)
                     )
                 except errors.TimeoutError:
                     raise CallError('Certificate request for final order timed out')

@@ -2,7 +2,6 @@ import asyncio
 import contextlib
 from collections import OrderedDict
 import copy
-from datetime import datetime, UTC
 import enum
 from functools import partial
 import logging
@@ -16,6 +15,8 @@ import threading
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.pipe import Pipes
 from middlewared.utils.privilege import credential_is_limited_to_own_jobs
+from middlewared.utils.time import now
+
 
 logger = logging.getLogger(__name__)
 
@@ -289,7 +290,7 @@ class Job:
             'extra': None,
         }
         self.internal_data = {}
-        self.time_started = datetime.now(UTC)
+        self.time_started = now()
         self.time_finished = None
         self.loop = self.middleware.loop
         self.future = None
@@ -350,7 +351,7 @@ class Job:
         assert self.state not in (State.SUCCESS, State.FAILED, State.ABORTED)
         self.state = State.__members__[state]
         if self.state in (State.SUCCESS, State.FAILED, State.ABORTED):
-            self.time_finished = datetime.now(UTC)
+            self.time_finished = now()
 
     def set_description(self, description):
         """

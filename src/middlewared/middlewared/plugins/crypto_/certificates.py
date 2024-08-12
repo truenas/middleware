@@ -8,6 +8,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import CallError, CRUDService, job, private, skip_arg, ValidationErrors
+from middlewared.utils.time import now
 from middlewared.validators import Email, Range
 
 from .common_validation import _validate_common_attributes, validate_cert_name
@@ -128,7 +129,7 @@ class CertificateService(CRUDService):
 
         if cert['until'] and datetime.datetime.strptime(
             cert['until'], '%a %b  %d %H:%M:%S %Y'
-        ) < datetime.datetime.now():
+        ) < now():
             verrors.add(
                 schema_name,
                 f'{cert["name"]!r} has expired (it was valid until {cert["until"]!r})'
@@ -630,7 +631,7 @@ class CertificateService(CRUDService):
 
             to_update = {'renew_days': new['renew_days']} if data.get('renew_days') else {}
             if old['revoked'] != new['revoked'] and new['revoked']:
-                to_update['revoked_date'] = datetime.datetime.now(datetime.UTC)
+                to_update['revoked_date'] = now()
 
             await self.middleware.call(
                 'datastore.update',

@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timedelta, timezone, UTC
+from datetime import datetime, timedelta, timezone
 import functools
 import re
 import time
@@ -15,6 +15,7 @@ from middlewared.service import (
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.utils.time import now
 
 
 RE_TIME = re.compile(r'test will complete after ([a-z]{3} [a-z]{3} [0-9 ]+ \d\d:\d\d:\d\d \d{4})', re.IGNORECASE)
@@ -542,13 +543,13 @@ class SMARTTestService(CRUDService):
                 else:
                     expected_result_time = expected_result_time.astimezone(timezone.utc).replace(tzinfo=None)
             elif time_details := re.search(RE_TIME_SCSIPRINT_EXTENDED, result):
-                expected_result_time = datetime.now(UTC) + timedelta(minutes=int(time_details.group(1)))
+                expected_result_time = now() + timedelta(minutes=int(time_details.group(1)))
             elif 'Self-test has begun' in result:
                 # nvmeprint.cpp does not print expected result time
-                expected_result_time = datetime.now(UTC) + timedelta(minutes=1)
+                expected_result_time = now() + timedelta(minutes=1)
             elif 'Self Test has begun' in result:
                 # scsiprint.cpp does not always print expected result time
-                expected_result_time = datetime.now(UTC) + timedelta(minutes=1)
+                expected_result_time = now() + timedelta(minutes=1)
 
             if expected_result_time:
                 output['expected_result_time'] = expected_result_time
@@ -716,7 +717,7 @@ class SMARTTestService(CRUDService):
     @job(abortable=True)
     async def wait(self, job, disk, expected_result_time):
         try:
-            start = datetime.now(UTC)
+            start = now()
             if expected_result_time < start:
                 raise CallError(f'Invalid expected_result_time {expected_result_time.isoformat()}')
 

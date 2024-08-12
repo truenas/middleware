@@ -1,9 +1,10 @@
 from collections import deque
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from systemd import journal
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.utils.time import now
 
 
 class SSHLoginFailuresAlertClass(AlertClass):
@@ -17,7 +18,7 @@ class SSHLoginFailuresAlertSource(ThreadedAlertSource):
     def check_sync(self):
         j = journal.Reader()
         j.add_match("SYSLOG_IDENTIFIER=sshd")
-        j.seek_realtime(datetime.now() - timedelta(days=1))
+        j.seek_realtime(now() - timedelta(days=1))
         count = 0
         last_messages = deque([], 4)
         for record in j:

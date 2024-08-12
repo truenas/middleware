@@ -1,6 +1,6 @@
 import asyncio
 import random
-from datetime import datetime, timedelta, UTC
+from datetime import timedelta
 import errno
 import time
 import warnings
@@ -18,6 +18,7 @@ from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils.origin import UnixSocketOrigin
 from middlewared.utils.crypto import generate_token
+from middlewared.utils.time import now
 
 
 class TokenManager:
@@ -154,7 +155,7 @@ class Session:
         return {
             "origin": str(self.app.origin),
             **dump_credentials(self.credentials),
-            "created_at": datetime.now(UTC) - timedelta(seconds=time.monotonic() - self.created_at),
+            "created_at": now() - timedelta(seconds=time.monotonic() - self.created_at),
         }
 
 

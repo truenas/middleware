@@ -1,7 +1,9 @@
-from datetime import datetime, timedelta, UTC
+from datetime import timedelta
 
 from middlewared.service import periodic, private, Service
 import middlewared.sqlalchemy as sa
+from middlewared.utils.time import now
+
 
 PENDING_SNAPSHOT_DELETE_INTERVAL = timedelta(hours=3)
 PENDING_SNAPSHOT_DELETE_LIFETIME = timedelta(days=7)
@@ -64,7 +66,7 @@ class VMWareService(Service):
 
                 await self.middleware.call("vmware.disconnect", si)
 
-            if deleted or datetime.now(UTC) - pending_snapshot_delete["datetime"] > PENDING_SNAPSHOT_DELETE_LIFETIME:
+            if deleted or now() - pending_snapshot_delete["datetime"] > PENDING_SNAPSHOT_DELETE_LIFETIME:
                 await self.middleware.call(
                     "datastore.delete",
                     "storage.vmwarependingsnapshotdelete",
