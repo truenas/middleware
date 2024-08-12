@@ -50,7 +50,7 @@ def test_create_idmap_certificate():
         }
     }
     results = call("idmap.create", payload)
-    idmap_id = results["id"]
+    idmap_id = int(results["id"])
     certificate_id = results["certificate"]["id"]
 
 

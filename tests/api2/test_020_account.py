@@ -21,7 +21,7 @@ def delete_group_delete_users(delete_users):
     })
 
     results = call(f"user.query", [["id", "=", user_id]])
-    group_id = results["group"]["id"]
+    group_id = results[0]["group"]["id"]
 
     call("group.delete", group_id, {"delete_users": delete_users})
 
