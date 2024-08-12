@@ -622,7 +622,7 @@ class ShellWorkerThread(threading.Thread):
         super(ShellWorkerThread, self).__init__(daemon=True)
 
     def get_command(self, username, as_root, options):
-        allowed_options = ('vm_id',)
+        allowed_options = ('vm_id', 'app_name')
         if all(options.get(k) for k in allowed_options):
             raise CallError(f'Only one option is supported from {", ".join(allowed_options)}')
 
@@ -630,6 +630,15 @@ class ShellWorkerThread(threading.Thread):
             command = [
                 '/usr/bin/virsh', '-c', 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock',
                 'console', f'{options["vm_data"]["id"]}_{options["vm_data"]["name"]}'
+            ]
+
+            if not as_root:
+                command = ['/usr/bin/sudo', '-H', '-u', username] + command
+
+            return command, not as_root
+        elif options.get('app_name'):
+            command = [
+                '/usr/bin/docker', 'exec', '-it', options['container_id'], options.get('command', '/bin/bash'),
             ]
 
             if not as_root:
@@ -817,6 +826,13 @@ class ShellApplication(object):
                 options = data.get('options', {})
                 if options.get('vm_id'):
                     options['vm_data'] = await self.middleware.call('vm.get_instance', options['vm_id'])
+                if options.get('app_name'):
+                    if not options.get('container_id'):
+                        raise CallError('Container id must be specified')
+                    if options['container_id'] not in await self.middleware.call(
+                        'app.container_console_choices', options['app_name']
+                    ):
+                        raise CallError('Provided container id is not valid')
 
                 # By default we want to run virsh with user's privileges and assume all "permission denied"
                 # errors this can cause, unless the user has a sudo permission for all commands; in that case, let's
