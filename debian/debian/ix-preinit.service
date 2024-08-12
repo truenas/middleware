@@ -9,7 +9,7 @@ After=ix-zfs.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=midclt call -job initshutdownscript.execute_init_tasks PREINIT
+ExecStart=midclt call --job initshutdownscript.execute_init_tasks PREINIT
 StandardOutput=null
 StandardError=null
 
