@@ -16,6 +16,7 @@ from middlewared.utils.directoryservices.ipactl_constants import (
     IpaOperation,
 )
 from middlewared.utils.directoryservices.krb5 import kerberos_ticket, ktutil_list_impl
+from middlewared.utils.directoryservices.krb5_error import KRB5ErrCode, KRB5Error
 from middlewared.utils.lang import undefined
 from middlewared.service_exception import CallError
 from tempfile import NamedTemporaryFile
@@ -46,6 +47,28 @@ def _parse_ipa_response(resp: subprocess.CompletedProcess) -> dict:
 
 class IPAJoinMixin:
     __ipa_smb_domain = undefined
+
+    def _ipa_remove_kerberos_cert_config(self, job: Job | None, ldap_config: dict | None):
+        if ldap_config is None:
+            ldap_config = self.middleware.call_sync('ldap.config')
+
+        if job:
+            job.set_progress(80, 'Removing kerberos configuration.')
+
+        if ldap_config['kerberos_realm']:
+            self.middleware.call_sync('kerberos.realm.delete', ldap_config['kerberos_realm'])
+
+        if (host_kt := self.middleware.call_sync('kerberos.keytab.query', [
+            ['name', '=', ipa_constants.IpaConfigName.IPA_HOST_KEYTAB.value]
+        ])):
+            self.middleware.call_sync('kerberos.keytab.delete', host_kt[0]['id'])
+
+        if job:
+            job.set_progress(90, 'Removing IPA certificate.')
+        if (ipa_cert := self.middleware.call_sync('certificateauthority.query', [
+            ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
+        ])):
+            self.middleware.call_sync('certificateauthority.delete', ipa_cert[0]['id'])
 
     def _ipa_leave(self, job: Job, ds_type: DSType, domain: str):
         """
@@ -92,20 +115,7 @@ class IPAJoinMixin:
 
         ldap_update_job.wait_sync()
 
-        job.set_progress(80, 'Removing kerberos configuration.')
-        if ldap_config['kerberos_realm']:
-            self.middleware.call_sync('kerberos.realm.delete', ldap_config['kerberos_realm'])
-
-        if (host_kt := self.middleware.call_sync('kerberos.keytab.query', [
-            ['name', '=', ipa_constants.IpaConfigName.IPA_HOST_KEYTAB.value]
-        ])):
-            self.middleware.call_sync('kerberos.keytab.delete', host_kt[0]['id'])
-
-        job.set_progress(90, 'Removing IPA certificate.')
-        if (ipa_cert := self.middleware.call_sync('certificateauthority.query', [
-            ['name', '=', ipa_constants.IpaConfigName.IPA_CACERT.value]
-        ])):
-            self.middleware.call_sync('certificateauthority.delete', ipa_cert[0]['id'])
+        self._ipa_remove_kerberos_cert_config(job, ldap_config)
 
         job.set_progress(95, 'Removing privileges.')
         if (priv := self.middleware.call_sync('privilege.query', [
@@ -492,7 +502,39 @@ class IPAJoinMixin:
         self.middleware.call_sync('kerberos.kdestroy')
 
         # GSS-TSIG in IPA domain requires using our HOST kerberos principal
-        self.middleware.call_sync('kerberos.start')
+        try:
+            self.middleware.call_sync('kerberos.start')
+        except KRB5Error as err:
+            match err.krb5_code:
+                case KRB5ErrCode.KRB5_REALM_UNKNOWN:
+                    # DNS is broken in the IPA domain and so we need to roll back our config
+                    # changes.
+                    self._ipa_remove_kerberos_cert_config(None, None)
+                    self.logger.warning(
+                        'Unable to resolve kerberos realm via DNS. This may indicate misconfigured '
+                        'nameservers on the TrueNAS server or a misconfigured IPA domain.', exc_info=True
+                    )
+                    self.middleware.call('datastore.update', 'directoryservice.ldap', ldap_config['id'], {
+                        'ldap_kerberos_realm': None,
+                        'ldap_kerberos_principal': '',
+                        'ldap_bindpw': ldap_config['bindpw']
+                    })
+
+                    # remove any configuration files we have written
+                    for p in (
+                        ipa_constants.IPAPath.DEFAULTCONF.path,
+                        ipa_constants.IPAPath.CACERT.path
+                    ):
+                        try:
+                            os.remove(p)
+                        except FileNotFoundError:
+                            pass
+                case _:
+                    # Log the complete error message so that we have opportunity to improve error
+                    # handling for weird kerberos errors.
+                    self.logger.error('Failed to obtain kerberos ticket with host keytab.', exc_info=True)
+
+            raise err
 
         # Verify that starting kerberos got the correct cred
         cred = self.middleware.call_sync('kerberos.check_ticket')
