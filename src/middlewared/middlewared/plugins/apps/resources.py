@@ -46,6 +46,24 @@ class AppService(Service):
             )['active_workloads']['container_details'] if (options['alive_only'] is False or c['state'] == 'running')
         }
 
+    @accepts(Str('app_name'), roles=['APPS_READ'])
+    @returns(Dict(
+        additional_attrs=True,
+        example={
+            'afb901dc53a29016c385a9de43f089117e399622c042674f82c10c911848baba': {
+                'service_name': 'jellyfin',
+                'image': 'jellyfin/jellyfin:10.9.7',
+                'state': 'running',
+                'id': 'afb901dc53a29016c385a9de43f089117e399622c042674f82c10c911848baba',
+            }
+        }
+    ))
+    async def container_console_choices(self, app_name):
+        """
+        Returns container console choices for `app_name`.
+        """
+        return await self.container_ids(app_name, {'alive_only': True})
+
     @accepts(roles=['APPS_READ'])
     @returns(List(items=[Ref('certificate_entry')]))
     async def certificate_choices(self):

@@ -830,7 +830,7 @@ class ShellApplication(object):
                     if not options.get('container_id'):
                         raise CallError('Container id must be specified')
                     if options['container_id'] not in await self.middleware.call(
-                        'app.container_ids', options['app_name']
+                        'app.container_console_choices', options['app_name']
                     ):
                         raise CallError('Provided container id is not valid')
 
