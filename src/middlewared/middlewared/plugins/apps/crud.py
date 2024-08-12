@@ -261,12 +261,13 @@ class AppService(CRUDService):
         """
         Update `app_name` app with new configuration.
         """
-        app = self.update_internal(job, self.get_instance__sync(app_name), data)
+        app = self.get_instance__sync(app_name)
+        app = self.update_internal(job, app, data, trigger_compose=app['state'] != 'STOPPED')
         self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
         return app
 
     @private
-    def update_internal(self, job, app, data, progress_keyword='Update'):
+    def update_internal(self, job, app, data, progress_keyword='Update', trigger_compose=True):
         app_name = app['id']
         if app['custom_app']:
             if progress_keyword == 'Update':
@@ -295,9 +296,11 @@ class AppService(CRUDService):
         if app['custom_app'] is False:
             # TODO: Eventually we would want this to be executed for custom apps as well
             update_app_metadata_for_portals(app_name, app['version'])
-        job.set_progress(60, 'Configuration updated, updating docker resources')
+        job.set_progress(60, 'Configuration updated')
         self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=self.get_instance__sync(app_name))
-        compose_action(app_name, app['version'], 'up', force_recreate=True, remove_orphans=True)
+        if trigger_compose:
+            job.set_progress(70, 'Updating docker resources')
+            compose_action(app_name, app['version'], 'up', force_recreate=True, remove_orphans=True)
 
         job.set_progress(100, f'{progress_keyword} completed for {app_name!r}')
         return self.get_instance__sync(app_name)
