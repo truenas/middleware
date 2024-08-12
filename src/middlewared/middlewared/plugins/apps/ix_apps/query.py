@@ -167,10 +167,10 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
                 # This will happen for ports which are not exposed on the host side
                 continue
             port_config = {
-                'container_port': container_port.split('/')[0],
+                'container_port': int(container_port.split('/')[0]),
                 'protocol': container_port.split('/')[1],
                 'host_ports': [
-                    {'host_port': host_port['HostPort'], 'host_ip': host_port['HostIp']}
+                    {'host_port': int(host_port['HostPort']), 'host_ip': host_port['HostIp']}
                     for host_port in host_config
                 ]
             }
