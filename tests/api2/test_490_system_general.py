@@ -10,59 +10,38 @@ import os
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET, SSH_TEST
-from auto_config import user, password
 TIMEZONE = "America/New_York"
 
 
 def test_01_get_system_general():
-    results = GET("/system/general/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict)
-
+    call("system.general.config")
 
 def test_02_get_system_general_language_choices():
-    results = GET("/system/general/language_choices/")
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert isinstance(data, dict), data
+    call("system.general.language_choices")
 
 
 def test_03_get_system_general_timezone_choices():
-    results = GET("/system/general/timezone_choices/")
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert isinstance(data, dict), data
-    assert TIMEZONE in data
+    results = call("system.general.timezone_choices")
+    assert TIMEZONE in results
 
 
 def test_04_get_system_general_country_choices():
-    results = GET("/system/general/country_choices/")
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert isinstance(data, dict), data
+    call("system.general.country_choices")
 
 
 def test_05_get_system_general_kbdmap_choices():
-    results = GET("/system/general/kbdmap_choices/")
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert isinstance(data, dict), data
+    call("system.general.kbdmap_choices")
 
 
 def test_06_Setting_timezone():
-    results = PUT("/system/general/", {"timezone": TIMEZONE})
-    assert results.status_code == 200, results.text
+    call("system.general.update", {"timezone": TIMEZONE})
 
 
 def test_07_Checking_timezone_using_api():
-    results = GET("/system/general/")
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert data['timezone'] == TIMEZONE
+    results = call("system.general.config")
+    assert results['timezone'] == TIMEZONE
 
 
 def test_08_Checking_timezone_using_ssh(request):
-    results = SSH_TEST(f'diff /etc/localtime /usr/share/zoneinfo/{TIMEZONE}',
-                       user, password)
+    results = ssh(f'diff /etc/localtime /usr/share/zoneinfo/{TIMEZONE}')
     assert results['result'] is True, results
