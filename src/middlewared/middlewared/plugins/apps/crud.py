@@ -222,6 +222,7 @@ class AppService(CRUDService):
             new_values = add_context_to_values(app_name, new_values, app_version_details['app_metadata'], install=True)
             update_app_config(app_name, version, new_values)
             update_app_metadata(app_name, app_version_details, migrated_app)
+            self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
             # At this point the app exists
             self.middleware.send_event('app.query', 'ADDED', id=app_name, fields=self.get_instance__sync(app_name))
 
@@ -237,11 +238,11 @@ class AppService(CRUDService):
                 with contextlib.suppress(Exception):
                     method(*args, **kwargs)
 
+            self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
             self.middleware.send_event('app.query', 'REMOVED', id=app_name)
             raise e from None
         else:
             if dry_run is False:
-                self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
                 job.set_progress(100, f'{app_name!r} installed successfully')
                 return self.get_instance__sync(app_name)
 
