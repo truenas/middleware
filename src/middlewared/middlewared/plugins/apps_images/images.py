@@ -47,7 +47,7 @@ class AppImageService(CRUDService):
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
 
-        update_cache = self.middleware.call_sync('app.image.op.image_update_cache')
+        update_cache = self.middleware.call_sync('app.image.op.get_update_cache')
         parse_all_tags = options['extra'].get('parse_tags')
         images = []
         for image in list_images():
@@ -132,5 +132,5 @@ class AppImageService(CRUDService):
         self.middleware.call_sync('docker.state.validate')
         image = self.get_instance__sync(image_id)
         delete_image(image_id, options['force'])
-        self.middleware.call_sync('app.image.op.remove_image_from_cache', image)
+        self.middleware.call_sync('app.image.op.remove_from_cache', image)
         return True

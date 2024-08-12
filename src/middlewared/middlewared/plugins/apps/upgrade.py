@@ -35,6 +35,12 @@ class AppService(Service):
         if app['upgrade_available'] is False:
             raise CallError(f'No upgrade available for {app_name!r}')
 
+        if app['custom_app']:
+            job.set_progress(20, 'Pulling app images')
+            self.middleware.call_sync('app.pull_images_internal', app_name, app, {'redeploy': True})
+            job.set_progress(100, 'App successfully upgraded and redeployed')
+            return
+
         job.set_progress(0, f'Retrieving versions for {app_name!r} app')
         versions_config = self.middleware.call_sync('app.get_versions', app, options)
         upgrade_version = versions_config['specified_version']
@@ -71,7 +77,9 @@ class AppService(Service):
             'app.query', 'CHANGED', id=app_name, fields=self.middleware.call_sync('app.get_instance', app_name)
         )
         try:
-            compose_action(app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True)
+            compose_action(
+                app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True, pull_images=True,
+            )
         finally:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
 

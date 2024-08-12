@@ -97,6 +97,7 @@ class AppService(CRUDService):
         kwargs = {
             'host_ip': extra.get('host_ip') or self.middleware.call_sync('interface.websocket_local_ip', app=app),
             'retrieve_config': extra.get('retrieve_config', False),
+            'image_update_cache': self.middleware.call_sync('app.image.op.get_update_cache', True),
         }
         if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
             kwargs['specific_app'] = filters[0][2]

@@ -8,9 +8,9 @@ from .utils import PROJECT_PREFIX, run
 
 
 def compose_action(
-    app_name: str, app_version: str, action: typing.Literal['up', 'down'], *,
+    app_name: str, app_version: str, action: typing.Literal['up', 'down', 'pull'], *,
     force_recreate: bool = False, remove_orphans: bool = False, remove_images: bool = False,
-    remove_volumes=False,
+    remove_volumes: bool = False, pull_images: bool = False,
 ):
     compose_files = list(itertools.chain(
         *[('-f', item) for item in get_rendered_templates_of_app(app_name, app_version)]
@@ -32,6 +32,8 @@ def compose_action(
             compose_action(app_name, app_version, 'down', remove_orphans=True)
         if remove_orphans:
             args.append('--remove-orphans')
+        if pull_images:
+            args.append('--pull=always')
     elif action == 'down':
         if remove_orphans:
             args.append('--remove-orphans')
@@ -39,6 +41,8 @@ def compose_action(
             args.extend(['--rmi', 'all'])
         if remove_volumes:
             args.append('-v')
+    elif action == 'pull':
+        args.extend(['--policy', 'always'])
     else:
         raise CallError(f'Invalid action {action!r} for app {app_name!r}')
 

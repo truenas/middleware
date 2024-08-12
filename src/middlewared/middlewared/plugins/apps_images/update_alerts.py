@@ -19,8 +19,10 @@ class ContainerImagesService(Service, ContainerRegistryClientMixin):
 
     IMAGE_CACHE = defaultdict(lambda: False)
 
-    async def image_update_cache(self):
-        return self.IMAGE_CACHE
+    async def get_update_cache(self, normalized=False):
+        return {
+            normalize_reference(i)['complete_tag']: v for i, v in self.IMAGE_CACHE.items()
+        } if normalized else self.IMAGE_CACHE
 
     def normalize_reference(self, reference: str) -> dict:
         return normalize_reference(reference=reference)
@@ -34,7 +36,7 @@ class ContainerImagesService(Service, ContainerRegistryClientMixin):
                 except CallError as e:
                     logger.error(str(e))
 
-    async def retrieve_image_digest(self, reference: str):
+    async def retrieve_digest(self, reference: str):
         repo_digests = []
         parsed_reference = self.normalize_reference(reference=reference)
         with contextlib.suppress(CallError):
@@ -70,6 +72,6 @@ class ContainerImagesService(Service, ContainerRegistryClientMixin):
             for digest in image_details['repo_digests']
         ) if image_details['repo_digests'] else False
 
-    async def remove_image_from_cache(self, image):
+    async def remove_from_cache(self, image):
         for tag in image['repo_tags']:
             self.IMAGE_CACHE.pop(tag, None)
