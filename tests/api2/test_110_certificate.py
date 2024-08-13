@@ -5,13 +5,9 @@
 
 import pytest
 import re
-import sys
-import os
 
 from time import sleep
 from middlewared.test.integration.utils import call
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 
 try:
     from config import (
@@ -24,10 +20,6 @@ except ImportError:
     Reason = "LDAP* variable are not setup in config.py"
     # comment pytestmark for development testing with --dev-test
     pytestmark = pytest.mark.skipif(True, reason=Reason)
-
-
-def test_01_get_certificate_query():
-    call("certificate.query")
 
 
 def test_create_idmap_certificate():
@@ -54,18 +46,18 @@ def test_create_idmap_certificate():
     certificate_id = results["certificate"]["id"]
 
 
-def test_02_delete_used_certificate():
+def test_delete_used_certificate():
     global job_id
     results = call("certificate.delete", certificate_id, True)
     job_id = int(results)
 
 
-def test_03_verify_certificate_delete_failed():
+def test_verify_certificate_delete_failed():
     while True:
         get_job = call("core.get_jobs", [["id", "=", job_id]])
         job_status = get_job[0]
         if job_status["state"] in ("RUNNING", "WAITING"):
-            sleep(5)
+            sleep(1)
         else:
             assert job_status["state"] == "FAILED", get_job
             assert bool(re.search(
@@ -74,5 +66,5 @@ def test_03_verify_certificate_delete_failed():
             break
 
 
-def test_04_delete_idmap():
+def test_delete_idmap():
     call("idmap.delete", idmap_id)

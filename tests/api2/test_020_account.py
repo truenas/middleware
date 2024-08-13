@@ -1,14 +1,5 @@
-#!/usr/bin/env python3
-
-# Author: Eric Turgeon
-# License: BSD
-# Location for tests into REST API of FreeNAS
-
-import sys
-import os
-from middlewared.test.integration.utils import call, ssh
-apifolder = os.getcwd()
-sys.path.append(apifolder)
+from middlewared.test.integration.utils import call
+import pytest
 
 
 def delete_group_delete_users(delete_users):
@@ -28,17 +19,14 @@ def delete_group_delete_users(delete_users):
     return user_id, group_id
 
 
-def test_01_delete_group_delete_users():
-    user_id, group_id = delete_group_delete_users(True)
-
-    results = call(f"user.query", [["id", "=", user_id]])
-    assert results == []
-
-
-def test_01_delete_group_no_delete_users():
-    user_id, group_id = delete_group_delete_users(False)
+@pytest.mark.parametrize("delete_users", [True, False])
+def test_delete_group(delete_users):
+    user_id, group_id = delete_group_delete_users(delete_users)
 
     results = call("user.query", [["id", "=", user_id]])
-    assert results[0]["group"]["bsdgrp_group"] in ["nogroup", "nobody"]
-
-    results = call("user.delete", user_id)
+    if delete_users:
+        results = call("user.query", [["id", "=", user_id]])
+        assert results == []
+    else:
+        assert results[0]["group"]["bsdgrp_group"] in ["nogroup", "nobody"]
+        results = call("user.delete", user_id)
