@@ -1,7 +1,7 @@
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.mock import mock
 from middlewared.test.integration.utils.mock_db import mock_table_contents
-from middlewared.utils.time_utils import utc_now
+from middlewared.test.integration.utils.time_utils import utc_now
 
 
 DISK_TEMPLATE = {
