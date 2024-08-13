@@ -5,7 +5,7 @@
 
 import os
 
-from middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import utc_now
 
 
 WATCHDOG_ALERT_FILE = "/data/sentinels/.watchdog-alert"
@@ -49,7 +49,7 @@ def setup_impl(middleware):
     if not middleware.call_sync("core.is_starting_during_boot") or not middleware.call_sync("failover.licensed"):
         return
 
-    now = time_now().strftime("%c")
+    now = utc_now().strftime("%c")
     fqdn = get_fqdn(middleware)
     watchdog_time, fenced_time = get_sentinel_files_time_and_clean_them_up(middleware)
     if watchdog_time and (not fenced_time or watchdog_time > fenced_time):

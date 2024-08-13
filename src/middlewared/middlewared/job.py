@@ -15,7 +15,7 @@ import threading
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.pipe import Pipes
 from middlewared.utils.privilege import credential_is_limited_to_own_jobs
-from middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import utc_now
 
 
 logger = logging.getLogger(__name__)
@@ -290,7 +290,7 @@ class Job:
             'extra': None,
         }
         self.internal_data = {}
-        self.time_started = time_now()
+        self.time_started = utc_now()
         self.time_finished = None
         self.loop = self.middleware.loop
         self.future = None
@@ -351,7 +351,7 @@ class Job:
         assert self.state not in (State.SUCCESS, State.FAILED, State.ABORTED)
         self.state = State.__members__[state]
         if self.state in (State.SUCCESS, State.FAILED, State.ABORTED):
-            self.time_finished = time_now()
+            self.time_finished = utc_now()
 
     def set_description(self, description):
         """

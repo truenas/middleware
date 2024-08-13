@@ -18,7 +18,7 @@ from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils.origin import UnixSocketOrigin
 from middlewared.utils.crypto import generate_token
-from middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import utc_now
 
 
 class TokenManager:
@@ -155,7 +155,7 @@ class Session:
         return {
             "origin": str(self.app.origin),
             **dump_credentials(self.credentials),
-            "created_at": time_now() - timedelta(seconds=time.monotonic() - self.created_at),
+            "created_at": utc_now() - timedelta(seconds=time.monotonic() - self.created_at),
         }
 
 

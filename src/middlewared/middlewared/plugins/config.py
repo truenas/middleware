@@ -10,7 +10,7 @@ import tempfile
 from middlewared.schema import accepts, Bool, Dict, returns
 from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
-from middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import utc_now
 from middlewared.utils.db import FREENAS_DATABASE
 
 CONFIG_FILES = {
@@ -258,7 +258,7 @@ class ConfigService(Service):
             except OSError:
                 pass
 
-        today = time_now().strftime("%Y%m%d")
+        today = utc_now().strftime("%Y%m%d")
 
         newfile = os.path.join(
             systemdataset["path"],

@@ -11,7 +11,7 @@ from cryptography.hazmat.primitives.asymmetric import dsa, ec, ed25519, ed448, r
 from OpenSSL import crypto
 from typing import Optional, Union
 
-from middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import utc_now
 
 from .utils import RE_CERTIFICATE
 
@@ -32,7 +32,7 @@ def load_certificate(certificate: str, get_issuer: bool = False) -> dict:
         cert = crypto.load_certificate(crypto.FILETYPE_PEM, certificate)
         from_date = parse_cert_date_string(cert.get_notBefore())
         until_date = parse_cert_date_string(cert.get_notAfter())
-        expired = time_now() > datetime.datetime.strptime(
+        expired = utc_now() > datetime.datetime.strptime(
             parse_cert_date_string(cert.get_notAfter()), '%a %b %d %H:%M:%S %Y'
         )
     except (crypto.Error, OverflowError):

@@ -16,7 +16,7 @@ from assets.websocket.service import (ensure_service_disabled,
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
-from middlewared.utils.time import time_now
+from middlewared.utils.time_utils import utc_now
 from pytest_dependency import depends
 from zeroconf import ServiceBrowser, ServiceStateChange, Zeroconf
 
@@ -110,7 +110,7 @@ def wait_for_avahi_startup(interval=5, timeout=300):
                 if completion in line:
                     # Did we just complete
                     finish_plus_five = (datetime.strptime(line.split()[2], "%H:%M:%S") + timedelta(seconds=5)).time()
-                    if finish_plus_five > time_now().time():
+                    if finish_plus_five > utc_now().time():
                         # Wait 5 seconds to ensure services are published
                         sleep(5)
                     return True

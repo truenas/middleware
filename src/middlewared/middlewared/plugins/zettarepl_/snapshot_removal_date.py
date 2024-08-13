@@ -5,7 +5,7 @@ from dateutil.tz import tzlocal
 import isodate
 
 from middlewared.service import Service
-from middlewared.utils.time_utils import time_now
+from middlewared.utils.time_utils import utc_now
 
 from zettarepl.snapshot.list import list_snapshots
 from zettarepl.snapshot.name import parse_snapshot_name
@@ -58,7 +58,7 @@ class ZettareplService(Service):
         zettarepl_task = PeriodicSnapshotTask.from_data(None, self.middleware.call_sync(
             "zettarepl.periodic_snapshot_task_definition", task,
         ))
-        snapshot_owner = PeriodicSnapshotTaskSnapshotOwner(time_now(), zettarepl_task)
+        snapshot_owner = PeriodicSnapshotTaskSnapshotOwner(utc_now(), zettarepl_task)
 
         task_snapshots = set()
         for snapshot in snapshots:
@@ -114,7 +114,7 @@ class ZettareplService(Service):
             for task in self.middleware.call_sync("pool.snapshottask.query", [["enabled", "=", True]])
         ]
         snapshot_owners = [
-            PeriodicSnapshotTaskSnapshotOwner(time_now(), zettarepl_task)
+            PeriodicSnapshotTaskSnapshotOwner(utc_now(), zettarepl_task)
             for zettarepl_task in zettarepl_tasks
         ]
 
