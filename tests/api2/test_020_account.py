@@ -1,5 +1,6 @@
-from middlewared.test.integration.utils import call
 import pytest
+
+from middlewared.test.integration.utils import call
 
 
 def delete_group_delete_users(delete_users):
