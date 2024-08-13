@@ -1315,6 +1315,9 @@ class TestNFSops:
         '''
         assert start_nfs is True
 
+        # Multiple restarts cause systemd failures.  Reset the systemd counters.
+        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
+
         choices = call("nfs.bindip_choices")
         assert truenas_server.ip in choices
 
