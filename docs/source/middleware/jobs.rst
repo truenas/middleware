@@ -46,7 +46,7 @@ From midclt
 ===========
 
 Calling a job method will immediately print its job ID and exit. To wait for a job to complete (and observe its progress
-meanwhile) use `-job` parameter. At the end the job return value will be printed:
+meanwhile) use `--job` parameter. At the end the job return value will be printed:
 
 .. code-block:: text
 
