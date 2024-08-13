@@ -966,6 +966,6 @@ class LDAPService(ConfigService):
             {'ccache': krb5ccache.SYSTEM.name},
             False
         ):
-            await self.middleware.call('kerberos.kdestory')
+            await self.middleware.call('kerberos.kdestroy')
 
         job.set_progress(100, 'LDAP directory service stopped.')

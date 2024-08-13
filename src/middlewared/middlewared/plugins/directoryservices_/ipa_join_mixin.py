@@ -282,14 +282,6 @@ class IPAJoinMixin:
                 'cifs_srv_workgroup': domain_info['netbios_name']
             })
 
-            # We must write the password encoded in the SMB keytab
-            # to secrets.tdb at this point.
-            self.middleware.call_sync(
-                'directoryservices.secrets.set_ipa_secret',
-                domain_info['netbios_name'],
-                base64.b64encode(password.encode())
-            )
-
             # regenerate our SMB config to apply our new domain
             self.middleware.call_sync('etc.generate', 'smb')
 
@@ -300,6 +292,14 @@ class IPAJoinMixin:
 
             if setsid.returncode:
                 raise CallError(f'Failed to set domain SID: {setsid.stderr.decode()}')
+
+            # We must write the password encoded in the SMB keytab
+            # to secrets.tdb at this point.
+            self.middleware.call_sync(
+                'directoryservices.secrets.set_ipa_secret',
+                domain_info['netbios_name'],
+                base64.b64encode(password.encode())
+            )
 
             self.middleware.call_sync('directoryservices.secrets.backup')
 
