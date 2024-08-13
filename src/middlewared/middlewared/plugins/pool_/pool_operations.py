@@ -1,6 +1,7 @@
+from datetime import datetime
+
 from middlewared.schema import accepts, Bool, Int, returns, Str
 from middlewared.service import item_method, job, private, Service
-from middlewared.utils.time_utils import utc_now
 
 
 class PoolService(Service):
@@ -21,7 +22,7 @@ class PoolService(Service):
 
         higher_prio = False
         weekdays = map(lambda x: int(x), resilver['weekday'].split(','))
-        now = utc_now()
+        now = datetime.now()
         now_t = now.time()
         # end overlaps the day
         if resilver['begin'] > resilver['end']:

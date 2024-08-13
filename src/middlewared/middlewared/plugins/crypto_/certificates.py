@@ -129,7 +129,7 @@ class CertificateService(CRUDService):
 
         if cert['until'] and datetime.datetime.strptime(
             cert['until'], '%a %b  %d %H:%M:%S %Y'
-        ) < utc_now():
+        ) < datetime.datetime.now():
             verrors.add(
                 schema_name,
                 f'{cert["name"]!r} has expired (it was valid until {cert["until"]!r})'

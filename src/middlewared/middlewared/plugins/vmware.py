@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime
 import errno
 import socket
 import ssl
@@ -414,7 +415,7 @@ class VMWareService(CRUDService):
         # Generate a helpful description that is visible on the VMWare side.  Since we
         # are going to be creating VMWare snaps, if one gets left dangling this will
         # help determine where it came from.
-        vmsnapdescription = f"{utc_now().strftime('%Y-%m-%d %H:%M:%S')} TrueNAS Created Snapshot"
+        vmsnapdescription = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} TrueNAS Created Snapshot"
 
         # We keep track of snapshots per VMWare "task" because we are going to iterate
         # over all the VMWare tasks for a given ZFS filesystem, do all the VMWare snapshotting

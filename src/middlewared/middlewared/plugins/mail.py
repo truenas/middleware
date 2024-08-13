@@ -4,7 +4,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.plugins.system.product import PRODUCT_NAME
 from middlewared.utils import BRAND
 from middlewared.utils.mako import get_template
-from middlewared.utils.time_utils import utc_now
 from middlewared.validators import Email
 
 from collections import deque
@@ -284,12 +283,12 @@ class MailService(ConfigService):
 
         if interval > timedelta():
             channelfile = f'/tmp/.msg.{message.get("channel") or BRAND.lower()}'
-            last_update = utc_now() - interval
+            last_update = datetime.now() - interval
             try:
                 last_update = datetime.fromtimestamp(os.stat(channelfile).st_mtime)
             except OSError:
                 pass
-            timediff = utc_now() - last_update
+            timediff = datetime.now() - last_update
             if (timediff >= interval) or (timediff < timedelta()):
                 # Make sure mtime is modified
                 # We could use os.utime but this is simpler!

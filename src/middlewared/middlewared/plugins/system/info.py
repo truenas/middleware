@@ -10,7 +10,6 @@ from datetime import datetime, timedelta, timezone
 from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils import sw_buildtime
-from middlewared.utils.time_utils import utc_now
 
 
 RE_CPU_MODEL = re.compile(r'^model name\s*:\s*(.*)', flags=re.M)
@@ -169,4 +168,4 @@ class SystemService(Service):
         threshold = 300.0  # seconds (Microsoft AD is 5mins, so if it's good enough for them, good enough for us)
         for ntp in filter(lambda x: x['active'], self.middleware.call_sync('system.ntpserver.peers')):
             if abs(ntp['offset']) <= threshold:
-                return utc_now(naive=False)
+                return datetime.now(timezone.utc)
