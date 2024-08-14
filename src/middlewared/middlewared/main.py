@@ -317,7 +317,10 @@ class Application:
         # Run callbacks registered in plugins for on_close
         for method in self.__callbacks['on_close']:
             try:
-                method(self)
+                if asyncio.iscoroutinefunction(method):
+                    await method(self)
+                else:
+                    await self.middleware.run_in_thread(method, self)
             except Exception:
                 self.logger.error('Failed to run on_close callback.', exc_info=True)
 
@@ -329,7 +332,10 @@ class Application:
         # Run callbacks registered in plugins for on_message
         for method in self.__callbacks['on_message']:
             try:
-                method(self, message)
+                if asyncio.iscoroutinefunction(method):
+                    await method(self, message)
+                else:
+                    await self.middleware.run_in_thread(method, self, message)
             except Exception:
                 self.logger.error('Failed to run on_message callback.', exc_info=True)
 

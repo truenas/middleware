@@ -131,7 +131,7 @@ class SessionManager:
                 "error": None,
             }, True)
 
-    def logout(self, app):
+    async def logout(self, app):
         session = self.sessions.pop(app.session_id, None)
 
         if session is not None:
@@ -140,9 +140,9 @@ class SessionManager:
 
             if not is_internal_session(session):
                 if was_root_session:
-                    self.middleware.call_sync("alert.oneshot_delete", "AdminSessionActive")
+                    await self.middleware.call("alert.oneshot_delete", "AdminSessionActive")
                     if (root_sessions := self.root_sessions()):
-                        self.middleware.call_sync(
+                        await self.middleware.call(
                             "alert.oneshot_create",
                             "AdminSessionActive",
                             {'sessions': ', '.join(root_sessions)}
@@ -152,20 +152,20 @@ class SessionManager:
 
         app.authenticated = False
 
-    def _app_on_message(self, app, message):
+    async def _app_on_message(self, app, message):
         session = self.sessions.get(app.session_id)
         if session is None:
             app.authenticated = False
             return
 
         if not session.credentials.is_valid():
-            self.logout(app)
+            await self.logout(app)
             return
 
         session.credentials.notify_used()
 
-    def _app_on_close(self, app):
-        self.logout(app)
+    async def _app_on_close(self, app):
+        await self.logout(app)
 
 
 class Session:
@@ -534,7 +534,7 @@ class AuthService(Service):
         Deauthenticates an app and if a token exists, removes that from the
         session.
         """
-        self.session_manager.logout(app)
+        await self.session_manager.logout(app)
         return True
 
     @no_authz_required
