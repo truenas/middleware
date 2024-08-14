@@ -1,6 +1,5 @@
-import datetime
-
 from middlewared.service import periodic, private, Service
+from middlewared.utils.time_utils import utc_now
 
 from .query_utils import get_ca_chain
 
@@ -24,7 +23,7 @@ class CertificateAuthorityService(Service):
                 'datastore.update',
                 datastore,
                 cert['id'], {
-                    'revoked_date': datetime.datetime.utcnow()
+                    'revoked_date': utc_now()
                 },
                 {'prefix': 'cert_'}
             )

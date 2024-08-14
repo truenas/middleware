@@ -4,12 +4,13 @@ import os
 import random
 import subprocess
 from collections import defaultdict
-from datetime import datetime
 
 import aiohttp
 
 from middlewared.service import Service
 from middlewared.utils.mount import getmntinfo
+from middlewared.utils.time_utils import utc_now
+
 
 USAGE_URL = 'https://usage.truenas.com/submit'
 
@@ -51,7 +52,7 @@ class UsageService(Service):
                 break
 
         event_loop = asyncio.get_event_loop()
-        now = datetime.utcnow()
+        now = utc_now()
         scheduled = (
             now.replace(hour=23, minute=59, second=59) - now
         ).total_seconds() + random.uniform(1, 86400)
@@ -427,7 +428,7 @@ class UsageService(Service):
 
 
 async def setup(middleware):
-    now = datetime.utcnow()
+    now = utc_now()
     event_loop = asyncio.get_event_loop()
 
     await middleware.call('network.general.register_activity', 'usage', 'Anonymous usage statistics')

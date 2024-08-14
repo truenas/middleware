@@ -37,6 +37,8 @@ from middlewared.validators import validate_schema
 from middlewared.utils import bisect
 from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
+from middlewared.utils.time_utils import utc_now
+
 
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
 DEFAULT_POLICY = "IMMEDIATELY"
@@ -282,7 +284,7 @@ class AlertService(Service):
             "NEVER": AlertPolicy(lambda d: None),
         }
         for policy in self.policies.values():
-            policy.receive_alerts(datetime.utcnow(), self.alerts)
+            policy.receive_alerts(utc_now(), self.alerts)
 
     @private
     async def terminate(self):
@@ -503,7 +505,7 @@ class AlertService(Service):
         product_type = await self.middleware.call("alert.product_type")
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
-        now = datetime.utcnow()
+        now = utc_now()
         for policy_name, policy in self.policies.items():
             gone_alerts, new_alerts = policy.receive_alerts(now, self.alerts)
 
@@ -672,10 +674,10 @@ class AlertService(Service):
             if alert_source.failover_related and not run_failover_related:
                 continue
 
-            if not alert_source.schedule.should_run(datetime.utcnow(), self.alert_source_last_run[alert_source.name]):
+            if not alert_source.schedule.should_run(utc_now(), self.alert_source_last_run[alert_source.name]):
                 continue
 
-            self.alert_source_last_run[alert_source.name] = datetime.utcnow()
+            self.alert_source_last_run[alert_source.name] = utc_now()
 
             alerts_a = [alert
                         for alert in self.alerts
@@ -756,12 +758,12 @@ class AlertService(Service):
         else:
             alert.uuid = existing_alert.uuid
         if existing_alert is None:
-            alert.datetime = alert.datetime or datetime.utcnow()
+            alert.datetime = alert.datetime or utc_now()
             if alert.datetime.tzinfo is not None:
                 alert.datetime = alert.datetime.astimezone(timezone.utc).replace(tzinfo=None)
         else:
             alert.datetime = existing_alert.datetime
-        alert.last_occurrence = datetime.utcnow()
+        alert.last_occurrence = utc_now()
         if existing_alert is None:
             alert.dismissed = False
         else:
@@ -773,7 +775,7 @@ class AlertService(Service):
     def __should_expire_alert(self, alert):
         if issubclass(alert.klass, OneShotAlertClass):
             if alert.klass.expires_after is not None:
-                return alert.last_occurrence < datetime.utcnow() - alert.klass.expires_after
+                return alert.last_occurrence < utc_now() - alert.klass.expires_after
 
         return False
 
@@ -1161,8 +1163,8 @@ class AlertServiceService(CRUDService):
         test_alert = Alert(
             TestAlertClass,
             node=master_node,
-            datetime=datetime.utcnow(),
-            last_occurrence=datetime.utcnow(),
+            datetime=utc_now(),
+            last_occurrence=utc_now(),
             _uuid=str(uuid.uuid4()),
         )
 

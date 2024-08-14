@@ -2,6 +2,7 @@ import datetime
 import re
 
 from middlewared.async_validators import validate_country
+from middlewared.utils.time_utils import utc_now
 
 from .utils import RE_CERTIFICATE
 
@@ -111,7 +112,7 @@ async def _validate_common_attributes(middleware, data, verrors, schema_name):
 
     if lifetime := data.get('lifetime'):
         try:
-            datetime.datetime.utcnow() + datetime.timedelta(days=lifetime)
+            utc_now() + datetime.timedelta(days=lifetime)
         except OverflowError:
             verrors.add(
                 f'{schema_name}.lifetime',

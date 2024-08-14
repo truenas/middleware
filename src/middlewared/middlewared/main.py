@@ -29,6 +29,7 @@ from .utils.rate_limit.cache import RateLimitCache
 from .utils.service.call import ServiceCallMixin
 from .utils.syslog import syslog_message
 from .utils.threading import set_thread_name, IoThreadPoolExecutor, io_thread_pool_executor
+from .utils.time_utils import utc_now
 from .utils.type import copy_function_metadata
 from .webui_auth import addr_in_allowlist, WebUIAuth
 from .worker import main_worker, worker_init
@@ -47,7 +48,6 @@ import concurrent.futures.process
 import concurrent.futures.thread
 import contextlib
 from dataclasses import dataclass
-from datetime import datetime
 import errno
 import fcntl
 import functools
@@ -1573,7 +1573,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 "addr": app.origin.repr() if isinstance(app.origin, TCPIPOrigin) else "127.0.0.1",
                 "user": audit_username_from_session(app.authenticated_credentials),
                 "sess": app.session_id,
-                "time": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
+                "time": utc_now().strftime('%Y-%m-%d %H:%M:%S.%f'),
                 "svc": "MIDDLEWARE",
                 "svc_data": json.dumps({
                     "vers": {

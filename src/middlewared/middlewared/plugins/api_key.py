@@ -1,4 +1,3 @@
-from datetime import datetime
 import random
 import string
 from typing import Literal, TYPE_CHECKING
@@ -14,6 +13,7 @@ from middlewared.api.current import (
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.allowlist import Allowlist
+from middlewared.utils.time_utils import utc_now
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 
@@ -64,7 +64,7 @@ class ApiKeyService(CRUDService):
         key = self._generate()
         data["key"] = pbkdf2_sha256.encrypt(key)
 
-        data["created_at"] = datetime.utcnow()
+        data["created_at"] = utc_now()
 
         data["id"] = await self.middleware.call(
             "datastore.insert",

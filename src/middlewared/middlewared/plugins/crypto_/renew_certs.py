@@ -2,6 +2,7 @@ import datetime
 
 from .generate_self_signed import generate_self_signed_certificate
 from middlewared.service import job, periodic, private, Service
+from middlewared.utils.time_utils import utc_now
 
 
 class CertificateService(Service):
@@ -32,7 +33,7 @@ class CertificateService(Service):
             progress += (100 / len(certs))
 
             if not (
-                datetime.datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - datetime.datetime.utcnow()
+                datetime.datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - utc_now()
             ).days < cert.get('renew_days', 5):
                 continue
 

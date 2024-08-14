@@ -19,6 +19,7 @@ from middlewared.utils import Popen, run
 from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
+from middlewared.utils.time_utils import utc_now
 from middlewared.validators import validate_schema
 
 import aiorwlock
@@ -30,7 +31,6 @@ import configparser
 from Cryptodome import Random
 from Cryptodome.Cipher import AES
 from Cryptodome.Util import Counter
-from datetime import datetime
 import enum
 import json
 import logging
@@ -196,7 +196,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
                     cloud_sync["path"],
                 )
                 snapshot_name = (
-                    f"cloud_sync-{cloud_sync.get('id', 'onetime')}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+                    f"cloud_sync-{cloud_sync.get('id', 'onetime')}-{utc_now().strftime('%Y%m%d%H%M%S')}"
                 )
 
                 snapshot = {"dataset": dataset["name"], "name": snapshot_name}

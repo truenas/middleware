@@ -9,6 +9,7 @@ from middlewared.async_validators import resolve_hostname
 from middlewared.schema import accepts, Any, Bool, Dict, Int, Str, Password, Patch
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.time_utils import utc_now
 
 from pyVim import connect, task as VimTask
 from pyVmomi import vim, vmodl
@@ -702,7 +703,7 @@ class VMWareService(CRUDService):
         self.middleware.call_sync("datastore.update", "storage.vmwareplugin", id_, {
             "state": {
                 **state,
-                "datetime": datetime.utcnow(),
+                "datetime": utc_now(),
             },
         })
 
