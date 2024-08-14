@@ -925,6 +925,21 @@ class LDAPService(ConfigService):
                 # switch over to LDAP for our status updates and reporting
                 ds_type = DSType.LDAP
                 await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.JOINING.name)
+            except CallError as err:
+                # We may have a kerberos error encapsulated in CallError due to translation from job results
+                # In this case we also want to fall back to using legacy LDAP client compatibility.
+                # We will expand this whitelist as we determine there are more somewhat-recoverable KRB5 errors.
+                if not err.err_msg.startswith('[KRB5_REALM_UNKNOWN]'):
+                    raise err
+
+                await self.middleware.call(
+                    'alert.oneshot_create',
+                    'IPALegacyConfiguration',
+                    {'errmsg': str(err)}
+                )
+                # switch over to LDAP for our status updates and reporting
+                ds_type = DSType.LDAP
+                await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.JOINING.name)
 
         # We activate the IPA service while performing a domain join and so we should avoid
         # going thorugh the activation routine a second time
