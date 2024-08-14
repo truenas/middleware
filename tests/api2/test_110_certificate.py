@@ -17,8 +17,8 @@ except ImportError:
     pytestmark = pytest.mark.skipif(True, reason=Reason)
 
 
-def test_create_idmap_certificate():
-    global certificate_id, idmap_id
+def test_certificate():
+    # create certificate
     payload = {
         "name": "BOB",
         "range_low": 1000,
@@ -40,14 +40,11 @@ def test_create_idmap_certificate():
     idmap_id = int(results["id"])
     certificate_id = results["certificate"]["id"]
 
-
-def test_delete_used_certificate():
-    global job_id
+    # successful delete
     results = call("certificate.delete", certificate_id, True)
     job_id = int(results)
 
-
-def test_verify_certificate_delete_failed():
+    # failed delete
     while True:
         get_job = call("core.get_jobs", [["id", "=", job_id]])
         job_status = get_job[0]
@@ -60,6 +57,5 @@ def test_verify_certificate_delete_failed():
             )) is True, job_status["error"]
             break
 
-
-def test_delete_idmap():
+    # delete idmap
     call("idmap.delete", idmap_id)
