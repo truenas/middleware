@@ -1890,6 +1890,18 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     )
                     break
 
+                elif len(msg.data) > 65536:
+                    # WARNING: RFC5424 (syslog) specifies that SDATA of message
+                    # should never exceed 64 KiB. The default syslog-ng configuration
+                    # will not parse messages larger than this, hence, going above this
+                    # value can potentially break auditing (either locally or sending to
+                    # remote syslog server).
+                    await ws.close(
+                        code=WSCloseCode.MESSAGE_TOO_BIG,
+                        message='Max message length is 64 kB'.encode('utf-8'),
+                    )
+                    break
+
                 try:
                     message = json.loads(msg.data)
                 except ValueError as f:
