@@ -63,14 +63,11 @@ class iSCSITargetAuthCredentialService(CRUDService):
 
         verrors.check()
 
-        orig_peerusers = await self.middleware.call('iscsi.discoveryauth.mutual_chap_peerusers')
-
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('iscsi.discoveryauth.recalc_mutual_chap_alert', orig_peerusers)
         await self._service_change('iscsitarget', 'reload')
 
         return await self.get_instance(data['id'])
@@ -98,20 +95,17 @@ class iSCSITargetAuthCredentialService(CRUDService):
         verrors = ValidationErrors()
         await self.validate(new, 'iscsi_auth_update', verrors)
         if new['tag'] != old['tag'] and not await self.query([['tag', '=', old['tag']], ['id', '!=', id_]]):
-            usages = await self.is_in_use(id_)
+            usages = await self.is_in_use_by_portals_targets(id_)
             if usages['in_use']:
                 verrors.add('iscsi_auth_update.tag', usages['usages'])
 
         verrors.check()
-
-        orig_peerusers = await self.middleware.call('iscsi.discoveryauth.mutual_chap_peerusers')
 
         await self.middleware.call(
             'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.middleware.call('iscsi.discoveryauth.recalc_mutual_chap_alert', orig_peerusers)
         await self._service_change('iscsitarget', 'reload')
 
         return await self.get_instance(id_)
@@ -127,34 +121,25 @@ class iSCSITargetAuthCredentialService(CRUDService):
         audit_callback(_auth_summary(config))
 
         if not await self.query([['tag', '=', config['tag']], ['id', '!=', id_]]):
-            # We are attempting to delete the last auth in a particular group (aka tag)
-            usages = await self.is_in_use(id_)
+            usages = await self.is_in_use_by_portals_targets(id_)
             if usages['in_use']:
                 raise CallError(usages['usages'])
 
-        orig_peerusers = await self.middleware.call('iscsi.discoveryauth.mutual_chap_peerusers')
-
-        result = await self.middleware.call(
+        return await self.middleware.call(
             'datastore.delete', self._config.datastore, id_
         )
-        if orig_peerusers:
-            await self.middleware.call('iscsi.discoveryauth.recalc_mutual_chap_alert', orig_peerusers)
-
-        return result
 
     @private
-    async def is_in_use(self, id_):
+    async def is_in_use_by_portals_targets(self, id_):
         config = await self.get_instance(id_)
         usages = []
-        # Check discovery auth
-        discovery_auths = await self.middleware.call(
-            'iscsi.discoveryauth.query', [['authgroup', '=', config['tag']]], {'select': ['id']}
+        portals = await self.middleware.call(
+            'iscsi.portal.query', [['discovery_authgroup', '=', config['tag']]], {'select': ['id']}
         )
-        if discovery_auths:
+        if portals:
             usages.append(
-                f'Authorized access of {id_} is being used by discovery auth(s): {", ".join(str(a["id"]) for a in discovery_auths)}'
+                f'Authorized access of {id_} is being used by portal(s): {", ".join(str(p["id"]) for p in portals)}'
             )
-        # Check targets
         groups = await self.middleware.call(
             'datastore.query', 'services.iscsitargetgroups', [['iscsi_target_authgroup', '=', config['tag']]]
         )

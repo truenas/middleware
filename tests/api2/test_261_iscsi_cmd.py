@@ -16,7 +16,7 @@ from assets.websocket.iscsi import (alua_enabled, initiator, initiator_portal,
                                     portal, read_capacity16, target,
                                     target_extent_associate, verify_capacity,
                                     verify_luns)
-from middlewared.service_exception import CallError, InstanceNotFound, ValidationError, ValidationErrors
+from middlewared.service_exception import InstanceNotFound, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.iscsi import target_login_test
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call, ssh
@@ -134,15 +134,6 @@ def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None):
         yield auth_config
     finally:
         call('iscsi.auth.delete', auth_config['id'])
-
-
-@contextlib.contextmanager
-def iscsi_discovery_auth(authmethod, authgroup):
-    config = call('iscsi.discoveryauth.create', {'authmethod': authmethod, 'authgroup': authgroup})
-    try:
-        yield config
-    finally:
-        call('iscsi.discoveryauth.delete', config['id'])
 
 
 @contextlib.contextmanager
@@ -728,57 +719,6 @@ def test_06_mutual_chap(request):
                                 # Finally ensure we can connect with the right Mutual CHAP creds
                                 with iscsi_scsi_connection(truenas_server.ip, iqn, 0, user, secret, peer_user, peer_secret) as s:
                                     _verify_inquiry(s)
-
-
-def test_06_discovery_auth():
-    """
-    Test Discovery Auth
-    """
-    assert [] == call('iscsi.discoveryauth.query')
-
-    with pytest.raises(ValidationErrors) as ve:
-        call('iscsi.discoveryauth.create', {'authmethod': 'CHAP', 'authgroup': 100})
-    assert ve.value.errors == [
-        ValidationError(
-            'iscsi_discoveryauth_create.authgroup',
-            'The specified authgroup does not contain any entries.'
-        )]
-
-    with pytest.raises(ValidationErrors) as ve:
-        call('iscsi.discoveryauth.create', {'authmethod': 'None', 'authgroup': 0})
-    assert ve.value.errors == [
-        ValidationError(
-            'iscsi_discoveryauth_create.authmethod',
-            'Invalid choice: None',
-            errno.EINVAL
-        )]
-
-    randsec = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
-    with iscsi_auth(1, 'user1', 'sec1' + randsec) as auth_config:
-        with iscsi_discovery_auth('CHAP', 1) as item:
-            assert item['authmethod'] == 'CHAP'
-            assert item['authgroup'] == 1
-            with pytest.raises(ValidationErrors) as ve:
-                call('iscsi.discoveryauth.create', {'authmethod': 'CHAP', 'authgroup': 1})
-            assert ve.value.errors == [
-                ValidationError(
-                    'iscsi_discoveryauth_create.authgroup',
-                    'The specified authgroup is already in use.'
-                )]
-            # Now that the auth is in use, we should NOT be able to delete it
-            with pytest.raises(CallError) as e:
-                call('iscsi.auth.delete', auth_config['id'])
-            assert f'Authorized access of {auth_config["id"]} is being used by discovery auth(s): {item["id"]}' in str(e), e
-
-            with iscsi_auth(2, 'user2', 'sec2' + randsec, 'peeruser2', 'psec2' + randsec) as auth_config:
-                with iscsi_discovery_auth('CHAP_MUTUAL', 2) as item:
-                    with pytest.raises(ValidationErrors) as ve:
-                        call('iscsi.discoveryauth.create', {'authmethod': 'CHAP', 'authgroup': 2})
-                    assert ve.value.errors == [
-                        ValidationError(
-                            'iscsi_discoveryauth_create.authgroup',
-                            'The specified authgroup is already in use.'
-                        )]
 
 
 def test_07_report_luns(request):
