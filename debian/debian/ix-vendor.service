@@ -7,5 +7,5 @@ After=ix-netif.service
 Type=oneshot
 RemainAfterExit=yes
 TimeoutStartSec=30
-ExecStart=/usr/bin/vendor_service
+ExecStart=-/usr/bin/vendor_service
 StandardOutput=null
