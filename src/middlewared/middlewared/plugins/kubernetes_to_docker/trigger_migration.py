@@ -1,6 +1,7 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.service import private, Service
+from middlewared.service_exception import MatchNotFound
 
 
 class KubernetesModel(sa.Model):
@@ -18,7 +19,10 @@ class K8stoDockerMigrationService(Service):
 
     @private
     async def trigger_migration(self):
-        k8s_pool = (await self.middleware.call('datastore.config', 'services.kubernetes'))['pool']
+        try:
+            k8s_pool = (await self.middleware.call('datastore.config', 'services.kubernetes'))['pool']
+        except MatchNotFound:
+            return
         if not k8s_pool:
             return
 
