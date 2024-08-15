@@ -371,6 +371,55 @@ class UpdateService(Service):
 
         self.middleware.call_hook_sync('update.post_update')
 
+    @private
+    def file_impl(self, job, options):
+        if options['resume']:
+            update_options = {'raise_warnings': False}
+        else:
+            update_options = {}
+
+        dest = options['destination']
+        if not dest:
+            if not options['resume']:
+                try:
+                    self.middleware.call_sync('update.create_upload_location')
+                except Exception as e:
+                    raise CallError(str(e))
+            dest = UPLOAD_LOCATION
+        elif not dest.startswith('/mnt/'):
+            raise CallError(f'Destination: {dest!r} must reside within a pool')
+
+        if not os.path.isdir(dest):
+            raise CallError(f'Destination: {dest!r} is not a directory')
+
+        destfile = os.path.join(dest, 'manualupdate.sqsh')
+
+        unlink_destfile = True
+        try:
+            if options['resume']:
+                if not os.path.exists(destfile):
+                    raise CallError('There is no uploaded file to resume')
+            else:
+                job.check_pipe('input')
+                job.set_progress(10, 'Writing uploaded file to disk')
+                with open(destfile, 'wb') as f:
+                    shutil.copyfileobj(job.pipes.input.r, f, 1048576)
+
+            try:
+                self.middleware.call_sync('update.install', job, destfile, update_options)
+            except CallError as e:
+                if e.errno == errno.EAGAIN:
+                    unlink_destfile = False
+                raise
+            job.set_progress(95, 'Cleaning up')
+        finally:
+            if unlink_destfile:
+                if os.path.exists(destfile):
+                    os.unlink(destfile)
+
+        if dest == UPLOAD_LOCATION:
+            self.middleware.call_sync('update.destroy_upload_location')
+
     @accepts(Dict(
         'updatefile',
         Bool('resume', default=False),
@@ -387,62 +436,8 @@ class UpdateService(Service):
 
         Use null `destination` to create a temporary location.
         """
-
-        if options['resume']:
-            update_options = {'raise_warnings': False}
-        else:
-            update_options = {}
-
-        dest = options['destination']
-
-        if not dest:
-            if not options['resume']:
-                try:
-                    await self.middleware.call('update.create_upload_location')
-                except Exception as e:
-                    raise CallError(str(e))
-
-            dest = UPLOAD_LOCATION
-        elif not dest.startswith('/mnt/'):
-            raise CallError('Destination must reside within a pool')
-
-        if not os.path.isdir(dest):
-            raise CallError('Destination is not a directory')
-
-        destfile = os.path.join(dest, 'manualupdate.sqsh')
-
-        unlink_destfile = True
-        try:
-            if options['resume']:
-                if not os.path.exists(destfile):
-                    raise CallError('There is no uploaded file to resume')
-            else:
-                job.check_pipe('input')
-                job.set_progress(10, 'Writing uploaded file to disk')
-                with open(destfile, 'wb') as f:
-                    await self.middleware.run_in_thread(
-                        shutil.copyfileobj, job.pipes.input.r, f, 1048576,
-                    )
-
-            try:
-                await self.middleware.call('update.install', job, destfile, update_options)
-            except CallError as e:
-                if e.errno == errno.EAGAIN:
-                    unlink_destfile = False
-
-                raise
-
-            job.set_progress(95, 'Cleaning up')
-        finally:
-            if unlink_destfile:
-                if os.path.exists(destfile):
-                    os.unlink(destfile)
-
-        if dest == UPLOAD_LOCATION:
-            await self.middleware.call('update.destroy_upload_location')
-
+        await self.middleware.run_in_thread(self.file_impl, job, options)
         await self.middleware.call_hook('update.post_update')
-
         job.set_progress(100, 'Update completed')
 
     @private
