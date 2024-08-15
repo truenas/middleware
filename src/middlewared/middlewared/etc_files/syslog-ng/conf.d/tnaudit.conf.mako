@@ -19,7 +19,7 @@
 
     VALUES = textwrap.dedent('''
         "${TNAUDIT.aid}",
-        "${UNIXTIME}",
+        "${R_UNIXTIME}",
         "${TNAUDIT.time}",
         "${TNAUDIT.addr}",
         "${TNAUDIT.user}",
@@ -118,6 +118,7 @@ rewrite r_rewrite_sudo_common {
 };
 rewrite r_rewrite_sudo_accept {
   set("${sudo.accept.uuid}", value("TNAUDIT.aid"));
+  fix-time-zone("UTC");
   set('${S_YEAR}-${S_MONTH}-${S_DAY} ${S_HOUR}:${S_MIN}:${S_SEC}.$(substr "${sudo.accept.server_time.nanoseconds}" "0" "6")', value("TNAUDIT.time"));
   set("${sudo.accept.submithost}", value("TNAUDIT.addr"));
   set("${sudo.accept.submituser}", value("TNAUDIT.user"));

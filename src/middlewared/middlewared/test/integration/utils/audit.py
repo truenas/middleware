@@ -48,3 +48,32 @@ def expect_audit_method_calls(calls):
         for call in calls
     ]):
         yield
+
+
+def get_audit_entry(service, index=-1):
+    """
+    service one of the audited services: 'MIDDLEWARE', 'SMB', 'SUDO' (see plugins/audit/utils.py)
+    index is which entry to return.  The default (-1) is the last entry
+    """
+    svc = str(service).upper()
+    assert svc in ['MIDDLEWARE', 'SMB', 'SUDO']
+    assert isinstance(index, int)
+
+    entry = {}
+    offset = 0
+    if index < 0:
+        max_count = 0
+        with client() as c:
+            if 0 < (max_count := c.call("audit.query", {"services": [svc], "query-options": {"count": True}})):
+                offset = max_count - 1
+    else:
+        offset = index
+
+    assert offset > -1
+    with client() as c:
+        entry_list = c.call('audit.query', {"services": [svc], "query-options": {"offset": offset}})
+
+    if len(entry_list):
+        entry = entry_list[0]
+
+    return entry
