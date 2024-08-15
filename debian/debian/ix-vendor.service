@@ -1,6 +1,6 @@
 [Unit]
 # vendor_service.py must run after network routes are set up.
-After=ix-postinit.service
+After=ix-netif.service
 
 
 [Service]
@@ -9,6 +9,3 @@ RemainAfterExit=yes
 TimeoutStartSec=30
 ExecStart=/usr/bin/vendor_service
 StandardOutput=null
-
-[Install]
-WantedBy=multi-user.target
