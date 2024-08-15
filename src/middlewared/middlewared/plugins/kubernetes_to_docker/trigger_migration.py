@@ -3,6 +3,8 @@ import middlewared.sqlalchemy as sa
 from middlewared.service import private, Service
 from middlewared.service_exception import MatchNotFound
 
+from .utils import get_sorted_backups
+
 
 class KubernetesModel(sa.Model):
     __tablename__ = 'services_kubernetes'
@@ -41,10 +43,7 @@ class K8stoDockerMigrationService(Service):
             return
 
         # We will get latest backup now and execute it
-        backups = sorted(
-            [backup for backup in list_backup_job.result['backups'].values() if backup['releases']],
-            key=lambda backup: backup['created_on'],
-        )
+        backups = get_sorted_backups(list_backup_job.result)
         if not backups:
             self.logger.debug('No backups found with releases which can be migrated for %r pool', k8s_pool)
             await self.unset_kubernetes_pool()
