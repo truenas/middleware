@@ -585,6 +585,15 @@ class Job:
                 'errno': errno,
                 'extra': extra,
             }
+
+        if self.state == State.SUCCESS:
+            if raw_result:
+                result = self.result
+            else:
+                result = self.middleware.dump_result(self.method, self.result, False)
+        else:
+            result = None
+
         return {
             'id': self.id,
             'method': self.method_name,
@@ -595,7 +604,7 @@ class Job:
             'logs_path': self.logs_path,
             'logs_excerpt': self.logs_excerpt,
             'progress': self.progress,
-            'result': self.result if raw_result else self.middleware.dump_result(self.method, self.result, False),
+            'result': result,
             'error': self.error,
             'exception': self.exception,
             'exc_info': exc_info,
