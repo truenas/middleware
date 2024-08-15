@@ -55,6 +55,7 @@ setup(
             'sedhelper = middlewared.scripts.sedhelper:main',
             'wait_to_hang_and_dump_core = middlewared.scripts.wait_to_hang_and_dump_core:main',
             'wait_on_disks = middlewared.scripts.wait_on_disks:main',
+            'start_vendor_service = middlewared.scripts.vendor_service:main',
         ],
     },
 )

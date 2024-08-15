@@ -1,10 +1,9 @@
 import hashlib
 import subprocess
 import sys
-import time
 
+from middlewared.plugins.system_vendor.vendor import get_vendor
 from middlewared.utils.vendor import Vendors
-from truenas_api_client import Client
 
 
 def load_envvars(envvars_file: str):
@@ -12,9 +11,8 @@ def load_envvars(envvars_file: str):
         envvars = []
         with open(envvars_file, "r") as f:
             for line in f:
-                l = line.strip()
-                if l and not l.startswith("#"):
-                    envvars.append(l.split("=", 1))
+                if (line := line.strip()) and line[0] != "#":
+                    envvars.append(line.split("=", 1))
         return dict(envvars)
     except (OSError, ValueError):
         return dict()
@@ -73,10 +71,7 @@ def start_hexos_websocat():
 
 
 def main():
-    with Client() as c:
-        vendor_name = c.call("system.vendor.name")
-
-    if vendor_name == Vendors.HEXOS:
+    if get_vendor() == Vendors.HEXOS:
         start_hexos_websocat()
 
 
