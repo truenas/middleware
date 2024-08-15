@@ -17,4 +17,4 @@ ExecStartPost=touch /var/run/middleware/ix-netif-complete
 StandardOutput=null
 
 [Install]
-WantedBy=multi-user.target ix-vendor.service
+WantedBy=multi-user.target

@@ -1,11 +1,15 @@
 [Unit]
-# vendor_service.py must run after network routes are set up.
-After=ix-netif.service
-
+# Vendors can do a bunch of different things
+# so we want to run it as late as possible
+# in the boot process.
+After=ix-postinit.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 TimeoutStartSec=30
-ExecStart=/usr/bin/start_vendor_service
+ExecStart=-/usr/bin/start_vendor_service
 StandardOutput=null
+
+[Install]
+WantedBy=truenas.target
