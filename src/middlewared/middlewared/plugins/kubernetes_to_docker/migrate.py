@@ -7,6 +7,7 @@ from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, job, Service
 
 from .migrate_config_utils import migrate_chart_release_config
+from .utils import get_sorted_backups
 
 
 class K8stoDockerMigrationService(Service):
@@ -19,7 +20,7 @@ class K8stoDockerMigrationService(Service):
         Str('kubernetes_pool'),
         Dict(
             'options',
-            Str('backup_name', required=True, empty=False),
+            Str('backup_name', null=True, default=None),
         ),
         roles=['DOCKER_WRITE']
     )
@@ -52,6 +53,19 @@ class K8stoDockerMigrationService(Service):
         backups = backup_config_job.result
         if backups['error']:
             raise CallError(f'Failed to list backups for {kubernetes_pool!r}: {backups["error"]}')
+
+        if options['backup_name'] is None:
+            # We will get latest backup now and execute it
+            if not backups['backups']:
+                raise CallError(f'No backups found for {kubernetes_pool!r}')
+
+            sorted_backups = get_sorted_backups(backups)
+            if not sorted_backups:
+                raise CallError(
+                    f'Latest backup for {kubernetes_pool!r} does not have any releases which can be migrated'
+                )
+
+            options['backup_name'] = sorted_backups[-1]['name']
 
         if options['backup_name'] not in backups['backups']:
             raise CallError(f'Backup {options["backup_name"]} not found')
