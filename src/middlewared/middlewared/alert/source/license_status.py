@@ -145,7 +145,8 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         RENEW YOUR SUPPORT contract. To continue to receive technical support and assistance without
                         any service interruptions, please renew your support contract by {contract_expiration}.
                     """)
-                    subject = f"Your TrueNAS support contract will expire in {days} days"
+                    days_left = (local_license['contract_end'] - date.today()).days
+                    subject = f"Your TrueNAS support contract will expire in {days_left} days"
                     if days == 14:
                         opening = textwrap.dedent(f"""\
                             This is the final reminder regarding the impending expiration of your TrueNAS
@@ -158,7 +159,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         """)
                     else:
                         opening = textwrap.dedent(f"""\
-                            Your TrueNAS {contract_type} support contract will expire in {days} days.
+                            Your TrueNAS {contract_type} support contract will expire in {days_left} days.
                             When that happens, technical support and assistance for this particular TrueNAS storage
                             array will no longer be available. Please review the wide array of services that are
                             available to you as an active support contract customer at:
