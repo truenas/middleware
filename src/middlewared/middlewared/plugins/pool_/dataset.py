@@ -13,6 +13,7 @@ from middlewared.service import (
     CallError, CRUDService, filterable, InstanceNotFound, item_method, job, pass_app, private, ValidationErrors
 )
 from middlewared.utils import filter_list
+from middlewared.utils.origin import TCPIPOrigin
 from middlewared.validators import Exact, Match, Or, Range
 
 from .utils import (
@@ -720,14 +721,12 @@ class PoolDatasetService(CRUDService):
 
         if app:
             uri = None
-            if app.rest and app.host:
-                uri = app.host
-            elif app.websocket and app.request.headers.get('X-Real-Remote-Addr'):
-                uri = app.request.headers.get('X-Real-Remote-Addr')
+            if isinstance(app.origin, TCPIPOrigin):
+                uri = app.origin.addr
             if uri and uri not in [
                 '::1', '127.0.0.1', *[d['address'] for d in await self.middleware.call('interface.ip_in_use')]
             ]:
-                data['managedby'] = uri if not data['managedby'] != 'INHERIT' else f'{data["managedby"]}@{uri}'
+                data['managedby'] = uri if data['managedby'] == 'INHERIT' else f'{data["managedby"]}@{uri}'
 
         props = {}
         for i, real_name, transform, inheritable in (

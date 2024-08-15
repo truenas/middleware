@@ -218,6 +218,17 @@ http {
             report_uploads proxied;
         }
 
+        location /api {
+            allow all;  # This is handled by `Middleware.ws_can_access` because if we return HTTP 403, browser security
+                        # won't allow us to understand that connection error was due to client IP not being allowlisted.
+            proxy_pass http://127.0.0.1:6000/api;
+            proxy_http_version 1.1;
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
+
         location /api/docs {
             proxy_pass http://127.0.0.1:6000/api/docs;
         }

@@ -1,7 +1,9 @@
 from .api.base.handler.dump_params import dump_params
 from .api.base.handler.result import serialize_result
+from .api.base.server.ws_handler.base import BaseWebSocketHandler
+from .api.base.server.ws_handler.rpc import RpcWebSocketApp, RpcWebSocketAppEvent
+from .api.base.server.ws_handler.rpc_factory import create_rpc_ws_handler
 from .apidocs import routes as apidocs_routes
-from .auth import is_ha_connection
 from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue
@@ -19,8 +21,7 @@ from .utils import MIDDLEWARE_RUN_DIR, sw_version
 from .utils.audit import audit_username_from_session
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
-from .utils.nginx import get_remote_addr_port
-from .utils.origin import UnixSocketOrigin, TCPIPOrigin
+from .utils.origin import Origin, TCPIPOrigin
 from .utils.os import close_fds
 from .utils.plugins import LoadPluginsMixin
 from .utils.privilege import credential_has_full_admin
@@ -31,7 +32,7 @@ from .utils.syslog import syslog_message
 from .utils.threading import set_thread_name, IoThreadPoolExecutor, io_thread_pool_executor
 from .utils.time_utils import utc_now
 from .utils.type import copy_function_metadata
-from .webui_auth import addr_in_allowlist, WebUIAuth
+from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
 from aiohttp.http_websocket import WSCloseCode
@@ -60,7 +61,6 @@ import re
 import queue
 import setproctitle
 import signal
-import socket
 import struct
 import sys
 import termios
@@ -102,55 +102,22 @@ def real_crud_method(method):
             return child_method
 
 
-class Application:
+class Application(RpcWebSocketApp):
+    def __init__(self, middleware: 'Middleware', origin: Origin, loop: asyncio.AbstractEventLoop, request, response):
+        super().__init__(middleware, origin, response)
+        self.websocket = True
 
-    def __init__(self, middleware: 'Middleware', loop: asyncio.AbstractEventLoop, request, response):
-        self.middleware = middleware
         self.loop = loop
         self.request = request
         self.response = response
-        self.authenticated = False
-        self.authenticated_credentials = None
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
-        self.session_id = str(uuid.uuid4())
-        self.rest = False
-        self.websocket = True
 
         # Allow at most 10 concurrent calls and only queue up until 20
         self._softhardsemaphore = SoftHardSemaphore(10, 20)
         self._py_exceptions = False
 
-        """
-        Callback index registered by services. They are blocking.
-
-        Currently the following events are allowed:
-          on_message(app, message)
-          on_close(app)
-        """
-        self.__callbacks = defaultdict(list)
         self.__subscribed = {}
-
-    @functools.cached_property
-    def origin(self) -> typing.Union[UnixSocketOrigin, TCPIPOrigin, None]:
-        try:
-            sock = self.request.transport.get_extra_info("socket")
-        except AttributeError:
-            # self.request.transport can be None by the time this is called
-            # on HA systems because remote node could have been rebooted
-            return
-
-        if sock.family == socket.AF_UNIX:
-            peercred = sock.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize('3i'))
-            pid, uid, gid = struct.unpack('3i', peercred)
-            return UnixSocketOrigin(pid, uid, gid)
-
-        remote_addr, remote_port = get_remote_addr_port(self.request)
-        return TCPIPOrigin(remote_addr, remote_port)
-
-    def register_callback(self, name: str, method):
-        assert name in ('on_message', 'on_close')
-        self.__callbacks[name].append(method)
 
     def _send(self, data: typing.Dict[str, typing.Any]):
         serialized = json.dumps(data)
@@ -245,20 +212,6 @@ class Application:
                         self.middleware.dump_args(message.get('params', []), method_name=message['method'])
                     ), exc_info=True)
 
-    def can_subscribe(self, name):
-        if event := self.middleware.events.get_event(name):
-            if event['no_auth_required']:
-                return True
-
-        if not self.authenticated:
-            return False
-
-        if event:
-            if event['no_authz_required']:
-                return True
-
-        return self.authenticated_credentials.authorize('SUBSCRIBE', name)
-
     async def subscribe(self, ident, name):
         shortname, arg = self.middleware.event_source_manager.short_name_arg(name)
         if shortname in self.middleware.event_source_manager.event_sources:
@@ -302,8 +255,21 @@ class Application:
             event['extra'] = kwargs
         self._send(event)
 
-    async def log_audit_message(self, event, event_data, success):
-        return await self.middleware.log_audit_message(self, event, event_data, success)
+    def notify_unsubscribed(self, collection, error):
+        error_dict = {}
+        if error:
+            if isinstance(error, ValidationErrors):
+                error_dict['error'] = self.get_error_dict(
+                    errno.EAGAIN, str(error), etype='VALIDATION', extra=list(error)
+                )
+            elif isinstance(error, CallError):
+                error_dict['error'] = self.get_error_dict(
+                    error.errno, str(error), extra=error.extra
+                )
+            else:
+                error_dict['error'] = self.get_error_dict(errno.EINVAL, str(error))
+
+        self._send({'msg': 'nosub', 'collection': collection, **error_dict})
 
     async def __log_audit_message_for_method(self, message, methodobj, authenticated, authorized, success):
         return await self.middleware.log_audit_message_for_method(
@@ -313,31 +279,15 @@ class Application:
     def on_open(self):
         self.middleware.register_wsclient(self)
 
-    async def on_close(self, *args, **kwargs):
-        # Run callbacks registered in plugins for on_close
-        for method in self.__callbacks['on_close']:
-            try:
-                if asyncio.iscoroutinefunction(method):
-                    await method(self)
-                else:
-                    await self.middleware.run_in_thread(method, self)
-            except Exception:
-                self.logger.error('Failed to run on_close callback.', exc_info=True)
+    async def on_close(self):
+        await self.run_callback(RpcWebSocketAppEvent.CLOSE)
 
         await self.middleware.event_source_manager.unsubscribe_app(self)
 
         self.middleware.unregister_wsclient(self)
 
     async def on_message(self, message: typing.Dict[str, typing.Any]):
-        # Run callbacks registered in plugins for on_message
-        for method in self.__callbacks['on_message']:
-            try:
-                if asyncio.iscoroutinefunction(method):
-                    await method(self, message)
-                else:
-                    await self.middleware.run_in_thread(method, self, message)
-            except Exception:
-                self.logger.error('Failed to run on_message callback.', exc_info=True)
+        await self.run_callback(RpcWebSocketAppEvent.MESSAGE, message)
 
         if message['msg'] == 'connect':
             if message.get('version') != '1':
@@ -355,68 +305,26 @@ class Application:
         elif not self.handshake:
             self._send({'msg': 'failed', 'version': '1'})
         elif message['msg'] == 'method':
-            error = False
             if 'method' not in message:
                 self.send_error(message, errno.EINVAL, "Message is malformed: 'method' is absent.")
-                error = True
             else:
                 try:
-                    serviceobj, methodobj = self.middleware._method_lookup(message['method'])
+                    serviceobj, methodobj = self.middleware.get_method(message['method'])
+
+                    await self.middleware.authorize_method_call(
+                        self, message['method'], methodobj, message.get('params') or [],
+                    )
                 except CallError as e:
                     self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
-                    error = True
-
-            if not error:
-                auth_required = not hasattr(methodobj, '_no_auth_required')
-                if not auth_required:
-                    ip_added = await RateLimitCache.add(message['method'], self.origin)
-                    if ip_added is not None:
-                        if any((
-                            RateLimitCache.max_entries_reached,
-                            RateLimitCache.rate_limit_exceeded(message['method'], ip_added),
-                        )):
-                            # 1 of 2 things happened:
-                            #   1. we've hit maximum amount of entries for global rate limit
-                            #       cache (this is an edge-case and something bad is going on)
-                            #   2. OR this endpoint has been hit too many times by the same
-                            #       origin IP address
-                            #   In either scenario, sleep a random delay and send an error
-                            await self.__log_audit_message_for_method(message, methodobj, False, True, False)
-                            await RateLimitCache.random_sleep()
-                            self.send_error(message, errno.EBUSY, 'Rate Limit Exceeded')
-                            error = True
-                        else:
-                            # was added to rate limit cache but rate limit thresholds haven't
-                            # been met so no error
-                            error = False
-                    else:
-                        # the origin of the request for the unauthenticated method is an
-                        # internal call or comes from the other controller on an HA system
-                        error = False
-                elif auth_required and not self.authenticated:
-                    await self.__log_audit_message_for_method(message, methodobj, False, False, False)
-                    self.send_error(message, ErrnoMixin.ENOTAUTHENTICATED, 'Not authenticated')
-                    error = True
-                elif self.authenticated_credentials.is_user_session and hasattr(methodobj, '_no_authz_required'):
-                    # Some methods require authentication to the NAS (a valid account)
-                    # but not explicit authorization. In this case the authorization
-                    # check is bypassed as long as it is a user session. API keys
-                    # explicitly whitelist particular methods and are used for targeted
-                    # purposes, and so authorization is _always_ enforced.
-                    error = False
-                elif not self.authenticated_credentials.authorize('CALL', message['method']):
-                    await self.__log_audit_message_for_method(message, methodobj, True, False, False)
-                    self.send_error(message, errno.EACCES, 'Not authorized')
-                    error = True
-            if not error:
-                self.middleware.create_task(self.call_method(message, serviceobj, methodobj))
+                else:
+                    self.middleware.create_task(self.call_method(message, serviceobj, methodobj))
         elif message['msg'] == 'ping':
             pong = {'msg': 'pong'}
             if 'id' in message:
                 pong['id'] = message['id']
             self._send(pong)
         elif message['msg'] == 'sub':
-            if not self.can_subscribe(message['name'].split(':', 1)[0]):
+            if not self.middleware.can_subscribe(self, message['name'].split(':', 1)[0]):
                 self.send_error(message, errno.EACCES, 'Not authorized')
             else:
                 await self.subscribe(message['id'], message['name'])
@@ -577,7 +485,7 @@ class FileApplication(object):
             return resp
 
         try:
-            serviceobj, methodobj = self.middleware._method_lookup(data['method'])
+            serviceobj, methodobj = self.middleware.get_method(data['method'])
             if authenticated_credentials.authorize('CALL', data['method']):
                 job = await self.middleware.call_with_audit(data['method'], serviceobj, methodobj,
                                                             data.get('params') or [], app,
@@ -769,7 +677,7 @@ class ShellConnectionData(object):
     t_worker = None
 
 
-class ShellApplication(object):
+class ShellApplication:
     shells = {}
 
     def __init__(self, middleware):
@@ -780,14 +688,16 @@ class ShellApplication(object):
         if not prepared:
             return ws
 
-        if not await self.middleware.ws_can_access(request, ws):
+        handler = BaseWebSocketHandler(self.middleware)
+        origin = await handler.get_origin(request)
+        if not await self.middleware.ws_can_access(ws, origin):
             return ws
 
         conndata = ShellConnectionData()
         conndata.id = str(uuid.uuid4())
 
         try:
-            await self.run(ws, request, conndata)
+            await self.run(ws, origin, conndata)
         except Exception:
             if conndata.t_worker:
                 await self.worker_kill(conndata.t_worker)
@@ -795,7 +705,7 @@ class ShellApplication(object):
             self.shells.pop(conndata.id, None)
             return ws
 
-    async def run(self, ws, request, conndata):
+    async def run(self, ws, origin, conndata):
 
         # Each connection will have its own input queue
         input_queue = queue.Queue()
@@ -815,7 +725,6 @@ class ShellApplication(object):
                 if not token:
                     continue
 
-                origin = TCPIPOrigin(*await self.middleware.run_in_thread(get_remote_addr_port, request))
                 token = await self.middleware.call('auth.get_token_for_shell_application', token, origin)
                 if not token:
                     await ws.send_json({
@@ -1221,9 +1130,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
 
-    def get_wsclients(self):
-        return self.__wsclients
-
     def register_wsclient(self, client):
         self.__wsclients[client.session_id] = client
 
@@ -1470,7 +1376,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if method is None:
             if method_name is not None:
                 try:
-                    method = self._method_lookup(method_name)[1]
+                    method = self.get_method(method_name)[1]
                 except Exception:
                     return args
 
@@ -1505,6 +1411,70 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 result = schema.dump(result)
 
         return result
+
+    async def authorize_method_call(self, app, method_name, methodobj, params):
+        if hasattr(methodobj, '_no_auth_required'):
+            if app.authenticated:
+                # Do not rate limit authenticated users
+                return
+
+            if not getattr(methodobj, 'rate_limit', True):
+                # The method is not subjected to rate limit.
+                return
+
+            ip_added = await RateLimitCache.add(method_name, app.origin)
+            if ip_added is None:
+                # the origin of the request for the unauthenticated method is an
+                # internal call or comes from the other controller on an HA system
+                return
+
+            if any((
+                RateLimitCache.max_entries_reached,
+                RateLimitCache.rate_limit_exceeded(method_name, ip_added),
+            )):
+                # 1 of 2 things happened:
+                #   1. we've hit maximum amount of entries for global rate limit
+                #       cache (this is an edge-case and something bad is going on)
+                #   2. OR this endpoint has been hit too many times by the same
+                #       origin IP address
+                #   In either scenario, sleep a random delay and send an error
+                await self.log_audit_message_for_method(method_name, methodobj, params, app, False, False, False)
+                await RateLimitCache.random_sleep()
+                raise CallError('Rate Limit Exceeded', errno.EBUSY)
+
+            # was added to rate limit cache but rate limit thresholds haven't
+            # been met so no error
+            return
+
+        if not app.authenticated:
+            await self.log_audit_message_for_method(method_name, methodobj, params, app, False, False, False)
+            raise CallError('Not authenticated', ErrnoMixin.ENOTAUTHENTICATED)
+
+        # Some methods require authentication to the NAS (a valid account)
+        # but not explicit authorization. In this case the authorization
+        # check is bypassed as long as it is a user session. API keys
+        # explicitly whitelist particular methods and are used for targeted
+        # purposes, and so authorization is _always_ enforced.
+        if app.authenticated_credentials.is_user_session and hasattr(methodobj, '_no_authz_required'):
+            return
+
+        if not app.authenticated_credentials.authorize('CALL', method_name):
+            await self.log_audit_message_for_method(method_name, methodobj, params, app, True, False, False)
+            raise CallError('Not authorized', errno.EACCES)
+
+    def can_subscribe(self, app, name):
+        if event := self.events.get_event(name):
+            if event['no_auth_required']:
+                return True
+
+        if not app.authenticated:
+            return False
+
+        if event:
+            if event['no_authz_required']:
+                return True
+
+        return app.authenticated_credentials.authorize('SUBSCRIBE', name)
 
     async def call_with_audit(self, method, serviceobj, methodobj, params, app, **kwargs):
         audit_callback_messages = []
@@ -1598,7 +1568,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     async def call(self, name, *params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
                    profile=False):
-        serviceobj, methodobj = self._method_lookup(name)
+        serviceobj, methodobj = self.get_method(name)
 
         if mock := self._mock_method(name, params):
             methodobj = mock
@@ -1618,7 +1588,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if background:
             return self.loop.call_soon_threadsafe(lambda: self.create_task(self.call(name, *params, app=app)))
 
-        serviceobj, methodobj = self._method_lookup(name)
+        serviceobj, methodobj = self.get_method(name)
 
         if mock := self._mock_method(name, params):
             methodobj = mock
@@ -1814,7 +1784,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if args == _args:
                 raise ValueError(f'{name!r} is already mocked with {args!r}')
 
-        serviceobj, methodobj = self._method_lookup(name)
+        serviceobj, methodobj = self.get_method(name)
 
         if inspect.iscoroutinefunction(mock):
             async def f(*args, **kwargs):
@@ -1864,10 +1834,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if not prepared:
             return ws
 
-        if not await self.ws_can_access(request, ws):
+        handler = BaseWebSocketHandler(self)
+        origin = await handler.get_origin(request)
+        if not await self.ws_can_access(ws, origin):
             return ws
 
-        connection = Application(self, self.loop, request, ws)
+        connection = Application(self, origin, self.loop, request, ws)
         connection.on_open()
 
         try:
@@ -1913,26 +1885,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return ws
 
-    async def ws_can_access(self, request, ws):
-        if not (ui_allowlist := await self.call('system.general.get_ui_allowlist')):
-            return True
-
-        sock = request.transport.get_extra_info('socket')
-        if sock.family == socket.AF_UNIX:
-            return True
-
-        remote_addr, remote_port = await self.run_in_thread(get_remote_addr_port, request)
-        if is_ha_connection(remote_addr, remote_port):
-            return True
-
-        if addr_in_allowlist(remote_addr, ui_allowlist):
-            return True
-
-        await ws.close(
-            code=WSCloseCode.POLICY_VIOLATION,
-            message='You are not allowed to access this resource'.encode('utf-8'),
-        )
-        return False
+    async def ws_can_access(self, ws, origin):
+        if not await BaseWebSocketHandler(self).can_access(origin):
+            await ws.close(
+                code=WSCloseCode.POLICY_VIOLATION,
+                message='You are not allowed to access this resource'.encode('utf-8'),
+            )
+            return False
+        return True
 
     _loop_monitor_ignore_frames = (
         LoopMonitorIgnoreFrame(
@@ -2036,6 +1996,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.loop.add_signal_handler(signal.SIGTERM, self.terminate)
         self.loop.add_signal_handler(signal.SIGUSR1, self.pdb)
         self.loop.add_signal_handler(signal.SIGUSR2, self.log_threads_stacks)
+
+        rpc_ws_handler = create_rpc_ws_handler(self)
+        app.router.add_route('GET', '/api/current', rpc_ws_handler)
+        app.router.add_route('GET', '/api/v25.04.0', rpc_ws_handler)
 
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
