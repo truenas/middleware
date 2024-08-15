@@ -11,6 +11,11 @@ from middlewared.service import Service
 SENTINEL_FILE_PATH = '/data/.vendor'
 
 
+def get_vendor() -> str | None:
+    with open(SENTINEL_FILE_PATH, 'r') as file:
+        return json.load(file).get('name') or None  # Don't return an empty string.
+
+
 class VendorService(Service):
 
     class Config:
@@ -20,8 +25,7 @@ class VendorService(Service):
     @api_method(VendorNameArgs, VendorNameResult, private=True)
     def name(self) -> str | None:
         try:
-            with open(SENTINEL_FILE_PATH, 'r') as file:
-                return json.load(file).get('name') or None  # Don't return an empty string.
+            return get_vendor()
         except FileNotFoundError:
             pass
         except json.JSONDecodeError:
