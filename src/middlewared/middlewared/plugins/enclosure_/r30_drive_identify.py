@@ -51,7 +51,7 @@ def led_status_mapping(status):
 
 def set_slot_status(slot, status):
     """
-    Unfortunately, there is on way to query current drive identification status.
+    Unfortunately, there is no way to query current drive identification status.
     Furthemore, switching SMBUS back into auto mode doesn't guarantee the LEDs
     will be automatically cleared so we need to clear them manually. Finally,
     it's unclear on whether or not we even need to transition from manual to auto
