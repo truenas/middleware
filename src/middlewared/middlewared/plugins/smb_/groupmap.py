@@ -293,7 +293,7 @@ class SMBService(Service):
         Latter occurs when group mapping is lost. In case of invalid entries, we store
         list of SIDS to be removed. SID is necessary and sufficient for groupmap removal.
         """
-        rv = {"builtins": {}, "local": {}, "local_builtins": {}, "invalid": {}}
+        rv = {"builtins": {}, "local": {}, "local_builtins": {}}
 
         localsid = self.middleware.call_sync('smb.local_server_sid')
         legacy_entries = []
@@ -302,9 +302,7 @@ class SMBService(Service):
             ['entry_type', '=', GroupmapEntryType.GROUP_MAPPING.name]
         ], {}):
             gid = g['gid']
-            key = 'invalid'
             if gid == -1:
-                rv[key].append(g['sid'])
                 continue
 
             if g['sid'].startswith("S-1-5-32"):
@@ -317,9 +315,11 @@ class SMBService(Service):
                     continue
 
                 key = 'local'
-
-            if key == 'invalid' or rv[key].get(gid):
-                rv['invalid'].append(g['sid'])
+            else:
+                # There is a groupmap that is not for local machine sid to
+                # a local group account. Add to our legacy entries so that we can try
+                # to map it to the proper local account.
+                legacy_entries.append(g)
                 continue
 
             rv[key][gid] = g
@@ -345,6 +345,9 @@ class SMBService(Service):
                 )
             except Exception:
                 self.logger.debug('Failed to delete legacy entry', exc_info=True)
+
+        if legacy_entries:
+            self.migrate_share_groupmap()
 
         return rv
 
@@ -427,7 +430,9 @@ class SMBService(Service):
         groupmap = self.groupmap_list()
 
         groups = self.middleware.call_sync('group.query', [('local', '=', True), ('smb', '=', True)])
-        groups.append(self.middleware.call_sync('group.query', [('gid', '=', 545), ('local', '=', True)], {'get': True}))
+        groups.append(self.middleware.call_sync('group.query', [
+            ('gid', '=', 545), ('local', '=', True)
+        ], {'get': True}))
         gid_set = {x["gid"] for x in groups}
 
         for group in groups:
@@ -464,3 +469,49 @@ class SMBService(Service):
                 self.middleware.call_sync('idmap.gencache.flush')
             except Exception:
                 self.logger.warning('Failed to flush caches after groupmap changes.', exc_info=True)
+
+    @private
+    def migrate_share_groupmap(self):
+        rejects = {g['sid']: g for g in query_groupmap_entries(GroupmapFile.REJECT, [
+            ['entry_type', '=', GroupmapEntryType.GROUP_MAPPING.name]
+        ], {})}
+
+        if not rejects:
+            return
+
+        reject_gids = [g['gid'] for g in rejects.values()]
+
+        set_reject_sids = set(list(rejects.keys()))
+        current = {g['gid']: g['sid'] for g in self.middleware.call_sync('group.query', [
+            ['gid', 'in', reject_gids], ['local', '=', True]
+        ])}
+
+        for sid, gm in rejects.copy().items():
+            rejects[sid]['new_sid'] = current.get(gm['gid'])
+
+        for share in self.middleware.call_sync('sharing.smb.query'):
+            acl = self.middleware.call_sync('smb.sharesec.getacl', share['name'])['share_acl']
+            acl_sids = set([ace['ae_who_sid'] for ace in acl])
+            if not set_reject_sids & acl_sids:
+                continue
+
+            for idx, ace in enumerate(acl):
+                if (entry := rejects.get(ace['ae_who_sid'])) is None:
+                    continue
+
+                if entry['new_sid'] == ace['ae_who_sid']:
+                    # This in theory shouldn't happen, but nothing to change
+                    continue
+
+                if entry['new_sid'] is None:
+                    self.logger.warning(
+                        'Share ACL entry [%d] references SID [%s] which at one point mapped to '
+                        'a local group with gid [%d] that no longer exists.',
+                        share['name'], ace['ae_who_sid'], entry['gid']
+                    )
+                    # preserve just in case user restores group
+                    continue
+
+                ace['ae_who_sid'] = entry['new_sid']
+
+            self.middleware.call_sync('smb.sharesec.setacl', {'share_name': share['name'], 'share_acl': acl})

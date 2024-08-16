@@ -33,7 +33,7 @@ from middlewared.plugins.smb_.constants import (
     SMBSharePreset
 )
 from middlewared.plugins.smb_.constants import SMBBuiltin  # noqa (imported so may be imported from here)
-from middlewared.plugins.smb_.sharesec import dup_share_acl, remove_share_acl
+from middlewared.plugins.smb_.sharesec import remove_share_acl
 from middlewared.plugins.smb_.util_param import smbconf_getparm, lpctx_validate_global_parm
 from middlewared.plugins.smb_.util_net_conf import reg_delshare, reg_listshares, reg_setparm
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
@@ -918,15 +918,14 @@ class SharingSMBService(SharingService):
 
     @private
     async def apply_share_changes(self, old_is_locked, new_is_locked, oldname, newname, old, new):
+        if oldname != newname:
+            await self.middleware.call('smb.sharesec.flush_share_info')
+
         if not old_is_locked and not new_is_locked:
             if oldname != newname:
                 # This is disruptive change. Share is actually being removed and replaced.
                 # Forcibly closes any existing SMB sessions.
                 await self.toggle_share(oldname, False)
-                try:
-                    await self.middleware.run_in_thread(dup_share_acl, oldname, newname)
-                except MatchNotFound:
-                    pass
 
                 try:
                     await self.middleware.run_in_thread(reg_delshare, oldname)
