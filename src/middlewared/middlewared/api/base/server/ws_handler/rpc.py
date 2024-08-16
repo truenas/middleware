@@ -19,6 +19,7 @@ from middlewared.schema import Error
 from middlewared.service_exception import (CallException, CallError, ValidationError, ValidationErrors, adapt_exception,
                                            get_errname)
 from middlewared.utils.debug import get_frame_details
+from middlewared.utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from middlewared.utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from middlewared.utils.origin import Origin
 from .base import BaseWebSocketHandler
@@ -216,15 +217,24 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
                     )
                     break
 
-                if not app.authenticated and len(msg.data) > 8192:
+                try:
+                    message = parse_message(app.authenticated, msg.data)
+                except MsgSizeError as err:
+                    if err.limit is not MsgSizeLimit.UNAUTHENTICATED:
+                        creds = app.authenticated_credentials.dump() if app.authenticated_credentials else None
+                        origin = app.origin.repr() if app.origin else None
+
+                        self.middleware.logger.error(
+                            'Client using credentials [%s] at [%s] sent message with payload size [%d bytes] '
+                            'exceeding limit of %d for method %s',
+                            creds, origin, err.datalen, err.limit, err.method_name
+                        )
+
                     await ws.close(
-                        code=WSCloseCode.INVALID_TEXT,
-                        message=b"Anonymous connection max message length is 8 kB",
+                        code=err.ws_close_code,
+                        message=err.ws_errmsg.encode('utf-8'),
                     )
                     break
-
-                try:
-                    message = json.loads(msg.data)
                 except ValueError as e:
                     app.send_error(None, JSONRPCError.INVALID_JSON.value, str(e))
                     continue
