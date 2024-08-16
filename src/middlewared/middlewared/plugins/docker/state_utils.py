@@ -1,3 +1,4 @@
+import dataclasses
 import collections
 import enum
 import os
@@ -9,20 +10,24 @@ CATALOG_DATASET_NAME: str = 'truenas_catalog'
 IX_APPS_DIR_NAME = '.ix-apps'
 IX_APPS_MOUNT_PATH: str = os.path.join('/mnt', IX_APPS_DIR_NAME)
 
-DATASET_DEFAULTS: dict = {
-    'aclmode': 'discard',
-    'acltype': 'posix',
-    'atime': 'off',
-    'casesensitivity': 'sensitive',
-    'canmount': 'noauto',
-    'dedup': 'off',
-    'exec': 'on',
-    'normalization': 'none',
-    'overlay': 'on',
-    'setuid': 'on',
-    'snapdir': 'hidden',
-    'xattr': 'sa',
-}
+@dataclasses.dataclass(slots=True, frozen=True)
+class DATASET_DEFAULTS:
+    aclmode: str = 'discard'
+    acltype: str = 'posix'
+    atime: str = 'off'
+    casesensitivity: str = 'sensitive'
+    canmount: str = 'noauto'
+    dedup: str = 'off'
+    exec: str = 'on'
+    normalization: str = 'none'
+    overlay: str = 'on'
+    setuid: str = 'on'
+    snapdir: str = 'hidden'
+    xattr: str = 'sa'
+
+    @classmethod
+    def to_dict(cls):
+        return dataclasses.asdict(cls())
 
 
 class Status(enum.Enum):
