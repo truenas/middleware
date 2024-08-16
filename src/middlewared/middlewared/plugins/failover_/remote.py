@@ -13,6 +13,8 @@ import time
 from collections import defaultdict
 from functools import partial
 
+from websocket._exceptions import WebSocketBadStatusException
+
 from truenas_api_client import Client, ClientException, CALL_TIMEOUT
 
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str, Float, returns
@@ -57,9 +59,13 @@ class RemoteClient:
                 self.refused = False
             time.sleep(retry)
 
-    def connect_and_wait(self):
+    def connect_and_wait(self, *, legacy=False):
+        url = f'ws://{self.remote_ip}:6000/api/current'
+        if legacy:
+            url = f'ws://{self.remote_ip}:6000/websocket'
+
         try:
-            with Client(f'ws://{self.remote_ip}:6000/api/current', reserved_ports=True) as c:
+            with Client(url, reserved_ports=True) as c:
                 self.client = c
                 self.connected.set()
                 # Subscribe to all events on connection
@@ -68,6 +74,13 @@ class RemoteClient:
                         self.client.subscribe(name, partial(self._sub_callback, name))
                 self._on_connect()
                 c._closed.wait()
+        except WebSocketBadStatusException as e:
+            if not legacy and e.status_code == 404:
+                # 24.10 middleware and earlier gives 404 when trying to access `/api/current`.
+                # We should try legacy API server in that case.
+                return self.connect_and_wait(legacy=True)
+
+            raise 
         except OSError as e:
             if e.errno in (
                 errno.EPIPE,    # Happens when failover is configured on cxl device that has no link
