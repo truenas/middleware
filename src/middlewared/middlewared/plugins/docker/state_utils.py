@@ -12,11 +12,16 @@ IX_APPS_MOUNT_PATH: str = os.path.join('/mnt', IX_APPS_DIR_NAME)
 DATASET_DEFAULTS: dict = {
     'aclmode': 'discard',
     'acltype': 'posix',
-    'exec': 'on',
-    'setuid': 'on',
-    'casesensitivity': 'sensitive',
     'atime': 'off',
+    'casesensitivity': 'sensitive',
     'canmount': 'noauto',
+    'dedup': 'off',
+    'exec': 'on',
+    'normalization': 'none',
+    'overlay': 'on',
+    'setuid': 'on',
+    'snapdir': 'hidden',
+    'xattr': 'sa',
 }
 
 
