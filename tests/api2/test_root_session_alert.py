@@ -4,12 +4,15 @@ from middlewared.test.integration.utils.client import client, truenas_server
 from middlewared.test.integration.utils import call
 
 
-def get_session_alert(call_fn):
+def get_session_alert(call_fn, session_id):
     alerts = call_fn('alert.list')
     alert_msg = None
 
     for alert in alerts:
         if alert['klass'] == 'AdminSessionActive':
+            if session_id and session_id not in alert['formatted']:
+                continue
+
             alert_msg = alert['formatted']
             break
 
@@ -19,9 +22,8 @@ def get_session_alert(call_fn):
 
 def check_session_alert(call_fn):
     session_id = call_fn('auth.sessions', [['current', '=', True]], {'get': True})['id']
-    session_alert = get_session_alert(call_fn)
+    session_alert = get_session_alert(call_fn, session_id)
 
-    assert session_id in session_alert
     return session_id
 
 
@@ -41,6 +43,6 @@ def test_root_session_logout():
     assert not closed_session
 
     # Make sure old session ID no longer in alert
-    session_alert = get_session_alert(call)
+    session_alert = get_session_alert(call, None)
 
     assert session_id not in session_alert
