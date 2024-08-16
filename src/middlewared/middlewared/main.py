@@ -18,6 +18,7 @@ from .service_exception import (
 from .utils import MIDDLEWARE_RUN_DIR, sw_version
 from .utils.audit import audit_username_from_session
 from .utils.debug import get_frame_details, get_threads_stacks
+from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.nginx import get_remote_addr_port
 from .utils.origin import UnixSocketOrigin, TCPIPOrigin
@@ -1883,15 +1884,29 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     )
                     break
 
-                if not connection.authenticated and len(msg.data) > 8192:
-                    await ws.close(
-                        code=WSCloseCode.INVALID_TEXT,
-                        message='Anonymous connection max message length is 8 kB'.encode('utf-8'),
-                    )
-                    break
+                datalen = len(msg.data)
 
                 try:
-                    message = json.loads(msg.data)
+                    message = parse_message(connection.authenticated, msg.data)
+                except MsgSizeError as err:
+                    if err.limit is not MsgSizeLimit.UNAUTHENTICATED:
+                        origin = connection.origin.repr() if connection.origin else None
+                        if connection.authenticated_credentials:
+                            creds =  connection.authenticated_credentials.dump()
+                        else:
+                            creds = None
+
+                        self.logger.error(
+                            'Client using credentials [%s] at [%s] sent message with payload size [%d bytes] '
+                            'exceeding limit of %d for method %s',
+                            creds, origin, err.datalen, err.limit, err.method_name
+                        )
+
+                    await ws.close(
+                        code=err.ws_close_code,
+                        message=err.ws_errmsg.encode('utf-8'),
+                    )
+                    break
                 except ValueError as f:
                     await ws.close(
                         code=WSCloseCode.INVALID_TEXT,
