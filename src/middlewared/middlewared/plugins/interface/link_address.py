@@ -1,5 +1,7 @@
 import re
 
+from sqlalchemy.exc import IntegrityError
+
 from middlewared.service import private, Service
 
 INTERFACE_FILTERS = [["type", "=", "PHYSICAL"]]
@@ -141,18 +143,30 @@ class InterfaceRenamer:
         for interface in await self.middleware.call("datastore.query", "network.interface_link_address"):
             if new_name := self.mapping.get(interface["interface"]):
                 self.middleware.logger.info("Renaming hardware interface %r to %r", interface["interface"], new_name)
-                await self.middleware.call(
-                    "datastore.update", "network.interface_link_address", interface["id"], {"interface": new_name},
-                )
+                try:
+                    await self.middleware.call(
+                        "datastore.update", "network.interface_link_address", interface["id"], {"interface": new_name},
+                    )
+                except IntegrityError:
+                    self.middleware.logger.warning(
+                        f"Already had configuration for hardware interface {new_name!r}, removing old entry"
+                    )
+                    await self.middleware.call("datastore.delete", "network.interface_link_address", interface["id"])
 
         for interface in await self.middleware.call("datastore.query", "network.interfaces", [], {"prefix": "int_"}):
             if new_name := self.mapping.get(interface["interface"]):
                 self.middleware.logger.info("Renaming interface configuration %r to %r", interface["interface"],
                                             new_name)
-                await self.middleware.call(
-                    "datastore.update", "network.interfaces", interface["id"], {"interface": new_name},
-                    {"prefix": "int_"},
-                )
+                try:
+                    await self.middleware.call(
+                        "datastore.update", "network.interfaces", interface["id"], {"interface": new_name},
+                        {"prefix": "int_"},
+                    )
+                except IntegrityError:
+                    self.middleware.logger.warning(
+                        f"Already had configuration for interface {new_name!r}, removing old entry"
+                    )
+                    await self.middleware.call("datastore.delete", "network.interfaces", interface["id"])
 
         for bridge in await self.middleware.call("datastore.query", "network.bridge"):
             updated = False
