@@ -85,7 +85,10 @@ SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
 
 # Type of the output of sys.exc_info()
-ExcInfoType = typing.Union[tuple[typing.Type[BaseException], BaseException, types.TracebackType], tuple[None, None, None]]
+ExcInfoType = typing.Union[
+    tuple[typing.Type[BaseException], BaseException, types.TracebackType],
+    tuple[None, None, None],
+]
 
 
 @dataclass
@@ -143,7 +146,14 @@ class Application(RpcWebSocketApp):
             'repr': repr(exc_info[1]),
         }
 
-    def get_error_dict(self, errno: int, reason: typing.Optional[str]=None, exc_info: typing.Optional[ExcInfoType]=None, etype: typing.Optional[str]=None, extra: typing.Optional[list]=None) -> typing.Dict[str, typing.Any]:
+    def get_error_dict(
+        self,
+        errno: int,
+        reason: str | None = None,
+        exc_info: ExcInfoType | None = None,
+        etype: str | None = None,
+        extra: list | None = None
+    ) -> dict[str, typing.Any]:
         error_extra = {}
         if self._py_exceptions and exc_info:
             error_extra['py_exception'] = binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()
@@ -156,7 +166,15 @@ class Application(RpcWebSocketApp):
             'extra': extra,
         }, **error_extra)
 
-    def send_error(self, message: typing.Dict[str, typing.Any], errno: int, reason: typing.Optional[str]=None, exc_info: typing.Optional[ExcInfoType]=None, etype: typing.Optional[str]=None, extra: typing.Optional[list]=None):
+    def send_error(
+        self,
+        message: dict[str, typing.Any],
+        errno: int,
+        reason: str | None = None,
+        exc_info: ExcInfoType | None = None,
+        etype: str | None = None,
+        extra: list | None = None
+    ):
         self._send({
             'msg': 'result',
             'id': message['id'],
