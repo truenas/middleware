@@ -10,24 +10,39 @@ CATALOG_DATASET_NAME: str = 'truenas_catalog'
 IX_APPS_DIR_NAME = '.ix-apps'
 IX_APPS_MOUNT_PATH: str = os.path.join('/mnt', IX_APPS_DIR_NAME)
 
+
+@dataclasses.dataclass(slots=True, frozen=True)
+class DatasetProp:
+    value: str
+    create_time_only: bool
+
+
 @dataclasses.dataclass(slots=True, frozen=True)
 class DATASET_DEFAULTS:
-    aclmode: str = 'discard'
-    acltype: str = 'posix'
-    atime: str = 'off'
-    casesensitivity: str = 'sensitive'
-    canmount: str = 'noauto'
-    dedup: str = 'off'
-    exec: str = 'on'
-    normalization: str = 'none'
-    overlay: str = 'on'
-    setuid: str = 'on'
-    snapdir: str = 'hidden'
-    xattr: str = 'sa'
+    aclmode: DatasetProp = DatasetProp('discard', False)
+    acltype: DatasetProp = DatasetProp('posix', False)
+    atime: DatasetProp = DatasetProp('off', False)
+    casesensitivity: DatasetProp = DatasetProp('sensitive', True)
+    canmount: DatasetProp = DatasetProp('noauto', False)
+    dedup: DatasetProp = DatasetProp('off', False)
+    exec: DatasetProp = DatasetProp('on', False)
+    normalization: DatasetProp = DatasetProp('none', True)
+    overlay: DatasetProp = DatasetProp('on', False)
+    setuid: DatasetProp = DatasetProp('on', False)
+    snapdir: DatasetProp = DatasetProp('hidden', False)
+    xattr: DatasetProp = DatasetProp('sa', False)
 
     @classmethod
     def to_dict(cls):
-        return dataclasses.asdict(cls())
+        return {k: v['value'] for k, v in dataclasses.asdict(cls())}
+
+    @classmethod
+    def create_time_only(cls):
+        return {k: v['value'] for k, v in dataclasses.asdict(cls()) if v['create_time_only']}
+
+    @classmethod
+    def update_only(cls):
+        return {k: v['value'] for k, v in dataclasses.asdict(cls()) if not v['create_time_only']}
 
 
 class Status(enum.Enum):
