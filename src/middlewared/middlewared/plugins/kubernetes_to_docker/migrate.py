@@ -181,9 +181,7 @@ class K8stoDockerMigrationService(Service):
                     self.middleware.call_sync('zfs.snapshot.clone', {
                         'snapshot': snapshot,
                         'dataset_dst': destination_ds,
-                        'dataset_properties': {
-                            k: v for k, v in DATASET_DEFAULTS.to_dict().items() if k != 'casesensitivity'
-                        },
+                        'dataset_properties': DATASET_DEFAULTS.update_only(),
                     })
                     self.middleware.call_sync('zfs.dataset.promote', destination_ds)
                     self.middleware.call_sync('zfs.dataset.mount', destination_ds)
