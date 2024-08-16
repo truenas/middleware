@@ -13,10 +13,12 @@ from .constants import (
     SYSFS_SLOT_KEY,
     MAPPED_SLOT_KEY,
     SUPPORTS_IDENTIFY_KEY,
+    SUPPORTS_IDENTIFY_STATUS_KEY,
     DISK_FRONT_KEY,
     DISK_REAR_KEY,
     DISK_TOP_KEY,
     DISK_INTERNAL_KEY,
+    DRIVE_BAY_LIGHT_STATUS,
 )
 from .element_types import ELEMENT_TYPES, ELEMENT_DESC
 from .enums import ControllerModels, ElementDescriptorsToIgnore, ElementStatusesToIgnore, JbodModels
@@ -306,15 +308,38 @@ class Enclosure:
                 # does this enclosure slot support identification? (i.e. lighting up LED)
                 parsed[SUPPORTS_IDENTIFY_KEY] = self.disks_map[slot][SUPPORTS_IDENTIFY_KEY]
 
+                # does this enclosure slot support reporting identification status?
+                # (i.e. whether the LED is currently lit up)
+                light_status = self.disks_map[slot].get(SUPPORTS_IDENTIFY_STATUS_KEY, parsed[SUPPORTS_IDENTIFY_KEY])
+                if light_status:
+                    # Per SES-4-r3 Table 84 — Array Device Slot status element
+                    # The IDENT bit is Bit #1 of Byte #2.  These have been flattened
+                    # above into value_raw.
+                    if value_raw & 0x0200:
+                        parsed[DRIVE_BAY_LIGHT_STATUS] = 'ON'
+                    else:
+                        parsed[DRIVE_BAY_LIGHT_STATUS] = 'OFF'
+                else:
+                    parsed[DRIVE_BAY_LIGHT_STATUS] = None
+
                 mapped_slot = self.disks_map[slot][MAPPED_SLOT_KEY]
                 # is this a front, rear or internal slot?
                 parsed.update(disk_position_mapping.get(mapped_slot, dict()))
+
+                # Pick out the original slot number from the descriptor,
+                # for example 'slot00', 'slot01', ... etc
+                try:
+                    descriptor = element['descriptor'].strip()
+                    if descriptor.startswith('slot'):
+                        slot = int(descriptor[4:].lstrip('0') or '0')
+                except KeyError:
+                    descriptor = f'slot{slot}'
 
                 parsed['original'] = {
                     'enclosure_id': self.encid,
                     'enclosure_sg': self.sg,
                     'enclosure_bsg': self.bsg,
-                    'descriptor': f'slot{slot}',
+                    'descriptor': descriptor,
                     'slot': slot,
                 }
 
