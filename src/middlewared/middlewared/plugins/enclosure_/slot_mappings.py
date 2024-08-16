@@ -10,9 +10,14 @@ from .constants import (
     DISK_INTERNAL_KEY,
     SYSFS_SLOT_KEY,
     MAPPED_SLOT_KEY,
-    SUPPORTS_IDENTIFY_KEY
+    SUPPORTS_IDENTIFY_KEY,
+    SUPPORTS_IDENTIFY_STATUS_KEY
 )
 from .enums import ControllerModels, JbodModels, JbofModels
+
+# If SUPPORTS_IDENTIFY_STATUS_KEY is absent from a slot mapping then
+# its value will be the same as SUPPORTS_IDENTIFY_KEY for that slot.
+# (Usually, if IDENT is enabled, then its status can also be read.)
 
 
 def get_jbof_slot_info(model):
@@ -78,6 +83,7 @@ def get_nvme_slot_info(model):
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: i,
                                 SUPPORTS_IDENTIFY_KEY: True,
+                                SUPPORTS_IDENTIFY_STATUS_KEY: False,
                                 DISK_FRONT_KEY: True,
                                 DISK_TOP_KEY: False,
                                 DISK_REAR_KEY: False,
@@ -89,6 +95,7 @@ def get_nvme_slot_info(model):
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: i,
                                 SUPPORTS_IDENTIFY_KEY: True,
+                                SUPPORTS_IDENTIFY_STATUS_KEY: False,
                                 DISK_FRONT_KEY: True,
                                 DISK_TOP_KEY: False,
                                 DISK_REAR_KEY: False,
@@ -100,6 +107,7 @@ def get_nvme_slot_info(model):
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: i,
                                 SUPPORTS_IDENTIFY_KEY: True,
+                                SUPPORTS_IDENTIFY_STATUS_KEY: False,
                                 DISK_FRONT_KEY: True,
                                 DISK_TOP_KEY: False,
                                 DISK_REAR_KEY: False,
@@ -164,6 +172,7 @@ def get_nvme_slot_info(model):
                                 SYSFS_SLOT_KEY: i,
                                 MAPPED_SLOT_KEY: i,
                                 SUPPORTS_IDENTIFY_KEY: True,
+                                SUPPORTS_IDENTIFY_STATUS_KEY: False,
                                 DISK_FRONT_KEY: True if i <= 12 else False,
                                 DISK_TOP_KEY: False,
                                 DISK_REAR_KEY: False,
