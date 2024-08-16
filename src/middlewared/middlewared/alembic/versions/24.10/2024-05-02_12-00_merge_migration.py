@@ -1,4 +1,4 @@
-""" Merge migration for changes in SMB-related fields from 24.04
+"""Merge migration for changes in SMB-related fields from 24.04
 
 Revision ID: 135a7e02cbec
 Revises: 4f11cc19bb9c, f38c2bbe776a

@@ -1,4 +1,4 @@
-"""empty message
+"""Readonly privilege
 
 Revision ID: 649fe0f7f0ba
 Revises: e3436f15aa9c

@@ -1,7 +1,9 @@
 """Add exporting table for reporting
+
 Revision ID: 8f8942557260
 Revises: 304e43883592
 Create Date: 2023-11-10 23:19:42.678757+00:00
+
 """
 import json
 import sqlalchemy as sa
