@@ -19,7 +19,7 @@
 
     VALUES = textwrap.dedent('''
         "${TNAUDIT.aid}",
-        "${R_UNIXTIME}",
+        "${C_UNIXTIME}",
         "${TNAUDIT.time}",
         "${TNAUDIT.addr}",
         "${TNAUDIT.user}",
