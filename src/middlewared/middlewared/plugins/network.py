@@ -71,7 +71,7 @@ class NetworkLaggInterfaceModel(sa.Model):
     __tablename__ = 'network_lagginterface'
 
     id = sa.Column(sa.Integer, primary_key=True)
-    lagg_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id'))
+    lagg_interface_id = sa.Column(sa.Integer(), sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'))
     lagg_protocol = sa.Column(sa.String(120))
     lagg_xmit_hash_policy = sa.Column(sa.String(8), nullable=True)
     lagg_lacpdu_rate = sa.Column(sa.String(4), nullable=True)
