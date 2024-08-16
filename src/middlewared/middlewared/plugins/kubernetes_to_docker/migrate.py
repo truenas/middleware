@@ -182,7 +182,7 @@ class K8stoDockerMigrationService(Service):
                         'snapshot': snapshot,
                         'dataset_dst': destination_ds,
                         'dataset_properties': {
-                            k: v for k, v in DATASET_DEFAULTS.items() if k not in ['casesensitivity']
+                            k: v for k, v in DATASET_DEFAULTS.to_dict().items() if k != 'casesensitivity'
                         },
                     })
                     self.middleware.call_sync('zfs.dataset.promote', destination_ds)

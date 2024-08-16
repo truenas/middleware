@@ -62,7 +62,7 @@ class DockerSetupService(Service):
 
     @private
     async def create_update_docker_datasets(self, docker_ds):
-        create_props_default = DATASET_DEFAULTS.copy()
+        create_props_default = DATASET_DEFAULTS.to_dict()
         for dataset_name in docker_datasets(docker_ds):
             custom_props = docker_dataset_custom_props(dataset_name.split('/', 1)[-1])
             # got custom properties, need to re-calculate
