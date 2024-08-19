@@ -8,7 +8,7 @@ from datetime import datetime
 from middlewared.service import CallError, private, Service
 
 from .state_utils import (
-    DATASET_DEFAULTS, docker_datasets, IX_APPS_MOUNT_PATH, IX_APPS_DIR_NAME, missing_required_datasets,
+    DatasetDefaults, docker_datasets, IX_APPS_MOUNT_PATH, IX_APPS_DIR_NAME, missing_required_datasets,
 )
 
 
@@ -73,8 +73,8 @@ class DockerSetupService(Service):
 
     @private
     def create_update_docker_datasets_impl(self, docker_ds):
-        create_props_default = DATASET_DEFAULTS.to_dict()
-        update_props_default = DATASET_DEFAULTS.update_only()
+        create_props_default = DatasetDefaults.to_dict()
+        update_props_default = DatasetDefaults.update_only()
         expect_dock_datasets = docker_datasets(docker_ds)
         actual_dock_datasets = {k["id"]: v["properties"] for k, v in self.middleware.call_sync(
             'zfs.dataset.query', [['id', 'in', expect_dock_datasets]], {

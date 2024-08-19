@@ -18,7 +18,7 @@ class DatasetProp:
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
-class DATASET_DEFAULTS:
+class DatasetDefaults:
     aclmode: DatasetProp = DatasetProp('discard', False)
     acltype: DatasetProp = DatasetProp('posix', False)
     atime: DatasetProp = DatasetProp('off', False)
