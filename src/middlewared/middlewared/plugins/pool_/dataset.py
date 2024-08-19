@@ -3,7 +3,7 @@ import errno
 import os
 
 import middlewared.sqlalchemy as sa
-
+from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs_.exceptions import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.schema import (
@@ -164,10 +164,10 @@ class PoolDatasetService(CRUDService):
     async def internal_datasets_filters(self):
         # We get filters here which ensure that we don't match an internal dataset
         return [
-            ['pool', '!=', await self.middleware.call('boot.pool_name')],
+            ['pool', 'nin', BOOT_POOL_NAME_VALID],
             ['id', 'rnin', '/.system'],
             ['id', 'rnin', '/ix-applications/'],
-            ['id', 'rnin', '/ix-apps/'],
+            ['id', 'rnin', '/ix-apps'],
         ]
 
     @private
