@@ -34,15 +34,15 @@ class DatasetDefaults:
 
     @classmethod
     def to_dict(cls):
-        return {k: v['value'] for k, v in dataclasses.asdict(cls())}
+        return {k: v['value'] for k, v in dataclasses.asdict(cls()).items()}
 
     @classmethod
     def create_time_only(cls):
-        return {k: v['value'] for k, v in dataclasses.asdict(cls()) if v['create_time_only']}
+        return {k: v['value'] for k, v in dataclasses.asdict(cls()).items() if v['create_time_only']}
 
     @classmethod
     def update_only(cls):
-        return {k: v['value'] for k, v in dataclasses.asdict(cls()) if not v['create_time_only']}
+        return {k: v['value'] for k, v in dataclasses.asdict(cls()).items() if not v['create_time_only']}
 
 
 class Status(enum.Enum):
