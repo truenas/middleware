@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 import ipaddress
-import socket
 from collections import defaultdict
 from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
@@ -9,8 +8,9 @@ from os import scandir
 
 import middlewared.sqlalchemy as sa
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
-from middlewared.utils import filter_list, run
+from middlewared.utils import filter_list
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, ValidationErrors
+from middlewared.utils.network_.procfs import read_proc_net
 from middlewared.validators import Range
 from .interface.netif import netif
 from .interface.interface_types import InterfaceType
@@ -1452,38 +1452,20 @@ class InterfaceService(CRUDService):
     @returns(IPAddr(null=True))
     @pass_app()
     async def websocket_local_ip(self, app):
-        """
-        Returns the ip this websocket is connected to.
-        """
-        if app is None:
-            return
-        sock = app.request.transport.get_extra_info('socket')
-        if sock.family not in (socket.AF_INET, socket.AF_INET6):
-            return
-
+        """Returns the local ip address for this websocket session."""
         remote_port = (
             app.request.headers.get('X-Real-Remote-Port') or app.request.transport.get_extra_info('peername')[1]
         )
         if not remote_port:
             return
 
-        data = (await run(['lsof', '-Fn', f'-i:{remote_port}', '-n'], encoding='utf-8')).stdout
-        for line in iter(data.splitlines()):
-            # line we're interested in looks like "n127.0.0.1:x11->127.0.0.1:44812"
-            found = line.find('->')
-            if found < 0:
-                # -1 on failure
-                continue
-
-            if line.endswith(f':{remote_port}'):
-                base = line[1:].split('->')[0]
-                if '[' in base:
-                    # ipv6 line looks like this "[2001:aaaa:bbbb:cccc:dddd::100]:http"
-                    # only care about address in between the brackets
-                    return base.split('[', 1)[1].split(']')[0]
-                else:
-                    # ipv4 line looks like "192.168.1.103:http"
-                    return base.split(':')[0]
+        try:
+            info = await self.middleware.run_in_thread(read_proc_net, None, remote_port)
+        except Exception:
+            self.logger.error("Unexpected failure determining local websocket ip", exc_info=True)
+            return
+        else:
+            return info.local_ip if info is not None else None
 
     @accepts()
     @returns(Str(null=True))
@@ -1492,7 +1474,10 @@ class InterfaceService(CRUDService):
         """
         Returns the interface this websocket is connected to.
         """
-        local_ip = await self.middleware.call('interface.websocket_local_ip', app=app)
+        local_ip = await self.websocket_local_ip(app)
+        if local_ip is None:
+            return
+
         for iface in await self.middleware.call('interface.query'):
             for alias in iface['aliases']:
                 if alias['address'] == local_ip:
@@ -1924,7 +1909,7 @@ class InterfaceService(CRUDService):
                         list_of_ip.append(alias_dict)
 
         return list_of_ip
-    
+
     @private
     def get_nic_names(self) -> set:
         """Get network interface names excluding internal interfaces"""
