@@ -74,7 +74,7 @@ class DockerSetupService(Service):
     @private
     def create_update_docker_datasets_impl(self, docker_ds):
         create_props_default = DatasetDefaults.to_dict()
-        update_props_default = DatasetDefaults.update_only()
+        update_props_default = DatasetDefaults.update_only(skip_ds_name_check=True)
         expected_docker_datasets = docker_datasets(docker_ds)
         actual_docker_datasets = {
             k['id']: v['properties'] for k, v in self.middleware.call_sync(
