@@ -8,7 +8,7 @@ from datetime import datetime
 from middlewared.service import CallError, private, Service
 
 from .state_utils import (
-    DATASET_DEFAULTS, docker_datasets, docker_dataset_custom_props, docker_dataset_update_props, IX_APPS_MOUNT_PATH,
+    DatasetDefaults, DOCKER_DATASET_NAME, docker_datasets, IX_APPS_MOUNT_PATH, IX_APPS_DIR_NAME,
     missing_required_datasets,
 )
 
@@ -61,41 +61,59 @@ class DockerSetupService(Service):
         await self.middleware.call('docker.state.start_service')
 
     @private
-    async def create_update_docker_datasets(self, docker_ds):
-        create_props_default = DATASET_DEFAULTS.copy()
-        for dataset_name in docker_datasets(docker_ds):
-            custom_props = docker_dataset_custom_props(dataset_name.split('/', 1)[-1])
-            # got custom properties, need to re-calculate
-            # the update and create props.
-            create_props = dict(create_props_default, **custom_props) if custom_props else create_props_default
-            update_props = docker_dataset_update_props(create_props)
+    def move_conflicting_dir(self, ds_name):
+        base_ds_name = os.path.basename(ds_name)
+        from_path = os.path.join(IX_APPS_MOUNT_PATH, base_ds_name)
+        if ds_name == DOCKER_DATASET_NAME:
+            from_path = IX_APPS_MOUNT_PATH
 
-            dataset = await self.middleware.call(
-                'zfs.dataset.query', [['id', '=', dataset_name]], {
+        with contextlib.suppress(FileNotFoundError):
+            # can't stop someone from manually creating same name
+            # directories on disk so we'll just move them
+            shutil.move(from_path, f'{from_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}')
+
+    @private
+    def create_update_docker_datasets_impl(self, docker_ds):
+        expected_docker_datasets = docker_datasets(docker_ds)
+        actual_docker_datasets = {
+            k['id']: k['properties'] for k in self.middleware.call_sync(
+                'zfs.dataset.query', [['id', 'in', expected_docker_datasets]], {
                     'extra': {
-                        'properties': list(update_props),
+                        'properties': list(DatasetDefaults.update_only(skip_ds_name_check=True).keys()),
                         'retrieve_children': False,
                         'user_properties': False,
                     }
                 }
             )
-            if not dataset:
-                base_ds_name = os.path.basename(dataset_name)
-                test_path = IX_APPS_MOUNT_PATH if base_ds_name == 'ix-apps' else os.path.join(
-                    IX_APPS_MOUNT_PATH, base_ds_name
-                )
-                with contextlib.suppress(FileNotFoundError):
-                    await self.middleware.run_in_thread(
-                        shutil.move, test_path, f'{test_path}-{str(uuid.uuid4())[:4]}-{datetime.now().isoformat()}',
+        }
+        for dataset_name in expected_docker_datasets:
+            if existing_dataset := actual_docker_datasets.get(dataset_name):
+                update_props = DatasetDefaults.update_only(os.path.basename(dataset_name))
+                if any(val['value'] != update_props[name] for name, val in existing_dataset.items()):
+                    # if any of the zfs properties don't match what we expect we'll update all properties
+                    self.middleware.call_sync(
+                        'zfs.dataset.update', dataset_name, {
+                            'properties': {k: {'value': v} for k, v in update_props.items()}
+                        }
                     )
-                await self.middleware.call(
-                    'zfs.dataset.create', {
-                        'name': dataset_name, 'type': 'FILESYSTEM', 'properties': create_props,
-                    }
-                )
-            elif any(val['value'] != update_props[name] for name, val in dataset[0]['properties'].items()):
-                await self.middleware.call(
-                    'zfs.dataset.update', dataset_name, {
-                        'properties': {k: {'value': v} for k, v in update_props.items()}
-                    }
-                )
+            else:
+                self.move_conflicting_dir(dataset_name)
+                self.middleware.call_sync('zfs.dataset.create', {
+                    'name': dataset_name, 'type': 'FILESYSTEM', 'properties': DatasetDefaults.create_time_only(
+                        os.path.basename(dataset_name)
+                    ),
+                })
+
+    @private
+    async def create_update_docker_datasets(self, docker_ds):
+        """The following logic applies:
+
+            1. create the docker datasets fresh (if they dont exist)
+            2. OR update the docker datasets zfs properties if they
+                don't match reality.
+
+            NOTE: this method needs to be optimized as much as possible
+            since this is called on docker state change for each docker
+            dataset
+        """
+        await self.middleware.run_in_thread(self.create_update_docker_datasets_impl, docker_ds)
