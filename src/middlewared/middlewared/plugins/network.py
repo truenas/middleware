@@ -1475,7 +1475,7 @@ class InterfaceService(CRUDService):
         """
         Returns the interface this websocket is connected to.
         """
-        local_ip = await self.websocket_local_ip(app=app)
+        local_ip = await self.websocket_local_ip(app)
         if local_ip is None:
             return
 
