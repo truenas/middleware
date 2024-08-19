@@ -27,7 +27,7 @@ class AppSchemaActions(Service):
         for create_ds in sorted(set(user_wants) - existing_datasets):
             await self.middleware.call(
                 'zfs.dataset.create', {
-                    'properties': user_wants[create_ds]['properties'] | DatasetDefaults.to_dict(),
+                    'properties': user_wants[create_ds]['properties'] | DatasetDefaults.create_time_only(),
                     'name': create_ds, 'type': 'FILESYSTEM',
                 }
             )
