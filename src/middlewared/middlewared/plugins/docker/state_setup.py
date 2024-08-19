@@ -76,7 +76,7 @@ class DockerSetupService(Service):
     def create_update_docker_datasets_impl(self, docker_ds):
         expected_docker_datasets = docker_datasets(docker_ds)
         actual_docker_datasets = {
-            k['id']: v['properties'] for k, v in self.middleware.call_sync(
+            k['id']: k['properties'] for k in self.middleware.call_sync(
                 'zfs.dataset.query', [['id', 'in', expected_docker_datasets]], {
                     'extra': {
                         'properties': list(DatasetDefaults.update_only(skip_ds_name_check=True).keys()),
@@ -84,12 +84,12 @@ class DockerSetupService(Service):
                         'user_properties': False,
                     }
                 }
-            ).items()
+            )
         }
         for dataset_name in expected_docker_datasets:
             if existing_dataset := actual_docker_datasets.get(dataset_name):
                 update_props = DatasetDefaults.update_only(os.path.basename(dataset_name))
-                if any(val['value'] != update_props[name] for name, val in existing_dataset['properties'].items()):
+                if any(val['value'] != update_props[name] for name, val in existing_dataset.items()):
                     # if any of the zfs properties don't match what we expect we'll update all properties
                     self.middleware.call_sync(
                         'zfs.dataset.update', dataset_name, {
