@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 import ipaddress
-import socket
 from collections import defaultdict
 from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
@@ -11,6 +10,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
 from middlewared.utils import filter_list, run
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, ValidationErrors
+from middlewared.utils.origin import TCPIPOrigin
 from middlewared.validators import Range
 from .interface.netif import netif
 from .interface.interface_types import InterfaceType
@@ -1457,15 +1457,11 @@ class InterfaceService(CRUDService):
         """
         if app is None:
             return
-        sock = app.request.transport.get_extra_info('socket')
-        if sock.family not in (socket.AF_INET, socket.AF_INET6):
+
+        if not isinstance(app.origin, TCPIPOrigin):
             return
 
-        remote_port = (
-            app.request.headers.get('X-Real-Remote-Port') or app.request.transport.get_extra_info('peername')[1]
-        )
-        if not remote_port:
-            return
+        remote_port = app.origin.port
 
         data = (await run(['lsof', '-Fn', f'-i:{remote_port}', '-n'], encoding='utf-8')).stdout
         for line in iter(data.splitlines()):
