@@ -8,7 +8,8 @@ from datetime import datetime
 from middlewared.service import CallError, private, Service
 
 from .state_utils import (
-    DatasetDefaults, docker_datasets, IX_APPS_MOUNT_PATH, IX_APPS_DIR_NAME, missing_required_datasets,
+    DatasetDefaults, DOCKER_DATASET_NAME, docker_datasets, IX_APPS_MOUNT_PATH, IX_APPS_DIR_NAME,
+    missing_required_datasets,
 )
 
 
@@ -63,7 +64,7 @@ class DockerSetupService(Service):
     def move_conflicting_dir(self, ds_name):
         base_ds_name = os.path.basename(ds_name)
         from_path = os.path.join(IX_APPS_MOUNT_PATH, base_ds_name)
-        if ds_name == 'ix-apps':  # FIXME: we need to specify this globally
+        if ds_name == DOCKER_DATASET_NAME:
             from_path = IX_APPS_MOUNT_PATH
 
         with contextlib.suppress(FileNotFoundError):
@@ -73,7 +74,6 @@ class DockerSetupService(Service):
 
     @private
     def create_update_docker_datasets_impl(self, docker_ds):
-        create_props_default = DatasetDefaults.to_dict()
         update_props_default = DatasetDefaults.update_only(skip_ds_name_check=True)
         expected_docker_datasets = docker_datasets(docker_ds)
         actual_docker_datasets = {
@@ -102,10 +102,10 @@ class DockerSetupService(Service):
 
             else:
                 self.move_conflicting_dir(dataset_name)
-                if dataset_name == 'ix-apps':  # FIXME: we need to specify this globally
-                    create_props_default = create_props_default | {'mountpoint': f'/{IX_APPS_DIR_NAME}'}
                 self.middleware.call_sync('zfs.dataset.create', {
-                    'name': dataset_name, 'type': 'FILESYSTEM', 'properties': create_props_default,
+                    'name': dataset_name, 'type': 'FILESYSTEM', 'properties': DatasetDefaults.create_time_only(
+                        os.path.basename(dataset_name)
+                    ),
                 })
 
     @private
