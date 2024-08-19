@@ -6,6 +6,8 @@ import time
 import pytest
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.time_utils import utc_now
+from datetime import timezone
 
 EVENT_KEYS = {'timestamp', 'message_timestamp', 'service_data', 'username', 'service', 'audit_id', 'address', 'event_data', 'event', 'session', 'success'}
 ACCEPT_KEYS = {'command', 'submituser', 'lines', 'submithost', 'uuid', 'runenv', 'server_time', 'runcwd', 'submitcwd', 'runuid', 'runargv', 'columns', 'runuser', 'submit_time'}
@@ -16,6 +18,11 @@ ECHO_COMMAND = '/bin/echo'
 
 SUDO_TO_USER = 'sudo-to-user'
 SUDO_TO_PASSWORD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
+
+
+def get_utc():
+    utc_time = int(utc_now().replace(tzinfo=timezone.utc).timestamp())
+    return utc_time
 
 
 def user_sudo_events(username, count=False):
@@ -53,6 +60,24 @@ def assert_reject(event):
     assert set(event['event_data']['sudo'].keys()) == {'reject'}
     assert set(event['event_data']['sudo']['reject'].keys()) == REJECT_KEYS
     return event['event_data']['sudo']['reject']
+
+
+def assert_timestamp(event):
+    """
+    NAS-130373:  message_timestamp should be UTC
+    """
+    assert type(event) is dict
+    submit_time = event['event_data']['sudo']['accept']['submit_time']['seconds']
+    msg_ts = event['message_timestamp']
+    utc_ts = get_utc()
+
+    # Confirm consistency and correctness of timestamps.
+    # The message_timestamp and the submit_time should be UTC and
+    # are expected to be mostly the same value. We allow for a generous delta between
+    # current UTC and the audit message timestamps.
+    assert abs(utc_ts - msg_ts) < 5, f"utc_ts={utc_ts}, msg_ts={msg_ts}"
+    assert abs(utc_ts - int(submit_time)) < 5, f"utc_ts={utc_ts}, submit_time={submit_time}"
+    assert abs(msg_ts - int(submit_time)) < 5, f"msg_ts={msg_ts}, submit_time={submit_time}"
 
 
 @contextlib.contextmanager
@@ -99,6 +124,8 @@ class SudoTests:
         assert accept['command'] == LS_COMMAND
         assert accept['runuser'] == 'root'
         assert accept['runargv'].split(',') == ['ls', '/etc']
+        # NAS-130373
+        assert_timestamp(user_sudo_events(self.USER)[-1])
 
         # One more completely unique command
         magic = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(20))

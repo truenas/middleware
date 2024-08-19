@@ -2,6 +2,8 @@ from middlewared.test.integration.assets.account import user, unprivileged_user_
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, url
+from middlewared.test.integration.utils.audit import get_audit_entry
+
 from protocols import smb_connection
 from time import sleep
 
@@ -268,3 +270,15 @@ class TestAuditOps:
                 r = requests.get(f"{url()}{path}")
                 r.raise_for_status()
                 assert len(r.content) == st['size']
+
+    @pytest.mark.parametrize('svc', ["MIDDLEWARE", "SMB"])
+    def test_audit_timestamps(self, svc):
+        """
+        NAS-130373
+        Confirm the timestamps are processed as expected
+        """
+        audit_entry = get_audit_entry(svc)
+
+        ae_ts_ts = int(audit_entry['timestamp'].timestamp())
+        ae_msg_ts = int(audit_entry['message_timestamp'])
+        assert abs(ae_ts_ts - ae_msg_ts) < 2, f"$date='{ae_ts_ts}, message_timestamp={ae_msg_ts}"
