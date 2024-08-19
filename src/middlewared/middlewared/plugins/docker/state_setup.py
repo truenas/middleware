@@ -74,13 +74,12 @@ class DockerSetupService(Service):
 
     @private
     def create_update_docker_datasets_impl(self, docker_ds):
-        update_props_default = DatasetDefaults.update_only(skip_ds_name_check=True)
         expected_docker_datasets = docker_datasets(docker_ds)
         actual_docker_datasets = {
             k['id']: v['properties'] for k, v in self.middleware.call_sync(
                 'zfs.dataset.query', [['id', 'in', expected_docker_datasets]], {
                     'extra': {
-                        'properties': list(update_props_default.keys()),
+                        'properties': list(DatasetDefaults.update_only(skip_ds_name_check=True).keys()),
                         'retrieve_children': False,
                         'user_properties': False,
                     }
@@ -89,17 +88,14 @@ class DockerSetupService(Service):
         }
         for dataset_name in expected_docker_datasets:
             if existing_dataset := actual_docker_datasets.get(dataset_name):
-                for prop_name, prop_info in existing_dataset['properties'].items():
-                    if prop_info['value'] != update_props_default[prop_name]:
-                        # if any of the zfs properties dont match what we expect
-                        # we'll update all properties
-                        self.middleware.call_sync(
-                            'zfs.dataset.update', dataset_name, {
-                                'properties': {k: {'value': v} for k, v in update_props_default.items()}
-                            }
-                        )
-                        break
-
+                update_props = DatasetDefaults.update_only(os.path.basename(dataset_name))
+                if any(val['value'] != update_props[name] for name, val in existing_dataset['properties'].items()):
+                    # if any of the zfs properties don't match what we expect we'll update all properties
+                    self.middleware.call_sync(
+                        'zfs.dataset.update', dataset_name, {
+                            'properties': {k: {'value': v} for k, v in update_props.items()}
+                        }
+                    )
             else:
                 self.move_conflicting_dir(dataset_name)
                 self.middleware.call_sync('zfs.dataset.create', {
