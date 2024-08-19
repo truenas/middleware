@@ -60,7 +60,7 @@ class DockerSetupService(Service):
         await self.middleware.call('docker.state.start_service')
 
     @private
-    def move_conflicting_dir(ds_name):
+    def move_conflicting_dir(self, ds_name):
         base_ds_name = os.path.basename(ds_name)
         from_path = os.path.join(IX_APPS_MOUNT_PATH, base_ds_name)
         if ds_name == "ix-apps":  # FIXME: we need to specify this globally
