@@ -1910,7 +1910,7 @@ class InterfaceService(CRUDService):
                         list_of_ip.append(alias_dict)
 
         return list_of_ip
-    
+   
     @private
     def get_nic_names(self) -> set:
         """Get network interface names excluding internal interfaces"""
