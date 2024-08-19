@@ -62,12 +62,12 @@ def assert_reject(event):
     return event['event_data']['sudo']['reject']
 
 
-def assert_timestamp(event):
+def assert_timestamp(event, event_data):
     """
     NAS-130373:  message_timestamp should be UTC
     """
     assert type(event) is dict
-    submit_time = event['event_data']['sudo']['accept']['submit_time']['seconds']
+    submit_time = event_data['submit_time']['seconds']
     msg_ts = event['message_timestamp']
     utc_ts = get_utc()
 
@@ -125,7 +125,7 @@ class SudoTests:
         assert accept['runuser'] == 'root'
         assert accept['runargv'].split(',') == ['ls', '/etc']
         # NAS-130373
-        assert_timestamp(user_sudo_events(self.USER)[-1])
+        assert_timestamp(user_sudo_events(self.USER)[-1], accept)
 
         # One more completely unique command
         magic = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(20))
@@ -189,6 +189,8 @@ class SudoTests:
         assert reject['runuser'] == 'root'
         assert reject['runargv'].split(',') == ['ls', '/etc']
         assert reject['reason'] == 'command not allowed'
+        # NAS-130373
+        assert_timestamp(user_sudo_events(self.USER)[-1], reject)
 
 
 class SudoNoPasswd:
