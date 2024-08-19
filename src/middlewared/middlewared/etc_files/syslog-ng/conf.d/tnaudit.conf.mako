@@ -127,6 +127,7 @@ rewrite r_rewrite_sudo_accept {
 };
 rewrite r_rewrite_sudo_reject {
   set("${sudo.reject.uuid}", value("TNAUDIT.aid"));
+  fix-time-zone("UTC");
   set('${S_YEAR}-${S_MONTH}-${S_DAY} ${S_HOUR}:${S_MIN}:${S_SEC}.$(substr "${sudo.reject.server_time.nanoseconds}" "0" "6")', value("TNAUDIT.time"));
   set("${sudo.reject.submithost}", value("TNAUDIT.addr"));
   set("${sudo.reject.submituser}", value("TNAUDIT.user"));
