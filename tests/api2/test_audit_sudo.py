@@ -119,13 +119,14 @@ class SudoTests:
         # Now create an event and do some basic checking
         self.sudo_command('ls /etc')
         assert count + 1 == wait_for_events(self.USER, count + 1)
-        accept = assert_accept(user_sudo_events(self.USER)[-1])
+        event = user_sudo_events(self.USER)[-1]
+        accept = assert_accept(event)
         assert accept['submituser'] == self.USER
         assert accept['command'] == LS_COMMAND
         assert accept['runuser'] == 'root'
         assert accept['runargv'].split(',') == ['ls', '/etc']
         # NAS-130373
-        assert_timestamp(user_sudo_events(self.USER)[-1], accept)
+        assert_timestamp(event, accept)
 
         # One more completely unique command
         magic = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(20))
@@ -183,14 +184,15 @@ class SudoTests:
             self.sudo_command('ls /etc')
         assert 'is not allowed to execute ' in str(ve), str(ve)
         assert count + 1 == wait_for_events(self.USER, count + 1)
-        reject = assert_reject(user_sudo_events(self.USER)[-1])
+        event = user_sudo_events(self.USER)[-1]
+        reject = assert_reject(event)
         assert reject['submituser'] == self.USER
         assert reject['command'] == LS_COMMAND
         assert reject['runuser'] == 'root'
         assert reject['runargv'].split(',') == ['ls', '/etc']
         assert reject['reason'] == 'command not allowed'
         # NAS-130373
-        assert_timestamp(user_sudo_events(self.USER)[-1], reject)
+        assert_timestamp(event, reject)
 
 
 class SudoNoPasswd:
