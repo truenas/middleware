@@ -11,6 +11,7 @@ class InetInfoEntry:
     local_port: int
     remote_ip: str
     remote_port: int
+    protocol: str
 
 
 def parse_address(hex_address, ipversion):
@@ -42,7 +43,7 @@ def read_proc_net(local_port=None, remote_port=None) -> InetInfoEntry | list[Ine
                         local_port is not None and local_port == lp,
                         remote_port is not None and remote_port == rp,
                     )):
-                        return InetInfoEntry(lip, lp, rip, rp)
+                        return InetInfoEntry(lip, lp, rip, rp, prot)
                 else:
-                    info.append(InetInfoEntry(lip, lp, rip, rp))
+                    info.append(InetInfoEntry(lip, lp, rip, rp, prot))
     return info
