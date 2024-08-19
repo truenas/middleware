@@ -1,3 +1,4 @@
+import dataclasses
 import collections
 import enum
 import os
@@ -6,18 +7,52 @@ import typing
 
 APPS_STATUS: collections.namedtuple = collections.namedtuple('Status', ['status', 'description'])
 CATALOG_DATASET_NAME: str = 'truenas_catalog'
+DOCKER_DATASET_NAME: str = 'ix-apps'
 IX_APPS_DIR_NAME = '.ix-apps'
 IX_APPS_MOUNT_PATH: str = os.path.join('/mnt', IX_APPS_DIR_NAME)
 
-DATASET_DEFAULTS: dict = {
-    'aclmode': 'discard',
-    'acltype': 'posix',
-    'exec': 'on',
-    'setuid': 'on',
-    'casesensitivity': 'sensitive',
-    'atime': 'off',
-    'canmount': 'noauto',
-}
+
+@dataclasses.dataclass(slots=True, frozen=True)
+class DatasetProp:
+    value: str
+    create_time_only: bool
+    ds_name: str | None = None
+
+
+@dataclasses.dataclass(slots=True, frozen=True)
+class DatasetDefaults:
+    aclmode: DatasetProp = DatasetProp('discard', False)
+    acltype: DatasetProp = DatasetProp('posix', False)
+    atime: DatasetProp = DatasetProp('off', False)
+    casesensitivity: DatasetProp = DatasetProp('sensitive', True)
+    canmount: DatasetProp = DatasetProp('noauto', False)
+    dedup: DatasetProp = DatasetProp('off', False)
+    encryption: DatasetProp = DatasetProp('off', True, DOCKER_DATASET_NAME)
+    exec: DatasetProp = DatasetProp('on', False)
+    mountpoint: DatasetProp = DatasetProp(f'/{IX_APPS_DIR_NAME}', True, DOCKER_DATASET_NAME)
+    normalization: DatasetProp = DatasetProp('none', True)
+    overlay: DatasetProp = DatasetProp('on', False)
+    setuid: DatasetProp = DatasetProp('on', False)
+    snapdir: DatasetProp = DatasetProp('hidden', False)
+    xattr: DatasetProp = DatasetProp('sa', False)
+
+    @classmethod
+    def to_dict(cls):
+        return {k: v['value'] for k, v in dataclasses.asdict(cls()).items()}
+
+    @classmethod
+    def create_time_only(cls, ds_name: str | None = None):
+        return {
+            k: v['value'] for k, v in dataclasses.asdict(cls()).items()
+            if v['create_time_only'] and v['ds_name'] in (ds_name, None)
+        }
+
+    @classmethod
+    def update_only(cls, ds_name: str | None = None, skip_ds_name_check: bool = False):
+        return {
+            k: v['value'] for k, v in dataclasses.asdict(cls()).items()
+            if v['create_time_only'] is False and (skip_ds_name_check or v['ds_name'] in (ds_name, None))
+        }
 
 
 class Status(enum.Enum):

@@ -2,7 +2,7 @@ import os.path
 import shutil
 
 from middlewared.plugins.apps.ix_apps.path import get_app_parent_volume_ds_name, get_installed_app_path
-from middlewared.plugins.docker.state_utils import DATASET_DEFAULTS
+from middlewared.plugins.docker.state_utils import DatasetDefaults
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, job, Service
 
@@ -181,9 +181,7 @@ class K8stoDockerMigrationService(Service):
                     self.middleware.call_sync('zfs.snapshot.clone', {
                         'snapshot': snapshot,
                         'dataset_dst': destination_ds,
-                        'dataset_properties': {
-                            k: v for k, v in DATASET_DEFAULTS.items() if k not in ['casesensitivity']
-                        },
+                        'dataset_properties': DatasetDefaults.update_only(os.path.basename(destination_ds)),
                     })
                     self.middleware.call_sync('zfs.dataset.promote', destination_ds)
                     self.middleware.call_sync('zfs.dataset.mount', destination_ds)

@@ -3,7 +3,7 @@ import os
 from middlewared.service import CallError, Service
 
 from .ix_apps.path import get_app_parent_volume_ds_name
-from .utils import DATASET_DEFAULTS
+from .utils import DatasetDefaults
 
 
 class AppSchemaActions(Service):
@@ -27,7 +27,7 @@ class AppSchemaActions(Service):
         for create_ds in sorted(set(user_wants) - existing_datasets):
             await self.middleware.call(
                 'zfs.dataset.create', {
-                    'properties': user_wants[create_ds]['properties'] | DATASET_DEFAULTS,
+                    'properties': user_wants[create_ds]['properties'] | DatasetDefaults.to_dict(),
                     'name': create_ds, 'type': 'FILESYSTEM',
                 }
             )
