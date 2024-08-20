@@ -1454,10 +1454,7 @@ class InterfaceService(CRUDService):
     @pass_app()
     async def websocket_local_ip(self, app):
         """Returns the local ip address for this websocket session."""
-        if any((
-            app is None,
-            not isinstance(app.origin, TCPIPOrigin)
-        )):
+        if app is None or isinstance(app.origin, TCPIPOrigin) is False:
             return
 
         try:
