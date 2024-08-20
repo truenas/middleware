@@ -55,16 +55,18 @@ def map_disks_to_enclosure_slots(pci):
                 continue
             else:
                 try:
-                    mapping[slot] = {
-                        'name': next((path / 'device/block').iterdir(), BaseDev).name,
-                        'locate': 'ON' if (path / 'locate').read_text().strip() == '1' else 'OFF',
-                    }
-                except (ValueError, FileNotFoundError):
+                    name = next((path / 'device/block').iterdir(), BaseDev).name,
+                except FileNotFoundError:
                     # no disk in this slot
-                    mapping[slot] = {
-                        'name': BaseDev.name,
-                        'locate': BaseDev.locate,
-                    }
+                    name = BaseDev.name
+                try:
+                    locate = 'ON' if (path / 'locate').read_text().strip() == '1' else 'OFF'
+                except ValueError:
+                    locate = BaseDev.locate
+                mapping[slot] = {
+                    'name': name,
+                    'locate': locate,
+                }
 
     return mapping
 
