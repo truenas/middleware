@@ -615,6 +615,11 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                     port = rsync['remoteport']
                     extra_args = ''
 
+                remote_username, remote_host = remote.rsplit('@', 1)
+                if ':' in remote_host:
+                    remote_host = f'[{remote_host}]'
+                remote = f'{remote_username}@{remote_host}'
+
                 line += [
                     '-e',
                     f'"ssh -p {port} -o BatchMode=yes -o StrictHostKeyChecking=yes {extra_args}"'
