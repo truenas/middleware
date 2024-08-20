@@ -4,12 +4,14 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from dataclasses import dataclass
+from os import scandir
 from pathlib import Path
 
 
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class BaseDev:
     name: str = None
+    locate: str = None
 
 
 def map_disks_to_enclosure_slots(pci):
@@ -43,18 +45,26 @@ def map_disks_to_enclosure_slots(pci):
         (i.e. {1: sda, 2: None})
     """
     mapping = dict()
-    for i in Path(f'/sys/class/enclosure/{pci}').iterdir():
-        try:
-            slot = int((i / 'slot').read_text().strip())
-        except (NotADirectoryError, FileNotFoundError, ValueError):
-            # not a slot directory
-            continue
-        else:
+    with scandir(f'/sys/class/enclosure/{pci}') as sdir:
+        for i in filter(lambda x: x.is_dir(), sdir):
+            path = Path(i)
             try:
-                mapping[slot] = next((i / 'device/block').iterdir(), BaseDev).name
-            except FileNotFoundError:
-                # no disk in this slot
-                mapping[slot] = BaseDev.name
+                slot = int((path / 'slot').read_text().strip())
+            except (NotADirectoryError, FileNotFoundError, ValueError):
+                # not a slot directory
+                continue
+            else:
+                try:
+                    mapping[slot] = {
+                        'name': next((path / 'device/block').iterdir(), BaseDev).name,
+                        'locate': 'ON' if (path / 'locate').read_text().strip() == '1' else 'OFF',
+                    }
+                except (ValueError, FileNotFoundError):
+                    # no disk in this slot
+                    mapping[slot] = {
+                        'name': BaseDev.name,
+                        'locate': BaseDev.locate,
+                    }
 
     return mapping
 
