@@ -441,18 +441,20 @@ class FailoverService(ConfigService):
         """Determine if NICs match between both controllers."""
         result = {'missing_local': list(), 'missing_remote': list()}
         try:
-            local_nics = await self.middleware.call('interface.get_nic_names')
+            local_nics = await self.middleware.call('interface.query', [], {'extra': {'retrieve_names_only': True}})
+            local_nics = set(i['name'] for i in local_nics)
         except Exception:
-            self.logger.error('Unhandled exception in get_nic_names on local controller', exc_info=True)
+            self.logger.error('Unhandled exception querying ifaces on local controller', exc_info=True)
             return result
 
         try:
             remote_nics = await self.middleware.call(
-                'failover.call_remote', 'interface.get_nic_names', [],
+                'failover.call_remote', 'interface.query', [[], {'extra': {'retrieve_names_only': True}}],
                 {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
             )
+            remote_nics = set(i['name'] for i in remote_nics)
         except Exception:
-            self.logger.error('Unhandled exception in get_nic_names on remote controller', exc_info=True)
+            self.logger.error('Unhandled exception querying ifaces on remote controller', exc_info=True)
         else:
             if remote_nics is not None:
                 result['missing_local'] = sorted(remote_nics - local_nics)
