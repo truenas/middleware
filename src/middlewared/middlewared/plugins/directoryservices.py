@@ -35,7 +35,8 @@ class DirectoryServices(Service):
     @returns(Dict(
         'directoryservices_status',
         Str('type', enum=[x.value for x in DSType], null=True),
-        Str('status', enum=[status.name for status in DSStatus], null=True)
+        Str('status', enum=[status.name for status in DSStatus], null=True),
+        Str('status_msg', null=True)
     ))
     def status(self):
         """
@@ -47,9 +48,7 @@ class DirectoryServices(Service):
             except Exception:
                 pass
 
-        status = DSHealthObj.dump()
-        status.pop('status_msg')
-        return status
+        return DSHealthObj.dump()
 
     @no_authz_required
     @accepts()
@@ -218,12 +217,15 @@ class DirectoryServices(Service):
             job.set_progress(100, f'{failover_status}: skipping directory service setup due to failover status')
             return
 
-        self.middleware.call_sync('service.restart', 'idmap')
-
-        self.middleware.call_sync('directoryservices.health.check')
+        # Recover is called here because it short-circuits if health check
+        # shows we're healthy. If we can't recover due to things being irreparably
+        # broken then this will raise an exception.
+        self.middleware.call_sync('directoryservices.health.recover')
         if DSHealthObj.dstype is None:
             return
 
+        # nsswitch.conf needs to be updated
+        self.middleware.call_sync('etc.generate', 'nss')
         job.set_progress(10, 'Refreshing cache'),
         cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh')
         cache_refresh.wait_sync()
