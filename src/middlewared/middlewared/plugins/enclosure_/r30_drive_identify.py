@@ -40,6 +40,7 @@ def led_status_mapping(status):
     mapping = {
         'CLEAR': '0x00',  # turn off red led
         'IDENTIFY': '0x42',  # red and green led blink fast
+        'ON': '0x42',  # same as IDENTIFY
         'FAULT': '0x44',  # red led solid, green led still works as normal
         'REBUILD': '0x46',  # red led blink slow, green led still works as normal
     }

@@ -31,7 +31,7 @@ def get_cmd(slot, status):
         clear_fault[-4] = '0x39'
         clear_fault[-1] = '0x00'
         final.append(clear_fault[:])
-    elif status in ('IDENT', 'IDENTIFY'):
+    elif status in ('ON', 'IDENT', 'IDENTIFY'):
         # turn blue led on
         ident = base[:]
         ident[-4] = '0x22'
