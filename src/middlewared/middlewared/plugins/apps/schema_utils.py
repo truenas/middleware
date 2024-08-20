@@ -37,10 +37,10 @@ def construct_schema(
 ) -> dict:
     schema_name = f'app_{"update" if update else "create"}'
     attrs = list(itertools.chain.from_iterable(
-        get_schema(q, update, old_values) for q in item_version_details['schema']['questions']
+        get_schema(q, False, old_values) for q in item_version_details['schema']['questions']
     ))
     dict_obj = update_conditional_defaults(
-        Dict(schema_name, *attrs, update=update, additional_attrs=True), {
+        Dict(schema_name, *attrs, update=False, additional_attrs=True), {
             'schema': {'attrs': item_version_details['schema']['questions']}
         }
     )
@@ -48,7 +48,7 @@ def construct_schema(
     verrors = ValidationErrors()
     verrors.add_child('values', validate_schema(
         attrs, new_values, True, dict_kwargs={
-            'conditional_defaults': dict_obj.conditional_defaults, 'update': update,
+            'conditional_defaults': dict_obj.conditional_defaults, 'update': False,
         }
     ))
     return {
