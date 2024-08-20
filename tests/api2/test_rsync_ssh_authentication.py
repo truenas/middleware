@@ -78,6 +78,12 @@ def ssh_credentials(remoteuser):
         yield c
 
 
+@pytest.fixture(scope="module")
+def ipv6_ssh_credentials(remoteuser):
+    with localhost_ssh_credentials(url="http://[::1]", username="remoteuser") as c:
+        yield c
+
+
 @pytest.fixture(scope="function")
 def cleanup(localuser, src, dst):
     ssh(f"rm -rf {localuser['home']}/.ssh")
@@ -300,3 +306,16 @@ def test_remotepath_with_whitespace(cleanup, localuser, remoteuser, src, dst, ss
         run_task(t)
 
     assert ssh(f"ls -1 '{dst}'") == "test\n"
+
+
+def test_ipv6_ssh_credentials(cleanup, localuser, remoteuser, src, dst, ipv6_ssh_credentials):
+    with task({
+        "path": f"{src}/",
+        "user": "localuser",
+        "ssh_credentials": ipv6_ssh_credentials["credentials"]["id"],
+        "mode": "SSH",
+        "remotepath": dst,
+    }) as t:
+        run_task(t)
+
+    assert ssh(f"ls -1 {dst}") == "test\n"

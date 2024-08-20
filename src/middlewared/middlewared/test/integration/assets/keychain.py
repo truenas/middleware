@@ -22,10 +22,12 @@ def ssh_keypair():
 
 @contextlib.contextmanager
 def localhost_ssh_credentials(**data):
+    url = data.pop("url", "http://localhost")
+
     with ssh_keypair() as keypair:
         credentials = call("keychaincredential.remote_ssh_semiautomatic_setup", {
             "name": str(uuid.uuid4()),
-            "url": "http://localhost",
+            "url": url,
             "token": call("auth.generate_token"),
             "private_key": keypair["id"],
             **data,
