@@ -133,7 +133,7 @@ def test_delete_share_info_tdb(setup_smb_share):
 
 def test_restore_sharesec_with_flush_share_info(setup_smb_share, sharesec_user):
     with client() as c:
-        c.call('smb.sharesec._flush_share_info')
+        c.call('smb.sharesec.flush_share_info')
 
     acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})
     assert acl['share_name'].casefold() == setup_smb_share['name'].casefold()
