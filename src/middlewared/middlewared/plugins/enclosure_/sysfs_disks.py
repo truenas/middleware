@@ -55,7 +55,7 @@ def map_disks_to_enclosure_slots(pci):
                 continue
             else:
                 try:
-                    name = next((path / 'device/block').iterdir(), BaseDev).name,
+                    name = next((path / 'device/block').iterdir(), BaseDev).name
                 except FileNotFoundError:
                     # no disk in this slot
                     name = BaseDev.name
