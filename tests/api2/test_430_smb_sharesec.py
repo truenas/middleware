@@ -1,14 +1,13 @@
 import pytest
 import sys
 import os
-from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.utils import call, client
-from functions import PUT, POST, GET, DELETE, SSH_TEST
+from middlewared.test.integration.utils import call, client, ssh
+from functions import SSH_TEST
 from auto_config import user, password
 
 Guests = {
@@ -29,14 +28,12 @@ Users = {
 
 
 @pytest.fixture(scope="module")
-def setup_smb_share(request):
-    global share_info
+def setup_smb_share():
     with dataset(
         "smb-sharesec",
         {'share_type': 'SMB'},
     ) as ds:
         with smb_share(f'/mnt/{ds}', "my_sharesec") as share:
-            share_info = share
             yield share
 
 
@@ -52,20 +49,18 @@ def sharesec_user():
         yield u
 
 
-@pytest.mark.dependency(name="sharesec_initialized")
-def test_02_initialize_share(setup_smb_share):
-    results = POST('/sharing/smb/getacl/', {
-        'share_name': share_info['name']
-    })
-    assert results.status_code == 200, results.text
-    assert results.json()['share_name'].casefold() == share_info['name'].casefold()
-    assert len(results.json()['share_acl']) == 1
+def test_initialize_share(setup_smb_share):
+    acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})
+    assert acl['share_name'].casefold() == setup_smb_share['name'].casefold()
+    assert len(acl['share_acl']) == 1
+    assert acl['share_acl'][0]['ae_who_sid'] == 'S-1-1-0'
+    assert acl['share_acl'][0]['ae_perm'] == 'FULL'
+    assert acl['share_acl'][0]['ae_type'] == 'ALLOWED'
 
 
-def test_06_set_smb_acl_by_sid(request):
-    depends(request, ["sharesec_initialized"], scope="session")
+def test_set_smb_acl_by_sid(setup_smb_share):
     payload = {
-        'share_name': share_info['name'],
+        'share_name': setup_smb_share['name'],
         'share_acl': [
             {
                 'ae_who_sid': 'S-1-5-32-545',
@@ -74,9 +69,7 @@ def test_06_set_smb_acl_by_sid(request):
             }
         ]
     }
-    results = POST("/sharing/smb/setacl", payload)
-    assert results.status_code == 200, results.text
-    acl_set = results.json()
+    acl_set = call('sharing.smb.setacl', payload)
 
     assert payload['share_name'].casefold() == acl_set['share_name'].casefold()
     assert payload['share_acl'][0]['ae_who_sid'] == acl_set['share_acl'][0]['ae_who_sid']
@@ -86,7 +79,7 @@ def test_06_set_smb_acl_by_sid(request):
 
     b64acl = call(
         'datastore.query', 'sharing.cifs.share',
-        [['cifs_name', '=', share_info['name']]],
+        [['cifs_name', '=', setup_smb_share['name']]],
         {'get': True}
     )['cifs_share_acl']
 
@@ -96,18 +89,16 @@ def test_06_set_smb_acl_by_sid(request):
 
     newb64acl = call(
         'datastore.query', 'sharing.cifs.share',
-        [['cifs_name', '=', share_info['name']]],
+        [['cifs_name', '=', setup_smb_share['name']]],
         {'get': True}
     )['cifs_share_acl']
 
     assert newb64acl == b64acl
 
 
-@pytest.mark.dependency(name="sharesec_acl_set")
-def test_07_set_smb_acl_by_unix_id(request, sharesec_user):
-    depends(request, ["sharesec_initialized"], scope="session")
+def test_set_smb_acl_by_unix_id(setup_smb_share, sharesec_user):
     payload = {
-        'share_name': share_info['name'],
+        'share_name': setup_smb_share['name'],
         'share_acl': [
             {
                 'ae_who_id': {'id_type': 'USER', 'id': sharesec_user['uid']},
@@ -116,9 +107,7 @@ def test_07_set_smb_acl_by_unix_id(request, sharesec_user):
             }
         ]
     }
-    results = POST("/sharing/smb/setacl", payload)
-    assert results.status_code == 200, results.text
-    acl_set = results.json()
+    acl_set = call('sharing.smb.setacl', payload)
 
     assert payload['share_name'].casefold() == acl_set['share_name'].casefold()
     assert payload['share_acl'][0]['ae_perm'] == acl_set['share_acl'][0]['ae_perm']
@@ -128,91 +117,71 @@ def test_07_set_smb_acl_by_unix_id(request, sharesec_user):
     assert acl_set['share_acl'][0]['ae_who_str'] == sharesec_user['username']
 
 
-def test_24_delete_share_info_tdb(request):
-    depends(request, ["sharesec_acl_set"], scope="session")
+def test_delete_share_info_tdb(setup_smb_share):
     cmd = 'rm /var/db/system/samba4/share_info.tdb'
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
-
-def test_25_verify_share_info_tdb_is_deleted(request):
-    depends(request, ["sharesec_acl_set"], scope="session")
     cmd = 'test -f /var/db/system/samba4/share_info.tdb'
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is False, results['output']
 
-    results = POST("/sharing/smb/getacl", {'share_name': share_info['name']})
-    assert results.status_code == 200, results.text
-    acl = results.json()
-
-    assert acl['share_name'].casefold() == share_info['name'].casefold()
+    acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})
+    assert acl['share_name'].casefold() == setup_smb_share['name'].casefold()
     assert acl['share_acl'][0]['ae_who_sid'] == 'S-1-1-0'
 
 
-def test_27_restore_sharesec_with_flush_share_info(request, sharesec_user):
-    depends(request, ["sharesec_acl_set"], scope="session")
+def test_restore_sharesec_with_flush_share_info(setup_smb_share, sharesec_user):
     with client() as c:
         c.call('smb.sharesec.flush_share_info')
 
-    results = POST("/sharing/smb/getacl", {'share_name': share_info['name']})
-    assert results.status_code == 200, results.text
-    acl = results.json()
-
-    assert acl['share_name'].casefold() == share_info['name'].casefold()
+    acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})
+    assert acl['share_name'].casefold() == setup_smb_share['name'].casefold()
     assert acl['share_acl'][0]['ae_who_str'] == sharesec_user['username']
 
 
-def test_29_verify_share_info_tdb_is_created(request):
-    depends(request, ["sharesec_acl_set"], scope="session")
+def test_verify_share_info_tdb_is_created(setup_smb_share, sharesec_user):
     cmd = 'test -f /var/db/system/samba4/share_info.tdb'
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
-
-@pytest.mark.dependency(name="sharesec_rename")
-def test_30_rename_smb_share_and_verify_share_info_moved(request, sharesec_user):
-    depends(request, ["sharesec_acl_set"], scope="session")
-    results = PUT(f"/sharing/smb/id/{share_info['id']}/",
-                  {"name": "my_sharesec2"})
-    assert results.status_code == 200, results.text
-
-    results = POST("/sharing/smb/getacl", {'share_name': 'my_sharesec2'})
-    assert results.status_code == 200, results.text
-    acl = results.json()
-
-    share_info['name'] = 'my_sharesec2'
-    assert acl['share_name'].casefold() == share_info['name'].casefold()
+    # Get the initial ACL information
+    acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})
+    assert acl['share_name'].casefold() == setup_smb_share['name'].casefold()
     assert acl['share_acl'][0]['ae_who_str'] == sharesec_user['username']
 
+    share = call('sharing.smb.query', [['id', '=', setup_smb_share['id']]], {'get': True})
+    assert share['name'] == setup_smb_share['name']
 
-def test_31_toggle_share_and_verify_acl_preserved(request, sharesec_user):
-    depends(request, ["sharesec_rename"], scope="session")
+    share = call('sharing.smb.update', setup_smb_share['id'], {'name': 'my_sharesec2'})
+    assert share['name'] == 'my_sharesec2'
 
-    results = PUT(f"/sharing/smb/id/{share_info['id']}/",
-                  {"enabled": False})
-    assert results.status_code == 200, results.text
+    acl = call('sharing.smb.getacl', {'share_name': 'my_sharesec2'})
 
-    results = PUT(f"/sharing/smb/id/{share_info['id']}/",
-                  {"enabled": True})
-    assert results.status_code == 200, results.text
+    setup_smb_share['name'] = 'my_sharesec2'
+    assert acl['share_name'].casefold() == setup_smb_share['name'].casefold()
+    assert acl['share_acl'][0]['ae_who_str'] == sharesec_user['username'], ssh('tdbdump /var/db/system/samba4/share_info.tdb') 
 
-    results = POST("/sharing/smb/getacl", {'share_name': 'my_sharesec2'})
-    assert results.status_code == 200, results.text
-    acl = results.json()
 
-    assert acl['share_name'].casefold() == share_info['name'].casefold()
+def test_toggle_share_and_verify_acl_preserved(setup_smb_share, sharesec_user):
+    call('sharing.smb.update', setup_smb_share['id'], {"enabled": False})
+
+    call('sharing.smb.update', setup_smb_share['id'], {"enabled": True})
+
+    acl = call('sharing.smb.getacl', {'share_name': 'my_sharesec2'})
+    assert acl['share_name'].casefold() == setup_smb_share['name'].casefold()
     assert acl['share_acl'][0]['ae_who_str'] == sharesec_user['username']
 
     # Abusive test, bypass normal APIs for share and
     # verify that sync_registry call still preserves info.
-    call('datastore.update', 'sharing.cifs.share', share_info['id'], {'cifs_enabled': False})
+    call('datastore.update', 'sharing.cifs.share', setup_smb_share['id'], {'cifs_enabled': False})
 
     call('sharing.smb.sync_registry', job=True)
 
-    call('datastore.update', 'sharing.cifs.share', share_info['id'], {'cifs_enabled': True})
+    call('datastore.update', 'sharing.cifs.share', setup_smb_share['id'], {'cifs_enabled': True})
 
     call('sharing.smb.sync_registry', job=True)
 
     acl = call('sharing.smb.getacl', {'share_name': 'my_sharesec2'})
-    assert acl['share_name'].casefold() == share_info['name'].casefold()
+    assert acl['share_name'].casefold() == setup_smb_share['name'].casefold()
     assert acl['share_acl'][0]['ae_who_str'] == sharesec_user['username']
