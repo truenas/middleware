@@ -4,7 +4,6 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import logging
-import re
 
 from middlewared.utils.scsi_generic import inquiry
 
@@ -27,9 +26,6 @@ from .sysfs_disks import map_disks_to_enclosure_slots
 from .slot_mappings import get_slot_info
 
 logger = logging.getLogger(__name__)
-
-SLOTNNN_RE = re.compile('^slot[0-9]{2,3}$')
-SLOT_NNN_COMMA_RE = re.compile('^SLOT [0-9]{2,3},')
 
 
 class Enclosure:
@@ -330,26 +326,12 @@ class Enclosure:
                 # is this a front, rear or internal slot?
                 parsed.update(disk_position_mapping.get(mapped_slot, dict()))
 
-                # Pick out the original slot number from the descriptor,
-                # for example 'slot00', 'slot01', ... etc
-                try:
-                    descriptor = element['descriptor'].strip()
-                    if SLOTNNN_RE.match(descriptor):
-                        origslot = int(descriptor[4:].lstrip('0') or '0')
-                    elif SLOT_NNN_COMMA_RE.match(descriptor):
-                        origslot = int(descriptor.split()[1].split(',')[0].lstrip('0') or 0)
-                    else:
-                        origslot = slot - 1
-                except KeyError:
-                    origslot = slot - 1
-                    descriptor = f'slot{origslot}'
-
                 parsed['original'] = {
                     'enclosure_id': self.encid,
                     'enclosure_sg': self.sg,
                     'enclosure_bsg': self.bsg,
-                    'descriptor': descriptor,
-                    'slot': origslot,
+                    'descriptor': f'slot{slot}',
+                    'slot': slot,
                 }
 
             final[element_type[0]].update({mapped_slot: parsed})
