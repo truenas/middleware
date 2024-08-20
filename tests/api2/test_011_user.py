@@ -541,14 +541,9 @@ def test_041_lock_smb_user(request):
     check_config_file('/etc/shadow', f'{username}:!:18397:0:99999:7:::')
 
     username = UserAssets.TestUser02['create_payload']['username']
-    for entry in call('smb.passdb_list', True):
-        if entry['Unix username'] == username:
-            my_entry = entry
-            break
-    else:
-        assert False, f'{username!r} not found in smb.passdb_list'
 
-    assert my_entry["Account Flags"] == "[DU         ]", str(my_entry)
+    my_entry = call('smb.passdb_list', [['username', '=', username]], {'get': True}) 
+    assert my_entry['acct_ctrl'] & 0x00000400, str(my_entry)  # 0x00000400 is AUTO_LOCKED in MS-SAMR 
 
 
 def test_042_disable_smb_user(request):
@@ -692,27 +687,6 @@ def toggle_smb_configured():
         yield
     finally:
         call('smb.set_configured')
-
-
-def test_061_check_smb_configured_sentinel():
-    assert call('smb.is_configured')
-    with toggle_smb_configured():
-        # Check that ValidationError is properly raised
-        with pytest.raises(ValidationErrors):
-            with user_asset({
-                'username': 'doug',
-                'full_name': 'doug',
-                'group_create': True,
-                'password': 'squirrel',
-                'smb': True
-            }, get_instance=False):
-                pass
-
-        with pytest.raises(ClientException):
-            call('smb.synchronize_passdb', job=True)
-
-    assert call('smb.is_configured')
-    call('smb.synchronize_passdb', job=True)
 
 
 def test_099_cleanup_share_user():

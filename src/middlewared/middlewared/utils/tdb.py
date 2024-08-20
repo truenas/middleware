@@ -292,7 +292,7 @@ class TDBHandle:
                 tdb_flags = tdb.DEFAULT
                 open_flags = os.O_RDWR
                 open_mode = 0o600
-            case 'group_mapping.tdb' | 'group_mapping_rejects.tdb':
+            case 'group_mapping.tdb' | 'group_mapping_rejects.tdb' | 'passdb.tdb':
                 tdb_flags = tdb.DEFAULT
                 open_flags = os.O_RDWR
                 self.keys_null_terminated = True

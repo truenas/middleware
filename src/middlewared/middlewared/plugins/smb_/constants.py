@@ -104,6 +104,10 @@ class SMBPath(enum.Enum):
     def is_dir(self):
         return self.value[2]
 
+    @property
+    def path(self):
+        return self.value[0]
+
 
 class SMBSharePreset(enum.Enum):
     NO_PRESET = {"verbose_name": "No presets", "params": {

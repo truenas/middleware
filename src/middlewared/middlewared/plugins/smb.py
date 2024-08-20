@@ -712,6 +712,10 @@ class SMBService(ConfigService):
 
         if old['netbiosname_local'] != new_config['netbiosname_local']:
             await self.middleware.call('smb.set_system_sid')
+            # we need to update domain field in passdb.tdb
+            pdb_job = await self.middleware.call('smb.synchronize_passdb')
+            await pdb_job.wait()
+
             await self.middleware.call('idmap.gencache.flush')
             srv = (await self.middleware.call("network.configuration.config"))["service_announcement"]
             await self.middleware.call("network.configuration.toggle_announcement", srv)
