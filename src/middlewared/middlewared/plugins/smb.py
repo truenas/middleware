@@ -38,7 +38,7 @@ from middlewared.plugins.smb_.util_param import smbconf_getparm, lpctx_validate_
 from middlewared.plugins.smb_.util_net_conf import reg_delshare, reg_listshares, reg_setparm
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.plugins.smb_.utils import apply_presets, is_time_machine_share, smb_strip_comments
-from middlewared.plugins.idmap_.idmap_constants import IDType, SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
+from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_USER_PREFIX, SID_LOCAL_GROUP_PREFIX
 from middlewared.utils import filter_list, run
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.mount import getmnttree
@@ -344,7 +344,6 @@ class SMBService(ConfigService):
         a messaging context, which will happen if the samba-related directories
         do not exist or have incorrect permissions.
         """
-        data = await self.config()
         job.set_progress(0, 'Setting up SMB directories.')
         if create_paths:
             await self.setup_directories()

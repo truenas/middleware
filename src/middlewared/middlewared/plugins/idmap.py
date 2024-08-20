@@ -1133,7 +1133,6 @@ class IdmapDomainService(CRUDService):
             'sid': sid
         }
 
-
     @private
     @filterable
     async def builtins(self, filters, options):

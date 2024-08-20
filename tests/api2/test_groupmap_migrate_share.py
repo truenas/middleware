@@ -37,7 +37,7 @@ def test_groupmap_migrate(do_setup):
     # Adding it back will force auto-allocation from low RID range
     ssh(f'net groupmap add ntgroup={RO_ADMINS} unixgroup={RO_ADMINS}')
 
-    groupmap = json.loads(ssh(f'net groupmap list --json'))
+    groupmap = json.loads(ssh('net groupmap list --json'))
     sid = None
     for entry in groupmap['groupmap']:
         if entry['gid'] != do_setup['group']['gid']:
