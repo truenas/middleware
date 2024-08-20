@@ -281,7 +281,7 @@ class PoolScrubService(CRUDService):
             return False
 
         last_scrubs = (await run(
-            'sh', '-c', f'zpool history {shlex.quote(name)} | grep -E "zpool (scrub|create)"',
+            'sh', '-c', f'zpool history {shlex.quote(name)} | grep -E "zpool (scrub|create|import)"',
             encoding='utf-8',
             errors='ignore',
         )).stdout
