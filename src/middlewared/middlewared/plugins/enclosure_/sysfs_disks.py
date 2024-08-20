@@ -8,7 +8,7 @@ from os import scandir
 from pathlib import Path
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)
 class BaseDev:
     name: str = None
     locate: str = None
