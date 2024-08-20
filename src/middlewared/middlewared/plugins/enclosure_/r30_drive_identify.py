@@ -77,7 +77,7 @@ def set_slot_status(slot, status):
     clear_fault_cmd = f'{base} {led_status_mapping("FAULT")} {bay}'
     clear_rebui_cmd = f'{base} {led_status_mapping("REBUILD")} {bay}'
     cmds = [manual_mode_cmd, clear_ident_cmd, clear_fault_cmd, clear_rebui_cmd]
-    if status != 'CLEAR':
+    if status not in ('OFF', 'CLEAR'):
         cmds.append(f'{base} {status_map} {bay}')
 
     # always go back to auto mode (for now)

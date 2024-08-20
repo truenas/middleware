@@ -19,7 +19,7 @@ def get_cmd(slot, status):
         None,  # ACTION
     ]
     final = []
-    if status == 'CLEAR':
+    if status in ('OFF', 'CLEAR'):
         # command to clear identify led (blue)
         clear_ident = base[:]
         clear_ident[-4] = '0x22'
