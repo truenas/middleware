@@ -2,23 +2,22 @@
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
-
-from libsg3.ses import EnclosureDevice
+import errno
 
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import Service, filterable
-from middlewared.service_exception import MatchNotFound, ValidationError
+from middlewared.service_exception import CallError, MatchNotFound, ValidationError
 from middlewared.utils import filter_list
 
 from .constants import SUPPORTS_IDENTIFY_KEY
-from .enums import JbofModels
+from .enums import ControllerModels, JbofModels
 from .fseries_drive_identify import set_slot_status as fseries_set_slot_status
-from .jbof_enclosures import map_jbof
-from .jbof_enclosures import set_slot_status as _jbof_set_slot_status
+from .jbof_enclosures import map_jbof, set_slot_status as _jbof_set_slot_status
 from .map2 import combine_enclosures
 from .nvme2 import map_nvme
 from .r30_drive_identify import set_slot_status as r30_set_slot_status
 from .ses_enclosures2 import get_ses_enclosures
+from .sysfs_disks import toggle_enclosure_slot_identifier
 
 
 class Enclosure2Service(Service):
@@ -77,14 +76,12 @@ class Enclosure2Service(Service):
         more flexbiility when we do get an enclosure that maps drives differently.
         (i.e. the ES102G2 is a prime example of this (enumerates drives at 1 instead of 0))
         """
-        sgdev = origslot = None
-        supports_identify = False
+        origslot, supports_identify = None, False
         for encslot, devinfo in filter(lambda x: x[0] == slot, enc_info['elements']['Array Device Slot'].items()):
-            sgdev = devinfo['original']['enclosure_sg']
             origslot = devinfo['original']['slot']
             supports_identify = devinfo[SUPPORTS_IDENTIFY_KEY]
 
-        return sgdev, origslot, supports_identify
+        return origslot, supports_identify
 
     @accepts(Dict(
         Str('enclosure_id', required=True),
@@ -105,49 +102,40 @@ class Enclosure2Service(Service):
         except MatchNotFound:
             raise ValidationError('enclosure2.set_slot_status', f'Enclosure with id: {data["enclosure_id"]} not found')
 
-        # Map the requested status to an underlying value.
-        # - OFF is an alias for CLEAR
-        # - ON means IDENT
-        if data['status'] in ['CLEAR', 'OFF']:
-            set_status = 'CLEAR'
-        elif data['status'] == 'ON':
-            set_status = 'IDENT'
-        else:
-            raise ValueError(f'{data["status"]}: unknown slot status')
-
         if enc_info['id'].endswith('_nvme_enclosure'):
             if enc_info['id'].startswith('r30'):
                 # an all nvme flash system so drive identification is handled
                 # in a completely different way than sata/scsi
-                return r30_set_slot_status(data['slot'], set_status)
+                return r30_set_slot_status(data['slot'], data['status'])
             elif enc_info['id'].startswith(('f60', 'f100', 'f130')):
-                return fseries_set_slot_status(data['slot'], set_status)
+                return fseries_set_slot_status(data['slot'], data['status'])
             else:
                 # mseries, and some rseries have mapped nvme enclosures but they
                 # don't support drive LED identification
                 return
         elif enc_info['model'] == JbofModels.ES24N.name:
-            return self.middleware.call_sync('enclosure2.jbof_set_slot_status', data['enclosure_id'], data['slot'], set_status)
+            return self.middleware.call_sync(
+                'enclosure2.jbof_set_slot_status', data['enclosure_id'], data['slot'], data['status']
+            )
 
-        sgdev, origslot, supported = self.get_original_disk_slot(data['slot'], enc_info)
-        if sgdev is None:
-            raise ValidationError('enclosure2.set_slot_status', 'Unable to find scsi generic device for enclosure')
-        elif origslot is None:
-            raise ValidationError('enclosure2.set_slot_status', f'Slot {data["slot"]} not found in enclosure')
-        elif not supported:
-            raise ValidationError('enclosure2.set_slot_status', f'Slot {data["slot"]} does not support identification')
-
-        if set_status == 'CLEAR':
-            actions = ('clear=ident', 'clear=fault')
+        if enc_info['pci'] is None:
+            raise ValidationError('enclosure2.set_slot_status', 'Unable to determine PCI address for enclosure')
         else:
-            actions = (f'set={set_status.lower()}',)
-
-        encdev = EnclosureDevice(sgdev)
-        try:
-            for action in actions:
-                encdev.set_control(str(origslot), action)
-        except OSError:
-            self.logger.warning(f'Failed to {data["status"]} slot {data["slot"]} on enclosure {enc_info["id"]}')
+            origslot, supported = self.get_original_disk_slot(data['slot'], enc_info)
+            if origslot is None:
+                raise ValidationError('enclosure2.set_slot_status', f'Slot {data["slot"]} not found in enclosure')
+            elif not supported:
+                raise ValidationError(
+                    'enclosure2.set_slot_status', f'Slot {data["slot"]} does not support identification'
+                )
+            else:
+                by_dirname = enc_info['model'] in (ControllerModels.H10.value, ControllerModels.H20.value)
+                try:
+                    toggle_enclosure_slot_identifier(
+                        f'/sys/class/enclosure/{enc_info["pci"]}', origslot, data['status'], by_dirname
+                    )
+                except FileNotFoundError:
+                    raise CallError(f'Slot: {data["slot"]!r} not found', errno.ENOENT)
 
     async def jbof_set_slot_status(self, ident, slot, status):
         return await _jbof_set_slot_status(ident, slot, status)
