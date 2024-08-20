@@ -1097,14 +1097,14 @@ class IdmapDomainService(CRUDService):
             return {
                 'name': f'{netbiosname}{separator}{SMBBuiltin.ADMINISTRATORS.nt_name}',
                 'id': SMBBuiltin.ADMINISTRATORS.rid,
-                'id_type': IDType.GROUP.value,
+                'id_type': IDType.GROUP.name,
                 'sid': sid,
             }
         elif rid == DomainRid.GUESTS:
             return {
                 'name': f'{netbiosname}{separator}{SMBBuiltin.GUESTS.nt_name}',
                 'id': SMBBuiltin.GUESTS.rid,
-                'id_type': IDType.GROUP.value,
+                'id_type': IDType.GROUP.name,
                 'sid': sid,
             }
         elif rid > BASE_RID_GROUP:
@@ -1132,7 +1132,6 @@ class IdmapDomainService(CRUDService):
             'id_type': id_type,
             'sid': sid
         }
-
 
     @private
     @filterable
