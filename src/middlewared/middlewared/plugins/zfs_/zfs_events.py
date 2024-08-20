@@ -159,6 +159,13 @@ async def zfs_events(middleware, data):
             return
         middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
     elif event_id in (
+        'ereport.fs.zfs.checksum',
+        'ereport.fs.zfs.io',
+        'ereport.fs.zfs.data',
+        'ereport.fs.zfs.vdev.clear',
+    ):
+        await middleware.call('cache.pop', 'VolumeStatusAlerts')
+    elif event_id in (
         'sysevent.fs.zfs.config_sync',
         'sysevent.fs.zfs.pool_destroy',
         'sysevent.fs.zfs.pool_import',
