@@ -106,17 +106,12 @@ def toggle_enclosure_slot_identifier(sysfs_path, slot, action, by_dirname=False)
         else:
             raise FileNotFoundError(slot_errmsg)
 
-    fault = (pathobj / 'fault')
-    locate = (pathobj / 'locate')
     match action:
-        case 'CLEAR':
-            actions = ((fault, '0'), (locate, '0'),)
-        case 'FAULT':
-            actions = ((fault, '1'),)
-        case 'IDENTIFY':
-            actions = ((locate, '1'),)
+        case 'CLEAR' | 'OFF':
+            value = '0'
+        case 'ON':
+            value = '1'
         case _:
             raise ValueError(f'Invalid action ({action!r})')
 
-    for path, action in actions:
-        path.write_text(action)
+    (pathobj / 'locate').write_text(value)
