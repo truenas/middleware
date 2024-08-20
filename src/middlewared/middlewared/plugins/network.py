@@ -1907,16 +1907,6 @@ class InterfaceService(CRUDService):
                         list_of_ip.append(alias_dict)
 
         return list_of_ip
-   
-    @private
-    def get_nic_names(self) -> set:
-        """Get network interface names excluding internal interfaces"""
-        res, ignore = set(), tuple(self.middleware.call_sync('interface.internal_interfaces'))
-        with scandir('/sys/class/net/') as nics:
-            for nic in filter(lambda x: x.is_symlink() and not x.name.startswith(ignore), nics):
-                res.add(nic.name)
-
-        return res
 
 
 async def configure_http_proxy(middleware, *args, **kwargs):
