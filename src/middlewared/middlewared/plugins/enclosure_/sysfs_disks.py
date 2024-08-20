@@ -61,7 +61,7 @@ def map_disks_to_enclosure_slots(pci):
                     name = BaseDev.name
                 try:
                     locate = 'ON' if (path / 'locate').read_text().strip() == '1' else 'OFF'
-                except ValueError:
+                except (ValueError, FileNotFoundError):
                     locate = BaseDev.locate
                 mapping[slot] = {
                     'name': name,
