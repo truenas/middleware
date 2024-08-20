@@ -1,7 +1,6 @@
-from collections import defaultdict
-import libzfs
 import threading
-import time
+
+import libzfs
 
 from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
@@ -108,9 +107,6 @@ async def scrub_finished(middleware, pool_name):
     await middleware.call('alert.oneshot_create', 'ScrubFinished', pool_name)
 
 
-deadman_throttle = defaultdict(list)
-
-
 async def retrieve_pool_from_db(middleware, pool_name):
     pool = await middleware.call('pool.query', [['name', '=', pool_name]])
     if not pool:
@@ -138,20 +134,6 @@ async def zfs_events(middleware, data):
 
     if event_id == 'sysevent.fs.zfs.scrub_finish':
         await scrub_finished(middleware, data.get('pool'))
-    elif event_id == 'ereport.fs.zfs.deadman':
-        vdev = data.get('vdev_path', '<unknown>')
-        pool = data.get('pool', '<unknown>')
-        now = time.monotonic()
-        interval = 300
-        max_items = 5
-        deadman_throttle[pool] = list(filter(lambda t: t > now - interval, deadman_throttle[pool]))
-        if len(deadman_throttle[pool]) < max_items:
-            middleware.create_task(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
-                'vdev': vdev,
-                'pool': pool,
-            }))
-        deadman_throttle[pool].append(now)
-        deadman_throttle[pool] = deadman_throttle[pool][-max_items:]
     elif event_id == 'resource.fs.zfs.statechange':
         await middleware.call('cache.pop', CACHE_POOLS_STATUSES)
         pool = await retrieve_pool_from_db(middleware, data.get('pool'))
