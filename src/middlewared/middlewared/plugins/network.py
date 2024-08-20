@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import ipaddress
+import socket
 from collections import defaultdict
 from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
@@ -1453,6 +1454,13 @@ class InterfaceService(CRUDService):
     @pass_app()
     async def websocket_local_ip(self, app):
         """Returns the local ip address for this websocket session."""
+        if app is None:
+            return
+
+        sock = app.request.transport.get_extra_info('socket')
+        if sock.family not in (socket.AF_INET, socket.AF_INET6):
+            return
+
         remote_port = (
             app.request.headers.get('X-Real-Remote-Port') or app.request.transport.get_extra_info('peername')[1]
         )
