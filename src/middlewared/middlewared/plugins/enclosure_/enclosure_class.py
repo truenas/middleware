@@ -296,7 +296,7 @@ class Enclosure:
             }
             if element_type[0] == 'Array Device Slot' and self.disks_map:
                 try:
-                    parsed['dev'] = self.sysfs_map[self.disks_map[slot][SYSFS_SLOT_KEY]]
+                    parsed['dev'] = self.sysfs_map[self.disks_map[slot][SYSFS_SLOT_KEY]]['name']
                 except KeyError:
                     # this happens on some of the MINI platforms, for example,
                     # the MINI-3.0-XL+ because we map the 1st drive and only
@@ -310,15 +310,8 @@ class Enclosure:
 
                 # does this enclosure slot support reporting identification status?
                 # (i.e. whether the LED is currently lit up)
-                light_status = self.disks_map[slot].get(SUPPORTS_IDENTIFY_STATUS_KEY, parsed[SUPPORTS_IDENTIFY_KEY])
-                if light_status:
-                    # Per SES-4-r3 Table 84 — Array Device Slot status element
-                    # The IDENT bit is Bit #1 of Byte #2.  These have been flattened
-                    # above into value_raw.
-                    if value_raw & 0x0200:
-                        parsed[DRIVE_BAY_LIGHT_STATUS] = 'ON'
-                    else:
-                        parsed[DRIVE_BAY_LIGHT_STATUS] = 'OFF'
+                if self.disks_map[slot].get(SUPPORTS_IDENTIFY_STATUS_KEY, parsed[SUPPORTS_IDENTIFY_KEY]):
+                    parsed[DRIVE_BAY_LIGHT_STATUS] = self.disks_map[slot][SYSFS_SLOT_KEY]]['locate']
                 else:
                     parsed[DRIVE_BAY_LIGHT_STATUS] = None
 
