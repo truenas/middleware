@@ -4,12 +4,14 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from dataclasses import dataclass
+from os import scandir
 from pathlib import Path
 
 
 @dataclass(frozen=True)
 class BaseDev:
     name: str = None
+    locate: str = None
 
 
 def map_disks_to_enclosure_slots(pci):
@@ -43,18 +45,28 @@ def map_disks_to_enclosure_slots(pci):
         (i.e. {1: sda, 2: None})
     """
     mapping = dict()
-    for i in Path(f'/sys/class/enclosure/{pci}').iterdir():
-        try:
-            slot = int((i / 'slot').read_text().strip())
-        except (NotADirectoryError, FileNotFoundError, ValueError):
-            # not a slot directory
-            continue
-        else:
+    with scandir(f'/sys/class/enclosure/{pci}') as sdir:
+        for i in filter(lambda x: x.is_dir(), sdir):
+            path = Path(i)
             try:
-                mapping[slot] = next((i / 'device/block').iterdir(), BaseDev).name
-            except FileNotFoundError:
-                # no disk in this slot
-                mapping[slot] = BaseDev.name
+                slot = int((path / 'slot').read_text().strip())
+            except (NotADirectoryError, FileNotFoundError, ValueError):
+                # not a slot directory
+                continue
+            else:
+                try:
+                    name = next((path / 'device/block').iterdir(), BaseDev).name
+                except FileNotFoundError:
+                    # no disk in this slot
+                    name = BaseDev.name
+                try:
+                    locate = 'ON' if (path / 'locate').read_text().strip() == '1' else 'OFF'
+                except (ValueError, FileNotFoundError):
+                    locate = BaseDev.locate
+                mapping[slot] = {
+                    'name': name,
+                    'locate': locate,
+                }
 
     return mapping
 
@@ -96,17 +108,12 @@ def toggle_enclosure_slot_identifier(sysfs_path, slot, action, by_dirname=False)
         else:
             raise FileNotFoundError(slot_errmsg)
 
-    fault = (pathobj / 'fault')
-    locate = (pathobj / 'locate')
     match action:
-        case 'CLEAR':
-            actions = ((fault, '0'), (locate, '0'),)
-        case 'FAULT':
-            actions = ((fault, '1'),)
-        case 'IDENTIFY':
-            actions = ((locate, '1'),)
+        case 'CLEAR' | 'OFF':
+            value = '0'
+        case 'ON':
+            value = '1'
         case _:
             raise ValueError(f'Invalid action ({action!r})')
 
-    for path, action in actions:
-        path.write_text(action)
+    (pathobj / 'locate').write_text(value)

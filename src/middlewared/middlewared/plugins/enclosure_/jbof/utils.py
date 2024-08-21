@@ -5,7 +5,9 @@ from middlewared.plugins.enclosure_.constants import (
     DISK_REAR_KEY,
     DISK_TOP_KEY,
     DISK_INTERNAL_KEY,
+    DRIVE_BAY_LIGHT_STATUS,
     SUPPORTS_IDENTIFY_KEY,
+    SUPPORTS_IDENTIFY_STATUS_KEY,
 )
 from middlewared.plugins.enclosure_.enums import (
     ElementStatus,
@@ -17,7 +19,7 @@ from middlewared.plugins.enclosure_.slot_mappings import get_jbof_slot_info
 LOGGER = getLogger(__name__)
 
 
-def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements={}):
+def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements={}, drive_bay_light_status={}):
     """This function takes the nvme devices that been mapped
     to their respective slots and then creates a "fake" enclosure
     device that matches (similarly) to what our real enclosure
@@ -76,6 +78,14 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements={})
         drk = disks_map['versions']['DEFAULT']['model'][model][slot][DISK_REAR_KEY]
         dtk = disks_map['versions']['DEFAULT']['model'][model][slot][DISK_TOP_KEY]
         dik = disks_map['versions']['DEFAULT']['model'][model][slot][DISK_INTERNAL_KEY]
+
+        # light_status will follow light unless explicitedly overridden
+        light_status = disks_map['versions']['DEFAULT']['model'][model][slot].get(SUPPORTS_IDENTIFY_STATUS_KEY, light)
+        if light_status:
+            led = drive_bay_light_status.get(slot, None)
+        else:
+            led = None
+
         fake_enclosure['elements']['Array Device Slot'][mapped_slot] = {
             'descriptor': f'Disk #{slot}',
             'status': status,
@@ -87,6 +97,7 @@ def fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements={})
             DISK_REAR_KEY: drk,
             DISK_TOP_KEY: dtk,
             DISK_INTERNAL_KEY: dik,
+            DRIVE_BAY_LIGHT_STATUS: led,
             'original': {
                 'enclosure_id': uuid,
                 'enclosure_sg': None,

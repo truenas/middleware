@@ -60,6 +60,7 @@ def do_map_es24n(model, uuid, data):
         if v['serial'] and v['transport_protocol'] == 'rdma'
     }
     mapped = dict()
+    drive_bay_light_status = dict()
     for disk in all_disks['Members']:
         slot = disk.get('Id', '')
         if not slot or not slot.isdigit():
@@ -67,6 +68,19 @@ def do_map_es24n(model, uuid, data):
             continue
         else:
             slot = int(slot)
+
+        # Check the LocationIndicatorActive before other items as we want the value
+        # even if no disk is present.
+        match disk.get('LocationIndicatorActive'):
+            case True:
+                drive_bay_light_status[slot] = 'ON'
+            case False:
+                drive_bay_light_status[slot] = 'OFF'
+            case None:
+                drive_bay_light_status[slot] = None
+            case _:
+                LOGGER.error('Unexpected drive bay light status')
+                drive_bay_light_status[slot] = None
 
         state = disk.get('Status', {}).get('State')
         if not state or state == 'Absent':
@@ -99,7 +113,7 @@ def do_map_es24n(model, uuid, data):
         elements[ElementType.VOLTAGE_SENSOR.value] = voltage
     # No Current Sensors reported
 
-    return fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements)
+    return fake_jbof_enclosure(model, uuid, num_of_slots, mapped, ui_info, elements, drive_bay_light_status)
 
 
 async def is_this_an_es24n(rclient):

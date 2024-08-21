@@ -13,7 +13,9 @@ from .constants import (
     DISK_REAR_KEY,
     DISK_TOP_KEY,
     DISK_INTERNAL_KEY,
-    SUPPORTS_IDENTIFY_KEY
+    DRIVE_BAY_LIGHT_STATUS,
+    SUPPORTS_IDENTIFY_KEY,
+    SUPPORTS_IDENTIFY_STATUS_KEY,
 )
 from .enums import ControllerModels
 from .slot_mappings import get_nvme_slot_info
@@ -82,6 +84,15 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info=None):
         drk = disks_map['versions']['DEFAULT']['id'][dmi][slot][DISK_REAR_KEY]
         dtk = disks_map['versions']['DEFAULT']['id'][dmi][slot][DISK_TOP_KEY]
         dik = disks_map['versions']['DEFAULT']['id'][dmi][slot][DISK_INTERNAL_KEY]
+
+        # light_status will follow light unless we explicitedly override
+        light_status = disks_map['versions']['DEFAULT']['id'][dmi][slot].get(SUPPORTS_IDENTIFY_STATUS_KEY, light)
+        if light_status:
+            # Currently do not have an nvme platform that supports retrieving IDENT status
+            raise NotImplementedError
+        else:
+            led = None
+
         fake_enclosure['elements']['Array Device Slot'][mapped_slot] = {
             'descriptor': f'Disk #{slot}',
             'status': status,
@@ -89,6 +100,7 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info=None):
             'value_raw': value_raw,
             'dev': device,
             SUPPORTS_IDENTIFY_KEY: light,
+            DRIVE_BAY_LIGHT_STATUS: led,
             DISK_FRONT_KEY: dfk,
             DISK_REAR_KEY: drk,
             DISK_TOP_KEY: dtk,
