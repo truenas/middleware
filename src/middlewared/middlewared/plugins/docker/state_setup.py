@@ -99,7 +99,7 @@ class DockerSetupService(Service):
             else:
                 self.move_conflicting_dir(dataset_name)
                 self.middleware.call_sync('zfs.dataset.create', {
-                    'name': dataset_name, 'type': 'FILESYSTEM', 'properties': DatasetDefaults.create_time_only(
+                    'name': dataset_name, 'type': 'FILESYSTEM', 'properties': DatasetDefaults.create_time_props(
                         os.path.basename(dataset_name)
                     ),
                 })

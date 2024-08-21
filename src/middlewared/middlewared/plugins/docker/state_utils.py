@@ -37,14 +37,10 @@ class DatasetDefaults:
     xattr: DatasetProp = DatasetProp('sa', False)
 
     @classmethod
-    def to_dict(cls):
-        return {k: v['value'] for k, v in dataclasses.asdict(cls()).items()}
-
-    @classmethod
-    def create_time_only(cls, ds_name: str | None = None):
+    def create_time_props(cls, ds_name: str | None = None):
         return {
             k: v['value'] for k, v in dataclasses.asdict(cls()).items()
-            if v['create_time_only'] and v['ds_name'] in (ds_name, None)
+            if v['ds_name'] in (ds_name, None)
         }
 
     @classmethod
