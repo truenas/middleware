@@ -18,7 +18,7 @@ from .utils import DEBUG_MAX_SIZE, get_debug_execution_dir
 class SystemService(Service):
 
     @private
-    @job(lock='system.debug_generate')
+    @job(lock='system.debug_generate', lock_queue_size=1)
     def debug_generate(self, job):
         """
         Generate system debug file.
