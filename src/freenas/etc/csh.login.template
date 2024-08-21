@@ -19,6 +19,6 @@ if ( "$USER" == "root" ) then
     if ( -f /usr/local/sbin/hactl) then
         /usr/local/sbin/hactl status -q
     endif
+    cat /root/.warning
 endif
 
-cat /root/.warning
