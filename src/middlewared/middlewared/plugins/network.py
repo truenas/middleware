@@ -1467,12 +1467,11 @@ class InterfaceService(CRUDService):
             return
 
         try:
-            info = await self.middleware.run_in_thread(read_proc_net, None, remote_port)
+            if info := await self.middleware.run_in_thread(read_proc_net, None, remote_port):
+                return info.local_ip
         except Exception:
             self.logger.error("Unexpected failure determining local websocket ip", exc_info=True)
             return
-        else:
-            return info.local_ip if info is not None else None
 
     @accepts()
     @returns(Str(null=True))
