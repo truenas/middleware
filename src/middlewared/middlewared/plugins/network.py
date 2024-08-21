@@ -4,7 +4,6 @@ import ipaddress
 from collections import defaultdict
 from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
-from os import scandir
 
 import middlewared.sqlalchemy as sa
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
@@ -1476,9 +1475,8 @@ class InterfaceService(CRUDService):
             return
 
         for iface in await self.middleware.call('interface.query'):
-            for alias in iface['aliases']:
-                if alias['address'] == local_ip:
-                    return iface
+            for _ in filter(lambda x: x['address'] == local_ip, iface['aliases'] + iface['state']['aliases']):
+                return iface
 
     @accepts()
     @returns(Dict(*[Str(i.value, enum=[i.value]) for i in XmitHashChoices]))
