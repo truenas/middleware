@@ -40,6 +40,7 @@ def led_status_mapping(status):
     mapping = {
         'CLEAR': '0x00',  # turn off red led
         'IDENTIFY': '0x42',  # red and green led blink fast
+        'ON': '0x42',  # same as IDENTIFY
         'FAULT': '0x44',  # red led solid, green led still works as normal
         'REBUILD': '0x46',  # red led blink slow, green led still works as normal
     }
@@ -51,7 +52,7 @@ def led_status_mapping(status):
 
 def set_slot_status(slot, status):
     """
-    Unfortunately, there is on way to query current drive identification status.
+    Unfortunately, there is no way to query current drive identification status.
     Furthemore, switching SMBUS back into auto mode doesn't guarantee the LEDs
     will be automatically cleared so we need to clear them manually. Finally,
     it's unclear on whether or not we even need to transition from manual to auto
@@ -76,7 +77,7 @@ def set_slot_status(slot, status):
     clear_fault_cmd = f'{base} {led_status_mapping("FAULT")} {bay}'
     clear_rebui_cmd = f'{base} {led_status_mapping("REBUILD")} {bay}'
     cmds = [manual_mode_cmd, clear_ident_cmd, clear_fault_cmd, clear_rebui_cmd]
-    if status != 'CLEAR':
+    if status not in ('OFF', 'CLEAR'):
         cmds.append(f'{base} {status_map} {bay}')
 
     # always go back to auto mode (for now)

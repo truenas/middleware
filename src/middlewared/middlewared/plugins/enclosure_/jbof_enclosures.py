@@ -92,10 +92,9 @@ async def set_slot_status(ident, slot, status):
         _, uri = await get_enclosure_model(rclient)
     fulluri = f'{uri}/Drives/{slot}'
 
-    match status:
-        case 'CLEAR':
-            await rclient.post(fulluri, data={'LocationIndicatorActive': False})
-        case 'IDENT':
-            await rclient.post(fulluri, data={'LocationIndicatorActive': True})
-        case _:
-            raise ValueError('Unsupported slot status', status)
+    if status in ('CLEAR', 'OFF'):
+        await rclient.post(fulluri, data={'LocationIndicatorActive': False})
+    elif status in ('ON', 'IDENT', 'IDENTIFY'):
+        await rclient.post(fulluri, data={'LocationIndicatorActive': True})
+    else:
+        raise ValueError('Unsupported slot status', status)

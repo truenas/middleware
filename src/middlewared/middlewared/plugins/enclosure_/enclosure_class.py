@@ -13,10 +13,12 @@ from .constants import (
     SYSFS_SLOT_KEY,
     MAPPED_SLOT_KEY,
     SUPPORTS_IDENTIFY_KEY,
+    SUPPORTS_IDENTIFY_STATUS_KEY,
     DISK_FRONT_KEY,
     DISK_REAR_KEY,
     DISK_TOP_KEY,
     DISK_INTERNAL_KEY,
+    DRIVE_BAY_LIGHT_STATUS,
 )
 from .element_types import ELEMENT_TYPES, ELEMENT_DESC
 from .enums import ControllerModels, ElementDescriptorsToIgnore, ElementStatusesToIgnore, JbodModels
@@ -294,7 +296,9 @@ class Enclosure:
             }
             if element_type[0] == 'Array Device Slot' and self.disks_map:
                 try:
-                    parsed['dev'] = self.sysfs_map[self.disks_map[slot][SYSFS_SLOT_KEY]]
+                    dinfo = self.disks_map[slot]
+                    sysfs_slot = dinfo[SYSFS_SLOT_KEY]
+                    parsed['dev'] = self.sysfs_map[sysfs_slot]['name']
                 except KeyError:
                     # this happens on some of the MINI platforms, for example,
                     # the MINI-3.0-XL+ because we map the 1st drive and only
@@ -304,9 +308,16 @@ class Enclosure:
                     continue
 
                 # does this enclosure slot support identification? (i.e. lighting up LED)
-                parsed[SUPPORTS_IDENTIFY_KEY] = self.disks_map[slot][SUPPORTS_IDENTIFY_KEY]
+                parsed[SUPPORTS_IDENTIFY_KEY] = dinfo[SUPPORTS_IDENTIFY_KEY]
 
-                mapped_slot = self.disks_map[slot][MAPPED_SLOT_KEY]
+                # does this enclosure slot support reporting identification status?
+                # (i.e. whether the LED is currently lit up)
+                if dinfo.get(SUPPORTS_IDENTIFY_STATUS_KEY, parsed[SUPPORTS_IDENTIFY_KEY]):
+                    parsed[DRIVE_BAY_LIGHT_STATUS] = self.sysfs_map[sysfs_slot]['locate']
+                else:
+                    parsed[DRIVE_BAY_LIGHT_STATUS] = None
+
+                mapped_slot = dinfo[MAPPED_SLOT_KEY]
                 # is this a front, rear or internal slot?
                 parsed.update(disk_position_mapping.get(mapped_slot, dict()))
 
@@ -314,8 +325,8 @@ class Enclosure:
                     'enclosure_id': self.encid,
                     'enclosure_sg': self.sg,
                     'enclosure_bsg': self.bsg,
-                    'descriptor': f'slot{slot}',
-                    'slot': slot,
+                    'descriptor': f'slot{sysfs_slot}',
+                    'slot': sysfs_slot,
                 }
 
             final[element_type[0]].update({mapped_slot: parsed})
