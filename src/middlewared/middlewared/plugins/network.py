@@ -4,7 +4,6 @@ import ipaddress
 from collections import defaultdict
 from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
-from os import scandir
 
 import middlewared.sqlalchemy as sa
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
@@ -1475,8 +1474,13 @@ class InterfaceService(CRUDService):
         if local_ip is None:
             return
 
-        for iface in await self.middleware.call('interface.query'):
+        interfaces = await self.middleware.call('interface.query')
+        for iface in interfaces:
             for alias in iface['aliases']:
+                if alias['address'] == local_ip:
+                    return iface
+        for iface in interfaces:
+            for alias in iface['state']['aliases']:
                 if alias['address'] == local_ip:
                     return iface
 
