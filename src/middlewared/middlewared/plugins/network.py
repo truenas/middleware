@@ -1484,8 +1484,13 @@ class InterfaceService(CRUDService):
         if local_ip is None:
             return
 
-        for iface in await self.middleware.call('interface.query'):
+        interfaces = await self.middleware.call('interface.query')
+        for iface in interfaces:
             for alias in iface['aliases']:
+                if alias['address'] == local_ip:
+                    return iface
+        for iface in interfaces:
+            for alias in iface['state']['aliases']:
                 if alias['address'] == local_ip:
                     return iface
 
