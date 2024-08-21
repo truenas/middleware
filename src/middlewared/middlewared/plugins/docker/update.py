@@ -1,7 +1,8 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
 from middlewared.service import CallError, ConfigService, job, private, returns
+from middlewared.utils.zfs import query_imported_fast_impl
 
 from .state_utils import Status
 from .utils import applications_ds_name
@@ -56,6 +57,12 @@ class DockerService(ConfigService):
         old_config.pop('dataset')
         config = old_config.copy()
         config.update(data)
+
+        verrors = ValidationErrors()
+        if config['pool'] and not await self.middleware.run_in_thread(query_imported_fast_impl, [config['pool']]):
+            verrors.add('docker_update.pool', 'Pool not found.')
+
+        verrors.check()
 
         if old_config != config:
             if config['pool'] != old_config['pool']:
