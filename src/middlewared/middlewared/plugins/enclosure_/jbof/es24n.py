@@ -79,7 +79,7 @@ def do_map_es24n(model, uuid, data):
             case None:
                 drive_bay_light_status[slot] = None
             case _:
-                LOGGER.error('Unexpected drive bay light status', exc_info=True)
+                LOGGER.error('Unexpected drive bay light status')
                 drive_bay_light_status[slot] = None
 
         state = disk.get('Status', {}).get('State')
