@@ -37,10 +37,6 @@ class DatasetDefaults:
     xattr: DatasetProp = DatasetProp('sa', False)
 
     @classmethod
-    def to_dict(cls):
-        return {k: v['value'] for k, v in dataclasses.asdict(cls()).items()}
-
-    @classmethod
     def create_time_only(cls, ds_name: str | None = None):
         return {
             k: v['value'] for k, v in dataclasses.asdict(cls()).items()
