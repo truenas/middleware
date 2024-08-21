@@ -459,14 +459,27 @@ def test_068_case_insensitive_rename(request):
     samba identifies files as same.
     """
     depends(request, ["SHARE_IS_WRITABLE"])
-    c = SMB()
-    c.connect(share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
-    fd = c.create_file("to_rename", "w")
-    c.close(fd)
-    c.rename("to_rename", "To_rename")
-    files = [x['name'] for x in c.ls('\\')]
-    c.disconnect()
-    assert ("To_rename" in files)
+    with smb_connection(
+        share=SMB_NAME,
+        username=SMB_USER,
+        password=SMB_PWD,
+        smb1=False
+    ) as c:
+        fd = c.create_file("to_rename", "w")
+        c.close(fd)
+        c.rename("to_rename", "To_rename")
+        files = [x['name'] for x in c.ls('\\')]
+        assert "To_rename" in files
+        assert "to_rename" not in files
+
+        # MacOS Sonoma currently (Aug 2024) gets SMB handle on file to be renamed
+        # potentially via the target of the rename which potentially hits optimization
+        # in samba. This validates that rename in this way also works on case-insensitve
+        # filesystems.
+        c.rename("to_rename", "to_rename")
+        files = [x['name'] for x in c.ls('\\')]
+        assert "to_rename" in files
+        assert "To_rename" not in files
 
 
 def test_069_normal_rename(request):
