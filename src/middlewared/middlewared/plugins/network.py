@@ -1474,15 +1474,9 @@ class InterfaceService(CRUDService):
         if local_ip is None:
             return
 
-        interfaces = await self.middleware.call('interface.query')
-        for iface in interfaces:
-            for alias in iface['aliases']:
-                if alias['address'] == local_ip:
-                    return iface
-        for iface in interfaces:
-            for alias in iface['state']['aliases']:
-                if alias['address'] == local_ip:
-                    return iface
+        for iface in await self.middleware.call('interface.query'):
+            for _ in filter(lambda x: x['address'] == local_ip, iface['aliases'] + iface['state']['aliases']):
+                return iface
 
     @accepts()
     @returns(Dict(*[Str(i.value, enum=[i.value]) for i in XmitHashChoices]))
