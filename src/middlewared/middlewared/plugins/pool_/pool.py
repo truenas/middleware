@@ -169,8 +169,16 @@ class PoolService(CRUDService):
 
         if info := await self.middleware.call('zfs.pool.query', [('name', '=', pool_name)]):
             info = info[0]
+
+            # `zpool.c` uses `zpool_get_state_str` to print pool status.
+            # This function return value is exposed as `health` property.
+            # `SUSPENDED` is the only differing status at the moment.
+            status = info['status']
+            if info['properties']['health']['value'] == 'SUSPENDED':
+                status = 'SUSPENDED'
+
             rv.update({
-                'status': info['status'],
+                'status': status,
                 'scan': info['scan'],
                 'expand': info['expand'],
                 'topology': await self.middleware.call('pool.transform_topology', info['groups']),
