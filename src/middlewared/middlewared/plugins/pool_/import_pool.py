@@ -219,25 +219,25 @@ class PoolService(Service):
     @private
     def encryption_is_active(self, name):
         cmd = [
-            'zpool', 'get',
+            'zfs', 'get',
             '-H',                  # use in script
             '-o', 'value',         # retrieve the value
-            'feature@encryption',  # property to retrieve
+            'encryption',          # property to retrieve
             name,                  # name of the zpool
         ]
         try:
-            self.logger.debug('Checking if feature@encryption is active on pool: %r', name)
+            self.logger.debug('Checking if root dataset is encrypted: %r', name)
             cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if cp.returncode != 0:
                 self.logger.error(
-                    'Failed to get feature@encryption for pool: %r with error: %r',
+                    'Failed to see if root dataset is encrypted for pool: %r with error: %r',
                     name, cp.stdout.decode()
                 )
                 return False
-            if cp.stdout.decode().strip() == 'active':
-                return True
-            else:
+            if cp.stdout.decode().strip() == 'off':
                 return False
+            else:
+                return True
         except Exception:
             self.logger.error(
                 'Unhandled exception while checking on feature@encryption for pool: %r',
@@ -471,7 +471,6 @@ class PoolService(Service):
 
             if not self.encryption_is_active(name):
                 self.recursive_mount(name)
-                continue
 
             self.unlock_on_boot_impl(name)
 
