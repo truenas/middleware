@@ -3,6 +3,7 @@ import contextlib
 from collections import OrderedDict
 import copy
 import enum
+import errno
 from functools import partial
 import logging
 import os
@@ -125,7 +126,17 @@ class JobsQueue(object):
         if job.options["lock_queue_size"] is not None:
             queued_jobs = [another_job for another_job in self.queue if another_job.lock is job.lock]
             if len(queued_jobs) >= job.options["lock_queue_size"]:
-                return queued_jobs[-1]
+                for queued_job in reversed(queued_jobs):
+                    if not credential_is_limited_to_own_jobs(job.credentials):
+                        return queued_job
+                    if (
+                        job.credentials.is_user_session and
+                        queued_job.credentials.is_user_session and
+                        job.credentials.user['username'] == queued_job.credentials.user['username']
+                    ):
+                        return queued_job
+
+                raise CallError('This job is already being performed by another user', errno.EBUSY)
 
         self.deque.add(job)
         self.queue.append(job)
