@@ -471,7 +471,6 @@ class PoolService(Service):
 
             if not self.encryption_is_active(name):
                 self.recursive_mount(name)
-                continue
 
             self.unlock_on_boot_impl(name)
 
