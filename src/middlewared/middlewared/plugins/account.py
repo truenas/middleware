@@ -5,8 +5,6 @@ import os
 import shlex
 import shutil
 import stat
-import subprocess
-import time
 import warnings
 import wbclient
 from pathlib import Path
@@ -598,8 +596,7 @@ class UserService(CRUDService):
         self.middleware.call_sync('service.reload', 'user')
 
         if data['smb']:
-            gm_job = self.middleware.call_sync('smb.synchronize_passdb')
-            gm_job.wait_sync()
+            self.middleware.call_sync('smb.update_passdb_user', data | {'id': pk})
 
         if os.path.isdir(SKEL_PATH) and os.path.exists(data['home']) and data['home'] not in DEFAULT_HOME_PATHS:
             for f in os.listdir(SKEL_PATH):
@@ -735,7 +732,7 @@ class UserService(CRUDService):
             if new_val is not None and old_val != new_val:
                 if k == 'username':
                     try:
-                        self.middleware.call_sync("smb.remove_passdb_user", old_val)
+                        self.middleware.call_sync("smb.remove_passdb_user", old_val, user['sid'])
                     except Exception:
                         self.logger.debug("Failed to remove passdb entry for user [%s]",
                                           old_val, exc_info=True)
@@ -745,7 +742,7 @@ class UserService(CRUDService):
         if user['smb'] is True and data.get('smb') is False:
             try:
                 must_change_pdb_entry = False
-                self.middleware.call_sync("smb.remove_passdb_user", user['username'])
+                self.middleware.call_sync("smb.remove_passdb_user", user['username'], user['sid'])
             except Exception:
                 self.logger.debug("Failed to remove passdb entry for user [%s]",
                                   user['username'], exc_info=True)
@@ -833,8 +830,7 @@ class UserService(CRUDService):
         self.middleware.call_sync('service.reload', 'ssh')
         self.middleware.call_sync('service.reload', 'user')
         if user['smb'] and must_change_pdb_entry:
-            gm_job = self.middleware.call_sync('smb.synchronize_passdb')
-            gm_job.wait_sync()
+            self.middleware.call_sync('smb.update_passdb_user', user)
 
         return pk
 
@@ -927,7 +923,7 @@ class UserService(CRUDService):
                 pass
 
         if user['smb']:
-            subprocess.run(['smbpasswd', '-x', user['username']], capture_output=True)
+            self.middleware.call_sync('smb.remove_passdb_user', user['username'], user['sid'])
 
         # TODO: add a hook in CIFS service
         cifs = self.middleware.call_sync('datastore.query', 'services.cifs', [], {'prefix': 'cifs_srv_'})
@@ -1454,8 +1450,7 @@ class UserService(CRUDService):
         password = data.pop('password')
         if password:
             data['unixhash'] = crypted_password(password)
-            data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}'
-            data['smbhash'] += f':{nt_password(password)}:[U         ]:LCT-{int(time.time()):X}:'
+            data['smbhash'] = nt_password(password)
         else:
             data['unixhash'] = '*'
             data['smbhash'] = '*'
@@ -1654,8 +1649,7 @@ class UserService(CRUDService):
         await self.middleware.call('etc.generate', 'shadow')
 
         if entry['smb']:
-            passdb_sync = await self.middleware.call('smb.synchronize_passdb')
-            await passdb_sync.wait()
+            await self.middleware.call('smb.update_passdb_user', entry)
 
 
 class GroupModel(sa.Model):
