@@ -37,6 +37,23 @@ def test__parse_smart_selftest_results__ataprint__1():
     ]
 
 
+def test__parse_smart_selftest_results__ataprint__2():
+    assert parse_smart_selftest_results(textwrap.dedent("""\
+        Num  Test_Description    Status                  Remaining  LifeTime(hours)  LBA_of_first_error
+        # 1  Offline             Self-test routine in progress 100%         0         -
+    """)) == [
+        {
+            "num": 1,
+            "description": "Offline",
+            "status": "RUNNING",
+            "status_verbose": "Self-test routine in progress",
+            "remaining": 1.0,
+            "lifetime": 0,
+            "lba_of_first_error": None,
+        },
+    ]
+
+
 @pytest.mark.parametrize("line,subresult", [
     # Longest possible error message
     ("# 1  Extended offline    Completed: servo/seek failure 80%      2941         -", {

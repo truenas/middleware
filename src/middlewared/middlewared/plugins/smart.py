@@ -47,12 +47,19 @@ def parse_smart_selftest_results(stdout):
             if not line.startswith("#"):
                 continue
 
+            if line[58] == "%":
+                remaining = line[55:58]
+                lifetime = line[61:69]
+            else:
+                remaining = line[55:57]
+                lifetime = line[60:68]
+
             test = {
                 "num": int(line[1:3].strip()),
                 "description": line[5:24].strip(),
                 "status_verbose": line[25:54].strip(),
-                "remaining": int(line[55:57]) / 100,
-                "lifetime": int(line[60:68].strip()),
+                "remaining": int(remaining.strip()) / 100,
+                "lifetime": int(lifetime.strip()),
                 "lba_of_first_error": line[77:].strip(),
             }
 
