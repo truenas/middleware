@@ -18,7 +18,6 @@ from middlewared.service import (
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils.origin import UnixSocketOrigin
-from middlewared.utils.privilege import credential_is_root_or_equivalent
 from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
 
@@ -96,14 +95,6 @@ class SessionManager:
 
         self.middleware = None
 
-    def root_sessions(self):
-        root_sessions = []
-        for session_id, session in self.sessions.items():
-            if not is_internal_session(session) and credential_is_root_or_equivalent(session.credentials):
-                root_sessions.append(session_id)
-
-        return root_sessions
-
     async def login(self, app, credentials):
         if app.authenticated:
             self.sessions[app.session_id].credentials = credentials
@@ -120,13 +111,6 @@ class SessionManager:
         app.register_callback(RpcWebSocketAppEvent.CLOSE, self._app_on_close)
 
         if not is_internal_session(session):
-            if credential_is_root_or_equivalent(credentials):
-                await self.middleware.call(
-                    "alert.oneshot_create",
-                    "AdminSessionActive",
-                    {'sessions': ', '.join(self.root_sessions())}
-                )
-
             self.middleware.send_event("auth.sessions", "ADDED", fields=dict(id=app.session_id, **session.dump()))
             await self.middleware.log_audit_message(app, "AUTHENTICATION", {
                 "credentials": dump_credentials(credentials),
@@ -137,19 +121,9 @@ class SessionManager:
         session = self.sessions.pop(app.session_id, None)
 
         if session is not None:
-            was_root_session = credential_is_root_or_equivalent(session.credentials)
             session.credentials.logout()
 
             if not is_internal_session(session):
-                if was_root_session:
-                    await self.middleware.call("alert.oneshot_delete", "AdminSessionActive")
-                    if (root_sessions := self.root_sessions()):
-                        await self.middleware.call(
-                            "alert.oneshot_create",
-                            "AdminSessionActive",
-                            {'sessions': ', '.join(root_sessions)}
-                        )
-
                 self.middleware.send_event("auth.sessions", "REMOVED", fields=dict(id=app.session_id))
 
         app.authenticated = False
