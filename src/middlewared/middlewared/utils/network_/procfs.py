@@ -1,6 +1,7 @@
+from codecs import decode
 from dataclasses import dataclass
-from socket import inet_ntoa, inet_ntop, AF_INET6
-from struct import pack
+from socket import inet_ntop, AF_INET, AF_INET6
+from struct import pack, unpack
 
 __all__ = ('read_proc_net',)
 
@@ -14,12 +15,40 @@ class InetInfoEntry:
     protocol: str
 
 
+def hex_to_ipv6(hex_addr):
+    """ hex address to standard IPv6 format
+    Process:
+        Convert hex to binary
+        Unpack into 4 32-bit integers in network byte order
+        Pack as 4 32-bit integers in native byte order
+        Use inet_ntop (standard network API) to format the address
+    """
+    addr = decode(hex_addr, "hex")
+    addr = unpack('!LLLL', addr)
+    addr = pack('@IIII', *addr)
+    addr = inet_ntop(AF_INET6, addr)
+    return addr
+
+
+def hex_to_ipv4(hex_addr):
+    """ hex address to standard IPv4 format
+    Process:
+        Convert hex to binary (decode and unpack)
+        Pack 32-bit integer in native byte order
+        Use inet_ntop (standard network API) to format address
+    """
+    addr = int(hex_addr, 16)
+    addr = pack("=L", addr)
+    addr = inet_ntop(AF_INET, addr)
+    return addr
+
+
 def parse_address(hex_address, ipversion):
     ip_hex, port_hex = hex_address.split(':')
     if ipversion == '4':
-        ip = inet_ntoa(pack("<L", int(ip_hex, 16)))
+        ip = hex_to_ipv4(ip_hex)
     else:
-        ip = inet_ntop(AF_INET6, bytes.fromhex(ip_hex))
+        ip = hex_to_ipv6(ip_hex)
     port = int(port_hex, 16)
     return ip, port
 
