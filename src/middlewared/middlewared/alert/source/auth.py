@@ -9,8 +9,12 @@ class AdminSessionAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "Administrator account activity"
     text = (
-        "The system administrator account was used to authenticate to the UI / API "
-        "%(count)d times in the last 24 hours:\n%(sessions)s"
+        "The root or default system administrator account was used to authenticate "
+        "to the UI / API %(count)d times in the last 24 hours:\n%(sessions)s.\n"
+        "To improve security, create one or more administrator accounts (see "
+        "[documentation](https://www.truenas.com/docs/scale/scaletutorials/credentials/adminroles/)) "
+        "with unique usernames and passwords and disable password access for default "
+        "administrator accounts (**root**, **admin**, or **truenas_admin**)."
     )
 
 
