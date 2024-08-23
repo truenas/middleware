@@ -38,7 +38,7 @@ class AppContainerLogsFollowTailEventSource(EventSource):
 
     def validate_log_args(self, app_name, container_id):
         app = self.middleware.call_sync('app.get_instance', app_name)
-        if app['state'] != 'RUNNING':
+        if app['state'] not in ('RUNNING', 'DEPLOYING'):
             raise CallError(f'App "{app_name}" is not running')
 
         if not any(c['id'] == container_id for c in app['active_workloads']['container_details']):
