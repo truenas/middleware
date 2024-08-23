@@ -1,6 +1,7 @@
 import pytest
 from itertools import chain
-from middlewared.test.integration.assets.nfs import nfs_start
+from middlewared.test.integration.assets.nfs import nfs_server
+from middlewared.test.integration.assets.ftp import ftp_server
 from middlewared.test.integration.assets.pool import dataset as nfs_dataset
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.client import truenas_server
@@ -59,7 +60,7 @@ def test_nfs_reporting(get_usage_sample):
     nfs_path = f'/mnt/{pool_name}/test_nfs'
     with nfs_dataset("test_nfs"):
         with nfs_share(nfs_path):
-            with nfs_start():
+            with nfs_server():
                 with SSH_NFS(truenas_server.ip, nfs_path,
                              user=user, password=password, ip=truenas_server.ip):
                     usage_sample = call('usage.gather')
@@ -72,10 +73,11 @@ def test_ftp_reporting(get_usage_sample):
     assert get_usage_sample['FTP']['num_connections'] == 0
 
     # Establish two connections
-    with ftp_connection(truenas_server.ip):
+    with ftp_server():
         with ftp_connection(truenas_server.ip):
-            usage_sample = call('usage.gather')
-            assert usage_sample['FTP']['num_connections'] == 2
+            with ftp_connection(truenas_server.ip):
+                usage_sample = call('usage.gather')
+                assert usage_sample['FTP']['num_connections'] == 2
 
 
 # Possible TODO:  Add validation of the entries
