@@ -9,7 +9,6 @@ import aiohttp
 
 from middlewared.service import Service
 from middlewared.utils.mount import getmntinfo
-# from middlewared.utils.network_.procfs import read_proc_net
 from middlewared.utils.time_utils import utc_now
 
 
