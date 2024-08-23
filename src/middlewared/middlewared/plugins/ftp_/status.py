@@ -13,7 +13,7 @@ class FTPService(Service):
         ftp = 21
 
         try:
-            proc_data = self.middleware.call(read_proc_net)
+            proc_data = read_proc_net()
             ftp_proclist = list(filter(lambda x: x.local_port == ftp and x.remote_port != 0, proc_data))
         except Exception:
             num_conn = 0
