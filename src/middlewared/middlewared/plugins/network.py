@@ -1460,9 +1460,12 @@ class InterfaceService(CRUDService):
         if sock.family not in (socket.AF_INET, socket.AF_INET6):
             return
 
-        remote_port = (
-            app.request.headers.get('X-Real-Remote-Port') or app.request.transport.get_extra_info('peername')[1]
-        )
+        try:
+            # this comes from nginx reverse proxy and is a string
+            remote_port = int(app.request.headers['X-Real-Remote-Port'])
+        except (ValueError, KeyError):
+            remote_port = app.request.transport.get_extra_info('peername')[1]
+
         if not remote_port:
             return
 
