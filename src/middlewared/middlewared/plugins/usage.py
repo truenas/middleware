@@ -329,6 +329,29 @@ class UsageService(Service):
     async def gather_services(self, context):
         return {'services': context['services']}
 
+    async def gather_nfs(self, context_unused):
+        num_clients = await self.middleware.call('nfs.client_count')
+        nfs_config = await self.middleware.call('nfs.config')
+        return {
+            'NFS': {
+                'enabled_protocols': nfs_config['protocols'],
+                'kerberos': nfs_config['v4_krb_enabled'],
+                'num_clients': num_clients,
+            }
+        }
+
+    async def gather_ftp(self, context_unused):
+        """ Gather number of FTP connection info """
+        ftp_config = await self.middleware.call('ftp.config')
+        num_conn = await self.middleware.call('ftp.connection_count')
+
+        return {
+            'FTP': {
+                'connections_allowed': ftp_config['clients'] * ftp_config['ipconnections'],
+                'num_connections': num_conn
+            }
+        }
+
     async def gather_sharing(self, context):
         sharing_list = []
         for service in {'iscsi', 'nfs', 'smb'}:

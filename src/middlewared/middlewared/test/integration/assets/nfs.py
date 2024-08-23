@@ -3,10 +3,21 @@ import contextlib
 import logging
 
 from middlewared.test.integration.utils import call
+from time import sleep
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["nfs_share"]
+__all__ = ["nfs_share", "nfs_server"]
+
+
+@contextlib.contextmanager
+def nfs_server():
+    try:
+        res = call('service.start', 'nfs', {'silent': False})
+        sleep(1)
+        yield res
+    finally:
+        call('service.stop', 'nfs', {'silent': False})
 
 
 @contextlib.contextmanager

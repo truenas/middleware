@@ -7,8 +7,9 @@ from middlewared.test.integration.utils import call, ssh
 
 
 @contextlib.contextmanager
-def ftp_server(config):
-    call("ftp.update", config)
+def ftp_server(config=None):
+    if config is not None:
+        call("ftp.update", config)
     call("service.start", "ftp")
 
     try:
