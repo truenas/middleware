@@ -331,7 +331,7 @@ class BootService(Service):
 
     @private
     async def is_boot_pool_path(self, path):
-        return path.startswith(f'/dev/zvol/{await self.middleware.call("boot.pool_name")}/')
+        return path.startswith(f'/dev/zvol/{await self.pool_name()}/')
 
 
 async def on_config_upload(middleware, path):
