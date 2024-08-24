@@ -71,7 +71,7 @@ class UPSService(SystemServiceService):
         Str('optionsupsd', max_length=None, required=True),
         Str('port', required=True),
         Str('remotehost', required=True),
-        Str('shutdown', enum=['LOWBATT', 'BATT'], required=True),
+        Str('shutdown', enum=['LOWBATT', 'BATT', 'HYBRID'], required=True),
         Str('shutdowncmd', null=True, required=True),
         Str('complete_identifier', required=True),
     )

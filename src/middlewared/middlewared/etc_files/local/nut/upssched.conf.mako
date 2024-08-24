@@ -21,4 +21,8 @@ AT ONBATT   * START-TIMER SHUTDOWN ${ups_config['shutdowntimer']}
 AT ONLINE   * CANCEL-TIMER SHUTDOWN
 % elif shutdown.lower() == 'lowbatt':
 AT LOWBATT  * EXECUTE SHUTDOWN
+% elif shutdown.lower() == 'hybrid':
+AT ONBATT   * START-TIMER SHUTDOWN ${ups_config['shutdowntimer']}
+AT ONLINE   * CANCEL-TIMER SHUTDOWN
+AT LOWBATT  * EXECUTE SHUTDOWN
 % endif
