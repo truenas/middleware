@@ -1,7 +1,8 @@
 import asyncio
 import itertools
 
-from middlewared.service import CallError, Service, job
+from middlewared.schema import accepts, Bool, returns
+from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
 
 CHUNK_SIZE = 20
@@ -38,8 +39,8 @@ class iSCSITargetAluaService(Service):
     (gradually) enable cluster_mode on the ACTIVE and react.
     """
     class Config:
-        private = True
         namespace = 'iscsi.alua'
+        cli_namespace = 'iscsi.alua'
 
     # See HA_PROPAGATE in event.py.  Only required when running command
     # on MASTER, and don't want it to propagate.
@@ -61,20 +62,24 @@ class iSCSITargetAluaService(Service):
         # the iscsitarget to decide what the initial value should be
         self._standby_write_empty_config = None
 
+    @private
     async def before_start(self):
         if await self.middleware.call('iscsi.global.alua_enabled'):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 self._standby_write_empty_config = True
                 await self.middleware.call('etc.generate', 'scst')
 
+    @private
     async def after_start(self):
         if await self.middleware.call('iscsi.global.alua_enabled'):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 await self.middleware.call('iscsi.alua.standby_after_start')
 
+    @private
     async def before_stop(self):
         self.standby_starting = False
 
+    @private
     async def standby_enable_devices(self, devices):
         await self.middleware.call('iscsi.target.login_ha_targets')
         extents = await self.middleware.call('iscsi.extent.logged_in_extents')
@@ -88,6 +93,7 @@ class iSCSITargetAluaService(Service):
         else:
             return False
 
+    @private
     async def standby_write_empty_config(self, value=None):
         if value is not None:
             self._standby_write_empty_config = value
@@ -98,6 +104,7 @@ class iSCSITargetAluaService(Service):
                 self._standby_write_empty_config = True
         return self._standby_write_empty_config
 
+    @private
     @job(lock='active_elected', transient=True, lock_queue_size=1)
     async def active_elected(self, job):
         self.active_elected_job = job
@@ -117,6 +124,7 @@ class iSCSITargetAluaService(Service):
         job.set_progress(100, 'ACTIVE node ALUA reset NOOP')
         self.logger.debug('ACTIVE node ALUA reset NOOP')
 
+    @private
     @job(lock='activate_extents', transient=True, lock_queue_size=1)
     async def activate_extents(self, job):
         self.activate_extents_job = job
@@ -168,6 +176,7 @@ class iSCSITargetAluaService(Service):
 
         job.set_progress(100, 'All extents activated')
 
+    @private
     async def become_active(self):
         self.logger.debug('Becoming active upon failover event starting')
         iqn_basename = (await self.middleware.call('iscsi.global.config'))['basename']
@@ -213,6 +222,7 @@ class iSCSITargetAluaService(Service):
         if await self.middleware.call('iscsi.scst.clear_suspend'):
             self.logger.debug('iSCSI unsuspended')
 
+    @private
     @job(lock='standby_after_start', transient=True, lock_queue_size=1)
     async def standby_after_start(self, job):
         job.set_progress(0, 'ALUA starting on STANDBY')
@@ -438,6 +448,7 @@ class iSCSITargetAluaService(Service):
         self.standby_alua_ready = True
         self.logger.debug('ALUA started on STANDBY')
 
+    @private
     @job(lock='standby_delayed_reload', transient=True)
     async def standby_delayed_reload(self, job):
         await asyncio.sleep(30)
@@ -446,6 +457,7 @@ class iSCSITargetAluaService(Service):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 await self.middleware.call('service.reload', 'iscsitarget', {'ha_propagate': False})
 
+    @private
     @job(lock='standby_fix_cluster_mode', transient=True)
     async def standby_fix_cluster_mode(self, job, devices):
         if self._standby_write_empty_config is not False:
@@ -509,6 +521,7 @@ class iSCSITargetAluaService(Service):
             job.set_progress(100, 'Fixed cluster_mode')
         self.logger.debug(f'Fixed cluster_mode for {len(devices)} extents')
 
+    @private
     async def wait_cluster_mode(self, target_id, extent_id):
         """After we add a target/extent mapping we wish to wait for the ALUA state to settle."""
         self.logger.debug(f'Wait for extent with ID {extent_id}')
@@ -571,6 +584,7 @@ class iSCSITargetAluaService(Service):
             self.logger.debug(f'Completed wait for {lextent}/{rextent} to enter cluster_mode')
             return
 
+    @private
     async def removed_target_extent(self, target_name, lun, extent_name):
         """This is called on the STANDBY node to remove an extent from a target."""
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call("failover.status") == 'BACKUP':
@@ -594,6 +608,7 @@ class iSCSITargetAluaService(Service):
             finally:
                 await self.middleware.call('service.reload', 'iscsitarget')
 
+    @private
     async def has_active_jobs(self):
         """Return whether any ALUA jobs are running or queued."""
         running_jobs = await self.middleware.call(
@@ -610,6 +625,8 @@ class iSCSITargetAluaService(Service):
         )
         return bool(running_jobs)
 
+    @accepts()
+    @returns(Bool())
     async def settled(self):
         """Check whether the ALUA state is settled"""
         if not await self.middleware.call("iscsi.global.alua_enabled"):
@@ -632,6 +649,7 @@ class iSCSITargetAluaService(Service):
             return False
         return True
 
+    @private
     async def wait_for_alua_settled(self, sleep_interval=1, retries=10):
         while retries > 0:
             if await self.middleware.call('iscsi.alua.settled'):
@@ -641,6 +659,7 @@ class iSCSITargetAluaService(Service):
             retries -= 1
         self.logger.warning('Gave up waiting for ALUA to settle')
 
+    @private
     @job(lock='force_close_sessions', transient=True, lock_queue_size=1)
     async def force_close_sessions(self, job):
         job.set_progress(0, 'Start force-close of iSCSI sessions')
@@ -651,6 +670,7 @@ class iSCSITargetAluaService(Service):
         job.set_progress(100, 'Complete force-close of iSCSI sessions')
         self.logger.debug('Complete force-close of iSCSI sessions')
 
+    @private
     @job(lock='reset_active', transient=True, lock_queue_size=1)
     async def reset_active(self, job):
         """Job to be run on the ACTIVE node before the STANDBY node will join."""
