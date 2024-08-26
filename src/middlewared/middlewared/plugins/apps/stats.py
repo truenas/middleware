@@ -6,6 +6,7 @@ from middlewared.service import CallError
 from middlewared.validators import Range
 
 from .ix_apps.docker.stats import list_resources_stats_by_project
+from .ix_apps.utils import get_app_name_from_project_name
 
 
 class AppStatsEventSource(EventSource):
@@ -27,7 +28,10 @@ class AppStatsEventSource(EventSource):
 
         interval = self.arg['interval']
         while not self._cancel_sync.is_set():
-            self.send_event('ADDED', fields=list_resources_stats_by_project())
+            self.send_event('ADDED', fields={
+                get_app_name_from_project_name(project_name): stats
+                for project_name, stats in list_resources_stats_by_project().items()
+            })
             time.sleep(interval)
 
 
