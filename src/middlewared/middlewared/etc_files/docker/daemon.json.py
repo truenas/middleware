@@ -20,7 +20,7 @@ def render(service, middleware):
     base = {
         'data-root': data_root,
         'exec-opts': ['native.cgroupdriver=cgroupfs'],
-        'iptables': True,  # FIXME: VMs connectivity would be broken
+        'iptables': True,
         'storage-driver': 'overlay2',
     }
     isolated = middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
