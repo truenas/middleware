@@ -855,7 +855,14 @@ class CoreService(Service):
             job.set_progress(100 * i / len(params), progress_description)
 
             try:
-                msg = await self.middleware.call_with_audit(method, serviceobj, methodobj, p, app=app)
+                # Convention for the auditing backend is to only generate audit
+                # entries for external callers to methods. app is only None
+                # on internal calls to core.bulk.
+                if app:
+                    msg = await self.middleware.call_with_audit(method, serviceobj, methodobj, p, app=app)
+                else:
+                    msg = await self.middleware.call(method, *p)
+
                 status = {"result": msg, "error": None}
 
                 if isinstance(msg, Job):
