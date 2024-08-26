@@ -452,11 +452,11 @@ class FailoverService(ConfigService):
                 'failover.call_remote', 'interface.query', [[], {'extra': {'retrieve_names_only': True}}],
                 {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
             )
-            remote_nics = set(i['name'] for i in remote_nics)
         except Exception:
             self.logger.error('Unhandled exception querying ifaces on remote controller', exc_info=True)
         else:
             if remote_nics is not None:
+                remote_nics = set(i['name'] for i in remote_nics)
                 result['missing_local'] = sorted(remote_nics - local_nics)
                 result['missing_remote'] = sorted(local_nics - remote_nics)
 
