@@ -6,8 +6,7 @@ import time
 import pytest
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.utils import call, ssh
-from middlewared.test.integration.utils.time_utils import utc_now
-from datetime import timezone
+from datetime import datetime, timezone
 
 EVENT_KEYS = {'timestamp', 'message_timestamp', 'service_data', 'username', 'service', 'audit_id', 'address', 'event_data', 'event', 'session', 'success'}
 ACCEPT_KEYS = {'command', 'submituser', 'lines', 'submithost', 'uuid', 'runenv', 'server_time', 'runcwd', 'submitcwd', 'runuid', 'runargv', 'columns', 'runuser', 'submit_time'}
@@ -21,7 +20,7 @@ SUDO_TO_PASSWORD = ''.join(secrets.choice(string.ascii_letters + string.digits) 
 
 
 def get_utc():
-    utc_time = int(utc_now().replace(tzinfo=timezone.utc).timestamp())
+    utc_time = int(datetime.utcnow().replace(tzinfo=timezone.utc).timestamp())
     return utc_time
 
 
