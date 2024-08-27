@@ -57,7 +57,7 @@ def item_method(fn):
 
 
 def job(
-    lock=None, lock_queue_size=None, logs=False, process=False, pipes=None, check_pipes=True, transient=False,
+    lock=None, lock_queue_size=5, logs=False, process=False, pipes=None, check_pipes=True, transient=False,
     description=None, abortable=False
 ):
     """
