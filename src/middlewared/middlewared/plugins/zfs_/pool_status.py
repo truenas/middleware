@@ -1,23 +1,9 @@
 from pathlib import Path
 
-from libzfs import ZFS, ZFSException
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import Service, ValidationError
+from middlewared.service import Service
 
-
-def get_zfs_vdev_disks(vdev) -> list:
-    if vdev['status'] in ('UNAVAIL', 'OFFLINE'):
-        return []
-
-    if vdev['type'] == 'disk':
-        return [vdev['path']]
-    elif vdev['type'] == 'file':
-        return []
-    else:
-        result = []
-        for i in vdev['children']:
-            result.extend(get_zfs_vdev_disks(i))
-        return result
+from .status_util import get_normalized_disk_info, get_zfs_vdev_disks, get_zpool_status
 
 
 class ZPoolService(Service):
@@ -57,33 +43,23 @@ class ZPoolService(Service):
     def status_impl(self, pool_name, vdev_type, members, **kwargs):
         real_paths = kwargs.setdefault('real_paths', False)
         final = dict()
-        for member in filter(lambda x: x['type'] != 'file', members):
+        for member in filter(lambda x: x['vdev_type'] != 'file', members.values()):
             vdev_disks = self.resolve_block_paths(get_zfs_vdev_disks(member), real_paths)
-            if member['type'] == 'disk':
+            if member['vdev_type'] == 'disk':
                 disk = self.resolve_block_path(member['path'], real_paths)
-                final[disk] = {
-                    'pool_name': pool_name,
-                    'disk_status': member['status'],
-                    'disk_read_errors': member['stats']['read_errors'],
-                    'disk_write_errors': member['stats']['write_errors'],
-                    'disk_checksum_errors': member['stats']['checksum_errors'],
-                    'vdev_name': 'stripe',
-                    'vdev_type': vdev_type,
-                    'vdev_disks': vdev_disks,
-                }
+                final[disk] = get_normalized_disk_info(pool_name, member, 'stripe', vdev_type, vdev_disks)
             else:
-                for i in member['children']:
+                for i in member['vdevs'].values():
+                    if i['vdev_type'] == 'spare':
+                        i_vdevs = list(i['vdevs'].values())
+                        if not i_vdevs:
+                            # An edge case but just covering to be safe
+                            continue
+
+                        i = next((e for e in i_vdevs if e['class'] == 'spare'), i_vdevs[0])
+
                     disk = self.resolve_block_path(i['path'], real_paths)
-                    final[disk] = {
-                        'pool_name': pool_name,
-                        'disk_status': i['status'],
-                        'disk_read_errors': i['stats']['read_errors'],
-                        'disk_write_errors': i['stats']['write_errors'],
-                        'disk_checksum_errors': i['stats']['checksum_errors'],
-                        'vdev_name': member['name'],
-                        'vdev_type': vdev_type,
-                        'vdev_disks': vdev_disks,
-                    }
+                    final[disk] = get_normalized_disk_info(pool_name, i, member['name'], vdev_type, vdev_disks)
 
         return final
 
@@ -115,11 +91,11 @@ class ZPoolService(Service):
                 }
               },
               "evo": {
-                "log": {},
-                "cache": {},
-                "spare": {},
-                "special": {},
+                "spares": {},
+                "logs": {},
                 "dedup": {},
+                "special": {},
+                "l2cache": {},
                 "data": {
                   "/dev/disk/by-partuuid/d9cfa346-8623-402f-9bfe-a8256de902ec": {
                     "pool_name": "evo",
@@ -137,30 +113,24 @@ class ZPoolService(Service):
               }
             }
         """
-        with ZFS() as zfs:
-            if data['name'] is not None:
-                try:
-                    pools = [zfs.get(data['name']).groups_asdict()]
-                except ZFSException:
-                    raise ValidationError('zpool.status', f'{data["name"]!r} not found')
-            else:
-                pools = [p.groups_asdict() for p in zfs.pools]
+        pools = get_zpool_status(data.get('name'))
 
         final = {'disks': dict()}
-        for pool in pools:
-            final[pool['name']] = dict()
-            # We do the sorting because when we populate `disks` we want data type disks to be updated last
-            for vdev_type in sorted(pool['groups'], key=lambda x: 2 if x == 'data' else 1):
-                vdev_members = pool['groups'][vdev_type]
+        for pool_name, pool_info in pools.items():
+            final[pool_name] = dict()
+            # We need some normalization for data vdev here
+            pool_info['data'] = pool_info.get('vdevs', {}).get(pool_name, {}).get('vdevs', {})
+            for vdev_type in ('spares', 'logs', 'dedup', 'special', 'l2cache', 'data'):
+                vdev_members = pool_info.get(vdev_type, {})
                 if not vdev_members:
-                    final[pool['name']][vdev_type] = dict()
+                    final[pool_name][vdev_type] = dict()
                     continue
 
-                info = self.status_impl(pool['name'], vdev_type, vdev_members, **data)
+                info = self.status_impl(pool_name, vdev_type, vdev_members, **data)
                 # we key on pool name and disk id because
                 # this was designed, primarily, for the
                 # `webui.enclosure.dashboard` endpoint
-                final[pool['name']][vdev_type] = info
+                final[pool_name][vdev_type] = info
                 final['disks'].update(info)
 
         return final
