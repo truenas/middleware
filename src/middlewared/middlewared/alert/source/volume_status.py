@@ -1,4 +1,5 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.utils.zfs import query_imported_fast_impl
 
 
 class VolumeStatusAlertClass(AlertClass):
@@ -23,8 +24,21 @@ class VolumeStatusAlertSource(AlertSource):
             return
 
         try:
-            alerts = await self.middleware.call("cache.get", "VolumeStatusAlerts")
+            states = await self.middleware.call("cache.get", "VolumeStatusAlertSource.pools_states")
         except KeyError:
+            states = None
+
+        current_states = await self.middleware.run_in_thread(query_imported_fast_impl)
+        await self.middleware.call("cache.put", "VolumeStatusAlertSource.pools_states", current_states)
+
+        alerts = None
+        if current_states == states:
+            try:
+                alerts = await self.middleware.call("cache.get", "VolumeStatusAlerts")
+            except KeyError:
+                pass
+
+        if alerts is None:
             alerts = []
             boot_pool = await self.middleware.call("boot.pool_name")
             for pool in await self.middleware.call("zfs.pool.query", [["id", "=", boot_pool]]):
