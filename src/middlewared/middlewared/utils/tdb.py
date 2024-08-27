@@ -100,6 +100,12 @@ class TDBHandle:
     opath_fd = FD_CLOSED
     keys_null_terminated = False
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, tp, val, traceback):
+        self.close()
+
     def close(self):
         """ Close the TDB handle and O_PATH open for the file """
         if self.opath_fd == FD_CLOSED and self.hdl is None:
