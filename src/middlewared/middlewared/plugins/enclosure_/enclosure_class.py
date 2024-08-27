@@ -380,7 +380,7 @@ class Enclosure:
         Args:
         Returns: bool
         """
-        return all((self.controller, self.model[0] == 'R'))
+        return all((self.controller, self.model and self.model[0] == 'R'))
 
     @property
     def is_r10(self):
@@ -457,7 +457,7 @@ class Enclosure:
         Args:
         Returns: bool
         """
-        return all((self.controller, self.model[0] == 'F'))
+        return all((self.controller, self.model and self.model[0] == 'F'))
 
     @property
     def is_hseries(self):
@@ -466,7 +466,7 @@ class Enclosure:
         Args:
         Returns: bool
         """
-        return all((self.controller, self.model[0] == 'H'))
+        return all((self.controller, self.model and self.model[0] == 'H'))
 
     @property
     def is_mseries(self):
@@ -476,7 +476,7 @@ class Enclosure:
         Returns: bool
         """
         return all((
-            self.controller, not self.is_mini, self.model[0] == 'M'
+            self.controller, not self.is_mini, self.model and self.model[0] == 'M'
         ))
 
     @property
@@ -487,7 +487,7 @@ class Enclosure:
         Returns: bool
         """
         return all((
-            self.controller, self.model[0] == 'X'
+            self.controller, self.model and self.model[0] == 'X'
         ))
 
     @property
