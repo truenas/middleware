@@ -23,7 +23,7 @@ from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
 
 
-class TokenError(exception):
+class TokenError(Exception):
     pass
 
 

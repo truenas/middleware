@@ -1879,15 +1879,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     )
                     break
 
-                datalen = len(msg.data)
-
                 try:
                     message = parse_message(connection.authenticated, msg.data)
                 except MsgSizeError as err:
                     if err.limit is not MsgSizeLimit.UNAUTHENTICATED:
                         origin = connection.origin.repr() if connection.origin else None
                         if connection.authenticated_credentials:
-                            creds =  connection.authenticated_credentials.dump()
+                            creds = connection.authenticated_credentials.dump()
                         else:
                             creds = None
 
