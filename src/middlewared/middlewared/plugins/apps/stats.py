@@ -1,6 +1,7 @@
 import time
 
 from middlewared.event import EventSource
+from middlewared.plugins.docker.state_utils import Status
 from middlewared.schema import Dict, Int, Str, List
 from middlewared.service import CallError
 from middlewared.validators import Range
@@ -63,10 +64,7 @@ class AppStatsEventSource(EventSource):
                 old_projects_stats = project_stats
                 time.sleep(interval)
             except Exception:
-                if self.middleware.call_sync('docker.config')['pool'] is None:
-                    return
-                if self.middleware.call_sync('service.started', 'docker') is False:
-                    self.middleware.logger.error('Unable to retrieve app stats as docker service has been stopped')
+                if self.middleware.call_sync('docker.status')['status'] != Status.RUNNING.value:
                     return
 
                 raise
