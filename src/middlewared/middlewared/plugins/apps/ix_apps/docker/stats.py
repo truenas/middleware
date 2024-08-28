@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+import requests
+
 from .utils import get_docker_client, PROJECT_KEY
 
 
@@ -13,6 +15,21 @@ def get_default_stats():
 
 
 def list_resources_stats_by_project(project_name: str | None = None) -> dict:
+    retries = 2
+    while retries > 0:
+        # We do this because when an app is being stopped, we can run into a race condition
+        # where the container got listed but when we queried it's stats we were not able
+        # to get them as the container by that time had been nuked (this is similar to what we
+        # do when we list resources by project)
+        try:
+            return list_resources_stats_by_project_internal(project_name)
+        except requests.exceptions.HTTPError:
+            retries -= 1
+            if retries == 0:
+                raise
+
+
+def list_resources_stats_by_project_internal(project_name: str | None = None) -> dict:
     projects = get_default_stats()
     with get_docker_client() as client:
         label_filter = {'label': f'{PROJECT_KEY}={project_name}' if project_name else PROJECT_KEY}
