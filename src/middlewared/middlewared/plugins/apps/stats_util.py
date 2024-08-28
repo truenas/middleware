@@ -1,3 +1,4 @@
+from .ix_apps.metadata import get_collective_metadata
 from .ix_apps.utils import get_app_name_from_project_name
 
 
@@ -6,9 +7,16 @@ NANO_SECOND = 1000000000
 
 def normalize_projects_stats(all_projects_stats: dict, old_stats: dict, interval: int) -> list[dict]:
     normalized_projects_stats = []
+    all_configured_apps = get_collective_metadata()
     for project, data in all_projects_stats.items():
+        app_name = get_app_name_from_project_name(project)
+        if app_name not in all_configured_apps:
+            continue
+        else:
+            all_configured_apps.pop(app_name)
+
         normalized_data = {
-            'app_name': get_app_name_from_project_name(project),
+            'app_name': app_name,
             'memory': data['memory'],
             'blkio': data['blkio'],
         }
@@ -34,4 +42,14 @@ def normalize_projects_stats(all_projects_stats: dict, old_stats: dict, interval
             })
         normalized_data['networks'] = networks
         normalized_projects_stats.append(normalized_data)
+
+    for stopped_app in all_configured_apps:
+        normalized_projects_stats.append({
+            'app_name': stopped_app,
+            'memory': 0,
+            'cpu_usage': 0,
+            'networks': [],
+            'blkio': {'read': 0, 'write': 0},
+        })
+
     return normalized_projects_stats
