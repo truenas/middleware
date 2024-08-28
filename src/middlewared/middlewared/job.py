@@ -273,7 +273,8 @@ class Job:
     pipes: Pipes
     logs_fd: None
 
-    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb, app):
+    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb, app,
+                 audit_callback):
         self._finished = asyncio.Event()
         self.middleware = middleware
         self.method_name = method_name
@@ -284,6 +285,7 @@ class Job:
         self.pipes = pipes or Pipes(input_=None, output=None)
         self.on_progress_cb = on_progress_cb
         self.app = app
+        self.audit_callback = audit_callback
 
         self.id = None
         self.lock = None
@@ -305,6 +307,8 @@ class Job:
         self.loop = self.middleware.loop
         self.future = None
         self.wrapped = []
+        self.on_finish_cb = None
+        self.on_finish_cb_called = False
 
         self.logs_path = None
         self.logs_fd = None
@@ -499,6 +503,7 @@ class Job:
 
             queue.release_lock(self)
             self._finished.set()
+            await self.call_on_finish_cb()
             send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
             if self.options['transient']:
                 queue.remove(self.id)
@@ -516,6 +521,8 @@ class Job:
             if hasattr(self.method, '_pass_app'):
                 prepend.append(self.app)
             prepend.append(self)
+            if getattr(self.method, 'audit_callback', None):
+                prepend.append(self.audit_callback)
             # Make sure args are not altered during job run
             args = prepend + copy.deepcopy(self.args)
             if asyncio.iscoroutinefunction(self.method):
@@ -637,7 +644,7 @@ class Job:
         serviceobj = middleware._services[service_name]
         methodobj = getattr(serviceobj, method_name)
         job = Job(middleware, job_dict['method'], serviceobj, methodobj, job_dict['arguments'], methodobj._job, None,
-                  None, None)
+                  None, None, None)
         job.id = job_dict['id']
         job.description = job_dict['description']
         if logs is not None:
@@ -694,6 +701,20 @@ class Job:
 
     async def logs_fd_write(self, data):
         await self.middleware.run_in_thread(self.logs_fd.write, data)
+
+    async def set_on_finish_cb(self, cb):
+        self.on_finish_cb = cb
+        if self.on_finish_cb_called:
+            await self.call_on_finish_cb()
+
+    async def call_on_finish_cb(self):
+        if self.on_finish_cb:
+            try:
+                await self.on_finish_cb(self)
+            except Exception:
+                logger.warning('Failed to run on finish callback', exc_info=True)
+
+        self.on_finish_cb_called = True
 
 
 class JobProgressBuffer:
