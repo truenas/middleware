@@ -33,8 +33,8 @@ class AppStatsEventSource(EventSource):
                         Dict(
                             'interface_stats',
                             Str('interface_name', description='Name of the interface use by the app'),
-                            Int('rx_bytes', description='Received bytes per interval by an interface'),
-                            Int('tx_bytes', description='Transmitted bytes per interval by an interface')
+                            Int('rx_bytes', description='Received bytes/s by an interface'),
+                            Int('tx_bytes', description='Transmitted bytes/s by an interface')
                         ),
                     ]
                 ),

@@ -24,7 +24,7 @@ def normalize_projects_stats(all_projects_stats: dict, old_stats: dict, interval
         networks = []
         for net_name, network_data in data['networks'].items():
             networks.append({
-                'interface_stats': net_name,
+                'interface_name': net_name,
                 'rx_bytes': int(
                     (network_data['rx_bytes'] - old_stats[project]['networks'][net_name]['rx_bytes']) / interval
                 ),
