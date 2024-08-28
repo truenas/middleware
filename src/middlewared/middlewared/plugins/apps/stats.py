@@ -1,4 +1,3 @@
-import copy
 import time
 
 from middlewared.event import EventSource
@@ -26,7 +25,7 @@ class AppStatsEventSource(EventSource):
                 'stats',
                 Str('app_name'),
                 Int('cpu_usage', description='Percentage of cpu used by an app'),
-                Int('memory', description='Current memory( in bytes) used by an app'),
+                Int('memory', description='Current memory(in bytes) used by an app'),
                 List(
                     'networks',
                     items=[
@@ -59,7 +58,7 @@ class AppStatsEventSource(EventSource):
             try:
                 project_stats = list_resources_stats_by_project()
                 self.send_event(
-                    'ADDED', fields=normalize_projects_stats(copy.deepcopy(project_stats), old_projects_stats, interval)
+                    'ADDED', fields=normalize_projects_stats(project_stats, old_projects_stats, interval)
                 )
                 old_projects_stats = project_stats
                 time.sleep(interval)
