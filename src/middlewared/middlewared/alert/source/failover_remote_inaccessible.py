@@ -15,6 +15,7 @@ class FailoverRemoteSystemInaccessibleAlertClass(AlertClass):
     text = 'Other TrueNAS controller is inaccessible. Contact support.'
     products = ('SCALE_ENTERPRISE',)
     proactive_support = True
+    proactive_support_notify_gone = True
 
 
 class FailoverRemoteSystemInaccessibleAlertSource(AlertSource):
