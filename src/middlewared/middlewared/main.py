@@ -6,7 +6,7 @@ from .api.base.server.ws_handler.rpc_factory import create_rpc_ws_handler
 from .apidocs import routes as apidocs_routes
 from .common.event_source.manager import EventSourceManager
 from .event import Events
-from .job import Job, JobsQueue
+from .job import Job, JobsQueue, State
 from .pipe import Pipes, Pipe
 from .restful import parse_credentials, authenticate, create_application, copy_multipart_to_pipe, RESTfulAPI
 from .role import ROLES, RoleManager
@@ -1311,14 +1311,16 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         return Pipe(self, buffered)
 
     def _call_prepare(
-        self, name, serviceobj, methodobj, params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
-        in_event_loop: bool = True,
+        self, name, serviceobj, methodobj, params, *, app=None, audit_callback=None, job_on_progress_cb=None,
+        pipes=None, in_event_loop: bool = True,
     ):
         """
         :param in_event_loop: Whether we are in the event loop thread.
         :return:
         """
         audit_callback = audit_callback or (lambda message: None)
+
+        params = list(params)
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -1330,8 +1332,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if getattr(methodobj, 'audit_callback', None):
             args.append(audit_callback)
 
-        if params:
-            args.extend(params)
+        args.extend(params)
 
         # If the method is marked as a @job we need to create a new
         # entry to keep track of its state.
@@ -1340,7 +1341,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if serviceobj._config.process_pool:
                 job_options['process'] = True
             # Create a job instance with required args
-            job = Job(self, name, serviceobj, methodobj, list(params), job_options, pipes, job_on_progress_cb, app)
+            job = Job(self, name, serviceobj, methodobj, params, job_options, pipes, job_on_progress_cb, app,
+                      audit_callback)
             # Add the job to the queue.
             # At this point an `id` is assigned to the job.
             # Job might be replaced with an already existing job if `lock_queue_size` is used.
@@ -1497,11 +1499,23 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     async def call_with_audit(self, method, serviceobj, methodobj, params, app, **kwargs):
         audit_callback_messages = []
+
+        async def log_audit_message_for_method(success):
+            await self.log_audit_message_for_method(method, methodobj, params, app, True, True, success,
+                                                    audit_callback_messages)
+
+        async def job_on_finish_cb(job):
+            await log_audit_message_for_method(job.state == State.SUCCESS)
+
         success = False
+        job = None
         try:
             result = await self._call(method, serviceobj, methodobj, params, app=app,
                                       audit_callback=audit_callback_messages.append, **kwargs)
             success = True
+            if isinstance(result, Job):
+                job = result
+                await job.set_on_finish_cb(job_on_finish_cb)
 
             expose_secrets = True
             if app and app.authenticated_credentials:
@@ -1516,8 +1530,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
             result = self.dump_result(methodobj, result, expose_secrets)
         finally:
-            await self.log_audit_message_for_method(method, methodobj, params, app, True, True, success,
-                                                    audit_callback_messages)
+            # If the method is a job, audit message will be logged by `job_on_finish_cb`
+            if job is None:
+                await log_audit_message_for_method(success)
 
         return result
 
