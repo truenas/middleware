@@ -49,7 +49,7 @@ def test_privilege_has_full_admin(credential, expected):
     ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_SMB_WRITE']}}, False),
     ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_NFS_WRITE']}}, True),
     ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_ISCSI_WRITE']}}, False),
-    ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, False)
+    ('nfs', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, False),
     ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['READONLY_ADMIN']}}, False),
     ('iscsitarget', {'privilege': {'allowlist': [], 'roles': ['FULL_ADMIN']}}, True),
     ('iscsitarget', {'privilege': {'roles': [], 'allowlist': [{'method': '*', 'resource': '*'}]}}, True),
@@ -63,7 +63,7 @@ def test_privilege_has_full_admin(credential, expected):
     ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_SMB_WRITE']}}, False),
     ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_NFS_WRITE']}}, False),
     ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_ISCSI_WRITE']}}, False),
-    ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, True),    
+    ('ftp', {'privilege': {'allowlist': [], 'roles': ['SHARING_FTP_WRITE']}}, True),
 ])
 def test_privilege_has_write_to_service(service, credential, expected):
     user_cred = UserSessionManagerCredentials({'username': 'BOB'} | credential)
