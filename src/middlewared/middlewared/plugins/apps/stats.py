@@ -56,12 +56,21 @@ class AppStatsEventSource(EventSource):
         time.sleep(interval)
 
         while not self._cancel_sync.is_set():
-            project_stats = list_resources_stats_by_project()
-            self.send_event(
-                'ADDED', fields=normalize_projects_stats(copy.deepcopy(project_stats), old_projects_stats, interval)
-            )
-            old_projects_stats = project_stats
-            time.sleep(interval)
+            try:
+                project_stats = list_resources_stats_by_project()
+                self.send_event(
+                    'ADDED', fields=normalize_projects_stats(copy.deepcopy(project_stats), old_projects_stats, interval)
+                )
+                old_projects_stats = project_stats
+                time.sleep(interval)
+            except Exception:
+                if self.middleware.call_sync('docker.config')['pool'] is None:
+                    return
+                if self.middleware.call('service.started', 'docker') is False:
+                    self.middleware.logger.error('Unable to retrieve app stats as docker service has been stopped')
+                    return
+
+                raise
 
 
 def setup(middleware):
