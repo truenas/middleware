@@ -102,6 +102,10 @@ ROLES = {
     'APPS_READ': Role(includes=['CATALOG_READ']),
     'APPS_WRITE': Role(includes=['CATALOG_WRITE', 'APPS_READ']),
 
+    # FTP roles
+    'SHARING_FTP_READ': Role(),
+    'SHARING_FTP_WRITE': Role(includes=['SHARING_FTP_READ']),
+
     # iSCSI roles
     'SHARING_ISCSI_AUTH_READ': Role(),
     'SHARING_ISCSI_AUTH_WRITE': Role(includes=['SHARING_ISCSI_AUTH_READ']),
@@ -142,10 +146,12 @@ ROLES = {
     'SHARING_SMB_WRITE': Role(includes=['SHARING_SMB_READ']),
     'SHARING_READ': Role(includes=['SHARING_ISCSI_READ',
                                    'SHARING_NFS_READ',
-                                   'SHARING_SMB_READ']),
+                                   'SHARING_SMB_READ',
+                                   'SHARING_FTP_READ']),
     'SHARING_WRITE': Role(includes=['SHARING_ISCSI_WRITE',
                                     'SHARING_NFS_WRITE',
-                                    'SHARING_SMB_WRITE']),
+                                    'SHARING_SMB_WRITE',
+                                    'SHARING_FTP_WRITE']),
 
     'KEYCHAIN_CREDENTIAL_READ': Role(),
     'KEYCHAIN_CREDENTIAL_WRITE': Role(includes=['KEYCHAIN_CREDENTIAL_READ']),
@@ -242,13 +248,13 @@ class RoleManager:
         self.methods = ResourceManager("Method", "CALL", self.roles)
         self.events = ResourceManager("Event", "SUBSCRIBE", self.roles)
 
-    def register_method(self, method_name: str, roles: typing.Iterable[str], *, exist_ok: bool=False):
+    def register_method(self, method_name: str, roles: typing.Iterable[str], *, exist_ok: bool = False):
         self.methods.register_resource(method_name, roles, exist_ok)
 
     def add_roles_to_method(self, method_name: str, roles: typing.Iterable[str]):
         self.methods.add_roles_to_resource(method_name, roles)
 
-    def register_event(self, event_name: str, roles: typing.Iterable[str], *, exist_ok: bool=False):
+    def register_event(self, event_name: str, roles: typing.Iterable[str], *, exist_ok: bool = False):
         self.events.register_resource(event_name, roles, exist_ok)
 
     def roles_for_role(self, role: str) -> typing.Set[str]:

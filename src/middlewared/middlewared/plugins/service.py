@@ -116,7 +116,7 @@ class ServiceService(CRUDService):
             'service-update',
             Bool('enable', default=False),
         ),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE'],
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
         audit='Update service configuration',
         audit_callback=True,
     )
@@ -156,7 +156,7 @@ class ServiceService(CRUDService):
             Bool('silent', default=True),
             register=True,
         ),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE']
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
     )
     @returns(Bool('started_service'))
     @pass_app(rest=True)
@@ -242,7 +242,7 @@ class ServiceService(CRUDService):
     @accepts(
         Str('service'),
         Ref('service-control'),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE']
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
     )
     @returns(Bool('service_stopped', description='Will return `true` if service successfully stopped'))
     @pass_app(rest=True)
@@ -278,7 +278,7 @@ class ServiceService(CRUDService):
     @accepts(
         Str('service'),
         Ref('service-control'),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE']
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
     )
     @returns(Bool('service_restarted'))
     @pass_app(rest=True)
@@ -340,7 +340,7 @@ class ServiceService(CRUDService):
     @accepts(
         Str('service'),
         Ref('service-control'),
-        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE']
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
     )
     @returns(Bool('service_reloaded'))
     @pass_app(rest=True)
