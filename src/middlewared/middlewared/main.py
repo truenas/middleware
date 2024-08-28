@@ -1551,7 +1551,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     'authorized': authorized,
                 }, success)
 
-    async def log_audit_message(self, app, event, event_data, success):
+    async def log_audit_message(self, app, event, event_data, success, user=None):
+        # NOTE: we allow overriding `user` specifically for handling case where
+        # the entry is being generated due to an expired authentication token so
+        # that we can set the value to .TOKEN_EXPIRED rather than .UNAUTHENTICATED
+        # which is more informative to end-users. Generally we should not override
+        # user without very good reason, and it should be properly documented.
         message = "@cee:" + json.dumps({
             "TNAUDIT": {
                 "aid": str(uuid.uuid4()),
@@ -1560,7 +1565,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     "minor": 1
                 },
                 "addr": app.origin.repr() if isinstance(app.origin, TCPIPOrigin) else "127.0.0.1",
-                "user": audit_username_from_session(app.authenticated_credentials),
+                "user": user or audit_username_from_session(app.authenticated_credentials),
                 "sess": app.session_id,
                 "time": utc_now().strftime('%Y-%m-%d %H:%M:%S.%f'),
                 "svc": "MIDDLEWARE",

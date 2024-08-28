@@ -17,9 +17,26 @@ from middlewared.service import (
 )
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
+from middlewared.utils.audit import TOKEN_EXPIRED
 from middlewared.utils.origin import UnixSocketOrigin
 from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
+
+
+class TokenError(exception):
+    pass
+
+
+class TokenDoesNotExist(TokenError):
+    errmsg = 'Token does not exist'
+
+
+class TokenExpired(TokenError):
+    errmsg = 'Token is expired'
+
+
+class TokenOriginDoesNotMatch(TokenError):
+    errmsg = 'Token origin does not match'
 
 
 class TokenManager:
@@ -36,19 +53,30 @@ class TokenManager:
         self.tokens[token] = Token(self, token, ttl, attributes, match_origin, credentials, session_id)
         return self.tokens[token]
 
-    def get(self, token, origin):
+    def get(self, token, origin, raise_error=False):
         token = self.tokens.get(token)
         if token is None:
+            if raise_error:
+                raise TokenDoesNotExist
+
             return None
 
         if not token.is_valid():
             self.tokens.pop(token.token)
+            if raise_error:
+                raise TokenExpired
+
             return None
 
         if token.match_origin:
             if not isinstance(origin, type(token.match_origin)):
+                if raise_error:
+                    raise TokenOriginDoesNotMatch
                 return None
             if not token.match_origin.match(origin):
+                if raise_error:
+                    raise TokenOriginDoesNotMatch
+
                 return None
 
         return token
@@ -465,8 +493,9 @@ class AuthService(Service):
         """
         Authenticate session using token generated with `auth.generate_token`.
         """
-        token = self.token_manager.get(token_str, app.origin)
-        if token is None:
+        try:
+            token = self.token_manager.get(token_str, app.origin, raise_error=True)
+        except TokenExpired as err:
             await self.middleware.log_audit_message(app, "AUTHENTICATION", {
                 "credentials": {
                     "credentials": "TOKEN",
@@ -474,7 +503,17 @@ class AuthService(Service):
                         "token": token_str,
                     }
                 },
-                "error": "Invalid token",
+                "error": err.errmsg,
+            }, False, user=TOKEN_EXPIRED)
+        except TokenError as err:
+            await self.middleware.log_audit_message(app, "AUTHENTICATION", {
+                "credentials": {
+                    "credentials": "TOKEN",
+                    "credentials_data": {
+                        "token": token_str,
+                    }
+                },
+                "error": err.errmsg,
             }, False)
             return False
 
