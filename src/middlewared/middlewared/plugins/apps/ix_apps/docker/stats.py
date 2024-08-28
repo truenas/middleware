@@ -22,10 +22,10 @@ def list_resources_stats_by_project(project_name: str | None = None) -> dict:
             if not project:
                 continue
 
-            blkio_container_stats = stats.get('blkio', {}).get('io_service_bytes_recursive') or {}
+            blkio_container_stats = stats.get('blkio_stats', {}).get('io_service_bytes_recursive') or {}
             project_stats = projects[project]
             project_stats['cpu_usage'] += stats.get('cpu_stats', {}).get('cpu_usage', {}).get('total_usage', 0)
-            project_stats['memory'] += stats.get('memory', {}).get('usage', 0)
+            project_stats['memory'] += stats.get('memory_stats', {}).get('usage', 0)
             for entry in filter(lambda x: x['op'] in ('read', 'write'), blkio_container_stats):
                 project_stats['blkio'][entry['op']] += entry['value']
             for net_name, net_values in stats.get('networks', {}).items():
