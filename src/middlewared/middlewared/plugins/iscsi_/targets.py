@@ -458,13 +458,13 @@ class iSCSITargetService(CRUDService):
                 raise OSError(cp.returncode, os.strerror(cp.returncode), err)
 
     @private
-    async def logout_iqn(self, ip, iqn, no_wait=False):
+    async def logout_iqn(self, ip, iqn, no_wait=False, timeout=30):
         cmd = ['iscsiadm', '-m', 'node', '-p', ip, '-T', iqn, '--logout']
         if no_wait:
             cmd.append('--no_wait')
         err = f'LOGOUT: {ip!r} {iqn!r}'
         try:
-            cp = await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+            cp = await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8', timeout=timeout)
         except Exception as e:
             err += f' ERROR: {str(e)}'
             raise UnexpectedFailure(err)
