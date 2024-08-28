@@ -1,11 +1,12 @@
 from middlewared.service import Service, private
-from middlewared.schema import Int, returns
+from middlewared.schema import Int, accepts, returns
 from middlewared.utils.network_.procfs import read_proc_net
 
 
 class FTPService(Service):
 
     @private
+    @accepts(roles=['SHARING_FTP_READ'])
     @returns(Int('number_of_connections'))
     def connection_count(self):
         ''' Return the number of active connections '''

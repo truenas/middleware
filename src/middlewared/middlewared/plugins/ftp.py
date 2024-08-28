@@ -58,6 +58,7 @@ class FTPService(SystemServiceService):
         datastore_prefix = "ftp_"
         datastore_extend = "ftp.ftp_extend"
         cli_namespace = "service.ftp"
+        role_prefix = "SHARING_FTP"
 
     ENTRY = Dict(
         'ftp_entry',
