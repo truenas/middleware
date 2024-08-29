@@ -17,7 +17,6 @@ from middlewared.service import (
 )
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
-from middlewared.utils.origin import UnixSocketOrigin
 from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
 
@@ -161,13 +160,14 @@ class Session:
 
 
 def is_internal_session(session):
-    if isinstance(session.app.origin, UnixSocketOrigin) and session.app.origin.uid == 0:
-        return True
-
-    if isinstance(session.app.authenticated_credentials, TrueNasNodeSessionManagerCredentials):
-        return True
-
-    return False
+    return any((
+        all((
+            session.app.origin is not None,
+            session.app.origin.is_unix_family,
+            session.app.origin.uid == 0,
+        )),
+        isinstance(session.app.authenticated_credentials, TrueNasNodeSessionManagerCredentials),
+    ))
 
 
 class UserWebUIAttributeModel(sa.Model):
@@ -601,7 +601,7 @@ async def check_permission(middleware, app):
     if origin is None:
         return
 
-    if isinstance(origin, UnixSocketOrigin):
+    if origin.is_unix_family:
         if origin.uid == 0:
             user = await middleware.call('auth.authenticate_root')
         else:
@@ -622,7 +622,6 @@ async def check_permission(middleware, app):
                 return
 
         await AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user))
-        return
 
 
 def setup(middleware):
