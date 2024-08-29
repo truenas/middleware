@@ -4,7 +4,6 @@ from random import uniform
 from time import monotonic
 from typing import TypedDict
 
-from middlewared.auth import is_ha_connection
 from middlewared.utils.origin import ConnectionOrigin
 
 __all__ = ['RateLimitCache']
