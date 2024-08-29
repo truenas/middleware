@@ -9,8 +9,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
 from middlewared.utils import filter_list
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, ValidationErrors
-from middlewared.utils.network_.procfs import read_proc_net
-from middlewared.utils.origin import TCPIPOrigin
 from middlewared.validators import Range
 from .interface.netif import netif
 from .interface.interface_types import InterfaceType
@@ -1453,15 +1451,8 @@ class InterfaceService(CRUDService):
     @pass_app()
     async def websocket_local_ip(self, app):
         """Returns the local ip address for this websocket session."""
-        if app is None or isinstance(app.origin, TCPIPOrigin) is False:
-            return
-
-        try:
-            if info := await self.middleware.run_in_thread(read_proc_net, None, app.origin.port):
-                return info.local_ip
-        except Exception:
-            self.logger.error("Unexpected failure determining local websocket ip", exc_info=True)
-            return
+        if all((app is not None, app.origin is not None)):
+            return app.origin.local_addr
 
     @accepts()
     @returns(Str(null=True))
