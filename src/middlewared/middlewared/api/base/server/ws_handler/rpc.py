@@ -21,7 +21,7 @@ from middlewared.service_exception import (CallException, CallError, ValidationE
 from middlewared.utils.debug import get_frame_details
 from middlewared.utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from middlewared.utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
-from middlewared.utils.origin import Origin
+from middlewared.utils.origin import ConnectionOrigin
 from .base import BaseWebSocketHandler
 from ..app import App
 from ..method import Method
@@ -45,7 +45,7 @@ class RpcWebSocketAppEvent(enum.Enum):
 
 
 class RpcWebSocketApp(App):
-    def __init__(self, middleware: "Middleware", origin: Origin, ws: WebSocketResponse):
+    def __init__(self, middleware: "Middleware", origin: ConnectionOrigin, ws: WebSocketResponse):
         super().__init__(origin)
 
         self.websocket = True
@@ -194,7 +194,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
         super().__init__(middleware)
         self.methods = methods
 
-    async def process(self, origin: Origin, ws: WebSocketResponse):
+    async def process(self, origin: ConnectionOrigin, ws: WebSocketResponse):
         app = RpcWebSocketApp(self.middleware, origin, ws)
 
         self.middleware.register_wsclient(app)
