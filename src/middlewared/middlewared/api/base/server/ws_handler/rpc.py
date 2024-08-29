@@ -222,7 +222,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
                 except MsgSizeError as err:
                     if err.limit is not MsgSizeLimit.UNAUTHENTICATED:
                         creds = app.authenticated_credentials.dump() if app.authenticated_credentials else None
-                        origin = app.origin.repr() if app.origin else None
+                        origin = app.origin.repr if app.origin else None
 
                         self.middleware.logger.error(
                             'Client using credentials [%s] at [%s] sent message with payload size [%d bytes] '
