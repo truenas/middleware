@@ -45,7 +45,7 @@ class BaseWebSocketHandler:
         ui_allowlist = await self.middleware.call("system.general.get_ui_allowlist")
         if not ui_allowlist:
             return True
-        elif addr_in_allowlist(origin.remote_addr, ui_allowlist):
+        elif addr_in_allowlist(origin.rem_addr, ui_allowlist):
             return True
 
         return False

@@ -52,10 +52,10 @@ class ConnectionOrigin:
                 la, lp, ra, rp = get_tcp_ip_info(sock, request)
                 return cls(
                     family=sock.family,
-                    local_addr=la,
-                    local_port=lp,
-                    remote_addr=ra,
-                    remote_port=rp,
+                    loc_addr=la,
+                    loc_port=lp,
+                    rem_addr=ra,
+                    rem_port=rp,
                 )
         except AttributeError:
             # request.transport can be None by the time this is
@@ -63,22 +63,23 @@ class ConnectionOrigin:
             # have been rebooted
             return
 
-    def repr(self) -> str:
-        return f"pid:{self.pid}" if self.is_unix_family else self.remote_addr
-
     def __str__(self) -> str:
         if self.is_unix_family:
             return f"UNIX socket (pid={self.pid} uid={self.uid} gid={self.gid})"
         elif self.family == AF_INET:
-            return f"{self.remote_addr}:{self.remote_port}"
+            return f"{self.rem_addr}:{self.rem_port}"
         elif self.family == AF_INET6:
-            return f"[{self.remote_addr}]:{self.remote_port}"
+            return f"[{self.rem_addr}]:{self.rem_port}"
 
     def match(self, origin) -> bool:
         if self.is_unix_family:
             return all((self.uid == origin.uid, self.gid == origin.gid))
         else:
-            return self.remote_addr == origin.remote_addr
+            return self.rem_addr == origin.rem_addr
+
+    @property
+    def repr(self) -> str:
+        return f"pid:{self.pid}" if self.is_unix_family else self.rem_addr
 
     @property
     def is_tcp_ip_family(self) -> bool:
@@ -92,8 +93,8 @@ class ConnectionOrigin:
     def is_ha_connection(self) -> bool:
         return all((
             self.family in (AF_INET, AF_INET6),
-            self.remote_port and self.remote_port <= 1024,
-            self.remote_addr and self.remote_addr in HA_HEARTBEAT_IPS,
+            self.rem_port and self.rem_port <= 1024,
+            self.rem_addr and self.rem_addr in HA_HEARTBEAT_IPS,
         ))
 
 

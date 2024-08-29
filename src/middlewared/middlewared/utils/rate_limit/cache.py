@@ -70,7 +70,7 @@ class RateLimit:
         if any((
             origin is None,
             origin.is_unix_family,
-            any((origin.remote_addr is None, origin.remote_port is None)),
+            any((origin.rem_addr is None, origin.rem_port is None)),
             origin.is_ha_connection,
         )):
             # Short-circuit if:
@@ -81,10 +81,10 @@ class RateLimit:
             # 5. OR the origin of the request is from our HA P2P heartbeat connection
             return None
         else:
-            key = self.cache_key(method_name, origin.remote_addr)
+            key = self.cache_key(method_name, origin.rem_addr)
             if key not in RL_CACHE:
                 RL_CACHE[key] = RateLimitObject(num_times_called=0, last_reset=monotonic())
-            return origin.remote_addr
+            return origin.rem_addr
 
     async def cache_pop(self, method_name: str, ip: str) -> None:
         """Pop (remove) an entry from the cache."""

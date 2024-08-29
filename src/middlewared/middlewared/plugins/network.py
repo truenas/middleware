@@ -1452,7 +1452,7 @@ class InterfaceService(CRUDService):
     async def websocket_local_ip(self, app):
         """Returns the local ip address for this websocket session."""
         if all((app is not None, app.origin is not None)):
-            return app.origin.local_addr
+            return app.origin.loc_addr
 
     @accepts()
     @returns(Str(null=True))
