@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import time
+import json
 
 import async_timeout
 
@@ -61,9 +62,8 @@ class DiskService(Service):
 
     @private
     async def temperature_uncached(self, name, powermode):
-        output = await self.middleware.call('disk.smartctl', name, ['-a', '-n', powermode.lower()], {'silent': True})
-        if output is not None:
-            return parse_smartctl_for_temperature_output(output)
+        if output := await self.middleware.call('disk.smartctl', name, ['-a', '-n', powermode.lower(), '--json=c'], {'silent': True}):
+            return parse_smartctl_for_temperature_output(json.loads(output))
 
     @private
     async def reset_temperature_cache(self):

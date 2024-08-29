@@ -38,7 +38,7 @@ class DiskService(Service):
         """
         Returns S.M.A.R.T. attributes values for specified disk name.
         """
-        output = json.loads(await self.middleware.call('disk.smartctl', name, ['-A', '-j']))
+        output = json.loads(await self.middleware.call('disk.smartctl', name, ['-A', '--json=c']))
 
         if 'ata_smart_attributes' in output:
             return output['ata_smart_attributes']['table']
