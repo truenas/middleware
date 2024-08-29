@@ -1,6 +1,6 @@
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
-from middlewared.utils.audit import UNAUTHENTICATED
+from middlewared.utils.audit import TOKEN_EXPIRED
 from time import time
 
 
@@ -78,12 +78,18 @@ class APIFailedLoginAlertSource(AlertSource):
 
     async def check(self):
         now = int(time())
+
+        # NOTE about filter:
+        # we are intentionally excluding audit entries due to expired tokens
+        # because they are generally benign and we don't want users in habit
+        # of just ignoring or turning off this alert. Alert will still be
+        # raised if someone tries to use non-existent token.
         auth_failures = await self.middleware.call('audit.query', {
             'services': ['MIDDLEWARE'],
             'query-filters': [
                 ['message_timestamp', '>', now - 86400],
                 ['event', '=', 'AUTHENTICATION'],
-                ['username', '!=', UNAUTHENTICATED],
+                ['username', '!=', TOKEN_EXPIRED],
                 ['success', '=', False]
             ],
             'query-options': {

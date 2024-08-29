@@ -10,6 +10,7 @@ API_KEY_PREFIX = '.API_KEY:'
 NODE_SESSION = '.TRUENAS_NODE'
 UNAUTHENTICATED = '.UNAUTHENTICATED'
 UNKNOWN_SESSION = '.UNKNOWN'
+TOKEN_EXPIRED = '.TOKEN_EXPIRED'  # used for expired tokens in auth.py
 
 
 def audit_username_from_session(cred) -> str:
