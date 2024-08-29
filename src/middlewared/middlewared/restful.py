@@ -18,8 +18,7 @@ from .job import Job
 from .pipe import Pipes
 from .schema import Error as SchemaError
 from .service_exception import adapt_exception, CallError, MatchNotFound, ValidationError, ValidationErrors
-from .utils.nginx import get_remote_addr_port
-from .utils.origin import TCPIPOrigin
+from .utils.origin import ConnectionOrigin
 
 
 def parse_credentials(request):
@@ -72,7 +71,7 @@ def parse_credentials(request):
 
 async def authenticate(middleware, request, credentials, method, resource):
     if credentials['credentials'] == 'TOKEN':
-        origin = TCPIPOrigin(*await middleware.run_in_thread(get_remote_addr_port, request))
+        origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
         token = await middleware.call('auth.get_token_for_action', credentials['credentials_data']['token'],
                                       origin, method, resource)
         if token is None:
@@ -102,11 +101,7 @@ async def authenticate(middleware, request, credentials, method, resource):
 
 
 def create_application(request, credentials=None):
-    try:
-        origin = TCPIPOrigin(request.headers['X-Real-Remote-Addr'], int(request.headers['X-Real-Remote-Port']))
-    except (KeyError, ValueError):
-        origin = TCPIPOrigin(*request.transport.get_extra_info('peername'))
-
+    origin = ConnectionOrigin.create(request)
     return Application(origin, credentials)
 
 
