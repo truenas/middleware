@@ -1,43 +1,132 @@
-class Origin:
-    def match(self, origin):
-        raise NotImplementedError
+from dataclasses import dataclass
+from socket import AF_INET, AF_INET6, AF_UNIX, SO_PEERCRED, SOL_SOCKET
+from struct import calcsize, unpack
 
-    def repr(self):
-        raise NotImplementedError
+from pyroute2 import DiagSocket
 
-    def __str__(self):
-        raise NotImplementedError
+__all__ = ('ConnectionOrigin',)
 
-
-class UnixSocketOrigin(Origin):
-    def __init__(self, pid, uid, gid):
-        self.pid = pid
-        self.uid = uid
-        self.gid = gid
-
-    def match(self, origin):
-        return self.uid == origin.uid and self.gid == origin.gid
-
-    def repr(self):
-        return f"pid:{self.pid}"
-
-    def __str__(self):
-        return f"UNIX socket (pid={self.pid} uid={self.uid} gid={self.gid})"
+HA_HEARTBEAT_IPS = ('169.254.10.1', '169.254.10.2')
+UIDS_TO_CHECK = (33, 0)
 
 
-class TCPIPOrigin(Origin):
-    def __init__(self, addr, port):
-        self.addr = addr
-        self.port = port
+@dataclass(slots=True, frozen=True, kw_only=True)
+class ConnectionOrigin:
+    family: AF_INET | AF_INET6 | AF_UNIX
+    """The address family associated to the API connection"""
+    loc_addr: str | None = None
+    """If `family` is not of type AF_UNIX, this represents
+    the local IP address associated to the TCP/IP connection"""
+    loc_port: int | None = None
+    """If `family` is not of type AF_UNIX, this represents
+    the local port associated to the TCP/IP connection"""
+    rem_addr: str | None = None
+    """If `family` is not of type AF_UNIX, this represents
+    the remote IP address associated to the TCP/IP connection"""
+    rem_port: int | None = None
+    """If `family` is not of type AF_UNIX, this represents
+    the remote port associated to the TCP/IP connection"""
+    pid: int | None = None
+    """If `family` is of type AF_UNIX, this represents
+    the process id associated to the unix datagram connection"""
+    uid: int | None = None
+    """If `family` is of type AF_UNIX, this represents
+    the user id associated to the unix datagram connection"""
+    gid: int | None = None
+    """If `family` is of type AF_UNIX, this represents
+    the group id associated to the unix datagram connection"""
 
-    def match(self, origin):
-        return self.addr == origin.addr
+    @classmethod
+    def create(cls, request):
+        try:
+            sock = request.transport.get_extra_info("socket")
+            if sock.family == AF_UNIX:
+                pid, uid, gid = unpack("3i", sock.getsockopt(SOL_SOCKET, SO_PEERCRED, calcsize("3i")))
+                return cls(
+                    family=sock.family,
+                    pid=pid,
+                    uid=uid,
+                    gid=gid
+                )
+            elif sock.family in (AF_INET, AF_INET6):
+                la, lp, ra, rp = get_tcp_ip_info(sock, request)
+                return cls(
+                    family=sock.family,
+                    local_addr=la,
+                    local_port=lp,
+                    remote_addr=ra,
+                    remote_port=rp,
+                )
+        except AttributeError:
+            # request.transport can be None by the time this is
+            # called on HA systems because remote node could
+            # have been rebooted
+            return
 
-    def repr(self):
-        return self.addr
+    def repr(self) -> str:
+        return f"pid:{self.pid}" if self.is_unix_family else self.remote_addr
 
-    def __str__(self):
-        if ":" in self.addr:
-            return f"[{self.addr}]:{self.port}"
+    def __str__(self) -> str:
+        if self.is_unix_family:
+            return f"UNIX socket (pid={self.pid} uid={self.uid} gid={self.gid})"
+        elif self.family == AF_INET:
+            return f"{self.remote_addr}:{self.remote_port}"
+        elif self.family == AF_INET6:
+            return f"[{self.remote_addr}]:{self.remote_port}"
+
+    def match(self, origin) -> bool:
+        if self.is_unix_family:
+            return all((self.uid == origin.uid, self.gid == origin.gid))
         else:
-            return f"{self.addr}:{self.port}"
+            return self.remote_addr == origin.remote_addr
+
+    @property
+    def is_tcp_ip_family(self) -> bool:
+        return self.family in (AF_INET, AF_INET6)
+
+    @property
+    def is_unix_family(self) -> bool:
+        return self.family == AF_UNIX
+
+    @property
+    def is_ha_connection(self) -> bool:
+        return all((
+            self.family in (AF_INET, AF_INET6),
+            self.remote_port and self.remote_port <= 1024,
+            self.remote_addr and self.remote_addr in HA_HEARTBEAT_IPS,
+        ))
+
+
+def get_tcp_ip_info(sock, request) -> tuple:
+    # All API connections are terminated by nginx reverse
+    # proxy so the remote address is always 127.0.0.1. The
+    # only exceptions to this are:
+    #   1. Someone connects directly to 127.0.0.1 via a local
+    #       shell session
+    #   2. Someone connects directly to heartbeat IP port 6000
+    #       via a local shell session on a TrueNAS HA system
+    #   3. We connect directly to the other controller on an HA
+    #       machine via heartbeat IP for intra-node communication.
+    #       (this is done by us)
+    try:
+        # These headers are set by nginx or a user trying to do
+        # (potentially) nefarious things. If these are set then
+        # we need to check if the UID of the socket is owned by
+        # 0 (root) or 33 (www-data (nginx forks workers))
+        ra = request.headers["X-Real-Remote-Addr"]
+        rp = int(request.headers["X-Real-Remote-Port"])
+        check_uids = True
+    except (KeyError, ValueError):
+        ra, rp = sock.getpeername()
+        check_uids = False
+
+    with DiagSocket() as ds:
+        ds.bind()
+        for i in ds.get_sock_stats(family=sock.family):
+            if all((i['idiag_dst'] == ra, i['idiag_dport'] == rp)):
+                if check_uids:
+                    if i['idiag_uid'] in UIDS_TO_CHECK:
+                        return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport']
+                else:
+                    return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport']
+    return (None, None, None, None)
