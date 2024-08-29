@@ -1,7 +1,8 @@
+import os
 import pam
 
 from middlewared.plugins.account import unixhash_is_valid
-from middlewared.plugins.account_.constants import ADMIN_UID
+from middlewared.plugins.account_.constants import ADMIN_UID, MIDDLEWARE_PAM_SERVICE
 from middlewared.service import Service, private
 from middlewared.utils.crypto import check_unixhash
 
@@ -63,6 +64,16 @@ class AuthService(Service):
         Potentially other may be returned as well depending on the particulars
         of the PAM modules.
         """
+        if not os.path.exists(MIDDLEWARE_PAM_SERVICE):
+            self.logger.error('PAM service file is missing. Attempting to regenerate')
+            self.middleware.call_sync('etc.generate', 'pam_middleware')
+            if not os.path.exists(MIDDLEWARE_PAM_SERVICE):
+                self.logger.error(
+                    '%s: Unable to generate PAM service file for middleware. Denying '
+                    'access to user.', username
+                )
+                return {'code': pam.PAM_ABORT, 'reason': 'Failed to generate PAM service file'}
+
         p = pam.pam()
         p.authenticate(username, password, service='middleware')
         return {'code': p.code, 'reason': p.reason}
