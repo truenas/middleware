@@ -31,7 +31,7 @@ class FailoverRemoteSystemInaccessibleAlertSource(AlertSource):
 
     async def check(self):
         try:
-            await self.middleware.call('failover.call_remote', 'core.ping', {'timeout': 2})
+            await self.middleware.call('failover.call_remote', 'core.ping', [], {'timeout': 2})
         except Exception:
             if time.monotonic() - self.last_available > 4 * 3600:
                 if self.incident_id is None:
