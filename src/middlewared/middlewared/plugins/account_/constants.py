@@ -11,3 +11,4 @@ SKEL_PATH = '/etc/skel/'  # TODO evaluate whether this is still needed
 LEGACY_DEFAULT_HOME_PATH = '/nonexistent'
 DEFAULT_HOME_PATH = '/var/empty'
 DEFAULT_HOME_PATHS = (DEFAULT_HOME_PATH, LEGACY_DEFAULT_HOME_PATH)
+MIDDLEWARE_PAM_SERVICE = '/etc/pam.d/middleware'
