@@ -10,10 +10,9 @@ from middlewared.schema import (
     accepts, Any, Attribute, EnumMixin, Bool, Dict, Int, List, NOT_PROVIDED, Patch, Ref, returns, Str
 )
 from middlewared.service import (
-    CallError, CRUDService, filterable, InstanceNotFound, item_method, job, pass_app, private, ValidationErrors
+    CallError, CRUDService, filterable, InstanceNotFound, item_method, job, private, ValidationErrors
 )
 from middlewared.utils import filter_list
-from middlewared.utils.origin import TCPIPOrigin
 from middlewared.validators import Exact, Match, Or, Range
 
 from .utils import (
@@ -489,8 +488,7 @@ class PoolDatasetService(CRUDService):
         Bool('create_ancestors', default=False),
         register=True,
     ), audit='Pool dataset create', audit_extended=lambda data: data['name'])
-    @pass_app(rest=True)
-    async def do_create(self, app, data):
+    async def do_create(self, data):
         """
         Creates a dataset/zvol.
 
@@ -718,15 +716,6 @@ class PoolDatasetService(CRUDService):
             'pool_dataset_create.encryption_options',
         ) or encryption_dict
         verrors.check()
-
-        if app:
-            uri = None
-            if isinstance(app.origin, TCPIPOrigin):
-                uri = app.origin.addr
-            if uri and uri not in [
-                '::1', '127.0.0.1', *[d['address'] for d in await self.middleware.call('interface.ip_in_use')]
-            ]:
-                data['managedby'] = uri if data['managedby'] == 'INHERIT' else f'{data["managedby"]}@{uri}'
 
         props = {}
         for i, real_name, transform, inheritable in (
