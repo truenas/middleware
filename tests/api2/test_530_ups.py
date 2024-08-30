@@ -226,10 +226,11 @@ def test__ups_onbatt_to_online(ups_running, dummy_ups_driver_configured):
 
 def test__ups_online_to_onbatt_lowbattery(ups_running, dummy_ups_driver_configured):
     assert 'UPSOnBattery' not in [alert['klass'] for alert in call('alert.list')]
-    write_fake_data({'battery.charge': 10, 'ups.status': 'OB LB'})
+    write_fake_data({'battery.charge': 90, 'ups.status': 'OB'})
     alert = wait_for_alert('UPSOnBattery')
     assert alert
-    assert 'battery.charge: 10' in alert['formatted'], alert
+    assert 'battery.charge: 90' in alert['formatted'], alert
+    write_fake_data({'battery.charge': 10, 'ups.status': 'OB LB'})
     alert = wait_for_alert('UPSBatteryLow')
     assert alert
     assert 'battery.charge: 10' in alert['formatted'], alert
