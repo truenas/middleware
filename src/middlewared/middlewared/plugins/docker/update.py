@@ -7,6 +7,7 @@ from middlewared.validators import Range
 
 from .state_utils import Status
 from .utils import applications_ds_name
+from .validation_utils import validate_address_pools
 
 
 class DockerModel(sa.Model):
@@ -75,6 +76,11 @@ class DockerService(ConfigService):
             verrors.add('docker_update.pool', 'Pool not found.')
 
         verrors.check()
+
+        if config['address_pools'] != old_config['address_pools']:
+            validate_address_pools(
+                await self.middleware.call('interface.ip_in_use', {'static': True}), config['address_pools']
+            )
 
         if old_config != config:
             if config['pool'] != old_config['pool']:
