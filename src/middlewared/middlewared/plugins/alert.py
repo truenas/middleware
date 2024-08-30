@@ -970,6 +970,49 @@ class AlertService(Service):
             await self.middleware.call("alert.send_alerts")
 
     @private
+    @accepts(
+        List('klasses', items=[Str('klass')], required=True),
+        Any("query", null=True, default=None))
+    @job(lock="process_alerts", transient=True)
+    async def oneshot_bulk_delete(self, job, klasses, query):
+        """
+        Deletes one-shot alerts of specified `klasses`, passing `query` to `klass.delete` method.
+
+        It's not an error if no alerts matching delete `query` exist.
+
+        :param klasses: list of one-shot alert class names (without the `AlertClass` suffix).
+        :param query: `query` that will be passed to `klass.delete` method.
+        """
+
+        deleted = False
+        for klassname in klasses:
+            try:
+                klass = AlertClass.class_by_name[klassname]
+            except KeyError:
+                raise CallError(f"Invalid alert source: {klassname!r}")
+
+            if not issubclass(klass, OneShotAlertClass):
+                raise CallError(f"Alert class {klassname!r} is not a one-shot alert source")
+
+            related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (self.node, klass),
+                                                      self.alerts)
+            left_alerts = await klass(self.middleware).delete(related_alerts, query)
+            for deleted_alert in related_alerts:
+                if deleted_alert not in left_alerts:
+                    self.alerts.remove(deleted_alert)
+                    deleted = True
+
+        if deleted:
+            # We need to flush alerts to the database immediately after deleting oneshot alerts.
+            # Some oneshot alerts can only de deleted programmatically (i.e. cloud sync oneshot alerts are deleted
+            # when deleting cloud sync task). If we delete a cloud sync task and then reboot the system abruptly,
+            # the alerts won't be flushed to the database and on next boot an alert for nonexisting cloud sync task
+            # will appear, and it won't be deletable.
+            await self.middleware.call("alert.flush_alerts")
+
+            await self.middleware.call("alert.send_alerts")
+
+    @private
     def alert_source_clear_run(self, name):
         alert_source = ALERT_SOURCES.get(name)
         if not alert_source:
