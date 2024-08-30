@@ -22,7 +22,7 @@ from .utils.audit import audit_username_from_session
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
-from .utils.origin import Origin, TCPIPOrigin
+from .utils.origin import ConnectionOrigin
 from .utils.os import close_fds
 from .utils.plugins import LoadPluginsMixin
 from .utils.privilege import credential_has_full_admin
@@ -107,20 +107,24 @@ def real_crud_method(method):
 
 
 class Application(RpcWebSocketApp):
-    def __init__(self, middleware: 'Middleware', origin: Origin, loop: asyncio.AbstractEventLoop, request, response):
+    def __init__(
+        self,
+        middleware,
+        origin: ConnectionOrigin,
+        loop: asyncio.AbstractEventLoop,
+        request,
+        response
+    ):
         super().__init__(middleware, origin, response)
         self.websocket = True
-
         self.loop = loop
         self.request = request
         self.response = response
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
-
         # Allow at most 10 concurrent calls and only queue up until 20
         self._softhardsemaphore = SoftHardSemaphore(10, 20)
         self._py_exceptions = False
-
         self.__subscribed = {}
 
     def _send(self, data: typing.Dict[str, typing.Any]):
@@ -129,13 +133,11 @@ class Application(RpcWebSocketApp):
 
     def _tb_error(self, exc_info: ExcInfoType) -> typing.Dict[str, typing.Union[str, list[dict]]]:
         klass, exc, trace = exc_info
-
         frames = []
         cur_tb = trace
         while cur_tb:
             tb_frame = cur_tb.tb_frame
             cur_tb = cur_tb.tb_next
-
             cur_frame = get_frame_details(tb_frame, self.logger)
             if cur_frame:
                 frames.append(cur_frame)
@@ -476,7 +478,7 @@ class FileApplication(object):
                 raise web.HTTPUnauthorized()
         except web.HTTPException as e:
             return web.Response(status=e.status_code, body=e.text)
-        app = create_application(request)
+        app = await create_application(request)
         try:
             authenticated_credentials = await authenticate(self.middleware, request, credentials, 'CALL',
                                                            data['method'])
@@ -489,7 +491,7 @@ class FileApplication(object):
                 'error': e.text,
             }, False)
             return web.Response(status=e.status_code, body=e.text)
-        app = create_application(request, authenticated_credentials)
+        app = await create_application(request, authenticated_credentials)
         credentials['credentials_data'].pop('password', None)
         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
             'credentials': credentials,
@@ -1126,9 +1128,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     blank = ' ' * (maxlen - (len(prefix) + len(text)))
                 else:
                     blank = ''
-                writes = self.__console_io.write(
-                    f'\r{prefix}{text}{blank}{newline}'
-                )
+                self.__console_io.write(f'\r{prefix}{text}{blank}{newline}')
             self.__console_io.flush()
             # be sure and reset error counter after we successfully log
             # to the console
@@ -1312,7 +1312,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def _call_prepare(
         self, name, serviceobj, methodobj, params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
-        in_event_loop: bool=True,
+        in_event_loop: bool = True,
     ):
         """
         :param in_event_loop: Whether we are in the event loop thread.
@@ -1552,6 +1552,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 }, success)
 
     async def log_audit_message(self, app, event, event_data, success):
+        remote_addr, origin = "127.0.0.1", None
+        if app is not None and app.origin is not None:
+            origin = app.origin.repr
+            if app.origin.is_tcp_ip_family:
+                remote_addr = origin
+
         message = "@cee:" + json.dumps({
             "TNAUDIT": {
                 "aid": str(uuid.uuid4()),
@@ -1559,7 +1565,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     "major": 0,
                     "minor": 1
                 },
-                "addr": app.origin.repr() if isinstance(app.origin, TCPIPOrigin) else "127.0.0.1",
+                "addr": remote_addr,
                 "user": audit_username_from_session(app.authenticated_credentials),
                 "sess": app.session_id,
                 "time": utc_now().strftime('%Y-%m-%d %H:%M:%S.%f'),
@@ -1569,7 +1575,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                         "major": 0,
                         "minor": 1,
                     },
-                    "origin": app.origin.repr() if app.origin else None,
+                    "origin": origin,
                     "protocol": "WEBSOCKET" if app.websocket else "REST",
                     "credentials": {
                         "credentials": app.authenticated_credentials.class_name(),
@@ -1874,15 +1880,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     )
                     break
 
-                datalen = len(msg.data)
-
                 try:
                     message = parse_message(connection.authenticated, msg.data)
                 except MsgSizeError as err:
                     if err.limit is not MsgSizeLimit.UNAUTHENTICATED:
-                        origin = connection.origin.repr() if connection.origin else None
+                        origin = connection.origin.repr if connection.origin else None
                         if connection.authenticated_credentials:
-                            creds =  connection.authenticated_credentials.dump()
+                            creds = connection.authenticated_credentials.dump()
                         else:
                             creds = None
 
