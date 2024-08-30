@@ -100,9 +100,12 @@ async def authenticate(middleware, request, credentials, method, resource):
         raise web.HTTPUnauthorized()
 
 
-def create_application(request, credentials=None):
-    origin = ConnectionOrigin.create(request)
-    return Application(origin, credentials)
+def create_applictaion_impl(request, credentials=None):
+    return Application(ConnectionOrigin.create(request), credentials)
+
+
+async def create_application(request, credentials=None):
+    return await asyncio.to_thread(create_application_impl, request, credentials)
 
 
 def normalize_query_parameter(value):
@@ -545,7 +548,7 @@ class Resource(object):
                 else:
                     resource = None
 
-                app = create_application(req)
+                app = await create_application(req)
                 auth_required = not self.rest._methods[getattr(self, method)]['no_auth_required']
                 credentials = parse_credentials(req)
                 if credentials is None:
@@ -564,7 +567,7 @@ class Resource(object):
                             'error': e.text,
                         }, False)
                         raise
-                    app = create_application(req, authenticated_credentials)
+                    app = await create_application(req, authenticated_credentials)
                     credentials['credentials_data'].pop('password', None)
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                         'credentials': credentials,

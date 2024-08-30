@@ -477,7 +477,7 @@ class FileApplication(object):
                 raise web.HTTPUnauthorized()
         except web.HTTPException as e:
             return web.Response(status=e.status_code, body=e.text)
-        app = create_application(request)
+        app = await create_application(request)
         try:
             authenticated_credentials = await authenticate(self.middleware, request, credentials, 'CALL',
                                                            data['method'])
@@ -490,7 +490,7 @@ class FileApplication(object):
                 'error': e.text,
             }, False)
             return web.Response(status=e.status_code, body=e.text)
-        app = create_application(request, authenticated_credentials)
+        app = await create_application(request, authenticated_credentials)
         credentials['credentials_data'].pop('password', None)
         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
             'credentials': credentials,
