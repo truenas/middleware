@@ -58,6 +58,9 @@ class AlertClass(metaclass=AlertClassMeta):
 
     :cvar proactive_support: Set this to `true` if, upon creation of the alert, a support ticket should be open for the
         systems that have a corresponding support license.
+
+    :cvar proactive_support_notify_gone: Set this to `true` if, upon removal of the alert, a support ticket should be
+        open for the systems that have a corresponding support license.
     """
 
     classes = []
@@ -71,6 +74,7 @@ class AlertClass(metaclass=AlertClassMeta):
     exclude_from_list = False
     products = ("CORE", "ENTERPRISE", "SCALE", "SCALE_ENTERPRISE")
     proactive_support = False
+    proactive_support_notify_gone = False
 
     def __init__(self, middleware):
         self.middleware = middleware
