@@ -1,6 +1,6 @@
-import ipaddress
+from socket import AF_INET6
 
-from middlewared.schema import accepts, Dict, Int, List, Ref, returns, Str
+from middlewared.schema import accepts, Dict, Int, List, returns, Str
 from middlewared.service import pass_app, private, Service
 
 from .devices import DISPLAY
@@ -94,13 +94,14 @@ class VMService(Service):
         """
         uri_data = {'error': None, 'uri': None}
         protocol = options['protocol'].lower()
-        host = host or await self.middleware.call('interface.websocket_local_ip', app=app)
-        try:
-            ipaddress.IPv6Address(host)
-        except ipaddress.AddressValueError:
-            pass
-        else:
-            host = f'[{host}]'
+        if not host:
+            try:
+                if app.origin.is_tcp_ip_family and (_h := app.origin.loc_addr):
+                    host = _h
+                    if app.origin.family == AF_INET6:
+                        host = f'[{_h}]'
+            except AttributeError:
+                pass
 
         if display_devices := await self.get_display_devices(id_):
             for device in map(lambda d: DISPLAY(d, middleware=self.middleware), display_devices):
