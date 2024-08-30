@@ -93,9 +93,17 @@ class AppService(CRUDService):
             return filter_list([], filters, options)
 
         extra = options.get('extra', {})
+        host_ip = extra.get('host_ip')
+        if not host_ip:
+            try:
+                if app.origin.is_tcp_ip_family:
+                    host_ip = app.origin.loc_addr
+            except AttributeError:
+                pass
+
         retrieve_app_schema = extra.get('include_app_schema', False)
         kwargs = {
-            'host_ip': extra.get('host_ip') or self.middleware.call_sync('interface.websocket_local_ip', app=app),
+            'host_ip': host_ip,
             'retrieve_config': extra.get('retrieve_config', False),
             'image_update_cache': self.middleware.call_sync('app.image.op.get_update_cache', True),
         }
