@@ -68,12 +68,10 @@ class RateLimit:
         """Add an entry to the cache. Returns the IP address of
         origin of the request if it has been cached, returns None otherwise"""
         try:
-            if any((
-                origin.is_ha_connection,
-                origin.is_unix_family,
-                origin.rem_addr is None,
-                origin.rem_port is None,
-            )):
+            if (
+                origin.is_ha_connection or origin.is_unix_family or
+                origin.rem_addr is None or origin.rem_port is None
+            ):
                 return None
             else:
                 key = self.cache_key(method_name, origin.rem_addr)
