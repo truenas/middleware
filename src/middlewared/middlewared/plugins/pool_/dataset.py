@@ -590,10 +590,6 @@ class PoolDatasetService(CRUDService):
             parent_st['acltype'] = await self.middleware.call('filesystem.path_get_acltype', parent_mp)
 
         mountpoint = os.path.join('/mnt', data['name'])
-        if data['type'] == 'FILESYSTEM' and data.get('acltype', 'INHERIT') == 'INHERIT' and len(
-                data['name'].split('/')
-        ) == 2:
-            data['acltype'] = 'POSIX'
 
         try:
             await self.middleware.call('filesystem.stat', mountpoint)
