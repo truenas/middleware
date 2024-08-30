@@ -73,7 +73,7 @@ class ConnectionOrigin:
 
     def match(self, origin) -> bool:
         if self.is_unix_family:
-            return all((self.uid == origin.uid, self.gid == origin.gid))
+            return self.uid == origin.uid and self.gid == origin.gid
         else:
             return self.rem_addr == origin.rem_addr
 
@@ -91,11 +91,11 @@ class ConnectionOrigin:
 
     @property
     def is_ha_connection(self) -> bool:
-        return all((
-            self.family in (AF_INET, AF_INET6),
-            self.rem_port and self.rem_port <= 1024,
-            self.rem_addr and self.rem_addr in HA_HEARTBEAT_IPS,
-        ))
+        return (
+            self.family in (AF_INET, AF_INET6) and
+            self.rem_port and self.rem_port <= 1024 and
+            self.rem_addr and self.rem_addr in HA_HEARTBEAT_IPS
+        )
 
 
 def get_tcp_ip_info(sock, request) -> tuple:
@@ -124,7 +124,7 @@ def get_tcp_ip_info(sock, request) -> tuple:
     with DiagSocket() as ds:
         ds.bind()
         for i in ds.get_sock_stats(family=sock.family):
-            if all((i['idiag_dst'] == ra, i['idiag_dport'] == rp)):
+            if i['idiag_dst'] == ra and i['idiag_dport'] == rp:
                 if check_uids:
                     if i['idiag_uid'] in UIDS_TO_CHECK:
                         return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport']

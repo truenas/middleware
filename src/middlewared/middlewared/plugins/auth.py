@@ -159,15 +159,19 @@ class Session:
         }
 
 
-def is_internal_session(session):
-    return any((
-        all((
-            session.app.origin is not None,
-            session.app.origin.is_unix_family,
-            session.app.origin.uid == 0,
-        )),
-        isinstance(session.app.authenticated_credentials, TrueNasNodeSessionManagerCredentials),
-    ))
+def is_internal_session(session) -> bool:
+    try:
+        is_root_sock = session.app.origin.is_unix_family and session.app.origin.uid == 0
+        if is_root_sock:
+            return True
+    except AttributeError:
+        # session.app.origin can be NoneType
+        pass
+
+    if isinstance(session.app.authenticated_credentials, TrueNasNodeSessionManagerCredentials):
+        return True
+
+    return False
 
 
 class UserWebUIAttributeModel(sa.Model):

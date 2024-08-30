@@ -39,7 +39,7 @@ class BaseWebSocketHandler:
         if origin is None:
             return False
 
-        if any((origin.is_unix_family, origin.is_ha_connection)):
+        if origin.is_unix_family or origin.is_ha_connection:
             return True
 
         ui_allowlist = await self.middleware.call("system.general.get_ui_allowlist")

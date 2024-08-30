@@ -67,24 +67,22 @@ class RateLimit:
     async def add(self, method_name: str, origin: ConnectionOrigin) -> str | None:
         """Add an entry to the cache. Returns the IP address of
         origin of the request if it has been cached, returns None otherwise"""
-        if any((
-            origin is None,
-            origin.is_unix_family,
-            any((origin.rem_addr is None, origin.rem_port is None)),
-            origin.is_ha_connection,
-        )):
-            # Short-circuit if:
-            # 1. origin object is NoneType
-            # 2. this is a connection on unix socket
-            # 3. or the remote IP address is None
-            # 4. OR the remote port is None
-            # 5. OR the origin of the request is from our HA P2P heartbeat connection
+        try:
+            if any((
+                origin.is_ha_connection,
+                origin.is_unix_family,
+                origin.rem_addr is None,
+                origin.rem_port is None,
+            )):
+                return None
+            else:
+                key = self.cache_key(method_name, origin.rem_addr)
+                if key not in RL_CACHE:
+                    RL_CACHE[key] = RateLimitObject(num_times_called=0, last_reset=monotonic())
+                return origin.rem_addr
+        except AttributeError:
+            # origin is NoneType
             return None
-        else:
-            key = self.cache_key(method_name, origin.rem_addr)
-            if key not in RL_CACHE:
-                RL_CACHE[key] = RateLimitObject(num_times_called=0, last_reset=monotonic())
-            return origin.rem_addr
 
     async def cache_pop(self, method_name: str, ip: str) -> None:
         """Pop (remove) an entry from the cache."""

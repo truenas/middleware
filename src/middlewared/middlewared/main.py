@@ -22,7 +22,7 @@ from .utils.audit import audit_username_from_session
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
-from .utils.origin import ConnectionOrigin 
+from .utils.origin import ConnectionOrigin
 from .utils.os import close_fds
 from .utils.plugins import LoadPluginsMixin
 from .utils.privilege import credential_has_full_admin
@@ -107,8 +107,9 @@ def real_crud_method(method):
 
 
 class Application(RpcWebSocketApp):
-    def __init__(self,
-        middleware: 'Middleware',
+    def __init__(
+        self,
+        middleware,
         origin: ConnectionOrigin,
         loop: asyncio.AbstractEventLoop,
         request,
@@ -1127,9 +1128,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     blank = ' ' * (maxlen - (len(prefix) + len(text)))
                 else:
                     blank = ''
-                writes = self.__console_io.write(
-                    f'\r{prefix}{text}{blank}{newline}'
-                )
+                self.__console_io.write(f'\r{prefix}{text}{blank}{newline}')
             self.__console_io.flush()
             # be sure and reset error counter after we successfully log
             # to the console
@@ -1313,7 +1312,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def _call_prepare(
         self, name, serviceobj, methodobj, params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
-        in_event_loop: bool=True,
+        in_event_loop: bool = True,
     ):
         """
         :param in_event_loop: Whether we are in the event loop thread.
@@ -1554,7 +1553,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     async def log_audit_message(self, app, event, event_data, success):
         remote_addr, origin = "127.0.0.1", None
-        if all((app is not None, app.origin is not None)):
+        if app is not None and app.origin is not None:
             origin = app.origin.repr
             if app.origin.is_tcp_ip_family:
                 remote_addr = origin
@@ -1881,15 +1880,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     )
                     break
 
-                datalen = len(msg.data)
-
                 try:
                     message = parse_message(connection.authenticated, msg.data)
                 except MsgSizeError as err:
                     if err.limit is not MsgSizeLimit.UNAUTHENTICATED:
-                        origin = connection.origin.repr() if connection.origin else None
+                        origin = connection.origin.repr if connection.origin else None
                         if connection.authenticated_credentials:
-                            creds =  connection.authenticated_credentials.dump()
+                            creds = connection.authenticated_credentials.dump()
                         else:
                             creds = None
 
