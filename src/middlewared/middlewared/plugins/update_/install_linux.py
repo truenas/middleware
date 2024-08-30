@@ -2,6 +2,7 @@ import json
 import logging
 import os
 
+from middlewared.plugins.config import UPLOADED_DB_PATH
 from middlewared.service import CallError, private, Service
 from middlewared.utils import sw_info
 
@@ -14,6 +15,12 @@ logger = logging.getLogger(__name__)
 class UpdateService(Service):
     @private
     def install(self, job, path, options):
+        if os.path.exists(UPLOADED_DB_PATH):
+            raise CallError(
+                "An unapplied uploaded configuration exists. Please, reboot the system to apply this configuration "
+                "before running upgrade."
+            )
+
         state = self.middleware.call_sync("boot.get_state")
         if (
             state["scan"] and
@@ -21,7 +28,7 @@ class UpdateService(Service):
             state["scan"]["state"] == "SCANNING"
         ):
             raise CallError(
-                f"One or more boot pool devices are currently being resilvered. The upgrade cannot continue "
+                "One or more boot pool devices are currently being resilvered. The upgrade cannot continue "
                 "until the resilvering operation is finished."
             )
 
