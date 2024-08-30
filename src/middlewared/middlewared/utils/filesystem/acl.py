@@ -9,6 +9,9 @@ class ACLXattr(enum.Enum):
 
 ACL_XATTRS = set([xat.value for xat in ACLXattr])
 
+# ACCESS_ACL_XATTRS is set of ACLs that control access to the file itself.
+ACCESS_ACL_XATTRS = set([ACLXattr.POSIX_ACCESS.value, ACLXattr.ZFS_NATIVE.value])
+
 
 def acl_is_present(xat_list: list) -> bool:
     """
