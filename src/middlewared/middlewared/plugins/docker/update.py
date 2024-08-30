@@ -41,7 +41,7 @@ class DockerService(ConfigService):
              Dict(
                  'address_pool',
                  IPAddr('base', cidr=True),
-                 Int('size', validators=[Range(min_=0, max_=32)])
+                 Int('size', validators=[Range(min_=1, max_=32)])
              )
         ]),
         update=True,
