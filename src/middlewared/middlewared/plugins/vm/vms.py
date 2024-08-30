@@ -101,9 +101,11 @@ class VMService(CRUDService, VMSupervisorMixin):
         status = {}
         kvm_supported = self._is_kvm_supported()
         if rows and kvm_supported:
-            self._check_setup_connection()
+            self._safely_check_setup_connection(5)
+
+        libvirt_running = self._is_connection_alive()
         for row in rows:
-            status[row['id']] = self.status_impl(row) if kvm_supported else get_default_status()
+            status[row['id']] = self.status_impl(row) if libvirt_running else get_default_status()
 
         return {
             'status': status,

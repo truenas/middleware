@@ -65,7 +65,10 @@ class LibvirtConnectionMixin:
         if not self._is_libvirt_connection_alive():
             raise CallError('Failed to connect to libvirt')
 
-    def _check_setup_connection(self):
+    def _safely_check_setup_connection(self, timeout: int = 10):
         if not self._is_connection_alive():
-            self.middleware.call_sync('vm.setup_libvirt_connection', 10)
+            self.middleware.call_sync('vm.setup_libvirt_connection', timeout)
+
+    def _check_setup_connection(self):
+        self._safely_check_setup_connection()
         self._check_connection_alive()
