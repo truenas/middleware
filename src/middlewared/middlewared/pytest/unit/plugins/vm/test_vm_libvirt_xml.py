@@ -36,6 +36,7 @@ def test_command_line_xml(vm_data, expected_xml):
         'cpuset': None,
         'pin_vcpus': False,
         'nodeset': None,
+        'enable_cpu_topology_extension': False
     }, {'cpu_model_choices': {}}, [
         '<cpu mode="custom"><topology sockets="1" cores="2" threads="3" /></cpu>',
         '<vcpu>6</vcpu>',
@@ -49,10 +50,26 @@ def test_command_line_xml(vm_data, expected_xml):
         'cpuset': None,
         'pin_vcpus': False,
         'nodeset': None,
+        'enable_cpu_topology_extension': False
     }, {'cpu_model_choices': {}}, [
         '<cpu mode="host-passthrough"><topology sockets="1" cores="2" threads="3" /><cache mode="passthrough" /></cpu>',
         '<vcpu>6</vcpu>',
     ]),
+    ({
+         'cpu_mode': 'HOST-PASSTHROUGH',
+         'vcpus': 1,
+         'cores': 2,
+         'threads': 3,
+         'cpu_model': None,
+         'cpuset': None,
+         'pin_vcpus': False,
+         'nodeset': None,
+         'enable_cpu_topology_extension': True
+     }, {'cpu_model_choices': {}}, [
+         '<cpu mode="host-passthrough"><topology sockets="1" cores="2" threads="3" />'
+         '<cache mode="passthrough" /><feature policy="require" name="topoext" /></cpu>',
+         '<vcpu>6</vcpu>',
+     ]),
     ({
         'cpu_mode': 'CUSTOM',
         'vcpus': 1,
@@ -62,6 +79,7 @@ def test_command_line_xml(vm_data, expected_xml):
         'cpuset': None,
         'pin_vcpus': False,
         'nodeset': None,
+        'enable_cpu_topology_extension': False
     }, {'cpu_model_choices': {'pentium': 'pentium', 'pentium2': 'pentium2'}}, [
         '<cpu mode="custom"><topology sockets="1" cores="2" threads="3" />'
         '<model fallback="forbid">pentium</model></cpu>',
@@ -76,6 +94,7 @@ def test_command_line_xml(vm_data, expected_xml):
         'cpuset': '1-2,4-6',
         'pin_vcpus': True,
         'nodeset': None,
+        'enable_cpu_topology_extension': False,
     }, {'cpu_model_choices': {}}, [
         '<cpu mode="custom"><topology sockets="1" cores="2" threads="3" /></cpu>',
         '<vcpu cpuset="1-2,4-6">6</vcpu>',
@@ -91,6 +110,7 @@ def test_command_line_xml(vm_data, expected_xml):
         'cpuset': None,
         'pin_vcpus': False,
         'nodeset': '1-2,4-6',
+        'enable_cpu_topology_extension': False
     }, {'cpu_model_choices': {}}, [
         '<cpu mode="custom"><topology sockets="1" cores="2" threads="3" /></cpu>',
         '<vcpu>6</vcpu>',
