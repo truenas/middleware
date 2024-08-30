@@ -4,6 +4,7 @@ import logging
 from middlewared.service import accepts, Service
 from middlewared.schema import Str, Dict, Int
 from middlewared.utils.cpu import cpu_info
+from middlewared.utils.zfs import query_imported_fast_impl
 
 from .netdata import ClientConnectError, Netdata
 from .utils import calculate_disk_space_for_netdata, get_metrics_approximation, TIER_0_POINT_SIZE, TIER_1_POINT_SIZE
@@ -52,8 +53,8 @@ class NetdataService(Service):
             len(self.middleware.call_sync('device.get_disks', False, True)),
             cpu_info()['core_count'],
             self.middleware.call_sync('interface.query', [], {'count': True}),
-            self.middleware.call_sync('zfs.pool.query', [], {'count': True}),
-            self.middleware.call_sync('vm.query', [], {'count': True}),
+            len(query_imported_fast_impl()),
+            self.middleware.call_sync('datastore.query', 'vm.vm', [], {'count': True}),
             len(glob.glob('/sys/fs/cgroup/**/*.service')),
         )
 
