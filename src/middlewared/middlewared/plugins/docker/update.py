@@ -1,8 +1,9 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Str, ValidationErrors
 from middlewared.service import CallError, ConfigService, job, private, returns
 from middlewared.utils.zfs import query_imported_fast_impl
+from middlewared.validators import Range
 
 from .state_utils import Status
 from .utils import applications_ds_name
@@ -15,6 +16,10 @@ class DockerModel(sa.Model):
     pool = sa.Column(sa.String(255), default=None, nullable=True)
     enable_image_updates = sa.Column(sa.Boolean(), default=True)
     nvidia = sa.Column(sa.Boolean(), default=False)
+    address_pools = sa.Column(sa.JSON(list), default=[
+        {'base': '172.30.0.0/16', 'size': 27},
+        {'base': '172.31.0.0/16', 'size': 27}
+    ])
 
 
 class DockerService(ConfigService):
@@ -32,6 +37,13 @@ class DockerService(ConfigService):
         Str('dataset', required=True),
         Str('pool', required=True, null=True),
         Bool('nvidia', required=True),
+        List('address_pools', items=[
+             Dict(
+                 'address_pool',
+                 IPAddr('base', cidr=True),
+                 Int('size', validators=[Range(min_=0, max_=32)])
+             )
+        ]),
         update=True,
     )
 
