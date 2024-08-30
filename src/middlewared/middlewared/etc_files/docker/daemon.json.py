@@ -22,16 +22,7 @@ def render(service, middleware):
         'exec-opts': ['native.cgroupdriver=cgroupfs'],
         'iptables': True,
         'storage-driver': 'overlay2',
-        'default-address-pools': [
-            {
-                'base': '172.30.0.0/16',
-                'size': 27
-            },
-            {
-                'base': '172.31.0.0/16',
-                'size': 27
-            },
-        ],
+        'default-address-pools': config['address_pools'],
     }
     isolated = middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
     for gpu in filter(lambda x: x not in isolated, get_nvidia_gpus()):
