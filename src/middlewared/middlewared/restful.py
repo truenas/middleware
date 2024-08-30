@@ -100,7 +100,7 @@ async def authenticate(middleware, request, credentials, method, resource):
         raise web.HTTPUnauthorized()
 
 
-def create_applictaion_impl(request, credentials=None):
+def create_application_impl(request, credentials=None):
     return Application(ConnectionOrigin.create(request), credentials)
 
 
