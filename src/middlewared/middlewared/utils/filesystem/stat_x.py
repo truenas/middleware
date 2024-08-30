@@ -8,9 +8,16 @@
 import os
 import ctypes
 import stat as statlib
-from enum import IntFlag
+from enum import auto, Enum, IntFlag
 from .constants import AT_FDCWD
 from .utils import path_in_ctldir
+
+
+class StatxEtype(Enum):
+    DIRECTORY = auto()
+    FILE = auto()
+    SYMLINK = auto()
+    OTHER = auto()
 
 
 class ATFlags(IntFlag):
@@ -181,20 +188,20 @@ def statx_entry_impl(entry, dir_fd=None, get_ctldir=True):
             out['attributes'].append(attr.name)
 
     if statlib.S_ISDIR(out['st'].stx_mode):
-        out['etype'] = 'DIRECTORY'
+        out['etype'] = StatxEtype.DIRECTORY.name
 
     elif statlib.S_ISLNK(out['st'].stx_mode):
-        out['etype'] = 'SYMLINK'
+        out['etype'] = StatxEtype.SYMLINK.name
         try:
             out['st'] = statx(path, dir_fd=dir_fd)
         except FileNotFoundError:
             return None
 
     elif statlib.S_ISREG(out['st'].stx_mode):
-        out['etype'] = 'FILE'
+        out['etype'] = StatxEtype.FILE.name
 
     else:
-        out['etype'] = 'OTHER'
+        out['etype'] = StatxEtype.OTHER.name
 
     if entry.is_absolute():
         out['is_ctldir'] = path_in_ctldir(entry)
