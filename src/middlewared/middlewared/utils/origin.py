@@ -35,6 +35,7 @@ class ConnectionOrigin:
     gid: int | None = None
     """If `family` is of type AF_UNIX, this represents
     the group id associated to the unix datagram connection"""
+    secure: bool | None = None
 
     @classmethod
     def create(cls, request):
@@ -46,7 +47,8 @@ class ConnectionOrigin:
                     family=sock.family,
                     pid=pid,
                     uid=uid,
-                    gid=gid
+                    gid=gid,
+                    secure=True
                 )
             elif sock.family in (AF_INET, AF_INET6):
                 la, lp, ra, rp = get_tcp_ip_info(sock, request)
@@ -56,6 +58,7 @@ class ConnectionOrigin:
                     loc_port=lp,
                     rem_addr=ra,
                     rem_port=rp,
+                    secure=request.secure
                 )
         except AttributeError:
             # request.transport can be None by the time this is
