@@ -94,7 +94,7 @@ def job(
         If lock queue size is exceeded then the new job is discarded and the `id` of the last job in the queue is
         returned.
 
-        Default value is `None` meaning that lock queue is infinite.
+        Default value is `5`. `None` would mean that lock queue is infinite.
 
     :param logs: If `True` then `job.logs_fd` object will be available. It is an unbuffered file opened in binary mode;
         the job can write its logs there, and they will be available in the `/var/log/jobs/{id}.log` file. By default,
