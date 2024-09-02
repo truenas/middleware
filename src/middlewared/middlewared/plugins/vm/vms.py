@@ -100,11 +100,12 @@ class VMService(CRUDService, VMSupervisorMixin):
     @private
     def extend_context(self, rows, extra):
         status = {}
+        shutting_down = self.middleware.call_sync('system.state') == 'SHUTTING_DOWN'
         kvm_supported = self._is_kvm_supported()
-        if rows and kvm_supported:
+        if shutting_down is False and rows and kvm_supported:
             self._safely_check_setup_connection(5)
 
-        libvirt_running = self._is_connection_alive()
+        libvirt_running = shutting_down is False and self._is_connection_alive()
         for row in rows:
             status[row['id']] = self.status_impl(row) if libvirt_running else get_default_status()
 
