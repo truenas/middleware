@@ -6,7 +6,7 @@ from middlewared.schema import ValidationErrors
 def validate_address_pools(system_ips: list[dict], user_specified_networks: list[dict]):
     verrors = ValidationErrors()
     network_cidrs = set([
-        ipaddress.ip_network(f'{ip["address"]}/{ip["network"]}', False)
+        ipaddress.ip_network(f'{ip["address"]}/{ip["netmask"]}', False)
         for ip in system_ips
     ])
     seen_networks = set()
