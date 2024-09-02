@@ -5,6 +5,10 @@ from middlewared.schema import ValidationErrors
 
 def validate_address_pools(system_ips: list[dict], user_specified_networks: list[dict]):
     verrors = ValidationErrors()
+    if not user_specified_networks:
+        verrors.add('docker_update.address_pools', 'At least one address pool must be specified')
+    verrors.check()
+
     network_cidrs = set([
         ipaddress.ip_network(f'{ip["address"]}/{ip["netmask"]}', False)
         for ip in system_ips
