@@ -103,11 +103,19 @@ class DockerService(ConfigService):
                     await self.middleware.call(
                         'nvidia.install',
                         job_on_progress_cb=lambda encoded: job.set_progress(
-                            80 + int(encoded['progress']['percent'] * 0.2),
+                            70 + int(encoded['progress']['percent'] * 0.2),
                             encoded['progress']['description'],
                         )
                     )
                 ).wait(raise_error=True)
+
+            if config['pool'] and config['address_pools'] != old_config['address_pools']:
+                job.set_progress(95, 'Initiating redeployment of applications to apply new address pools changes')
+                await self.middleware.call(
+                    'core.bulk', 'app.redeploy', [
+                        [app['name']] for app in await self.middleware.call('app.query', [['state', '!=', 'STOPPED']])
+                    ]
+                )
 
         job.set_progress(100, 'Requested configuration applied')
         return await self.config()
