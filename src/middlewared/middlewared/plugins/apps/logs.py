@@ -8,6 +8,7 @@ from middlewared.schema import Dict, Int, Str
 from middlewared.service import CallError
 from middlewared.validators import Range
 
+from .ix_apps.utils import AppState
 from .ix_apps.docker.utils import get_docker_client
 
 
@@ -38,8 +39,8 @@ class AppContainerLogsFollowTailEventSource(EventSource):
 
     def validate_log_args(self, app_name, container_id):
         app = self.middleware.call_sync('app.get_instance', app_name)
-        if app['state'] not in ('RUNNING', 'DEPLOYING'):
-            raise CallError(f'App "{app_name}" is not running')
+        if app['state'] not in (AppState.CRASHED.value, AppState.RUNNING.value, AppState.DEPLOYING.value):
+            raise CallError(f'Unable to retrieve logs of stopped {app_name!r} app')
 
         if not any(c['id'] == container_id for c in app['active_workloads']['container_details']):
             raise CallError(f'Container "{container_id}" not found in app "{app_name}"', errno=errno.ENOENT)

@@ -3,6 +3,7 @@ from middlewared.service import private, Service
 
 from middlewared.utils.gpu import get_nvidia_gpus
 
+from .ix_apps.utils import ContainerState
 from .resources_utils import get_normalized_gpu_choices
 
 
@@ -43,7 +44,9 @@ class AppService(Service):
                 'id': c['id'],
             } for c in (
                 await self.middleware.call('app.get_instance', app_name)
-            )['active_workloads']['container_details'] if (options['alive_only'] is False or c['state'] == 'running')
+            )['active_workloads']['container_details'] if (
+                options['alive_only'] is False or ContainerState(c['state']) == ContainerState.RUNNING
+            )
         }
 
     @accepts(Str('app_name'), roles=['APPS_READ'])
