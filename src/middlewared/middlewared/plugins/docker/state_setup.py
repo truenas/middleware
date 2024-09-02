@@ -50,6 +50,13 @@ class DockerSetupService(Service):
                 errno=CallError.EDATASETISLOCKED,
             )
 
+        # What we want to validate now is that the interface on default route is up and running
+        # This is problematic for bridge interfaces which can or cannot come up in time
+
+    @private
+    async def validate_interfaces(self):
+        pass
+
     @private
     async def status_change(self):
         config = await self.middleware.call('docker.config')
