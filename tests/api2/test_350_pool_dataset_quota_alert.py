@@ -1,16 +1,12 @@
-#!/usr/bin/env python3
-
 # License: BSD
 
-import sys
-import os
 import re
 import pytest
 from pytest_dependency import depends
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import DELETE, GET, POST, SSH_TEST
+from functions import SSH_TEST
 from auto_config import pool_name, user, password
+
+from middlewared.test.integration.utils import call
 
 G = 1024 * 1024 * 1024
 
@@ -59,13 +55,7 @@ def test_dataset_quota_alert(request, datasets, expected_alerts):
         for dataset, params in datasets.items():
             used = params.pop("used", None)
 
-            result = POST(
-                "/pool/dataset/", {
-                    "name": f"{pool_name}/quota_test/{dataset}".rstrip("/"),
-                    **params,
-                }
-            )
-            assert result.status_code == 200, result.text
+            call("pool.dataset.create", {"name": f"{pool_name}/quota_test/{dataset}".rstrip("/"), **params})
 
             if used is not None:
                 results = SSH_TEST(f'dd if=/dev/urandom of=/mnt/{pool_name}/quota_test/{dataset}/blob '
@@ -78,10 +68,7 @@ def test_dataset_quota_alert(request, datasets, expected_alerts):
         results = SSH_TEST("midclt call --job core.bulk alert.process_alerts '[[]]'", user, password)
         assert results['result'] is True, results
 
-        result = GET("/alert/list/")
-        assert result.status_code == 200, result.text
-
-        alerts = [alert for alert in result.json() if alert["source"] == "Quota"]
+        alerts = [alert for alert in call("alert.list") if alert["source"] == "Quota"]
 
         assert len(alerts) == len(expected_alerts), alerts
 
@@ -92,7 +79,6 @@ def test_dataset_quota_alert(request, datasets, expected_alerts):
                 else:
                     assert alert[k] == v, (alert, expected_alert, k)
     finally:
-        result = DELETE(f"/pool/dataset/id/{pool_name}%2Fquota_test/", {
+        call("pool.dataset.delete", f"/pool/dataset/id/{pool_name}%2Fquota_test/", {
             "recursive": True,
         })
-        assert result.status_code == 200, result.text
