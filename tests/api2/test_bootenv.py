@@ -10,7 +10,7 @@ def test_get_default_environment_and_make_new_one():
 
     # create new bootenv and activate it
     call('bootenv.create', {'name': 'bootenv01', 'source': active_be_id})
-    assert len(call('bootenv.query', [['name', '=', 'bootenv01']]).json()) == 1
+    assert len(call('bootenv.query', [['name', '=', 'bootenv01']])) == 1
     call('bootenv.activate', 'bootenv01')
 
 
@@ -27,22 +27,15 @@ def test_change_boot_environment_name_and_attributes():
 
 
 # Delete tests
-def test_removing_a_boot_environment_02():
-    job_id = call('bootenv.delete', 'bootenv02')
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS'
-
-
 def test_activate_original_bootenv():
     be_id = call('bootenv.query', [['name', '!=', 'bootenv03']], {'get': True})["id"]
     call('bootenv.activate', be_id)
 
 
-def test_removing_a_boot_environment_03():
+def test_removing_boot_environments():
     call('bootenv.set_attribute', 'bootenv03', {'keep': False})
-    job_id = call('bootenv.delete', 'bootenv03')
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS'
+    job_id = call('bootenv.delete', 'bootenv02', job=True)
+    job_id = call('bootenv.delete', 'bootenv03', job=True)
 
 
 def test_promote_current_be_datasets():
