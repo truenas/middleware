@@ -688,9 +688,9 @@ class PoolService(CRUDService):
         ('rm', {'name': 'deduplication'}),
         ('rm', {'name': 'checksum'}),
         ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
-    ), audit='Pool update')
+    ), audit='Pool update', audit_callback=True)
     @job(lock='pool_createupdate')
-    async def do_update(self, job, id_, data):
+    async def do_update(self, job, audit_callback, id_, data):
         """
         Update pool of `id`, adding the new topology.
 
@@ -715,6 +715,7 @@ class PoolService(CRUDService):
             }
         """
         pool = await self.get_instance(id_)
+        audit_callback(pool['name'])
 
         disks = vdevs = None
         if 'topology' in data:
