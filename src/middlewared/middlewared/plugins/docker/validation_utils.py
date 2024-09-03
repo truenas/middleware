@@ -16,10 +16,9 @@ def validate_address_pools(system_ips: list[dict], user_specified_networks: list
     seen_networks = set()
     for index, user_network in enumerate(user_specified_networks):
         base_network = ipaddress.ip_network(user_network['base'], False)
-        subnet_prefix = int(user_network['base'].split('/')[-1])
 
         # Validate subnet size vs. base network
-        if subnet_prefix > user_network['size']:
+        if base_network.prefixlen > user_network['size']:
             verrors.add(
                 f'docker_update.address_pools.{index}.base',
                 f'Base network {user_network["base"]} cannot be smaller than '
