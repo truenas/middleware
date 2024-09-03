@@ -5,58 +5,44 @@ def test_get_default_environment_and_make_new_one():
     active_be_id = call('bootenv.query', [['activated', '=', True]], {'get': True})['id']
 
     # create duplicate name to test failure
-    payload = {'name': active_be_id, 'source': active_be_id}
-    results = call('bootenv.create', payload)
+    results = call('bootenv.create', {'name': active_be_id, 'source': active_be_id})
     assert results == f'[EEXIST] bootenv_create.name: The name "{active_be_id}" already exists'
 
     # create new bootenv and activate it
-    payload = {'name': 'bootenv01', 'source': active_be_id}
-    call('bootenv.create', payload)
-
+    call('bootenv.create', {'name': 'bootenv01', 'source': active_be_id})
     assert len(call('bootenv.query', [['name', '=', 'bootenv01']]).json()) == 1
     call('bootenv.activate', 'bootenv01')
 
 
 # Update tests
 def test_cloning_a_new_boot_environment():
-    payload = {'name': 'bootenv02', 'source': 'bootenv01'}
-    results = call('bootenv.create', payload)
-
-    results = call('bootenv.activate', 'bootenv02')
+    call('bootenv.create', {'name': 'bootenv02', 'source': 'bootenv01'})
+    call('bootenv.activate', 'bootenv02')
 
 
 def test_change_boot_environment_name_and_attributes():
-    payload = {'name': 'bootenv03'}
-    results = call('bootenv.update', 'bootenv01', payload)
-
-    payload = {'keep': True}
-    results = call('bootenv.set_attribute', 'bootenv03', payload)
-
-    results = call('bootenv.activate', 'bootenv03')
+    call('bootenv.update', 'bootenv01', {'name': 'bootenv03'})
+    call('bootenv.set_attribute', 'bootenv03', {'keep': True})
+    call('bootenv.activate', 'bootenv03')
 
 
 # Delete tests
 def test_removing_a_boot_environment_02():
     job_id = call('bootenv.delete', 'bootenv02')
-
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS'
 
 
 def test_activate_original_bootenv():
-    be_id = call('bootenv.query', [['name', '!=', 'bootenv03']])[0]["id"]
+    be_id = call('bootenv.query', [['name', '!=', 'bootenv03']], {'get': True})["id"]
     call('bootenv.activate', be_id)
 
 
 def test_removing_a_boot_environment_03():
-    payload = {'keep': False}
-    results = call('bootenv.set_attribute', 'bootenv03', payload)
-
-    results = call('bootenv.delete', 'bootenv03')
-    job_id = results
-
+    call('bootenv.set_attribute', 'bootenv03', {'keep': False})
+    job_id = call('bootenv.delete', 'bootenv03')
     job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    assert job_status['state'] == 'SUCCESS'
 
 
 def test_promote_current_be_datasets():
