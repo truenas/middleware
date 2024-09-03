@@ -1,15 +1,14 @@
 """
-Add docker cidr subnet
+Add address_pools column to services_docker
 
 Revision ID: 98c1ebde0079
 Revises: d24d6760fda4
-Create Date: 2024-08-30 20:33:47.996994+00:00
+Create Date: 2024-09-03 20:33:47.996994+00:00
 """
 from alembic import op
 import sqlalchemy as sa
 
 
-# revision identifiers, used by Alembic.
 revision = '98c1ebde0079'
 down_revision = 'd24d6760fda4'
 branch_labels = None
