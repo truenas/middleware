@@ -350,6 +350,37 @@ class FailoverEventsService(Service):
 
         return fenced_error
 
+    def iscsi_cleanup_alua_state(self):
+        """
+        Cleanup iSCSI ALUA state if we are now becoming ACTIVE node, and
+        previously were STANDBY node.
+        """
+        # We will suspend iSCSI and then close any existing iSCSI sessions
+        # to avoid inflight I/O interfering with the LUN replacement during
+        # become_active.  Suspending iSCSI means BUSY will be returned.
+        suspended = cleaned = False
+        try:
+            try:
+                logger.info('Suspending iSCSI')
+                self.run_call('iscsi.scst.suspend', 30)
+                suspended = True
+                logger.info('Suspended iSCSI')
+            except FileNotFoundError:
+                # This can occur if we are booting into ACTIVE node
+                # rather than becoming ACTIVE from STANDBY.
+                logger.info('Did not suspend iSCSI')
+            else:
+                logger.info('Closing iSCSI sessions')
+                self.run_call('iscsi.alua.force_close_sessions')
+                logger.info('Closed iSCSI sessions')
+                logger.info('calling iscsi ALUA active elected')
+                self.run_call('iscsi.alua.active_elected')
+                logger.info('done calling iscsi ALUA active elected')
+                cleaned = True
+        except Exception:
+            logger.exception('Unexpected failure setting up iscsi')
+        return (suspended, cleaned)
+
     @job(lock=FAILOVER_LOCK_NAME)
     def vrrp_master(self, job, fobj, ifname, event):
 
@@ -477,23 +508,13 @@ class FailoverEventsService(Service):
 
         # Kick off a job to clean up any left-over ALUA state from when we were STANDBY/BACKUP.
         logger.info('Verifying iSCSI service')
+        iscsi_suspended = iscsi_cleaned = False
         if self.run_call('service.started_or_enabled', 'iscsitarget'):
             logger.info('Checking if ALUA is enabled')
             handle_alua = self.run_call('iscsi.global.alua_enabled')
             logger.info('Done checking if ALUA is enabled')
             if handle_alua:
-                # We will suspend iSCSI and then close any existing iSCSI sessions
-                # to avoid inflight I/O interfering with the LUN replacement during
-                # become_active.  Suspending iSCSI means BUSY will be returned.
-                logger.info('Suspending iSCSI')
-                self.run_call('iscsi.scst.suspend', 30)
-                logger.info('Suspended iSCSI')
-                logger.info('Closing iSCSI sessions')
-                self.run_call('iscsi.alua.force_close_sessions')
-                logger.info('Closed iSCSI sessions')
-                logger.info('calling iscsi ALUA active elected')
-                self.run_call('iscsi.alua.active_elected')
-                logger.info('done calling iscsi ALUA active elected')
+                iscsi_suspended, iscsi_cleaned = self.iscsi_cleanup_alua_state()
         else:
             handle_alua = False
         logger.info('Done verifying iSCSI service')
@@ -626,7 +647,7 @@ class FailoverEventsService(Service):
             logger.info('Volume imports complete')
 
         # Now that the volumes have been imported, get a head-start on activating extents.
-        if handle_alua:
+        if handle_alua and iscsi_cleaned:
             logger.info('Activating ALUA extents')
             self.run_call('iscsi.alua.activate_extents')
             logger.info('Done activating ALUA extents')
@@ -683,11 +704,15 @@ class FailoverEventsService(Service):
         logger.info('Done starting failover background jobs')
 
         if handle_alua:
-            logger.info('Clearing iSCSI suspend')
-            if self.run_call('iscsi.scst.clear_suspend'):
-                logger.info('Cleared iSCSI suspend')
-            # Kick off a job to start clearing up HA targets from when we were STANDBY
-            self.run_call('iscsi.alua.reset_active')
+            try:
+                if iscsi_suspended:
+                    logger.info('Clearing iSCSI suspend')
+                    if self.run_call('iscsi.scst.clear_suspend'):
+                        logger.info('Cleared iSCSI suspend')
+                # Kick off a job to start clearing up HA targets from when we were STANDBY
+                self.run_call('iscsi.alua.reset_active')
+            except Exception:
+                logger.exception('Failed to complete iSCSI bringup')
 
         # restart the remaining "non-critical" services
         logger.info('Restarting remaining services')
