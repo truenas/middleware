@@ -58,7 +58,7 @@ class DockerSetupService(Service):
     async def validate_interfaces(self):
         default_iface, success = wait_for_default_interface_link_state_up()
         if default_iface is None:
-            raise CallError('Unable to determine default interface.')
+            raise CallError('Unable to determine default interface')
         elif not success:
             raise CallError(f'Default interface {default_iface!r} is not in active state')
 
