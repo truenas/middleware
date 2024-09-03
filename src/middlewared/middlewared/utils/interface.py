@@ -30,3 +30,11 @@ def wait_on_interface_link_state_up(interface: str) -> bool:
         time_waited += sleep_interval
 
     return False
+
+
+def wait_for_default_interface_link_state_up() -> tuple[str | None, bool]:
+    default_interface = get_default_interface()
+    if default_interface is None:
+        return default_interface, False
+
+    return default_interface, wait_on_interface_link_state_up(default_interface)
