@@ -2,7 +2,7 @@
 Add docker cidr subnet
 
 Revision ID: 98c1ebde0079
-Revises: 7b13df980355
+Revises: d24d6760fda4
 Create Date: 2024-08-30 20:33:47.996994+00:00
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '98c1ebde0079'
-down_revision = '7b13df980355'
+down_revision = 'd24d6760fda4'
 branch_labels = None
 depends_on = None
 
