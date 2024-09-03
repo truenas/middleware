@@ -1,5 +1,8 @@
 from .api.base.handler.dump_params import dump_params
 from .api.base.handler.result import serialize_result
+from .api.base.handler.version import APIVersion, APIVersionsAdapter
+from .api.base.server.legacy_api_method import LegacyAPIMethod
+from .api.base.server.method import Method
 from .api.base.server.ws_handler.base import BaseWebSocketHandler
 from .api.base.server.ws_handler.rpc import RpcWebSocketApp, RpcWebSocketAppEvent
 from .api.base.server.ws_handler.rpc_factory import create_rpc_ws_handler
@@ -29,6 +32,7 @@ from .utils.privilege import credential_has_full_admin
 from .utils.profile import profile_wrap
 from .utils.rate_limit.cache import RateLimitCache
 from .utils.service.call import ServiceCallMixin
+from .utils.service.crud import real_crud_method
 from .utils.syslog import syslog_message
 from .utils.threading import set_thread_name, IoThreadPoolExecutor, io_thread_pool_executor
 from .utils.time_utils import utc_now
@@ -53,10 +57,12 @@ from dataclasses import dataclass
 import errno
 import fcntl
 import functools
+import importlib
 import inspect
 import itertools
 import multiprocessing
 import os
+import pathlib
 import pickle
 import re
 import queue
@@ -97,13 +103,6 @@ class LoopMonitorIgnoreFrame:
     regex: typing.Pattern
     substitute: str = None
     cut_below: bool = False
-
-
-def real_crud_method(method):
-    if method.__name__ in ['create', 'update', 'delete'] and hasattr(method, '__self__'):
-        child_method = getattr(method.__self__, f'do_{method.__name__}', None)
-        if child_method is not None:
-            return child_method
 
 
 class Application(RpcWebSocketApp):
@@ -892,13 +891,27 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         task.add_done_callback(self.tasks.discard)
         return task
 
+    def _load_api_versions(self):
+        versions = []
+        api_dir = os.path.join(os.path.dirname(__file__), 'api')
+        for version_dir in sorted(pathlib.Path(api_dir).iterdir()):
+            if version_dir.name.startswith('v') and version_dir.is_dir():
+                version = version_dir.name.replace('_', '.')
+                self._console_write(f'loading API version {version}')
+                versions.append(
+                    APIVersion.from_module(
+                        version,
+                        importlib.import_module(f'middlewared.api.{version_dir.name}'),
+                    ),
+                )
+        return versions
+
     def __init_services(self):
         from middlewared.service import CoreService
         self.add_service(CoreService(self))
         self.event_register('core.environ', 'Send on middleware process environment changes.', private=True)
 
-    async def __plugins_load(self):
-
+    def __plugins_load(self):
         setup_funcs = []
 
         def on_module_begin(mod):
@@ -1984,7 +1997,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             last = current
 
     def run(self):
-
         self._console_write('starting')
 
         set_thread_name('asyncio_loop')
@@ -2016,9 +2028,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         ], loop=self.loop)
         self.app['middleware'] = self
 
+        api_versions = self._load_api_versions()
+        api_versions_adapter = APIVersionsAdapter(api_versions)
+
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
-        setup_funcs = await self.__plugins_load()
+        setup_funcs = self.__plugins_load()
 
         self._console_write('registering services')
 
@@ -2034,9 +2049,23 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.loop.add_signal_handler(signal.SIGUSR1, self.pdb)
         self.loop.add_signal_handler(signal.SIGUSR2, self.log_threads_stacks)
 
-        rpc_ws_handler = create_rpc_ws_handler(self)
-        app.router.add_route('GET', '/api/current', rpc_ws_handler)
-        app.router.add_route('GET', '/api/v25.04.0', rpc_ws_handler)
+        current_rpc_ws_handler = create_rpc_ws_handler(self, Method)
+        app.router.add_route('GET', '/api/current', current_rpc_ws_handler)
+        app.router.add_route('GET', f'/api/{api_versions[-1].version}', current_rpc_ws_handler)
+        for version in api_versions[:-1]:
+            app.router.add_route(
+                'GET',
+                f'/api/{version.version}',
+                create_rpc_ws_handler(
+                    self,
+                    lambda middleware, method_name: LegacyAPIMethod(
+                        middleware,
+                        method_name,
+                        version.version,
+                        api_versions_adapter,
+                    )
+                ),
+            )
 
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
