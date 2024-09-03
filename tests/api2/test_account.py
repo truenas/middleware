@@ -1,6 +1,3 @@
-import os
-import sys
-
 import pytest
 
 from middlewared.test.integration.assets.account import user, group
@@ -8,12 +5,8 @@ from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
-sys.path.append(os.getcwd())
-from functions import DELETE, POST, PUT
 
-
-@pytest.mark.parametrize("api", ["ws", "rest"])
-def test_create_account_audit(api):
+def test_create_account_audit():
     user_id = None
     try:
         with expect_audit_method_calls([{
@@ -36,21 +29,13 @@ def test_create_account_audit(api):
                 "home": "/nonexistent",
                 "password": "password",
             }
-            if api == "ws":
-                user_id = call("user.create", payload)
-            elif api == "rest":
-                result = POST(f"/user/", payload)
-                assert result.status_code == 200, result.text
-                user_id = result.json()
-            else:
-                raise ValueError(api)
+            user_id = call("user.create", payload)
     finally:
         if user_id is not None:
             call("user.delete", user_id)
 
 
-@pytest.mark.parametrize("api", ["ws", "rest"])
-def test_update_account_audit(api):
+def test_update_account_audit():
     with user({
         "username": "user2",
         "full_name": "user2",
@@ -62,17 +47,10 @@ def test_update_account_audit(api):
             "params": [u["id"], {}],
             "description": "Update user user2",
         }]):
-            if api == "ws":
-                call("user.update", u["id"], {})
-            elif api == "rest":
-                result = PUT(f"/user/id/{u['id']}", {})
-                assert result.status_code == 200, result.text
-            else:
-                raise ValueError(api)
+            call("user.update", u["id"], {})
 
 
-@pytest.mark.parametrize("api", ["ws", "rest"])
-def test_delete_account_audit(api):
+def test_delete_account_audit():
     with user({
         "username": "user2",
         "full_name": "user2",
@@ -84,17 +62,10 @@ def test_delete_account_audit(api):
             "params": [u["id"], {}],
             "description": "Delete user user2",
         }]):
-            if api == "ws":
-                call("user.delete", u["id"], {})
-            elif api == "rest":
-                result = DELETE(f"/user/id/{u['id']}")
-                assert result.status_code == 200, result.text
-            else:
-                raise ValueError(api)
+            call("user.delete", u["id"], {})
 
 
-@pytest.mark.parametrize("api", ["ws", "rest"])
-def test_create_group_audit(api):
+def test_create_group_audit():
     group_id = None
     try:
         with expect_audit_method_calls([{
@@ -109,21 +80,13 @@ def test_create_group_audit(api):
             payload = {
                 "name": "group2",
             }
-            if api == "ws":
-                group_id = call("group.create", payload)
-            elif api == "rest":
-                result = POST(f"/group/", payload)
-                assert result.status_code == 200, result.text
-                group_id = result.json()
-            else:
-                raise ValueError(api)
+            group_id = call("group.create", payload)
     finally:
         if group_id is not None:
             call("group.delete", group_id)
 
 
-@pytest.mark.parametrize("api", ["ws", "rest"])
-def test_update_group_audit(api):
+def test_update_group_audit():
     with group({
         "name": "group2",
     }) as g:
@@ -132,17 +95,10 @@ def test_update_group_audit(api):
             "params": [g["id"], {}],
             "description": "Update group group2",
         }]):
-            if api == "ws":
-                call("group.update", g["id"], {})
-            elif api == "rest":
-                result = PUT(f"/group/id/{g['id']}", {})
-                assert result.status_code == 200, result.text
-            else:
-                raise ValueError(api)
+            call("group.update", g["id"], {})
 
 
-@pytest.mark.parametrize("api", ["ws", "rest"])
-def test_delete_group_audit(api):
+def test_delete_group_audit():
     with group({
         "name": "group2",
     }) as g:
@@ -151,13 +107,7 @@ def test_delete_group_audit(api):
             "params": [g["id"], {}],
             "description": "Delete group group2",
         }]):
-            if api == "ws":
-                call("group.delete", g["id"], {})
-            elif api == "rest":
-                result = DELETE(f"/group/id/{g['id']}")
-                assert result.status_code == 200, result.text
-            else:
-                raise ValueError(api)
+            call("group.delete", g["id"], {})
 
 
 def test_update_account_using_api_key():
