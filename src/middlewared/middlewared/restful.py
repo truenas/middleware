@@ -18,8 +18,7 @@ from .job import Job
 from .pipe import Pipes
 from .schema import Error as SchemaError
 from .service_exception import adapt_exception, CallError, MatchNotFound, ValidationError, ValidationErrors
-from .utils.nginx import get_remote_addr_port
-from .utils.origin import TCPIPOrigin
+from .utils.origin import ConnectionOrigin
 
 
 def parse_credentials(request):
@@ -72,7 +71,7 @@ def parse_credentials(request):
 
 async def authenticate(middleware, request, credentials, method, resource):
     if credentials['credentials'] == 'TOKEN':
-        origin = TCPIPOrigin(*await middleware.run_in_thread(get_remote_addr_port, request))
+        origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
         token = await middleware.call('auth.get_token_for_action', credentials['credentials_data']['token'],
                                       origin, method, resource)
         if token is None:
@@ -101,13 +100,12 @@ async def authenticate(middleware, request, credentials, method, resource):
         raise web.HTTPUnauthorized()
 
 
-def create_application(request, credentials=None):
-    try:
-        origin = TCPIPOrigin(request.headers['X-Real-Remote-Addr'], int(request.headers['X-Real-Remote-Port']))
-    except (KeyError, ValueError):
-        origin = TCPIPOrigin(*request.transport.get_extra_info('peername'))
+def create_application_impl(request, credentials=None):
+    return Application(ConnectionOrigin.create(request), credentials)
 
-    return Application(origin, credentials)
+
+async def create_application(request, credentials=None):
+    return await asyncio.to_thread(create_application_impl, request, credentials)
 
 
 def normalize_query_parameter(value):
@@ -550,7 +548,7 @@ class Resource(object):
                 else:
                     resource = None
 
-                app = create_application(req)
+                app = await create_application(req)
                 auth_required = not self.rest._methods[getattr(self, method)]['no_auth_required']
                 credentials = parse_credentials(req)
                 if credentials is None:
@@ -569,7 +567,7 @@ class Resource(object):
                             'error': e.text,
                         }, False)
                         raise
-                    app = create_application(req, authenticated_credentials)
+                    app = await create_application(req, authenticated_credentials)
                     credentials['credentials_data'].pop('password', None)
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                         'credentials': credentials,

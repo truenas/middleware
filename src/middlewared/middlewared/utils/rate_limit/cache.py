@@ -4,8 +4,7 @@ from random import uniform
 from time import monotonic
 from typing import TypedDict
 
-from middlewared.auth import is_ha_connection
-from middlewared.utils.origin import TCPIPOrigin
+from middlewared.utils.origin import ConnectionOrigin
 
 __all__ = ['RateLimitCache']
 
@@ -65,25 +64,23 @@ class RateLimit:
 
         return False
 
-    async def add(self, method_name: str, origin: TCPIPOrigin) -> str | None:
+    async def add(self, method_name: str, origin: ConnectionOrigin) -> str | None:
         """Add an entry to the cache. Returns the IP address of
         origin of the request if it has been cached, returns None otherwise"""
-        if not isinstance(origin, TCPIPOrigin):
+        try:
+            if (
+                origin.is_ha_connection or origin.is_unix_family or
+                origin.rem_addr is None or origin.rem_port is None
+            ):
+                return None
+            else:
+                key = self.cache_key(method_name, origin.rem_addr)
+                if key not in RL_CACHE:
+                    RL_CACHE[key] = RateLimitObject(num_times_called=0, last_reset=monotonic())
+                return origin.rem_addr
+        except AttributeError:
+            # origin is NoneType
             return None
-
-        ip, port = origin.addr, origin.port
-        if any((ip is None, port is None)) or is_ha_connection(ip, port):
-            # Short-circuit if:
-            # 1. if the IP address is None
-            # 2. OR the port is None
-            # 3. OR the origin of the request is from our HA P2P heartbeat
-            #   connection
-            return None
-        else:
-            key = self.cache_key(method_name, ip)
-            if key not in RL_CACHE:
-                RL_CACHE[key] = RateLimitObject(num_times_called=0, last_reset=monotonic())
-            return ip
 
     async def cache_pop(self, method_name: str, ip: str) -> None:
         """Pop (remove) an entry from the cache."""

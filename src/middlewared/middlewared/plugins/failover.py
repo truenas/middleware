@@ -11,7 +11,7 @@ import textwrap
 import time
 from functools import partial
 
-from middlewared.auth import is_ha_connection, TrueNasNodeSessionManagerCredentials
+from middlewared.auth import TrueNasNodeSessionManagerCredentials
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
 from middlewared.service import (
     job, no_auth_required, no_authz_required, pass_app, private, CallError, ConfigService,
@@ -27,7 +27,6 @@ from middlewared.plugins.update_.install import STARTING_INSTALLER
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE, can_update
 from middlewared.plugins.update_.utils_linux import mount_update
 from middlewared.utils.contextlib import asyncnullcontext
-from middlewared.utils.origin import TCPIPOrigin
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 
@@ -1119,14 +1118,11 @@ class FailoverService(ConfigService):
 
 
 async def ha_permission(middleware, app):
-    # Skip if session was already authenticated
-    if app is not None and app.authenticated is True:
-        return
-
-    # We only care for remote connections (IPv4), in the interlink
-    if isinstance(app.origin, TCPIPOrigin):
-        if is_ha_connection(app.origin.addr, app.origin.port):
+    try:
+        if not app.authenticated and app.origin.is_ha_connection:
             await AuthService.session_manager.login(app, TrueNasNodeSessionManagerCredentials())
+    except AttributeError:
+        pass
 
 
 async def interface_pre_sync_hook(middleware):

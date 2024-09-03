@@ -121,10 +121,6 @@ class TrueNasNodeSessionManagerCredentials(SessionManagerCredentials):
         return True
 
 
-def is_ha_connection(remote_addr, remote_port):
-    return remote_port <= 1024 and remote_addr in ('169.254.10.1', '169.254.10.2')
-
-
 class FakeApplication:
     authenticated_credentials = SessionManagerCredentials()
 

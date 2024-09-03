@@ -1,12 +1,7 @@
-import socket
-import struct
-
 from aiohttp.http_websocket import WSCloseCode
 from aiohttp.web import Request, WebSocketResponse
 
-from middlewared.auth import is_ha_connection
-from middlewared.utils.nginx import get_remote_addr_port
-from middlewared.utils.origin import Origin, UnixSocketOrigin, TCPIPOrigin
+from middlewared.utils.origin import ConnectionOrigin
 from middlewared.webui_auth import addr_in_allowlist
 
 
@@ -37,36 +32,23 @@ class BaseWebSocketHandler:
         await self.process(origin, ws)
         return ws
 
-    async def get_origin(self, request: Request) -> Origin | None:
-        try:
-            sock = request.transport.get_extra_info("socket")
-        except AttributeError:
-            # request.transport can be None by the time this is called on HA systems because remote node could have been
-            # rebooted
-            return
+    async def get_origin(self, request: Request) -> ConnectionOrigin | None:
+        return await self.middleware.run_in_thread(ConnectionOrigin.create, request)
 
-        if sock.family == socket.AF_UNIX:
-            peercred = sock.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("3i"))
-            pid, uid, gid = struct.unpack("3i", peercred)
-            return UnixSocketOrigin(pid, uid, gid)
+    async def can_access(self, origin: ConnectionOrigin | None) -> bool:
+        if origin is None:
+            return False
 
-        remote_addr, remote_port = await self.middleware.run_in_thread(get_remote_addr_port, request)
-        return TCPIPOrigin(remote_addr, remote_port)
-
-    async def can_access(self, origin: Origin | None) -> bool:
-        if not isinstance(origin, TCPIPOrigin):
+        if origin.is_unix_family or origin.is_ha_connection:
             return True
 
-        if not (ui_allowlist := await self.middleware.call("system.general.get_ui_allowlist")):
+        ui_allowlist = await self.middleware.call("system.general.get_ui_allowlist")
+        if not ui_allowlist:
             return True
-
-        if is_ha_connection(origin.addr, origin.port):
-            return True
-
-        if addr_in_allowlist(origin.addr, ui_allowlist):
+        elif addr_in_allowlist(origin.rem_addr, ui_allowlist):
             return True
 
         return False
 
-    async def process(self, origin: Origin, ws: WebSocketResponse):
+    async def process(self, origin: ConnectionOrigin, ws: WebSocketResponse):
         raise NotImplementedError

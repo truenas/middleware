@@ -57,6 +57,7 @@ class VMModel(sa.Model):
     command_line_args = sa.Column(sa.Text(), default='', nullable=False)
     bootloader_ovmf = sa.Column(sa.String(1024), default='OVMF_CODE.fd')
     trusted_platform_module = sa.Column(sa.Boolean(), default=False)
+    enable_cpu_topology_extension = sa.Column(sa.Boolean(), default=False)
 
 
 @functools.cache
@@ -101,9 +102,11 @@ class VMService(CRUDService, VMSupervisorMixin):
         status = {}
         kvm_supported = self._is_kvm_supported()
         if rows and kvm_supported:
-            self._check_setup_connection()
+            self._safely_check_setup_connection(5)
+
+        libvirt_running = self._is_connection_alive()
         for row in rows:
-            status[row['id']] = self.status_impl(row) if kvm_supported else get_default_status()
+            status[row['id']] = self.status_impl(row) if libvirt_running else get_default_status()
 
         return {
             'status': status,
@@ -143,6 +146,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('threads', default=1),
         Str('cpuset', default=None, null=True, validators=[NumericSet()]),
         Str('nodeset', default=None, null=True, validators=[NumericSet()]),
+        Bool('enable_cpu_topology_extension', default=False),
         Bool('pin_vcpus', default=False),
         Bool('suspend_on_snapshot', default=False),
         Bool('trusted_platform_module', default=False),
