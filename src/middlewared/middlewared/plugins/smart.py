@@ -46,9 +46,8 @@ def parse_smart_selftest_results(data):
             for index, entry in enumerate(data["ata_smart_self_test_log"]["standard"]["table"]):
 
                 # remaining_percent is in the dict only if the test is in progress (status value & 0x0f)
-                # instead, let's just calculate the remaining value like they do
                 if remaining := entry["status"]["value"] & 0x0f:
-                    remaining *= 10
+                    remaining = entry["status"]["remaining_percent"]
 
                 test = {
                     "num": index,
@@ -106,7 +105,7 @@ def parse_smart_selftest_results(data):
     # scsiprint.cpp
     # this JSON has numbered keys as an index, there's a reason it's not called a "smart" test
     if "scsi_self_test_0" in data: # 0 is most recent test
-        for index in range(0, 20): # only 20 tests ever return
+        for index in range(0, 20): # only 20 tests can ever return
             test_key = f"scsi_self_test_{index}"
             if not test_key in data:
                 break
