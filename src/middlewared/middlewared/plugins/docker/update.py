@@ -83,7 +83,7 @@ class DockerService(ConfigService):
             )
 
         if old_config != config:
-            if config['pool'] != old_config['pool']:
+            if any(config[k] != old_config[k] for k in ('pool', 'address_pools')):
                 job.set_progress(20, 'Stopping Docker service')
                 try:
                     await self.middleware.call('service.stop', 'docker')
