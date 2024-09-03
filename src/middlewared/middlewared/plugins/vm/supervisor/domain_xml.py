@@ -75,6 +75,8 @@ def cpu_xml(vm_data, context):
     features = []
     if vm_data['cpu_mode'] == 'HOST-PASSTHROUGH':
         features.append(create_element('cache', mode='passthrough'))
+        if vm_data['enable_cpu_topology_extension']:
+            features.append(create_element('feature', policy='require', name='topoext'))
 
     cpu_nodes = [
         create_element(

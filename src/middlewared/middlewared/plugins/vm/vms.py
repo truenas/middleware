@@ -57,6 +57,7 @@ class VMModel(sa.Model):
     command_line_args = sa.Column(sa.Text(), default='', nullable=False)
     bootloader_ovmf = sa.Column(sa.String(1024), default='OVMF_CODE.fd')
     trusted_platform_module = sa.Column(sa.Boolean(), default=False)
+    enable_cpu_topology_extension = sa.Column(sa.Boolean(), default=False)
 
 
 @functools.cache
@@ -145,6 +146,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('threads', default=1),
         Str('cpuset', default=None, null=True, validators=[NumericSet()]),
         Str('nodeset', default=None, null=True, validators=[NumericSet()]),
+        Bool('enable_cpu_topology_extension', default=False),
         Bool('pin_vcpus', default=False),
         Bool('suspend_on_snapshot', default=False),
         Bool('trusted_platform_module', default=False),
