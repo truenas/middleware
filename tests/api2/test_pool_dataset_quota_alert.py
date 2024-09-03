@@ -1,12 +1,12 @@
-# License: BSD
-
 import re
+
 import pytest
 from pytest_dependency import depends
-from functions import SSH_TEST
-from auto_config import pool_name, user, password
 
+from auto_config import pool_name, user, password
+from functions import SSH_TEST
 from middlewared.test.integration.utils import call
+
 
 G = 1024 * 1024 * 1024
 
@@ -62,14 +62,10 @@ def test_dataset_quota_alert(request, datasets, expected_alerts):
                                    f'bs=1M count={used}', user, password)
                 assert results['result'] is True, results
 
-        results = SSH_TEST("midclt call alert.initialize", user, password)
-        assert results['result'] is True, results
-
-        results = SSH_TEST("midclt call --job core.bulk alert.process_alerts '[[]]'", user, password)
-        assert results['result'] is True, results
+        call("alert.initialize")
+        call("core.bulk", "alert.process_alerts", [[]], job=True)
 
         alerts = [alert for alert in call("alert.list") if alert["source"] == "Quota"]
-
         assert len(alerts) == len(expected_alerts), alerts
 
         for alert, expected_alert in zip(alerts, expected_alerts):
