@@ -79,6 +79,6 @@ def test_dataset_quota_alert(request, datasets, expected_alerts):
                 else:
                     assert alert[k] == v, (alert, expected_alert, k)
     finally:
-        call("pool.dataset.delete", f"/pool/dataset/id/{pool_name}%2Fquota_test/", {
+        call("pool.dataset.delete", f"{pool_name}/quota_test", {
             "recursive": True,
         })
