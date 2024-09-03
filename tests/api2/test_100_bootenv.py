@@ -1,41 +1,29 @@
-import sys
-import os
 from time import sleep
 from unittest.mock import ANY
 
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import POST, DELETE, GET, PUT, wait_on_job
-
+from functions import wait_on_job
+from middlewared.test.integration.utils import call
 
 def test_01_get_the_activated_bootenv():
     global active_be_id
-    results = GET('/bootenv/?activated=True')
-    assert results.status_code == 200, results.text
-    active_be_id = results.json()[0]['id']
+    results = call('bootenv.query', [["activated", "=", True]], {"get": True})
+    active_be_id = results.json()['id']
 
-
-def test_02_create_be_duplicate_name():
+    # create duplicate name
     payload = {"name": active_be_id, "source": active_be_id}
-    results = POST("/bootenv/", payload)
-    assert results.status_code == 422, results.text
-    assert results.json() == {"bootenv_create.name": ANY}
+    results = call("bootenv.create", payload)
+    assert results == f'[EEXIST] bootenv_create.name: The name "{active_be_id}" already exists'
 
-
-def test_02_creating_a_new_boot_environment_from_the_active_boot_environment():
+    # creating_a_new_boot_environment_from_the_active_boot_environment():
     payload = {"name": "bootenv01", "source": active_be_id}
-    results = POST("/bootenv/", payload)
-    assert results.status_code == 200, results.text
+    call("bootenv.create", payload)
     sleep(1)
 
 
-def test_03_look_new_bootenv_is_created():
-    assert len(GET('/bootenv?name=bootenv01').json()) == 1
+def check_create_and_activate_bootenv():
+    assert len(call('bootenv.query', [['name', '=', 'bootenv01']]).json()) == 1
 
-
-def test_04_activate_bootenv01():
-    results = POST("/bootenv/id/bootenv01/activate/", None)
-    assert results.status_code == 200, results.text
+    call("bootenv.activate", "bootenv01")
 
 
 # Update tests
