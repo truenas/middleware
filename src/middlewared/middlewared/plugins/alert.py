@@ -574,6 +574,15 @@ class AlertService(Service):
                         await self.middleware.call("mail.send", alert.mail)
 
                 if await self.middleware.call("system.is_enterprise"):
+                    gone_proactive_support_alerts = [
+                        alert
+                        for alert in gone_alerts
+                        if (
+                            alert.klass.proactive_support and
+                            (await as_.get_alert_class(alert)).get("proactive_support", True) and
+                            alert.klass.proactive_support_notify_gone
+                        )
+                    ]
                     new_proactive_support_alerts = [
                         alert
                         for alert in new_alerts
@@ -582,11 +591,19 @@ class AlertService(Service):
                             (await as_.get_alert_class(alert)).get("proactive_support", True)
                         )
                     ]
-                    if new_proactive_support_alerts:
+                    if gone_proactive_support_alerts or new_proactive_support_alerts:
                         if await self.middleware.call("support.is_available_and_enabled"):
                             support = await self.middleware.call("support.config")
-                            msg = [f"* {html2text.html2text(alert.formatted)}"
-                                   for alert in new_proactive_support_alerts]
+
+                            msg = []
+                            if gone_proactive_support_alerts:
+                                msg.append("The following alerts were cleared:")
+                                msg += [f"* {html2text.html2text(alert.formatted)}"
+                                        for alert in gone_proactive_support_alerts]
+                            if new_proactive_support_alerts:
+                                msg.append("The following new alerts appeared:")
+                                msg += [f"* {html2text.html2text(alert.formatted)}"
+                                        for alert in new_proactive_support_alerts]
 
                             serial = (await self.middleware.call("system.dmidecode_info"))["system-serial-number"]
 
