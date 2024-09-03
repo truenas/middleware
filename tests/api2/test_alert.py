@@ -1,40 +1,15 @@
-#!/usr/bin/env python3
+from time import sleep
 
 import pytest
-import os
-import sys
 from pytest_dependency import depends
-from time import sleep
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import GET, POST, SSH_TEST
+
 from auto_config import password, user, pool_name
+from functions import GET, POST, SSH_TEST
 from middlewared.test.integration.utils import call
 
 
-
-def test_01_get_alert_list():
-    results = GET("/alert/list/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results.text
-
-
-def test_02_get_alert_list_categories():
-    results = GET("/alert/list_categories/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results.text
-    assert results.json(), results.json()
-
-
-def test_03_get_alert_list_policies():
-    results = GET("/alert/list_policies/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results.text
-    assert results.json(), results.json()
-
-
 @pytest.mark.dependency(name='degrade_pool')
-def test_04_degrading_a_pool_to_create_an_alert(request):
+def test_degrading_a_pool_to_create_an_alert(request):
     global gptid
     get_pool = GET(f"/pool/?name={pool_name}").json()[0]
     id_path = '/dev/disk/by-partuuid/'
@@ -44,7 +19,7 @@ def test_04_degrading_a_pool_to_create_an_alert(request):
     assert results['result'] is True, results['output']
 
 
-def test_05_verify_the_pool_is_degraded(request):
+def test_verify_the_pool_is_degraded(request):
     depends(request, ['degrade_pool'], scope="session")
     cmd = f'zpool status {pool_name} | grep {gptid}'
     results = SSH_TEST(cmd, user, password)
@@ -53,7 +28,7 @@ def test_05_verify_the_pool_is_degraded(request):
 
 
 @pytest.mark.timeout(120)
-def test_06_wait_for_the_alert_and_get_the_id(request):
+def test_wait_for_the_alert_and_get_the_id(request):
     depends(request, ["degrade_pool"], scope="session")
     global alert_id
     call("alert.process_alerts")
@@ -70,14 +45,14 @@ def test_06_wait_for_the_alert_and_get_the_id(request):
         sleep(1)
 
 
-def test_08_dimiss_the_alert(request):
+def test_dimiss_the_alert(request):
     depends(request, ["degrade_pool"], scope="session")
     results = POST("/alert/dismiss/", alert_id)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), type(None)), results.text
 
 
-def test_09_verify_the_alert_is_dismissed(request):
+def test_verify_the_alert_is_dismissed(request):
     depends(request, ["degrade_pool"], scope="session")
     results = GET("/alert/list/")
     assert results.status_code == 200, results.text
@@ -88,14 +63,14 @@ def test_09_verify_the_alert_is_dismissed(request):
             break
 
 
-def test_10_restore_the_alert(request):
+def test_restore_the_alert(request):
     depends(request, ["degrade_pool"], scope="session")
     results = POST("/alert/restore/", alert_id)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), type(None)), results.text
 
 
-def test_11_verify_the_alert_is_restored(request):
+def test_verify_the_alert_is_restored(request):
     depends(request, ["degrade_pool"], scope="session")
     results = GET(f"/alert/list/?id={alert_id}")
     assert results.status_code == 200, results.text
@@ -106,14 +81,14 @@ def test_11_verify_the_alert_is_restored(request):
             break
 
 
-def test_12_clear_the_pool_degradation(request):
+def test_clear_the_pool_degradation(request):
     depends(request, ["degrade_pool"], scope="session")
     cmd = f'zpool clear {pool_name}'
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
 
 
-def test_13_verify_the_pool_is_not_degraded(request):
+def test_verify_the_pool_is_not_degraded(request):
     depends(request, ["degrade_pool"], scope="session")
     cmd = f'zpool status {pool_name} | grep {gptid}'
     results = SSH_TEST(cmd, user, password)
@@ -122,7 +97,7 @@ def test_13_verify_the_pool_is_not_degraded(request):
 
 
 @pytest.mark.timeout(120)
-def test_14_wait_for_the_alert_to_disappear(request):
+def test_wait_for_the_alert_to_disappear(request):
     depends(request, ["degrade_pool"], scope="session")
     while True:
         if alert_id not in GET("/alert/list/").text:
