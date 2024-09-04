@@ -2,7 +2,6 @@ import errno
 
 import pytest
 
-from functions import wait_on_job
 from middlewared.middlewared.service_exception import ValidationErrors, ValidationError
 from middlewared.test.integration.utils import call, ssh
 
