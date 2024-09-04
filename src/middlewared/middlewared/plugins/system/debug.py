@@ -64,7 +64,7 @@ class SystemService(Service):
 
     @accepts(roles=['READONLY_ADMIN'])
     @returns()
-    @job(lock='system.debug', pipes=['output'])
+    @job(lock='system.debug', lock_queue_size=0, pipes=['output'])
     def debug(self, job):
         """
         Download a debug file.
