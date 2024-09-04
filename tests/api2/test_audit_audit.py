@@ -10,9 +10,6 @@ from middlewared.test.integration.utils import call, url
 from middlewared.test.integration.utils.audit import expect_audit_log, expect_audit_method_calls
 from unittest.mock import ANY
 
-sys.path.append(os.getcwd())
-from functions import POST, PUT
-
 
 # =====================================================================
 #                     Fixtures and utilities
@@ -31,13 +28,11 @@ def report_exists(request):
     ({'retention': 20}, True),
     ({'retention': 0}, False)
 ])
-@pytest.mark.parametrize('api', ['ws', 'rest'])
-def test_audit_config_audit(api, payload, success):
+def test_audit_config_audit(payload, success):
     '''
     Test the auditing of Audit configuration changes
     '''
     initial_audit_config = call('audit.config')
-    protocol = 'WEBSOCKET' if api == 'ws' else 'REST'
     rest_operator = operator.eq if success else operator.ne
     expected_log_template = {
         "service_data": {
@@ -46,7 +41,7 @@ def test_audit_config_audit(api, payload, success):
                 "minor": 1,
             },
             "origin": ANY,
-            "protocol": protocol,
+            "protocol": "WEBSOCKET",
             "credentials": {
                 "credentials": "LOGIN_PASSWORD",
                 "credentials_data": {"username": "root"},
@@ -64,33 +59,20 @@ def test_audit_config_audit(api, payload, success):
     }
     try:
         with expect_audit_log([expected_log_template]):
-            if api == 'ws':
-                if success:
-                    call('audit.update', payload)
-                else:
-                    with pytest.raises(ValidationErrors):
-                        call('audit.update', payload)
-            elif api == 'rest':
-                result = PUT('/audit/', payload)
-                assert rest_operator(result.status_code, 200), result.text
+            if success:
+                call('audit.update', payload)
             else:
-                raise ValueError(api)
+                with pytest.raises(ValidationErrors):
+                    call('audit.update', payload)
     finally:
         # Restore initial state
         restore_payload = {
             'retention': initial_audit_config['retention'],
         }
-        if api == 'ws':
-            call('audit.update', restore_payload)
-        elif api == 'rest':
-            result = PUT('/audit/', restore_payload)
-            assert result.status_code == 200, result.text
-        else:
-            raise ValueError(api)
+        call('audit.update', restore_payload)
 
 
-@pytest.mark.parametrize('api', ['ws', 'rest'])
-def test_audit_export_audit(request, api):
+def test_audit_export_audit(request):
     '''
     Test the auditing of the audit export function
     '''
@@ -102,22 +84,15 @@ def test_audit_export_audit(request, api):
         'params': [payload],
         'description': 'Export Audit Data',
     }]):
-        if api == 'ws':
-            report_pathname = call('audit.export', payload, job=True)
-            request.config.cache.set('report_pathname', report_pathname)
-        elif api == 'rest':
-            results = POST("/audit/export/", payload)
-            assert results.status_code == 200, results.text
-        else:
-            raise ValueError(api)
+        report_pathname = call('audit.export', payload, job=True)
+        request.config.cache.set('report_pathname', report_pathname)
 
 
 class TestAuditDownload:
     """
     Wrap these tests in a class for the 'report_exists' fixture
     """
-    @pytest.mark.parametrize('api', ['ws', 'rest'])
-    def test_audit_download_audit(self, report_exists, api):
+    def test_audit_download_audit(self, report_exists):
         '''
         Test the auditing of the audit download function
         '''
@@ -134,18 +109,12 @@ class TestAuditDownload:
         payload = {
             'report_name': report_name
         }
-        if api == 'ws':
-            job_id, download_data = call(
-                'core.download', 'audit.download_report', [payload], 'report.csv'
-            )
-            r = requests.get(f"{url()}{download_data}")
-            r.raise_for_status()
-            assert len(r.content) == st['size']
-        elif api == 'rest':
-            results = POST("/audit/download_report/", payload)
-            assert results.status_code == 200, results.text
-        else:
-            raise ValueError(api)
+        job_id, download_data = call(
+            'core.download', 'audit.download_report', [payload], 'report.csv'
+        )
+        r = requests.get(f"{url()}{download_data}")
+        r.raise_for_status()
+        assert len(r.content) == st['size']
 
         post_audit_query = call("audit.query", {
             "query-filters": [["event_data.method", "=", "audit.download_report"]],
