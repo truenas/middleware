@@ -8,7 +8,10 @@ def test_alert_gets():
     call("alertservice.list_types")
 
 
-def test_03_create_an_alertservice():
+def test_alertservice():
+    data = ["name", "type", "attributes", "level", "enabled"]
+
+    # create
     payload = {
         "name": "Critical Email Test",
         "type": "Mail",
@@ -19,12 +22,12 @@ def test_03_create_an_alertservice():
         "enabled": True
     }
     results = call("alertservice.create", payload)
-    alertservice_id = results['id']
-
-    data = ["name", "type", "attributes", "level", "enabled"]
     for key in data:
         assert results[key] == payload[key]
 
+    alertservice_id = results['id']
+
+    # update
     payload = {
         "name": "Warning Email Test",
         "type": "Mail",
@@ -35,10 +38,8 @@ def test_03_create_an_alertservice():
         "enabled": False
     }
     results = call(f"alertservice.update", alertservice_id, payload)
-
     for key in data:
-        assert results[key] == payload[key], results.text
-
+        assert results[key] == payload[key]
 
     # delete
     call("alertservice.delete", alertservice_id)
