@@ -1,5 +1,3 @@
-from time import sleep
-
 from middlewared.test.integration.utils import call, ssh
 
 TESTFILE = '/mnt/cronjob_testfile'
@@ -20,8 +18,7 @@ def test_cron_job():
     except Exception as e:
         assert False, f'Unexpected failure: {str(e)}'
 
-    # sleep and verify cronjob ran
-    sleep(65)
+    call('cronjob.run', id, job=True)
     assert call('filesystem.statfs', TESTFILE)['blocksize']
 
     results = ssh(f'rm "{TESTFILE}"', complete_response=True)
