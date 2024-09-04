@@ -1,40 +1,31 @@
 from time import sleep
 
-import pytest
-
 from middlewared.test.integration.utils import call, ssh
 
-TESTFILE = '/tmp/.testFileCreatedViaCronjob'
+TESTFILE = '/mnt/cronjob_testfile'
 
 
-def test_create_check_update_verify_cron_job():
-    cronjob_dict = {}
+def test_cron_job():
+    try:
+        id = call(
+            'cronjob.create',
+            {
+                'user': 'root',
+                'enabled': True,
+                'command': f'echo "yeah" > "{TESTFILE}"',
+                'schedule': {'minute': '*/1'}
+            }
+        )['id']
+        assert call('cronjob.query', [['id', '=', id]], {"get": True})['enabled'] is True
+    except Exception as e:
+        assert False, f'Unexpected failure: {str(e)}'
 
-    # create job
-    results = call("cronjob.create", {
-        'user': 'root',
-        'command': f'touch "{TESTFILE}"',
-        'schedule': {'minute': '*/1'}
-    })
-    cronjob_dict.update(results)
-
-    # verify job creation
-    id = cronjob_dict['id']
-    results = call('cronjob.query', [['id', '=', id]], {"get": True})
-    assert results['enabled'] is True
-
-    # wait so job can run
+    # sleep and verify cronjob ran
     sleep(65)
+    assert call('filesystem.statfs', TESTFILE)['blocksize']
 
-    # disable job
-    id = cronjob_dict['id']
-    call('cronjob.update', id, {'enabled': False})
-
-    # remove test file
     results = ssh(f'rm "{TESTFILE}"', complete_response=True)
     assert results['result'] is True, results['output']
 
-    # delete job
-    call('cronjob.delete', cronjob_dict['id'])
-    results = call('cronjob.query', [['id', '=', id]], {"get": True})
-    assert results.json() == []
+    call('cronjob.delete', id)
+    assert call('cronjob.query', [['id', '=', id]]) == []
