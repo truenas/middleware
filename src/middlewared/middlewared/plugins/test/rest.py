@@ -45,3 +45,10 @@ class RestTestService(Service):
         time.sleep(2)
         job.pipes.output.w.write(json.dumps(arg).encode("utf-8"))
         job.pipes.output.w.close()
+
+    @accepts(Any("arg"))
+    @job(lock="test_download_slow_pipe_with_lock", lock_queue_size=0, pipes=["output"])
+    def test_download_slow_pipe_with_lock(self, job, arg):
+        time.sleep(5)
+        job.pipes.output.w.write(json.dumps(arg).encode("utf-8"))
+        job.pipes.output.w.close()
