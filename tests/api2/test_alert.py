@@ -11,7 +11,7 @@ ID_PATH = "/dev/disk/by-partuuid/"
 
 
 def get_alert_by_id(alert_id):
-    return next(filter(lambda alert: alert["id"] == alert_id, call("alert.list")))
+    return next(filter(lambda alert: alert["id"] == alert_id, call("alert.list")), None)
 
 
 @pytest.mark.dependency(name="degrade_pool")
@@ -30,6 +30,7 @@ def test_verify_the_pool_is_degraded(request):
 
 
 @pytest.mark.timeout(120)
+@pytest.mark.dependency(name="set_alert_id")
 def test_wait_for_the_alert_and_get_the_id(request):
     depends(request, ["degrade_pool"], scope="session")
     call("alert.process_alerts")
@@ -46,7 +47,7 @@ def test_wait_for_the_alert_and_get_the_id(request):
 
 
 def test_verify_the_alert_is_dismissed(request):
-    depends(request, ["degrade_pool"], scope="session")
+    depends(request, ["degrade_pool", "set_alert_id"], scope="session")
     alert_id = request.config.cache.get("alert/alert_id", "Not a valid id")
     call("alert.dismiss", alert_id)
     alert = get_alert_by_id(alert_id)
@@ -54,7 +55,7 @@ def test_verify_the_alert_is_dismissed(request):
 
 
 def test_verify_the_alert_is_restored(request):
-    depends(request, ["degrade_pool"], scope="session")
+    depends(request, ["degrade_pool", "set_alert_id"], scope="session")
     alert_id = request.config.cache.get("alert/alert_id", "Not a valid id")
     call("alert.restore", alert_id)
     alert = get_alert_by_id(alert_id)
@@ -75,7 +76,7 @@ def test_verify_the_pool_is_not_degraded(request):
 
 @pytest.mark.timeout(120)
 def test_wait_for_the_alert_to_disappear(request):
-    depends(request, ["degrade_pool"], scope="session")
+    depends(request, ["degrade_pool", "set_alert_id"], scope="session")
     alert_id = request.config.cache.get("alert/alert_id", "Not a valid id")
     while get_alert_by_id(alert_id) is not None: 
         sleep(1)
