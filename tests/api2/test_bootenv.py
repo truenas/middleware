@@ -2,7 +2,7 @@ import errno
 
 import pytest
 
-from middlewared.middlewared.service_exception import ValidationErrors, ValidationError
+from middlewared.service_exception import ValidationErrors, ValidationError
 from middlewared.test.integration.utils import call, ssh
 
 
