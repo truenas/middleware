@@ -56,6 +56,11 @@ def another_pool(data=None, topology=None):
         except ValidationErrors as e:
             if not any(error.errcode == errno.ENOENT for error in e.errors):
                 raise
+        # If necessary wait a few seconds for the teardown to complete
+        for _ in range(10):
+            if not call('pool.query', [('name', '=', pool['name'])]):
+                break
+            time.sleep(1)
 
 
 @contextlib.contextmanager
