@@ -26,7 +26,7 @@ from middlewared.alert.base import (
     ProThreadedAlertService,
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
-from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Patch, returns, Ref, Str
+from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, OROperator, Patch, returns, Ref, Str
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
@@ -932,34 +932,46 @@ class AlertService(Service):
         await self.middleware.call("alert.send_alerts")
 
     @private
-    @accepts(Str("klass"), Any("query", null=True, default=None))
+    @accepts(
+        OROperator(
+            Str("klass"),
+            List('klass', items=[Str('klassname')], default=None),
+        ),
+        Any("query", null=True, default=None))
     @job(lock="process_alerts", transient=True)
     async def oneshot_delete(self, job, klass, query):
         """
-        Deletes one-shot alerts of specified `klass`, passing `query` to `klass.delete` method.
+        Deletes one-shot alerts of specified `klass` or klasses, passing `query`
+        to `klass.delete` method.
 
         It's not an error if no alerts matching delete `query` exist.
 
-        :param klass: one-shot alert class name (without the `AlertClass` suffix).
+        :param klass: either one-shot alert class name (without the `AlertClass` suffix), or list thereof.
         :param query: `query` that will be passed to `klass.delete` method.
         """
 
-        try:
-            klass = AlertClass.class_by_name[klass]
-        except KeyError:
-            raise CallError(f"Invalid alert source: {klass!r}")
+        if isinstance(klass, list):
+            klasses = klass
+        else:
+            klasses = [klass]
 
-        if not issubclass(klass, OneShotAlertClass):
-            raise CallError(f"Alert class {klass!r} is not a one-shot alert source")
-
-        related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (self.node, klass),
-                                                  self.alerts)
-        left_alerts = await klass(self.middleware).delete(related_alerts, query)
         deleted = False
-        for deleted_alert in related_alerts:
-            if deleted_alert not in left_alerts:
-                self.alerts.remove(deleted_alert)
-                deleted = True
+        for klassname in klasses:
+            try:
+                klass = AlertClass.class_by_name[klassname]
+            except KeyError:
+                raise CallError(f"Invalid alert source: {klassname!r}")
+
+            if not issubclass(klass, OneShotAlertClass):
+                raise CallError(f"Alert class {klassname!r} is not a one-shot alert source")
+
+            related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (self.node, klass),
+                                                      self.alerts)
+            left_alerts = await klass(self.middleware).delete(related_alerts, query)
+            for deleted_alert in related_alerts:
+                if deleted_alert not in left_alerts:
+                    self.alerts.remove(deleted_alert)
+                    deleted = True
 
         if deleted:
             # We need to flush alerts to the database immediately after deleting oneshot alerts.
