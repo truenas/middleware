@@ -43,8 +43,8 @@ def test_activate_original_bootenv():
 
 def test_removing_boot_environments():
     call('bootenv.set_attribute', 'bootenv03', {'keep': False})
-    job_id = call('bootenv.delete', 'bootenv02', job=True)
-    job_id = call('bootenv.delete', 'bootenv03', job=True)
+    call('bootenv.delete', 'bootenv02', job=True)
+    call('bootenv.delete', 'bootenv03', job=True)
 
 
 def test_promote_current_be_datasets():
