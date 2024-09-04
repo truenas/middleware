@@ -1,12 +1,21 @@
+import errno
+
+import pytest
+
 from functions import wait_on_job
+from middlewared.middlewared.service_exception import ValidationErrors, ValidationError
 from middlewared.test.integration.utils import call, ssh
+
 
 def test_get_default_environment_and_make_new_one():
     active_be_id = call('bootenv.query', [['activated', '=', True]], {'get': True})['id']
 
     # create duplicate name to test failure
-    results = call('bootenv.create', {'name': active_be_id, 'source': active_be_id})
-    assert results == f'[EEXIST] bootenv_create.name: The name "{active_be_id}" already exists'
+    with pytest.raises(ValidationErrors) as ve:
+        call('bootenv.create', {'name': active_be_id, 'source': active_be_id})
+    assert ve.value.errors == [
+        ValidationError('bootenv_create.name', f'The name "{active_be_id}" already exists', errno.EEXIST)
+    ]
 
     # create new bootenv and activate it
     call('bootenv.create', {'name': 'bootenv01', 'source': active_be_id})
@@ -24,6 +33,7 @@ def test_change_boot_environment_name_and_attributes():
     call('bootenv.update', 'bootenv01', {'name': 'bootenv03'})
     call('bootenv.set_attribute', 'bootenv03', {'keep': True})
     call('bootenv.activate', 'bootenv03')
+    assert call('bootenv.query', [['activated', '=', True]], {'get': True})['id'] == 'bootenv3'
 
 
 # Delete tests
