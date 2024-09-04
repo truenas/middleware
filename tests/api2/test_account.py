@@ -1,5 +1,3 @@
-import pytest
-
 from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
