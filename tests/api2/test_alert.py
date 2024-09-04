@@ -7,22 +7,17 @@ from auto_config import pool_name
 from middlewared.test.integration.utils import call, ssh
 
 
+ID_PATH = '/dev/disk/by-partuuid/'
+
+
 def get_alert_by_id(alert_id):
-    results = call("alert.list")
-    for alert in results:
-        if alert['id'] == alert_id:
-            return alert
-
-
-def alert_exists(alert_id):
-    return isinstance(get_alert_by_id(alert_id), dict)
+    return next(filter(lambda alert: alert['id'] == alert_id, call("alert.list")))
 
 
 @pytest.mark.dependency(name='degrade_pool')
 def test_degrading_a_pool_to_create_an_alert(request):
-    get_pool = call("pool.query", [["name", "=", pool_name]])[0]
-    id_path = '/dev/disk/by-partuuid/'
-    gptid = get_pool['topology']['data'][0]['path'].replace(id_path, '')
+    get_pool = call("pool.query", [["name", "=", pool_name]], {"get": True})
+    gptid = get_pool['topology']['data'][0]['path'].replace(ID_PATH, '')
     ssh(f'zinject -d {gptid} -A fault {pool_name}')
     request.config.cache.set("alert/gptid", gptid)
 
@@ -30,8 +25,8 @@ def test_degrading_a_pool_to_create_an_alert(request):
 def test_verify_the_pool_is_degraded(request):
     depends(request, ['degrade_pool'], scope="session")
     gptid = request.config.cache.get("alert/gptid", "Not a valid id")
-    stdout = ssh(f'zpool status {pool_name} | grep {gptid}')
-    assert 'DEGRADED' in stdout
+    status = call("zpool.status", {"name": pool_name})[pool_name][ID_PATH + gptid]["disk_status"]
+    assert status == 'DEGRADED'
 
 
 @pytest.mark.timeout(120)
@@ -74,13 +69,13 @@ def test_clear_the_pool_degradation(request):
 def test_verify_the_pool_is_not_degraded(request):
     depends(request, ["degrade_pool"], scope="session")
     gptid = request.config.cache.get("alert/gptid", "Not a valid id")
-    stdout = ssh(f'zpool status {pool_name} | grep {gptid}')
-    assert 'DEGRADED' not in stdout
+    status = call("zpool.status", {"name": pool_name})[pool_name][ID_PATH + gptid]["disk_status"]
+    assert status != 'DEGRADED'
 
 
 @pytest.mark.timeout(120)
 def test_wait_for_the_alert_to_disappear(request):
     depends(request, ["degrade_pool"], scope="session")
     alert_id = request.config.cache.get("alert/alert_id", "Not a valid id")
-    while alert_exists(alert_id): 
+    while get_alert_by_id(alert_id) is not None: 
         sleep(1)
