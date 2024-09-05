@@ -4,6 +4,7 @@ from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, url
 from middlewared.test.integration.utils.audit import get_audit_entry
 
+from auto_config import ha
 from protocols import smb_connection
 from time import sleep
 
@@ -12,6 +13,8 @@ import pytest
 import requests
 import secrets
 import string
+
+ha_test = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
 
 
 SMBUSER = 'audit-smb-user'
@@ -43,7 +46,6 @@ class AUDIT_CONFIG():
     }
 
 
-# def get_zfs(key, zfs_config):
 def get_zfs(data_type, key, zfs_config):
     """ Get the equivalent ZFS value associated with the audit config setting """
 
@@ -64,7 +66,6 @@ def get_zfs(data_type, key, zfs_config):
             'used_by_reservation': zfs_config['properties']['usedbyrefreservation']['parsed']
         }
     }
-    # return zfs[key]
     return types[data_type][key]
 
 
@@ -95,6 +96,27 @@ def init_audit():
         yield (config, dataset)
     finally:
         call('audit.update', AUDIT_CONFIG.defaults)
+
+
+@pytest.fixture(scope="function")
+def standby_user():
+    """ HA system: Create a user on the BACKUP node
+    This will generate a 'create' audit entry, yield,
+    and on exit generate a 'delete' audit entry.
+    """
+    try:
+        name = "StandbyUser" + PASSWD
+        user_id = call('failover.call_remote', 'user.create', [{
+            "username": name,
+            "full_name": name + " Deleteme",
+            "group": 100,
+            "smb": False,
+            "home_create": False,
+            "password": "testing"
+        }])
+        yield name
+    finally:
+        call('failover.call_remote', 'user.delete', [user_id])
 
 
 # =====================================================================
@@ -282,3 +304,28 @@ class TestAuditOps:
         ae_ts_ts = int(audit_entry['timestamp'].timestamp())
         ae_msg_ts = int(audit_entry['message_timestamp'])
         assert abs(ae_ts_ts - ae_msg_ts) < 2, f"$date='{ae_ts_ts}, message_timestamp={ae_msg_ts}"
+
+    @ha_test
+    def test_audit_ha_query(self, standby_user):
+        name = standby_user
+        remote_user = call('failover.call_remote', 'user.query', [[["username", "=", name]]])
+        assert remote_user != []
+
+        # Handle delays in the audit database
+        remote_audit_entry = []
+        tries = 3
+        while tries > 0 and remote_audit_entry == []:
+            sleep(1)
+            remote_audit_entry = call('audit.query', {
+                "query-filters": [["event_data.description", "$", name]],
+                "query-options": {"select": ["event_data", "success"]},
+                "controller": "Standby"
+            })
+            if remote_audit_entry != []:
+                break
+            tries -= 1
+
+        assert tries > 0, "Failed to get expected audit entry"
+        assert remote_audit_entry != []
+        params = remote_audit_entry[0]['event_data']['params'][0]
+        assert params['username'] == name

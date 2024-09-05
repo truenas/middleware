@@ -12,6 +12,7 @@ import yaml
 from truenas_api_client import json as ejson
 
 from .utils import (
+    AUDIT_CONTROLLER_SELECTIONS,
     AUDIT_DATASET_PATH,
     AUDIT_LIFETIME,
     AUDIT_DEFAULT_RESERVATION,
@@ -135,6 +136,7 @@ class AuditService(ConfigService):
         List('services', items=[Str('db_name', enum=ALL_AUDITED)], default=NON_BULK_AUDIT),
         Ref('query-filters'),
         Ref('query-options'),
+        Str('controller', enum=AUDIT_CONTROLLER_SELECTIONS, null=True, default=None),
         register=True
     ))
     @filterable_returns(Dict(
@@ -158,6 +160,10 @@ class AuditService(ConfigService):
         If the query-option `force_sql_filters` is true, then the query will be
         converted into a more efficient form for better performance. This will
         not be possible if filters use keys within `svc_data` and `event_data`.
+
+        HA systems may specify the controller.  The active controller may be
+        selected with 'MASTER' or 'Active'.  The standby controller may be selected
+        with 'BACKUP' or 'Standby'.  The default is the 'current' controller.
 
         Each audit entry contains the following keys:
 
@@ -193,9 +199,27 @@ class AuditService(ConfigService):
         `success` - boolean value indicating whether the action generating the
         event message succeeded.
         """
-        sql_filters = data['query-options']['force_sql_filters']
 
         verrors = ValidationErrors()
+
+        # If HA, handle the possibility of remote controller requests
+        ctrlr_state = await self.middleware.call('failover.status')
+
+        # want_ctrlr: Default is 'current' controller else use selection
+        want_ctrlr = ctrlr_state if data['controller'] is None else (
+            'MASTER' if data['controller'] in ['MASTER', 'Active'] else 'BACKUP'
+        )
+        if ctrlr_state != 'SINGLE':
+            if ctrlr_state not in ['MASTER', 'BACKUP']:
+                verrors.add('audit.query.controller', f'controller status: {ctrlr_state}')
+                verrors.check()
+            else:
+                if want_ctrlr != ctrlr_state:
+                    # Get the data from the other controller
+                    return await self.middleware.call('failover.call_remote', 'audit.query', [data])
+
+        sql_filters = data['query-options']['force_sql_filters']
+
         if (select := data['query-options'].get('select')):
             for idx, entry in enumerate(select):
                 if isinstance(entry, list):
