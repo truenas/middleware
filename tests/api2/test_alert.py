@@ -35,13 +35,12 @@ def test_wait_for_the_alert_and_get_the_id(request):
     depends(request, ["degrade_pool"], scope="session")
     call("alert.process_alerts")
     while True:
-        for line in call("alert.list"):
+        for alert in call("alert.run_source", "VolumeStatus"):
             if (
-                line["source"] == "VolumeStatus" and
-                line["args"]["volume"] == pool_name and
-                line["args"]["state"] == "DEGRADED"
+                alert["args"]["volume"] == pool_name and
+                alert["args"]["state"] == "DEGRADED"
             ):
-                request.config.cache.set("alert/alert_id", line["id"])
+                request.config.cache.set("alert/alert_id", alert["id"])
                 return
         sleep(1)
 
