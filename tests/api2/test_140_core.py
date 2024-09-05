@@ -1,16 +1,6 @@
-#!/usr/bin/env python3
-
-# Author: Eric Turgeon
-# License: BSD
-
-import pytest
-import sys
-import os
 from urllib.request import urlretrieve
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import GET, POST
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils import call
 
 
 def test_01_get_core_jobs():
