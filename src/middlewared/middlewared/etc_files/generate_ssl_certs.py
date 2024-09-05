@@ -7,7 +7,7 @@ from middlewared.main import Middleware
 from middlewared.service import CallError, Service
 
 
-def write_certificates(certs: list, cacerts: list) -> set:
+def write_certificates(certs: list) -> set:
     expected_files = set()
     for cert in certs:
         if cert['chain_list']:
@@ -31,9 +31,9 @@ def write_certificates(certs: list, cacerts: list) -> set:
     # to forcibly remove all locally-added CAs.
     trusted_cas_path = '/var/local/ca-certificates'
     shutil.rmtree(trusted_cas_path, ignore_errors=True)
-    for ca in filter(lambda c: c['chain_list'] and c['add_to_trusted_store'], cacerts):
-        with open(os.path.join(trusted_cas_path, f'{ca["name"]}.crt'), 'w') as f:
-            f.write('\n'.join(ca['chain_list']))
+    for cert in filter(lambda c: c['chain_list'] and c['add_to_trusted_store'], certs):
+        with open(os.path.join(trusted_cas_path, f'{cert["name"]}.crt'), 'w') as f:
+            f.write('\n'.join(cert['chain_list']))
 
     cp = subprocess.Popen('update-ca-certificates', stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     err = cp.communicate()[1]
@@ -73,7 +73,7 @@ def render(service: Service, middleware: Middleware) -> None:
     certs = middleware.call_sync('certificate.query')
     cas = middleware.call_sync('certificateauthority.query')
 
-    expected_files |= write_certificates(certs + cas, cas)
+    expected_files |= write_certificates(certs + cas)
     expected_files |= write_crls(cas, middleware)
 
     # We would like to remove certificates which have been deleted
