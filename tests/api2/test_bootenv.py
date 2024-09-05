@@ -19,7 +19,7 @@ def test_get_default_environment_and_make_new_one():
     # create new bootenv and activate it
     call('bootenv.create', {'name': 'bootenv01', 'source': active_be_id})
     call('bootenv.query', [['name', '=', 'bootenv01']], {'get': True})
-    call('bootenv.activate', 'bootenv01')
+    call('bootenv.activate', 'bootenv01', job=True)
 
 
 # Update tests
