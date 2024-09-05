@@ -1,4 +1,5 @@
 import errno
+from time import sleep
 
 import pytest
 
@@ -19,19 +20,21 @@ def test_get_default_environment_and_make_new_one():
     # create new bootenv and activate it
     call('bootenv.create', {'name': 'bootenv01', 'source': active_be_id})
     call('bootenv.query', [['name', '=', 'bootenv01']], {'get': True})
-    call('bootenv.activate', 'bootenv01', job=True)
+    call('bootenv.activate', 'bootenv01')
+    sleep(3)
 
 
 # Update tests
 def test_cloning_a_new_boot_environment():
     call('bootenv.create', {'name': 'bootenv02', 'source': 'bootenv01'})
     call('bootenv.activate', 'bootenv02')
-
+    sleep(3)
 
 def test_change_boot_environment_name_and_attributes():
     call('bootenv.update', 'bootenv01', {'name': 'bootenv03'})
     call('bootenv.set_attribute', 'bootenv03', {'keep': True})
     call('bootenv.activate', 'bootenv03')
+    sleep(3)
     assert call('bootenv.query', [['activated', '=', True]], {'get': True})['id'] == 'bootenv3'
 
 
@@ -43,9 +46,10 @@ def test_activate_original_bootenv():
 
 def test_removing_boot_environments():
     call('bootenv.set_attribute', 'bootenv03', {'keep': False})
-    call('bootenv.delete', 'bootenv02', job=True)
-    call('bootenv.delete', 'bootenv03', job=True)
-
+    call('bootenv.delete', 'bootenv02')
+    sleep(3)
+    call('bootenv.delete', 'bootenv03')
+    sleep(3)
 
 def test_promote_current_be_datasets():
     var_log = ssh('df | grep /var/log').split()[0]
