@@ -1,10 +1,10 @@
 import os
-import sys
 
-import operator
-import pytest
 import requests
 import time
+import operator
+import pytest
+
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call, url
 from middlewared.test.integration.utils.audit import expect_audit_log, expect_audit_method_calls
