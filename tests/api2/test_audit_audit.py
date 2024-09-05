@@ -35,27 +35,27 @@ def test_audit_config_audit(payload, success):
     initial_audit_config = call('audit.config')
     rest_operator = operator.eq if success else operator.ne
     expected_log_template = {
-        "service_data": {
-            "vers": {
-                "major": 0,
-                "minor": 1,
+        'service_data': {
+            'vers': {
+                'major': 0,
+                'minor': 1,
             },
-            "origin": ANY,
-            "protocol": "WEBSOCKET",
-            "credentials": {
-                "credentials": "LOGIN_PASSWORD",
-                "credentials_data": {"username": "root"},
+            'origin': ANY,
+            'protocol': 'WEBSOCKET',
+            'credentials': {
+                'credentials': 'LOGIN_PASSWORD',
+                'credentials_data': {'username': 'root'},
             },
         },
-        "event": "METHOD_CALL",
-        "event_data": {
-            "authenticated": True,
-            "authorized": True,
-            "method": "audit.update",
-            "params": [payload],
-            "description": "Update Audit Configuration",
+        'event': 'METHOD_CALL',
+        'event_data': {
+            'authenticated': True,
+            'authorized': True,
+            'method': 'audit.update',
+            'params': [payload],
+            'description': 'Update Audit Configuration',
         },
-        "success": success
+        'success': success
     }
     try:
         with expect_audit_log([expected_log_template]):
@@ -89,9 +89,9 @@ def test_audit_export_audit(request):
 
 
 class TestAuditDownload:
-    """
+    '''
     Wrap these tests in a class for the 'report_exists' fixture
-    """
+    '''
     def test_audit_download_audit(self, report_exists):
         '''
         Test the auditing of the audit download function
@@ -99,9 +99,9 @@ class TestAuditDownload:
         report_pathname = report_exists
         st = call('filesystem.stat', report_pathname)
 
-        init_audit_query = call("audit.query", {
-            "query-filters": [["event_data.method", "=", "audit.download_report"]],
-            "query-options": {"select": ["event_data", "success"]}
+        init_audit_query = call('audit.query', {
+            'query-filters': [['event_data.method', '=', 'audit.download_report']],
+            'query-options': {'select': ['event_data', 'success']}
         })
         init_len = len(init_audit_query)
 
@@ -112,13 +112,13 @@ class TestAuditDownload:
         job_id, download_data = call(
             'core.download', 'audit.download_report', [payload], 'report.csv'
         )
-        r = requests.get(f"{url()}{download_data}")
+        r = requests.get(f'{url()}{download_data}')
         r.raise_for_status()
         assert len(r.content) == st['size']
 
-        post_audit_query = call("audit.query", {
-            "query-filters": [["event_data.method", "=", "audit.download_report"]],
-            "query-options": {"select": ["event_data", "success"]}
+        post_audit_query = call('audit.query', {
+            'query-filters': [['event_data.method', '=', 'audit.download_report']],
+            'query-options': {'select': ['event_data', 'success']}
         })
         post_len = len(post_audit_query)
 
@@ -127,13 +127,13 @@ class TestAuditDownload:
         while count_down > 0 and post_len == init_len:
             time.sleep(1)
             count_down -= 1
-            post_audit_query = call("audit.query", {
-                "query-filters": [["event_data.method", "=", "audit.download_report"]],
-                "query-options": {"select": ["event_data", "success"]}
+            post_audit_query = call('audit.query', {
+                'query-filters': [['event_data.method', '=', 'audit.download_report']],
+                'query-options': {'select': ['event_data', 'success']}
             })
             post_len = len(post_audit_query)
 
-        assert count_down > 0, "Timed out waiting for the audit entry"
+        assert count_down > 0, 'Timed out waiting for the audit entry'
         assert post_len > init_len
 
         # Confirm this download is recorded
