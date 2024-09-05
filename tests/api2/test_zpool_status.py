@@ -5,15 +5,19 @@ import pytest
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
 
+
 POOL_NAME = 'test_format_pool'
+ZFS_PART_UUID = '6a898cc3-1dd2-11b2-99a6-080020736631'
 
 
 def get_disk_uuid_mapping(unused_disks):
     disk_uuid = {}
-    for disk_path in call('filesystem.listdir', '/dev/disk/by-partuuid'):
-        resolved_path = call('zpool.resolve_block_path', disk_path['path'], True)
-        if resolved_path in unused_disks:
-            disk_uuid[resolved_path] = disk_path['path']
+    for disk in filter(
+        lambda n: n['name'] in unused_disks and n['parts'], call('device.get_disks', True, False).values()
+    ):
+        if partition := next((part for part in disk['parts'] if part['partition_type'] == ZFS_PART_UUID), None):
+            disk_uuid[disk['name']] = os.path.join('/dev/disk/by-partuuid', partition['partition_uuid'])
+
     return disk_uuid
 
 
