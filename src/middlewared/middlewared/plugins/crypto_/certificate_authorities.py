@@ -203,7 +203,6 @@ class CertificateAuthorityService(CRUDService):
             ('edit', _set_enum('create_type')),
             ('edit', _set_cert_extensions_defaults('cert_extensions')),
             ('rm', {'name': 'dns_mapping'}),
-            ('add', Bool('add_to_trusted_store', default=False)),
             register=True
         ),
     )
