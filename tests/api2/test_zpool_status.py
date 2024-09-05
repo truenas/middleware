@@ -10,10 +10,10 @@ POOL_NAME = 'test_format_pool'
 
 def get_disk_uuid_mapping(unused_disks):
     disk_uuid = {}
-    for uuid in os.listdir('/dev/disk/by-partuuid'):
-        resolved_path = call('zpool.resolve_block_path', os.path.join('/dev/disk/by-partuuid', uuid), True)
+    for disk_path in call('filesystem.listdir', '/dev/disk/by-partuuid'):
+        resolved_path = call('zpool.resolve_block_path', disk_path['path'], True)
         if resolved_path in unused_disks:
-            disk_uuid[resolved_path] = os.path.join('/dev/disk/by-partuuid', uuid)
+            disk_uuid[resolved_path] = disk_path['path']
     return disk_uuid
 
 
