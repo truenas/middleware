@@ -5,6 +5,7 @@ from middlewared.utils.gpu import get_nvidia_gpus
 
 from .ix_apps.utils import ContainerState
 from .resources_utils import get_normalized_gpu_choices
+from .utils import IX_APPS_MOUNT_PATH
 
 
 class AppService(Service):
@@ -113,27 +114,13 @@ class AppService(Service):
         }
 
     @accepts(roles=['CATALOG_READ'])
-    @returns(Dict(
-        'available_space',
-        additional_attrs=True,
-        example={
-            'parsed': 21289574400,
-            'rawvalue': '21289574400',
-            'value': '19.8G',
-            'source': 'NONE',
-            'source_info': None,
-        }
-    ))
+    @returns(Int())
     async def available_space(self):
         """
-        Returns space available in the configured apps pool which apps can consume
+        Returns space available in bytes in the configured apps pool which apps can consume
         """
         await self.middleware.call('docker.state.validate')
-        return (await self.middleware.call(
-            'zfs.dataset.get_instance', (await self.middleware.call('docker.config'))['dataset'], {
-                'extra': {'retrieve_children': False, 'properties': ['available']},
-            }
-        ))['properties']['available']
+        return (await self.middleware.call('filesystem.statfs', IX_APPS_MOUNT_PATH))['free_bytes']
 
     @accepts(roles=['APPS_READ'])
     @returns(Dict('gpu_choices', additional_attrs=True))
