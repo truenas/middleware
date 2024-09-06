@@ -112,6 +112,29 @@ class AppService(Service):
             for ip in await self.middleware.call('interface.ip_in_use', {'static': True, 'any': True})
         }
 
+    @accepts(roles=['CATALOG_READ'])
+    @returns(Dict(
+        'available_space',
+        additional_attrs=True,
+        example={
+            'parsed': 21289574400,
+            'rawvalue': '21289574400',
+            'value': '19.8G',
+            'source': 'NONE',
+            'source_info': None,
+        }
+    ))
+    async def available_space(self):
+        """
+        Returns space available in the configured apps pool which apps can consume
+        """
+        await self.middleware.call('docker.state.validate')
+        return (await self.middleware.call(
+            'zfs.dataset.get_instance', (await self.middleware.call('docker.config'))['dataset'], {
+                'extra': {'retrieve_children': False, 'properties': ['available']},
+            }
+        ))['properties']['available']
+
     @accepts(roles=['APPS_READ'])
     @returns(Dict('gpu_choices', additional_attrs=True))
     async def gpu_choices(self):
