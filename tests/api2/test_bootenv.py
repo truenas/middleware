@@ -34,7 +34,7 @@ def test_change_boot_environment_name_and_attributes():
     call('bootenv.update', 'bootenv01', {'name': 'bootenv03'})
     call('bootenv.set_attribute', 'bootenv03', {'keep': True})
     call('bootenv.activate', 'bootenv03')
-    sleep(3)
+    sleep(6)
     assert call('bootenv.query', [['activated', '=', True]], {'get': True})['id'] == 'bootenv3'
 
 
