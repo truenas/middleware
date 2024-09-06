@@ -1,10 +1,7 @@
-import sys
 import time
 import os
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-
 import errno
+
 import pytest
 
 from middlewared.service_exception import ValidationError, ValidationErrors
@@ -121,6 +118,8 @@ def test_002_configure_interface(request, ws_client, get_payload):
 def test_003_recheck_ipvx(request):
     assert int(call('tunable.get_sysctl', f'net.ipv6.conf.{interface}.autoconf')) == 0
 
+
+@pytest.mark.skipif(ha, reason='Test valid on HA systems only')
 def test_004_remove_critical_failover_group(request):
     with pytest.raises(ValidationErrors) as ve:
         call('interface.update', interface, {'failover_group': None, 'failover_critical': True})
