@@ -5,7 +5,9 @@ import errno
 import time
 import warnings
 
+from middlewared.api import api_method
 from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
+from middlewared.api.current import AuthMeArgs, AuthMeResult
 from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionManagerCredentials,
                               LoginPasswordSessionManagerCredentials, ApiKeySessionManagerCredentials,
                               TrueNasNodeSessionManagerCredentials, TokenSessionManagerCredentials,
@@ -518,15 +520,7 @@ class AuthService(Service):
         return True
 
     @no_authz_required
-    @accepts()
-    @returns(
-        Patch(
-            'user_information',
-            'current_user_information',
-            ('add', Dict('attributes', additional_attrs=True)),
-            ('add', Dict('two_factor_config', additional_attrs=True)),
-        )
-    )
+    @api_method(AuthMeArgs, AuthMeResult)
     @pass_app()
     async def me(self, app):
         """

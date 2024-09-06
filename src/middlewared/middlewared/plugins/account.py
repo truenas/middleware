@@ -5,14 +5,12 @@ import os
 import shlex
 import shutil
 import stat
-import warnings
 import wbclient
 from pathlib import Path
 from contextlib import suppress
 
 from middlewared.api import api_method
 from middlewared.api.current import *
-from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, returns, SID, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, no_auth_required, no_authz_required, pass_app, private, filterable, job
 )
@@ -24,7 +22,6 @@ from middlewared.utils.directoryservices.constants import DSType, DSStatus
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
-from middlewared.validators import Range
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.utils.sid import db_id_to_rid, DomainRid
 from middlewared.plugins.account_.constants import (
@@ -34,7 +31,6 @@ from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID,
     IDType,
-    TRUENAS_IDMAP_DEFAULT_LOW,
     SID_LOCAL_USER_PREFIX,
     SID_LOCAL_GROUP_PREFIX
 )
@@ -856,16 +852,7 @@ class UserService(CRUDService):
                     'options': {'stripacl': True},
                 }).wait_sync(raise_error=True)
 
-    @accepts(
-        Int('id'),
-        Dict(
-            'options',
-            Bool('delete_group', default=True),
-        ),
-        audit='Delete user',
-        audit_callback=True,
-    )
-    @returns(Int('primary_key'))
+    @api_method(UserDeleteArgs, UserDeleteResult, audit='Delete user', audit_callback=True)
     def do_delete(self, audit_callback, pk, options):
         """
         Delete user `id`.
@@ -951,20 +938,7 @@ class UserService(CRUDService):
 
         return pk
 
-    @accepts(List('group_ids', items=[Int('group_id')]))
-    @returns(Dict(
-        'shell_info',
-        Str('shell_path'),
-        example={
-            '/usr/bin/bash': 'bash',
-            '/usr/bin/rbash': 'rbash',
-            '/usr/bin/dash': 'dash',
-            '/usr/bin/sh': 'sh',
-            '/usr/bin/zsh': 'zsh',
-            '/usr/bin/tmux': 'tmux',
-            '/usr/sbin/nologin': 'nologin'
-        }
-    ))
+    @api_method(UserShellChoicesArgs, UserShellChoicesResult)
     def shell_choices(self, group_ids):
         """
         Return the available shell choices to be used in `user.create` and `user.update`.
@@ -998,62 +972,13 @@ class UserService(CRUDService):
 
         return shells
 
-    @accepts(Dict(
-        'get_user_obj',
-        Str('username', default=None),
-        Int('uid', default=None),
-        Bool('get_groups', default=False),
-        Bool('sid_info', default=False),
-    ), roles=['ACCOUNT_READ'])
-    @returns(Dict(
-        'user_information',
-        Str('pw_name'),
-        Str('pw_gecos'),
-        Str('pw_dir'),
-        Str('pw_shell'),
-        Int('pw_uid'),
-        Int('pw_gid'),
-        List('grouplist'),
-        SID('sid', null=True),
-        Str('source', enum=['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']),
-        Bool('local'),
-        register=True,
-    ))
+    @api_method(UserGetUserObjArgs, UserGetUserObjResult, roles=['ACCOUNT_READ'])
     def get_user_obj(self, data):
         """
         Returns dictionary containing information from struct passwd for the user specified by either
         the username or uid. Bypasses user cache.
 
-        Supports the following optional parameters:
-        `get_groups` - retrieve group list for the specified user.
-
-        NOTE: results will not include nested groups for Active Directory users
-
-        `sid_info` - retrieve SID and domain information for the user
-
-        Returns object with following keys:
-
-        `pw_name` - name of the user
-
-        `pw_uid` - numerical user id of the user
-
-        `pw_gid` - numerical group id for the user's primary group
-
-        `pw_gecos` - full username or comment field
-
-        `pw_dir` - user home directory
-
-        `pw_shell` - user command line interpreter
-
-        `local` - boolean value indicating whether the account is local to TrueNAS or provided by
-        a directory service.
-
-        `grouplist` - optional list of group ids for groups of which this account is a member. If `get_groups`
-        is not specified, this value will be null.
-
-        `sid` - optional SID value for the account that is present if `sid_info` is specified in payload.
-
-        `source` - the source for the user account.
+        NOTE: results will not include nested groups for Active Directory users.
         """
         verrors = ValidationErrors()
         if not data['username'] and data['uid'] is None:
@@ -1095,6 +1020,8 @@ class UserService(CRUDService):
 
         if data['get_groups']:
             user_obj['grouplist'] = os.getgrouplist(user_obj['pw_name'], user_obj['pw_gid'])
+        else:
+            user_obj['grouplist'] = None
 
         if data['sid_info']:
             match user_obj['source']:
@@ -1143,8 +1070,7 @@ class UserService(CRUDService):
 
         return user_obj
 
-    @accepts(roles=['ACCOUNT_READ'])
-    @returns(Int('next_available_uid'))
+    @api_method(UserGetNextUidArgs, UserGetNextUidResult, roles=['ACCOUNT_READ'])
     async def get_next_uid(self):
         """
         Get the next available/free uid.
@@ -1167,19 +1093,7 @@ class UserService(CRUDService):
         return last_uid + 1
 
     @no_auth_required
-    @accepts()
-    @returns(Bool())
-    async def has_root_password(self):
-        """
-        Deprecated method. Use `user.has_local_administrator_set_up`
-        """
-        warnings.warn("`user.has_root_password` has been deprecated. Use `user.has_local_administrator_set_up`",
-                      DeprecationWarning)
-        return await self.has_local_administrator_set_up()
-
-    @no_auth_required
-    @accepts()
-    @returns(Bool())
+    @api_method(UserHasLocalAdministratorSetUpArgs, UserHasLocalAdministratorSetUpResult)
     async def has_local_administrator_set_up(self):
         """
         Return whether a local administrator with a valid password exists.
@@ -1190,20 +1104,7 @@ class UserService(CRUDService):
         return len(await self.middleware.call('privilege.local_administrators')) > 0
 
     @no_auth_required
-    @accepts(
-        Str('username', enum=['root', 'truenas_admin']),
-        Password('password'),
-        Dict(
-            'options',
-            Dict(
-                'ec2',
-                Str('instance_id', required=True),
-            ),
-            update=True,
-        ),
-        audit='Set up local administrator',
-    )
-    @returns()
+    @api_method(UserSetupLocalAdministratorArgs, UserSetupLocalAdministratorResult, audit='Set up local administrator')
     @pass_app()
     async def setup_local_administrator(self, app, username, password, options):
         """
@@ -1544,12 +1445,8 @@ class UserService(CRUDService):
             f.write(f'{pubkey}\n')
 
     @no_authz_required
-    @accepts(Dict(
-        'set_password_data',
-        Str('username', required=True),
-        Password('old_password', default=None),
-        Password('new_password', required=True),
-    ), audit='Set account password', audit_extended=lambda data: data['username'])
+    @api_method(UserSetPasswordArgs, UserSetPasswordResult,
+                audit='Set account password', audit_extended=lambda data: data['username'])
     @pass_app(require=True)
     async def set_password(self, app, data):
         """
@@ -1681,19 +1578,7 @@ class GroupService(CRUDService):
         datastore_extend_context = 'group.group_extend_context'
         cli_namespace = 'account.group'
         role_prefix = 'ACCOUNT'
-
-    ENTRY = Patch(
-        'group_create', 'group_entry',
-        ('rm', {'name': 'allow_duplicate_gid'}),
-        ('add', Int('id')),
-        ('add', Str('group')),
-        ('add', Bool('builtin')),
-        ('add', Bool('id_type_both')),
-        ('add', Bool('local')),
-        ('add', Str('sid', null=True)),
-        ('add', List('roles', items=[Str('role')])),
-        register=True
-    )
+        entry = GroupEntry
 
     @private
     async def group_extend_context(self, rows, extra):
@@ -1801,29 +1686,10 @@ class GroupService(CRUDService):
             filter_list, result + ds_groups, filters, options
         )
 
-    @accepts(Dict(
-        'group_create',
-        Int('gid', validators=[Range(0, TRUENAS_IDMAP_DEFAULT_LOW - 1)]),
-        Str('name', required=True),
-        Bool('smb', default=True),
-        List('sudo_commands', items=[Str('command', empty=False)]),
-        List('sudo_commands_nopasswd', items=[Str('command', empty=False)]),
-        Bool('allow_duplicate_gid', default=False),
-        List('users', items=[Int('id')], required=False),
-        register=True,
-    ), audit='Create group', audit_extended=lambda data: data['name'])
-    @returns(Int('primary_key'))
+    @api_method(GroupCreateArgs, GroupCreateResult, audit='Create group', audit_extended=lambda data: data['name'])
     async def do_create(self, data):
         """
         Create a new group.
-
-        If `gid` is not provided it is automatically filled with the next one available.
-
-        `allow_duplicate_gid` allows distinct group names to share the same gid.
-
-        `users` is a list of user ids (`id` attribute from `user.query`).
-
-        `smb` specifies whether the group should be mapped into an NT group.
         """
         return await self.create_internal(data)
 
@@ -1858,17 +1724,7 @@ class GroupService(CRUDService):
 
         return pk
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'group_create',
-            'group_update',
-            ('attr', {'update': True}),
-        ),
-        audit='Update group',
-        audit_callback=True,
-    )
-    @returns(Int('primary_key'))
+    @api_method(GroupUpdateArgs, GroupUpdateResult, audit='Update group', audit_callback=True)
     async def do_update(self, audit_callback, pk, data):
         """
         Update attributes of an existing group.
@@ -1954,8 +1810,7 @@ class GroupService(CRUDService):
         await self.middleware.call('service.reload', 'user')
         return pk
 
-    @accepts(Int('id'), Dict('options', Bool('delete_users', default=False)), audit='Delete group', audit_callback=True)
-    @returns(Int('primary_key'))
+    @api_method(GroupDeleteArgs, GroupDeleteResult, audit='Delete group', audit_callback=True)
     async def do_delete(self, audit_callback, pk, options):
         """
         Delete group `id`.
@@ -2015,8 +1870,7 @@ class GroupService(CRUDService):
 
         return pk
 
-    @accepts(roles=['ACCOUNT_READ'])
-    @returns(Int('next_available_gid'))
+    @api_method(GroupGetNextGidArgs, GroupGetNextGidResult, roles=['ACCOUNT_READ'])
     async def get_next_gid(self):
         """
         Get the next available/free gid.
@@ -2034,21 +1888,7 @@ class GroupService(CRUDService):
 
         return next_gid
 
-    @accepts(Dict(
-        'get_group_obj',
-        Str('groupname', default=None),
-        Int('gid', default=None),
-        Bool('sid_info', default=False)
-    ), roles=['ACCOUNT_READ'])
-    @returns(Dict(
-        'group_info',
-        Str('gr_name'),
-        Int('gr_gid'),
-        List('gr_mem'),
-        SID('sid', null=True),
-        Str('source', enum=['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']),
-        Bool('local'),
-    ))
+    @api_method(GroupGetGroupObjArgs, GroupGetGroupObjResult, roles=['ACCOUNT_READ'])
     def get_group_obj(self, data):
         """
         Returns dictionary containing information from struct grp for the group specified by either
@@ -2056,23 +1896,6 @@ class GroupService(CRUDService):
 
         If `sid_info` is specified then addition SMB / domain information is returned for the
         group.
-
-        Output contains following keys:
-
-        `gr_name` - name of the group
-
-        `gr_gid` - group id of the group
-
-        `gr_mem` - list of gids that are members of the group
-
-        `local` - boolean indicating whether this group is local to the NAS or provided by a
-        directory service.
-
-        `sid` - optional SID value for the account that is present if `sid_info` is specified in payload.
-
-        `source` - the name server switch module that provided the user. Options are:
-        FILES - local user in passwd file of server, WINBIND - user provided by winbindd, SSS - user
-        provided by SSSD.
         """
         verrors = ValidationErrors()
         if not data['groupname'] and data['gid'] is None:
