@@ -94,6 +94,9 @@ def job(
         If lock queue size is exceeded then the new job is discarded and the `id` of the last job in the queue is
         returned.
 
+        If lock queue size is zero, then launching a job when another job with the same lock is running will raise an
+        `EBUSY` error.
+
         Default value is `5`. `None` would mean that lock queue is infinite.
 
     :param logs: If `True` then `job.logs_fd` object will be available. It is an unbuffered file opened in binary mode;
