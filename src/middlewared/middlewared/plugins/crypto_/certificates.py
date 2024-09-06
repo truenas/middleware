@@ -37,6 +37,7 @@ class CertificateModel(sa.Model):
     cert_renew_days = sa.Column(sa.Integer(), nullable=True, default=10)
     cert_acme_id = sa.Column(sa.ForeignKey('system_acmeregistration.id'), index=True, nullable=True)
     cert_revoked_date = sa.Column(sa.DateTime(), nullable=True)
+    cert_add_to_trusted_store = sa.Column(sa.Boolean(), default=False, nullable=False)
 
 
 class CertificateService(CRUDService):
@@ -199,6 +200,7 @@ class CertificateService(CRUDService):
             Str('digest_algorithm', enum=['SHA224', 'SHA256', 'SHA384', 'SHA512']),
             List('san', items=[Str('san')]),
             Ref('cert_extensions'),
+            Bool('add_to_trusted_store', default=False),
             register=True
         ),
     )
@@ -327,7 +329,7 @@ class CertificateService(CRUDService):
             ).items()
             if k in [
                 'name', 'certificate', 'CSR', 'privatekey', 'type', 'signedby', 'acme', 'acme_uri',
-                'domains_authenticators', 'renew_days'
+                'domains_authenticators', 'renew_days', 'add_to_trusted_store',
             ]
         }
 
@@ -554,6 +556,7 @@ class CertificateService(CRUDService):
             'certificate_update',
             Bool('revoked'),
             Int('renew_days', validators=[Range(min_=1, max_=30)]),
+            Bool('add_to_trusted_store'),
             Str('name'),
         ),
     )
@@ -594,7 +597,7 @@ class CertificateService(CRUDService):
 
         new.update(data)
 
-        if any(new.get(k) != old.get(k) for k in ('name', 'revoked', 'renew_days')):
+        if any(new.get(k) != old.get(k) for k in ('name', 'revoked', 'renew_days', 'add_to_trusted_store')):
 
             verrors = ValidationErrors()
 
@@ -626,6 +629,12 @@ class CertificateService(CRUDService):
                     'Certificate has already been revoked and this cannot be reversed'
                 )
 
+            if not verrors and new['revoked'] and new['add_to_trusted_store']:
+                verrors.add(
+                    'certificate_update.add_to_trusted_store',
+                    'Revoked certificates cannot be added to system\'s trusted store'
+                )
+
             verrors.check()
 
             to_update = {'renew_days': new['renew_days']} if data.get('renew_days') else {}
@@ -636,7 +645,7 @@ class CertificateService(CRUDService):
                 'datastore.update',
                 self._config.datastore,
                 id_,
-                {'name': new['name'], **to_update},
+                {'name': new['name'], 'add_to_trusted_store': new['add_to_trusted_store'], **to_update},
                 {'prefix': self._config.datastore_prefix}
             )
 
