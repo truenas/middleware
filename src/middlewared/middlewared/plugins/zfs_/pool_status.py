@@ -43,9 +43,9 @@ class ZPoolService(Service):
     def status_impl(self, pool_name, vdev_type, members, **kwargs):
         real_paths = kwargs.setdefault('real_paths', False)
         final = dict()
-        for member in filter(lambda x: x['vdev_type'] != 'file', members.values()):
+        for member in filter(lambda x: x.get('vdev_type') != 'file', members.values()):
             vdev_disks = self.resolve_block_paths(get_zfs_vdev_disks(member), real_paths)
-            if member['vdev_type'] == 'disk':
+            if member.get('vdev_type') in ('disk', 'dspare'):
                 disk = self.resolve_block_path(member['path'], real_paths)
                 final[disk] = get_normalized_disk_info(pool_name, member, 'stripe', vdev_type, vdev_disks)
             else:
