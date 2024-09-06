@@ -98,10 +98,7 @@ def test_api_key_auth_session_list_terminate():
             sessions = call("auth.sessions")
             my_sessions = []
             for s in sessions:
-                if (
-                    s["credentials"] == "API_KEY"
-                    and s["credentials_data"]["api_key"]["name"] == "Test API Key"
-                ):
+                if s["credentials"] == "API_KEY" and s["credentials_data"]["api_key"]["name"] == "Test API Key":
                     my_sessions.append(s)
             assert len(my_sessions) == 1, sessions
             call("auth.terminate_session", my_sessions[0]["id"])
