@@ -9,7 +9,7 @@ from middlewared.test.integration.utils import call
 
 @pytest.fixture(scope="module")
 def scrub_info():
-    for i in call("pool.scrub.query", [["name", "=", pool_name]]):
+    for i in call("pool.scrub.query", [["pool_name", "=", pool_name]]):
         return i
     else:
         # by default, on pool creation a scrub task is created
@@ -64,7 +64,7 @@ def test_update_scrub(scrub_info):
 
 def test_delete_scrub(scrub_info):
     call("pool.scrub.delete", scrub_info["id"])
-    assert call("pool.scrub.query", [["name", "=", pool_name]]) == []
+    assert call("pool.scrub.query", [["pool_name", "=", pool_name]]) == []
 
 
 def test_create_scrub(scrub_info):
