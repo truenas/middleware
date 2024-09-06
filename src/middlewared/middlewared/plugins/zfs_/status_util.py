@@ -18,12 +18,14 @@ def get_normalized_disk_info(pool_name: str, disk: dict, vdev_name: str, vdev_ty
 
 
 def get_zfs_vdev_disks(vdev) -> list:
-    if vdev['state'] in ('UNAVAIL', 'OFFLINE'):
+    # We get this safely because of draid based vdevs
+    if vdev.get('state') in ('UNAVAIL', 'OFFLINE'):
         return []
 
-    if vdev['vdev_type'] == 'disk':
+    vdev_type = vdev.get('vdev_type')
+    if vdev_type == 'disk':
         return [vdev['path']]
-    elif vdev['vdev_type'] == 'file':
+    elif vdev_type == 'file':
         return []
     else:
         result = []
