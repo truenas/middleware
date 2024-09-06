@@ -256,7 +256,7 @@ def test_verify_passphrase_encrypted_root_is_locked(request):
             assert dictionary['locked'] is True, str(job_status_result)
             break
     else:
-        assert False, str(job_status_result)
+        pytest.fail(str(job_status_result))
 
 
 def test_unlock_passphrase_encrypted_datasets_with_wrong_passphrase(request):
@@ -276,15 +276,7 @@ def test_unlock_passphrase_encrypted_datasets_with_wrong_passphrase(request):
 
 def test_verify_passphrase_encrypted_root_still_locked(request):
     depends(request, ['CREATED_POOL'])
-    payload = {
-        'id': dataset
-    }
-    results = POST('/pool/dataset/encryption_summary/', payload)
-    assert results.status_code == 200, results.text
-    job_id = results.json()
-    job_status = wait_on_job(job_id, 120)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    job_status_result = job_status['results']['result']
+    job_status_result = call('pool.dataset.encryption_summary', dataset, job=True)
     for dictionary in job_status_result:
         if dictionary['name'] == dataset:
             assert dictionary['key_format'] == 'PASSPHRASE', str(job_status_result)
@@ -292,7 +284,7 @@ def test_verify_passphrase_encrypted_root_still_locked(request):
             assert dictionary['locked'] is True, str(job_status_result)
             break
     else:
-        assert False, str(job_status_result)
+        pytest.fail(str(job_status_result))
 
 
 def test_unlock_passphrase_encrypted_datasets(request):
@@ -335,7 +327,7 @@ def test_verify_passphrase_encrypted_root_is_unlocked(request):
             assert dictionary['locked'] is False, str(job_status_result)
             break
     else:
-        assert False, str(job_status_result)
+        pytest.fail(str(job_status_result))
 
 
 def test_delete_encrypted_dataset(request):
@@ -639,7 +631,7 @@ def test_verify_passphrase_encrypted_root_unlock_successful_is_false(request):
             assert dictionary['locked'] is True, str(job_status_result)
             break
     else:
-        assert False, str(job_status_result)
+        pytest.fail(str(job_status_result))
 
 
 def test_unlock_passphrase_key_encrypted_datasets(request):
@@ -687,7 +679,7 @@ def test_verify_passphrase_key_encrypted_root_is_unlocked(request):
             assert dictionary['locked'] is False, str(job_status_result)
             break
     else:
-        assert False, str(job_status_result)
+        pytest.fail(str(job_status_result))
 
 
 def test_delete_passphrase_key_encrypted_dataset(request):
@@ -802,7 +794,7 @@ def test_verify_the_parrent_encrypted_root_unlock_successful_is_false(request):
             assert dictionary['locked'] is True, str(job_status_result)
             break
     else:
-        assert False, str(job_status_result)
+        pytest.fail(str(job_status_result))
 
 
 def test_verify_the_parrent_encrypted_root_dataset_is_locked(request):
@@ -829,7 +821,7 @@ def test_verify_the_chid_of_the_encrypted_root_parent_unlock_successful_is_false
             assert dictionary['locked'] is True, str(job_status_result)
             break
     else:
-        assert False, str(job_status_result)
+        pytest.fail(str(job_status_result))
 
 
 def test_verify_the_child_dataset_is_locked(request):
@@ -885,7 +877,7 @@ def test_Verify_chid_unlock_successful_is_still_false(request):
             assert dictionary['locked'] is True, str(job_status_result)
             break
     else:
-        assert False, str(job_status_result)
+        pytest.fail(str(job_status_result))
 
 
 def test_unlock_parent_dataset_with_child_recursively(request):
@@ -940,7 +932,7 @@ def test_verify_the_parent_dataset_unlock_successful_is_true(request):
             assert dictionary['locked'] is False, str(job_status_result)
             break
     else:
-        assert False, str(job_status_result)
+        pytest.fail(str(job_status_result))
 
 
 def test_verify_the_dataset_is_unlocked(request):
@@ -967,7 +959,7 @@ def test_verify_the_child_dataset_unlock_successful_is_true(request):
             assert dictionary['locked'] is False, str(job_status_result)
             break
     else:
-        assert False, str(job_status_result)
+        pytest.fail(str(job_status_result))
 
 
 def test_verify_the_child_dataset_is_unlocked(request):
