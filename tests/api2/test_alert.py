@@ -1,7 +1,6 @@
 from time import sleep
 
 import pytest
-from pytest_dependency import depends
 
 from auto_config import pool_name
 from middlewared.test.integration.utils import call, ssh
@@ -14,25 +13,17 @@ def get_alert_by_id(alert_id):
     return next(filter(lambda alert: alert["id"] == alert_id, call("alert.list")), None)
 
 
-@pytest.mark.dependency(name="degrade_pool")
-def test_degrading_a_pool_to_create_an_alert(request):
+@pytest.fixture(scope="module", autouse=True)
+def degraded_pool_gptid():
     get_pool = call("pool.query", [["name", "=", pool_name]], {"get": True})
     gptid = get_pool["topology"]["data"][0]["path"].replace(ID_PATH, "")
     ssh(f"zinject -d {gptid} -A fault {pool_name}")
-    request.config.cache.set("alert/gptid", gptid)
-
-
-def test_verify_the_pool_is_degraded(request):
-    depends(request, ["degrade_pool"], scope="session")
-    gptid = request.config.cache.get("alert/gptid", "Not a valid id")
-    status = call("zpool.status", {"name": pool_name})[pool_name][ID_PATH + gptid]["disk_status"]
-    assert status == "DEGRADED"
+    return gptid
 
 
 @pytest.mark.timeout(120)
-@pytest.mark.dependency(name="set_alert_id")
-def test_wait_for_the_alert_and_get_the_id(request):
-    depends(request, ["degrade_pool"], scope="session")
+@pytest.fixture(scope="module")
+def alert_id(degraded_pool_gptid):
     call("alert.process_alerts")
     while True:
         for alert in call("alert.run_source", "VolumeStatus"):
@@ -40,42 +31,34 @@ def test_wait_for_the_alert_and_get_the_id(request):
                 alert["args"]["volume"] == pool_name and
                 alert["args"]["state"] == "DEGRADED"
             ):
-                request.config.cache.set("alert/alert_id", alert["id"])
-                return
+                return alert["id"]
         sleep(1)
 
 
-def test_verify_the_alert_is_dismissed(request):
-    depends(request, ["degrade_pool", "set_alert_id"], scope="session")
-    alert_id = request.config.cache.get("alert/alert_id", "Not a valid id")
+def test_verify_the_pool_is_degraded(degraded_pool_gptid):
+    status = call("zpool.status", {"name": pool_name})[pool_name][ID_PATH + degraded_pool_gptid]["disk_status"]
+    assert status == "DEGRADED"
+
+
+def test_dismiss_alert(alert_id):
     call("alert.dismiss", alert_id)
     alert = get_alert_by_id(alert_id)
     assert alert["dismissed"] is True, alert
 
 
-def test_verify_the_alert_is_restored(request):
-    depends(request, ["degrade_pool", "set_alert_id"], scope="session")
-    alert_id = request.config.cache.get("alert/alert_id", "Not a valid id")
+def test_restore_alert(alert_id):
     call("alert.restore", alert_id)
     alert = get_alert_by_id(alert_id)
     assert alert["dismissed"] is False, alert
 
 
-def test_clear_the_pool_degradation(request):
-    depends(request, ["degrade_pool"], scope="session")
+def test_clear_the_pool_degradation(degraded_pool_gptid):
     ssh(f"zpool clear {pool_name}")
-
-
-def test_verify_the_pool_is_not_degraded(request):
-    depends(request, ["degrade_pool"], scope="session")
-    gptid = request.config.cache.get("alert/gptid", "Not a valid id")
-    status = call("zpool.status", {"name": pool_name})[pool_name][ID_PATH + gptid]["disk_status"]
+    status = call("zpool.status", {"name": pool_name})[pool_name][ID_PATH + degraded_pool_gptid]["disk_status"]
     assert status != "DEGRADED"
 
 
 @pytest.mark.timeout(120)
-def test_wait_for_the_alert_to_disappear(request):
-    depends(request, ["degrade_pool", "set_alert_id"], scope="session")
-    alert_id = request.config.cache.get("alert/alert_id", "Not a valid id")
+def test_wait_for_the_alert_to_disappear(alert_id):
     while get_alert_by_id(alert_id) is not None: 
         sleep(1)
