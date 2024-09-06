@@ -10,12 +10,7 @@ def test_03_get_download_info_for_config_dot_save():
     assert call('core.ping') == 'pong'
 
     # set up core download
-    payload = {
-        'method': 'config.save',
-        'args': [],
-        'filename': 'freenas.db'
-    }
-    results = call('core.download', payload)
+    results = call('core.download', 'config.save', [], 'freenas.db')
     url = results[1]
     job_id = results[0]
 
