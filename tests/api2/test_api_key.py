@@ -1,8 +1,8 @@
 import pytest
 
+from middlewared.test.integration.assets.account import user as temp_user
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client, ssh
-from middlewared.test.integration.utils.account import user as temp_user
 from middlewared.test.integration.utils.client import truenas_server
 
 
@@ -24,8 +24,8 @@ def test_root_api_key_websocket(tuser):
     ip = truenas_server.ip
     with api_key([{"method": "*", "resource": "*"}]) as key:
         results = ssh(
-            f"sudo -u {tuser["username"]} midclt -u ws://{ip}/api/current --api-key {key} call system.info",
-            completes_response=True,
+            f"sudo -u {tuser['username']} midclt -u ws://{ip}/api/current --api-key {key} call system.info",
+            complete_response=True,
         )
         assert results["result"] is True, results["output"]
         assert "uptime" in results["stdout"]
@@ -44,8 +44,8 @@ def test_allowed_api_key_websocket(tuser):
     ip = truenas_server.ip
     with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
         results = ssh(
-            f"sudo -u {tuser["username"]} midclt -u ws://{ip}/api/current --api-key {key} call system.info",
-            completes_response=True,
+            f"sudo -u {tuser['username']} midclt -u ws://{ip}/api/current --api-key {key} call system.info",
+            complete_response=True,
         )
         assert results["result"] is True, results["output"]
         assert "uptime" in results["stdout"]
@@ -56,8 +56,9 @@ def test_denied_api_key_websocket(tuser):
     ip = truenas_server.ip
     with api_key([{"method": "CALL", "resource": "system.info_"}]) as key:
         results = ssh(
-            f"sudo -u {tuser["username"]} midclt -u ws://{ip}/api/current --api-key {key} call system.info",
-            completes_response=True,
+            f"sudo -u {tuser['username']} midclt -u ws://{ip}/api/current --api-key {key} call system.info",
+            check=False,
+            complete_response=True,
         )
         assert results["result"] is False, results
 
