@@ -4,17 +4,17 @@ import time
 
 
 IFACE_LINK_STATE_MAX_WAIT: int = 60
+RTF_GATEWAY: int = 0x0002
+RTF_UP: int = 0x0001
 
 
 def get_default_interface() -> str | None:
-    data = []
     with contextlib.suppress(FileNotFoundError):
         with open('/proc/net/route', 'r') as f:
-            data = [line.split() for line in f.readlines()]
-
-    for entry in filter(lambda i: len(i) == 11, data):
-        if entry[1] == '00000000' and entry[1] == entry[7]:
-            return entry[0]
+            for entry in filter(lambda i: len(i) == 11, map(str.split, f.readlines()[1:])):
+                with contextlib.suppress(ValueError):
+                    if int(entry[3], 16) == (RTF_UP | RTF_GATEWAY):
+                        return entry[0].strip()
 
 
 def wait_on_interface_link_state_up(interface: str) -> bool:
