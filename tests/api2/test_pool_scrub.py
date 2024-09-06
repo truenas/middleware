@@ -4,7 +4,7 @@ import pytest
 
 from auto_config import pool_name
 from middlewared.service_exception import ValidationError, ValidationErrors
-from middlewared.test.integration.utils.client import call
+from middlewared.test.integration.utils import call
 
 
 @pytest.fixture(scope="module")
