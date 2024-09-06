@@ -6,7 +6,7 @@ import requests
 
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import unprivileged_user
-from middlewared.test.integration.utils import client, session, url
+from middlewared.test.integration.utils import call, client, session, url
 
 
 @pytest.mark.parametrize("method", ["test_download_pipe", "test_download_unchecked_pipe"])
@@ -77,6 +77,14 @@ def test_buffered_download_from_slow_download_endpoint(buffered, sleep, result):
     assert r.headers["Content-Disposition"] == "attachment; filename=\"file.bin\""
     assert r.headers["Content-Type"] == "application/octet-stream"
     assert r.text == result
+
+
+def test_download_duplicate_job():
+    call("core.download", "resttest.test_download_slow_pipe_with_lock", [{"key": "value"}], "file.bin")
+    with pytest.raises(CallError) as ve:
+        call("core.download", "resttest.test_download_slow_pipe_with_lock", [{"key": "value"}], "file.bin")
+
+    assert ve.value.errno == errno.EBUSY
 
 
 def test_download_authorization_ok():

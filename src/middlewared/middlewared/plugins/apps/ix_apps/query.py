@@ -6,7 +6,7 @@ from .docker.query import list_resources_by_project
 from .metadata import get_collective_config, get_collective_metadata
 from .lifecycle import get_current_app_config
 from .path import get_app_parent_config_path
-from .utils import get_app_name_from_project_name, normalize_reference, PROJECT_PREFIX
+from .utils import AppState, ContainerState, get_app_name_from_project_name, normalize_reference, PROJECT_PREFIX
 
 
 COMPOSE_SERVICE_KEY: str = 'com.docker.compose.service'
@@ -86,12 +86,18 @@ def list_apps(
         # When we stop docker service and start it again - the containers can be in exited
         # state which means we need to account for this.
         state = 'STOPPED'
+        exited_containers = 0
         for container in workloads['container_details']:
-            if container['state'] == 'starting':
-                state = 'DEPLOYING'
+            if container['state'] == ContainerState.STARTING.value:
+                state = AppState.DEPLOYING.value
                 break
-            elif container['state'] == 'running':
-                state = 'RUNNING'
+            elif container['state'] == ContainerState.RUNNING.value:
+                state = AppState.RUNNING.value
+            elif container['state'] == ContainerState.EXITED.value:
+                exited_containers += 1
+        else:
+            if exited_containers != 0 and exited_containers == len(workloads['container_details']):
+                state = AppState.CRASHED.value
 
         app_metadata = metadata[app_name]
         active_workloads = get_default_workload_values() if state == 'STOPPED' else workloads
@@ -127,7 +133,7 @@ def list_apps(
                 'name': entry.name,
                 'id': entry.name,
                 'active_workloads': get_default_workload_values(),
-                'state': 'STOPPED',
+                'state': AppState.STOPPED.value,
                 'upgrade_available': upgrade_available_for_app(train_to_apps_version_mapping, app_metadata),
                 'image_updates_available': False,
                 **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
@@ -187,9 +193,12 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
 
         if container['State']['Status'].lower() == 'running':
             if health_config := container['State'].get('Health'):
-                state = 'running' if health_config['Status'] == 'healthy' else 'starting'
+                if health_config['Status'] == 'healthy':
+                    state = ContainerState.RUNNING.value
+                else:
+                    state = ContainerState.STARTING.value
             else:
-                state = 'running'
+                state = ContainerState.RUNNING.value
         else:
             state = 'exited'
 
