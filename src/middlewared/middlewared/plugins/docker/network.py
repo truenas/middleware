@@ -1,6 +1,6 @@
 from middlewared.plugins.apps.ix_apps.docker.networks import list_networks
 from middlewared.schema import Dict, Str
-from middlewared.service import CRUDService, filterable
+from middlewared.service import CRUDService, filterable, private
 from middlewared.utils import filter_list
 
 
@@ -42,3 +42,7 @@ class DockerNetworkService(CRUDService):
             })
 
         return filter_list(networks, filters, options)
+
+    @private
+    def interfaces_mapping(self):
+        return [f'br-{network["short_id"]}' for network in self.query()]
