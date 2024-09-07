@@ -14,9 +14,14 @@ class DockerNetworkService(CRUDService):
 
     ENTRY = Dict(
         'docker_network_entry',
-        Str('id', required=True),
-        Str('name', required=True),
-        Str('short_id', required=True),
+        Dict('ipam', additional_attrs=True, null=True),
+        Dict('labels', additional_attrs=True, null=True),
+        Str('created', required=True, null=True),
+        Str('driver', required=True, null=True),
+        Str('id', required=True, null=True),
+        Str('name', required=True, null=True),
+        Str('scope', required=True, null=True),
+        Str('short_id', required=True, null=True),
         additional_attrs=True,
     )
 
@@ -28,4 +33,12 @@ class DockerNetworkService(CRUDService):
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
 
-        return filter_list(list_networks(), filters, options)
+        networks = []
+        for network in list_networks():
+            networks.append({
+                k: network.get(k) for k in (
+                    'ipam', 'labels', 'created', 'driver', 'id', 'name', 'scope', 'short_id',
+                )
+            })
+
+        return filter_list(networks, filters, options)
