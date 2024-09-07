@@ -1,3 +1,4 @@
+from middlewared.plugins.apps.ix_apps.docker.networks import list_networks
 from middlewared.schema import Dict, Str
 from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
@@ -20,9 +21,11 @@ class DockerNetworkService(CRUDService):
     )
 
     @filterable
-    def query(self, app, filters, options):
+    def query(self, filters, options):
         """
         Query all docker networks
         """
         if not self.middleware.call_sync('docker.state.validate', False):
             return filter_list([], filters, options)
+
+        return filter_list(list_networks(), filters, options)
