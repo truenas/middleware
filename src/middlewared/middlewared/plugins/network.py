@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 import ipaddress
-import itertools
 from collections import defaultdict
 from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
@@ -1704,11 +1703,7 @@ class InterfaceService(CRUDService):
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
-        internal_interfaces = tuple(itertools.chain(*[
-            await self.middleware.call(endpoint) for endpoint in (
-                'interface.internal_interfaces', 'docker.network.interfaces_mapping'
-            )
-        ]))
+        internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
         dhclient_aws = []
         for name, iface in await self.middleware.run_in_thread(lambda: list(netif.list_interfaces().items())):
             # Skip internal interfaces
