@@ -45,4 +45,9 @@ class DockerNetworkService(CRUDService):
 
     @private
     def interfaces_mapping(self):
-        return [f'br-{network["short_id"]}' for network in self.query()]
+        try:
+            return [f'br-{network["short_id"]}' for network in self.query()]
+        except Exception as e:
+            # We don't want this to fail ever because this is used in interface.sync
+            self.logger.error('Failed to get docker interfaces mapping: %s', e)
+            return []
