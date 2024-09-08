@@ -1,16 +1,13 @@
+import os.path
+import textwrap
+
 import pytest
 
-from truenas_api_client import ValidationErrors
 from middlewared.test.integration.assets.crypto import (
     certificate_signing_request, get_cert_params, intermediate_certificate_authority, root_certificate_authority
 )
 from middlewared.test.integration.utils import call
-
-import sys
-import textwrap
-import os
-apifolder = os.getcwd()
-sys.path.append(apifolder)
+from truenas_api_client import ValidationErrors
 
 
 # We would like to test the following cases
@@ -195,6 +192,31 @@ def test_cert_issuer_reported_correctly():
         intermediate_ca = call('certificateauthority.get_instance', intermediate_ca['id'])
         try:
             assert cert['issuer'] == intermediate_ca, cert
+        finally:
+            call('certificate.delete', cert['id'], job=True)
+
+
+@pytest.mark.parametrize('add_to_trusted_store_enabled', [
+    True,
+    False,
+])
+def test_cert_add_to_trusted_store(add_to_trusted_store_enabled):
+    with intermediate_certificate_authority('root_ca', 'intermediate_ca') as (root_ca, intermediate_ca):
+        cert = call('certificate.create', {
+            'name': 'cert_trusted_store_test',
+            'signedby': intermediate_ca['id'],
+            'create_type': 'CERTIFICATE_CREATE_INTERNAL',
+            'add_to_trusted_store': add_to_trusted_store_enabled,
+            **get_cert_params(),
+        }, job=True)
+        try:
+            assert cert['add_to_trusted_store'] == add_to_trusted_store_enabled
+            args = ['filesystem.stat', os.path.join('/var/local/ca-certificates', f'cert_{cert["name"]}.crt')]
+            if add_to_trusted_store_enabled:
+                assert call(*args)
+            else:
+                with pytest.raises(Exception):
+                    call(*args)
         finally:
             call('certificate.delete', cert['id'], job=True)
 
