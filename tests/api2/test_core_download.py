@@ -5,7 +5,7 @@ from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils import call
 
 
-def test_03_get_download_info_for_config_dot_save():
+def test_get_download_for_config_dot_save():
     # ping core for sanity
     assert call('core.ping') == 'pong'
 
