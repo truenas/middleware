@@ -1,3 +1,4 @@
+import logging
 import os.path
 import shutil
 
@@ -8,6 +9,9 @@ from middlewared.service import CallError, job, Service
 
 from .migrate_config_utils import migrate_chart_release_config
 from .utils import get_sorted_backups
+
+
+logger = logging.getLogger('app_migrations')
 
 
 class K8stoDockerMigrationService(Service):
@@ -215,5 +219,13 @@ class K8stoDockerMigrationService(Service):
                 })
 
         job.set_progress(100, 'Migration completed')
+
+        # Let's log the results to a separate log file
+        logger.debug('Migration details for %r backup on %r pool', options['backup_name'], kubernetes_pool)
+        for release in release_details:
+            if release['successfully_migrated']:
+                logger.debug('%r app migrated successfully', release['name'])
+            else:
+                logger.debug('%r app failed to migrate successfully: %r', release['name'], release['error'])
 
         return release_details
