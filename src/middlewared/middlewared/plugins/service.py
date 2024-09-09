@@ -269,11 +269,11 @@ class ServiceService(CRUDService):
             if service_object.deprecated:
                 await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', service_object.name)
 
-            return False
+            return True
         else:
             self.logger.error("Service %r running after stop", service)
             await self.middleware.call('service.notify_running', service)
-            return True
+            return False
 
     @accepts(
         Str('service'),
