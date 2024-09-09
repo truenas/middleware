@@ -220,12 +220,19 @@ class K8stoDockerMigrationService(Service):
 
         job.set_progress(100, 'Migration completed')
 
+        failures = False
         # Let's log the results to a separate log file
         logger.debug('Migration details for %r backup on %r pool', options['backup_name'], kubernetes_pool)
         for release in release_details:
             if release['successfully_migrated']:
                 logger.debug('%r app migrated successfully', release['name'])
             else:
+                failures = True
                 logger.debug('%r app failed to migrate successfully: %r', release['name'], release['error'])
+
+        if failures:
+            self.middleware.call_sync('alert.oneshot_create', 'FailuresInAppMigration')
+        else:
+            self.middleware.call_sync('alert.oneshot_delete', 'FailuresInAppMigration')
 
         return release_details
