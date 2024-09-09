@@ -1,48 +1,32 @@
 import pytest
 
 from truenas_api_client import ClientException
-from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.utils import call, mock
 
-import os
-import sys
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import PUT
-from auto_config import pool_name, ha
+from middlewared.test.integration.assets.pool import another_pool, pool as pool_name
+from middlewared.test.integration.utils import call, disable_failover, mock
 
 
-def test_systemdataset_migrate_error(request):
+def test_systemdataset_migrate_error():
     """
     On HA this test will fail with the error below if failover is enabled:
     [ENOTSUP] Disable failover before exporting last pool on system.
     """
+    with disable_failover():
+        pool = call("pool.query", [["name", "=", pool_name]], {"get": True})
 
-    # Disable Failover
-    if ha is True:
-        results = PUT('/failover/', {"disabled": True, "master": True})
-        assert results.status_code == 200, results.text
+        with mock("systemdataset.update", """\
+            from middlewared.service import job, CallError
 
-    pool = call("pool.query", [["name", "=", pool_name]], {"get": True})
+            @job()
+            def mock(self, job, *args):
+                raise CallError("Test error")
+        """):
+            with pytest.raises(ClientException) as e:
+                call("pool.export", pool["id"], job=True)
 
-    with mock("systemdataset.update", """\
-        from middlewared.service import job, CallError
-
-        @job()
-        def mock(self, job, *args):
-            raise CallError("Test error")
-    """):
-        with pytest.raises(ClientException) as e:
-            call("pool.export", pool["id"], job=True)
-
-        assert e.value.error == (
-            "[EFAULT] This pool contains system dataset, but its reconfiguration failed: [EFAULT] Test error"
-        )
-
-    # Enable back Failover.
-    if ha is True:
-        results = PUT('/failover/', {"disabled": False, "master": True})
-        assert results.status_code == 200, results.text
+            assert e.value.error == (
+                "[EFAULT] This pool contains system dataset, but its reconfiguration failed: [EFAULT] Test error"
+            )
 
 
 def test_destroy_offline_disks():
