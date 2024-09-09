@@ -16,14 +16,14 @@ def test_check_system_set_time():
     results = call("system.info")
 
     # Convert to seconds
-    datetime = results["datetime"]["$date"] / 1000
+    datetime = int(results["datetime"].timestamp())
 
     # hop 300 seconds into the past
     target = datetime - 300
     call("system.set_time", int(target))
 
     results = call("system.info")
-    datetime2 = results["datetime"]["$date"] / 1000
+    datetime2 = int(results["datetime"].timestamp())
 
     # This is a fudge-factor because NTP will start working
     # pretty quickly to correct the slew.
