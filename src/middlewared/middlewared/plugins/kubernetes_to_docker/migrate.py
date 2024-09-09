@@ -231,7 +231,7 @@ class K8stoDockerMigrationService(Service):
                 logger.debug('%r app failed to migrate successfully: %r', release['name'], release['error'])
 
         if failures:
-            self.middleware.call_sync('alert.oneshot_create', 'FailuresInAppMigration')
+            self.middleware.call_sync('alert.oneshot_create', 'FailuresInAppMigration', None)
         else:
             self.middleware.call_sync('alert.oneshot_delete', 'FailuresInAppMigration')
 
