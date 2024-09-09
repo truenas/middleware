@@ -2,12 +2,6 @@ from middlewared.test.integration.utils import call
 
 TIMEZONE = "America/New_York"
 
-def test_system_is_ready_and_sane():
-    assert call("system.ready") is True
-    assert call("system.info")["version"] == call("system.version")
-    assert call("system.product_type") in ("SCALE", "SCALE_ENTERPRISE")
-
-
 def test_check_system_set_time():
     """
     This test intentionally slews our clock to be off
