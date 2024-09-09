@@ -6,8 +6,8 @@ class FailuresInAppMigrationAlertClass(AlertClass, OneShotAlertClass):
 
     category = AlertCategory.APPLICATIONS
     level = AlertLevel.ERROR
-    title = 'Application(s) failed to migrate from kubernetes'
-    text = 'App(s) failed to migrate from dragonfish, please check /var/log/app_migrations.log for more details.'
+    title = 'App(s) failed to migrate'
+    text = 'App(s) failed to migrate, please check /var/log/app_migrations.log for more details.'
 
     async def create(self, args):
         return Alert(FailuresInAppMigrationAlertClass, args)
