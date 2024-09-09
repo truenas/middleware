@@ -1,6 +1,21 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, OneShotAlertClass
 
 
+class FailuresInAppMigrationAlertClass(AlertClass, OneShotAlertClass):
+    deleted_automatically = False
+
+    category = AlertCategory.APPLICATIONS
+    level = AlertLevel.ERROR
+    title = 'App(s) failed to migrate'
+    text = 'App(s) failed to migrate, please check /var/log/app_migrations.log for more details.'
+
+    async def create(self, args):
+        return Alert(FailuresInAppMigrationAlertClass, args)
+
+    async def delete(self, alerts, query):
+        return []
+
+
 class ApplicationsConfigurationFailedAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     level = AlertLevel.CRITICAL
