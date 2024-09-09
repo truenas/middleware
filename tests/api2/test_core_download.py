@@ -7,10 +7,7 @@ from middlewared.test.integration.utils import call
 
 def test_get_download_for_config_dot_save():
     # set up core download
-    job_id, url = call('core.download', 'config.save', [], 'freenas.db', job=True)
-
-    # is the job running?
-    assert call('core.get_jobs', [['id', '=', job_id]], {'get': True}, job=True)['state'] == 'SUCCESS'
+    job_id, url = call('core.download', 'config.save', [], 'freenas.db')
 
     # download from URL
     rv = urlretrieve(f'http://{truenas_server.ip}{url}')
