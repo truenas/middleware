@@ -9,10 +9,9 @@ def test_get_download_for_config_dot_save():
     # ping core for sanity
     assert call('core.ping') == 'pong'
 
+
     # set up core download
-    results = call('core.download', 'config.save', [], 'freenas.db')
-    url = results[1]
-    job_id = results[0]
+    job_id, url = call('core.download', 'config.save', [], 'freenas.db')
 
 
     # is the job running?
