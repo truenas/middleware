@@ -19,7 +19,7 @@ def test_creating_staticroute(sr_dict):
 
 
 def test_check_staticroute_configured_using_api(sr_dict):
-    data = call('staticroute.query', [['id', '=', sr_dict['newroute']['id']]], {'get', '=', True})
+    data = call('staticroute.query', [['id', '=', sr_dict['newroute']['id']]], {'get': True})
     assert DESTINATION in data['destination']
     assert data['gateway'] == GATEWAY
 
