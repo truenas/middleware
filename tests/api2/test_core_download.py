@@ -16,7 +16,7 @@ def test_get_download_for_config_dot_save():
 
     # is the job running?
     results = call('core.get_jobs', [['id', '=', job_id]], {"get": True})
-    assert results['state'] == 'RUNNING', results.text
+    assert results['state'] == 'RUNNING'
 
 
     # download from URL
@@ -26,4 +26,4 @@ def test_get_download_for_config_dot_save():
 
     # verify success
     results = call('core.get_jobs', [['id', '=', job_id]], {"get": True})
-    assert results['state'] == 'SUCCESS', results.text
+    assert results['state'] == 'SUCCESS'
