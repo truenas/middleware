@@ -33,7 +33,7 @@ class K8stoDockerMigrationService(Service):
         # interface, then migration is bound to fail as catalog won't sync because of no network
         # connectivity and us not able to see if an app is available in newer catalog. If the default interface
         # is not up, then we will fail the migration here and early
-        await self.middleware.call('docker.state.validate_interfaces')
+        await self.middleware.call('docker.setup.validate_interfaces')
 
         list_backup_job = await self.middleware.call('k8s_to_docker.list_backups', k8s_pool)
         await list_backup_job.wait()
