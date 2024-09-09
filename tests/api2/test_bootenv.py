@@ -16,7 +16,7 @@ def test_get_default_environment_and_make_new_one():
         ValidationError('bootenv_create.name', f'The name "{active_be_id}" already exists', errno.EEXIST)
     ]
 
-    # create new bootenv and activate it
+    # create new bootenv
     call('bootenv.create', {'name': 'bootenv01', 'source': active_be_id})
     call('bootenv.query', [['name', '=', 'bootenv01']], {'get': True})
 
@@ -37,7 +37,7 @@ def test_promote_current_be_datasets():
     ssh(f'zfs snapshot {snapshot}')
     try:
         clone = 'boot-pool/ROOT/clone'
-        ssh(f"zfs clone {snapshot} {clone}")
+        ssh(f'zfs clone {snapshot} {clone}')
         try:
             ssh(f'zfs promote {clone}')
 
