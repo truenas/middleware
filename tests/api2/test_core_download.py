@@ -10,7 +10,7 @@ def test_get_download_for_config_dot_save():
     job_id, url = call('core.download', 'config.save', [], 'freenas.db', job=True)
 
     # is the job running?
-    assert call('core.get_jobs', [['id', '=', job_id]], {'get': True})['state'] == 'SUCCESS'
+    assert call('core.get_jobs', [['id', '=', job_id]], {'get': True}, job=True)['state'] == 'SUCCESS'
 
     # download from URL
     rv = urlretrieve(f'http://{truenas_server.ip}{url}')
