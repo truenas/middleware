@@ -1,5 +1,4 @@
 import contextlib
-import urllib.parse
 
 import pytest
 
@@ -38,7 +37,7 @@ def dataset(name, options=None):
     try:
         yield dataset
     finally:
-        assert call('pool.dataset.delete', urllib.parse.quote(dataset, ""))
+        assert call('pool.dataset.delete', dataset)
 
 
 @contextlib.contextmanager
