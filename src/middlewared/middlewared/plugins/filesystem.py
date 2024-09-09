@@ -20,7 +20,7 @@ from middlewared.utils import filter_list
 from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import acl_is_present
 from middlewared.utils.filesystem.constants import FileType
-from middlewared.utils.filesystem.directory import DirectoryIterator
+from middlewared.utils.filesystem.directory import DirectoryIterator, DirectoryRequestMask
 from middlewared.utils.filesystem.utils import timespec_convert
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.nss import pwd, grp
@@ -214,6 +214,33 @@ class FilesystemService(Service):
             'zfs_attrs': ['ARCHIVE']
         }
 
+    @private
+    def listdir_request_mask(self, select):
+        """ create request mask for directory listing """
+        if not select:
+            # request_mask=None means ALL in the directory iterator
+            return None
+
+        request_mask = 0
+        for i in select:
+            # select may be list [key, new_name] to allow
+            # equivalent of SELECT AS.
+            selected = i[0] if isinstance(i, list) else i
+
+            match selected:
+                case 'realpath':
+                    request_mask |= DirectoryRequestMask.REALPATH
+                case 'acl':
+                    request_mask |= DirectoryRequestMask.ACL
+                case 'zfs_attrs':
+                    request_mask |= DirectoryRequestMask.ZFS_ATTRS
+                case 'is_ctldir':
+                    request_mask |= DirectoryRequestMask.CTLDIR
+                case 'xattrs':
+                    request_mask |= DirectoryRequestMask.XATTRS
+
+        return request_mask
+
     @accepts(
         Str('path', required=True),
         Ref('query-filters'),
@@ -248,6 +275,14 @@ class FilesystemService(Service):
         """
         Get the contents of a directory.
 
+        The select option may be used to optimize listdir performance. Metadata-related
+        fields that are not selected will not be retrieved from the filesystem.
+
+        For example {"select": ["path", "type"]} will avoid querying an xattr list and
+        ZFS attributes for files in a directory.
+
+        NOTE: an empty list for select (default) is treated as requesting all information.
+
         Each entry of the list consists of:
           name(str): name of the file
           path(str): absolute path of the entry
@@ -273,6 +308,20 @@ class FilesystemService(Service):
 
         if not path.is_dir():
             raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
+
+        if options.get('count') is True:
+            # We're just getting count, drop any unnecessary info
+            request_mask = 0
+        else:
+            request_mask = self.listdir_request_mask(options.get('select', None))
+
+        # None request_mask means "everything"
+        if request_mask is None or (request_mask & DirectoryRequestMask.ZFS_ATTRS):
+            # Make sure this is actually ZFS before issuing FS ioctls
+            try:
+                self.get_zfs_attributes(str(path))
+            except Exception:
+                raise CallError(f'{path}: ZFS attributes are not supported.')
 
         file_type = None
         for filter_ in filters:
@@ -300,7 +349,7 @@ class FilesystemService(Service):
             # filter these here.
             filters.extend([['is_mountpoint', '=', True], ['name', '!=', IX_APPS_DIR_NAME]])
 
-        with DirectoryIterator(path, file_type=file_type) as d_iter:
+        with DirectoryIterator(path, file_type=file_type, request_mask=request_mask) as d_iter:
             return filter_list(d_iter, filters, options)
 
     @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])

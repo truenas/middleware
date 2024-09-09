@@ -36,6 +36,9 @@ class DirectoryRequestMask(enum.IntFlag):
     XATTR - list of extended attributes (requires listxattr call)
 
     ZFS_ATTRS - include ZFS attributes (requires fcntl call per file)
+
+    NOTE: this changes to this should also be reflected in API test
+    `test_listdir_request_mask.py`
     """
     ACL = enum.auto()
     CTLDIR = enum.auto()
@@ -245,9 +248,9 @@ class DirectoryIterator():
                     attr_mask = fget_zfs_file_attributes(fd)
                     zfs_attrs = zfs_attributes_dump(attr_mask)
                 except OSError as e:
-                    # non-ZFS filesystems will fail with ENOTTY
+                    # non-ZFS filesystems will fail with ENOTTY or EINVAL
                     # In this case we set `None` to indicate non-ZFS
-                    if e.errno != errno.ENOTTY:
+                    if e.errno not in (errno.ENOTTY, errno.EINVAL):
                         raise e from None
 
                     zfs_attrs = None
