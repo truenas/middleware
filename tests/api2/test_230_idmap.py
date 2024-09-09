@@ -35,4 +35,4 @@ def test_create_and_delete_idmap_certificate():
     }
     idmap_id = call('idmap.create', payload)['id']
 
-    results = call('idmap.delete', idmap_id)
+    call('idmap.delete', idmap_id)
