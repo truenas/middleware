@@ -13,6 +13,18 @@ def get_alert_by_id(alert_id):
     return next(filter(lambda alert: alert["id"] == alert_id, call("alert.list")), None)
 
 
+def wait_for_alert(timeout=120):
+    for _ in range(timeout):
+        for alert in call("alert.list"):
+            if (
+                alert["source"] == "VolumeStatus" and
+                alert["args"]["volume"] == pool_name and
+                alert["args"]["state"] == "DEGRADED"
+            ):
+                return alert["id"]
+        sleep(1)
+
+
 @pytest.fixture(scope="module", autouse=True)
 def degraded_pool_gptid():
     get_pool = call("pool.query", [["name", "=", pool_name]], {"get": True})
@@ -24,15 +36,10 @@ def degraded_pool_gptid():
 @pytest.fixture(scope="module")
 def alert_id(degraded_pool_gptid):
     call("alert.process_alerts")
-    while True:
-        for alert in call("alert.list"):
-            if (
-                alert["source"] == "VolumeStatus" and
-                alert["args"]["volume"] == pool_name and
-                alert["args"]["state"] == "DEGRADED"
-            ):
-                return alert["id"]
-        sleep(1)
+    result = wait_for_alert()
+    if result is None:
+        pytest.fail("Timed out while waiting for alert.")
+    return result
 
 
 def test_verify_the_pool_is_degraded(degraded_pool_gptid):
@@ -41,7 +48,6 @@ def test_verify_the_pool_is_degraded(degraded_pool_gptid):
     assert disk_status == "DEGRADED"
 
 
-@pytest.mark.timeout(120)
 def test_dismiss_alert(alert_id):
     call("alert.dismiss", alert_id)
     alert = get_alert_by_id(alert_id)
