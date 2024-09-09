@@ -20,6 +20,11 @@ def test_get_default_environment_and_make_new_one():
     call('bootenv.create', {'name': 'bootenv01', 'source': active_be_id})
     call('bootenv.query', [['name', '=', 'bootenv01']], {'get': True})
 
+    # activate it, check that it's pending activation, then activate old bootenv
+    call('bootenv.activate', 'bootenv01')
+    assert call('bootenv.query', [['name', '=', 'bootenv01']], {'get': True})['active'] == 'R'
+    call('bootenv.activate', active_be_id)
+    assert call('bootenv.query', [['name', '=', 'bootenv01']], {'get': True})['active'] == ''
 
 def test_change_boot_environment_name_and_attributes_then_delete():
     call('bootenv.update', 'bootenv01', {'name': 'bootenv03'})
