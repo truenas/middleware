@@ -21,7 +21,6 @@ def degraded_pool_gptid():
     return gptid
 
 
-@pytest.mark.timeout(120)
 @pytest.fixture(scope="module")
 def alert_id(degraded_pool_gptid):
     call("alert.process_alerts")
@@ -42,6 +41,7 @@ def test_verify_the_pool_is_degraded(degraded_pool_gptid):
     assert disk_status == "DEGRADED"
 
 
+@pytest.mark.timeout(120)
 def test_dismiss_alert(alert_id):
     call("alert.dismiss", alert_id)
     alert = get_alert_by_id(alert_id)
