@@ -300,7 +300,10 @@ class CertificateService(CRUDService):
             for key in ('key_length', 'key_type', 'ec_curve'):
                 data.pop(key, None)
 
+        add_to_trusted_store = data.pop('add_to_trusted_store', False)
         verrors = await self.validate_common_attributes(data, 'certificate_create')
+        if add_to_trusted_store and create_type in ('CERTIFICATE_CREATE_IMPORTED_CSR', 'CERTIFICATE_CREATE_CSR'):
+            verrors.add('certificate_create.add_to_trusted_store', 'Cannot add CSR to trusted store')
 
         if create_type == 'CERTIFICATE_CREATE_IMPORTED' and not load_certificate(data['certificate']):
             verrors.add('certificate_create.certificate', 'Unable to parse certificate')
@@ -332,6 +335,7 @@ class CertificateService(CRUDService):
                 'domains_authenticators', 'renew_days', 'add_to_trusted_store',
             ]
         }
+        data['add_to_trusted_store'] = add_to_trusted_store
 
         pk = await self.middleware.call(
             'datastore.insert',
