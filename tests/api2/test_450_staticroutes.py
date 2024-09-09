@@ -1,15 +1,5 @@
-#!/usr/bin/env python3
-# License: BSD
-
-
-import os
 import pytest
-import sys
-from pytest_dependency import depends
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import DELETE, GET, POST, SSH_TEST
-from auto_config import user, password
+from middlewared.test.integration.utils import call, ssh
 DESTINATION = '127.1.1.1'
 GATEWAY = '127.0.0.1'
 
@@ -19,45 +9,34 @@ def sr_dict():
     return {}
 
 
-def test_01_creating_staticroute(sr_dict):
-    results = POST('/staticroute/', {
+def test_creating_staticroute(sr_dict):
+    sr_dict['newroute'] = call('staticroute.create', {
         'destination': DESTINATION,
         'gateway': GATEWAY,
         'description': 'test route',
     })
-    assert results.status_code == 200, results.text
-    sr_dict['newroute'] = results.json()
 
 
-def test_02_check_staticroute_configured_using_api(sr_dict):
-    results = GET(f'/staticroute/?id={sr_dict["newroute"]["id"]}')
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert isinstance(data, list), data
-    assert len(data) == 1, data
-    assert DESTINATION in data[0]['destination'], data
-    assert data[0]['gateway'] == GATEWAY, data
+def test_check_staticroute_configured_using_api(sr_dict):
+    data = call('staticroute.query', [['id', '=', sr_dict['newroute']['id']]], {'get', '=', True})
+    assert DESTINATION in data['destination']
+    assert data['gateway'] == GATEWAY
 
 
-def test_03_checking_staticroute_configured_using_ssh(request):
-    results = SSH_TEST(f'netstat -4rn|grep -E ^{DESTINATION}', user, password)
-    assert results['result'] is True, results
-    assert results['stdout'].strip().split()[1] == GATEWAY, results
+def test_checking_staticroute_configured_using_ssh(request):
+    results = ssh(f'netstat -4rn|grep -E ^{DESTINATION}', complete_response=True)
+    assert results['result'] is True
+    assert results['stdout'].strip().split()[1] == GATEWAY
 
 
-def test_04_delete_staticroute(sr_dict):
-    results = DELETE(f'/staticroute/id/{sr_dict["newroute"]["id"]}/')
-    assert results.status_code == 200, results.text
+def test_delete_staticroute(sr_dict):
+    call('staticroute.delete', [['id', '=', sr_dict["newroute"]["id"]]])
 
 
-def test_05_check_staticroute_unconfigured_using_api(sr_dict):
-    results = GET(f'/staticroute/?destination={DESTINATION}')
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert isinstance(data, list), data
-    assert len(data) == 0, data
+def test_check_staticroute_unconfigured_using_api(sr_dict):
+    data = call('staticroute.query', [['destination', '=', DESTINATION]], {'get': True})
 
 
-def test_06_checking_staticroute_unconfigured_using_ssh(request):
-    results = SSH_TEST(f'netstat -4rn|grep -E ^{DESTINATION}', user, password)
-    assert results['result'] is False, results
+def test_checking_staticroute_unconfigured_using_ssh(request):
+    results = ssh(f'netstat -4rn|grep -E ^{DESTINATION}', complete_response=True)
+    assert results['result'] is False
