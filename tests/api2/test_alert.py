@@ -25,7 +25,7 @@ def wait_for_alert(timeout=120):
         sleep(1)
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def degraded_pool_gptid():
     get_pool = call("pool.query", [["name", "=", pool_name]], {"get": True})
     gptid = get_pool["topology"]["data"][0]["path"].replace(ID_PATH, "")
