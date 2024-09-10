@@ -1,14 +1,12 @@
+from middlewared.api import api_method
+from middlewared.api.current import GroupHasPasswordEnabledUserArgs, GroupHasPasswordEnabledUserResult
 from middlewared.plugins.account import unixhash_is_valid
-from middlewared.schema import accepts, Int, List
 from middlewared.service import filter_list, Service, private
 
 
 class GroupService(Service):
 
-    @accepts(
-        List("gids", items=[Int("gid")]),
-        List("exclude_user_ids", items=[Int("exclude_user_id")]),
-    )
+    @api_method(GroupHasPasswordEnabledUserArgs, GroupHasPasswordEnabledUserResult)
     async def has_password_enabled_user(self, gids, exclude_user_ids):
         """
         Checks whether at least one local user with a password is a member of any of the `group_ids`.

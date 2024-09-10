@@ -3,7 +3,7 @@ import pytest
 import stat
 
 from middlewared.utils.filesystem import stat_x as sx
-from middlewared.utils.filesystem.utils import timespec_convert
+from middlewared.utils.filesystem.utils import timespec_convert_float
 
 
 BASIC_STAT_ATTRS = [
@@ -39,11 +39,11 @@ def validate_stat(stat_prop, st1, st2):
         case 'GID':
             assert st1.st_gid == st2.stx_gid
         case 'ATIME':
-            assert st1.st_atime == timespec_convert(st2.stx_atime)
+            assert st1.st_atime == timespec_convert_float(st2.stx_atime)
         case 'MTIME':
-            assert st1.st_mtime == timespec_convert(st2.stx_mtime)
+            assert st1.st_mtime == timespec_convert_float(st2.stx_mtime)
         case 'CTIME':
-            assert st1.st_ctime == timespec_convert(st2.stx_ctime)
+            assert st1.st_ctime == timespec_convert_float(st2.stx_ctime)
         case 'INO':
             assert st1.st_ino == st2.stx_ino
         case 'DEV':

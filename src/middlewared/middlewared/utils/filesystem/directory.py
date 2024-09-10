@@ -16,7 +16,7 @@ from collections import namedtuple
 from .acl import acl_is_present
 from .attrs import fget_zfs_file_attributes, zfs_attributes_dump
 from .constants import FileType
-from .stat_x import statx_entry_impl
+from .stat_x import statx, statx_entry_impl, ATFlags, StructStatx
 from .utils import path_in_ctldir
 
 
@@ -56,7 +56,7 @@ ALL_ATTRS = (
 )
 
 dirent_struct = namedtuple('struct_dirent', [
-    'name', 'path', 'realpath', 'stat', 'acl', 'xattrs', 'zfs_attrs', 'is_in_ctldir'
+    'name', 'path', 'realpath', 'stat', 'etype', 'acl', 'xattrs', 'zfs_attrs', 'is_in_ctldir'
 ])
 
 
@@ -84,7 +84,7 @@ class DirectoryFd():
         self.__dir_fd = None
 
     @property
-    def fileno(self):
+    def fileno(self) -> int:
         return self.__dir_fd
 
 
@@ -132,6 +132,7 @@ class DirectoryIterator():
         self.__dir_fd = DirectoryFd(path, dir_fd)
         self.__file_type = FileType(file_type).name if file_type else None
         self.__path_iter = os.scandir(self.__dir_fd.fileno)
+        self.__stat = statx('', dir_fd=self.__dir_fd.fileno, flags=ATFlags.EMPTY_PATH.value)
 
         # Explicitly allow zero for request_mask
         self.__request_mask = request_mask if request_mask is not None else ALL_ATTRS
@@ -182,6 +183,7 @@ class DirectoryIterator():
             os.path.join(self.__path, dirent.name),
             realpath,
             st['st'],
+            st['etype'],
             acl,
             xattrs,
             zfs_attrs,
@@ -225,6 +227,12 @@ class DirectoryIterator():
             # `dirent` was most likely deleted while we were generating listing
             # There's not point in logging an error. Just keep moving on.
             return self.__next__()
+        except OSError as err:
+            if err.errno in (errno.ENXIO, errno.ENODEV):
+                # this can happen for broken symlinks
+                return self.__next__()
+
+            raise
 
         try:
             if self.__request_mask & int(DirectoryRequestMask.REALPATH):
@@ -268,7 +276,7 @@ class DirectoryIterator():
         return self.__return_fn(dirent, st, realpath, xattrs, acl, zfs_attrs, is_in_ctldir)
 
     @property
-    def dir_fd(self):
+    def dir_fd(self) -> int:
         """
         File descriptor for O_DIRECTORY open for target directory.
         """
@@ -278,10 +286,14 @@ class DirectoryIterator():
         return self.__dir_fd.fileno
 
     @property
-    def request_mask(self):
+    def request_mask(self) -> DirectoryRequestMask:
         return self.__request_mask
 
-    def close(self, force=False):
+    @property
+    def stat(self) -> StructStatx:
+        return self.__stat
+
+    def close(self, force=False) -> None:
         try:
             if self.__path_iter is not None:
                 self.__path_iter.close()

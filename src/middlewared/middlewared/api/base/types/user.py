@@ -4,7 +4,9 @@ from annotated_types import Ge, Le
 from pydantic.functional_validators import AfterValidator
 from typing_extensions import Annotated
 
-__all__ = ["LocalUsername", "RemoteUsername", "LocalUID"]
+from middlewared.utils.sid import sid_is_valid
+
+__all__ = ["LocalUsername", "RemoteUsername", "LocalUID", "LocalGID", "SID"]
 
 TRUENAS_IDMAP_DEFAULT_LOW = 90000001
 
@@ -45,6 +47,21 @@ def validate_remote_username(val: str) -> str:
     return validate_username(val, DEFAULT_VALID_CHARS + '\\', None, None)
 
 
+def validate_sid(value: str) -> str:
+    value = value.strip()
+    value = value.upper()
+
+    assert sid_is_valid(value), ('SID is malformed. See MS-DTYP Section 2.4 for SID type specifications. Typically '
+                                 'SIDs refer to existing objects on the local or remote server and so an appropriate '
+                                 'value should be queried prior to submitting to API endpoints.')
+
+    return value
+
+
 LocalUsername = Annotated[str, AfterValidator(validate_local_username)]
 RemoteUsername = Annotated[str, AfterValidator(validate_remote_username)]
 LocalUID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
+
+LocalGID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
+
+SID = Annotated[str, AfterValidator(validate_sid)]

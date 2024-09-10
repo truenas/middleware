@@ -1,11 +1,27 @@
+from typing import Literal
+
 from annotated_types import Ge, Le
-from pydantic import EmailStr
+from pydantic import EmailStr, Field
 from typing_extensions import Annotated
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LocalUsername, RemoteUsername,
-                                  LocalUID, LongString, NonEmptyString, Private, single_argument_result)
+                                  LocalUID, LongString, NonEmptyString, Private, single_argument_args,
+                                  single_argument_result)
 
-__all__ = ["UserEntry", "UserCreateArgs", "UserCreateResult", "UserUpdateArgs", "UserUpdateResult",
+__all__ = ["UserEntry",
+           "UserCreateArgs", "UserCreateResult",
+           "UserUpdateArgs", "UserUpdateResult",
+           "UserDeleteArgs", "UserDeleteResult",
+           "UserShellChoicesArgs", "UserShellChoicesResult",
+           "UserGetUserObjArgs", "UserGetUserObjResult",
+           "UserGetNextUidArgs", "UserGetNextUidResult",
+           "UserHasLocalAdministratorSetUpArgs", "UserHasLocalAdministratorSetUpResult",
+           "UserSetupLocalAdministratorArgs", "UserSetupLocalAdministratorResult",
+           "UserSetPasswordArgs", "UserSetPasswordResult",
+           "UserProvisioningUriArgs", "UserProvisioningUriResult",
+           "UserTwofactorConfigArgs", "UserTwofactorConfigResult",
+           "UserVerifyTwofactorTokenArgs", "UserVerifyTwofactorTokenResult",
+           "UserUnset2faSecretArgs", "UserUnset2faSecretResult",
            "UserRenew2faSecretArgs", "UserRenew2faSecretResult"]
 
 
@@ -87,6 +103,157 @@ class UserUpdateArgs(BaseModel):
 
 class UserUpdateResult(BaseModel):
     result: int
+
+
+class UserDeleteOptions(BaseModel):
+    delete_group: bool = True
+    "Deletes the user primary group if it is not being used by any other user."
+
+
+class UserDeleteArgs(BaseModel):
+    id: int
+    options: UserDeleteOptions = Field(default=UserDeleteOptions())
+
+
+class UserDeleteResult(BaseModel):
+    result: int
+
+
+class UserShellChoicesArgs(BaseModel):
+    group_ids: list[int] = []
+
+
+class UserShellChoicesResult(BaseModel):
+    result: dict = Field(examples=[
+        {
+            '/usr/bin/bash': 'bash',
+            '/usr/bin/rbash': 'rbash',
+            '/usr/bin/dash': 'dash',
+            '/usr/bin/sh': 'sh',
+            '/usr/bin/zsh': 'zsh',
+            '/usr/bin/tmux': 'tmux',
+            '/usr/sbin/nologin': 'nologin'
+        },
+    ])
+
+
+@single_argument_args("get_user_obj")
+class UserGetUserObjArgs(BaseModel):
+    username: str | None = None
+    uid: int | None = None
+    get_groups: bool = False
+    "retrieve group list for the specified user."
+    sid_info: bool = False
+    "retrieve SID and domain information for the user."
+
+
+@single_argument_result
+class UserGetUserObjResult(BaseModel):
+    pw_name: str
+    "name of the user"
+    pw_gecos: str
+    "full username or comment field"
+    pw_dir: str
+    "user home directory"
+    pw_shell: str
+    "user command line interpreter"
+    pw_uid: int
+    "numerical user id of the user"
+    pw_gid: int
+    "numerical group id for the user's primary group"
+    grouplist: list[int] | None
+    """
+    optional list of group ids for groups of which this account is a member. If `get_groups` is not specified,
+    this value will be null.
+    """
+    sid: str | None
+    "optional SID value for the account that is present if `sid_info` is specified in payload."
+    source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']
+    "the source for the user account."
+    local: bool
+    "boolean value indicating whether the account is local to TrueNAS or provided by a directory service."
+
+
+class UserGetNextUidArgs(BaseModel):
+    pass
+
+
+class UserGetNextUidResult(BaseModel):
+    result: int
+
+
+class UserHasLocalAdministratorSetUpArgs(BaseModel):
+    pass
+
+
+class UserHasLocalAdministratorSetUpResult(BaseModel):
+    result: bool
+
+
+class UserSetupLocalAdministratorEC2Options(BaseModel):
+    instance_id: NonEmptyString
+
+
+class UserSetupLocalAdministratorOptions(BaseModel):
+    ec2: UserSetupLocalAdministratorEC2Options | None = None
+
+
+class UserSetupLocalAdministratorArgs(BaseModel):
+    username: Literal['root', 'truenas_admin']
+    password: Private[str]
+    options: UserSetupLocalAdministratorOptions = Field(default=UserSetupLocalAdministratorOptions())
+
+
+class UserSetupLocalAdministratorResult(BaseModel):
+    result: None
+
+
+@single_argument_args("set_password_data")
+class UserSetPasswordArgs(BaseModel):
+    username: str
+    old_password: Private[str | None] = None
+    new_password: Private[NonEmptyString]
+
+
+class UserSetPasswordResult(BaseModel):
+    result: None
+
+
+class UserProvisioningUriArgs(BaseModel):
+    username: str
+
+
+class UserProvisioningUriResult(BaseModel):
+    result: str
+
+
+class UserTwofactorConfigArgs(BaseModel):
+    username: str
+
+
+@single_argument_result
+class UserTwofactorConfigResult(BaseModel):
+    provisioning_uri: str | None
+    secret_configured: bool
+    interval: int
+    otp_digits: int
+
+
+class UserVerifyTwofactorTokenArgs(BaseModel):
+    username: str
+    token: Private[str | None] = None
+
+
+class UserVerifyTwofactorTokenResult(BaseModel):
+    result: bool
+
+
+class UserUnset2faSecretArgs(BaseModel):
+    username: str
+
+
+class UserUnset2faSecretResult(BaseModel):
+    result: None
 
 
 class TwofactorOptions(BaseModel, metaclass=ForUpdateMetaclass):
