@@ -147,7 +147,7 @@ def parse_smart_selftest_results(data):
 def parse_current_smart_selftest(data):
     # ata
     if "ata_smart_self_test_log" in data:
-        if tests := data["ata_smart_self_test_log"].get("table"):
+        if tests := data["ata_smart_self_test_log"]["standard"].get("table"):
             if remaining := tests[0]["status"].get("remaining_percent"):
                 return {"progress": 100 - remaining}
 
