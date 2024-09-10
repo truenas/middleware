@@ -1,8 +1,3 @@
-import os
-import sys
-
-import pytest
-
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
