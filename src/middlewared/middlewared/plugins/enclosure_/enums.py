@@ -52,6 +52,7 @@ class JbodModels(Enum):
     ES24F = 'ES24F'
     ES60 = 'ES60'
     ES60G2 = 'ES60G2'
+    ES60G3 = 'ES60G3'
     ES102 = 'ES102'
     ES102G2 = 'ES102G2'
 
