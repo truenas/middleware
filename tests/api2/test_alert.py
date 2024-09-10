@@ -34,12 +34,11 @@ def degraded_pool_gptid():
 
 
 @pytest.fixture(scope="module")
-def alert_id(request, degraded_pool_gptid):
+def alert_id(degraded_pool_gptid):
     call("alert.process_alerts")
-    timeout = request.param if hasattr(request, "param") else 120
-    result = wait_for_alert(timeout)
+    result = wait_for_alert()
     if result is None:
-        pytest.fail(f"Timed out while waiting {timeout} seconds for alert.")
+        pytest.fail("Timed out while waiting for alert.")
     return result
 
 
