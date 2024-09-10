@@ -188,6 +188,9 @@ class Enclosure:
             case 'HGST_H4060-J':
                 self.model = JbodModels.ES60G2.value
                 self.controller = False
+            case 'WDC_UData60':
+                self.model = JbodModels.ES60G3.value
+                self.controller = False
             case 'HGST_H4102-J':
                 self.model = JbodModels.ES102.value
                 self.controller = False
@@ -609,6 +612,7 @@ class Enclosure:
             self.model in (
                 JbodModels.ES60.value,
                 JbodModels.ES60G2.value,
+                JbodModels.ES60G3.value,
             )
         ))
 
