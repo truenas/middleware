@@ -358,7 +358,7 @@ class TestSNMP:
             reset_systemd_svcs("snmpd snmp-agent")
 
             res = call('service.stop', 'snmp')
-            assert res is False
+            assert res is True
             res = call('service.start', 'snmp')
             assert res is True
             res = call('snmp.get_snmp_users')

@@ -11,7 +11,7 @@ import pytest
 from auto_config import pool_name
 from functions import POST, DELETE, wait_on_job
 from middlewared.test.integration.assets.account import user
-from middlewared.test.integration.utils import ssh
+from middlewared.test.integration.utils import call, ssh
 from protocols import SMB
 from samba import ntstatus, NTSTATUSError
 
@@ -187,5 +187,4 @@ def test_pool_dataset_unlock_smb(smb_user, toggle_attachments):
                                 pass
 
                         assert e.value.args[0] == ntstatus.NT_STATUS_BAD_NETWORK_NAME
-    results = POST("/service/stop/", {"service": "cifs"})
-    assert results.status_code == 200, results.text
+    assert call("service.stop", "cifs")
