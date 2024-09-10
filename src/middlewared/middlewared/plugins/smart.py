@@ -87,8 +87,8 @@ def parse_smart_selftest_results(data):
                     "failing_lba": lba,
                     "nsid": entry.get("nsid"),
                     "seg": entry.get("segment"),
-                    "sct": entry["status_code_type"],
-                    "code": entry["status_code"],
+                    "sct": entry.get("status_code_type"),
+                    "code": entry.get("status_code"),
                 }
 
                 if test["status_verbose"] == "Completed without error":
