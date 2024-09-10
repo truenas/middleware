@@ -98,12 +98,13 @@ def init_audit():
         call('audit.update', AUDIT_CONFIG.defaults)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope='class')
 def standby_user():
     """ HA system: Create a user on the BACKUP node
     This will generate a 'create' audit entry, yield,
     and on exit generate a 'delete' audit entry.
     """
+    user_id = None
     try:
         name = "StandbyUser" + PASSWD
         user_id = call('failover.call_remote', 'user.create', [{
@@ -116,7 +117,8 @@ def standby_user():
         }])
         yield name
     finally:
-        call('failover.call_remote', 'user.delete', [user_id])
+        if user_id is not None:
+            call('failover.call_remote', 'user.delete', [user_id])
 
 
 # =====================================================================
@@ -305,7 +307,9 @@ class TestAuditOps:
         ae_msg_ts = int(audit_entry['message_timestamp'])
         assert abs(ae_ts_ts - ae_msg_ts) < 2, f"$date='{ae_ts_ts}, message_timestamp={ae_msg_ts}"
 
-    @ha_test
+
+@ha_test
+class TestAuditOpsHA:
     def test_audit_ha_query(self, standby_user):
         name = standby_user
         remote_user = call('failover.call_remote', 'user.query', [[["username", "=", name]]])
@@ -329,3 +333,26 @@ class TestAuditOps:
         assert remote_audit_entry != []
         params = remote_audit_entry[0]['event_data']['params'][0]
         assert params['username'] == name
+
+    def test_audit_ha_export(self):
+        # for backend in ['CSV', 'JSON', 'YAML']:
+        report_path = call('audit.export', {'export_format': 'CSV'}, job=True)
+        # assert report_path.startswith('/audit/reports/root/')
+        # st = call('filesystem.stat', report_path)
+        # assert st['size'] != 0, str(st)
+
+        job_id, path = call(
+            "core.download", "audit.download_report",
+            [{"report_name": os.path.basename(report_path)}],
+            "report.csv"
+            # f"report.{backend.lower()}"
+        )
+        r = requests.get(f"{url()}{path}")
+        r.raise_for_status()
+        # assert len(r.content) == st['size']
+        # lines = 1
+        # for line in r.iter_content():
+        #     print(f"[MCG DEBUG] [{lines}] {line}")
+        #     lines += 1
+        #     if lines > 10:
+        #         break
