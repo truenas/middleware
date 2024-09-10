@@ -135,8 +135,8 @@ def test__parse_smart_selftest_results__nvmeprint__1():
             "failing_lba": None,
             "nsid": None,
             "seg": None,
-            "sct": "0x0",
-            "code": "0x00",
+            "sct": 0x0,
+            "code": 0x00,
         },
     ]
 
