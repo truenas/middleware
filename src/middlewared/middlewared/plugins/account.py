@@ -12,6 +12,7 @@ import wbclient
 from pathlib import Path
 from contextlib import suppress
 
+from dataclasses import asdict
 from middlewared.api import api_method
 from middlewared.api.current import *
 from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, returns, SID, Str
@@ -23,6 +24,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.utils.crypto import generate_nt_hash, sha512_crypt
 from middlewared.utils.directoryservices.constants import DSType, DSStatus
+from middlewared.utils.filesystem.copy import copytree, CopyTreeConfig
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.nss.nss_common import NssModule
 from middlewared.utils.privilege import credential_has_full_admin, privileges_group_mapping
@@ -756,17 +758,13 @@ class UserService(CRUDService):
         # Copy the home directory if it changed
         home_copy = False
         home_old = None
-        if (
-            has_home and
-            'home' in data and
-            data['home'] != user['home'] and
-            not data['home'].startswith(f'{user["home"]}/')
-        ):
-            if had_home:
-                home_copy = True
-                home_old = user['home']
+        if has_home and 'home' in data:
             if data.get('home_create', False):
                 data['home'] = os.path.join(data['home'], data.get('username') or user['username'])
+
+            if had_home and user['home'] != data['home']:
+                home_copy = True
+                home_old = user['home']
 
         # After this point user dict has values from data
         user.update(data)
@@ -1286,32 +1284,30 @@ class UserService(CRUDService):
 
     @private
     @job(lock=lambda args: f'copy_home_to_{args[1]}')
-    async def do_home_copy(self, job, home_old, home_new, username, new_mode, uid):
-        if home_old in DEFAULT_HOME_PATHS:
+    def do_home_copy(self, job, home_old, home_new, username, new_mode, uid):
+        if home_old in DEFAULT_HOME_PATH:
             return
 
+        # We need to set permission and strip ACL first before copying files
         if new_mode is not None:
-            perm_job = await self.middleware.call('filesystem.setperm', {
+            perm_job = self.middleware.call_sync('filesystem.setperm', {
                 'uid': uid,
                 'path': home_new,
                 'mode': new_mode,
                 'options': {'stripacl': True},
             })
         else:
-            current_mode = stat.S_IMODE((await self.middleware.call('filesystem.stat', home_old))['mode'])
-            perm_job = await self.middleware.call('filesystem.setperm', {
+            current_mode = stat.S_IMODE(self.middleware.call_sync('filesystem.stat', home_old)['mode'])
+            perm_job = self.middleware.call_sync('filesystem.setperm', {
                 'uid': uid,
                 'path': home_new,
                 'mode': f'{current_mode:03o}',
                 'options': {'stripacl': True},
             })
 
-        await perm_job.wait()
+        perm_job.wait_sync()
 
-        command = f"/bin/cp -a {shlex.quote(home_old) + '/' + '.'} {shlex.quote(home_new + '/')}"
-        do_copy = await run(["/usr/bin/su", "-", username, "-c", command], check=False)
-        if do_copy.returncode != 0:
-            raise CallError(f"Failed to copy homedir [{home_old}] to [{home_new}]: {do_copy.stderr.decode()}")
+        return asdict(copytree(home_old, home_new, CopyTreeConfig(exist_ok=True, job=job)))
 
     @private
     async def common_validation(self, verrors, data, schema, group_ids, old=None):
