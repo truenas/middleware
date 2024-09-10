@@ -3,11 +3,9 @@ import pyotp
 
 from middlewared.api import api_method
 from middlewared.api.current import *
-from middlewared.schema import accepts, Bool, Dict, Int, Password, Ref, returns, Str
 from middlewared.service import CallError, no_authz_required, pass_app, private, Service
 from middlewared.plugins.system.product import PRODUCT_NAME
 from middlewared.utils.privilege import app_credential_full_admin_or_user
-from middlewared.validators import Range
 
 
 class UserService(Service):
@@ -23,8 +21,7 @@ class UserService(Service):
             'iXsystems'
         )
 
-    @accepts(Str('username'))
-    @returns(Str(title='Provisioning URI'))
+    @api_method(UserProvisioningUriArgs, UserProvisioningUriResult)
     async def provisioning_uri(self, username):
         """
         Returns the provisioning URI for the OTP for `username`. This can then be encoded in a QR code and used
@@ -39,14 +36,7 @@ class UserService(Service):
 
         return await self.provisioning_uri_internal(username, user_twofactor_config)
 
-    @accepts(Str('username'))
-    @returns(Dict(
-        'user_twofactor_config',
-        Str('provisioning_uri', null=True),
-        Bool('secret_configured'),
-        Int('interval', validators=[Range(min_=5)]),
-        Int('otp_digits', validators=[Range(min_=6, max_=8)]),
-    ))
+    @api_method(UserTwofactorConfigArgs, UserTwofactorConfigResult)
     async def twofactor_config(self, username):
         """
         Returns two-factor authentication configuration settings for specified `username`.
@@ -67,8 +57,7 @@ class UserService(Service):
             'otp_digits': user_twofactor_config['otp_digits'],
         }
 
-    @accepts(Str('username'), Password('token', null=True))
-    @returns(Bool('token_verified'))
+    @api_method(UserVerifyTwofactorTokenArgs, UserVerifyTwofactorTokenResult)
     def verify_twofactor_token(self, username, token):
         """
         Returns boolean true if provided `token` is successfully authenticated for `username`.
@@ -102,8 +91,8 @@ class UserService(Service):
 
         return await self.middleware.call('user.query', [['username', '=', user['pw_name']]], {'get': True})
 
-    @accepts(Str('username'), audit='Unset two-factor authentication secret:', audit_extended=lambda username: username)
-    @returns()
+    @api_method(UserUnset2faSecretArgs, UserUnset2faSecretResult,
+                audit='Unset two-factor authentication secret:', audit_extended=lambda username: username)
     async def unset_2fa_secret(self, username):
         """
         Unset two-factor authentication secret for `username`.
