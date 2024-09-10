@@ -1,17 +1,9 @@
-import os
-import sys
-
 import pytest
-from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
-sys.path.append(os.getcwd())
-from functions import DELETE, POST, PUT
-
 REDACTED_SECRET = '********'
-
 
 @pytest.fixture(scope='module')
 def nfs_audit_dataset(request):
@@ -22,8 +14,7 @@ def nfs_audit_dataset(request):
             pass
 
 
-@pytest.mark.parametrize('api', ['ws', 'rest'])
-def test_nfs_config_audit(api):
+def test_nfs_config_audit():
     '''
     Test the auditing of NFS configuration changes
     '''
@@ -42,13 +33,7 @@ def test_nfs_config_audit(api):
             'params': [payload],
             'description': 'Update NFS configuration',
         }]):
-            if api == 'ws':
-                call('nfs.update', payload)
-            elif api == 'rest':
-                result = PUT('/nfs/', payload)
-                assert result.status_code == 200, result.text
-            else:
-                raise ValueError(api)
+            call('nfs.update', payload)
     finally:
         # Restore initial state
         restore_payload = {
@@ -56,17 +41,10 @@ def test_nfs_config_audit(api):
             'mountd_port': initial_nfs_config['mountd_port'],
             'protocols': initial_nfs_config['protocols']
         }
-        if api == 'ws':
-            call('nfs.update', restore_payload)
-        elif api == 'rest':
-            result = PUT('/nfs/', restore_payload)
-            assert result.status_code == 200, result.text
-        else:
-            raise ValueError(api)
+        call('nfs.update', restore_payload)
 
 
-@pytest.mark.parametrize('api', ['ws', 'rest'])
-def test_nfs_share_audit(api, nfs_audit_dataset):
+def test_nfs_share_audit(nfs_audit_dataset):
     '''
     Test the auditing of NFS share operations
     '''
@@ -83,14 +61,7 @@ def test_nfs_share_audit(api, nfs_audit_dataset):
             'params': [payload],
             'description': f'NFS share create {nfs_export_path}',
         }]):
-            if api == 'ws':
-                share_config = call('sharing.nfs.create', payload)
-            elif api == 'rest':
-                results = POST("/sharing/nfs/", payload)
-                assert results.status_code == 200, results.text
-                share_config = results.json()
-            else:
-                raise ValueError(api)
+            share_config = call('sharing.nfs.create', payload)
         # UPDATE
         payload = {
             "security": []
@@ -103,14 +74,7 @@ def test_nfs_share_audit(api, nfs_audit_dataset):
             ],
             'description': f'NFS share update {nfs_export_path}',
         }]):
-            if api == 'ws':
-                share_config = call('sharing.nfs.update', share_config['id'], payload)
-            elif api == 'rest':
-                results = PUT(f"/sharing/nfs/id/{share_config['id']}/", payload)
-                assert results.status_code == 200, results.text
-                share_config = results.json()
-            else:
-                raise ValueError(api)
+            share_config = call('sharing.nfs.update', share_config['id'], payload)
     finally:
         if share_config is not None:
             # DELETE
@@ -120,10 +84,4 @@ def test_nfs_share_audit(api, nfs_audit_dataset):
                 'params': [id_],
                 'description': f'NFS share delete {nfs_export_path}',
             }]):
-                if api == 'ws':
-                    call('sharing.nfs.delete', id_)
-                elif api == 'rest':
-                    result = DELETE(f'/sharing/nfs/id/{id_}')
-                    assert result.status_code == 200, result.text
-                else:
-                    raise ValueError(api)
+                call('sharing.nfs.delete', id_)
