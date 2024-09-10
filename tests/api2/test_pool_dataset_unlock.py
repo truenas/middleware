@@ -2,8 +2,9 @@ import contextlib
 
 import pytest
 
-from auto_config import pool_name
 from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, ssh
 from protocols import SMB
 from samba import ntstatus, NTSTATUSError
@@ -24,35 +25,6 @@ def passphrase_encryption():
         'encryption': True,
         'inherit_encryption': False,
     }
-
-
-@contextlib.contextmanager
-def dataset(name, options=None):
-    assert '/' not in name
-
-    dataset = f'{pool_name}/{name}'
-    call('pool.dataset.create', {'name': dataset, **(options or {})})
-    call('filesystem.setperm', {'path': f'/mnt/{dataset}', 'mode': '777'}, job=True)
-
-    try:
-        yield dataset
-    finally:
-        assert call('pool.dataset.delete', dataset)
-
-
-@contextlib.contextmanager
-def smb_share(name, path, options=None):
-    id = call('sharing.smb.create', {
-        'name': name,
-        'path': path,
-        'guestok': True,
-        **(options or {}),
-    })['id']
-    try:
-        yield id
-    finally:
-        assert call('sharing.smb.delete', id)
-
 
 def lock_dataset(name):
     payload = {
@@ -103,11 +75,11 @@ def smb_user():
 def test_pool_dataset_unlock_smb(smb_user, toggle_attachments):
     with (
         # Prepare test SMB share
-        dataset('normal') as normal,
-        smb_share('normal', f'/mnt/{normal}'),
+        dataset('normal', mode='777') as normal,
+        smb_share(f'/mnt/{normal}', 'normal', {'guestok': True}),
         # Create an encrypted SMB share, unlocking which might lead to SMB service interruption
-        dataset('encrypted', passphrase_encryption()) as encrypted,
-        smb_share('encrypted', f'/mnt/{encrypted}')
+        dataset('encrypted', passphrase_encryption(), mode='777') as encrypted,
+        smb_share(f'/mnt/{encrypted}', 'encrypted', {'guestok': True})
     ):
         ssh(f'touch /mnt/{encrypted}/secret')
         assert call('service.start', 'cifs')
