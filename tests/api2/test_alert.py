@@ -70,5 +70,6 @@ def test_clear_the_pool_degradation(degraded_pool_gptid):
 
 @pytest.mark.timeout(120)
 def test_wait_for_the_alert_to_disappear(alert_id):
+    call("alert.process_alerts")
     while get_alert_by_id(alert_id) is not None: 
         sleep(1)
