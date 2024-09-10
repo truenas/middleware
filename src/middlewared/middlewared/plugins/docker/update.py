@@ -83,6 +83,10 @@ class DockerService(ConfigService):
             )
 
         if old_config != config:
+            if config['pool'] != old_config['pool']:
+                # We want to clear upgrade alerts for apps at this point
+                await self.middleware.call('app.clear_upgrade_alerts_for_all')
+
             if any(config[k] != old_config[k] for k in ('pool', 'address_pools')):
                 job.set_progress(20, 'Stopping Docker service')
                 try:
