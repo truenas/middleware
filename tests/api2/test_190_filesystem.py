@@ -152,9 +152,13 @@ def test_07_test_filesystem_stat_filetype(request):
             assert statout['is_ctldir']
 
         assert call('filesystem.stat', f'{path}/.zfs/snapshot/{snap_name}')['is_ctldir']
-        assert all(dirent['is_ctldir'] for dirent in call('filesystem.listdir', f'{path}/.zfs/snapshot'))
+        assert all(dirent['is_ctldir'] for dirent in call(
+            'filesystem.listdir', f'{path}/.zfs/snapshot', [], {'select': ['name', 'is_ctldir']}
+        ))
         assert call('filesystem.stat', f'{path}/.zfs/snapshot')['is_ctldir']
-        assert all(dirent['is_ctldir'] for dirent in call('filesystem.listdir', f'{path}/.zfs'))
+        assert all(dirent['is_ctldir'] for dirent in call(
+            'filesystem.listdir', f'{path}/.zfs', [], {'select': ['name', 'is_ctldir']}
+        ))
         assert call('filesystem.stat', f'{path}/.zfs')['is_ctldir']
 
 

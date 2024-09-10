@@ -14,7 +14,7 @@ class CallException(ErrnoMixin, Exception):
 
 
 class CallError(CallException):
-    def __init__(self, errmsg: str, errno: int=errno.EFAULT, extra=None):
+    def __init__(self, errmsg: str, errno: int = errno.EFAULT, extra=None):
         self.errmsg = errmsg
         self.errno = errno
         self.extra = extra
@@ -30,7 +30,7 @@ class ValidationError(CallException):
     attribute of a middleware method is invalid/not allowed.
     """
 
-    def __init__(self, attribute, errmsg, errno: int=errno.EINVAL):
+    def __init__(self, attribute, errmsg, errno: int = errno.EINVAL):
         self.attribute = attribute
         self.errmsg = errmsg
         self.errno = errno
@@ -53,11 +53,11 @@ class ValidationErrors(CallException):
     CallException with a collection of ValidationError
     """
 
-    def __init__(self, errors: typing.List[ValidationError]=None):
+    def __init__(self, errors: typing.List[ValidationError] = None):
         self.errors = errors or []
         super().__init__(self.errors)
 
-    def add(self, attribute, errmsg: str, errno: int=errno.EINVAL):
+    def add(self, attribute, errmsg: str, errno: int = errno.EINVAL):
         self.errors.append(ValidationError(attribute, errmsg, errno))
 
     def add_validation_error(self, validation_error: ValidationError):

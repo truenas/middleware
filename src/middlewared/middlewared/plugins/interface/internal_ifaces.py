@@ -20,4 +20,4 @@ class InterfaceService(Service):
             # can be obtained from platform team.
             result.append('eno1')
 
-        return result
+        return result + await self.middleware.call('docker.network.interfaces_mapping')

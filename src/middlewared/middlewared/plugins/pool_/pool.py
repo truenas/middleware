@@ -591,6 +591,7 @@ class PoolService(CRUDService):
             'acltype': 'posix',
             'compression': 'lz4',
             'aclinherit': 'passthrough',
+            'xattr': 'sa',
             'mountpoint': f'/{data["name"]}',
             **encryption_dict
         }

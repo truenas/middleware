@@ -1,11 +1,13 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Str, ValidationErrors
 from middlewared.service import CallError, ConfigService, job, private, returns
 from middlewared.utils.zfs import query_imported_fast_impl
+from middlewared.validators import Range
 
 from .state_utils import Status
 from .utils import applications_ds_name
+from .validation_utils import validate_address_pools
 
 
 class DockerModel(sa.Model):
@@ -15,6 +17,10 @@ class DockerModel(sa.Model):
     pool = sa.Column(sa.String(255), default=None, nullable=True)
     enable_image_updates = sa.Column(sa.Boolean(), default=True)
     nvidia = sa.Column(sa.Boolean(), default=False)
+    address_pools = sa.Column(sa.JSON(list), default=[
+        {'base': '172.30.0.0/16', 'size': 27},
+        {'base': '172.31.0.0/16', 'size': 27}
+    ])
 
 
 class DockerService(ConfigService):
@@ -32,6 +38,13 @@ class DockerService(ConfigService):
         Str('dataset', required=True),
         Str('pool', required=True, null=True),
         Bool('nvidia', required=True),
+        List('address_pools', items=[
+             Dict(
+                 'address_pool',
+                 IPAddr('base', cidr=True),
+                 Int('size', validators=[Range(min_=1, max_=32)])
+             )
+        ]),
         update=True,
     )
 
@@ -64,8 +77,17 @@ class DockerService(ConfigService):
 
         verrors.check()
 
+        if config['address_pools'] != old_config['address_pools']:
+            validate_address_pools(
+                await self.middleware.call('interface.ip_in_use', {'static': True}), config['address_pools']
+            )
+
         if old_config != config:
             if config['pool'] != old_config['pool']:
+                # We want to clear upgrade alerts for apps at this point
+                await self.middleware.call('app.clear_upgrade_alerts_for_all')
+
+            if any(config[k] != old_config[k] for k in ('pool', 'address_pools')):
                 job.set_progress(20, 'Stopping Docker service')
                 try:
                     await self.middleware.call('service.stop', 'docker')
@@ -79,17 +101,28 @@ class DockerService(ConfigService):
             if config['pool'] != old_config['pool']:
                 job.set_progress(60, 'Applying requested configuration')
                 await self.middleware.call('docker.setup.status_change')
+            elif config['pool'] and config['address_pools'] != old_config['address_pools']:
+                job.set_progress(60, 'Starting docker')
+                await self.middleware.call('service.start', 'docker')
 
             if not old_config['nvidia'] and config['nvidia']:
                 await (
                     await self.middleware.call(
                         'nvidia.install',
                         job_on_progress_cb=lambda encoded: job.set_progress(
-                            80 + int(encoded['progress']['percent'] * 0.2),
+                            70 + int(encoded['progress']['percent'] * 0.2),
                             encoded['progress']['description'],
                         )
                     )
                 ).wait(raise_error=True)
+
+            if config['pool'] and config['address_pools'] != old_config['address_pools']:
+                job.set_progress(95, 'Initiating redeployment of applications to apply new address pools changes')
+                await self.middleware.call(
+                    'core.bulk', 'app.redeploy', [
+                        [app['name']] for app in await self.middleware.call('app.query', [['state', '!=', 'STOPPED']])
+                    ]
+                )
 
         job.set_progress(100, 'Requested configuration applied')
         return await self.config()

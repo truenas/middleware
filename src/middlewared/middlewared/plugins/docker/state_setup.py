@@ -6,10 +6,10 @@ import uuid
 from datetime import datetime
 
 from middlewared.service import CallError, private, Service
+from middlewared.utils.interface import wait_for_default_interface_link_state_up
 
 from .state_utils import (
-    DatasetDefaults, DOCKER_DATASET_NAME, docker_datasets, IX_APPS_MOUNT_PATH, IX_APPS_DIR_NAME,
-    missing_required_datasets,
+    DatasetDefaults, DOCKER_DATASET_NAME, docker_datasets, IX_APPS_MOUNT_PATH, missing_required_datasets,
 )
 
 
@@ -50,6 +50,18 @@ class DockerSetupService(Service):
                 errno=CallError.EDATASETISLOCKED,
             )
 
+        # What we want to validate now is that the interface on default route is up and running
+        # This is problematic for bridge interfaces which can or cannot come up in time
+        await self.validate_interfaces()
+
+    @private
+    async def validate_interfaces(self):
+        default_iface, success = await self.middleware.run_in_thread(wait_for_default_interface_link_state_up)
+        if default_iface is None:
+            raise CallError('Unable to determine default interface')
+        elif not success:
+            raise CallError(f'Default interface {default_iface!r} is not in active state')
+
     @private
     async def status_change(self):
         config = await self.middleware.call('docker.config')
@@ -59,6 +71,7 @@ class DockerSetupService(Service):
 
         await self.create_update_docker_datasets(config['dataset'])
         await self.middleware.call('docker.state.start_service')
+        self.middleware.create_task(self.middleware.call('docker.state.periodic_check'))
 
     @private
     def move_conflicting_dir(self, ds_name):

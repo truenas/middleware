@@ -49,6 +49,7 @@ CERT_ENTRY = Dict(
     Int('lifetime', null=True),
     Int('serial', null=True),
     Int('key_length', null=True),
+    Bool('add_to_trusted_store', default=False),
     Bool('chain', null=True),
     Bool('CA_type_existing'),
     Bool('CA_type_internal'),
@@ -68,5 +69,4 @@ CERT_ENTRY = Dict(
 def get_ca_result_entry():
     entry = copy.deepcopy(CERT_ENTRY)
     entry.name = 'certificateauthority_entry'
-    entry.attrs['add_to_trusted_store'] = Bool('add_to_trusted_store')
     return entry
