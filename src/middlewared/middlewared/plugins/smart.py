@@ -47,7 +47,7 @@ def parse_smart_selftest_results(data):
 
                 # remaining_percent is in the dict only if the test is in progress (status value & 0x0f)
                 if remaining := entry["status"]["value"] & 0x0f:
-                    remaining = entry["status"]["remaining_percent"]
+                    remaining = entry["status"]["remaining_percent"] / 100
 
                 test = {
                     "num": index,
