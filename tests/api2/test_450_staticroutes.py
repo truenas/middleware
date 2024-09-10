@@ -39,5 +39,5 @@ def test_check_staticroute_unconfigured_using_api(sr_dict):
 
 
 def test_checking_staticroute_unconfigured_using_ssh(request):
-    results = ssh(f'netstat -4rn|grep -E ^{DESTINATION}', complete_response=True)
+    results = ssh(f'netstat -4rn|grep -E ^{DESTINATION}', complete_response=True, check=False)
     assert results['result'] is False
