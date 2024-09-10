@@ -1,10 +1,14 @@
 import itertools
+import logging
 import typing
 
 from middlewared.service_exception import CallError
 
 from .ix_apps.lifecycle import get_rendered_templates_of_app
 from .utils import PROJECT_PREFIX, run
+
+
+logger = logging.getLogger('app_lifecycle')
 
 
 def compose_action(
@@ -49,4 +53,7 @@ def compose_action(
     # TODO: We will likely have a configurable timeout on this end
     cp = run(['docker', 'compose'] + compose_files + args, timeout=1200)
     if cp.returncode != 0:
-        raise CallError(f'Failed {action!r} action for {app_name!r} app: {cp.stderr}')
+        logger.error('Failed %r action for %r app: %s', action, app_name, cp.stderr)
+        raise CallError(
+            f'Failed {action!r} action for {app_name!r} app, please check /var/log/app_lifecycle.log for more details'
+        )
