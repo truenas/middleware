@@ -102,10 +102,22 @@ def test_delete_group_audit():
     }) as g:
         with expect_audit_method_calls([{
             "method": "group.delete",
-            "params": [g["id"], {}],
+            "params": [g["id"]],
             "description": "Delete group group2",
         }]):
-            call("group.delete", g["id"], {})
+            call("group.delete", g["id"])
+
+
+def test_delete_group_audit_delete_users():
+    with group({
+        "name": "group2",
+    }) as g:
+        with expect_audit_method_calls([{
+            "method": "group.delete",
+            "params": [g["id"], {"delete_users": True}],
+            "description": "Delete group group2 and all users that have this group as their primary group",
+        }]):
+            call("group.delete", g["id"], {"delete_users": True})
 
 
 def test_update_account_using_api_key():

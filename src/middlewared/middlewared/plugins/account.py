@@ -1832,7 +1832,8 @@ class GroupService(CRUDService):
             )
 
         group = await self.get_instance(pk)
-        audit_callback(group['name'] + (' and all its users' if options['delete_users'] else ''))
+        audit_callback(group['name'] + (' and all users that have this group as their primary group'
+                                        if options['delete_users'] else ''))
 
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
