@@ -69,6 +69,24 @@ def get_zfs(data_type, key, zfs_config):
     return types[data_type][key]
 
 
+def check_audit_download(report_path, report_type, tag=None):
+    """ Download audit DB (root user)
+    If requested, assert the tag is present
+    INPUT: report_type ['CSV'|'JSON'|'YAML']
+    RETURN: lenght of content (bytes)
+    """
+    job_id, url_path = call(
+        "core.download", "audit.download_report",
+        [{"report_name": os.path.basename(report_path)}],
+        f"report.{report_type.lower()}"
+    )
+    r = requests.get(f"{url()}{url_path}")
+    r.raise_for_status()
+    if tag is not None:
+        assert f"{tag}" in r.text
+    return len(r.content)
+
+
 @pytest.fixture(scope='class')
 def initialize_for_smb_tests():
     with dataset('audit-test-basic', data={'share_type': 'SMB'}) as ds:
@@ -266,14 +284,8 @@ class TestAuditOps:
             st = call('filesystem.stat', report_path)
             assert st['size'] != 0, str(st)
 
-            job_id, path = call(
-                "core.download", "audit.download_report",
-                [{"report_name": os.path.basename(report_path)}],
-                f"report.{backend.lower()}"
-            )
-            r = requests.get(f"{url()}{path}")
-            r.raise_for_status()
-            assert len(r.content) == st['size']
+            content_len = check_audit_download(report_path, backend)
+            assert content_len == st['size']
 
     def test_audit_export_nonroot(self):
         with unprivileged_user_client(roles=['SYSTEM_AUDIT_READ', 'FILESYSTEM_ATTRS_READ']) as c:
@@ -286,6 +298,7 @@ class TestAuditOps:
                 st = c.call('filesystem.stat', report_path)
                 assert st['size'] != 0, str(st)
 
+                # Make the call as the client
                 job_id, path = c.call(
                     "core.download", "audit.download_report",
                     [{"report_name": os.path.basename(report_path)}],
@@ -334,25 +347,19 @@ class TestAuditOpsHA:
         params = remote_audit_entry[0]['event_data']['params'][0]
         assert params['username'] == name
 
-    def test_audit_ha_export(self):
-        # for backend in ['CSV', 'JSON', 'YAML']:
-        report_path = call('audit.export', {'export_format': 'CSV'}, job=True)
-        # assert report_path.startswith('/audit/reports/root/')
-        # st = call('filesystem.stat', report_path)
-        # assert st['size'] != 0, str(st)
+    def test_audit_ha_export(self, standby_user):
+        """
+        Confirm we can download 'Active' and 'Standby' audit DB.
+        With a user created on the 'Standby' controller download the
+        audit DB from both controllers and confirm the user create is
+        in the 'Standby' audit DB and not in the 'Active' audit DB.
+        """
+        report_path_active = call('audit.export', {'export_format': 'CSV', 'controller': 'MASTER'}, job=True)
+        report_path_standby = call('audit.export', {'export_format': 'CSV', 'controller': 'BACKUP'}, job=True)
 
-        job_id, path = call(
-            "core.download", "audit.download_report",
-            [{"report_name": os.path.basename(report_path)}],
-            "report.csv"
-            # f"report.{backend.lower()}"
-        )
-        r = requests.get(f"{url()}{path}")
-        r.raise_for_status()
-        # assert len(r.content) == st['size']
-        # lines = 1
-        # for line in r.iter_content():
-        #     print(f"[MCG DEBUG] [{lines}] {line}")
-        #     lines += 1
-        #     if lines > 10:
-        #         break
+        # Confirm entry NOT in active controller audit DB
+        with pytest.raises(AssertionError):
+            check_audit_download(report_path_active, 'CSV', f"Create user {standby_user}")
+
+        # Confirm entry IS in standby controller audit DB
+        check_audit_download(report_path_standby, 'CSV', f"Create user {standby_user}")
