@@ -172,7 +172,7 @@ def test__parse_smart_selftest_results__scsiprint__1():
 @pytest.mark.parametrize("stdout,result", [
     # ataprint.cpp
     (
-        textwrap.dedent("""\
+        json.loads("""\
 {
     "ata_smart_self_test_log": {
         "standard": {
@@ -202,7 +202,7 @@ def test__parse_smart_selftest_results__scsiprint__1():
     ),
     # nvmeprint.cpp
     (
-        textwrap.dedent("""\
+        json.loads("""\
 {
     "nvme_self_test_log": {
         "current_self_test_completion_percent": 3
@@ -213,11 +213,11 @@ def test__parse_smart_selftest_results__scsiprint__1():
     ),
     # scsiprint.spp
     (
-        '{"junkjson":true}',
+        json.loads('{"junkjson":true}'),
         None,
     ),
     (
-        "{'self_test_in_progress':true}",
+        json.loads("{'self_test_in_progress':true}"),
         {"progress": 0},
     )
 ])
