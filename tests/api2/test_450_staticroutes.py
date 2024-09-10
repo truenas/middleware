@@ -35,7 +35,7 @@ def test_delete_staticroute(sr_dict):
 
 
 def test_check_staticroute_unconfigured_using_api(sr_dict):
-    call('staticroute.query', [['destination', '=', DESTINATION]])
+    assert call('staticroute.query', [['destination', '=', DESTINATION]]) == []
 
 
 def test_checking_staticroute_unconfigured_using_ssh(request):
