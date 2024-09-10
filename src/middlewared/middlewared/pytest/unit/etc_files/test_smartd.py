@@ -22,7 +22,7 @@ async def test__ensure_smart_enabled__smart_error():
 @pytest.mark.asyncio
 async def test__ensure_smart_enabled__smart_enabled():
     with patch("middlewared.etc_files.smartd.smartctl") as run:
-        run.return_value = Mock(stdout='{"smart_support": {"available": false}}')
+        run.return_value = Mock(stdout='{"smart_support": {"available": true}}')
 
         assert await ensure_smart_enabled(["/dev/ada0"])
 

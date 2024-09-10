@@ -24,7 +24,7 @@ async def ensure_smart_enabled(args):
     if any(arg.startswith("/dev/nvme") for arg in args):
         return True
 
-    p = await smartctl(args + ["-i", "--json=c"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
+    p = await smartctl(args + ["-i", "--json=c"], check=False, stderr=subprocess.STDOUT, encoding="utf8", errors="ignore")
     pjson = json.loads(p.stdout)
     if not pjson["smart_support"]["available"]:
         logger.debug("SMART is not supported on %r", args)
@@ -33,7 +33,7 @@ async def ensure_smart_enabled(args):
     if pjson["smart_support"]["enabled"]:
         return True
 
-    p = await smartctl(args + ["-s", "on"], stderr=subprocess.STDOUT, check=False)
+    p = await smartctl(args + ["-s", "on"], check=False, stderr=subprocess.STDOUT)
     if p.returncode == 0:
         return True
     else:
