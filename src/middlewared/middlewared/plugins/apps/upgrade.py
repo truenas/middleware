@@ -96,7 +96,13 @@ class AppService(Service):
             )
 
         job.set_progress(100, 'Upgraded app successfully')
-        return self.middleware.call_sync('app.get_instance', app_name)
+        app = self.middleware.call_sync('app.get_instance', app_name)
+        if app['upgrade_available'] is False:
+            # We have this conditional for the case if user chose not to upgrade to latest version
+            # and jump to some intermediate version which is not latest
+            self.middleware.call_sync('alert.oneshot_delete', 'AppUpdate', app_name)
+
+        return app
 
     @accepts(
         Str('app_name'),
@@ -168,3 +174,16 @@ class AppService(Service):
             'versions': app_details['versions'],
             'latest_version': app_details['versions'][get_latest_version_from_app_versions(app_details['versions'])],
         }
+
+    @private
+    async def clear_upgrade_alerts_for_all(self):
+        for app in await self.middleware.call('app.query'):
+            await self.middleware.call('alert.oneshot_delete', 'AppUpdate', app['id'])
+
+    @private
+    async def check_upgrade_alerts(self):
+        for app in await self.middleware.call('app.query'):
+            if app['upgrade_available']:
+                await self.middleware.call('alert.oneshot_create', 'AppUpdate', {'name': app['id']})
+            else:
+                await self.middleware.call('alert.oneshot_delete', 'AppUpdate', app['id'])

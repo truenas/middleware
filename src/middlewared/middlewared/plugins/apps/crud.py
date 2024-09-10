@@ -18,6 +18,7 @@ from .ix_apps.metadata import update_app_metadata, update_app_metadata_for_porta
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
+from .ix_apps.utils import AppState
 from .version_utils import get_latest_version_from_app_versions
 
 
@@ -33,7 +34,7 @@ class AppService(CRUDService):
         'app_entry',
         Str('name'),
         Str('id'),
-        Str('state', enum=['STOPPED', 'DEPLOYING', 'RUNNING']),
+        Str('state', enum=[state.value for state in AppState]),
         Bool('upgrade_available'),
         Str('human_version'),
         Str('version'),
@@ -336,16 +337,18 @@ class AppService(CRUDService):
             app_name, app_config['version'], 'down', remove_orphans=True,
             remove_volumes=True, remove_images=options['remove_images'],
         )
-        try:
-            job.set_progress(80, 'Cleaning up resources')
-            shutil.rmtree(get_installed_app_path(app_name))
-            if options['remove_ix_volumes'] and (apps_volume_ds := self.get_app_volume_ds(app_name)):
-                self.middleware.call_sync('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
-        finally:
-            self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+        # Remove app from metadata first as if someone tries to query filesystem info of the app
+        # where the app resources have been nuked from filesystem, it will error out
+        self.middleware.call_sync('app.metadata.generate', [app_name]).wait_sync(raise_error=True)
+        job.set_progress(80, 'Cleaning up resources')
+        shutil.rmtree(get_installed_app_path(app_name))
+        if options['remove_ix_volumes'] and (apps_volume_ds := self.get_app_volume_ds(app_name)):
+            self.middleware.call_sync('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
 
         if options.get('send_event', True):
             self.middleware.send_event('app.query', 'REMOVED', id=app_name)
+
+        self.middleware.call_sync('alert.oneshot_delete', 'AppUpdate', app_name)
         job.set_progress(100, f'Deleted {app_name!r} app')
         return True
 

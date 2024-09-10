@@ -3,7 +3,9 @@ from middlewared.service import private, Service
 
 from middlewared.utils.gpu import get_nvidia_gpus
 
+from .ix_apps.utils import ContainerState
 from .resources_utils import get_normalized_gpu_choices
+from .utils import IX_APPS_MOUNT_PATH
 
 
 class AppService(Service):
@@ -43,7 +45,9 @@ class AppService(Service):
                 'id': c['id'],
             } for c in (
                 await self.middleware.call('app.get_instance', app_name)
-            )['active_workloads']['container_details'] if (options['alive_only'] is False or c['state'] == 'running')
+            )['active_workloads']['container_details'] if (
+                options['alive_only'] is False or ContainerState(c['state']) == ContainerState.RUNNING
+            )
         }
 
     @accepts(Str('app_name'), roles=['APPS_READ'])
@@ -108,6 +112,15 @@ class AppService(Service):
             ip['address']: ip['address']
             for ip in await self.middleware.call('interface.ip_in_use', {'static': True, 'any': True})
         }
+
+    @accepts(roles=['CATALOG_READ'])
+    @returns(Int())
+    async def available_space(self):
+        """
+        Returns space available in bytes in the configured apps pool which apps can consume
+        """
+        await self.middleware.call('docker.state.validate')
+        return (await self.middleware.call('filesystem.statfs', IX_APPS_MOUNT_PATH))['avail_bytes']
 
     @accepts(roles=['APPS_READ'])
     @returns(Dict('gpu_choices', additional_attrs=True))

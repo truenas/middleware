@@ -6,7 +6,7 @@ from pytest_dependency import depends
 from auto_config import ha, pool_name
 from truenas_api_client import ValidationErrors
 from middlewared.test.integration.assets.directory_service import active_directory
-from middlewared.test.integration.utils import fail
+from middlewared.test.integration.utils import call, fail
 from middlewared.test.integration.utils.client import client
 
 
@@ -232,3 +232,18 @@ def test_004_verify_pool_property_unused_disk_functionality(request, ws_client, 
             # every test after this one expects this to be enabled
             ws_client.call('failover.update', {'disabled': False, 'master': True})
             assert ws_client.call('failover.config')['disabled'] is False
+
+
+def test__check_root_level_dataset_properties():
+    """ validate that our root-level dataset has expected properties """
+    ds = call('pool.dataset.get_instance', pool_name)
+    assert ds['acltype']['value'] == 'POSIX'
+    assert ds['aclmode']['value'] == 'DISCARD'
+    assert ds['xattr']['value'] == 'SA'
+    assert ds['deduplication']['value'] == 'OFF'
+    assert ds['casesensitivity']['value'] == 'SENSITIVE'
+    assert ds['compression']['value'] == 'LZ4'
+    assert ds['snapdev']['value'] == 'HIDDEN'
+    assert ds['sync']['value'] == 'STANDARD'
+    assert ds['checksum']['value'] == 'ON'
+    assert ds['snapdir']['value'] == 'HIDDEN'

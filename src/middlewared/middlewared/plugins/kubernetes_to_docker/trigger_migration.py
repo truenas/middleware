@@ -28,6 +28,13 @@ class K8stoDockerMigrationService(Service):
         if not k8s_pool:
             return
 
+        # We would like to wait for interfaces like bridge to come up before we proceed with migration
+        # because they are notorious and can take some time to actually come up and if they are the default
+        # interface, then migration is bound to fail as catalog won't sync because of no network
+        # connectivity and us not able to see if an app is available in newer catalog. If the default interface
+        # is not up, then we will fail the migration here and early
+        await self.middleware.call('docker.setup.validate_interfaces')
+
         list_backup_job = await self.middleware.call('k8s_to_docker.list_backups', k8s_pool)
         await list_backup_job.wait()
         if list_backup_job.error or list_backup_job.result['error']:

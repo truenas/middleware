@@ -37,7 +37,6 @@ class WebUIEnclosureService(Service):
             pool_info['vdev_disks'].append(info)
 
     def dashboard_impl(self):
-        disks_to_pools = dict()
         enclosures = self.middleware.call_sync('enclosure2.query')
         if enclosures:
             disk_deets = self.middleware.call_sync('device.get_disks')
@@ -56,7 +55,7 @@ class WebUIEnclosureService(Service):
                         # work with UI to remove unnecessary ones
                         self.map_disk_details(slot_info, disk_deets)
 
-                        if (pool_info := disks_to_pools['disks'].get(slot_info['dev'])):
+                        if pool_info := disks_to_pools['disks'].get(slot_info['dev']):
                             # now map zpool info
                             self.map_zpool_info(enc['id'], disk_slot, slot_info['dev'], pool_info)
 
