@@ -99,7 +99,7 @@ def test__parse_smart_selftest_results__ataprint__2():
             "description": "Offline",
             "status": "RUNNING",
             "status_verbose": "Self-test routine in progress",
-            "remaining": 1.0,
+            "remaining": 100,
             "lifetime": 0,
             "lba_of_first_error": None,
         },
