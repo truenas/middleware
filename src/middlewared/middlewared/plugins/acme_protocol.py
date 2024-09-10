@@ -171,7 +171,7 @@ class ACMERegistrationService(CRUDService):
             self._config.datastore,
             {
                 'uri': register.uri,
-                'tos': register.terms_of_service,
+                'tos': register.terms_of_service or '',
                 'new_account_uri': directory.newAccount,
                 'new_nonce_uri': directory.newNonce,
                 'new_order_uri': directory.newOrder,
