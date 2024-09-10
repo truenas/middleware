@@ -217,7 +217,7 @@ def test__parse_smart_selftest_results__scsiprint__1():
         None,
     ),
     (
-        json.loads("{'self_test_in_progress':true}"),
+        json.loads('{"self_test_in_progress":true}'),
         {"progress": 0},
     )
 ])
