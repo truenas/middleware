@@ -3,8 +3,6 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
-REDACTED_SECRET = '********'
-
 @pytest.fixture(scope='module')
 def nfs_audit_dataset(request):
     with dataset('audit-test-nfs') as ds:
