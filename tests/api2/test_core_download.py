@@ -10,4 +10,5 @@ def test_get_download_for_config_dot_save():
 
     # download from URL
     rv = requests.get(f'http://{truenas_server.ip}{url}')
+    assert rv.status_code == 200
     assert len(rv.content) > 0
