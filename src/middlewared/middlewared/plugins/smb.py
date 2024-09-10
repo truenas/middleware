@@ -382,21 +382,12 @@ class SMBService(ConfigService):
         job.set_progress(30, 'Setting up server SID.')
         await self.middleware.call('smb.set_system_sid')
 
-        """
-        If the ldap passdb backend is being used, then the remote LDAP server
-        will provide the SMB users and groups. We skip these steps to avoid having
-        samba potentially try to write our local users and groups to the remote
-        LDAP server.
-
-        """
-        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
-        if passdb_backend.startswith("tdbsam"):
-            job.set_progress(40, 'Synchronizing passdb and groupmap.')
-            await self.middleware.call('etc.generate', 'user')
-            pdb_job = await self.middleware.call("smb.synchronize_passdb", True)
-            grp_job = await self.middleware.call("smb.synchronize_group_mappings", True)
-            await pdb_job.wait()
-            await grp_job.wait()
+        job.set_progress(40, 'Synchronizing passdb and groupmap.')
+        await self.middleware.call('etc.generate', 'user')
+        pdb_job = await self.middleware.call("smb.synchronize_passdb", True)
+        grp_job = await self.middleware.call("smb.synchronize_group_mappings", True)
+        await pdb_job.wait()
+        await grp_job.wait()
 
         """
         The following steps ensure that we cleanly import our SMB shares
