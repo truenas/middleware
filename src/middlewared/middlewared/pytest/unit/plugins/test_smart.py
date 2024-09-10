@@ -173,45 +173,51 @@ def test__parse_smart_selftest_results__scsiprint__1():
     # ataprint.cpp
     (
         textwrap.dedent("""\
-            === START OF READ SMART DATA SECTION ===
-            Self-test execution status:        41% of test remaining
-            SMART Self-test log
+{
+    "ata_smart_self_test_log": {
+        "standard": {
+            "revision": 1,
+            "table": [
+                {
+                    "type": {
+                        "value": 1,
+                        "string": "Offline"
+                    },
+                    "status": {
+                        "value": 249,
+                        "string": "Self-test routine in progress",
+                        "remaining_percent": 41,
+                        "passed": true
+                    },
+                    "lifetime_hours": 0
+                }
+            ],
+            "error_count_total": 0,
+            "error_count_outdated": 0
+            }
+        }
+}
         """),
         {"progress": 59},
     ),
     # nvmeprint.cpp
     (
         textwrap.dedent("""\
-            Self-test Log (NVMe Log 0x06)
-            Self-test status: Short self-test in progress (3% completed)
-            No Self-tests Logged
+{
+    "nvme_self_test_log": {
+        "current_self_test_completion_percent": 3
+    }
+}
         """),
         {"progress": 3},
     ),
     # scsiprint.spp
     (
-        textwrap.dedent("""\
-            Self-test execution status:      (   0)	The previous self-test routine completed
-                                             without error or no self-test has ever
-                                             been run.
-
-        """),
+        '{"junkjson":true}',
         None,
     ),
     (
-        textwrap.dedent("""\
-            Self-test execution status:      ( 242)	Self-test routine in progress...
-                                                    20% of test remaining.
-        """),
-        {"progress": 80},
-    ),
-    (
-        textwrap.dedent("""\
-            SMART Self-test log
-            Num  Test              Status                 segment  LifeTime  LBA_first_err [SK ASC ASQ]
-                 Description                              number   (hours)
-            # 1  Background short  Self test in progress ...   -     NOW                 - [-   -    -]
-        """),
+        "{'self_test_in_progress':true}",
         {"progress": 0},
     )
 ])
