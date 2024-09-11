@@ -202,18 +202,29 @@ class AuditService(ConfigService):
 
         # If HA, handle the possibility of remote controller requests
         if await self.middleware.call('failover.licensed') and data['remote_controller']:
+            data.pop('remote_controller')
             try:
-                if audit_query := self.middleware.call(
+                audit_query = await self.middleware.call(
                     'failover.call_remote',
                     'audit.query',
                     [data],
                     {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
-                ):
-                    return audit_query
+                )
+                return audit_query
+            except CallError as e:
+                if e.errno in [errno.ECONNABORTED, errno.ECONNREFUSED, errno.ECONNRESET, errno.EHOSTDOWN,
+                               errno.ETIMEDOUT, CallError.EALERTCHECKERUNAVAILABLE]:
+                    raise ValidationError(
+                        'audit.query.remote_controller',
+                        'Temporarily failed to communicate to remote controller'
+                    )
+                raise ValidationError(
+                    'audit.query.remote_controller',
+                    'Failed to query audit logs of remote controller'
+                )
             except Exception:
                 self.logger.exception('Unexpected failure querying remote node for audit entries')
-            else:
-                raise ValidationError('audit.query.remote_controller', 'Failed to query audit logs of remote controller')
+                raise
 
         sql_filters = data['query-options']['force_sql_filters']
 
