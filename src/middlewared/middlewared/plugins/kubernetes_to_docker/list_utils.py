@@ -74,6 +74,9 @@ def release_details(
         **secrets,
     })
 
+    if config['app_name'] == 'ix-chart' and release_train == 'stable':
+        config['app_name'] = 'ix-app'
+
     if config['app_name'] not in apps_mapping[release_train]:
         return config | {'error': 'Unable to locate release\'s app'}
 
