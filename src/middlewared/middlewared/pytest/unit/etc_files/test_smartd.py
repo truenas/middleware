@@ -59,7 +59,7 @@ async def test__ensure_smart_enabled__handled_args_properly():
         assert await ensure_smart_enabled(["/dev/ada0", "-d", "sat"])
 
         run.assert_called_once_with(
-            ["/dev/ada0", "-d", "sat", "-i"], check=False, stderr=subprocess.STDOUT,
+            ["/dev/ada0", "-d", "sat", "-i", "--json=c"], check=False, stderr=subprocess.STDOUT,
             encoding="utf8", errors="ignore",
         )
 
