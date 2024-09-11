@@ -14,8 +14,6 @@ import requests
 import secrets
 import string
 
-ha_test = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
-
 
 SMBUSER = 'audit-smb-user'
 PASSWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
@@ -321,7 +319,7 @@ class TestAuditOps:
         assert abs(ae_ts_ts - ae_msg_ts) < 2, f"$date='{ae_ts_ts}, message_timestamp={ae_msg_ts}"
 
 
-@ha_test
+@pytest.mark.skipif(not ha, reason="Skip HA tests")
 class TestAuditOpsHA:
     def test_audit_ha_query(self, standby_user):
         name = standby_user
@@ -336,7 +334,7 @@ class TestAuditOpsHA:
             remote_audit_entry = call('audit.query', {
                 "query-filters": [["event_data.description", "$", name]],
                 "query-options": {"select": ["event_data", "success"]},
-                "controller": "Standby"
+                "remote_controller": True
             })
             if remote_audit_entry != []:
                 break
@@ -354,8 +352,8 @@ class TestAuditOpsHA:
         audit DB from both controllers and confirm the user create is
         in the 'Standby' audit DB and not in the 'Active' audit DB.
         """
-        report_path_active = call('audit.export', {'export_format': 'CSV', 'controller': 'MASTER'}, job=True)
-        report_path_standby = call('audit.export', {'export_format': 'CSV', 'controller': 'BACKUP'}, job=True)
+        report_path_active = call('audit.export', {'export_format': 'CSV'}, job=True)
+        report_path_standby = call('audit.export', {'export_format': 'CSV', 'remote_controller': True}, job=True)
 
         # Confirm entry NOT in active controller audit DB
         with pytest.raises(AssertionError):

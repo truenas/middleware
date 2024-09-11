@@ -12,7 +12,6 @@ import yaml
 from truenas_api_client import json as ejson
 
 from .utils import (
-    AUDIT_CONTROLLER_SELECTIONS,
     AUDIT_DATASET_PATH,
     AUDIT_LIFETIME,
     AUDIT_DEFAULT_RESERVATION,
@@ -32,7 +31,7 @@ from middlewared.schema import (
     accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str, UUID
 )
 from middlewared.service import filterable, filterable_returns, job, private, ConfigService
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors, ValidationError
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.functools_ import cache
@@ -136,7 +135,7 @@ class AuditService(ConfigService):
         List('services', items=[Str('db_name', enum=ALL_AUDITED)], default=NON_BULK_AUDIT),
         Ref('query-filters'),
         Ref('query-options'),
-        Str('controller', enum=AUDIT_CONTROLLER_SELECTIONS, null=True, default=None),
+        Bool('remote_controller', default=False),
         register=True
     ))
     @filterable_returns(Dict(
@@ -161,9 +160,8 @@ class AuditService(ConfigService):
         converted into a more efficient form for better performance. This will
         not be possible if filters use keys within `svc_data` and `event_data`.
 
-        HA systems may specify the controller.  The active controller may be
-        selected with 'MASTER' or 'Active'.  The standby controller may be selected
-        with 'BACKUP' or 'Standby'.  The default is the 'current' controller.
+        HA systems may direct the query to the 'remote' controller by
+        including 'remote_controller=True'.  The default is the 'current' controller.
 
         Each audit entry contains the following keys:
 
@@ -204,19 +202,19 @@ class AuditService(ConfigService):
 
         # If HA, handle the possibility of remote controller requests
         ctrlr_state = await self.middleware.call('failover.status')
-
-        # want_ctrlr: Default is 'current' controller else use selection
-        want_ctrlr = ctrlr_state if data['controller'] is None else (
-            'MASTER' if data['controller'] in ['MASTER', 'Active'] else 'BACKUP'
-        )
-        if ctrlr_state != 'SINGLE':
-            if ctrlr_state not in ['MASTER', 'BACKUP']:
-                verrors.add('audit.query.controller', f'controller status: {ctrlr_state}')
-                verrors.check()
+        if ctrlr_state != 'SINGLE' and data['remote_controller']:
+            try:
+                if audit_query := self.middleware.call(
+                    'failover.call_remote',
+                    'audit.query',
+                    [data],
+                    {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+                ):
+                    return audit_query
+            except Exception:
+                self.logger.exception('Unexpected failure querying remote node for audit entries')
             else:
-                if want_ctrlr != ctrlr_state:
-                    # Get the data from the other controller
-                    return await self.middleware.call('failover.call_remote', 'audit.query', [data])
+                raise ValidationError('audit.query.remote_controller', 'Failed to query audit logs of remote controller')
 
         sql_filters = data['query-options']['force_sql_filters']
 

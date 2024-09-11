@@ -24,7 +24,6 @@ SQL_SAFE_FIELDS = (
     AuditEventParam.EVENT.value,
     AuditEventParam.SUCCESS.value,
 )
-AUDIT_CONTROLLER_SELECTIONS = ['MASTER', 'Active', 'BACKUP', 'Standby']
 
 
 AuditBase = declarative_base()
