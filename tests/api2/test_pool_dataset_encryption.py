@@ -3,8 +3,9 @@ import secrets
 import pytest
 from pytest_dependency import depends
 
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call, ssh
-from truenas_api_client.exc import ClientException, ValidationErrors
+from truenas_api_client.exc import ClientException
 
 
 # genrated token_hex 32bit for
@@ -388,7 +389,7 @@ def test_try_to_change_a_passphrase_encrypted_root_to_key_on_passphrase_encrypte
     payload = {
         'key': dataset_token_hex
     }
-    with pytest.raises(ValidationErrors, match=f'{dataset} has parent(s) which are encrypted with a passphrase.'):
+    with pytest.raises(ValidationErrors, match=f'{dataset} has parent\\(s\\) which are encrypted with a passphrase'):
         call('pool.dataset.change_key', dataset, payload, job=True)
 
 
@@ -410,7 +411,7 @@ def test_create_a_dataset_to_inherit_encryption_from_the_passphrase_encrypted_po
         'inherit_encryption': True
     }
     results = call('pool.dataset.create', payload)
-    assert results['key_format']['value'] == 'PASSPHRASE', results.text
+    assert results['key_format']['value'] == 'PASSPHRASE', results
 
 
 def test_delete_encrypted_dataset_from_the_passphrase_encrypted_pool(request):
@@ -428,7 +429,7 @@ def test_try_to_create_an_encrypted_root_with_generate_key_on_passphrase_encrypt
         'encryption': True,
         'inherit_encryption': False
     }
-    with pytest.raises(ValidationErrors, match='Passphrase encrypted datasets cannot have children encrypted with a key.'):
+    with pytest.raises(ValidationErrors, match='Passphrase encrypted datasets cannot have children encrypted with a key'):
         call('pool.dataset.create', payload)
 
 
@@ -442,7 +443,7 @@ def test_try_to_create_an_encrypted_root_with_key_on_passphrase_encrypted_pool(r
         'encryption': True,
         'inherit_encryption': False
     }
-    with pytest.raises(ValidationErrors, match='Passphrase encrypted datasets cannot have children encrypted with a key.'):
+    with pytest.raises(ValidationErrors, match='Passphrase encrypted datasets cannot have children encrypted with a key'):
         call('pool.dataset.create', payload)
 
 
@@ -805,7 +806,7 @@ def test_verify_the_child_dataset_unlock_successful_is_true(request):
 def test_verify_the_child_dataset_is_unlocked(request):
     depends(request, ['CREATED_POOL'])
     results = call('pool.dataset.get_instance', child_dataset)
-    assert results.json()['locked'] is False, results.text
+    assert results['locked'] is False, results
 
 
 def test_delete_dataset_with_is_child_recursive(request):
