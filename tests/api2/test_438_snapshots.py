@@ -89,10 +89,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
                     }
                 }
             }
-            results = GET(f"/zfs/snapshot", payload)
-            assert results.status_code == 200, results.text
-            assert isinstance(results.json(), list), results.text
-            snaps = results.json()
+            snaps = call("zfs.snapshot.query", payload)
             # Check that we have one snap returned and that it has the expected
             # data
             assert len(snaps) == 1, snaps
@@ -105,10 +102,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
             # Now create another snapshot and re-issue the query to check the
             # new results.
             with snapshot(dataset_id, "snap02", get=True) as snap02_config:
-                results = GET(f"/zfs/snapshot", payload)
-                assert results.status_code == 200, results.text
-                assert isinstance(results.json(), list), results.text
-                snaps = results.json()
+                snaps = call("zfs.snapshot.query", payload)
                 # Check that we have two snaps returned and that they have the expected
                 # data.
                 assert len(snaps) == 2, snaps
@@ -133,10 +127,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
                     with snapshot(dataset2, "snap03", get=True) as snap03_config:
                         # First issue the original query again & ensure we still have
                         # the expected snapshots
-                        results = GET(f"/zfs/snapshot", payload)
-                        assert results.status_code == 200, results.text
-                        assert isinstance(results.json(), list), results.text
-                        snaps = results.json()
+                        snaps = call("zfs.snapshot.query", payload)
                         assert len(snaps) == 2, snaps
                         for snap in snaps:
                             assert snap['createtxg'] in existing_snaps, f"Got unexpected snap: {snap}"
@@ -145,10 +136,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
                         payload.update({
                             'query-filters': [['dataset', '=', dataset2]]
                             })
-                        results = GET(f"/zfs/snapshot", payload)
-                        assert results.status_code == 200, results.text
-                        assert isinstance(results.json(), list), results.text
-                        snaps = results.json()
+                        snaps = call("zfs.snapshot.query", payload)
                         assert len(snaps) == 1, snaps
                         snap = snaps[0]
                         assert snap['createtxg'] not in existing_snaps, f"Got unexpected snap: {snap}"
@@ -162,11 +150,8 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
                         payload.update({
                             'query-filters': [['dataset', '=', f"{dataset_name}-BOGUS"]]
                             })
-                        results = GET(f"/zfs/snapshot", payload)
-                        assert results.status_code == 200, results.text
-                        assert isinstance(results.json(), list), results.text
-                        snaps = results.json()
-                        assert len(snaps) == 0, snaps
+                        snaps = call("zfs.snapshot.query", payload)
+                        assert len(snaps) == 0
 
                         # Next issue the query WITHOUT a filter.  It's possible
                         # that this test could be run while other snapshots are
@@ -175,10 +160,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
                         payload.update({
                             'query-filters': []
                             })
-                        results = GET(f"/zfs/snapshot", payload)
-                        assert results.status_code == 200, results.text
-                        assert isinstance(results.json(), list), results.text
-                        snaps = results.json()
+                        snaps = call("zfs.snapshot.query", payload)
                         assert len(snaps) >= 3, len(snaps)
                         all_snaps = set([s['createtxg'] for s in snaps])
                         assert existing_snaps.issubset(all_snaps), "Existing snaps not returned in filterless query"
@@ -186,10 +168,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
 
                     # Let the snap03 get cleaned up, and then ensure even with a filterless query
                     # that it is no longer returned.
-                    results = GET(f"/zfs/snapshot", payload)
-                    assert results.status_code == 200, results.text
-                    assert isinstance(results.json(), list), results.text
-                    snaps = results.json()
+                    snaps = call("zfs.snapshot.query", payload)
                     assert len(snaps) >= 2, len(snaps)
                     all_snaps = set([s['createtxg'] for s in snaps])
                     assert existing_snaps.issubset(all_snaps), "Existing snaps not returned in filterless query"
