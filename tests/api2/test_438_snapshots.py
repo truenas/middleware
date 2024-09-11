@@ -82,7 +82,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
     with dataset(dataset_name) as dataset_id:
         with snapshot(dataset_id, "snap01", get=True) as snap01_config:
             payload = {
-                'query-filters': [['dataset', '=', dataset_id]],
+                'query-filters': [["dataset", "=", dataset_id]],
                 'query-options': {
                     'extra': {
                         'properties': properties_list
@@ -134,7 +134,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
 
                         # Next issue the query with a different filter
                         payload.update({
-                            'query-filters': [['dataset', '=', dataset2]]
+                            'query-filters': [["dataset", "=", dataset2]]
                             })
                         snaps = call("zfs.snapshot.query", payload)
                         assert len(snaps) == 1, snaps
@@ -148,7 +148,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
 
                         # Next issue the query with a bogus filter
                         payload.update({
-                            'query-filters': [['dataset', '=', f"{dataset_name}-BOGUS"]]
+                            'query-filters': [["dataset", "=", f"{dataset_name}-BOGUS"]]
                             })
                         snaps = call("zfs.snapshot.query", payload)
                         assert len(snaps) == 0
