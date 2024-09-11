@@ -127,7 +127,7 @@ def test_003_recheck_ipvx(request):
     assert int(call("tunable.get_sysctl", f"net.ipv6.conf.{interface}.autoconf")) == 0
 
 
-@pytest.mark.skipif(ha, reason="Test valid on HA systems only")
+@pytest.mark.skipif(not ha, reason="Test valid on HA systems only")
 def test_004_remove_critical_failover_group(request):
     with pytest.raises(ValidationErrors) as ve:
         call(
