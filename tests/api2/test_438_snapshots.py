@@ -8,6 +8,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import pool_name
 from functions import DELETE, GET, POST, PUT, wait_on_job
+from middlewared.test.integration.utils import call
 
 
 def _verify_snapshot_keys_present(snap, expected, unexpected):
@@ -428,7 +429,7 @@ def _test_xxx_snapshot_query_filter_pool(dataset_name, properties_list, expected
                 assert isinstance(results.json(), list), results.text
                 snaps = results.json()
 
-                # Check that we have two additional snap returned and that 
+                # Check that we have two additional snap returned and that
                 # they have the expected data
                 assert len(snaps) == original_snap_count+2, snaps
                 ssnaps = sorted(snaps, key=lambda d: int(d['createtxg']))
