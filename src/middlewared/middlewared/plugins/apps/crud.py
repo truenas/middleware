@@ -4,6 +4,8 @@ import os
 import shutil
 import textwrap
 
+from catalog_reader.custom_app import get_version_details
+
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import (
     CallError, CRUDService, filterable, InstanceNotFound, job, pass_app, private, ValidationErrors
@@ -119,10 +121,15 @@ class AppService(CRUDService):
 
         questions_context = self.middleware.call_sync('catalog.get_normalized_questions_context')
         for app in apps:
-            app['version_details'] = self.middleware.call_sync(
-                'catalog.app_version_details', get_installed_app_version_path(app['name'], app['version']),
-                questions_context,
-            )
+            if app['custom_app']:
+                version_details = get_version_details()
+            else:
+                version_details = self.middleware.call_sync(
+                    'catalog.app_version_details', get_installed_app_version_path(app['name'], app['version']),
+                    questions_context,
+                )
+
+            app['version_details'] = version_details
 
         return filter_list(apps, filters, options)
 
