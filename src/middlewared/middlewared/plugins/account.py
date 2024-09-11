@@ -39,8 +39,6 @@ from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID,
     IDType,
     TRUENAS_IDMAP_DEFAULT_LOW,
-    SID_LOCAL_USER_PREFIX,
-    SID_LOCAL_GROUP_PREFIX
 )
 from middlewared.plugins.idmap_ import idmap_winbind
 from middlewared.plugins.idmap_ import idmap_sss
@@ -1099,9 +1097,22 @@ class UserService(CRUDService):
             user_obj['grouplist'] = os.getgrouplist(user_obj['pw_name'], user_obj['pw_gid'])
 
         if data['sid_info']:
+            sid = None
             match user_obj['source']:
-                case 'LOCAL' | 'ACTIVEDIRECTORY':
-                    # winbind provides idmapping for local and AD users
+                case 'LOCAL':
+                    idmap_ctx = None
+                    db_entry = self.middleware.call_sync('user.query', [[
+                        'username', '=', user_obj['pw_name']
+                    ]], {'select': ['sid']})
+                    if not db_entry:
+                        self.logger.error(
+                            '%s: local user exists on server but does not exist in the '
+                            'the user account table.', user_obj['pw_name']
+                        )
+                    else:
+                        sid = db_entry[0]['sid']
+                case 'ACTIVEDIRECTORY':
+                    # winbind provides idmapping for AD users
                     try:
                         idmap_ctx = idmap_winbind.WBClient()
                     except wbclient.WBCError as e:
@@ -1124,20 +1135,9 @@ class UserService(CRUDService):
                         'id': user_obj['pw_uid']
                     })['sid']
                 except MatchNotFound:
-                    if user_obj['source'] == 'LOCAL':
-                        # Local user that doesn't have passdb entry
-                        # we can simply apply default prefix
-                        sid = SID_LOCAL_USER_PREFIX + str(user_obj['pw_uid'])
-                    else:
-                        # This is a more odd situation. The user accout exists
-                        # in IPA but doesn't have a SID assigned to it.
-                        sid = None
-            else:
-                # We were unable to establish an idmap client context even
-                # though we were able to retrieve the user account info. This
-                # most likely means that we're dealing with a local account and
-                # winbindd is not running.
-                sid = None
+                    # This is a more odd situation. Most likely case is that the user account exists
+                    # in IPA but doesn't have a SID assigned to it. All AD users have SIDs.
+                    sid = None
 
             user_obj['sid'] = sid
         else:
@@ -2115,9 +2115,23 @@ class GroupService(CRUDService):
         grp_obj['local'] = grp_obj['source'] == 'LOCAL'
 
         if data['sid_info']:
+            sid = None
+
             match grp_obj['source']:
-                case 'LOCAL' | 'ACTIVEDIRECTORY':
-                    # winbind provides idmapping for local and AD users
+                case 'LOCAL':
+                    idmap_ctx = None
+                    db_entry = self.middleware.call_sync('group.query', [[
+                        'group', '=', grp_obj['gr_name']
+                    ]], {'select': ['sid']})
+                    if not db_entry:
+                        self.logger.error(
+                            '%s: local group exists on server but does not exist in the '
+                            'the group account table.', grp_obj['gr_name']
+                        )
+                    else:
+                        sid = db_entry[0]['sid']
+                case 'ACTIVEDIRECTORY':
+                    # winbind provides idmapping for AD groups
                     try:
                         idmap_ctx = idmap_winbind.WBClient()
                     except wbclient.WBCError as e:
@@ -2144,14 +2158,8 @@ class GroupService(CRUDService):
                         'id': grp_obj['gr_gid']
                     })['sid']
                 except MatchNotFound:
-                    if grp_obj['source'] == 'LOCAL':
-                        # Local user that doesn't have groupmap entry
-                        # we can simply apply default prefix
-                        sid = SID_LOCAL_GROUP_PREFIX + str(grp_obj['gr_gid'])
-                    else:
-                        sid = None
-            else:
-                sid = None
+                    # This can happen if IPA and group doesn't have SID assigned
+                    sid = None
 
             grp_obj['sid'] = sid
         else:
