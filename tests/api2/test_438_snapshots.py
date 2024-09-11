@@ -89,7 +89,7 @@ def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
                     }
                 }
             }
-            snaps = call("zfs.snapshot.query", payload["query-filters"], {payload["query-options"]})
+            snaps = call("zfs.snapshot.query", payload["query-filters"], {}.update(payload["query-options"]))
             # Check that we have one snap returned and that it has the expected
             # data
             assert len(snaps) == 1, snaps
