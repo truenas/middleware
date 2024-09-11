@@ -212,7 +212,7 @@ def test_002_verify_user_exists_in_pwd(request):
     assert pw['pw_dir'] == VAR_EMPTY
 
     # At this point, we're not an SMB user
-    assert pw['sid'] is not None
+    assert pw['sid'] is None
     assert pw['source'] == 'LOCAL'
     assert pw['local'] is True
 

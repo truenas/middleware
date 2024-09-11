@@ -230,15 +230,12 @@ class NTPServerService(CRUDService):
         verrors = ValidationErrors()
         maxpoll = data['maxpoll']
         minpoll = data['minpoll']
-        force = data.pop('force', False)
-        usable = True if await self.middleware.run_in_thread(
-            self.test_ntp_server, data['address']) else False
-
-        if not force and not usable:
-            verrors.add(f'{schema_name}.address',
-                        'Server could not be reached. Check "Force" to '
-                        'continue regardless.'
-                        )
+        if not data.pop('force', False):
+            if not await self.middleware.run_in_thread(self.test_ntp_server, data['address']):
+                verrors.add(
+                    f'{schema_name}.address',
+                    'Server could not be reached. Check "Force" to continue regardless.'
+                )
 
         if not maxpoll > minpoll:
             verrors.add(f'{schema_name}.maxpoll',

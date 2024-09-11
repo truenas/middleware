@@ -418,7 +418,12 @@ class SMBService(ConfigService):
         job.set_progress(70, 'Checking SMB server status.')
         if await self.middleware.call("service.started_or_enabled", "cifs"):
             job.set_progress(80, 'Restarting SMB service.')
-            await self.middleware.call("service.restart", "cifs")
+            await self.middleware.call("service.restart", "cifs", {"ha_propagate": False})
+
+        # Ensure that winbind is running once we configure SMB service
+        if not await self.middleware.call('service.started', 'idmap'):
+            await self.middleware.call('service.start', 'idmap', {'ha_propagate': False})
+
         job.set_progress(100, 'Finished configuring SMB.')
 
     @private
