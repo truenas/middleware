@@ -16,35 +16,22 @@ def test_get_default_environment_and_make_new_one():
         ValidationError('bootenv_create.name', f'The name "{active_be_id}" already exists', errno.EEXIST)
     ]
 
-    # create new bootenv and activate it
+    # create new bootenv
     call('bootenv.create', {'name': 'bootenv01', 'source': active_be_id})
     call('bootenv.query', [['name', '=', 'bootenv01']], {'get': True})
+
+    # activate it, check that it's pending activation, then activate old bootenv
     call('bootenv.activate', 'bootenv01')
+    assert call('bootenv.query', [['name', '=', 'bootenv01']], {'get': True})['active'] == 'R'
+    call('bootenv.activate', active_be_id)
+    assert call('bootenv.query', [['name', '=', 'bootenv01']], {'get': True})['active'] == ''
 
-
-# Update tests
-def test_cloning_a_new_boot_environment():
-    call('bootenv.create', {'name': 'bootenv02', 'source': 'bootenv01'})
-    call('bootenv.activate', 'bootenv02')
-
-
-def test_change_boot_environment_name_and_attributes():
+def test_change_boot_environment_name_and_attributes_then_delete():
     call('bootenv.update', 'bootenv01', {'name': 'bootenv03'})
     call('bootenv.set_attribute', 'bootenv03', {'keep': True})
-    call('bootenv.activate', 'bootenv03')
-    assert call('bootenv.query', [['activated', '=', True]], {'get': True})['id'] == 'bootenv3'
-
-
-# Delete tests
-def test_activate_original_bootenv():
-    be_id = call('bootenv.query', [['name', '!=', 'bootenv03']], {'get': True})["id"]
-    call('bootenv.activate', be_id)
-
-
-def test_removing_boot_environments():
+    assert call('bootenv.query', [['name', '=', 'bootenv03']], {'get': True})['keep'] is True
     call('bootenv.set_attribute', 'bootenv03', {'keep': False})
-    call('bootenv.delete', 'bootenv02', job=True)
-    call('bootenv.delete', 'bootenv03', job=True)
+    call('bootenv.delete', 'bootenv03')
 
 
 def test_promote_current_be_datasets():
@@ -55,7 +42,7 @@ def test_promote_current_be_datasets():
     ssh(f'zfs snapshot {snapshot}')
     try:
         clone = 'boot-pool/ROOT/clone'
-        ssh(f"zfs clone {snapshot} {clone}")
+        ssh(f'zfs clone {snapshot} {clone}')
         try:
             ssh(f'zfs promote {clone}')
 

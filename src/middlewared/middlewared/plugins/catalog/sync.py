@@ -47,6 +47,7 @@ class CatalogService(Service):
             await self.middleware.call('alert.oneshot_delete', 'CatalogSyncFailed', OFFICIAL_LABEL)
             job.set_progress(100, f'Synced {OFFICIAL_LABEL!r} catalog')
             self.SYNCED = True
+            self.middleware.create_task(self.middleware.call('app.check_upgrade_alerts'))
 
     @private
     def update_git_repository(self, location, repository, branch):

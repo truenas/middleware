@@ -34,6 +34,23 @@ class BaseModel(PydanticBaseModel):
                             "cannot be a member of an Optional or a Union, please make the whole field Private."
                         )
 
+    @classmethod
+    def from_previous(cls, value):
+        """
+        Converts model value from a preceding API version to this API version. `value` can be modified in-place.
+        :param value: value of the same model in the preceding API version.
+        :return: value in this API version.
+        """
+        return value
+
+    @classmethod
+    def to_previous(cls, value):
+        """
+        Converts model value from this API version to a preceding API version. `value` can be modified in-place.
+        :param value: value in this API version.
+        :return: value of the same model in the preceding API version.
+        """
+        return value
 
 
 class ForUpdateMetaclass(ModelMetaclass):
@@ -76,19 +93,41 @@ def _field_for_update(field):
     return new.annotation, new
 
 
-def single_argument_args(name):
+def single_argument_args(name: str):
+    """
+    Model class decorator used to define an arguments model for a method that accepts a single dictionary argument.
+
+    :param name: name for that single argument.
+    :return: a model class that consists of unique `name` field that is represented by a class being decorated.
+        Class name will be preserved.
+    """
     def wrapper(klass):
-        return create_model(
+        model = create_model(
             klass.__name__,
             __base__=(BaseModel,),
             __module__=klass.__module__,
             **{name: Annotated[klass, Field()]},
         )
+        model.from_previous = classmethod(klass.from_previous)
+        model.to_previous = classmethod(klass.to_previous)
+        return model
 
     return wrapper
 
 
 def single_argument_result(klass, klass_name=None):
+    """
+    Can be used as:
+    * Decorator for a class. In that case, it will create a class that represents a return value for a function that
+      returns a single dictionary, represented by the decorated class.
+    * Standalone model generator. Will return a model class named `klass_name` that consists of a single field
+      represented by `klass` (in that case, `klass` can be a primitive type).
+
+    :param klass: class or a primitive type to create model from.
+    :param klass_name: required, when being called as a standalone model generator. Returned class will have that name.
+        (otherwise, the decorated class name will be preserved).
+    :return: a model class that consists of unique `result` field that corresponds to `klass`.
+    """
     if klass is None:
         klass = NoneType
 
@@ -98,9 +137,13 @@ def single_argument_result(klass, klass_name=None):
     else:
         klass_name = klass_name or klass.__name__
 
-    return create_model(
+    model = create_model(
         klass_name,
         __base__=(BaseModel,),
         __module__=inspect.getmodule(inspect.stack()[1][0]),
         **{"result": Annotated[klass, Field()]},
     )
+    if issubclass(klass, BaseModel):
+        model.from_previous = classmethod(klass.from_previous)
+        model.to_previous = classmethod(klass.to_previous)
+    return model

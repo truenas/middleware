@@ -2,8 +2,9 @@ import enum
 import errno
 import wbclient
 
+from middlewared.api import api_method
+from middlewared.api.current import *
 from middlewared.plugins.account import unixhash_is_valid
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, SID, Str, Patch
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.privilege import (
@@ -43,22 +44,7 @@ class PrivilegeService(CRUDService):
         datastore_extend = "privilege.item_extend"
         datastore_extend_context = "privilege.item_extend_context"
         cli_namespace = "auth.privilege"
-
-    ENTRY = Dict(
-        "privilege_entry",
-        Int("id"),
-        Str("builtin_name", null=True),
-        Str("name", required=True, empty=False),
-        List("local_groups", items=[Ref("group_entry")]),
-        List("ds_groups", items=[Ref("group_entry")]),
-        List("allowlist", items=[Dict(
-            "allowlist_item",
-            Str("method", required=True, enum=["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE", "*"]),
-            Str("resource", required=True),
-        )]),
-        List("roles", items=[Str("role")]),
-        Bool("web_shell", required=True),
-    )
+        entry = PrivilegeEntry
 
     @private
     async def item_extend_context(self, rows, extra):
@@ -72,16 +58,8 @@ class PrivilegeService(CRUDService):
         item["ds_groups"] = await self._ds_groups(context["groups"], item["ds_groups"])
         return item
 
-    @accepts(Patch(
-        "privilege_entry",
-        "privilege_create",
-        ("rm", {"name": "builtin_name"}),
-        ("rm", {"name": "local_groups"}),
-        ("rm", {"name": "ds_groups"}),
-        ("add", List("local_groups", items=[Int("local_group")])),
-        ("add", List("ds_groups", items=[Int("ds_group_gid"), SID("ds_group_sid")])),
-        register=True
-    ), audit="Create privilege", audit_extended=lambda data: data["name"])
+    @api_method(PrivilegeCreateArgs, PrivilegeCreateResult,
+                audit="Create privilege", audit_extended=lambda data: data["name"])
     async def do_create(self, data):
         """
         Creates a privilege.
@@ -106,16 +84,7 @@ class PrivilegeService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(
-        Int("id", required=True),
-        Patch(
-            "privilege_create",
-            "privilege_update",
-            ("attr", {"update": True}),
-        ),
-        audit="Update privilege",
-        audit_callback=True,
-    )
+    @api_method(PrivilegeUpdateArgs, PrivilegeUpdateResult, audit="Update privilege", audit_callback=True)
     async def do_update(self, audit_callback, id_, data):
         """
         Update the privilege `id`.
@@ -179,11 +148,7 @@ class PrivilegeService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(
-        Int("id"),
-        audit="Delete privilege",
-        audit_callback=True,
-    )
+    @api_method(PrivilegeDeleteArgs, PrivilegeDeleteResult, audit="Delete privilege", audit_callback=True)
     async def do_delete(self, audit_callback, id_):
         """
         Delete the privilege `id`.
