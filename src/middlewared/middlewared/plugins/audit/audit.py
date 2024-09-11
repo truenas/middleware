@@ -201,8 +201,7 @@ class AuditService(ConfigService):
         verrors = ValidationErrors()
 
         # If HA, handle the possibility of remote controller requests
-        ctrlr_state = await self.middleware.call('failover.status')
-        if ctrlr_state != 'SINGLE' and data['remote_controller']:
+        if await self.middleware.call('failover.licensed') and data['remote_controller']:
             try:
                 if audit_query := self.middleware.call(
                     'failover.call_remote',
