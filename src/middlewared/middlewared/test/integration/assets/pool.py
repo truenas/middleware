@@ -67,11 +67,10 @@ def dataset(name, data=None, pool=pool, **kwargs):
     call("pool.dataset.create", {"name": dataset, **data})
 
     try:
-        if "acl" in kwargs or "mode" in kwargs:
-            if "acl" in kwargs:
-                call("filesystem.setacl", {'path': f"/mnt/{dataset}", "dacl": kwargs['acl']})
-            else:
-                call("filesystem.setperm", {'path': f"/mnt/{dataset}", "mode": kwargs['mode'] or "777"})
+        if "acl" in kwargs:
+            call("filesystem.setacl", {'path': f"/mnt/{dataset}", "dacl": kwargs['acl']})
+        elif "mode" in kwargs:
+            call("filesystem.setperm", {'path': f"/mnt/{dataset}", "mode": kwargs['mode'] or "777"})
 
         yield dataset
     finally:
