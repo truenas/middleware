@@ -28,7 +28,14 @@ def normalize_projects_stats(all_projects_stats: dict, old_stats: dict, interval
         # 2. Normalize this delta over the given time interval by dividing by (interval * NANO_SECOND).
         # 3. Multiply by 100 to convert to percentage.
         cpu_delta = data['cpu_usage'] - old_stats[project]['cpu_usage']
-        normalized_data['cpu_usage'] = (cpu_delta / (interval * NANO_SECOND * cpu_info()['core_count'])) * 100
+        if cpu_delta >= 0:
+            normalized_data['cpu_usage'] = (cpu_delta / (interval * NANO_SECOND * cpu_info()['core_count'])) * 100
+        else:
+            # This will happen when there were multiple containers and an app is being stopped
+            # and old stats contain cpu usage times of multiple containers and current stats
+            # only contains the stats of the containers which are still running which means collectively
+            # current cpu usage time will be obviously low then what old stats contain
+            normalized_data['cpu_usage'] = 0
 
         networks = []
         for net_name, network_data in data['networks'].items():
