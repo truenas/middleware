@@ -123,14 +123,17 @@ def standby_user():
     user_id = None
     try:
         name = "StandbyUser" + PASSWD
-        user_id = call('failover.call_remote', 'user.create', [{
-            "username": name,
-            "full_name": name + " Deleteme",
-            "group": 100,
-            "smb": False,
-            "home_create": False,
-            "password": "testing"
-        }])
+        user_id = call(
+            'failover.call_remote', 'user.create', [{
+                "username": name,
+                "full_name": name + " Deleteme",
+                "group": 100,
+                "smb": False,
+                "home_create": False,
+                "password": "testing"
+            }],
+            {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+        )
         yield name
     finally:
         if user_id is not None:
@@ -323,7 +326,11 @@ class TestAuditOps:
 class TestAuditOpsHA:
     def test_audit_ha_query(self, standby_user):
         name = standby_user
-        remote_user = call('failover.call_remote', 'user.query', [[["username", "=", name]]])
+        remote_user = call(
+            'failover.call_remote', 'user.query',
+            [[["username", "=", name]]],
+            {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+        )
         assert remote_user != []
 
         # Handle delays in the audit database
