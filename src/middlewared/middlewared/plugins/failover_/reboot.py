@@ -6,6 +6,8 @@ import asyncio
 import errno
 import time
 
+from middlewared.api import api_method
+from middlewared.api.current import FailoverRebootRequiredArgs, FailoverRebootRequiredResult
 from middlewared.schema import accepts, Bool, Dict, UUID, returns
 from middlewared.service import CallError, job, private, Service
 
@@ -17,6 +19,17 @@ class FailoverRebootService(Service):
     class Config:
         cli_namespace = 'system.failover.reboot'
         namespace = 'failover.reboot'
+
+    reboot_reasons : dict[str, str] = {}
+
+    @private
+    async def add_reason(self, key: str, value: str):
+        """
+        Adds a reason on why this system needs a reboot.
+        :param key: unique identifier for the reason.
+        :param value: text explanation for the reason.
+        """
+        self.reboot_reasons[key] = value
 
     @private
     async def boot_ids(self):
@@ -39,36 +52,36 @@ class FailoverRebootService(Service):
     async def info_impl(self):
         # initial state
         current_info = await self.boot_ids()
-        current_info['this_node'].update({'reboot_required': None})
-        current_info['other_node'].update({'reboot_required': None})
+        current_info['this_node'].update({'reboot_required': None, 'reboot_required_reasons': []})
+        current_info['other_node'].update({'reboot_required': None, 'reboot_required_reasons': []})
 
         fips_change_info = await self.middleware.call('keyvalue.get', FIPS_KEY, False)
         if not fips_change_info:
             for i in current_info:
                 current_info[i]['reboot_required'] = False
-            return current_info
+        else:
+            for key in ('this_node', 'other_node'):
+                current_info[key]['reboot_required'] = all((
+                    fips_change_info[key]['id'] == current_info[key]['id'],
+                    fips_change_info[key]['reboot_required']
+                ))
+                if current_info[key]['reboot_required']:
+                    current_info[key]['reboot_required_reasons'].append('FIPS configuration was changed.')
 
-        for key in ('this_node', 'other_node'):
-            current_info[key]['reboot_required'] = all((
-                fips_change_info[key]['id'] == current_info[key]['id'],
-                fips_change_info[key]['reboot_required']
-            ))
+            if all((
+                current_info['this_node']['reboot_required'] is False,
+                current_info['other_node']['reboot_required'] is False,
+            )):
+                # no reboot required for either controller so delete
+                await self.middleware.call('keyvalue.delete', FIPS_KEY)
 
-        if all((
-            current_info['this_node']['reboot_required'] is False,
-            current_info['other_node']['reboot_required'] is False,
-        )):
-            # no reboot required for either controller so delete
-            await self.middleware.call('keyvalue.delete', FIPS_KEY)
+        for reason in self.reboot_reasons.values():
+            current_info['this_node']['reboot_required'] = True
+            current_info['this_node']['reboot_required_reasons'].append(reason)
 
         return current_info
 
-    @accepts(roles=['FAILOVER_READ'])
-    @returns(Dict(
-        'info',
-        Dict('this_node', UUID('id'), Bool('reboot_required')),
-        Dict('other_node', UUID('id', null=True), Bool('reboot_required', null=True)),
-    ))
+    @api_method(FailoverRebootRequiredArgs, FailoverRebootRequiredResult, roles=['FAILOVER_READ'])
     async def info(self):
         """Returns the local and remote nodes boot_ids along with their
         reboot statuses (i.e. does a reboot need to take place)"""
