@@ -12,6 +12,7 @@ __all__ = ["api_method"]
 def api_method(
     accepts: type[BaseModel],
     returns: type[BaseModel],
+    *,
     audit: str | None = None,
     audit_callback: bool = False,
     audit_extended: Callable[..., str] | None = None,
