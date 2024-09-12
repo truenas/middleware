@@ -1,6 +1,7 @@
+from middlewared.utils.cpu import cpu_info
+
 from .ix_apps.metadata import get_collective_metadata
 from .ix_apps.utils import get_app_name_from_project_name
-
 
 NANO_SECOND = 1000000000
 
@@ -27,7 +28,7 @@ def normalize_projects_stats(all_projects_stats: dict, old_stats: dict, interval
         # 2. Normalize this delta over the given time interval by dividing by (interval * NANO_SECOND).
         # 3. Multiply by 100 to convert to percentage.
         cpu_delta = data['cpu_usage'] - old_stats[project]['cpu_usage']
-        normalized_data['cpu_usage'] = (cpu_delta / (interval * NANO_SECOND)) * 100
+        normalized_data['cpu_usage'] = (cpu_delta / (interval * NANO_SECOND * cpu_info()['core_count'])) * 100
 
         networks = []
         for net_name, network_data in data['networks'].items():
