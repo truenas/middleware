@@ -128,4 +128,4 @@ def test_pool_dataset_unlock_smb(smb_user, toggle_attachments):
 
             assert e.value.args[0] == ntstatus.NT_STATUS_BAD_NETWORK_NAME
 
-    assert call('service.stop', 'cifs') is False  # successfully stopped
+    assert call('service.stop', 'cifs')

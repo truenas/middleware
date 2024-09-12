@@ -158,7 +158,7 @@ class ServiceService(CRUDService):
         ),
         roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE']
     )
-    @returns(Bool('started_service'))
+    @returns(Bool('started_service', description='Will return `true` if service successfully started'))
     @pass_app(rest=True)
     async def start(self, app, service, options):
         """
@@ -269,11 +269,13 @@ class ServiceService(CRUDService):
             if service_object.deprecated:
                 await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', service_object.name)
 
-            return False
+            return True
         else:
             self.logger.error("Service %r running after stop", service)
             await self.middleware.call('service.notify_running', service)
-            return True
+            if options['silent']:
+                return False
+            raise CallError(await service_object.failure_logs() or 'Service still running after stop')
 
     @accepts(
         Str('service'),
