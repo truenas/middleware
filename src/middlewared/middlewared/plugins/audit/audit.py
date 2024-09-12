@@ -31,7 +31,7 @@ from middlewared.schema import (
     accepts, Bool, Datetime, Dict, Int, List, Patch, Ref, returns, Str, UUID
 )
 from middlewared.service import filterable, filterable_returns, job, private, ConfigService
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors, ValidationError
 from middlewared.utils import filter_list
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.functools_ import cache
@@ -135,6 +135,7 @@ class AuditService(ConfigService):
         List('services', items=[Str('db_name', enum=ALL_AUDITED)], default=NON_BULK_AUDIT),
         Ref('query-filters'),
         Ref('query-options'),
+        Bool('remote_controller', default=False),
         register=True
     ))
     @filterable_returns(Dict(
@@ -158,6 +159,9 @@ class AuditService(ConfigService):
         If the query-option `force_sql_filters` is true, then the query will be
         converted into a more efficient form for better performance. This will
         not be possible if filters use keys within `svc_data` and `event_data`.
+
+        HA systems may direct the query to the 'remote' controller by
+        including 'remote_controller=True'.  The default is the 'current' controller.
 
         Each audit entry contains the following keys:
 
@@ -193,9 +197,37 @@ class AuditService(ConfigService):
         `success` - boolean value indicating whether the action generating the
         event message succeeded.
         """
-        sql_filters = data['query-options']['force_sql_filters']
 
         verrors = ValidationErrors()
+
+        # If HA, handle the possibility of remote controller requests
+        if await self.middleware.call('failover.licensed') and data['remote_controller']:
+            data.pop('remote_controller')
+            try:
+                audit_query = await self.middleware.call(
+                    'failover.call_remote',
+                    'audit.query',
+                    [data],
+                    {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+                )
+                return audit_query
+            except CallError as e:
+                if e.errno in [errno.ECONNABORTED, errno.ECONNREFUSED, errno.ECONNRESET, errno.EHOSTDOWN,
+                               errno.ETIMEDOUT, CallError.EALERTCHECKERUNAVAILABLE]:
+                    raise ValidationError(
+                        'audit.query.remote_controller',
+                        'Temporarily failed to communicate to remote controller'
+                    )
+                raise ValidationError(
+                    'audit.query.remote_controller',
+                    'Failed to query audit logs of remote controller'
+                )
+            except Exception:
+                self.logger.exception('Unexpected failure querying remote node for audit entries')
+                raise
+
+        sql_filters = data['query-options']['force_sql_filters']
+
         if (select := data['query-options'].get('select')):
             for idx, entry in enumerate(select):
                 if isinstance(entry, list):
