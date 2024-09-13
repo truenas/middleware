@@ -178,7 +178,7 @@ def test__parse_smart_selftest_results__scsiprint__1():
                             "value": 249,
                             "string": "Self-test routine in progress",
                             "remaining_percent": 41,
-                            "passed": true
+                            "passed": True
                         },
                         "lifetime_hours": 0
                     }
