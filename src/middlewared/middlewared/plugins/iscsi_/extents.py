@@ -335,8 +335,7 @@ class iSCSITargetExtentService(SharingService):
             if not os.path.exists(device):
                 verrors.add(f'{schema_name}.disk', f'Device {device!r} for volume {zvol_name!r} does not exist')
 
-            if self.middleware.call_sync('boot.is_boot_pool_path', device):
-                verrors.add(f'{schema_name}.disk', 'Disk residing in boot pool cannot be consumed and is not supported')
+            self.middleware.call_sync('iscsi.extent.validate_zvol_path', verrors, f'{schema_name}.disk', device)
 
             if '@' in zvol_name and not data['ro']:
                 verrors.add(f'{schema_name}.ro', 'Must be set when disk is a ZFS Snapshot')

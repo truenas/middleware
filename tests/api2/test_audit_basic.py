@@ -4,6 +4,7 @@ from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, url
 from middlewared.test.integration.utils.audit import get_audit_entry
 
+from auto_config import ha
 from protocols import smb_connection
 from time import sleep
 
@@ -43,7 +44,6 @@ class AUDIT_CONFIG():
     }
 
 
-# def get_zfs(key, zfs_config):
 def get_zfs(data_type, key, zfs_config):
     """ Get the equivalent ZFS value associated with the audit config setting """
 
@@ -64,8 +64,25 @@ def get_zfs(data_type, key, zfs_config):
             'used_by_reservation': zfs_config['properties']['usedbyrefreservation']['parsed']
         }
     }
-    # return zfs[key]
     return types[data_type][key]
+
+
+def check_audit_download(report_path, report_type, tag=None):
+    """ Download audit DB (root user)
+    If requested, assert the tag is present
+    INPUT: report_type ['CSV'|'JSON'|'YAML']
+    RETURN: lenght of content (bytes)
+    """
+    job_id, url_path = call(
+        "core.download", "audit.download_report",
+        [{"report_name": os.path.basename(report_path)}],
+        f"report.{report_type.lower()}"
+    )
+    r = requests.get(f"{url()}{url_path}")
+    r.raise_for_status()
+    if tag is not None:
+        assert f"{tag}" in r.text
+    return len(r.content)
 
 
 @pytest.fixture(scope='class')
@@ -95,6 +112,32 @@ def init_audit():
         yield (config, dataset)
     finally:
         call('audit.update', AUDIT_CONFIG.defaults)
+
+
+@pytest.fixture(scope='class')
+def standby_user():
+    """ HA system: Create a user on the BACKUP node
+    This will generate a 'create' audit entry, yield,
+    and on exit generate a 'delete' audit entry.
+    """
+    user_id = None
+    try:
+        name = "StandbyUser" + PASSWD
+        user_id = call(
+            'failover.call_remote', 'user.create', [{
+                "username": name,
+                "full_name": name + " Deleteme",
+                "group": 100,
+                "smb": False,
+                "home_create": False,
+                "password": "testing"
+            }],
+            {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+        )
+        yield name
+    finally:
+        if user_id is not None:
+            call('failover.call_remote', 'user.delete', [user_id])
 
 
 # =====================================================================
@@ -242,14 +285,8 @@ class TestAuditOps:
             st = call('filesystem.stat', report_path)
             assert st['size'] != 0, str(st)
 
-            job_id, path = call(
-                "core.download", "audit.download_report",
-                [{"report_name": os.path.basename(report_path)}],
-                f"report.{backend.lower()}"
-            )
-            r = requests.get(f"{url()}{path}")
-            r.raise_for_status()
-            assert len(r.content) == st['size']
+            content_len = check_audit_download(report_path, backend)
+            assert content_len == st['size']
 
     def test_audit_export_nonroot(self):
         with unprivileged_user_client(roles=['SYSTEM_AUDIT_READ', 'FILESYSTEM_ATTRS_READ']) as c:
@@ -262,6 +299,7 @@ class TestAuditOps:
                 st = c.call('filesystem.stat', report_path)
                 assert st['size'] != 0, str(st)
 
+                # Make the call as the client
                 job_id, path = c.call(
                     "core.download", "audit.download_report",
                     [{"report_name": os.path.basename(report_path)}],
@@ -282,3 +320,51 @@ class TestAuditOps:
         ae_ts_ts = int(audit_entry['timestamp'].timestamp())
         ae_msg_ts = int(audit_entry['message_timestamp'])
         assert abs(ae_ts_ts - ae_msg_ts) < 2, f"$date='{ae_ts_ts}, message_timestamp={ae_msg_ts}"
+
+
+@pytest.mark.skipif(not ha, reason="Skip HA tests")
+class TestAuditOpsHA:
+    def test_audit_ha_query(self, standby_user):
+        name = standby_user
+        remote_user = call(
+            'failover.call_remote', 'user.query',
+            [[["username", "=", name]]],
+            {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+        )
+        assert remote_user != []
+
+        # Handle delays in the audit database
+        remote_audit_entry = []
+        tries = 3
+        while tries > 0 and remote_audit_entry == []:
+            sleep(1)
+            remote_audit_entry = call('audit.query', {
+                "query-filters": [["event_data.description", "$", name]],
+                "query-options": {"select": ["event_data", "success"]},
+                "remote_controller": True
+            })
+            if remote_audit_entry != []:
+                break
+            tries -= 1
+
+        assert tries > 0, "Failed to get expected audit entry"
+        assert remote_audit_entry != []
+        params = remote_audit_entry[0]['event_data']['params'][0]
+        assert params['username'] == name
+
+    def test_audit_ha_export(self, standby_user):
+        """
+        Confirm we can download 'Active' and 'Standby' audit DB.
+        With a user created on the 'Standby' controller download the
+        audit DB from both controllers and confirm the user create is
+        in the 'Standby' audit DB and not in the 'Active' audit DB.
+        """
+        report_path_active = call('audit.export', {'export_format': 'CSV'}, job=True)
+        report_path_standby = call('audit.export', {'export_format': 'CSV', 'remote_controller': True}, job=True)
+
+        # Confirm entry NOT in active controller audit DB
+        with pytest.raises(AssertionError):
+            check_audit_download(report_path_active, 'CSV', f"Create user {standby_user}")
+
+        # Confirm entry IS in standby controller audit DB
+        check_audit_download(report_path_standby, 'CSV', f"Create user {standby_user}")

@@ -25,6 +25,7 @@ SQL_SAFE_FIELDS = (
     AuditEventParam.SUCCESS.value,
 )
 
+
 AuditBase = declarative_base()
 
 

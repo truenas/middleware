@@ -16,6 +16,7 @@ from auto_config import (
 from pytest_dependency import depends
 from protocols import SMB
 from samba import ntstatus
+from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.client import truenas_server
 
 
@@ -343,9 +344,7 @@ def test_051_disable_smb1(request):
 
 def test_052_stopping_smb_service(request):
     depends(request, ["VSS_SMB_SERVICE_STARTED"])
-    payload = {"service": "cifs"}
-    results = POST("/service/stop/", payload)
-    assert results.status_code == 200, results.text
+    assert call("service.stop", "cifs")
     sleep(1)
 
 

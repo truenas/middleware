@@ -1024,9 +1024,10 @@ class UserService(CRUDService):
             match user_obj['source']:
                 case 'LOCAL':
                     idmap_ctx = None
-                    db_entry = self.middleware.call_sync('user.query', [[
-                        'username', '=', user_obj['pw_name']
-                    ]], {'select': ['sid']})
+                    db_entry = self.middleware.call_sync('user.query', [
+                        ['username', '=', user_obj['pw_name']],
+                        ['local', '=', True]
+                    ], {'select': ['sid']})
                     if not db_entry:
                         self.logger.error(
                             '%s: local user exists on server but does not exist in the '
@@ -1938,9 +1939,10 @@ class GroupService(CRUDService):
             match grp_obj['source']:
                 case 'LOCAL':
                     idmap_ctx = None
-                    db_entry = self.middleware.call_sync('group.query', [[
-                        'group', '=', grp_obj['gr_name']
-                    ]], {'select': ['sid']})
+                    db_entry = self.middleware.call_sync('group.query', [
+                        ['group', '=', grp_obj['gr_name']],
+                        ['local', '=', True]
+                    ], {'select': ['sid']})
                     if not db_entry:
                         self.logger.error(
                             '%s: local group exists on server but does not exist in the '
