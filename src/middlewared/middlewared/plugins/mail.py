@@ -492,11 +492,11 @@ class MailService(ConfigService):
 
     @private
     async def local_administrators_emails(self):
-        return list(set(
-            user["email"]
-            for user in await self.middleware.call("privilege.local_administrators")
-            if user["email"]
-        ))
+        return list(set(user["email"] for user in await self.middleware.call("user.query", [
+            ["roles", "rin", "FULL_ADMIN"],
+            ["local", "=", True],
+            ["email", "!=", None]
+        ])))
 
     @private
     async def local_administrator_email(self):
