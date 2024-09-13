@@ -39,12 +39,19 @@ class DISKPlugin(GraphBase):
     def get_title(self):
         return 'Disk I/O ({identifier})'
 
+    async def build_context(self):
+        all_charts = await self.all_charts()
+        self.disk_mapping = {
+            disk['name']: all_charts[f'disk.{disk["name"]}']['name'].rsplit('.')[-1]
+            for disk in await self.middleware.call('disk.query')
+            if f'disk.{disk["name"]}' in all_charts
+        }
+
     async def get_identifiers(self) -> typing.Optional[list]:
-        disks = {f'disk.{disk["name"]}' for disk in await self.middleware.call('disk.query')}
-        return [disk.rsplit('.')[-1] for disk in (disks & set(await self.all_charts()))]
+        return list(self.disk_mapping.keys())
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return f'disk.{identifier}'
+        return f'disk.{self.disk_mapping[identifier]}'
 
     def normalize_metrics(self, metrics) -> dict:
         metrics = super().normalize_metrics(metrics)
