@@ -140,7 +140,7 @@
 	path to /dev/disk/by-label = /dev/disk/by-label
 	path to /dev/disk/by-id = /dev/disk/by-id
 	# path to /dev/vx/dsk = /dev/vx/dsk
-	name disks by id = no
+	name disks by id = yes
 	preferred disk ids = *
 	exclude disks = loop* ram* zd* md* dm*
 	filename to monitor = /proc/diskstats
