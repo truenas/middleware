@@ -5,6 +5,7 @@ import typing
 import yaml
 
 from middlewared.service_exception import CallError
+from middlewared.utils.io import write_if_changed
 
 from .path import (
     get_installed_app_config_path, get_installed_app_rendered_dir_path, get_installed_app_version_path,
@@ -18,7 +19,8 @@ def get_rendered_template_config_of_app(app_name: str, version: str) -> dict:
     for rendered_file in get_rendered_templates_of_app(app_name, version):
         with contextlib.suppress(FileNotFoundError, yaml.YAMLError):
             with open(rendered_file, 'r') as f:
-                rendered_config.update(yaml.safe_load(f.read()))
+                if (data := yaml.safe_load(f)) is not None:
+                    rendered_config.update(data)
 
     return rendered_config
 
@@ -32,13 +34,13 @@ def get_rendered_templates_of_app(app_name: str, version: str) -> list[str]:
 
 
 def write_new_app_config(app_name: str, version: str, values: dict[str, typing.Any]) -> None:
-    with open(get_installed_app_config_path(app_name, version), 'w') as f:
-        f.write(yaml.safe_dump(values))
+    app_config_path = get_installed_app_config_path(app_name, version)
+    write_if_changed(app_config_path, yaml.safe_dump(values), perms=0o600, raise_error=False)
 
 
 def get_current_app_config(app_name: str, version: str) -> dict:
     with open(get_installed_app_config_path(app_name, version), 'r') as f:
-        return yaml.safe_load(f)
+        return yaml.safe_load(f) or {}
 
 
 def render_compose_templates(app_version_path: str, values_file_path: str):
@@ -51,8 +53,8 @@ def render_compose_templates(app_version_path: str, values_file_path: str):
 def update_app_config(app_name: str, version: str, values: dict[str, typing.Any], custom_app: bool = False) -> None:
     write_new_app_config(app_name, version, values)
     if custom_app:
-        with open(get_installed_custom_app_compose_file(app_name, version), 'w') as f:
-            f.write(yaml.safe_dump(values))
+        compose_file_path = get_installed_custom_app_compose_file(app_name, version)
+        write_if_changed(compose_file_path, yaml.safe_dump(values), perms=0o600, raise_error=False)
     else:
         render_compose_templates(
             get_installed_app_version_path(app_name, version), get_installed_app_config_path(app_name, version)
