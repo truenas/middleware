@@ -49,7 +49,7 @@ def update_app_metadata_for_portals(app_name: str, version: str):
     write_if_changed(get_installed_app_metadata_path(app_name), yaml.safe_dump({
         **app_metadata,
         **get_portals_and_app_notes(app_name, version),
-    }, perms=0o600, raise_error=True)
+    }), perms=0o600, raise_error=True)
 
 
 def get_collective_config() -> dict[str, dict]:
@@ -63,7 +63,7 @@ def get_collective_metadata() -> dict[str, dict]:
 def update_app_yaml_for_last_update(version_path: str, last_update: str):
     app_yaml_path = os.path.join(version_path, 'app.yaml')
 
-    app_config = _load_app_yml(app_yaml_path)
+    app_config = _load_app_yaml(app_yaml_path)
     app_config['last_update'] = last_update
 
     write_if_changed(app_yaml_path, yaml.safe_dump(app_config), perms=0o600, raise_error=True)
