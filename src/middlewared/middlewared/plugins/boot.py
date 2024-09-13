@@ -329,10 +329,6 @@ class BootService(Service):
         if properties:
             await self.middleware.call('zfs.pool.update', BOOT_POOL_NAME, {'properties': properties})
 
-    @private
-    async def is_boot_pool_path(self, path):
-        return path.startswith(f'/dev/zvol/{await self.pool_name()}/')
-
 
 async def on_config_upload(middleware, path):
     await middleware.call('boot.update_initramfs', {'database': path})
