@@ -14,6 +14,7 @@ HDD_TYPE: str = 'hdd'
 @dataclass
 class Disk:
     id: str
+    identifier: str
     serial: Optional[str] = None
 
 
@@ -25,7 +26,7 @@ def get_disks_for_temperature_reading() -> Dict[str, Disk]:
     disks = {}
     for disk in query_table('storage_disk', prefix='disk_'):
         if disk['serial'] != '' and bool(disk['togglesmart']):
-            disks[disk['serial']] = Disk(id=disk['name'], serial=disk['serial'])
+            disks[disk['serial']] = Disk(id=disk['name'], identifier=disk['identifier'], serial=disk['serial'])
 
     return disks
 
