@@ -3,6 +3,7 @@ import shutil
 import textwrap
 import yaml
 
+from middlewared.utils.io import write_if_changed
 from .metadata import update_app_yaml_for_last_update
 from .path import get_app_parent_config_path, get_installed_app_version_path
 
@@ -20,9 +21,14 @@ def setup_install_app_dir(app_name: str, app_version_details: dict, custom_app: 
 
             This is a custom app where user can use his/her own docker compose file for deploying services.
             '''))
+            f.flush()
 
-        with open(os.path.join(destination, 'app.yaml'), 'w') as f:
-            f.write(yaml.safe_dump(app_version_details['app_metadata']))
+        write_if_changed(
+            os.path.join(destination, 'app.yaml'),
+            yaml.safe_dump(app_version_details['app_metadata']),
+            perms=0o600,
+            raise_error=True
+        )
     else:
         shutil.copytree(app_version_details['location'], destination)
 
