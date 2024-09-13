@@ -206,7 +206,7 @@ class TestNormalPool:
             verify_lock_status(dataset, locked=True)
 
             # Now actually unlock it
-            payload['passphrase'] = passphrase
+            payload['datasets'][0]['passphrase'] = passphrase
             job_status = call('pool.dataset.unlock', dataset, payload, job=True)
             assert job_status['unlocked'] == [dataset], job_status
             verify_lock_status(dataset, locked=False)
