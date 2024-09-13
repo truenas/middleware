@@ -19,7 +19,7 @@ def get_rendered_template_config_of_app(app_name: str, version: str) -> dict:
     for rendered_file in get_rendered_templates_of_app(app_name, version):
         with contextlib.suppress(FileNotFoundError, yaml.YAMLError):
             with open(rendered_file, 'r') as f:
-                if (data := yaml.safe_load(f.read())) is not None:
+                if (data := yaml.safe_load(f)) is not None:
                     rendered_config.update(data)
 
     return rendered_config
@@ -35,7 +35,7 @@ def get_rendered_templates_of_app(app_name: str, version: str) -> list[str]:
 
 def write_new_app_config(app_name: str, version: str, values: dict[str, typing.Any]) -> None:
     app_config_path = get_installed_app_config_path(app_name, version)
-    write_if_changed(app_config_path, yaml.safe_dump(values), perms=0o600, raise_error=True)
+    write_if_changed(app_config_path, yaml.safe_dump(values), perms=0o600, raise_error=False)
 
 
 def get_current_app_config(app_name: str, version: str) -> dict:
@@ -54,7 +54,7 @@ def update_app_config(app_name: str, version: str, values: dict[str, typing.Any]
     write_new_app_config(app_name, version, values)
     if custom_app:
         compose_file_path = get_installed_custom_app_compose_file(app_name, version)
-        write_if_changed(compose_file_path, yaml.safe_dump(values), perms=0o600, raise_error=True)
+        write_if_changed(compose_file_path, yaml.safe_dump(values), perms=0o600, raise_error=False)
     else:
         render_compose_templates(
             get_installed_app_version_path(app_name, version), get_installed_app_config_path(app_name, version)

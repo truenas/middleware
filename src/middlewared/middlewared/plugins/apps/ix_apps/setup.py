@@ -27,7 +27,7 @@ def setup_install_app_dir(app_name: str, app_version_details: dict, custom_app: 
             os.path.join(destination, 'app.yaml'),
             yaml.safe_dump(app_version_details['app_metadata']),
             perms=0o600,
-            raise_error=True
+            raise_error=False
         )
     else:
         shutil.copytree(app_version_details['location'], destination)
