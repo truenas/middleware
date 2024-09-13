@@ -7,8 +7,7 @@ from middlewared.plugins.smart import parse_smart_selftest_results, parse_curren
 
 
 def test__parse_smart_selftest_results__ataprint__1():
-    data = json.loads(textwrap.dedent("""\
-{
+    data = {
     "ata_smart_self_test_log": {
         "standard": {
             "revision": 1,
@@ -21,7 +20,7 @@ def test__parse_smart_selftest_results__ataprint__1():
                     "status": {
                         "value": 0,
                         "string": "Completed without error",
-                        "passed": true
+                        "passed": True
                     },
                     "lifetime_hours": 16590
                 },
@@ -33,7 +32,7 @@ def test__parse_smart_selftest_results__ataprint__1():
                     "status": {
                         "value": 0,
                         "string": "Completed without error",
-                        "passed": true
+                        "passed": True
                     },
                     "lifetime_hours": 16589
                 }
@@ -42,8 +41,7 @@ def test__parse_smart_selftest_results__ataprint__1():
             "error_count_outdated": 0
             }
         }
-}
-        """))
+    }
     assert parse_smart_selftest_results(data) == [
         {
             "num": 0,
@@ -67,8 +65,7 @@ def test__parse_smart_selftest_results__ataprint__1():
 
 
 def test__parse_smart_selftest_results__ataprint__2():
-    data = json.loads("""\
-{
+    data = {
     "ata_smart_self_test_log": {
         "standard": {
             "revision": 1,
@@ -82,7 +79,7 @@ def test__parse_smart_selftest_results__ataprint__2():
                         "value": 249,
                         "string": "Self-test routine in progress",
                         "remaining_percent": 100,
-                        "passed": true
+                        "passed": True
                     },
                     "lifetime_hours": 0
                 }
@@ -91,8 +88,7 @@ def test__parse_smart_selftest_results__ataprint__2():
             "error_count_outdated": 0
             }
         }
-}
-        """)
+    }
     assert parse_smart_selftest_results(data) == [
         {
             "num": 0,
@@ -107,25 +103,23 @@ def test__parse_smart_selftest_results__ataprint__2():
 
 
 def test__parse_smart_selftest_results__nvmeprint__1():
-    assert parse_smart_selftest_results(json.loads("""\
-{
-    "nvme_self_test_log": {
-        "table": [
-            {
-                "self_test_code": {
-                    "string": "Short"
-                },
-                "self_test_result": {
-                    "string": "Completed without error"
-                },
-                "power_on_hours": 18636
-            }
-        ],
-        "error_count_total": 0,
-        "error_count_outdated": 0
-    }
-}
-    """)) == [
+    assert parse_smart_selftest_results({
+        "nvme_self_test_log": {
+            "table": [
+                {
+                    "self_test_code": {
+                        "string": "Short"
+                    },
+                    "self_test_result": {
+                        "string": "Completed without error"
+                    },
+                    "power_on_hours": 18636
+                }
+            ],
+            "error_count_total": 0,
+            "error_count_outdated": 0
+        }
+    }) == [
         {
             "num": 0,
             "description": "Short",
@@ -142,21 +136,19 @@ def test__parse_smart_selftest_results__nvmeprint__1():
 
 
 def test__parse_smart_selftest_results__scsiprint__1():
-    assert parse_smart_selftest_results(json.loads("""\
-{
-    "scsi_self_test_0": {
-        "code": {
-            "string": "Background short"
-        },
-        "result": {
-            "string": "Completed, segment failed"
-        },
-        "power_on_time": {
-            "hours": 3943
+    assert parse_smart_selftest_results({
+        "scsi_self_test_0": {
+            "code": {
+                "string": "Background short"
+            },
+            "result": {
+                "string": "Completed, segment failed"
+            },
+            "power_on_time": {
+                "hours": 3943
+            }
         }
-    }
-}
-    """)) == [
+    }) == [
         {
             "num": 0,
             "description": "Background short",
@@ -172,53 +164,49 @@ def test__parse_smart_selftest_results__scsiprint__1():
 @pytest.mark.parametrize("stdout,result", [
     # ataprint.cpp
     (
-        json.loads("""\
-{
-    "ata_smart_self_test_log": {
-        "standard": {
-            "revision": 1,
-            "table": [
-                {
-                    "type": {
-                        "value": 1,
-                        "string": "Offline"
-                    },
-                    "status": {
-                        "value": 249,
-                        "string": "Self-test routine in progress",
-                        "remaining_percent": 41,
-                        "passed": true
-                    },
-                    "lifetime_hours": 0
+        {
+        "ata_smart_self_test_log": {
+            "standard": {
+                "revision": 1,
+                "table": [
+                    {
+                        "type": {
+                            "value": 1,
+                            "string": "Offline"
+                        },
+                        "status": {
+                            "value": 249,
+                            "string": "Self-test routine in progress",
+                            "remaining_percent": 41,
+                            "passed": true
+                        },
+                        "lifetime_hours": 0
+                    }
+                ],
+                "error_count_total": 0,
+                "error_count_outdated": 0
                 }
-            ],
-            "error_count_total": 0,
-            "error_count_outdated": 0
             }
-        }
-}
-        """),
+        },
         {"progress": 59},
     ),
     # nvmeprint.cpp
     (
-        json.loads("""\
-{
-    "nvme_self_test_log": {
-        "current_self_test_completion_percent": 3
-    }
-}
-        """),
+        {
+            "nvme_self_test_log": {
+                "current_self_test_completion_percent": 3
+            }
+        },
         {"progress": 3},
     ),
     # scsiprint.spp
     (
-        json.loads('{"junkjson":true}'),
+        {"junkjson":True},
         None,
     ),
     (
-        json.loads('{"self_test_in_progress":true}'),
-        {"progress": 0},
+        {"self_test_in_progress":True},
+        {"progress": 0}
     )
 ])
 def test__parse_current_smart_selftest(stdout, result):
