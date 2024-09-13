@@ -39,8 +39,9 @@ def verify_lock_status(ds, *, locked):
 
 @contextlib.contextmanager
 def create_dataset(payload, **delete_args):
+    name = payload['name']
     yield call('pool.dataset.create', payload)
-    assert call('pool.dataset.delete', payload['name'], delete_args)
+    assert call('pool.dataset.delete', name, delete_args)
 
 
 @pytest.fixture(scope='class')
