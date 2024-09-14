@@ -30,6 +30,9 @@ class FailoverRemoteSystemInaccessibleAlertSource(AlertSource):
         self.incident_id = None
 
     async def check(self):
+        if not await self.middleware.call('failover.licensed'):
+            return []
+
         try:
             await self.middleware.call('failover.call_remote', 'core.ping', [], {'timeout': 2})
         except Exception:
