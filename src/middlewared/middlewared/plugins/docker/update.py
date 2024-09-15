@@ -1,3 +1,5 @@
+import errno
+
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Str, ValidationErrors
@@ -93,6 +95,16 @@ class DockerService(ConfigService):
                     await self.middleware.call('service.stop', 'docker')
                 except Exception as e:
                     raise CallError(f'Failed to stop docker service: {e}')
+
+                try:
+                    await self.middleware.call('docker.fs_manage.umount')
+                except CallError as e:
+                    # We handle this specially, if for whatever reason ix-apps dataset is not there,
+                    # we don't make it fatal to change pools etc - however if some dataset other then
+                    # boot pool is mounted at ix-apps dir, then we will error out as it's a problem
+                    # and needs to be fixed before we can proceed
+                    if e.errno != errno.ENOENT or await self.middleware.call('docker.fs_manage.ix_apps_is_mounted'):
+                        raise
 
                 await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 
