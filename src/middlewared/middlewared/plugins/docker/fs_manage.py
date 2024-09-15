@@ -1,6 +1,8 @@
-from middlewared.service import Service
+import errno
 
-from .state_utils import Status
+from middlewared.service import CallError, Service
+
+from .state_utils import IX_APPS_MOUNT_PATH, Status
 
 
 class DockerFilesystemManageService(Service):
@@ -29,3 +31,16 @@ class DockerFilesystemManageService(Service):
 
     async def umount(self):
         await self.common_func(False)
+
+    async def ix_apps_is_mounted(self):
+        """
+        This will tell us if some dataset is mounted on /mnt/.ix-apps or not.
+        """
+        try:
+            fs_details = await self.middleware.call('filesystem.statfs', IX_APPS_MOUNT_PATH)
+        except CallError as e:
+            if e.errno == errno.ENOENT:
+                return False
+            raise
+
+        return False if fs_details['source'].startswith('boot-pool/') else True
