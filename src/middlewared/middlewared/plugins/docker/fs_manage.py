@@ -32,7 +32,7 @@ class DockerFilesystemManageService(Service):
     async def umount(self):
         await self.common_func(False)
 
-    async def ix_apps_is_mounted(self):
+    async def ix_apps_is_mounted(self, dataset_to_check=None):
         """
         This will tell us if some dataset is mounted on /mnt/.ix-apps or not.
         """
@@ -43,4 +43,10 @@ class DockerFilesystemManageService(Service):
                 return False
             raise
 
-        return False if fs_details['source'].startswith('boot-pool/') else True
+        if fs_details['source'].startswith('boot-pool/'):
+            return False
+
+        if dataset_to_check:
+            return fs_details['source'] == dataset_to_check
+
+        return True

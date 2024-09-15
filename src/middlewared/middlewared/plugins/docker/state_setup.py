@@ -54,6 +54,10 @@ class DockerSetupService(Service):
         # This is problematic for bridge interfaces which can or cannot come up in time
         await self.validate_interfaces()
 
+        # Make sure correct ix-apps dataset is mounted
+        if not await self.middleware.call('docker.fs_manage.ix_apps_is_mounted', config['dataset']):
+            raise CallError(f'{config["dataset"]!r} dataset is not mounted on {IX_APPS_MOUNT_PATH!r}')
+
     @private
     async def validate_interfaces(self):
         default_iface, success = await self.middleware.run_in_thread(wait_for_default_interface_link_state_up)
