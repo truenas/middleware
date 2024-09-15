@@ -70,6 +70,8 @@ class DockerSetupService(Service):
             return
 
         await self.create_update_docker_datasets(config['dataset'])
+        # Docker dataset would not be mounted at this point, so we will explicitly mount them now
+        await self.middleware.call('docker.fs_manage.mount')
         await self.middleware.call('docker.state.start_service')
         self.middleware.create_task(self.middleware.call('docker.state.periodic_check'))
 
