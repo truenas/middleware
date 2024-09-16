@@ -1,5 +1,6 @@
 boto3
 dnspython
+junitparser
 pytest
 pytest-dependency
 pytest-rerunfailures
