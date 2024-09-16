@@ -694,6 +694,34 @@ class AlertService(Service):
                     other_node_alerts.append(i)
         return this_node_alerts, other_node_alerts, locked
 
+    async def __run_other_node_alert_source(self, name):
+        keys = ("args", "datetime", "last_occurrence", "dismissed", "mail",)
+        other_node_alerts = []
+        try:
+            try:
+                for alert in await self.middleware.call("failover.call_remote", "alert.run_source", [name]):
+                    other_node_alerts.append([
+                        Alert(**dict(
+                            {k: v for k, v in alert.items() if k in keys},
+                            klass=AlertClass.class_by_name[alert["klass"]],
+                            _source=alert["source"],
+                            _key=alert["key"]
+                        ))
+                    ])
+            except CallError as e:
+                if e.errno not in NETWORK_ERRORS + (CallError.EALERTCHECKERUNAVAILABLE,):
+                    raise
+        except ReserveFDException:
+            self.logger.debug('Failed to reserve a privileged port')
+        except Exception as e:
+            other_node_alerts = [Alert(
+                AlertSourceRunFailedOnBackupNodeAlertClass,
+                args={"source_name": name, "traceback": str(e)},
+                _source=name
+            )]
+
+        return other_node_alerts
+
     async def __run_alerts(self):
         product_type = await self.middleware.call("alert.product_type")
         this_node, other_node, run_on_backup_node, run_failover_related = await self.__get_failover_info()
@@ -724,37 +752,7 @@ class AlertService(Service):
                     pass
 
                 if run_on_backup_node and alert_source.run_on_backup_node:
-                    keys = ("args", "datetime", "last_occurrence", "dismissed", "mail",)
-                    try:
-                        try:
-                            other_node_alerts = [
-                                Alert(
-                                    **dict(
-                                        {k: v for k, v in alert.items() if k in keys},
-                                        klass=AlertClass.class_by_name[alert["klass"]],
-                                        _source=alert["source"],
-                                        _key=alert["key"]
-                                    )
-                                ) for alert in await self.middleware.call(
-                                    "failover.call_remote", "alert.run_source", [alert_source.name]
-                                )
-                            ]
-                        except CallError as e:
-                            if e.errno not in NETWORK_ERRORS + (CallError.EALERTCHECKERUNAVAILABLE,):
-                                raise
-                    except ReserveFDException:
-                        self.logger.debug('Failed to reserve a privileged port')
-                    except Exception as e:
-                        other_node_alerts = [
-                            Alert(
-                                AlertSourceRunFailedOnBackupNodeAlertClass,
-                                args={
-                                    "source_name": alert_source.name,
-                                    "traceback": str(e),
-                                },
-                                _source=alert_source.name
-                            )
-                        ]
+                    other_node_alerts = await self.__run_other_node_alert_source(alert_source.name)
 
             for talert, oalert in zip_longest(this_node_alerts, other_node_alerts, fillvalue=None):
                 if talert is not None:
