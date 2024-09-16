@@ -19,6 +19,8 @@ INVALID_SALT = '$pbkdf2-sha256$29000$CyGktHYOwXgvBYDQOqc0*g$nK1MMvVuPGHMvUENyR01
 INVALID_HASH = '$pbkdf2-sha256$29000$CyGktHYOwXgvBYDQOqc05g$nK1MMvVuPGHMvUENyR01qNsaZjgGmlt3k08CRuC4a*I'
 MISSING_SALT = '$pbkdf2-sha256$29000$$nK1MMvVuPGHMvUENyR01qNsaZjgGmlt3k08CRuC4aTI'
 MISSING_HASH = '$pbkdf2-sha256$29000$CyGktHYOwXgvBYDQOqc05g$'
+EMPTY_HASH_STRING = ''
+
 PAM_DIR = '/etc/pam.d'
 PAM_FILE = 'middleware-api-key'
 PAM_AUTH_LINE = 'auth  [success=1 default=die]      pam_tdb.so debug '
@@ -43,7 +45,8 @@ def write_tdb_file(
     a varying amount of hashes.
 
     Although each hash supports a separate expiry, we are only
-    concerned in these tests in that works overall.
+    concerned in these tests expired hashes generate PAM_AUTH_ERR
+    as expected.
     """
 
     keys = []
@@ -230,6 +233,7 @@ def test_new_auth(current_username):
             assert authd is False
             assert p.code == pam.PAM_AUTH_ERR
 
+
 def test_new_auth_truncated_password(current_username):
     """ Verify that truncated password generates auth error """
     key = crypto.generate_string(string_size=64)
@@ -294,6 +298,7 @@ def test_unsupported_service_file_name(current_username):
     INVALID_HASH,
     MISSING_SALT,
     MISSING_HASH,
+    EMPTY_HASH_STRING,
 ])
 def test_invalid_hash(current_username, thehash):
     """ Check that variations of broken hash entries generate PAM_AUTH_ERR """
