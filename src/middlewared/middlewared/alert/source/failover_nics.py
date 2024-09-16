@@ -31,8 +31,7 @@ class FailoverNetworkCardsAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self):
-        licensed = await self.middleware.call('failover.licensed')
-        if licensed and (interfaces := await self.middleware.call('failover.mismatch_nics')):
+        if (interfaces := await self.middleware.call('failover.mismatch_nics')):
             if interfaces['missing_remote']:
                 return [Alert(
                     NetworkCardsMismatchOnStandbyNodeAlertClass, {'interfaces': ', '.join(interfaces['missing_remote'])}
