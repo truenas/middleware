@@ -1,37 +1,12 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import KeychainCredentialSetupSSHConnectionArgs, KeychainCredentialSetupSSHConnectionResult
 from middlewared.service import Service, ValidationErrors
 
 
 class KeychainCredentialService(Service):
 
-    @accepts(
-        Dict(
-            'setup_ssh_connection',
-            Dict(
-                'private_key',
-                Bool('generate_key', default=True),
-                Int('existing_key_id'),
-                Str('name', empty=False),
-            ),
-            Str('connection_name', required=True),
-            Str('setup_type', required=True, enum=['SEMI-AUTOMATIC', 'MANUAL'], default='MANUAL'),
-            Patch(
-                'keychain_remote_ssh_semiautomatic_setup', 'semi_automatic_setup',
-                ('rm', {'name': 'name'}),
-                ('rm', {'name': 'private_key'}),
-                ('attr', {'null': True}),
-                ('attr', {'default': None}),
-            ),
-            Dict(
-                'manual_setup',
-                additional_attrs=True,
-                null=True,
-                default=None,
-            )
-        ),
-        roles=['KEYCHAIN_CREDENTIAL_WRITE'],
-    )
-    @returns(Ref('keychain_credential_entry'))
+    @api_method(KeychainCredentialSetupSSHConnectionArgs, KeychainCredentialSetupSSHConnectionResult,
+                roles=['KEYCHAIN_CREDENTIAL_WRITE'])
     async def setup_ssh_connection(self, options):
         """
         Creates a SSH Connection performing the following steps:
