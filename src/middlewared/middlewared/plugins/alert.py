@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from collections import defaultdict, namedtuple
 import copy
 from datetime import datetime, timezone
@@ -43,13 +44,19 @@ from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 
 POLICIES = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
 DEFAULT_POLICY = "IMMEDIATELY"
-
 ALERT_SOURCES = {}
 ALERT_SERVICES_FACTORIES = {}
+SEND_ALERTS_ON_READY = False
 
 AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
 
-SEND_ALERTS_ON_READY = False
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class AlertFailoverInfo:
+    this_node: str
+    other_node: str
+    run_on_backup_node: bool
+    run_failover_related: bool
 
 
 class AlertModel(sa.Model):
@@ -680,7 +687,12 @@ class AlertService(Service):
                         rem_fstat == "BACKUP",
                     ))
 
-        return (this_node, other_node, run_on_backup_node, run_failover_related)
+        return AlertFailoverInfo(
+            this_node=this_node,
+            other_node=other_node,
+            run_on_backup_node=run_on_backup_node,
+            run_failover_related=run_failover_related
+        )
 
     async def __handle_locked_alert_source(self, name, this_node, other_node):
         this_node_alerts, other_node_alerts = [], []
@@ -724,7 +736,7 @@ class AlertService(Service):
 
     async def __run_alerts(self):
         product_type = await self.middleware.call("alert.product_type")
-        this_node, other_node, run_on_backup_node, run_failover_related = await self.__get_failover_info()
+        fi = await self.__get_failover_info()
         for k, source_lock in list(self.sources_locks.items()):
             if source_lock.expires_at <= time.monotonic():
                 await self.unblock_source(k)
@@ -733,7 +745,7 @@ class AlertService(Service):
             if product_type not in alert_source.products:
                 continue
 
-            if alert_source.failover_related and not run_failover_related:
+            if alert_source.failover_related and not fi.run_failover_related:
                 continue
 
             if not alert_source.schedule.should_run(utc_now(), self.alert_source_last_run[alert_source.name]):
@@ -742,7 +754,7 @@ class AlertService(Service):
             self.alert_source_last_run[alert_source.name] = utc_now()
 
             this_node_alerts, other_node_alerts, locked = await self.__handle_locked_alert_source(
-                alert_source.name, this_node, other_node
+                alert_source.name, fi.this_node, fi.other_node
             )
             if not locked:
                 self.logger.trace("Running alert source: %r", alert_source.name)
@@ -751,15 +763,15 @@ class AlertService(Service):
                 except UnavailableException:
                     pass
 
-                if run_on_backup_node and alert_source.run_on_backup_node:
+                if fi.run_on_backup_node and alert_source.run_on_backup_node:
                     other_node_alerts = await self.__run_other_node_alert_source(alert_source.name)
 
             for talert, oalert in zip_longest(this_node_alerts, other_node_alerts, fillvalue=None):
                 if talert is not None:
-                    talert.node = this_node
+                    talert.node = fi.this_node
                     self.__handle_alert(talert)
                 if oalert is not None:
-                    oalert.node = other_node
+                    oalert.node = fi.other_node
                     self.__handle_alert(oalert)
 
             self.alerts = (
