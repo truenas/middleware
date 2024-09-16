@@ -187,11 +187,20 @@ class TestAuditFTP:
             assert result.status_code == 200, result.text
 
 
-@pytest.fixture
-def report_exists(request):
-    report_pathname = request.config.cache.get('report_pathname', None)
+@pytest.fixture(scope='class')
+def report_pathname():
+    """Test the auditing of the audit export function"""
+    payload = {'export_format': 'CSV'}
+    with expect_audit_method_calls([{
+        'method': 'audit.export',
+        'params': [payload],
+        'description': 'Export Audit Data',
+    }]):
+        results = POST('/audit/export/', payload)
+    assert results.status_code == 200, results.text
+    report_pathname = results.json()
     assert report_pathname is not None
-    yield report_pathname
+    return report_pathname
 
 
 class TestAudit:
@@ -237,18 +246,7 @@ class TestAudit:
             result = PUT('/audit/', restore_payload)
             assert result.status_code == 200, result.text
 
-    def test_audit_export_audit(self):
-        """Test the auditing of the audit export function"""
-        payload = {'export_format': 'CSV'}
-        with expect_audit_method_calls([{
-            'method': 'audit.export',
-            'params': [payload],
-            'description': 'Export Audit Data',
-        }]):
-            results = POST('/audit/export/', payload)
-            assert results.status_code == 200, results.text
-
-    def test_audit_download_audit(self, report_exists):
+    def test_audit_download_audit(self, report_pathname):
         """Test the auditing of the audit download function"""
         init_audit_query = call('audit.query', {
             'query-filters': [['event_data.method', '=', 'audit.download_report']],
@@ -256,7 +254,7 @@ class TestAudit:
         })
         init_len = len(init_audit_query)
 
-        report_name = os.path.basename(report_exists)
+        report_name = os.path.basename(report_pathname)
         results = POST('/audit/download_report/', {'report_name': report_name})
         assert results.status_code == 200, results.text
 
