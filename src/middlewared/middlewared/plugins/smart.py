@@ -8,6 +8,7 @@ import json
 from humanize import ordinal
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
+from middlewared.middlewared.api.v25_04_0.smartctl import NvmeSelfTest
 from middlewared.plugins.smart_.schedule import SMARTD_SCHEDULE_PIECES, smartd_schedule_piece_values
 from middlewared.schema import accepts, Bool, Cron, Datetime, Dict, Int, Float, List, Patch, returns, Str
 from middlewared.service import (
@@ -17,6 +18,9 @@ from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.time_utils import utc_now
+from middlewared.api.current import (
+    AtaSelfTest, NvmeSelfTest, ScsiSelfTest, SelfTestResults
+)
 
 
 RE_TIME = re.compile(r'test will complete after ([a-z]{3} [a-z]{3} [0-9 ]+ \d\d:\d\d:\d\d \d{4})', re.IGNORECASE)
@@ -37,7 +41,7 @@ async def annotate_disk_smart_tests(middleware, tests_filter, disk):
     return dict(tests=filter_list(tests, tests_filter), current_test=current_test, **disk)
 
 
-def parse_smart_selftest_results(data):
+def parse_smart_selftest_results(data) -> SelfTestResults:
     tests = []
 
     # ataprint.cpp
@@ -49,14 +53,15 @@ def parse_smart_selftest_results(data):
                 if remaining := entry["status"]["value"] & 0x0f:
                     remaining = entry["status"]["remaining_percent"]
 
-                test = {
-                    "num": index,
-                    "description": entry["type"]["string"],
-                    "status_verbose": entry["status"]["string"],
-                    "remaining": remaining,
-                    "lifetime": entry["lifetime_hours"],
-                    "lba_of_first_error": entry.get("lba"), # only included if there is an error
-                }
+                test = AtaSelfTest(
+                    index,
+                    entry["type"]["string"],
+                    entry["status"]["string"],
+                    entry["status"]["string"],
+                    remaining,
+                    entry["lifetime_hours"],
+                    entry.get("lba"), # only included if there is an error
+                )
 
                 if test["status_verbose"] == "Completed without error":
                     test["status"] = "SUCCESS"
@@ -69,7 +74,7 @@ def parse_smart_selftest_results(data):
 
                 tests.append(test)
 
-        return tests
+        return SelfTestResults(tests)
 
     # nvmeprint.cpp
     if "nvme_self_test_log" in data:
@@ -79,28 +84,29 @@ def parse_smart_selftest_results(data):
                 if lba := entry.get("lba"):
                     lba = entry["lba"]["value"]
 
-                test = {
-                    "num": index,
-                    "description": entry["self_test_code"]["string"],
-                    "status_verbose": entry["self_test_result"]["string"],
-                    "power_on_hours": entry["power_on_hours"],
-                    "failing_lba": lba,
-                    "nsid": entry.get("nsid"),
-                    "seg": entry.get("segment"),
-                    "sct": entry.get("status_code_type") or 0x0,
-                    "code": entry.get("status_code") or 0x0,
-                }
+                test = NvmeSelfTest(
+                    index,
+                    entry["self_test_code"]["string"],
+                    entry["self_test_result"]["string"],
+                    entry["self_test_result"]["string"],
+                    entry["power_on_hours"],
+                    lba,
+                    entry.get("nsid"),
+                    entry.get("segment"),
+                    entry.get("status_code_type") or 0x0,
+                    entry.get("status_code") or 0x0,
+                )
 
-                if test["status_verbose"] == "Completed without error":
-                    test["status"] = "SUCCESS"
-                elif test["status_verbose"].startswith("Aborted:"):
-                    test["status"] = "ABORTED"
+                if test.status_verbose == "Completed without error":
+                    test.status = "SUCCESS"
+                elif test.status_verbose.startswith("Aborted:"):
+                    test.status = "ABORTED"
                 else:
-                    test["status"] = "FAILED"
+                    test.status = "FAILED"
 
                 tests.append(test)
 
-        return tests
+        return SelfTestResults(tests)
 
     # scsiprint.cpp
     # this JSON has numbered keys as an index, there's a reason it's not called a "smart" test
@@ -121,27 +127,30 @@ def parse_smart_selftest_results(data):
             if not entry.get("self_test_in_progress"):
                 lifetime = entry["power_on_time"]["hours"]
 
-            test = {
-                "num": index,
-                "description": entry["code"]["string"],
-                "status_verbose": entry["result"]["string"],
-                "segment_number": segment,
-                "lifetime": lifetime,
-                "lba_of_first_error": lba,
-            }
+            test = ScsiSelfTest(
+                index,
+                entry["code"]["string"],
+                entry["result"]["string"],
+                segment, #will be replaced
+                segment,
+                lifetime,
+                lba
+            )
 
-            if test["status_verbose"] == "Completed":
-                test["status"] = "SUCCESS"
-            elif test["status_verbose"] == "Self test in progress ...":
-                test["status"] = "RUNNING"
-            elif test["status_verbose"].startswith("Aborted"):
-                test["status"] = "ABORTED"
+            if test.status_verbose == "Completed":
+                test.status = "SUCCESS"
+            elif test.status_verbose == "Self test in progress ...":
+                test.status = "RUNNING"
+            elif test.status_verbose.startswith("Aborted"):
+                test.status = "ABORTED"
             else:
-                test["status"] = "FAILED"
+                test.status = "FAILED"
 
             tests.append(test)
 
-        return tests
+        return SelfTestResults(tests)
+
+    return SelfTestResults(None)
 
 
 def parse_current_smart_selftest(data):

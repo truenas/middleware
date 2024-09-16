@@ -7,3 +7,4 @@ from .group import *  # noqa
 from .privilege import *  # noqa
 from .user import *  # noqa
 from .vendor import *  # noqa
+from .smartctl import * # noqa
