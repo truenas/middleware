@@ -3,6 +3,7 @@ import typing
 from middlewared.utils.disks import get_disks_for_temperature_reading
 
 from .graph_base import GraphBase
+from .utils import get_human_disk_name
 
 
 class CPUPlugin(GraphBase):
@@ -42,7 +43,7 @@ class DISKPlugin(GraphBase):
     async def build_context(self):
         all_charts = await self.all_charts()
         self.disk_mapping = {
-            disk['identifier']: all_charts[f'disk.{disk["name"]}']['name'].rsplit('.')[-1]
+            get_human_disk_name(disk): all_charts[f'disk.{disk["name"]}']['name'].split('.', 1)[-1]
             for disk in await self.middleware.call('disk.query')
             if f'disk.{disk["name"]}' in all_charts
         }
@@ -236,7 +237,7 @@ class DiskTempPlugin(GraphBase):
             identifier = disk.id if disk.id.startswith('nvme') else disk.serial
             for k in (identifier, identifier.replace('-', '_')):
                 if f'smart_log_smart.disktemp.{k}' in all_charts:
-                    self.disk_mapping[disk.identifier] = k
+                    self.disk_mapping[get_human_disk_name(disk.__dict__)] = k
                     break
 
     async def get_identifiers(self) -> typing.Optional[list]:

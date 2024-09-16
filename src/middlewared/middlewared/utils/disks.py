@@ -15,7 +15,10 @@ HDD_TYPE: str = 'hdd'
 class Disk:
     id: str
     identifier: str
-    serial: Optional[str] = None
+    name: str
+    serial: str | None = None
+    model: str | None = None
+    type: str | None = None
 
 
 def parse_smartctl_for_temperature_output(json) -> Optional[int]:
@@ -26,7 +29,10 @@ def get_disks_for_temperature_reading() -> Dict[str, Disk]:
     disks = {}
     for disk in query_table('storage_disk', prefix='disk_'):
         if disk['serial'] != '' and bool(disk['togglesmart']):
-            disks[disk['serial']] = Disk(id=disk['name'], identifier=disk['identifier'], serial=disk['serial'])
+            disks[disk['serial']] = Disk(
+                id=disk['name'], identifier=disk['identifier'], serial=disk['serial'],
+                model=disk['model'], type=disk['type'], name=disk['name'],
+            )
 
     return disks
 
