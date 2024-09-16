@@ -187,22 +187,6 @@ class TestAuditFTP:
             assert result.status_code == 200, result.text
 
 
-@pytest.fixture(scope='class')
-def report_pathname():
-    """Test the auditing of the audit export function"""
-    payload = {'export_format': 'CSV'}
-    with expect_audit_method_calls([{
-        'method': 'audit.export',
-        'params': [payload],
-        'description': 'Export Audit Data',
-    }]):
-        results = POST('/audit/export/', payload)
-    assert results.status_code == 200, results.text
-    job_result = wait_on_job(results.json(), 30)
-    assert job_result['state'] == 'SUCCESS', job_result
-    return job_result['results']
-
-
 class TestAudit:
 
     @pytest.mark.parametrize('payload, success', [
@@ -246,13 +230,26 @@ class TestAudit:
             result = PUT('/audit/', restore_payload)
             assert result.status_code == 200, result.text
 
-    def test_audit_download_audit(self, report_pathname):
+    def test_audit_download_audit(self):
         """Test the auditing of the audit download function"""
         init_audit_query = call('audit.query', {
             'query-filters': [['event_data.method', '=', 'audit.download_report']],
             'query-options': {'select': ['event_data', 'success']}
         })
         init_len = len(init_audit_query)
+
+        # Get the report file path
+        payload = {'export_format': 'CSV'}
+        with expect_audit_method_calls([{
+            'method': 'audit.export',
+            'params': [payload],
+            'description': 'Export Audit Data',
+        }]):
+            results = POST('/audit/export/', payload)
+        assert results.status_code == 200, results.text
+        job_result = wait_on_job(results.json(), 30)
+        assert job_result['state'] == 'SUCCESS', job_result
+        report_pathname = job_result['results']['result']
 
         report_name = os.path.basename(report_pathname)
         results = POST('/audit/download_report/', {'report_name': report_name})
