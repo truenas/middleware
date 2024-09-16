@@ -185,7 +185,7 @@ class ShareSec(CRUDService):
             if not (share_acl := filter_list(entries, [['key', '=', f'SECDESC/{share_name.lower()}']])):
                 continue
 
-            if share_acl[0] != s['share_acl']:
+            if share_acl[0]['value'] != s['share_acl']:
                 self.logger.debug('Updating stored copy of SMB share ACL on %s', share_name)
                 await self.middleware.call(
                     'datastore.update',
