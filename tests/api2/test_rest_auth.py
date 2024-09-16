@@ -4,7 +4,7 @@ import pytest
 import time
 from unittest.mock import ANY
 
-from functions import DELETE, POST, PUT
+from functions import DELETE, POST, PUT, wait_on_job
 from middlewared.test.integration.assets.account import user, group, privilege
 from middlewared.test.integration.assets.iscsi import iscsi_extent, iscsi_target
 from middlewared.test.integration.assets.pool import dataset
@@ -198,9 +198,9 @@ def report_pathname():
     }]):
         results = POST('/audit/export/', payload)
     assert results.status_code == 200, results.text
-    report_pathname = results.json()
-    assert report_pathname is not None
-    return report_pathname
+    job_result = wait_on_job(results.json(), 30)
+    assert job_result['state'] == 'SUCCESS', job_result
+    return job_result['results']
 
 
 class TestAudit:
