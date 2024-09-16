@@ -292,23 +292,23 @@ def test_unsupported_service_file_name(current_username):
         assert p.code == pam.PAM_SYSTEM_ERR
 
 
-@pytest.mark.parametrize('thehash', [
-    INVALID_HASH_TYPE,
-    INVALID_SALT,
-    INVALID_HASH,
-    MISSING_SALT,
-    MISSING_HASH,
-    EMPTY_HASH_STRING,
+@pytest.mark.parametrize('thehash,pam_error', [
+    (INVALID_HASH_TYPE, pam.PAM_AUTH_ERR),
+    (INVALID_SALT, pam.PAM_AUTH_ERR),
+    (INVALID_HASH, pam.PAM_AUTH_ERR),
+    (MISSING_SALT, pam.PAM_AUTH_ERR),
+    (MISSING_HASH, pam.PAM_AUTH_ERR),
+    (EMPTY_HASH_STRING, pam.PAM_AUTHINFO_UNAVAIL),
 ])
-def test_invalid_hash(current_username, thehash):
-    """ Check that variations of broken hash entries generate PAM_AUTH_ERR """
+def test_invalid_hash(current_username, thehash, pam_error):
+    """ Check that variations of broken hash entries generate expected error """
     db_id = write_tdb_file(current_username, [thehash])
     with pam_service(admin_user=current_username) as svc:
         p = pam.pam()
         # verify that using correct key succeeds
         authd = p.authenticate(current_username, f'{db_id}-{LEGACY_ENTRY_KEY}', service=svc)
         assert authd is False
-        assert p.code == pam.PAM_AUTH_ERR
+        assert p.code == pam_error
 
 
 @pytest.mark.parametrize('fuzz_fn', [
