@@ -35,6 +35,9 @@ class ConnectionOrigin:
     gid: int | None = None
     """If `family` is of type AF_UNIX, this represents
     the group id associated to the unix datagram connection"""
+    secure: bool | None = None
+    """Indicates whether SSL/TLS used for connection. If
+    `family` is of type AF_UNIX, this will also be set to True"""
 
     @classmethod
     def create(cls, request):
@@ -46,6 +49,7 @@ class ConnectionOrigin:
                     family=sock.family,
                     pid=pid,
                     uid=uid,
+                    secure=True,
                     gid=gid
                 )
             elif sock.family in (AF_INET, AF_INET6):
@@ -56,6 +60,7 @@ class ConnectionOrigin:
                     loc_port=lp,
                     rem_addr=ra,
                     rem_port=rp,
+                    secure=request.secure
                 )
         except AttributeError:
             # request.transport can be None by the time this is
@@ -96,6 +101,10 @@ class ConnectionOrigin:
             self.rem_port and self.rem_port <= 1024 and
             self.rem_addr and self.rem_addr in HA_HEARTBEAT_IPS
         )
+
+    @property
+    def is_secure_connection(self) -> bool:
+        return (self.secure or self.is_ha_connection)
 
 
 def get_tcp_ip_info(sock, request) -> tuple:

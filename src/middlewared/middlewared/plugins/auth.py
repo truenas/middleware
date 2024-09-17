@@ -156,6 +156,7 @@ class Session:
     def dump(self):
         return {
             "origin": str(self.app.origin),
+            "secure": self.app.origin.is_secure_connection,
             **dump_credentials(self.credentials),
             "created_at": utc_now() - timedelta(seconds=time.monotonic() - self.created_at),
         }
