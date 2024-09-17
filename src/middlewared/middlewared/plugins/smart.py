@@ -8,7 +8,6 @@ import json
 from humanize import ordinal
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
-from middlewared.middlewared.api.v25_04_0.smartctl import NvmeSelfTest
 from middlewared.plugins.smart_.schedule import SMARTD_SCHEDULE_PIECES, smartd_schedule_piece_values
 from middlewared.schema import accepts, Bool, Cron, Datetime, Dict, Int, Float, List, Patch, returns, Str
 from middlewared.service import (
