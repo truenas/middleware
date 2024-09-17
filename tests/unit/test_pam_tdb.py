@@ -24,7 +24,7 @@ EMPTY_HASH_STRING = ''
 PAM_DIR = '/etc/pam.d'
 PAM_FILE = 'middleware-api-key'
 PAM_AUTH_LINE = 'auth  [success=1 default=die]      pam_tdb.so debug '
-PAM_FAIL_DELAY = 1.50  # pam_fail_delay is 2s, but we need a little wiggle-room
+PAM_FAIL_DELAY = 1  # pam_fail_delay is 2s, but we need a little wiggle-room
 
 PAM_FILE_REMAINING_CONTENTS = """
 @include common-auth-unix

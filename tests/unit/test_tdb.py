@@ -4,7 +4,7 @@ import pytest
 
 from base64 import b64encode
 from contextlib import closing
-from middlewared.plugins.sysdataset import SYSDATASET_PATH
+from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.utils.tdb import (
     close_sysdataset_tdb_handles,
     get_tdb_handle,

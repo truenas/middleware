@@ -25,12 +25,16 @@ DESCRIPTION = (
 )
 
 UNIT_TESTS = 'tests/unit'
-MIDDLEWARE_MODULE_PATH = os.path.dirname(os.path.abspath(middlewared.__file__))
+MIDDLEWARE_MODULE_PATH = '/usr/lib/python3/dist-packages/middlewared'
 MIDDLEWARE_PYTEST = 'src/middlewared/middlewared/pytest'
 MIDDLEWARE_UNIT_TESTS = os.path.join(MIDDLEWARE_PYTEST, 'unit')
 MIDDLEWARE_PYTEST_MODULE = os.path.join(MIDDLEWARE_MODULE_PATH, 'pytest')
 RESULT_FILE = 'unit_tests_result.xml'
 PYTEST_CONFTEST_FILE = 'tests/conftest.py'
+
+if not os.path.exists(MIDDLEWARE_MODULE_PATH):
+    # If middlware has been reinstalled then we should try to find where it's located
+    MIDDLEWARE_MODULE_PATH = os.path.dirname(os.path.abspath(middlewared.__file__))
 
 
 @dataclass()
