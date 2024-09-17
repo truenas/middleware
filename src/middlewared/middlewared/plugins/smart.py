@@ -19,7 +19,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.time_utils import utc_now
 from middlewared.api.current import (
-    AtaSelfTest, NvmeSelfTest, ScsiSelfTest, SelfTestResults
+    AtaSelfTest, NvmeSelfTest, ScsiSelfTest
 )
 
 
@@ -41,7 +41,7 @@ async def annotate_disk_smart_tests(middleware, tests_filter, disk):
     return dict(tests=filter_list(tests, tests_filter), current_test=current_test, **disk)
 
 
-def parse_smart_selftest_results(data) -> SelfTestResults:
+def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest] | list[ScsiSelfTest] | None:
     tests = []
 
     # ataprint.cpp
@@ -74,7 +74,7 @@ def parse_smart_selftest_results(data) -> SelfTestResults:
 
                 tests.append(test)
 
-        return SelfTestResults(tests)
+        return tests
 
     # nvmeprint.cpp
     if "nvme_self_test_log" in data:
@@ -106,7 +106,7 @@ def parse_smart_selftest_results(data) -> SelfTestResults:
 
                 tests.append(test)
 
-        return SelfTestResults(tests)
+        return tests
 
     # scsiprint.cpp
     # this JSON has numbered keys as an index, there's a reason it's not called a "smart" test
@@ -148,9 +148,7 @@ def parse_smart_selftest_results(data) -> SelfTestResults:
 
             tests.append(test)
 
-        return SelfTestResults(tests)
-
-    return SelfTestResults(None)
+        return tests
 
 
 def parse_current_smart_selftest(data):
