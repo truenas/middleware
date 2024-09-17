@@ -53,13 +53,13 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                     remaining = entry["status"]["remaining_percent"]
 
                 test = AtaSelfTest(
-                    index,
-                    entry["type"]["string"],
-                    entry["status"]["string"],
-                    entry["status"]["string"],
-                    remaining,
-                    entry["lifetime_hours"],
-                    entry.get("lba"), # only included if there is an error
+                    num=index,
+                    description=entry["type"]["string"],
+                    status=entry["status"]["string"],
+                    status_verbose=entry["status"]["string"],
+                    remaining=remaining,
+                    lifetime=entry["lifetime_hours"],
+                    lba_of_first_error=entry.get("lba"), # only included if there is an error
                 )
 
                 if test["status_verbose"] == "Completed without error":
@@ -84,16 +84,16 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                     lba = entry["lba"]["value"]
 
                 test = NvmeSelfTest(
-                    index,
-                    entry["self_test_code"]["string"],
-                    entry["self_test_result"]["string"],
-                    entry["self_test_result"]["string"],
-                    entry["power_on_hours"],
-                    lba,
-                    entry.get("nsid"),
-                    entry.get("segment"),
-                    entry.get("status_code_type") or 0x0,
-                    entry.get("status_code") or 0x0,
+                    num=index,
+                    description=entry["self_test_code"]["string"],
+                    status=entry["self_test_result"]["string"],
+                    status_verbose=entry["self_test_result"]["string"],
+                    power_on_hours=entry["power_on_hours"],
+                    failing_lba=lba,
+                    nsid=entry.get("nsid"),
+                    seg=entry.get("segment"),
+                    sct=entry.get("status_code_type") or 0x0,
+                    code=entry.get("status_code") or 0x0,
                 )
 
                 if test.status_verbose == "Completed without error":
@@ -127,13 +127,13 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                 lifetime = entry["power_on_time"]["hours"]
 
             test = ScsiSelfTest(
-                index,
-                entry["code"]["string"],
-                entry["result"]["string"],
-                segment, #will be replaced
-                segment,
-                lifetime,
-                lba
+                num=index,
+                description=entry["code"]["string"],
+                status=entry["result"]["string"],
+                status_verbose=segment, #will be replaced
+                segment_number=segment,
+                lifetime=lifetime,
+                lba_of_first_error=lba
             )
 
             if test.status_verbose == "Completed":
