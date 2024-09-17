@@ -67,9 +67,9 @@ class RemoteClient:
         try:
             with Client(url, reserved_ports=True) as c:
                 self.client = c
-                self.connected.set()
-                # Subscribe to all events on connection
                 with self._subscribe_lock:
+                    self.connected.set()
+                    # Subscribe to all events on connection
                     for name in self._subscriptions:
                         self.client.subscribe(name, partial(self._sub_callback, name))
                 self._on_connect()
@@ -162,9 +162,9 @@ class RemoteClient:
             raise CallError(str(e), e.errno or errno.EFAULT)
 
     def subscribe(self, name, callback):
-        # Only subscribe if we are already connected, otherwise simply register it
-        if name not in self._subscriptions and self.is_connected():
-            with self._subscribe_lock:
+        with self._subscribe_lock:
+            # Only subscribe if we are already connected, otherwise simply register it
+            if name not in self._subscriptions and self.is_connected():
                 self.client.subscribe(name, partial(self._sub_callback, name))
         self._subscriptions[name].append(callback)
 
