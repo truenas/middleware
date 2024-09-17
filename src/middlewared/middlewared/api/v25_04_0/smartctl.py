@@ -9,7 +9,7 @@ class AtaSelfTest(BaseModel):
     description: str
     status: str
     status_verbose: str
-    remaining: int
+    remaining: float
     lifetime: int
     lba_of_first_error: int | None = None
 

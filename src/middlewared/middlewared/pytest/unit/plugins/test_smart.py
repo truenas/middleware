@@ -51,7 +51,7 @@ def test__parse_smart_selftest_results__ataprint__1():
             description="Short offline",
             status="SUCCESS",
             status_verbose="Completed without error",
-            remaining=0,
+            remaining=0.0,
             lifetime=16590,
             lba_of_first_error=None
         ),
@@ -98,7 +98,7 @@ def test__parse_smart_selftest_results__ataprint__2():
             description="Offline",
             status="RUNNING",
             status_verbose="Self-test routine in progress",
-            remaining=100,
+            remaining=1.0,
             lifetime=0,
             lba_of_first_error=None
         )
