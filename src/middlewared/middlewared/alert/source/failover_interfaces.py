@@ -20,8 +20,7 @@ class FailoverCriticalAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self):
-        licensed = await self.middleware.call('failover.licensed')
-        if licensed and not await self.middleware.call('interface.query', [('failover_critical', '=', True)]):
+        if not await self.middleware.call('interface.query', [('failover_critical', '=', True)]):
             return [Alert(NoCriticalFailoverInterfaceFoundAlertClass)]
         else:
             return []

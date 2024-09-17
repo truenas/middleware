@@ -56,7 +56,6 @@ class NFSModel(sa.Model):
     nfs_srv_servers = sa.Column(sa.Integer(), nullable=True)
     nfs_srv_allow_nonroot = sa.Column(sa.Boolean(), default=False)
     nfs_srv_protocols = sa.Column(sa.JSON(list), default=[NFSProtocol.NFSv3, NFSProtocol.NFSv4])
-    nfs_srv_v4_v3owner = sa.Column(sa.Boolean(), default=False)
     nfs_srv_v4_krb = sa.Column(sa.Boolean(), default=False)
     nfs_srv_bindip = sa.Column(sa.MultiSelectField())
     nfs_srv_mountd_port = sa.Column(sa.SmallInteger(), nullable=True)
@@ -86,7 +85,6 @@ class NFSService(SystemServiceService):
         Int('servers', null=True, validators=[Range(min_=1, max_=256)], required=True),
         Bool('allow_nonroot', required=True),
         List('protocols', items=[Str('protocol', enum=NFSProtocol.choices())], required=True),
-        Bool('v4_v3owner', required=True),
         Bool('v4_krb', required=True),
         Str('v4_domain', required=True),
         List('bindip', items=[IPAddr('ip')], required=True),
@@ -288,9 +286,6 @@ class NFSService(SystemServiceService):
                     INPUT: Select NFSv3 or NFSv4 or NFSv3,NFSv4
                     Default: NFSv3,NFSv4
 
-        `v4_v3owner` - when set means that system will use NFSv3 ownership model for NFSv4.
-                    (Deprecated)
-
         `v4_krb` -  Force Kerberos authentication on NFS shares
                     If enabled, NFS shares will fail if the Kerberos ticket is unavilable
 
@@ -345,8 +340,6 @@ class NFSService(SystemServiceService):
                     'nfs_update.protocols',
                     'Must specify at least one value ("NFSV3", "NFSV4") in the "protocols" list.'
                 )
-            if NFSProtocol.NFSv4 not in data.get("protocols"):
-                data.setdefault("v4_v3owner", False)
 
         old = await self.config()
 
@@ -394,13 +387,6 @@ class NFSService(SystemServiceService):
                 )
                 await self.middleware.call('etc.generate', 'smb')
                 await self.middleware.call('service.reload', 'idmap')
-
-        if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_v3owner"]:
-            verrors.add("nfs_update.v4_v3owner", "This option requires enabling NFSv4")
-
-        if new["v4_v3owner"] and new["userd_manage_gids"]:
-            verrors.add(
-                "nfs_update.userd_manage_gids", "This option is incompatible with NFSv3 ownership model for NFSv4")
 
         if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_domain"]:
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")

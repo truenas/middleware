@@ -61,7 +61,6 @@ class NFS_CONFIG:
     default_config = {
         "allow_nonroot": False,
         "protocols": ["NFSV3", "NFSV4"],
-        "v4_v3owner": False,
         "v4_krb": False,
         "v4_domain": "",
         "bindip": [],

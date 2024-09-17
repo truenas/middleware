@@ -1,3 +1,5 @@
+from base64 import b64encode
+from hashlib import pbkdf2_hmac
 from secrets import choice, compare_digest, token_urlsafe, token_hex
 from string import ascii_letters, digits, punctuation
 
@@ -63,3 +65,16 @@ def generate_nt_hash(passwd):
     """
     md4_hash_bytes = md4_hash_blob(passwd.encode('utf-16le'))
     return md4_hash_bytes.hex().upper()
+
+
+def generate_pbkdf2_512(passwd):
+    """
+    Generate a pbkdf2_sha512 hash for password. This is used for
+    verification of API keys.
+    """
+    prefix = 'pbkdf2-sha512'
+    rounds = 500000
+    salt_length = 16
+    salt = generate_string(string_size=salt_length, extra_chars='./').encode()
+    hash = pbkdf2_hmac('sha512', passwd.encode(), salt, rounds)
+    return f'${prefix}${rounds}${b64encode(salt).decode()}${b64encode(hash).decode()}'

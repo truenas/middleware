@@ -15,11 +15,8 @@ class LDAPHealthMixin:
         our health check.
         """
         match error.reason:
-            case LDAPHealthCheckFailReason.LDAP_BIND_FAILED:
+            case LDAPHealthCheckFailReason.LDAP_BIND_FAILED | LDAPHealthCheckFailReason.SSSD_STOPPED:
                 self._recover_ldap_config()
-            case LDAPHealthCheckFailReason.SSSD_STOPPED:
-                # pick up with sssd restart below
-                pass
             case _:
                 # not recoverable
                 raise error from None

@@ -31,8 +31,7 @@ class FailoverDisksAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self):
-        licensed = await self.middleware.call('failover.licensed')
-        if licensed and (md := await self.middleware.call('failover.mismatch_disks')):
+        if (md := await self.middleware.call('failover.mismatch_disks')):
             if md['missing_remote']:
                 return [Alert(
                     DisksAreNotPresentOnStandbyNodeAlertClass, {'serials': ', '.join(md['missing_remote'])}

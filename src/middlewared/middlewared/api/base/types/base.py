@@ -1,12 +1,14 @@
 from typing import Any, Generic, get_args, get_origin, TypeVar
 
-from pydantic import BeforeValidator, Field, GetCoreSchemaHandler, PlainSerializer
+from pydantic import AfterValidator, BeforeValidator, Field, GetCoreSchemaHandler, HttpUrl as _HttpUrl, PlainSerializer
 from pydantic_core import CoreSchema, core_schema, PydanticKnownError
 from typing_extensions import Annotated
 
 from middlewared.utils.lang import undefined
 
-__all__ = ["LongString", "NonEmptyString", "Private", "PRIVATE_VALUE"]
+__all__ = ["HttpUrl", "LongString", "NonEmptyString", "Private", "PRIVATE_VALUE"]
+
+HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
 
 
 class LongStringWrapper:

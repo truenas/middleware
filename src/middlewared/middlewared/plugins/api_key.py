@@ -6,9 +6,8 @@ from passlib.hash import pbkdf2_sha256
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ApiKeyCreateArgs, ApiKeyCreateResult, ApiKeyUpdateArgs,
-    ApiKeyUpdateResult, ApiKeyDeleteArgs, ApiKeyDeleteResult,
-    HttpVerb
+    ApiKeyEntry, ApiKeyCreateArgs, ApiKeyCreateResult, ApiKeyUpdateArgs, ApiKeyUpdateResult,
+    ApiKeyDeleteArgs, ApiKeyDeleteResult, HttpVerb,
 )
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -46,6 +45,7 @@ class ApiKeyService(CRUDService):
         datastore = "account.api_key"
         datastore_extend = "api_key.item_extend"
         cli_namespace = "auth.api_key"
+        entry = ApiKeyEntry
 
     @private
     async def item_extend(self, item):

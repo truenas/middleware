@@ -1,9 +1,6 @@
-import errno
-import os
-
-from middlewared.service_exception import CallError
-from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
+from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
 
 from .crud_service import CRUDService
 from .decorators import pass_app, private
@@ -63,6 +60,11 @@ class SharingTaskService(CRUDService):
         raise NotImplementedError
 
     @private
+    async def validate_zvol_path(self, verrors, name, path):
+        if check_zvol_in_boot_pool_using_path(path):
+            verrors.add(name, 'Disk residing in boot pool cannot be consumed and is not supported')
+
+    @private
     async def validate_local_path(self, verrors, name, path):
         await check_path_resides_within_volume(verrors, self.middleware, name, path)
 
@@ -70,6 +72,7 @@ class SharingTaskService(CRUDService):
     async def validate_path_field(self, data, schema, verrors):
         name = f'{schema}.{self.path_field}'
         path = await self.get_path_field(data)
+        await self.validate_zvol_path(verrors, name, path)
         loc = path_location(path)
 
         if loc not in self.allowed_path_types:

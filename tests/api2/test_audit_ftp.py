@@ -1,26 +1,8 @@
-import os
-import sys
-
-import pytest
-from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
-sys.path.append(os.getcwd())
-from functions import PUT
 
-
-@pytest.fixture(scope='module')
-def nfs_audit_dataset(request):
-    with dataset('audit-test-nfs') as ds:
-        try:
-            yield ds
-        finally:
-            pass
-
-
-@pytest.mark.parametrize('api', ['ws', 'rest'])
-def test_ftp_config_audit(api):
+def test_ftp_config_audit():
     '''
     Test the auditing of FTP configuration changes
     '''
@@ -36,23 +18,11 @@ def test_ftp_config_audit(api):
             'params': [payload],
             'description': 'Update FTP configuration',
         }]):
-            if api == 'ws':
-                call('ftp.update', payload)
-            elif api == 'rest':
-                result = PUT('/ftp/', payload)
-                assert result.status_code == 200, result.text
-            else:
-                raise ValueError(api)
+            call('ftp.update', payload)
     finally:
         # Restore initial state
         restore_payload = {
             'clients': initial_ftp_config['clients'],
             'banner': initial_ftp_config['banner']
         }
-        if api == 'ws':
-            call('ftp.update', restore_payload)
-        elif api == 'rest':
-            result = PUT('/ftp/', restore_payload)
-            assert result.status_code == 200, result.text
-        else:
-            raise ValueError(api)
+        call('ftp.update', restore_payload)

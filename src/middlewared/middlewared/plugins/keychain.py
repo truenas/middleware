@@ -11,12 +11,25 @@ import urllib.parse
 
 from truenas_api_client import Client, ClientException
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    KeychainCredentialEntry,
+    KeychainCredentialCreateArgs, KeychainCredentialCreateResult,
+    KeychainCredentialUpdateArgs, KeychainCredentialUpdateResult,
+    KeychainCredentialDeleteArgs, KeychainCredentialDeleteResult,
+    KeychainCredentialUsedByArgs, KeychainCredentialUsedByResult,
+    KeychainCredentialGetOfTypeArgs, KeychainCredentialGetOfTypeResult,
+    KeychainCredentialGenerateSSHKeyPairArgs, KeychainCredentialGenerateSSHKeyPairResult,
+    KeychainCredentialRemoteSSHHostKeyScanArgs, KeychainCredentialRemoteSSHHostKeyScanResult,
+    KeychainCredentialRemoteSSHSemiautomaticSetupArgs, KeychainCredentialRemoteSSHSemiautomaticSetupResult,
+    KeychainCredentialSSHPairArgs, KeychainCredentialSSHPairResult,
+)
 from middlewared.service_exception import CallError, MatchNotFound
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Password, Ref, returns, Str, ValidationErrors
+from middlewared.schema import Int, Str, ValidationErrors
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
-from middlewared.validators import validate_schema, URL
+from middlewared.validators import validate_schema
 
 
 class KeychainCredentialType:
@@ -256,19 +269,9 @@ class KeychainCredentialService(CRUDService):
         datastore = "system.keychaincredential"
         cli_namespace = "system.keychain_credential"
         role_prefix = "KEYCHAIN_CREDENTIAL"
+        entry = KeychainCredentialEntry
 
-    ENTRY = Patch(
-        "keychain_credential_create", "keychain_credential_entry",
-        ("add", Int("id")),
-    )
-
-    @accepts(Dict(
-        "keychain_credential_create",
-        Str("name", required=True, empty=False),
-        Str("type", required=True),
-        Dict("attributes", additional_attrs=True, required=True, private=True),
-        register=True,
-    ))
+    @api_method(KeychainCredentialCreateArgs, KeychainCredentialCreateResult)
     async def do_create(self, data):
         """
         Create a Keychain Credential
@@ -319,15 +322,7 @@ class KeychainCredentialService(CRUDService):
         )
         return data
 
-    @accepts(
-        Int("id"),
-        Patch(
-            "keychain_credential_create",
-            "keychain_credential_update",
-            ("attr", {"update": True}),
-            ("rm", {"name": "type"}),
-        )
-    )
+    @api_method(KeychainCredentialUpdateArgs, KeychainCredentialUpdateResult)
     async def do_update(self, id_, data):
         """
         Update a Keychain Credential with specific `id`
@@ -378,8 +373,7 @@ class KeychainCredentialService(CRUDService):
 
         return new
 
-    @accepts(Int("id"), Dict("options", Bool("cascade", default=False)))
-    @returns()
+    @api_method(KeychainCredentialDeleteArgs, KeychainCredentialDeleteResult)
     async def do_delete(self, id_, options):
         """
         Delete Keychain Credential with specific `id`
@@ -413,12 +407,7 @@ class KeychainCredentialService(CRUDService):
             id_,
         )
 
-    @accepts(Int("id"))
-    @returns(List("credential_results", items=[Dict(
-        "credential_result",
-        Str("title"),
-        Str("unbind_method"),
-    )]))
+    @api_method(KeychainCredentialUsedByArgs, KeychainCredentialUsedByResult)
     async def used_by(self, id_):
         """
         Returns list of objects that use this credential.
@@ -457,9 +446,7 @@ class KeychainCredentialService(CRUDService):
 
         verrors.check()
 
-    @private
-    @accepts(Int("id"), Str("type"))
-    @returns(Ref("keychain_credential_entry"))
+    @api_method(KeychainCredentialGetOfTypeArgs, KeychainCredentialGetOfTypeResult, private=True)
     async def get_of_type(self, id_, type_):
         try:
             credential = await self.middleware.call("keychaincredential.query", [["id", "=", id_]], {"get": True})
@@ -474,12 +461,8 @@ class KeychainCredentialService(CRUDService):
 
             return credential
 
-    @accepts(roles=["KEYCHAIN_CREDENTIAL_WRITE"])
-    @returns(Dict(
-        "ssh_key_pair",
-        Str("private_key", max_length=None, required=True),
-        Str("public_key", max_length=None, required=True),
-    ))
+    @api_method(KeychainCredentialGenerateSSHKeyPairArgs, KeychainCredentialGenerateSSHKeyPairResult,
+                roles=["KEYCHAIN_CREDENTIAL_WRITE"])
     def generate_ssh_key_pair(self):
         """
         Generate a public/private key pair
@@ -510,16 +493,8 @@ class KeychainCredentialService(CRUDService):
             "public_key": public_key,
         }
 
-    @accepts(
-        Dict(
-            "keychain_remote_ssh_host_key_scan",
-            Str("host", required=True, empty=False),
-            Str("port", default=22),
-            Int("connect_timeout", default=10),
-        ),
-        roles=["KEYCHAIN_CREDENTIAL_WRITE"],
-    )
-    @returns(Str("remove_ssh_host_key", max_length=None))
+    @api_method(KeychainCredentialRemoteSSHHostKeyScanArgs, KeychainCredentialRemoteSSHHostKeyScanResult,
+                roles=["KEYCHAIN_CREDENTIAL_WRITE"])
     async def remote_ssh_host_key_scan(self, data):
         """
         Discover a remote host key
@@ -554,25 +529,8 @@ class KeychainCredentialService(CRUDService):
         else:
             raise CallError(f"ssh-keyscan failed: {proc.stdout + proc.stderr}")
 
-    @accepts(
-        Dict(
-            "keychain_remote_ssh_semiautomatic_setup",
-            Str("name", required=True),
-            Str("url", required=True, validators=[URL()]),
-            Bool("verify_ssl", default=True),
-            Password("token"),
-            Str("admin_username", default="root"),
-            Password("password"),
-            Password("otp_token"),
-            Str("username", default="root"),
-            Int("private_key", required=True, private=True),
-            Int("connect_timeout", default=10),
-            Bool("sudo", default=False),
-            register=True,
-        ),
-        roles=["KEYCHAIN_CREDENTIAL_WRITE"],
-    )
-    @returns(Ref("keychain_credential_entry"))
+    @api_method(KeychainCredentialRemoteSSHSemiautomaticSetupArgs, KeychainCredentialRemoteSSHSemiautomaticSetupResult,
+                roles=["KEYCHAIN_CREDENTIAL_WRITE"])
     def remote_ssh_semiautomatic_setup(self, data):
         """
         Perform semi-automatic SSH connection setup with other FreeNAS machine
@@ -664,13 +622,7 @@ class KeychainCredentialService(CRUDService):
             }
         })
 
-    @private
-    @accepts(Dict(
-        "keychain_ssh_pair",
-        Str("remote_hostname", required=True),
-        Str("username", default="root"),
-        Str("public_key", required=True),
-    ))
+    @api_method(KeychainCredentialSSHPairArgs, KeychainCredentialSSHPairResult, private=True)
     def ssh_pair(self, data):
         """
         Receives public key, storing it to accept SSH connection and return

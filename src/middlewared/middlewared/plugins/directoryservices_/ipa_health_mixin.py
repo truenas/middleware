@@ -29,11 +29,8 @@ class IPAHealthMixin:
                 self._recover_ipa_config()
             case IPAHealthCheckFailReason.IPA_NO_CACERT | IPAHealthCheckFailReason.IPA_CACERT_PERM:
                 self._recover_ipa_config()
-            case IPAHealthCheckFailReason.LDAP_BIND_FAILED:
+            case IPAHealthCheckFailReason.LDAP_BIND_FAILED | IPAHealthCheckFailReason.SSSD_STOPPED:
                 self._recover_ldap_config()
-            case IPAHealthCheckFailReason.SSSD_STOPPED:
-                # pick up with sssd restart below
-                pass
             case _:
                 # not recoverable
                 raise error from None

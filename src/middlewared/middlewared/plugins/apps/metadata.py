@@ -15,11 +15,12 @@ class AppMetadataService(Service):
         private = True
 
     @job(lock='app_metadata_generate', lock_queue_size=1)
-    def generate(self, job):
+    def generate(self, job, blacklisted_apps=None):
         config = {}
         metadata = {}
+        blacklisted_apps = blacklisted_apps or []
         with os.scandir(get_app_parent_config_path()) as scan:
-            for entry in filter(lambda e: e.is_dir(), scan):
+            for entry in filter(lambda e: e.name not in blacklisted_apps and e.is_dir(), scan):
                 if not (app_metadata := get_app_metadata(entry.name)):
                     # The app is malformed or something is seriously wrong with it
                     continue

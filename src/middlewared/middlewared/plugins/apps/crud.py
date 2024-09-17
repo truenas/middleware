@@ -4,6 +4,8 @@ import os
 import shutil
 import textwrap
 
+from catalog_reader.custom_app import get_version_details
+
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import (
     CallError, CRUDService, filterable, InstanceNotFound, job, pass_app, private, ValidationErrors
@@ -119,10 +121,15 @@ class AppService(CRUDService):
 
         questions_context = self.middleware.call_sync('catalog.get_normalized_questions_context')
         for app in apps:
-            app['version_details'] = self.middleware.call_sync(
-                'catalog.app_version_details', get_installed_app_version_path(app['name'], app['version']),
-                questions_context,
-            )
+            if app['custom_app']:
+                version_details = get_version_details()
+            else:
+                version_details = self.middleware.call_sync(
+                    'catalog.app_version_details', get_installed_app_version_path(app['name'], app['version']),
+                    questions_context,
+                )
+
+            app['version_details'] = version_details
 
         return filter_list(apps, filters, options)
 
@@ -337,13 +344,13 @@ class AppService(CRUDService):
             app_name, app_config['version'], 'down', remove_orphans=True,
             remove_volumes=True, remove_images=options['remove_images'],
         )
-        try:
-            job.set_progress(80, 'Cleaning up resources')
-            shutil.rmtree(get_installed_app_path(app_name))
-            if options['remove_ix_volumes'] and (apps_volume_ds := self.get_app_volume_ds(app_name)):
-                self.middleware.call_sync('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
-        finally:
-            self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+        # Remove app from metadata first as if someone tries to query filesystem info of the app
+        # where the app resources have been nuked from filesystem, it will error out
+        self.middleware.call_sync('app.metadata.generate', [app_name]).wait_sync(raise_error=True)
+        job.set_progress(80, 'Cleaning up resources')
+        shutil.rmtree(get_installed_app_path(app_name))
+        if options['remove_ix_volumes'] and (apps_volume_ds := self.get_app_volume_ds(app_name)):
+            self.middleware.call_sync('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
 
         if options.get('send_event', True):
             self.middleware.send_event('app.query', 'REMOVED', id=app_name)
