@@ -55,9 +55,7 @@ class FailoverAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self):
-        if not await self.middleware.call('failover.licensed'):
-            return []
-        elif not await self.middleware.call('failover.internal_interfaces'):
+        if not await self.middleware.call('failover.internal_interfaces'):
             return [Alert(FailoverInterfaceNotFoundAlertClass)]
 
         try:
