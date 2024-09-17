@@ -12,7 +12,6 @@ from middlewared.utils.asyncio_ import asyncio_map
 
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
 RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
-RE_SMART_AVAILABLE = re.compile(r'SMART support is:\s+Available')
 
 
 class DiskModel(sa.Model):
