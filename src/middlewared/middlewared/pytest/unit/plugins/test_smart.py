@@ -47,22 +47,22 @@ def test__parse_smart_selftest_results__ataprint__1():
     }
     assert parse_smart_selftest_results(data) == [
         AtaSelfTest(
-            0,
-            "Short offline",
-            "SUCCESS",
-            "Completed without error",
-            0.0,
-            16590,
-            None
+            num=0,
+            description="Short offline",
+            status="SUCCESS",
+            status_verbose="Completed without error",
+            remaining=0,
+            lifetime=16590,
+            lba_of_first_error=None
         ),
         AtaSelfTest(
-            1,
-            "Short offline",
-            "SUCCESS",
-            "Completed without error",
-            0.0,
-            16589,
-            None
+            num=1,
+            description="Short offline",
+            status="SUCCESS",
+            status_verbose="Completed without error",
+            remaining=0.0,
+            lifetime=16589,
+            lba_of_first_error=None
         )
     ]
 
@@ -94,13 +94,13 @@ def test__parse_smart_selftest_results__ataprint__2():
     }
     assert parse_smart_selftest_results(data) == [
         AtaSelfTest(
-            0,
-            "Offline",
-            "RUNNING",
-            "Self-test routine in progress",
-            100,
-            0,
-            None
+            num=0,
+            description="Offline",
+            status="RUNNING",
+            status_verbose="Self-test routine in progress",
+            remaining=100,
+            lifetime=0,
+            lba_of_first_error=None
         )
     ]
 
@@ -124,16 +124,16 @@ def test__parse_smart_selftest_results__nvmeprint__1():
         }
     }) == [
         NvmeSelfTest(
-            0,
-            "Short",
-            "SUCCESS",
-            "Completed without error",
-            18636,
-            None,
-            None,
-            None,
-            0x0,
-            0x0,
+            num=0,
+            description="Short",
+            status="SUCCESS",
+            status_verbose="Completed without error",
+            power_on_hours=18636,
+            failing_lba=None,
+            nsid=None,
+            seg=None,
+            sct=0x0,
+            code=0x0
         ),
     ]
 
@@ -153,13 +153,13 @@ def test__parse_smart_selftest_results__scsiprint__1():
         }
     }) == [
         ScsiSelfTest(
-            0,
-            "Background short",
-            "FAILED",
-            "Completed, segment failed",
-            None,
-            3943,
-            None,
+            num=0,
+            description="Background short",
+            status="FAILED",
+            status_verbose="Completed, segment failed",
+            segment_number=None,
+            lifetime=3943,
+            lba_of_first_error=None
         ),
     ]
 
