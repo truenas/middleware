@@ -1,9 +1,11 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.failover_.disabled_reasons import DisabledReasonsEnum
-from middlewared.plugins.failover_.reboot import FIPS_KEY
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
 from middlewared.service import ConfigService, ValidationError, job, private
+
+FIPS_REBOOT_CODE = 'FIPS'
+FIPS_REBOOT_REASON = 'FIPS configuration was changed.'
 
 
 class SystemSecurityModel(sa.Model):
@@ -32,46 +34,23 @@ class SystemSecurityService(ConfigService):
             return
 
         await self.middleware.call('failover.call_remote', 'etc.generate', ['fips'])
-        boot_info = await self.middleware.call('failover.reboot.info')
-        if boot_info['this_node']['reboot_required']:
-            # means FIPS is being toggled but this node is already pending a reboot
-            # so it means the user toggled FIPS twice without a reboot in between
-            boot_info['this_node']['reboot_required'] = False
-            await self.middleware.call('keyvalue.set', FIPS_KEY, boot_info)
-        else:
-            # means FIPS is toggled and this node isn't pending a reboot, so mark it
-            # as such
-            boot_info['this_node']['reboot_required'] = True
-            await self.middleware.call('keyvalue.set', FIPS_KEY, boot_info)
 
-        if boot_info['other_node']['reboot_required']:
-            # means FIPS is being toggled but other node is already pending a reboot
+        remote_reboot_reasons = await self.middleware.call('failover.call_remote', 'system.reboot.list_reasons')
+        if FIPS_REBOOT_CODE in remote_reboot_reasons:
+            # means FIPS is being toggled but other node is already pending a reboot,
             # so it means the user toggled FIPS twice and somehow the other node
             # didn't reboot (even though we do this automatically). This is an edge
             # case and means someone or something is doing things behind our backs
-            boot_info['other_node']['reboot_required'] = False
-            await self.middleware.call('keyvalue.set', FIPS_KEY, boot_info)
+            await self.middleware.call('failover.call_remote', 'system.reboot.remove_reason', [FIPS_REBOOT_CODE])
         else:
             try:
                 # we automatically reboot (and wait for) the other controller
                 reboot_job = await self.middleware.call('failover.reboot.other_node')
                 await job.wrap(reboot_job)
             except Exception:
-                self.logger.error('Unexpected failure rebooting the other node', exc_info=True)
-                # something extravagant happened so we'll just play it safe and say that
+                # something extravagant happened, so we'll just play it safe and say that
                 # another reboot is required
-                boot_info['other_node']['reboot_required'] = True
-            else:
-                new_info = await self.middleware.call('failover.reboot.info')
-                if boot_info['other_node']['id'] == new_info['other_node']['id']:
-                    # standby "rebooted" but the boot id is the same....not good
-                    self.logger.warning('Other node claims it rebooted but boot id is the same')
-                    boot_info['other_node']['reboot_required'] = True
-                else:
-                    boot_info['other_node']['id'] = new_info['other_node']['id']
-                    boot_info['other_node']['reboot_required'] = False
-
-            await self.middleware.call('keyvalue.set', FIPS_KEY, boot_info)
+                await self.middleware.call('failover.reboot.add_remote_reason', FIPS_REBOOT_CODE, FIPS_REBOOT_REASON)
 
     @private
     async def validate(self, is_ha, ha_disabled_reasons):
@@ -125,7 +104,7 @@ class SystemSecurityService(ConfigService):
             # TODO: We likely need to do some SSH magic as well
             #  let's investigate the exact configuration there
             await self.middleware.call('etc.generate', 'fips')
-            # TODO: We need to fix this for non-HA iX hardware...
+            await self.middleware.call('system.reboot.toggle_reason', FIPS_REBOOT_CODE, FIPS_REBOOT_REASON)
             await self.configure_fips_on_ha(is_ha, job)
 
         return await self.config()

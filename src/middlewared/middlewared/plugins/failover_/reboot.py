@@ -3,15 +3,23 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 import asyncio
+from dataclasses import dataclass
 import errno
 import time
 
 from middlewared.api import api_method
-from middlewared.api.current import FailoverRebootRequiredArgs, FailoverRebootRequiredResult
-from middlewared.schema import accepts, Bool, Dict, UUID, returns
+from middlewared.api.current import (
+    FailoverRebootInfoArgs, FailoverRebootInfoResult,
+    FailoverRebootOtherNodeArgs, FailoverRebootOtherNodeResult,
+)
 from middlewared.service import CallError, job, private, Service
 
-FIPS_KEY = 'fips_toggled'
+
+@dataclass
+class RemoteRebootReason:
+    # Boot ID for which the reboot is required. `None` means that the system must be rebooted when it comes online.
+    boot_id: str | None
+    reason: str
 
 
 class FailoverRebootService(Service):
@@ -20,83 +28,74 @@ class FailoverRebootService(Service):
         cli_namespace = 'system.failover.reboot'
         namespace = 'failover.reboot'
 
-    reboot_reasons : dict[str, str] = {}
+    remote_reboot_reasons: dict[str, RemoteRebootReason] = {}
 
     @private
-    async def add_reason(self, key: str, value: str):
+    async def add_remote_reason(self, code: str, reason: str):
         """
-        Adds a reason on why this system needs a reboot.
-        :param key: unique identifier for the reason.
-        :param value: text explanation for the reason.
+        Adds a reason for why the remote system needs a reboot.
+        This will be appended to the list of the reasons that the remote node itself returns.
+        :param code: unique identifier for the reason.
+        :param reason: text explanation for the reason.
         """
-        self.reboot_reasons[key] = value
-
-    @private
-    async def boot_ids(self):
-        info = {
-            'this_node': {'id': await self.middleware.call('system.boot_id')},
-            'other_node': {'id': None}
-        }
         try:
-            info['other_node']['id'] = await self.middleware.call(
-                'failover.call_remote', 'system.boot_id', [], {
-                    'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2,
-                }
-            )
+            boot_id = await self.middleware.call('failover.call_remote', 'system.boot_id', [], {
+                'raise_connect_error': False,
+                'timeout': 2,
+                'connect_timeout': 2,
+            })
         except Exception:
-            self.logger.warning('Unexpected error querying remote node boot id', exc_info=True)
+            self.logger.warning('Unexpected error querying remote reboot boot id', exc_info=True)
+            # Remote system is inaccessible, so, when it comes back, another reboot will be required.
+            boot_id = None
+
+        self.remote_reboot_reasons[code] = RemoteRebootReason(boot_id, reason)
+
+        await self.send_event()
+
+    @api_method(FailoverRebootInfoArgs, FailoverRebootInfoResult, roles=['FAILOVER_READ'])
+    async def info(self):
+        changed = False
+
+        try:
+            other_node = await self.middleware.call('failover.call_remote', 'system.reboot.info', [], {
+                'raise_connect_error': False,
+                'timeout': 2,
+                'connect_timeout': 2,
+            })
+        except Exception:
+            self.logger.warning('Unexpected error querying remote reboot info', exc_info=True)
+            other_node = None
+
+        if other_node is not None:
+            for remote_reboot_reason_code, remote_reboot_reason in list(self.remote_reboot_reasons.items()):
+                if remote_reboot_reason.boot_id is None:
+                    # This reboot reason was added while the remote node was not functional.
+                    # In that case, when the remote system comes online, an additional reboot is required.
+                    remote_reboot_reason.boot_id = other_node['boot_id']
+                    changed = True
+
+                if remote_reboot_reason.boot_id == other_node['boot_id']:
+                    other_node['reboot_required_reasons'].append({
+                        'code': remote_reboot_reason_code,
+                        'reason': remote_reboot_reason.reason,
+                    })
+                else:
+                    # The system was rebooted, this reason is not valid anymore
+                    self.remote_reboot_reasons.pop(remote_reboot_reason_code)
+                    changed = True
+
+        info = {
+            'this_node': await self.middleware.call('system.reboot.info'),
+            'other_node': other_node,
+        }
+
+        if changed:
+            await self.send_event(info)
 
         return info
 
-    @private
-    async def info_impl(self):
-        # initial state
-        current_info = await self.boot_ids()
-        current_info['this_node'].update({'reboot_required': None, 'reboot_required_reasons': []})
-        current_info['other_node'].update({'reboot_required': None, 'reboot_required_reasons': []})
-
-        fips_change_info = await self.middleware.call('keyvalue.get', FIPS_KEY, False)
-        if not fips_change_info:
-            for i in current_info:
-                current_info[i]['reboot_required'] = False
-        else:
-            for key in ('this_node', 'other_node'):
-                current_info[key]['reboot_required'] = all((
-                    fips_change_info[key]['id'] == current_info[key]['id'],
-                    fips_change_info[key]['reboot_required']
-                ))
-                if current_info[key]['reboot_required']:
-                    current_info[key]['reboot_required_reasons'].append('FIPS configuration was changed.')
-
-            if all((
-                current_info['this_node']['reboot_required'] is False,
-                current_info['other_node']['reboot_required'] is False,
-            )):
-                # no reboot required for either controller so delete
-                await self.middleware.call('keyvalue.delete', FIPS_KEY)
-
-        for reason in self.reboot_reasons.values():
-            current_info['this_node']['reboot_required'] = True
-            current_info['this_node']['reboot_required_reasons'].append(reason)
-
-        return current_info
-
-    @api_method(FailoverRebootRequiredArgs, FailoverRebootRequiredResult, roles=['FAILOVER_READ'])
-    async def info(self):
-        """Returns the local and remote nodes boot_ids along with their
-        reboot statuses (i.e. does a reboot need to take place)"""
-        return await self.info_impl()
-
-    @accepts(roles=['FAILOVER_READ'])
-    @returns(Bool())
-    async def required(self):
-        """Returns whether this node needs to be rebooted for failover/security
-        system configuration changes to take effect."""
-        # TODO: should we raise Callerror/ValidationError if reboot_required is None?
-        return (await self.info())['this_node']['reboot_required'] is True
-
-    @accepts(roles=['FULL_ADMIN'])
-    @returns()
+    @api_method(FailoverRebootOtherNodeArgs, FailoverRebootOtherNodeResult, roles=['FULL_ADMIN'])
     @job(lock='reboot_standby')
     async def other_node(self, job):
         """
@@ -145,3 +144,26 @@ class FailoverRebootService(Service):
 
         job.set_progress(100, 'Other controller rebooted successfully')
         return True
+
+    @private
+    async def send_event(self, info=None):
+        if info is None:
+            info = await self.info()
+
+        self.middleware.send_event('failover.reboot.info', 'CHANGED', id=None, fields=info)
+
+
+async def reboot_info(middleware, *args, **kwargs):
+    await middleware.call('failover.reboot.send_event')
+
+
+def remote_reboot_info(middleware, *args, **kwargs):
+    middleware.call_sync('failover.reboot.send_event', background=True)
+
+
+async def setup(middleware):
+    middleware.event_register('failover.reboot.info', 'Sent when a system reboot is required.', roles=['FAILOVER_READ'])
+
+    middleware.event_subscribe('system.reboot.info', remote_reboot_info)
+    await middleware.call('failover.remote_on_connect', remote_reboot_info)
+    await middleware.call('failover.remote_subscribe', 'system.reboot.info', remote_reboot_info)
