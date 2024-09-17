@@ -62,14 +62,14 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                     lba_of_first_error=entry.get("lba"), # only included if there is an error
                 )
 
-                if test["status_verbose"] == "Completed without error":
-                    test["status"] = "SUCCESS"
-                elif test["status_verbose"] == "Self-test routine in progress":
-                    test["status"] = "RUNNING"
-                elif test["status_verbose"] in ["Aborted by host", "Interrupted (host reset)"]:
-                    test["status"] = "ABORTED"
+                if test.status_verbose == "Completed without error":
+                    test.status = "SUCCESS"
+                elif test.status_verbose == "Self-test routine in progress":
+                    test.status = "RUNNING"
+                elif test.status_verbose in ["Aborted by host", "Interrupted (host reset)"]:
+                    test.status= "ABORTED"
                 else:
-                    test["status"] = "FAILED"
+                    test.status = "FAILED"
 
                 tests.append(test)
 
@@ -130,7 +130,7 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                 num=index,
                 description=entry["code"]["string"],
                 status=entry["result"]["string"],
-                status_verbose=segment, #will be replaced
+                status_verbose=entry["result"]["string"], #will be replaced
                 segment_number=segment,
                 lifetime=lifetime,
                 lba_of_first_error=lba
