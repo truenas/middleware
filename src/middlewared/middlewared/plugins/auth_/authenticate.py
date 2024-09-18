@@ -1,10 +1,13 @@
-import os
 import pam
 
 from middlewared.plugins.account import unixhash_is_valid
-from middlewared.plugins.account_.constants import ADMIN_UID, MIDDLEWARE_PAM_SERVICE
+from middlewared.plugins.account_.constants import (
+    ADMIN_UID, MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE
+)
 from middlewared.service import Service, private
 from middlewared.utils.crypto import check_unixhash
+
+PAM_SERVICES = {MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE}
 
 
 class AuthService(Service):
@@ -13,7 +16,9 @@ class AuthService(Service):
         cli_namespace = 'auth'
 
     @private
-    async def authenticate(self, username, password):
+    async def authenticate_plain(self, username, password, is_api_key=False):
+        pam_svc = MIDDLEWARE_PAM_API_KEY_SERVICE if is_api_key else MIDDLEWARE_PAM_SERVICE
+
         if user_info := (await self.middleware.call(
             'datastore.query', 'account.bsdusers',
             [('username', '=', username)],
@@ -26,6 +31,7 @@ class AuthService(Service):
             unixhash = None
 
         pam_resp = {'code': pam.PAM_AUTH_ERR, 'reason': 'Authentication failure'}
+        user_token = None
 
         # The following provides way for root user to avoid getting locked out
         # of webui via due to PAM enforcing password policies on the root
@@ -36,7 +42,7 @@ class AuthService(Service):
         #
         # In all failure cases libpam_authenticate is called so that timing
         # is consistent with pam_fail_delay
-        if username == 'root' and await self.middleware.call('privilege.always_has_root_password_enabled'):
+        if not is_api_key and username == 'root' and await self.middleware.call('privilege.always_has_root_password_enabled'):
             if not unixhash_is_valid(unixhash):
                 await self.middleware.call('auth.libpam_authenticate', username, password)
             elif await self.middleware.run_in_thread(check_unixhash, password, unixhash):
@@ -45,41 +51,19 @@ class AuthService(Service):
                 await self.middleware.call('auth.libpam_authenticate', username, password)
 
         else:
-            pam_resp = await self.middleware.call('auth.libpam_authenticate', username, password)
+            pam_resp = await self.middleware.call('auth.libpam_authenticate', username, password, pam_svc)
 
-        if pam_resp['code'] != pam.PAM_SUCCESS:
-            return None
+        if pam_resp['code'] == pam.PAM_SUCCESS:
+            user_token = await self.authenticate_user({'username': username}, user_info, is_api_key)
+            if user_token is None:
+                # Some error occurred when trying to generate our user token
+                pam_resp['code'] = pam.PAM_AUTH_ERR
+                pam_resp['reason'] = 'Failed to generate user token'
 
-        return await self.authenticate_user({'username': username}, user_info)
-
-    @private
-    def libpam_authenticate(self, username, password):
-        """
-        Following PAM codes are returned:
-
-        PAM_SUCCESS = 0
-        PAM_AUTH_ERR = 7 // Bad username or password
-        PAM_NEW_AUTHTOK_REQD = 12 // User must change password
-
-        Potentially other may be returned as well depending on the particulars
-        of the PAM modules.
-        """
-        if not os.path.exists(MIDDLEWARE_PAM_SERVICE):
-            self.logger.error('PAM service file is missing. Attempting to regenerate')
-            self.middleware.call_sync('etc.generate', 'pam_middleware')
-            if not os.path.exists(MIDDLEWARE_PAM_SERVICE):
-                self.logger.error(
-                    '%s: Unable to generate PAM service file for middleware. Denying '
-                    'access to user.', username
-                )
-                return {'code': pam.PAM_ABORT, 'reason': 'Failed to generate PAM service file'}
-
-        p = pam.pam()
-        p.authenticate(username, password, service='middleware')
-        return {'code': p.code, 'reason': p.reason}
+        return {'pam_response': pam_resp, 'user_data': user_token}
 
     @private
-    async def authenticate_user(self, query, user_info):
+    async def authenticate_user(self, query, user_info, is_api_key):
         try:
             user = await self.middleware.call('user.get_user_obj', {
                 **query, 'get_groups': True,
@@ -143,6 +127,9 @@ class AuthService(Service):
 
         if twofactor_enabled:
             account_flags.append('2FA')
+
+        if is_api_key:
+            account_flags.append('API_KEY')
 
         if user['pw_uid'] in (0, ADMIN_UID):
             if not user['local']:

@@ -4,6 +4,7 @@ import binascii
 from collections import defaultdict
 import copy
 import errno
+import pam
 import traceback
 import types
 import urllib.parse
@@ -83,19 +84,19 @@ async def authenticate(middleware, request, credentials, method, resource):
         if twofactor_auth['enabled']:
             raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
 
-        user = await middleware.call('auth.authenticate',
+        resp = await middleware.call('auth.authenticate_plain',
                                      credentials['credentials_data']['username'],
                                      credentials['credentials_data']['password'])
-        if user is None:
+        if resp['pam_response']['code'] != pam.PAM_SUCCESS:
             raise web.HTTPUnauthorized(text='Bad username or password')
 
-        return LoginPasswordSessionManagerCredentials(user)
+        return LoginPasswordSessionManagerCredentials(resp['user_data'])
     elif credentials['credentials'] == 'API_KEY':
         api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'])
         if api_key is None:
             raise web.HTTPUnauthorized(text='Invalid API key')
 
-        return ApiKeySessionManagerCredentials(api_key)
+        return ApiKeySessionManagerCredentials(*api_key)
     else:
         raise web.HTTPUnauthorized()
 

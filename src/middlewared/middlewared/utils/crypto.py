@@ -62,6 +62,12 @@ def generate_nt_hash(passwd):
     """
     Generate an NT hash for SMB user password. This is required for
     NTLM authentication for local users.
+
+    NOTE: the library generating the NT hash ignores the system
+    FIPS mode.
+
+    WARNING: This is a weak algorithm and must be treated as
+    plain-text equivalent.
     """
     md4_hash_bytes = md4_hash_blob(passwd.encode('utf-16le'))
     return md4_hash_bytes.hex().upper()
