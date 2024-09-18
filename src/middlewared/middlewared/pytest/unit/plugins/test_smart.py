@@ -11,40 +11,40 @@ from middlewared.api.current import (
 
 def test__parse_smart_selftest_results__ataprint__1():
     data = {
-    "ata_smart_self_test_log": {
-        "standard": {
-            "revision": 1,
-            "table": [
-                {
-                    "type": {
-                        "value": 1,
-                        "string": "Short offline"
+        "ata_smart_self_test_log": {
+            "standard": {
+                "revision": 1,
+                "table": [
+                    {
+                        "type": {
+                            "value": 1,
+                            "string": "Short offline"
+                        },
+                        "status": {
+                            "value": 0,
+                            "string": "Completed without error",
+                            "passed": True
+                        },
+                        "lifetime_hours": 16590
                     },
-                    "status": {
-                        "value": 0,
-                        "string": "Completed without error",
-                        "passed": True
-                    },
-                    "lifetime_hours": 16590
-                },
-                {
-                    "type": {
-                        "value": 1,
-                        "string": "Short offline"
-                    },
-                    "status": {
-                        "value": 0,
-                        "string": "Completed without error",
-                        "passed": True
-                    },
-                    "lifetime_hours": 16589
+                    {
+                        "type": {
+                            "value": 1,
+                            "string": "Short offline"
+                        },
+                        "status": {
+                            "value": 0,
+                            "string": "Completed without error",
+                            "passed": True
+                        },
+                        "lifetime_hours": 16589
+                    }
+                ],
+                "error_count_total": 0,
+                "error_count_outdated": 0
                 }
-            ],
-            "error_count_total": 0,
-            "error_count_outdated": 0
             }
         }
-    }
     assert parse_smart_selftest_results(data) == [
         AtaSelfTest(
             num=0,
@@ -69,29 +69,29 @@ def test__parse_smart_selftest_results__ataprint__1():
 
 def test__parse_smart_selftest_results__ataprint__2():
     data = {
-    "ata_smart_self_test_log": {
-        "standard": {
-            "revision": 1,
-            "table": [
-                {
-                    "type": {
-                        "value": 1,
-                        "string": "Offline"
-                    },
-                    "status": {
-                        "value": 249,
-                        "string": "Self-test routine in progress",
-                        "remaining_percent": 100,
-                        "passed": True
-                    },
-                    "lifetime_hours": 0
+        "ata_smart_self_test_log": {
+            "standard": {
+                "revision": 1,
+                "table": [
+                    {
+                        "type": {
+                            "value": 1,
+                            "string": "Offline"
+                        },
+                        "status": {
+                            "value": 249,
+                            "string": "Self-test routine in progress",
+                            "remaining_percent": 100,
+                            "passed": True
+                        },
+                        "lifetime_hours": 0
+                    }
+                ],
+                "error_count_total": 0,
+                "error_count_outdated": 0
                 }
-            ],
-            "error_count_total": 0,
-            "error_count_outdated": 0
             }
         }
-    }
     assert parse_smart_selftest_results(data) == [
         AtaSelfTest(
             num=0,

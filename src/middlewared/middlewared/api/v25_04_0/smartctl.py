@@ -4,6 +4,7 @@ from middlewared.api.base import BaseModel
 
 __all__ = ["AtaSelfTest", "NvmeSelfTest", "ScsiSelfTest"]
 
+
 class AtaSelfTest(BaseModel):
     num: int
     description: str
@@ -12,6 +13,7 @@ class AtaSelfTest(BaseModel):
     remaining: float
     lifetime: int
     lba_of_first_error: int | None = None
+
 
 class NvmeSelfTest(BaseModel):
     num: int
@@ -24,6 +26,7 @@ class NvmeSelfTest(BaseModel):
     seg: int | None = None
     sct: int | None = 0x0
     code: int | None = 0x0
+
 
 class ScsiSelfTest(BaseModel):
     num: int

@@ -139,12 +139,11 @@ class DiskService(CRUDService):
 
         disk['supports_smart'] = None
         if context['supports_smart']:
-            if await self.middleware.call('truenas.is_ix_hardware'):
+            if await self.middleware.call('truenas.is_ix_hardware') or disk['name'].startswith('nvme'):
                 disk['supports_smart'] = True
             else:
                 disk_query = await self.middleware.call('disk.smartctl', disk['name'], ['-a', '--json=c'], {'silent': True})
-
-                disk['supports_smart'] = disk['name'].startswith('nvme') or disk_query.get('smart_support', {}).get('available', False)
+                disk['supports_smart'] = disk_query.get('smart_support', {}).get('available', False)
 
         if disk['name'] in context['boot_pool_disks']:
             disk['pool'] = context['boot_pool_name']
