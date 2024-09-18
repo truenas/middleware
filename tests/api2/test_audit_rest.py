@@ -1,16 +1,18 @@
 import io
+import json
 import operator
 import os
 import time
 from unittest.mock import ANY
 
 import pytest
+import requests
 
 from functions import DELETE, GET, POST, PUT, wait_on_job
 from middlewared.test.integration.assets.account import user, group, privilege, unprivileged_user
 from middlewared.test.integration.assets.iscsi import iscsi_extent, iscsi_target
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, url
 from middlewared.test.integration.utils.audit import expect_audit_log, expect_audit_method_calls
 
 
@@ -48,8 +50,8 @@ def test_unauthenticated_upload_call():
         }],
         include_logins=True
     ):
-        r = POST(
-            "/resttest/test_input_pipe",
+        r = requests.post(
+            f"{url()}/api/v2.0/resttest/test_input_pipe",
             auth=("invalid", "password"),
             files={
                 "data": (None, io.StringIO('{"key": "value"}')),
@@ -167,10 +169,11 @@ def test_unauthorized_call():
             },
             "success": False,
         }]):
-            r = POST(
-                "/user",
-                {"username": "sergey", "full_name": "Sergey"},
+            r = requests.post(
+                f"{url()}/api/v2.0/user",
                 auth=(u.username, u.password),
+                headers={"Content-type": "application/json"},
+                data=json.dumps({"username": "sergey", "full_name": "Sergey"}),
             )
             assert r.status_code == 403, r.text
 
