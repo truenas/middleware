@@ -6,8 +6,21 @@ import pytest
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client, user
 from middlewared.test.integration.assets.api_key import api_key
+from middlewared.test.integration.assets.two_factor_auth import enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.audit import expect_audit_log
+
+
+@pytest.fixture(scope='function')
+def sharing_admin_user(unprivileged_user_fixture):
+    privilege = call('privilege.query', [['local_groups.0.group', '=', unprivileged_user_fixture.group_name]])
+    assert len(privilege) > 0, 'Privilege not found'
+    call('privilege.update', privilege[0]['id'], {'roles': ['SHARING_ADMIN']})
+
+    try:
+        yield unprivileged_user_fixture
+    finally:
+        call('privilege.update', privilege[0]['id'], {'roles': []})
 
 
 def test_unauthenticated_call():
@@ -51,7 +64,7 @@ def test_unauthorized_call():
                     "protocol": "WEBSOCKET",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": ANY},
+                        "credentials_data": {"username": ANY, "login_at": ANY},
                     },
                 },
                 "event": "METHOD_CALL",
@@ -82,7 +95,7 @@ def test_bogus_call():
                     "protocol": "WEBSOCKET",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": "root"},
+                        "credentials_data": {"username": "root", "login_at": ANY},
                     },
                 },
                 "event": "METHOD_CALL",
@@ -113,7 +126,7 @@ def test_invalid_call():
                     "protocol": "WEBSOCKET",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": "root"},
+                        "credentials_data": {"username": "root", "login_at": ANY},
                     },
                 },
                 "event": "METHOD_CALL",
@@ -144,7 +157,7 @@ def test_typo_in_secret_credential_name():
                     "protocol": "WEBSOCKET",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": "root"},
+                        "credentials_data": {"username": "root", "login_at": ANY},
                     },
                 },
                 "event": "METHOD_CALL",
@@ -174,7 +187,7 @@ def test_valid_call():
                 "protocol": "WEBSOCKET",
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": "root"},
+                    "credentials_data": {"username": "root", "login_at": ANY},
                 },
             },
             "event": "METHOD_CALL",
@@ -220,14 +233,14 @@ def test_password_login():
                 "protocol": "WEBSOCKET",
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": "root"},
+                    "credentials_data": {"username": "root", "login_at": ANY},
                 },
             },
             "event": "AUTHENTICATION",
             "event_data": {
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": "root"},
+                    "credentials_data": {"username": "root", "login_at": ANY},
                 },
                 "error": None,
             },
@@ -269,7 +282,7 @@ def test_token_login():
                         "credentials_data": {
                             "parent": {
                                 "credentials": "LOGIN_PASSWORD",
-                                "credentials_data": {"username": "root"},
+                                "credentials_data": {"username": "root", "login_at": ANY},
                             },
                             "username": "root",
                         },
@@ -325,7 +338,7 @@ def test_token_attributes_login_failed():
 
 
 def test_api_key_login():
-    with api_key([]) as key:
+    with api_key() as key:
         with client(auth=None) as c:
             with expect_audit_log([
                 {
@@ -334,6 +347,8 @@ def test_api_key_login():
                         "credentials": {
                             "credentials": "API_KEY",
                             "credentials_data": {
+                                "username": "root",
+                                "login_at": ANY,
                                 "api_key": {"id": ANY, "name": ANY},
                             },
                         },
@@ -355,6 +370,7 @@ def test_api_key_login_failed():
                         "credentials": "API_KEY",
                         "credentials_data": {
                             "api_key": "invalid_api_key",
+                            "username": None
                         },
                     },
                     "error": "Invalid API key",
@@ -363,6 +379,71 @@ def test_api_key_login_failed():
             }
         ], include_logins=True):
             c.call("auth.login_with_api_key", "invalid_api_key")
+
+
+def test_2fa_login(sharing_admin_user):
+    user_obj_id = call('user.query', [['username', '=', sharing_admin_user.username]], {'get': True})['id']
+
+    with enabled_twofactor_auth():
+        call('user.renew_2fa_secret', sharing_admin_user.username, {'interval': 60})
+        secret = get_user_secret(user_obj_id)
+
+        with client(auth=None) as c:
+            resp = c.call('auth.login_ex', {
+                'mechanism': 'PASSWORD_PLAIN',
+                'username': sharing_admin_user.username,
+                'password': sharing_admin_user.password
+            })
+            assert resp['response_type'] == 'OTP_REQUIRED'
+            assert resp['username'] == sharing_admin_user.username
+
+            # simulate user fat-fingering the OTP token and then getting it correct on second attempt
+            otp = get_2fa_totp_token(secret)
+
+            with expect_audit_log([
+                {
+                    "event": "AUTHENTICATION",
+                    "event_data": {
+                        "credentials": {
+                            "credentials": "LOGIN_TWOFACTOR",
+                            "credentials_data": {
+                                "username": sharing_admin_user.username,
+                            },
+                        },
+                        "error": "One-time token validation failed.",
+                    },
+                    "success": False,
+                }
+            ], include_logins=True):
+                resp = c.call('auth.login_ex', {
+                    'mechanism': 'OTP_TOKEN',
+                    'otp_token': 'canary'
+                })
+                assert resp['response_type'] == 'OTP_REQUIRED'
+                assert resp['username'] == sharing_admin_user.username
+
+            with expect_audit_log([
+                {
+                    "event": "AUTHENTICATION",
+                    "event_data": {
+                        "credentials": {
+                            "credentials": "LOGIN_TWOFACTOR",
+                            "credentials_data": {
+                                "username": sharing_admin_user.username,
+                                "login_at": ANY,
+                            },
+                        },
+                        "error": None,
+                    },
+                    "success": True,
+                }
+            ], include_logins=True):
+                resp = c.call('auth.login_ex', {
+                    'mechanism': 'OTP_TOKEN',
+                    'otp_token': otp
+                })
+
+                assert resp['response_type'] == 'SUCCESS'
 
 
 @pytest.mark.parametrize('logfile', ('/var/log/messages', '/var/log/syslog'))

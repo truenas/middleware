@@ -14,13 +14,20 @@ from middlewared.test.integration.utils.client import truenas_server
 import os
 import sys
 sys.path.append(os.getcwd())
-from functions import POST, GET, DELETE, SSH_TEST
+from functions import GET
 
 
 @contextlib.contextmanager
 def api_key_auth(allowlist):
-    with api_key(allowlist) as key:
-        yield dict(anonymous=True, headers={"Authorization": f"Bearer {key}"})
+    with unprivileged_user_template(
+        username="unprivileged2",
+        group_name="unprivileged_users2",
+        privilege_name="Unprivileged users",
+        allowlist=allowlist,
+        web_shell=False,
+    ) as t:
+        with api_key(t.username) as key:
+            yield dict(anonymous=True, headers={"Authorization": f"Bearer {key}"})
 
 
 @contextlib.contextmanager

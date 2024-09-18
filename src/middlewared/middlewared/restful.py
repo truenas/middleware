@@ -4,6 +4,7 @@ import binascii
 from collections import defaultdict
 import copy
 import errno
+import pam
 import traceback
 import types
 import urllib.parse
@@ -18,6 +19,7 @@ from .job import Job
 from .pipe import Pipes
 from .schema import Error as SchemaError
 from .service_exception import adapt_exception, CallError, MatchNotFound, ValidationError, ValidationErrors
+from .utils.auth import AA_LEVEL1, CURRENT_AAL
 from .utils.origin import ConnectionOrigin
 
 
@@ -70,6 +72,9 @@ def parse_credentials(request):
 
 
 async def authenticate(middleware, request, credentials, method, resource):
+    if CURRENT_AAL.level is not AA_LEVEL1:
+        raise web.HTTPForbidden(text='REST authentication not permitted by server authentication security level')
+
     if credentials['credentials'] == 'TOKEN':
         origin = await middleware.run_in_thread(ConnectionOrigin.create, request)
         token = await middleware.call('auth.get_token_for_action', credentials['credentials_data']['token'],
@@ -83,19 +88,19 @@ async def authenticate(middleware, request, credentials, method, resource):
         if twofactor_auth['enabled']:
             raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
 
-        user = await middleware.call('auth.authenticate',
+        resp = await middleware.call('auth.authenticate_plain',
                                      credentials['credentials_data']['username'],
                                      credentials['credentials_data']['password'])
-        if user is None:
+        if resp['pam_response']['code'] != pam.PAM_SUCCESS:
             raise web.HTTPUnauthorized(text='Bad username or password')
 
-        return LoginPasswordSessionManagerCredentials(user)
+        return LoginPasswordSessionManagerCredentials(resp['user_data'], assurance=CURRENT_AAL.level)
     elif credentials['credentials'] == 'API_KEY':
         api_key = await middleware.call('api_key.authenticate', credentials['credentials_data']['api_key'])
         if api_key is None:
             raise web.HTTPUnauthorized(text='Invalid API key')
 
-        return ApiKeySessionManagerCredentials(api_key)
+        return ApiKeySessionManagerCredentials(*api_key, assurance=CURRENT_AAL.level)
     else:
         raise web.HTTPUnauthorized()
 

@@ -1,5 +1,4 @@
 from middlewared.auth import (
-    ApiKeySessionManagerCredentials,
     TokenSessionManagerCredentials,
     TrueNasNodeSessionManagerCredentials
 )
@@ -23,9 +22,6 @@ def audit_username_from_session(cred) -> str:
     # Track back to root credential if necessary (token session)
     if isinstance(cred, TokenSessionManagerCredentials):
         cred = cred.root_credentials
-
-    if isinstance(cred, ApiKeySessionManagerCredentials):
-        return f'{API_KEY_PREFIX}{cred.api_key.api_key["name"]}'
 
     elif isinstance(cred, TrueNasNodeSessionManagerCredentials):
         return NODE_SESSION
