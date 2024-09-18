@@ -8,13 +8,13 @@ from os import scandir
 from pathlib import Path
 
 
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True, kw_only=True)
 class BaseDev:
     name: str = None
     locate: str = None
 
 
-def map_disks_to_enclosure_slots(pci):
+def map_disks_to_enclosure_slots(enc) -> dict[int, BaseDev]:
     """The sysfs directory structure is dynamic based on the enclosure
     that is attached.
 
@@ -37,16 +37,15 @@ def map_disks_to_enclosure_slots(pci):
     so we don't need to convert to hexadecimal
 
     Args:
-        pci: string (i.e. 0:0:0:0)
+        enc: An instance of class Enclosure
 
-    Returns:
-        dictionary whose key is an integer (disk slot) and value is a device name (i.e. sda)
-        If no device is found at the given slot, None is set as the value
-        (i.e. {1: sda, 2: None})
     """
     mapping = dict()
-    with scandir(f'/sys/class/enclosure/{pci}') as sdir:
+    with scandir(f'/sys/class/enclosure/{enc.pci}') as sdir:
         for i in filter(lambda x: x.is_dir(), sdir):
+            if enc.is_hseries and i.name in ('4', '5', '6', '7'):
+                continue
+
             path = Path(i)
             try:
                 slot = int((path / 'slot').read_text().strip())
@@ -55,18 +54,16 @@ def map_disks_to_enclosure_slots(pci):
                 continue
             else:
                 try:
-                    name = next((path / 'device/block').iterdir(), BaseDev).name
-                except FileNotFoundError:
+                    name = next((path / 'device/block').iterdir(), None).name
+                except (AttributeError, FileNotFoundError):
                     # no disk in this slot
-                    name = BaseDev.name
+                    name = None
                 try:
                     locate = 'ON' if (path / 'locate').read_text().strip() == '1' else 'OFF'
                 except (ValueError, FileNotFoundError):
-                    locate = BaseDev.locate
-                mapping[slot] = {
-                    'name': name,
-                    'locate': locate,
-                }
+                    locate = None
+
+                mapping[slot] = BaseDev(name=name, locate=locate)
 
     return mapping
 
