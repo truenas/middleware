@@ -17,40 +17,8 @@ class Disk:
     serial: Optional[str] = None
 
 
-def parse_smartctl_for_temperature_output(stdout: str) -> Optional[int]:
-    # ataprint.cpp
-
-    data = {}
-    for s in re.findall(r'^((190|194) .+)', stdout, re.M):
-        s = s[0].split()
-        try:
-            data[s[1]] = int(s[9])
-        except (IndexError, ValueError):
-            pass
-    for k in ['Temperature_Celsius', 'Temperature_Internal', 'Drive_Temperature',
-              'Temperature_Case', 'Case_Temperature', 'Airflow_Temperature_Cel']:
-        if k in data:
-            return data[k]
-
-    reg = re.search(r'194\s+Temperature_Celsius[^\n]*', stdout, re.M)
-    if reg:
-        return int(reg.group(0).split()[9])
-
-    # nvmeprint.cpp
-
-    reg = re.search(r'Temperature:\s+([0-9]+) Celsius', stdout, re.M)
-    if reg:
-        return int(reg.group(1))
-
-    reg = re.search(r'Temperature Sensor [0-9]+:\s+([0-9]+) Celsius', stdout, re.M)
-    if reg:
-        return int(reg.group(1))
-
-    # scsiprint.cpp
-
-    reg = re.search(r'Current Drive Temperature:\s+([0-9]+) C', stdout, re.M)
-    if reg:
-        return int(reg.group(1))
+def parse_smartctl_for_temperature_output(json) -> Optional[int]:
+    return json['temperature']['current']
 
 
 def get_disks_for_temperature_reading() -> Dict[str, Disk]:

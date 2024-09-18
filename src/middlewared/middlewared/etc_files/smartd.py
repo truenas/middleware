@@ -2,6 +2,7 @@ import logging
 import re
 import shlex
 import subprocess
+import json
 
 from middlewared.common.smart.smartctl import get_smartctl_args, smartctl, SMARTCTX
 from middlewared.plugins.smart_.schedule import SMARTD_SCHEDULE_PIECES, smartd_schedule_piece
@@ -23,15 +24,16 @@ async def ensure_smart_enabled(args):
     if any(arg.startswith("/dev/nvme") for arg in args):
         return True
 
-    p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
-    if not re.search("SMART.*abled", p.stdout):
+    p = await smartctl(args + ["-i", "--json=c"], check=False, stderr=subprocess.STDOUT, encoding="utf8", errors="ignore")
+    pjson = json.loads(p.stdout)
+    if not pjson["smart_support"]["available"]:
         logger.debug("SMART is not supported on %r", args)
         return False
 
-    if re.search("SMART.*Enabled", p.stdout):
+    if pjson["smart_support"]["enabled"]:
         return True
 
-    p = await smartctl(args + ["-s", "on"], stderr=subprocess.STDOUT, check=False)
+    p = await smartctl(args + ["-s", "on"], check=False, stderr=subprocess.STDOUT)
     if p.returncode == 0:
         return True
     else:

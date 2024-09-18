@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 import functools
 import re
 import time
+import json
 
 from humanize import ordinal
 
@@ -16,164 +17,153 @@ from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.time_utils import utc_now
+from middlewared.api.current import (
+    AtaSelfTest, NvmeSelfTest, ScsiSelfTest
+)
 
 
 RE_TIME = re.compile(r'test will complete after ([a-z]{3} [a-z]{3} [0-9 ]+ \d\d:\d\d:\d\d \d{4})', re.IGNORECASE)
 RE_TIME_SCSIPRINT_EXTENDED = re.compile(r'Please wait (\d+) minutes for test to complete')
-
-RE_OF_TEST_REMAINING = re.compile(r'([0-9]+)% of test remaining')
-RE_SELF_TEST_STATUS = re.compile(r'self-test in progress \(([0-9]+)% completed\)')
 
 
 async def annotate_disk_smart_tests(middleware, tests_filter, disk):
     if disk["disk"] is None:
         return
 
-    output = await middleware.call("disk.smartctl", disk["disk"], ["-a"], {"silent": True})
+    output = await middleware.call("disk.smartctl", disk["disk"], ["-a", "--json=c"], {"silent": True})
     if output is None:
         return
+    data = json.loads(output)
 
-    tests = parse_smart_selftest_results(output) or []
-    current_test = parse_current_smart_selftest(output)
+    tests = parse_smart_selftest_results(data) or []
+    current_test = parse_current_smart_selftest(data)
     return dict(tests=filter_list(tests, tests_filter), current_test=current_test, **disk)
 
 
-def parse_smart_selftest_results(stdout):
+def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest] | list[ScsiSelfTest] | None:
     tests = []
 
     # ataprint.cpp
-    if "LBA_of_first_error" in stdout:
-        for line in stdout.split("\n"):
-            if not line.startswith("#"):
-                continue
+    if "ata_smart_self_test_log" in data:
+        if "table" in data["ata_smart_self_test_log"]["standard"]: # If there are no tests, there is no table
+            for index, entry in enumerate(data["ata_smart_self_test_log"]["standard"]["table"]):
 
-            if line[58] == "%":
-                remaining = line[55:58]
-                lifetime = line[61:69]
-            else:
-                remaining = line[55:57]
-                lifetime = line[60:68]
+                # remaining_percent is in the dict only if the test is in progress (status value & 0x0f)
+                if remaining := entry["status"]["value"] & 0x0f:
+                    remaining = entry["status"]["remaining_percent"] / 100
 
-            test = {
-                "num": int(line[1:3].strip()),
-                "description": line[5:24].strip(),
-                "status_verbose": line[25:54].strip(),
-                "remaining": int(remaining.strip()) / 100,
-                "lifetime": int(lifetime.strip()),
-                "lba_of_first_error": line[77:].strip(),
-            }
+                test = AtaSelfTest(
+                    num=index,
+                    description=entry["type"]["string"],
+                    status=entry["status"]["string"],
+                    status_verbose=entry["status"]["string"],
+                    remaining=remaining,
+                    lifetime=entry["lifetime_hours"],
+                    lba_of_first_error=entry.get("lba"), # only included if there is an error
+                )
 
-            if test["status_verbose"] == "Completed without error":
-                test["status"] = "SUCCESS"
-            elif test["status_verbose"] == "Self-test routine in progress":
-                test["status"] = "RUNNING"
-            elif test["status_verbose"] in ["Aborted by host", "Interrupted (host reset)"]:
-                test["status"] = "ABORTED"
-            else:
-                test["status"] = "FAILED"
+                if test.status_verbose == "Completed without error":
+                    test.status = "SUCCESS"
+                elif test.status_verbose == "Self-test routine in progress":
+                    test.status = "RUNNING"
+                elif test.status_verbose in ["Aborted by host", "Interrupted (host reset)"]:
+                    test.status= "ABORTED"
+                else:
+                    test.status = "FAILED"
 
-            if test["lba_of_first_error"] == "-":
-                test["lba_of_first_error"] = None
-
-            tests.append(test)
+                tests.append(test)
 
         return tests
 
     # nvmeprint.cpp
-    if "Failing_LBA" in stdout:
-        got_header = False
-        for line in stdout.split("\n"):
-            if "Failing_LBA" in line:
-                got_header = True
-                continue
+    if "nvme_self_test_log" in data:
+        if "table" in data["nvme_self_test_log"]:
+            for index, entry in enumerate(data["nvme_self_test_log"]["table"]):
 
-            if not got_header:
-                continue
+                if lba := entry.get("lba"):
+                    lba = entry["lba"]["value"]
 
-            try:
-                status_verbose = line[23:56].strip()
-                if status_verbose == "Completed without error":
-                    status = "SUCCESS"
-                elif status_verbose.startswith("Aborted:"):
-                    status = "ABORTED"
+                test = NvmeSelfTest(
+                    num=index,
+                    description=entry["self_test_code"]["string"],
+                    status=entry["self_test_result"]["string"],
+                    status_verbose=entry["self_test_result"]["string"],
+                    power_on_hours=entry["power_on_hours"],
+                    failing_lba=lba,
+                    nsid=entry.get("nsid"),
+                    seg=entry.get("segment"),
+                    sct=entry.get("status_code_type") or 0x0,
+                    code=entry.get("status_code") or 0x0,
+                )
+
+                if test.status_verbose == "Completed without error":
+                    test.status = "SUCCESS"
+                elif test.status_verbose.startswith("Aborted:"):
+                    test.status = "ABORTED"
                 else:
-                    status = "FAILED"
+                    test.status = "FAILED"
 
-                failing_lba = line[67:79].strip()
-                nsid = line[80:85].strip()
-                seg = line[86:89].strip()
-                sct = line[90:93]
-                code = line[94:98]
-
-                test = {
-                    "num": int(line[0:2].strip()),
-                    "description": line[5:22].strip(),
-                    "status": status,
-                    "status_verbose": status_verbose,
-                    "power_on_hours": int(line[57:66].strip()),
-                    "failing_lba": None if failing_lba == "-" else int(failing_lba),
-                    "nsid": None if nsid == "-" else nsid,
-                    "seg": None if seg == "-" else int(seg),
-                    "sct": sct,
-                    "code": code,
-                }
-            except ValueError:
-                break
-
-            tests.append(test)
+                tests.append(test)
 
         return tests
 
     # scsiprint.cpp
-    if "LBA_first_err" in stdout:
-        for line in stdout.split("\n"):
-            if not line.startswith("#"):
-                continue
+    # this JSON has numbered keys as an index, there's a reason it's not called a "smart" test
+    if "scsi_self_test_0" in data: # 0 is most recent test
+        for index in range(0, 20): # only 20 tests can ever return
+            test_key = f"scsi_self_test_{index}"
+            if not test_key in data:
+                break
+            entry = data[test_key]
 
-            test = {
-                "num": int(line[1:3].strip()),
-                "description": line[5:22].strip(),
-                "status_verbose": line[23:48].strip(),
-                "segment_number": line[49:52].strip(),
-                "lifetime": line[55:60].strip(),
-                "lba_of_first_error": line[60:78].strip(),
-            }
+            if segment := entry.get("failed_segment"):
+                segment = entry["failed_segment"]["value"]
 
-            if test["status_verbose"] == "Completed":
-                test["status"] = "SUCCESS"
-            elif test["status_verbose"] == "Self test in progress ...":
-                test["status"] = "RUNNING"
-            elif test["status_verbose"] in ["Aborted (by user command)", "Aborted (device reset ?)"]:
-                test["status"] = "ABORTED"
+            if lba := entry.get("lba_first_failure"):
+                lba = entry["lba_first_failure"]["value"]
+
+            lifetime = 0
+            if not entry.get("self_test_in_progress"):
+                lifetime = entry["power_on_time"]["hours"]
+
+            test = ScsiSelfTest(
+                num=index,
+                description=entry["code"]["string"],
+                status=entry["result"]["string"],
+                status_verbose=entry["result"]["string"], #will be replaced
+                segment_number=segment,
+                lifetime=lifetime,
+                lba_of_first_error=lba
+            )
+
+            if test.status_verbose == "Completed":
+                test.status = "SUCCESS"
+            elif test.status_verbose == "Self test in progress ...":
+                test.status = "RUNNING"
+            elif test.status_verbose.startswith("Aborted"):
+                test.status = "ABORTED"
             else:
-                test["status"] = "FAILED"
-
-            if test["segment_number"] == "-":
-                test["segment_number"] = None
-            else:
-                test["segment_number"] = int(test["segment_number"])
-
-            if test["lifetime"] == "NOW":
-                test["lifetime"] = None
-            else:
-                test["lifetime"] = int(test["lifetime"])
-
-            if test["lba_of_first_error"] == "-":
-                test["lba_of_first_error"] = None
+                test.status = "FAILED"
 
             tests.append(test)
 
         return tests
 
 
-def parse_current_smart_selftest(stdout):
-    if remaining := RE_OF_TEST_REMAINING.search(stdout):
-        return {"progress": 100 - int(remaining.group(1))}
+def parse_current_smart_selftest(data):
+    # ata
+    if "ata_smart_self_test_log" in data:
+        if tests := data["ata_smart_self_test_log"]["standard"].get("table"):
+            if remaining := tests[0]["status"].get("remaining_percent"):
+                return {"progress": 100 - remaining}
 
-    if remaining := RE_SELF_TEST_STATUS.search(stdout):
-        return {"progress": int(remaining.group(1))}
+    # nvme
+    if "nvme_self_test_log" in data:
+        if remaining := data["nvme_self_test_log"].get("current_self_test_completion_percent"):
+            return {"progress": remaining}
 
-    if "Self test in progress ..." in stdout:
+    # scsi gives no progress
+    if "self_test_in_progress" in data:
         return {"progress": 0}
 
 

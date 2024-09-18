@@ -12,7 +12,7 @@ from middlewared.etc_files.smartd import (
 @pytest.mark.asyncio
 async def test__ensure_smart_enabled__smart_error():
     with patch("middlewared.etc_files.smartd.smartctl") as run:
-        run.return_value = Mock(stdout="S.M.A.R.T. Error")
+        run.return_value = Mock(stdout='{"smart_support": {"enabled": false, "available": false}}')
 
         assert await ensure_smart_enabled(["/dev/ada0"]) is False
 
@@ -22,7 +22,7 @@ async def test__ensure_smart_enabled__smart_error():
 @pytest.mark.asyncio
 async def test__ensure_smart_enabled__smart_enabled():
     with patch("middlewared.etc_files.smartd.smartctl") as run:
-        run.return_value = Mock(stdout="SMART   Enabled")
+        run.return_value = Mock(stdout='{"smart_support": {"enabled": true, "available": true}}')
 
         assert await ensure_smart_enabled(["/dev/ada0"])
 
@@ -32,12 +32,12 @@ async def test__ensure_smart_enabled__smart_enabled():
 @pytest.mark.asyncio
 async def test__ensure_smart_enabled__smart_was_disabled():
     with patch("middlewared.etc_files.smartd.smartctl") as run:
-        run.return_value = Mock(stdout="SMART   Disabled", returncode=0)
+        run.return_value = Mock(stdout='{"smart_support": {"enabled": false, "available": true}}', returncode=0)
 
         assert await ensure_smart_enabled(["/dev/ada0"])
 
         assert run.call_args_list == [
-            call(["/dev/ada0", "-i"], check=False, stderr=subprocess.STDOUT,
+            call(["/dev/ada0", "-i", "--json=c"], check=False, stderr=subprocess.STDOUT,
                  encoding="utf8", errors="ignore"),
             call(["/dev/ada0", "-s", "on"], check=False, stderr=subprocess.STDOUT),
         ]
@@ -46,7 +46,7 @@ async def test__ensure_smart_enabled__smart_was_disabled():
 @pytest.mark.asyncio
 async def test__ensure_smart_enabled__enabling_smart_failed():
     with patch("middlewared.etc_files.smartd.smartctl") as run:
-        run.return_value = Mock(stdout="SMART   Disabled", returncode=1)
+        run.return_value = Mock(stdout='{"smart_support": {"enabled": false, "available": false}}', returncode=1)
 
         assert await ensure_smart_enabled(["/dev/ada0"]) is False
 
@@ -54,12 +54,12 @@ async def test__ensure_smart_enabled__enabling_smart_failed():
 @pytest.mark.asyncio
 async def test__ensure_smart_enabled__handled_args_properly():
     with patch("middlewared.etc_files.smartd.smartctl") as run:
-        run.return_value = Mock(stdout="SMART   Enabled")
+        run.return_value = Mock(stdout='{"smart_support": {"enabled": true, "available": true}}')
 
         assert await ensure_smart_enabled(["/dev/ada0", "-d", "sat"])
 
         run.assert_called_once_with(
-            ["/dev/ada0", "-d", "sat", "-i"], check=False, stderr=subprocess.STDOUT,
+            ["/dev/ada0", "-d", "sat", "-i", "--json=c"], check=False, stderr=subprocess.STDOUT,
             encoding="utf8", errors="ignore",
         )
 

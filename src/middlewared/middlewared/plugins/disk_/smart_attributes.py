@@ -38,12 +38,16 @@ class DiskService(Service):
         """
         Returns S.M.A.R.T. attributes values for specified disk name.
         """
-        output = json.loads(await self.middleware.call('disk.smartctl', name, ['-A', '-j']))
+        output = json.loads(await self.middleware.call('disk.smartctl', name, ['-a', '--json=c']))
 
         if 'ata_smart_attributes' in output:
             return output['ata_smart_attributes']['table']
+        if 'nvme_smart_health_information_log' in output:
+            return output['nvme_smart_health_information_log']
+        if 'scsi_error_counter_log' in output and 'scsi_grown_defect_list' in output:
+            return {'scsi_error_counter_log': output['scsi_error_counter_log'], 'scsi_grown_defect_list': output['scsi_grown_defect_list']}
 
-        raise CallError('Only ATA device support S.M.A.R.T. attributes')
+        raise CallError('Only ATA/SCSI/NVMe devices support S.M.A.R.T. attributes')
 
     @private
     async def sata_dom_lifetime_left(self, name):

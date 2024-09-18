@@ -12,7 +12,6 @@ from middlewared.utils.asyncio_ import asyncio_map
 
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
 RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
-RE_SMART_AVAILABLE = re.compile(r'SMART support is:\s+Available')
 
 
 class DiskModel(sa.Model):
@@ -140,12 +139,11 @@ class DiskService(CRUDService):
 
         disk['supports_smart'] = None
         if context['supports_smart']:
-            if await self.middleware.call('truenas.is_ix_hardware'):
+            if await self.middleware.call('truenas.is_ix_hardware') or disk['name'].startswith('nvme'):
                 disk['supports_smart'] = True
             else:
-                disk['supports_smart'] = disk['name'].startswith('nvme') or bool(RE_SMART_AVAILABLE.search(
-                    await self.middleware.call('disk.smartctl', disk['name'], ['-a'], {'silent': True}) or ''
-                ))
+                disk_query = await self.middleware.call('disk.smartctl', disk['name'], ['-a', '--json=c'], {'silent': True})
+                disk['supports_smart'] = disk_query.get('smart_support', {}).get('available', False)
 
         if disk['name'] in context['boot_pool_disks']:
             disk['pool'] = context['boot_pool_name']
