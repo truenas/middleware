@@ -275,7 +275,7 @@ class DSCache(Service):
 
     async def abort_refresh(self):
         cache_job = await self.middleware.call('core.get_jobs', [
-            ['method', '=', 'directoryservices.cache.refresh'],
+            ['method', '=', 'directoryservices.cache.refresh_impl'],
             ['state', '=', 'RUNNING']
         ])
         if cache_job:
