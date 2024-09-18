@@ -712,14 +712,14 @@ class AlertService(Service):
         try:
             try:
                 for alert in await self.middleware.call("failover.call_remote", "alert.run_source", [name]):
-                    other_node_alerts.append([
+                    other_node_alerts.append(
                         Alert(**dict(
                             {k: v for k, v in alert.items() if k in keys},
                             klass=AlertClass.class_by_name[alert["klass"]],
                             _source=alert["source"],
                             _key=alert["key"]
                         ))
-                    ])
+                    )
             except CallError as e:
                 if e.errno not in NETWORK_ERRORS + (CallError.EALERTCHECKERUNAVAILABLE,):
                     raise
