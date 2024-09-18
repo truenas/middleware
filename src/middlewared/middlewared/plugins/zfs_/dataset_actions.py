@@ -8,6 +8,11 @@ from middlewared.utils.mount import getmntinfo
 from middlewared.utils.path import is_child
 
 
+def handle_ds_not_found(error_code: int, ds_name: str):
+    if error_code == libzfs.Error.NOENT.value:
+        raise CallError(f'Dataset {ds_name!r} not found', errno.ENOENT)
+
+
 class ZFSDatasetService(Service):
 
     class Config:
@@ -69,6 +74,7 @@ class ZFSDatasetService(Service):
                     dataset.mount()
         except libzfs.ZFSException as e:
             self.logger.error('Failed to mount dataset', exc_info=True)
+            handle_ds_not_found(e.code, name)
             raise CallError(f'Failed to mount dataset: {e}')
 
     @accepts(Str('name'), Dict('options', Bool('force', default=False)))
@@ -79,6 +85,7 @@ class ZFSDatasetService(Service):
                 dataset.umount(force=options['force'])
         except libzfs.ZFSException as e:
             self.logger.error('Failed to umount dataset', exc_info=True)
+            handle_ds_not_found(e.code, name)
             raise CallError(f'Failed to umount dataset: {e}')
 
     @accepts(
@@ -96,6 +103,7 @@ class ZFSDatasetService(Service):
                 dataset.rename(options['new_name'], recursive=options['recursive'])
         except libzfs.ZFSException as e:
             self.logger.error('Failed to rename dataset', exc_info=True)
+            handle_ds_not_found(e.code, name)
             raise CallError(f'Failed to rename dataset: {e}')
 
     def promote(self, name):
@@ -105,6 +113,7 @@ class ZFSDatasetService(Service):
                 dataset.promote()
         except libzfs.ZFSException as e:
             self.logger.error('Failed to promote dataset', exc_info=True)
+            handle_ds_not_found(e.code, name)
             raise CallError(f'Failed to promote dataset: {e}')
 
     def inherit(self, name, prop, recursive=False):
@@ -116,6 +125,8 @@ class ZFSDatasetService(Service):
                     raise CallError(f'Property {prop!r} not found.', errno.ENOENT)
                 zprop.inherit(recursive=recursive)
         except libzfs.ZFSException as e:
+            handle_ds_not_found(e.code, name)
+
             if prop != 'mountpoint':
                 raise CallError(str(e))
 
