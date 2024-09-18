@@ -2,25 +2,33 @@ import asyncio
 import random
 from datetime import timedelta
 import errno
+import os
+import pam
 import time
-import warnings
 
 from middlewared.api import api_method
 from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
-from middlewared.api.current import AuthMeArgs, AuthMeResult
+from middlewared.api.current import (
+    AuthLoginExArgs, AuthLoginExResult,
+    AuthMeArgs, AuthMeResult,
+)
 from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionManagerCredentials,
-                              LoginPasswordSessionManagerCredentials, ApiKeySessionManagerCredentials,
+                              ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
                               TrueNasNodeSessionManagerCredentials, TokenSessionManagerCredentials,
-                              dump_credentials)
-from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, Password, Patch, returns, Str
+                              dump_credentials, AuthenticationContext)
+from middlewared.plugins.account_.constants import MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE
+from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, Password, returns, Str
 from middlewared.service import (
     Service, filterable, filterable_returns, filter_list, no_auth_required, no_authz_required,
     pass_app, private, cli_private, CallError,
 )
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
+from middlewared.utils.auth import AuthMech, AuthResp
 from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
+
+PAM_SERVICES = {MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE}
 
 
 class TokenManager:
@@ -93,7 +101,7 @@ class Token:
 class SessionManager:
     def __init__(self):
         self.sessions = {}
-
+        self.authentication_context = AuthenticationContext(pam_hdl=pam.pam())
         self.middleware = None
 
     async def login(self, app, credentials):
@@ -309,7 +317,7 @@ class AuthService(Service):
         """
         Verify username and password
         """
-        return await self.middleware.call('auth.authenticate', username, password) is not None
+        return await self.middleware.call('auth.authenticate_plain', username, password) is not None
 
     @no_auth_required
     @accepts(
@@ -394,7 +402,7 @@ class AuthService(Service):
         """
         Returns true if two-factor authorization is required for authorizing user's login.
         """
-        user_authenticated = await self.middleware.call('auth.authenticate', username, password)
+        user_authenticated = await self.middleware.call('auth.authenticate_plain', username, password)
         return user_authenticated and (
             await self.middleware.call('auth.twofactor.config')
         )['enabled'] and '2FA' in user_authenticated['account_attributes']
@@ -409,34 +417,356 @@ class AuthService(Service):
         Authenticate session using username and password.
         `otp_token` must be specified if two factor authentication is enabled.
         """
-        user = await self.get_login_user(username, password, otp_token)
-        if user is None:
-            await self.middleware.log_audit_message(app, "AUTHENTICATION", {
-                "credentials": {
-                    "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": username},
-                },
-                "error": "Bad username or password",
-            }, False)
-            await asyncio.sleep(random.randint(1, 5))
-        else:
-            await self.session_manager.login(app, LoginPasswordSessionManagerCredentials(user))
-            return True
 
-        return False
+        resp = await self.login_ex(app, {
+            'mechanism': AuthMech.PASSWORD_PLAIN.name,
+            'username': username,
+            'password': password
+        })
+
+        match resp['response_type']:
+            case AuthResp.SUCCESS.name:
+                return True
+            case AuthResp.OTP_REQUIRED.name:
+                if otp_token is None:
+                    return False
+
+                otp_resp = await self.login_ex({
+                    'mechanism': AuthMech.OTP_TOKEN.name,
+                    'otp_token': otp_token
+                })
+                return otp_resp['response_type'] == AuthResp.SUCCESS.name
+            case _:
+                return False
 
     @private
-    async def get_login_user(self, username, password, otp_token=None):
-        user = await self.middleware.call('auth.authenticate', username, password)
-        twofactor_auth = await self.middleware.call('auth.twofactor.config')
+    def libpam_authenticate(self, username, password, pam_service=MIDDLEWARE_PAM_SERVICE):
+        """
+        Following PAM codes are returned:
 
-        if user and twofactor_auth['enabled'] and '2FA' in user['account_attributes']:
-            # We should run user.verify_twofactor_token regardless of check_user result to prevent guessing
-            # passwords with a timing attack
-            if not await self.middleware.call('user.verify_twofactor_token', username, otp_token):
-                user = None
+        PAM_SUCCESS = 0
+        PAM_SYSTEM_ERR = 4 // pam_tdb.so response if used in unexpected pam service file
+        PAM_AUTH_ERR = 7 // Bad username or password
+        PAM_AUTHINFO_UNAVAIL = 9 // API key - pam_tdb file must be regenerated
+        PAM_USER_UNKNOWN = 10 // API key - user has no keys defined
+        PAM_NEW_AUTHTOK_REQD = 12 // User must change password
 
-        return user
+        Potentially other may be returned as well depending on the particulars
+        of the PAM modules.
+        """
+        if pam_service not in PAM_SERVICES:
+            self.logger.error('%s: invalid pam service file used for username: %s',
+                              pam_service, username)
+            raise CallError(f'{pam_service}: invalid pam service file')
+
+        if not os.path.exists(pam_service):
+            self.logger.error('PAM service file is missing. Attempting to regenerate')
+            self.middleware.call_sync('etc.generate', 'pam_middleware')
+            if not os.path.exists(pam_service):
+                self.logger.error(
+                    '%s: Unable to generate PAM service file for middleware. Denying '
+                    'access to user.', username
+                )
+                return {'code': pam.PAM_ABORT, 'reason': 'Failed to generate PAM service file'}
+
+        p = self.session_manager.authentication_context.pam_hdl
+        p.authenticate(username, password, service=os.path.basename(pam_service))
+        return {'code': p.code, 'reason': p.reason}
+
+    @cli_private
+    @no_auth_required
+    @api_method(AuthLoginExArgs, AuthLoginExResult)
+    @pass_app()
+    async def login_ex(self, app, data):
+        """
+        Authenticate using one of a variety of mechanisms
+
+        NOTE: mechanisms with a _PLAIN suffix indicate that they involve
+        passing plain-text passwords or password-equivalent strings and
+        should not be used on untrusted / insecure transport. Available
+        mechanisms will be expanded in future releases.
+
+        params:
+            mechanism: the mechanism by which to authenticate to the backend
+            the exact parameters to use vary by mechanism and are described
+            below
+
+            PASSWORD_PLAIN
+            username: username with which to authenticate
+            password: password with which to authenticate
+
+            API_KEY_PLAIN
+            username: username with which to authenticate
+            api_key: API key string
+
+            AUTH_TOKEN_PLAIN
+            token: authentication token string
+
+            OTP_TOKEN
+            otp_token: one-time password token. This is only permitted if
+            a previous auth.login_ex call responded with "OTP_REQUIRED".
+
+        raises:
+            CallError: a middleware CallError may be raised in the following
+                circumstances.
+
+            * An multistep challenge-response authentication mechanism is being
+              used and the specified `mechanism` does not match the expected
+              next step for authentication. In this case the errno will be set
+              to EBUSY.
+
+            * OTP_TOKEN mechanism was passed without an explicit request from
+              a previous authentication step. In this case the errno will be set
+              to EINVAL.
+
+        returns:
+            dictionary containing the following keys:
+
+            response_type: string indicating the results of the current authentication
+                mechanism. This is used to inform client of nature of authentication
+                error or whether further action will be required in order to complete
+                authentication.
+
+            <additional keys per response_type>
+
+        Notes about response types:
+
+        OTP_REQUIRED
+        additional key:
+            username: normalized username of user who must provide an OTP token.
+
+        AUTH_ERR
+        Generic authentication error corresponds to PAM_AUTH_ERR and PAM_USER_UNKOWN
+        from libpam. This may be returned if the account does not exist or if the
+        credential is incorrect.
+
+        EXPIRED
+        The specified credential is expired and not suitable for authentication.
+        """
+        mechanism = data['mechanism']
+        auth_ctx = self.session_manager.authentication_context
+        login_fn = self.session_manager.login
+        next_mech = auth_ctx.next_mech
+        response = {'response_type': AuthResp.AUTH_ERR.name}
+
+        if next_mech and mechanism != next_mech:
+            raise CallError(
+                f'{mechanism}: authentication in progress. Expected [{next_mech}]',
+                errno.EBUSY
+            )
+
+        if next_mech is None and mechanism == AuthMech.OTP_TOKEN.name:
+            raise CallError(f'{mechanism}: no authentication in progress', errno.EINVAL)
+
+        match mechanism:
+            case AuthMech.PASSWORD_PLAIN.name:
+                # Both of these mechanisms are de-factor username + password
+                # combinations and pass through libpam.
+                resp = await self.get_login_user(
+                    data['username'],
+                    data['password'],
+                    mechanism
+                )
+                if resp['otp_required']:
+                    # A one-time password is required for this user account and so
+                    # we should request it from API client.
+                    auth_ctx.next_mech = AuthMech.OTP_TOKEN.name
+                    auth_ctx.user_data = resp['user_data']
+                    return {
+                        'response_type': AuthResp.OTP_REQUIRED.name,
+                        'username': resp['user_data']['username']
+                    }
+
+                if resp['pam_response']['code'] == pam.PAM_SUCCESS:
+                    await login_fn(app, LoginPasswordSessionManagerCredentials(resp['user_data']))
+                else:
+                    await self.middleware.log_audit_message(app, "AUTHENTICATION", {
+                        "credentials": {
+                            "credentials": 'LOGIN_PASSWORD',
+                            "credentials_data": {'username': data['username']},
+                        },
+                        "error": resp['pam_response']['reason']
+                    }, False)
+
+            case AuthMech.API_KEY_PLAIN.name:
+                # API key that we receive over wire is concatenation of the
+                # datastore `id` of the particular key with the key itself,
+                # delimited by a dash. <id>-<key>.
+                resp = await self.get_login_user(
+                    data['username'],
+                    data['api_key'],
+                    mechanism
+                )
+                if resp['pam_response']['code'] == pam.PAM_AUTHINFO_UNAVAIL:
+                    # This is a special error code that means we need to
+                    # etc.generate because we somehow got garbage in the file.
+                    # It should not happen, but we must try to recover.
+
+                    self.logger.warning('API key backend has errors that require regenerating its file.')
+                    await self.middleware.call('etc.generate', 'pam_middleware')
+
+                    # We've exhausted steps we can take, so we'll take the
+                    # response to second request as authoritative
+                    resp = await self.get_login_user(
+                        data['username'],
+                        data['api_key'],
+                        mechanism
+                    )
+
+                # Retrieve the API key here so that we can upgrade the underlying
+                # hash type and iterations if needed (since we have plain-text).
+                # We also need the key info so that we can generate a useful
+                # audit entry in case of failure.
+                try:
+                    key_id = int(data['api_key'].split('-')[0])
+                    key = await self.middleware.call(
+                        'api_key.query', [['id', '=', key_id]],
+                        {'get': True, 'select': ['id', 'name', 'key']}
+                    )
+                    hash = key.pop('key')
+                except Exception:
+                    key = None
+
+                if resp['pam_response']['code'] == pam.PAM_SUCCESS:
+                    if hash.startswith('$pbkdf2-sha256'):
+                        # Legacy API key with insufficient iterations. Since we
+                        # know that the plain-text we have here is correct, we can
+                        # use it to update the hash in backend.
+                        await self.middleware.call('api_key.update_hash', data['api_key'])
+
+                    await login_fn(app, ApiKeySessionManagerCredentials(resp['user_data'], key))
+                else:
+                    await self.middleware.log_audit_message(app, "AUTHENTICATION", {
+                        "credentials": {
+                            "credentials": 'LOGIN_API_KEY',
+                            "credentials_data": {
+                                "username": data['username'],
+                                "api_key": key,
+                            }
+                        },
+                        "error": resp['pam_response']['reason'],
+                    }, False)
+
+            case AuthMech.OTP_TOKEN.name:
+                # We've received a one-time password token based in response to our
+                # response to an earlier authentication attempt. This means our auth
+                # context has user information. We don't re-request username from the
+                # client as this would open possibility of user trivially bypassing
+                # 2FA.
+                otp_ok = await self.middleware.call(
+                    'user.verify_twofactor_token',
+                    auth_ctx.user_data['username'],
+                    data['otp_token'],
+                )
+                resp = {
+                    'pam_response': {
+                        'code': pam.PAM_SUCCESS if otp_ok else pam.PAM_AUTH_ERR,
+                        'reason': None
+                    }
+                }
+                # get reference to user data
+                user = auth_ctx.user_data
+
+                # reset the auth_ctx state
+                auth_ctx.next_mech = None
+                auth_ctx.user_data = None
+
+                if otp_ok:
+                    # Per feedback to NEP-053 it was decided to only request second
+                    # factor for password-based logins (not user-linked API keys).
+                    await login_fn(app, LoginPasswordSessionManagerCredentials(user))
+                else:
+                    # Add a sleep like pam_delay() would add for pam_oath
+                    await asyncio.sleep(random.randint(1, 5))
+                    await self.middleware.log_audit_message(app, "AUTHENTICATION", {
+                        "credentials": {
+                            "credentials": "LOGIN_PASSWORD",
+                            "credentials_data": {"username": user['username']},
+                        },
+                        "error": 'One-time token validation failed.'
+                    }, False)
+
+            case AuthMech.TOKEN_PLAIN.name:
+                # We've received a authentication token that _should_ have been
+                # generated by `auth.generate_token`. For consistency with other
+                # authentication methods a failure delay has been added, but this
+                # may be removed more safely than for other authentication methods
+                # since the tokens are short-lived.
+                token_str = data['token'],
+                token = self.token_manager.get(token_str, app.origin)
+                if token is None:
+                    await asyncio.sleep(random.randint(1, 5))
+                    await self.middleware.log_audit_message(app, "AUTHENTICATION", {
+                        "credentials": {
+                            "credentials": "TOKEN",
+                            "credentials_data": {
+                                "token": token_str,
+                            }
+                        },
+                        "error": "Invalid token",
+                    }, False)
+                    return response
+
+                if token.attributes:
+                    await asyncio.sleep(random.randint(1, 5))
+                    await self.middleware.log_audit_message(app, "AUTHENTICATION", {
+                        "credentials": {
+                            "credentials": "TOKEN",
+                            "credentials_data": {
+                                "token": token.token,
+                            }
+                        },
+                        "error": "Bad token",
+                    }, False)
+                    return response
+
+                await login_fn(app, TokenSessionManagerCredentials(self.token_manager, token))
+                resp = {
+                    'pam_response': {
+                        'code': pam.PAM_SUCCESS,
+                        'reason': None
+                    }
+                }
+
+            case _:
+                # This shouldn't happen so we'll log it and raise a call error
+                self.logger.error('%s: unexpected authentication mechanism', mechanism)
+                raise CallError(f'{mechanism}: unexpected authentication mechanism')
+
+        match resp['pam_response']['code']:
+            case pam.PAM_SUCCESS:
+                response['response_type'] = AuthResp.SUCCESS.name
+            case pam.PAM_AUTH_ERR | pam.PAM_USER_UNKNOWN:
+                # We have to squash AUTH_ERR and USER_UNKNOWN into a generic response
+                # to prevent unauthenticated remote clients from guessing valid usernames.
+                response['response_type'] = AuthResp.AUTH_ERR.name
+            case pam.PAM_ACCT_EXPIRED | pam.PAM_NEW_AUTHTOK_REQD | pam.PAM_CRED_EXPIRED:
+                response['response_type'] = AuthResp.EXPIRED.name
+            case _:
+                # This is unexpected and so we should generate a debug message
+                # so that we can better handle in the future.
+                self.logger.debug(
+                    '%s: unexpected response code [%d] to authentication request',
+                    mechanism, resp['pam_response']['code']
+                )
+                response['response_type'] = AuthResp.AUTH_ERR.name
+
+        return response
+
+    @private
+    async def get_login_user(self, username, password, mechanism):
+        otp_required = False
+        resp = await self.middleware.call(
+            'auth.authenticate_plain',
+            username, password,
+            mechanism == AuthMech.API_KEY_PLAIN.name
+        )
+        if mechanism == AuthMech.PASSWORD_PLAIN.name and resp['pam_response']['code'] == pam.PAM_SUCCESS:
+            twofactor_auth = await self.middleware.call('auth.twofactor.config')
+            if twofactor_auth['enabled'] and '2FA' in resp['user_data']['account_attributes']:
+                otp_required = True
+
+        return resp | {'otp_required': otp_required}
 
     @cli_private
     @no_auth_required
@@ -447,20 +777,23 @@ class AuthService(Service):
         """
         Authenticate session using API Key.
         """
-        if api_key_object := await self.middleware.call('api_key.authenticate', api_key):
-            await self.session_manager.login(app, ApiKeySessionManagerCredentials(api_key_object))
-            return True
+        try:
+             key_id = int(api_key.split('-')[0])
+        except Exception:
+             return False
 
-        await self.middleware.log_audit_message(app, "AUTHENTICATION", {
-            "credentials": {
-                "credentials": "API_KEY",
-                "credentials_data": {
-                    "api_key": api_key,
-                }
-            },
-            "error": "Invalid API key",
-        }, False)
-        return False
+        key_entry = await self.middleware.call('api_key.query', [['id', '=', key_id]])
+        if not key_entry:
+            return False
+
+        resp = await self.login_ex(app, {
+            'mechanism': AuthMech.API_KEY_PLAIN.name,
+            'username': key_entry[0]['username'],
+            'api_key': api_key
+        })
+        self.logger.debug("XXX: resp: %s", resp)
+
+        return resp['response_type'] == AuthResp.SUCCESS.name
 
     @cli_private
     @no_auth_required
@@ -471,41 +804,11 @@ class AuthService(Service):
         """
         Authenticate session using token generated with `auth.generate_token`.
         """
-        token = self.token_manager.get(token_str, app.origin)
-        if token is None:
-            await self.middleware.log_audit_message(app, "AUTHENTICATION", {
-                "credentials": {
-                    "credentials": "TOKEN",
-                    "credentials_data": {
-                        "token": token_str,
-                    }
-                },
-                "error": "Invalid token",
-            }, False)
-            return False
-
-        if token.attributes:
-            await self.middleware.log_audit_message(app, "AUTHENTICATION", {
-                "credentials": {
-                    "credentials": "TOKEN",
-                    "credentials_data": {
-                        "token": token.token,
-                    }
-                },
-                "error": "Bad token",
-            }, False)
-            return None
-
-        await self.session_manager.login(app, TokenSessionManagerCredentials(self.token_manager, token))
-        token.session_ids.add(app.session_id)
-        return True
-
-    @private
-    @no_auth_required
-    @pass_app()
-    async def token(self, app, token):
-        warnings.warn("`auth.token` has been deprecated. Use `api.login_with_token`", DeprecationWarning)
-        return await self.login_with_token(app, token)
+        resp = await self.login_ex(app, {
+            'mechanism': AuthMech.TOKEN_PLAIN.name,
+            'token': token_str
+        })
+        return resp['response_type'] == AuthResp.SUCCESS.name
 
     @cli_private
     @accepts()

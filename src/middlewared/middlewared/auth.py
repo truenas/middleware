@@ -1,6 +1,9 @@
+import pam
 import re
 
+from dataclasses import dataclass
 from middlewared.utils.allowlist import Allowlist
+from middlewared.utils.auth import AuthMech
 
 
 class SessionManagerCredentials:
@@ -55,16 +58,9 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
         }
 
 
-class UnixSocketSessionManagerCredentials(UserSessionManagerCredentials):
-    pass
-
-
-class LoginPasswordSessionManagerCredentials(UserSessionManagerCredentials):
-    pass
-
-
-class ApiKeySessionManagerCredentials(SessionManagerCredentials):
-    def __init__(self, api_key):
+class ApiKeySessionManagerCredentials(UserSessionManagerCredentials):
+    def __init__(self, user, api_key):
+        super().__init__(user)
         self.api_key = api_key
 
     def authorize(self, method, resource):
@@ -72,11 +68,20 @@ class ApiKeySessionManagerCredentials(SessionManagerCredentials):
 
     def dump(self):
         return {
+            "username": self.user["username"],
             "api_key": {
                 "id": self.api_key.api_key["id"],
                 "name": self.api_key.api_key["name"],
             }
         }
+
+
+class UnixSocketSessionManagerCredentials(UserSessionManagerCredentials):
+    pass
+
+
+class LoginPasswordSessionManagerCredentials(UserSessionManagerCredentials):
+    pass
 
 
 class TokenSessionManagerCredentials(SessionManagerCredentials):
@@ -119,6 +124,18 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
 class TrueNasNodeSessionManagerCredentials(SessionManagerCredentials):
     def authorize(self, method, resource):
         return True
+
+
+@dataclass()
+class AuthenticationContext:
+    """
+    This stores PAM context for authentication mechanisms that implement
+    challenge-response protocol. We need to keep reference for PAM handle
+    to handle any required PAM conversations.
+    """
+    pam_hdl: pam.PamAuthenticator
+    next_mech: AuthMech | None = None
+    user_data: dict | None = None
 
 
 class FakeApplication:

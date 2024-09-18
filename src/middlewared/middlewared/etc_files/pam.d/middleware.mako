@@ -1,7 +1,7 @@
 <%
     ds_auth = middleware.call_sync('datastore.config', 'system.settings')['stg_ds_auth']
 %>\
-# PAM configuration for the middleware (Web UI login)
+# PAM configuration for the middleware (Web UI / API login)
 
 %if ds_auth:
 @include common-auth

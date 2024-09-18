@@ -181,6 +181,8 @@ class EtcService(Service):
         },
         'pam_middleware': [
             {'type': 'mako', 'path': 'pam.d/middleware'},
+            {'type': 'mako', 'path': 'pam.d/middleware-api-key'},
+            {'type': 'py', 'path': 'pam_tdb'},
         ],
         'ftp': {
             'ctx': [
