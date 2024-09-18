@@ -333,9 +333,9 @@ class AuditService(ConfigService):
                     writer.writeheader()
                     for entry in res:
                         if entry.get('service_data'):
-                            entry['service_data'] = json.dumps(entry['service_data'])
+                            entry['service_data'] = ejson.dumps(entry['service_data'])
                         if entry.get('event_data'):
-                            entry['event_data'] = json.dumps(entry['event_data'])
+                            entry['event_data'] = ejson.dumps(entry['event_data'])
                         writer.writerow(entry)
                 case 'JSON':
                     ejson.dump(res, f, indent=4)

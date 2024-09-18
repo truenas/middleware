@@ -1,9 +1,7 @@
 import pytest
 
-from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.account import user
-from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
 
 
@@ -29,17 +27,6 @@ def test_works_for_token():
         assert user['two_factor_config'] is not None
         assert 'SYS_ADMIN' in user['account_attributes']
         assert 'LOCAL' in user['account_attributes']
-
-
-def test_does_not_work_for_api_key():
-    with api_key([{"method": "CALL", "resource": "auth.me"}]) as key:
-        with client(auth=None) as c:
-            assert c.call("auth.login_with_api_key", key)
-
-            with pytest.raises(CallError) as ve:
-                c.call("auth.me")
-
-            assert ve.value.errmsg == "You are logged in using API_KEY"
 
 
 def test_attributes():
@@ -70,7 +57,7 @@ def test_distinguishes_attributes():
         "full_name": "Admin",
         "group_create": True,
         "groups": [builtin_administrators_group_id],
-        "home": f"/nonexistent",
+        "home": "/nonexistent",
         "password": "test1234",
     }) as admin:
         with client(auth=("admin", "test1234")) as c:
