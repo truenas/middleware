@@ -3,7 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 import asyncio
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import errno
 import time
 
@@ -28,7 +28,8 @@ class FailoverRebootService(Service):
         cli_namespace = 'system.failover.reboot'
         namespace = 'failover.reboot'
 
-    remote_reboot_reasons: dict[str, RemoteRebootReason] = {}
+    remote_reboot_reasons_key: str
+    remote_reboot_reasons: dict[str, RemoteRebootReason]
 
     @private
     async def add_remote_reason(self, code: str, reason: str):
@@ -44,12 +45,15 @@ class FailoverRebootService(Service):
                 'timeout': 2,
                 'connect_timeout': 2,
             })
-        except Exception:
-            self.logger.warning('Unexpected error querying remote reboot boot id', exc_info=True)
+        except Exception as e:
+            if not (isinstance(e, CallError) and e.errno == CallError.ENOMETHOD):
+                self.logger.warning('Unexpected error querying remote reboot boot id', exc_info=True)
+
             # Remote system is inaccessible, so, when it comes back, another reboot will be required.
             boot_id = None
 
         self.remote_reboot_reasons[code] = RemoteRebootReason(boot_id, reason)
+        await self.persist_remote_reboot_reasons()
 
         await self.send_event()
 
@@ -63,8 +67,10 @@ class FailoverRebootService(Service):
                 'timeout': 2,
                 'connect_timeout': 2,
             })
-        except Exception:
-            self.logger.warning('Unexpected error querying remote reboot info', exc_info=True)
+        except Exception as e:
+            if not (isinstance(e, CallError) and e.errno == CallError.ENOMETHOD):
+                self.logger.warning('Unexpected error querying remote reboot info', exc_info=True)
+
             other_node = None
 
         if other_node is not None:
@@ -91,6 +97,8 @@ class FailoverRebootService(Service):
         }
 
         if changed:
+            await self.persist_remote_reboot_reasons()
+
             await self.send_event(info)
 
         return info
@@ -152,6 +160,21 @@ class FailoverRebootService(Service):
 
         self.middleware.send_event('failover.reboot.info', 'CHANGED', id=None, fields=info)
 
+    @private
+    async def load_remote_reboot_reasons(self):
+        self.remote_reboot_reasons_key = f'remote_reboot_reasons_{await self.middleware.call("failover.node")}'
+        self.remote_reboot_reasons = {
+            k: RemoteRebootReason(**v)
+            for k, v in (await self.middleware.call('keyvalue.get',self.remote_reboot_reasons_key, {})).items()
+        }
+
+    @private
+    async def persist_remote_reboot_reasons(self):
+        await self.middleware.call('keyvalue.set', self.remote_reboot_reasons_key, {
+            k: asdict(v)
+            for k, v in self.remote_reboot_reasons.items()
+        })
+
 
 async def reboot_info(middleware, *args, **kwargs):
     await middleware.call('failover.reboot.send_event')
@@ -162,6 +185,8 @@ def remote_reboot_info(middleware, *args, **kwargs):
 
 
 async def setup(middleware):
+    await middleware.call('failover.reboot.load_remote_reboot_reasons')
+
     middleware.event_register('failover.reboot.info', 'Sent when a system reboot is required.', roles=['FAILOVER_READ'])
 
     middleware.event_subscribe('system.reboot.info', remote_reboot_info)

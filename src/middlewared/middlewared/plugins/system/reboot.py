@@ -1,6 +1,12 @@
+import enum
+
 from middlewared.api import api_method
 from middlewared.api.current import SystemRebootInfoArgs, SystemRebootInfoResult
 from middlewared.service import private, Service
+
+
+class RebootReason(enum.Enum):
+    FIPS = 'FIPS configuration was changed.'
 
 
 class SystemRebootService(Service):

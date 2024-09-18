@@ -1,11 +1,9 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.failover_.disabled_reasons import DisabledReasonsEnum
+from middlewared.plugins.system.reboot import RebootReason
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
 from middlewared.service import ConfigService, ValidationError, job, private
-
-FIPS_REBOOT_CODE = 'FIPS'
-FIPS_REBOOT_REASON = 'FIPS configuration was changed.'
 
 
 class SystemSecurityModel(sa.Model):
@@ -36,12 +34,12 @@ class SystemSecurityService(ConfigService):
         await self.middleware.call('failover.call_remote', 'etc.generate', ['fips'])
 
         remote_reboot_reasons = await self.middleware.call('failover.call_remote', 'system.reboot.list_reasons')
-        if FIPS_REBOOT_CODE in remote_reboot_reasons:
+        if RebootReason.FIPS.name in remote_reboot_reasons:
             # means FIPS is being toggled but other node is already pending a reboot,
             # so it means the user toggled FIPS twice and somehow the other node
             # didn't reboot (even though we do this automatically). This is an edge
             # case and means someone or something is doing things behind our backs
-            await self.middleware.call('failover.call_remote', 'system.reboot.remove_reason', [FIPS_REBOOT_CODE])
+            await self.middleware.call('failover.call_remote', 'system.reboot.remove_reason', [RebootReason.FIPS.name])
         else:
             try:
                 # we automatically reboot (and wait for) the other controller
@@ -50,7 +48,8 @@ class SystemSecurityService(ConfigService):
             except Exception:
                 # something extravagant happened, so we'll just play it safe and say that
                 # another reboot is required
-                await self.middleware.call('failover.reboot.add_remote_reason', FIPS_REBOOT_CODE, FIPS_REBOOT_REASON)
+                await self.middleware.call('failover.reboot.add_remote_reason', RebootReason.FIPS.name,
+                                           RebootReason.FIPS.value)
 
     @private
     async def validate(self, is_ha, ha_disabled_reasons):
@@ -104,7 +103,7 @@ class SystemSecurityService(ConfigService):
             # TODO: We likely need to do some SSH magic as well
             #  let's investigate the exact configuration there
             await self.middleware.call('etc.generate', 'fips')
-            await self.middleware.call('system.reboot.toggle_reason', FIPS_REBOOT_CODE, FIPS_REBOOT_REASON)
+            await self.middleware.call('system.reboot.toggle_reason', RebootReason.FIPS.name, RebootReason.FIPS.value)
             await self.configure_fips_on_ha(is_ha, job)
 
         return await self.config()
