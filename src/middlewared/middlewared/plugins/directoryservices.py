@@ -227,7 +227,7 @@ class DirectoryServices(Service):
         # nsswitch.conf needs to be updated
         self.middleware.call_sync('etc.generate', 'nss')
         job.set_progress(10, 'Refreshing cache'),
-        cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh')
+        cache_refresh = self.middleware.call_sync('directoryservices.cache.refresh_impl')
         cache_refresh.wait_sync()
 
         job.set_progress(75, 'Restarting dependent services')
