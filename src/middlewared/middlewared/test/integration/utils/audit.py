@@ -1,3 +1,4 @@
+# -*- coding=utf-8 -*-
 import contextlib
 import pprint
 import time
@@ -8,7 +9,7 @@ from middlewared.test.integration.utils import client
 @contextlib.contextmanager
 def expect_audit_log(entries, *, include_logins=False):
     with client() as c:
-        time.sleep(5)
+        time.sleep(5)  # FIXME: proper audit log flush
 
         existing = c.call("audit.query", {"services": ["MIDDLEWARE"]})
 
