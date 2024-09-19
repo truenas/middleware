@@ -84,14 +84,9 @@ class AppCustomService(Service):
                 'Failure occurred while '
                 f'{"converting" if app_being_converted else "installing"} {app_name!r}, cleaning up'
             )
-            for method, args, kwargs in (
-                (compose_action, (app_name, version, 'down'), {'remove_orphans': True}),
-                (shutil.rmtree, (get_installed_app_path(app_name),), {}),
-            ):
-                with contextlib.suppress(Exception):
-                    method(*args, **kwargs)
 
-            self.middleware.send_event('app.query', 'REMOVED', id=app_name)
+            self.middleware.call_sync('app.remove_failed_resources', app_name, version)
+
             raise e from None
         else:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
