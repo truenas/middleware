@@ -15,7 +15,7 @@ import requests
 from assets.websocket.iscsi import (alua_enabled, initiator, initiator_portal,
                                     portal, read_capacity16, target,
                                     target_extent_associate, verify_capacity,
-                                    verify_luns)
+                                    verify_luns, verify_ha_inquiry, verify_ha_device_identification, TUR)
 from middlewared.service_exception import CallError, InstanceNotFound, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.iscsi import target_login_test
 from middlewared.test.integration.assets.pool import dataset, snapshot
@@ -371,19 +371,6 @@ def isns_enabled(delay=5):
         if delay:
             print(f'Sleeping for {delay} seconds after turning off iSNS')
             sleep(delay)
-
-
-def TUR(s):
-    """
-    Perform a TEST UNIT READY.
-
-    :param s: a pyscsi.SCSI instance
-    """
-    s.testunitready()
-    # try:
-    #     s.testunitready()
-    # except TypeError:
-    #     s.testunitready()
 
 
 def expect_check_condition(s, text=None, check_type=CheckType.CHECK_CONDITION):
@@ -1692,45 +1679,6 @@ def test_18_persistent_reservation_two_initiators(request):
                     _check_persistent_reservations(s1, s2)
 
 
-def _serial_number(s):
-    x = s.inquiry(evpd=1, page_code=0x80)
-    return x.result['unit_serial_number'].decode('utf-8')
-
-
-def _device_identification(s):
-    result = {}
-    x = s.inquiry(evpd=1, page_code=0x83)
-    for desc in x.result['designator_descriptors']:
-        if desc['designator_type'] == 4:
-            result['relative_target_port_identifier'] = desc['designator']['relative_port']
-        if desc['designator_type'] == 5:
-            result['target_port_group'] = desc['designator']['target_portal_group']
-        if desc['designator_type'] == 3 and desc['designator']['naa'] == 6:
-            items = (desc['designator']['naa'],
-                     desc['designator']['ieee_company_id'],
-                     desc['designator']['vendor_specific_identifier'],
-                     desc['designator']['vendor_specific_identifier_extension']
-                     )
-            result['naa'] = "0x{:01x}{:06x}{:09x}{:016x}".format(*items)
-    return result
-
-
-def _verify_ha_inquiry(s, serial_number, naa, tpgs=0,
-                       vendor='TrueNAS', product_id='iSCSI Disk'):
-    """
-    Verify that the supplied SCSI has the expected INQUIRY response.
-
-    :param s: a pyscsi.SCSI instance
-    """
-    TUR(s)
-    inq = s.inquiry().result
-    assert inq['t10_vendor_identification'].decode('utf-8').startswith(vendor)
-    assert inq['product_identification'].decode('utf-8').startswith(product_id)
-    assert inq['tpgs'] == tpgs
-    assert serial_number == _serial_number(s)
-    assert naa == _device_identification(s)['naa']
-
-
 def _get_node(timeout=None):
     return call('failover.node')
 
@@ -1783,13 +1731,6 @@ def _check_ha_node_configuration():
     assert truenas_server.nodea_ip not in ips['B']
     assert truenas_server.nodeb_ip in ips['B']
     assert truenas_server.nodeb_ip not in ips['A']
-
-
-def _verify_ha_device_identification(s, naa, relative_target_port_identifier, target_port_group):
-    x = _device_identification(s)
-    assert x['naa'] == naa, x
-    assert x['relative_target_port_identifier'] == relative_target_port_identifier, x
-    assert x['target_port_group'] == target_port_group, x
 
 
 def _verify_ha_report_target_port_groups(s, tpgs, active_tpg):
@@ -1942,7 +1883,7 @@ def test_19_alua_config(request):
             api_serial_number = iscsi_config['extent']['serial']
             api_naa = iscsi_config['extent']['naa']
             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
-                _verify_ha_inquiry(s, api_serial_number, api_naa)
+                verify_ha_inquiry(s, api_serial_number, api_naa)
 
             if ha:
                 # Only perform this section on a HA system
@@ -1955,12 +1896,12 @@ def test_19_alua_config(request):
                     # we see the same target.  Observe that we supply tpgs=1 as
                     # part of the check
                     with iscsi_scsi_connection(truenas_server.nodea_ip, iqn) as s1:
-                        _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
+                        verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
                         with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn) as s2:
-                            _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
+                            verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
 
-                            _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
-                            _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+                            verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                            verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
 
                             tpgs = {
                                 CONTROLLER_A_TARGET_PORT_GROUP_ID: [1],
@@ -1991,13 +1932,13 @@ def test_19_alua_config(request):
                     api_naa = iscsi_config['extent']['naa']
                     # Login to the target and ensure that things look reasonable.
                     with iscsi_scsi_connection(truenas_server.nodea_ip, iqn) as s1:
-                        _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
+                        verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
 
                         with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn) as s2:
-                            _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
+                            verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
 
-                            _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
-                            _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+                            verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                            verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
 
                             # Use the tpgs & active_tpg from above
                             _verify_ha_report_target_port_groups(s1, tpgs, active_tpg)
@@ -2014,8 +1955,8 @@ def test_19_alua_config(request):
                             new_active_tpg = _get_active_target_portal_group()
                             assert new_active_tpg != active_tpg
 
-                            _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
-                            _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+                            verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                            verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
 
                             _verify_ha_report_target_port_groups(s1, tpgs, new_active_tpg)
                             _verify_ha_report_target_port_groups(s2, tpgs, new_active_tpg)
@@ -2035,12 +1976,12 @@ def test_19_alua_config(request):
                                 _wait_for_alua_settle()
                                 # Login to the target on each controller
                                 with iscsi_scsi_connection(truenas_server.nodea_ip, iqn2) as s3:
-                                    _verify_ha_inquiry(s3, api_serial_number2, api_naa2, 1)
+                                    verify_ha_inquiry(s3, api_serial_number2, api_naa2, 1)
                                     initiator_name3 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:third"
                                     with iscsi_scsi_connection(truenas_server.nodeb_ip, iqn2, initiator_name=initiator_name3) as s4:
-                                        _verify_ha_inquiry(s4, api_serial_number2, api_naa2, 1)
-                                        _verify_ha_device_identification(s3, api_naa2, 2, CONTROLLER_A_TARGET_PORT_GROUP_ID)
-                                        _verify_ha_device_identification(s4, api_naa2, 32002, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+                                        verify_ha_inquiry(s4, api_serial_number2, api_naa2, 1)
+                                        verify_ha_device_identification(s3, api_naa2, 2, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                                        verify_ha_device_identification(s4, api_naa2, 32002, CONTROLLER_B_TARGET_PORT_GROUP_ID)
                                         _verify_ha_report_target_port_groups(s3, tpgs2, new_active_tpg)
                                         _verify_ha_report_target_port_groups(s4, tpgs2, new_active_tpg)
                                         _check_target_rw_paths(s3, s4)
@@ -2053,19 +1994,19 @@ def test_19_alua_config(request):
                                         # After the 2nd reboot we will switch back to using the original active_tpg
 
                                         # Check the new target again
-                                        _verify_ha_inquiry(s3, api_serial_number2, api_naa2, 1)
-                                        _verify_ha_inquiry(s4, api_serial_number2, api_naa2, 1)
-                                        _verify_ha_device_identification(s3, api_naa2, 2, CONTROLLER_A_TARGET_PORT_GROUP_ID)
-                                        _verify_ha_device_identification(s4, api_naa2, 32002, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+                                        verify_ha_inquiry(s3, api_serial_number2, api_naa2, 1)
+                                        verify_ha_inquiry(s4, api_serial_number2, api_naa2, 1)
+                                        verify_ha_device_identification(s3, api_naa2, 2, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                                        verify_ha_device_identification(s4, api_naa2, 32002, CONTROLLER_B_TARGET_PORT_GROUP_ID)
                                         _verify_ha_report_target_port_groups(s3, tpgs2, active_tpg)
                                         _verify_ha_report_target_port_groups(s4, tpgs2, active_tpg)
                                         _check_target_rw_paths(s3, s4)
 
                                         # Check the original target
-                                        _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
-                                        _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
-                                        _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
-                                        _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+                                        verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
+                                        verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
+                                        verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                                        verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
                                         _verify_ha_report_target_port_groups(s1, tpgs2, active_tpg)
                                         _verify_ha_report_target_port_groups(s2, tpgs2, active_tpg)
                                         _check_target_rw_paths(s1, s2)

@@ -159,3 +159,59 @@ def verify_capacity(s, expected_capacity):
     s.testunitready()
     returned_size = read_capacity16(s)
     assert returned_size == expected_capacity
+
+
+def TUR(s):
+    """
+    Perform a TEST UNIT READY.
+
+    :param s: a pyscsi.SCSI instance
+    """
+    s.testunitready()
+
+
+def _serial_number(s):
+    x = s.inquiry(evpd=1, page_code=0x80)
+    return x.result['unit_serial_number'].decode('utf-8')
+
+
+def _device_identification(s):
+    result = {}
+    x = s.inquiry(evpd=1, page_code=0x83)
+    for desc in x.result['designator_descriptors']:
+        if desc['designator_type'] == 4:
+            result['relative_target_port_identifier'] = desc['designator']['relative_port']
+        if desc['designator_type'] == 5:
+            result['target_port_group'] = desc['designator']['target_portal_group']
+        if desc['designator_type'] == 3 and desc['designator']['naa'] == 6:
+            items = (desc['designator']['naa'],
+                     desc['designator']['ieee_company_id'],
+                     desc['designator']['vendor_specific_identifier'],
+                     desc['designator']['vendor_specific_identifier_extension']
+                     )
+            result['naa'] = "0x{:01x}{:06x}{:09x}{:016x}".format(*items)
+    return result
+
+
+def verify_ha_device_identification(s, naa, relative_target_port_identifier, target_port_group):
+    x = _device_identification(s)
+    assert x['naa'] == naa, x
+    assert x['relative_target_port_identifier'] == relative_target_port_identifier, x
+    assert x['target_port_group'] == target_port_group, x
+
+
+def verify_ha_inquiry(s, serial_number, naa, tpgs=0,
+                      vendor='TrueNAS', product_id='iSCSI Disk'):
+    """
+    Verify that the supplied SCSI has the expected INQUIRY response.
+
+    :param s: a pyscsi.SCSI instance
+    """
+    TUR(s)
+    inq = s.inquiry().result
+    assert inq['t10_vendor_identification'].decode('utf-8').startswith(vendor)
+    assert inq['product_identification'].decode('utf-8').startswith(product_id)
+    if tpgs is not None:
+        assert inq['tpgs'] == tpgs
+    assert serial_number == _serial_number(s)
+    assert naa == _device_identification(s)['naa']
