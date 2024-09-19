@@ -129,10 +129,9 @@ class Enclosure2Service(Service):
                     'enclosure2.set_slot_status', f'Slot {data["slot"]} does not support identification'
                 )
             else:
-                by_dirname = enc_info['model'] in (ControllerModels.H10.value, ControllerModels.H20.value)
                 try:
                     toggle_enclosure_slot_identifier(
-                        f'/sys/class/enclosure/{enc_info["pci"]}', origslot, data['status'], by_dirname
+                        f'/sys/class/enclosure/{enc_info["pci"]}', origslot, data['status']
                     )
                 except FileNotFoundError:
                     raise CallError(f'Slot: {data["slot"]!r} not found', errno.ENOENT)

@@ -37,7 +37,7 @@ class Enclosure:
         self._should_ignore_enclosure()
         self.sysfs_map, self.disks_map, self.elements = dict(), dict(), dict()
         if not self.should_ignore:
-            self.sysfs_map = map_disks_to_enclosure_slots(self.pci)
+            self.sysfs_map = map_disks_to_enclosure_slots(self)
             self.disks_map = self._get_array_device_mapping_info()
             self.elements = self._parse_elements(enc_stat['elements'])
 
@@ -298,7 +298,7 @@ class Enclosure:
                 try:
                     dinfo = self.disks_map[slot]
                     sysfs_slot = dinfo[SYSFS_SLOT_KEY]
-                    parsed['dev'] = self.sysfs_map[sysfs_slot]['name']
+                    parsed['dev'] = self.sysfs_map[sysfs_slot].name
                 except KeyError:
                     # this happens on some of the MINI platforms, for example,
                     # the MINI-3.0-XL+ because we map the 1st drive and only
@@ -313,7 +313,7 @@ class Enclosure:
                 # does this enclosure slot support reporting identification status?
                 # (i.e. whether the LED is currently lit up)
                 if dinfo.get(SUPPORTS_IDENTIFY_STATUS_KEY, parsed[SUPPORTS_IDENTIFY_KEY]):
-                    parsed[DRIVE_BAY_LIGHT_STATUS] = self.sysfs_map[sysfs_slot]['locate']
+                    parsed[DRIVE_BAY_LIGHT_STATUS] = self.sysfs_map[sysfs_slot].locate
                 else:
                     parsed[DRIVE_BAY_LIGHT_STATUS] = None
 
@@ -712,11 +712,11 @@ class Enclosure:
                 return 7
             elif self.is_mini_3_xl_plus:
                 return 10
-            elif any((self.is_xseries, self.is_r30, self.is_12_bay_jbod)):
+            elif any((self.is_hseries, self.is_xseries, self.is_r30, self.is_12_bay_jbod)):
                 return 12
             elif self.is_r20_series:
                 return 14
-            elif any((self.is_hseries, self.is_r10)):
+            elif self.is_r10:
                 return 16
             elif any((self.is_fseries, self.is_mseries, self.is_24_bay_jbod)):
                 return 24
