@@ -10,8 +10,8 @@ from pathlib import Path
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class BaseDev:
-    name: str = None
-    locate: str = None
+    name: str | None = None
+    locate: str | None = None
 
 
 def map_disks_to_enclosure_slots(enc) -> dict[int, BaseDev]:
