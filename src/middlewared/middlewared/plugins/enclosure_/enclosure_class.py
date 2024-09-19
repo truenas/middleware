@@ -21,7 +21,7 @@ from .constants import (
     DRIVE_BAY_LIGHT_STATUS,
 )
 from .element_types import ELEMENT_TYPES, ELEMENT_DESC
-from .enums import ControllerModels, ElementDescriptorsToIgnore, ElementStatusesToIgnore, JbodModels
+from .enums import ControllerModels, ElementDescriptorsToIgnore, ElementStatusesToIgnore, ElementType, JbodModels
 from .sysfs_disks import map_disks_to_enclosure_slots
 from .slot_mappings import get_slot_info
 
@@ -205,23 +205,32 @@ class Enclosure:
                 self.model = ''
                 self.controller = False
 
-    def _ignore_element(self, parsed_element_status, element):
+    def _ignore_element(self, parsed_element_status, element, element_type):
         """We ignore certain elements reported by the enclosure, for example,
         elements that report as unsupported. Our alert system polls enclosures
         for elements that report "bad" statuses and these elements need to be
         ignored. NOTE: every hardware platform is different for knowing which
         elements are to be ignored"""
         desc = element['descriptor'].lower()
-        return any((
-            (parsed_element_status.lower() == ElementStatusesToIgnore.UNSUPPORTED.value),
-            (self.is_xseries and desc == ElementDescriptorsToIgnore.ADISE0.value),
-            (self.model == JbodModels.ES60.value and desc == ElementDescriptorsToIgnore.ADS.value),
-            (not self.is_hseries and desc in (
-                ElementDescriptorsToIgnore.EMPTY.value,
-                ElementDescriptorsToIgnore.AD.value,
-                ElementDescriptorsToIgnore.DS.value,
-            )),
-        ))
+        if parsed_element_status.lower() == ElementStatusesToIgnore.UNSUPPORTED.value:
+            return True
+        elif self.is_xseries:
+            if element_type == ElementType.TEMPERATURE_SENSORS.value:
+                if self.model == ControllerModels.X10.value and desc.startswith(('dimm2', 'dimm3')):
+                    # x10 platform only has 2 DIMM slots (dimm0/1) populated so the others report
+                    # -1C temperature but the descriptor status reports as "OK".
+                    return True
+            elif desc == ElementDescriptorsToIgnore.ADISE0.value:
+                return True
+        elif self.model == JbodModels.ES60.value and desc == ElementDescriptorsToIgnore.ADS.value:
+            return True
+        elif not self.is_hseries and desc in (
+            ElementDescriptorsToIgnore.EMPTY.value,
+            ElementDescriptorsToIgnore.AD.value,
+            ElementDescriptorsToIgnore.DS.value,
+        ):
+            return True
+        return False
 
     def _get_array_device_mapping_info(self):
         mapped_info = get_slot_info(self)
@@ -276,7 +285,7 @@ class Enclosure:
                 # is not mapped so just report unknown
                 element_status = 'UNKNOWN'
 
-            if self._ignore_element(element_status, element):
+            if self._ignore_element(element_status, element, element_type[0]):
                 continue
 
             if element_type[0] not in final:
