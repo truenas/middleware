@@ -24,17 +24,20 @@ class ReportingService(Service):
 
     @private
     def post_dataset_mount_action(self):
-        if os.path.exists(get_netdata_state_path()):
+        netdata_state_path = get_netdata_state_path()
+        if os.path.exists(netdata_state_path):
             return
 
         cp = subprocess.run(
-            ['cp', '-a', '/var/lib/netdata', get_netdata_state_path()], check=False, capture_output=True,
+            ['cp', '-a', '/var/lib/netdata', netdata_state_path], check=False, capture_output=True,
         )
         if cp.returncode != 0:
             self.logger.error('Failed to copy netdata state over from /var/lib/netdata: %r', cp.stderr.decode())
             # We want to make sure this path exists always regardless of an error so that
             # at least netdata can start itself gracefully
-            os.makedirs(get_netdata_state_path(), exist_ok=True)
+            os.makedirs(netdata_state_path, exist_ok=True)
+            os.chown(netdata_state_path, uid=999, gid=997)
+            os.chmod(netdata_state_path, mode=0o755)
 
     @private
     async def start_service(self):
