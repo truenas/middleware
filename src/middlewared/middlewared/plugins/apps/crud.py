@@ -209,6 +209,7 @@ class AppService(CRUDService):
         app_version_details = complete_app_details['versions'][version]
         self.middleware.call_sync('catalog.version_supported_error_check', app_version_details)
 
+        app_volume_ds_exists = bool(self.get_app_volume_ds(app_name))
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
         new_values = self.middleware.call_sync(
@@ -218,7 +219,6 @@ class AppService(CRUDService):
 
         job.set_progress(25, 'Initial Validation completed')
 
-        app_volume_ds_exists = bool(self.get_app_volume_ds(app_name))
         # Now that we have completed validation for the app in question wrt values provided,
         # we will now perform the following steps
         # 1) Create relevant dir for app
@@ -257,9 +257,9 @@ class AppService(CRUDService):
         for method, args, kwargs in (
             (compose_action, (app_name, version, 'down'), {'remove_orphans': True}),
             (shutil.rmtree, (get_installed_app_path(app_name),), {}),
-        ) + (
-            (self.middleware.call_sync, ('zfs.dataset.delete', apps_volume_ds, {'recursive': True})),
-        ) if apps_volume_ds and remove_ds else ():
+        ) + ((
+            (self.middleware.call_sync, ('zfs.dataset.delete', apps_volume_ds, {'recursive': True}), {}),
+        ) if apps_volume_ds and remove_ds else ()):
             with contextlib.suppress(Exception):
                 method(*args, **kwargs)
 
@@ -367,4 +367,8 @@ class AppService(CRUDService):
         # This will return volume dataset of app if it exists, otherwise null
         apps_volume_ds = get_app_parent_volume_ds(self.middleware.call_sync('docker.config')['dataset'], app_name)
         with contextlib.suppress(InstanceNotFound):
-            return self.middleware.call_sync('pool.dataset.get_instance_quick', apps_volume_ds)['id']
+            return self.middleware.call_sync(
+                'zfs.dataset.get_instance', apps_volume_ds, {
+                    'extra': {'retrieve_children': False, 'retrieve_properties': False}
+                }
+            )['id']
