@@ -240,23 +240,28 @@ class AppService(CRUDService):
                 compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:
             job.set_progress(80, f'Failure occurred while installing {app_name!r}, cleaning up')
-            apps_volume_ds = self.get_app_volume_ds(app_name)
-            for method, args, kwargs in (
-                (compose_action, (app_name, version, 'down'), {'remove_orphans': True}),
-                (shutil.rmtree, (get_installed_app_path(app_name),), {}),
-            ) + (
-                self.middleware.call_sync, ('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
-            ) if apps_volume_ds else ():
-                with contextlib.suppress(Exception):
-                    method(*args, **kwargs)
-
-            self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+            self.remove_failed_resources(app_name, version)
             self.middleware.send_event('app.query', 'REMOVED', id=app_name)
             raise e from None
         else:
             if dry_run is False:
                 job.set_progress(100, f'{app_name!r} installed successfully')
                 return self.get_instance__sync(app_name)
+
+    @private
+    def remove_failed_resources(self, app_name, version):
+        apps_volume_ds = self.get_app_volume_ds(app_name)
+        for method, args, kwargs in (
+            (compose_action, (app_name, version, 'down'), {'remove_orphans': True}),
+            (shutil.rmtree, (get_installed_app_path(app_name),), {}),
+        ) + (
+            (self.middleware.call_sync, ('zfs.dataset.delete', apps_volume_ds, {'recursive': True})),
+        ) if apps_volume_ds else ():
+            with contextlib.suppress(Exception):
+                method(*args, **kwargs)
+
+        self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+        self.middleware.send_event('app.query', 'REMOVED', id=app_name)
 
     @accepts(
         Str('app_name'),
