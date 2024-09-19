@@ -165,7 +165,7 @@ class FailoverRebootService(Service):
         self.remote_reboot_reasons_key = f'remote_reboot_reasons_{await self.middleware.call("failover.node")}'
         self.remote_reboot_reasons = {
             k: RemoteRebootReason(**v)
-            for k, v in (await self.middleware.call('keyvalue.get',self.remote_reboot_reasons_key, {})).items()
+            for k, v in (await self.middleware.call('keyvalue.get', self.remote_reboot_reasons_key, {})).items()
         }
 
     @private
