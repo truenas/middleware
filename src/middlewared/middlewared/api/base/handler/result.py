@@ -5,4 +5,4 @@ def serialize_result(model, result, expose_secrets):
     if expose_secrets:
         return result
 
-    return model(result=result).model_dump(mode="json", warnings=False)["result"]
+    return model(result=result).model_dump(context={"expose_secrets": expose_secrets}, warnings=False)["result"]

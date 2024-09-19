@@ -1,9 +1,9 @@
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, Secret
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString,
-                                  Private, single_argument_args, single_argument_result)
+                                  single_argument_args, single_argument_result)
 
 __all__ = ["KeychainCredentialEntry",
            "KeychainCredentialCreateArgs", "KeychainCredentialCreateResult",
@@ -22,7 +22,7 @@ class KeychainCredentialEntry(BaseModel):
     id: int
     name: NonEmptyString
     type: str
-    attributes: Private[dict]
+    attributes: Secret[dict]
 
 
 class KeychainCredentialCreate(KeychainCredentialEntry):
@@ -112,12 +112,12 @@ class KeychainCredentialRemoteSSHSemiautomaticSetupArgs(BaseModel):
     name: NonEmptyString
     url: HttpUrl
     verify_ssl: bool = True
-    token: Private[str | None] = None
+    token: Secret[str | None] = None
     admin_username: str = "root"
-    password: Private[str | None] = None
-    otp_token: Private[str | None] = None
+    password: Secret[str | None] = None
+    otp_token: Secret[str | None] = None
     username: str = "root"
-    private_key: Private[int]
+    private_key: Secret[int]
     connect_timeout: int = 10
     sudo: bool = False
 

@@ -2,9 +2,9 @@ from datetime import datetime
 from typing import Literal, TypeAlias
 from typing_extensions import Annotated
 
-from pydantic import StringConstraints
+from pydantic import Secret, StringConstraints
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, Private
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString
 
 
 HttpVerb: TypeAlias = Literal["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE", "*"]
@@ -23,7 +23,7 @@ class ApiKeyEntry(BaseModel):
 
 
 class ApiKeyEntryWithKey(ApiKeyEntry):
-    key: Private[str]
+    key: Secret[str]
 
 
 class ApiKeyCreate(ApiKeyEntry):

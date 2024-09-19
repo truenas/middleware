@@ -1,12 +1,11 @@
 from typing import Literal
 
 from annotated_types import Ge, Le
-from pydantic import EmailStr, Field
+from pydantic import EmailStr, Field, Secret
 from typing_extensions import Annotated
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LocalUsername, RemoteUsername,
-                                  LocalUID, LongString, NonEmptyString, Private, single_argument_args,
-                                  single_argument_result)
+                                  LocalUID, LongString, NonEmptyString, single_argument_args, single_argument_result)
 
 __all__ = ["UserEntry",
            "UserCreateArgs", "UserCreateResult",
@@ -32,8 +31,8 @@ class UserEntry(BaseModel):
     id: int
     uid: int
     username: LocalUsername | RemoteUsername
-    unixhash: Private[str | None]
-    smbhash: Private[str | None]
+    unixhash: Secret[str | None]
+    smbhash: Secret[str | None]
     home: NonEmptyString = DEFAULT_HOME_PATH
     shell: NonEmptyString = "/usr/bin/zsh"
     "Available choices can be retrieved with `user.shell_choices`."
@@ -81,7 +80,7 @@ class UserCreate(UserEntry):
     "Required if `group_create` is `false`."
     home_create: bool = False
     home_mode: str = "700"
-    password: Private[str | None] = None
+    password: Secret[str | None] = None
 
 
 class UserUpdate(UserCreate, metaclass=ForUpdateMetaclass):
@@ -200,7 +199,7 @@ class UserSetupLocalAdministratorOptions(BaseModel):
 
 class UserSetupLocalAdministratorArgs(BaseModel):
     username: Literal['root', 'truenas_admin']
-    password: Private[str]
+    password: Secret[str]
     options: UserSetupLocalAdministratorOptions = Field(default=UserSetupLocalAdministratorOptions())
 
 
@@ -211,8 +210,8 @@ class UserSetupLocalAdministratorResult(BaseModel):
 @single_argument_args("set_password_data")
 class UserSetPasswordArgs(BaseModel):
     username: str
-    old_password: Private[str | None] = None
-    new_password: Private[NonEmptyString]
+    old_password: Secret[str | None] = None
+    new_password: Secret[NonEmptyString]
 
 
 class UserSetPasswordResult(BaseModel):
@@ -241,7 +240,7 @@ class UserTwofactorConfigResult(BaseModel):
 
 class UserVerifyTwofactorTokenArgs(BaseModel):
     username: str
-    token: Private[str | None] = None
+    token: Secret[str | None] = None
 
 
 class UserVerifyTwofactorTokenResult(BaseModel):

@@ -1,4 +1,6 @@
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, Private,
+from pydantic import Secret
+
+from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
                                   single_argument_args, single_argument_result)
 
 __all__ = ["CloudCredentialEntry",
@@ -12,7 +14,7 @@ class CloudCredentialEntry(BaseModel):
     id: int
     name: NonEmptyString
     provider: str
-    attributes: Private[dict]
+    attributes: Secret[dict]
 
 
 class CloudCredentialCreate(CloudCredentialEntry):
@@ -51,7 +53,7 @@ class CloudCredentialDeleteResult(BaseModel):
 @single_argument_args("cloud_sync_credentials_create")
 class CloudCredentialVerifyArgs(BaseModel):
     provider: str
-    attributes: Private[dict]
+    attributes: Secret[dict]
 
 
 @single_argument_result

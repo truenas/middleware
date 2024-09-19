@@ -1,14 +1,16 @@
 import copy
+import functools
 import inspect
 from types import NoneType
 import typing
 
-from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, model_serializer
+from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, model_serializer, Secret
 from pydantic._internal._model_construction import ModelMetaclass
+from pydantic.main import IncEx
 from typing_extensions import Annotated
 
+from middlewared.api.base.types.base import SECRET_VALUE
 from middlewared.utils.lang import undefined
-from .types.base import Private
 
 __all__ = ["BaseModel", "ForUpdateMetaclass", "single_argument_args", "single_argument_result"]
 
@@ -25,7 +27,7 @@ class BaseModel(PydanticBaseModel):
         for k, v in cls.model_fields.items():
             if typing.get_origin(v.annotation) is typing.Union:
                 for option in typing.get_args(v.annotation):
-                    if typing.get_origin(option) is Private:
+                    if typing.get_origin(option) is Secret:
                         def dump(t):
                             return str(t).replace("typing.", "").replace("middlewared.api.base.types.base.", "")
 
@@ -33,6 +35,46 @@ class BaseModel(PydanticBaseModel):
                             f"Model {cls.__name__} has field {k} defined as {dump(v.annotation)}. {dump(option)} "
                             "cannot be a member of an Optional or a Union, please make the whole field Private."
                         )
+
+    def model_dump(
+        self,
+        *,
+        mode: typing.Literal['json', 'python'] | str = 'python',
+        include: IncEx = None,
+        exclude: IncEx = None,
+        context: dict[str, typing.Any] | None = None,
+        by_alias: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        round_trip: bool = False,
+        warnings: bool | typing.Literal['none', 'warn', 'error'] = True,
+        serialize_as_any: bool = False,
+    ) -> dict[str, typing.Any]:
+        return self.__pydantic_serializer__.to_python(
+            self,
+            mode=mode,
+            by_alias=by_alias,
+            include=include,
+            exclude=exclude,
+            context=context,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+            round_trip=round_trip,
+            warnings=warnings,
+            serialize_as_any=serialize_as_any,
+            fallback=functools.partial(self._model_dump_fallback, context),
+        )
+
+    def _model_dump_fallback(self, context, value):
+        if isinstance(value, Secret):
+            if context["expose_secrets"]:
+                return value.get_secret_value()
+            else:
+                return SECRET_VALUE
+
+        return value
 
     @classmethod
     def from_previous(cls, value):
