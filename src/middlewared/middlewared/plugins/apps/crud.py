@@ -248,10 +248,13 @@ class AppService(CRUDService):
                 compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:
             job.set_progress(80, f'Failure occurred while installing {app_name!r}, cleaning up')
+            apps_volume_ds = self.get_app_volume_ds(app_name)
             for method, args, kwargs in (
                 (compose_action, (app_name, version, 'down'), {'remove_orphans': True}),
                 (shutil.rmtree, (get_installed_app_path(app_name),), {}),
-            ):
+            ) + (
+                self.middleware.call_sync, ('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
+            ) if apps_volume_ds else ():
                 with contextlib.suppress(Exception):
                     method(*args, **kwargs)
 
