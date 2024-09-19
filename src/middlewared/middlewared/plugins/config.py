@@ -9,7 +9,7 @@ import tarfile
 import tempfile
 
 from middlewared.schema import accepts, Bool, Dict, returns
-from middlewared.service import CallError, Service, job, private
+from middlewared.service import CallError, Service, job, pass_app, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.db import FREENAS_DATABASE
 
@@ -84,7 +84,8 @@ class ConfigService(Service):
     @accepts()
     @returns()
     @job(pipes=["input"])
-    def upload(self, job):
+    @pass_app(rest=True)
+    def upload(self, app, job):
         """
         Accepts a configuration file via job pipe.
         """
@@ -105,7 +106,10 @@ class ConfigService(Service):
             is_tar = tarfile.is_tarfile(stf.name)
             self.upload_impl(stf.name, is_tar_file=is_tar)
 
-        self.middleware.run_coroutine(self.middleware.call('system.reboot', {'delay': 10}), wait=False)
+        self.middleware.run_coroutine(
+            self.middleware.call('system.reboot', 'Configuration upload', {'delay': 10}, app=app),
+            wait=False,
+        )
 
     @private
     def upload_impl(self, file_or_tar, is_tar_file=False):
@@ -180,7 +184,7 @@ class ConfigService(Service):
                     'failover.call_remote', 'core.call_hook', ['config.on_upload', [UPLOADED_DB_PATH]]
                 )
                 self.middleware.run_coroutine(
-                    self.middleware.call('failover.call_remote', 'system.reboot'),
+                    self.middleware.call('failover.call_remote', 'system.reboot', 'Configuration upload'),
                     wait=False,
                 )
             except Exception as e:
@@ -193,7 +197,8 @@ class ConfigService(Service):
     @accepts(Dict('options', Bool('reboot', default=True)))
     @returns()
     @job(lock='config_reset', logs=True)
-    def reset(self, job, options):
+    @pass_app(rest=True)
+    def reset(self, app, job, options):
         """
         Reset database to configuration defaults.
 
@@ -224,7 +229,7 @@ class ConfigService(Service):
 
                 if options['reboot']:
                     self.middleware.run_coroutine(
-                        self.middleware.call('failover.call_remote', 'system.reboot'),
+                        self.middleware.call('failover.call_remote', 'system.reboot', 'Configuration upload'),
                         wait=False,
                     )
             except Exception as e:
@@ -240,7 +245,8 @@ class ConfigService(Service):
         if options['reboot']:
             job.set_progress(95, 'Will reboot in 10 seconds')
             self.middleware.run_coroutine(
-                self.middleware.call('system.reboot', {'delay': 10}), wait=False,
+                self.middleware.call('system.reboot', 'Configuration reset', {'delay': 10}, app=app),
+                wait=False,
             )
 
     @private

@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import job, private, CallError, Service
+from middlewared.service import job, private, CallError, Service, pass_app
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.update_.utils import UPLOAD_LOCATION
 from middlewared.utils import PRODUCT
@@ -256,7 +256,8 @@ class UpdateService(Service):
         Bool('reboot', default=False),
     ))
     @job(lock='update')
-    async def update(self, job, attrs):
+    @pass_app(rest=True)
+    async def update(self, app, job, attrs):
         """
         Downloads (if not already in cache) and apply an update.
 
@@ -288,7 +289,7 @@ class UpdateService(Service):
         await self.middleware.call_hook('update.post_update')
 
         if attrs['reboot']:
-            await self.middleware.call('system.reboot', {'delay': 10})
+            await self.middleware.call('system.reboot', 'System upgrade', {'delay': 10}, app=app)
 
         return True
 
