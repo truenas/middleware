@@ -109,7 +109,7 @@ class ConfigService(Service):
             self.upload_impl(stf.name, is_tar_file=is_tar)
 
         self.middleware.run_coroutine(
-            self.middleware.call('system.reboot', 'Configuration upload', {'delay': 10}, app=app),
+            self.middleware.call('system.reboot', CONFIGURATION_UPLOAD_REBOOT_REASON, {'delay': 10}, app=app),
             wait=False,
         )
 
