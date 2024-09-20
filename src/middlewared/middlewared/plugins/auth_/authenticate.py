@@ -54,7 +54,7 @@ class AuthService(Service):
             pam_resp = await self.middleware.call('auth.libpam_authenticate', username, password, pam_svc)
 
         if pam_resp['code'] == pam.PAM_SUCCESS:
-            user_token = await self.authenticate_user({'username': username}, user_info)
+            user_token = await self.authenticate_user({'username': username}, user_info, is_api_key)
             if user_token is None:
                 # Some error occurred when trying to generate our user token
                 pam_resp['code'] = pam.PAM_AUTH_ERR
@@ -63,7 +63,7 @@ class AuthService(Service):
         return {'pam_response': pam_resp, 'user_data': user_token}
 
     @private
-    async def authenticate_user(self, query, user_info):
+    async def authenticate_user(self, query, user_info, is_api_key):
         try:
             user = await self.middleware.call('user.get_user_obj', {
                 **query, 'get_groups': True,
@@ -127,6 +127,9 @@ class AuthService(Service):
 
         if twofactor_enabled:
             account_flags.append('2FA')
+
+        if is_api_key:
+            account_flags.append('API_KEY')
 
         if user['pw_uid'] in (0, ADMIN_UID):
             if not user['local']:

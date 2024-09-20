@@ -1,106 +1,149 @@
 import pytest
 
-from middlewared.test.integration.assets.account import user as temp_user
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.api_key import api_key
-from middlewared.test.integration.utils import call, client, ssh
-from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils import call, client
+
+LEGACY_ENTRY_KEY = 'rtpz6u16l42XJJGy5KMJOVfkiQH7CyitaoplXy7TqFTmY7zHqaPXuA1ob07B9bcB'
+LEGACY_ENTRY_HASH = '$pbkdf2-sha256$29000$CyGktHYOwXgvBYDQOqc05g$nK1MMvVuPGHMvUENyR01qNsaZjgGmlt3k08CRuC4aTI'
 
 
-@pytest.fixture(scope="module")
-def tuser():
-    with temp_user(
-        {
-            "username": "testuser",
-            "full_name": "Test User",
-            "group_create": True,
-            "password": "test1234",
-        }
-    ) as u:
-        yield u
+@pytest.fixture(scope='function')
+def sharing_admin_user(unprivileged_user_fixture):
+    privilege = call('privilege.query', [['local_groups.0.group', '=', unprivileged_user_fixture.group_name]])
+    assert len(privilege) > 0, 'Privilege not found'
+    call('privilege.update', privilege[0]['id'], {'roles': ['SHARING_ADMIN']})
+
+    try:
+        yield unprivileged_user_fixture
+    finally:
+        call('privilege.update', privilege[0]['id'], {'roles': []})
 
 
-def test_root_api_key_websocket(tuser):
+def test_user_unprivileged_api_key_failure(unprivileged_user_fixture):
     """We should be able to call a method with root API key using Websocket."""
-    ip = truenas_server.ip
-    with api_key([{"method": "*", "resource": "*"}]) as key:
-        results = ssh(
-            f"sudo -u {tuser['username']} midclt -u ws://{ip}/api/current --api-key {key} call system.info",
-            complete_response=True,
-        )
-        assert results["result"] is True, results["output"]
-        assert "uptime" in results["stdout"]
+    with pytest.raises(ValidationErrors) as ve:
+        with api_key(unprivileged_user_fixture.username):
+            pass
+
+    assert 'User lacks privilege role membership' in ve.value.errors[0].errmsg
+
+
+def test_api_key_nonexistent_username():
+    """Non-existent user should raise a validation error."""
+    with pytest.raises(ValidationErrors) as ve:
+        with api_key('canary'):
+            pass
+
+    assert 'User does not exist' in ve.value.errors[0].errmsg
+
+
+def test_api_key_info(sharing_admin_user):
+    with api_key(sharing_admin_user.username):
+        key_info = call('api_key.query', [['username', '=', sharing_admin_user.username]], {'get': True})
+        assert key_info['revoked'] is False
+        assert key_info['expires_at'] is None
+        assert key_info['local'] is True
+
+        user = call('user.query', [['username', '=', sharing_admin_user.username]], {'get': True})
+        assert user['api_keys'] == [key_info['id']]
+
+
+@pytest.mark.parametrize(endpoint, ['LEGACY', 'CURRENT'])
+def test_api_key_session(sharing_admin_user, endpoint):
+    with api_key(sharing_admin_user.username) as key:
         with client(auth=None) as c:
-            assert c.call("auth.login_with_api_key", key)
-            # root-level API key should be able to start / stop services
-            c.call("service.start", "cifs")
-            c.call("service.stop", "cifs")
-            # root-level API key should be able to enable / disable services
-            c.call("service.update", "cifs", {"enable": True})
-            c.call("service.update", "cifs", {"enable": False})
+            match endpoint:
+                case 'LEGACY':
+                    assert c.call('auth.login_with_api_key', key)
+                case 'CURRENT':
+                    resp = assert c.call('auth.login_ex', {
+                        'mechanism': 'API_KEY_PLAIN',
+                        'username': sharing_admin_user.username,
+                        'api_key': key
+                    })
+                    asset resp['response_type'] == 'SUCCESS'
+                case _:
+                    raise ValueError(f'{endpoint}: unknown endpoint')
+
+            session = c.call('auth.sessions', [['current', '=', True]], {'get': True})
+            assert session['credentials'] == 'API_KEY'
+            assert session['credentials_data']['api_key']['name'] == 'Test API Key'
+
+            me = c.call('auth.me')
+            assert me['username'] == sharing_admin_user.username
+            assert 'SHARING_ADMIN' in me['privilege']['roles']
+            assert 'API_KEY' in me['attributes']
+
+            call("auth.terminate_session", session['id'])
+
+            with pytest.raises(Exception):
+                c.call('system.info')
 
 
-def test_allowed_api_key_websocket(tuser):
-    """We should be able to call a method with API key that allows that call using Websocket."""
-    ip = truenas_server.ip
-    with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
-        results = ssh(
-            f"sudo -u {tuser['username']} midclt -u ws://{ip}/api/current --api-key {key} call system.info",
-            complete_response=True,
-        )
-        assert results["result"] is True, results["output"]
-        assert "uptime" in results["stdout"]
+def test_legacy_api_key_upgrade(sharing_admin_user):
+    """We should automatically upgrade old hashes on successful login"""
+    with api_key(sharing_admin_user.username):
+        key_id = call('api_key.query', [['username', '=', sharing_admin_user.username]], {'get': True})['id']
+        call('datastore.update', 'account.api_key', key_id, {'key': LEGACY_ENTRY_HASH})
 
-
-def test_denied_api_key_websocket(tuser):
-    """We should not be able to call a method with API key that does not allow that call using Websocket."""
-    ip = truenas_server.ip
-    with api_key([{"method": "CALL", "resource": "system.info_"}]) as key:
-        results = ssh(
-            f"sudo -u {tuser['username']} midclt -u ws://{ip}/api/current --api-key {key} call system.info",
-            check=False,
-            complete_response=True,
-        )
-        assert results["result"] is False, results
-
-
-def test_denied_api_key_noauthz():
-    with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
         with client(auth=None) as c:
-            assert c.call("auth.login_with_api_key", key)
-            # verify API key works as expected
-            c.call("system.info")
-            # system.version has no_authz_required
-            # this should fail do to lack of authorization for
-            # API key
-            with pytest.raises(Exception):
-                c.call("system.version")
-            with pytest.raises(Exception):
-                c.call("service.start", "cifs")
-            with pytest.raises(Exception):
-                c.call("service.update", "cifs", {"enable": True})
-            auth_token = c.call("auth.generate_token")
+            resp = c.call('auth.login_ex', {
+               'mechanism': 'API_KEY_PLAIN',
+               'username': sharing_admin_user.username,
+               'api_key': LEGACY_ENTRY_KEY
+            })
+            assert resp['response_type'] == 'SUCCESS'
+
+            # We should have replaced hash on auth
+            updated = call('api_key.query', [['username', '=', sharing_admin_user.username]], {'get': True})
+            assert updated['key'] != LEGACY_ENTRY_HASH
+            assert updated['key'].startswith('$pbkdf2-sha512')
+
+        # verify we still have access
         with client(auth=None) as c:
-            assert c.call("auth.login_with_token", auth_token)
-            # verify that token has same access rights
-            c.call("system.info")
-            with pytest.raises(Exception):
-                c.call("system.version")
-            with pytest.raises(Exception):
-                c.call("service.start", "cifs")
-            with pytest.raises(Exception):
-                c.call("service.update", "cifs", {"enable": True})
+            resp = c.call('auth.login_ex', {
+               'mechanism': 'API_KEY_PLAIN',
+               'username': sharing_admin_user.username,
+               'api_key': LEGACY_ENTRY_KEY
+            })
+            assert resp['response_type'] == 'SUCCESS'
 
 
-def test_api_key_auth_session_list_terminate():
-    with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
+def test_api_key_expired(sharing_admin_user):
+    """Expired keys should fail with expected response type"""
+    with api_key(sharing_admin_user.username) as key:
+        key_id = call('api_key.query', [['username', '=', sharing_admin_user.username]], {'get': True})['id']
+        call('datastore.update', 'account.api_key', key_id, {'expiry': 1})
+
+        # update our pam_tdb file with new expiration
+        call('etc.generate', 'pam_middleware')
+
         with client(auth=None) as c:
-            assert c.call("auth.login_with_api_key", key)
-            sessions = call("auth.sessions")
-            my_sessions = []
-            for s in sessions:
-                if s["credentials"] == "API_KEY" and s["credentials_data"]["api_key"]["name"] == "Test API Key":
-                    my_sessions.append(s)
-            assert len(my_sessions) == 1, sessions
-            call("auth.terminate_session", my_sessions[0]["id"])
-            with pytest.raises(Exception):
-                c.call("system.info")
+            resp = c.call('auth.login_ex', {
+               'mechanism': 'API_KEY_PLAIN',
+               'username': sharing_admin_user.username,
+               'api_key': key
+            })
+            assert resp['response_type'] == 'EXPIRED'
+
+
+def test_key_revoked(sharing_admin_user):
+    """Revoked key should raise an AUTH_ERR"""
+    with api_key(sharing_admin_user.username) as key:
+        key_id = call('api_key.query', [['username', '=', sharing_admin_user.username]], {'get': True})['id']
+        call('datastore.update', 'account.api_key', key_id, {'expiry': -1})
+
+        # update our pam_tdb file with revocation
+        call('etc.generate', 'pam_middleware')
+
+        revoked = call('api_key.query', [['username', '=', sharing_admin_user.username]], {'get': True})['revoked']
+        assert revoked is True
+
+        with client(auth=None) as c:
+            resp = c.call('auth.login_ex', {
+               'mechanism': 'API_KEY_PLAIN',
+               'username': sharing_admin_user.username,
+               'api_key': key
+            })
+            assert resp['response_type'] == 'AUTH_ERR'
