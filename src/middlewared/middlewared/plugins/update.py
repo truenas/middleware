@@ -291,7 +291,7 @@ class UpdateService(Service):
         await self.middleware.call_hook('update.post_update')
 
         if attrs['reboot']:
-            await self.middleware.call('system.reboot', 'System upgrade', {'delay': 10}, app=app)
+            await self.middleware.call('system.reboot', SYSTEM_UPGRADE_REBOOT_REASON, {'delay': 10}, app=app)
 
         return True
 
