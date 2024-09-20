@@ -17,7 +17,7 @@ from .compose_utils import compose_action
 from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
 from .ix_apps.metadata import update_app_metadata, update_app_metadata_for_portals
-from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
+from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
 from .ix_apps.utils import AppState
@@ -217,6 +217,7 @@ class AppService(CRUDService):
         app_version_details = complete_app_details['versions'][version]
         self.middleware.call_sync('catalog.version_supported_error_check', app_version_details)
 
+        app_volume_ds_exists = bool(self.get_app_volume_ds(app_name))
         # The idea is to validate the values provided first and if it passes our validation test, we
         # can move forward with setting up the datasets and installing the catalog item
         new_values = self.middleware.call_sync(
@@ -248,20 +249,33 @@ class AppService(CRUDService):
                 compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
         except Exception as e:
             job.set_progress(80, f'Failure occurred while installing {app_name!r}, cleaning up')
-            for method, args, kwargs in (
-                (compose_action, (app_name, version, 'down'), {'remove_orphans': True}),
-                (shutil.rmtree, (get_installed_app_path(app_name),), {}),
-            ):
-                with contextlib.suppress(Exception):
-                    method(*args, **kwargs)
-
-            self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+            # We only want to remove app volume ds if it did not exist before the installation
+            # and was created during this installation process
+            self.remove_failed_resources(app_name, version, app_volume_ds_exists is False)
             self.middleware.send_event('app.query', 'REMOVED', id=app_name)
             raise e from None
         else:
             if dry_run is False:
                 job.set_progress(100, f'{app_name!r} installed successfully')
                 return self.get_instance__sync(app_name)
+
+    @private
+    def remove_failed_resources(self, app_name, version, remove_ds=False):
+        apps_volume_ds = self.get_app_volume_ds(app_name) if remove_ds else None
+
+        with contextlib.suppress(Exception):
+            compose_action(app_name, version, 'down', remove_orphans=True)
+
+        shutil.rmtree(get_installed_app_path(app_name), ignore_errors=True)
+
+        if apps_volume_ds and remove_ds:
+            try:
+                self.middleware.call_sync('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
+            except Exception:
+                self.logger.error('Failed to remove %r app volume dataset', apps_volume_ds, exc_info=True)
+
+        self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+        self.middleware.send_event('app.query', 'REMOVED', id=app_name)
 
     @accepts(
         Str('app_name'),
@@ -362,8 +376,10 @@ class AppService(CRUDService):
     @private
     def get_app_volume_ds(self, app_name):
         # This will return volume dataset of app if it exists, otherwise null
-        apps_volume_ds = os.path.join(
-            self.middleware.call_sync('docker.config')['dataset'], 'app_mounts', app_name
-        )
+        apps_volume_ds = get_app_parent_volume_ds(self.middleware.call_sync('docker.config')['dataset'], app_name)
         with contextlib.suppress(InstanceNotFound):
-            return self.middleware.call_sync('pool.dataset.get_instance_quick', apps_volume_ds)['id']
+            return self.middleware.call_sync(
+                'zfs.dataset.get_instance', apps_volume_ds, {
+                    'extra': {'retrieve_children': False, 'retrieve_properties': False}
+                }
+            )['id']
