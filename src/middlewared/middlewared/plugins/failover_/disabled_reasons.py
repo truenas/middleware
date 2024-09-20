@@ -91,9 +91,9 @@ class FailoverDisabledReasonsService(Service):
             return
 
         reboot_info = self.middleware.call_sync('failover.reboot.info')
-        if reboot_info['this_node']['reboot_required']:
+        if reboot_info['this_node']['reboot_required_reasons']:
             reasons.add(DisabledReasonsEnum.LOC_FIPS_REBOOT_REQ.name)
-        if reboot_info['other_node']['reboot_required']:
+        if reboot_info['other_node'] is not None and reboot_info['other_node']['reboot_required_reasons']:
             reasons.add(DisabledReasonsEnum.REM_FIPS_REBOOT_REQ.name)
 
         if self.SYSTEM_DATASET_SETUP_IN_PROGRESS:
