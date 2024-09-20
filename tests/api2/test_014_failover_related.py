@@ -101,7 +101,6 @@ if ha:
         with client(auth=(readonly_admin.username, readonly_admin.password)) as c:
             c.call('failover.config')
             c.call('failover.node')
-            c.call('failover.upgrade_pending')
             with pytest.raises(CallError) as ce:
                 c.call('failover.call_remote', 'user.update')
 

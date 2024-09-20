@@ -7,7 +7,6 @@ import logging
 import os
 import shutil
 import stat
-import textwrap
 import time
 from functools import partial
 
@@ -23,8 +22,9 @@ from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
+from middlewared.plugins.system.reboot import RebootReason
 from middlewared.plugins.update_.install import STARTING_INSTALLER
-from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE, can_update
+from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
 from middlewared.plugins.update_.utils_linux import mount_update
 from middlewared.utils.contextlib import asyncnullcontext
 
@@ -773,8 +773,6 @@ class FailoverService(ConfigService):
 
             dataset_name = f'{self.middleware.call_sync("boot.pool_name")}/ROOT/{bootenv_name}'
 
-            self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', True)
-
             remote_path = self.middleware.call_sync('failover.call_remote', 'update.get_update_location')
 
             if not options['resume']:
@@ -867,29 +865,6 @@ class FailoverService(ConfigService):
         except Exception:
             raise
 
-        # The upgrade procedure will upgrade both systems simultaneously
-        # as well as activate the new BEs. The standby controller will be
-        # automatically rebooted into the new BE to "finalize" the upgrade.
-        # However, we will re-activate the old BE on the active controller
-        # to give the end-user a chance to "test" the new upgrade so in the
-        # rare case something horrendous occurs on the new version they can
-        # simply "reboot" (to cause a failover) and faill back to the
-        # controller running the old version of the software.
-        # The procedure is supposed to look like this:
-        #   1. upgrade both controllers
-        #   2. standby controller activates new BE and reboots
-        #   3. end-user verifies the standby controller upgraded without issues
-        #   4. end-user then failovers (reboots) to the newly upgraded node
-        #   5. end-user verifies that the new software functions as expected
-        #   6. end-user is then presented with a webUI option to "apply pending upgrade"
-        #   7. end-user chooses that webUI option
-        #   8. after webUI option is chosen, standby node is rebooted to "finalize" the
-        #       upgrade procedure
-        local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
-        if not local_bootenv:
-            raise CallError('Could not find current boot environment.')
-        self.middleware.call_sync('bootenv.activate', local_bootenv[0]['id'])
-
         # SCALE is using systemd and at the time of writing this, the
         # DefaultTimeoutStopSec setting hasn't been changed and so
         # defaults to 90 seconds. This means when the system is sent the
@@ -933,6 +908,8 @@ class FailoverService(ConfigService):
         if remote_boot_id == self.middleware.call_sync('failover.call_remote', 'system.boot_id'):
             raise CallError('Standby Controller failed to reboot.')
 
+        self.middleware.call_sync('system.reboot.add_reason', RebootReason.UPGRADE.name, RebootReason.UPGRADE.value)
+
         return True
 
     @private
@@ -972,74 +949,6 @@ class FailoverService(ConfigService):
             else:
                 return True
         return False
-
-    @accepts(roles=['FAILOVER_READ'])
-    @returns(Bool())
-    def upgrade_pending(self):
-        """
-        Verify if HA upgrade is pending.
-
-        `upgrade_finish` needs to be called to finish
-        the HA upgrade process if this method returns true.
-        """
-
-        if self.middleware.call_sync('failover.status') != 'MASTER':
-            raise CallError('Upgrade can only be run from the Active Controller.')
-
-        if self.middleware.call_sync('keyvalue.get', 'HA_UPGRADE', False) is not True:
-            return False
-
-        if self.middleware.call_sync('core.get_jobs', [['method', '=', 'failover.upgrade'], ['state', '=', 'RUNNING']]):
-            # We don't want to prematurely set `HA_UPGRADE` to false in the event that remote is still updating
-            # and reports the same version as active - so we would want to make sure that no HA upgrade job
-            # is executing at the moment.
-            return False
-
-        try:
-            assert self.middleware.call_sync('failover.call_remote', 'core.ping') == 'pong'
-        except Exception:
-            return False
-
-        local_version = self.middleware.call_sync('system.version')
-        remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
-
-        if local_version == remote_version:
-            self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
-            return False
-
-        if not self.middleware.call_sync('failover.call_remote', 'bootenv.query', [[('active', '=', 'NR')]]):
-            raise CallError('Remote controller must reboot to activate pending boot environment')
-
-        return can_update(remote_version, local_version)
-
-    @accepts(roles=['FAILOVER_WRITE'])
-    @returns(Bool())
-    @job(lock='failover_upgrade_finish')
-    def upgrade_finish(self, job):
-        """
-        Perform the last stage of an HA upgrade.
-
-        This will activate the new boot environment on the
-        Standby Controller and reboot it.
-        """
-
-        if self.middleware.call_sync('failover.status') != 'MASTER':
-            raise CallError('Upgrade can only run on Active Controller.')
-
-        job.set_progress(None, 'Ensuring the Standby Controller is booted')
-        if not self.upgrade_waitstandby():
-            raise CallError('Timed out waiting for the Standby Controller to boot.')
-
-        job.set_progress(None, 'Activating new boot environment')
-        local_bootenv = self.middleware.call_sync('bootenv.query', [('active', 'rin', 'N')])
-        if not local_bootenv:
-            raise CallError('Could not find current boot environment.')
-        self.middleware.call_sync('failover.call_remote', 'bootenv.activate', [local_bootenv[0]['id']])
-
-        job.set_progress(None, 'Rebooting Standby Controller')
-        self.middleware.call_sync('failover.call_remote', 'system.reboot', [{'delay': 10}])
-        self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
-        return True
 
     @private
     async def sync_keys_from_remote_node(self):
@@ -1332,9 +1241,6 @@ async def _event_system_ready(middleware, event_type, args):
     if await middleware.call('failover.status') in ('MASTER', 'SINGLE'):
         return
 
-    if await middleware.call('keyvalue.get', 'HA_UPGRADE', False):
-        middleware.send_event('failover.upgrade_pending', 'ADDED', id='BACKUP', fields={'pending': True})
-
 
 def remote_status_event(middleware, *args, **kwargs):
     middleware.call_sync('failover.status_refresh')
@@ -1343,11 +1249,6 @@ def remote_status_event(middleware, *args, **kwargs):
 async def setup(middleware):
     middleware.event_register('failover.setup', 'Sent when failover is being setup.')
     middleware.event_register('failover.status', 'Sent when failover status changes.', no_auth_required=True)
-    middleware.event_register('failover.upgrade_pending', textwrap.dedent('''\
-        Sent when system is ready and HA upgrade is pending.
-
-        It is expected the client will react by issuing `upgrade_finish` call
-        at user will.'''))
     middleware.event_subscribe('system.ready', _event_system_ready)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
