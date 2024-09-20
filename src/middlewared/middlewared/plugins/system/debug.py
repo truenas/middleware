@@ -4,6 +4,7 @@ import os
 import requests
 import shutil
 import tarfile
+import time
 
 from middlewared.schema import accepts, returns
 from middlewared.service import CallError, job, private, Service
@@ -136,6 +137,10 @@ class SystemService(Service):
 
                 tarinfo = tarfile.TarInfo(f'{remote_hostname}.txz')
                 tarinfo.size = standby_debug.tell()
+                # need to set a valid modify time because `standby_debug`
+                # is an io.BytesIO object which doesn't have any type of
+                # file metadata on it.
+                tarinfo.mtime = time.time()
                 standby_debug.seek(0)
                 tar.addfile(tarinfo, fileobj=standby_debug)
 
