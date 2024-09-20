@@ -310,14 +310,16 @@ class SMARTTestService(CRUDService):
         return verrors
 
     @accepts(Str('disk'), roles=['REPORTING_READ'])
-    async def query_for_disk(self, disk):
+    async def query_for_disk(self, disk_name):
         """
-        Query S.M.A.R.T. tests for the specified disk.
+        Query S.M.A.R.T. tests for the specified disk name.
         """
+        disk = await self.middleware.call_sync('disk.query', [['name', '=', disk_name]], {'get': True})
+
         return [
             test
             for test in await self.query()
-            if test['all_disks'] or disk in test['disks']
+            if test['all_disks'] or disk['identifier'] in test['disks']
         ]
 
     @accepts(Bool('full_disk', default=False))
