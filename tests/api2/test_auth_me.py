@@ -1,6 +1,5 @@
 import pytest
 
-from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.utils import call, client
@@ -58,7 +57,7 @@ def test_distinguishes_attributes():
         "full_name": "Admin",
         "group_create": True,
         "groups": [builtin_administrators_group_id],
-        "home": f"/nonexistent",
+        "home": "/nonexistent",
         "password": "test1234",
     }) as admin:
         with client(auth=("admin", "test1234")) as c:

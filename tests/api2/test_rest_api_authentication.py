@@ -14,7 +14,7 @@ from middlewared.test.integration.utils.client import truenas_server
 import os
 import sys
 sys.path.append(os.getcwd())
-from functions import POST, GET, DELETE, SSH_TEST
+from functions import GET
 
 
 @contextlib.contextmanager

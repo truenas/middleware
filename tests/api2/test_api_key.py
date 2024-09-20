@@ -60,7 +60,7 @@ def test_api_key_info(sharing_admin_user):
         assert user['api_keys'] == [key_info['id']]
 
 
-@pytest.mark.parametrize(endpoint, ['LEGACY', 'CURRENT'])
+@pytest.mark.parametrize('endpoint', ['LEGACY', 'CURRENT'])
 def test_api_key_session(sharing_admin_user, endpoint):
     with api_key(sharing_admin_user.username) as key:
         with client(auth=None) as c:
@@ -68,12 +68,12 @@ def test_api_key_session(sharing_admin_user, endpoint):
                 case 'LEGACY':
                     assert c.call('auth.login_with_api_key', key)
                 case 'CURRENT':
-                    resp = assert c.call('auth.login_ex', {
+                    resp = c.call('auth.login_ex', {
                         'mechanism': 'API_KEY_PLAIN',
                         'username': sharing_admin_user.username,
                         'api_key': key
                     })
-                    asset resp['response_type'] == 'SUCCESS'
+                    assert resp['response_type'] == 'SUCCESS'
                 case _:
                     raise ValueError(f'{endpoint}: unknown endpoint')
 

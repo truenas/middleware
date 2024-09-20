@@ -31,7 +31,7 @@ def test_api_key_audit():
             call('api_key.update', api_key_id, payload2)
 
     finally:
-        if audit_id:
+        if api_key_id:
             with expect_audit_method_calls([{
                 'method': 'api_key.delete',
                 'params': [api_key_id],
