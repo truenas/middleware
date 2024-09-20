@@ -358,4 +358,8 @@ class AppService(CRUDService):
             self.middleware.call_sync('docker.config')['dataset'], 'app_mounts', app_name
         )
         with contextlib.suppress(InstanceNotFound):
-            return self.middleware.call_sync('pool.dataset.get_instance_quick', apps_volume_ds)['id']
+            return self.middleware.call_sync(
+                'zfs.dataset.get_instance', apps_volume_ds, {
+                    'extra': {'retrieve_children': False, 'retrieve_properties': False}
+                }
+            )['id']
