@@ -389,7 +389,7 @@ class FailoverService(ConfigService):
         )
 
         if options['reboot']:
-            self.middleware.call_sync('failover.call_remote', 'Failover sync to peer', 'system.reboot', [{'delay': 2}])
+            self.middleware.call_sync('failover.call_remote', 'system.reboot', 'Failover sync to peer', [{'delay': 2}])
 
     @accepts(roles=['FAILOVER_WRITE'])
     @returns()
