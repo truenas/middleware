@@ -72,9 +72,4 @@ def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, e
 
         raise verrors from None
 
-    if expose_secrets:
-        mode = "python"
-    else:
-        mode = "json"
-
-    return instance.model_dump(mode=mode, exclude_unset=exclude_unset, warnings=False)
+    return instance.model_dump(context={"expose_secrets": expose_secrets}, exclude_unset=exclude_unset, warnings=False)

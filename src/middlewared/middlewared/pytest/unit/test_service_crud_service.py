@@ -1,6 +1,7 @@
+from pydantic import Secret
 import pytest
 
-from middlewared.api.base import BaseModel, Private
+from middlewared.api.base import BaseModel
 from middlewared.api.base.handler.result import serialize_result
 from middlewared.service.crud_service import query_result
 
@@ -14,6 +15,6 @@ from middlewared.service.crud_service import query_result
 def test_query_result(result, serialized):
     class Entry(BaseModel):
         username: str
-        password: Private[str]
+        password: Secret[str]
 
     assert serialize_result(query_result(Entry), result, False) == serialized

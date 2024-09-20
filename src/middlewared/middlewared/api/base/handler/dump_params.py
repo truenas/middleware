@@ -1,7 +1,9 @@
 import itertools
 import typing
 
-from middlewared.api.base import BaseModel, Private, PRIVATE_VALUE
+from pydantic import Secret
+
+from middlewared.api.base import BaseModel, SECRET_VALUE
 from middlewared.service_exception import ValidationErrors
 from .accept import accept_params
 from .inspect import model_field_is_model, model_field_is_list_of_models
@@ -43,7 +45,7 @@ def remove_secrets(model: type[BaseModel], value):
         }
     elif isinstance(value, list) and (nested_model := model_field_is_list_of_models(model)):
         return [remove_secrets(nested_model, v) for v in value]
-    elif typing.get_origin(model) is Private:
-        return PRIVATE_VALUE
+    elif typing.get_origin(model) is Secret:
+        return SECRET_VALUE
     else:
         return value
