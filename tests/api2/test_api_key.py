@@ -1,5 +1,6 @@
 import pytest
 
+from datetime import datetime, UTC
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
@@ -36,6 +37,16 @@ def test_api_key_nonexistent_username():
             pass
 
     assert 'User does not exist' in ve.value.errors[0].errmsg
+
+
+def test_print_expired_api_key_update_failure():
+    with pytest.raises(ValidationErrors) as ve:
+        with api_key():
+            key = call('api_key.query', [], {'get': True})
+            expiry = datetime.now(UTC) - datetime.timedelta(minutes=60)
+            call('api_key.update', key['id'], {'expires_at': expiry})
+
+    assert 'Expiration date is in the past' in ve.value.errors[0].errmsg
 
 
 def test_api_key_info(sharing_admin_user):

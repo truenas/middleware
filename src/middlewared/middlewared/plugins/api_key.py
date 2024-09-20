@@ -236,6 +236,10 @@ class ApiKeyService(CRUDService):
         ]):
             verrors.add(schema_name, "name must be unique")
 
+        if (expiration := data.get('expires_at')) is not None:
+            if utc_now() > expiration:
+                verrors.add(schema_name, 'Expiration date is in the past')
+
         verrors.check()
 
     @private
