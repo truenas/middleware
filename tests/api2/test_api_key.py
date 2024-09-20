@@ -147,3 +147,33 @@ def test_key_revoked(sharing_admin_user):
                'api_key': key
             })
             assert resp['response_type'] == 'AUTH_ERR'
+
+
+def test_api_key_reset(sharing_admin_user):
+    with api_key([]) as key:
+        with client(auth=None) as c:
+            resp = c.call('auth.login_ex', {
+               'mechanism': 'API_KEY_PLAIN',
+               'username': sharing_admin_user.username,
+               'api_key': key
+            })
+            assert resp['response_type'] == 'SUCCESS'
+
+        key_id = call('api_key.query', [['username', '=', sharing_admin_user.username]], {'get': True})['id']
+        updated = call("api_key.update", key_id, {"reset": True})
+
+        with client(auth=None) as c:
+            resp = c.call('auth.login_ex', {
+               'mechanism': 'API_KEY_PLAIN',
+               'username': sharing_admin_user.username,
+               'api_key': key
+            })
+            assert resp['response_type'] == 'AUTH_ERR'
+
+        with client(auth=None) as c:
+            resp = c.call('auth.login_ex', {
+               'mechanism': 'API_KEY_PLAIN',
+               'username': sharing_admin_user.username,
+               'api_key': updated['key']
+            })
+            assert resp['response_type'] == 'SUCCESS'
