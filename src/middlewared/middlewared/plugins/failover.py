@@ -7,7 +7,6 @@ import logging
 import os
 import shutil
 import stat
-import textwrap
 import time
 from functools import partial
 
@@ -23,8 +22,9 @@ from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
+from middlewared.plugins.system.reboot import RebootReason
 from middlewared.plugins.update_.install import STARTING_INSTALLER
-from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE, can_update
+from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
 from middlewared.plugins.update_.utils_linux import mount_update
 from middlewared.utils.contextlib import asyncnullcontext
 
@@ -908,11 +908,7 @@ class FailoverService(ConfigService):
         if remote_boot_id == self.middleware.call_sync('failover.call_remote', 'system.boot_id'):
             raise CallError('Standby Controller failed to reboot.')
 
-        self.middleware.call_sync(
-            'system.reboot.add_reason',
-            'UPGRADE',
-            'This system needs to be rebooted in order for the system upgrade to finish.',
-        )
+        self.middleware.call_sync('system.reboot.add_reason', RebootReason.UPGRADE.name, RebootReason.UPGRADE.value)
 
         return True
 
