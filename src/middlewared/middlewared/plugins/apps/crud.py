@@ -254,14 +254,15 @@ class AppService(CRUDService):
     @private
     def remove_failed_resources(self, app_name, version, remove_ds=False):
         apps_volume_ds = self.get_app_volume_ds(app_name) if remove_ds else None
-        for method, args, kwargs in (
-            (compose_action, (app_name, version, 'down'), {'remove_orphans': True}),
-            (shutil.rmtree, (get_installed_app_path(app_name),), {}),
-        ) + ((
-            (self.middleware.call_sync, ('zfs.dataset.delete', apps_volume_ds, {'recursive': True}), {}),
-        ) if apps_volume_ds and remove_ds else ()):
+
+        with contextlib.suppress(Exception):
+            compose_action(app_name, version, 'down', remove_orphans=True)
+
+        shutil.rmtree(get_installed_app_path(app_name), ignore_errors=True)
+
+        if apps_volume_ds and remove_ds:
             with contextlib.suppress(Exception):
-                method(*args, **kwargs)
+                self.middleware.call_sync('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
 
         self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
         self.middleware.send_event('app.query', 'REMOVED', id=app_name)
