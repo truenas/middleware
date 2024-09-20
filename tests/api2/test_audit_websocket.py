@@ -325,7 +325,7 @@ def test_token_attributes_login_failed():
 
 
 def test_api_key_login():
-    with api_key([]) as key:
+    with api_key() as key:
         with client(auth=None) as c:
             with expect_audit_log([
                 {
