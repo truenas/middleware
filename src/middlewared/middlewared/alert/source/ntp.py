@@ -1,4 +1,3 @@
-import time
 from datetime import timedelta
 
 from middlewared.alert.base import (Alert, AlertCategory, AlertClass,
@@ -19,8 +18,7 @@ class NTPHealthCheckAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self):
-        uptime_seconds = time.clock_gettime(time.CLOCK_MONOTONIC_RAW)
-        if uptime_seconds < 300:
+        if (await self.middleware.call("system.time_info"))["uptime_seconds"] < 300:
             return
 
         try:
