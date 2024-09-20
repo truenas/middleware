@@ -14,7 +14,7 @@ def test_system_reboot():
         except Exception:
             pass
         else:
-            if new_boot_id == boot_id:
+            if new_boot_id != boot_id:
                 break
 
         time.sleep(1)
