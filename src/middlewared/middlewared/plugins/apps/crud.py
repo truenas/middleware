@@ -269,8 +269,10 @@ class AppService(CRUDService):
         shutil.rmtree(get_installed_app_path(app_name), ignore_errors=True)
 
         if apps_volume_ds and remove_ds:
-            with contextlib.suppress(Exception):
+            try:
                 self.middleware.call_sync('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
+            except Exception:
+                self.logger.error('Failed to remove %r app volume dataset', apps_volume_ds, exc_info=True)
 
         self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
         self.middleware.send_event('app.query', 'REMOVED', id=app_name)
