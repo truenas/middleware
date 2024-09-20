@@ -13,6 +13,8 @@ import subprocess
 import textwrap
 import pathlib
 
+SYSTEM_UPGRADE_REBOOT_REASON = 'System upgrade'
+
 
 def parse_train_name(name):
     split = (name + '-').split('-')

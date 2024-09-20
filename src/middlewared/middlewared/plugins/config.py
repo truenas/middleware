@@ -26,6 +26,8 @@ ADMIN_KEYS_UPLOADED = '/data/admin_authorized_keys_uploaded'
 TRUENAS_ADMIN_KEYS_UPLOADED = '/data/truenas_admin_authorized_keys_uploaded'
 ROOT_KEYS_UPLOADED = '/data/root_authorized_keys_uploaded'
 DATABASE_NAME = os.path.basename(FREENAS_DATABASE)
+CONFIGURATION_UPLOAD_REBOOT_REASON = 'Configuration upload'
+CONFIGURATION_RESET_REBOOT_REASON = 'Configuration reset'
 
 
 class ConfigService(Service):
@@ -184,7 +186,7 @@ class ConfigService(Service):
                     'failover.call_remote', 'core.call_hook', ['config.on_upload', [UPLOADED_DB_PATH]]
                 )
                 self.middleware.run_coroutine(
-                    self.middleware.call('failover.call_remote', 'system.reboot', 'Configuration upload'),
+                    self.middleware.call('failover.call_remote', 'system.reboot', CONFIGURATION_UPLOAD_REBOOT_REASON),
                     wait=False,
                 )
             except Exception as e:
@@ -229,7 +231,9 @@ class ConfigService(Service):
 
                 if options['reboot']:
                     self.middleware.run_coroutine(
-                        self.middleware.call('failover.call_remote', 'system.reboot', 'Configuration upload'),
+                        self.middleware.call(
+                            'failover.call_remote', 'system.reboot', CONFIGURATION_UPLOAD_REBOOT_REASON,
+                        ),
                         wait=False,
                     )
             except Exception as e:
@@ -245,7 +249,7 @@ class ConfigService(Service):
         if options['reboot']:
             job.set_progress(95, 'Will reboot in 10 seconds')
             self.middleware.run_coroutine(
-                self.middleware.call('system.reboot', 'Configuration reset', {'delay': 10}, app=app),
+                self.middleware.call('system.reboot', CONFIGURATION_RESET_REBOOT_REASON, {'delay': 10}, app=app),
                 wait=False,
             )
 
