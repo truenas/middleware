@@ -2,7 +2,7 @@ import pytest
 
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call
-from middlewared.test.integration.utils.docker import dataset_props
+from middlewared.test.integration.utils.docker import dataset_props, IX_APPS_MOUNT_PATH
 
 
 @pytest.fixture(scope='module')
@@ -30,6 +30,12 @@ def test_docker_datasets_properties():
                 invalid_props[to_check_prop] = current_props[to_check_prop]['value']
 
         assert invalid_props == {}, f'{ds_name} has invalid properties: {invalid_props}'
+
+
+@pytest.mark.dependency(depends=['docker_setup'])
+def test_correct_docker_dataset_is_mounted():
+    docker_config = call('docker.config')
+    assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] == docker_config['dataset']
 
 
 @pytest.mark.dependency(depends=['docker_setup'])
