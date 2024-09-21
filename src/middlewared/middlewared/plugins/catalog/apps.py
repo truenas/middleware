@@ -29,6 +29,8 @@ class AppService(Service):
         Bool('installed', required=True),
         Bool('recommended', required=True),
         Datetime('last_update', required=True),
+        List('capabilities', required=True),
+        List('run_as_context', required=True),
         List('categories', required=True),
         List('maintainers', required=True),
         List('tags', required=True),
@@ -47,7 +49,10 @@ class AppService(Service):
         Str('icon_url', null=True, required=True),
         Str('train', required=True),
         Str('catalog', required=True),
-        register=True
+        register=True,
+        # We do this because if we change anything in catalog.json, even older releases will
+        # get this new field and different roles will start breaking due to this
+        additional_attrs=True,
     ))
     def available(self, filters, options):
         """
