@@ -11,7 +11,8 @@ for file in \
     /etc/logrotate.d/netdata \
     /usr/lib/tmpfiles.d/nut-server.conf \
     /usr/lib/tmpfiles.d/nut-client.conf \
-    /usr/lib/tmpfiles.d/nut-common.tmpfiles
+    /usr/lib/tmpfiles.d/nut-common.tmpfiles \
+    /usr/share/misc/enterprise-numbers.txt
 do
     dpkg-divert --add --package truenas-files --rename --divert "/var/trash/$(echo "$file" | sed "s/\//_/g")" "$file"
 done
