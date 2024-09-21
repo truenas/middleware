@@ -53,6 +53,11 @@ def test_apps_being_reported():
     assert call('app.available', [], {'count': True}) != 0
 
 
+@pytest.mark.dependency(depends=['docker_setup'])
+def test_apps_are_running():
+    assert call('docker.status')['status'] == 'RUNNING'
+
+
 def test_unset_docker_pool(docker_pool):
     docker_config = call('docker.update', {'pool': None}, job=True)
     assert docker_config['pool'] is None, docker_config
