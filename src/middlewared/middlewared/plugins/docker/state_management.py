@@ -73,7 +73,6 @@ class DockerStateService(Service):
                 await self.set_status(Status.RUNNING.value)
             else:
                 await self.set_status(Status.FAILED.value)
-            await self.middleware.call('catalog.sync')
 
     async def validate(self, raise_error=True):
         # When `raise_error` is unset, we return boolean true if there was no issue with the state

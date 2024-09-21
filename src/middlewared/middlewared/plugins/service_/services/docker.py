@@ -13,7 +13,6 @@ class DockerService(SimpleService):
     async def before_start(self):
         await self.middleware.call('docker.state.set_status', Status.INITIALIZING.value)
         await self.middleware.call('docker.state.before_start_check')
-        await self.middleware.call('catalog.sync')
         for key, value in (
             ('vm.panic_on_oom', 0),
             ('vm.overcommit_memory', 1),
@@ -45,7 +44,6 @@ class DockerService(SimpleService):
     async def after_start(self):
         await self.middleware.call('docker.state.set_status', Status.RUNNING.value)
         self.middleware.create_task(self.middleware.call('docker.events.setup'))
-        await self.middleware.call('catalog.sync')
         if (await self.middleware.call('docker.config'))['enable_image_updates']:
             self.middleware.create_task(self.middleware.call('app.image.op.check_update'))
 
@@ -54,4 +52,3 @@ class DockerService(SimpleService):
 
     async def after_stop(self):
         await self.middleware.call('docker.state.set_status', Status.STOPPED.value)
-        await self.middleware.call('catalog.sync')
