@@ -1058,7 +1058,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                         f"Setting up periodic task {method_name} to run every {method._periodic.interval} seconds"
                     )
 
-                    self.loop.call_later(
+                    self.loop.call_soon_threadsafe(
+                        self.loop.call_later,
                         delay,
                         functools.partial(
                             self.__call_periodic_task,
