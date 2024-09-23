@@ -72,6 +72,7 @@ def test_cloud_backup(cloud_backup_task):
     run_task(cloud_backup_task.task)
 
     logs = ssh("cat " + call("cloud_backup.get_instance", cloud_backup_task.task["id"])["job"]["logs_path"])
+    assert "unable to open cache:" not in logs
     assert "Files:           1 new,     0 changed,     0 unmodified" in logs
 
     snapshots = call("cloud_backup.list_snapshots", cloud_backup_task.task["id"])
