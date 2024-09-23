@@ -10,9 +10,10 @@ from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_schema
 from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
+from middlewared.rclone.remote.storjix import StorjIxError
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, Password, Patch, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, item_method, job, pass_app, private, TaskPathService,
+    CallError, CRUDService, ValidationError, ValidationErrors, item_method, job, pass_app, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
@@ -915,7 +916,10 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         if not provider.can_create_bucket:
             raise CallError("This provider can't create buckets")
 
-        await provider.create_bucket(credentials, name)
+        try:
+            await provider.create_bucket(credentials, name)
+        except StorjIxError as e:
+            raise ValidationError("cloudsync.create_bucket", e.errmsg, e.errno)
 
     @accepts(Int("credentials_id"), roles=["CLOUD_SYNC_WRITE"])
     async def list_buckets(self, credentials_id):
