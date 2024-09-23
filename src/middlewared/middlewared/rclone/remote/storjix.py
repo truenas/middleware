@@ -45,8 +45,11 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
                 s3_client.create_bucket(Bucket=name)
             except s3_client.exceptions.BucketAlreadyExists as e:
                 raise CallError(str(e), errno=errno.EEXIST)
-            except Exception as e:
-                raise CallError("Bucket name can only contain lowercase letters, numbers, and hyphens", errno.EINVAL, str(e))
+            except botocore.exceptions.ClientError as e:
+                if "InvalidBucketName" in e.args[0]:
+                    raise CallError("Bucket name can only contain lowercase letters, numbers, and hyphens.",
+                                    errno.EINVAL, str(e))
+                raise
 
         return await self.middleware.run_in_thread(create_bucket_sync)
 
