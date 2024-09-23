@@ -86,7 +86,7 @@ class KerberosHealthMixin:
                 faulted_reason
             )
 
-        if not krb5.gss_get_current_cred(krb5_constants.krb5ccache.SYSTEM.value):
+        if not krb5.gss_get_current_cred(krb5_constants.krb5ccache.SYSTEM.value, raise_error=False):
             faulted_reason = (
                 'Kerberos ticket for domain is expired. Failure to renew '
                 'kerberos ticket may indicate issues with DNS resolution or '
