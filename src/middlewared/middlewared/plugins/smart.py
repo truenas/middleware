@@ -71,7 +71,7 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                 else:
                     test.status = "FAILED"
 
-                tests.append(test)
+                tests.append(test.json())
 
         return tests
 
@@ -103,7 +103,7 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                 else:
                     test.status = "FAILED"
 
-                tests.append(test)
+                tests.append(test.json())
 
         return tests
 
@@ -145,7 +145,7 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
             else:
                 test.status = "FAILED"
 
-            tests.append(test)
+            tests.append(test.json())
 
         return tests
 

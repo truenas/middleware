@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from middlewared.api.base import BaseModel
@@ -14,6 +15,9 @@ class AtaSelfTest(BaseModel):
     lifetime: int
     lba_of_first_error: int | None = None
 
+    def json(self)-> str:
+        return json.dumps(self.dict(exclude_unset=True))
+
 
 class NvmeSelfTest(BaseModel):
     num: int
@@ -27,6 +31,9 @@ class NvmeSelfTest(BaseModel):
     sct: int | None = 0x0
     code: int | None = 0x0
 
+    def json(self)-> str:
+        return json.dumps(self.dict(exclude_unset=True))
+
 
 class ScsiSelfTest(BaseModel):
     num: int
@@ -36,3 +43,6 @@ class ScsiSelfTest(BaseModel):
     segment_number: int | None = None
     lifetime: int | None = None
     lba_of_first_error: int | None = None
+
+    def json(self)-> str:
+        return json.dumps(self.dict(exclude_unset=True))
