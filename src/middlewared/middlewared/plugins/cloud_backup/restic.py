@@ -21,7 +21,7 @@ def get_restic_config(cloud_backup):
 
     url, env = remote.get_restic_config(cloud_backup)
 
-    cmd = ["restic", "-r", f"{remote.rclone_type}:{url}/{remote_path}"]
+    cmd = ["restic", "--no-cache", "-r", f"{remote.rclone_type}:{url}/{remote_path}"]
 
     env["RESTIC_PASSWORD"] = cloud_backup["password"]
 
