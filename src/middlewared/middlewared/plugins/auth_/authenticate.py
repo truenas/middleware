@@ -1,10 +1,12 @@
+import os
 import pam
 
+from middlewared.auth import AuthenticationContext
 from middlewared.plugins.account import unixhash_is_valid
 from middlewared.plugins.account_.constants import (
     ADMIN_UID, MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE
 )
-from middlewared.service import Service, private
+from middlewared.service import Service, pass_app, private
 from middlewared.utils.crypto import check_unixhash
 
 PAM_SERVICES = {MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE}
@@ -16,7 +18,8 @@ class AuthService(Service):
         cli_namespace = 'auth'
 
     @private
-    async def authenticate_plain(self, username, password, is_api_key=False):
+    @pass_app()
+    async def authenticate_plain(self, app, username, password, is_api_key=False):
         pam_svc = MIDDLEWARE_PAM_API_KEY_SERVICE if is_api_key else MIDDLEWARE_PAM_SERVICE
 
         if user_info := (await self.middleware.call(
@@ -48,10 +51,10 @@ class AuthService(Service):
             elif await self.middleware.run_in_thread(check_unixhash, password, unixhash):
                 pam_resp = {'code': pam.PAM_SUCCESS, 'reason': ''}
             else:
-                await self.middleware.call('auth.libpam_authenticate', username, password)
+                await self.middleware.call('auth.libpam_authenticate', username, password, app=app)
 
         else:
-            pam_resp = await self.middleware.call('auth.libpam_authenticate', username, password, pam_svc)
+            pam_resp = await self.middleware.call('auth.libpam_authenticate', username, password, pam_svc, app=app)
 
         if pam_resp['code'] == pam.PAM_SUCCESS:
             user_token = await self.authenticate_user({'username': username}, user_info, is_api_key)
@@ -61,6 +64,52 @@ class AuthService(Service):
                 pam_resp['reason'] = 'Failed to generate user token'
 
         return {'pam_response': pam_resp, 'user_data': user_token}
+
+    @private
+    @pass_app()
+    def libpam_authenticate(self, app, username, password, pam_service=MIDDLEWARE_PAM_SERVICE):
+        """
+        Following PAM codes are returned:
+
+        PAM_SUCCESS = 0
+        PAM_SYSTEM_ERR = 4 // pam_tdb.so response if used in unexpected pam service file
+        PAM_AUTH_ERR = 7 // Bad username or password
+        PAM_AUTHINFO_UNAVAIL = 9 // API key - pam_tdb file must be regenerated
+        PAM_USER_UNKNOWN = 10 // API key - user has no keys defined
+        PAM_NEW_AUTHTOK_REQD = 12 // User must change password
+
+        Potentially other may be returned as well depending on the particulars
+        of the PAM modules.
+        """
+        if app and app.authentication_context:
+            auth_ctx = app.authentication_context
+        else:
+            # If this is coming through REST API then we may not have app, but
+            # this is not an issue since we will not implement PAM converstations
+            # over REST.
+            auth_ctx = AuthenticationContext()
+
+        if pam_service not in PAM_SERVICES:
+            self.logger.error('%s: invalid pam service file used for username: %s',
+                              pam_service, username)
+            raise CallError(f'{pam_service}: invalid pam service file')
+
+        if not os.path.exists(pam_service):
+            self.logger.error('PAM service file is missing. Attempting to regenerate')
+            self.middleware.call_sync('etc.generate', 'pam_middleware')
+            if not os.path.exists(pam_service):
+                self.logger.error(
+                    '%s: Unable to generate PAM service file for middleware. Denying '
+                    'access to user.', username
+                )
+                return {'code': pam.PAM_ABORT, 'reason': 'Failed to generate PAM service file'}
+
+        with auth_ctx.pam_lock:
+            p = auth_ctx.pam_hdl
+            p.authenticate(username, password, service=os.path.basename(pam_service))
+            pam_resp = {'code': p.code, 'reason': p.reason}
+
+        return pam_resp
 
     @private
     async def authenticate_user(self, query, user_info, is_api_key):

@@ -7,8 +7,8 @@ API_KEY_NAME = 'AUDIT_API_KEY'
 
 
 def test_api_key_audit():
-    payload = {'username': 'root'}
-    payload2 = {'expires': None}
+    payload = {'username': 'root', 'name': API_KEY_NAME}
+    payload2 = {'expires_at': None}
     api_key_id = None
 
     try:
@@ -21,7 +21,7 @@ def test_api_key_audit():
             api_key_id = api_key['id']
 
             # Set expiration 60 minutes in future
-            payload2['expires'] = api_key['created_at'] + datetime.timedelta(minutes=60)
+            payload2['expires_at'] = api_key['created_at'] + datetime.timedelta(minutes=60)
 
         with expect_audit_method_calls([{
             'method': 'api_key.update',

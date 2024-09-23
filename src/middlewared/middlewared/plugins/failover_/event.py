@@ -735,10 +735,6 @@ class FailoverEventsService(Service):
         self.run_call('alert.initialize', False)
         logger.info('Done initializing alert system')
 
-        logger.info('Loading api keys')
-        self.run_call('api_key.load_keys')
-        logger.info('Done loading api keys')
-
         logger.info('Starting truecommand service (if necessary)')
         self.run_call('truecommand.start_truecommand_service')
         logger.info('Done starting truecommand service (if necessary)')

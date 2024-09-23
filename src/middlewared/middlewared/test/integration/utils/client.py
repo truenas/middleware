@@ -116,7 +116,12 @@ class TrueNAS_Server:
         uri = host_websocket_uri(addr)
         cl = Client(uri, py_exceptions=True, log_py_exceptions=True)
         try:
-            cl.call('auth.login', 'root', password())
+            resp = cl.call('auth.login_ex', {
+                'mechanism': 'PASSWORD_PLAIN',
+                'username': 'root',
+                'password': password()
+            })
+            assert resp['response_type'] == 'SUCCESS'
         except Exception:
             cl.close()
             raise
@@ -161,8 +166,13 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
     try:
         with Client(uri, py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions) as c:
             if auth is not None:
+                auth_req = {
+                    "mechanism": "PASSWORD_PLAIN",
+                    "username": auth[0],
+                    "password": auth[1]
+                }
                 try:
-                    logged_in = c.call("auth.login", *auth)
+                    resp = c.call("auth.login_ex", auth_req)
                 except CallError as e:
                     if e.errno == errno.EBUSY and e.errmsg == 'Rate Limit Exceeded':
                         # our "roles" tests (specifically common_checks() function)
@@ -172,11 +182,11 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
                         # this is easiest path forward to not cause a bunch of roles
                         # related tests to trip on our rate limiting functionality
                         truenas_server.client.call("rate.limit.cache_clear")
-                        logged_in = c.call("auth.login", *auth)
+                        resp = c.call("auth.login_ex", auth_req)
                     else:
                         raise
                 if auth_required:
-                    assert logged_in
+                    assert resp['response_type'] == 'SUCCESS'
             yield c
     except socket.timeout:
         fail(f'socket timeout on URI: {uri!r} HOST_IP: {host_ip!r}')

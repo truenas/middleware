@@ -48,6 +48,7 @@ class AuthTokenPlain(BaseModel):
 class AuthOTPToken(BaseModel):
     mechanism: Literal[AuthMech.OTP_TOKEN.name]
     otp_token: Secret[str]
+    login_options: AuthCommonOptions = Field(default=AuthCommonOptions())
 
 
 class AuthRespSuccess(BaseModel):
@@ -74,3 +75,11 @@ class AuthLoginExArgs(BaseModel):
 
 class AuthLoginExResult(BaseModel):
     result: AuthRespSuccess | AuthRespAuthErr | AuthRespExpired | AuthRespOTPRequired
+
+
+class AuthMechChoicesArgs(BaseModel):
+    pass
+
+
+class AuthMechChoicesResult(BaseModel):
+    result: list[str]

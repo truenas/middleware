@@ -27,7 +27,6 @@ class ApiKeyEntry(BaseModel):
     created_at: datetime
     expires_at: datetime | None = None
     local: bool
-    expired: bool
     revoked: bool
 
 
@@ -42,7 +41,6 @@ class ApiKeyCreate(ApiKeyEntry):
     created_at: Excluded = excluded_field()
     local: Excluded = excluded_field()
     revoked: Excluded = excluded_field()
-    expired: Excluded = excluded_field()
 
 
 class ApiKeyCreateArgs(BaseModel):

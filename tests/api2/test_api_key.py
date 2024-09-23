@@ -1,7 +1,8 @@
+import errno
 import pytest
 
 from datetime import datetime, timedelta, UTC
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
 
@@ -96,28 +97,31 @@ def test_legacy_api_key_upgrade():
     """We should automatically upgrade old hashes on successful login"""
     with api_key():
         key_id = call('api_key.query', [['username', '=', 'root']], {'get': True})['id']
-        call('datastore.update', 'account.api_key', key_id, {'key': f'{key_id}-{LEGACY_ENTRY_HASH}'})
+        call('datastore.update', 'account.api_key', key_id, {
+            'key': LEGACY_ENTRY_HASH,
+            'user_identifier': 'LEGACY_API_KEY'
+        })
         call('etc.generate', 'pam_middleware')
 
         with client(auth=None) as c:
             resp = c.call('auth.login_ex', {
                'mechanism': 'API_KEY_PLAIN',
                'username': 'root',
-               'api_key': LEGACY_ENTRY_KEY
+               'api_key': f'{key_id}-{LEGACY_ENTRY_KEY}'
             })
             assert resp['response_type'] == 'SUCCESS'
 
             # We should have replaced hash on auth
             updated = call('api_key.query', [['username', '=', 'root']], {'get': True})
-            assert updated['key'] != LEGACY_ENTRY_HASH
-            assert updated['key'].startswith('$pbkdf2-sha512')
+            assert updated['keyhash'] != LEGACY_ENTRY_HASH
+            assert updated['keyhash'].startswith('$pbkdf2-sha512')
 
         # verify we still have access
         with client(auth=None) as c:
             resp = c.call('auth.login_ex', {
                'mechanism': 'API_KEY_PLAIN',
                'username': 'root',
-               'api_key': LEGACY_ENTRY_KEY
+               'api_key': f'{key_id}-{LEGACY_ENTRY_KEY}'
             })
             assert resp['response_type'] == 'SUCCESS'
 
@@ -126,7 +130,7 @@ def test_legacy_api_key_reject_nonroot(sharing_admin_user):
     """Old hash style should be rejected for non-root user."""
     with api_key(sharing_admin_user.username):
         key_id = call('api_key.query', [['username', '=', sharing_admin_user.username]], {'get': True})['id']
-        call('datastore.update', 'account.api_key', key_id, {'key': f'{key_id}-{LEGACY_ENTRY_HASH}'})
+        call('datastore.update', 'account.api_key', key_id, {'key': LEGACY_ENTRY_HASH})
         call('etc.generate', 'pam_middleware')
 
         with client(auth=None) as c:
@@ -205,3 +209,29 @@ def test_api_key_reset(sharing_admin_user):
                'api_key': updated['key']
             })
             assert resp['response_type'] == 'SUCCESS'
+
+
+def test_api_key_crud_restricted_admin_own_keys(sharing_admin_user):
+    with client(auth=(sharing_admin_user.username, sharing_admin_user.password)) as c:
+        key_info = c.call('api_key.create', {
+            'username': sharing_admin_user.username,
+            'name': 'test_restricted_admin_key',
+        })
+
+        try:
+            c.call('api_key.update', key_info['id'], {
+                'name': 'test_restricted_admin_key_new'
+            })
+        finally:
+            c.call('api_key.delete', key_info['id'])
+
+
+def test_api_key_restrict_admin_other_keys_fail(sharing_admin_user):
+    with client(auth=(sharing_admin_user.username, sharing_admin_user.password)) as c:
+        with pytest.raises(CallError) as ce:
+            c.call('api_key.create', {
+                'username': 'root',
+                'name': 'test_restricted_admin_key',
+            })
+
+        assert ce.value.errno == errno.EACCES

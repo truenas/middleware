@@ -1,4 +1,5 @@
 import pam
+import errno
 
 from typing import Literal, TYPE_CHECKING
 
@@ -8,11 +9,13 @@ from middlewared.api.current import (
     ApiKeyEntry, ApiKeyCreateArgs, ApiKeyCreateResult, ApiKeyUpdateArgs, ApiKeyUpdateResult,
     ApiKeyDeleteArgs, ApiKeyDeleteResult, ApiKeyMyKeysArgs, ApiKeyMyKeysResult,
 )
-from middlewared.service import CRUDService, no_authz_required, pass_app, private, ValidationError, ValidationErrors
+from middlewared.service import CRUDService, pass_app, private, ValidationError, ValidationErrors
+from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
 from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
 from middlewared.utils.crypto import generate_pbkdf2_512, generate_string
+from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.sid import sid_is_valid
 from middlewared.utils.time_utils import utc_now
 if TYPE_CHECKING:
@@ -38,6 +41,7 @@ class ApiKeyService(CRUDService):
         datastore_extend = "api_key.item_extend"
         datastore_extend_context = "api_key.item_extend_ctx"
         cli_namespace = "auth.api_key"
+        role_prefix = 'API_KEY'
         entry = ApiKeyEntry
 
     @private
@@ -84,7 +88,6 @@ class ApiKeyService(CRUDService):
             'keyhash': thehash,
             'local': True,
             'expires_at': None,
-            'expired': False,
             'revoked': False
         })
         if user_identifier.isdigit():
@@ -125,7 +128,6 @@ class ApiKeyService(CRUDService):
                 pass
             case _:
                 item['expires_at'] = datetime.fromtimestamp(expiry, UTC)
-                item['expired'] = ctx['now'] > item['expires_at']
 
         return item
 
@@ -148,33 +150,40 @@ class ApiKeyService(CRUDService):
         for key in [
             'username',
             'revoked',
-            'expired',
             'keyhash',
             'local',
-            'user_identifier',
         ]:
             out.pop(key, None)
 
         return out
 
-    @api_method(ApiKeyCreateArgs, ApiKeyCreateResult, audit='Create API key', audit_extended=lambda data: data['name'])
-    def do_create(self, data: dict) -> dict:
+    @api_method(
+        ApiKeyCreateArgs,
+        ApiKeyCreateResult,
+        audit='Create API key',
+        audit_extended=lambda data: data['name'],
+        roles=['READONLY_ADMIN', 'API_KEY_WRITE']
+    )
+    @pass_app(rest=True)
+    def do_create(self, app, data: dict) -> dict:
         """
         Creates API Key.
 
         `name` is a user-readable name for key.
         """
-        self._validate("api_key_create", data)
+        # First catch any privilege errors to avoid leaking potentially sensitive information
+        self.api_key_privilege_check(app, data['username'], 'api_key.create')
+
+        verrors = ValidationErrors()
+        self._validate("api_key_create", data, verrors)
         user = self.middleware.call_sync('user.query', [
             ['username', '=', data['username']]
         ])
-        verrors = ValidationErrors()
         if not user:
             verrors.add('api_key_create', 'User does not exist.')
 
         if user and not user[0]['roles']:
             verrors.add('api_key_create', 'User lacks privilege role membership.')
-
         verrors.check()
 
         if user[0]['local']:
@@ -201,14 +210,20 @@ class ApiKeyService(CRUDService):
             'username': user[0]['username'],
             'local': user[0]['local'],
             'revoked': False,
-            'expired': False
         })
 
         self.middleware.call_sync('etc.generate', 'pam_middleware')
         return dict(data, key=f"{data['id']}-{key}")
 
-    @api_method(ApiKeyUpdateArgs, ApiKeyUpdateResult, audit='Update API key', audit_callback=True)
-    def do_update(self, audit_callback: callable, id_: int, data: dict) -> dict:
+    @api_method(
+        ApiKeyUpdateArgs,
+        ApiKeyUpdateResult,
+        audit='Update API key',
+        audit_callback=True,
+        roles=['READONLY_ADMIN', 'API_KEY_WRITE']
+    )
+    @pass_app(rest=True)
+    def do_update(self, app, audit_callback: callable, id_: int, data: dict) -> dict:
         """
         Update API Key `id`.
 
@@ -221,8 +236,12 @@ class ApiKeyService(CRUDService):
         new = old.copy()
 
         new.update(data)
-        self._validate("api_key_update", new, id_)
 
+        self.api_key_privilege_check(app, new['username'], 'api_key.update')
+
+        verrors = ValidationErrors()
+        self._validate("api_key_update", new, verrors, id_)
+        verrors.check()
         key = None
         if reset:
             key = generate_string(string_size=64)
@@ -241,13 +260,22 @@ class ApiKeyService(CRUDService):
         self.middleware.call_sync('etc.generate', 'pam_middleware')
         return dict(new, key=f"{new['id']}-{key}")
 
-    @api_method(ApiKeyDeleteArgs, ApiKeyDeleteResult, audit='Delete API key', audit_callback=True)
-    async def do_delete(self, audit_callback: callable, id_: int) -> Literal[True]:
+    @api_method(
+        ApiKeyDeleteArgs,
+        ApiKeyDeleteResult,
+        audit='Delete API key',
+        audit_callback=True,
+        roles=['READONLY_ADMIN', 'API_KEY_WRITE']
+    )
+    @pass_app(rest=True)
+    async def do_delete(self, app, audit_callback: callable, id_: int) -> Literal[True]:
         """
         Delete API Key `id`.
         """
-        name = (await self.get_instance(id_))['name']
-        audit_callback(name)
+        api_key = await self.get_instance(id_)
+        audit_callback(api_key['name'])
+
+        self.api_key_privilege_check(app, api_key['username'], 'api_key.delete')
 
         response = await self.middleware.call(
             "datastore.delete",
@@ -259,8 +287,7 @@ class ApiKeyService(CRUDService):
         return response
 
     @private
-    def _validate(self, schema_name: str, data: dict, id_: int = None):
-        verrors = ValidationErrors()
+    def _validate(self, schema_name: str, data: dict, verrors: ValidationErrors, id_: int = None):
         if self.middleware.call_sync('datastore.query', self._config.datastore, [
             ['name', '=', data['name']], ['id', '!=', id_]
         ]):
@@ -270,7 +297,25 @@ class ApiKeyService(CRUDService):
             if utc_now(naive=False) > expiration:
                 verrors.add(schema_name, 'Expiration date is in the past')
 
-        verrors.check()
+    @private
+    def api_key_privilege_check(self, app, username: str, method_name: str) -> None:
+        if not app or not app.authenticated_credentials.is_user_session:
+            # internal session
+            return
+
+        if credential_has_full_admin(app.authenticated_credentials):
+            return
+
+        if app.authenticated_credentials.has_role('API_KEY_WRITE'):
+            return
+
+        auth_user = app.authenticated_credentials.user['username']
+
+        if auth_user != username:
+            raise CallError(
+                f'{auth_user}: authenticated user lacks privileges to create or '
+                'modify API keys of other users.', errno.EACCES
+            )
 
     @private
     def update_hash(self, old_key: str):
@@ -285,7 +330,7 @@ class ApiKeyService(CRUDService):
             "datastore.update",
             self._config.datastore,
             int(id_),
-            {'keyhash': newhash}
+            {'key': newhash}
         )
         self.middleware.call_sync('etc.generate', 'pam_middleware')
 
@@ -311,8 +356,7 @@ class ApiKeyService(CRUDService):
             'name': entry['name'],
         })
 
-    @no_authz_required
-    @api_method(ApiKeyMyKeysArgs, ApiKeyMyKeysResult)
+    @api_method(ApiKeyMyKeysArgs, ApiKeyMyKeysResult, roles=['READONLY_ADMIN', 'API_KEY_READ'])
     @pass_app(require=True)
     async def my_keys(self, app) -> list:
         """ Get the existing API keys for the currently-authenticated user """
@@ -321,48 +365,3 @@ class ApiKeyService(CRUDService):
 
         username = app.authenticated_credentials.user['username']
         return await self.query([['username', '=', username]])
-
-    @no_authz_requried
-    @api_method(ApiKeyMyKeysArgs, ApiKeyCreateResult, audit='User Create API key', audit_extended=lambda data: data['name'])
-    @pass_app(require=True)
-    async def user_create(self, app, data: dict) -> dict:
-        """ Endpoint that allows the currently authenticated user to create their
-        own API keys. The only requirement to use this endpoint is that the authenticated
-        user have at a minimum the READONLY_ADMIN RBAC role.
-        """
-        if not app.authenticated_credentials.is_user_session:
-            raise CallError('Not a user session')
-
-        username = app.authenticated_credentials.user['username']
-        if not app.authenticated_credentials.has_role('READONLY_ADMIN'):
-            raise CallError(f'{username}: minimum requirement is that user have READONLY_ADMIN RBAC role.')
-
-        return await self.middleware.call('api_key.create', data | {'username': username})
-
-    @no_authz_requried
-    @api_method(ApiKeyMyKeysArgs, ApiKeyCreateResult, audit='User Update API key', audit_callback=True)
-    @pass_app(require=True)
-    async def user_delete(self, app, key_id: int) -> Literal[True]:
-        """ Endpoint that allows the currently authenticated user to delete their
-        own API keys. The only requirement to use this endpoint is that the authenticated
-        """
-        if not app.authenticated_credentials.is_user_session:
-            raise CallError('Not a user session')
-
-        username = app.authenticated_credentials.user['username']
-        if not app.authenticated_credentials.has_role('READONLY_ADMIN'):
-            raise CallError(f'{username}: minimum requirement is that user have READONLY_ADMIN RBAC role.')
-
-        api_key = await self.get_instance(key_id)
-        audit_callback(f'{username} delete {api_key["name"]}')
-        if api_key['username'] != username:
-            raise CallError(f'{username}: specified API key does not belong to user.')
-
-        response = await self.middleware.call(
-            'datastore.delete',
-            self._config.datastore,
-            api_key['id']
-        )
-
-        await self.middleware.call('etc.generate', 'pam_middleware')
-        return response
