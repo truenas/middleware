@@ -326,7 +326,7 @@ class FailoverEventsService(Service):
         elif event == 'BACKUP':
             return self.run_call('failover.events.vrrp_backup', fobj, ifname, event)
 
-    def fenced_start_loop(self, max_retries=3):
+    def fenced_start_loop(self, max_retries=4):
         # When active node is rebooted administratively from shell, the
         # fenced process will continue running on the node until systemd
         # finishes terminating services and actually reboots. Hence, we may
