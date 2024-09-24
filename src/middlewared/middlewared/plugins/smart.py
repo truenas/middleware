@@ -60,7 +60,6 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                     remaining=remaining,
                     lifetime=entry["lifetime_hours"],
                     lba_of_first_error=entry.get("lba"), # only included if there is an error
-                    start_time=entry["local_time"]["time_t"]
                 )
 
                 if test.status_verbose == "Completed without error":
@@ -95,7 +94,6 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                     seg=entry.get("segment"),
                     sct=entry.get("status_code_type") or 0x0,
                     code=entry.get("status_code") or 0x0,
-                    start_time=entry["local_time"]["time_t"]
                 )
 
                 if test.status_verbose == "Completed without error":
@@ -136,7 +134,6 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                 segment_number=segment,
                 lifetime=lifetime,
                 lba_of_first_error=lba,
-                start_time=entry["local_time"]["time_t"],
             )
 
             if test.status_verbose == "Completed":
