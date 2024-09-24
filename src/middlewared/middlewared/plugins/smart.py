@@ -4,6 +4,7 @@ import functools
 import re
 import time
 import json
+from typing import Any
 
 from humanize import ordinal
 
@@ -40,7 +41,7 @@ async def annotate_disk_smart_tests(middleware, tests_filter, disk):
     return dict(tests=filter_list(tests, tests_filter), current_test=current_test, **disk)
 
 
-def parse_smart_selftest_results(data):
+def parse_smart_selftest_results(data) -> list[dict[str, Any]] | None:
     tests = []
 
     # ataprint.cpp

@@ -1,4 +1,3 @@
-import json
 from typing import Any
 
 from middlewared.api.base import BaseModel
