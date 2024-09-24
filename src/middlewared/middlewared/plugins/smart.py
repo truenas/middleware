@@ -40,7 +40,7 @@ async def annotate_disk_smart_tests(middleware, tests_filter, disk):
     return dict(tests=filter_list(tests, tests_filter), current_test=current_test, **disk)
 
 
-def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest] | list[ScsiSelfTest] | None:
+def parse_smart_selftest_results(data):
     tests = []
 
     # ataprint.cpp
@@ -71,7 +71,7 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                 else:
                     test.status = "FAILED"
 
-                tests.append(test.json())
+                tests.append(test.dict())
 
         return tests
 
@@ -103,7 +103,7 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                 else:
                     test.status = "FAILED"
 
-                tests.append(test.json())
+                tests.append(test.dict())
 
         return tests
 
@@ -145,7 +145,7 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
             else:
                 test.status = "FAILED"
 
-            tests.append(test.json())
+            tests.append(test.dict())
 
         return tests
 
