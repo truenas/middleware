@@ -172,18 +172,6 @@ class SyslogdService(SimpleService):
     systemd_unit = "syslog-ng"
 
 
-class SystemService(PseudoServiceBase):
-    name = "system"
-
-    restartable = True
-
-    async def stop(self):
-        self.middleware.create_task(self.middleware.call("system.shutdown", {"delay": 3}))
-
-    async def restart(self):
-        self.middleware.create_task(self.middleware.call("system.reboot", {"delay": 3}))
-
-
 class TimeservicesService(PseudoServiceBase):
     name = "timeservices"
 

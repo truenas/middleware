@@ -286,7 +286,9 @@ class SystemDatasetService(ConfigService):
         if await self.middleware.call('failover.licensed'):
             if await self.middleware.call('failover.status') == 'MASTER':
                 try:
-                    await self.middleware.call('failover.call_remote', 'system.reboot')
+                    await self.middleware.call(
+                        'failover.call_remote', 'system.reboot', 'Failover system dataset change',
+                    )
                 except Exception as e:
                     self.logger.debug('Failed to reboot standby storage controller after system dataset change: %s', e)
 

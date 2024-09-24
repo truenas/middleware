@@ -23,6 +23,7 @@ from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOO
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.system.reboot import RebootReason
+from middlewared.plugins.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.plugins.update_.install import STARTING_INSTALLER
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
 from middlewared.plugins.update_.utils_linux import mount_update
@@ -388,7 +389,7 @@ class FailoverService(ConfigService):
         )
 
         if options['reboot']:
-            self.middleware.call_sync('failover.call_remote', 'system.reboot', [{'delay': 2}])
+            self.middleware.call_sync('failover.call_remote', 'system.reboot', 'Failover sync to peer', [{'delay': 2}])
 
     @accepts(roles=['FAILOVER_WRITE'])
     @returns()
@@ -858,9 +859,7 @@ class FailoverService(ConfigService):
                 rjob.result()
 
             self.middleware.call_sync(
-                'failover.call_remote', 'system.reboot',
-                [{'delay': 5}],
-                {'job': True}
+                'failover.call_remote', 'system.reboot', SYSTEM_UPGRADE_REBOOT_REASON, [{'delay': 5}], {'job': True},
             )
         except Exception:
             raise
