@@ -108,6 +108,11 @@ class ADHealthMixin:
                 self._recover_secrets()
             case ADHealthCheckFailReason.AD_SECRET_ENTRY_MISSING:
                 self._recover_secrets()
+            case ADHealthCheckFailReason.AD_NETLOGON_FAILURE:
+                # It's possible that our smb.conf has incorrect
+                # information in it. We'll try to regenerate the config
+                # file and the restart winbindd for good measure
+                self.middleware.call_sync('etc.generate', 'smb')
             case ADHealthCheckFailReason.WINBIND_STOPPED:
                 # pick up winbind restart below
                 pass
