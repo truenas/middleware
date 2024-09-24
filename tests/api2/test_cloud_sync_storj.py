@@ -1,27 +1,14 @@
-import os
-import sys
-
 import pytest
 
+from config import (
+    STORJ_IX_AWS_ACCESS_KEY_ID,
+    STORJ_IX_AWS_SECRET_ACCESS_KEY,
+    STORJ_IX_BUCKET,
+)
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.assets.cloud_sync import credential, task, run_task
 from middlewared.test.integration.assets.pool import dataset
 
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-
-pytestmark = pytest.mark.skip(reason='See IT ticket IT-9829')
-try:
-    from config import (
-        STORJ_IX_AWS_ACCESS_KEY_ID,
-        STORJ_IX_AWS_SECRET_ACCESS_KEY,
-        STORJ_IX_BUCKET,
-    )
-except ImportError:
-    pytestmark = pytest.mark.skip(reason='Storj credential are missing in config.py')
-    STORJ_IX_AWS_ACCESS_KEY_ID = None
-    STORJ_IX_AWS_SECRET_ACCESS_KEY = None
-    STORJ_IX_BUCKET = None
 
 CREDENTIAL = {
     "provider": "STORJ_IX",
