@@ -582,7 +582,7 @@ class TestFixtureConfiguredALUA:
         if newnode != fix_orig_active_node:
             if self.VERBOSE:
                 print(f'Restoring {fix_orig_active_node} as MASTER')
-            call('system.reboot')
+            call('system.reboot', 'iSCSI ALUA test')
             newnode2 = self.wait_for_new_master(newnode)
             assert newnode2 == fix_orig_active_node
             self.wait_for_backup()
