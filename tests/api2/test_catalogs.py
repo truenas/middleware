@@ -10,15 +10,7 @@ from middlewared.test.integration.utils.docker import IX_APPS_CATALOG_PATH
 @pytest.fixture(scope='module')
 def docker_pool(request):
     with another_pool() as pool:
-        pool_name = pool['name']
-
-        def unset_docker_pool():
-            docker_config = call('docker.update', {'pool': None}, job=True)
-            assert docker_config['pool'] is None, docker_config
-
-        request.addfinalizer(unset_docker_pool)
-
-        yield pool_name
+        yield pool['name']
 
 
 @pytest.mark.dependency(name='unconfigure_apps')
@@ -86,3 +78,9 @@ def test_app_version_details():
     assert app_details['name'] == 'plex', app_details
 
     assert len(app_details['versions']) != 0, app_details
+
+
+@pytest.mark.dependency(depends=['docker_setup'])
+def test_unconfigure_apps_after_setup():
+    config = call('docker.update', {'pool': None}, job=True)
+    assert config['pool'] is None, config
