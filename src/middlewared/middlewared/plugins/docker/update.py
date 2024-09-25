@@ -96,8 +96,9 @@ class DockerService(ConfigService):
                 except Exception as e:
                     raise CallError(f'Failed to stop docker service: {e}')
 
+                catalog_sync_job = None
                 try:
-                    await self.middleware.call('docker.fs_manage.umount')
+                    catalog_sync_job = await self.middleware.call('docker.fs_manage.umount')
                 except CallError as e:
                     # We handle this specially, if for whatever reason ix-apps dataset is not there,
                     # we don't make it fatal to change pools etc - however if some dataset other then
@@ -105,6 +106,9 @@ class DockerService(ConfigService):
                     # and needs to be fixed before we can proceed
                     if e.errno != errno.ENOENT or await self.middleware.call('docker.fs_manage.ix_apps_is_mounted'):
                         raise
+                finally:
+                    if catalog_sync_job:
+                        await catalog_sync_job.wait()
 
                 await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 
