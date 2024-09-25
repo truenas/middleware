@@ -15,3 +15,20 @@ def docker_pool():
 def test_unconfigure_apps():
     config = call('docker.update', {'pool': None}, job=True)
     assert config['pool'] is None, config
+
+
+@pytest.mark.dependency(depends=['unconfigure_apps'])
+def test_catalog_sync():
+    call('catalog.sync', job=True)
+    assert call('catalog.synced') is True
+
+
+@pytest.mark.dependency(depends=['unconfigure_apps'])
+def test_catalog_cloned_location():
+    config = call('catalog.config')
+    assert config['location'] == '/var/run/middleware/ix-apps/catalogs', config
+
+
+@pytest.mark.dependency(depends=['unconfigure_apps'])
+def test_apps_are_being_reported():
+    assert call('app.available', [], {'count': True}) != 0
