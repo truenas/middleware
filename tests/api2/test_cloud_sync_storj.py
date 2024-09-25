@@ -50,7 +50,7 @@ def test_storj_list_buckets(storj_credential):
 def storj_sync(storj_credential):
     """Reset the remote bucket to only contain a single empty folder."""
     with dataset("test_storj_sync") as ds:
-        assert ssh(f"mkdir /mnt/{ds}/{DIR_NAME}")
+        ssh(f"mkdir /mnt/{ds}/{DIR_NAME}")
         with task({
             "direction": "PUSH",
             "transfer_mode": "SYNC",
