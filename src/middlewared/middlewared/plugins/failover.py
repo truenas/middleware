@@ -389,7 +389,7 @@ class FailoverService(ConfigService):
         )
 
         if options['reboot']:
-            self.middleware.call_sync('failover.call_remote', 'system.reboot', 'Failover sync to peer', [{'delay': 2}])
+            self.middleware.call_sync('failover.call_remote', 'system.reboot', ['Failover sync to peer', {'delay': 2}])
 
     @accepts(roles=['FAILOVER_WRITE'])
     @returns()
@@ -859,7 +859,7 @@ class FailoverService(ConfigService):
                 rjob.result()
 
             self.middleware.call_sync(
-                'failover.call_remote', 'system.reboot', SYSTEM_UPGRADE_REBOOT_REASON, [{'delay': 5}], {'job': True},
+                'failover.call_remote', 'system.reboot', [SYSTEM_UPGRADE_REBOOT_REASON, {'delay': 5}], {'job': True},
             )
         except Exception:
             raise

@@ -186,7 +186,7 @@ class ConfigService(Service):
                     'failover.call_remote', 'core.call_hook', ['config.on_upload', [UPLOADED_DB_PATH]]
                 )
                 self.middleware.run_coroutine(
-                    self.middleware.call('failover.call_remote', 'system.reboot', CONFIGURATION_UPLOAD_REBOOT_REASON),
+                    self.middleware.call('failover.call_remote', 'system.reboot', [CONFIGURATION_UPLOAD_REBOOT_REASON]),
                     wait=False,
                 )
             except Exception as e:
@@ -232,7 +232,7 @@ class ConfigService(Service):
                 if options['reboot']:
                     self.middleware.run_coroutine(
                         self.middleware.call(
-                            'failover.call_remote', 'system.reboot', CONFIGURATION_UPLOAD_REBOOT_REASON,
+                            'failover.call_remote', 'system.reboot', [CONFIGURATION_UPLOAD_REBOOT_REASON],
                         ),
                         wait=False,
                     )
