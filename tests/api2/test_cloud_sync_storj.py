@@ -21,7 +21,7 @@ TASK_ATTRIBUTES = {
     "bucket": STORJ_IX_BUCKET,
     "folder": "",
 }
-DIR_NAME = "a"
+FILENAME = "a"
 
 
 def test_storj_verify():
@@ -48,9 +48,9 @@ def test_storj_list_buckets(storj_credential):
 
 @pytest.fixture(scope="module")
 def storj_sync(storj_credential):
-    """Reset the remote bucket to only contain a single empty folder."""
+    """Reset the remote bucket to only contain a single empty file."""
     with dataset("test_storj_sync") as ds:
-        ssh(f"mkdir /mnt/{ds}/{DIR_NAME}")
+        ssh(f"touch /mnt/{ds}/{FILENAME}")
         with task({
             "direction": "PUSH",
             "transfer_mode": "SYNC",
@@ -67,7 +67,7 @@ def test_storj_list_directory(storj_credential, storj_sync):
         "attributes": TASK_ATTRIBUTES,
     })
     assert len(result) == 1
-    assert result[0]["Name"] == DIR_NAME
+    assert result[0]["Name"] == FILENAME
 
 
 def test_storj_pull(storj_credential, storj_sync):
@@ -81,4 +81,4 @@ def test_storj_pull(storj_credential, storj_sync):
         }) as t:
             run_task(t)
 
-            assert ssh(f"ls /mnt/{ds}") == DIR_NAME + "\n"
+            assert ssh(f"ls /mnt/{ds}") == FILENAME + "\n"
