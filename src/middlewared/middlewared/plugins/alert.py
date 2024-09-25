@@ -1037,24 +1037,6 @@ class AlertServiceService(CRUDService):
         ('add', Str('type__title')),
     )
 
-    @accepts()
-    @returns(List('alert_service_types', items=[Dict(
-        'alert_service_type',
-        Str('name', required=True),
-        Str('title', required=True),
-    )]))
-    async def list_types(self):
-        """
-        List all types of supported Alert services which can be configured with the system.
-        """
-        return [
-            {
-                "name": name,
-                "title": factory.title,
-            }
-            for name, factory in sorted(ALERT_SERVICES_FACTORIES.items(), key=lambda i: i[1].title.lower())
-        ]
-
     @private
     async def _extend(self, service):
         try:
