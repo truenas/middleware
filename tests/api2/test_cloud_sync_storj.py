@@ -21,6 +21,7 @@ TASK_ATTRIBUTES = {
     "bucket": STORJ_IX_BUCKET,
     "folder": "",
 }
+DIR_NAME = "a"
 
 
 def test_storj_verify():
@@ -45,16 +46,31 @@ def test_storj_list_buckets(storj_credential):
     assert any(item["Name"] == STORJ_IX_BUCKET for item in call("cloudsync.list_buckets", storj_credential["id"]))
 
 
-def test_storj_list_directory(storj_credential):
+@pytest.fixture(scope="module")
+def storj_sync(storj_credential):
+    """Reset the remote bucket to only contain a single empty folder."""
+    with dataset("test_storj_sync") as ds:
+        assert ssh(f"mkdir /mnt/{ds}/{DIR_NAME}")
+        with task({
+            "direction": "PUSH",
+            "transfer_mode": "SYNC",
+            "path": f"/mnt/{ds}",
+            "credentials": storj_credential["id"],
+            "attributes": TASK_ATTRIBUTES,
+        }) as t:
+            run_task(t)
+
+
+def test_storj_list_directory(storj_credential, storj_sync):
     result = call("cloudsync.list_directory", {
         "credentials": storj_credential["id"],
         "attributes": TASK_ATTRIBUTES,
     })
     assert len(result) == 1
-    assert result[0]["Name"] == "a"
+    assert result[0]["Name"] == DIR_NAME
 
 
-def test_storj_sync(storj_credential):
+def test_storj_pull(storj_credential, storj_sync):
     with dataset("test_storj_sync") as ds:
         with task({
             "direction": "PULL",
@@ -65,4 +81,4 @@ def test_storj_sync(storj_credential):
         }) as t:
             run_task(t)
 
-            assert ssh(f"ls /mnt/{ds}") == "a\n"
+            assert ssh(f"ls /mnt/{ds}") == DIR_NAME + "\n"
