@@ -15,6 +15,7 @@ from os import (
     fchown,
     fstat,
     getxattr,
+    listxattr,
     lseek,
     makedev,
     mkdir,
@@ -604,6 +605,29 @@ def copytree(
     try:
         with DirectoryIterator(src, request_mask=int(dir_request_mask), as_dict=False) as d_iter:
             _copytree_impl(d_iter, dst, dst_fd, CLONETREE_ROOT_DEPTH, config, fstat(dst_fd), stats)
+
+            # Ensure that root level directory also gets metadata copied
+            try:
+                xattrs = listxattr(d_iter.dir_fd)
+                if config.flags.value & CopyFlags.PERMISSIONS.value:
+                    copy_permissions(d_iter.dir_fd, dst_fd, xattrs, d_iter.stat.stx_mode)
+
+                if config.flags.value & CopyFlags.XATTRS.value:
+                    copy_xattrs(d_iter.dir_fd, dst_fd, xattrs)
+
+                if config.flags.value & CopyFlags.OWNER.value:
+                    fchown(dst_fd, d_iter.stat.stx_uid, d_iter.stat.stx_gid)
+
+                if config.flags.value & CopyFlags.TIMESTAMPS.value:
+                    ns_ts = (
+                        timespec_convert_int(d_iter.stat.stx_atime),
+                        timespec_convert_int(d_iter.stat.stx_mtime)
+                    )
+                    utime(dst_fd, ns=ns_ts)
+            except Exception:
+                if config.raise_error:
+                    raise
+
     finally:
         close(dst_fd)
 
