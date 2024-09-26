@@ -39,7 +39,7 @@ class DockerService(SimpleService):
     async def start(self):
         try:
             await super().start()
-            timeout = 40
+            timeout = 120  # We have this at 120 because HDDs are notorious and docker can take more time there
             # First time when docker is started, it takes a bit more time to initialise itself properly
             # and we need to have sleep here so that after start is called post_start is not dismissed
             while timeout > 0:
