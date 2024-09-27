@@ -22,6 +22,7 @@ class ControllerModels(Enum):
     F130 = 'F130'  # all nvme flash
     H10 = 'H10'
     H20 = 'H20'
+    H30 = 'H30'
     M30 = 'M30'
     M40 = 'M40'
     M50 = 'M50'
