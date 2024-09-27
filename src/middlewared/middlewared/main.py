@@ -1,11 +1,13 @@
 from .api.base.handler.dump_params import dump_params
 from .api.base.handler.result import serialize_result
 from .api.base.handler.version import APIVersion, APIVersionsAdapter
+from .api.base.server.api import API
+from .api.base.server.doc import DocumentationGenerator
 from .api.base.server.legacy_api_method import LegacyAPIMethod
 from .api.base.server.method import Method
 from .api.base.server.ws_handler.base import BaseWebSocketHandler
 from .api.base.server.ws_handler.rpc import RpcWebSocketApp, RpcWebSocketAppEvent
-from .api.base.server.ws_handler.rpc_factory import create_rpc_ws_handler
+from .api.base.server.ws_handler.rpc import RpcWebSocketHandler
 from .apidocs import routes as apidocs_routes
 from .common.event_source.manager import EventSourceManager
 from .event import Events
@@ -856,7 +858,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             'middlewared', debug_level, log_format
         ).getLogger()
         self.logger.info('Starting %s middleware', sw_version())
-        self.crash_reporting_semaphore = asyncio.Semaphore(value=2)
         self.loop_debug = loop_debug
         self.loop_monitor = loop_monitor
         self.trace_malloc = trace_malloc
@@ -890,7 +891,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         task.add_done_callback(self.tasks.discard)
         return task
 
-    def _load_api_versions(self):
+    def _load_apis(self) -> dict[str, API]:
+        api_versions = self._load_api_versions()
+        api_versions_adapter = APIVersionsAdapter(api_versions)
+        return self._create_apis(api_versions, api_versions_adapter)
+
+    def _load_api_versions(self) -> [APIVersion]:
         versions = []
         api_dir = os.path.join(os.path.dirname(__file__), 'api')
         for version_dir in sorted(pathlib.Path(api_dir).iterdir()):
@@ -903,7 +909,49 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                         importlib.import_module(f'middlewared.api.{version_dir.name}'),
                     ),
                 )
+
         return versions
+
+    def _create_apis(
+        self,
+        api_versions: list[APIVersion],
+        api_versions_adapter: APIVersionsAdapter
+    ) -> dict[str, API]:
+        current_api = self._create_api(api_versions[-1].version, Method)
+
+        apis = {
+            "current": current_api,
+            api_versions[-1].version: current_api,
+        }
+
+        for version in api_versions[:-1]:
+            apis[version.version] = self._create_api(version.version, lambda middleware, method_name: LegacyAPIMethod(
+                middleware,
+                method_name,
+                version.version,
+                api_versions_adapter,
+            ))
+
+        return apis
+
+    def _create_api(self, version: str, method_factory: typing.Callable[["Middleware", str], Method]) -> API:
+        methods = []
+        for service_name, service in self.get_services().items():
+            for attribute in dir(service):
+                if attribute.startswith("_"):
+                    continue
+
+                if not callable(getattr(service, attribute)):
+                    continue
+
+                method_name = f"{service_name}.{attribute}"
+
+                methods.append(method_factory(self, method_name))
+
+        return API(version, methods)
+
+    def _add_api_route(self, version: str, api: API):
+        self.app.router.add_route('GET', f'/api/{version}', RpcWebSocketHandler(self, api.methods))
 
     def __init_services(self):
         from middlewared.service import CoreService
@@ -2006,6 +2054,16 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
             last = current
 
+    def generate_docs(self, path: str):
+        self.__plugins_load()
+
+        apis = self._load_apis()
+
+        for version, api in apis.items():
+            output_dir = f"{path}/{version}"
+            os.makedirs(output_dir, exist_ok=True)
+            DocumentationGenerator(version, api, output_dir).generate()
+
     def run(self):
         self._console_write('starting')
 
@@ -2038,12 +2096,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         ], loop=self.loop)
         self.app['middleware'] = self
 
-        api_versions = self._load_api_versions()
-        api_versions_adapter = APIVersionsAdapter(api_versions)
-
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
         setup_funcs = self.__plugins_load()
+
+        apis = self._load_apis()
 
         self._console_write('registering services')
 
@@ -2059,23 +2116,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.loop.add_signal_handler(signal.SIGUSR1, self.pdb)
         self.loop.add_signal_handler(signal.SIGUSR2, self.log_threads_stacks)
 
-        current_rpc_ws_handler = create_rpc_ws_handler(self, Method)
-        app.router.add_route('GET', '/api/current', current_rpc_ws_handler)
-        app.router.add_route('GET', f'/api/{api_versions[-1].version}', current_rpc_ws_handler)
-        for version in api_versions[:-1]:
-            app.router.add_route(
-                'GET',
-                f'/api/{version.version}',
-                create_rpc_ws_handler(
-                    self,
-                    lambda middleware, method_name: LegacyAPIMethod(
-                        middleware,
-                        method_name,
-                        version.version,
-                        api_versions_adapter,
-                    )
-                ),
-            )
+        for version, api in apis.items():
+            self._add_api_route(version, api)
 
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
@@ -2165,21 +2207,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
 
 def main():
-    # Workaround for development
-    modpath = os.path.realpath(os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        '..',
-    ))
-    if modpath not in sys.path:
-        sys.path.insert(0, modpath)
-
     parser = argparse.ArgumentParser()
-    parser.add_argument('restart', nargs='?')
+    parser.add_argument('--generate-docs', nargs=1)
     parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--loop-debug', action='store_true')
     parser.add_argument('--trace-malloc', '-tm', action='store', nargs=2, type=int, default=False)
-    parser.add_argument('--overlay-dirs', '-o', action='append')
     parser.add_argument('--debug-level', choices=[
         'TRACE',
         'DEBUG',
@@ -2196,17 +2229,19 @@ def main():
     os.makedirs(MIDDLEWARE_RUN_DIR, exist_ok=True)
     pidpath = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.pid')
 
-    if args.restart:
-        if os.path.exists(pidpath):
-            with open(pidpath, 'r') as f:
-                pid = int(f.read().strip())
-            try:
-                os.kill(pid, 15)
-            except ProcessLookupError as e:
-                if e.errno != errno.ESRCH:
-                    raise
-
     logger.setup_logging('middleware', args.debug_level, args.log_handler)
+
+    middleware = Middleware(
+        loop_debug=args.loop_debug,
+        loop_monitor=not args.disable_loop_monitor,
+        trace_malloc=args.trace_malloc,
+        debug_level=args.debug_level,
+        log_handler=args.log_handler,
+    )
+
+    if args.generate_docs:
+        middleware.generate_docs(args.generate_docs[0])
+        return
 
     setproctitle.setproctitle('middlewared')
 
@@ -2214,13 +2249,7 @@ def main():
         with open(pidpath, "w") as _pidfile:
             _pidfile.write(f"{str(os.getpid())}\n")
 
-    Middleware(
-        loop_debug=args.loop_debug,
-        loop_monitor=not args.disable_loop_monitor,
-        trace_malloc=args.trace_malloc,
-        debug_level=args.debug_level,
-        log_handler=args.log_handler,
-    ).run()
+    middleware.run()
 
 
 if __name__ == '__main__':

@@ -20,6 +20,7 @@ class BaseModel(PydanticBaseModel):
         extra="forbid",
         strict=True,
         str_max_length=1024,
+        use_attribute_docstrings=True,
     )
 
     @classmethod

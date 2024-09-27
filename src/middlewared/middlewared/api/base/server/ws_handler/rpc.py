@@ -6,7 +6,7 @@ import errno
 import pickle
 import sys
 import traceback
-from typing import Any, Callable
+from typing import Any, Callable, TYPE_CHECKING
 
 from aiohttp.http_websocket import WSCloseCode, WSMessage
 from aiohttp.web import WebSocketResponse, WSMsgType
@@ -25,6 +25,10 @@ from middlewared.utils.origin import ConnectionOrigin
 from .base import BaseWebSocketHandler
 from ..app import App
 from ..method import Method
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
+
 
 REQUEST_SCHEMA = {
     "type": "object",
@@ -57,7 +61,7 @@ class RpcWebSocketApp(App):
         self.subscriptions = {}
 
     def send(self, data):
-        fut = asyncio.run_coroutine_threadsafe(self.ws.send_str(json.dumps(data)), self.middleware.loop)
+        asyncio.run_coroutine_threadsafe(self.ws.send_str(json.dumps(data)), self.middleware.loop)
 
     def send_error(self, id_: Any, code: int, message: str, data: Any = None):
         error = {
@@ -190,9 +194,9 @@ class RpcWebSocketApp(App):
 
 
 class RpcWebSocketHandler(BaseWebSocketHandler):
-    def __init__(self, middleware: "Middleware", methods: dict[str, Method]):
+    def __init__(self, middleware: "Middleware", methods: list[Method]):
         super().__init__(middleware)
-        self.methods = methods
+        self.methods = {method.name: method for method in methods}
 
     async def process(self, origin: ConnectionOrigin, ws: WebSocketResponse):
         app = RpcWebSocketApp(self.middleware, origin, ws)
@@ -272,7 +276,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
 
         asyncio.ensure_future(self.process_method_call(app, id_, method, message["params"]))
 
-    async def process_method_call(self, app: RpcWebSocketApp, id_: Any, method: Method, params: dict[str, Any]):
+    async def process_method_call(self, app: RpcWebSocketApp, id_: Any, method: Method, params: list):
         try:
             async with app.softhardsemaphore:
                 result = await method.call(app, params)

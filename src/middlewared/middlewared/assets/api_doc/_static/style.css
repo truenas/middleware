@@ -1,0 +1,8 @@
+div.sphinxsidebarwrapper > div.sidebartoctree ul ul { padding: 0.1em 0 0 0 !important; }
+.accordion:last-child>.card .card-header { margin-bottom: 0; }
+
+#json-schema>.value-type { display: none; }
+#json-schema h2, #json-schema h3, #json-schema h4, #json-schema h5 { margin: 0.5rem 0 0.5rem 0; padding: 0; }
+#json-schema h4 { display: none; }
+#json-schema .breadcrumbs { display: none; }
+#json-schema .no-additional { display: none; }
