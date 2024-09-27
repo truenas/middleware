@@ -77,3 +77,11 @@ def test_system_dataset_mountpoints():
         assert ds_stats["uid"] == system_dataset_spec["chown_config"]["uid"]
         assert ds_stats["gid"] == system_dataset_spec["chown_config"]["gid"]
         assert ds_stats["mode"] & 0o777 == system_dataset_spec["chown_config"]["mode"]
+
+
+def test_netdata_post_mount_action():
+    # We rely on this to make sure system dataset post mount actions are working as intended
+    ds_stats = call("filesystem.stat", "/var/db/system/netdata/ix_state")
+    assert ds_stats["uid"] == 999, ds_stats
+    assert ds_stats["gid"] == 997, ds_stats
+    assert ds_stats["mode"] & 0o777 == 0o755, ds_stats
