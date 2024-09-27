@@ -323,7 +323,7 @@ class SMARTTestService(CRUDService):
         """
         Query S.M.A.R.T. tests for the specified disk name.
         """
-        disk = await self.middleware.call_sync('disk.query', [['name', '=', disk_name]], {'get': True})
+        disk = await self.middleware.call('disk.query', [['name', '=', disk_name]], {'get': True})
 
         return [
             test
