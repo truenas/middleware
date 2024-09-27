@@ -11,8 +11,9 @@ def get_json_schema(model):
 
 def replace_refs(data, defs=None):
     if isinstance(data, dict):
-        if set(data.keys()) == {"$ref"}:
-            data = defs[data["$ref"].removeprefix("#/$defs/")]
+        if "$ref" in data:
+            ref = data.pop("$ref")
+            data = {**defs[ref.removeprefix("#/$defs/")], **data}
 
         return {k: replace_refs(v, defs) for k, v in data.items()}
     elif isinstance(data, list):
