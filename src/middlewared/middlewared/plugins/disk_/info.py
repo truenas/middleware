@@ -1,7 +1,7 @@
-from middlewared.plugins.disk_.utils import valid_zfs_partition_uuids
 from middlewared.schema import accepts, Str
 from middlewared.service import filterable, private, Service
 from middlewared.utils import filter_list
+from middlewared.utils.disks import valid_zfs_partition_uuids
 
 
 class DiskService(Service):
