@@ -1,6 +1,6 @@
 import typing
 
-from middlewared.utils.disks import get_disks_for_temperature_reading
+from middlewared.utils.disk_temperatures import get_disks_for_temperature_reading
 
 from .graph_base import GraphBase
 from .utils import get_human_disk_name
