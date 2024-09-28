@@ -1,4 +1,3 @@
-import pathlib
 import re
 
 import pyudev
@@ -8,14 +7,16 @@ from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 from middlewared.plugins.disk_.disk_info import get_partition_size_info
 from middlewared.schema import Dict, returns
 from middlewared.service import Service, accepts, private
+from middlewared.utils.disks import get_disk_names
 from middlewared.utils.functools_ import cache
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils.serial import serial_port_choices
 
-RE_IS_PART = re.compile(r'p\d{1,3}$')
+
 RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')
-ISCSI_DEV_PATH = re.compile(r'/devices/platform/host[0-9]+/session[0-9]+/'
-                            'target[0-9]+:[0-9]+:[0-9]+/[0-9]+:[0-9]+:[0-9]+:[0-9]+/block/.*')
+ISCSI_DEV_PATH = re.compile(
+    r'/devices/platform/host[0-9]+/session[0-9]+/target[0-9]+:[0-9]+:[0-9]+/[0-9]+:[0-9]+:[0-9]+:[0-9]+/block/.*'
+)
 
 
 def is_iscsi_device(dev):
@@ -47,7 +48,8 @@ class DeviceService(Service):
 
     @private
     def get_disk_names(self):
-        """This endpoint serves almost exclusively to be called in our
+        """
+        This endpoint serves almost exclusively to be called in our
         reporting plugin. It just needs the block device names
         (sda/nvme0n1/pmem0/etc) and so this will very quickly enumerate
         that information.
@@ -55,23 +57,7 @@ class DeviceService(Service):
         NOTE: The return of this method should match the keys retrieved
         when running `self.get_disks`.
         """
-        disks = []
-        try:
-            for disk in pathlib.Path('/sys/class/block').iterdir():
-                if not disk.name.startswith(('sd', 'nvme', 'pmem')):
-                    continue
-                elif RE_IS_PART.search(disk.name):
-                    # sdap1/nvme0n1p12/pmem0p1/etc
-                    continue
-                elif disk.name[:2] == 'sd' and disk.name[-1].isdigit():
-                    # sda1/sda2/etc
-                    continue
-                else:
-                    disks.append(disk.name)
-        except FileNotFoundError:
-            pass
-
-        return disks
+        return get_disk_names()
 
     @private
     def get_disks(self, get_partitions=False, serial_only=False):
