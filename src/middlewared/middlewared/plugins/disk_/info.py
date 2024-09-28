@@ -1,7 +1,6 @@
 from middlewared.schema import accepts, Str
 from middlewared.service import filterable, private, Service
 from middlewared.utils import filter_list
-from middlewared.utils.disks import valid_zfs_partition_uuids
 
 
 class DiskService(Service):
@@ -40,7 +39,3 @@ class DiskService(Service):
             'freebsd-boot': '83bd6b9d-7f41-11dc-be0b-001560b84f0f',
         }
         return mapping.get(part_type_name)
-
-    @private
-    async def get_valid_zfs_partition_type_uuids(self):
-        return list(valid_zfs_partition_uuids())

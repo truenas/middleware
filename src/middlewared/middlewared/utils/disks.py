@@ -49,7 +49,7 @@ def dev_to_ident(name, sys_disks):
             return f'{{serial_lunid}}{dev["serial_lunid"]}'
         elif dev['serial']:
             return f'{{serial}}{dev["serial"]}'
-        elif dev['parts']:
+        elif dev.get('parts'):
             for part in filter(lambda x: x['partition_type'] in valid_zfs_partition_uuids(), dev['parts']):
                 return f'{{uuid}}{part["partition_uuid"]}'
 
@@ -79,15 +79,35 @@ def get_disk_names() -> list[str]:
     return disks
 
 
-def get_disks_with_identifiers() -> dict[str, str]:
+def get_disks_with_identifiers(
+    disks_identifier_required: list[str] | None = None, block_devices_data: dict[str, dict] | None = None,
+) -> dict[str, str]:
     disks = {}
+    available_disks = get_disk_names()
+    disks_identifier_required = disks_identifier_required or available_disks
+    block_devices_data = block_devices_data or {}
     context = pyudev.Context()
-    for disk_name in get_disk_names():
+    for disk_name in disks_identifier_required:
+        if disk_name not in available_disks:
+            continue
+
+        if block_device_data := block_devices_data.get(disk_name, {}):
+            identifier = dev_to_ident(disk_name, block_devices_data)
+            if not identifier.startswith('{devicename}'):
+                disks[disk_name] = identifier
+                continue
+
+        # If we had cached data but we still end up here, it means we still need to try the partitions check
+        # and see if we can use that as an identifier
         try:
             # Retrieve the device directly by name
             block_device = pyudev.Devices.from_name(context, 'block', disk_name)
-            serial = get_disk_serial_from_block_device(block_device)
-            lunid = safe_retrieval(block_device.properties, 'ID_WWN', '').removeprefix('0x').removeprefix('eui.')
+            if block_device_data:
+                serial, lunid = block_device_data['serial'], block_device_data['lunid']
+            else:
+                serial = get_disk_serial_from_block_device(block_device)
+                lunid = safe_retrieval(block_device.properties, 'ID_WWN', '').removeprefix('0x').removeprefix('eui.')
+
             parts = []
             for partition in filter(
                 lambda p: all(p.get(k) for k in ('ID_PART_ENTRY_TYPE', 'ID_PART_ENTRY_UUID')), block_device.children
@@ -102,7 +122,7 @@ def get_disks_with_identifiers() -> dict[str, str]:
                 'lunid': '',
                 'serial_lunid': '',
                 'parts': [],
-            }
+            } | block_device_data
         else:
             block_device_data = {
                 'serial': serial,
@@ -110,6 +130,7 @@ def get_disks_with_identifiers() -> dict[str, str]:
                 'serial_lunid': f'{serial}_{lunid}' if serial and lunid else None,
                 'parts': parts,
             }
+
         disks[disk_name] = dev_to_ident(disk_name, {disk_name: block_device_data})
 
     return disks
