@@ -7,7 +7,6 @@ from middlewared.utils.disk_stats import get_disk_stats
 class Service(SimpleService):
     def __init__(self, configuration=None, name=None):
         SimpleService.__init__(self, configuration=configuration, name=name)
-        self.last_stats = {}
         self.disk_mapping = {}
 
     def check(self):
@@ -38,21 +37,7 @@ class Service(SimpleService):
         disks_stats = {}
         for disk_id, disks_io in disk_data.items():
             for op, value in disks_io.items():
-                stat_id = f'{disk_id}.{op}'
-                if op == 'busy':
-                    disks_stats[stat_id] = value
-                else:
-                    # We maintain last stats as the data we get is total read/written etc
-                    # However what we want to report is the difference to say that this much i/o
-                    # happened
-                    if self.last_stats.get(stat_id) is not None:
-                        disks_stats[stat_id] = value - self.last_stats[stat_id]
-                    else:
-                        # For this iteration it will be 0 as we can otherwise report huge values
-                        # which won't be accurate obviously
-                        disks_stats[stat_id] = 0
-                    self.last_stats[stat_id] = value
-
+                disks_stats[f'{disk_id}.{op}'] = value
         return disks_stats
 
     def add_disk_to_charts(self, disk_ids):
@@ -63,20 +48,23 @@ class Service(SimpleService):
             self.charts.add_chart([
                 f'io.{disk_id}', disk_id, disk_id, 'KiB/s',
                 'disk.io',
-                f'Read/Write for disk {disk_id}', 'line',
+                f'Read/Write for disk {disk_id}',
+                'line',
             ])
             self.charts.add_chart([
                 f'ops.{disk_id}', disk_id, disk_id, 'Operation/s',
                 'disk.ops',
-                f'Complete read/write for disk {disk_id}', 'line',
+                f'Complete read/write for disk {disk_id}',
+                'line',
             ])
             self.charts.add_chart([
                 f'busy.{disk_id}', disk_id, disk_id, 'Milliseconds',
                 'disk.busy',
-                f'busy', 'line',
+                'Disk Busy Time',
+                'area',
             ])
-            self.charts[f'io.{disk_id}'].add_dimension([f'{disk_id}.reads'])
-            self.charts[f'io.{disk_id}'].add_dimension([f'{disk_id}.writes'])
-            self.charts[f'ops.{disk_id}'].add_dimension([f'{disk_id}.read_ops'])
-            self.charts[f'ops.{disk_id}'].add_dimension([f'{disk_id}.write_ops'])
-            self.charts[f'busy.{disk_id}'].add_dimension([f'{disk_id}.busy'])
+            self.charts[f'io.{disk_id}'].add_dimension([f'{disk_id}.reads', 'reads', 'incremental'])
+            self.charts[f'io.{disk_id}'].add_dimension([f'{disk_id}.writes', 'writes', 'incremental'])
+            self.charts[f'ops.{disk_id}'].add_dimension([f'{disk_id}.read_ops', 'read_ops', 'incremental'])
+            self.charts[f'ops.{disk_id}'].add_dimension([f'{disk_id}.write_ops', 'write_ops', 'incremental'])
+            self.charts[f'busy.{disk_id}'].add_dimension([f'{disk_id}.busy', 'busy', 'incremental'])
