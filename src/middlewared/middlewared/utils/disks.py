@@ -64,7 +64,7 @@ def get_disk_names() -> list[str]:
     disks = []
     try:
         for disk in pathlib.Path('/sys/class/block').iterdir():
-            if not disk.name.startswith(DISKS_TO_IGNORE):
+            if disk.name.startswith(DISKS_TO_IGNORE):
                 continue
             elif RE_IS_PART.search(disk.name):
                 # sdap1/nvme0n1p12/pmem0p1/etc
