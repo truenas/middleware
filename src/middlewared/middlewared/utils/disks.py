@@ -69,8 +69,8 @@ def get_disk_names() -> list[str]:
             elif RE_IS_PART.search(disk.name):
                 # sdap1/nvme0n1p12/pmem0p1/etc
                 continue
-            elif disk.name[:2] == 'sd' and disk.name[-1].isdigit():
-                # sda1/sda2/etc
+            elif disk.name[:2] in ('sd', 'vd') and disk.name[-1].isdigit():
+                # sda1/sda2/vda1/vda2/etc
                 continue
             else:
                 disks.append(disk.name)
