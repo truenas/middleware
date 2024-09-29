@@ -5,6 +5,7 @@ import typing
 import pyudev
 
 
+DISKS_TO_IGNORE = ('sr', 'md', 'dm-', 'loop', 'zd')
 RE_IS_PART = re.compile(r'p\d{1,3}$')
 
 
@@ -63,7 +64,7 @@ def get_disk_names() -> list[str]:
     disks = []
     try:
         for disk in pathlib.Path('/sys/class/block').iterdir():
-            if not disk.name.startswith(('sd', 'nvme', 'pmem')):
+            if not disk.name.startswith(DISKS_TO_IGNORE):
                 continue
             elif RE_IS_PART.search(disk.name):
                 # sdap1/nvme0n1p12/pmem0p1/etc

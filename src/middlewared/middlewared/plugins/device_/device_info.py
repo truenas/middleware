@@ -3,11 +3,10 @@ import re
 import pyudev
 
 import libsgio
-from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 from middlewared.plugins.disk_.disk_info import get_partition_size_info
 from middlewared.schema import Dict, returns
 from middlewared.service import Service, accepts, private
-from middlewared.utils.disks import get_disk_names, get_disk_serial_from_block_device, safe_retrieval
+from middlewared.utils.disks import DISKS_TO_IGNORE, get_disk_names, get_disk_serial_from_block_device, safe_retrieval
 from middlewared.utils.functools_ import cache
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils.serial import serial_port_choices
