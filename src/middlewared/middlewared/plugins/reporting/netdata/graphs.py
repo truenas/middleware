@@ -58,11 +58,6 @@ class DISKPlugin(GraphBase):
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return f'truenas_disk_stats.io.{self.disk_mapping[identifier]}'
 
-    def normalize_metrics(self, metrics) -> dict:
-        metrics = super().normalize_metrics(metrics)
-        metrics['legend'] = ['reads', 'writes']
-        return metrics
-
 
 class InterfacePlugin(GraphBase):
 
