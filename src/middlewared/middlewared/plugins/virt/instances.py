@@ -211,6 +211,9 @@ class VirtInstancesService(CRUDService):
 
     @api_method(VirtInstancesDeviceListArgs, VirtInstancesDeviceListResult, roles=['VIRT_INSTANCES_READ'])
     async def device_list(self, id):
+        """
+        List all devices associated to an instance.
+        """
         instance = await self.middleware.call('virt.instances.get_instance', id)
 
         # Grab devices from default profile (e.g. nic and disk)
@@ -381,6 +384,9 @@ class VirtInstancesService(CRUDService):
 
     @api_method(VirtInstancesDeviceAddArgs, VirtInstancesDeviceAddResult, roles=['VIRT_INSTANCES_WRITE'])
     async def device_add(self, id, device):
+        """
+        Add a device to an instance.
+        """
         instance = await self.middleware.call('virt.instances.get_instance', id)
         data = instance['raw']
         if device['name'] is None:
@@ -391,6 +397,9 @@ class VirtInstancesService(CRUDService):
 
     @api_method(VirtInstancesDeviceDeleteArgs, VirtInstancesDeviceDeleteResult, roles=['VIRT_INSTANCES_DELETE'])
     async def device_delete(self, id, device):
+        """
+        Delete a device from an instance.
+        """
         instance = await self.middleware.call('virt.instances.get_instance', id)
         data = instance['raw']
         if device not in data['devices']:

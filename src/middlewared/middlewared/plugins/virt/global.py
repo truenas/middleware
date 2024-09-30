@@ -146,6 +146,9 @@ class VirtGlobalService(ConfigService):
 
     @api_method(VirtGlobalGetNetworkArgs, VirtGlobalGetNetworkResult)
     async def get_network(self, name):
+        """
+        Details for the given network.
+        """
         result = await incus_call(f'1.0/networks/{name}', 'get')
         if result.get('status_code') != 200:
             raise CallError(result.get('error'))
