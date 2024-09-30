@@ -65,7 +65,7 @@ class EnclosureStatusAlertSource(AlertSource):
     async def check(self):
         good_enclosures, bad_elements = [], []
         for enc in await self.middleware.call("enclosure2.query"):
-            good_enclosures.append([enc["name"]])
+            good_enclosures.append([f"{enc['name']} (id: {enc['id']})")
             enc["elements"].pop("Array Device Slot")  # dont care about disk slots
             for element_type, element_values in enc["elements"].items():
                 for ele_value in element_values.values():
