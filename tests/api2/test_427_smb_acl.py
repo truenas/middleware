@@ -18,8 +18,8 @@ from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.smb import security, smb_connection
 from middlewared.test.integration.utils.unittest import RegexString
-from protocols import SMB
 from pytest_dependency import depends
 from time import sleep
 from utils import create_dataset
@@ -252,15 +252,20 @@ def test_007_test_disable_autoinherit(request):
     path = f'/mnt/{pool_name}/{ds}'
     with create_dataset(f'{pool_name}/{ds}', {'share_type': 'SMB'}):
         with smb_share(path, 'NFS4_INHERIT'):
-            c = SMB()
-            c.connect(share='NFS4_INHERIT', username=SMB_USER, password=SMB_PWD, smb1=False)
-            c.mkdir('foo')
-            sd = c.get_sd('foo')
-            assert 'SEC_DESC_DACL_PROTECTED' not in sd['control']['parsed'], str(sd)
-            c.inherit_acl('foo', 'COPY')
-            sd = c.get_sd('foo')
-            assert 'SEC_DESC_DACL_PROTECTED' in sd['control']['parsed'], str(sd)
-            c.disconnect()
+            with smb_connection(
+                share='NFS4_INHERIT',
+                username=SMB_USER,
+                password=SMB_PWD
+            ) as c:
+                c.mkdir('foo')
+                fh = c.create_file('foo', 'r')
+                sd = c.get_sd(fh, security.SECINFO_DACL)
+                c.close(fh)
+                assert sd.type & security.SEC_DESC_DACL_PROTECTED == 0, sd.as_sddl()
+                c.inherit_acl('foo', 'COPY')
+                fh = c.create_file('foo', 'r')
+                sd = c.get_sd(fh, security.SECINFO_DACL)
+                assert sd.type & security.SEC_DESC_DACL_PROTECTED, sd.as_sddl()
 
 
 def test_008_test_prevent_smb_dataset_update(request):
