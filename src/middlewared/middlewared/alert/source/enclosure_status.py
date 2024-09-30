@@ -2,8 +2,27 @@
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
+from dataclasses import dataclass
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class BadElement:
+    enc_name: str
+    descriptor: str
+    status: str
+    value: str
+    value_raw: int
+
+    def args(self):
+        return [
+            self.enc_name,
+            self.descriptor,
+            self.status,
+            self.value,
+            self.value_raw
+        ]
 
 
 class EnclosureUnhealthyAlertClass(AlertClass):
@@ -27,64 +46,59 @@ class EnclosureStatusAlertSource(AlertSource):
     failover_related = True
     run_on_backup_node = False
     bad = ('critical', 'noncritical', 'unknown', 'unrecoverable')
-    bad_elements = []
+    bad_elements: list | list[tuple[BadElement, int]] = list()
 
-    async def should_report(self, enclosure, element):
-        should_report = True
-        if element['status'].lower() in self.bad and element['value'] != 'None':
-            if element['name'] == 'Enclosure':
-                # this is an element that provides an "overview" for all the other elements
-                # i.e. if a power supply element is reporting critical, this will (should)
-                # report critical as well. Sometimes, however, this will constantly report
-                # a bad status, just ignore it #11918
-                should_report = False
-            elif enclosure['name'] == 'ECStream 3U16+4R-4X6G.3 d10c' and element['descriptor'] == '1.8V Sensor':
-                # The 1.8V sensor is bugged on the echostream enclosure (Z-series). The
-                # management chip loses it's mind and claims undervoltage, but scoping
-                # this confirms the voltage is fine. Ignore alerts from this element. #10077
-                should_report = False
-        else:
-            should_report = False
+    async def should_report(self, ele_type: str, ele_value: dict[str]):
+        """We only want to raise an alert for an element's status
+        if it meets a certain criteria"""
+        if not ele_value['value']:
+            # if we don't have an actual value, doesn't
+            # matter what status the element is reporting
+            # we'll skip it so we don't raise alarm to
+            # end-user unnecessarily
+            return False
+        elif ele_value['status'].lower() not in self.bad:
+            return False
 
-        return should_report
+        return True
 
     async def check(self):
-        good_enclosures = []
-        bad_elements = []
-        for enc in await self.middleware.call('enclosure.query'):
+        good_enclosures, bad_elements = [], []
+        for enc in await self.middleware.call('enclosure2.query'):
             good_enclosures.append([enc['name']])
-
-            for element_values in enc['elements']:
-                for value in element_values['elements']:
-                    if await self.should_report(enc, value):
-                        args = [
-                            enc['name'],
-                            value['name'],
-                            value['status'],
-                            value['value'],
-                            value['value_raw']
-                        ]
-                        for i, (another_args, count) in enumerate(self.bad_elements):
-                            if another_args == args:
-                                bad_elements.append((args, count + 1))
+            enc['elements'].pop('Array Device Slot')  # dont care about disk slots
+            for element_type, element_values in enc['elements'].items():
+                for ele_value in element_values.values():
+                    if await self.should_report(element_type, ele_value):
+                        current_bad_element = BadElement(
+                            enc_name=enc['name'],
+                            descriptor=ele_value['descriptor'],
+                            status=ele_value['status'],
+                            value=ele_value['value'],
+                            value_raw=ele_value['value_raw']
+                        )
+                        for previous_bad_element, count in self.bad_elements:
+                            if previous_bad_element == current_bad_element:
+                                bad_elements.append((current_bad_element, count + 1))
                                 break
                         else:
-                            bad_elements.append((args, 1))
+                            bad_elements.append((current_bad_element, 1))
 
         self.bad_elements = bad_elements
 
         alerts = []
-        for args, count in bad_elements:
-            # We only report unhealthy enclosure elements if they were unhealthy 5 probes in a row (1 probe = 1 minute)
+        for current_bad_element, count in bad_elements:
+            # We only report unhealthy enclosure elements if
+            # they were unhealthy 5 probes in a row (1 probe = 1 minute)
             if count >= 5:
                 try:
-                    good_enclosures.remove(args[:1])
+                    good_enclosures.remove(current_bad_element.enc_name)
                 except ValueError:
                     pass
 
-                alerts.append(Alert(EnclosureUnhealthyAlertClass, args=args))
+                alerts.append(Alert(EnclosureUnhealthyAlertClass, args=current_bad_element.args()))
 
-        for args in good_enclosures:
-            alerts.append(Alert(EnclosureHealthyAlertClass, args=args))
+        for enclosure in good_enclosures:
+            alerts.append(Alert(EnclosureHealthyAlertClass, args=enclosure))
 
         return alerts
