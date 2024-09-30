@@ -132,6 +132,11 @@ class VirtGlobalService(ConfigService):
                 pools[p['name']] = p['name']
         return pools
 
+
+    @private
+    async def internal_interfaces(self):
+        return [INCUS_BRIDGE]
+
     @private
     async def get_default_profile(self):
         result = await incus_call('1.0/profiles/default', 'get')
