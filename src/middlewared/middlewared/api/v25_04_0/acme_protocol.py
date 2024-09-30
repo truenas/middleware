@@ -1,0 +1,101 @@
+from pydantic import Field, Secret
+
+from middlewared.api.base import BaseModel, Excluded, excluded_field, single_argument_args, single_argument_result
+
+
+__all__ = [
+    'ACMERegistrationCreateArgs', 'ACMERegistrationCreateResult', 'DNSAuthenticatorUpdateArgs',
+    'DNSAuthenticatorUpdateResult', 'DNSAuthenticatorCreateArgs', 'DNSAuthenticatorCreateResult',
+    'DNSAuthenticatorDeleteArgs', 'DNSAuthenticatorDeleteResult', 'DNSAuthenticatorSchemasArgs',
+    'DNSAuthenticatorSchemasResult'
+]
+
+
+class JWKCreate(BaseModel):
+    key_size: int = 2048
+    public_exponent: int = 65537
+
+
+class ACMEDNSAuthenticatorEntry(BaseModel):
+    id: int
+    authenticator: str
+    attributes: Secret[dict]
+    name: str
+
+
+class DNSAuthenticatorCreate(ACMEDNSAuthenticatorEntry):
+    id: Excluded = excluded_field()
+
+
+class DNSAuthenticatorUpdate(ACMEDNSAuthenticatorEntry):
+    id: Excluded = excluded_field()
+    authenticator: Excluded = excluded_field()
+
+
+class DNSAuthenticatorAttributeSchema(BaseModel):
+    _name_: str
+    title: str
+    _required_: bool
+
+
+class DNSAuthenticatorSchemaEntry(BaseModel):
+    key: str
+    schema: list[DNSAuthenticatorAttributeSchema]
+
+
+###################   Arguments   ###################
+
+
+@single_argument_args('acme_registration_create')
+class ACMERegistrationCreateArgs(BaseModel):
+    tos: bool = False
+    jwk_create: JWKCreate = Field(default=JWKCreate())
+    acme_directory_uri: str
+
+
+class DNSAuthenticatorCreateArgs(BaseModel):
+    data: DNSAuthenticatorCreate
+
+
+class DNSAuthenticatorUpdateArgs(BaseModel):
+    id: int
+    dns_authenticator_update: DNSAuthenticatorUpdate
+
+
+class DNSAuthenticatorDeleteArgs(BaseModel):
+    id: int
+
+
+class DNSAuthenticatorSchemasArgs(BaseModel):
+    pass
+
+
+###################   Returns   ###################
+
+
+@single_argument_result
+class ACMERegistrationCreateResult(BaseModel):
+    id: int
+    uri: str
+    directory: str
+    tos: str
+    new_account_uri: str
+    new_nonce_uri: str
+    new_order_uri: str
+    revoke_cert_uri: str
+
+
+class DNSAuthenticatorCreateResult(BaseModel):
+    result: ACMEDNSAuthenticatorEntry
+
+
+class DNSAuthenticatorUpdateResult(BaseModel):
+    instance: ACMEDNSAuthenticatorEntry
+
+
+class DNSAuthenticatorDeleteResult(BaseModel):
+    deleted: bool
+
+
+class DNSAuthenticatorSchemasResult(BaseModel):
+    authenticator_schemas: list[DNSAuthenticatorSchemaEntry]
