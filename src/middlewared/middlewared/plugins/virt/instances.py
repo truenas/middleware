@@ -138,6 +138,12 @@ class VirtInstancesService(CRUDService):
 
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_create', verrors)
+
+        devices = {}
+        for i in (data['devices'] or []):
+            await self.__validate_device(i, 'virt_instance_create', verrors)
+            devices[i['name']] = await self.__device_to_incus(data['instance_type'], i)
+
         verrors.check()
 
         async def running_cb(data):
@@ -146,10 +152,6 @@ class VirtInstancesService(CRUDService):
                     job.set_progress(None, metadata['download_progress'])
                 if 'create_instance_from_image_unpack_progress' in metadata:
                     job.set_progress(None, metadata['create_instance_from_image_unpack_progress'])
-
-        devices = {}
-        for i in (data['devices'] or []):
-            devices[i['name']] = await self.__device_to_incus(data['instance_type'], i)
 
         if data['remote'] in (None, 'LINUX_CONTAINERS'):
             url = LC_IMAGES_SERVER
@@ -382,6 +384,12 @@ class VirtInstancesService(CRUDService):
             i += 1
         return name
 
+    async def __validate_device(self, device, schema, verrors: ValidationErrors):
+        match device['dev_type']:
+            case 'PROXY':
+                verror = await self.middleware.call('port.validate_port', schema, device['source_port'])
+                verrors.extend(verror)
+
     @api_method(VirtInstancesDeviceAddArgs, VirtInstancesDeviceAddResult, roles=['VIRT_INSTANCES_WRITE'])
     async def device_add(self, id, device):
         """
@@ -391,6 +399,11 @@ class VirtInstancesService(CRUDService):
         data = instance['raw']
         if device['name'] is None:
             device['name'] = await self.__generate_device_name(data['devices'].keys(), device['dev_type'])
+
+        verrors = ValidationErrors()
+        await self.__validate_device(device, 'virt_device_add', verrors)
+        verrors.check()
+
         data['devices'][device['name']] = await self.__device_to_incus(instance['type'], device)
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': data})
         return True

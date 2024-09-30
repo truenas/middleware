@@ -73,7 +73,7 @@ class VirtPortDelegate(PortDelegate):
                 if device['dev_type'] != 'PROXY':
                     continue
                 instance_ports.append(('0.0.0.0', device['source_port']))
-                instance_ports.append(('[::]', device['source_port']))
+                instance_ports.append(('::', device['source_port']))
             if instance_ports:
                 ports.append({
                     'description': f'{instance["id"]!r} instance',
