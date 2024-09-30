@@ -82,7 +82,6 @@ def create_test_data(target: str, symlink_target_path) -> None:
         os.setxattr(source, xat_name, xat_data)
 
     os.chown(source, JENNY + 10, JENNY + 11)
-    os.utime(source, ns=(JENNY + 5, JENNY + 6))
     os.chmod(source, 0o777)
 
     create_test_files(source, symlink_target_path)
@@ -109,6 +108,8 @@ def create_test_data(target: str, symlink_target_path) -> None:
         os.mkdir(os.path.join(target, dirname))
         create_test_files(path, os.path.join(target, dirname))
         os.utime(path, ns=(JENNY + 3, JENNY + 4))
+
+    os.utime(source, ns=(JENNY + 5, JENNY + 6))
 
 
 @pytest.fixture(scope="function")
