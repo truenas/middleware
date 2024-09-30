@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.ports import PortDelegate
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -58,6 +59,29 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
         await self.toggle(attachments, True)
 
 
+class VirtPortDelegate(PortDelegate):
+
+    name = 'virt devices'
+    namespace = 'virt.device'
+    title = 'Virtualization Device'
+
+    async def get_ports(self):
+        ports = []
+        for instance in await self.middleware.call('virt.instances.query'):
+            instance_ports = []
+            for device in await self.middleware.call('virt.instances.device_list', instance['id']):
+                if device['dev_type'] != 'PROXY':
+                    continue
+                instance_ports.append(('0.0.0.0', device['source_port']))
+                instance_ports.append(('[::]', device['source_port']))
+            if instance_ports:
+                ports.append({
+                    'description': f'{instance["id"]!r} instance',
+                    'ports': instance_ports,
+                })
+        return ports
+
+
 async def setup(middleware: 'Middleware'):
     middleware.create_task(
         middleware.call(
@@ -65,3 +89,4 @@ async def setup(middleware: 'Middleware'):
             VirtFSAttachmentDelegate(middleware),
         )
     )
+    await middleware.call('port.register_attachment_delegate', VirtPortDelegate(middleware))
