@@ -3,6 +3,8 @@
 mkdir -p /var/trash
 for file in \
     /etc/nsswitch.conf \
+    /etc/subgid \
+    /etc/subuid \
     /usr/lib/netdata/conf.d/python.d.conf \
     /usr/lib/netdata/conf.d/charts.d.conf \
     /lib/systemd/system/smartmontools.service \
