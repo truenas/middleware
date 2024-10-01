@@ -90,12 +90,12 @@ class DNSAuthenticatorCreateResult(BaseModel):
 
 
 class DNSAuthenticatorUpdateResult(BaseModel):
-    instance: ACMEDNSAuthenticatorEntry
+    result: ACMEDNSAuthenticatorEntry
 
 
 class DNSAuthenticatorDeleteResult(BaseModel):
-    deleted: bool
+    result: bool
 
 
 class DNSAuthenticatorSchemasResult(BaseModel):
-    authenticator_schemas: list[DNSAuthenticatorSchemaEntry]
+    result: list[DNSAuthenticatorSchemaEntry]
