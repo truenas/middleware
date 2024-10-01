@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+import subprocess
 import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
@@ -131,7 +132,6 @@ class VirtGlobalService(ConfigService):
             if not ds[0]['encrypted'] or not ds[0]['locked'] or ds[0]['key_format']['value'] == 'PASSPHRASE':
                 pools[p['name']] = p['name']
         return pools
-
 
     @private
     async def internal_interfaces(self):
@@ -308,7 +308,11 @@ class VirtGlobalService(ConfigService):
 
         if not config['bridge']:
             # Make sure we delete in case it exists
-            if await self.middleware.call('interface.query', [('id', '=', INCUS_BRIDGE)]):
+            try:
+                await run(['ip', 'link', 'show', INCUS_BRIDGE], check=True)
+            except subprocess.CalledProcessError:
+                pass
+            else:
                 await run(['ip', 'link', 'delete', INCUS_BRIDGE], check=True)
 
         await self.middleware.call('service.stop', 'incus')
