@@ -813,6 +813,14 @@ class FailoverEventsService(Service):
 
         logger.warning('Entering BACKUP on "%s".', ifname)
 
+        # We will try to give some time to docker to gracefully stop before zpools will be forcefully
+        # exported. This is to avoid any potential data corruption.
+        stop_docker_thread = threading.Thread(
+            target=self.stop_apps,
+            name='failover_stop_docker',
+        )
+        stop_docker_thread.start()
+
         # We stop netdata before exporting pools because otherwise we might have erroneous stuff
         # getting logged and causing spam
         logger.info('Stopping reporting metrics')
@@ -946,6 +954,18 @@ class FailoverEventsService(Service):
         self.FAILOVER_RESULT = 'SUCCESS'
 
         return self.FAILOVER_RESULT
+
+    def stop_apps(self):
+        if not self.middleware.call_sync('docker.config')['dataset']:
+            return
+
+        logger.info('Trying to gracefully stop docker service')
+        try:
+            self.run_call('service.stop', 'docker')
+        except Exception:
+            logger.error('Failed to stop docker service gracefully', exc_info=True)
+        else:
+            logger.info('Docker service stopped gracefully')
 
 
 async def vrrp_fifo_hook(middleware, data):
