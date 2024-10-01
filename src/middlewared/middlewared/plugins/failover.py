@@ -1159,7 +1159,6 @@ async def hook_setup_ha(middleware, *args, **kwargs):
 
 
 async def hook_pool_export(middleware, pool=None, *args, **kwargs):
-    await middleware.call('enclosure.sync_zpool', pool)
     await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
 
 
