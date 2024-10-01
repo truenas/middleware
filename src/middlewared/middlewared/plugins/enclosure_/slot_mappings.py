@@ -446,24 +446,24 @@ def get_slot_info(enc):
                 'DEFAULT': {
                     'model': {
                         enc.model: {
-                            3: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 1, SUPPORTS_IDENTIFY_KEY: False},
-                            6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 2, SUPPORTS_IDENTIFY_KEY: False},
-                            9: {SYSFS_SLOT_KEY: 8, MAPPED_SLOT_KEY: 3, SUPPORTS_IDENTIFY_KEY: False},
-                            12: {SYSFS_SLOT_KEY: 11, MAPPED_SLOT_KEY: 4, SUPPORTS_IDENTIFY_KEY: False},
-                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 5, SUPPORTS_IDENTIFY_KEY: False},
-                            5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 6, SUPPORTS_IDENTIFY_KEY: False},
-                            8: {SYSFS_SLOT_KEY: 7, MAPPED_SLOT_KEY: 7, SUPPORTS_IDENTIFY_KEY: False},
-                            11: {SYSFS_SLOT_KEY: 10, MAPPED_SLOT_KEY: 8, SUPPORTS_IDENTIFY_KEY: False},
-                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 9, SUPPORTS_IDENTIFY_KEY: False},
-                            4: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 10, SUPPORTS_IDENTIFY_KEY: False},
-                            7: {SYSFS_SLOT_KEY: 6, MAPPED_SLOT_KEY: 11, SUPPORTS_IDENTIFY_KEY: False},
-                            10: {SYSFS_SLOT_KEY: 9, MAPPED_SLOT_KEY: 12, SUPPORTS_IDENTIFY_KEY: False}
+                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 1, SUPPORTS_IDENTIFY_KEY: True},
+                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 2, SUPPORTS_IDENTIFY_KEY: True},
+                            3: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 3, SUPPORTS_IDENTIFY_KEY: True},
+                            4: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 4, SUPPORTS_IDENTIFY_KEY: True},
+                            5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 5, SUPPORTS_IDENTIFY_KEY: True},
+                            6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 6, SUPPORTS_IDENTIFY_KEY: True},
+                            7: {SYSFS_SLOT_KEY: 6, MAPPED_SLOT_KEY: 7, SUPPORTS_IDENTIFY_KEY: True},
+                            8: {SYSFS_SLOT_KEY: 7, MAPPED_SLOT_KEY: 8, SUPPORTS_IDENTIFY_KEY: True},
+                            9: {SYSFS_SLOT_KEY: 8, MAPPED_SLOT_KEY: 9, SUPPORTS_IDENTIFY_KEY: True},
+                            10: {SYSFS_SLOT_KEY: 9, MAPPED_SLOT_KEY: 10, SUPPORTS_IDENTIFY_KEY: True},
+                            11: {SYSFS_SLOT_KEY: 10, MAPPED_SLOT_KEY: 11, SUPPORTS_IDENTIFY_KEY: True},
+                            12: {SYSFS_SLOT_KEY: 11, MAPPED_SLOT_KEY: 12, SUPPORTS_IDENTIFY_KEY: True}
                         }
                     },
                     'id': {
                         '3000000000000001': {
-                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 13, SUPPORTS_IDENTIFY_KEY: False},
-                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 14, SUPPORTS_IDENTIFY_KEY: False}
+                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 13, SUPPORTS_IDENTIFY_KEY: True},
+                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 14, SUPPORTS_IDENTIFY_KEY: True}
                         }
                     }
                 }
