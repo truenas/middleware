@@ -461,9 +461,10 @@ def get_slot_info(enc):
                         }
                     },
                     'id': {
+                        # on the rear of the system (do not support identify lights)
                         '3000000000000001': {
-                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 13, SUPPORTS_IDENTIFY_KEY: True},
-                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 14, SUPPORTS_IDENTIFY_KEY: True}
+                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 13, SUPPORTS_IDENTIFY_KEY: False},
+                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 14, SUPPORTS_IDENTIFY_KEY: False}
                         }
                     }
                 }
