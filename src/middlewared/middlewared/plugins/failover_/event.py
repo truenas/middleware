@@ -122,16 +122,6 @@ class FailoverEventsService(Service):
                     svc, data['timeout']
                 )
 
-    async def background(self):
-        """
-        Some methods can be backgrounded on a failover
-        event since they can take quite some time to
-        finish. So background them to not hold up the
-        entire failover event.
-        """
-        logger.info('Syncing enclosure')
-        self.middleware.create_task(self.middleware.call('enclosure.sync_zpool'))
-
     async def refresh_failover_status(self, jobid, event):
         # this is called in a background task so we need to make sure that
         # we wait on the current failover job to complete before we try
@@ -695,13 +685,6 @@ class FailoverEventsService(Service):
         logger.info('Syncing disks')
         self.run_call('disk.sync_all', {'zfs_guid': True})
         logger.info('Done syncing disks')
-
-        # background any methods that can take awhile to
-        # run but shouldn't hold up the entire failover
-        # event
-        logger.info('Starting failover background jobs')
-        self.run_call('failover.events.background')
-        logger.info('Done starting failover background jobs')
 
         if handle_alua:
             try:
