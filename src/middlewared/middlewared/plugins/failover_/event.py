@@ -754,6 +754,8 @@ class FailoverEventsService(Service):
             self.run_call('kmip.initialize_keys')
             logger.info('Done syncing encryption keys with KMIP server')
 
+        self.start_apps()
+
         logger.info('Migrating interface information (if required)')
         self.run_call('interface.persist_link_addresses')
         logger.info('Done migrating interface information (if required)')
@@ -954,6 +956,30 @@ class FailoverEventsService(Service):
         self.FAILOVER_RESULT = 'SUCCESS'
 
         return self.FAILOVER_RESULT
+
+    def start_apps(self):
+        pool = self.run_call('docker.config')['pool']
+        if not pool:
+            logger.info('Skipping starting apps as they are not configured')
+            return
+
+        logger.info('Going to initialize apps plugin as %r pool is configured for apps', pool)
+        logger.info('Mounting relevant docker datasets')
+        try:
+            self.run_call('docker.fs_manage.mount')
+        except Exception:
+            logger.error('Failed to mount docker datasets', exc_info=True)
+            return
+        else:
+            logger.info('Mounted docker datasets successfully')
+
+        logger.info('Starting docker service')
+        try:
+            self.run_call('docker.state.start_service')
+        except Exception:
+            logger.error('Failed to start docker service', exc_info=True)
+        else:
+            logger.info('Docker service started successfully')
 
     def stop_apps(self):
         if not self.middleware.call_sync('docker.config')['dataset']:
