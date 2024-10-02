@@ -7,13 +7,24 @@ __all__ = [
     'ACMERegistrationCreateArgs', 'ACMERegistrationCreateResult', 'DNSAuthenticatorUpdateArgs',
     'DNSAuthenticatorUpdateResult', 'DNSAuthenticatorCreateArgs', 'DNSAuthenticatorCreateResult',
     'DNSAuthenticatorDeleteArgs', 'DNSAuthenticatorDeleteResult', 'DNSAuthenticatorSchemasArgs',
-    'DNSAuthenticatorSchemasResult'
+    'DNSAuthenticatorSchemasResult', 'ACMERegistrationEntry', 'ACMEDNSAuthenticatorEntry',
 ]
 
 
 class JWKCreate(BaseModel):
     key_size: int = 2048
     public_exponent: int = 65537
+
+
+class ACMERegistrationEntry(BaseModel):
+    id: int
+    uri: str
+    directory: str
+    tos: str
+    new_account_uri: str
+    new_nonce_uri: str
+    new_order_uri: str
+    revoke_cert_uri: str
 
 
 class ACMEDNSAuthenticatorEntry(BaseModel):
@@ -27,8 +38,7 @@ class DNSAuthenticatorCreate(ACMEDNSAuthenticatorEntry):
     id: Excluded = excluded_field()
 
 
-class DNSAuthenticatorUpdate(ACMEDNSAuthenticatorEntry):
-    id: Excluded = excluded_field()
+class DNSAuthenticatorUpdate(DNSAuthenticatorCreate):
     authenticator: Excluded = excluded_field()
 
 
@@ -54,7 +64,7 @@ class ACMERegistrationCreateArgs(BaseModel):
 
 
 class DNSAuthenticatorCreateArgs(BaseModel):
-    data: DNSAuthenticatorCreate
+    dns_authenticator_create: DNSAuthenticatorCreate
 
 
 class DNSAuthenticatorUpdateArgs(BaseModel):
@@ -73,16 +83,8 @@ class DNSAuthenticatorSchemasArgs(BaseModel):
 ###################   Returns   ###################
 
 
-@single_argument_result
 class ACMERegistrationCreateResult(BaseModel):
-    id: int
-    uri: str
-    directory: str
-    tos: str
-    new_account_uri: str
-    new_nonce_uri: str
-    new_order_uri: str
-    revoke_cert_uri: str
+    result: ACMERegistrationEntry
 
 
 class DNSAuthenticatorCreateResult(BaseModel):

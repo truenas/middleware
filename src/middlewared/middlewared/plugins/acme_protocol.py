@@ -6,9 +6,9 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     ACMERegistrationCreateArgs, ACMERegistrationCreateResult, DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult,
     DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult, DNSAuthenticatorDeleteArgs, DNSAuthenticatorDeleteResult,
+    ACMERegistrationEntry, ACMEDNSAuthenticatorEntry,
 )
-from middlewared.plugins.acme_protocol_.authenticators.factory import auth_factory
-from middlewared.schema import Dict, Int, Str, ValidationErrors
+from middlewared.schema import ValidationErrors
 from middlewared.service import CallError, CRUDService, private
 import middlewared.sqlalchemy as sa
 
@@ -50,6 +50,7 @@ class ACMERegistrationService(CRUDService):
         datastore_extend = 'acme.registration.register_extend'
         namespace = 'acme.registration'
         private = True
+        entry = ACMERegistrationEntry
 
     @private
     async def register_extend(self, data):
@@ -204,22 +205,7 @@ class DNSAuthenticatorService(CRUDService):
         namespace = 'acme.dns.authenticator'
         datastore = 'system.acmednsauthenticator'
         cli_namespace = 'system.acme.dns_auth'
-
-    ENTRY = Dict(
-        'acme_dns_authenticator_entry',
-        Int('id', required=True),
-        Str(
-            'authenticator', enum=[authenticator for authenticator in auth_factory.get_authenticators()],
-            required=True
-        ),
-        Dict(
-            'attributes',
-            additional_attrs=True,
-            description='Specific attributes of each `authenticator`',
-            private=True,
-        ),
-        Str('name', description='User defined name of authenticator', required=True),
-    )
+        entry = ACMEDNSAuthenticatorEntry
 
     @private
     async def common_validation(self, data, schema_name, old=None):
