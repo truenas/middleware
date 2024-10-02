@@ -202,6 +202,8 @@ ROLES = {
     'VIRT_INSTANCES_READ': Role(),
     'VIRT_INSTANCES_WRITE': Role(includes=['VIRT_INSTANCES_READ']),
     'VIRT_INSTANCES_DELETE': Role(),
+    'VIRT_IMAGE_READ': Role(),
+    'VIRT_IMAGE_WRITE': Role(includes=['VIRT_IMAGE_READ']),
 
 }
 ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)

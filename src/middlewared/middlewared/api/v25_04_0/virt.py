@@ -263,3 +263,14 @@ class GPUChoice(BaseModel):
 
 class VirtDeviceGPUChoicesResult(BaseModel):
     result: dict[str, GPUChoice]
+
+
+
+class VirtImageUploadArgs(BaseModel):
+    pass
+
+
+@single_argument_result
+class VirtImageUploadResult(BaseModel):
+    fingerprint: NonEmptyString
+    size: int

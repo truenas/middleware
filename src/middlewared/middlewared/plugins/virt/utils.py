@@ -31,7 +31,7 @@ async def incus_call_and_wait(
         if data['metadata']['status'] == 'Failure':
             raise CallError(data['metadata']['err'])
         if data['metadata']['status'] == 'Success':
-            return True
+            return data['metadata']['metadata']
         if data['metadata']['status'] == 'Running':
             if running_cb:
                 await running_cb(data)
@@ -41,3 +41,4 @@ async def incus_call_and_wait(
         await asyncio.wait_for(task, timeout)
     except asyncio.TimeoutError:
         raise CallError('Timed out')
+    return task.result()

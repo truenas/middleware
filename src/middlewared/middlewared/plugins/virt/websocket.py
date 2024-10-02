@@ -67,8 +67,8 @@ class IncusWS(object):
                 event.clear()
 
                 for i in list(self._incoming[id]):
-                    if await callback(i) is True:
-                        return
+                    if (result := await callback(i)) is not None:
+                        return result
                     self._incoming[id].remove(i)
         finally:
             self._waiters[id].remove(event)
