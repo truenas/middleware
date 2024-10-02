@@ -28,7 +28,17 @@ from middlewared.alert.base import (
     ProThreadedAlertService,
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
-from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, OROperator, Patch, returns, Ref, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    AlertDismissArgs, AlertDismissResult, AlertListArgs, AlertListResult, AlertListCategoriesArgs,
+    AlertListCategoriesResult, AlertListPoliciesArgs, AlertListPoliciesResult, AlertRestoreArgs, AlertRestoreResult,
+    AlertOneshotCreateArgs, AlertOneshotCreateResult, AlertOneshotDeleteArgs, AlertOneshotDeleteResult,
+    AlertServiceListTypesArgs, AlertServiceListTypesResult, AlertServiceCreateArgs, AlertServiceCreateResult,
+    AlertServiceUpdateArgs, AlertServiceUpdateResult, AlertServiceDeleteArgs, AlertServiceDeleteResult,
+    AlertServiceTestArgs, AlertServiceTestResult, AlertClassesUpdateArgs, AlertClassesUpdateResult, AlertClassesEntry,
+    AlertServiceEntry,
+)
+from middlewared.schema import Bool, Str
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
@@ -298,27 +308,14 @@ class AlertService(Service):
     async def terminate(self):
         await self.flush_alerts()
 
-    @accepts(roles=['ALERT_LIST_READ'])
-    @returns(List('alert_policies', items=[Str('policy', enum=POLICIES)]))
+    @api_method(AlertListPoliciesArgs, AlertListPoliciesResult, roles=['ALERT_LIST_READ'])
     async def list_policies(self):
         """
         List all alert policies which indicate the frequency of the alerts.
         """
         return POLICIES
 
-    @accepts(roles=['ALERT_LIST_READ'])
-    @returns(List('categories', items=[Dict(
-        'category',
-        Str('id'),
-        Str('title'),
-        List('classes', items=[Dict(
-            'category_class',
-            Str('id'),
-            Str('title'),
-            Str('level'),
-            Bool('proactive_support'),
-        )])
-    )]))
+    @api_method(AlertListCategoriesArgs, AlertListCategoriesResult, roles=['ALERT_LIST_READ'])
     async def list_categories(self):
         """
         List all types of alerts which the system can issue.
@@ -351,26 +348,7 @@ class AlertService(Service):
             if any(alert_class.category == alert_category for alert_class in classes)
         ]
 
-    @accepts(roles=['ALERT_LIST_READ'])
-    @returns(List('alerts', items=[Dict(
-        'alert',
-        Str('uuid'),
-        Str('source'),
-        Str('klass'),
-        Any('args'),
-        Str('node'),
-        Str('key', max_length=None),
-        Datetime('datetime'),
-        Datetime('last_occurrence'),
-        Bool('dismissed'),
-        Any('mail', null=True),
-        Str('text', max_length=None),
-        Str('id'),
-        Str('level'),
-        Str('formatted', null=True, max_length=None),
-        Bool('one_shot'),
-        register=True,
-    )]))
+    @api_method(AlertListArgs, AlertListResult, roles=['ALERT_LIST_READ'])
     async def list(self):
         """
         List all types of alerts including active/dismissed currently in the system.
@@ -423,8 +401,7 @@ class AlertService(Service):
         except IndexError:
             return None
 
-    @accepts(Str("uuid"))
-    @returns()
+    @api_method(AlertDismissArgs, AlertDismissResult)
     async def dismiss(self, uuid):
         """
         Dismiss `id` alert.
@@ -460,8 +437,7 @@ class AlertService(Service):
         if removed:
             self._send_alert_deleted_event(alert)
 
-    @accepts(Str("uuid"))
-    @returns()
+    @api_method(AlertRestoreArgs, AlertRestoreResult)
     async def restore(self, uuid):
         """
         Restore `id` alert which had been dismissed.
@@ -911,8 +887,7 @@ class AlertService(Service):
             del d["mail"]
             await self.middleware.call("datastore.insert", "system.alert", d)
 
-    @private
-    @accepts(Str("klass"), Any("args", null=True))
+    @api_method(AlertOneshotCreateArgs, AlertOneshotCreateResult, private=True)
     @job(lock="process_alerts", transient=True)
     async def oneshot_create(self, job, klass, args):
         """
@@ -948,13 +923,7 @@ class AlertService(Service):
 
         await self.middleware.call("alert.send_alerts")
 
-    @private
-    @accepts(
-        OROperator(
-            Str("klass"),
-            List('klass', items=[Str('klassname')], default=None),
-        ),
-        Any("query", null=True, default=None))
+    @api_method(AlertOneshotDeleteArgs, AlertOneshotDeleteResult, private=True)
     @job(lock="process_alerts", transient=True)
     async def oneshot_delete(self, job, klass, query):
         """
@@ -1030,19 +999,9 @@ class AlertServiceService(CRUDService):
         datastore_extend = "alertservice._extend"
         datastore_order_by = ["name"]
         cli_namespace = "system.alert.service"
+        entry = AlertServiceEntry
 
-    ENTRY = Patch(
-        'alert_service_create', 'alertservice_entry',
-        ('add', Int('id')),
-        ('add', Str('type__title')),
-    )
-
-    @accepts()
-    @returns(List('alert_service_types', items=[Dict(
-        'alert_service_type',
-        Str('name', required=True),
-        Str('title', required=True),
-    )]))
+    @api_method(AlertServiceListTypesArgs, AlertServiceListTypesResult)
     async def list_types(self):
         """
         List all types of supported Alert services which can be configured with the system.
@@ -1084,15 +1043,7 @@ class AlertServiceService(CRUDService):
 
         verrors.check()
 
-    @accepts(Dict(
-        "alert_service_create",
-        Str("name", required=True, empty=False),
-        Str("type", required=True),
-        Dict("attributes", required=True, additional_attrs=True),
-        Str("level", required=True, enum=list(AlertLevel.__members__)),
-        Bool("enabled", default=True),
-        register=True,
-    ))
+    @api_method(AlertServiceCreateArgs, AlertServiceCreateResult)
     async def do_create(self, data):
         """
         Create an Alert Service of specified `type`.
@@ -1129,11 +1080,7 @@ class AlertServiceService(CRUDService):
 
         return await self.get_instance(data["id"])
 
-    @accepts(Int("id"), Patch(
-        "alert_service_create",
-        "alert_service_update",
-        ("attr", {"update": True}),
-    ))
+    @api_method(AlertServiceUpdateArgs, AlertServiceUpdateResult)
     async def do_update(self, id_, data):
         """
         Update Alert Service of `id`.
@@ -1153,17 +1100,14 @@ class AlertServiceService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int("id"))
+    @api_method(AlertServiceDeleteArgs, AlertServiceDeleteResult)
     async def do_delete(self, id_):
         """
         Delete Alert Service of `id`.
         """
         return await self.middleware.call("datastore.delete", self._config.datastore, id_)
 
-    @accepts(
-        Ref('alert_service_create')
-    )
-    @returns(Bool('successful_test', description='Is `true` if test is successful'))
+    @api_method(AlertServiceTestArgs, AlertServiceTestResult)
     async def test(self, data):
         """
         Send a test alert using `type` of Alert Service.
@@ -1234,13 +1178,9 @@ class AlertClassesService(ConfigService):
     class Config:
         datastore = "system.alertclasses"
         cli_namespace = "system.alert.class"
+        entry = AlertClassesEntry
 
-    ENTRY = Dict(
-        "alertclasses_entry",
-        Int("id"),
-        Dict("classes", additional_attrs=True),
-    )
-
+    @api_method(AlertClassesUpdateArgs, AlertClassesUpdateResult)
     async def do_update(self, data):
         """
         Update default Alert settings.
