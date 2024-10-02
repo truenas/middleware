@@ -4,6 +4,7 @@ import logging
 from middlewared.service import accepts, Service
 from middlewared.schema import Str, Dict, Int
 from middlewared.utils.cpu import cpu_info
+from middlewared.utils.disk_stats import get_disk_stats
 from middlewared.utils.zfs import query_imported_fast_impl
 
 from .netdata import ClientConnectError, Netdata
@@ -69,3 +70,6 @@ class NetdataService(Service):
         return calculate_disk_space_for_netdata(
             self.calculated_metrics_count(), config['tier1_days'], TIER_1_POINT_SIZE, config['tier1_update_interval'],
         )
+
+    def get_disk_stats(self, disk_identifier_mapping=None):
+        return get_disk_stats(disk_identifier_mapping)

@@ -4,8 +4,6 @@ import pytest
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
 
-from middlewared.utils.disk_stats import get_disk_stats
-
 
 def get_test_file_path(pool_name: str) -> str:
     return os.path.join('/mnt', pool_name, 'test_file')
@@ -24,7 +22,7 @@ def test_disk_write_stats(disk_pool):
     pool_name, pool_disk = disk_pool
     disk_identifier = pool_disk['identifier']
 
-    disk_stats_before_write = get_disk_stats()[disk_identifier]
+    disk_stats_before_write = call('netdata.get_disk_stats')[disk_identifier]
     test_file_path = get_test_file_path(pool_name)
 
     # Amount of data to write
@@ -33,7 +31,7 @@ def test_disk_write_stats(disk_pool):
 
     ssh(f'dd if=/dev/urandom of={test_file_path} bs=1M count={num_of_mb} oflag=sync')
 
-    disk_stats_after_write = get_disk_stats()[disk_identifier]
+    disk_stats_after_write = call('netdata.get_disk_stats')[disk_identifier]
 
     expected_write_in_kb = data_size / 1024
     actual_writes = disk_stats_after_write['writes'] - disk_stats_before_write['writes']
