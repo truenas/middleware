@@ -91,7 +91,7 @@ async def render(service, middleware):
 
     devices = await middleware.call("device.get_disks")
     hardware = await middleware.call("truenas.is_ix_hardware")
-    context = SMARTCTX(devices=devices, enterprise_hardware=hardware)
+    context = SMARTCTX(devices=devices, enterprise_hardware=hardware, middleware=middleware)
     annotated = dict(filter(None, await asyncio_map(
         lambda disk: annotate_disk_for_smart(context, disk["disk_name"], disk["disk_smartoptions"]),
         [disk for disk in disks if disk["disk_name"] is not None],
