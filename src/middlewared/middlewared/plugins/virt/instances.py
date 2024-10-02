@@ -158,18 +158,27 @@ class VirtInstancesService(CRUDService):
         else:
             raise CallError('Invalid remote')
 
+        source = {
+            'type': 'image',
+        }
+
+        result = await incus_call(f'1.0/images/{data["image"]}', 'get')
+        if result['status_code'] == 200:
+            source['fingerprint'] = result['metadata']['fingerprint']
+        else:
+            source.update({
+                'server': url,
+                'protocol': 'simplestreams',
+                'mode': 'pull',
+                'alias': data['image'],
+            })
+
         await incus_call_and_wait('1.0/instances', 'post', {'json': {
             'name': data['name'],
             'ephemeral': False,
             'config': self.__data_to_config(data),
             'devices': devices,
-            'source': {
-                'type': 'image',
-                'server': url,
-                'protocol': 'simplestreams',
-                'mode': 'pull',
-                'alias': data['image'],
-            },
+            'source': source,
             'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
             'start': True,
         }}, running_cb)
