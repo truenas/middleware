@@ -37,6 +37,7 @@ class KmipService(PseudoServiceBase):
 class IncusService(SimpleService):
     name = "incus"
 
+    etc = ["subids"]
     systemd_unit = "incus"
 
     async def stop(self):

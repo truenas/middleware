@@ -8,6 +8,11 @@ from middlewared.utils.sid import sid_is_valid
 
 __all__ = ["LocalUsername", "RemoteUsername", "LocalUID", "LocalGID", "SID"]
 
+
+# TRUENAS_IDMAP_MAX + 1
+INCUS_IDMAP_MIN = 2147000001
+INCUS_IDMAP_COUNT = 10000
+INCUS_IDMAP_MAX = INCUS_IDMAP_MIN + INCUS_IDMAP_COUNT
 TRUENAS_IDMAP_DEFAULT_LOW = 90000001
 
 DEFAULT_VALID_CHARS = string.ascii_letters + string.digits + '_' + '-' + '$' + '.'
