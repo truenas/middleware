@@ -6,7 +6,6 @@ import warnings
 
 from middlewared.schema import Attribute
 from middlewared.service_exception import CallError, ValidationErrors
-from middlewared.settings import conf
 
 from .exceptions import Error
 from .utils import NOT_PROVIDED
@@ -47,14 +46,10 @@ def returns(*schema):
         if asyncio.iscoroutinefunction(f):
             async def nf(*args, **kwargs):
                 res = await f(*args, **kwargs)
-                if conf.debug_mode:
-                    validate_return_type(f, res, nf.returns)
                 return res
         else:
             def nf(*args, **kwargs):
                 res = f(*args, **kwargs)
-                if conf.debug_mode:
-                    validate_return_type(f, res, nf.returns)
                 return res
 
         from middlewared.utils.type import copy_function_metadata

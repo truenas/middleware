@@ -2,14 +2,12 @@ import asyncio
 import base64
 import errno
 import gssapi
-import io
 import os
-import shutil
 import subprocess
 import tempfile
 import time
 
-from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Password, Ref, Datetime, Bool
+from middlewared.schema import accepts, Dict, Int, List, Patch, Str, OROperator, Password, Ref, Bool
 from middlewared.service import CallError, ConfigService, CRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -840,23 +838,6 @@ class KerberosKeytabService(CRUDService):
                 'Failed to start kerberos service after deleting keytab entry: %s' % e
             )
 
-    @accepts(Dict(
-        'keytab_data',
-        Str('name', required=True),
-    ), audit='Kerberos keytab upload:', audit_extended=lambda name: name)
-    @returns(Ref('kerberos_keytab_entry'))
-    @job(lock='upload_keytab', pipes=['input'], check_pipes=True)
-    async def upload_keytab(self, job, data):
-        """
-        Upload a keytab file. This method expects the keytab file to be uploaded using
-        the /_upload/ endpoint.
-        """
-        ktmem = io.BytesIO()
-        await self.middleware.run_in_thread(shutil.copyfileobj, job.pipes.input.r, ktmem)
-        b64kt = base64.b64encode(ktmem.getvalue())
-        return await self.middleware.call('kerberos.keytab.create',
-                                          {'name': data['name'], 'file': b64kt.decode()})
-
     @private
     async def _cleanup_kerberos_principals(self):
         principal_choices = await self.middleware.call('kerberos.keytab.kerberos_principal_choices')
@@ -909,27 +890,6 @@ class KerberosKeytabService(CRUDService):
                                 keytab_file, e)
 
         return []
-
-    @accepts(roles=['DIRECTORY_SERVICE_READ'])
-    @returns(List(
-        'system-keytab',
-        items=[
-            Dict(
-                'keytab-entry',
-                Int('slot'),
-                Int('kvno'),
-                Str('principal'),
-                Str('etype'),
-                Bool('etype_deprecated'),
-                Datetime('date')
-            )
-        ]
-    ))
-    async def system_keytab_list(self):
-        """
-        Returns content of system keytab (/etc/krb5.keytab).
-        """
-        return await self.ktutil_list()
 
     @private
     async def kerberos_principal_choices(self):

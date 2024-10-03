@@ -293,37 +293,6 @@ class FilesystemService(Service):
         self.__acltool(data['path'], action, uid, gid, options)
         job.set_progress(100, 'Finished setting permissions.')
 
-    @accepts(Str('path', required=False, default=''))
-    @returns(List('acl_choices', items=[Str("choice")]))
-    async def default_acl_choices(self, path):
-        """
-        `DEPRECATED`
-        Returns list of names of ACL templates. Wrapper around
-        filesystem.acltemplate.query.
-        """
-        acl_templates = await self.middleware.call('filesystem.acltemplate.by_path', {"path": path})
-        return [x['name'] for x in acl_templates]
-
-    @accepts(
-        Str('acl_type', default='POSIX_OPEN'),
-        Str('share_type', default='NONE', enum=['NONE', 'SMB', 'NFS']),
-    )
-    @returns(OROperator(Ref('nfs4_acl'), Ref('posix1e_acl'), name='acl'))
-    async def get_default_acl(self, acl_type, share_type):
-        """
-        `DEPRECATED`
-        Returns a default ACL depending on the usage specified by `acl_type`.
-        If an admin group is defined, then an entry granting it full control will
-        be placed at the top of the ACL. Optionally may pass `share_type` to argument
-        to get share-specific template ACL.
-        """
-        filters = [("name", "=", acl_type)]
-        options = {"ensure_builtins": share_type == "SMB"}
-        return (await self.middleware.call("filesystem.acltemplate.by_path", {
-            "query-filters": filters,
-            "format-options": options
-        }))[0]['acl']
-
     @private
     def getacl_nfs4(self, path, simplified, resolve_ids):
         flags = "-jn"

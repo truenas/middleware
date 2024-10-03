@@ -48,7 +48,6 @@ Optional option
     --vm-name <VM_NAME>         - Name the the Bhyve VM
     --ha                        - Run test for HA
     --ha_license                - The base64 encoded string of an HA license
-    --debug-mode                - Start API tests with middleware debug mode
     --isns_ip <###.###.###.###> - IP of the iSNS server (default: {isns_ip})
     --pool <POOL_NAME>          - Name of the ZFS pool (default: {pool_name})
     """ % argv[0]
@@ -69,7 +68,6 @@ option_list = [
     "ha",
     "update",
     "dev-test",
-    "debug-mode",
     "log-cli-level=",
     "returncode",
     "isns_ip=",
@@ -93,7 +91,6 @@ testName = ''
 testexpr = None
 ha = False
 update = False
-debug_mode = False
 verbose = 0
 exitfirst = ''
 returncode = False
@@ -128,8 +125,6 @@ for output, arg in myopts:
         hostname = arg
     elif output == '--update':
         update = True
-    elif output == '--debug-mode':
-        debug_mode = True
     elif output == '-v':
         verbose += 1
     elif output == '-x':
@@ -260,7 +255,6 @@ ha_pool_name = "ha"
 ha = {ha}
 ha_license = "{ha_license}"
 update = {update}
-debug_mode = {debug_mode}
 artifacts = "{artifacts}"
 isns_ip = "{isns_ip}"
 """

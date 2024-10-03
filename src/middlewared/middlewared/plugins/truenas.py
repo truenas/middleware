@@ -1,43 +1,15 @@
 import errno
-import json
 import os
-from datetime import timedelta
 
 from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware
 
 from middlewared.plugins.truecommand.enums import Status as TrueCommandStatus
-from middlewared.schema import accepts, Bool, Dict, Patch, returns, Str
+from middlewared.schema import accepts, Bool, Patch, returns, Str
 from middlewared.service import cli_private, job, no_auth_required, private, Service
 from middlewared.utils.functools_ import cache
-from middlewared.utils.time_utils import utc_now
-import middlewared.sqlalchemy as sa
 
 EULA_FILE = '/usr/local/share/truenas/eula.html'
 EULA_PENDING_PATH = "/data/truenas-eula-pending"
-user_attrs = [
-    Str('first_name'),
-    Str('last_name'),
-    Str('title'),
-    Str('office_phone'),
-    Str('mobile_phone'),
-    Str('primary_email'),
-    Str('secondary_email'),
-    Str('address'),
-    Str('city'),
-    Str('state'),
-    Str('zip'),
-    Str('country'),
-]
-
-
-class TruenasCustomerInformationModel(sa.Model):
-    __tablename__ = 'truenas_customerinformation'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    data = sa.Column(sa.Text())
-    updated_at = sa.Column(sa.DateTime())
-    sent_at = sa.Column(sa.DateTime(), nullable=True)
-    form_dismissed = sa.Column(sa.Boolean())
 
 
 class TrueNASService(Service):
@@ -115,76 +87,6 @@ class TrueNASService(Service):
     def unaccept_eula(self):
         with open(EULA_PENDING_PATH, "w") as f:
             os.fchmod(f.fileno(), 0o600)
-
-    # TODO: Document this please
-    @accepts()
-    async def get_customer_information(self):
-        """
-        Returns stored customer information.
-        """
-        result = await self.__fetch_customer_information()
-        return result
-
-    @accepts(Dict(
-        'customer_information_update',
-        Str('company'),
-        Dict('administrative_user', *user_attrs),
-        Dict('technical_user', *user_attrs),
-        Dict(
-            'reseller',
-            Str('company'),
-            Str('first_name'),
-            Str('last_name'),
-            Str('title'),
-            Str('office_phone'),
-            Str('mobile_phone'),
-        ),
-        Dict(
-            'physical_location',
-            Str('address'),
-            Str('city'),
-            Str('state'),
-            Str('zip'),
-            Str('country'),
-            Str('contact_name'),
-            Str('contact_phone_number'),
-            Str('contact_email'),
-        ),
-        Str('primary_use_case'),
-        Str('other_primary_use_case'),
-    ))
-    async def update_customer_information(self, data):
-        """
-        Updates customer information.
-        """
-        customer_information = await self.__fetch_customer_information()
-
-        await self.middleware.call('datastore.update', 'truenas.customerinformation', customer_information["id"], {
-            "data": json.dumps(data),
-            "updated_at": utc_now(),
-        })
-
-        return customer_information
-
-    async def __fetch_customer_information(self):
-        result = await self.middleware.call('datastore.config', 'truenas.customerinformation')
-        result["immutable_data"] = await self.__fetch_customer_information_immutable_data()
-        result["data"] = json.loads(result["data"])
-        result["needs_update"] = utc_now() - result["updated_at"] > timedelta(days=365)
-        return result
-
-    async def __fetch_customer_information_immutable_data(self):
-        license_ = await self.middleware.call('system.license')
-        if license_ is None:
-            return None
-
-        return {
-            "serial_number": license_['system_serial'],
-            "serial_number_ha": license_['system_serial_ha'],
-            "support_level": license_['contract_type'].title(),
-            "support_start_date": license_['contract_start'].isoformat(),
-            "support_end_date": license_['contract_end'].isoformat(),
-        }
 
     @accepts(roles=['READONLY_ADMIN'])
     @returns(Bool('is_production_system'))

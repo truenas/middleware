@@ -318,64 +318,6 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         return response
 
-    @accepts(
-        Dict(
-            'periodic_snapshot_foreseen_count',
-            Int('lifetime_value', required=True),
-            Str('lifetime_unit', enum=['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'], required=True),
-            Cron(
-                'schedule',
-                defaults={
-                    'minute': '00',
-                    'begin': '00:00',
-                    'end': '23:59',
-                },
-                required=True,
-                begin_end=True
-            ),
-            register=True,
-        )
-    )
-    @returns(Int())
-    def foreseen_count(self, data):
-        """
-        Returns a number of snapshots (per-dataset) being retained if a periodic snapshot task with specific parameters
-        is created.
-        """
-
-        # Arbitrary year choice, fixed for unit tests repeatability. We don't need the precise answer, we only need
-        # to evaluate the magnitude.
-        base = datetime(2020, 1, 1, 0, 0, 0) - timedelta(seconds=1)
-
-        multiplier = 1
-        lifetime_value = data['lifetime_value']
-        lifetime_unit = data['lifetime_unit']
-        if lifetime_unit == 'YEAR' and lifetime_value > 1:
-            # All years are the same, we don't need to run the same croniter multiple times for N years, just need to
-            # run it for one year and multiply the result.
-            multiplier = lifetime_value
-            lifetime_value = 1
-
-        until = base + timedelta(seconds=lifetime_value * {
-            'HOUR': 3600,
-            'DAY': 3600 * 24,
-            'WEEK': 3600 * 24 * 7,
-            'MONTH': 3600 * 24 * 30,
-            'YEAR': 3600 * 24 * 365,
-        }[lifetime_unit])
-
-        iter_ = croniter_for_schedule(data['schedule'], base, datetime)
-        count = 0
-        while True:
-            d = iter_.get_next()
-            if d > until:
-                break
-
-            if data['schedule']['begin'] <= d.time() <= data['schedule']['end']:
-                count += 1
-
-        return count * multiplier
-
     @accepts()
     @returns(Int())
     def max_count(self):
