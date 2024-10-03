@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, LongString
 
 
 __all__ = [
@@ -19,15 +19,15 @@ class Alert(BaseModel):
     klass: str
     args: Any
     node: str
-    key: str
+    key: LongString
     datetime: str
     last_occurrence: str
     dismissed: bool
     mail: Any
-    text: str
+    text: LongString
     id: str
     level: str
-    formatted: str | None
+    formatted: LongString | None
     one_shot: bool
 
 
