@@ -33,10 +33,9 @@ from middlewared.api.current import (
     AlertDismissArgs, AlertDismissResult, AlertListArgs, AlertListResult, AlertListCategoriesArgs,
     AlertListCategoriesResult, AlertListPoliciesArgs, AlertListPoliciesResult, AlertRestoreArgs, AlertRestoreResult,
     AlertOneshotCreateArgs, AlertOneshotCreateResult, AlertOneshotDeleteArgs, AlertOneshotDeleteResult,
-    AlertServiceListTypesArgs, AlertServiceListTypesResult, AlertServiceCreateArgs, AlertServiceCreateResult,
-    AlertServiceUpdateArgs, AlertServiceUpdateResult, AlertServiceDeleteArgs, AlertServiceDeleteResult,
-    AlertServiceTestArgs, AlertServiceTestResult, AlertClassesUpdateArgs, AlertClassesUpdateResult, AlertClassesEntry,
-    AlertServiceEntry,
+    AlertServiceCreateArgs, AlertServiceCreateResult, AlertServiceUpdateArgs, AlertServiceUpdateResult,
+    AlertServiceDeleteArgs, AlertServiceDeleteResult, AlertServiceTestArgs, AlertServiceTestResult,
+    AlertClassesUpdateArgs, AlertClassesUpdateResult, AlertClassesEntry, AlertServiceEntry,
 )
 from middlewared.schema import Bool, Str
 from middlewared.service import (

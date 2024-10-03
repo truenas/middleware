@@ -2,15 +2,10 @@ from middlewared.api.base import BaseModel, NonEmptyString
 
 
 __all__ = [
-    'AlertServiceEntry', 'AlertServiceListTypesArgs', 'AlertServiceCreateArgs', 'AlertServiceUpdateArgs',
-    'AlertServiceDeleteArgs', 'AlertServiceTestArgs', 'AlertServiceListTypesResult', 'AlertServiceCreateResult',
-    'AlertServiceUpdateResult', 'AlertServiceDeleteResult', 'AlertServiceTestResult',
+    'AlertServiceEntry', 'AlertServiceCreateArgs', 'AlertServiceUpdateArgs', 'AlertServiceDeleteArgs',
+    'AlertServiceTestArgs', 'AlertServiceCreateResult', 'AlertServiceUpdateResult', 'AlertServiceDeleteResult',
+    'AlertServiceTestResult',
 ]
-
-
-class AlertServiceType(BaseModel):
-    name: str
-    title: str
 
 
 class AlertServiceCreate(BaseModel):
@@ -27,10 +22,6 @@ class AlertServiceEntry(AlertServiceCreate):
 
 
 ###########   Arguments   ###########
-
-
-class AlertServiceListTypesArgs(BaseModel):
-    pass
 
 
 class AlertServiceCreateArgs(BaseModel):
@@ -51,10 +42,6 @@ class AlertServiceTestArgs(BaseModel):
 
 
 ###########   Returns   ###########
-
-
-class AlertServiceListTypesResult(BaseModel):
-    result: list[AlertServiceType]
 
 
 class AlertServiceCreateResult(BaseModel):
