@@ -19,10 +19,7 @@ class DockerModel(sa.Model):
     pool = sa.Column(sa.String(255), default=None, nullable=True)
     enable_image_updates = sa.Column(sa.Boolean(), default=True)
     nvidia = sa.Column(sa.Boolean(), default=False)
-    address_pools = sa.Column(sa.JSON(list), default=[
-        {'base': '172.30.0.0/16', 'size': 27},
-        {'base': '172.31.0.0/16', 'size': 27}
-    ])
+    address_pools = sa.Column(sa.JSON(list), default=[{'base': '172.17.0.0/12', 'size': 24}])
 
 
 class DockerService(ConfigService):
