@@ -11,7 +11,13 @@ __all__ = ["LocalUsername", "RemoteUsername", "LocalUID", "LocalGID", "SID"]
 
 # TRUENAS_IDMAP_MAX + 1
 INCUS_IDMAP_MIN = 2147000001
-INCUS_IDMAP_COUNT = 10000
+# Each unpriviliged container with isolated idmap will require at least 65536.
+# Lets reserve enough so we can run at least 7 of these.
+# Increasing this would go above signed 32 bits (>= 2147483648) which might
+# cause problems for programs that do not expect it (e.g. filesystems like
+# devpts and some syscalls like setfsuid())
+INCUS_MAX_ISOLATED_CONTAINER = 7
+INCUS_IDMAP_COUNT = 65536 * INCUS_MAX_ISOLATED_CONTAINER
 INCUS_IDMAP_MAX = INCUS_IDMAP_MIN + INCUS_IDMAP_COUNT
 TRUENAS_IDMAP_DEFAULT_LOW = 90000001
 
