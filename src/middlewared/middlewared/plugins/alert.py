@@ -1001,19 +1001,6 @@ class AlertServiceService(CRUDService):
         cli_namespace = "system.alert.service"
         entry = AlertServiceEntry
 
-    @api_method(AlertServiceListTypesArgs, AlertServiceListTypesResult)
-    async def list_types(self):
-        """
-        List all types of supported Alert services which can be configured with the system.
-        """
-        return [
-            {
-                "name": name,
-                "title": factory.title,
-            }
-            for name, factory in sorted(ALERT_SERVICES_FACTORIES.items(), key=lambda i: i[1].title.lower())
-        ]
-
     @private
     async def _extend(self, service):
         try:

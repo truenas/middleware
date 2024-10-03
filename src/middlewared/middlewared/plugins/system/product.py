@@ -198,11 +198,6 @@ class SystemService(Service):
         """
         Returns whether the `feature` is enabled or not
         """
-        is_core = (await self.middleware.call('system.product_type')) == 'CORE'
-        if name == 'FIBRECHANNEL' and is_core:
-            return False
-        elif is_core:
-            return True
         license_ = await self.middleware.call('system.license')
         if license_ and name in license_['features']:
             return True

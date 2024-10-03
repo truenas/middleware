@@ -356,32 +356,6 @@ class VMWareService(CRUDService):
 
         return datastores
 
-    @accepts(Int('pk'), roles=['READONLY_ADMIN'])
-    async def get_virtual_machines(self, pk):
-        """
-        Returns Virtual Machines on the VMWare host identified by `pk`.
-        """
-        await self.middleware.call('network.general.will_perform_activity', 'vmware')
-
-        item = await self.query([('id', '=', pk)], {'get': True})
-
-        server_instance = self.connect(item)
-
-        content = server_instance.RetrieveContent()
-        objview = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
-        vm_view = objview.view
-        objview.Destroy()
-
-        vms = {}
-        for vm in vm_view:
-            data = {
-                'uuid': vm.config.uuid,
-                'name': vm.name,
-                'power_state': vm.summary.runtime.powerState,
-            }
-            vms[vm.config.uuid] = data
-        return vms
-
     @accepts(Str('dataset'), Bool('recursive'), roles=['READONLY_ADMIN'])
     def dataset_has_vms(self, dataset, recursive):
         """

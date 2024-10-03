@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from middlewared.schema import accepts, Int, List
+from middlewared.schema import accepts, Int
 from middlewared.service import private, Service, ServiceChangeMixin
 import middlewared.sqlalchemy as sa
 
@@ -29,26 +29,6 @@ class iSCSIHostService(Service, ServiceChangeMixin):
                 ["host_id", "=", id_],
             ], {"relationships": False})
         ]]])
-
-    @accepts(Int("id"),
-             List("ids", items=[Int("id")]),
-             audit='Set iSCSI host targets',
-             audit_callback=True,
-             roles=['SHARING_ISCSI_HOST_WRITE'])
-    async def set_targets(self, audit_callback, id_, ids):
-        """
-        Associates targets `ids` with host `id`.
-        """
-        audit_callback(await self._audit_summary(id_, ids))
-        await self.middleware.call("datastore.delete", "services.iscsihosttarget", [["host_id", "=", id_]])
-
-        for target_id in ids:
-            await self.middleware.call("datastore.insert", "services.iscsihosttarget", {
-                "host_id": id_,
-                "target_id": target_id,
-            })
-
-        await self._service_change("iscsitarget", "reload")
 
     async def _audit_summary(self, id_, ids):
         """

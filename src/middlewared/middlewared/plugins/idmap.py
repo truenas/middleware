@@ -456,16 +456,6 @@ class IdmapDomainService(CRUDService):
         """
         return {x.name: x.value for x in IdmapBackend}
 
-    @accepts(
-        Str('idmap_backend', enum=[x.name for x in IdmapBackend]),
-        roles=['DIRECTORY_SERVICE_READ']
-    )
-    async def options_choices(self, backend):
-        """
-        Returns a list of supported keys for the specified idmap backend.
-        """
-        return IdmapBackend[backend].supported_keys()
-
     @accepts(roles=['DIRECTORY_SERVICE_READ'])
     async def backend_choices(self):
         """

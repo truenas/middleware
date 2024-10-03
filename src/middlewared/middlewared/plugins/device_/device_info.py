@@ -291,19 +291,3 @@ class DeviceService(Service):
         for gpu in gpus:
             gpu['available_to_host'] = gpu['addr']['pci_slot'] not in to_isolate_gpus
         return gpus
-
-    @accepts()
-    @returns(Dict(
-        'gpu_pci_id_choices',
-        additional_attrs=True,
-        description='Returns PCI id(s) of GPU(s) located in the system',
-        example={'Red Hat, Inc. QXL paravirtual graphic card': '0000:00:02.0'}
-    ))
-    async def gpu_pci_ids_choices(self):
-        """
-        Retrieve choices for GPU PCI ids located in the system.
-        """
-        return {
-            gpu['description'] or gpu['vendor'] or gpu['addr']['pci_slot']: gpu['addr']['pci_slot']
-            for gpu in await self.middleware.call('device.get_gpus')
-        }

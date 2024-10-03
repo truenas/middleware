@@ -6,7 +6,6 @@ import typing
 
 from middlewared.role import RoleManager
 from middlewared.schema import Any, clean_and_validate_arg, ValidationErrors
-from middlewared.settings import conf
 
 
 class Events:
@@ -80,15 +79,6 @@ class EventSource(metaclass=EventSourceMetabase):
         self._cancel_sync = threading.Event()
 
     def send_event(self, event_type: str, **kwargs):
-        if conf.debug_mode and event_type in ('ADDED', 'CHANGED'):
-            verrors = ValidationErrors()
-            clean_and_validate_arg(verrors, self.RETURNS[0], kwargs.get('fields'))
-            if verrors:
-                self.middleware.loop.call_soon_threadsafe(
-                    lambda: self.middleware.create_task(self.unsubscribe_all(verrors))
-                )
-                return
-
         self.send_event_internal(event_type, **kwargs)
 
     async def validate_arg(self):
