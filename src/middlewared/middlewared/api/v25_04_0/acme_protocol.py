@@ -1,9 +1,6 @@
-from typing import Literal
-
 from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, Excluded, excluded_field, single_argument_args
-from middlewared.plugins.acme_protocol_.authenticators.factory import auth_factory
 
 
 __all__ = [
@@ -32,7 +29,7 @@ class ACMERegistrationEntry(BaseModel):
 
 class ACMEDNSAuthenticatorEntry(BaseModel):
     id: int
-    authenticator: Literal[tuple(auth_factory.get_authenticators())]
+    authenticator: str
     attributes: Secret[dict]
     name: str
 
