@@ -26,9 +26,9 @@ def upgrade():
         address_pool_config = json.loads(docker_config['address_pools'])
 
         if address_pool_config == [{'base': '172.30.0.0/16', 'size': 27}, {'base': '172.31.0.0/16', 'size': 27}]:
-            conn.execute("UPDATE services_docker SET address_pools = ? WHERE id = 1", [json.dumps(
+            conn.execute("UPDATE services_docker SET address_pools = ? WHERE id = ?", [json.dumps(
                 [{"base": "172.17.0.0/12", "size": 24}]
-            )])
+            ), docker_config['id']])
 
 
 def downgrade():
