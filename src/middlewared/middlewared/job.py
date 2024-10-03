@@ -608,11 +608,16 @@ class Job:
                 'extra': extra,
             }
 
+        result_encoding_error = None
         if self.state == State.SUCCESS:
             if raw_result:
                 result = self.result
             else:
-                result = self.middleware.dump_result(self.method, self.result, False)
+                try:
+                    result = self.middleware.dump_result(self.method, self.result, False)
+                except Exception as e:
+                    result = None
+                    result_encoding_error = repr(e)
         else:
             result = None
 
@@ -627,6 +632,7 @@ class Job:
             'logs_excerpt': self.logs_excerpt,
             'progress': self.progress,
             'result': result,
+            'result_encoding_error': result_encoding_error,
             'error': self.error,
             'exception': self.exception,
             'exc_info': exc_info,
