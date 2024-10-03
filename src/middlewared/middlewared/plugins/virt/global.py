@@ -320,6 +320,8 @@ class VirtGlobalService(ConfigService):
             raise CallError('Failed to stop virtualization service')
 
         # Have incus start fresh
+        # Use subprocess because shutil.rmtree will traverse filesystems
+        # and we do have instances datasets that might be mounted beneath
         await run(['rm', '-rf', '--one-file-system', INCUS_PATH], check=True)
 
         if not await self.middleware.call('service.start', 'incus'):
