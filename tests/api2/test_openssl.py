@@ -7,7 +7,9 @@ from auto_config import ha
 @pytest.mark.skipif(not ha, reason='Test only valid for HA')
 def test_fips_context():
     print('AIDEN debug info')
-    print(call('failover.internal_interface.detect'))
+    print(call('failover.disabled.reasons'))
+    print(call('failover.call_remote', 'failover.disabled.reasons'))
+    print(call('failover.call_remote', 'core.ping', [], {'timeout': 2}))
     call('system.security.update', {'enable_fips': True}, job=True)
     print("AIDEN enabled fips")
     reason_1 = call('failover.call_remote', 'system.reboot.list_reasons')
