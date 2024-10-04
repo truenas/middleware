@@ -1,6 +1,6 @@
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, single_argument_args
+from middlewared.api.base import BaseModel, Excluded, excluded_field, single_argument_args, ForUpdateMetaclass
 
 
 __all__ = [
@@ -38,7 +38,7 @@ class DNSAuthenticatorCreate(ACMEDNSAuthenticatorEntry):
     id: Excluded = excluded_field()
 
 
-class DNSAuthenticatorUpdate(DNSAuthenticatorCreate):
+class DNSAuthenticatorUpdate(DNSAuthenticatorCreate, metaclass=ForUpdateMetaclass):
     authenticator: Excluded = excluded_field()
 
 
