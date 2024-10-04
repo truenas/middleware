@@ -138,8 +138,8 @@ class RDMAService(Service):
     @private
     async def capable_services(self):
         result = []
-        if await self.middleware.call('system.is_enterprise'):
-            if await self.middleware.call('system.license'):
-                if await self.middleware.call('rdma.get_link_choices', True):
-                    result.append(RDMAprotocols.NFS.value)
+        is_ent = await self.middleware.call('system.is_enterprise')
+        if is_ent and 'MINI' not in await self.middleware.call('truenas.get_chassis_hardware'):
+            if await self.middleware.call('rdma.get_link_choices', True):
+                result.append(RDMAprotocols.NFS.value)
         return result
