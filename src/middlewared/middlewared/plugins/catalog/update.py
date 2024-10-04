@@ -3,9 +3,9 @@ import os
 import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.docker.state_utils import catalog_ds_path, CATALOG_DATASET_NAME
-from middlewared.plugins.system.product import ProductType
 from middlewared.schema import accepts, Dict, List, returns, Str
 from middlewared.service import ConfigService, private, ValidationErrors
+from middlewared.utils import ProductType
 from middlewared.validators import Match
 
 from .utils import OFFICIAL_ENTERPRISE_TRAIN, OFFICIAL_LABEL, TMP_IX_APPS_CATALOGS

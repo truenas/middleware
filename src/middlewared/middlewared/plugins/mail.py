@@ -1,8 +1,7 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, Ref, returns, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
 import middlewared.sqlalchemy as sa
-from middlewared.plugins.system.product import PRODUCT_NAME
-from middlewared.utils import BRAND
+from middlewared.utils import ProductName, BRAND
 from middlewared.utils.mako import get_template
 from middlewared.validators import Email
 
@@ -247,7 +246,7 @@ class MailService(ConfigService):
         """
         gc = self.middleware.call_sync('datastore.config', 'network.globalconfiguration')
         hostname = f'{gc["gc_hostname"]}.{gc["gc_domain"]}'
-        message['subject'] = f'{PRODUCT_NAME} {hostname}: {message["subject"]}'
+        message['subject'] = f'{ProductName.PRODUCT_NAME} {hostname}: {message["subject"]}'
         add_html = True
         if 'html' in message and message['html'] is None:
             message.pop('html')

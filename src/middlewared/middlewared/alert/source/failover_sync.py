@@ -6,7 +6,7 @@
 from middlewared.alert.base import (
     Alert, AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 )
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 
 
 class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):

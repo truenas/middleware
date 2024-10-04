@@ -6,7 +6,7 @@
 from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 
 
 class SATADOMWearWarningAlertClass(AlertClass):

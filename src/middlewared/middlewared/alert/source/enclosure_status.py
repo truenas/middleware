@@ -3,7 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 from dataclasses import dataclass
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 
 from middlewared.alert.base import (
     AlertClass,

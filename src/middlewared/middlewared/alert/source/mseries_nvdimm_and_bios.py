@@ -7,7 +7,7 @@ import datetime
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 
 WEBUI_SUPPORT_FORM = (
     'Please contact iXsystems Support using the "File Ticket" button in the System Settings->General->Support form'

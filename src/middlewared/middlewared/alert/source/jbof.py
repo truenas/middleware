@@ -8,7 +8,7 @@ import datetime
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource, SimpleOneShotAlertClass
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.enclosure_.enums import ElementStatus, ElementType
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 
 
 class JBOFTearDownFailureAlertClass(AlertClass, SimpleOneShotAlertClass):

@@ -9,7 +9,7 @@ from truenas_api_client import Client
 from pathlib import Path
 from subprocess import run
 
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 
 
 ZFS_CMD = '/usr/sbin/zfs'

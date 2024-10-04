@@ -5,7 +5,7 @@
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 from middlewared.utils.size import format_size
 
 

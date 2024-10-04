@@ -9,7 +9,7 @@ import textwrap
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 

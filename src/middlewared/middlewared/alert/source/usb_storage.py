@@ -6,7 +6,7 @@
 from pathlib import Path
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 
 
 class USBStorageAlertClass(AlertClass):

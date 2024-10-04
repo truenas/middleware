@@ -1,5 +1,5 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 
 URL = "https://www.truenas.com/docs/hardware/legacyhardware/miniseries/freenas-minis-2nd-gen/freenasminibmcwatchdog/"
 

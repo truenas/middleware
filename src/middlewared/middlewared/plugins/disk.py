@@ -3,7 +3,7 @@ import re
 import subprocess
 from sqlalchemy.exc import IntegrityError
 
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, Str
 from middlewared.service import filterable, private, CallError, CRUDService, ValidationError
 import middlewared.sqlalchemy as sa

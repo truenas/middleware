@@ -6,7 +6,7 @@
 import errno
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 from middlewared.service_exception import CallError
 
 

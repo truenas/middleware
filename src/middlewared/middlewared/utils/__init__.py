@@ -8,6 +8,7 @@ import subprocess
 import time
 import json
 from collections import namedtuple
+from dataclasses import dataclass
 from datetime import datetime
 
 from middlewared.service_exception import MatchNotFound
@@ -15,12 +16,25 @@ from .lang import undefined
 from .prctl import die_with_parent
 from .threading import io_thread_pool_executor
 
+
+# Define Product Strings
+@dataclass(slots=True, frozen=True)
+class ProductType:
+    SCALE: str = 'SCALE'
+    SCALE_ENTERPRISE: str = 'SCALE_ENTERPRISE'
+
+
+@dataclass(slots=True, frozen=True)
+class ProductName:
+    PRODUCT_NAME: str = 'TrueNAS'
+
+
 MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
 MANIFEST_FILE = '/data/manifest.json'
-BRAND = 'TrueNAS'
-PRODUCT = 'SCALE_ENTERPRISE'
+BRAND = ProductName.PRODUCT_NAME
+PRODUCT = ProductType.SCALE
 BRAND_PRODUCT = f'{BRAND}-{PRODUCT}'
 NULLS_FIRST = 'nulls_first:'
 NULLS_LAST = 'nulls_last:'

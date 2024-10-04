@@ -4,7 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 
 TITLE = 'Missing Network Interface On '
 TEXT = 'Network interfaces %(interfaces)s present on '

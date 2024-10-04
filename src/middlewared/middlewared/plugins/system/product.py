@@ -11,18 +11,13 @@ from licenselib.license import ContractType, Features, License
 from middlewared.plugins.truenas import EULA_PENDING_PATH
 from middlewared.schema import accepts, Bool, returns, Str
 from middlewared.service import no_authz_required, private, Service, ValidationError
-from middlewared.utils import sw_info
+from middlewared.utils import ProductType, sw_info
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
 LICENSE_FILE = '/data/license'
 LICENSE_FILE_MODE = 0o600
 PRODUCT_NAME = 'TrueNAS'
-
-
-class ProductType:
-    SCALE = 'SCALE'
-    SCALE_ENTERPRISE = 'SCALE_ENTERPRISE'
 
 
 class SystemService(Service):

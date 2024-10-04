@@ -6,7 +6,7 @@
 import time
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
-from middlewared.plugins.system.product import ProductType
+from middlewared.utils import ProductType
 from middlewared.utils.crypto import generate_token
 
 
