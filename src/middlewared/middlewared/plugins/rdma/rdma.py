@@ -136,9 +136,6 @@ class RDMAService(Service):
         return list(grouper.values())
 
     @private
-    @accepts()
-    @returns(List('protocols',
-                  items=[Str('protocol', enum=RDMAprotocols.values())]))
     async def capable_services(self):
         result = []
         if await self.middleware.call('system.is_enterprise'):
