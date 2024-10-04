@@ -20,7 +20,7 @@ async def incus_call(path: str, method: str, request_kwargs: dict = None):
 
 async def incus_call_and_wait(
     path: str, method: str, request_kwargs: dict = None,
-    running_cb: Callable[[dict],None] = None, timeout: int = 300,
+    running_cb: Callable[[dict], None] = None, timeout: int = 300,
 ):
     result = await incus_call(path, method, request_kwargs)
 

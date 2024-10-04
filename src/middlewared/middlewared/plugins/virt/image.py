@@ -1,6 +1,4 @@
-import usb.core
-
-from middlewared.service import CallError, Service, job
+from middlewared.service import Service, job
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -32,4 +30,3 @@ class VirtImageService(Service):
             })
         result['size'] = int(result['size'])
         return result
-
