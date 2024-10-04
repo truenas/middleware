@@ -52,27 +52,37 @@ class AlertClassesEntry(AlertClassesUpdate):
     id: int
 
 
-###########   Arguments   ###########
-
-
 class AlertDismissArgs(BaseModel):
     uuid: str
+
+
+class AlertDismissResult(BaseModel):
+    result: None
 
 
 class AlertListArgs(BaseModel):
     pass
 
 
+class AlertListResult(BaseModel):
+    result: list[Alert]
+
+
 class AlertListCategoriesArgs(BaseModel):
     pass
+
+
+class AlertListCategoriesResult(BaseModel):
+    result: list[AlertCategory]
+
 
 
 class AlertListPoliciesArgs(BaseModel):
     pass
 
 
-class AlertRestoreArgs(BaseModel):
-    uuid: str
+class AlertListPoliciesResult(BaseModel):
+    result: list[str]
 
 
 class AlertOneshotCreateArgs(BaseModel):
@@ -80,45 +90,38 @@ class AlertOneshotCreateArgs(BaseModel):
     args: Any
 
 
+class AlertOneshotCreateResult(BaseModel):
+    result: None
+
+
 class AlertOneshotDeleteArgs(BaseModel):
     klass: str | list[str]
     query: Any = None
-
-
-class AlertClassesUpdateArgs(BaseModel):
-    alertclasses_update: AlertClassesUpdate = Field(default=AlertClassesUpdate())
-
-
-###########   Returns   ###########
-
-
-class AlertDismissResult(BaseModel):
-    result: None
-
-
-class AlertListResult(BaseModel):
-    result: list[Alert]
-
-
-class AlertListCategoriesResult(BaseModel):
-    result: list[AlertCategory]
-
-
-class AlertListPoliciesResult(BaseModel):
-    result: list[str]
-
-
-class AlertRestoreResult(BaseModel):
-    result: None
-
-
-class AlertOneshotCreateResult(BaseModel):
-    result: None
 
 
 class AlertOneshotDeleteResult(BaseModel):
     result: None
 
 
+class AlertRestoreArgs(BaseModel):
+    uuid: str
+
+
+class AlertRestoreResult(BaseModel):
+    result: None
+
+
+class AlertClassesUpdateArgs(BaseModel):
+    alertclasses_update: AlertClassesUpdate = Field(default=AlertClassesUpdate())
+
+
 class AlertClassesUpdateResult(BaseModel):
     result: AlertClassesEntry
+
+
+class DiskTemperatureAlertsArgs(BaseModel):
+    names: list[str]
+
+
+class DiskTemperatureAlertsResult(BaseModel):
+    result: list[Alert]
