@@ -29,12 +29,13 @@ async def incus_call_and_wait(
 
     async def callback(data):
         if data['metadata']['status'] == 'Failure':
-            raise CallError(data['metadata']['err'])
+            return ('ERROR', data['metadata']['err'])
         if data['metadata']['status'] == 'Success':
-            return data['metadata']['metadata']
+            return ('SUCCESS', data['metadata']['metadata'])
         if data['metadata']['status'] == 'Running':
             if running_cb:
                 await running_cb(data)
+            return ('RUNNING', None)
 
     task = asyncio.ensure_future(IncusWS.instance.wait(result['metadata']['id'], callback))
     try:

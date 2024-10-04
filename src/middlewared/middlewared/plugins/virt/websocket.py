@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 import aiohttp
 import logging
 
+from middlewared.service import CallError
+
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 
@@ -51,7 +53,7 @@ class IncusWS(object):
                             case 'logging':
                                 if data['metadata']['message'] == 'Instance agent started':
                                     self.middleware.send_event(
-                                        'virt.instances.agent_running',
+                                        'virt.instance.agent_running',
                                         'CHANGED',
                                         id=data['metadata']['context']['instance'],
                                     )
@@ -67,15 +69,25 @@ class IncusWS(object):
                 event.clear()
 
                 for i in list(self._incoming[id]):
-                    if (result := await callback(i)) is not None:
-                        return result
                     self._incoming[id].remove(i)
+                    if (result := await callback(i)) is None:
+                        continue
+                    status, data = result
+                    match status:
+                        case 'SUCCESS':
+                            return data
+                        case 'ERROR':
+                            raise CallError(data)
+                        case 'RUNNING':
+                            pass
+                        case _:
+                            raise CallError(f'Unknown status: {status}')
         finally:
             self._waiters[id].remove(event)
 
 
 async def setup(middleware: 'Middleware'):
     middleware.event_register(
-        'virt.instances.agent_running', 'Agent is running on guest.', roles=['VIRT_INSTANCES_READ'],
+        'virt.instance.agent_running', 'Agent is running on guest.', roles=['VIRT_INSTANCE_READ'],
     )
     asyncio.ensure_future(IncusWS(middleware).run())
