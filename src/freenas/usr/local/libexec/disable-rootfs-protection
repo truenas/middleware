@@ -9,6 +9,8 @@ from truenas_api_client import Client
 from pathlib import Path
 from subprocess import run
 
+from middlewared.plugins.system.product import ProductType
+
 
 ZFS_CMD = '/usr/sbin/zfs'
 TO_CHMOD = ['apt', 'dpkg']
@@ -91,11 +93,11 @@ if __name__ == '__main__':
     # environment.
     if rv.stdout.decode().strip() != 'on' and not args.force:
         with Client() as c:
-            if c.call('system.product_type') == 'SCALE_ENTERPRISE':
+            if c.call('system.product_type') == ProductType.SCALE_ENTERPRISE:
                 print((
-                  'Root filesystem protections may not be administratively disabled '
-                  'on Enterprise-licensed TrueNAS products. Circumventing this '
-                  'restriction is considered an unsupported configuration.'
+                    'Root filesystem protections may not be administratively disabled '
+                    'on Enterprise-licensed TrueNAS products. Circumventing this '
+                    'restriction is considered an unsupported configuration.'
                 ))
                 sys.exit(1)
     try:

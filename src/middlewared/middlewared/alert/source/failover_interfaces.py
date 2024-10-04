@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
+from middlewared.plugins.system.product import ProductType
 
 
 class NoCriticalFailoverInterfaceFoundAlertClass(AlertClass):
@@ -11,11 +12,11 @@ class NoCriticalFailoverInterfaceFoundAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'At Least 1 Network Interface Is Required To Be Marked Critical For Failover'
     text = 'At least 1 network interface is required to be marked critical for failover.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class FailoverCriticalAlertSource(AlertSource):
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
     failover_related = True
     run_on_backup_node = False
 

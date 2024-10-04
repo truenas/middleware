@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.plugins.system.product import ProductType
 
 TITLE = 'Disks Missing On '
 TEXT = 'Disks with serial %(serials)s present on '
@@ -14,7 +15,7 @@ class DisksAreNotPresentOnStandbyNodeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = TITLE + 'Standby Storage Controller'
     text = TEXT + 'active storage controller but missing on standby storage controller.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class DisksAreNotPresentOnActiveNodeAlertClass(AlertClass):
@@ -22,11 +23,11 @@ class DisksAreNotPresentOnActiveNodeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = TITLE + 'Active Storage Controller'
     text = TEXT + 'standby storage controller but missing on active storage controller.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class FailoverDisksAlertSource(AlertSource):
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
     failover_related = True
     run_on_backup_node = False
 

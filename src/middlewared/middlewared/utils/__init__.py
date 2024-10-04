@@ -10,6 +10,7 @@ import json
 from collections import namedtuple
 from datetime import datetime
 
+from middlewared.plugins.system.product import ProductType
 from middlewared.service_exception import MatchNotFound
 from .lang import undefined
 from .prctl import die_with_parent
@@ -20,7 +21,7 @@ MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
 MANIFEST_FILE = '/data/manifest.json'
 BRAND = 'TrueNAS'
-PRODUCT = 'SCALE'
+PRODUCT = ProductType.SCALE_ENTERPRISE
 BRAND_PRODUCT = f'{BRAND}-{PRODUCT}'
 NULLS_FIRST = 'nulls_first:'
 NULLS_LAST = 'nulls_last:'

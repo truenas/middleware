@@ -20,6 +20,11 @@ LICENSE_FILE_MODE = 0o600
 PRODUCT_NAME = 'TrueNAS'
 
 
+class ProductType():
+    SCALE = 'SCALE'
+    SCALE_ENTERPRISE = 'SCALE_ENTERPRISE'
+
+
 class SystemService(Service):
 
     PRODUCT_TYPE = None
@@ -36,19 +41,19 @@ class SystemService(Service):
         if SystemService.PRODUCT_TYPE is None:
             if await self.is_ha_capable():
                 # HA capable hardware
-                SystemService.PRODUCT_TYPE = 'SCALE_ENTERPRISE'
+                SystemService.PRODUCT_TYPE = ProductType.SCALE_ENTERPRISE
             else:
                 if license_ := await self.middleware.call('system.license'):
                     if license_['model'].lower().startswith('freenas'):
                         # legacy freenas certified
-                        SystemService.PRODUCT_TYPE = 'SCALE'
+                        SystemService.PRODUCT_TYPE = ProductType.SCALE
                     else:
                         # the license has been issued for a "certified" line
                         # of hardware which is considered enterprise
-                        SystemService.PRODUCT_TYPE = 'SCALE_ENTERPRISE'
+                        SystemService.PRODUCT_TYPE = ProductType.SCALE_ENTERPRISE
                 else:
                     # no license
-                    SystemService.PRODUCT_TYPE = 'SCALE'
+                    SystemService.PRODUCT_TYPE = ProductType.SCALE
 
         return SystemService.PRODUCT_TYPE
 
@@ -58,7 +63,7 @@ class SystemService(Service):
 
     @private
     async def is_enterprise(self):
-        return await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE'
+        return await self.middleware.call('system.product_type') == ProductType.SCALE_ENTERPRISE
 
     @no_authz_required
     @accepts()

@@ -7,7 +7,7 @@ import typing
 import html2text
 
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.plugins.system.product import PRODUCT_NAME
+from middlewared.plugins.system.product import ProductType, PRODUCT_NAME
 from middlewared.utils.lang import undefined
 
 __all__ = ["UnavailableException",
@@ -72,7 +72,7 @@ class AlertClass(metaclass=AlertClassMeta):
     text = None
 
     exclude_from_list = False
-    products = ("CORE", "ENTERPRISE", "SCALE", "SCALE_ENTERPRISE")
+    products = ("CORE", "ENTERPRISE", ProductType.SCALE, ProductType.SCALE_ENTERPRISE)
     proactive_support = False
     proactive_support_notify_gone = False
 
@@ -311,7 +311,7 @@ class AlertSource:
 
     schedule = IntervalSchedule(timedelta())
 
-    products = ("CORE", "ENTERPRISE", "SCALE", "SCALE_ENTERPRISE")
+    products = ("CORE", "ENTERPRISE", ProductType.SCALE, ProductType.SCALE_ENTERPRISE)
     failover_related = False
     run_on_backup_node = True
 

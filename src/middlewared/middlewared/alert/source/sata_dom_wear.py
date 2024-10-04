@@ -6,6 +6,7 @@
 from datetime import timedelta
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule
+from middlewared.plugins.system.product import ProductType
 
 
 class SATADOMWearWarningAlertClass(AlertClass):
@@ -13,7 +14,7 @@ class SATADOMWearWarningAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "SATA DOM Lifetime: Less Than 20% Left"
     text = "%(lifetime)d%% of lifetime left on SATA DOM %(disk)s."
-    products = ("SCALE_ENTERPRISE",)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class SATADOMWearCriticalAlertClass(AlertClass):
@@ -21,12 +22,12 @@ class SATADOMWearCriticalAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "SATA DOM Lifetime: Less Than 10% Left"
     text = "%(lifetime)d%% of lifetime left on SATA DOM %(disk)s."
-    products = ("SCALE_ENTERPRISE",)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class SATADOMWearAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
-    products = ("SCALE_ENTERPRISE",)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
     async def check(self):
         dmi = await self.middleware.call("system.dmidecode_info")

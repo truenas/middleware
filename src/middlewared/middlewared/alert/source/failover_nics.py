@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.plugins.system.product import ProductType
 
 TITLE = 'Missing Network Interface On '
 TEXT = 'Network interfaces %(interfaces)s present on '
@@ -14,7 +15,7 @@ class NetworkCardsMismatchOnStandbyNodeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = TITLE + 'Standby Storage Controller'
     text = TEXT + 'active storage controller but missing on standby storage controller.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class NetworkCardsMismatchOnActiveNodeAlertClass(AlertClass):
@@ -22,11 +23,11 @@ class NetworkCardsMismatchOnActiveNodeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = TITLE + 'Active Storage Controller'
     text = TEXT + 'standby storage controller but missing on active storage controller.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class FailoverNetworkCardsAlertSource(AlertSource):
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
     failover_related = True
     run_on_backup_node = False
 

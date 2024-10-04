@@ -3,6 +3,7 @@ import os
 import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.docker.state_utils import catalog_ds_path, CATALOG_DATASET_NAME
+from middlewared.plugins.system.product import ProductType
 from middlewared.schema import accepts, Dict, List, returns, Str
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.validators import Match
@@ -30,18 +31,18 @@ class CatalogService(ConfigService):
         role_prefix = 'CATALOG'
 
     ENTRY = Dict(
-            'catalog_create',
-            List('preferred_trains'),
-            Str('id'),
-            Str(
-                'label', required=True, validators=[Match(
-                    r'^\w+[\w.-]*$',
-                    explanation='Label must start with an alphanumeric character and can include dots and dashes.'
-                )],
-                max_length=60,
-            ),
-            register=True,
-        )
+        'catalog_create',
+        List('preferred_trains'),
+        Str('id'),
+        Str(
+            'label', required=True, validators=[Match(
+                r'^\w+[\w.-]*$',
+                explanation='Label must start with an alphanumeric character and can include dots and dashes.'
+            )],
+            max_length=60,
+        ),
+        register=True,
+    )
 
     @private
     def extend(self, data, context):
@@ -92,7 +93,7 @@ class CatalogService(ConfigService):
                 'At least 1 preferred train must be specified.'
             )
         if (
-            await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE' and
+            await self.middleware.call('system.product_type') == ProductType.SCALE_ENTERPRISE and
             OFFICIAL_ENTERPRISE_TRAIN not in data['preferred_trains']
         ):
             verrors.add(
@@ -122,7 +123,7 @@ class CatalogService(ConfigService):
     @private
     async def update_train_for_enterprise(self):
         catalog = await self.middleware.call('catalog.config')
-        if await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE':
+        if await self.middleware.call('system.product_type') == ProductType.SCALE_ENTERPRISE:
             preferred_trains = []
             # Logic coming from here
             # https://github.com/truenas/middleware/blob/e7f2b29b6ff8fadcc9fdd8d7f104cbbf5172fc5a/src/middlewared

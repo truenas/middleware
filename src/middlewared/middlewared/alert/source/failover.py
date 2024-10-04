@@ -6,6 +6,7 @@
 import errno
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
+from middlewared.plugins.system.product import ProductType
 from middlewared.service_exception import CallError
 
 
@@ -14,7 +15,7 @@ class FailoverInterfaceNotFoundAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failover Internal Interface Not Found'
     text = 'Failover internal interface not found. Contact support.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class TrueNASVersionsMismatchAlertClass(AlertClass):
@@ -22,7 +23,7 @@ class TrueNASVersionsMismatchAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'TrueNAS Software Versions Must Match Between Storage Controllers'
     text = 'TrueNAS software versions must match between storage controllers.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class FailoverStatusCheckFailedAlertClass(AlertClass):
@@ -30,7 +31,7 @@ class FailoverStatusCheckFailedAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failed to Check Failover Status with the Other Controller'
     text = 'Failed to check failover status with the other controller: %s.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class FailoverFailedAlertClass(AlertClass):
@@ -38,7 +39,7 @@ class FailoverFailedAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failover Failed'
     text = 'Failover failed. Check /var/log/failover.log on both controllers.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class VRRPStatesDoNotAgreeAlertClass(AlertClass):
@@ -46,11 +47,11 @@ class VRRPStatesDoNotAgreeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Controllers VRRP States Do Not Agree'
     text = 'Controllers VRRP states do not agree: %(error)s.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class FailoverAlertSource(AlertSource):
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
     failover_related = True
     run_on_backup_node = False
 
