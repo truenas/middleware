@@ -61,7 +61,7 @@ REMOTE_CHOICES: TypeAlias = Optional[Literal['LINUX_CONTAINERS']]
 
 
 @single_argument_args('virt_instances_image_choices')
-class VirtInstancesImageChoicesArgs(BaseModel):
+class VirtInstanceImageChoicesArgs(BaseModel):
     remote: REMOTE_CHOICES = None
 
 
@@ -73,7 +73,7 @@ class ImageChoiceItem(BaseModel):
     variant: int
 
 
-class VirtInstancesImageChoicesResult(BaseModel):
+class VirtInstanceImageChoicesResult(BaseModel):
     result: dict[str, ImageChoiceItem]
 
 
@@ -156,7 +156,7 @@ class VirtInstanceEntry(BaseModel):
 
 
 @single_argument_args('virt_instance_create')
-class VirtInstancesCreateArgs(BaseModel):
+class VirtInstanceCreateArgs(BaseModel):
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
     image: Annotated[NonEmptyString, StringConstraints(max_length=200)]
     remote: REMOTE_CHOICES = None
@@ -168,67 +168,67 @@ class VirtInstancesCreateArgs(BaseModel):
     devices: Devices = None
 
 
-class VirtInstancesCreateResult(BaseModel):
+class VirtInstanceCreateResult(BaseModel):
     result: dict
 
 
-class VirtInstancesUpdate(BaseModel, metaclass=ForUpdateMetaclass):
+class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     environment: dict | None = None
     autostart: bool | None = None
     cpu: str | None = None
     memory: int | None = None
 
 
-class VirtInstancesUpdateArgs(BaseModel):
+class VirtInstanceUpdateArgs(BaseModel):
     id: str
-    virt_instance_update: VirtInstancesUpdate
+    virt_instance_update: VirtInstanceUpdate
 
 
-class VirtInstancesUpdateResult(BaseModel):
+class VirtInstanceUpdateResult(BaseModel):
     result: VirtInstanceEntry
 
 
-class VirtInstancesDeleteArgs(BaseModel):
+class VirtInstanceDeleteArgs(BaseModel):
     id: str
 
 
-class VirtInstancesDeleteResult(BaseModel):
+class VirtInstanceDeleteResult(BaseModel):
     result: Literal[True]
 
 
-class VirtInstancesDeviceListArgs(BaseModel):
+class VirtInstanceDeviceListArgs(BaseModel):
     id: str
 
 
-class VirtInstancesDeviceListResult(BaseModel):
+class VirtInstanceDeviceListResult(BaseModel):
     result: List[Devices]
 
 
-class VirtInstancesDeviceAddArgs(BaseModel):
+class VirtInstanceDeviceAddArgs(BaseModel):
     id: str
     device: Union[Disk, GPU, NIC, Proxy, TPM, USB] = Field(..., descriminator='dev_type')
 
 
-class VirtInstancesDeviceAddResult(BaseModel):
+class VirtInstanceDeviceAddResult(BaseModel):
     result: dict
 
 
-class VirtInstancesDeviceDeleteArgs(BaseModel):
+class VirtInstanceDeviceDeleteArgs(BaseModel):
     id: str
     name: str
 
 
-class VirtInstancesDeviceDeleteResult(BaseModel):
+class VirtInstanceDeviceDeleteResult(BaseModel):
     result: dict
 
 
-class VirtInstancesStateArgs(BaseModel):
+class VirtInstanceStateArgs(BaseModel):
     id: str
     action: Literal['START', 'STOP', 'RESTART']
     force: bool = False
 
 
-class VirtInstancesStateResult(BaseModel):
+class VirtInstanceStateResult(BaseModel):
     result: bool
 
 
@@ -263,7 +263,6 @@ class GPUChoice(BaseModel):
 
 class VirtDeviceGPUChoicesResult(BaseModel):
     result: dict[str, GPUChoice]
-
 
 
 class VirtImageUploadArgs(BaseModel):

@@ -14,10 +14,10 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
     async def query(self, path, enabled, options=None):
         config = await self.middleware.call('virt.global.config')
         instances = []
-        for i in await self.middleware.call('virt.instances.query'):
+        for i in await self.middleware.call('virt.instance.query'):
             append = False
             if path != f'/mnt/{config["pool"]}':
-                for device in await self.middleware.call('virt.instances.device_list', i['id']):
+                for device in await self.middleware.call('virt.instance.device_list', i['id']):
                     if device['dev_type'] != 'DISK':
                         continue
                     if device['source'] is None:
@@ -38,7 +38,7 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
     async def delete(self, attachments):
         for attachment in attachments:
             try:
-                job = await self.middleware.call('virt.instances.state', attachment['id'], 'STOP')
+                job = await self.middleware.call('virt.instance.state', attachment['id'], 'STOP')
                 await job.wait(raise_error=True)
             except Exception as e:
                 self.middleware.logger.warning('Unable to stop %r: %s', attachment['id'], e)
@@ -47,7 +47,7 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
         for attachment in attachments:
             action = 'START' if enabled else 'STOP'
             try:
-                job = await self.middleware.call('virt.instances.state', attachment['id'], action)
+                job = await self.middleware.call('virt.instance.state', attachment['id'], action)
                 await job.wait(raise_error=True)
             except Exception as e:
                 self.middleware.logger.warning('Unable to %s %r: %s', action, attachment['id'], e)
@@ -67,9 +67,9 @@ class VirtPortDelegate(PortDelegate):
 
     async def get_ports(self):
         ports = []
-        for instance in await self.middleware.call('virt.instances.query'):
+        for instance in await self.middleware.call('virt.instance.query'):
             instance_ports = []
-            for device in await self.middleware.call('virt.instances.device_list', instance['id']):
+            for device in await self.middleware.call('virt.instance.device_list', instance['id']):
                 if device['dev_type'] != 'PROXY':
                     continue
                 instance_ports.append(('0.0.0.0', device['source_port']))

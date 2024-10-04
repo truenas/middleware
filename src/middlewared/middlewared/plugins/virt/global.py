@@ -300,10 +300,10 @@ class VirtGlobalService(ConfigService):
 
         if await self.middleware.call('service.started', 'incus'):
             # Stop running instances
-            for instance in await self.middleware.call('virt.instances.query', [('status', '=', 'RUNNING')]):
-                await (await self.middleware.call('virt.instances.state', instance['id'], 'STOP', True)).wait()
+            for instance in await self.middleware.call('virt.instance.query', [('status', '=', 'RUNNING')]):
+                await (await self.middleware.call('virt.instance.state', instance['id'], 'STOP', True)).wait()
 
-            if await self.middleware.call('virt.instances.query', [('status', '=', 'RUNNING')]):
+            if await self.middleware.call('virt.instance.query', [('status', '=', 'RUNNING')]):
                 raise CallError('Failed to stop instances')
 
         if not config['bridge']:

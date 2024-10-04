@@ -16,7 +16,7 @@ class VirtDeviceService(Service):
         namespace = 'virt.device'
         cli_namespace = 'virt.device'
 
-    @api_method(VirtDeviceUSBChoicesArgs, VirtDeviceUSBChoicesResult, roles=['VIRT_INSTANCES_READ'])
+    @api_method(VirtDeviceUSBChoicesArgs, VirtDeviceUSBChoicesResult, roles=['VIRT_INSTANCE_READ'])
     def usb_choices(self):
         """
         Provide choices for USB devices.
@@ -34,7 +34,7 @@ class VirtDeviceService(Service):
             }
         return choices
 
-    @api_method(VirtDeviceGPUChoicesArgs, VirtDeviceGPUChoicesResult, roles=['VIRT_INSTANCES_READ'])
+    @api_method(VirtDeviceGPUChoicesArgs, VirtDeviceGPUChoicesResult, roles=['VIRT_INSTANCE_READ'])
     def gpu_choices(self, instance_type, gpu_type):
         """
         Provide choices for GPU devices.

@@ -49,5 +49,5 @@ class VirtInstacesMetricsEventSource(EventSource):
 
 async def setup(middleware):
     middleware.register_event_source(
-        'virt.instances.metrics', VirtInstacesMetricsEventSource, roles=['VIRT_INSTANCES_READ']
+        'virt.instance.metrics', VirtInstacesMetricsEventSource, roles=['VIRT_INSTANCE_READ']
     )

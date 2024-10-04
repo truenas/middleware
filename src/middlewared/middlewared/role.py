@@ -199,9 +199,9 @@ ROLES = {
     # Virtualization
     'VIRT_GLOBAL_READ': Role(),
     'VIRT_GLOBAL_WRITE': Role(includes=['VIRT_GLOBAL_READ']),
-    'VIRT_INSTANCES_READ': Role(),
-    'VIRT_INSTANCES_WRITE': Role(includes=['VIRT_INSTANCES_READ']),
-    'VIRT_INSTANCES_DELETE': Role(),
+    'VIRT_INSTANCE_READ': Role(),
+    'VIRT_INSTANCE_WRITE': Role(includes=['VIRT_INSTANCE_READ']),
+    'VIRT_INSTANCE_DELETE': Role(),
     'VIRT_IMAGE_READ': Role(),
     'VIRT_IMAGE_WRITE': Role(includes=['VIRT_IMAGE_READ']),
 

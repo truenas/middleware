@@ -10,14 +10,14 @@ from middlewared.utils import filter_list
 from middlewared.api import api_method
 from middlewared.api.current import (
     VirtInstanceEntry,
-    VirtInstancesCreateArgs, VirtInstancesCreateResult,
-    VirtInstancesUpdateArgs, VirtInstancesUpdateResult,
-    VirtInstancesDeleteArgs, VirtInstancesDeleteResult,
-    VirtInstancesStateArgs, VirtInstancesStateResult,
-    VirtInstancesImageChoicesArgs, VirtInstancesImageChoicesResult,
-    VirtInstancesDeviceListArgs, VirtInstancesDeviceListResult,
-    VirtInstancesDeviceAddArgs, VirtInstancesDeviceAddResult,
-    VirtInstancesDeviceDeleteArgs, VirtInstancesDeviceDeleteResult,
+    VirtInstanceCreateArgs, VirtInstanceCreateResult,
+    VirtInstanceUpdateArgs, VirtInstanceUpdateResult,
+    VirtInstanceDeleteArgs, VirtInstanceDeleteResult,
+    VirtInstanceStateArgs, VirtInstanceStateResult,
+    VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult,
+    VirtInstanceDeviceListArgs, VirtInstanceDeviceListResult,
+    VirtInstanceDeviceAddArgs, VirtInstanceDeviceAddResult,
+    VirtInstanceDeviceDeleteArgs, VirtInstanceDeviceDeleteResult,
 )
 from .utils import incus_call, incus_call_and_wait
 
@@ -26,13 +26,13 @@ LC_IMAGES_SERVER = 'https://images.linuxcontainers.org'
 LC_IMAGES_JSON = f'{LC_IMAGES_SERVER}/streams/v1/images.json'
 
 
-class VirtInstancesService(CRUDService):
+class VirtInstanceService(CRUDService):
 
     class Config:
-        namespace = 'virt.instances'
-        cli_namespace = 'virt.instances'
+        namespace = 'virt.instance'
+        cli_namespace = 'virt.instance'
         entry = VirtInstanceEntry
-        role_prefix = 'VIRT_INSTANCES'
+        role_prefix = 'VIRT_INSTANCE'
 
     @filterable
     async def query(self, filters, options):
@@ -105,7 +105,7 @@ class VirtInstancesService(CRUDService):
             config['boot.autostart'] = str(data['autostart']).lower()
         return config
 
-    @api_method(VirtInstancesImageChoicesArgs, VirtInstancesImageChoicesResult)
+    @api_method(VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult)
     async def image_choices(self, data):
         """
         Provice choices for instance image from a remote repository.
@@ -129,7 +129,7 @@ class VirtInstancesService(CRUDService):
                     }
         return choices
 
-    @api_method(VirtInstancesCreateArgs, VirtInstancesCreateResult)
+    @api_method(VirtInstanceCreateArgs, VirtInstanceCreateResult)
     @job()
     async def do_create(self, job, data):
         """
@@ -183,15 +183,15 @@ class VirtInstancesService(CRUDService):
             'start': True,
         }}, running_cb)
 
-        return await self.middleware.call('virt.instances.get_instance', data['name'])
+        return await self.middleware.call('virt.instance.get_instance', data['name'])
 
-    @api_method(VirtInstancesUpdateArgs, VirtInstancesUpdateResult)
+    @api_method(VirtInstanceUpdateArgs, VirtInstanceUpdateResult)
     @job()
     async def do_update(self, job, id, data):
         """
         Update instance.
         """
-        instance = await self.middleware.call('virt.instances.get_instance', id)
+        instance = await self.middleware.call('virt.instance.get_instance', id)
 
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_create', verrors, old=instance)
@@ -200,15 +200,15 @@ class VirtInstancesService(CRUDService):
         instance['raw']['config'].update(self.__data_to_config(data))
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': instance['raw']})
 
-        return await self.middleware.call('virt.instances.get_instance', id)
+        return await self.middleware.call('virt.instance.get_instance', id)
 
-    @api_method(VirtInstancesDeleteArgs, VirtInstancesDeleteResult)
+    @api_method(VirtInstanceDeleteArgs, VirtInstanceDeleteResult)
     @job()
     async def do_delete(self, job, id):
         """
         Delete an instance.
         """
-        instance = await self.middleware.call('virt.instances.get_instance', id)
+        instance = await self.middleware.call('virt.instance.get_instance', id)
         if instance['status'] == 'RUNNING':
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
                 'action': 'stop',
@@ -220,12 +220,12 @@ class VirtInstancesService(CRUDService):
 
         return True
 
-    @api_method(VirtInstancesDeviceListArgs, VirtInstancesDeviceListResult, roles=['VIRT_INSTANCES_READ'])
+    @api_method(VirtInstanceDeviceListArgs, VirtInstanceDeviceListResult, roles=['VIRT_INSTANCE_READ'])
     async def device_list(self, id):
         """
         List all devices associated to an instance.
         """
-        instance = await self.middleware.call('virt.instances.get_instance', id)
+        instance = await self.middleware.call('virt.instance.get_instance', id)
 
         # Grab devices from default profile (e.g. nic and disk)
         profile = await self.middleware.call('virt.global.get_default_profile')
@@ -399,12 +399,12 @@ class VirtInstancesService(CRUDService):
                 verror = await self.middleware.call('port.validate_port', schema, device['source_port'])
                 verrors.extend(verror)
 
-    @api_method(VirtInstancesDeviceAddArgs, VirtInstancesDeviceAddResult, roles=['VIRT_INSTANCES_WRITE'])
+    @api_method(VirtInstanceDeviceAddArgs, VirtInstanceDeviceAddResult, roles=['VIRT_INSTANCE_WRITE'])
     async def device_add(self, id, device):
         """
         Add a device to an instance.
         """
-        instance = await self.middleware.call('virt.instances.get_instance', id)
+        instance = await self.middleware.call('virt.instance.get_instance', id)
         data = instance['raw']
         if device['name'] is None:
             device['name'] = await self.__generate_device_name(data['devices'].keys(), device['dev_type'])
@@ -417,12 +417,12 @@ class VirtInstancesService(CRUDService):
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': data})
         return True
 
-    @api_method(VirtInstancesDeviceDeleteArgs, VirtInstancesDeviceDeleteResult, roles=['VIRT_INSTANCES_DELETE'])
+    @api_method(VirtInstanceDeviceDeleteArgs, VirtInstanceDeviceDeleteResult, roles=['VIRT_INSTANCE_DELETE'])
     async def device_delete(self, id, device):
         """
         Delete a device from an instance.
         """
-        instance = await self.middleware.call('virt.instances.get_instance', id)
+        instance = await self.middleware.call('virt.instance.get_instance', id)
         data = instance['raw']
         if device not in data['devices']:
             raise CallError('Device not found.', errno.ENOENT)
@@ -430,7 +430,7 @@ class VirtInstancesService(CRUDService):
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': data})
         return True
 
-    @api_method(VirtInstancesStateArgs, VirtInstancesStateResult, roles=['VIRT_INSTANCES_WRITE'])
+    @api_method(VirtInstanceStateArgs, VirtInstanceStateResult, roles=['VIRT_INSTANCE_WRITE'])
     @job()
     async def state(self, job, id, action, force):
         """

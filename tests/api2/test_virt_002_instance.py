@@ -24,15 +24,15 @@ def test_virt_instances_create():
         wait_agent.set()
 
     with client() as c:
-        c.subscribe('virt.instances.agent_running', wait_debian, sync=True)
+        c.subscribe('virt.instance.agent_running', wait_debian, sync=True)
 
         # Create first so there is time for the agent to start
-        call('virt.instances.create', {'name': 'debian', 'image': 'debian/trixie', 'instance_type': 'VM'}, job=True)
+        call('virt.instance.create', {'name': 'debian', 'image': 'debian/trixie', 'instance_type': 'VM'}, job=True)
 
-        call('virt.instances.create', {'name': 'void', 'image': 'voidlinux/musl'}, job=True)
+        call('virt.instance.create', {'name': 'void', 'image': 'voidlinux/musl'}, job=True)
         ssh('incus exec void cat /etc/os-release | grep "Void Linux"')
 
-        call('virt.instances.create', {
+        call('virt.instance.create', {
             'name': 'arch',
             'image': 'archlinux/current/default',
             'devices': [
@@ -41,7 +41,7 @@ def test_virt_instances_create():
         }, job=True)
         ssh('incus exec arch cat /etc/os-release | grep "Arch Linux"')
 
-        devices = call('virt.instances.device_list', 'arch')
+        devices = call('virt.instance.device_list', 'arch')
         assert any(i for i in devices if i['name'] == 'tpm'), devices
 
         assert wait_agent.wait(timeout=30)
@@ -49,7 +49,7 @@ def test_virt_instances_create():
 
 
 def test_virt_instances_update():
-    call('virt.instances.update', 'void', {'cpu': '1', 'memory': 500, 'environment': {'FOO': 'BAR'}}, job=True)
+    call('virt.instance.update', 'void', {'cpu': '1', 'memory': 500, 'environment': {'FOO': 'BAR'}}, job=True)
     ssh('incus exec void grep MemTotal: /proc/meminfo|grep 512000')
     # Checking CPUs seems to cause a racing condition (perhaps CPU currently in use in the container?)
     # rv = ssh('incus exec void cat /proc/cpuinfo |grep processor|wc -l')
@@ -61,20 +61,20 @@ def test_virt_instances_update():
 def test_virt_instances_state():
     # Stop only one of them so the others are stopped during delete
     assert ssh('incus list void -f json| jq ".[].status"').strip() == '"Running"'
-    call('virt.instances.state', 'void', 'STOP', True, job=True)
+    call('virt.instance.state', 'void', 'STOP', True, job=True)
     assert ssh('incus list void -f json| jq ".[].status"').strip() == '"Stopped"'
 
 
 def test_virt_instances_device_add():
     assert ssh('incus list debian -f json| jq ".[].status"').strip() == '"Running"'
-    call('virt.instances.state', 'debian', 'STOP', True, job=True)
+    call('virt.instance.state', 'debian', 'STOP', True, job=True)
 
-    call('virt.instances.device_add', 'debian', {
+    call('virt.instance.device_add', 'debian', {
         'name': 'tpm',
         'dev_type': 'TPM',
     })
 
-    call('virt.instances.device_add', 'arch', {
+    call('virt.instance.device_add', 'arch', {
         'name': 'proxy',
         'dev_type': 'PROXY',
         'source_proto': 'TCP',
@@ -84,16 +84,16 @@ def test_virt_instances_device_add():
     })
 
     # TODO: adding to a VM causes start to hang at the moment (zombie process)
-    # call('virt.instances.device_add', 'debian', {
+    # call('virt.instance.device_add', 'debian', {
     #     'name': 'disk1',
     #     'dev_type': 'DISK',
     #     'source': f'/mnt/{pool_name}',
     #     'destination': '/host',
     # })
 
-    devices = call('virt.instances.device_list', 'debian')
+    devices = call('virt.instance.device_list', 'debian')
     assert any(i for i in devices if i['name'] == 'tpm'), devices
-    devices = call('virt.instances.device_list', 'arch')
+    devices = call('virt.instance.device_list', 'arch')
     assert any(i for i in devices if i['name'] == 'proxy'), devices
     # assert 'disk1' in devices, devices
 
@@ -103,25 +103,25 @@ def test_virt_instances_device_add():
         wait_agent.set()
 
     with client() as c:
-        c.subscribe('virt.instances.agent_running', wait_debian, sync=True)
-        call('virt.instances.state', 'debian', 'START', False, job=True)
+        c.subscribe('virt.instance.agent_running', wait_debian, sync=True)
+        call('virt.instance.state', 'debian', 'START', False, job=True)
         assert wait_agent.wait(timeout=30)
 
     ssh('incus exec debian ls /dev/tpm0')
     # ssh('incus exec debian ls /host')
 
     with dataset('virtshare') as ds:
-        call('virt.instances.device_add', 'arch', {
+        call('virt.instance.device_add', 'arch', {
             'name': 'disk1',
             'dev_type': 'DISK',
             'source': f'/mnt/{ds}',
             'destination': '/host',
         })
-        devices = call('virt.instances.device_list', 'arch')
+        devices = call('virt.instance.device_list', 'arch')
         assert any(i for i in devices if i['name'] == 'disk1'), devices
         with mkfile(f'/mnt/{ds}/testfile'):
             ssh('incus exec arch ls /host/testfile')
-        call('virt.instances.device_delete', 'arch', 'disk1')
+        call('virt.instance.device_delete', 'arch', 'disk1')
 
 
 def test_virt_instances_proxy():
@@ -134,20 +134,20 @@ def test_virt_instances_proxy():
 
 
 def test_virt_instances_device_delete():
-    call('virt.instances.state', 'debian', 'STOP', True, job=True)
-    call('virt.instances.device_delete', 'debian', 'tpm')
-    devices = call('virt.instances.device_list', 'debian')
+    call('virt.instance.state', 'debian', 'STOP', True, job=True)
+    call('virt.instance.device_delete', 'debian', 'tpm')
+    devices = call('virt.instance.device_list', 'debian')
     assert not any(i for i in devices if i['name'] == 'tpm'), devices
 
 
 def test_virt_instances_delete():
-    call('virt.instances.delete', 'void', job=True)
+    call('virt.instance.delete', 'void', job=True)
     ssh('incus config show void 2>&1 | grep "not found"')
 
-    call('virt.instances.delete', 'arch', job=True)
+    call('virt.instance.delete', 'arch', job=True)
     ssh('incus config show arch 2>&1 | grep "not found"')
 
-    call('virt.instances.delete', 'debian', job=True)
+    call('virt.instance.delete', 'debian', job=True)
     ssh('incus config show debian 2>&1 | grep "not found"')
 
-    assert len(call('virt.instances.query')) == 0
+    assert len(call('virt.instance.query')) == 0
