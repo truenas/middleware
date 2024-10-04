@@ -20,7 +20,7 @@ LICENSE_FILE_MODE = 0o600
 PRODUCT_NAME = 'TrueNAS'
 
 
-class ProductType():
+class ProductType:
     SCALE = 'SCALE'
     SCALE_ENTERPRISE = 'SCALE_ENTERPRISE'
 
