@@ -50,7 +50,7 @@ class DNSAuthenticatorAttributeSchema(BaseModel):
 
 class DNSAuthenticatorSchemaEntry(BaseModel):
     key: str
-    schema: list[DNSAuthenticatorAttributeSchema]
+    schema_: list[DNSAuthenticatorAttributeSchema] = Field(..., alias='schema')
 
 
 ###################   Arguments   ###################
