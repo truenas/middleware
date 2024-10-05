@@ -211,12 +211,11 @@ class K8stoDockerMigrationService(Service):
         if bulk_job.error:
             raise CallError(f'Failed to redeploy apps: {bulk_job.error}')
 
-        for index, status in enumerate(bulk_job.result):
-            if status['error']:
-                release_details[index].update({
-                    'error': f'Failed to deploy app: {status["error"]}',
-                    'successfully_migrated': False,
-                })
+        # We won't check here if the apps are working or not, as the idea of this endpoint is to migrate
+        # apps from k8s to docker which is complete at this point. If the app is not running at this point,
+        # that does not mean the migration didn't work - it's an app problem and we need to fix/investigate
+        # it accordingly. User will see the app is not working in the UI and can raise a ticket accordingly
+        # or consult app lifecycle logs.
 
         job.set_progress(100, 'Migration completed')
 
