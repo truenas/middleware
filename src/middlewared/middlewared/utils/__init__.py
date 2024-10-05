@@ -19,15 +19,18 @@ from .threading import io_thread_pool_executor
 
 # Define Product Strings
 @dataclass(slots=True, frozen=True)
-class ProductType:
+class ProductTypes:
     SCALE: str = 'SCALE'
     SCALE_ENTERPRISE: str = 'SCALE_ENTERPRISE'
 
 
 @dataclass(slots=True, frozen=True)
-class ProductName:
+class ProductNames:
     PRODUCT_NAME: str = 'TrueNAS'
 
+
+ProductType = ProductTypes()
+ProductName = ProductNames()
 
 MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
