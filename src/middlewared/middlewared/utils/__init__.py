@@ -1,4 +1,5 @@
 import asyncio
+import enum
 import errno
 import functools
 import logging
@@ -17,11 +18,9 @@ from .prctl import die_with_parent
 from .threading import io_thread_pool_executor
 
 
-# Define Product Strings
-@dataclass(slots=True, frozen=True)
-class ProductType:
-    SCALE: str = 'SCALE'
-    SCALE_ENTERPRISE: str = 'SCALE_ENTERPRISE'
+class ProductType(enum.StrEnum):
+    SCALE = 'SCALE'
+    SCALE_ENTERPRISE = 'SCALE_ENTERPRISE'
 
 
 @dataclass(slots=True, frozen=True)
