@@ -9,6 +9,7 @@ import textwrap
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.utils import ProductType
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
@@ -17,7 +18,7 @@ class LicenseAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "TrueNAS License Issue"
     text = "%s"
-    products = ("SCALE_ENTERPRISE",)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class LicenseIsExpiringAlertClass(AlertClass):
@@ -25,7 +26,7 @@ class LicenseIsExpiringAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "TrueNAS License Is Expiring"
     text = "%s"
-    products = ("SCALE_ENTERPRISE",)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class LicenseHasExpiredAlertClass(AlertClass):
@@ -33,11 +34,11 @@ class LicenseHasExpiredAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "TrueNAS License Has Expired"
     text = "%s"
-    products = ("SCALE_ENTERPRISE",)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class LicenseStatusAlertSource(ThreadedAlertSource):
-    products = ("SCALE_ENTERPRISE",)
+    products = (ProductType.SCALE_ENTERPRISE,)
     run_on_backup_node = False
     schedule = IntervalSchedule(timedelta(hours=24))
 

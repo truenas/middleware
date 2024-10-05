@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.utils import ProductType
 
 
 class ProactiveSupportAlertClass(AlertClass):
@@ -11,11 +12,11 @@ class ProactiveSupportAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "Proactive Support Is Not Configured"
     text = "%s"
-    products = ("SCALE_ENTERPRISE",)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class ProactiveSupportAlertSource(AlertSource):
-    products = ("SCALE_ENTERPRISE",)
+    products = (ProductType.SCALE_ENTERPRISE,)
     run_on_backup_node = False
 
     async def check(self):

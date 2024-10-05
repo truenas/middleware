@@ -7,7 +7,7 @@ import typing
 import html2text
 
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.plugins.system.product import PRODUCT_NAME
+from middlewared.utils import ProductName, ProductType
 from middlewared.utils.lang import undefined
 
 __all__ = ["UnavailableException",
@@ -72,7 +72,7 @@ class AlertClass(metaclass=AlertClassMeta):
     text = None
 
     exclude_from_list = False
-    products = ("CORE", "ENTERPRISE", "SCALE", "SCALE_ENTERPRISE")
+    products = ("CORE", "ENTERPRISE", ProductType.SCALE, ProductType.SCALE_ENTERPRISE)
     proactive_support = False
     proactive_support_notify_gone = False
 
@@ -311,7 +311,7 @@ class AlertSource:
 
     schedule = IntervalSchedule(timedelta())
 
-    products = ("CORE", "ENTERPRISE", "SCALE", "SCALE_ENTERPRISE")
+    products = ("CORE", "ENTERPRISE", ProductType.SCALE, ProductType.SCALE_ENTERPRISE)
     failover_related = False
     run_on_backup_node = True
 
@@ -376,7 +376,7 @@ class AlertService:
         else:
             node_map = None
 
-        html = format_alerts(PRODUCT_NAME, hostname, node_map, alerts, gone_alerts, new_alerts)
+        html = format_alerts(ProductName.PRODUCT_NAME, hostname, node_map, alerts, gone_alerts, new_alerts)
 
         if self.html:
             return html
@@ -397,7 +397,7 @@ class ThreadedAlertService(AlertService):
             node_map = self.middleware.call_sync("alert.node_map")
         else:
             node_map = None
-        return format_alerts(PRODUCT_NAME, hostname, node_map, alerts, gone_alerts, new_alerts)
+        return format_alerts(ProductName.PRODUCT_NAME, hostname, node_map, alerts, gone_alerts, new_alerts)
 
 
 class ProThreadedAlertService(ThreadedAlertService):

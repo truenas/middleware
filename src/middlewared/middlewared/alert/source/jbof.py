@@ -8,6 +8,7 @@ import datetime
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource, SimpleOneShotAlertClass
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.enclosure_.enums import ElementStatus, ElementType
+from middlewared.utils import ProductType
 
 
 class JBOFTearDownFailureAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -25,7 +26,7 @@ class JBOFRedfishCommAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failed to Communicate with JBOF'
     text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) Failed to communicate with redfish interface.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class JBOFInvalidDataAlertClass(AlertClass):
@@ -33,7 +34,7 @@ class JBOFInvalidDataAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'JBOF has invalid data'
     text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) does not provide valid data for: %(keys)s'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class JBOFElementWarningAlertClass(AlertClass):
@@ -41,7 +42,7 @@ class JBOFElementWarningAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = 'JBOF element non-critical'
     text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is noncritical: %(value)s'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class JBOFElementCriticalAlertClass(AlertClass):
@@ -49,11 +50,11 @@ class JBOFElementCriticalAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'JBOF element critical'
     text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is critical: %(value)s'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class JBOFAlertSource(AlertSource):
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
     run_on_backup_node = False
     schedule = IntervalSchedule(datetime.timedelta(minutes=5))
 
