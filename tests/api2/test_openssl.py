@@ -12,4 +12,4 @@ def test_fips_context():
     print("FIPS payload")
     print(ssh(payload, complete_response=True, check=False, timeout=300))
     print("Were back in!")
-    print(ssh("cat /root/opensslproviders"))
+    print(ssh("cat /root/osslproviders"))
