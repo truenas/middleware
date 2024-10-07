@@ -10,6 +10,6 @@ from auto_config import ha
 def test_fips_context():
     payload = """midclt call --job system.security.update '{"enable_fips": true}' && openssl list -providers > /root/osslproviders && midclt call --job system.security.update '{"enable_fips": false}'"""
     print("FIPS payload")
-    ssh(payload)
+    ssh(payload, capture_output=True, check=False)
     print("Were back in!")
     print(ssh("cat /root/opensslproviders"))
