@@ -403,9 +403,7 @@ class NFSService(SystemServiceService):
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
 
         if new["rdma"]:
-            self.logger.debug(f"[MCG DEBUG] rdma setting is {new['rdma']}")
             available_rdma_services = await self.middleware.call('rdma.capable_services')
-            self.logger.debug(f"[MCG DEBUG] available_rdma_services = {available_rdma_services}")
             if "NFS" not in available_rdma_services:
                 verrors.add(
                     "nfs_update.rdma",
