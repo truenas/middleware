@@ -72,7 +72,8 @@ class NFS_CONFIG:
         "v4_krb_enabled": False,
         "userd_manage_gids": False,
         "keytab_has_nfs_spn": False,
-        "managed_nfsd": True
+        "managed_nfsd": True,
+        "rdma": False,
     }
 
     initial_service_state = {}
@@ -1243,22 +1244,38 @@ class TestNFSops:
         s = parse_server_config()
         assert s.get('nfsd', {}).get('udp') is None, s
 
-    def test_service_ports(self, start_nfs):
+    @pytest.mark.parametrize('test_port', [
+        pp([["mountd", 618, None], ["rpcstatd", 871, None], ["rpclockd", 32803, None]], id="valid ports"),
+        pp([["rpcstatd", -21, 0], ["rpclockd", 328031, 0]], id="invalid ports"),
+        pp([["mountd", 20049, 1]], id="excluded ports"),
+    ])
+    def test_service_ports(self, start_nfs, test_port):
         """
         This test verifies that we can set custom port and the
         settings are reflected in the relevant files and are active.
+        This also tests the port range and exclude.
         """
         assert start_nfs is True
 
-        # Make custom port selections
-        nfs_conf = call("nfs.update", {
-            "mountd_port": 618,
-            "rpcstatd_port": 871,
-            "rpclockd_port": 32803,
-        })
-        assert nfs_conf['mountd_port'] == 618
-        assert nfs_conf['rpcstatd_port'] == 871
-        assert nfs_conf['rpclockd_port'] == 32803
+        # Friendly index names
+        name = 0
+        value = 1
+        err = 2
+
+        # Error message snippets
+        errmsg = ["Should be between", "reserved for internal use"]
+
+        # Test ports
+        for port in test_port:
+            port_name = port[name] + "_port"
+            if port[err] is None:
+                nfs_conf = call("nfs.update", {port_name: port[value]})
+                assert nfs_conf[port_name] == port[value]
+            else:
+                with pytest.raises(ValidationErrors) as ve:
+                    nfs_conf = call("nfs.update", {port_name: port[value]})
+                errStr = str(ve.value.errors[0])
+                assert errmsg[port[err]] in errStr
 
         # Compare DB with setting in /etc/nfs.conf.d/local.conf
         with nfs_config() as config_db:

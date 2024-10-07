@@ -9,13 +9,15 @@ from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
-from middlewared.validators import Match, NotMatch, Range, IpAddress
+from middlewared.validators import Match, NotMatch, Port, Range, IpAddress
 from middlewared.service import private, SharingService, SystemServiceService
 from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+
+NFS_RDMA_DEFAULT_PORT = 20049
 
 
 class NFSServicePathInfo(enum.Enum):
@@ -66,6 +68,7 @@ class NFSModel(sa.Model):
     nfs_srv_statd_lockd_log = sa.Column(sa.Boolean(), default=False)
     nfs_srv_v4_domain = sa.Column(sa.String(120))
     nfs_srv_v4_owner_major = sa.Column(sa.String(1023), default='')
+    nfs_srv_rdma = sa.Column(sa.Boolean(), default=False)
 
 
 class NFSService(SystemServiceService):
@@ -88,15 +91,16 @@ class NFSService(SystemServiceService):
         Bool('v4_krb', required=True),
         Str('v4_domain', required=True),
         List('bindip', items=[IPAddr('ip')], required=True),
-        Int('mountd_port', null=True, validators=[Range(min_=1, max_=65535)], required=True),
-        Int('rpcstatd_port', null=True, validators=[Range(min_=1, max_=65535)], required=True),
-        Int('rpclockd_port', null=True, validators=[Range(min_=1, max_=65535)], required=True),
+        Int('mountd_port', null=True, validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])], required=True),
+        Int('rpcstatd_port', null=True, validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])], required=True),
+        Int('rpclockd_port', null=True, validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])], required=True),
         Bool('mountd_log', required=True),
         Bool('statd_lockd_log', required=True),
         Bool('v4_krb_enabled', required=True),
         Bool('userd_manage_gids', required=True),
         Bool('keytab_has_nfs_spn', required=True),
         Bool('managed_nfsd', default=True),
+        Bool('rdma', default=False, required=True),
     )
 
     @private
@@ -317,6 +321,13 @@ class NFSService(SystemServiceService):
                     INPUT: unset or an integer between 1 .. 65535
                     Default: unset
 
+        `rdma` -    Enable/Disable NFS over RDMA support
+                    Available on supported platforms and requires an installed and RDMA capable NIC.
+                    NFS over RDMA uses port 20040.
+
+                    INPUT: Enable/Disable
+                    Default: Disable
+
         .. examples(websocket)::
 
           Update NFS Service Configuration to listen on 192.168.0.10 and use NFSv4
@@ -390,6 +401,16 @@ class NFSService(SystemServiceService):
 
         if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_domain"]:
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
+
+        if new["rdma"]:
+            self.logger.debug(f"[MCG DEBUG] rdma setting is {new['rdma']}")
+            available_rdma_services = await self.middleware.call('rdma.capable_services')
+            self.logger.debug(f"[MCG DEBUG] available_rdma_services = {available_rdma_services}")
+            if "NFS" not in available_rdma_services:
+                verrors.add(
+                    "nfs_update.rdma",
+                    "This platform cannot support NFS over RDMA or is missing an RDMA capable NIC."
+                )
 
         verrors.check()
 
