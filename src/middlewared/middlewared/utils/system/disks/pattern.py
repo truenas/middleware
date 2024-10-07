@@ -13,7 +13,6 @@ class REPatterns:
     PMEM: Pattern = re_compile(r"^pmem\d+$")
     """pmem0 but not pmem0p1 etc"""
 
-    @property
     def is_valid(self, value: str) -> bool:
         if self.SD.match(value):
             return True
