@@ -76,7 +76,9 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
 
     def notify_used(self):
         if self.inactivity_timeout:
-            self.last_used_at = monotonic()
+            now = monotonic()
+            if now < self.last_used_at + self.inactivity_timeout:
+                self.last_used_at = now
 
     def is_valid(self):
         if self.assurance and (now := monotonic()) > self.expiry:

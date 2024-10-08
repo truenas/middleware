@@ -210,3 +210,38 @@ def test_multiple_users_login_with_otp(clear_ratelimit):
 
                 call('user.renew_2fa_secret', first_user['username'], TEST_TWOFACTOR_INTERVAL)
                 do_login(TEST_USERNAME, TEST_PASSWORD, get_2fa_totp_token(get_user_secret(first_user['id'])))
+
+
+def test_login_with_otp_failure(clear_ratelimit):
+    """ simulate continually fat-fingering OTP token until eventual failure """
+    with user({
+        'username': TEST_USERNAME,
+        'password': TEST_PASSWORD,
+        'full_name': TEST_USERNAME,
+    }) as u:
+        with enabled_twofactor_auth():
+            call('user.renew_2fa_secret', u['username'], TEST_TWOFACTOR_INTERVAL)
+
+            with client(auth=None) as c:
+                resp = c.call('auth.login_ex', {
+                    'mechanism': 'PASSWORD_PLAIN',
+                    'username': TEST_USERNAME,
+                    'password': TEST_PASSWORD,
+                })
+                assert resp['response_type'] == 'OTP_REQUIRED'
+                retry_cnt = 0
+
+                while retry_cnt < 3:
+                    resp = c.call('auth.login_ex', {
+                        'mechanism': 'OTP_TOKEN',
+                        'otp_token': 'canary'
+                    })
+                    assert resp['response_type'] == 'OTP_REQUIRED', retry_cnt
+                    retry_cnt += 1
+
+                # We've now exhausted any grace from server. Hammer is dropped.
+                resp = c.call('auth.login_ex', {
+                    'mechanism': 'OTP_TOKEN',
+                    'otp_token': 'canary'
+                })
+                assert resp['response_type'] == 'AUTH_ERR'

@@ -11,6 +11,10 @@ def convert_keys(username, keys) -> PamTdbEntry:
     for key in keys:
         if key['expires_at'] is None:
             expiry = 0
+        else if key['revoked']:
+            # Backstop. We filter these out when we etc.generate, but we don't
+            # want to have an avenue to accidentally insert revoked keys.
+            continue
         else:
             expiry = int(key['expires_at'].timestamp())
 

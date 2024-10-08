@@ -123,7 +123,7 @@ class ApiKeyService(CRUDService):
             case -1:
                 # key has been forcibly revoked
                 item['revoked'] = True
-            case 0:
+            case 0 | None:
                 # zero value indicates never expires
                 pass
             case _:

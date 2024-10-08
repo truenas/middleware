@@ -496,6 +496,9 @@ class AuthService(Service):
         mechanisms will be expanded in future releases.
 
         params:
+            This takes a single argument consistning of a JSON object with the
+            following keys:
+
             mechanism: the mechanism by which to authenticate to the backend
             the exact parameters to use vary by mechanism and are described
             below
@@ -539,7 +542,7 @@ class AuthService(Service):
               set to EOPNOTSUPP.
 
         returns:
-            dictionary containing the following keys:
+            JSON object containing the following keys:
 
             response_type: string indicating the results of the current authentication
                 mechanism. This is used to inform client of nature of authentication
@@ -823,6 +826,10 @@ class AuthService(Service):
     @private
     @pass_app()
     async def get_login_user(self, app, username, password, mechanism):
+        """
+        This is a private endpoint that performs the actual validation of username/password
+        combination and returns user information and whether additional OTP is required.
+        """
         otp_required = False
         resp = await self.middleware.call(
             'auth.authenticate_plain',
