@@ -178,15 +178,20 @@ class Or(ValidatorBase):
 
 
 class Range(ValidatorBase):
-    def __init__(self, min_=None, max_=None):
+    def __init__(self, min_=None, max_=None, exclude=None):
         self.min = min_
         self.max = max_
+        self.exclude = exclude or []
 
     def __call__(self, value):
         if value is None:
             return
         if isinstance(value, str):
             value = len(value)
+        if value in self.exclude:
+            raise ValueError(
+                f'{value} is a reserved for internal use. Please select another value.'
+            )
 
         error = {
             (True, True): f"between {self.min} and {self.max}",
@@ -203,8 +208,11 @@ class Range(ValidatorBase):
 
 
 class Port(Range):
-    def __init__(self):
-        super().__init__(min_=1, max_=65535)
+    ''' Example usage with exclude:
+    validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])]
+    '''
+    def __init__(self, exclude=None):
+        super().__init__(min_=1, max_=65535, exclude=exclude)
 
 
 class QueryFilters(ValidatorBase):
@@ -412,7 +420,6 @@ def check_path_resides_within_volume_sync(verrors, schema_name, path, vol_names)
         inode = None
 
     rp = Path(os.path.realpath(path))
-    is_mountpoint = os.path.ismount(path)
 
     vol_paths = [os.path.join("/mnt", vol_name) for vol_name in vol_names]
     if not path.startswith("/mnt/") or not any(
