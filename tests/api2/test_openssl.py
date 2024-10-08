@@ -18,7 +18,6 @@ def test_fips_version():
     for i in range(retry):
         request = ssh(payload, complete_response=True, check=False, timeout=300)
         if request["returncode"] != 0:
-            print(f"Retry {i + 1}")
             continue
         break
     else:
