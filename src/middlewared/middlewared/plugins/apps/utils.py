@@ -7,6 +7,10 @@ from middlewared.plugins.docker.state_utils import DatasetDefaults, IX_APPS_MOUN
 PROJECT_PREFIX = 'ix-'
 
 
+def get_app_stop_cache_key(app_name: str) -> str:
+    return f'app_stop_{app_name}'
+
+
 def run(*args, **kwargs) -> subprocess.CompletedProcess:
     shell = isinstance(args[0], str)
     if isinstance(args[0], list):
