@@ -27,4 +27,4 @@ def test_fips_version():
     else:
         assert False, f"Failed to run FIPS payload after {retry} retries."
 
-    assert False, ssh("midclt call system.reboot.info")
+    assert ssh("midclt call system.reboot.info") == ""
