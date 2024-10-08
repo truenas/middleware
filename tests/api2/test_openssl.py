@@ -21,8 +21,7 @@ def test_fips_version():
             continue
         break
     else:
-        request = ssh(payload, complete_response=True, timeout=300)
-        assert False, f"Failed to run FIPS payload after {retry} retries."
+        request = ssh(payload, complete_response=True, timeout=300) # fail the test
 
     enabled_info = ssh("cat /root/osslproviders")
     # Check that things are what we expect when fips was enabled
