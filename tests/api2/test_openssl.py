@@ -28,5 +28,5 @@ def test_fips_version():
     assert "3.0.9" in info
     assert "FIPS configuration was changed." in info
 
-    finalData = ssh("midclt call system.reboot.info", complete_response=True)
-    assert False, f"{type(finalData)} - {finalData.keys()}"
+    finalData = ssh("midclt call system.reboot.info", complete_response=True)["stdout"]
+    assert False, f"{type(finalData)} - {finalData}, {'"reboot_required_reasons": []' in finalData}"
