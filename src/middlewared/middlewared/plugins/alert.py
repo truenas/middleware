@@ -35,9 +35,9 @@ from middlewared.api.current import (
     AlertOneshotCreateArgs, AlertOneshotCreateResult, AlertOneshotDeleteArgs, AlertOneshotDeleteResult,
     AlertServiceCreateArgs, AlertServiceCreateResult, AlertServiceUpdateArgs, AlertServiceUpdateResult,
     AlertServiceDeleteArgs, AlertServiceDeleteResult, AlertServiceTestArgs, AlertServiceTestResult,
-    AlertClassesUpdateArgs, AlertClassesUpdateResult, AlertClassesEntry, AlertServiceEntry,
+    AlertServiceEntry,
 )
-from middlewared.schema import Bool, Str
+from middlewared.schema import Bool, Dict, Int, Str
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
@@ -1169,9 +1169,13 @@ class AlertClassesService(ConfigService):
     class Config:
         datastore = "system.alertclasses"
         cli_namespace = "system.alert.class"
-        entry = AlertClassesEntry
+    
+    ENTRY = Dict(
+        "alertclasses_entry",
+        Int("id"),
+        Dict("classes", additional_attrs=True),
+    )
 
-    @api_method(AlertClassesUpdateArgs, AlertClassesUpdateResult)
     async def do_update(self, data):
         """
         Update default Alert settings.
