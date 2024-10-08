@@ -36,7 +36,6 @@ from .pseudo.misc import (
     RoutingService,
     SslService,
     SyslogdService,
-    SystemService,
     TimeservicesService,
     UserService,
 )
@@ -78,7 +77,6 @@ all_services = [
     RoutingService,
     SslService,
     SyslogdService,
-    SystemService,
     TimeservicesService,
     TruecommandService,
     UserService,

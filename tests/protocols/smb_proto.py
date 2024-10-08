@@ -324,53 +324,11 @@ class SMB(object):
         quotaout = smbcquotas.stdout.decode().splitlines()
         return self._parse_quota(quotaout)
 
-    def get_sd(self, path):
-        def get_offset_by_key(data, key):
-            for idx, entry in enumerate(data):
-                if entry.startswith(key):
-                    return data[idx:]
+    def set_sd(self, idx, secdesc, security_info):
+        self._connection.set_sd(self._open_files[idx]["fh"], secdesc, security_info)
 
-            raise ValueError(f'Failed to parse ACL: {data}')
-
-        cmd = [
-            "smbcacls", f"//{self._host}/{self._share}",
-            "-U", f"{self._username}%{self._password}",
-            "--numeric"
-        ]
-
-        if self._smb1:
-            cmd.extend(["-m", "NT1"])
-
-        cmd.append(path)
-
-        cl = subprocess.run(cmd, capture_output=True)
-        if cl.returncode != 0:
-            raise RuntimeError(cl.stdout.decode() or cl.stderr.decode())
-
-        output = get_offset_by_key(cl.stdout.decode().splitlines(), 'REVISION')
-        revision = int(output[0].split(':')[1])
-        control = {"raw": output[1].split(':')[1]}
-        control['parsed'] = [x.name for x in ACLControl if int(control['raw'], 16) & x]
-
-        sd = {
-            "revision": revision,
-            "control": control,
-            "owner": output[2].split(':')[1],
-            "group": output[3].split(':')[1],
-            "acl": []
-        }
-        for l in get_offset_by_key(output, 'ACL'):
-            entry, flags, access_mask = l.split("/")
-            prefix, trustee, ace_type = entry.split(":")
-
-            sd['acl'].append({
-                "trustee": trustee,
-                "type": int(ace_type),
-                "access_mask": int(access_mask, 16),
-                "flags": int(flags, 16),
-            })
-
-        return sd
+    def get_sd(self, idx, security_info):
+        return self._connection.get_sd(self._open_files[idx]["fh"], security_info)
 
     def inherit_acl(self, path, action):
         cmd = [
@@ -395,4 +353,3 @@ class SMB(object):
         cl = subprocess.run(cmd, capture_output=True)
         if cl.returncode != 0:
             raise RuntimeError(cl.stdout.decode() or cl.stderr.decode())
-

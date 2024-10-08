@@ -5,8 +5,10 @@ import json
 
 import async_timeout
 
+from middlewared.api import api_method
+from middlewared.api.current import DiskTemperatureAlertsArgs, DiskTemperatureAlertsResult
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.disks import parse_smartctl_for_temperature_output
@@ -139,8 +141,7 @@ class DiskService(Service):
 
         return final
 
-    @accepts(List('names', items=[Str('name')]), roles=['REPORTING_READ'])
-    @returns(Ref('alert'))
+    @api_method(DiskTemperatureAlertsArgs, DiskTemperatureAlertsResult, roles=['REPORTING_READ'])
     async def temperature_alerts(self, names):
         """
         Returns existing temperature alerts for specified disk `names.`

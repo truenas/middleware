@@ -13,6 +13,10 @@ from middlewared.service_exception import CallError
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 
+class StorjIxError(CallError):
+    pass
+
+
 class StorjIxRcloneRemote(BaseRcloneRemote):
     name = "STORJ_IX"
     title = "Storj iX"
@@ -41,10 +45,19 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
                 aws_access_key_id=credentials["attributes"]["access_key_id"],
                 aws_secret_access_key=credentials["attributes"]["secret_access_key"],
             )
+            # s3 bucket naming rules: https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
             try:
                 s3_client.create_bucket(Bucket=name)
             except s3_client.exceptions.BucketAlreadyExists as e:
                 raise CallError(str(e), errno=errno.EEXIST)
+            except botocore.exceptions.ParamValidationError as e:
+                raise StorjIxError("The bucket name can only contain lowercase letters, numbers, and hyphens.",
+                                   errno.EINVAL, str(e))
+            except botocore.exceptions.ClientError as e:
+                if "InvalidBucketName" in e.args[0]:
+                    raise StorjIxError("The bucket name must be between 3-63 characters in length and cannot contain "
+                                       "uppercase.", errno.EINVAL, str(e))
+                raise
 
         return await self.middleware.run_in_thread(create_bucket_sync)
 

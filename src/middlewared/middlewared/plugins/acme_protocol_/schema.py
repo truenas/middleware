@@ -1,5 +1,6 @@
-from middlewared.schema import Bool, Dict, Str, List, returns
-from middlewared.service import accepts, private, Service
+from middlewared.api import api_method
+from middlewared.api.current import DNSAuthenticatorSchemasArgs, DNSAuthenticatorSchemasResult
+from middlewared.service import private, Service
 
 from .authenticators.factory import auth_factory
 
@@ -13,26 +14,7 @@ class DNSAuthenticatorService(Service):
         super(DNSAuthenticatorService, self).__init__(*args, **kwargs)
         self.schemas = self.get_authenticator_schemas()
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(List(
-        title='Authenticator Schemas',
-        items=[Dict(
-            'schema_entry',
-            Str('key', required=True),
-            List(
-                'schema',
-                items=[Dict(
-                    'attribute_schema',
-                    Str('_name_', required=True),
-                    Str('title', required=True),
-                    Bool('_required_', required=True),
-                    additional_attrs=True,
-                    title='Attribute Schema',
-                )],
-            ),
-            title='Authenticator Schema'
-        )],
-    ))
+    @api_method(DNSAuthenticatorSchemasArgs, DNSAuthenticatorSchemasResult, roles=['READONLY_ADMIN'])
     def authenticator_schemas(self):
         """
         Get the schemas for all DNS providers we support for ACME DNS Challenge and the respective attributes

@@ -7,6 +7,7 @@ import datetime
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.utils import ProductType
 
 WEBUI_SUPPORT_FORM = (
     'Please contact iXsystems Support using the "File Ticket" button in the System Settings->General->Support form'
@@ -18,7 +19,7 @@ class NVDIMMAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = 'There Is An Issue With NVDIMM'
     text = 'NVDIMM: "%(dev)s" is reporting "%(value)s" with status "%(status)s".'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class NVDIMMESLifetimeWarningAlertClass(AlertClass):
@@ -26,7 +27,7 @@ class NVDIMMESLifetimeWarningAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = 'NVDIMM Energy Source Lifetime Is Less Than 20%'
     text = 'NVDIMM Energy Source Remaining Lifetime for %(dev)s is %(value)d%%.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class NVDIMMESLifetimeCriticalAlertClass(AlertClass):
@@ -34,7 +35,7 @@ class NVDIMMESLifetimeCriticalAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'NVDIMM Energy Source Lifetime Is Less Than 10%'
     text = 'NVDIMM Energy Source Remaining Lifetime for %(dev)s is %(value)d%%.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class NVDIMMMemoryModLifetimeWarningAlertClass(AlertClass):
@@ -42,7 +43,7 @@ class NVDIMMMemoryModLifetimeWarningAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = 'NVDIMM Memory Module Lifetime Is Less Than 20%'
     text = 'NVDIMM Memory Module Remaining Lifetime for %(dev)s is %(value)d%%.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class NVDIMMMemoryModLifetimeCriticalAlertClass(AlertClass):
@@ -50,7 +51,7 @@ class NVDIMMMemoryModLifetimeCriticalAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'NVDIMM Memory Module Lifetime Is Less Than 10%'
     text = 'NVDIMM Memory Module Remaining Lifetime for %(dev)s is %(value)d%%.'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class NVDIMMInvalidFirmwareVersionAlertClass(AlertClass):
@@ -58,7 +59,7 @@ class NVDIMMInvalidFirmwareVersionAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Invalid NVDIMM Firmware Version'
     text = f'NVDIMM: "%(dev)s" is running invalid firmware. {WEBUI_SUPPORT_FORM}'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
     proactive_support = True
 
 
@@ -70,7 +71,7 @@ class NVDIMMRecommendedFirmwareVersionAlertClass(AlertClass):
         'NVDIMM: "%(dev)s" is running firmware version "%(rv)s" which can be upgraded to '
         f'"%(uv)s". {WEBUI_SUPPORT_FORM}'
     )
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
     proactive_support = True
 
 
@@ -79,13 +80,13 @@ class OldBiosVersionAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = 'Old BIOS Version'
     text = f'This system is running an old BIOS version. {WEBUI_SUPPORT_FORM}'
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
     proactive_support = True
 
 
 class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(datetime.timedelta(minutes=5))
-    products = ('SCALE_ENTERPRISE',)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
     def produce_alerts(self, nvdimm, alerts, old_bios):
         persistency_restored = 0x4

@@ -53,14 +53,6 @@ class KMIPService(ConfigService):
             data[k] = data[k]['id']
         return data
 
-    @accepts(roles=['KMIP_READ'])
-    @returns(Dict(*[Str(i, enum=[i]) for i in SUPPORTED_SSL_VERSIONS]))
-    async def ssl_version_choices(self):
-        """
-        Retrieve valid SSL version choices to be used when configuring kmip service.
-        """
-        return {k: k for k in SUPPORTED_SSL_VERSIONS}
-
     @accepts(
         Patch(
             'kmip_entry', 'kmip_update',

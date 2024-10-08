@@ -1,11 +1,8 @@
-import pytest
-
 from middlewared.test.integration.utils import call
 
 
 def test_alert_gets():
     call("alertservice.query")
-    call("alertservice.list_types")
 
 
 def test_alertservice():

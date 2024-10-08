@@ -1,6 +1,7 @@
 import json
 import subprocess
 from pathlib import Path
+from .constants import RDMAprotocols
 
 from middlewared.schema import Bool, Dict, List, Ref, Str, accepts, returns
 from middlewared.service import Service, private
@@ -133,3 +134,12 @@ class RDMAService(Service):
             names = [link['rdma'] for link in v['links']]
             v['name'] = ':'.join(sorted(names))
         return list(grouper.values())
+
+    @private
+    async def capable_services(self):
+        result = []
+        is_ent = await self.middleware.call('system.is_enterprise')
+        if is_ent and 'MINI' not in await self.middleware.call('truenas.get_chassis_hardware'):
+            if await self.middleware.call('rdma.get_link_choices', True):
+                result.append(RDMAprotocols.NFS.value)
+        return result

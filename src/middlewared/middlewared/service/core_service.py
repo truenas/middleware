@@ -25,9 +25,8 @@ from middlewared.api.current import (
 from middlewared.common.environ import environ_update
 from middlewared.job import Job
 from middlewared.pipe import Pipes
-from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, returns, Str
+from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Str
 from middlewared.service_exception import CallError, ValidationErrors
-from middlewared.settings import conf
 from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.utils.privilege import credential_has_full_admin, credential_is_limited_to_own_jobs
@@ -65,18 +64,6 @@ class CoreService(Service):
             raise CallError('Shell does not exist', errno.ENOENT)
 
         shell.resize(cols, rows)
-
-    @accepts(Bool('debug_mode'))
-    async def set_debug_mode(self, debug_mode):
-        """
-        Set `debug_mode` for middleware.
-        """
-        conf.debug_mode = debug_mode
-
-    @accepts()
-    @returns(Bool())
-    async def debug_mode_enabled(self):
-        return conf.debug_mode
 
     @private
     def get_tasks(self):

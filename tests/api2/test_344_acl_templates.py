@@ -94,47 +94,6 @@ def test_03_create_new_template(request, acltype):
     assert results.status_code == 200, results.text
  
 
-def test_04_legacy_check_default_acl_choices(request):
-    """
-    Verify that our new templates appear as choices for "default" ACLs.
-    """
-    depends(request, ["NEW_ACLTEMPLATES_CREATED"], scope="session")
-
-    results = GET(
-        '/filesystem/acltemplate', payload={
-            'query-filters': [['builtin', '=', False]],
-        }
-    )
-    assert results.status_code == 200, results.text
-
-    names = [x['name'] for x in results.json()]
-
-    results = POST('/filesystem/default_acl_choices')
-    assert results.status_code == 200, results.text
-    acl_choices = results.json()
-
-    for name in names:
-        assert name in acl_choices, results.text
-
-
-@pytest.mark.parametrize('acltype', ['NFS4', 'POSIX'])
-def test_05_legacy_check_default_acl_choices_by_path(request, acltype):
-    """
-    Verify that our new templates appear as choices for "default" ACLs
-    given a path.
-    """
-    depends(request, ["NEW_ACLTEMPLATES_CREATED"], scope="session")
-    inverse = 'POSIX' if acltype == 'NFS4' else 'NFS4'
-
-    path = f'/mnt/{pool_name}/acltemplate_{"posix" if acltype == "POSIX" else "nfsv4"}'
-    results = POST('/filesystem/default_acl_choices', payload=path)
-    assert results.status_code == 200, results.text
-
-    choices = results.json()
-    assert f'{acltype}_TEST' in choices, results.text
-    assert f'{inverse}_TEST' not in choices, results.text
-
-
 @pytest.mark.dependency(name="NEW_ACLTEMPLATES_UPDATED")
 @pytest.mark.parametrize('acltype', ['NFS4', 'POSIX'])
 def test_09_update_new_template(request, acltype):

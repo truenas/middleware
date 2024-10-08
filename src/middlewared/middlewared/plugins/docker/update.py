@@ -19,10 +19,7 @@ class DockerModel(sa.Model):
     pool = sa.Column(sa.String(255), default=None, nullable=True)
     enable_image_updates = sa.Column(sa.Boolean(), default=True)
     nvidia = sa.Column(sa.Boolean(), default=False)
-    address_pools = sa.Column(sa.JSON(list), default=[
-        {'base': '172.30.0.0/16', 'size': 27},
-        {'base': '172.31.0.0/16', 'size': 27}
-    ])
+    address_pools = sa.Column(sa.JSON(list), default=[{'base': '172.17.0.0/12', 'size': 24}])
 
 
 class DockerService(ConfigService):
@@ -96,8 +93,9 @@ class DockerService(ConfigService):
                 except Exception as e:
                     raise CallError(f'Failed to stop docker service: {e}')
 
+                catalog_sync_job = None
                 try:
-                    await self.middleware.call('docker.fs_manage.umount')
+                    catalog_sync_job = await self.middleware.call('docker.fs_manage.umount')
                 except CallError as e:
                     # We handle this specially, if for whatever reason ix-apps dataset is not there,
                     # we don't make it fatal to change pools etc - however if some dataset other then
@@ -105,6 +103,9 @@ class DockerService(ConfigService):
                     # and needs to be fixed before we can proceed
                     if e.errno != errno.ENOENT or await self.middleware.call('docker.fs_manage.ix_apps_is_mounted'):
                         raise
+                finally:
+                    if catalog_sync_job:
+                        await catalog_sync_job.wait()
 
                 await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 

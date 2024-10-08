@@ -314,29 +314,6 @@ class EnclosureService(CRUDService):
         if disk_enclosure != disk['enclosure']:
             self.middleware.call_sync('disk.update', id_, {'enclosure': disk_enclosure})
 
-    @private
-    @accepts(Str("pool", null=True, default=None))
-    def sync_zpool(self, pool):
-        """
-        Sync enclosure of a given ZFS pool
-        """
-        for i in self.middleware.call_sync('enclosure.list_ses_enclosures'):
-            enc = EnclosureDevice(i)
-            for slot, info in filter(lambda x: x[0] != 0 and x[1]['type'] == 23, enc.status()['elements'].items()):
-                # slot 0 is the group identifer disk slots
-                # type 23 is "Array Device Slot" (i.e. disks)
-                slot_str = f'{slot - 1}'
-                try:
-                    if enc.set_control(slot_str, 'get=ident'):
-                        # identify light is on, clear it
-                        enc.set_control(slot_str, 'clear=ident')
-                    if enc.set_control(slot_str, 'get=fault'):
-                        # fault light is on, clear it
-                        enc.set_control(slot_str, 'clear=fault')
-                except OSError:
-                    self.logger.warning('Failed to clear slot %r on enclosure %r', slot, i, exc_info=True)
-                    return
-
     def __get_enclosures(self):
         return Enclosures(
             self.middleware.call_sync("enclosure.get_ses_enclosures"),
@@ -1255,46 +1232,3 @@ class SASExpander(Element):
         if not output:
             output.append("None")
         return ', '.join(output)
-
-
-async def devd_zfs_hook(middleware, data):
-    if data.get('type') in (
-        'ATTACH',
-        'DETACH',
-        'resource.fs.zfs.removed',
-        'misc.fs.zfs.config_sync',
-        'misc.fs.zfs.vdev_remove',
-    ):
-        await middleware.call('enclosure.sync_zpool')
-
-
-async def zfs_events_hook(middleware, data):
-    event_id = data['class']
-
-    if event_id in [
-        'sysevent.fs.zfs.config_sync',
-        'sysevent.fs.zfs.vdev_remove',
-    ]:
-        await middleware.call('enclosure.sync_zpool')
-
-
-async def udev_block_devices_hook(middleware, data):
-    if data.get('SUBSYSTEM') != 'block':
-        return
-    elif data.get('DEVTYPE') != 'disk':
-        return
-    elif data['SYS_NAME'].startswith(DISKS_TO_IGNORE):
-        return
-
-    if data['ACTION'] in ['add', 'remove']:
-        await middleware.call('enclosure.sync_zpool')
-
-
-async def pool_post_delete(middleware, id_):
-    await middleware.call('enclosure.sync_zpool')
-
-
-def setup(middleware):
-    middleware.register_hook('zfs.pool.events', zfs_events_hook)
-    middleware.register_hook('udev.block', udev_block_devices_hook)
-    middleware.register_hook('pool.post_delete', pool_post_delete)

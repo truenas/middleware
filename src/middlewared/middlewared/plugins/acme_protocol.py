@@ -2,9 +2,14 @@ import josepy as jose
 import json
 import requests
 
-from middlewared.plugins.acme_protocol_.authenticators.factory import auth_factory
-from middlewared.schema import Bool, Dict, Int, Patch, Str, ValidationErrors
-from middlewared.service import accepts, CallError, CRUDService, private
+from middlewared.api import api_method
+from middlewared.api.current import (
+    ACMERegistrationCreateArgs, ACMERegistrationCreateResult, DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult,
+    DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult, DNSAuthenticatorDeleteArgs, DNSAuthenticatorDeleteResult,
+    ACMERegistrationEntry, ACMEDNSAuthenticatorEntry,
+)
+from middlewared.schema import ValidationErrors
+from middlewared.service import CallError, CRUDService, private
 import middlewared.sqlalchemy as sa
 
 from acme import client, messages
@@ -45,6 +50,7 @@ class ACMERegistrationService(CRUDService):
         datastore_extend = 'acme.registration.register_extend'
         namespace = 'acme.registration'
         private = True
+        entry = ACMERegistrationEntry
 
     @private
     async def register_extend(self, data):
@@ -70,18 +76,7 @@ class ACMERegistrationService(CRUDService):
         except (requests.ConnectionError, requests.Timeout, json.JSONDecodeError, KeyError) as e:
             raise CallError(f'Unable to retrieve directory : {e}')
 
-    @accepts(
-        Dict(
-            'acme_registration_create',
-            Bool('tos', default=False),
-            Dict(
-                'JWK_create',
-                Int('key_size', default=2048),
-                Int('public_exponent', default=65537)
-            ),
-            Str('acme_directory_uri', required=True),
-        )
-    )
+    @api_method(ACMERegistrationCreateArgs, ACMERegistrationCreateResult)
     def do_create(self, data):
         """
         Register with ACME Server
@@ -210,22 +205,7 @@ class DNSAuthenticatorService(CRUDService):
         namespace = 'acme.dns.authenticator'
         datastore = 'system.acmednsauthenticator'
         cli_namespace = 'system.acme.dns_auth'
-
-    ENTRY = Dict(
-        'acme_dns_authenticator_entry',
-        Int('id', required=True),
-        Str(
-            'authenticator', enum=[authenticator for authenticator in auth_factory.get_authenticators()],
-            required=True
-        ),
-        Dict(
-            'attributes',
-            additional_attrs=True,
-            description='Specific attributes of each `authenticator`',
-            private=True,
-        ),
-        Str('name', description='User defined name of authenticator', required=True),
-    )
+        entry = ACMEDNSAuthenticatorEntry
 
     @private
     async def common_validation(self, data, schema_name, old=None):
@@ -246,6 +226,7 @@ class DNSAuthenticatorService(CRUDService):
 
         verrors.check()
 
+    @api_method(DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult)
     async def do_create(self, data):
         """
         Create a DNS Authenticator
@@ -282,16 +263,7 @@ class DNSAuthenticatorService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'acme_dns_authenticator_entry',
-            'dns_authenticator_update',
-            ('rm', {'name': 'id'}),
-            ('rm', {'name': 'authenticator'}),
-            ('attr', {'update': True}),
-        ),
-    )
+    @api_method(DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult)
     async def do_update(self, id_, data):
         """
         Update DNS Authenticator of `id`
@@ -332,6 +304,7 @@ class DNSAuthenticatorService(CRUDService):
 
         return await self.get_instance(id_)
 
+    @api_method(DNSAuthenticatorDeleteArgs, DNSAuthenticatorDeleteResult)
     async def do_delete(self, id_):
         """
         Delete DNS Authenticator of `id`
