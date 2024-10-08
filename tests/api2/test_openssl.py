@@ -24,10 +24,11 @@ def test_fips_version():
         request = ssh(payload, complete_response=True, timeout=300)
         assert False, f"Failed to run FIPS payload after {retry} retries."
 
-    info = ssh("cat /root/osslproviders")
-    assert "3.0.9" in info
-    assert "FIPS configuration was changed." in info
+    enabled_info = ssh("cat /root/osslproviders")
+    # Check that things are what we expect when fips was enabled
+    assert "3.0.9" in enabled_info
+    assert "FIPS configuration was changed." in enabled_info
 
-    finalData = ssh("midclt call system.reboot.info", complete_response=True)["stdout"]
-    check = '"reboot_required_reasons": []'
-    assert False, f"{type(finalData)} - {finalData}, {check in finalData} "
+    # Check that we no longer have FIPS enabled
+    assert "3.0.9" not in ssh("openssl list -providers")
+    assert '"reboot_required_reasons": []' in ssh("midclt call system.reboot.info")
