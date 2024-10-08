@@ -11,6 +11,7 @@ class AppState(enum.Enum):
     DEPLOYING = 'DEPLOYING'
     RUNNING = 'RUNNING'
     STOPPED = 'STOPPED'
+    STOPPING = 'STOPPING'
 
 
 class ContainerState(enum.Enum):

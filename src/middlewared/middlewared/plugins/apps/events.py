@@ -1,6 +1,7 @@
 from middlewared.service import Service
 
 from .ix_apps.utils import get_app_name_from_project_name
+from .utils import get_app_stop_cache_key
 
 
 PROCESSING_APP_EVENT = set()
@@ -13,7 +14,10 @@ class AppEvents(Service):
         private = True
 
     async def process(self, app_name, container_event):
-        if app := await self.middleware.call('app.query', [['id', '=', app_name]]):
+        cache_key = get_app_stop_cache_key(app_name)
+        if (app := await self.middleware.call('app.query', [['id', '=', app_name]])) and not await self.middleware.call(
+            'cache.has_key', cache_key
+        ):
             self.middleware.send_event(
                 'app.query', 'CHANGED', id=app_name, fields=app[0],
             )
