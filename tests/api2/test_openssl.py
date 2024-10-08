@@ -18,14 +18,16 @@ def test_fips_version():
     for i in range(retry):
         request = ssh(payload, complete_response=True, check=False, timeout=300)
         if request["returncode"] != 0:
-            print(f"Retry {i}")
+            print(f"Retry {i + 1}")
             continue
-        info = ssh("cat /root/osslproviders")
-        assert "3.0.9" in info
-        assert "FIPS configuration was changed." in info
         break
     else:
+        request = ssh(payload, complete_response=True, timeout=300)
         assert False, f"Failed to run FIPS payload after {retry} retries."
+
+    info = ssh("cat /root/osslproviders")
+    assert "3.0.9" in info
+    assert "FIPS configuration was changed." in info
 
     finalData = ssh("midclt call system.reboot.info", complete_response=True)
     assert False, f"{type(finalData)} - {finalData.keys()}"
