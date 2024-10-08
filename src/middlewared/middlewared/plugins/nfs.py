@@ -100,7 +100,7 @@ class NFSService(SystemServiceService):
         Bool('userd_manage_gids', required=True),
         Bool('keytab_has_nfs_spn', required=True),
         Bool('managed_nfsd', default=True),
-        Bool('rdma', default=False, required=True),
+        Bool('rdma', default=False),
     )
 
     @private
