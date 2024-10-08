@@ -1,11 +1,10 @@
 import pytest
 
-import subprocess
-
 from middlewared.test.integration.utils import call, ssh
 from auto_config import ha
 
 retry = 5
+fips_version = "3.0.9"
 
 
 # Sometimes this test fails because the testing environment has broken failover (randomly. Fun transient error. Reports a failed heartbeat).
@@ -25,7 +24,7 @@ def test_fips_version():
 
     enabled_info = ssh("cat /root/osslproviders")
     # Check that things are what we expect when FIPS was enabled
-    assert "3.0.9" in enabled_info
+    assert fips_version in enabled_info
     assert "FIPS configuration was changed." in enabled_info
 
     # Check that we no longer have FIPS enabled
