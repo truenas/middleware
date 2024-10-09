@@ -953,6 +953,7 @@ class FailoverEventsService(Service):
         try:
             self.run_call('docker.fs_manage.mount')
         except Exception:
+            self.middleware.call_sync('docker.state.set_status', Status.FAILED.value, 'Failed to mount docker datasets')
             logger.error('Failed to mount docker datasets', exc_info=True)
             return
         else:
