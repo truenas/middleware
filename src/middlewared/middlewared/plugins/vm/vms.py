@@ -15,7 +15,7 @@ from middlewared.service import CallError, CRUDService, item_method, job, privat
 from middlewared.validators import Range, UUID
 from middlewared.plugins.vm.numeric_set import parse_numeric_set, NumericSet
 
-from .utils import ACTIVE_STATES, get_default_status
+from .utils import ACTIVE_STATES, get_default_status, get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
 from .vm_supervisor import VMSupervisorMixin
 
 
@@ -377,6 +377,21 @@ class VMService(CRUDService, VMSupervisorMixin):
         vm_data = await self.get_instance(id_)
         if new['name'] != old['name']:
             await self.middleware.run_in_thread(self._rename_domain, old, vm_data)
+            try:
+                new_path = os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(new))
+                await self.middleware.run_in_thread(
+                    os.rename, os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(old)), new_path
+                )
+            except FileNotFoundError:
+                if old['bootloader'] == new['bootloader'] == 'UEFI':
+                    # So we only want to raise an error if bootloader is UEFI because for BIOS
+                    # nvram file will not exist and it is fine. If bootloader is changed from
+                    # BIOS to UEFI, even then we will not have it and it is fine so we don't want
+                    # to raise an error in that case.
+                    raise CallError(
+                        f'VM name has been updated but nvram file for {old["name"]} does not exist '
+                        f'which can result in {new["name"]} VM not booting properly.'
+                    )
 
         if old['shutdown_timeout'] != new['shutdown_timeout']:
             await self.middleware.call('etc.generate', 'libvirt_guests')
