@@ -8,7 +8,7 @@ from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, job, Service
 
 from .migrate_config_utils import migrate_chart_release_config
-from .utils import get_sorted_backups
+from .utils import get_k8s_ds, get_sorted_backups
 
 
 logger = logging.getLogger('app_migrations')
@@ -79,6 +79,12 @@ class K8stoDockerMigrationService(Service):
 
         if not backup_config['releases']:
             raise CallError(f'No old apps found in {options["backup_name"]!r} backup which can be migrated')
+
+        k8s_ds_encrypted = bool(self.middleware.call_sync(
+            'zfs.dataset.get_instance',
+            get_k8s_ds(kubernetes_pool),
+            {'extra': {'properties': ['encryption'], 'retrieve_children': False}}
+        )['encrypted'])
 
         docker_config = self.middleware.call_sync('docker.config')
         if docker_config['pool'] and docker_config['pool'] != kubernetes_pool:
@@ -176,6 +182,8 @@ class K8stoDockerMigrationService(Service):
                 self.middleware.call_sync('app.schema.action.update_volumes', chart_release['release_name'], [])
 
             try:
+                if k8s_ds_encrypted:
+                    raise CallError('Encrypted ix-volumes are not supported for migration')
                 app_volume_ds = get_app_parent_volume_ds_name(
                     os.path.join(kubernetes_pool, 'ix-apps'), chart_release['release_name']
                 )
@@ -190,7 +198,10 @@ class K8stoDockerMigrationService(Service):
                     self.middleware.call_sync('zfs.dataset.promote', destination_ds)
                     self.middleware.call_sync('zfs.dataset.mount', destination_ds)
             except CallError as e:
-                release_config['error'] = f'Failed to clone and promote ix-volumes: {e}'
+                if k8s_ds_encrypted:
+                    release_config['error'] = 'App is using encrypted ix-volumes which are not supported for migration'
+                else:
+                    release_config['error'] = f'Failed to clone and promote ix-volumes: {e}'
                 # We do this to make sure it does not show up as installed in the UI
                 shutil.rmtree(get_installed_app_path(chart_release['release_name']), ignore_errors=True)
             else:
