@@ -57,6 +57,11 @@ class ZPoolService(Service):
                             continue
 
                         i = next((e for e in i_vdevs if e['class'] == 'spare'), i_vdevs[0])
+                    elif i['vdev_type'] == 'replacing':
+                        for j in filter(lambda entry: entry.get('path'), list(i['vdevs'].values())):
+                            disk = self.resolve_block_path(j['path'], real_paths)
+                            final[disk] = get_normalized_disk_info(pool_name, j, member['name'], vdev_type, vdev_disks)
+                        continue
 
                     disk = self.resolve_block_path(i['path'], real_paths)
                     final[disk] = get_normalized_disk_info(pool_name, i, member['name'], vdev_type, vdev_disks)
