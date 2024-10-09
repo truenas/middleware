@@ -134,8 +134,6 @@ class ZFSDatasetService(CRUDService):
 
         # it's important that we set xattr=sa for various
         # performance reasons related to ea handling
-        # pool.dataset.create already sets this by default
-        # so mirror the behavior here
         if data['type'] == 'FILESYSTEM' and 'xattr' not in params:
             params['xattr'] = 'sa'
 
