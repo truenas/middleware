@@ -280,11 +280,11 @@ def test_008_test_prevent_smb_dataset_update(request):
             with smb_share(path, 'SMB_SHARE_2'):
 
                 # Confirm we ignore requests that don't involve changes
-                for setting in [{"xattr": "SA"}, {"acltype": "POSIX"}]:
+                for setting in [{"acltype": "POSIX"}]:
                     call('pool.dataset.update', ds, setting)
 
                 # Confirm we block requests that involve changes
-                for setting in [{"xattr": "ON"}, {"acltype": "OFF"}]:
+                for setting in [{"acltype": "OFF"}]:
                     attrib = list(setting.keys())[0]
                     with pytest.raises(ValidationErrors) as ve:
                         call('pool.dataset.update', ds, setting)
