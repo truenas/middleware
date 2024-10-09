@@ -50,13 +50,21 @@ class ZPoolService(Service):
                 final[disk] = get_normalized_disk_info(pool_name, member, 'stripe', vdev_type, vdev_disks)
             else:
                 for i in member['vdevs'].values():
-                    if i['vdev_type'] == 'spare':
+                    i_vdev_type = i['vdev_type']
+                    if i_vdev_type == 'spare':
                         i_vdevs = list(i['vdevs'].values())
                         if not i_vdevs:
                             # An edge case but just covering to be safe
                             continue
 
                         i = next((e for e in i_vdevs if e['class'] == 'spare'), i_vdevs[0])
+                    elif i_vdev_type == 'replacing':
+                        for d in i['vdevs'].values():
+                            if d['state'] == 'ONLINE':
+                                i = d
+                                break
+                        else:
+                            continue
 
                     disk = self.resolve_block_path(i['path'], real_paths)
                     final[disk] = get_normalized_disk_info(pool_name, i, member['name'], vdev_type, vdev_disks)
