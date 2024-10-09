@@ -368,11 +368,13 @@ class OpenAPIResource(object):
                     if item.get('type') == 'null':
                         items.remove(item)
                 if len(items) > 1:
-                    schema['items'] = {'oneOf': items}
+                    schema['items'] = {'oneOf': list(map(self._convert_schema, items))}
                 elif len(items) > 0:
-                    schema['items'] = items[0]
+                    schema['items'] = self._convert_schema(items[0])
                 else:
                     schema['items'] = {}
+        if anyOf := schema.get('anyOf', None):
+            schema['anyOf'] = list(map(self._convert_schema, anyOf))
         return schema
 
     def _returns_to_request(self, methodname, method_returns):
