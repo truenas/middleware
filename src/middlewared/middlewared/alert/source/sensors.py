@@ -4,6 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
+from middlewared.utils import ProductType
 
 
 class SensorAlertClass(AlertClass):
@@ -11,7 +12,7 @@ class SensorAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Sensor Value Is Outside of Working Range"
     text = "Sensor %(name)s is %(relative)s %(level)s value: %(value)s %(event)s"
-    products = ("SCALE_ENTERPRISE",)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class PowerSupplyAlertClass(AlertClass):
@@ -19,7 +20,7 @@ class PowerSupplyAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Power Supply Error"
     text = "%(psu)s is %(state)s showing: %(errors)s"
-    products = ("SCALE_ENTERPRISE",)
+    products = (ProductType.SCALE_ENTERPRISE,)
 
 
 class SensorsAlertSource(AlertSource):

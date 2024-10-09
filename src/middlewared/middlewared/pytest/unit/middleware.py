@@ -3,11 +3,8 @@ import logging
 from unittest.mock import AsyncMock, Mock
 
 from middlewared.plugins.datastore.read import DatastoreService
-from middlewared.settings import conf
 from middlewared.utils import filter_list
 from middlewared.utils.plugins import SchemasMixin
-
-conf.debug_mode = False  # FIXME: Find a proper way to disable return value schema validation in tests
 
 
 class Middleware(SchemasMixin, dict):

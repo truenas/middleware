@@ -11,7 +11,7 @@ from licenselib.license import ContractType, Features, License
 from middlewared.plugins.truenas import EULA_PENDING_PATH
 from middlewared.schema import accepts, Bool, returns, Str
 from middlewared.service import no_authz_required, private, Service, ValidationError
-from middlewared.utils import sw_info
+from middlewared.utils import ProductType, sw_info
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
@@ -36,19 +36,19 @@ class SystemService(Service):
         if SystemService.PRODUCT_TYPE is None:
             if await self.is_ha_capable():
                 # HA capable hardware
-                SystemService.PRODUCT_TYPE = 'SCALE_ENTERPRISE'
+                SystemService.PRODUCT_TYPE = ProductType.SCALE_ENTERPRISE
             else:
                 if license_ := await self.middleware.call('system.license'):
                     if license_['model'].lower().startswith('freenas'):
                         # legacy freenas certified
-                        SystemService.PRODUCT_TYPE = 'SCALE'
+                        SystemService.PRODUCT_TYPE = ProductType.SCALE
                     else:
                         # the license has been issued for a "certified" line
                         # of hardware which is considered enterprise
-                        SystemService.PRODUCT_TYPE = 'SCALE_ENTERPRISE'
+                        SystemService.PRODUCT_TYPE = ProductType.SCALE_ENTERPRISE
                 else:
                     # no license
-                    SystemService.PRODUCT_TYPE = 'SCALE'
+                    SystemService.PRODUCT_TYPE = ProductType.SCALE
 
         return SystemService.PRODUCT_TYPE
 
@@ -58,7 +58,7 @@ class SystemService(Service):
 
     @private
     async def is_enterprise(self):
-        return await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE'
+        return await self.middleware.call('system.product_type') == ProductType.SCALE_ENTERPRISE
 
     @no_authz_required
     @accepts()
@@ -198,11 +198,6 @@ class SystemService(Service):
         """
         Returns whether the `feature` is enabled or not
         """
-        is_core = (await self.middleware.call('system.product_type')) == 'CORE'
-        if name == 'FIBRECHANNEL' and is_core:
-            return False
-        elif is_core:
-            return True
         license_ = await self.middleware.call('system.license')
         if license_ and name in license_['features']:
             return True

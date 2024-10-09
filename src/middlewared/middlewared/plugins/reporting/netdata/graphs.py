@@ -253,12 +253,18 @@ class DiskTempPlugin(GraphBase):
 class UPSBase(GraphBase):
 
     UPS_IDENTIFIER = None
+    skip_zero_values_in_aggregation = True
 
     async def export_multiple_identifiers(
         self, query_params: dict, identifiers: list, aggregate: bool = True
     ) -> typing.List[dict]:
         self.UPS_IDENTIFIER = (await self.middleware.call('ups.config'))['identifier']
         return await super().export_multiple_identifiers(query_params, identifiers, aggregate)
+
+    def query_parameters(self) -> dict:
+        return super().query_parameters() | {
+            'group': 'median'
+        }
 
 
 class UPSChargePlugin(UPSBase):
@@ -333,7 +339,6 @@ class UPSTemperaturePlugin(UPSBase):
 
     title = 'UPS Temperature'
     vertical_label = 'Celsius'
-    skip_zero_values_in_aggregation = True
     uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:

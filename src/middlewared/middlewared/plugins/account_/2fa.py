@@ -4,7 +4,7 @@ import pyotp
 from middlewared.api import api_method
 from middlewared.api.current import *
 from middlewared.service import CallError, no_authz_required, pass_app, private, Service
-from middlewared.plugins.system.product import PRODUCT_NAME
+from middlewared.utils import ProductName
 from middlewared.utils.privilege import app_credential_full_admin_or_user
 
 
@@ -17,7 +17,7 @@ class UserService(Service):
             digits=user_twofactor_config['otp_digits'],
         ).provisioning_uri(
             f'{username}-{await self.middleware.call("system.hostname")}'
-            f'@{PRODUCT_NAME}',
+            f'@{ProductName.PRODUCT_NAME}',
             'iXsystems'
         )
 

@@ -1,8 +1,10 @@
 import asyncio
 
-from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import SystemRebootArgs, SystemRebootResult, SystemShutdownArgs, SystemShutdownResult
+from middlewared.schema import accepts, Bool, returns, Str
 from middlewared.service import job, private, Service, no_auth_required, pass_app
-from middlewared.utils import Popen, run
+from middlewared.utils import run
 
 from .utils import lifecycle_conf, RE_KDUMP_CONFIGURED
 
@@ -19,7 +21,7 @@ class SystemService(Service):
     @pass_app()
     async def boot_id(self, app):
         """
-        Returns an unique boot identifier.
+        Returns a unique boot identifier.
 
         It is supposed to be unique every system boot.
         """
@@ -53,41 +55,39 @@ class SystemService(Service):
             return 'READY'
         return 'BOOTING'
 
-    @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
-    @returns()
+    @api_method(SystemRebootArgs, SystemRebootResult)
     @job()
-    async def reboot(self, job, options):
+    @pass_app(rest=True)
+    async def reboot(self, app, job, reason, options):
         """
         Reboots the operating system.
 
         Emits an "added" event of name "system" and id "reboot".
         """
-        if options is None:
-            options = {}
+        await self.middleware.log_audit_message(app, 'REBOOT', {'reason': reason}, True)
 
-        self.middleware.send_event('system.reboot', 'ADDED')
+        self.middleware.send_event('system.reboot', 'ADDED', fields={'reason': reason})
 
-        delay = options.get('delay')
-        if delay:
-            await asyncio.sleep(delay)
+        if options['delay'] is not None:
+            await asyncio.sleep(options['delay'])
 
         await run(['/sbin/shutdown', '-r', 'now'])
 
-    @accepts(Dict('system-shutdown', Int('delay', required=False), required=False))
-    @returns()
+    @api_method(SystemShutdownArgs, SystemShutdownResult)
     @job()
-    async def shutdown(self, job, options):
+    @pass_app(rest=True)
+    async def shutdown(self, app, job, reason, options):
         """
         Shuts down the operating system.
 
         An "added" event of name "system" and id "shutdown" is emitted when shutdown is initiated.
         """
-        if options is None:
-            options = {}
+        await self.middleware.log_audit_message(app, 'SHUTDOWN', {'reason': reason}, True)
 
-        delay = options.get('delay')
-        if delay:
-            await asyncio.sleep(delay)
+        self.middleware.send_event('system.shutdown', 'ADDED', fields={'reason': reason})
+
+        if options['delay'] is not None:
+            await asyncio.sleep(options['delay'])
 
         await run(['/sbin/poweroff'])
 

@@ -1,5 +1,3 @@
-from typing import Any
-
 from middlewared.api.base import BaseModel
 
 __all__ = ["AtaSelfTest", "NvmeSelfTest", "ScsiSelfTest"]

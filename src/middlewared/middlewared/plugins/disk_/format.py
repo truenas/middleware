@@ -20,6 +20,16 @@ class DiskService(Service):
             raise CallError(f'Disk: {disk!r} is incorrectly formatted with Data Integrity Feature (DIF).')
 
         dev = parted.getDevice(f'/dev/{disk}')
+        # it's important we remove this device from the global cache
+        # so that libparted probes the disk for the latest up-to-date
+        # information. This becomes _very_ important, for example,
+        # when we overprovision disk devices. If the disk is overprovisioned
+        # to a larger/smaller size, then libparted has possibility of
+        # referencing the old disk size. So depending on the direction of
+        # the resize operation, the `clobber()` operation can run off of
+        # the end of the disk and raise an IO failure. We actually saw this
+        # interally during testing
+        dev._Device__device.cache_remove()
         for i in range(2):
             if not dev.clobber():
                 # clobber() wipes partition label info from disk but during testing

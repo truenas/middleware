@@ -208,14 +208,6 @@ class BootService(Service):
         )
         return interval
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Int('interval'))
-    async def get_scrub_interval(self):
-        """
-        Get Automatic Scrub Interval value in days.
-        """
-        return (await self.middleware.call('system.advanced.config'))['boot_scrub']
-
     @asynccontextmanager
     async def __toggle_rootfs_readwrite(self):
         mnt = await self.middleware.call('filesystem.mount_info', [['mountpoint', '=', '/']], {'get': True})

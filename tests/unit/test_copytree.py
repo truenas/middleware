@@ -4,7 +4,6 @@ import os
 import pytest
 import random
 import stat
-import subprocess
 
 from middlewared.utils.filesystem import copy
 from operator import eq, ne
@@ -76,11 +75,19 @@ def create_test_data(target: str, symlink_target_path) -> None:
 
     Basic tree of files and directories including some symlinks
     """
-    os.mkdir(os.path.join(target, 'SOURCE'))
-    create_test_files(os.path.join(target, 'SOURCE'), symlink_target_path)
+    source = os.path.join(target, 'SOURCE')
+    os.mkdir(source)
+
+    for xat_name, xat_data in TEST_DIR_XATTRS:
+        os.setxattr(source, xat_name, xat_data)
+
+    os.chown(source, JENNY + 10, JENNY + 11)
+    os.chmod(source, 0o777)
+
+    create_test_files(source, symlink_target_path)
 
     for dirname in TEST_DIRS:
-        path = os.path.join(target, 'SOURCE', dirname)
+        path = os.path.join(source, dirname)
         os.mkdir(path)
         os.chmod(path, 0o777)
         os.chown(path, JENNY, JENNY)
@@ -101,6 +108,8 @@ def create_test_data(target: str, symlink_target_path) -> None:
         os.mkdir(os.path.join(target, dirname))
         create_test_files(path, os.path.join(target, dirname))
         os.utime(path, ns=(JENNY + 3, JENNY + 4))
+
+    os.utime(source, ns=(JENNY + 5, JENNY + 6))
 
 
 @pytest.fixture(scope="function")
@@ -249,7 +258,6 @@ def validate_the_things(
 def validate_copy_tree(
     src: str,
     dst: str,
-
     flags: copy.CopyFlags
 ):
     with os.scandir(src) as it:
@@ -263,6 +271,8 @@ def validate_copy_tree(
             validate_the_things(new_src, new_dst, flags)
             if f.is_dir() and not f.is_symlink():
                 validate_copy_tree(new_src, new_dst, flags)
+
+    validate_the_things(src, dst, flags)
 
 
 def test__copytree_default(directory_for_test, fd_count):
@@ -293,7 +303,7 @@ def test__copytree_exclude_ctldir(directory_for_test, fd_count, is_ctldir):
 
     snapdir = os.path.join(src, '.zfs', 'snapshot', 'now')
     os.makedirs(snapdir)
-    with open(os.path.join(snapdir, 'canary'), 'w') as f:
+    with open(os.path.join(snapdir, 'canary'), 'w'):
         pass
 
     if is_ctldir:

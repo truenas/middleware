@@ -49,17 +49,6 @@ class CertificateService(Service):
 
     @accepts()
     @returns(Dict(
-        'private_key_type_choices',
-        *[Str(k, enum=[k]) for k in ('RSA', 'EC')]
-    ))
-    async def key_type_choices(self):
-        """
-        Dictionary of supported key types for certificates.
-        """
-        return {k: k for k in ['RSA', 'EC']}
-
-    @accepts()
-    @returns(Dict(
         'extended_key_usage_choices',
         *[Str(k, enum=[k]) for k in EKU_OIDS]
     ))

@@ -13,8 +13,7 @@ from .job import Job, JobsQueue, State
 from .pipe import Pipes, Pipe
 from .restful import parse_credentials, authenticate, create_application, copy_multipart_to_pipe, RESTfulAPI
 from .role import ROLES, RoleManager
-from .settings import conf
-from .schema import clean_and_validate_arg, Error as SchemaError, OROperator
+from .schema import Error as SchemaError, OROperator
 import middlewared.service
 from .service_exception import (
     adapt_exception, CallError, CallException, ErrnoMixin, MatchNotFound, ValidationError, ValidationErrors,
@@ -1741,14 +1740,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
 
-        event_data = self.events.get_event(name)
-        # TODO: Temporarily skip events which are CHANGED but have cleared set for validation as CHANGED
-        # will be removed in next release and this case wouldn't be applicable
-        if event_data and conf.debug_mode and event_type in ('ADDED', 'CHANGED'):
-            verrors = ValidationErrors()
-            clean_and_validate_arg(verrors, event_data['returns'][0], kwargs.get('fields'))
-            verrors.check()
-
         self.logger.trace(f'Sending event {name!r}:{event_type!r}:{kwargs!r}')
 
         for session_id, wsclient in list(self.__wsclients.items()):
@@ -2186,7 +2177,6 @@ def main():
     parser.add_argument('--loop-debug', action='store_true')
     parser.add_argument('--trace-malloc', '-tm', action='store', nargs=2, type=int, default=False)
     parser.add_argument('--overlay-dirs', '-o', action='append')
-    parser.add_argument('--debug-mode', action='store_true', default=False)
     parser.add_argument('--debug-level', choices=[
         'TRACE',
         'DEBUG',
@@ -2220,8 +2210,6 @@ def main():
     if args.pidfile:
         with open(pidpath, "w") as _pidfile:
             _pidfile.write(f"{str(os.getpid())}\n")
-
-    conf.debug_mode = args.debug_mode
 
     Middleware(
         loop_debug=args.loop_debug,

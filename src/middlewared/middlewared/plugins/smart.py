@@ -4,6 +4,7 @@ import functools
 import re
 import time
 import json
+from typing import Any
 
 from humanize import ordinal
 
@@ -40,7 +41,7 @@ async def annotate_disk_smart_tests(middleware, tests_filter, disk):
     return dict(tests=filter_list(tests, tests_filter), current_test=current_test, **disk)
 
 
-def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest] | list[ScsiSelfTest] | None:
+def parse_smart_selftest_results(data) -> list[dict[str, Any]] | None:
     tests = []
 
     # ataprint.cpp
@@ -71,7 +72,7 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                 else:
                     test.status = "FAILED"
 
-                tests.append(test)
+                tests.append(test.dict())
 
         return tests
 
@@ -103,7 +104,7 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
                 else:
                     test.status = "FAILED"
 
-                tests.append(test)
+                tests.append(test.dict())
 
         return tests
 
@@ -112,7 +113,7 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
     if "scsi_self_test_0" in data: # 0 is most recent test
         for index in range(0, 20): # only 20 tests can ever return
             test_key = f"scsi_self_test_{index}"
-            if not test_key in data:
+            if test_key not in data:
                 break
             entry = data[test_key]
 
@@ -145,7 +146,7 @@ def parse_smart_selftest_results(data) -> list[AtaSelfTest] | list[NvmeSelfTest]
             else:
                 test.status = "FAILED"
 
-            tests.append(test)
+            tests.append(test.dict())
 
         return tests
 
@@ -314,7 +315,7 @@ class SMARTTestService(CRUDService):
         """
         Query S.M.A.R.T. tests for the specified disk name.
         """
-        disk = await self.middleware.call_sync('disk.query', [['name', '=', disk_name]], {'get': True})
+        disk = await self.middleware.call('disk.query', [['name', '=', disk_name]], {'get': True})
 
         return [
             test

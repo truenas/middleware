@@ -18,7 +18,7 @@ class DockerFilesystemManageService(Service):
                     await self.middleware.call('zfs.dataset.mount', docker_ds, {'recursive': True, 'force_mount': True})
                 else:
                     await self.middleware.call('zfs.dataset.umount', docker_ds, {'force': True})
-                await self.middleware.call('catalog.sync')
+                return await self.middleware.call('catalog.sync')
             except Exception as e:
                 await self.middleware.call(
                     'docker.state.set_status', Status.FAILED.value,
@@ -27,10 +27,10 @@ class DockerFilesystemManageService(Service):
                 raise
 
     async def mount(self):
-        await self.common_func(True)
+        return await self.common_func(True)
 
     async def umount(self):
-        await self.common_func(False)
+        return await self.common_func(False)
 
     async def ix_apps_is_mounted(self, dataset_to_check=None):
         """

@@ -1,6 +1,6 @@
 import contextlib
 
-from middlewared.test.integration.utils import call, mock
+from middlewared.test.integration.utils import mock
 
 
 @contextlib.contextmanager

@@ -251,30 +251,6 @@ class ZFSSnapshot(CRUDService):
             return self.middleware.call_sync('zfs.snapshot.get_instance', snap_id)
 
     @accepts(
-        Dict(
-            'snapshot_remove',
-            Str('dataset', required=True),
-            Str('name', required=True),
-            Bool('defer_delete')
-        ),
-        roles=['SNAPSHOT_DELETE'],
-    )
-    def remove(self, data):
-        """
-        Remove a snapshot from a given dataset.
-
-        Returns:
-            bool: True if succeed otherwise False.
-        """
-        self.logger.debug('zfs.snapshot.remove is deprecated, use zfs.snapshot.delete')
-        snapshot_name = data['dataset'] + '@' + data['name']
-        try:
-            self.do_delete(snapshot_name, {'defer': data.get('defer_delete') or False})
-        except Exception:
-            return False
-        return True
-
-    @accepts(
         Str('id'),
         Dict(
             'options',

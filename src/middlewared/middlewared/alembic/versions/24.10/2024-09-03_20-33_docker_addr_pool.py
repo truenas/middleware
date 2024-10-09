@@ -22,7 +22,7 @@ def upgrade():
                 'address_pools',
                 sa.TEXT(),
                 nullable=False,
-                server_default='[{"base": "172.30.0.0/16", "size": 27}, {"base": "172.31.0.0/16", "size": 27}]'
+                server_default='[{"base": "172.17.0.0/12", "size": 24}]'
             )
         )
 
