@@ -16,6 +16,7 @@ from middlewared.utils import filter_list
 from middlewared.service import Service, job, accepts
 from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Bool, Int
+from middlewared.plugins.docker.state_utils import Status
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
@@ -943,6 +944,7 @@ class FailoverEventsService(Service):
     def start_apps(self):
         pool = self.run_call('docker.config')['pool']
         if not pool:
+            self.middleware.call_sync('docker.state.set_status', Status.UNCONFIGURED.value)
             logger.info('Skipping starting apps as they are not configured')
             return
 
