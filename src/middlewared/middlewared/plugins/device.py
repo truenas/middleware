@@ -33,7 +33,7 @@ class DeviceService(Service):
                 Str('pci_slot', required=True),
                 Str('domain', required=True),
                 Str('bus', required=True),
-                Str('slot', True),
+                Str('slot', required=True),
             ),
             Str('description', required=True),
             List('devices', items=[Dict(
