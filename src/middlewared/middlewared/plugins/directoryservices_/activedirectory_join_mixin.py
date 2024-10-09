@@ -26,8 +26,9 @@ class ADJoinMixin:
 
         self.middleware.call_sync('service.stop', 'idmap')
         self.middleware.call_sync('service.start', 'idmap', {'silent': False})
-        self.middleware.call_sync('kerberos.start')
+        # Wait for winbind to come online to provide some time for sysvol replication
         self._ad_wait_wbclient()
+        self.middleware.call_sync('kerberos.start')
 
     def _ad_wait_wbclient(self) -> None:
         waited = 0
