@@ -5,11 +5,10 @@ import os
 
 from pyudev import Context
 
-from middlewared.plugins.device_.device_info import (RE_NVME_PRIV,
-                                                     is_iscsi_device)
-from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
+from middlewared.plugins.device_.device_info import RE_NVME_PRIV, is_iscsi_device
 from middlewared.schema import List, Str
 from middlewared.service import Service, accepts, job, private
+from middlewared.utils.disks import DISKS_TO_IGNORE
 
 logger = logging.getLogger(__name__)
 

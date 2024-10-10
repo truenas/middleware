@@ -302,7 +302,7 @@ NETDATA_ALL_METRICS = {
             }
         }
     },
-    'disk.sda': {
+    'truenas_disk_stats.io.{devicename}sda': {
         'name': 'disk.sda',
         'family': 'vda',
         'context': 'disk.io',
@@ -311,15 +311,15 @@ NETDATA_ALL_METRICS = {
         'dimensions': {
             'reads': {
                 'name': 'reads',
-                'value': 0
+                'value': 10
             },
             'writes': {
                 'name': 'writes',
-                'value': 0
+                'value': 20
             }
         }
     },
-    'disk_ops.sda': {
+    'truenas_disk_stats.ops.{devicename}sda': {
         'name': 'disk_ops.sda',
         'family': 'vda',
         'context': 'disk.ops',
@@ -328,15 +328,15 @@ NETDATA_ALL_METRICS = {
         'dimensions': {
             'reads': {
                 'name': 'reads',
-                'value': 0
+                'value': 2
             },
             'writes': {
                 'name': 'writes',
-                'value': 0
+                'value': 3
             }
         }
     },
-    'disk_busy.sda': {
+    'truenas_disk_stats.busy.{devicename}sda': {
         'name': 'disk_busy.sda',
         'family': 'vda',
         'context': 'disk.busy',
@@ -349,7 +349,7 @@ NETDATA_ALL_METRICS = {
             }
         }
     },
-    'disk.sdb': {
+    'truenas_disk_stats.io.{devicename}sdb': {
         'name': 'disk.sdb',
         'family': 'vdb',
         'context': 'disk.io',
@@ -358,15 +358,15 @@ NETDATA_ALL_METRICS = {
         'dimensions': {
             'reads': {
                 'name': 'reads',
-                'value': 0
+                'value': 3
             },
             'writes': {
                 'name': 'writes',
-                'value': 0
+                'value': 3
             }
         }
     },
-    'disk_ops.sdb': {
+    'truenas_disk_stats.ops.{devicename}sdb': {
         'name': 'disk_ops.sdb',
         'family': 'vdb',
         'context': 'disk.ops',
@@ -375,15 +375,15 @@ NETDATA_ALL_METRICS = {
         'dimensions': {
             'reads': {
                 'name': 'reads',
-                'value': 0
+                'value': 1
             },
             'writes': {
                 'name': 'writes',
-                'value': 0
+                'value': 1
             }
         }
     },
-    'disk_busy.sdb': {
+    'truenas_disk_stats.busy.{devicename}sdb': {
         'name': 'disk_busy.sdb',
         'family': 'vdb',
         'context': 'disk.busy',
@@ -396,7 +396,7 @@ NETDATA_ALL_METRICS = {
             }
         }
     },
-    'disk.sdc': {
+    'truenas_disk_stats.io.{devicename}sdc': {
         'name': 'disk.sdc',
         'family': 'vdc',
         'context': 'disk.io',
@@ -405,16 +405,16 @@ NETDATA_ALL_METRICS = {
         'dimensions': {
             'reads': {
                 'name': 'reads',
-                'value': 0
+                'value': 3
             },
             'writes': {
                 'name': 'writes',
-                'value': 0
+                'value': 4
             }
         }
     },
 
-    'disk_ops.sdc': {
+    'truenas_disk_stats.ops.{devicename}sdc': {
         'name': 'disk_ops.sdc',
         'family': 'vdc',
         'context': 'disk.ops',
@@ -423,15 +423,15 @@ NETDATA_ALL_METRICS = {
         'dimensions': {
             'reads': {
                 'name': 'reads',
-                'value': 0
+                'value': 6
             },
             'writes': {
                 'name': 'writes',
-                'value': 0
+                'value': 6
             }
         }
     },
-    'disk_busy.sdc': {
+    'truenas_disk_stats.busy.{devicename}sdc': {
         'name': 'disk_busy.sdc',
         'family': 'vdc',
         'context': 'disk.busy',
@@ -444,7 +444,7 @@ NETDATA_ALL_METRICS = {
             }
         }
     },
-    'disk.sdd': {
+    'truenas_disk_stats.io.{devicename}sdd': {
         'name': 'disk.sdd',
         'family': 'vdd',
         'context': 'disk.io',
@@ -453,15 +453,15 @@ NETDATA_ALL_METRICS = {
         'dimensions': {
             'reads': {
                 'name': 'reads',
-                'value': 0
+                'value': 2
             },
             'writes': {
                 'name': 'writes',
-                'value': 0
+                'value': 3
             }
         }
     },
-    'disk_ops.sdd': {
+    'truenas_disk_stats.ops.{devicename}sdd': {
         'name': 'disk_ops.sdd',
         'family': 'vdd',
         'context': 'disk.ops',
@@ -470,15 +470,15 @@ NETDATA_ALL_METRICS = {
         'dimensions': {
             'reads': {
                 'name': 'reads',
-                'value': 0
+                'value': 1
             },
             'writes': {
                 'name': 'writes',
-                'value': 0
+                'value': 1
             }
         }
     },
-    'disk_busy.sdd': {
+    'truenas_disk_stats.busy.{devicename}sdd': {
         'name': 'disk_busy.sdd',
         'family': 'vdd',
         'context': 'disk.busy',
@@ -575,16 +575,32 @@ def test_cpu_stats():
 
 def test_disk_stats():
     disks = ['sda', 'sdb', 'sdc', 'sdd']
-    disk_stats = get_disk_stats(NETDATA_ALL_METRICS, disks)
+    disk_mapping = {
+        'sda': '{devicename}sda', 'sdb': '{devicename}sdb', 'sdc': '{devicename}sdc', 'sdd': '{devicename}sdd'
+    }
+    disk_stats = get_disk_stats(NETDATA_ALL_METRICS, disks, disk_mapping)
     read_ops = read_bytes = write_ops = write_bytes = busy = 0
     for disk in disks:
-        read_ops += safely_retrieve_dimension(NETDATA_ALL_METRICS, f'disk_ops.{disk}', 'reads', 0)
-        read_bytes += normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, f'disk.{disk}', 'reads', 0), multiplier=1024,
+        mapped_key = disk_mapping.get(disk)
+        read_ops += safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, f'truenas_disk_stats.ops.{mapped_key}', f'{mapped_key}.read_ops', 0
         )
-        write_ops += normalize_value(safely_retrieve_dimension(NETDATA_ALL_METRICS, f'disk_ops.{disk}', 'writes', 0))
-        write_bytes += normalize_value(safely_retrieve_dimension(NETDATA_ALL_METRICS, f'disk.{disk}', 'writes', 0))
-        busy += safely_retrieve_dimension(NETDATA_ALL_METRICS, f'disk_busy.{disk}', 'busy', 0)
+        read_bytes += normalize_value(
+            safely_retrieve_dimension(
+                NETDATA_ALL_METRICS, f'truenas_disk_stats.io.{mapped_key}', f'{mapped_key}.reads', 0
+            ), multiplier=1024,
+        )
+        write_ops += normalize_value(safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, f'truenas_disk_stats.ops.{mapped_key}', f'{mapped_key}.write_ops', 0
+        ))
+        write_bytes += normalize_value(
+            safely_retrieve_dimension(
+                NETDATA_ALL_METRICS, f'truenas_disk_stats.io.{mapped_key}', f'{mapped_key}.writes', 0
+            ), multiplier=1024,
+        )
+        busy += safely_retrieve_dimension(
+            NETDATA_ALL_METRICS, f'truenas_disk_stats.busy.{mapped_key}', f'{mapped_key}.busy', 0
+        )
 
     assert disk_stats['read_ops'] == read_ops
     assert disk_stats['read_bytes'] == read_bytes

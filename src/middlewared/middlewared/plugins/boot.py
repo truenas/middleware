@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, returns, Patch
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
+from middlewared.utils.disks import valid_zfs_partition_uuids
 from middlewared.validators import Range
 
 BOOT_ATTACH_REPLACE_LOCK = 'boot_attach_replace'
@@ -104,7 +105,7 @@ class BootService(Service):
             zfs_part = await self.middleware.call(
                 'disk.get_partition_with_uuids',
                 disks[0],
-                await self.middleware.call('disk.get_valid_zfs_partition_type_uuids'),
+                list(valid_zfs_partition_uuids()),
             )
             if zfs_part:
                 format_opts['size'] = zfs_part['size']

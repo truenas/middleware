@@ -11,7 +11,7 @@ from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
 from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils.asyncio_ import asyncio_map
-from middlewared.utils.disks import parse_smartctl_for_temperature_output
+from middlewared.utils.disk_temperatures import parse_smartctl_for_temperature_output
 
 
 class DiskService(Service):
