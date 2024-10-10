@@ -3,20 +3,17 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+import pathlib
 import subprocess
-import re
 
 from pyudev import Context
 
 from ixhardware import PLATFORM_PREFIXES
-from libsg3.ses import EnclosureDevice
 
 from middlewared.service import Service
 from middlewared.utils.functools_ import cache
 
-from .ha_hardware import HA_HARDWARE
-
-ENCLOSURES_DIR = '/sys/class/enclosure/'
+from middlewared.plugins.enclosure_.ses_enclosures2 import get_ses_enclosures
 
 
 class EnclosureDetectionService(Service):
@@ -90,52 +87,33 @@ class EnclosureDetectionService(Service):
             # down this path.
             return HARDWARE, NODE
 
-        for enc in self.middleware.call_sync('enclosure.list_ses_enclosures'):
-            try:
-                info = EnclosureDevice(enc).get_element_descriptor()
-            except OSError:
-                self.logger.warning('Error querying element descriptor page for %r', enc, exc_info=True)
-                continue
-            else:
-                if re.search(HA_HARDWARE.ZSERIES_ENCLOSURE.value, info):
-                    # Z-series Hardware (Echostream)
-                    HARDWARE = 'ECHOSTREAM'
-                    reg = re.search(HA_HARDWARE.ZSERIES_NODE.value, info)
-                    NODE = reg.group(1)
-                    if NODE:
+        for enc in get_ses_enclosures(product, False):
+            if enc.is_mseries:
+                HARDWARE = 'ECHOWARP'
+                if enc.product == '4024Sp':
+                    return HARDWARE, 'A'
+                elif enc.product == '4024Ss':
+                    return HARDWARE, 'B'
+            elif enc.is_xseries:
+                HARDWARE = 'PUMA'
+                esce = enc.elements.get('Enclosure Services Controller Electronics', {})
+                for i in esce.values():
+                    if i['descriptor'].find('ESCE A_') != -1:
+                        node = 'A'
+                    elif i['descriptor'].find('ESCE B_') != -1:
+                        node = 'B'
+                    else:
                         break
-                elif re.search(HA_HARDWARE.XSERIES_ENCLOSURE.value, info):
-                    # X-series Hardware (PUMA)
-                    HARDWARE = 'PUMA'
-
-                    sas_addr = ''
-                    with open(f'{ENCLOSURES_DIR}{enc.split("/")[-1]}/device/sas_address') as f:
-                        # We need to get the SAS address of the SAS expander first
-                        sas_addr = f.read().strip()
 
                     # We then cast the SES address (deduced from SES VPD pages)
                     # to an integer and subtract 1. Then cast it back to hexadecimal.
-                    # We then compare if the SAS expander's SAS address
-                    # is in the SAS expanders SES address
-                    if (reg := re.search(HA_HARDWARE.XSERIES_NODEA.value, info)) is not None:
-                        ses_addr = hex(int(reg.group(1), 16) - 1)
-                        if ses_addr == sas_addr:
-                            NODE = 'A'
-                            break
-
-                    if (reg := re.search(HA_HARDWARE.XSERIES_NODEB.value, info)) is not None:
-                        ses_addr = hex(int(reg.group(1), 16) - 1)
-                        if ses_addr == sas_addr:
-                            NODE = 'B'
-                            break
-                elif (reg := re.search(HA_HARDWARE.MSERIES_ENCLOSURE.value, info)) is not None:
-                    # M-series hardware (Echowarp)
-                    HARDWARE = 'ECHOWARP'
-                    if reg.group(2) == 'p':
-                        NODE = 'A'
-                        break
-                    elif reg.group(2) == 's':
-                        NODE = 'B'
-                        break
+                    # We then compare if the SAS expander's SAS address is the same
+                    # as the SAS expanders SES address.
+                    ses_addr = hex(int(i['descriptor'][7:].strip(), 16) - 1)
+                    sas_addr = pathlib.Path(
+                        f'/sys/class/enclosure/{enc.pci}/device/sas_address'
+                    ).read_text().strip()
+                    if ses_addr == sas_addr:
+                        return HARDWARE, node
 
         return HARDWARE, NODE
