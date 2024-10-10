@@ -107,7 +107,7 @@ def test__parse_smart_selftest_results__ataprint__2():
             "status": "RUNNING",
             "status_verbose": "Self-test routine in progress",
             "remaining": 1.0,
-            "lifetime": 0,
+            "lifetime": 16590,
             "lba_of_first_error": None,
             "poh_ago": 0
         }
