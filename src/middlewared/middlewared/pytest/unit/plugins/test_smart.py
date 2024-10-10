@@ -11,6 +11,9 @@ from middlewared.api.current import (
 
 def test__parse_smart_selftest_results__ataprint__1():
     data = {
+        "power_on_time": {
+            "hours": 16590
+        },
         "ata_smart_self_test_log": {
             "standard": {
                 "revision": 1,
@@ -53,7 +56,8 @@ def test__parse_smart_selftest_results__ataprint__1():
             "status_verbose": "Completed without error",
             "remaining": 0.0,
             "lifetime": 16590,
-            "lba_of_first_error": None
+            "lba_of_first_error": None,
+            "poh_ago": 0
         },
         {
             "num": 1,
@@ -62,13 +66,17 @@ def test__parse_smart_selftest_results__ataprint__1():
             "status_verbose": "Completed without error",
             "remaining": 0.0,
             "lifetime": 16589,
-            "lba_of_first_error": None
+            "lba_of_first_error": None,
+            "poh_ago": 1
         }
     ]
 
 
 def test__parse_smart_selftest_results__ataprint__2():
     data = {
+        "power_on_time": {
+            "hours": 16590
+        },
         "ata_smart_self_test_log": {
             "standard": {
                 "revision": 1,
@@ -84,7 +92,7 @@ def test__parse_smart_selftest_results__ataprint__2():
                             "remaining_percent": 100,
                             "passed": True
                         },
-                        "lifetime_hours": 0
+                        "lifetime_hours": 16590
                     }
                 ],
                 "error_count_total": 0,
@@ -100,13 +108,17 @@ def test__parse_smart_selftest_results__ataprint__2():
             "status_verbose": "Self-test routine in progress",
             "remaining": 1.0,
             "lifetime": 0,
-            "lba_of_first_error": None
+            "lba_of_first_error": None,
+            "poh_ago": 0
         }
     ]
 
 
 def test__parse_smart_selftest_results__nvmeprint__1():
     assert parse_smart_selftest_results({
+        "power_on_time": {
+            "hours": 18636
+        },
         "nvme_self_test_log": {
             "table": [
                 {
@@ -133,13 +145,17 @@ def test__parse_smart_selftest_results__nvmeprint__1():
             "nsid": None,
             "seg": None,
             "sct": 0x0,
-            "code": 0x0
+            "code": 0x0,
+            "poh_ago": 0
         },
     ]
 
 
 def test__parse_smart_selftest_results__scsiprint__1():
     assert parse_smart_selftest_results({
+        "power_on_time": {
+            "hours": 3943
+        },
         "scsi_self_test_0": {
             "code": {
                 "string": "Background short"
@@ -159,7 +175,8 @@ def test__parse_smart_selftest_results__scsiprint__1():
             "status_verbose": "Completed, segment failed",
             "segment_number": None,
             "lifetime": 3943,
-            "lba_of_first_error": None
+            "lba_of_first_error": None,
+            "poh_ago": 0
         }
     ]
 
