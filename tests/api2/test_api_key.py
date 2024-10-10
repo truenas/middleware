@@ -5,6 +5,7 @@ from datetime import datetime, UTC
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
+from time import sleep
 
 LEGACY_ENTRY_KEY = 'rtpz6u16l42XJJGy5KMJOVfkiQH7CyitaoplXy7TqFTmY7zHqaPXuA1ob07B9bcB'
 LEGACY_ENTRY_HASH = '$pbkdf2-sha256$29000$CyGktHYOwXgvBYDQOqc05g$nK1MMvVuPGHMvUENyR01qNsaZjgGmlt3k08CRuC4aTI'
@@ -25,14 +26,12 @@ def sharing_admin_user(unprivileged_user_fixture):
 def check_revoked_alert():
     # reset any revoked alert
     call('api_key.check_status')
-    has_alert = False
 
     for a in call('alert.list'):
         if a['klass'] == 'ApiKeyRevoked':
-            has_alert = True
-            break
+            return a
 
-    return has_alert
+    return None
 
 
 def test_user_unprivileged_api_key_failure(unprivileged_user_fixture):
@@ -193,9 +192,11 @@ def test_key_revoked(sharing_admin_user):
             })
             assert resp['response_type'] == 'AUTH_ERR'
 
-        assert check_revoked_alert() is True
+        assert check_revoked_alert() is not None
         call('datastore.update', 'account.api_key', key_id, {'expiry': 0})
-        assert check_revoked_alert() is False
+        sleep(1)
+        alert = check_revoked_alert()
+        assert alert is None, str(alert)
 
 
 def test_api_key_reset(sharing_admin_user):
