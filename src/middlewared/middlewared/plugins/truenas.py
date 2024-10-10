@@ -57,10 +57,11 @@ class TrueNASService(Service):
         """
         Returns the TrueNAS End-User License Agreement (EULA).
         """
-        if not os.path.exists(EULA_FILE):
-            return
-        with open(EULA_FILE, 'r', encoding='utf8') as f:
-            return f.read()
+        try:
+            with open(EULA_FILE, 'r', encoding='utf8') as f:
+                return f.read()
+        except FileNotFoundError:
+            pass
 
     @accepts(roles=['READONLY_ADMIN'])
     @returns(Bool('system_eula_accepted'))

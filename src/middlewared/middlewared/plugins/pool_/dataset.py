@@ -294,10 +294,10 @@ class PoolDatasetService(CRUDService):
             to_check = {'acltype': None, 'aclmode': None}
 
             if mode == 'UPDATE':
-                # Prevent users from changing acltype or xattr settings underneath an active SMB share
+                # Prevent users from changing acltype settings underneath an active SMB share
                 # If this dataset hosts an SMB share, then prompt the user to first delete the share,
                 # make the dataset change, the recreate the share.
-                keys = ('acltype', 'xattr')
+                keys = ('acltype',)
                 if any([data.get(key) for key in keys]):
                     ds_attachments = await self.middleware.call('pool.dataset.attachments', data['name'])
                     if smb_attachments := [share for share in ds_attachments if share['type'] == "SMB Share"]:
@@ -473,7 +473,6 @@ class PoolDatasetService(CRUDService):
         Inheritable(Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED', 'DISCARD']), has_default=False),
         Inheritable(Str('acltype', enum=['OFF', 'NFSV4', 'POSIX']), has_default=False),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'MULTIPROTOCOL', 'NFS', 'SMB', 'APPS']),
-        Inheritable(Str('xattr', default='SA', enum=['ON', 'SA'])),
         Ref('encryption_options'),
         Bool('encryption', default=False),
         Bool('inherit_encryption', default=True),
@@ -743,7 +742,6 @@ class PoolDatasetService(CRUDService):
             ('sync', None, str.lower, True),
             ('volblocksize', None, None, False),
             ('volsize', None, lambda x: str(x), False),
-            ('xattr', None, str.lower, True),
             ('special_small_block_size', 'special_small_blocks', None, True),
         ):
             if i not in data or (inheritable and data[i] == 'INHERIT'):
