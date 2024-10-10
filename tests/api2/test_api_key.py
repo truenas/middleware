@@ -22,6 +22,19 @@ def sharing_admin_user(unprivileged_user_fixture):
         call('privilege.update', privilege[0]['id'], {'roles': []})
 
 
+def check_revoked_alert(self):
+    # reset any revoked alert
+    call('api_key.check_status')
+    has_alert = False
+
+    for a in call('alert.list'):
+        if a['klass'] == 'ApiKeyRevoked':
+            has_alert = True
+            break
+
+    return has_alert
+
+
 def test_user_unprivileged_api_key_failure(unprivileged_user_fixture):
     """We should be able to call a method with root API key using Websocket."""
     with pytest.raises(ValidationErrors) as ve:
@@ -179,6 +192,10 @@ def test_key_revoked(sharing_admin_user):
                 'api_key': key
             })
             assert resp['response_type'] == 'AUTH_ERR'
+
+        assert check_revoked_alert() is True
+        call('datastore.update', 'account.api_key', key_id, {'expiry': 0})
+        assert check_revoked_alert() is False
 
 
 def test_api_key_reset(sharing_admin_user):
