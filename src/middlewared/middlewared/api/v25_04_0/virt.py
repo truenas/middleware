@@ -14,13 +14,17 @@ class VirtGlobalEntry(BaseModel):
     pool: str | None = None
     dataset: str | None = None
     bridge: str | None = None
+    v4_network: str | None = None
+    v6_network: str | None = None
     state: str | None = None
 
 
 @single_argument_args('virt_global_update')
-class VirtGlobalUpdateArgs(BaseModel):
+class VirtGlobalUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     pool: str | None = None
     bridge: str | None = None
+    v4_network: str | None = None
+    v6_network: str | None = None
 
 
 class VirtGlobalUpdateResult(BaseModel):

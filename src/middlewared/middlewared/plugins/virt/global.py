@@ -39,6 +39,8 @@ class VirtGlobalModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     pool = sa.Column(sa.String(120), nullable=True)
     bridge = sa.Column(sa.String(120), nullable=True)
+    v4_network = sa.Column(sa.String(120), nullable=True)
+    v6_network = sa.Column(sa.String(120), nullable=True)
 
 
 class VirtGlobalService(ConfigService):
@@ -81,6 +83,7 @@ class VirtGlobalService(ConfigService):
 
         new = old.copy()
         new.update(data)
+        print(old, new)
 
         verrors = ValidationErrors()
         await self.validate(new, 'virt_global_update', verrors)
@@ -234,17 +237,31 @@ class VirtGlobalService(ConfigService):
             result = await incus_call(f'1.0/networks/{INCUS_BRIDGE}', 'get')
             # Create INCUS_BRIDGE if it doesn't exist
             if result.get('status') != 'Success':
+                # Reuse v4/v6 network from database if there is one
                 result = await incus_call('1.0/networks', 'post', {'json': {
                     'config': {
-                        'ipv4.address': 'auto',
-                        'ipv6.address': 'auto',
+                        'ipv4.address': config['v4_network'] or 'auto',
+                        'ipv4.nat': 'true',
+                        'ipv6.address': config['v6_network'] or 'auto',
+                        'ipv6.nat': 'true',
                     },
                     'description': '',
                     'name': INCUS_BRIDGE,
-                    'type': '',
+                    'type': 'bridge',
                 }})
-                if result.get('status') != 'Success':
+                if result.get('status_code') != 200:
                     raise CallError(result.get('error'))
+
+                result = await incus_call(f'1.0/networks/{INCUS_BRIDGE}', 'get')
+                if result.get('status_code') != 200:
+                    raise CallError(result.get('error'))
+
+                # Update automatically selected networks into our database
+                # so it can persist upgrades.
+                await self.middleware.call('datastore.update', 'virt_global', config['id'], {
+                    'v4_network': result['metadata']['config']['ipv4.address'],
+                    'v6_network': result['metadata']['config']['ipv6.address'],
+                })
 
             nic = {
                 'name': 'eth0',
@@ -306,6 +323,10 @@ class VirtGlobalService(ConfigService):
             if await self.middleware.call('virt.instance.query', [('status', '=', 'RUNNING')]):
                 raise CallError('Failed to stop instances')
 
+        await self.middleware.call('service.stop', 'incus')
+        if await self.middleware.call('service.started', 'incus'):
+            raise CallError('Failed to stop virtualization service')
+
         if not config['bridge']:
             # Make sure we delete in case it exists
             try:
@@ -314,10 +335,6 @@ class VirtGlobalService(ConfigService):
                 pass
             else:
                 await run(['ip', 'link', 'delete', INCUS_BRIDGE], check=True)
-
-        await self.middleware.call('service.stop', 'incus')
-        if await self.middleware.call('service.started', 'incus'):
-            raise CallError('Failed to stop virtualization service')
 
         # Have incus start fresh
         # Use subprocess because shutil.rmtree will traverse filesystems

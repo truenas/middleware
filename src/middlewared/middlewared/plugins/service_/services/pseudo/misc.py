@@ -1,3 +1,7 @@
+import os
+import re
+import signal
+
 from pystemd.systemd1 import Unit
 
 from middlewared.plugins.service_.services.base import SimpleService, systemd_unit
@@ -46,6 +50,16 @@ class IncusService(SimpleService):
         unit = Unit("incus.socket")
         unit.load()
         await self._unit_action("Stop", unit=unit)
+
+        # Incus will run dnsmasq for its managed network and not stop it
+        # when the service is stopped.
+        dnsmasq_pid = '/var/lib/incus/networks/incusbr0/dnsmasq.pid'
+        if os.path.exists(dnsmasq_pid):
+            with open(dnsmasq_pid) as f:
+                data = f.read()
+                if reg := re.search(r'^pid: (\d+)', data, flags=re.M):
+                    # os.kill should never block, will this still require a thread?
+                    os.kill(int(reg.group(1)), signal.SIGTERM)
 
 
 class LoaderService(PseudoServiceBase):

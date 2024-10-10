@@ -22,6 +22,8 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('pool', sa.String(length=120), nullable=True),
     sa.Column('bridge', sa.String(length=120), nullable=True),
+    sa.Column('v4_network', sa.String(length=120), nullable=True),
+    sa.Column('v6_network', sa.String(length=120), nullable=True),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_virt_global')),
     sqlite_autoincrement=True
     )
