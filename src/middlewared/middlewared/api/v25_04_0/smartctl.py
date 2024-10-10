@@ -12,6 +12,7 @@ class AtaSelfTest(BaseModel):
     lifetime: int
     start_time: int
     lba_of_first_error: int | None = None
+    poh_ago: int # current lifetime - lifetime at test start, "power on hours ago"
 
 
 class NvmeSelfTest(BaseModel):
@@ -26,6 +27,7 @@ class NvmeSelfTest(BaseModel):
     seg: int | None = None
     sct: int | None = 0x0
     code: int | None = 0x0
+    poh_ago: int
 
 
 class ScsiSelfTest(BaseModel):
@@ -37,3 +39,4 @@ class ScsiSelfTest(BaseModel):
     segment_number: int | None = None
     lifetime: int | None = None
     lba_of_first_error: int | None = None
+    poh_ago: int
