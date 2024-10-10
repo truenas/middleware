@@ -9,12 +9,19 @@ from middlewared.utils.directoryservices.ad import (
     get_domain_info,
     lookup_dc
 )
+from middlewared.utils.directoryservices.ad_constants import (
+    MAX_KERBEROS_START_TRIES
+)
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5 import (
     gss_get_current_cred,
     kerberos_ticket,
 )
 from middlewared.utils.directoryservices.krb5_constants import krb5ccache
+from middlewared.utils.directoryservices.krb5_error import (
+    KRB5Error,
+    KRB5ErrCode,
+)
 from time import sleep, time
 
 
@@ -42,6 +49,33 @@ class ADJoinMixin:
             waited += 1
 
         raise CallError('Timed out while waiting for domain to come online')
+
+    def _ad_wait_kerberos_start(self) -> None:
+        """
+        After initial AD join we reconfigure kerberos to find KDC via DNS.
+        Unfortunately, depending on the AD environment it may take a significant
+        amount of time to replicate the new machine account to other domain
+        controllers. This means we have a retry loop on starting the kerberos
+        service.
+        """
+        tries = 0
+        while tries < MAX_KERBEROS_START_TRIES:
+            try:
+                self.middleware.call_sync('kerberos.start')
+                return
+            except KRB5Error as krberr:
+                # KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN - account doesn't exist yet
+                # KRB5KDC_ERR_CLIENT_REVOKED - account locked (unlock maybe not replicated)
+                # KRB5KDC_ERR_PREAUTH_FAILED - bad password (password update not replicated)
+                if krberr.krb5_code not in (
+                    KRB5ErrCode.KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN,
+                    KRB5ErrCode.KRB5KDC_ERR_CLIENT_REVOKED,
+                    KRB5ErrCode.KRB5KDC_ERR_PREAUTH_FAILED,
+                ):
+                    raise krberr
+
+            sleep(1)
+            tries += 1
 
     def _ad_domain_info(self, domain: str, retry: bool = True) -> dict:
         """
@@ -217,7 +251,11 @@ class ADJoinMixin:
         self.middleware.call_sync('activedirectory.register_dns')
 
         # start up AD service
-        self._ad_activate()
+        try:
+            self._ad_activate()
+        except KRB5Error:
+            job.set_progress(65, 'Waiting for active directory to replicate machine account changes.')
+            self._ad_wait_kerberos_start()
 
     def _ad_join_impl(self, job: Job, conf: dict):
         """
@@ -249,7 +287,12 @@ class ADJoinMixin:
         # we've now successfully joined AD and can proceed with post-join
         # operations
         try:
+            job.set_progress(60, 'Performing post-join actions')
             return self._ad_post_join_actions(job)
+        except KRB5Error:
+            # if there's an actual unrecoverable kerberos error
+            # in our post-join actions then leaving AD will also fail
+            raise
         except Exception as e:
             # We failed to set up DNS / keytab cleanly
             # roll back and present user with error
