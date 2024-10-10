@@ -190,7 +190,7 @@ def get_nvme_slot_info(model):
                                 DISK_TOP_KEY: False,
                                 DISK_REAR_KEY: True,
                                 DISK_INTERNAL_KEY: False
-                            } for i, j in zip(range(1, 4), range(25, 28))
+                            } for i, j in zip(range(1, 4), range(49, 52))
                         },
                         'r50b_nvme_enclosure': {
                             i: {
@@ -201,7 +201,7 @@ def get_nvme_slot_info(model):
                                 DISK_TOP_KEY: False,
                                 DISK_REAR_KEY: True,
                                 DISK_INTERNAL_KEY: False
-                            } for i, j in zip(range(1, 3), range(25, 27))
+                            } for i, j in zip(range(1, 3), range(49, 51))
                         },
                         'r50bm_nvme_enclosure': {
                             i: {
@@ -212,7 +212,7 @@ def get_nvme_slot_info(model):
                                 DISK_TOP_KEY: False,
                                 DISK_REAR_KEY: True,
                                 DISK_INTERNAL_KEY: False
-                            } for i, j in zip(range(1, 5), range(25, 29))
+                            } for i, j in zip(range(1, 5), range(49, 53))
                         },
                     }
                 }
