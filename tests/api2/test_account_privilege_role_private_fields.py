@@ -221,7 +221,7 @@ def test_fields_are_visible_if_has_write_access():
 
 
 def test_fields_are_visible_for_api_key():
-    with api_key([{"method": "CALL", "resource": "user.get_instance"}]) as key:
+    with api_key() as key:
         with client(auth=None) as c:
             assert c.call("auth.login_with_api_key", key)
             result = c.call("user.get_instance", 1)

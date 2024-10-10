@@ -7,6 +7,7 @@ import shutil
 import stat
 import wbclient
 from pathlib import Path
+from collections import defaultdict
 from contextlib import suppress
 
 from dataclasses import asdict
@@ -188,6 +189,13 @@ class UserService(CRUDService):
 
         group_roles = await self.middleware.call('group.query', [['local', '=', True]], {'select': ['id', 'roles']})
 
+        user_api_keys = defaultdict(list)
+        for key in await self.middleware.call('api_key.query'):
+            if not key['local']:
+                continue
+
+            user_api_keys[key['username']].append(key['id'])
+
         for i in res:
             uid = i['user']['id']
             if uid in memberships:
@@ -203,6 +211,7 @@ class UserService(CRUDService):
                     'datastore.query', 'account.twofactor_user_auth', [['user_id', '!=', None]]
                 )
             }),
+            'user_api_keys': user_api_keys,
             'roles_mapping': {i['id']: i['roles'] for i in group_roles}
         }
 
@@ -245,13 +254,15 @@ class UserService(CRUDService):
             'local': True,
             'id_type_both': False,
             'sid': sid,
-            'roles': list(user_roles)
+            'roles': list(user_roles),
+            'api_keys': ctx['user_api_keys'][user['username']]
         })
         return user
 
     @private
     def user_compress(self, user):
         to_remove = [
+            'api_keys',
             'local',
             'id_type_both',
             'sid',

@@ -1,5 +1,4 @@
 from middlewared.test.integration.assets.account import user, group
-from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
@@ -118,14 +117,6 @@ def test_delete_group_audit_delete_users():
             "description": "Delete group group2 and all users that have this group as their primary group",
         }]):
             call("group.delete", g["id"], {"delete_users": True})
-
-
-def test_update_account_using_api_key():
-    with api_key([{"method": "CALL", "resource": "user.update"}]) as key:
-        with client(auth=None) as c:
-            assert c.call("auth.login_with_api_key", key)
-
-            c.call("user.update", 1, {})
 
 
 def test_update_account_using_token():
