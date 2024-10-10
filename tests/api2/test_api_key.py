@@ -22,7 +22,7 @@ def sharing_admin_user(unprivileged_user_fixture):
         call('privilege.update', privilege[0]['id'], {'roles': []})
 
 
-def check_revoked_alert(self):
+def check_revoked_alert():
     # reset any revoked alert
     call('api_key.check_status')
     has_alert = False
