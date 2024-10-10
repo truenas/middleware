@@ -92,6 +92,7 @@ def unprivileged_user_client(roles=None, allowlist=None):
 def root_with_password_disabled():
     root_backup = call("datastore.query", "account.bsdusers", [["bsdusr_username", "=", "root"]], {"get": True})
     root_backup["bsdusr_group"] = root_backup["bsdusr_group"]["id"]
+    root_backup["bsdusr_groups"] = [g["id"] for g in root_backup["bsdusr_groups"]]
     root_id = root_backup.pop("id")
     # Connect before removing root password
     with client() as c:

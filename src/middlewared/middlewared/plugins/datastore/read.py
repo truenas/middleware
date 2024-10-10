@@ -270,7 +270,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 for connection in await self.query(
                     relationship.secondary.name.replace('_', '.', 1),
                     [[relationship_local_pk.name, 'in', pk_values]],
-                    {'relationships': False}
+                    {'relationships': False},
                 ):
                     child_id = connection[relationship_remote_pk.name]
 
@@ -282,6 +282,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                     for child in await self.query(
                         relationship.target.name.replace('_', '.', 1),
                         [[remote_pk.name, 'in', all_children_ids]],
+                        {'relationships': False},
                     ):
                         all_children[child[remote_pk.name]] = child
 
