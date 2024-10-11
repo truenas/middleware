@@ -15,13 +15,13 @@ def get_ses_enclosure_status(bsg_path):
         logger.error('Error querying enclosure status for %r', bsg_path, exc_info=True)
 
 
-def get_ses_enclosures(dmi):
+def get_ses_enclosures():
     rv = list()
     with suppress(FileNotFoundError):
         for i in Path('/sys/class/enclosure').iterdir():
             bsg = f'/dev/bsg/{i.name}'
             if (status := get_ses_enclosure_status(bsg)):
                 sg = next((i / 'device/scsi_generic').iterdir())
-                rv.append(Enclosure(bsg, f'/dev/{sg.name}', dmi, status).asdict())
+                rv.append(Enclosure(bsg, f'/dev/{sg.name}', status).asdict())
 
     return rv
