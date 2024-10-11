@@ -208,7 +208,7 @@ class AuditService(ConfigService):
                     'failover.call_remote',
                     'audit.query',
                     [data],
-                    {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
+                    {'timeout': 2, 'connect_timeout': 2}
                 )
                 return audit_query
             except CallError as e:
