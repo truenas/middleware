@@ -18,7 +18,7 @@ DOCKER_DATASET_PROPS = {
     'overlay': 'on',
     'setuid': 'on',
     'snapdir': 'hidden',
-    'xattr': 'sa',
+    'xattr': 'on',
 }
 
 
