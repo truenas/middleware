@@ -534,9 +534,8 @@ def get_slot_info(enc):
         }
     elif enc.model == ControllerModels.MINI3X.value:
         return {
-            'any_version': True,
+            'any_version': False,
             'versions': {
-                # NOTE: 1.0 "version" has same mapping?? (CORE is the same)
                 'DEFAULT': {
                     'id': {
                         '3000000000000001': {
@@ -547,6 +546,21 @@ def get_slot_info(enc):
                             1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 5, SUPPORTS_IDENTIFY_KEY: False},
                             2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 6, SUPPORTS_IDENTIFY_KEY: False},
                             4: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 7, SUPPORTS_IDENTIFY_KEY: False}
+                        }
+                    }
+                },
+                '1.0': {
+                    'id': {
+                        '3000000000000002': {
+                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 1, SUPPORTS_IDENTIFY_KEY: False},
+                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 2, SUPPORTS_IDENTIFY_KEY: False},
+                            4: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 3, SUPPORTS_IDENTIFY_KEY: False},
+                            5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 4, SUPPORTS_IDENTIFY_KEY: False}
+                        },
+                        '3000000000000001': {
+                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 5, SUPPORTS_IDENTIFY_KEY: False},
+                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 6, SUPPORTS_IDENTIFY_KEY: False},
+                            3: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 7, SUPPORTS_IDENTIFY_KEY: False}
                         }
                     }
                 }
