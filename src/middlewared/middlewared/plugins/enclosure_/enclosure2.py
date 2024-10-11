@@ -10,7 +10,7 @@ from middlewared.service_exception import CallError, MatchNotFound, ValidationEr
 from middlewared.utils import filter_list
 
 from .constants import SUPPORTS_IDENTIFY_KEY
-from .enums import ControllerModels, JbofModels
+from .enums import JbofModels
 from .fseries_drive_identify import set_slot_status as fseries_set_slot_status
 from .jbof_enclosures import map_jbof, set_slot_status as _jbof_set_slot_status
 from .map2 import combine_enclosures
@@ -26,29 +26,17 @@ class Enclosure2Service(Service):
         cli_namespace = 'storage.enclosure2'
         private = True
 
-    def get_ses_enclosures(self, dmi=None):
+    def get_ses_enclosures(self):
         """This generates the "raw" list of enclosures detected on the system. It
         serves as the "entry" point to "enclosure2.query" and is foundational in
-        how all of the structuring of the final data object is returned.
-
-        We use pyudev to enumerate enclosure type devices using a socket to the
-        udev database. While we're at it, we also add some useful keys to the
-        object (/dev/bsg, /dev/sg, and dmi). Then we use SCSI commands (issued
-        directly to the enclosure) to generate an object of all elements and the
-        information associated to each element.
-
-        It's _VERY_ important to understand that the "dmi" key is the hingepoint for
-        identifying what platform we're on. This is SMBIOS data and is burned into
-        the motherboard before we ship to our customers. This is also how we map the
-        enclosure's array device slots (disk drives) to a human friendly format.
-
-        The `Enclosure` class is where all the magic happens wrt to taking in all the
-        raw data and formatting it into a structured object that will be consumed by
-        the webUI team as well as on the backend (alerts, drive identifiction, etc).
+        how all of the structuring of the final data object is returned. We use
+        SCSI commands (issued directly to the enclosure) to generate an object of
+        all elements and the information associated to each element. The `Enclosure`
+        class is where all the magic happens wrt to taking in all the raw data and
+        formatting it into a structured object that will be consumed by the webUI
+        team as well as on the backend (alerts, drive identifiction, etc).
         """
-        if dmi is None:
-            dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
-        return get_ses_enclosures(dmi)
+        return get_ses_enclosures()
 
     async def map_jbof(self, jbof_qry=None):
         """This method serves as an endpoint to easily be able to test
@@ -59,14 +47,12 @@ class Enclosure2Service(Service):
             jbof_qry = await self.middleware.call('jbof.query')
         return await map_jbof(jbof_qry)
 
-    def map_nvme(self, dmi=None):
+    def map_nvme(self):
         """This method serves as an endpoint to easily be able to test
         the nvme mapping logic specifically without having to call enclosure2.query
         which includes the head-unit and all attached JBODs.
         """
-        if dmi is None:
-            dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
-        return map_nvme(dmi)
+        return map_nvme()
 
     def get_original_disk_slot(self, slot, enc_info):
         """Get the original slot based on the `slot` passed to us via the end-user.
@@ -150,8 +136,7 @@ class Enclosure2Service(Service):
             label['encid']: label['label']
             for label in self.middleware.call_sync('datastore.query', 'truenas.enclosurelabel')
         }
-        dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
-        for i in self.get_ses_enclosures(dmi) + self.map_nvme(dmi) + self.middleware.call_sync('enclosure2.map_jbof'):
+        for i in self.get_ses_enclosures() + self.map_nvme() + self.middleware.call_sync('enclosure2.map_jbof'):
             if i.pop('should_ignore'):
                 continue
 
