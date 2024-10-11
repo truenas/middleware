@@ -86,19 +86,22 @@ def list_apps(
         workloads = translate_resources_to_desired_workflow(app_resources)
         # When we stop docker service and start it again - the containers can be in exited
         # state which means we need to account for this.
-        state = 'STOPPED'
-        exited_containers = 0
+        state = AppState.STOPPED
+        workload_stats = defaultdict(int)
+        workloads_len = len(workloads['container_details'])
         for container in workloads['container_details']:
-            if container['state'] == ContainerState.STARTING.value:
-                state = AppState.DEPLOYING.value
-                break
-            elif container['state'] == ContainerState.RUNNING.value:
-                state = AppState.RUNNING.value
-            elif container['state'] == ContainerState.EXITED.value:
-                exited_containers += 1
-        else:
-            if exited_containers != 0 and exited_containers == len(workloads['container_details']):
-                state = AppState.CRASHED.value
+            workload_stats[container['state']] += 1
+
+        if workload_stats[ContainerState.CRASHED.value]:
+            state = AppState.CRASHED
+        elif workload_stats[ContainerState.CREATED.value]:
+            state = AppState.DEPLOYING
+        elif 0 < workloads_len == (
+            workload_stats[ContainerState.RUNNING.value] + workload_stats[ContainerState.EXITED.value]
+        ):
+            state = AppState.RUNNING
+
+        state = state.value
 
         app_metadata = metadata[app_name]
         active_workloads = get_default_workload_values() if state == 'STOPPED' else workloads
