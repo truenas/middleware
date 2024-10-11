@@ -11,8 +11,8 @@ from middlewared.test.integration.assets.roles import common_checks
     ('READONLY_ADMIN', 'system.advanced.update', [{}], False, False, False),
     ('SYSTEM_ADVANCED_WRITE', 'system.advanced.update', [{}], True, False, False),
     ('SYSTEM_ADVANCED_READ', 'system.advanced.sed_global_password', [], True, False, False),
-    ('READONLY_ADMIN', 'system.advanced.update_gpu_pci_ids', [[]], False, False, False),
-    ('SYSTEM_ADVANCED_WRITE', 'system.advanced.update_gpu_pci_ids', [], True, False, True),
+    ('READONLY_ADMIN', 'system.advanced.update_gpu_pci_ids', [None], False, True, False),
+    ('SYSTEM_ADVANCED_WRITE', 'system.advanced.update_gpu_pci_ids', [None], True, True, True),
     ('SYSTEM_GENERAL_READ', 'system.general.local_url', [], True, False, False),
 ])
 def test_system_settings_read_and_write_role(
