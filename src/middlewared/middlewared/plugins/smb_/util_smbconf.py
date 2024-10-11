@@ -15,7 +15,8 @@ def generate_smb_conf_dict(
     smb_service_config: dict,
     smb_shares: list,
     smb_bind_choices: dict,
-    idmap_settings: list
+    idmap_settings: list,
+    is_enterprise: bool = False
 ):
     guest_enabled = any(filter_list(smb_shares, [['guestok', '=', True]]))
     fsrvp_enabled = any(filter_list(smb_shares, [['fsrvp', '=', True]]))
@@ -303,7 +304,11 @@ def generate_smb_conf_dict(
         param, value = entry.split('=', 1)
         smbconf[param.strip()] = value.strip()
 
+    # The following parameters must come after processing includes in order to
+    # prevent auxiliary parameters from overriding them
     smbconf.update({
+        'zfs_core:zfs_integrity_streams': is_enterprise,
+        'zfs_core:zfs_block_cloning': is_enterprise,
         'registry shares': True,
         'include': 'registry',
     })

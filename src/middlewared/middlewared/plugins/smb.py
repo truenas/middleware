@@ -148,9 +148,10 @@ class SMBService(ConfigService):
         smb_config = self.middleware.call_sync('smb.config')
         smb_shares = self.middleware.call_sync('sharing.smb.query')
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
+        is_enterprise = self.middleware.call_sync('system.is_enterprise')
 
         return generate_smb_conf_dict(
-            ds_type, ds_config, smb_config, smb_shares, bind_ip_choices, idmap_config
+            ds_type, ds_config, smb_config, smb_shares, bind_ip_choices, idmap_config, is_enterprise
         )
 
     @private
@@ -1200,7 +1201,9 @@ class SharingSMBService(SharingService):
             'socket options',
             'include',
             'wide links',
-            'insecure wide links'
+            'insecure wide links',
+            'zfs_core:zfs_block_cloning',
+            'zfs_core:zfs_integrity_streams',
         ]
         freebsd_vfs_objects = [
             'noacl',
