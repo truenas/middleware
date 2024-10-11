@@ -568,7 +568,6 @@ class TestNFSops:
                     # We know apriori that the current state is managed_nfsd == True
                     with nfs_config():
                         # Test making change to non-'server' setting does not change managed_nfsd
-                        call("nfs.update", {"bindip": [truenas_server.ip]})
                         assert call("nfs.config")['managed_nfsd'] == expected['managed']
                 else:
                     with pytest.raises(ValidationErrors) as ve:
@@ -1256,6 +1255,8 @@ class TestNFSops:
         This also tests the port range and exclude.
         """
         assert start_nfs is True
+        # Multiple restarts cause systemd failures.  Reset the systemd counters.
+        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
 
         # Friendly index names
         name = 0

@@ -232,6 +232,8 @@ def test__base_smb():
     assert conf['idmap config * : backend'] == 'tdb'
     assert conf['idmap config * : range'] == '90000001 - 100000000'
     assert conf['server smb encrypt'] == 'default'
+    assert conf['directory mask'] == '0775'
+    assert conf['create mask'] == '0664'
 
 
 def test__syslog():
