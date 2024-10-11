@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 from dataclasses import dataclass
 from pkg_resources import parse_version
 
@@ -199,6 +200,10 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
                     state = ContainerState.STARTING.value
             else:
                 state = ContainerState.RUNNING.value
+        elif container['State']['Status'].lower() == 'created':
+            state = ContainerState.CREATED.value
+        elif container['State']['Status'] == 'exited' and container['State']['ExitCode'] != 0:
+            state = ContainerState.CRASHED.value
         else:
             state = 'exited'
 
