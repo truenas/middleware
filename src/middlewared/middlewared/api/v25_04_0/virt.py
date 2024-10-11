@@ -5,6 +5,7 @@ from pydantic import Field, StringConstraints
 
 from middlewared.api.base import (
     BaseModel, ForUpdateMetaclass, NonEmptyString,
+    LocalUID,
     single_argument_args, single_argument_result,
 )
 
@@ -124,9 +125,9 @@ GPUType: TypeAlias = Literal['PHYSICAL', 'MDEV', 'MIG', 'SRIOV']
 class GPU(Device):
     gpu_type: GPUType
     id: str | None = None
-    gid: Optional[int] = None
-    uid: Optional[int] = None
-    mode: Optional[int] = None
+    gid: LocalUID | None = None
+    uid: LocalUID | None = None
+    mode: Optional[str] = None
     mdev: Optional[NonEmptyString] = None
     mig_uuid: Optional[NonEmptyString] = None
     pci: Optional[NonEmptyString] = None
