@@ -16,6 +16,7 @@ from middlewared.utils import filter_list
 from middlewared.service import Service, job, accepts
 from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Bool, Int
+from middlewared.plugins.docker.state_utils import Status
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
@@ -737,6 +738,8 @@ class FailoverEventsService(Service):
             self.run_call('kmip.initialize_keys')
             logger.info('Done syncing encryption keys with KMIP server')
 
+        self.start_apps()
+
         logger.info('Migrating interface information (if required)')
         self.run_call('interface.persist_link_addresses')
         logger.info('Done migrating interface information (if required)')
@@ -795,6 +798,14 @@ class FailoverEventsService(Service):
             raise IgnoreFailoverEvent()
 
         logger.warning('Entering BACKUP on "%s".', ifname)
+
+        # We will try to give some time to docker to gracefully stop before zpools will be forcefully
+        # exported. This is to avoid any potential data corruption.
+        stop_docker_thread = threading.Thread(
+            target=self.stop_apps,
+            name='failover_stop_docker',
+        )
+        stop_docker_thread.start()
 
         # We stop netdata before exporting pools because otherwise we might have erroneous stuff
         # getting logged and causing spam
@@ -929,6 +940,44 @@ class FailoverEventsService(Service):
         self.FAILOVER_RESULT = 'SUCCESS'
 
         return self.FAILOVER_RESULT
+
+    def start_apps(self):
+        pool = self.run_call('docker.config')['pool']
+        if not pool:
+            self.middleware.call_sync('docker.state.set_status', Status.UNCONFIGURED.value)
+            logger.info('Skipping starting apps as they are not configured')
+            return
+
+        logger.info('Going to initialize apps plugin as %r pool is configured for apps', pool)
+        logger.info('Mounting relevant docker datasets')
+        try:
+            self.run_call('docker.fs_manage.mount')
+        except Exception:
+            self.middleware.call_sync('docker.state.set_status', Status.FAILED.value, 'Failed to mount docker datasets')
+            logger.error('Failed to mount docker datasets', exc_info=True)
+            return
+        else:
+            logger.info('Mounted docker datasets successfully')
+
+        logger.info('Starting docker service')
+        try:
+            self.run_call('docker.state.start_service')
+        except Exception:
+            logger.error('Failed to start docker service', exc_info=True)
+        else:
+            logger.info('Docker service started successfully')
+
+    def stop_apps(self):
+        if not self.middleware.call_sync('docker.config')['dataset']:
+            return
+
+        logger.info('Trying to gracefully stop docker service')
+        try:
+            self.run_call('service.stop', 'docker')
+        except Exception:
+            logger.error('Failed to stop docker service gracefully', exc_info=True)
+        else:
+            logger.info('Docker service stopped gracefully')
 
 
 async def vrrp_fifo_hook(middleware, data):

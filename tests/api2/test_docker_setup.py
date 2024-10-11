@@ -58,6 +58,16 @@ def test_apps_are_running():
     assert call('docker.status')['status'] == 'RUNNING'
 
 
+@pytest.mark.dependency(depends=['docker_setup'])
+def test_apps_dataset_after_address_pool_update():
+    docker_config = call('docker.update', {'address_pools': [{'base': '172.17.0.0/12', 'size': 27}]}, job=True)
+    assert docker_config['address_pools'] == [{'base': '172.17.0.0/12', 'size': 27}]
+    assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] == docker_config['dataset']
+    assert call('docker.status')['status'] == 'RUNNING'
+
+
 def test_unset_docker_pool(docker_pool):
-    docker_config = call('docker.update', {'pool': None}, job=True)
+    docker_config = call(
+        'docker.update', {'pool': None, 'address_pools': [{'base': '172.17.0.0/12', 'size': 24}]}, job=True
+    )
     assert docker_config['pool'] is None, docker_config

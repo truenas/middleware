@@ -13,6 +13,10 @@
     # the number of mountd be 1/4 the number of nfsd.
     num_mountd = max(num_nfsd // 4, 1)
     manage_gids = 'y' if config["userd_manage_gids"] else 'n'
+
+    # RDMA Notes: 
+    #    * The INET default NFS RDMA (nfsrdma) port is 20049
+    #    * Including 'insecure' appears to not be requried on the share settings
 %>
 [nfsd]
 syslog = 1
@@ -30,6 +34,10 @@ vers4 = n
 % endif
 % if config['bindip']:
 host = ${','.join(config['bindip'])}
+% endif
+% if config['rdma']:
+rdma = y
+rdma-port = 20049
 % endif
 
 [exportd]
