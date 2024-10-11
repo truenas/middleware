@@ -24,5 +24,5 @@ def test_fips_version():
     assert "FIPS configuration was changed." in enabled_info
 
     # Check that we no longer have FIPS enabled
-    assert "3.0.9" not in ssh("openssl list -providers")
+    assert fips_version not in ssh("openssl list -providers")
     assert call("system.reboot.info")["reboot_required_reasons"] == []
