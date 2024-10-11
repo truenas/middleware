@@ -6,6 +6,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     VirtDeviceUSBChoicesArgs, VirtDeviceUSBChoicesResult,
     VirtDeviceGPUChoicesArgs, VirtDeviceGPUChoicesResult,
+    VirtDeviceDiskChoicesArgs, VirtDeviceDiskChoicesResult,
 )
 from middlewared.utils.gpu import get_gpus
 
@@ -55,3 +56,22 @@ class VirtDeviceService(Service):
                 'vendor': i['vendor'],
             }
         return choices
+
+    @api_method(VirtDeviceDiskChoicesArgs, VirtDeviceDiskChoicesResult, roles=['VIRT_INSTANCE_READ'])
+    async def disk_choices(self):
+        """
+        Returns disk (zvol) choices for device type "DISK".
+        """
+        out = {}
+        zvols = await self.middleware.call(
+            'zfs.dataset.unlocked_zvols_fast', [
+                ['OR', [['attachment', '=', None], ['attachment.method', '=', 'virt.instance.query']]],
+                ['ro', '=', False],
+            ],
+            {}, ['ATTACHMENT', 'RO']
+        )
+
+        for zvol in zvols:
+            out[zvol['path']] = zvol['name']
+
+        return out

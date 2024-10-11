@@ -322,6 +322,8 @@ class VirtInstanceService(CRUDService):
                     raise CallError('Only pool paths are allowed.')
                 new['source'] = device['source']
                 if source.startswith('/mnt/'):
+                    if source.startswith('/mnt/.ix-apps'):
+                        raise CallError('Invalid source')
                     if not device.get('destination'):
                         raise CallError('Destination is required for filesystem paths.')
                     if instance_type == 'VM':
@@ -398,6 +400,10 @@ class VirtInstanceService(CRUDService):
             case 'PROXY':
                 verror = await self.middleware.call('port.validate_port', schema, device['source_port'])
                 verrors.extend(verror)
+            case 'DISK':
+                if device['source'] and device['source'].startswith('/dev/zvol/'):
+                    if device['source'] not in await self.middleware.call('virt.device.disk_choices'):
+                        verrors.add(schema, 'Invalid ZVOL choice.')
 
     @api_method(VirtInstanceDeviceAddArgs, VirtInstanceDeviceAddResult, roles=['VIRT_INSTANCE_WRITE'])
     async def device_add(self, id, device):

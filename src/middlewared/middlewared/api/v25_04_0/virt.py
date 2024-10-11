@@ -269,6 +269,14 @@ class VirtDeviceGPUChoicesResult(BaseModel):
     result: dict[str, GPUChoice]
 
 
+class VirtDeviceDiskChoicesArgs(BaseModel):
+    pass
+
+
+class VirtDeviceDiskChoicesResult(BaseModel):
+    result: dict[str, str]
+
+
 class VirtImageUploadArgs(BaseModel):
     pass
 
