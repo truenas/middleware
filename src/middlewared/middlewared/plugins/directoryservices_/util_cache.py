@@ -266,7 +266,8 @@ class DSCacheFill:
                     'id_type_both': id_type_both,
                     'smb': u['sid'] is not None,
                     'sid': u['sid'],
-                    'roles': []
+                    'roles': [],
+                    'api_keys': [],
                 }
 
                 if user_count % LOG_CACHE_ENTRY_INTERVAL == 0:

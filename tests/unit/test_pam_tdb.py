@@ -177,13 +177,13 @@ def test_legacy_auth_admin(current_username):
 
 
 def test_legacy_auth_admin_expired_key(current_username):
-    """ Verify that an expired key results in PAM_AUTH_ERR """
+    """ Verify that an expired key results in PAM_CRED_EXPIRED """
     db_id = write_tdb_file(current_username, [LEGACY_ENTRY_HASH], True)
     with pam_service(admin_user=current_username) as svc:
         p = pam.pam()
         authd = p.authenticate(current_username, f'{db_id}-{LEGACY_ENTRY_KEY}', service=svc)
         assert authd is False
-        assert p.code == pam.PAM_AUTH_ERR
+        assert p.code == pam.PAM_CRED_EXPIRED
 
 
 def test_legacy_auth_non_admin(current_username):
@@ -277,7 +277,7 @@ def test_new_auth_timeout(current_username):
         with fail_delay():
             authd = p.authenticate(current_username, f'{db_id}-{key}', service=svc)
             assert authd is False
-            assert p.code == pam.PAM_AUTH_ERR
+            assert p.code == pam.PAM_CRED_EXPIRED
 
 
 def test_unsupported_service_file_name(current_username):
