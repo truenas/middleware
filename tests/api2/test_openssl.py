@@ -25,4 +25,4 @@ def test_fips_version():
 
     # Check that we no longer have FIPS enabled
     assert "3.0.9" not in ssh("openssl list -providers")
-    assert '"reboot_required_reasons": []' in ssh("midclt call system.reboot.info")
+    assert call("system.reboot.info")["reboot_required_reasons"] == []
