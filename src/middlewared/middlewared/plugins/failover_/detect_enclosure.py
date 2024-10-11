@@ -87,7 +87,7 @@ class EnclosureDetectionService(Service):
             # down this path.
             return HARDWARE, NODE
 
-        for enc in get_ses_enclosures(product, False):
+        for enc in get_ses_enclosures(False):
             if enc.is_mseries:
                 HARDWARE = 'ECHOWARP'
                 if enc.product == '4024Sp':

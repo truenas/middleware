@@ -7,6 +7,7 @@ import logging
 
 from middlewared.utils.scsi_generic import inquiry
 
+from ixhardware import parse_dmi
 from .constants import (
     MINI_MODEL_BASE,
     MINIR_MODEL_BASE,
@@ -29,8 +30,9 @@ logger = logging.getLogger(__name__)
 
 
 class Enclosure:
-    def __init__(self, bsg, sg, dmi, enc_stat):
-        self.bsg, self.sg, self.pci, self.dmi = bsg, sg, bsg.removeprefix('/dev/bsg/'), dmi
+    def __init__(self, bsg, sg, enc_stat):
+        self.dmi = parse_dmi()
+        self.bsg, self.sg, self.pci, = bsg, sg, bsg.removeprefix('/dev/bsg/')
         self.encid, self.status = enc_stat['id'], list(enc_stat['status'])
         self.vendor, self.product, self.revision, self.encname = self._get_vendor_product_revision_and_encname()
         self._get_model_and_controller()
@@ -48,7 +50,7 @@ class Enclosure:
             'name': self.encname,  # vendor, product and revision joined by whitespace
             'model': self.model,  # M60, F100, MINI-R, etc
             'controller': self.controller,  # if True, represents the "head-unit"
-            'dmi': self.dmi,  # comes from system.dmidecode_info[system-product-name]
+            'dmi': self.dmi.system_product_name,
             'status': self.status,  # the overall status reported by the enclosure
             'id': self.encid,
             'vendor': self.vendor,  # t10 vendor from INQUIRY
@@ -118,7 +120,8 @@ class Enclosure:
         2. We check the t10 vendor and product strings returned from the enclosure
             using a standard inquiry command
         """
-        model = self.dmi.removeprefix('TRUENAS-').removeprefix('FREENAS-')
+        spn = self.dmi.system_product_name
+        model = spn.removeprefix('TRUENAS-').removeprefix('FREENAS-')
         model = model.removesuffix('-HA').removesuffix('-S')
         try:
             dmi_model = ControllerModels[model]
@@ -134,7 +137,7 @@ class Enclosure:
             except ValueError:
                 # this shouldn't ever happen because the instantiator of this class
                 # checks DMI before we even get here but better safe than sorry
-                logger.warning('Unexpected model: %r from dmi: %r', model, self.dmi)
+                logger.warning('Unexpected model: %r from dmi: %r', model, spn)
                 self.model = ''
                 self.controller = False
                 return
@@ -234,7 +237,7 @@ class Enclosure:
         vers_key = 'DEFAULT'
         if not mapped_info['any_version']:
             for key, vers in mapped_info['versions'].items():
-                if self.revision == key:
+                if self.dmi.system_version == key:
                     vers_key = vers
                     break
 
