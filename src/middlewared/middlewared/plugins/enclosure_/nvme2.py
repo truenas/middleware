@@ -8,6 +8,7 @@ import re
 
 from pyudev import Context, Devices, DeviceNotFoundAtPathError
 
+from ixhardware import parse_dmi
 from .constants import (
     DISK_FRONT_KEY,
     DISK_REAR_KEY,
@@ -251,8 +252,9 @@ def map_r30_or_fseries(model, ctx):
     return fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info)
 
 
-def map_nvme(dmi):
-    model = dmi.removeprefix('TRUENAS-').removesuffix('-S').removesuffix('-HA')
+def map_nvme():
+    model = parse_dmi().system_product_name.removeprefix('TRUENAS-')
+    model = model.removesuffix('-S').removesuffix('-HA')
     ctx = Context()
     if model in (
         ControllerModels.R50.value,
