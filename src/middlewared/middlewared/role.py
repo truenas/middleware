@@ -21,6 +21,9 @@ ROLES = {
     'ACCOUNT_READ': Role(),
     'ACCOUNT_WRITE': Role(includes=['ACCOUNT_READ']),
 
+    'API_KEY_READ': Role(),
+    'API_KEY_WRITE': Role(includes=['API_KEY_READ']),
+
     'FAILOVER_READ': Role(),
     'FAILOVER_WRITE': Role(includes=['FAILOVER_READ']),
 
