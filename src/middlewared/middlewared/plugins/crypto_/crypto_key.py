@@ -1,19 +1,12 @@
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import Service
 from middlewared.validators import Email
 
-from .extensions_utils import add_extensions
 from .generate_ca import generate_certificate_authority
 from .generate_certs import generate_certificate
 from .generate_self_signed import generate_self_signed_certificate
-from .generate_utils import generate_builder, normalize_san
-from .load_utils import load_certificate, load_certificate_request, load_private_key
-from .key_utils import retrieve_signing_algorithm
-from .utils import CERT_BACKEND_MAPPINGS, EKU_OIDS
+from .generate_utils import normalize_san, sign_csr_with_ca
+from .utils import EKU_OIDS
 
 
 class CryptoKeyService(Service):
@@ -110,28 +103,4 @@ class CryptoKeyService(Service):
         )
     )
     def sign_csr_with_ca(self, data):
-        csr_data = load_certificate_request(data['csr'])
-        ca_data = load_certificate(data['ca_certificate'])
-        ca_key = load_private_key(data['ca_privatekey'])
-        csr_key = load_private_key(data['csr_privatekey'])
-        new_cert = generate_builder({
-            'crypto_subject_name': {
-                k: csr_data.get(v) for k, v in CERT_BACKEND_MAPPINGS.items()
-            },
-            'crypto_issuer_name': {
-                k: ca_data.get(v) for k, v in CERT_BACKEND_MAPPINGS.items()
-            },
-            'serial': data['serial'],
-            'san': normalize_san(csr_data.get('san'))
-        })
-
-        new_cert = add_extensions(
-            new_cert, data.get('cert_extensions'), csr_key,
-            x509.load_pem_x509_certificate(data['ca_certificate'].encode(), default_backend())
-        )
-
-        new_cert = new_cert.sign(
-            ca_key, retrieve_signing_algorithm(data, ca_key), default_backend()
-        )
-
-        return new_cert.public_bytes(serialization.Encoding.PEM).decode()
+        return sign_csr_with_ca(data)
