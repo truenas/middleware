@@ -94,11 +94,11 @@ def list_apps(
 
         if workload_stats[ContainerState.CRASHED.value]:
             state = AppState.CRASHED
-        elif workload_stats[ContainerState.CREATED.value]:
+        elif workload_stats[ContainerState.CREATED.value] or workload_stats[ContainerState.STARTING.value]:
             state = AppState.DEPLOYING
-        elif 0 < workloads_len == (
-            workload_stats[ContainerState.RUNNING.value] + workload_stats[ContainerState.EXITED.value]
-        ):
+        elif 0 < workloads_len == sum(
+            workload_stats[k.value] for k in (ContainerState.RUNNING, ContainerState.EXITED)
+        ) and workload_stats[ContainerState.RUNNING.value]:
             state = AppState.RUNNING
 
         state = state.value
