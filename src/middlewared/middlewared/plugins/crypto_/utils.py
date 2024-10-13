@@ -12,6 +12,22 @@ CERT_BACKEND_MAPPINGS = {
     'organizational_unit_name': 'organizational_unit',
     'email_address': 'email'
 }
+RDN_MAPPINGS = {
+    'C': 'country_name',
+    'country': 'country_name',
+    'ST': 'state_or_province_name',
+    'state': 'state_or_province_name',
+    'L': 'locality_name',
+    'city': 'locality_name',
+    'O': 'organization_name',
+    'organization': 'organization_name',
+    'OU': 'organizational_unit_name',
+    'organizational_unit': 'organizational_unit_name',
+    'CN': 'common_name',
+    'common': 'common_name',
+    'emailAddress': 'email_address',
+    'email': 'email_address'
+}
 # Cert locations
 CERT_ROOT_PATH = '/etc/certificates'
 CERT_CA_ROOT_PATH = '/etc/certificates/CA'
