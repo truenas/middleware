@@ -1,7 +1,7 @@
 from _pytest.mark import KeywordMatcher
 from libvirt import Callable
 from middlewared.api.base import BaseModel
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, Optional
 from ipaddress import ip_network, ip_interface, ip_address, IPv4Network, IPv4Interface, IPv4Address, IPv6Network, IPv6Interface, IPv6Address
 
 __all__ = ["IPAddr"]
@@ -23,9 +23,9 @@ class IPAddr(BaseModel):
     address_types: list[ExcludedAddrTypes] = []
     v4: bool = True
     v6: bool = True
-    factory: Callable
+    factory: Optional[Callable] = None
 
-    def __init__(self, **kwargs):
+    def fdsfs(self, **kwargs):
         super().__init__(**kwargs)
         if self.v4 and self.v6:
             if self.network:
