@@ -25,8 +25,7 @@ class IPAddr(BaseModel):
     v6: bool = True
     factory: Callable
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def model_post_init(self, *args, **kwargs):
         if self.v4 and self.v6:
             if self.network:
                 self.factory = ip_network
