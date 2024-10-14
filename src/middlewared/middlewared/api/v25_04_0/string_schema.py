@@ -18,7 +18,7 @@ ExcludedAddrTypes: TypeAlias = Literal[
 ]
 
 class IPAddrResult(BaseModel):
-    result = "idktest"
+    result: str = "idktest"
 
 class IPAddr(BaseModel):
     cidr: bool = False
