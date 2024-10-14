@@ -26,7 +26,7 @@ class IPAddr(BaseModel):
     factory: Callable
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__()
         if self.v4 and self.v6:
             if self.network:
                 self.factory = ip_network
