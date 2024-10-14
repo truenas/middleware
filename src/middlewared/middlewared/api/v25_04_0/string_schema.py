@@ -1,5 +1,6 @@
 from _pytest.mark import KeywordMatcher
 from pydantic.networks import IPvAnyAddress
+from pydantic import RootModel
 from libvirt import Callable
 from middlewared.api.base import BaseModel
 from typing import Literal, TypeAlias
@@ -17,8 +18,8 @@ ExcludedAddrTypes: TypeAlias = Literal[
     'LINK_LOCAL'
 ]
 
-class IPAddr(BaseModel):
-    __root__: IPvAnyAddress
+class IPAddr(BaseModel, RootModel):
+    root: IPvAnyAddress
     cidr: bool = False
     network: bool = False
     network_strict: bool = False
