@@ -3,32 +3,32 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from subprocess import run, PIPE, STDOUT
+from subprocess import run
 
-from middlewared.service_exception import CallError
+NVME_CONTROLLERS = ('0xc0', '0xc2', '0xc4')
 
 
 def slot_to_controller_and_bay_mapping(slot):
     mapping = {
         # bays 1-8
-        1: ('0xc0', '0x01'),
-        2: ('0xc0', '0x02'),
-        3: ('0xc0', '0x04'),
-        4: ('0xc0', '0x08'),
-        5: ('0xc0', '0x10'),
-        6: ('0xc0', '0x20'),
-        7: ('0xc0', '0x40'),
-        8: ('0xc0', '0x80'),
+        1: (NVME_CONTROLLERS[0], '0x01'),
+        2: (NVME_CONTROLLERS[0], '0x02'),
+        3: (NVME_CONTROLLERS[0], '0x04'),
+        4: (NVME_CONTROLLERS[0], '0x08'),
+        5: (NVME_CONTROLLERS[0], '0x10'),
+        6: (NVME_CONTROLLERS[0], '0x20'),
+        7: (NVME_CONTROLLERS[0], '0x40'),
+        8: (NVME_CONTROLLERS[0], '0x80'),
         # bays 9-12
-        9: ('0xc2', '0x01'),
-        10: ('0xc2', '0x02'),
-        11: ('0xc2', '0x04'),
-        12: ('0xc2', '0x08'),
+        9: (NVME_CONTROLLERS[1], '0x01'),
+        10: (NVME_CONTROLLERS[1], '0x02'),
+        11: (NVME_CONTROLLERS[1], '0x04'),
+        12: (NVME_CONTROLLERS[1], '0x08'),
         # bays 13-16
-        13: ('0xc4', '0x01'),
-        14: ('0xc4', '0x02'),
-        15: ('0xc4', '0x04'),
-        16: ('0xc4', '0x08'),
+        13: (NVME_CONTROLLERS[2], '0x01'),
+        14: (NVME_CONTROLLERS[2], '0x02'),
+        15: (NVME_CONTROLLERS[2], '0x04'),
+        16: (NVME_CONTROLLERS[2], '0x08'),
     }
     try:
         return mapping[slot]
@@ -38,11 +38,10 @@ def slot_to_controller_and_bay_mapping(slot):
 
 def led_status_mapping(status):
     mapping = {
+        'OFF': '0x00',
         'CLEAR': '0x00',  # turn off red led
         'IDENTIFY': '0x42',  # red and green led blink fast
         'ON': '0x42',  # same as IDENTIFY
-        'FAULT': '0x44',  # red led solid, green led still works as normal
-        'REBUILD': '0x46',  # red led blink slow, green led still works as normal
     }
     try:
         return mapping[status]
@@ -53,38 +52,24 @@ def led_status_mapping(status):
 def set_slot_status(slot, status):
     """
     Unfortunately, there is no way to query current drive identification status.
-    Furthemore, switching SMBUS back into auto mode doesn't guarantee the LEDs
-    will be automatically cleared so we need to clear them manually. Finally,
-    it's unclear on whether or not we even need to transition from manual to auto
-    mode (and vice versa) on SMBUS so we go the safe route and always toggle it.
-    Steps are as follows:
-        1. switch to manual mode
-        2. clear drive IDENTIFY led `bay` on `ctrl`
-        3. clear drive FAULT led `bay` on `ctrl`
-        4. clear drive REBUILD led `bay` on `ctrl`
-
-        If the user has requested anything other than CLEAR for the drive bay
-            5. light up the drive bay that was requested
-
-        6. switch back to auto mode
+    Also, there is no way to turn off a singular LED bay, you have to clear the
+    controller (nvme bank) of drives.
     """
     ctrl, bay = slot_to_controller_and_bay_mapping(slot)
-    status_map = led_status_mapping(status)
+    led_status_mapping(status)  # will crash if invalid status is passed to us
 
-    base = f'ipmitool raw 0x06 0x52 0x07 {ctrl} 0x00'
-    manual_mode_cmd = f'{base} 0x3c 0xff'
-    clear_ident_cmd = f'{base} {led_status_mapping("IDENTIFY")} {bay}'
-    clear_fault_cmd = f'{base} {led_status_mapping("FAULT")} {bay}'
-    clear_rebui_cmd = f'{base} {led_status_mapping("REBUILD")} {bay}'
-    cmds = [manual_mode_cmd, clear_ident_cmd, clear_fault_cmd, clear_rebui_cmd]
-    if status not in ('OFF', 'CLEAR'):
-        cmds.append(f'{base} {status_map} {bay}')
-
-    # always go back to auto mode (for now)
-    cmds.append(f'{base} 0x3c 0x00')
-
-    # now subprocess (once) for the commands
-    cmds = '; '.join(cmds)
-    ret = run(cmds, stdout=PIPE, stderr=STDOUT, shell=True)
-    if ret.returncode != 0:
-        raise CallError(f'Failed to run {cmds!r}: {ret.stdout.decode()}')
+    # always disable BMC sensor scan
+    run('ipmitool raw 0x30 0x02 0x00', check=False, shell=True)
+    # always switch to SMBUS
+    run('ipmitool raw 0x06 0x52 0x07 0xe6 0x0 0x4 0x4', check=False, shell=True)
+    if status in ('OFF', 'CLEAR'):
+        for i in ('0xc0', '0xc2', '0xc4'):
+            # set to manual mode for the nvme controller
+            run(f'ipmitool raw 0x06 0x52 0x07 {i} 0x00 0x3c 0xff', shell=True)
+            # clear all the bank of LEDs on the controller (no way to turn off specific drive)
+            run(f'ipmitool raw 0x06 0x52 0x07 {i} 0x00 {led_status_mapping("ON")} 0x00', shell=True)
+    else:
+        # set to manual mode for the nvme controller
+        run(f'ipmitool raw 0x06 0x52 0x07 {ctrl} 0x00 0x3c 0xff', shell=True)
+        # light up the slot
+        run(f'ipmitool raw 0x06 0x52 0x07 {ctrl} 0x00 {led_status_mapping("ON")} {bay}', shell=True)
