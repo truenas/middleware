@@ -2,8 +2,9 @@ import os
 import uuid
 
 from middlewared.utils import BOOTREADY
+from middlewared.utils.lifecycle import lifecycle_conf
 
-from .utils import FIRST_INSTALL_SENTINEL, lifecycle_conf
+from .utils import FIRST_INSTALL_SENTINEL
 
 
 def firstboot(middleware):
