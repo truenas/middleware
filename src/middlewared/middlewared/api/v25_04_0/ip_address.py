@@ -23,10 +23,10 @@ class IPAddr(BaseModel):
     address_types: list[ExcludedAddrTypes] = []
     v4: bool = True
     v6: bool = True
-    factory: Optional[Callable] = None
+    factory: Callable
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if self.v4 and self.v6:
             if self.network:
                 self.factory = ip_network
