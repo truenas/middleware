@@ -750,6 +750,7 @@ class FailoverEventsService(Service):
 
         logger.info('Failover event complete.')
 
+        lifecycle_conf.SYSTEM_READONLY = False
         # clear the description and set the result
         job.set_progress(None, description='SUCCESS')
 
@@ -933,6 +934,7 @@ class FailoverEventsService(Service):
         logger.info('Unpausing failover event processing')
         self.run_call('vrrpthread.unpause_events')
         logger.info('Successfully became the BACKUP node.')
+        lifecycle_conf.SYSTEM_READONLY = True
         self.FAILOVER_RESULT = 'SUCCESS'
 
         return self.FAILOVER_RESULT

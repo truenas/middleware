@@ -5,8 +5,9 @@ from middlewared.api.current import SystemRebootArgs, SystemRebootResult, System
 from middlewared.schema import accepts, Bool, returns, Str
 from middlewared.service import job, private, Service, no_auth_required, pass_app
 from middlewared.utils import run
+from middlewared.utils.lifecycle import lifecycle_conf
 
-from .utils import lifecycle_conf, RE_KDUMP_CONFIGURED
+from .utils import RE_KDUMP_CONFIGURED
 
 
 class SystemService(Service):
@@ -94,6 +95,11 @@ class SystemService(Service):
 
 async def _event_system_ready(middleware, event_type, args):
     lifecycle_conf.SYSTEM_READY = True
+
+    if (await middleware.call('failover.status')) == 'SINGLE':
+        # For HA systems we allow failover state change to control
+        # SYSTEM_READONLY
+        lifecycle_conf.SYSTEM_READONLY = False
 
     if (await middleware.call('system.advanced.config'))['kdump_enabled']:
         cp = await run(['kdump-config', 'status'], check=False)

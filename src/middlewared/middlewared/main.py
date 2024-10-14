@@ -22,6 +22,7 @@ from .service_exception import (
 from .utils import MIDDLEWARE_RUN_DIR, sw_version
 from .utils.audit import audit_username_from_session
 from .utils.debug import get_frame_details, get_threads_stacks
+from .utils.lifecycle import lifecycle_conf
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.origin import ConnectionOrigin
@@ -966,10 +967,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     )
 
             for method_name in dir(service):
-                roles = getattr(getattr(service, method_name), 'roles', None) or []
+                method = getattr(service, method_name)
+                roles = getattr(method, 'roles', None) or []
 
                 if method_name in ['do_create', 'do_update', 'do_delete']:
                     method_name = method_name.removeprefix('do_')
+
+                if method_name in ('create', 'updated', 'delete'):
+                    setattr(method, '_check_system_readonly', True)
 
                 if method_name.endswith('_choices'):
                     roles.append('READONLY_ADMIN')
@@ -1483,6 +1488,16 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if not app.authenticated:
             await self.log_audit_message_for_method(method_name, methodobj, params, app, False, False, False)
             raise CallError('Not authenticated', ErrnoMixin.ENOTAUTHENTICATED)
+
+        # We need to prevent user sessions from making system changes while
+        # server is in state that is not ready to accept the. Examples of this
+        # are: server is HA standby controller, system is not ready.
+        if app.authenticated_credentials.is_user_session and lifecycle_conf.SYSTEM_READONLY:
+            is hasattr(methodobj, '_check_system_readonly'):
+                raise CallError(
+                    'System is currently in readonly state for user interactive sessions',
+                    errno.EACCES
+                )
 
         # Some methods require authentication to the NAS (a valid account)
         # but not explicit authorization. In this case the authorization
