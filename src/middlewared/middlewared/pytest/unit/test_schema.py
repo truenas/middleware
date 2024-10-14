@@ -3,6 +3,7 @@ from unittest.mock import Mock
 
 from middlewared.service import job
 from middlewared.service_exception import ValidationErrors
+from middlewared.api import api_method
 from middlewared.schema import (
     accepts, Bool, Cron, Dict, Dir, File, Float, Int, List, Str, URI,
     Password, UnixPerm, UUID, LocalUsername, NetbiosName, NetbiosDomain
@@ -641,7 +642,7 @@ def test__cron__begin_end_validate(value, error):
 ])
 def test__schema_ipaddr(value, expected):
 
-    @accepts(IPAddr('data'))
+    @api_method(accepts=IPAddr, returns=IPAddr)
     def ipaddrv(self, data):
         return data
 
@@ -665,7 +666,7 @@ def test__schema_ipaddr(value, expected):
 ])
 def test__schema_ipaddr_cidr(value, expected):
 
-    @accepts(IPAddr('data', cidr=True))
+    @api_method(accepts=IPAddr, returns=IPAddr)
     def ipaddrv(self, data):
         return data
 
