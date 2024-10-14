@@ -46,7 +46,7 @@ def parse_smart_selftest_results(data) -> list[dict[str, Any]] | None:
 
     # ataprint.cpp
     if "ata_smart_self_test_log" in data:
-        current_poh = data["power_on_time"]["hours"]
+        current_power_on_hours = data["power_on_time"]["hours"]
         if "table" in data["ata_smart_self_test_log"]["standard"]: # If there are no tests, there is no table
             for index, entry in enumerate(data["ata_smart_self_test_log"]["standard"]["table"]):
 
@@ -62,7 +62,7 @@ def parse_smart_selftest_results(data) -> list[dict[str, Any]] | None:
                     remaining=remaining,
                     lifetime=entry["lifetime_hours"],
                     lba_of_first_error=entry.get("lba"), # only included if there is an error
-                    poh_ago = current_poh - entry["lifetime_hours"]
+                    power_on_hours_ago = current_power_on_hours - entry["lifetime_hours"]
                 )
 
                 if test.status_verbose == "Completed without error":
@@ -80,7 +80,7 @@ def parse_smart_selftest_results(data) -> list[dict[str, Any]] | None:
 
     # nvmeprint.cpp
     if "nvme_self_test_log" in data:
-        current_poh = data["power_on_time"]["hours"]
+        current_power_on_hours = data["power_on_time"]["hours"]
         if "table" in data["nvme_self_test_log"]:
             for index, entry in enumerate(data["nvme_self_test_log"]["table"]):
 
@@ -98,7 +98,7 @@ def parse_smart_selftest_results(data) -> list[dict[str, Any]] | None:
                     seg=entry.get("segment"),
                     sct=entry.get("status_code_type") or 0x0,
                     code=entry.get("status_code") or 0x0,
-                    poh_ago=current_poh - entry["power_on_hours"]
+                    power_on_hours_ago=current_power_on_hours - entry["power_on_hours"]
                 )
 
                 if test.status_verbose == "Completed without error":
@@ -115,7 +115,7 @@ def parse_smart_selftest_results(data) -> list[dict[str, Any]] | None:
     # scsiprint.cpp
     # this JSON has numbered keys as an index, there's a reason it's not called a "smart" test
     if "scsi_self_test_0" in data: # 0 is most recent test
-        current_poh = data["power_on_time"]["hours"]
+        current_power_on_hours = data["power_on_time"]["hours"]
         for index in range(0, 20): # only 20 tests can ever return
             test_key = f"scsi_self_test_{index}"
             if test_key not in data:
@@ -128,7 +128,7 @@ def parse_smart_selftest_results(data) -> list[dict[str, Any]] | None:
             if lba := entry.get("lba_first_failure"):
                 lba = entry["lba_first_failure"]["value"]
 
-            lifetime = current_poh
+            lifetime = current_power_on_hours
             if not entry.get("self_test_in_progress"):
                 lifetime = entry["power_on_time"]["hours"]
 
@@ -140,7 +140,7 @@ def parse_smart_selftest_results(data) -> list[dict[str, Any]] | None:
                 segment_number=segment,
                 lifetime=lifetime,
                 lba_of_first_error=lba,
-                poh_ago=current_poh - lifetime
+                power_on_hours_ago=current_power_on_hours - lifetime
             )
 
             if test.status_verbose == "Completed":

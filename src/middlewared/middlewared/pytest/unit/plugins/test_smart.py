@@ -57,7 +57,7 @@ def test__parse_smart_selftest_results__ataprint__1():
             "remaining": 0.0,
             "lifetime": 16590,
             "lba_of_first_error": None,
-            "poh_ago": 0
+            "power_on_hours_ago": 0
         },
         {
             "num": 1,
@@ -67,7 +67,7 @@ def test__parse_smart_selftest_results__ataprint__1():
             "remaining": 0.0,
             "lifetime": 16589,
             "lba_of_first_error": None,
-            "poh_ago": 1
+            "power_on_hours_ago": 1
         }
     ]
 
@@ -109,7 +109,7 @@ def test__parse_smart_selftest_results__ataprint__2():
             "remaining": 1.0,
             "lifetime": 16590,
             "lba_of_first_error": None,
-            "poh_ago": 0
+            "power_on_hours_ago": 0
         }
     ]
 
@@ -146,7 +146,7 @@ def test__parse_smart_selftest_results__nvmeprint__1():
             "seg": None,
             "sct": 0x0,
             "code": 0x0,
-            "poh_ago": 0
+            "power_on_hours_ago": 0
         },
     ]
 
@@ -176,7 +176,7 @@ def test__parse_smart_selftest_results__scsiprint__1():
             "segment_number": None,
             "lifetime": 3943,
             "lba_of_first_error": None,
-            "poh_ago": 0
+            "power_on_hours_ago": 0
         }
     ]
 
