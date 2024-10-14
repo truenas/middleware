@@ -1494,6 +1494,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         if not app.authenticated_credentials.authorize('CALL', method_name):
             await self.log_audit_message_for_method(method_name, methodobj, params, app, True, False, False)
+            if app.authenticated_credentials.is_user_session and not app.authenticated_credentials.is_valid():
+                raise CallError('Session is expired', errno.EACCES)
+
             raise CallError('Not authorized', errno.EACCES)
 
     def can_subscribe(self, app, name):

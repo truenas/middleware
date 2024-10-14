@@ -73,7 +73,7 @@ def test_authenticated_call():
                     "protocol": "REST",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": "root"},
+                        "credentials_data": {"username": "root", "login_at": ANY},
                     },
                 },
                 "event": "AUTHENTICATION",
@@ -96,7 +96,7 @@ def test_authenticated_call():
                     "protocol": "REST",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": "root"},
+                        "credentials_data": {"username": "root", "login_at": ANY},
                     },
                 },
                 "event": "METHOD_CALL",
@@ -152,7 +152,7 @@ def test_unauthorized_call():
                     "protocol": "REST",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
-                        "credentials_data": {"username": ANY},
+                        "credentials_data": {"username": ANY, "login_at": ANY},
                     },
                 },
                 "event": "METHOD_CALL",
@@ -187,7 +187,7 @@ def test_bogus_call():
                 "protocol": "REST",
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": "root"},
+                    "credentials_data": {"username": "root", "login_at": ANY},
                 },
             },
             "event": "METHOD_CALL",

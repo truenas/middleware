@@ -1,3 +1,4 @@
+from collections import defaultdict
 import errno
 import glob
 import json
@@ -7,7 +8,10 @@ import shutil
 import stat
 import wbclient
 from pathlib import Path
+from collections import defaultdict
 from contextlib import suppress
+
+from sqlalchemy.orm import relationship
 
 from dataclasses import asdict
 from middlewared.api import api_method
@@ -142,6 +146,14 @@ def filters_include_ds_accounts(filters):
     return True
 
 
+class GroupMembershipModel(sa.Model):
+    __tablename__ = 'account_bsdgroupmembership'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    bsdgrpmember_group_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdgroups.id", ondelete="CASCADE"))
+    bsdgrpmember_user_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdusers.id", ondelete="CASCADE"))
+
+
 class UserModel(sa.Model):
     __tablename__ = 'account_bsdusers'
 
@@ -162,6 +174,7 @@ class UserModel(sa.Model):
     bsdusr_sudo_commands_nopasswd = sa.Column(sa.JSON(list))
     bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
     bsdusr_email = sa.Column(sa.String(254), nullable=True)
+    bsdusr_groups = relationship('GroupModel', secondary=lambda: GroupMembershipModel.__table__)
 
 
 class UserService(CRUDService):
@@ -180,29 +193,23 @@ class UserService(CRUDService):
 
     @private
     async def user_extend_context(self, rows, extra):
-        memberships = {}
-        res = await self.middleware.call(
-            'datastore.query', 'account.bsdgroupmembership',
-            [], {'prefix': 'bsdgrpmember_'}
-        )
-
         group_roles = await self.middleware.call('group.query', [['local', '=', True]], {'select': ['id', 'roles']})
 
-        for i in res:
-            uid = i['user']['id']
-            if uid in memberships:
-                memberships[uid].append(i['group']['id'])
-            else:
-                memberships[uid] = [i['group']['id']]
+        user_api_keys = defaultdict(list)
+        for key in await self.middleware.call('api_key.query'):
+            if not key['local']:
+                continue
+
+            user_api_keys[key['username']].append(key['id'])
 
         return {
             'server_sid': await self.middleware.call('smb.local_server_sid'),
-            'memberships': memberships,
             'user_2fa_mapping': ({
                 entry['user']['id']: bool(entry['secret']) for entry in await self.middleware.call(
                     'datastore.query', 'account.twofactor_user_auth', [['user_id', '!=', None]]
                 )
             }),
+            'user_api_keys': user_api_keys,
             'roles_mapping': {i['id']: i['roles'] for i in group_roles}
         }
 
@@ -217,12 +224,12 @@ class UserService(CRUDService):
 
     @private
     async def user_extend(self, user, ctx):
+        user['groups'] = [g['id'] for g in user['groups']]
 
         # Normalize email, empty is really null
         if user['email'] == '':
             user['email'] = None
 
-        user['groups'] = ctx['memberships'].get(user['id'], [])
         # Get authorized keys
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
 
@@ -245,13 +252,15 @@ class UserService(CRUDService):
             'local': True,
             'id_type_both': False,
             'sid': sid,
-            'roles': list(user_roles)
+            'roles': list(user_roles),
+            'api_keys': ctx['user_api_keys'][user['username']]
         })
         return user
 
     @private
     def user_compress(self, user):
         to_remove = [
+            'api_keys',
             'local',
             'id_type_both',
             'sid',
@@ -505,7 +514,6 @@ class UserService(CRUDService):
 
         verrors.check()
 
-        groups = data.pop('groups')
         create = data.pop('group_create')
         group_created = False
 
@@ -537,7 +545,7 @@ class UserService(CRUDService):
             group = group[0]
 
         if data['smb']:
-            groups.append((self.middleware.call_sync(
+            data['groups'].append((self.middleware.call_sync(
                 'group.query', [('group', '=', 'builtin_users'), ('local', '=', True)], {'get': True},
             ))['id'])
 
@@ -576,8 +584,6 @@ class UserService(CRUDService):
                     'user': pk,
                 }
             )
-
-            self.__set_groups(pk, groups)
 
         except Exception:
             if pk is not None:
@@ -811,10 +817,6 @@ class UserService(CRUDService):
 
         user.pop('sshpubkey', None)
         self.__set_password(user)
-
-        if 'groups' in user:
-            groups = user.pop('groups')
-            self.__set_groups(pk, groups)
 
         user = self.user_compress(user)
         self.middleware.call_sync('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
@@ -1355,33 +1357,6 @@ class UserService(CRUDService):
 
         return data
 
-    def __set_groups(self, pk, groups):
-
-        groups = set(groups)
-        existing_ids = set()
-        gms = self.middleware.call_sync(
-            'datastore.query', 'account.bsdgroupmembership',
-            [('user', '=', pk)], {'prefix': 'bsdgrpmember_'}
-        )
-        for gm in gms:
-            if gm['id'] not in groups:
-                self.middleware.call_sync('datastore.delete', 'account.bsdgroupmembership', gm['id'])
-            else:
-                existing_ids.add(gm['id'])
-
-        for _id in groups - existing_ids:
-            group = self.middleware.call_sync(
-                'datastore.query', 'account.bsdgroups', [('id', '=', _id)], {'prefix': 'bsdgrp_'}
-            )
-            if not group:
-                raise CallError(f'Group {_id} not found', errno.ENOENT)
-            self.middleware.call_sync(
-                'datastore.insert',
-                'account.bsdgroupmembership',
-                {'group': _id, 'user': pk},
-                {'prefix': 'bsdgrpmember_'}
-            )
-
     @private
     def update_sshpubkey(self, homedir, user, group):
         if 'sshpubkey' not in user:
@@ -1556,14 +1531,7 @@ class GroupModel(sa.Model):
     bsdgrp_sudo_commands = sa.Column(sa.JSON(list))
     bsdgrp_sudo_commands_nopasswd = sa.Column(sa.JSON(list))
     bsdgrp_smb = sa.Column(sa.Boolean(), default=True)
-
-
-class GroupMembershipModel(sa.Model):
-    __tablename__ = 'account_bsdgroupmembership'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    bsdgrpmember_group_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdgroups.id", ondelete="CASCADE"))
-    bsdgrpmember_user_id = sa.Column(sa.Integer(), sa.ForeignKey("account_bsdusers.id", ondelete="CASCADE"))
+    bsdgrp_users = relationship('UserModel', secondary=lambda: GroupMembershipModel.__table__, overlaps='bsdusr_groups')
 
 
 class GroupService(CRUDService):
@@ -1579,38 +1547,25 @@ class GroupService(CRUDService):
 
     @private
     async def group_extend_context(self, rows, extra):
-        mem = {}
-        membership = await self.middleware.call(
-            'datastore.query', 'account.bsdgroupmembership', [], {'prefix': 'bsdgrpmember_'}
-        )
-        users = await self.middleware.call('datastore.query', 'account.bsdusers')
         privileges = await self.middleware.call('datastore.query', 'account.privilege')
 
-        # uid and gid variables here reference database ids rather than OS uid / gid
-        for g in membership:
-            gid = g['group']['id']
-            uid = g['user']['id']
-            if gid in mem:
-                mem[gid].append(uid)
-            else:
-                mem[gid] = [uid]
-
+        users = await self.middleware.call('datastore.query', 'account.bsdusers')
+        primary_memberships = defaultdict(set)
         for u in users:
-            gid = u['bsdusr_group']['id']
-            uid = u['id']
-            if gid in mem:
-                mem[gid].append(uid)
-            else:
-                mem[gid] = [uid]
+            primary_memberships[u['bsdusr_group']['id']].add(u['id'])
 
         server_sid = await self.middleware.call('smb.local_server_sid')
 
-        return {"memberships": mem, "privileges": privileges, "server_sid": server_sid}
+        return {
+            "privileges": privileges,
+            "primary_memberships": primary_memberships,
+            "server_sid": server_sid,
+        }
 
     @private
     async def group_extend(self, group, ctx):
         group['name'] = group['group']
-        group['users'] = ctx['memberships'].get(group['id'], [])
+        group['users'] = list({u['id'] for u in group['users']} | ctx['primary_memberships'][group['id']])
 
         privilege_mappings = privileges_group_mapping(ctx['privileges'], [group['gid']], 'local_groups')
         if privilege_mappings['allowlist']:
@@ -1703,15 +1658,8 @@ class GroupService(CRUDService):
         group = data.copy()
         group['group'] = group.pop('name')
 
-        users = group.pop('users', [])
-
         group = await self.group_compress(group)
         pk = await self.middleware.call('datastore.insert', 'account.bsdgroups', group, {'prefix': 'bsdgrp_'})
-
-        for user in users:
-            await self.middleware.call(
-                'datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': user}
-            )
 
         if reload_users:
             await self.middleware.call('service.reload', 'user')
@@ -1756,7 +1704,6 @@ class GroupService(CRUDService):
         old_smb = group['smb']
 
         group.update(data)
-        group.pop('users', None)
         new_smb = group['smb']
 
         if 'name' in data and data['name'] != group['group']:
@@ -1772,10 +1719,7 @@ class GroupService(CRUDService):
             elif old_smb and not new_smb:
                 await self.middleware.call('smb.del_groupmap', group['id'])
 
-        group = await self.group_compress(group)
-        await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
-
-        if 'users' in data:
+        if 'users' in group:
             primary_users = {
                 u['id']
                 for u in await self.middleware.call(
@@ -1784,25 +1728,10 @@ class GroupService(CRUDService):
                     [('bsdusr_group', '=', pk)],
                 )
             }
-            existing = {
-                i['bsdgrpmember_user']['id']: i
-                for i in await self.middleware.call(
-                    'datastore.query',
-                    'account.bsdgroupmembership',
-                    [('bsdgrpmember_group', '=', pk)]
-                )
-            }
-            to_remove = set(existing.keys()) - set(data['users'])
-            for i in to_remove:
-                await self.middleware.call('datastore.delete', 'account.bsdgroupmembership', existing[i]['id'])
+            group['users'] = [u for u in group['users'] if u not in primary_users]
 
-            to_add = set(data['users']) - set(existing.keys()) - primary_users
-            for i in to_add:
-                await self.middleware.call(
-                    'datastore.insert',
-                    'account.bsdgroupmembership',
-                    {'bsdgrpmember_group': pk, 'bsdgrpmember_user': i},
-                )
+        group = await self.group_compress(group)
+        await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
 
         await self.middleware.call('service.reload', 'user')
         return pk

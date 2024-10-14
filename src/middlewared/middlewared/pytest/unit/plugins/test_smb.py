@@ -234,6 +234,17 @@ def test__base_smb():
     assert conf['server smb encrypt'] == 'default'
     assert conf['directory mask'] == '0775'
     assert conf['create mask'] == '0664'
+    assert conf['zfs_core:zfs_integrity_streams'] is False
+    assert conf['zfs_core:zfs_block_cloning'] is False
+
+
+def test__base_smb_enterprise():
+    conf = generate_smb_conf_dict(
+        None, None, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, BASE_IDMAP, True
+    )
+    assert conf['zfs_core:zfs_integrity_streams'] is True
+    assert conf['zfs_core:zfs_block_cloning'] is True
 
 
 def test__syslog():
