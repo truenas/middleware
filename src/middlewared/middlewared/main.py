@@ -1493,7 +1493,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         # server is in state that is not ready to accept the. Examples of this
         # are: server is HA standby controller, system is not ready.
         if app.authenticated_credentials.is_user_session and lifecycle_conf.SYSTEM_READONLY:
-            is hasattr(methodobj, '_check_system_readonly'):
+            if hasattr(methodobj, '_check_system_readonly'):
                 raise CallError(
                     'System is currently in readonly state for user interactive sessions',
                     errno.EACCES
