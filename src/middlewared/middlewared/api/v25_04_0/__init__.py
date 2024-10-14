@@ -8,6 +8,7 @@ from .common import *  # noqa
 from .core import *  # noqa
 from .disk import *  # noqa
 from .failover_reboot import *  # noqa
+from .fc_host import *  # noqa
 from .group import *  # noqa
 from .iscsi_auth import *  # noqa
 from .keychain import *  # noqa
