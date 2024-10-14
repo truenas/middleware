@@ -18,7 +18,7 @@ ExcludedAddrTypes: TypeAlias = Literal[
 ]
 
 class IPAddr(BaseModel):
-    address: IPvAnyAddress
+    __root__: IPvAnyAddress
     cidr: bool = False
     network: bool = False
     network_strict: bool = False
