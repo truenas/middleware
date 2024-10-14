@@ -23,7 +23,7 @@ class IPAddr(BaseModel):
     address_types: list[ExcludedAddrTypes] = []
     v4: bool = True
     v6: bool = True
-    factory: Callable
+    factory: Optional[Callable] = None
 
     def __init__(self, *args, **kwargs):
         super().__init__()
