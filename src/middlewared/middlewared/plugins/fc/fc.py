@@ -6,7 +6,7 @@ from pathlib import Path
 
 from middlewared.service import Service
 from middlewared.service_exception import CallError
-from .utils import dmi_pci_slot_info, wwn_as_colon_hex
+from .utils import dmi_pci_slot_info
 
 FIBRE_CHANNEL_SEARCH_STRING = 'Fibre Channel'
 QLA2XXX_KERNEL_MODULE = 'qla2xxx_scst'
@@ -123,23 +123,6 @@ class FCService(Service):
         (Should we make it a dict with wwpn from each node?, and a flag to see whether virtual)
         """
         return []
-
-    async def nickname_to_wwpn(self, nickname):
-        # TODO:
-        # 1. Hard code for now (DB table in future?)
-        # 2. Currently we do not handle NPIV.  Rectify this.
-        match nickname:
-            case 'fc0':
-                addr = '/sys/devices/pci0000:b2/0000:b2:00.0/0000:b3:00.0'
-            case 'fc1':
-                addr = '/sys/devices/pci0000:b2/0000:b2:00.0/0000:b3:00.1'
-            case _:
-                return None
-
-        try:
-            return wwn_as_colon_hex((await self.middleware.call('fc.fc_hosts'))[addr]['port_name'])
-        except KeyError:
-            return None
 
 
 # async def __event_system_ready(middleware, event_type, args):
