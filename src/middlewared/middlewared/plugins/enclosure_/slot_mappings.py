@@ -665,8 +665,8 @@ def get_slot_info(enc):
                 'DEFAULT': {
                     'model': {
                         enc.model: {
-                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
-                            for i in range(1, 13)
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
+                            for i in range(0, 12)
                         },
                     }
                 }
