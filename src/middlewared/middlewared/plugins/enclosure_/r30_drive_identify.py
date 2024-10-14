@@ -52,20 +52,8 @@ def led_status_mapping(status):
 def set_slot_status(slot, status):
     """
     Unfortunately, there is no way to query current drive identification status.
-    Furthemore, switching SMBUS back into auto mode doesn't guarantee the LEDs
-    will be automatically cleared so we need to clear them manually. Finally,
-    it's unclear on whether or not we even need to transition from manual to auto
-    mode (and vice versa) on SMBUS so we go the safe route and always toggle it.
-    Steps are as follows:
-        1. switch to manual mode
-        2. clear drive IDENTIFY led `bay` on `ctrl`
-        3. clear drive FAULT led `bay` on `ctrl`
-        4. clear drive REBUILD led `bay` on `ctrl`
-
-        If the user has requested anything other than CLEAR for the drive bay
-            5. light up the drive bay that was requested
-
-        6. switch back to auto mode
+    Also, there is no way to turn off a singular LED bay, you have to clear the
+    controller (nvme bank) of drives.
     """
     ctrl, bay = slot_to_controller_and_bay_mapping(slot)
     led_status_mapping(status)  # will crash if invalid status is passed to us
@@ -74,7 +62,6 @@ def set_slot_status(slot, status):
     run('ipmitool raw 0x30 0x02 0x00', check=False, shell=True)
     # always switch to SMBUS
     run('ipmitool raw 0x06 0x52 0x07 0xe6 0x0 0x4 0x4', check=False, shell=True)
-
     if status in ('OFF', 'CLEAR'):
         for i in ('0xc0', '0xc2', '0xc4'):
             # set to manual mode for the nvme controller
