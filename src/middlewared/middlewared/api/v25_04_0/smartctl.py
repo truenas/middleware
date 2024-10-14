@@ -10,7 +10,7 @@ class AtaSelfTest(BaseModel):
     status_verbose: str
     remaining: float
     lifetime: int
-    power_on_hours_ago: int # current lifetime - lifetime at test start, "power on hours ago"
+    power_on_hours_ago: int
     lba_of_first_error: int | None = None
 
 
