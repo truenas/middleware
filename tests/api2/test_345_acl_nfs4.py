@@ -322,7 +322,7 @@ def test_13_recursive_no_traverse(request):
     # INHERIT_ONLY should be set to False at this depth.
     acl_result = call('filesystem.getacl', f'/mnt/{ACLTEST_DATASET}/dir1', False)
     theacl = acl_result['acl']
-    assert theacl[0]['flags'] == expected_flags_0, acl_result 
+    assert theacl[0]['flags'] == expected_flags_0, acl_result
     assert theacl[1]['flags'] == expected_flags_1, acl_result
 
     # Verify that user was changed on subdirectory
@@ -373,15 +373,15 @@ def test_15_strip_acl_from_dataset(request):
 
     assert call('filesystem.stat', f'/mnt/{ACLTEST_SUBDATASET}')['acl'] is True
 
-    st =  call('filesystem.stat', f'/mnt/{ACLTEST_DATASET}')
+    st = call('filesystem.stat', f'/mnt/{ACLTEST_DATASET}')
     assert st['acl'] is False, str(st)
     assert oct(st['mode']) == '0o40777', str(st)
 
-    st =  call('filesystem.stat', f'/mnt/{ACLTEST_DATASET}/dir1')
+    st = call('filesystem.stat', f'/mnt/{ACLTEST_DATASET}/dir1')
     assert st['acl'] is False, str(st)
     assert oct(st['mode']) == '0o40777', str(st)
 
-    st =  call('filesystem.stat', f'/mnt/{ACLTEST_DATASET}/dir1/testfile')
+    st = call('filesystem.stat', f'/mnt/{ACLTEST_DATASET}/dir1/testfile')
     assert st['acl'] is False, str(st)
     assert oct(st['mode']) == '0o100777', str(st)
 
