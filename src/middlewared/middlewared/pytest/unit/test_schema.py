@@ -4,10 +4,11 @@ from unittest.mock import Mock
 from middlewared.service import job
 from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
-    accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, URI,
+    accepts, Bool, Cron, Dict, Dir, File, Float, Int, List, Str, URI,
     Password, UnixPerm, UUID, LocalUsername, NetbiosName, NetbiosDomain
 )
 from middlewared.validators import QueryFilters, QueryOptions
+from middlewared.api.current import IPAddr
 
 
 def test__nonhidden_after_hidden():
