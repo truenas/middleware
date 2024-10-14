@@ -2,6 +2,7 @@ from _pytest.mark import KeywordMatcher
 from pydantic.networks import IPvAnyAddress
 from libvirt import Callable
 from middlewared.api.base import BaseModel
+from pydantic import RootModel
 from typing import Literal, TypeAlias
 from ipaddress import ip_network, ip_interface, ip_address, IPv4Network, IPv4Interface, IPv4Address, IPv6Network, IPv6Interface, IPv6Address
 
