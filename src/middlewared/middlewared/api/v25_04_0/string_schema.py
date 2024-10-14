@@ -5,7 +5,7 @@ from middlewared.api.base import BaseModel
 from typing import Literal, TypeAlias
 from ipaddress import ip_network, ip_interface, ip_address, IPv4Network, IPv4Interface, IPv4Address, IPv6Network, IPv6Interface, IPv6Address
 
-__all__ = ["IPAddr"]
+__all__ = ["IPAddr", "IPAddrResult"]
 
 ExcludedAddrTypes: TypeAlias = Literal[
     'MULTICAST',
@@ -16,6 +16,9 @@ ExcludedAddrTypes: TypeAlias = Literal[
     'LOOPBACK',
     'LINK_LOCAL'
 ]
+
+class IPAddrResult(BaseModel):
+    result = "idktest"
 
 class IPAddr(BaseModel):
     cidr: bool = False
