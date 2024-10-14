@@ -7,8 +7,12 @@
     from pathlib import Path
 
     from middlewared.service import CallError
+    from middlewared.plugins.fc.utils import wwn_as_colon_hex
 
-    global_config = middleware.call_sync('iscsi.global.config')
+    REL_TGT_ID_NODEB_OFFSET = 32000
+    REL_TGT_ID_FC_OFFSET = 5000
+
+    global_config = render_ctx['iscsi.global.config']
 
     def existing_copy_manager_luns():
         luns = {}
@@ -39,13 +43,41 @@
                 cml[start_count] = device
         return cml
 
-    targets = middleware.call_sync('iscsi.target.query')
+    targets = render_ctx['iscsi.target.query']
     extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]], {'extra': {'use_cached_locked_datasets': False}})}
     portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
     initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
+    fcports_by_target_id = {d['target']['id']: d for d in render_ctx['fcport.query']}
+    targets_by_id = {d['id']: d for d in targets}
     authenticators = defaultdict(list)
     for auth in middleware.call_sync('iscsi.auth.query'):
         authenticators[auth['tag']].append(auth)
+
+    def ha_node_wwpn_for_fcport(fcport):
+        if render_ctx['failover.node'] == 'A':
+            return wwn_as_colon_hex(fcport['wwpn'])
+        elif render_ctx['failover.node'] == 'B':
+            return wwn_as_colon_hex(fcport['wwpn_b'])
+
+    def ha_node_wwpn_for_target(target, node):
+        if target['id'] in fcports_by_target_id:
+            fcport = fcports_by_target_id[target['id']]
+            if node == 'A':
+                return wwn_as_colon_hex(fcport['wwpn'])
+            elif node == 'B':
+                return wwn_as_colon_hex(fcport['wwpn_b'])
+
+    def is_iscsi_target(target):
+        return target['mode'] in ['ISCSI', 'BOTH']
+
+    def is_fc_target(target):
+        return target['mode'] in ['FC', 'BOTH']
+
+    def fcport_to_target(fcport):
+        try:
+            return targets_by_id[fcport['target']['id']]
+        except KeyError:
+            return None
 
     # There are several changes that must occur if ALUA is enabled,
     # and these are different depending on whether this is the
@@ -68,10 +100,10 @@
     # - clustered_extents is used to prevent cluster_mode from being
     #   enabled on entents at startup.  We will have to explicitly
     #   write 1 to cluster_mode elsewhere.
-    is_ha = middleware.call_sync('failover.licensed')
-    alua_enabled = middleware.call_sync("iscsi.global.alua_enabled")
-    failover_status = middleware.call_sync("failover.status")
-    node = middleware.call_sync("failover.node")
+    is_ha = render_ctx['failover.licensed']
+    alua_enabled = render_ctx['iscsi.global.alua_enabled']
+    failover_status = render_ctx['failover.status']
+    node = render_ctx['failover.node']
     failover_virtual_aliases = []
     if alua_enabled:
         listen_ip_choices = middleware.call_sync('iscsi.portal.listen_ip_choices')
@@ -131,6 +163,7 @@
 
     nodes = {"A" : {"other" : "B", "group_id" : 101},
              "B" : {"other" : "A", "group_id" : 102}}
+    other_node = nodes[node]['other']
 
     # Let's map extents to respective ios
     all_extent_names = []
@@ -269,6 +302,11 @@ TARGET_DRIVER copy_manager {
 % endif
 ##
 
+####################################################################################
+##
+## Devices
+##
+####################################################################################
 % for handler in extents_io:
 HANDLER ${handler} {
 %   for extent in extents_io[handler]:
@@ -308,6 +346,11 @@ HANDLER ${handler} {
 }
 % endfor
 
+####################################################################################
+##
+## iSCSI targets
+##
+####################################################################################
 TARGET_DRIVER iscsi {
     enabled 1
     link_local 0
@@ -325,6 +368,7 @@ TARGET_DRIVER iscsi {
     % endfor
 </%def>\
 % for idx, target in enumerate(targets, start=1):
+%if is_iscsi_target(target):
     TARGET ${global_config['basename']}:${target['name']} {
 <%
     # SCST does not allow us to set authentication at a group level, so it is going to be set at
@@ -377,7 +421,7 @@ TARGET_DRIVER iscsi {
         rel_tgt_id ${target['rel_tgt_id']}
 %           endif
 %           if node == "B":
-        rel_tgt_id ${target['rel_tgt_id'] + 32000}
+        rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_NODEB_OFFSET}
 %           endif
 %       else:
         rel_tgt_id ${target['rel_tgt_id']}
@@ -436,6 +480,7 @@ ${retrieve_luns(target['id'], ' ' * 4)}\
 %   endif
         }
     }
+% endif  ## is_iscsi_target
 % endfor
 ##
 ## For the master in HA ALUA write out additional targets that will only be accessible
@@ -446,7 +491,7 @@ ${retrieve_luns(target['id'], ' ' * 4)}\
     TARGET ${global_config['basename']}:HA:${target['name']} {
         allowed_portal ${local_ip}
 %       if node == "A":
-        rel_tgt_id ${target['rel_tgt_id'] + 32000}
+        rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_NODEB_OFFSET}
 %       endif
 %       if node == "B":
         rel_tgt_id ${target['rel_tgt_id']}
@@ -465,6 +510,107 @@ ${retrieve_luns(target['id'],'')}\
 %     endfor
 % endif
 }
+
+####################################################################################
+##
+## Fibre Channel targets
+##
+####################################################################################
+% if render_ctx['fc.capable']:
+%   if render_ctx['fcport.query']:
+TARGET_DRIVER qla2x00t {
+## How we populate the FC targets depends on the configuration / node status
+% if is_ha:
+##
+## HA configuration
+##
+% for fcport in render_ctx['fcport.query']:
+% if alua_enabled:
+##    ALUA enabled - write out the target for this node
+<%
+    wwpn = ha_node_wwpn_for_fcport(fcport)
+    target = fcport_to_target(fcport)
+%>\
+% if wwpn and target:
+    TARGET ${wwpn} {
+% if node == "A":
+        rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
+% endif
+% if node == "B":
+        rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET + REL_TGT_ID_NODEB_OFFSET}
+% endif
+% if failover_status == "MASTER":
+        enabled 1
+% elif failover_status == "BACKUP" and set_standy_target_to_enabled(fcport['target']['iscsi_target_name']):
+        enabled 1
+% else:
+        enabled 0
+% endif
+
+% if failover_status == "MASTER":
+        % for associated_target in associated_targets[fcport['target']['id']]:
+        LUN ${associated_target['lunid']} ${extents[associated_target['extent']]['name']}
+        % endfor
+% elif failover_status == "BACKUP":
+<%
+    devices = logged_in_targets.get(fcport['target']['iscsi_target_name'], None)
+%>\
+%       if devices:
+%       for device in devices:
+        LUN ${device.split(':')[-1]} ${device}
+%       endfor
+%       endif
+% endif  ## MASTER / BACKUP
+% endif  ##  wwpn and target
+    }
+%  else:  ## ALUA
+##    ALUA not enabled - only write out the target for this node if MASTER
+% if failover_status == "MASTER":
+<%
+    wwpn = ha_node_wwpn_for_fcport(fcport)
+    target = fcport_to_target(fcport)
+%>
+    % if wwpn and target:
+    TARGET ${wwpn} {
+        rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
+        enabled 1
+        % for associated_target in associated_targets[fcport['target']['id']]:
+        LUN ${associated_target['lunid']} ${extents[associated_target['extent']]['name']}
+        % endfor
+    }
+    % endif  ## wwpn and
+% endif  ## if MASTER
+% endif  ## ALUA (not)
+% endfor  ## for fcport
+% else:  ## HA
+##
+## NOT HA - just write out targets
+##
+% for fcport in render_ctx['fcport.query']:
+<%
+    wwpn = wwn_as_colon_hex(fcport['wwpn'])
+    target = fcport_to_target(fcport)
+%>
+    % if wwpn and target:
+    TARGET ${wwpn} {
+        rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
+        enabled 1
+        % for associated_target in associated_targets[fcport['target']['id']]:
+        LUN ${associated_target['lunid']} ${extents[associated_target['extent']]['name']}
+        % endfor
+    }
+    % endif  ## wwpn and target
+% endfor
+%endif
+}
+%   endif
+% endif
+##
+####################################################################################
+##
+## Device group
+##
+####################################################################################
 ##
 ## If ALUA is enabled then we will want a section to setup the target portal groups
 ##
@@ -496,7 +642,15 @@ DEVICE_GROUP targets {
                 state active
 
 % for target in targets:
+% if is_iscsi_target(target):
                 TARGET ${global_config['basename']}:${target['name']}
+% endif
+% if is_fc_target(target):
+<% wwpn = ha_node_wwpn_for_target(target, node) %>\
+% if wwpn:
+                TARGET ${wwpn}
+% endif
+% endif
 % endfor
         }
 
@@ -506,7 +660,20 @@ DEVICE_GROUP targets {
 
 % for target in targets:
                 TARGET ${global_config['basename']}:HA:${target['name']}
-% endfor
+% if is_fc_target(target):
+<% wwpn = ha_node_wwpn_for_target(target, other_node) %>\
+% if wwpn:
+                TARGET ${wwpn} {
+% if other_node == "A":
+                    rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
+% endif
+% if other_node == "B":
+                    rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET+ REL_TGT_ID_NODEB_OFFSET}
+% endif
+                }
+% endif  ## wwpn
+% endif  ## is_fc_target
+% endfor  ## target
         }
 }
 %     endif
@@ -530,14 +697,29 @@ DEVICE_GROUP targets {
                 state active
 
 % for idx, target in enumerate(targets, start=1):
+% if is_iscsi_target(target):
                 TARGET ${global_config['basename']}:alt:${target['name']} {
 %     if node == "A":
-                   rel_tgt_id ${target['rel_tgt_id'] + 32000}
+                   rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_NODEB_OFFSET}
 %     endif
 %     if node == "B":
                    rel_tgt_id ${target['rel_tgt_id']}
 %     endif
                 }
+% endif  ## is_iscsi_target
+% if is_fc_target(target):
+<% wwpn = ha_node_wwpn_for_target(target, other_node) %>\
+% if wwpn:
+                TARGET ${wwpn} {
+% if other_node == "A":
+                    rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
+% endif
+% if other_node == "B":
+                    rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET + REL_TGT_ID_NODEB_OFFSET}
+% endif
+                }
+% endif  ## wwpn
+% endif  ## is_fc_target
 % endfor
 
         }
@@ -547,8 +729,16 @@ DEVICE_GROUP targets {
                 state nonoptimized
 
 % for target in targets:
+% if is_iscsi_target(target):
                 TARGET ${global_config['basename']}:${target['name']}
-% endfor
+% endif  ## is_iscsi_target
+% if is_fc_target(target):
+<% wwpn = ha_node_wwpn_for_target(target, node) %>\
+% if wwpn:
+                TARGET ${wwpn}
+% endif  ## wwpn
+% endif  ## is_fc_target
+% endfor ## target
         }
 
 }
