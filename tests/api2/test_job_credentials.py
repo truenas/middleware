@@ -1,5 +1,6 @@
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.utils import call, mock
+from unittest.mock import ANY
 
 
 def test_job_credentials():
@@ -15,4 +16,4 @@ def test_job_credentials():
 
             job = call("core.get_jobs", [["id", "=", job_id]], {"get": True})
 
-            assert job["credentials"] == {"type": "LOGIN_PASSWORD", "data": {"username": c.username}}
+            assert job["credentials"] == {"type": "LOGIN_PASSWORD", "data": {"username": c.username, "login_at": ANY}}

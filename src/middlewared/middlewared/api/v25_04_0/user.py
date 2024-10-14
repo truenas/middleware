@@ -57,6 +57,7 @@ class UserEntry(BaseModel):
     twofactor_auth_configured: bool
     sid: str | None
     roles: list[str]
+    api_keys: list[int]
 
 
 class UserCreate(UserEntry):
@@ -70,6 +71,7 @@ class UserCreate(UserEntry):
     twofactor_auth_configured: Excluded = excluded_field()
     sid: Excluded = excluded_field()
     roles: Excluded = excluded_field()
+    api_keys: Excluded = excluded_field()
 
     uid: LocalUID | None = None
     "UNIX UID. If not provided, it is automatically filled with the next one available."

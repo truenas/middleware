@@ -464,7 +464,7 @@ class PoolDatasetService(CRUDService):
         Int('refreservation'),
         Inheritable(Int('special_small_block_size'), has_default=False),
         Inheritable(Int('copies')),
-        Inheritable(Str('snapdir', enum=['VISIBLE', 'HIDDEN'])),
+        Inheritable(Str('snapdir', enum=['DISABLED', 'VISIBLE', 'HIDDEN'])),
         Inheritable(Str('deduplication', enum=['ON', 'VERIFY', 'OFF'])),
         Inheritable(Str('checksum', enum=ZFS_CHECKSUM_CHOICES)),
         Inheritable(Str('readonly', enum=['ON', 'OFF'])),

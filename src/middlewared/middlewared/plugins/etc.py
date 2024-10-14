@@ -179,9 +179,17 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'security/pam_winbind.conf'},
             ]
         },
-        'pam_middleware': [
-            {'type': 'mako', 'path': 'pam.d/middleware'},
-        ],
+        'pam_middleware': {
+            'ctx': [
+                {'method': 'datastore.config', 'args': ['system.settings']},
+                {'method': 'api_key.query', 'args': [[['revoked', '=', False]]]}
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'pam.d/middleware'},
+                {'type': 'mako', 'path': 'pam.d/middleware-api-key'},
+                {'type': 'py', 'path': 'pam_tdb'},
+            ]
+        },
         'ftp': {
             'ctx': [
                 {'method': 'ftp.config'},
