@@ -25,7 +25,7 @@ class IPAddr(BaseModel):
     v6: bool = True
     factory: Optional[Callable] = None
 
-    def fdsfs(self, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if self.v4 and self.v6:
             if self.network:
