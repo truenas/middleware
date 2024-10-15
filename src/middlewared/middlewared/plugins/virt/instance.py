@@ -1,6 +1,6 @@
 import aiohttp
 import errno
-from typing import Any, List
+from typing import Any
 
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, job, private
@@ -384,7 +384,7 @@ class VirtInstanceService(CRUDService):
                 raise Exception('Invalid device type')
         return new
 
-    async def __generate_device_name(self, device_names: List[str], device_type: str) -> str:
+    async def __generate_device_name(self, device_names: list[str], device_type: str) -> str:
         name = device_type.lower()
         i = 0
         while True:

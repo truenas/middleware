@@ -44,7 +44,7 @@ class VirtInstacesMetricsEventSource(EventSource):
 
             self.send_event('ADDED', fields=data)
 
-            time.sleep(1)
+            time.sleep(2)
 
 
 async def setup(middleware):
