@@ -199,6 +199,9 @@ class Application:
 
     async def call_method(self, message, serviceobj, methodobj):
         params = message.get('params') or []
+        if not isinstance(params, list):
+            self.send_error(message, errno.EINVAL, '`params` must be a list.')
+            return
 
         if mock := self.middleware._mock_method(message['method'], params):
             methodobj = mock
