@@ -194,7 +194,7 @@ class ISCSIGlobalService(SystemServiceService):
             return False
 
         # If FIBRECHANNEL is licensed then allow ALUA
-        if await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
-            return True
+        # if await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
+        #     return True
 
         return (await self.middleware.call('iscsi.global.config'))['alua']
