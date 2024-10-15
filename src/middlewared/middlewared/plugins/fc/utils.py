@@ -17,6 +17,8 @@ def wwn_as_colon_hex(hexstr):
         if hexstr.startswith('naa.'):
             # range(4,) to skip the leading naa.
             return ':'.join(hexstr[i:i + 2] for i in range(4, len(hexstr), 2))
+        if HEX_COLON.match(hexstr):
+            return hexstr
 
 
 def colon_hex_as_naa(hexstr):
