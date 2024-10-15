@@ -15,6 +15,7 @@ from middlewared.service import job, private
 from middlewared.service import ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run
+from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 
 from .utils import incus_call
 if TYPE_CHECKING:
@@ -123,8 +124,10 @@ class VirtGlobalService(ConfigService):
         """
         pools = {'': '[Disabled]'}
         for p in (await self.middleware.call('zfs.pool.query_imported_fast')).values():
+            if p['name'] in BOOT_POOL_NAME_VALID:
+                continue
             ds = await self.middleware.call(
-                    'pool.dataset.get_instance_quick', p['name'], {'encryption': True},
+                'pool.dataset.get_instance_quick', p['name'], {'encryption': True},
             )
             if not ds['encrypted'] or not ds['locked'] or ds['key_format']['value'] == 'PASSPHRASE':
                 pools[p['name']] = p['name']
@@ -195,11 +198,12 @@ class VirtGlobalService(ConfigService):
             self.logger.debug('No pool set for virtualization, skipping.')
             raise NoPoolConfigured()
 
-        ds = await self.middleware.call(
-            'pool.dataset.query',
-            [['id', '=', config['dataset']]],
-            {'extra': {'retrieve_children': False}}
-        )
+        try:
+            ds = await self.middleware.call(
+                'pool.dataset.get_instance_quick', config['dataset'], {'encryption': True},
+            )
+        except Exception:
+            ds = None
         if not ds:
             await self.middleware.call('pool.dataset.create', {
                 'name': config['dataset'],
@@ -211,8 +215,7 @@ class VirtGlobalService(ConfigService):
                 'xattr': 'SA',
             })
         else:
-            ds = ds[0]
-            if ds['encrypted'] or ds['locked']:
+            if ds['encrypted'] and ds['locked']:
                 self.logger.info('Dataset %r not unlocked, skipping virt setup.', ds['name'])
                 raise LockedDataset()
 
@@ -311,8 +314,14 @@ class VirtGlobalService(ConfigService):
 
         if await self.middleware.call('service.started', 'incus'):
             # Stop running instances
-            for instance in await self.middleware.call('virt.instance.query', [('status', '=', 'RUNNING')]):
-                await (await self.middleware.call('virt.instance.state', instance['id'], 'STOP', True)).wait()
+            params = [
+                [i['id'], 'STOP', True]
+                for i in await self.middleware.call(
+                    'virt.instance.query', [('status', '=', 'RUNNING')]
+                )
+            ]
+            job = await self.middleware.call('core.bulk', 'virt.instance.state', params, 'Stopping instances')
+            await job.wait()
 
             if await self.middleware.call('virt.instance.query', [('status', '=', 'RUNNING')]):
                 raise CallError('Failed to stop instances')

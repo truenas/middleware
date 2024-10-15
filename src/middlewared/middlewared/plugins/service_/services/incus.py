@@ -7,7 +7,7 @@ from pystemd.systemd1 import Unit
 from middlewared.plugins.service_.services.base import SimpleService
 
 
-RE_DNSMASQ_PID = re.compile(r'^pid: (\d+)')
+RE_DNSMASQ_PID = re.compile(r'^pid: (\d+)', flags=re.M)
 
 
 class IncusService(SimpleService):
@@ -30,7 +30,7 @@ class IncusService(SimpleService):
             try:
                 with open(dnsmasq_pid) as f:
                     data = f.read()
-                    if reg := RE_DNSMASQ_PID(data, flags=re.M):
+                    if reg := RE_DNSMASQ_PID.search(data):
                         # os.kill should never block, will this still require a thread?
                         os.kill(int(reg.group(1)), signal.SIGTERM)
             except FileNotFoundError:
