@@ -79,6 +79,15 @@
         except KeyError:
             return None
 
+    def fc_initiator_access_for_target(target):
+        initiator_access = set()
+        for group in target['groups']:
+            group_initiators = initiators[group['initiator']]['initiators'] if group['initiator'] else []
+            for initiator in group_initiators:
+                if wwn := wwn_as_colon_hex(initiator):
+                    initiator_access.add(wwn)
+        return initiator_access
+
     # There are several changes that must occur if ALUA is enabled,
     # and these are different depending on whether this is the
     # MASTER node, or BACKUP node.
@@ -378,12 +387,13 @@ TARGET_DRIVER iscsi {
     alias = target.get('alias')
     mutual_chap = None
     chap_users = set()
-    initiator_portal_access = set()
+    iscsi_initiator_portal_access = set()
     has_per_host_access = False
     for host in target_hosts[target['id']]:
         for iqn in hosts_iqns[host['id']]:
-            initiator_portal_access.add(f'{iqn}\#{host["ip"]}')
-            has_per_host_access = True
+            if iqn.startswith('iqn'):
+                iscsi_initiator_portal_access.add(f'{iqn}\#{host["ip"]}')
+                has_per_host_access = True
     for group in target['groups']:
         if group['authmethod'] != 'NONE' and authenticators[group['auth']]:
             auth_list = authenticators[group['auth']]
@@ -409,7 +419,8 @@ TARGET_DRIVER iscsi {
             if not has_per_host_access:
                 group_initiators = group_initiators or ['*']
             for initiator in group_initiators:
-                initiator_portal_access.add(f'{initiator}\#{address}')
+                if initiator.startswith('iqn'):
+                    iscsi_initiator_portal_access.add(f'{initiator}\#{address}')
 %>\
 %   if associated_targets.get(target['id']):
 ##
@@ -462,7 +473,7 @@ TARGET_DRIVER iscsi {
 %   endif
 
         GROUP security_group {
-%   for access_control in initiator_portal_access:
+%   for access_control in iscsi_initiator_portal_access:
             INITIATOR ${access_control}
 %   endfor
 ##
@@ -530,6 +541,7 @@ TARGET_DRIVER qla2x00t {
 <%
     wwpn = ha_node_wwpn_for_fcport(fcport)
     target = fcport_to_target(fcport)
+    fc_initiator_access = fc_initiator_access_for_target(target)
 %>\
 % if wwpn and target:
     TARGET ${wwpn} {
@@ -546,7 +558,13 @@ TARGET_DRIVER qla2x00t {
 % else:
         enabled 0
 % endif
-
+## Before we write the LUNs, we may write a security_group
+% if fc_initiator_access:
+        GROUP security_group {
+%   for initiator_wwpn in fc_initiator_access:
+            INITIATOR ${initiator_wwpn}
+%   endfor
+% endif  ## if fc_initiator_access
 % if failover_status == "MASTER":
         % for associated_target in associated_targets[fcport['target']['id']]:
         LUN ${associated_target['lunid']} ${extents[associated_target['extent']]['name']}
@@ -561,6 +579,9 @@ TARGET_DRIVER qla2x00t {
 %       endfor
 %       endif
 % endif  ## MASTER / BACKUP
+% if fc_initiator_access:
+        }
+% endif  ## if fc_initiator_access
 % endif  ##  wwpn and target
     }
 %  else:  ## ALUA
@@ -569,14 +590,26 @@ TARGET_DRIVER qla2x00t {
 <%
     wwpn = ha_node_wwpn_for_fcport(fcport)
     target = fcport_to_target(fcport)
+    fc_initiator_access = fc_initiator_access_for_target(target)
 %>
     % if wwpn and target:
     TARGET ${wwpn} {
         rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
         enabled 1
+## Before we write the LUNs, we may write a security_group
+% if fc_initiator_access:
+        GROUP security_group {
+%   for initiator_wwpn in fc_initiator_access:
+            INITIATOR ${initiator_wwpn}
+%   endfor
+% endif  ## if fc_initiator_access
+
         % for associated_target in associated_targets[fcport['target']['id']]:
         LUN ${associated_target['lunid']} ${extents[associated_target['extent']]['name']}
         % endfor
+% if fc_initiator_access:
+        }
+% endif  ## if fc_initiator_access
     }
     % endif  ## wwpn and
 % endif  ## if MASTER
