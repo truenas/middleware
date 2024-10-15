@@ -19,6 +19,7 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
         '''
         for attachment in attachments:
             await self.middleware.call('sharing.nfs.delete', attachment['id'])
+            await self.remove_alert(attachment)
 
         # Every share delete includes a reload.  Let's do one extra for good measure.
         await self._service_change('nfs', 'reload')
