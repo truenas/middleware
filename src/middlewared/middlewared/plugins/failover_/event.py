@@ -959,6 +959,11 @@ class FailoverEventsService(Service):
         self.run_call('service.start', 'keepalived', self.HA_PROPAGATE)
         logger.info('Unpausing failover event processing')
         self.run_call('vrrpthread.unpause_events')
+
+        logger.info('Retasting disks (if required)')
+        self.run_call('disk.retaste')
+        logger.info ('Done retasting disks (if required)')
+
         logger.info('Successfully became the BACKUP node.')
         self.FAILOVER_RESULT = 'SUCCESS'
 
