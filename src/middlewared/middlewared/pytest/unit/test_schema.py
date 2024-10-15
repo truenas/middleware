@@ -1,10 +1,10 @@
 import pytest
 from unittest.mock import Mock
+from pydantic_core import ValidationError
 
-from middlewared.middlewared.api.v25_04_0.string_schema import IPAddrResult
 from middlewared.service import job
 from middlewared.service_exception import ValidationErrors
-from middlewared.api import api_method
+from middlewared.api.base.decorator import api_method
 from middlewared.schema import (
     accepts, Bool, Cron, Dict, Dir, File, Float, Int, List, Str, URI,
     Password, UnixPerm, UUID, LocalUsername, NetbiosName, NetbiosDomain
@@ -643,17 +643,16 @@ def test__cron__begin_end_validate(value, error):
 ])
 def test__schema_ipaddr(value, expected):
 
-    @api_method(accepts=IPAddr, returns=IPAddrResult)
-    def ipaddrv(self, data):
-        return data
+    @api_method(IPAddr, IPAddrResult)
+    def ipaddrv(address, cidr, network, network_strict, address_types, v4, v6, factory, allow_zone_index):
+        return address
 
-    self = Mock()
 
     if expected is ValidationErrors:
         with pytest.raises(ValidationErrors):
-            ipaddrv(self, value)
+            ipaddrv(value)
     else:
-        assert ipaddrv(self, value) == expected
+        assert ipaddrv(value) == expected
 
 
 @pytest.mark.parametrize("value,expected", [
@@ -668,16 +667,15 @@ def test__schema_ipaddr(value, expected):
 def test__schema_ipaddr_cidr(value, expected):
 
     @api_method(accepts=IPAddr, returns=IPAddrResult)
-    def ipaddrv(self, data):
-        return data
+    def ipaddrv(address, cidr, network, network_strict, address_types, v4, v6, factory, allow_zone_index):
+        return address
 
-    self = Mock()
 
     if expected is ValidationErrors:
         with pytest.raises(ValidationErrors):
-            ipaddrv(self, value)
+            ipaddrv(value, True)
     else:
-        assert ipaddrv(self, value) == expected
+        assert ipaddrv(value, True) == expected
 
 
 @pytest.mark.parametrize("value,expected", [
@@ -686,17 +684,16 @@ def test__schema_ipaddr_cidr(value, expected):
 ])
 def test__schema_ipaddr_cidr_allow_zone_index(value, expected):
 
-    @accepts(IPAddr('data', allow_zone_index=True))
-    def ipaddrv(self, data):
-        return data
+    @api_method(IPAddr, IPAddrResult)
+    def ipaddrv(address, cidr, network, network_strict, address_types, v4, v6, factory, allow_zone_index):
+        return address
 
-    self = Mock()
 
     if expected is ValidationErrors:
         with pytest.raises(ValidationErrors):
-            ipaddrv(self, value)
+            ipaddrv(value, False, False, False, [], True, True, True)
     else:
-        assert ipaddrv(self, value) == expected
+        assert ipaddrv(value, False, False, False, [], True, True, True) == expected
 
 
 @pytest.mark.parametrize("value,expected", [
@@ -708,34 +705,32 @@ def test__schema_ipaddr_cidr_allow_zone_index(value, expected):
 ])
 def test__schema_ipaddr_network(value, expected):
 
-    @accepts(IPAddr('data', network=True))
-    def ipaddrv(self, data):
-        return data
+    @api_method(IPAddr, IPAddrResult)
+    def ipaddrv(address, cidr, network, network_strict, address_types, v4, v6, factory, allow_zone_index):
+        return address
 
-    self = Mock()
 
     if expected is ValidationErrors:
         with pytest.raises(ValidationErrors):
-            ipaddrv(self, value)
+            ipaddrv(value, False, True)
     else:
-        assert ipaddrv(self, value) == expected
+        assert ipaddrv(value, False, True) == expected
 
 
 @pytest.mark.parametrize("value,expected", [
     ('192.168.0.0/24', None),
     ('192.168.0.0/255.255.255.0', None),
     ('192.168.0.1', None),
-    ('192.168.0.999', ValidationErrors),
-    ('BOGUS.NAME', ValidationErrors),
+    ('192.168.0.999', ValidationError),
+    ('BOGUS.NAME', ValidationError),
 ])
 def test__schema_ipaddr_validate(value, expected):
     network = value.find('/') != -1
-    ipaddr = IPAddr(network=network)
-    if expected is ValidationErrors:
-        with pytest.raises(ValidationErrors):
-            ipaddr.validate(value)
+    if expected is ValidationError:
+        with pytest.raises(ValidationError):
+            IPAddr(address=value, network=network)
     else:
-        assert ipaddr.validate(value) == expected
+        IPAddr(address=value, network=network)
 
 
 def test__schema_str_default():
