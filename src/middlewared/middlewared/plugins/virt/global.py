@@ -83,7 +83,6 @@ class VirtGlobalService(ConfigService):
 
         new = old.copy()
         new.update(data)
-        print(old, new)
 
         verrors = ValidationErrors()
         await self.validate(new, 'virt_global_update', verrors)
@@ -125,14 +124,9 @@ class VirtGlobalService(ConfigService):
         pools = {'': '[Disabled]'}
         for p in (await self.middleware.call('zfs.pool.query_imported_fast')).values():
             ds = await self.middleware.call(
-                'pool.dataset.query',
-                [['id', '=', p['name']]],
-                {'extra': {'retrieve_children': False}}
+                    'pool.dataset.get_instance_quick', p['name'], {'encryption': True},
             )
-            if not ds:
-                continue
-
-            if not ds[0]['encrypted'] or not ds[0]['locked'] or ds[0]['key_format']['value'] == 'PASSPHRASE':
+            if not ds['encrypted'] or not ds['locked'] or ds['key_format']['value'] == 'PASSPHRASE':
                 pools[p['name']] = p['name']
         return pools
 

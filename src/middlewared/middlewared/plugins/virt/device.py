@@ -8,7 +8,6 @@ from middlewared.api.current import (
     VirtDeviceGPUChoicesArgs, VirtDeviceGPUChoicesResult,
     VirtDeviceDiskChoicesArgs, VirtDeviceDiskChoicesResult,
 )
-from middlewared.utils.gpu import get_gpus
 
 
 class VirtDeviceService(Service):
@@ -36,7 +35,7 @@ class VirtDeviceService(Service):
         return choices
 
     @api_method(VirtDeviceGPUChoicesArgs, VirtDeviceGPUChoicesResult, roles=['VIRT_INSTANCE_READ'])
-    def gpu_choices(self, instance_type, gpu_type):
+    async def gpu_choices(self, instance_type, gpu_type):
         """
         Provide choices for GPU devices.
         """
@@ -48,10 +47,12 @@ class VirtDeviceService(Service):
         if instance_type != 'CONTAINER':
             raise CallError('Only CONTAINER supported for now.')
 
-        for i in get_gpus():
+        for i in await self.middleware.call('device.get_gpus'):
+            if not i['available_to_host'] or i['uses_system_critical_devices']:
+                continue
             choices[i['addr']['pci_slot']] = {
-                'bus': int(i['addr']['bus']),
-                'slot': int(i['addr']['slot']),
+                'bus': i['addr']['bus'],
+                'slot': i['addr']['slot'],
                 'description': i['description'],
                 'vendor': i['vendor'],
             }

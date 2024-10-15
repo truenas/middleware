@@ -36,12 +36,10 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
         return instances
 
     async def delete(self, attachments):
-        for attachment in attachments:
-            try:
-                job = await self.middleware.call('virt.instance.state', attachment['id'], 'STOP')
-                await job.wait(raise_error=True)
-            except Exception as e:
-                self.middleware.logger.warning('Unable to stop %r: %s', attachment['id'], e)
+        if attachments:
+            job = await self.middleware.call('virt.global.update', {'pool': ''})
+            await job.wait(raise_error=True)
+
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
