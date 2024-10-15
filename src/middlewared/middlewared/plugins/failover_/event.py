@@ -520,15 +520,21 @@ class FailoverEventsService(Service):
 
         # unlock SED disks
         logger.info('Unlocking all SED disks (if any)')
+        maybe_unlocked = False
         try:
-            self.run_call('disk.sed_unlock_all', True)
+            maybe_unlocked = self.run_call('disk.sed_unlock_all', True)
         except Exception as e:
             # failing here doesn't mean the zpool won't import
             # we could have failed on only 1 disk so log an
             # error and move on
             logger.error('Failed to unlock SED disk(s) with error: %r', e)
-        else:
+
+        if maybe_unlocked:
             logger.info('Done unlocking all SED disks (if any)')
+            try:
+                self.run_call('failover.call_remote', 'disk.retaste', [], {'raise_connect_error': False})
+            except Exception:
+                logger.exception('Unexpected failure retasting disks on standby node')
 
         # setup the zpool cachefile  TODO: see comment below about cachefile usage
         # self.run_call('failover.zpool.cachefile.setup', 'MASTER')
