@@ -59,7 +59,10 @@ class VirtGlobalService(ConfigService):
             data['dataset'] = f'{data["pool"]}/.ix-virt'
         else:
             data['dataset'] = None
-        data['state'] = await self.middleware.call('cache.get', 'VIRT_STATE')
+        try:
+            data['state'] = await self.middleware.call('cache.get', 'VIRT_STATE')
+        except KeyError:
+            data['state'] = 'INITIALIZING'
         return data
 
     @private
