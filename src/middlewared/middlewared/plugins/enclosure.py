@@ -15,7 +15,7 @@ from middlewared.utils import filter_list
 from middlewared.plugins.enclosure_.r30_drive_identify import set_slot_status as r30_set_slot_status
 from middlewared.plugins.enclosure_.fseries_drive_identify import set_slot_status as fseries_set_slot_status
 from middlewared.plugins.enclosure_.sysfs_disks import toggle_enclosure_slot_identifier
-from middlewared.utils.disks import DISKS_TO_IGNORE
+
 
 logger = logging.getLogger(__name__)
 

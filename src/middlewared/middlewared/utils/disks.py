@@ -12,7 +12,7 @@ RE_IS_PART = re.compile(r'p\d{1,3}$')
 def safe_retrieval(prop, key, default, as_int=False) -> typing.Any:
     value = prop.get(key)
     if value is not None:
-        if type(value) == bytes:
+        if type(value) is bytes:
             value = value.strip().decode()
         else:
             value = value.strip()
