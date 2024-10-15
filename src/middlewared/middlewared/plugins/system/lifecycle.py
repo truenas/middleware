@@ -92,6 +92,16 @@ class SystemService(Service):
 
         await run(['/sbin/poweroff'])
 
+    @private
+    async def set_system_readonly(self, value):
+        """
+        Set the system readonly state to the specified boolean value.
+        """
+        if not isinstance(value, bool):
+            raise TypeError(f'{value}: must be boolean.')
+
+        life_cycle_conf.SYSTEM_READONLY = value
+
 
 async def _event_system_ready(middleware, event_type, args):
     lifecycle_conf.SYSTEM_READY = True

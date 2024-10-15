@@ -19,6 +19,7 @@ def api_method(
     rate_limit=True,
     roles: list[str] | None = None,
     private: bool = False,
+    check_system_readonly: bool = False,
 ):
     """
     Mark a `Service` class method as an API method.
@@ -70,6 +71,7 @@ def api_method(
         wrapped.rate_limit = rate_limit
         wrapped.roles = roles or []
         wrapped._private = private
+        wrapped._check_system_readonly = check_system_readonly
 
         # FIXME: This is only here for backwards compatibility and should be removed eventually
         wrapped.accepts = []

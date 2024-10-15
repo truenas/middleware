@@ -245,6 +245,8 @@ class FailoverService(ConfigService):
             )
             if len(remote_imported) <= 1:
                 # getting here means we dont have a pool and neither does remote node
+                # allow interactive user sessions to edit configuration on both controllers.
+                await self.middleware.call('system.set_system_readonly', False)
                 return 'ERROR'
             else:
                 # Other node has the pool (excluding boot pool)
