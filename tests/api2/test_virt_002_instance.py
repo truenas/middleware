@@ -61,7 +61,11 @@ def test_virt_instances_update():
 def test_virt_instances_state():
     # Stop only one of them so the others are stopped during delete
     assert ssh('incus list void -f json| jq ".[].status"').strip() == '"Running"'
+    instance = call('virt.instance.query', [['id', '=', 'void']], {'get': True})
+    assert instance['status'] == 'RUNNING'
     call('virt.instance.state', 'void', 'STOP', True, job=True)
+    instance = call('virt.instance.query', [['id', '=', 'void']], {'get': True})
+    assert instance['status'] == 'STOPPED'
     assert ssh('incus list void -f json| jq ".[].status"').strip() == '"Stopped"'
 
 
