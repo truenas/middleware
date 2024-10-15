@@ -13,6 +13,7 @@ from middlewared.service_exception import (
 from middlewared.test.integration.assets.account import group as create_group
 from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.filesystem import directory
+from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, mock, ssh
 from middlewared.test.integration.utils.string import random_string
 from middlewared.test.integration.utils.client import truenas_server
@@ -318,14 +319,16 @@ def run_missing_usrgrp_mapping_test(data: list[str], usrgrp, tmp_path, share, us
 
 
 @contextlib.contextmanager
-def nfs_dataset(name, options=None, acl=None, mode=None):
+def nfs_dataset(name, options=None, acl=None, mode=None, pool=None):
     """
     NOTE: This is _nearly_ the same as the 'dataset' test asset. The difference
           is the retry loop.
     TODO: Enhance the 'dataset' test asset to include a retry loop
     """
     assert "/" not in name
-    dataset = f"{pool_name}/{name}"
+    _pool_name = pool if pool else pool_name
+
+    dataset = f"{_pool_name}/{name}"
 
     try:
         call("pool.dataset.create", {"name": dataset, **(options or {})})
@@ -1676,6 +1679,19 @@ class TestNFSops:
 
             s = parse_server_config()
             assert s['mountd']['manage-gids'] == expected, str(s)
+
+    def test_pool_delete_with_attached_share(self, start_nfs):
+        '''
+        Confirm we can delete a pool that has a dataset with active NFS shares
+        '''
+        assert start_nfs is True
+
+        with another_pool() as p:
+            with nfs_dataset("deleteme", pool=p['name']) as ds:
+                with nfs_share(f"/mnt/{ds}"):
+                    # Delete the pool
+                    call("pool.export", p["id"], {"destroy": True}, job=True)
+                    assert call("pool.query", [["name", "=", f"{p['name']}"]]) == []
 
 
 def test_threadpool_mode():
