@@ -1,3 +1,5 @@
+import os
+import subprocess
 from typing import Literal
 
 import middlewared.sqlalchemy as sa
@@ -8,8 +10,8 @@ from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.service_exception import MatchNotFound
 from .fc.utils import wwpn_to_vport
 
-
 VPORT_SEP_CHAR = '/'
+QLA2XXX_KERNEL_TARGET_MODULE = 'qla2x00tgt'
 
 
 class FCPortModel(sa.Model):
@@ -42,11 +44,13 @@ class FCPortService(CRUDService):
 
         await self.compress(data)
 
+        orig_count = await self.count()
+
         pk = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
-        await self.update_scst()
+        await self.update_scst(orig_count == 0)
 
         return await self.get_instance(pk)
 
@@ -197,11 +201,41 @@ class FCPortService(CRUDService):
         return data
 
     @private
-    async def update_scst(self):
+    async def count(self):
+        return await self.middleware.call(
+            "datastore.query",
+            self._config.datastore,
+            [],
+            {'count': True}
+        )
+
+    def __load_kernel_module(self):
+        # If SCST has already started, but the kernel target module is not already loaded
+        if os.path.isdir('/sys/kernel/scst_tgt/targets') and not os.path.isdir('/sys/kernel/scst_tgt/targets/qla2x00t'):
+            self.logger.info('Loading kernel module %r', QLA2XXX_KERNEL_TARGET_MODULE)
+            try:
+                subprocess.run(["modprobe", QLA2XXX_KERNEL_TARGET_MODULE])
+            except subprocess.CalledProcessError as e:
+                self.logger.error('Failed to load kernel module. Error %r', e)
+
+    @private
+    async def load_kernel_module(self):
+        """
+        Load the Fibre Channel kernel target module.
+        """
+        await self.middleware.run_in_thread(self.__load_kernel_module)
+
+    @private
+    async def update_scst(self, do_module_load=False):
         # First process the local (MASTER) config
+        if do_module_load:
+            await self.middleware.run_in_thread(self.__load_kernel_module)
+
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
         # Then process the BACKUP config if we are HA and ALUA is enabled.
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+            if do_module_load:
+                await self.middleware.call('failover.call_remote', 'fcport.load_kernel_module')
             await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
             await self.middleware.call('iscsi.alua.wait_for_alua_settled')
