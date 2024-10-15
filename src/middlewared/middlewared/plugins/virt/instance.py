@@ -99,7 +99,7 @@ class VirtInstanceService(CRUDService):
             config['limits.cpu'] = data['cpu']
 
         if data.get('memory'):
-            config['limits.memory'] = str(data['memory']) + 'MiB'
+            config['limits.memory'] = str(data['memory'] * 1024 * 1024) + 'MiB'
 
         if data.get('autostart') is not None:
             config['boot.autostart'] = str(data['autostart']).lower()
