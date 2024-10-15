@@ -542,7 +542,9 @@ class FailoverEventsService(Service):
         if maybe_unlocked:
             logger.info('Done unlocking all SED disks (if any)')
             try:
+                logger.info('Retasting disks on standby node')
                 self.run_call('failover.call_remote', 'disk.retaste', [], {'raise_connect_error': False})
+                logger.info('Done retasting disks on standby node')
             except Exception:
                 logger.exception('Unexpected failure retasting disks on standby node')
 
