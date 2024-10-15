@@ -10,7 +10,7 @@ from middlewared.schema import (
     Password, UnixPerm, UUID, LocalUsername, NetbiosName, NetbiosDomain
 )
 from middlewared.validators import QueryFilters, QueryOptions
-from middlewared.api.current import IPAddr
+from middlewared.api.current import IPAddr, IPAddrResult
 
 
 def test__nonhidden_after_hidden():
