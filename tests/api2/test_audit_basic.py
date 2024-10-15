@@ -123,12 +123,11 @@ def standby_audit_event():
     event = "user.delete"
     username = "backup"
     user = call('user.query', [["username", "=", username]], {"select": ["id"], "get": True})
-    try:
-        # This _should_ fail.  Assert if not!
+    # Generate an audit entry on the remote node
+    with pytest.raises(CallError):
         call('failover.call_remote', event, [user['id']])
-        assert True, "!!! Should not be allowed to delete a built-in user !!!"
-    except CallError:
-        yield {"event": event, "username": username}
+
+    yield {"event": event, "username": username}
 
 
 # =====================================================================
@@ -317,7 +316,12 @@ class TestAuditOps:
 class TestAuditOpsHA:
     @pytest.mark.parametrize('remote_available', [True, False])
     def test_audit_ha_query(self, standby_audit_event, remote_available):
-        assert standby_audit_event, "Missing event data"
+        '''
+        Confirm:
+            1) Ability to get a remote node audit event from a healthy remote node
+            2) Generate an exception on remote node audit event get if the remote node is unavailable.
+        NOTE: The standby_audit_event fixture generates the remote node audit event.
+        '''
         event = standby_audit_event['event']
         username = standby_audit_event['username']
         payload = {
