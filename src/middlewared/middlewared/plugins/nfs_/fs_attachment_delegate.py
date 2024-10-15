@@ -18,7 +18,6 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
         The attachments is a list of shares exporting a pool that is being deleted
         '''
         for attachment in attachments:
-            self.logger.debug(f"[MCG DEBUG] delete share: {attachment}")
             await self.middleware.call('sharing.nfs.delete', attachment['id'])
 
         # Every share delete includes a reload.  Let's do one extra for good measure.
