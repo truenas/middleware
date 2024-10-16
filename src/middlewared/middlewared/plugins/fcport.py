@@ -4,11 +4,12 @@ from typing import Literal
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import (FCPortCreateArgs, FCPortCreateResult, FCPortDeleteArgs, FCPortDeleteResult,
-                                     FCPortEntry, FCPortUpdateArgs, FCPortUpdateResult)
+from middlewared.api.current import (FCPortChoicesArgs, FCPortChoicesResult, FCPortCreateArgs, FCPortCreateResult,
+                                     FCPortDeleteArgs, FCPortDeleteResult, FCPortEntry, FCPortUpdateArgs,
+                                     FCPortUpdateResult)
 from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.service_exception import MatchNotFound
-from .fc.utils import wwpn_to_vport
+from .fc.utils import naa_to_int, wwpn_to_vport_naa
 
 VPORT_SEP_CHAR = '/'
 QLA2XXX_KERNEL_TARGET_MODULE = 'qla2x00tgt'
@@ -39,7 +40,9 @@ class FCPortService(CRUDService):
         """
         Creates mapping between a FC port and a target.
 
-        `name` is a user-readable name for key.
+        `port` is a FC host port `alias`, or `alias/number` for a NPIV port.
+
+        `target_id` is the `id` of the target to be associated with the FC port.
         """
         await self._validate("fcport_create", data)
 
@@ -98,6 +101,34 @@ class FCPortService(CRUDService):
         await self.update_scst()
 
         return response
+
+    @api_method(FCPortChoicesArgs, FCPortChoicesResult)
+    async def port_choices(self, include_used):
+        result = {}
+        if include_used:
+            # We don't need to check, so don't populate this
+            used_ports = set()
+        else:
+            used_ports = set(e['port'] for e in await self.middleware.call('fcport.query', [], {'select': ['port']}))
+        for fc_host in await self.middleware.call('fc.fc_host.query'):
+            alias = fc_host['alias']
+            if include_used or alias not in used_ports:
+                result[alias] = {
+                    'wwpn': fc_host['wwpn'],
+                    'wwpn_b': fc_host['wwpn_b']
+                }
+            if fc_host['npiv']:
+                int_wwpn = naa_to_int(fc_host['wwpn'])
+                int_wwpn_b = naa_to_int(fc_host['wwpn_b'])
+                for chan in range(1, fc_host['npiv'] + 1):
+                    npiv_alias = f'{alias}/{chan}'
+                    if include_used or npiv_alias not in used_ports:
+                        result[npiv_alias] = {
+                            'wwpn': wwpn_to_vport_naa(int_wwpn, chan),
+                            'wwpn_b': wwpn_to_vport_naa(int_wwpn_b, chan)
+                        }
+
+        return result
 
     async def _validate(self, schema_name: str, data: dict, id_: int = None):
         verrors = ValidationErrors()
@@ -193,8 +224,8 @@ class FCPortService(CRUDService):
         else:
             if chan:
                 # NPIV
-                data['wwpn'] = wwpn_to_vport(fc_host_pair.get('wwpn'), int(chan))
-                data['wwpn_b'] = wwpn_to_vport(fc_host_pair.get('wwpn_b'), int(chan))
+                data['wwpn'] = wwpn_to_vport_naa(fc_host_pair.get('wwpn'), int(chan))
+                data['wwpn_b'] = wwpn_to_vport_naa(fc_host_pair.get('wwpn_b'), int(chan))
             else:
                 # Non-NPIV
                 data['wwpn'] = fc_host_pair.get('wwpn')

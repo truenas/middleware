@@ -34,20 +34,26 @@ class FCHostService(CRUDService):
     @api_method(FCHostCreateArgs, FCHostCreateResult, audit='Create FC host', audit_extended=lambda data: data['alias'])
     async def do_create(self, data: dict) -> dict:
         """
-        Creates FC host.
+        Creates FC host (pairing).
 
-        `alias` is a user-readable name for FC host.
+        This will associate an `alias` with a corresponding Fibre Channel WWPN.  For
+        HA sytems the alias will be associated with a pair of WWPNs, one per node.
+
+        `alias` is a user-readable name for FC host (pairing).
+
         `wwpn` is the WWPN in naa format (Controller A if HA)
+
         `wwpn_b` is the WWPN in naa format (Controller B, only applicable for HA)
+
         `npiv` is the number of NPIV hosts to create for this FC host.
         """
         await self._validate("fc_host_create", data)
 
-        pk = await self.middleware.call(
+        id_ = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
-        return await self.get_instance(pk)
+        return await self.get_instance(id_)
 
     @api_method(FCHostUpdateArgs, FCHostUpdateResult, audit='Update FC host', audit_callback=True)
     async def do_update(self, audit_callback: callable, id_: int, data: dict) -> dict:
@@ -55,9 +61,12 @@ class FCHostService(CRUDService):
         Update FC host `id`.
 
         `alias` is a user-readable name for FC host port.
+
         `wwpn` is the WWPN in naa format (Controller A if HA)
+
         `wwpn_b` is the WWPN in naa format (Controller B, only applicable for HA)
-        `npiv` is the number of NPIV hosts to create for this FC host.
+
+        `npiv` is the number of NPIV hosts to allow for this FC host.
         """
         old = await self.get_instance(id_)
         audit_callback(old['alias'])
@@ -167,8 +176,9 @@ class FCHostService(CRUDService):
             count += 1
 
     async def _get_remote_fc_hosts(self):
+        physical_port_filter = [["physical", "=", True]]
         try:
-            return await self.middleware.call('failover.call_remote', 'fc.fc_hosts')
+            return await self.middleware.call('failover.call_remote', 'fc.fc_hosts', [physical_port_filter])
         except CallError as e:
             if e.errno in NETWORK_ERRORS + (CallError.ENOMETHOD,):
                 # swallow error, but don't present any choices
@@ -194,13 +204,14 @@ class FCHostService(CRUDService):
                 return False
             node = await self.middleware.call('failover.node')
             slot_2_fc_host_wwpn = defaultdict(dict)
+            physical_port_filter = [["physical", "=", True]]
             match node:
                 case 'A':
-                    node_a_fc_hosts = await self.middleware.call('fc.fc_hosts')
+                    node_a_fc_hosts = await self.middleware.call('fc.fc_hosts', physical_port_filter)
                     node_b_fc_hosts = await self._get_remote_fc_hosts()
                 case 'B':
                     node_a_fc_hosts = await self._get_remote_fc_hosts()
-                    node_b_fc_hosts = await self.middleware.call('fc.fc_hosts')
+                    node_b_fc_hosts = await self.middleware.call('fc.fc_hosts', physical_port_filter)
                 case _:
                     raise CallError('Cannot configure FC until HA is configured')
             # Match pairs by slow (includes PCI function)
