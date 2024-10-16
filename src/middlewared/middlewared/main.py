@@ -974,7 +974,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     method_name = method_name.removeprefix('do_')
 
                 if method_name in ('create', 'updated', 'delete'):
-                    setattr(method, '_check_system_readonly', True)
+                    if hasattr(method, '_check_system_readonly'):
+                        setattr(method, '_check_system_readonly', True)
 
                 if method_name.endswith('_choices'):
                     roles.append('READONLY_ADMIN')
