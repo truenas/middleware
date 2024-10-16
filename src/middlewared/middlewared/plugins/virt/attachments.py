@@ -43,9 +43,9 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
-            action = 'START' if enabled else 'STOP'
+            action = 'start' if enabled else 'stop'
             try:
-                job = await self.middleware.call('virt.instance.state', attachment['id'], action)
+                job = await self.middleware.call(f'virt.instance.{action}', attachment['id'])
                 await job.wait(raise_error=True)
             except Exception as e:
                 self.middleware.logger.warning('Unable to %s %r: %s', action, attachment['id'], e)

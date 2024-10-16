@@ -317,12 +317,12 @@ class VirtGlobalService(ConfigService):
         if await self.middleware.call('service.started', 'incus'):
             # Stop running instances
             params = [
-                [i['id'], 'STOP', True]
+                [i['id'], {'force': True, 'timeout': 10}]
                 for i in await self.middleware.call(
                     'virt.instance.query', [('status', '=', 'RUNNING')]
                 )
             ]
-            job = await self.middleware.call('core.bulk', 'virt.instance.state', params, 'Stopping instances')
+            job = await self.middleware.call('core.bulk', 'virt.instance.stop', params, 'Stopping instances')
             await job.wait()
 
             if await self.middleware.call('virt.instance.query', [('status', '=', 'RUNNING')]):

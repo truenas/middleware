@@ -15,7 +15,7 @@ def clean():
     call('virt.global.update', {'pool': 'tank'}, job=True)
 
 
-def test_virt_instances_create():
+def test_virt_instance_create():
     clean()
 
     wait_agent = Event()
@@ -48,8 +48,8 @@ def test_virt_instances_create():
         ssh('incus exec debian cat /etc/os-release | grep "Debian"')
 
 
-def test_virt_instances_update():
-    call('virt.instance.update', 'void', {'cpu': '1', 'memory': 500, 'environment': {'FOO': 'BAR'}}, job=True)
+def test_virt_instance_update():
+    call('virt.instance.update', 'void', {'cpu': '1', 'memory': 500 * 1024 * 1024, 'environment': {'FOO': 'BAR'}}, job=True)
     ssh('incus exec void grep MemTotal: /proc/meminfo|grep 512000')
     # Checking CPUs seems to cause a racing condition (perhaps CPU currently in use in the container?)
     # rv = ssh('incus exec void cat /proc/cpuinfo |grep processor|wc -l')
@@ -58,20 +58,20 @@ def test_virt_instances_update():
     assert rv.strip() == 'FOO=BAR'
 
 
-def test_virt_instances_state():
+def test_virt_instance_stop():
     # Stop only one of them so the others are stopped during delete
     assert ssh('incus list void -f json| jq ".[].status"').strip() == '"Running"'
     instance = call('virt.instance.query', [['id', '=', 'void']], {'get': True})
     assert instance['status'] == 'RUNNING'
-    call('virt.instance.state', 'void', 'STOP', True, job=True)
+    call('virt.instance.stop', 'void', {'force': True}, job=True)
     instance = call('virt.instance.query', [['id', '=', 'void']], {'get': True})
     assert instance['status'] == 'STOPPED'
     assert ssh('incus list void -f json| jq ".[].status"').strip() == '"Stopped"'
 
 
-def test_virt_instances_device_add():
+def test_virt_instance_device_add():
     assert ssh('incus list debian -f json| jq ".[].status"').strip() == '"Running"'
-    call('virt.instance.state', 'debian', 'STOP', True, job=True)
+    call('virt.instance.stop', 'debian', {'force': True}, job=True)
 
     call('virt.instance.device_add', 'debian', {
         'name': 'tpm',
@@ -108,7 +108,7 @@ def test_virt_instances_device_add():
 
     with client() as c:
         c.subscribe('virt.instance.agent_running', wait_debian, sync=True)
-        call('virt.instance.state', 'debian', 'START', False, job=True)
+        call('virt.instance.start', 'debian', job=True)
         assert wait_agent.wait(timeout=30)
 
     ssh('incus exec debian ls /dev/tpm0')
@@ -128,7 +128,7 @@ def test_virt_instances_device_add():
         call('virt.instance.device_delete', 'arch', 'disk1')
 
 
-def test_virt_instances_proxy():
+def test_virt_instance_proxy():
     ssh('incus exec arch -- pacman -S --noconfirm openbsd-netcat')
     ssh('incus exec -T arch -- bash -c "nohup nc -l 0.0.0.0 80 > /tmp/nc 2>&1 &"')
     ssh('echo "foo" | nc -w 1 localhost 8005 || true')
@@ -137,14 +137,14 @@ def test_virt_instances_proxy():
     assert rv.strip() == 'foo'
 
 
-def test_virt_instances_device_delete():
-    call('virt.instance.state', 'debian', 'STOP', True, job=True)
+def test_virt_instance_device_delete():
+    call('virt.instance.stop', 'debian', {'force': True}, job=True)
     call('virt.instance.device_delete', 'debian', 'tpm')
     devices = call('virt.instance.device_list', 'debian')
     assert not any(i for i in devices if i['name'] == 'tpm'), devices
 
 
-def test_virt_instances_delete():
+def test_virt_instance_delete():
     call('virt.instance.delete', 'void', job=True)
     ssh('incus config show void 2>&1 | grep "not found"')
 
