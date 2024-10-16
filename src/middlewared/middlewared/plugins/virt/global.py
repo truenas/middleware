@@ -215,7 +215,6 @@ class VirtGlobalService(ConfigService):
                 'exec': 'ON',
                 'casesensitivity': 'SENSITIVE',
                 'atime': 'OFF',
-                'xattr': 'SA',
             })
         else:
             if ds['encrypted'] and ds['locked']:
