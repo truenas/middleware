@@ -15,6 +15,8 @@ class AppState(enum.Enum):
 
 
 class ContainerState(enum.Enum):
+    CRASHED = 'crashed'
+    CREATED = 'created'
     EXITED = 'exited'
     RUNNING = 'running'
     STARTING = 'starting'
