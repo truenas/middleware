@@ -1,4 +1,6 @@
-from typing import Literal
+from typing import Dict, Literal
+
+from pydantic import Field
 
 from middlewared.api.base import BaseModel, Excluded, FibreChannelPortAlias, ForUpdateMetaclass, WWPN, excluded_field
 
@@ -44,3 +46,27 @@ class FCPortDeleteArgs(BaseModel):
 
 class FCPortDeleteResult(BaseModel):
     result: Literal[True]
+
+
+class FCPortChoiceEntry(BaseModel):
+    wwpn: WWPN | None
+    wwpn_b: WWPN | None
+
+
+class FCPortChoicesArgs(BaseModel):
+    include_used: bool = True
+
+
+class FCPortChoicesResult(BaseModel):
+    result: Dict[FibreChannelPortAlias, FCPortChoiceEntry] = Field(examples=[
+        {
+            'fc0': {
+                'wwpn': 'naa.2100001122334455',
+                'wwpn_b': 'naa.210000AABBCCDDEEFF'
+            },
+            'fc0/1': {
+                'wwpn': 'naa.2200001122334455',
+                'wwpn_b': 'naa.220000AABBCCDDEEFF'
+            },
+        },
+    ])
