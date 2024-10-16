@@ -13,7 +13,9 @@ from middlewared.api.current import (
     VirtInstanceCreateArgs, VirtInstanceCreateResult,
     VirtInstanceUpdateArgs, VirtInstanceUpdateResult,
     VirtInstanceDeleteArgs, VirtInstanceDeleteResult,
-    VirtInstanceStateArgs, VirtInstanceStateResult,
+    VirtInstanceStartArgs, VirtInstanceStartResult,
+    VirtInstanceStopArgs, VirtInstanceStopResult,
+    VirtInstanceRestartArgs, VirtInstanceRestartResult,
     VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult,
     VirtInstanceDeviceListArgs, VirtInstanceDeviceListResult,
     VirtInstanceDeviceAddArgs, VirtInstanceDeviceAddResult,
@@ -99,7 +101,7 @@ class VirtInstanceService(CRUDService):
             config['limits.cpu'] = data['cpu']
 
         if data.get('memory'):
-            config['limits.memory'] = str(data['memory'] * 1024 * 1024) + 'MiB'
+            config['limits.memory'] = str(int(data['memory'] / 1024 / 1024)) + 'MiB'
 
         if data.get('autostart') is not None:
             config['boot.autostart'] = str(data['autostart']).lower()
@@ -111,7 +113,7 @@ class VirtInstanceService(CRUDService):
         Provice choices for instance image from a remote repository.
         """
         choices = {}
-        if data['remote'] in (None, 'LINUX_CONTAINERS'):
+        if data['remote'] == 'LINUX_CONTAINERS':
             url = LC_IMAGES_JSON
         else:
             raise CallError('Invalid remote')
@@ -153,7 +155,7 @@ class VirtInstanceService(CRUDService):
                 if 'create_instance_from_image_unpack_progress' in metadata:
                     job.set_progress(None, metadata['create_instance_from_image_unpack_progress'])
 
-        if data['remote'] in (None, 'LINUX_CONTAINERS'):
+        if data['remote'] == 'LINUX_CONTAINERS':
             url = LC_IMAGES_SERVER
         else:
             raise CallError('Invalid remote')
@@ -436,16 +438,52 @@ class VirtInstanceService(CRUDService):
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': data})
         return True
 
-    @api_method(VirtInstanceStateArgs, VirtInstanceStateResult, roles=['VIRT_INSTANCE_WRITE'])
+    @api_method(VirtInstanceStartArgs, VirtInstanceStartResult, roles=['VIRT_INSTANCE_WRITE'])
     @job()
-    async def state(self, job, id, action, force):
+    async def start(self, job, id):
         """
-        Change state of an instance.
+        Start an instance.
         """
         await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
-            'action': action.lower(),
-            'timeout': -1,
-            'force': force,
+            'action': 'start',
+        }})
+
+        return True
+
+    @api_method(VirtInstanceStopArgs, VirtInstanceStopResult, roles=['VIRT_INSTANCE_WRITE'])
+    @job()
+    async def stop(self, job, id, data):
+        """
+        Stop an instance.
+
+        Timeout is how long it should wait for the instance to shutdown cleanly.
+        """
+        await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+            'action': 'stop',
+            'timeout': data['timeout'],
+            'force': data['force'],
+        }})
+
+        return True
+
+    @api_method(VirtInstanceRestartArgs, VirtInstanceRestartResult, roles=['VIRT_INSTANCE_WRITE'])
+    @job()
+    async def restart(self, job, id, data):
+        """
+        Restart an instance.
+
+        Timeout is how long it should wait for the instance to shutdown cleanly.
+        """
+        instance = await self.middleware.call('virt.instance.get_instance', id)
+        if instance['state'] == 'RUNNING':
+            await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+                'action': 'stop',
+                'timeout': data['timeout'],
+                'force': data['force'],
+            }})
+
+        await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+            'action': 'start',
         }})
 
         return True

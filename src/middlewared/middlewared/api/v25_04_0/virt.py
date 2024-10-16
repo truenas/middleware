@@ -62,12 +62,12 @@ class VirtGlobalGetNetworkResult(BaseModel):
     ipv6_nat: bool
 
 
-REMOTE_CHOICES: TypeAlias = Optional[Literal['LINUX_CONTAINERS']]
+REMOTE_CHOICES: TypeAlias = Literal['LINUX_CONTAINERS']
 
 
 @single_argument_args('virt_instances_image_choices')
 class VirtInstanceImageChoicesArgs(BaseModel):
-    remote: REMOTE_CHOICES = None
+    remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
 
 
 class ImageChoiceItem(BaseModel):
@@ -164,7 +164,7 @@ class VirtInstanceEntry(BaseModel):
 class VirtInstanceCreateArgs(BaseModel):
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
     image: Annotated[NonEmptyString, StringConstraints(max_length=200)]
-    remote: REMOTE_CHOICES = None
+    remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
     instance_type: InstanceType = 'CONTAINER'
     environment: dict | None = None
     autostart: bool | None = None
@@ -227,13 +227,34 @@ class VirtInstanceDeviceDeleteResult(BaseModel):
     result: dict
 
 
-class VirtInstanceStateArgs(BaseModel):
+class VirtInstanceStartArgs(BaseModel):
     id: str
-    action: Literal['START', 'STOP', 'RESTART']
+
+
+class VirtInstanceStartResult(BaseModel):
+    result: bool
+
+
+class StopArgs(BaseModel):
+    timeout: int = -1
     force: bool = False
 
 
-class VirtInstanceStateResult(BaseModel):
+class VirtInstanceStopArgs(BaseModel):
+    id: str
+    stop_args: StopArgs
+
+
+class VirtInstanceStopResult(BaseModel):
+    result: bool
+
+
+class VirtInstanceRestartArgs(BaseModel):
+    id: str
+    stop_args: StopArgs
+
+
+class VirtInstanceRestartResult(BaseModel):
     result: bool
 
 
