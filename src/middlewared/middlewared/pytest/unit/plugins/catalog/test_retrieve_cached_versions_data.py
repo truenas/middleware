@@ -1,4 +1,5 @@
 import textwrap
+import unittest
 
 import pytest
 
@@ -69,9 +70,10 @@ from middlewared.service import CallError
         True
     ),
 ])
-def test_retrieve_caches_versions_data(mocker, file, should_work):
-    mock_file = mocker.mock_open(read_data=file)
-    mocker.patch('builtins.open', mock_file)
+@unittest.mock.patch('builtins.open', new_callable=unittest.mock.mock_open)
+def test_retrieve_cached_versions_data(mock_file, file, should_work):
+    mock_file.return_value.read.return_value = file
+
     if should_work:
         result = retrieve_cached_versions_data('/path/to/app', 'actual-budget')
         assert isinstance(result, dict)

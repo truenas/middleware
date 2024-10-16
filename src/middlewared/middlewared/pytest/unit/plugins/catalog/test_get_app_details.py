@@ -1,3 +1,5 @@
+import unittest
+
 import pytest
 
 from middlewared.plugins.catalog.apps_util import get_app_details
@@ -143,9 +145,11 @@ from middlewared.plugins.catalog.apps_util import get_app_details
         }
     ),
 ])
-def test_get_app_details(mocker, app_data, versions, expected):
-    mocker.patch('middlewared.plugins.catalog.apps_util.normalize_questions')
-    mocker.patch('middlewared.plugins.catalog.apps_util.retrieve_cached_versions_data', return_value=versions)
+@unittest.mock.patch('middlewared.plugins.catalog.apps_util.normalize_questions')
+@unittest.mock.patch('middlewared.plugins.catalog.apps_util.retrieve_cached_versions_data')
+def test_get_app_details(mock_retrieve_cached_versions_data, mock_normalize_questions, app_data, versions, expected):
+    mock_retrieve_cached_versions_data.return_value = versions
+
     if isinstance(expected, dict):
         result = get_app_details('/path/to/app', app_data, {})
         assert expected == result
