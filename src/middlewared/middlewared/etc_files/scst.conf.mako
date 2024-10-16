@@ -48,6 +48,7 @@
     portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
     initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
     fcports_by_target_id = {d['target']['id']: d for d in render_ctx['fcport.query']}
+    fcports_by_port_name = {d['port']: d for d in render_ctx['fcport.query']}
     targets_by_id = {d['id']: d for d in targets}
     authenticators = defaultdict(list)
     for auth in middleware.call_sync('iscsi.auth.query'):
@@ -78,6 +79,12 @@
             return targets_by_id[fcport['target']['id']]
         except KeyError:
             return None
+
+    def fcport_to_parent_host(fcport):
+        if '/' in fcport['port']:
+            parent_port_name = fcport['port'].split('/')[0]
+            if parent_fcport := fcports_by_port_name.get(parent_port_name):
+                return ha_node_wwpn_for_fcport(parent_fcport)
 
     def fc_initiator_access_for_target(target):
         initiator_access = set()
@@ -542,9 +549,14 @@ TARGET_DRIVER qla2x00t {
     wwpn = ha_node_wwpn_for_fcport(fcport)
     target = fcport_to_target(fcport)
     fc_initiator_access = fc_initiator_access_for_target(target)
+    parent_host = fcport_to_parent_host(fcport)
 %>\
 % if wwpn and target:
     TARGET ${wwpn} {
+% if parent_host:
+        node_name ${parent_host}
+        parent_host ${parent_host}
+% endif  ## parent_host
 % if node == "A":
         rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
 % endif
@@ -591,9 +603,14 @@ TARGET_DRIVER qla2x00t {
     wwpn = ha_node_wwpn_for_fcport(fcport)
     target = fcport_to_target(fcport)
     fc_initiator_access = fc_initiator_access_for_target(target)
+    parent_host = fcport_to_parent_host(fcport)
 %>
     % if wwpn and target:
     TARGET ${wwpn} {
+% if parent_host:
+        node_name ${parent_host}
+        parent_host ${parent_host}
+% endif  ## parent_host
         rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
         enabled 1
 ## Before we write the LUNs, we may write a security_group
