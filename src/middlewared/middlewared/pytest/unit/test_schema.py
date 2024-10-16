@@ -644,7 +644,7 @@ def test__cron__begin_end_validate(value, error):
 def test__schema_ipaddr(value, expected):
 
     @api_method(IPAddr, IPAddrResult)
-    def ipaddrv(address, cidr, network, network_strict, address_types, v4, v6, factory, allow_zone_index):
+    def ipaddrv(address, *data, **kwargs):
         return address
 
 
@@ -667,7 +667,7 @@ def test__schema_ipaddr(value, expected):
 def test__schema_ipaddr_cidr(value, expected):
 
     @api_method(accepts=IPAddr, returns=IPAddrResult)
-    def ipaddrv(address, cidr, network, network_strict, address_types, v4, v6, factory, allow_zone_index):
+    def ipaddrv(address, *data, **kwargs):
         return address
 
 
@@ -685,7 +685,7 @@ def test__schema_ipaddr_cidr(value, expected):
 def test__schema_ipaddr_cidr_allow_zone_index(value, expected):
 
     @api_method(IPAddr, IPAddrResult)
-    def ipaddrv(address, cidr, network, network_strict, address_types, v4, v6, factory, allow_zone_index):
+    def ipaddrv(address, *data, **kwargs):
         return address
 
 
@@ -706,7 +706,7 @@ def test__schema_ipaddr_cidr_allow_zone_index(value, expected):
 def test__schema_ipaddr_network(value, expected):
 
     @api_method(IPAddr, IPAddrResult)
-    def ipaddrv(address, cidr, network, network_strict, address_types, v4, v6, factory, allow_zone_index):
+    def ipaddrv(address, *data, **kwargs):
         return address
 
 

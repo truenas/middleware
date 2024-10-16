@@ -1,4 +1,4 @@
-from pydantic import model_validator
+from pydantic import model_validator, ConfigDict
 from middlewared.api.base import BaseModel
 from typing import Callable
 from ipaddress import ip_network, ip_interface, ip_address, IPv4Network, IPv4Interface, IPv4Address, IPv6Network, IPv6Interface, IPv6Address
@@ -91,6 +91,8 @@ def validate_address(ipaddr: 'IPAddr'):
     ipaddr.address = value
 
 class IPAddr(BaseModel):
+    model_config = ConfigDict(extra='allow')
+
     address: str
     cidr: bool = False
     network: bool = False
