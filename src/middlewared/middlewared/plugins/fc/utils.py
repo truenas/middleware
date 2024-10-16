@@ -39,15 +39,22 @@ def str_to_naa(string):
         return string
 
 
-def wwpn_to_vport(wwpn, chan):
+def naa_to_int(string):
+    if string.startswith('naa.'):
+        return int(f'0x{string[4:]}', 16)
+
+
+def wwpn_to_vport_naa(wwpn, chan):
     if wwpn is None:
         return None
+    if isinstance(wwpn, str):
+        wwpn = naa_to_int(str_to_naa(wwpn))
     # Similar to some code in isp_default_wwn (CORE os)
     seed = wwpn
     seed ^= 0x0100000000000000
     seed ^= ((chan + 1) & 0xf) << 56
     seed ^= (((chan + 1) >> 4) & 0xf) << 52
-    return seed
+    return str_to_naa(hex(seed))
 
 
 def dmi_pci_slot_info():

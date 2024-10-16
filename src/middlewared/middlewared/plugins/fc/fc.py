@@ -4,8 +4,9 @@ import subprocess
 from functools import cache
 from pathlib import Path
 
-from middlewared.service import Service
+from middlewared.service import Service, filterable
 from middlewared.service_exception import CallError
+from middlewared.utils import filter_list
 from .utils import dmi_pci_slot_info
 
 FIBRE_CHANNEL_SEARCH_STRING = 'Fibre Channel'
@@ -52,12 +53,12 @@ class FCService(Service):
             return True
         return False
 
-    @cache
-    def fc_hosts(self):
+    @filterable
+    def fc_hosts(self, filters, options):
         result = []
         if self.middleware.call_sync('fc.capable'):
             self.__load_kernel_module()
-            slots = dmi_pci_slot_info()
+            slots = self.middleware.call_sync('fc.slot_info')
             with os.scandir('/sys/class/fc_host') as scan:
                 for i in filter(lambda x: x.is_symlink() and x.name.startswith('host'), scan):
                     # Ensure realpath looks something like
@@ -71,9 +72,21 @@ class FCService(Service):
                             'path': i.path,
                             'node_name': (path / 'node_name').read_text().strip(),
                             'port_name': (path / 'port_name').read_text().strip(),
+                            'port_type': (path / 'port_type').read_text().strip(),
+                            'speed': (path / 'speed').read_text().strip(),
                             'addr': addr,
                         }
-                        # Maybe also get slot information from DMI (dmidecode)
+                        # If nothing is connected then port_type and speed can be "Unknown"
+
+                        # Some attributes are only present for real hardware ports
+                        for fname in ['max_npiv_vports', 'npiv_vports_inuse']:
+                            try:
+                                entry[fname] = int((path / fname).read_text().strip())
+                            except FileNotFoundError:
+                                entry[fname] = None
+                        entry['physical'] = entry['max_npiv_vports'] is not None
+
+                        # Get slot information from DMI (dmidecode)
                         # First pull out the piece of PCI address that is also included
                         # in dmidecode output.
                         laddr = addr.split('/')[-1]
@@ -90,7 +103,7 @@ class FCService(Service):
                                 if zeroaddr in slots:
                                     entry['slot'] = f'{slots[zeroaddr]} / PCI Function {function}'
                         result.append(entry)
-        return result
+        return filter_list(result, filters, options)
 
     @cache
     def fc_host_nport_wwpn_choices(self):
@@ -120,20 +133,9 @@ class FCService(Service):
         if await self.middleware.call('fc.capable'):
             await self.middleware.run_in_thread(self.__load_kernel_module)
 
-    async def ports(self):
+    @cache
+    def slot_info(self):
         """
-        Return a list of port nicknames
-        (Should we make it a dict with wwpn from each node?, and a flag to see whether virtual)
+        Cached wrapper around dmi_pci_slot_info
         """
-        return []
-
-
-# async def __event_system_ready(middleware, event_type, args):
-#     await middleware.call('fc.load_kernel_module')
-#
-#
-# async def setup(middleware):
-#     if await middleware.call('system.ready'):
-#         await middleware.call('fc.load_kernel_module')
-#     else:
-#         middleware.event_subscribe('system.ready', __event_system_ready)
+        return dmi_pci_slot_info()
