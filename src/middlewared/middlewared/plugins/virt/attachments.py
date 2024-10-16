@@ -40,7 +40,6 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
             job = await self.middleware.call('virt.global.update', {'pool': ''})
             await job.wait(raise_error=True)
 
-
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
             action = 'start' if enabled else 'stop'
