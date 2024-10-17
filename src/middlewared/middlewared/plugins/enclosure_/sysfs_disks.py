@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from os import scandir
 from pathlib import Path
 
+from .enums import ControllerModels
+
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class BaseDev:
@@ -41,25 +43,27 @@ def map_disks_to_enclosure_slots(enc) -> dict[int, BaseDev]:
 
     """
     mapping = dict()
-    with scandir(f'/sys/class/enclosure/{enc.pci}') as sdir:
+    with scandir(f"/sys/class/enclosure/{enc.pci}") as sdir:
         for i in filter(lambda x: x.is_dir(), sdir):
-            if enc.is_hseries and i.name in ('4', '5', '6', '7'):
+            if enc.is_hseries and i.name in ("4", "5", "6", "7"):
                 continue
 
             path = Path(i)
             try:
-                slot = int((path / 'slot').read_text().strip())
+                slot = int((path / "slot").read_text().strip())
             except (NotADirectoryError, FileNotFoundError, ValueError):
                 # not a slot directory
                 continue
             else:
                 try:
-                    name = next((path / 'device/block').iterdir(), None).name
+                    name = next((path / "device/block").iterdir(), None).name
                 except (AttributeError, FileNotFoundError):
                     # no disk in this slot
                     name = None
                 try:
-                    locate = 'ON' if (path / 'locate').read_text().strip() == '1' else 'OFF'
+                    locate = (
+                        "ON" if (path / "locate").read_text().strip() == "1" else "OFF"
+                    )
                 except (ValueError, FileNotFoundError):
                     locate = None
 
@@ -68,7 +72,9 @@ def map_disks_to_enclosure_slots(enc) -> dict[int, BaseDev]:
     return mapping
 
 
-def toggle_enclosure_slot_identifier(sysfs_path, slot, action, by_dirname=False):
+def toggle_enclosure_slot_identifier(
+    sysfs_path, slot, action, by_dirname=False, model=None
+):
     """Use sysfs to toggle the enclosure light indicator for a disk
     slot.
 
@@ -89,28 +95,48 @@ def toggle_enclosure_slot_identifier(sysfs_path, slot, action, by_dirname=False)
     """
     pathobj = Path(sysfs_path)
     if not pathobj.exists():
-        raise FileNotFoundError(f'Enclosure path: {sysfs_path!r} not found')
+        raise FileNotFoundError(f"Enclosure path: {sysfs_path!r} not found")
 
-    slot_errmsg = f'Slot: {slot!r} not found'
+    slot_errmsg = f"Slot: {slot!r} not found"
+    slot = str(slot)
+    if model in (ControllerModels.H10.value, ControllerModels.H20.value):
+        # kernel bug for hseries where the slot files report duplicate numbers
+        # between the array device slots so until that can be fixed, we have to
+        # use the directory name where the slot file exists. Only applies to 4
+        # slots on the HBA
+        match slot:
+            case "4":
+                slot = "12"
+                by_dirname = True
+            case "5":
+                slot = "13"
+                by_dirname = True
+            case "6":
+                slot = "14"
+                by_dirname = True
+            case "7":
+                slot = "15"
+                by_dirname = True
+
     if by_dirname:
-        pathobj = Path(f'{sysfs_path}/{slot}')
+        pathobj = Path(f"{sysfs_path}/{slot}")
         if not pathobj.exists():
             raise FileNotFoundError(slot_errmsg)
     else:
         for i in pathobj.iterdir():
-            slot_path = (i / 'slot')
-            if slot_path.exists() and slot_path.read_text().strip() == str(slot):
+            slot_path = i / "slot"
+            if slot_path.exists() and slot_path.read_text().strip() == slot:
                 pathobj = i
                 break
         else:
             raise FileNotFoundError(slot_errmsg)
 
     match action:
-        case 'CLEAR' | 'OFF':
-            value = '0'
-        case 'ON':
-            value = '1'
+        case "CLEAR" | "OFF":
+            value = "0"
+        case "ON":
+            value = "1"
         case _:
-            raise ValueError(f'Invalid action ({action!r})')
+            raise ValueError(f"Invalid action ({action!r})")
 
-    (pathobj / 'locate').write_text(value)
+    (pathobj / "locate").write_text(value)
