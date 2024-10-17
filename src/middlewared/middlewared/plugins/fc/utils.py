@@ -67,3 +67,22 @@ def dmi_pci_slot_info():
             bus_addr = mat.group(0)
             result[bus_addr] = designation
     return result
+
+
+def filter_by_wwpns_hex_string(wwpn_naa, wwpn_b_naa):
+    """
+    Filter is suitable for consumption by fc.fc_hosts
+    """
+    if wwpn_naa and wwpn_b_naa:
+        return [['OR',
+                 [
+                     ['port_name', '=', f'0x{wwpn_naa[4:]}'],
+                     ['port_name', '=', f'0x{wwpn_b_naa[4:]}'],
+                 ]
+                 ]]
+    elif wwpn_naa:
+        return [['port_name', '=', f'0x{wwpn_naa[4:]}']]
+    elif wwpn_b_naa:
+        return [['port_name', '=', f'0x{wwpn_b_naa[4:]}']]
+    else:
+        return []
