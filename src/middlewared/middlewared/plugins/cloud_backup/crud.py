@@ -65,7 +65,6 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         Cron.convert_schedule_to_db_format(cloud_backup)
 
         cloud_backup.pop("job", None)
-        cloud_backup["attributes"].pop("create_bucket", None)
         cloud_backup.pop(self.locked_field, None)
 
         return cloud_backup

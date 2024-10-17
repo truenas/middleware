@@ -52,10 +52,7 @@ class CloudTaskServiceMixin:
         schema = []
 
         if provider.buckets:
-            schema.extend([
-                Str("bucket", required=True, empty=False),
-                Bool("create_bucket", default=False),
-            ])
+            schema.append(Str("bucket", required=True, empty=False))
 
         schema.extend([
             Str("folder", required=True),
