@@ -106,9 +106,12 @@ class FCService(Service):
         return filter_list(result, filters, options)
 
     @cache
-    def fc_host_wwpn_choices(self):
+    def fc_host_nport_wwpn_choices(self):
+        """
+        Return a list of physical N_Port WWPNs on this node.
+        """
         result = []
-        for fc in (self.middleware.call_sync('fc.fc_hosts')):
+        for fc in (self.middleware.call_sync('fc.fc_hosts', [["physical", "=", True]])):
             port_name = fc['port_name']
             # Replace the leading '0x' with 'naa.'
             wwpn = f'naa.{port_name[2:]}'
