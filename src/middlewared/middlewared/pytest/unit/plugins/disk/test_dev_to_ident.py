@@ -4,10 +4,6 @@ from unittest.mock import Mock
 from middlewared.plugins.disk_.sync import DiskService
 
 OBJ = DiskService(Mock())
-UUIDS = [
-    "6a898cc3-1dd2-11b2-99a6-080020736631",
-    "516e7cba-6ecf-11d6-8ff8-00022d09712b"
-]
 BY_UUID = (
     "pmem0",
     {
@@ -61,4 +57,4 @@ BY_SERIAL = (
 
 @pytest.mark.parametrize('disk_name, sys_disks, result', [BY_UUID, BY_SERIAL_LUNID, BY_DEVICENAME, BY_SERIAL])
 def test_dev_to_ident(disk_name, sys_disks, result):
-    assert result == OBJ.dev_to_ident(disk_name, sys_disks, UUIDS)
+    assert result == OBJ.dev_to_ident(disk_name, sys_disks)

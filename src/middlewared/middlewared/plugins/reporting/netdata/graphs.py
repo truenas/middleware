@@ -1,8 +1,9 @@
 import typing
 
-from middlewared.utils.disks import get_disks_for_temperature_reading
+from middlewared.utils.disk_temperatures import get_disks_for_temperature_reading
 
 from .graph_base import GraphBase
+from .utils import get_human_disk_name
 
 
 class CPUPlugin(GraphBase):
@@ -36,32 +37,26 @@ class DISKPlugin(GraphBase):
     title = 'Disk I/O Bandwidth'
     vertical_label = 'Kibibytes/s'
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.disk_mapping = {}
+
     def get_title(self):
         return 'Disk I/O ({identifier})'
 
+    async def build_context(self):
+        all_charts = await self.all_charts()
+        self.disk_mapping = {
+            get_human_disk_name(disk): disk['identifier']
+            for disk in await self.middleware.call('disk.query')
+            if f'truenas_disk_stats.io.{disk["identifier"]}' in all_charts
+        }
+
     async def get_identifiers(self) -> typing.Optional[list]:
-        disks = {f'disk.{disk["name"]}' for disk in await self.middleware.call('disk.query')}
-        return [disk.rsplit('.')[-1] for disk in (disks & set(await self.all_charts()))]
+        return list(self.disk_mapping.keys())
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return f'disk.{identifier}'
-
-    def normalize_metrics(self, metrics) -> dict:
-        metrics = super().normalize_metrics(metrics)
-        if len(metrics['legend']) < 3:
-            for to_add in {'time', 'reads', 'writes'} - set(metrics['legend']):
-                metrics['legend'].append(to_add)
-
-        write_column = metrics['legend'].index('writes')
-        for index, data in enumerate(metrics['data']):
-            data_length = len(data)
-            if data_length < 3:
-                for i in range(3 - data_length):
-                    data.append(0)
-
-            if data[write_column] is not None:
-                metrics['data'][index][write_column] = abs(data[write_column])
-        return metrics
+        return f'truenas_disk_stats.io.{self.disk_mapping[identifier]}'
 
 
 class InterfacePlugin(GraphBase):
@@ -229,7 +224,7 @@ class DiskTempPlugin(GraphBase):
             identifier = disk.id if disk.id.startswith('nvme') else disk.serial
             for k in (identifier, identifier.replace('-', '_')):
                 if f'smart_log_smart.disktemp.{k}' in all_charts:
-                    self.disk_mapping[disk.id] = k
+                    self.disk_mapping[get_human_disk_name(disk.__dict__)] = k
                     break
 
     async def get_identifiers(self) -> typing.Optional[list]:

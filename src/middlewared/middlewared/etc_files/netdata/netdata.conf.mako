@@ -60,7 +60,7 @@
 
 [plugin:proc]
 	netdata server resources = yes
-	/proc/diskstats = yes
+	/proc/diskstats = no
 	/proc/meminfo = yes
 	/proc/net/dev = yes
 	/proc/pagetypeinfo = no
@@ -116,42 +116,6 @@
 	refresh interface speed every seconds = 1
 	refresh interface duplex every seconds = 1
 	refresh interface operstate every seconds = 1
-
-[plugin:proc:/proc/diskstats]
-	enable new disks detected at runtime = yes
-	performance metrics for physical disks = yes
-	performance metrics for virtual disks = yes
-	performance metrics for partitions = no
-	bandwidth for all disks = auto
-	operations for all disks = auto
-	merged operations for all disks = auto
-	i/o time for all disks = auto
-	queued operations for all disks = auto
-	utilization percentage for all disks = auto
-	backlog for all disks = auto
-	bcache for all disks = no
-	bcache priority stats update every = 0
-	remove charts of removed disks = yes
-	path to get block device = /sys/block/%s
-	# path to get block device bcache = /sys/block/%s/bcache
-	# path to get virtual block device = /sys/devices/virtual/block/%s
-	path to get block device infos = /sys/dev/block/%lu:%lu/%s
-	# path to device mapper = /dev/mapper
-	path to /dev/disk/by-label = /dev/disk/by-label
-	path to /dev/disk/by-id = /dev/disk/by-id
-	# path to /dev/vx/dsk = /dev/vx/dsk
-	name disks by id = no
-	preferred disk ids = *
-	exclude disks = loop* ram* zd* md* dm*
-	filename to monitor = /proc/diskstats
-	enable performance metrics = no
-	enable per partition performance metrics = no
-	# performance metrics for disks with major 259 = yes
-	# performance metrics for disks with major 8 = yes
-	# performance metrics for disks with major 65 = yes
-	# performance metrics for disks with major 9 = no
-	# performance metrics for disks with major 253 = no
-	# performance metrics for disks with major 230 = no
 
 [plugin:cgroups]
         enable by default cgroups names matching = !*udev* *
