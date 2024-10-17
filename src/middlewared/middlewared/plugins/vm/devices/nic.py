@@ -104,3 +104,7 @@ class NIC(Device):
                 'attributes.trust_guest_rx_filters',
                 'This can only be set when "type" of NIC device is "VIRTIO"'
             )
+
+        mac_address = device['attributes'].get('mac')
+        if mac_address and mac_address.lower().startswith('ff'):
+            verrors.add('attributes.mac', 'MAC address must not start with `ff`')
