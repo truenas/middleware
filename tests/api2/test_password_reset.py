@@ -96,6 +96,15 @@ def test_restricted_user_set_password():
                         'new_password': 'CANARY',
                     })
 
+                with pytest.raises(ValidationErrors) as ve:
+                    # Providing invalid old password for a limited user
+                    # should raise an error
+                    c2.call('user.set_password', {
+                        'username': TEST_USERNAME_2,
+                        'old_password': 'ANOTHER CANARY',
+                        'new_password': 'CANARY',
+                    })
+
             call("user.update", u['id'], {'password_disabled': True})
             with pytest.raises(ValidationErrors) as ve:
                 # This should fail because we've disabled password auth

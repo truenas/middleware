@@ -3,6 +3,7 @@ import errno
 import glob
 import json
 import os
+import pam
 import shlex
 import shutil
 import stat
@@ -1575,20 +1576,21 @@ class UserService(CRUDService):
                     f'{username}: user is not local to the TrueNAS server.'
                 )
 
-        if data['old_password'] is None and not is_full_admin:
-            verrors.add(
-                'user.set_password.old_password',
-                'FULL_ADMIN role is required in order to bypass check for current password.'
-            )
-
-        if data['old_password'] is not None and not await self.middleware.call(
-            'auth.libpam_authenticate',
-            username, data['old_password']
-        ):
-            verrors.add(
-                'user.set_password.old_password',
-                f'{username}: failed to validate password.'
-            )
+        if not is_full_admin:
+            if data['old_password'] is None:
+                verrors.add(
+                    'user.set_password.old_password',
+                    'FULL_ADMIN role is required in order to bypass check for current password.'
+                )
+            else:
+                pam_resp = await self.middleware.call(
+                    'auth.libpam_authenticate', username, data['old_password']
+                )
+                if pam_resp['code'] != pam.PAM_SUCCESS:
+                    verrors.add(
+                        'user.set_password.old_password',
+                        f'{username}: failed to validate password.'
+                    )
 
         verrors.check()
 
