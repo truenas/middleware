@@ -13,8 +13,8 @@ except ImportError:
 __all__ = ["ssh"]
 
 
-def ssh(command, check=True, complete_response=False, *, user=default_user, password=default_password, ip=None):
-    result = SSH_TEST(command, user, password, ip)
+def ssh(command, check=True, complete_response=False, *, user=default_user, password=default_password, ip=None, timeout=120):
+    result = SSH_TEST(command, user, password, ip, timeout=timeout)
     if check:
         assert result["result"], result["output"]
     return result if complete_response else result["stdout"]
