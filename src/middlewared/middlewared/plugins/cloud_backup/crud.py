@@ -65,6 +65,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         Cron.convert_schedule_to_db_format(cloud_backup)
 
         cloud_backup.pop("job", None)
+        cloud_backup["attributes"].pop("create_bucket", None)
         cloud_backup.pop(self.locked_field, None)
 
         return cloud_backup
@@ -81,16 +82,12 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         """
         """
         verrors = ValidationErrors()
-
         await self._validate(app, verrors, "cloud_backup_create", cloud_backup)
-
         verrors.check()
 
         cloud_backup = await self._compress(cloud_backup)
-
         cloud_backup["id"] = await self.middleware.call("datastore.insert", "tasks.cloud_backup",
                                                         {**cloud_backup, "job": None})
-
         await self.middleware.call("service.restart", "cron")
 
         return await self.get_instance(cloud_backup["id"])

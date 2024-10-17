@@ -18,11 +18,16 @@ class CloudBackupService(Service):
     def ensure_initialized(self, cloud_backup):
         self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
-        if isinstance(cloud_backup["credentials"], int):
+        cred = cloud_backup["credentials"]
+        if isinstance(cred, int):
+
+            attrs = cloud_backup["attributes"]
+            if attrs.get("create_bucket", False):
+                self.middleware.call("cloudsync.create_bucket", cred, attrs["bucket"])
+
             cloud_backup = {
                 **cloud_backup,
-                "credentials": self.middleware.call_sync("cloudsync.credentials.get_instance",
-                                                         cloud_backup["credentials"]),
+                "credentials": self.middleware.call_sync("cloudsync.credentials.get_instance", cred),
             }
 
         if self.is_initialized(cloud_backup):

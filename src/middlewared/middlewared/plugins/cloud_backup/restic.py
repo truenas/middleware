@@ -10,8 +10,8 @@ from middlewared.utils import Popen
 
 @dataclass
 class ResticConfig:
-    cmd: [str]
-    env: {str: str}
+    cmd: list[str]
+    env: dict[str, str]
 
 
 def get_restic_config(cloud_backup):
@@ -63,15 +63,12 @@ async def run_restic(job, cmd, env, stdin=None):
 
 
 async def restic_check_progress(job, proc):
-    try:
-        while True:
-            read = (await proc.stdout.readline()).decode("utf-8", "ignore")
-            if read == "":
-                break
+    while True:
+        read = (await proc.stdout.readline()).decode("utf-8", "ignore")
+        if read == "":
+            break
 
-            await job.logs_fd_write(read.encode("utf-8", "ignore"))
+        await job.logs_fd_write(read.encode("utf-8", "ignore"))
 
-            job.internal_data.setdefault("messages", [])
-            job.internal_data["messages"] = job.internal_data["messages"][-4:] + [read]
-    finally:
-        pass
+        job.internal_data.setdefault("messages", [])
+        job.internal_data["messages"] = job.internal_data["messages"][-4:] + [read]
