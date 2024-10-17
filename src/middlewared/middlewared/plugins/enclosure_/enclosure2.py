@@ -117,7 +117,7 @@ class Enclosure2Service(Service):
             else:
                 try:
                     toggle_enclosure_slot_identifier(
-                        f'/sys/class/enclosure/{enc_info["pci"]}', origslot, data['status']
+                        f'/sys/class/enclosure/{enc_info["pci"]}', origslot, data['status'], False, enc_info['model']
                     )
                 except FileNotFoundError:
                     raise CallError(f'Slot: {data["slot"]!r} not found', errno.ENOENT)
