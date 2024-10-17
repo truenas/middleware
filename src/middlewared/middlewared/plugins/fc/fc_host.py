@@ -100,9 +100,9 @@ class FCHostService(CRUDService):
 
         return response
 
-    async def _get_remote_fc_host_wwpn_choices(self):
+    async def _get_remote_fc_host_nport_wwpn_choices(self):
         try:
-            return await self.middleware.call('failover.call_remote', 'fc.fc_host_wwpn_choices')
+            return await self.middleware.call('failover.call_remote', 'fc.fc_host_nport_wwpn_choices')
         except CallError as e:
             if e.errno in NETWORK_ERRORS + (CallError.ENOMETHOD,):
                 # swallow error, but don't present any choices
@@ -126,11 +126,11 @@ class FCHostService(CRUDService):
                 node = await self.middleware.call('failover.node')
                 match node:
                     case 'A':
-                        node_a_choices = await self.middleware.call('fc.fc_host_wwpn_choices')
-                        node_b_choices = await self._get_remote_fc_host_wwpn_choices()
+                        node_a_choices = await self.middleware.call('fc.fc_host_nport_wwpn_choices')
+                        node_b_choices = await self._get_remote_fc_host_nport_wwpn_choices()
                     case 'B':
-                        node_a_choices = await self._get_remote_fc_host_wwpn_choices()
-                        node_b_choices = await self.middleware.call('fc.fc_host_wwpn_choices')
+                        node_a_choices = await self._get_remote_fc_host_nport_wwpn_choices()
+                        node_b_choices = await self.middleware.call('fc.fc_host_nport_wwpn_choices')
                     case _:
                         raise CallError('Cannot configure FC until HA is configured')
                 if wwpn and wwpn not in node_a_choices:
@@ -153,7 +153,7 @@ class FCHostService(CRUDService):
                     'May not specify a wwpn for a failover node if not HA'
                 )
             if wwpn is not None:
-                choices = await self.middleware.call('fc.fc_host_wwpn_choices')
+                choices = await self.middleware.call('fc.fc_host_nport_wwpn_choices')
                 if wwpn not in choices:
                     verrors.add(
                         f'{schema_name}.wwpn',
