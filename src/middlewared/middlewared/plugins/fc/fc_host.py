@@ -7,7 +7,7 @@ from middlewared.api.current import (FCHostCreateArgs, FCHostCreateResult, FCHos
                                      FCHostEntry, FCHostUpdateArgs, FCHostUpdateResult)
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
-from .utils import str_to_naa
+from .utils import filter_by_wwpns_hex_string, str_to_naa
 
 
 class FCHostModel(sa.Model):
@@ -73,7 +73,7 @@ class FCHostService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        await self._validate("fc_host_update", new, id_)
+        await self._validate("fc_host_update", new, id_, old)
 
         await self.middleware.call(
             "datastore.update",
@@ -111,7 +111,7 @@ class FCHostService(CRUDService):
             else:
                 raise
 
-    async def _validate(self, schema_name: str, data: dict, id_: int = None):
+    async def _validate(self, schema_name: str, data: dict, id_: int = None, old: dict = None):
         verrors = ValidationErrors()
 
         wwpn = data.get('wwpn')
@@ -160,6 +160,54 @@ class FCHostService(CRUDService):
                         f'{schema_name}.wwpn',
                         f'Invalid wwpn ({wwpn}) supplied, should be one of: {",".join(choices)}'
                     )
+
+        # If setting a non-zero value for NPIV then checks may be required
+        npiv = data.get('npiv')
+        if npiv is not None:
+            if npiv < 0:
+                verrors.add(
+                    f'{schema_name}.npiv',
+                    f'Invalid npiv ({npiv}) supplied, must be 0 or greater'
+                )
+            else:
+                bounds_check = False
+                usage_check = False
+                if old is None:
+                    # Create - bounds check required (only)
+                    bounds_check = True
+                elif old.get('npiv') != npiv:
+                    # Update - check both bounds and usage
+                    bounds_check = True
+                    if npiv < old.get('npiv'):
+                        # If we're reducing NPIV we need to ensure we don't have a target mapped
+                        # to a NPIV port that would disappear
+                        usage_check = True
+                if bounds_check:
+                    fc_host_filter = filter_by_wwpns_hex_string(wwpn, wwpn_b)
+                    fc_hosts = await self.middleware.call('fc.fc_hosts', fc_host_filter)
+                    if len(fc_hosts) != 1:
+                        verrors.add(
+                            f'{schema_name}.npiv',
+                            f'Unable to check npiv ({npiv}) supplied'
+                        )
+                    else:
+                        max_npiv_vports = fc_hosts[0]['max_npiv_vports']
+                        if npiv > max_npiv_vports:
+                            verrors.add(
+                                f'{schema_name}.npiv',
+                                f'Invalid npiv ({npiv}) supplied, max value {max_npiv_vports}'
+                            )
+                if usage_check:
+                    vpfilter = [['port', '~', f'^{data["alias"]}/[1-9][0-9]*$']]
+                    vports = [p['port'].split('/')[-1] for p in await self.middleware.call('fcport.query', vpfilter, {'select': ['port']})]
+                    vports = [int(p['port'].split('/')[-1]) for p in await self.middleware.call('fcport.query', vpfilter, {'select': ['port']})]
+                    for chan in vports:
+                        if chan > npiv:
+                            verrors.add(
+                                f'{schema_name}.npiv',
+                                f'Invalid npiv ({npiv}) supplied, {data["alias"]}/{chan} is currently mapped to a target'
+                            )
+                        break
 
         verrors.check()
 
