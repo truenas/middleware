@@ -951,6 +951,10 @@ class FailoverEventsService(Service):
         return self.FAILOVER_RESULT
 
     def start_apps(self):
+        self.start_apps_impl()
+        self.middleware.create_task(self.middleware.call('k8s_to_docker.trigger_migration'))
+
+    def start_apps_impl(self):
         pool = self.run_call('docker.config')['pool']
         if not pool:
             self.middleware.call_sync('docker.state.set_status', Status.UNCONFIGURED.value)
