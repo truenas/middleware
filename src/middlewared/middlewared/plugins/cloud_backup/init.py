@@ -23,9 +23,9 @@ class CloudBackupService(Service):
 
             attrs = cloud_backup["attributes"]
             if "bucket" in attrs:
-                existing_buckets = [b["Name"] for b in self.middleware.call("cloudsync.list_buckets", cred)]
+                existing_buckets = [b["Name"] for b in self.middleware.call_sync("cloudsync.list_buckets", cred)]
                 if attrs["bucket"] not in existing_buckets:
-                    self.middleware.call("cloudsync.create_bucket", cred, attrs["bucket"])
+                    self.middleware.call_sync("cloudsync.create_bucket", cred, attrs["bucket"])
 
             cloud_backup = {
                 **cloud_backup,
