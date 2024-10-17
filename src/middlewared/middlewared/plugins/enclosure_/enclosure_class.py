@@ -660,7 +660,6 @@ class Enclosure:
         Returns: bool
         """
         return any((
-            self.is_r40,
             self.is_r50_series,
             self.is_60_bay_jbod,
             self.is_102_bay_jbod
@@ -674,7 +673,7 @@ class Enclosure:
         Returns: int
         """
         if self.top_loaded:
-            if self.is_r40 or self.is_r50_series:
+            if self.is_r50_series:
                 return 48
             elif self.is_60_bay_jbod:
                 return 60
@@ -695,6 +694,7 @@ class Enclosure:
         return any((
             self.is_xseries,
             self.is_r30,
+            self.is_r40,
             self.is_12_bay_jbod,
             self.is_r20_series,
             self.is_hseries,
