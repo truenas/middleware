@@ -54,11 +54,11 @@ class CloudTaskServiceMixin:
         if provider.buckets:
             schema.append(Str("bucket", required=True, empty=False))
 
-        schema.extend([
-            Str("folder", required=True),
-            *provider.task_schema,
-            *self._common_task_schema(provider),
-        ])
+        schema.append(Str("folder", required=True))
+
+        schema.extend(provider.task_schema)
+
+        schema.extend(self._common_task_schema(provider))
 
         attributes_verrors = validate_schema(schema, data["attributes"])
 

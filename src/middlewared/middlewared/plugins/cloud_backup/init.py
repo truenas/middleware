@@ -18,18 +18,11 @@ class CloudBackupService(Service):
     def ensure_initialized(self, cloud_backup):
         self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
-        cred = cloud_backup["credentials"]
-        if isinstance(cred, int):
-
-            attrs = cloud_backup["attributes"]
-            if "bucket" in attrs:
-                existing_buckets = [b["Name"] for b in self.middleware.call_sync("cloudsync.list_buckets", cred)]
-                if attrs["bucket"] not in existing_buckets:
-                    self.middleware.call_sync("cloudsync.create_bucket", cred, attrs["bucket"])
-
+        if isinstance(cloud_backup["credentials"], int):
             cloud_backup = {
                 **cloud_backup,
-                "credentials": self.middleware.call_sync("cloudsync.credentials.get_instance", cred),
+                "credentials": self.middleware.call_sync("cloudsync.credentials.get_instance",
+                                                         cloud_backup["credentials"]),
             }
 
         if self.is_initialized(cloud_backup):
@@ -66,6 +59,13 @@ class CloudBackupService(Service):
     @private
     def init(self, cloud_backup):
         self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
+
+        attrs = cloud_backup["attributes"]
+        cred = cloud_backup["credentials"]["id"]
+        if "bucket" in attrs:
+            existing_buckets = [b["Name"] for b in self.middleware.call_sync("cloudsync.list_buckets", cred)]
+            if attrs["bucket"] not in existing_buckets:
+                self.middleware.call_sync("cloudsync.create_bucket", cred, attrs["bucket"])
 
         restic_config = get_restic_config(cloud_backup)
 
