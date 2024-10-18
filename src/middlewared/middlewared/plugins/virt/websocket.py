@@ -25,15 +25,17 @@ class IncusWS(object):
         self.middleware = middleware
         self._incoming = defaultdict(list)
         self._waiters = defaultdict(list)
+        self.shutdown = False
 
     async def run(self):
-        while True:
+        while not self.shutdown:
             try:
                 await self._run_impl()
             except aiohttp.client_exceptions.UnixClientConnectorError as e:
                 logger.warning('Failed to connect to incus socket: %r', e)
             except Exception:
-                logger.warning('Incus websocket failure', exc_info=True)
+                if not self.shutdown:
+                    logger.warning('Incus websocket failure', exc_info=True)
             await asyncio.sleep(1)
 
     async def _run_impl(self):
@@ -86,8 +88,13 @@ class IncusWS(object):
             self._waiters[id].remove(event)
 
 
+async def __event_system_shutdown(middleware, event_type, args):
+    IncusWS.instance.shutdown = True
+
+
 async def setup(middleware: 'Middleware'):
     middleware.event_register(
         'virt.instance.agent_running', 'Agent is running on guest.', roles=['VIRT_INSTANCE_READ'],
     )
     asyncio.ensure_future(IncusWS(middleware).run())
+    middleware.event_subscribe('system.shutdown', __event_system_shutdown)
