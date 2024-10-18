@@ -691,7 +691,7 @@ def test__schema_ipaddr_cidr_allow_zone_index(value, expected):
 
     if expected is ValidationErrors:
         with pytest.raises(ValidationErrors):
-            ipaddrv(value, False, False, False, [], True, True, True)
+            ipaddrv(value, False, False, False, [], True, True, True) # I REALLY dislike that these have to be sent over like this, specifying a name (like cidr=True) breaks everything. But it still is completely positional and optional after you reach the one positional argument you want to modify. Like allow_zone_index being at the very end here. I've tried so much to try and prevent this. Even specifying all the possible positional arguments in the ipaddrv function doesn't allow you to use named arguments (still just positional, fun). Also the magical inferring is really annoying. Either specifying all the arguments in order in the ipaddrv function or using *args, **kwargs notation lets the magic work, any missing or anything named incorrectly breaks it all.
     else:
         assert ipaddrv(value, False, False, False, [], True, True, True) == expected
 

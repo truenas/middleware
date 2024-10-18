@@ -13,6 +13,8 @@ from middlewared.validators import Range
 from .interface.netif import netif
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
+from middlewared.api.current import NetworkIpInUseArgs, NetworkIpInUseResult
+from middlewared.api import api_method
 
 
 class NetworkAliasModel(sa.Model):
@@ -1797,7 +1799,7 @@ class InterfaceService(CRUDService):
         except Exception:
             self.logger.error('Failed to run DHCP for {}'.format(name), exc_info=True)
 
-    @accepts(
+    """@accepts(
         Dict(
             'ips',
             Bool('ipv4', default=True),
@@ -1814,7 +1816,8 @@ class InterfaceService(CRUDService):
         IPAddr('address', required=True),
         Int('netmask', required=True),
         Str('broadcast'),
-    )]))
+    )]))"""
+    @api_method(NetworkIpInUseArgs, NetworkIpInUseResult)
     def ip_in_use(self, choices):
         """
         Get all IPv4 / Ipv6 from all valid interfaces, excluding tap and epair.
