@@ -154,6 +154,9 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
                 alerts.append(Alert(OldBiosVersionAlertClass))
 
             for nvdimm in self.middleware.call_sync('mseries.nvdimm.info'):
-                self.produce_alerts(nvdimm, alerts, old_bios)
+                try:
+                    self.produce_alerts(nvdimm, alerts, old_bios)
+                except Exception:
+                    self.middleware.logger.exception('Unexpected failure processing NVDIMM alerts')
 
         return alerts

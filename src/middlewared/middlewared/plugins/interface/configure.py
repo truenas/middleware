@@ -2,7 +2,6 @@ import ipaddress
 import os
 import signal
 import re
-import textwrap
 
 from .netif import netif
 from .interface_types import InterfaceType
@@ -49,7 +48,6 @@ class InterfaceService(Service):
                 self.logger.info('Unable to get address from dhclient lease file for %r', name)
 
         if data[addr_key] and not data['int_dhcp']:
-            # TODO: how are we handling int_ipv6auto (is it SLAAC or stateless DHCPv6 or stateful DHCPv6)??
             addrs_database.add(self.alias_to_addr({'address': data[addr_key], 'netmask': data['int_netmask']}))
 
         if vip := data.get('int_vip', ''):
@@ -66,20 +64,14 @@ class InterfaceService(Service):
                     {'address': alias_vip, 'netmask': '32' if alias['alias_version'] == 4 else '128'}
                 ))
 
-        if has_ipv6 and not [i for i in map(str, iface.addresses) if i.startswith('fe80::')]:
-            # https://tools.ietf.org/html/rfc4291#section-2.5.1
-            # add an EUI64 link-local ipv6 address if one doesn't already exist
-            mac = iface.link_address.replace(':', '')
-            mac = mac[0:6] + 'fffe' + mac[6:]
-            mac = hex(int(mac[0:2], 16) ^ 2)[2:].zfill(2) + mac[2:]
-            link_local = {'address': 'fe80::' + ':'.join(textwrap.wrap(mac, 4)), 'netmask': '64'}
-            addrs_database.add(self.alias_to_addr(link_local))
-
         for addr in addrs_configured:
             address = str(addr.address)
-            if address == vip or address in alias_vips or (has_ipv6 and address.startswith('fe80::')):
+            if address.startswith('fe80::'):
+                # having a link-local address causes no harm and is a
+                # pre-requisite for IPv6 working in general. Just ignore it.
+                continue
+            elif address == vip or address in alias_vips:
                 # keepalived service is responsible for deleting the VIP(s)
-                # dont remove fe80 address if ipv6 is configured since it's needed
                 continue
             elif addr not in addrs_database:
                 # Remove addresses configured and not in database
@@ -88,7 +80,6 @@ class InterfaceService(Service):
             elif not data['int_dhcp']:
                 self.logger.debug('%s: removing possible valid_lft and preferred_lft on %s', name, addr)
                 iface.replace_address(addr)
-            # TODO: what are we doing with ipv6auto??
 
         autoconf = '1' if has_ipv6 else '0'
         self.middleware.call_sync('tunable.set_sysctl', f'net.ipv6.conf.{name}.autoconf', autoconf)
@@ -102,8 +93,8 @@ class InterfaceService(Service):
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
             address = str(addr.address)
-            # keepalived service is responsible for adding the VIP(s)
             if address == vip or address in alias_vips:
+                # keepalived service is responsible for adding the VIP(s)
                 continue
             self.logger.debug('%s: adding %s', name, addr)
             iface.add_address(addr)

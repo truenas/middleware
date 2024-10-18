@@ -1,3 +1,4 @@
+from middlewared.service_exception import ValidationError, CallError
 from middlewared.test.integration.assets.account import user, unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
@@ -115,29 +116,18 @@ def init_audit():
 
 
 @pytest.fixture(scope='class')
-def standby_user():
-    """ HA system: Create a user on the BACKUP node
-    This will generate a 'create' audit entry, yield,
-    and on exit generate a 'delete' audit entry.
+def standby_audit_event():
+    """ HA system: Create an audit event on the standby node
+    Attempt to delete a built-in user on the standby node
     """
-    user_id = None
-    try:
-        name = "StandbyUser" + PASSWD
-        user_id = call(
-            'failover.call_remote', 'user.create', [{
-                "username": name,
-                "full_name": name + " Deleteme",
-                "group": 100,
-                "smb": False,
-                "home_create": False,
-                "password": "testing"
-            }],
-            {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
-        )
-        yield name
-    finally:
-        if user_id is not None:
-            call('failover.call_remote', 'user.delete', [user_id])
+    event = "user.delete"
+    username = "backup"
+    user = call('user.query', [["username", "=", username]], {"select": ["id"], "get": True})
+    # Generate an audit entry on the remote node
+    with pytest.raises(CallError):
+        call('failover.call_remote', event, [user['id']])
+
+    yield {"event": event, "username": username}
 
 
 # =====================================================================
@@ -324,47 +314,63 @@ class TestAuditOps:
 
 @pytest.mark.skipif(not ha, reason="Skip HA tests")
 class TestAuditOpsHA:
-    def test_audit_ha_query(self, standby_user):
-        name = standby_user
-        remote_user = call(
-            'failover.call_remote', 'user.query',
-            [[["username", "=", name]]],
-            {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
-        )
-        assert remote_user != []
+    @pytest.mark.parametrize('remote_available', [True, False])
+    def test_audit_ha_query(self, standby_audit_event, remote_available):
+        '''
+        Confirm:
+            1) Ability to get a remote node audit event from a healthy remote node
+            2) Generate an exception on remote node audit event get if the remote node is unavailable.
+        NOTE: The standby_audit_event fixture generates the remote node audit event.
+        '''
+        event = standby_audit_event['event']
+        username = standby_audit_event['username']
+        payload = {
+            "query-filters": [["event_data.method", "=", event], ["success", "=", False]],
+            "query-options": {"select": ["event_data", "success"]},
+            "remote_controller": True
+        }
+        job_id = None
+        if not remote_available:
+            job_id = call('failover.reboot.other_node')
+            # Let the reboot get churning
+            sleep(2)
+            with pytest.raises(ValidationError) as e:
+                call('audit.query', payload)
+            assert "failed to communicate" in str(e.value)
 
-        # Handle delays in the audit database
-        remote_audit_entry = []
-        tries = 3
-        while tries > 0 and remote_audit_entry == []:
-            sleep(1)
-            remote_audit_entry = call('audit.query', {
-                "query-filters": [["event_data.description", "$", name]],
-                "query-options": {"select": ["event_data", "success"]},
-                "remote_controller": True
-            })
-            if remote_audit_entry != []:
-                break
-            tries -= 1
+            # Wait for the remote to return
+            assert call("core.job_wait", job_id, job=True)
+        else:
+            # Handle delays in the audit database
+            remote_audit_entry = []
+            tries = 3
+            while tries > 0 and remote_audit_entry == []:
+                sleep(1)
+                remote_audit_entry = call('audit.query', payload)
+                if remote_audit_entry != []:
+                    break
+                tries -= 1
 
-        assert tries > 0, "Failed to get expected audit entry"
-        assert remote_audit_entry != []
-        params = remote_audit_entry[0]['event_data']['params'][0]
-        assert params['username'] == name
+            assert tries > 0, "Failed to get expected audit entry"
+            assert remote_audit_entry != []
+            description = remote_audit_entry[0]['event_data']['description']
+            assert username in description, remote_audit_entry[0]['event_data']
 
-    def test_audit_ha_export(self, standby_user):
+    def test_audit_ha_export(self, standby_audit_event):
         """
         Confirm we can download 'Active' and 'Standby' audit DB.
-        With a user created on the 'Standby' controller download the
-        audit DB from both controllers and confirm the user create is
+        With a failed user delete on the 'Standby' controller download the
+        audit DB from both controllers and confirm the failure is
         in the 'Standby' audit DB and not in the 'Active' audit DB.
         """
+        assert standby_audit_event
+        username = standby_audit_event['username']
         report_path_active = call('audit.export', {'export_format': 'CSV'}, job=True)
         report_path_standby = call('audit.export', {'export_format': 'CSV', 'remote_controller': True}, job=True)
 
         # Confirm entry NOT in active controller audit DB
         with pytest.raises(AssertionError):
-            check_audit_download(report_path_active, 'CSV', f"Create user {standby_user}")
+            check_audit_download(report_path_active, 'CSV', f"Delete user {username}")
 
         # Confirm entry IS in standby controller audit DB
-        check_audit_download(report_path_standby, 'CSV', f"Create user {standby_user}")
+        check_audit_download(report_path_standby, 'CSV', f"Delete user {username}")

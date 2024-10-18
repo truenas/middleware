@@ -420,7 +420,7 @@ def get_slot_info(enc):
                         enc.model: {
                             1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 1, SUPPORTS_IDENTIFY_KEY: False},
                             5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 2, SUPPORTS_IDENTIFY_KEY: False},
-                            9: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 3, SUPPORTS_IDENTIFY_KEY: False},
+                            9: {SYSFS_SLOT_KEY: 8, MAPPED_SLOT_KEY: 3, SUPPORTS_IDENTIFY_KEY: False},
                             13: {SYSFS_SLOT_KEY: 12, MAPPED_SLOT_KEY: 4, SUPPORTS_IDENTIFY_KEY: False},
                             2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 5, SUPPORTS_IDENTIFY_KEY: False},
                             6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 6, SUPPORTS_IDENTIFY_KEY: False},
@@ -658,22 +658,7 @@ def get_slot_info(enc):
                 }
             }
         }
-    elif enc.is_xseries:
-        return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
-                        enc.model: {
-                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
-                            for i in range(1, 13)
-                        },
-                    }
-                }
-            }
-        }
-    # JBODs
-    elif enc.model == JbodModels.ES12.value:
+    elif enc.model == JbodModels.ES12.value or enc.is_xseries:
         return {
             'any_version': True,
             'versions': {

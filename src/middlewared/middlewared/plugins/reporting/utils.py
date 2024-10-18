@@ -74,23 +74,9 @@ def get_metrics_approximation(
 
             # diskstats
             'system.io': 2,
-            'disk': 2 * disk_count,
-            'disk_ext': disk_count,
-            'disk_ops': 2 * disk_count,
-            'disk_ext_ops': 2 * disk_count,
-            'disk_backlog': disk_count,
-            'disk_busy': disk_count,
-            'disk_util': disk_count,
-            'disk_iotime': 2 * disk_count,
-            'disk_ext_iotime': 2 * disk_count,
-            'disk_svctm': 1 * disk_count,
-            'disk_qops': 2 * disk_count,
-            'disk_mops': 2 * disk_count,
-            'disk_ext_mops': disk_count,
-            'disk_avgsz': 2 * disk_count,
-            'disk_ext_avgsz': disk_count,
-            'disk_await': 2 * disk_count,
-            'disk_ext_await': 2 * disk_count,
+            'truenas_disk_stats.ops': 2 * disk_count,
+            'truenas_disk_stats.io': 2 * disk_count,
+            'truenas_disk_stats.busy': 1 * disk_count,
 
             # meminfo
             'system.ram': 4,

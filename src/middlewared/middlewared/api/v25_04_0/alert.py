@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 from pydantic import Field
@@ -20,8 +21,8 @@ class Alert(BaseModel):
     args: Any
     node: str
     key: LongString
-    datetime: str
-    last_occurrence: str
+    datetime_: datetime = Field(..., alias='datetime')
+    last_occurrence: datetime
     dismissed: bool
     mail: Any
     text: LongString

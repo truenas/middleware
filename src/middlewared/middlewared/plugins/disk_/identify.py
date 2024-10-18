@@ -1,8 +1,8 @@
-import pyudev
 import re
 
 from middlewared.schema import accepts, Dict, Str
 from middlewared.service import Service, private
+from middlewared.utils.disks import get_disks_with_identifiers
 
 
 class DiskService(Service):
@@ -11,7 +11,7 @@ class DiskService(Service):
 
     @private
     @accepts(Str('name'), Dict('disks', additional_attrs=True))
-    async def device_to_identifier(self, name, disks):
+    def device_to_identifier(self, name, disks):
         """
         Given a device `name` (e.g. sda) returns an unique identifier string
         for this device.
@@ -28,28 +28,7 @@ class DiskService(Service):
         Returns:
             str - identifier
         """
-        disks = disks or await self.middleware.call('device.get_disks')
-        if name not in disks:
-            return ''
-        else:
-            block_device = disks[name]
-
-        if block_device['serial_lunid']:
-            return f'{{serial_lunid}}{block_device["serial_lunid"]}'
-        elif block_device['serial']:
-            return f'{{serial}}{block_device["serial"]}'
-
-        dev = pyudev.Devices.from_name(pyudev.Context(), 'block', name)
-        for partition in filter(
-            lambda p: all(p.get(k) for k in ('ID_PART_ENTRY_TYPE', 'ID_PART_ENTRY_UUID')), dev.children
-        ):
-            if partition['ID_PART_ENTRY_TYPE'] not in await self.middleware.call(
-                'disk.get_valid_zfs_partition_type_uuids'
-            ):
-                continue
-            return f'{{uuid}}{partition["ID_PART_ENTRY_UUID"]}'
-
-        return f'{{devicename}}{name}'
+        return get_disks_with_identifiers([name], disks).get(name, '')
 
     @private
     async def identifier_to_device(self, ident, disks):

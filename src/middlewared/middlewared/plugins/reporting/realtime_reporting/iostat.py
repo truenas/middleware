@@ -1,19 +1,30 @@
-import typing
-
 from .utils import normalize_value, safely_retrieve_dimension
 
 
-def get_disk_stats(netdata_metrics: dict, disks: typing.List[str]) -> dict:
+def get_disk_stats(netdata_metrics: dict, disks: list[str], disk_mapping: dict[str, str]) -> dict:
     total_disks = len(disks)
     read_ops = read_bytes = write_ops = write_bytes = busy = 0
     for disk in disks:
-        read_ops += safely_retrieve_dimension(netdata_metrics, f'disk_ops.{disk}', 'reads', 0)
-        read_bytes += normalize_value(
-            safely_retrieve_dimension(netdata_metrics, f'disk.{disk}', 'reads', 0), multiplier=1024,
+        mapped_key = disk_mapping.get(disk)
+        read_ops += safely_retrieve_dimension(
+            netdata_metrics, f'truenas_disk_stats.ops.{mapped_key}', f'{mapped_key}.read_ops', 0
         )
-        write_ops += normalize_value(safely_retrieve_dimension(netdata_metrics, f'disk_ops.{disk}', 'writes', 0))
-        write_bytes += normalize_value(safely_retrieve_dimension(netdata_metrics, f'disk.{disk}', 'writes', 0))
-        busy += safely_retrieve_dimension(netdata_metrics, f'disk_busy.{disk}', 'busy', 0)
+        read_bytes += normalize_value(
+            safely_retrieve_dimension(
+                netdata_metrics, f'truenas_disk_stats.io.{mapped_key}', f'{mapped_key}.reads', 0
+            ), multiplier=1024,
+        )
+        write_ops += normalize_value(safely_retrieve_dimension(
+            netdata_metrics, f'truenas_disk_stats.ops.{mapped_key}', f'{mapped_key}.write_ops', 0
+        ))
+        write_bytes += normalize_value(
+            safely_retrieve_dimension(
+                netdata_metrics, f'truenas_disk_stats.io.{mapped_key}', f'{mapped_key}.writes', 0
+            ), multiplier=1024,
+        )
+        busy += safely_retrieve_dimension(
+            netdata_metrics, f'truenas_disk_stats.busy.{mapped_key}', f'{mapped_key}.busy', 0
+        )
 
     return {
         'read_ops': read_ops,
