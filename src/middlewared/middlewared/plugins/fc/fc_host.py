@@ -280,7 +280,7 @@ class FCHostService(CRUDService):
                 elif wwpn:
                     existing = await self.middleware.call('fc.fc_host.query', [['wwpn', '=', wwpn]])
                 elif wwpn_b:
-                    existing = await self.middleware.call('fc.fc_host.query', [['wwpn', '=', wwpn_b]])
+                    existing = await self.middleware.call('fc.fc_host.query', [['wwpn_b', '=', wwpn_b]])
                 else:
                     existing = []
                 if not existing:
