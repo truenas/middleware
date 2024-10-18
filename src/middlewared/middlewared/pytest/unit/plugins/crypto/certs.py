@@ -390,7 +390,8 @@ def test__generating_cert(generate_params, key_type, key_size, cert_info):
             }
         }
     }
-])
+], ids=['Test ca_sign_csr']
+)
 def test_ca_sign_csr(data):
     cert = sign_csr_with_ca(data)
     cert_data = x509.load_pem_x509_certificate(cert.encode('utf-8'), default_backend())
