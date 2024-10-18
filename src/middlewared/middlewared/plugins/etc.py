@@ -219,10 +219,22 @@ class EtcService(Service):
         'ssl': [
             {'type': 'py', 'path': 'generate_ssl_certs'},
         ],
-        'scst': [
-            {'type': 'mako', 'path': 'scst.conf', 'checkpoint': 'pool_import', 'mode': 0o600},
-            {'type': 'mako', 'path': 'scst.env', 'checkpoint': 'pool_import', 'mode': 0o744},
-        ],
+        'scst': {
+            'ctx': [
+                {'method': 'failover.licensed'},
+                {'method': 'failover.node'},
+                {'method': 'failover.status'},
+                {'method': 'fc.capable'},
+                {'method': 'fcport.query'},
+                {'method': 'iscsi.global.alua_enabled'},
+                {'method': 'iscsi.global.config'},
+                {'method': 'iscsi.target.query'},
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'scst.conf', 'checkpoint': 'pool_import', 'mode': 0o600},
+                {'type': 'mako', 'path': 'scst.env', 'checkpoint': 'pool_import', 'mode': 0o744},
+            ]
+        },
         'scst_targets': [
             {'type': 'mako', 'path': 'initiators.allow', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'initiators.deny', 'checkpoint': 'pool_import'},
@@ -293,7 +305,7 @@ class EtcService(Service):
         'snmpd': [
             {'type': 'mako', 'path': 'snmp/snmpd.conf',
                 'local_path': 'local/snmpd.conf', 'owner': 'root', 'group': 'Debian-snmp', 'mode': 0o640
-            },
+             },
         ],
         'syslogd': {
             'ctx': [
