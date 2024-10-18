@@ -10,7 +10,7 @@ from auto_config import pool_name
 
 
 def clean():
-    call('virt.global.update', {'pool': ''}, job=True)
+    call('virt.global.update', {'pool': None}, job=True)
     ssh(f'zfs destroy -r {pool_name}/.ix-virt || true')
     call('virt.global.update', {'pool': 'tank'}, job=True)
 
