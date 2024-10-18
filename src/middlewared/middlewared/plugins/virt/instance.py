@@ -1,7 +1,7 @@
 import aiohttp
 
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, filterable, job, private
+    CRUDService, ValidationErrors, filterable, job, private
 )
 from middlewared.utils import filter_list
 
@@ -102,7 +102,7 @@ class VirtInstanceService(CRUDService):
             config['boot.autostart'] = str(data['autostart']).lower()
         return config
 
-    @api_method(VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult)
+    @api_method(VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult, roles=['VIRT_INSTANCE_READ'])
     async def image_choices(self, data):
         """
         Provice choices for instance image from a remote repository.
@@ -110,8 +110,7 @@ class VirtInstanceService(CRUDService):
         choices = {}
         if data['remote'] == 'LINUX_CONTAINERS':
             url = LC_IMAGES_JSON
-        else:
-            raise CallError('Invalid remote')
+
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 data = await resp.json()
@@ -152,8 +151,6 @@ class VirtInstanceService(CRUDService):
 
         if data['remote'] == 'LINUX_CONTAINERS':
             url = LC_IMAGES_SERVER
-        else:
-            raise CallError('Invalid remote')
 
         source = {
             'type': 'image',

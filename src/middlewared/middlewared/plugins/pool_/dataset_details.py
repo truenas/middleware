@@ -156,7 +156,7 @@ class PoolDatasetService(Service):
             'smb_shares': [],
             'iscsi_shares': [],
             'vms': [],
-            'instances': [],
+            'virt_instances': [],
             'apps': [{
                 'name': 'plex',
                 'path': '/mnt/evo/data',
@@ -224,7 +224,7 @@ class PoolDatasetService(Service):
         dataset['iscsi_shares'] = self.get_iscsi_shares(dataset, info['iscsi'])
         dataset['vms'] = self.get_vms(dataset, info['vm'])
         dataset['apps'] = self.get_apps(dataset, info['app'])
-        dataset['instances'] = self.get_instances(dataset, info['instance'])
+        dataset['virt_instances'] = self.get_virt_instances(dataset, info['virt_instance'])
         dataset['replication_tasks_count'] = self.get_repl_tasks_count(dataset, info['repl'])
         dataset['snapshot_tasks_count'] = self.get_snapshot_tasks_count(dataset, info['snap'])
         dataset['cloudsync_tasks_count'] = self.get_cloudsync_tasks_count(dataset, info['cloud'])
@@ -271,7 +271,7 @@ class PoolDatasetService(Service):
             'iscsi': [], 'nfs': [], 'smb': [],
             'repl': [], 'snap': [], 'cloud': [],
             'rsync': [], 'vm': [], 'app': [],
-            'instance': [],
+            'virt_instance': [],
         }
 
         # iscsi
@@ -353,7 +353,7 @@ class PoolDatasetService(Service):
                 else:
                     # raw type is always a file
                     device['mount_info'] = self.get_mount_info(device['source'], mntinfo)
-                results['instance'].append(device)
+                results['virt_instance'].append(device)
 
         return results
 
@@ -448,7 +448,7 @@ class PoolDatasetService(Service):
         return vms
 
     @private
-    def get_instances(self, ds, _instances):
+    def get_virt_instances(self, ds, _instances):
         instances = []
         for i in _instances:
             if (
