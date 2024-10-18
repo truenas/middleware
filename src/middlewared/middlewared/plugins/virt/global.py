@@ -72,7 +72,8 @@ class VirtGlobalService(ConfigService):
         if bridge not in await self.bridge_choices():
             verrors.add(f'{schema_name}.bridge', 'Invalid bridge')
 
-        if new['pool'] not in await self.pool_choices():
+        pool = new['pool'] or ''
+        if pool not in await self.pool_choices():
             verrors.add(f'{schema_name}.pool', 'Invalid pool')
 
     @api_method(VirtGlobalUpdateArgs, VirtGlobalUpdateResult)

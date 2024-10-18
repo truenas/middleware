@@ -22,8 +22,8 @@ class VirtGlobalEntry(BaseModel):
 
 @single_argument_args('virt_global_update')
 class VirtGlobalUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
-    pool: str | None = None
-    bridge: str | None = None
+    pool: NonEmptyString | None = None
+    bridge: NonEmptyString | None = None
     v4_network: str | None = None
     v6_network: str | None = None
 
