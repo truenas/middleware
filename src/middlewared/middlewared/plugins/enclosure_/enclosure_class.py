@@ -723,6 +723,8 @@ class Enclosure:
                 return 16
             elif any((self.is_fseries, self.is_mseries, self.is_24_bay_jbod)):
                 return 24
+            elif self.is_rseries:
+                return 48
             else:
                 return 0
         return 0
