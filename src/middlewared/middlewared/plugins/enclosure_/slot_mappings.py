@@ -658,22 +658,7 @@ def get_slot_info(enc):
                 }
             }
         }
-    elif enc.is_xseries:
-        return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'model': {
-                        enc.model: {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i, SUPPORTS_IDENTIFY_KEY: True}
-                            for i in range(0, 12)
-                        },
-                    }
-                }
-            }
-        }
-    # JBODs
-    elif enc.model == JbodModels.ES12.value:
+    elif enc.model == JbodModels.ES12.value or enc.is_xseries:
         return {
             'any_version': True,
             'versions': {
