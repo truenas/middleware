@@ -16,7 +16,7 @@ from .role import ROLES, RoleManager
 from .schema import Error as SchemaError, OROperator
 import middlewared.service
 from .service_exception import (
-    adapt_exception, CallError, CallException, ErrnoMixin, MatchNotFound, ValidationError, ValidationErrors,
+    adapt_exception, CallError, CallException, ErrnoMixin, InstanceNotFound, MatchNotFound, ValidationError, ValidationErrors,
     get_errname,
 )
 from .utils import MIDDLEWARE_RUN_DIR, sw_version
@@ -558,7 +558,7 @@ class ShellWorkerThread(threading.Thread):
         super(ShellWorkerThread, self).__init__(daemon=True)
 
     def get_command(self, username, as_root, options):
-        allowed_options = ('vm_id', 'app_name')
+        allowed_options = ('vm_id', 'app_name', 'virt_instance_id')
         if all(options.get(k) for k in allowed_options):
             raise CallError(f'Only one option is supported from {", ".join(allowed_options)}')
 
@@ -577,6 +577,12 @@ class ShellWorkerThread(threading.Thread):
                 '/usr/bin/docker', 'exec', '-it', options['container_id'], options.get('command', '/bin/bash'),
             ]
 
+            if not as_root:
+                command = ['/usr/bin/sudo', '-H', '-u', username] + command
+
+            return command, not as_root
+        elif options.get('virt_instance_id'):
+            command = ['/usr/bin/incus', 'exec', options['virt_instance_id'], options.get('command', '/bin/bash')]
             if not as_root:
                 command = ['/usr/bin/sudo', '-H', '-u', username] + command
 
@@ -763,6 +769,11 @@ class ShellApplication:
                 options = data.get('options', {})
                 if options.get('vm_id'):
                     options['vm_data'] = await self.middleware.call('vm.get_instance', options['vm_id'])
+                if options.get('virt_instance_id'):
+                    try:
+                        await self.middleware.call('virt.instance.get_instance', options['virt_instance_id'])
+                    except InstanceNotFound:
+                        raise CallError('Provided instance id is not valid')
                 if options.get('app_name'):
                     if not options.get('container_id'):
                         raise CallError('Container id must be specified')
