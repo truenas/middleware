@@ -7,6 +7,12 @@ from subprocess import run, PIPE, STDOUT
 
 from middlewared.service_exception import CallError
 
+def set_master_role():
+    base = ['ipmi-raw', '0x0', '0x3c', '0x33']
+    ret = run(base[:] + ['0x00'], stdout=PIPE, stderr=STDOUT)
+    if ret.returncode == 0 and ret.stdout.split()[-1] == b'00':
+        run(base[:] + ['0x01', '0x01'], check=False)
+
 
 def get_cmd(slot, status):
     base = [
@@ -54,6 +60,7 @@ def set_slot_status(slot, status):
     if slot < 1 or slot > 24:
         raise ValueError(f'Invalid slot: {slot!r}')
 
+    set_master_role()
     for cmd in get_cmd(hex(slot), status):
         ret = run(cmd, stdout=PIPE, stderr=STDOUT)
         if ret.returncode != 0:
