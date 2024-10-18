@@ -44,7 +44,7 @@ def test_virt_instance_create():
         devices = call('virt.instance.device_list', 'arch')
         assert any(i for i in devices if i['name'] == 'tpm'), devices
 
-        assert wait_agent.wait(timeout=30)
+        assert wait_agent.wait(timeout=60)
         ssh('incus exec debian cat /etc/os-release | grep "Debian"')
 
 

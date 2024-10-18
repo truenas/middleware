@@ -106,7 +106,7 @@ class VirtGlobalService(ConfigService):
 
         return await self.config()
 
-    @api_method(VirtGlobalBridgeChoicesArgs, VirtGlobalBridgeChoicesResult)
+    @api_method(VirtGlobalBridgeChoicesArgs, VirtGlobalBridgeChoicesResult, roles=['VIRT_GLOBAL_READ'])
     async def bridge_choices(self):
         """
         Bridge choices for virtualization purposes.
@@ -120,7 +120,7 @@ class VirtGlobalService(ConfigService):
         })
         return choices
 
-    @api_method(VirtGlobalPoolChoicesArgs, VirtGlobalPoolChoicesResult)
+    @api_method(VirtGlobalPoolChoicesArgs, VirtGlobalPoolChoicesResult, roles=['VIRT_GLOBAL_READ'])
     async def pool_choices(self):
         """
         Pool choices for virtualization purposes.
@@ -132,7 +132,7 @@ class VirtGlobalService(ConfigService):
             ds = await self.middleware.call(
                 'pool.dataset.get_instance_quick', p['name'], {'encryption': True},
             )
-            if not ds['encrypted'] or not ds['locked'] or ds['key_format']['value'] == 'PASSPHRASE':
+            if not ds['locked']:
                 pools[p['name']] = p['name']
         return pools
 
@@ -147,7 +147,7 @@ class VirtGlobalService(ConfigService):
             raise CallError(result.get('error'))
         return result['metadata']
 
-    @api_method(VirtGlobalGetNetworkArgs, VirtGlobalGetNetworkResult)
+    @api_method(VirtGlobalGetNetworkArgs, VirtGlobalGetNetworkResult, roles=['VIRT_GLOBAL_READ'])
     async def get_network(self, name):
         """
         Details for the given network.
