@@ -11,10 +11,10 @@ def test_virt_pool():
 
 
 def test_virt_no_pool():
-    call('virt.global.update', {'pool': ''}, job=True)
+    call('virt.global.update', {'pool': None}, job=True)
     ssh('incus storage show default 2>&1 | grep "not found"')
 
 
 def test_virt_pool_auto_bridge():
-    call('virt.global.update', {'pool': pool_name, 'bridge': ''}, job=True)
+    call('virt.global.update', {'pool': pool_name, 'bridge': None}, job=True)
     ssh('ifconfig incusbr0')
