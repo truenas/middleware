@@ -12,7 +12,7 @@ from middlewared.pytest.unit.middleware import Middleware
 @pytest.mark.parametrize('obj, identifier, legend', [
     (CPUPlugin, 'cpu', ['time']),
     (CPUTempPlugin, 'cputemp', ['time']),
-    (DISKPlugin, 'sda', ['time', 'reads', 'writes']),
+    (DISKPlugin, 'sda', ['time']),
     (InterfacePlugin, 'enp1s0', ['time', 'received', 'sent']),
     (LoadPlugin, 'load', ['time']),
     (MemoryPlugin, 'memory', ['time']),
@@ -25,15 +25,14 @@ from middlewared.pytest.unit.middleware import Middleware
 @pytest.mark.asyncio
 async def test_netdata_client_malformed_response_error(obj, identifier, legend):
     plugin_object = obj(Middleware())
-    plugin_name = plugin_object.__class__.__name__
 
     api_response = {'error': 'test error', 'data': [], 'identifier': identifier, 'uri': 'http://test_uri'}
     with patch(
         'middlewared.plugins.reporting.netdata.connector.ClientMixin.fetch', AsyncMock(return_value=api_response)
     ):
-        if hasattr(obj, 'disk_mapping'):
-            with patch(f'middlewared.plugins.reporting.netdata.graphs.{plugin_name}.disk_mapping', {identifier: ''}):
-                data = await plugin_object.export_multiple_identifiers({'after': 0, 'before': 0}, [identifier])
+        if obj in (DISKPlugin, DiskTempPlugin):
+            plugin_object.disk_mapping = {identifier: ''}
+            data = await plugin_object.export_multiple_identifiers({'after': 0, 'before': 0}, [identifier])
         else:
             data = await plugin_object.export_multiple_identifiers({'after': 0, 'before': 0}, [identifier])
 

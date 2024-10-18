@@ -1,4 +1,4 @@
-from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
+from middlewared.utils.disks import DISKS_TO_IGNORE
 
 
 async def added_disk(middleware, disk_name):

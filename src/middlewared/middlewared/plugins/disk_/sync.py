@@ -1,9 +1,9 @@
 import re
 from datetime import timedelta
 
-from middlewared.plugins.disk_.utils import dev_to_ident
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
+from middlewared.utils.disks import dev_to_ident
 from middlewared.utils.time_utils import utc_now
 
 
@@ -100,8 +100,8 @@ class DiskService(Service, ServiceChangeMixin):
                 return disk
 
     @private
-    def dev_to_ident(self, name, sys_disks, uuids):
-        return dev_to_ident(name, sys_disks, uuids)
+    def dev_to_ident(self, name, sys_disks):
+        return dev_to_ident(name, sys_disks)
 
     @private
     @accepts(Dict(
@@ -127,7 +127,6 @@ class DiskService(Service, ServiceChangeMixin):
         job.set_progress(20, 'Enumerating disk information from database')
         db_disks = self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
 
-        uuids = self.middleware.call_sync('disk.get_valid_zfs_partition_type_uuids')
         options = {'send_events': False, 'ha_sync': False}
         seen_disks = {}
         changed = set()
@@ -143,7 +142,7 @@ class DiskService(Service, ServiceChangeMixin):
             original_disk = disk.copy()
 
             name = self.ident_to_dev(disk['disk_identifier'], sys_disks)
-            if not name or self.dev_to_ident(name, sys_disks, uuids) != disk['disk_identifier']:
+            if not name or self.dev_to_ident(name, sys_disks) != disk['disk_identifier']:
                 # 1. can't translate identitifer to device
                 # 2. or can't translate device to identifier
                 if not disk['disk_expiretime']:
@@ -193,7 +192,7 @@ class DiskService(Service, ServiceChangeMixin):
         progress_percent = 70
         for name in filter(lambda x: x not in seen_disks, sys_disks):
             progress_percent += increment
-            disk_identifier = self.dev_to_ident(name, sys_disks, uuids)
+            disk_identifier = self.dev_to_ident(name, sys_disks)
             if qs is None:
                 qs = self.middleware.call_sync('datastore.query', 'storage.disk')
 
