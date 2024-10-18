@@ -12,23 +12,23 @@ def slot_to_controller_and_bay_mapping(slot):
     mapping = {
         # bays 1-8
         1: (NVME_CONTROLLERS[0], '0x01'),
-        2: (NVME_CONTROLLERS[0], '0x02'),
-        3: (NVME_CONTROLLERS[0], '0x04'),
-        4: (NVME_CONTROLLERS[0], '0x08'),
-        5: (NVME_CONTROLLERS[0], '0x10'),
-        6: (NVME_CONTROLLERS[0], '0x20'),
-        7: (NVME_CONTROLLERS[0], '0x40'),
-        8: (NVME_CONTROLLERS[0], '0x80'),
+        2: (NVME_CONTROLLERS[0], '0x04'),
+        3: (NVME_CONTROLLERS[0], '0x10'),
+        4: (NVME_CONTROLLERS[0], '0x40'),
+        5: (NVME_CONTROLLERS[1], '0x01'),
+        6: (NVME_CONTROLLERS[1], '0x04'),
+        7: (NVME_CONTROLLERS[0], '0x02'),
+        8: (NVME_CONTROLLERS[0], '0x08'),
         # bays 9-12
-        9: (NVME_CONTROLLERS[1], '0x01'),
-        10: (NVME_CONTROLLERS[1], '0x02'),
-        11: (NVME_CONTROLLERS[1], '0x04'),
+        9: (NVME_CONTROLLERS[0], '0x20'),
+        10: (NVME_CONTROLLERS[0], '0x80'),
+        11: (NVME_CONTROLLERS[1], '0x02'),
         12: (NVME_CONTROLLERS[1], '0x08'),
         # bays 13-16
-        13: (NVME_CONTROLLERS[2], '0x01'),
-        14: (NVME_CONTROLLERS[2], '0x02'),
-        15: (NVME_CONTROLLERS[2], '0x04'),
-        16: (NVME_CONTROLLERS[2], '0x08'),
+        13: (NVME_CONTROLLERS[2], '0x04'),
+        14: (NVME_CONTROLLERS[2], '0x01'),
+        15: (NVME_CONTROLLERS[2], '0x08'),
+        16: (NVME_CONTROLLERS[2], '0x02'),
     }
     try:
         return mapping[slot]
