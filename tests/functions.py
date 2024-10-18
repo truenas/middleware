@@ -114,7 +114,7 @@ def DELETE(testpath, payload=None, controller_a=False, **optional):
     return deleteit
 
 
-def SSH_TEST(command, username, passwrd, host=None):
+def SSH_TEST(command, username, passwrd, host=None, timeout=120):
     target = host or get_host_ip(SRVTarget.DEFAULT)
 
     cmd = [] if passwrd is None else ["sshpass", "-p", passwrd]
@@ -131,7 +131,7 @@ def SSH_TEST(command, username, passwrd, host=None):
     ]
     # 120 second timeout, to make sure no SSH connection hang.
     process = run(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True,
-                  timeout=120)
+                  timeout=timeout)
     stdout = process.stdout
     stderr = process.stderr
     return {'stdout': stdout, 'stderr': stderr, 'output': stdout + stderr, 'returncode': process.returncode,
