@@ -202,7 +202,7 @@ class AuthenticationContext:
     to handle any required PAM conversations.
     """
     pam_lock: threading.Lock = threading.Lock()
-    pam_hdl: pam.PamAuthenticator = pam.pam()
+    pam_hdl: pam.PamAuthenticator | None = None
     next_mech: AuthMech | None = None
     auth_data: dict | None = None
 
