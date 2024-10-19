@@ -89,7 +89,10 @@ class AppCustomService(Service):
         else:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
             app_info = self.middleware.call_sync('app.get_instance', app_name)
-            self.middleware.send_event('app.query', 'ADDED', id=app_name, fields=app_info)
+            if app_being_converted is False:
+                # We only want to send this when a new custom app is being installed, not when an
+                # existing app is being converted to a custom app
+                self.middleware.send_event('app.query', 'ADDED', id=app_name, fields=app_info)
             job.set_progress(
                 100, f'{app_name!r} {"converted to custom app" if app_being_converted else "installed"} successfully'
             )
