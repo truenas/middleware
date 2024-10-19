@@ -106,6 +106,9 @@ class AuthService(Service):
                 return {'code': pam.PAM_ABORT, 'reason': 'Failed to generate PAM service file'}
 
         with auth_ctx.pam_lock:
+            if not auth_ctx.pam_hdl:
+                auth_ctx.pam_hdl = pam.pam()
+
             p = auth_ctx.pam_hdl
             p.authenticate(username, password, service=os.path.basename(pam_service))
             pam_resp = {'code': p.code, 'reason': p.reason}
