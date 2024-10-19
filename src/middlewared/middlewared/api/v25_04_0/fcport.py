@@ -2,7 +2,8 @@ from typing import Dict, Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, FibreChannelPortAlias, ForUpdateMetaclass, WWPN, excluded_field
+from middlewared.api.base import WWPN, BaseModel, Excluded, FibreChannelPortAlias, ForUpdateMetaclass, excluded_field
+from .common import QueryArgs
 
 
 class FCPortEntry(BaseModel):
@@ -70,3 +71,11 @@ class FCPortChoicesResult(BaseModel):
             },
         },
     ])
+
+
+class FCPortStatusArgs(QueryArgs):
+    pass  # FIXME: when QueryArgs has better options.extra support add in with_lun_access
+
+
+class FCPortStatusResult(BaseModel):
+    result: list
