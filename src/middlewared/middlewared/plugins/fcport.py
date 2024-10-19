@@ -189,7 +189,7 @@ class FCPortService(CRUDService):
             else:
                 raise
 
-    @api_method(FCPortStatusArgs, FCPortStatusResult)
+    @api_method(FCPortStatusArgs, FCPortStatusResult, roles=['SHARING_ISCSI_TARGET_READ'])
     async def status(self, filters, options):
         with_lun_access = options['extra'].get('with_lun_access', True)
         # If a filter has been supplied, and if it *only* selects a single fc_port
