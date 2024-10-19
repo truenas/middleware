@@ -15,6 +15,7 @@ PACKAGES=(
     # open-iscsi is used to test authorized networks for iscsi
     open-iscsi
     # Integration and unit test utils, python package management
+    python3-cryptography
     python3-pip
     python3-pyfakefs
     python3-pyotp
