@@ -73,6 +73,7 @@ class FCService(Service):
                             'node_name': (path / 'node_name').read_text().strip(),
                             'port_name': (path / 'port_name').read_text().strip(),
                             'port_type': (path / 'port_type').read_text().strip(),
+                            'port_state': (path / 'port_state').read_text().strip(),
                             'speed': (path / 'speed').read_text().strip(),
                             'addr': addr,
                         }

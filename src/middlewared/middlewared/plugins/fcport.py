@@ -1,18 +1,23 @@
 import os
 import subprocess
+from collections import defaultdict
+from pathlib import Path
 from typing import Literal
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (FCPortChoicesArgs, FCPortChoicesResult, FCPortCreateArgs, FCPortCreateResult,
-                                     FCPortDeleteArgs, FCPortDeleteResult, FCPortEntry, FCPortUpdateArgs,
-                                     FCPortUpdateResult)
-from middlewared.service import CRUDService, ValidationErrors, private
+                                     FCPortDeleteArgs, FCPortDeleteResult, FCPortEntry, FCPortStatusArgs,
+                                     FCPortStatusResult, FCPortUpdateArgs, FCPortUpdateResult)
+from middlewared.plugins.failover_.remote import NETWORK_ERRORS
+from middlewared.service import CallError, CRUDService, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
-from .fc.utils import naa_to_int, wwpn_to_vport_naa
+from middlewared.utils import filter_list
+from .fc.utils import naa_to_int, str_to_naa, wwn_as_colon_hex, wwpn_to_vport_naa
 
 VPORT_SEP_CHAR = '/'
 QLA2XXX_KERNEL_TARGET_MODULE = 'qla2x00tgt'
+SCST_QLA_TARGET_PATH = '/sys/kernel/scst_tgt/targets/qla2x00t'
 
 
 class FCPortModel(sa.Model):
@@ -129,6 +134,100 @@ class FCPortService(CRUDService):
                         }
 
         return result
+
+    @private
+    async def local_status(self, node, port, with_lun_access):
+        """
+        Query the status of the specified fcport on this node, or
+        all fcports if None is specified.
+        """
+        if port:
+            ports = await self.middleware.call('fcport.query', [['port', '=', port]])
+        else:
+            ports = await self.middleware.call('fcport.query')
+
+        key = 'wwpn' if node == 'A' else 'wwpn_b'
+        naa_to_fc_host = {str_to_naa(fc['port_name']): fc for fc in await self.middleware.call('fc.fc_hosts')}
+        qla_target_path = Path(SCST_QLA_TARGET_PATH)
+        result = {}
+        for p in ports:
+            naa = p[key]
+            sessions_path = qla_target_path / wwn_as_colon_hex(naa) / 'sessions'
+            sessions = []
+            with os.scandir(sessions_path) as iter:
+                for entry in iter:
+                    if not entry.is_dir():
+                        continue
+                    if with_lun_access:
+                        have_lun = False
+                        with os.scandir(Path(entry.path) / 'luns') as subdir:
+                            for subentry in subdir:
+                                if subentry.name.isnumeric():
+                                    have_lun = True
+                                    break
+                        if have_lun:
+                            sessions.append(entry.name)
+                    else:
+                        sessions.append(entry.name)
+            # Take some data directly from fc.fc_hosts
+            result[p['port']] = {
+                'port_type': naa_to_fc_host[naa]['port_type'],
+                'port_state': naa_to_fc_host[naa]['port_state'],
+                'speed': naa_to_fc_host[naa]['speed'],
+                'physical': naa_to_fc_host[naa]['physical'],
+                key: naa,
+                'sessions': sessions,
+            }
+        return result
+
+    async def _get_remote_local_status(self, node, port, with_lun_access):
+        try:
+            return await self.middleware.call('failover.call_remote', 'fcport.local_status', [node, port, with_lun_access])
+        except CallError as e:
+            if e.errno in NETWORK_ERRORS + (CallError.ENOMETHOD,):
+                # swallow error, but don't present any choices
+                return []
+            else:
+                raise
+
+    @api_method(FCPortStatusArgs, FCPortStatusResult, roles=['SHARING_ISCSI_TARGET_READ'])
+    async def status(self, filters, options):
+        with_lun_access = options['extra'].get('with_lun_access', True)
+        # If a filter has been supplied, and if it *only* selects a single fc_port
+        # then we can optimize what data we collect.
+        if filters and len(filters) == 1 and len(filters[0]) == 3 and filters[0][0] == 'port' and filters[0][1] == '=':
+            # Optimize
+            query_port = filters[0][2]
+
+        else:
+            # Get all the data
+            query_port = None
+
+        if await self.middleware.call('failover.licensed'):
+            node = await self.middleware.call('failover.node')
+            match node:
+                case 'A':
+                    node_a_data = await self.middleware.call('fcport.local_status', node, query_port, with_lun_access)
+                    node_b_data = await self._get_remote_local_status('B', query_port, with_lun_access)
+                case 'B':
+                    node_a_data = await self._get_remote_local_status('A', query_port, with_lun_access)
+                    node_b_data = await self.middleware.call('fcport.local_status', node, query_port, with_lun_access)
+                case _:
+                    raise CallError(f'Unknown node: {node}')
+        else:
+            node_a_data = await self.middleware.call('fcport.local_status', 'A', query_port, with_lun_access)
+            node_b_data = []
+
+        # Merge the data
+        port_2_data = defaultdict(dict)
+        for port in node_a_data:
+            port_2_data[port]['A'] = node_a_data[port]
+            port_2_data[port]['port'] = port
+        for port in node_b_data:
+            port_2_data[port]['B'] = node_b_data[port]
+            port_2_data[port]['port'] = port
+
+        return filter_list(port_2_data.values(), filters, options)
 
     async def _validate(self, schema_name: str, data: dict, id_: int = None):
         verrors = ValidationErrors()
