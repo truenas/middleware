@@ -70,8 +70,6 @@ class AppCustomService(Service):
             update_app_config(app_name, version, compose_config, custom_app=True)
             update_app_metadata(app_name, app_version_details, migrated=False, custom_app=True)
 
-            if app_being_converted is False:
-                self.middleware.send_event('app.query', 'ADDED', id=app_name)
             if app_being_converted:
                 msg = 'App conversion in progress, pulling images'
             else:
@@ -90,7 +88,9 @@ class AppCustomService(Service):
             raise e from None
         else:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+            app_info = self.middleware.call_sync('app.get_instance', app_name)
+            self.middleware.send_event('app.query', 'ADDED', id=app_name, fields=app_info)
             job.set_progress(
                 100, f'{app_name!r} {"converted to custom app" if app_being_converted else "installed"} successfully'
             )
-            return self.middleware.call_sync('app.get_instance', app_name)
+            return app_info
