@@ -5,7 +5,6 @@ import itertools
 import os
 import shutil
 
-from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
@@ -950,22 +949,10 @@ async def pool_post_import(middleware, pool):
             break
 
 
-class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
-    name = 'nfs'
-    title = 'NFS Share'
-    service = 'nfs'
-    service_class = SharingNFSService
-    resource_name = 'path'
-
-    async def restart_reload_services(self, attachments):
-        await self._service_change('nfs', 'reload')
-
-
 async def setup(middleware):
     await middleware.call(
         'interface.register_listen_delegate',
         SystemServiceListenMultipleDelegate(middleware, 'nfs', 'bindip'),
     )
-    await middleware.call('pool.dataset.register_attachment_delegate', NFSFSAttachmentDelegate(middleware))
 
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
