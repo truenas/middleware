@@ -11,7 +11,7 @@ class NetworkIpInUseResultItems(BaseModel):
 
 
 class NetworkIpInUseResult(BaseModel):
-    result: NetworkIpInUseResultItems
+    result: list[NetworkIpInUseResultItems]
 
 
 class NetworkIpInUseArgs(BaseModel):
