@@ -56,7 +56,7 @@ def do_login(username, password, otp=None, expected=True):
         if not otp:
             return
 
-        resp = c.call('auth.login_ex', {
+        resp = c.call('auth.login_ex_continue', {
             'mechanism': 'OTP_TOKEN',
             'otp_token': otp
         })
@@ -232,7 +232,7 @@ def test_login_with_otp_failure(clear_ratelimit):
                 retry_cnt = 0
 
                 while retry_cnt < 3:
-                    resp = c.call('auth.login_ex', {
+                    resp = c.call('auth.login_ex_continue', {
                         'mechanism': 'OTP_TOKEN',
                         'otp_token': 'canary'
                     })
@@ -240,7 +240,7 @@ def test_login_with_otp_failure(clear_ratelimit):
                     retry_cnt += 1
 
                 # We've now exhausted any grace from server. Hammer is dropped.
-                resp = c.call('auth.login_ex', {
+                resp = c.call('auth.login_ex_continue', {
                     'mechanism': 'OTP_TOKEN',
                     'otp_token': 'canary'
                 })
