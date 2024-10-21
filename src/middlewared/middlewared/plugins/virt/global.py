@@ -16,6 +16,7 @@ from middlewared.service import ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
+from middlewared.plugins.virt.websocket import IncusWS
 
 from .utils import incus_call
 if TYPE_CHECKING:
@@ -189,46 +190,55 @@ class VirtGlobalService(ConfigService):
     async def _setup_impl(self, job):
         config = await self.config()
 
-        storage = await incus_call('1.0/storage-pools/default', 'get')
         if not config['pool']:
-            # No pool is configured, make sure Incus does not have storage otherwise reset it
-            if storage['type'] != 'error' and storage['metadata']['config']['source']:
-                self.logger.debug(
-                    'Incus configured with %r, resetting', storage['metadata']['config']['source'],
-                )
+            if await self.middleware.call('service.started', 'incus'):
                 job = await self.middleware.call('virt.global.reset')
                 await job.wait(raise_error=True)
+            await IncusWS().stop()
 
             self.logger.debug('No pool set for virtualization, skipping.')
             raise NoPoolConfigured()
+        else:
+            if not await self.middleware.call('service.started', 'incus'):
+                await self.middleware.call('service.start', 'incus')
+            await IncusWS().start()
 
         try:
             ds = await self.middleware.call(
-                'pool.dataset.get_instance_quick', config['dataset'], {'encryption': True},
+                'zfs.dataset.get_instance', config['dataset'], {
+                    'extra': {
+                        'retrieve_children': False,
+                        'user_properties': False,
+                        'properties': ['encryption', 'keystatus'],
+                    }
+                },
             )
         except Exception:
             ds = None
         if not ds:
-            await self.middleware.call('pool.dataset.create', {
+            await self.middleware.call('zfs.dataset.create', {
                 'name': config['dataset'],
-                'aclmode': 'DISCARD',
-                'acltype': 'POSIX',
-                'exec': 'ON',
-                'casesensitivity': 'SENSITIVE',
-                'atime': 'OFF',
+                'properties': {
+                    'aclmode': 'discard',
+                    'acltype': 'posix',
+                    'exec': 'on',
+                    'casesensitivity': 'sensitive',
+                    'atime': 'off',
+                },
             })
         else:
-            if ds['encrypted'] and ds['locked']:
+            if ds['encrypted'] and not ds['key_loaded']:
                 self.logger.info('Dataset %r not unlocked, skipping virt setup.', ds['name'])
                 raise LockedDataset()
 
         import_storage = True
+        storage = await incus_call('1.0/storage-pools/default', 'get')
         if storage['type'] != 'error':
             if storage['metadata']['config']['source'] == config['dataset']:
                 self.logger.debug('Storage pool for virt already configured.')
                 import_storage = False
             else:
-                job = await self.middleware.call('virt.global.reset')
+                job = await self.middleware.call('virt.global.reset', True)
                 await job.wait(raise_error=True)
 
         # If no bridge interface has been set, use incus managed
@@ -312,7 +322,7 @@ class VirtGlobalService(ConfigService):
 
     @private
     @job()
-    async def reset(self, job):
+    async def reset(self, job, start: bool = False):
         config = await self.config()
 
         if await self.middleware.call('service.started', 'incus'):
@@ -347,7 +357,7 @@ class VirtGlobalService(ConfigService):
         # and we do have instances datasets that might be mounted beneath
         await run(['rm', '-rf', '--one-file-system', INCUS_PATH], check=True)
 
-        if not await self.middleware.call('service.start', 'incus'):
+        if start and not await self.middleware.call('service.start', 'incus'):
             raise CallError('Failed to start virtualization service')
 
 

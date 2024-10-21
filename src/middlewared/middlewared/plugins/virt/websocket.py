@@ -16,26 +16,32 @@ logger = logging.getLogger(__name__)
 SOCKET = '/var/lib/incus/unix.socket'
 
 
-class IncusWS(object):
+class Singleton(type):
 
     instance = None
 
+    def __call__(cls, *args, **kwargs):
+        if cls.instance is None:
+            cls.instance = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls.instance
+
+
+class IncusWS(object, metaclass=Singleton):
+
     def __init__(self, middleware):
-        IncusWS.instance = self
         self.middleware = middleware
         self._incoming = defaultdict(list)
         self._waiters = defaultdict(list)
-        self.shutdown = False
+        self._task = None
 
     async def run(self):
-        while not self.shutdown:
+        while True:
             try:
                 await self._run_impl()
             except aiohttp.client_exceptions.UnixClientConnectorError as e:
                 logger.warning('Failed to connect to incus socket: %r', e)
             except Exception:
-                if not self.shutdown:
-                    logger.warning('Incus websocket failure', exc_info=True)
+                logger.warning('Incus websocket failure', exc_info=True)
             await asyncio.sleep(1)
 
     async def _run_impl(self):
@@ -87,14 +93,23 @@ class IncusWS(object):
         finally:
             self._waiters[id].remove(event)
 
+    async def start(self):
+        if not self._task:
+            self._task = asyncio.ensure_future(self.run())
+
+    async def stop(self):
+        if self._task:
+            self._task.cancel()
+            self._task = None
+
 
 async def __event_system_shutdown(middleware, event_type, args):
-    IncusWS.instance.shutdown = True
+    await IncusWS().stop()
 
 
 async def setup(middleware: 'Middleware'):
     middleware.event_register(
         'virt.instance.agent_running', 'Agent is running on guest.', roles=['VIRT_INSTANCE_READ'],
     )
-    asyncio.ensure_future(IncusWS(middleware).run())
+    IncusWS(middleware)
     middleware.event_subscribe('system.shutdown', __event_system_shutdown)
