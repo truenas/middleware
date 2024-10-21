@@ -449,7 +449,7 @@ class AuthService(Service):
     @private
     async def check_auth_mechanism(
         self,
-        mechanism: str,
+        mechanism: AuthMech,
         auth_ctx: AuthenticationContext,
         level: AuthenticatorAssuranceLevel
     ) -> None:
@@ -457,11 +457,28 @@ class AuthService(Service):
         # The current session may be in the middle of a challenge-response conversation
         # and so we need to validate that what we received from client was expected
         # next message.
-        if auth_ctx.next_mech and mechanism != auth_ctx.next_mech:
-            raise CallError(
-                f'{mechanism}: authentication in progress. Expected [{auth_ctx.next_mech}]',
-                errno.EBUSY
-            )
+        if auth_ctx.next_mech and mechanism is not auth_ctx.next_mech:
+            expected = auth_ctx.auth_data['user']['username']
+
+            if auth_ctx.next_mech is AuthMech.OTP_PASSWORD:
+                    errmsg = (
+                        'Abandoning login attempt after being presented wtih '
+                        'requirement for second factor for authentication.'
+                    )
+
+                    await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                        'credentials': {
+                            'credentials': 'LOGIN_TWOFACTOR',
+                            'credentials_data': {
+                                'username': expected,
+                            },
+                        },
+                        'error': errmsg
+                    }, False)
+
+            # Discard in-progress auth attempt
+            auth_ctx.next_mech = None
+            auth_ctx.auth_data = None
 
         # OTP tokens are only permitted when prompted
         if auth_ctx.next_mech is None and mechanism == AuthMech.OTP_TOKEN.name:
@@ -570,7 +587,7 @@ class AuthService(Service):
         EXPIRED
         The specified credential is expired and not suitable for authentication.
         """
-        mechanism = data['mechanism']
+        mechanism = AuthMech[data['mechanism']]
         auth_ctx = app.authentication_context
         login_fn = self.session_manager.login
         response = {'response_type': AuthResp.AUTH_ERR}
@@ -590,7 +607,7 @@ class AuthService(Service):
                 if resp['otp_required']:
                     # A one-time password is required for this user account and so
                     # we should request it from API client.
-                    auth_ctx.next_mech = AuthMech.OTP_TOKEN.name
+                    auth_ctx.next_mech = AuthMech.OTP_TOKEN
                     auth_ctx.auth_data = {'cnt': 0, 'user': resp['user_data']}
                     return {
                         'response_type': AuthResp.OTP_REQUIRED,
@@ -695,7 +712,7 @@ class AuthService(Service):
                         'error': resp['pam_response']['reason'],
                     }, False)
 
-            case AuthMech.OTP_TOKEN.name:
+            case AuthMech.OTP_TOKEN:
                 # We've received a one-time password token based in response to our
                 # response to an earlier authentication attempt. This means our auth
                 # context has user information. We don't re-request username from the
