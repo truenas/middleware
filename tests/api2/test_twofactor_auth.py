@@ -56,7 +56,7 @@ def do_login(username, password, otp=None, expected=True):
         if not otp:
             return
 
-        resp = c.call('auth.login_ex', {
+        resp = c.call('auth.login_ex_continue', {
             'mechanism': 'OTP_TOKEN',
             'otp_token': otp
         })
@@ -232,7 +232,7 @@ def test_login_with_otp_failure(clear_ratelimit):
                 retry_cnt = 0
 
                 while retry_cnt < 3:
-                    resp = c.call('auth.login_ex', {
+                    resp = c.call('auth.login_ex_continue', {
                         'mechanism': 'OTP_TOKEN',
                         'otp_token': 'canary'
                     })
@@ -240,8 +240,39 @@ def test_login_with_otp_failure(clear_ratelimit):
                     retry_cnt += 1
 
                 # We've now exhausted any grace from server. Hammer is dropped.
-                resp = c.call('auth.login_ex', {
+                resp = c.call('auth.login_ex_continue', {
                     'mechanism': 'OTP_TOKEN',
                     'otp_token': 'canary'
                 })
                 assert resp['response_type'] == 'AUTH_ERR'
+
+
+def test_login_with_otp_switch_account(clear_ratelimit):
+    """ Validate we can abandon a login attempt with 2FA """
+    with user({
+        'username': TEST_USERNAME,
+        'password': TEST_PASSWORD,
+        'full_name': TEST_USERNAME,
+    }) as u:
+        with user({
+            'username': TEST_USERNAME_2,
+            'password': TEST_PASSWORD_2,
+            'full_name': TEST_USERNAME_2,
+        }):
+            with enabled_twofactor_auth():
+                call('user.renew_2fa_secret', u['username'], TEST_TWOFACTOR_INTERVAL)
+
+                with client(auth=None) as c:
+                    resp = c.call('auth.login_ex', {
+                        'mechanism': 'PASSWORD_PLAIN',
+                        'username': TEST_USERNAME,
+                        'password': TEST_PASSWORD,
+                    })
+                    assert resp['response_type'] == 'OTP_REQUIRED'
+
+                    resp = c.call('auth.login_ex', {
+                        'mechanism': 'PASSWORD_PLAIN',
+                        'username': TEST_USERNAME_2,
+                        'password': TEST_PASSWORD_2,
+                    })
+                    assert resp['response_type'] == 'SUCCESS'
