@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from middlewared.middlewared.api.base.decorator import api_method
+from middlewared.api.base.decorator import api_method
 from middlewared.service import Service
 from middlewared.schema import Dict, List, IPAddr, returns, accepts
 from middlewared.api.current import NetworkGeneralSummaryArgs, NetworkGeneralSummaryResult
