@@ -10,7 +10,7 @@ from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
 from middlewared.api.current import (
     AuthLegacyPasswordLoginArgs, AuthLegacyApiKeyLoginArgs, AuthLegacyTokenLoginArgs,
     AuthLegacyTwoFactorArgs, AuthLegacyResult,
-    AuthLoginExArgs, AuthLoginExResult,
+    AuthLoginExArgs, AuthLoginExContinueArgs, AuthLoginExResult,
     AuthMeArgs, AuthMeResult,
     AuthMechChoicesArgs, AuthMechChoicesResult,
 )
@@ -459,8 +459,11 @@ class AuthService(Service):
         # next message.
         if auth_ctx.next_mech and mechanism is not auth_ctx.next_mech:
             expected = auth_ctx.auth_data['user']['username']
+            self.logger.debug('%s: received auth mechanism for user %s while expecting next auth mechanism: %s',
+                               mechanism, expected, auth_ctx.next_mech)
 
-            if auth_ctx.next_mech is AuthMech.OTP_PASSWORD:
+            expected = auth_ctx.auth_data['user']['username']
+            if auth_ctx.next_mech is AuthMech.OTP_TOKEN:
                     errmsg = (
                         'Abandoning login attempt after being presented wtih '
                         'requirement for second factor for authentication.'
@@ -498,6 +501,38 @@ class AuthService(Service):
         """ Get list of available authentication mechanisms available for auth.login_ex """
         aal = CURRENT_AAL.level
         return [mech.name for mech in aal.mechanisms]
+
+    @cli_private
+    @no_auth_required
+    @api_method(AuthLoginExContinueArgs, AuthLoginExResult)
+    @pass_app()
+    async def login_ex_continue(self, app, data):
+        """
+        Continue in-progress authentication attempt. This endpoint should be
+        called to continue an auth.login_ex attempt that returned OTP_REQUIRED.
+
+        This is a convenience wrapper around auth.login_ex for API consumers.
+
+        params:
+            mechanism: the mechanism by which to continue authentication.
+            Currently the only supported mechanism here is OTP_TOKEN.
+
+            OTP_TOKEN
+            otp_token: one-time password token. This is only permitted if
+            a previous auth.login_ex call responded with "OTP_REQUIRED".
+
+        returns:
+            JSON object containing the following keys:
+
+            `response_type` - will be one of the following:
+            SUCCESS - continued auth was required
+
+            OTP_REQUIRED - otp token was rejected. API consumer may call this
+            endpoint again with correct OTP token.
+
+            AUTH_ERR - invalid OTP token submitted too many times.
+        """
+        return await self.login_ex(app, data)
 
     @cli_private
     @no_auth_required
