@@ -194,7 +194,17 @@ ROLES = {
     'SYSTEM_GENERAL_WRITE': Role(includes=['SYSTEM_GENERAL_READ']),
 
     'SYSTEM_ADVANCED_READ': Role(),
-    'SYSTEM_ADVANCED_WRITE': Role(includes=['SYSTEM_ADVANCED_READ'])
+    'SYSTEM_ADVANCED_WRITE': Role(includes=['SYSTEM_ADVANCED_READ']),
+
+    # Virtualization
+    'VIRT_GLOBAL_READ': Role(),
+    'VIRT_GLOBAL_WRITE': Role(includes=['VIRT_GLOBAL_READ']),
+    'VIRT_INSTANCE_READ': Role(),
+    'VIRT_INSTANCE_WRITE': Role(includes=['VIRT_INSTANCE_READ']),
+    'VIRT_INSTANCE_DELETE': Role(),
+    'VIRT_IMAGE_READ': Role(),
+    'VIRT_IMAGE_WRITE': Role(includes=['VIRT_IMAGE_READ']),
+
 }
 ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
 

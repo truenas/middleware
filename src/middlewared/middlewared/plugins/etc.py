@@ -343,7 +343,11 @@ class EtcService(Service):
         ],
         'libvirt_guests': [
             {'type': 'mako', 'path': 'default/libvirt-guests', 'checkpoint': None},
-        ]
+        ],
+        'subids': [
+            {'type': 'mako', 'path': 'subuid', 'checkpoint': None},
+            {'type': 'mako', 'path': 'subgid', 'checkpoint': None},
+        ],
     }
     LOCKS = defaultdict(asyncio.Lock)
 

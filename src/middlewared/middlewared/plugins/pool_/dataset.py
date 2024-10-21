@@ -167,6 +167,7 @@ class PoolDatasetService(CRUDService):
             ['id', 'rnin', '/.system'],
             ['id', 'rnin', '/ix-applications/'],
             ['id', 'rnin', '/ix-apps'],
+            ['id', 'rnin', '/.ix-virt'],
         ]
 
     @private
