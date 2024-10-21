@@ -20,6 +20,7 @@ class PoolService(Service):
         Str('disk', required=True),
         Bool('force', default=False),
         Bool('preserve_settings', default=True),
+        Bool('preserve_description', default=True),
     ))
     @returns(Bool('replaced_successfully'))
     @job(lock='pool_replace')
@@ -101,7 +102,8 @@ class PoolService(Service):
             try:
                 old_disk = await self.middleware.call('disk.query', filters, options)
                 job.set_progress(98, 'Copying old disk settings to new')
-                await self.middleware.call('disk.copy_settings', old_disk, disk)
+                await self.middleware.call('disk.copy_settings', old_disk, disk, options['preserve_settings'],
+                                           options['preserve_description'])
             except MatchNotFound:
                 pass
 
