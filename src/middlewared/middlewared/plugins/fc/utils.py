@@ -3,7 +3,8 @@ from subprocess import run
 
 DESIGNATION = re.compile(r'(?<=Designation: ).*')
 BUS_ADDRESS = re.compile(r'(?<=Bus Address: ).*')
-HEX_COLON = re.compile(r'^([0-9a-fA-F][0-9a-fA-F]:)+[0-9a-fA-F][0-9a-fA-F]$')
+HEX_COLON = re.compile(r'^([0-9a-fA-F][0-9a-fA-F]:){7}[0-9a-fA-F][0-9a-fA-F]$')
+NAA_PATTERN = re.compile(r"^naa.[0-9a-fA-F]{16}$")
 
 
 def wwn_as_colon_hex(hexstr):
@@ -86,3 +87,7 @@ def filter_by_wwpns_hex_string(wwpn_naa, wwpn_b_naa):
         return [['port_name', '=', f'0x{wwpn_b_naa[4:]}']]
     else:
         return []
+
+
+def is_fc_addr(addr):
+    return bool(HEX_COLON.match(addr) or NAA_PATTERN.match(addr))
