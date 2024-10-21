@@ -11,8 +11,12 @@ def get_collective_metadata_path() -> str:
     return os.path.join(IX_APPS_MOUNT_PATH, 'metadata.yaml')
 
 
+def get_app_mounts_ds(docker_ds: str) -> str:
+    return os.path.join(docker_ds, 'app_mounts')
+
+
 def get_app_parent_volume_ds(docker_ds: str, app_name: str) -> str:
-    return os.path.join(docker_ds, 'app_mounts', app_name)
+    return os.path.join(get_app_mounts_ds(docker_ds), app_name)
 
 
 def get_app_parent_config_path() -> str:
