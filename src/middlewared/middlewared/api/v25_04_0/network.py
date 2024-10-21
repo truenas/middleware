@@ -3,7 +3,7 @@ from middlewared.api.v25_04_0.string_schema import IPAddr
 
 __all__ = ["NetworkIpInUseResult", "NetworkIpInUseArgs"]
 
-class NetworkIpInUseResultItems(BaseModel):
+class NetworkIpInUseResultItem(BaseModel):
     type: str
     address: IPAddr
     netmask: int
@@ -11,7 +11,7 @@ class NetworkIpInUseResultItems(BaseModel):
 
 
 class NetworkIpInUseResult(BaseModel):
-    result: list[NetworkIpInUseResultItems]
+    result: list[NetworkIpInUseResultItem]
 
 
 class NetworkIpInUseArgs(BaseModel):
