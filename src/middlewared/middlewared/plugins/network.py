@@ -1818,7 +1818,7 @@ class InterfaceService(CRUDService):
         Str('broadcast'),
     )]))"""
     @api_method(NetworkIpInUseArgs, NetworkIpInUseResult)
-    def ip_in_use(self, choices):
+    def ip_in_use(self, *args, **kwargs):
         """
         Get all IPv4 / Ipv6 from all valid interfaces, excluding tap and epair.
 
