@@ -2,8 +2,8 @@ from collections import defaultdict
 
 from middlewared.api.base.decorator import api_method
 from middlewared.service import Service
-from middlewared.schema import Dict, List, IPAddr, returns, accepts
-from middlewared.api.current import NetworkGeneralSummaryArgs, NetworkGeneralSummaryResult
+from middlewared.schema import Dict, List, returns, accepts
+from middlewared.api.current import NetworkGeneralSummaryArgs, NetworkGeneralSummaryResult, IPAddr
 
 
 class NetworkGeneralService(Service):
@@ -58,19 +58,19 @@ class NetworkGeneralService(Service):
                     continue
                 ips[iface['name']][key].append(f'{alias["address"]}/{alias["netmask"]}')
 
-        default_routes = dict()
+        default_routes = []
         for route in await self.middleware.call('route.system_routes', [('netmask', 'in', ['0.0.0.0', '::'])]):
             # IPv6 have local addresses that don't have gateways. Make sure we only return a gateway
             # if there is one.
             if route['gateway']:
-                default_routes[route['gateway']] = None
+                default_routes.append(IPAddr(address=route['gateway']))
 
-        nameservers = dict()
+        nameservers = []
         for ns in await self.middleware.call('dns.query'):
-            nameservers[ns['nameserver']] = None
+            nameservers.append(IPAddr(address=ns['nameserver']))
 
         return {
             'ips': ips,
-            'default_routes': list(default_routes.keys()),
-            'nameservers': list(nameservers.keys()),
+            'default_routes': default_routes,
+            'nameservers': nameservers,
         }
