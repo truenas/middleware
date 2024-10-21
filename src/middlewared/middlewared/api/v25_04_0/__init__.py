@@ -16,3 +16,4 @@ from .system_reboot import *  # noqa
 from .system_lifecycle import *  # noqa
 from .user import *  # noqa
 from .vendor import *  # noqa
+from .virt import *  #noqa
