@@ -211,7 +211,7 @@ class FCHostService(CRUDService):
                                 f'{schema_name}.npiv',
                                 f'Invalid npiv ({npiv}) supplied, {data["alias"]}/{chan} is currently mapped to a target'
                             )
-                        break
+                            break
 
         verrors.check()
 
