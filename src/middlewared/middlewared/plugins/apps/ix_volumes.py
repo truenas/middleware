@@ -1,6 +1,6 @@
 import collections
 
-from middlewared.schema import Dict, Str
+from middlewared.schema import accepts, Bool, Dict, returns, Str
 from middlewared.service import filterable, filterable_returns, Service
 from middlewared.utils import filter_list
 
@@ -49,3 +49,11 @@ class AppsIxVolumeService(Service):
                 })
 
         return filter_list(volumes, filters, options)
+
+    @accepts(Str('app_name'))
+    @returns(Bool('ix_volumes_exist'))
+    async def exists(self, app_name):
+        """
+        Check if ix-volumes exist for `app_name`.
+        """
+        return bool(await self.query([['app_name', '=', app_name]]))
