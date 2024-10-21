@@ -28,9 +28,9 @@ class AppsIxVolumeService(Service):
         if not await self.middleware.call('docker.state.validate', False):
             return filter_list([], filters, options)
 
-        docker_pool = (await self.middleware.call('docker.config'))['pool']
+        docker_ds = (await self.middleware.call('docker.config'))['dataset']
         datasets = await self.middleware.call(
-            'zfs.dataset.query', [['id', '^', f'{get_app_mounts_ds(docker_pool)}/']], {
+            'zfs.dataset.query', [['id', '^', f'{get_app_mounts_ds(docker_ds)}/']], {
                 'extra': {'retrieve_properties': False, 'flat': True}
             }
         )
@@ -48,4 +48,4 @@ class AppsIxVolumeService(Service):
                     'app_name': app,
                 })
 
-        return volumes
+        return filter_list(volumes, filters, options)
