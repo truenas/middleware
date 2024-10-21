@@ -1,7 +1,8 @@
 from middlewared.api.base import BaseModel
 from middlewared.api.v25_04_0.string_schema import IPAddr
 
-__all__ = ["NetworkIpInUseResult", "NetworkIpInUseArgs"]
+__all__ = ["NetworkIpInUseResult", "NetworkIpInUseArgs", "NetworkIpInUseResultItem",
+    "NetworkGeneralSummaryArgs", "NetworkGeneralSummaryResultItem", "NetworkGeneralSummaryResult"]
 
 class NetworkIpInUseResultItem(BaseModel):
     type: str
@@ -21,3 +22,14 @@ class NetworkIpInUseArgs(BaseModel):
     loopback: bool = False
     any: bool = False
     static: bool = False
+
+class NetworkGeneralSummaryArgs(BaseModel):
+    pass
+
+class NetworkGeneralSummaryResultItem(BaseModel):
+    ips: dict
+    default_route: list[IPAddr]
+    nameservers: list[IPAddr]
+
+class NetworkGeneralSummaryResult(BaseModel):
+    result: NetworkGeneralSummaryResultItem
