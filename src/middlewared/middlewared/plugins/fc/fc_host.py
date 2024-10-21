@@ -22,6 +22,10 @@ class FCHostModel(sa.Model):
 
 class FCHostService(CRUDService):
 
+    # Initialize wired to False on middlewared start.  fcport.query will call
+    # ensure_wired (indirectly)
+    wired = False
+
     class Config:
         private = True
         namespace = "fc.fc_host"
@@ -292,6 +296,7 @@ class FCHostService(CRUDService):
                         'npiv': 0
                     }
                     await self.middleware.call('fc.fc_host.create', new_fc_host)
+                    self.logger.info('Wired new FC Host %r wwpn: %r wwpn_b: %r', new_fc_host['alias'], wwpn, wwpn_b)
                 else:
                     # Maybe update record
                     if len(existing) == 1:
@@ -309,6 +314,7 @@ class FCHostService(CRUDService):
                                 result = False
                         if update_fc_host:
                             await self.middleware.call('fc.fc_host.update', existing['id'], update_fc_host)
+                            self.logger.info('Updated FC Host %r wwpn: %r wwpn_b: %r', existing['alias'], wwpn, wwpn_b)
                     else:
                         # Should not occur
                         self.logger.error('Slot "%r" has %d entries: %r', slot, len(existing), existing)
@@ -327,4 +333,16 @@ class FCHostService(CRUDService):
                             'npiv': 0
                         }
                         await self.middleware.call('fc.fc_host.create', new_fc_host)
+                        self.logger.info('Wired new FC Host %r wwpn: %r', new_fc_host['alias'], naa)
             return True
+
+    @private
+    async def ensure_wired(self):
+        """
+        Ensure that fc_port.wire has been called sucessfully since middlewared started.
+        """
+        if not self.wired:
+            if await self.middleware.call('fc.fc_host.wire'):
+                self.wired = True
+                return True
+        return False

@@ -332,6 +332,12 @@ class FCPortService(CRUDService):
         return data
 
     @private
+    async def get_options(self, options):
+        # Override superclass method called by query in order to add a side effect
+        await self.middleware.call('fc.fc_host.ensure_wired')
+        return await super().get_options(options)
+
+    @private
     async def count(self):
         return await self.middleware.call(
             "datastore.query",
