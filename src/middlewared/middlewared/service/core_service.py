@@ -178,6 +178,7 @@ class CoreService(Service):
             Any('extra', null=True),
         ),
         Any('result', null=True),
+        Any('result_encoding_error', null=True),
         Str('error', null=True),
         Str('exception', null=True),
         Dict(
