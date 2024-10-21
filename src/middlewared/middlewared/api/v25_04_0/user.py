@@ -86,6 +86,7 @@ class UserCreate(UserEntry):
 
 
 class UserUpdate(UserCreate, metaclass=ForUpdateMetaclass):
+    uid: Excluded = excluded_field()
     group_create: Excluded = excluded_field()
 
 

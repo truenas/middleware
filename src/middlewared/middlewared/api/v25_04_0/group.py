@@ -43,8 +43,6 @@ class GroupCreate(GroupEntry):
 
     gid: LocalUID | None = None
     "If `null`, it is automatically filled with the next one available."
-    allow_duplicate_gid: bool = False
-    "Allows distinct group names to share the same gid."
 
 
 class GroupCreateArgs(BaseModel):
@@ -56,7 +54,7 @@ class GroupCreateResult(BaseModel):
 
 
 class GroupUpdate(GroupCreate, metaclass=ForUpdateMetaclass):
-    pass
+    gid: Excluded = excluded_field()
 
 
 class GroupUpdateArgs(BaseModel):
