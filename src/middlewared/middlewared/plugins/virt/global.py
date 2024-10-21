@@ -16,7 +16,6 @@ from middlewared.service import ConfigService, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.utils import run
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
-from middlewared.plugins.virt.websocket import IncusWS
 
 from .utils import incus_call
 if TYPE_CHECKING:
@@ -143,6 +142,13 @@ class VirtGlobalService(ConfigService):
         return [INCUS_BRIDGE]
 
     @private
+    async def check_initialized(self, config=None):
+        if config is None:
+            config = await self.config()
+        if config['state'] != 'INITIALIZED':
+            raise CallError('Virtualization not initialized.')
+
+    @private
     async def get_default_profile(self):
         result = await incus_call('1.0/profiles/default', 'get')
         if result.get('status_code') != 200:
@@ -154,6 +160,7 @@ class VirtGlobalService(ConfigService):
         """
         Details for the given network.
         """
+        await self.check_initialized()
         result = await incus_call(f'1.0/networks/{name}', 'get')
         if result.get('status_code') != 200:
             raise CallError(result.get('error'))
@@ -194,14 +201,11 @@ class VirtGlobalService(ConfigService):
             if await self.middleware.call('service.started', 'incus'):
                 job = await self.middleware.call('virt.global.reset')
                 await job.wait(raise_error=True)
-            await IncusWS().stop()
 
             self.logger.debug('No pool set for virtualization, skipping.')
             raise NoPoolConfigured()
         else:
-            if not await self.middleware.call('service.started', 'incus'):
-                await self.middleware.call('service.start', 'incus')
-            await IncusWS().start()
+            await self.middleware.call('service.start', 'incus')
 
         try:
             ds = await self.middleware.call(

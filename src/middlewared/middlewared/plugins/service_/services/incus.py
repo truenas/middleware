@@ -5,6 +5,7 @@ import signal
 from pystemd.systemd1 import Unit
 
 from middlewared.plugins.service_.services.base import SimpleService
+from middlewared.plugins.virt.websocket import IncusWS
 
 
 RE_DNSMASQ_PID = re.compile(r'^pid: (\d+)', flags=re.M)
@@ -16,7 +17,12 @@ class IncusService(SimpleService):
     etc = ["subids"]
     systemd_unit = "incus"
 
+    async def start(self):
+        await super().start()
+        await IncusWS().start()
+
     async def stop(self):
+        await IncusWS().stop()
         await self._unit_action("Stop")
         # incus.socket needs to be stopped in addition to the service
         unit = Unit("incus.socket")

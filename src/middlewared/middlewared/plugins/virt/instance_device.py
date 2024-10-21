@@ -25,7 +25,7 @@ class VirtInstanceDeviceService(Service):
         """
         List all devices associated to an instance.
         """
-        instance = await self.middleware.call('virt.instance.get_instance', id)
+        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
 
         # Grab devices from default profile (e.g. nic and disk)
         profile = await self.middleware.call('virt.global.get_default_profile')
@@ -212,7 +212,7 @@ class VirtInstanceDeviceService(Service):
         """
         Add a device to an instance.
         """
-        instance = await self.middleware.call('virt.instance.get_instance', id)
+        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
         data = instance['raw']
         if device['name'] is None:
             device['name'] = await self.__generate_device_name(data['devices'].keys(), device['dev_type'])
@@ -230,7 +230,7 @@ class VirtInstanceDeviceService(Service):
         """
         Delete a device from an instance.
         """
-        instance = await self.middleware.call('virt.instance.get_instance', id)
+        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
         data = instance['raw']
         if device not in data['devices']:
             raise CallError('Device not found.', errno.ENOENT)

@@ -36,6 +36,9 @@ class VirtInstanceService(CRUDService):
         """
         Query all instances with `query-filters` and `query-options`.
         """
+        config = await self.middleware.call('virt.global.config')
+        if config['state'] != 'INITIALIZED':
+            return []
         results = (await incus_call('1.0/instances?filter=&recursion=2', 'get'))['metadata']
         entries = []
         for i in results:
@@ -50,9 +53,11 @@ class VirtInstanceService(CRUDService):
                 'cpu': i['config'].get('limits.cpu'),
                 'autostart': i['config'].get('boot.autostart') or False,
                 'environment': {},
-                'raw': i,
                 'aliases': [],
             }
+
+            if options.get('extra').get('raw'):
+                entry['raw'] = i
 
             if memory := i['config'].get('limits.memory'):
                 # Handle all units? e.g. changes done through CLI
@@ -132,6 +137,7 @@ class VirtInstanceService(CRUDService):
         Create a new virtualizated instance.
         """
 
+        await self.middleware.call('virt.global.check_initialized')
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_create', verrors)
 
@@ -185,7 +191,8 @@ class VirtInstanceService(CRUDService):
         """
         Update instance.
         """
-        instance = await self.middleware.call('virt.instance.get_instance', id)
+        await self.middleware.call('virt.global.check_initialized')
+        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
 
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_create', verrors, old=instance)
@@ -202,6 +209,7 @@ class VirtInstanceService(CRUDService):
         """
         Delete an instance.
         """
+        await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
         if instance['status'] == 'RUNNING':
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
@@ -220,6 +228,7 @@ class VirtInstanceService(CRUDService):
         """
         Start an instance.
         """
+        await self.middleware.call('virt.global.check_initialized')
         await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
             'action': 'start',
         }})
@@ -234,6 +243,7 @@ class VirtInstanceService(CRUDService):
 
         Timeout is how long it should wait for the instance to shutdown cleanly.
         """
+        await self.middleware.call('virt.global.check_initialized')
         await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
             'action': 'stop',
             'timeout': data['timeout'],
@@ -250,6 +260,7 @@ class VirtInstanceService(CRUDService):
 
         Timeout is how long it should wait for the instance to shutdown cleanly.
         """
+        await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
         if instance['state'] == 'RUNNING':
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
