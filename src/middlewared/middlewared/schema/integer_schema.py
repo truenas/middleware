@@ -56,6 +56,6 @@ class Float(EnumMixin, Attribute):
 
     def to_json_schema(self, parent=None):
         return {
-            'type': ['float', 'null'] if self.null else 'float',
+            'type': ['number', 'null'] if self.null else 'number',
             **self._to_json_schema_common(parent),
         }
