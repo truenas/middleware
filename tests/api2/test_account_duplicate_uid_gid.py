@@ -51,28 +51,6 @@ def test_create_duplicate_uid(uid_1234):
         ]
 
 
-def test_update_duplicate_uid(uid_1234):
-    with dataset(f"user2_homedir") as user2_homedir:
-        with user({
-            "username": "user2",
-            "full_name": "user2",
-            "group_create": True,
-            "groups": [],
-            "home": f"/mnt/{user2_homedir}",
-            "password": "test1234",
-        }) as user2:
-            with pytest.raises(ValidationErrors) as ve:
-                call("user.update", user2["id"], {"uid": 1234})
-
-            assert ve.value.errors == [
-                ValidationError('user_update.uid', 'Uid 1234 is already used (user user1 has it)', errno.EEXIST),
-            ]
-
-
-def test_update_no_duplicate_uid(uid_1234):
-    call("user.update", uid_1234["id"], {"uid": 1234})
-
-
 def test_create_duplicate_gid(gid_1234):
     with pytest.raises(ValidationErrors) as ve:
         with group({
@@ -84,19 +62,3 @@ def test_create_duplicate_gid(gid_1234):
     assert ve.value.errors == [
         ValidationError('group_create.gid', 'Gid 1234 is already used (group group1 has it)', errno.EEXIST),
     ]
-
-
-def test_update_duplicate_gid(gid_1234):
-    with group({
-        "name": "group2",
-    }) as group2:
-        with pytest.raises(ValidationErrors) as ve:
-            call("group.update", group2["id"], {"gid": 1234})
-
-        assert ve.value.errors == [
-            ValidationError('group_update.gid', 'Gid 1234 is already used (group group1 has it)', errno.EEXIST),
-        ]
-
-
-def test_update_no_duplicate_gid(gid_1234):
-    call("group.update", gid_1234["id"], {"gid": 1234})

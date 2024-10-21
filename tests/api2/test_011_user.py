@@ -669,7 +669,6 @@ def test_060_immutable_user_validation(request):
     to_validate = [
         {'group': 1},
         {'home': '/mnt/tank', 'home_create': True},
-        {'uid': 777777},
         {'smb': True},
         {'username': 'no_way_bad'},
     ]
