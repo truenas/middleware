@@ -449,6 +449,7 @@ class AuthService(Service):
     @private
     async def check_auth_mechanism(
         self,
+        app,
         mechanism: AuthMech,
         auth_ctx: AuthenticationContext,
         level: AuthenticatorAssuranceLevel
@@ -627,7 +628,7 @@ class AuthService(Service):
         login_fn = self.session_manager.login
         response = {'response_type': AuthResp.AUTH_ERR}
 
-        await self.check_auth_mechanism(mechanism, auth_ctx, CURRENT_AAL.level)
+        await self.check_auth_mechanism(app, mechanism, auth_ctx, CURRENT_AAL.level)
 
         match mechanism:
             case AuthMech.PASSWORD_PLAIN:
@@ -795,7 +796,7 @@ class AuthService(Service):
                     if auth_data['cnt'] < MAX_OTP_ATTEMPTS:
                         auth_data['cnt'] += 1
                         auth_ctx.auth_data = auth_data
-                        auth_ctx.next_mech = AuthMech.OTP_TOKEN.name
+                        auth_ctx.next_mech = AuthMech.OTP_TOKEN
 
                         return {
                             'response_type': AuthResp.OTP_REQUIRED,
