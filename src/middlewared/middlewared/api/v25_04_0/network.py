@@ -28,8 +28,8 @@ class NetworkGeneralSummaryArgs(BaseModel):
 
 class NetworkGeneralSummaryResultEntry(BaseModel):
     ips: dict
-    default_route: list[IPAddr]
-    nameservers: list[IPAddr]
+    default_route: list[str]
+    nameservers: list[str]
 
 class NetworkGeneralSummaryResult(BaseModel):
     result: NetworkGeneralSummaryResultEntry

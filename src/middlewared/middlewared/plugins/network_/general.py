@@ -63,11 +63,11 @@ class NetworkGeneralService(Service):
             # IPv6 have local addresses that don't have gateways. Make sure we only return a gateway
             # if there is one.
             if route['gateway']:
-                default_routes.append(IPAddr(address=route['gateway']))
+                default_routes.append(route['gateway'])
 
         nameservers = []
         for ns in await self.middleware.call('dns.query'):
-            nameservers.append(IPAddr(address=ns['nameserver']))
+            nameservers.append(ns['nameserver'])
 
         return {
             'ips': ips,
