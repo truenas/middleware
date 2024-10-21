@@ -18,8 +18,8 @@ class AppsIxVolumeService(Service):
     @filterable_returns(Dict(
         'ix-volumes_query',
         Str('app_name'),
-        Str('id'),
         Str('name'),
+        additional_attrs=True,
     ))
     async def query(self, filters, options):
         """
@@ -43,7 +43,6 @@ class AppsIxVolumeService(Service):
         for app, app_volumes in apps.items():
             for volume in app_volumes:
                 volumes.append({
-                    'id': volume,
                     'name': volume,
                     'app_name': app,
                 })
