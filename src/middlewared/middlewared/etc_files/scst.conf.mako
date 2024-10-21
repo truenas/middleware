@@ -7,7 +7,7 @@
     from pathlib import Path
 
     from middlewared.service import CallError
-    from middlewared.plugins.fc.utils import wwn_as_colon_hex
+    from middlewared.plugins.fc.utils import is_fc_addr, wwn_as_colon_hex
 
     REL_TGT_ID_NODEB_OFFSET = 32000
     REL_TGT_ID_FC_OFFSET = 5000
@@ -179,7 +179,11 @@
 
     nodes = {"A" : {"other" : "B", "group_id" : 101},
              "B" : {"other" : "A", "group_id" : 102}}
-    other_node = nodes[node]['other']
+    try:
+        other_node = nodes[node]['other']
+    except KeyError:
+        # Non-HA
+        other_node = 'MANUAL'
 
     # Let's map extents to respective ios
     all_extent_names = []
@@ -398,7 +402,7 @@ TARGET_DRIVER iscsi {
     has_per_host_access = False
     for host in target_hosts[target['id']]:
         for iqn in hosts_iqns[host['id']]:
-            if iqn.startswith('iqn'):
+            if not is_fc_addr(iqn):
                 iscsi_initiator_portal_access.add(f'{iqn}\#{host["ip"]}')
                 has_per_host_access = True
     for group in target['groups']:
@@ -426,7 +430,7 @@ TARGET_DRIVER iscsi {
             if not has_per_host_access:
                 group_initiators = group_initiators or ['*']
             for initiator in group_initiators:
-                if initiator.startswith('iqn'):
+                if not is_fc_addr(initiator):
                     iscsi_initiator_portal_access.add(f'{initiator}\#{address}')
 %>\
 %   if associated_targets.get(target['id']):
