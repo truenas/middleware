@@ -10,7 +10,7 @@ from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
 from middlewared.api.current import (
     AuthLegacyPasswordLoginArgs, AuthLegacyApiKeyLoginArgs, AuthLegacyTokenLoginArgs,
     AuthLegacyTwoFactorArgs, AuthLegacyResult,
-    AuthLoginExArgs, AuthLoginExResult,
+    AuthLoginExArgs, AuthLoginExContinueArgs, AuthLoginExResult,
     AuthMeArgs, AuthMeResult,
     AuthMechChoicesArgs, AuthMechChoicesResult,
 )
@@ -449,7 +449,8 @@ class AuthService(Service):
     @private
     async def check_auth_mechanism(
         self,
-        mechanism: str,
+        app,
+        mechanism: AuthMech,
         auth_ctx: AuthenticationContext,
         level: AuthenticatorAssuranceLevel
     ) -> None:
@@ -457,11 +458,31 @@ class AuthService(Service):
         # The current session may be in the middle of a challenge-response conversation
         # and so we need to validate that what we received from client was expected
         # next message.
-        if auth_ctx.next_mech and mechanism != auth_ctx.next_mech:
-            raise CallError(
-                f'{mechanism}: authentication in progress. Expected [{auth_ctx.next_mech}]',
-                errno.EBUSY
-            )
+        if auth_ctx.next_mech and mechanism is not auth_ctx.next_mech:
+            expected = auth_ctx.auth_data['user']['username']
+            self.logger.debug('%s: received auth mechanism for user %s while expecting next auth mechanism: %s',
+                               mechanism, expected, auth_ctx.next_mech)
+
+            expected = auth_ctx.auth_data['user']['username']
+            if auth_ctx.next_mech is AuthMech.OTP_TOKEN:
+                    errmsg = (
+                        'Abandoning login attempt after being presented wtih '
+                        'requirement for second factor for authentication.'
+                    )
+
+                    await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                        'credentials': {
+                            'credentials': 'LOGIN_TWOFACTOR',
+                            'credentials_data': {
+                                'username': expected,
+                            },
+                        },
+                        'error': errmsg
+                    }, False)
+
+            # Discard in-progress auth attempt
+            auth_ctx.next_mech = None
+            auth_ctx.auth_data = None
 
         # OTP tokens are only permitted when prompted
         if auth_ctx.next_mech is None and mechanism == AuthMech.OTP_TOKEN.name:
@@ -481,6 +502,38 @@ class AuthService(Service):
         """ Get list of available authentication mechanisms available for auth.login_ex """
         aal = CURRENT_AAL.level
         return [mech.name for mech in aal.mechanisms]
+
+    @cli_private
+    @no_auth_required
+    @api_method(AuthLoginExContinueArgs, AuthLoginExResult)
+    @pass_app()
+    async def login_ex_continue(self, app, data):
+        """
+        Continue in-progress authentication attempt. This endpoint should be
+        called to continue an auth.login_ex attempt that returned OTP_REQUIRED.
+
+        This is a convenience wrapper around auth.login_ex for API consumers.
+
+        params:
+            mechanism: the mechanism by which to continue authentication.
+            Currently the only supported mechanism here is OTP_TOKEN.
+
+            OTP_TOKEN
+            otp_token: one-time password token. This is only permitted if
+            a previous auth.login_ex call responded with "OTP_REQUIRED".
+
+        returns:
+            JSON object containing the following keys:
+
+            `response_type` - will be one of the following:
+            SUCCESS - continued auth was required
+
+            OTP_REQUIRED - otp token was rejected. API consumer may call this
+            endpoint again with correct OTP token.
+
+            AUTH_ERR - invalid OTP token submitted too many times.
+        """
+        return await self.login_ex(app, data)
 
     @cli_private
     @no_auth_required
@@ -570,12 +623,12 @@ class AuthService(Service):
         EXPIRED
         The specified credential is expired and not suitable for authentication.
         """
-        mechanism = data['mechanism']
+        mechanism = AuthMech[data['mechanism']]
         auth_ctx = app.authentication_context
         login_fn = self.session_manager.login
         response = {'response_type': AuthResp.AUTH_ERR}
 
-        await self.check_auth_mechanism(mechanism, auth_ctx, CURRENT_AAL.level)
+        await self.check_auth_mechanism(app, mechanism, auth_ctx, CURRENT_AAL.level)
 
         match mechanism:
             case AuthMech.PASSWORD_PLAIN:
@@ -590,7 +643,7 @@ class AuthService(Service):
                 if resp['otp_required']:
                     # A one-time password is required for this user account and so
                     # we should request it from API client.
-                    auth_ctx.next_mech = AuthMech.OTP_TOKEN.name
+                    auth_ctx.next_mech = AuthMech.OTP_TOKEN
                     auth_ctx.auth_data = {'cnt': 0, 'user': resp['user_data']}
                     return {
                         'response_type': AuthResp.OTP_REQUIRED,
@@ -695,7 +748,7 @@ class AuthService(Service):
                         'error': resp['pam_response']['reason'],
                     }, False)
 
-            case AuthMech.OTP_TOKEN.name:
+            case AuthMech.OTP_TOKEN:
                 # We've received a one-time password token based in response to our
                 # response to an earlier authentication attempt. This means our auth
                 # context has user information. We don't re-request username from the
@@ -743,7 +796,7 @@ class AuthService(Service):
                     if auth_data['cnt'] < MAX_OTP_ATTEMPTS:
                         auth_data['cnt'] += 1
                         auth_ctx.auth_data = auth_data
-                        auth_ctx.next_mech = AuthMech.OTP_TOKEN.name
+                        auth_ctx.next_mech = AuthMech.OTP_TOKEN
 
                         return {
                             'response_type': AuthResp.OTP_REQUIRED,

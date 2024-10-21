@@ -98,6 +98,10 @@ class AuthLoginExArgs(BaseModel):
     login_data: AuthApiKeyPlain | AuthPasswordPlain | AuthTokenPlain | AuthOTPToken
 
 
+class AuthLoginExContinueArgs(BaseModel):
+    login_data: AuthOTPToken
+
+
 class AuthLoginExResult(BaseModel):
     result: AuthRespSuccess | AuthRespAuthErr | AuthRespExpired | AuthRespOTPRequired
 
