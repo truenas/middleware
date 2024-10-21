@@ -76,9 +76,9 @@ class DiskService(Service):
             # no reason to write more than 1MB at a time
             # or kernel will break them into smaller chunks
             if mode in ('QUICK', 'FULL'):
-                to_write = bytearray(CHUNK).zfill(0)
+                to_write = b'0' * CHUNK
             else:
-                to_write = bytearray(os.urandom(CHUNK))
+                to_write = os.urandom(CHUNK)
 
             # seek back to the beginning of the disk
             os.lseek(f.fileno(), 0, os.SEEK_SET)
