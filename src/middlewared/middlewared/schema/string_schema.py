@@ -195,7 +195,11 @@ class HostPath(Path):
 
         if value:
             if not os.path.exists(value):
-                verrors.add(self.name, 'This path does not exist.', errno.ENOENT)
+                verrors.add(
+                    self.name,
+                    'Path does not exist (underlying dataset may be locked or the path is just missing).',
+                    errno.ENOENT
+                )
             else:
                 self.validate_internal(verrors, value)
 
