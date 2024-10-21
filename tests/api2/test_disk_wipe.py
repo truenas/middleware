@@ -5,6 +5,9 @@ import pytest
 from auto_config import ha
 from middlewared.test.integration.utils import call, ssh
 
+VMFS_MAGIC_STRING_B64 = "DdABwA=="
+VMFS_MAGIC_STRING_WFS = "VMFS_volume_member"
+
 
 def test_disk_wipe_partition_clean():
     """Confirm we clean up around the middle partitions"""
@@ -17,6 +20,13 @@ def test_disk_wipe_partition_clean():
     seek_blk = parts[0]['start_sector']
     blk_size = parts[0]['start'] // parts[0]['start_sector']
 
+    # Fake a VMFS volume at start of disk
+    ssh(
+        f'echo -n {VMFS_MAGIC_STRING_B64} > vmfs;'
+        f"base64 -d vmfs | dd of=/dev/{disk} bs=1M seek=1 count=1 status=none"
+    )
+    assert VMFS_MAGIC_STRING_WFS in ssh(f"wipefs /dev/{disk}")
+
     # Write some private data into the start of the data partition
     ssh(
         f"echo '{signal_msg}' > junk;"
@@ -24,7 +34,7 @@ def test_disk_wipe_partition_clean():
         "rm -f junk"
     )
 
-    # Confirm presence
+    # Confirm presence of signal_message
     readback_presence = ssh(f"dd if=/dev/{disk} bs={blk_size} iseek={seek_blk} count=1").splitlines()[0]
     assert signal_msg in readback_presence
 
@@ -32,6 +42,7 @@ def test_disk_wipe_partition_clean():
     call('disk.wipe', disk, 'QUICK', job=True)
 
     # Confirm it's now clean
+    assert VMFS_MAGIC_STRING_WFS not in ssh(f"wipefs /dev/{disk}")
     readback_clean = ssh(f"dd if=/dev/{disk} bs={blk_size} iseek={seek_blk} count=1").splitlines()[0]
     assert signal_msg not in readback_clean
 
