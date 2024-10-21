@@ -22,7 +22,9 @@ class IncusService(SimpleService):
         unit = Unit("incus.socket")
         unit.load()
         await self._unit_action("Stop", unit=unit)
+        await self.middleware.run_in_thread(self._stop_dnsmasq)
 
+    def _stop_dnsmasq(self):
         # Incus will run dnsmasq for its managed network and not stop it
         # when the service is stopped.
         dnsmasq_pid = '/var/lib/incus/networks/incusbr0/dnsmasq.pid'
@@ -31,7 +33,6 @@ class IncusService(SimpleService):
                 with open(dnsmasq_pid) as f:
                     data = f.read()
                     if reg := RE_DNSMASQ_PID.search(data):
-                        # os.kill should never block, will this still require a thread?
                         os.kill(int(reg.group(1)), signal.SIGTERM)
             except FileNotFoundError:
                 pass

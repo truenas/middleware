@@ -49,7 +49,7 @@ class VirtInstanceDeviceService(Service):
         device = {'name': name, 'readonly': incus.get('readonly') or False}
 
         def unsupported():
-            self.logger.warning('Proxy device not supported by API, skipping.')
+            self.logger.trace('Proxy device not supported by API, skipping.')
             return None
 
         match incus['type']:
