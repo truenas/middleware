@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import enum
 import json
 import logging
-import typing
+from typing import Any, TypeAlias
 
 import html2text
 
@@ -10,12 +10,11 @@ from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductName, ProductType
 from middlewared.utils.lang import undefined
 
-__all__ = ["UnavailableException",
-           "AlertClass", "OneShotAlertClass", "SimpleOneShotAlertClass", "DismissableAlertClass",
-           "AlertCategory", "AlertLevel", "Alert",
-           "AlertSource", "ThreadedAlertSource",
-           "AlertService", "ThreadedAlertService", "ProThreadedAlertService",
-           "format_alerts", "ellipsis"]
+__all__ = [
+    "UnavailableException", "AlertClass", "OneShotAlertClass", "SimpleOneShotAlertClass", "DismissableAlertClass",
+    "AlertCategory", "AlertLevel", "Alert", "AlertSource", "ThreadedAlertSource", "AlertService",
+    "ThreadedAlertService", "ProThreadedAlertService", "format_alerts", "ellipsis"
+]
 
 logger = logging.getLogger(__name__)
 
@@ -214,7 +213,7 @@ class AlertLevel(enum.Enum):
     EMERGENCY = 7
 
 
-DateTimeType: typing.TypeAlias = datetime
+DateTimeType: TypeAlias = datetime
 
 
 class Alert:
@@ -250,13 +249,13 @@ class Alert:
     """
 
     klass: type[AlertClass]
-    args: typing.Union[dict[str, typing.Any], list]
-    key: typing.Any
+    args: dict[str, Any] | list
+    key: Any
     datetime: DateTimeType
     last_occurrence: DateTimeType
-    node: typing.Optional[str]
+    node: str | None
     dismissed: bool
-    mail: typing.Optional[dict]
+    mail: dict | None
 
     def __init__(self, klass, args=None, key=undefined, datetime=None, last_occurrence=None, node=None, dismissed=None,
                  mail=None, _uuid=None, _source=None, _key=None, _text=None):
