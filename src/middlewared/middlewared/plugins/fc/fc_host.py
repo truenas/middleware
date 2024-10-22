@@ -251,9 +251,10 @@ class FCHostService(CRUDService):
             return False
         if await self.middleware.call('failover.licensed'):
             # HA
-            if await self.middleware.call('failover.status') != 'MASTER':
-                self.logger.error('Cannot wire fc_host if not ACTIVE node')
-                return False
+            if (fo_status := await self.middleware.call('failover.status')) != 'MASTER':
+                self.logger.error('Cannot wire fc_host if not ACTIVE node: %r', fo_status)
+                # If we're the BACKUP node then we don't need to keep trying
+                return fo_status == 'BACKUP'
             node = await self.middleware.call('failover.node')
             slot_2_fc_host_wwpn = defaultdict(dict)
             physical_port_filter = [["physical", "=", True]]
