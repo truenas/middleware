@@ -3,6 +3,10 @@ import subprocess
 from pathlib import Path
 from .constants import RDMAprotocols
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    RdmaCapableServicesArgs, RdmaCapableServicesResult
+)
 from middlewared.schema import Bool, Dict, List, Ref, Str, accepts, returns
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
@@ -135,7 +139,7 @@ class RDMAService(Service):
             v['name'] = ':'.join(sorted(names))
         return list(grouper.values())
 
-    @private
+    @api_method(RdmaCapableServicesArgs, RdmaCapableServicesResult)
     async def capable_services(self):
         result = []
         is_ent = await self.middleware.call('system.is_enterprise')
