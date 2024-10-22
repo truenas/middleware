@@ -13,12 +13,14 @@ from middlewared.service_exception import (
 from middlewared.test.integration.assets.account import group as create_group
 from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.filesystem import directory
+from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, mock, ssh
 from middlewared.test.integration.utils.string import random_string
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.failover import wait_for_standby
 from middlewared.test.integration.utils.system import reset_systemd_svcs as reset_svcs
 
-from auto_config import hostname, password, pool_name, user
+from auto_config import hostname, password, pool_name, user, ha
 from protocols import SSH_NFS, nfs_share
 
 MOUNTPOINT = f"/tmp/nfs-{hostname}"
@@ -318,31 +320,68 @@ def run_missing_usrgrp_mapping_test(data: list[str], usrgrp, tmp_path, share, us
 
 
 @contextlib.contextmanager
-def nfs_dataset(name, options=None, acl=None, mode=None):
+def manage_start_nfs():
+    """ The exit state is managed by init_nfs """
+    try:
+        yield set_nfs_service_state('start')
+    finally:
+        set_nfs_service_state('stop')
+
+
+def move_systemdataset(new_pool_name):
+    ''' Move the system dataset to the requested pool '''
+    try:
+        call('systemdataset.update', {'pool': new_pool_name}, job=True)
+    except Exception as e:
+        raise e
+    else:
+        if ha:
+            wait_for_standby()
+
+    return call('systemdataset.config')
+
+
+@contextlib.contextmanager
+def system_dataset(new_pool_name):
+    '''
+    Temporarily move the system dataset to the new_pool_name
+    '''
+    orig_sysds = call('systemdataset.config')
+    try:
+        sysds = move_systemdataset(new_pool_name)
+        yield sysds
+    finally:
+        move_systemdataset(orig_sysds['pool'])
+
+
+@contextlib.contextmanager
+def nfs_dataset(name, options=None, acl=None, mode=None, pool=None):
     """
     NOTE: This is _nearly_ the same as the 'dataset' test asset. The difference
           is the retry loop.
     TODO: Enhance the 'dataset' test asset to include a retry loop
     """
     assert "/" not in name
-    dataset = f"{pool_name}/{name}"
+    _pool_name = pool if pool else pool_name
+
+    _dataset = f"{_pool_name}/{name}"
 
     try:
-        call("pool.dataset.create", {"name": dataset, **(options or {})})
+        call("pool.dataset.create", {"name": _dataset, **(options or {})})
 
         if acl is None:
-            call("filesystem.setperm", {'path': f"/mnt/{dataset}", "mode": mode or "777"}, job=True)
+            call("filesystem.setperm", {'path': f"/mnt/{_dataset}", "mode": mode or "777"}, job=True)
         else:
-            call("filesystem.setacl", {'path': f"/mnt/{dataset}", "dacl": acl}, job=True)
+            call("filesystem.setacl", {'path': f"/mnt/{_dataset}", "dacl": acl}, job=True)
 
-        yield dataset
+        yield _dataset
 
     finally:
         # dataset may be busy
         sleep(2)
         for _ in range(6):
             try:
-                call("pool.dataset.delete", dataset)
+                call("pool.dataset.delete", _dataset)
                 # Success
                 break
             except InstanceNotFound:
@@ -476,7 +515,9 @@ class TestNFSops:
         assert start_nfs is True
 
         # Make sure the conf file has the expected settings
-        nfs_state_dir = '/var/db/system/nfs'
+        sysds_path = call('systemdataset.sysdataset_path')
+        assert sysds_path == '/var/db/system'
+        nfs_state_dir = os.path.join(sysds_path, 'nfs')
         s = parse_server_config()
         assert s['exportd']['state-directory-path'] == nfs_state_dir, str(s)
         assert s['nfsdcld']['storagedir'] == os.path.join(nfs_state_dir, 'nfsdcld'), str(s)
@@ -484,9 +525,25 @@ class TestNFSops:
         assert s['nfsdcld']['storagedir'] == os.path.join(nfs_state_dir, 'nfsdcld'), str(s)
         assert s['mountd']['state-directory-path'] == nfs_state_dir, str(s)
         assert s['statd']['state-directory-path'] == nfs_state_dir, str(s)
+
         # Confirm we have the mount point in the system dataset
+        sysds = call('systemdataset.config')
+        bootds = call('systemdataset.get_system_dataset_spec', sysds['pool'], sysds['uuid'])
+        bootds_nfs = list([d for d in bootds if 'nfs' in d.get('name')])[0]
+        assert bootds_nfs['name'] == sysds['pool'] + "/.system/nfs"
+
+        # Confirm the required entries are present
+        required_nfs_entries = set(["nfsdcld", "nfsdcltrack", "sm", "sm.bak", "state", "v4recovery"])
+        current_nfs_entries = set(list(ssh(f'ls {nfs_state_dir}').splitlines()))
+        assert required_nfs_entries.issubset(current_nfs_entries)
+
+        # Confirm proc entry reports expected value after nfs restart
+        call('service.restart', 'nfs')
+        sleep(1)
+        recovery_dir = ssh('cat /proc/fs/nfsd/nfsv4recoverydir').strip()
+        assert recovery_dir == os.path.join(nfs_state_dir, 'v4recovery'), \
+            f"Expected {nfs_state_dir + '/v4recovery'} but found {recovery_dir}"
         # ----------------------------------------------------------------------
-        # NOTE: Update test_001_ssh.py: test_002_first_boot_checks.
         # NOTE: Test fresh-install and upgrade.
         # ----------------------------------------------------------------------
 
@@ -1676,6 +1733,22 @@ class TestNFSops:
 
             s = parse_server_config()
             assert s['mountd']['manage-gids'] == expected, str(s)
+
+
+def test_pool_delete_with_attached_share():
+    '''
+    Confirm we can delete a pool with the system dataset and a dataset with active NFS shares
+    '''
+    with another_pool() as new_pool:
+        # Move the system dataset to this pool
+        with system_dataset(new_pool['name']):
+            # Add some additional NFS stuff to make it interesting
+            with nfs_dataset("deleteme", pool=new_pool['name']) as ds:
+                with nfs_share(f"/mnt/{ds}"):
+                    with manage_start_nfs():
+                        # Delete the pool and confirm it's gone
+                        call("pool.export", new_pool["id"], {"destroy": True}, job=True)
+                        assert call("pool.query", [["name", "=", f"{new_pool['name']}"]]) == []
 
 
 def test_threadpool_mode():
