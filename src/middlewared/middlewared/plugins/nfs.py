@@ -5,7 +5,6 @@ import itertools
 import os
 import shutil
 
-from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
@@ -16,6 +15,9 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+
+# Support the nfsv4recoverydir procfs entry.  This may deprecate.
+NFSV4_RECOVERY_DIR_PROCFS_PATH = '/proc/fs/nfsd/nfsv4recoverydir'
 
 
 class NFSServicePathInfo(enum.Enum):
@@ -126,6 +128,28 @@ class NFSService(SystemServiceService):
             return name
 
     @private
+    def update_procfs_v4recoverydir(self):
+        '''
+        The proc file /proc/fs/nfsd/nfsv4recoverydir is part of the legacy NFS client management.
+        It's usefulness is debatable and by default it reports a path that TrueNAS does not use.
+        While this entry exists TrueNAS will attempt to make it consistent with actual.
+        NOTE: NFS will function correctly even if this is reporting an inconsistent value.
+        '''
+        procfs_path = NFSV4_RECOVERY_DIR_PROCFS_PATH
+        try:
+            with open(procfs_path, 'r+') as fp:
+                fp.write(f'{NFSServicePathInfo.V4RECOVERYDIR.path()}\n')
+        except FileNotFoundError:
+            # This usually happens after a reboot
+            self.logger.info("%r: Missing or has been removed", procfs_path)
+        except Exception as e:
+            # errno=EBUSY usually happens on a system dataset move
+            if e.errno != errno.EBUSY:
+                self.logger.info("Unable to update %r: %r", procfs_path, str(e))
+        else:
+            self.logger.debug("%r: updated with %r", procfs_path, NFSServicePathInfo.V4RECOVERYDIR.path())
+
+    @private
     def setup_directories(self):
         '''
         We are moving the NFS state directory from /var/lib/nfs to
@@ -161,16 +185,6 @@ class NFSService(SystemServiceService):
                 os.chown(path, uid, gid)
             except Exception:
                 self.logger.error('Unexpected failure initializing %r', path, exc_info=True)
-
-        procfs_path = '/proc/fs/nfsd/nfsv4recoverydir'
-        try:
-            with open(procfs_path, 'r+') as fp:
-                fp.write(f'{NFSServicePathInfo.V4RECOVERYDIR.path()}\n')
-        except FileNotFoundError:
-            # When this is removed from the kernel we will have a gentle reminder
-            self.logger.info("%r: Proc file has been removed", procfs_path)
-        except Exception:
-            self.logger.error("Unexpected failure updating %r", procfs_path, exc_info=True)
 
     @private
     async def nfs_extend(self, nfs):
@@ -945,22 +959,10 @@ async def pool_post_import(middleware, pool):
             break
 
 
-class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
-    name = 'nfs'
-    title = 'NFS Share'
-    service = 'nfs'
-    service_class = SharingNFSService
-    resource_name = 'path'
-
-    async def restart_reload_services(self, attachments):
-        await self._service_change('nfs', 'reload')
-
-
 async def setup(middleware):
     await middleware.call(
         'interface.register_listen_delegate',
         SystemServiceListenMultipleDelegate(middleware, 'nfs', 'bindip'),
     )
-    await middleware.call('pool.dataset.register_attachment_delegate', NFSFSAttachmentDelegate(middleware))
 
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
