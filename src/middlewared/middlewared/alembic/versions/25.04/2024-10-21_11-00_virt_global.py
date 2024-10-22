@@ -1,4 +1,4 @@
-"""empty message
+"""Global configuration for virtualization feature
 
 Revision ID: dd6e581235b2
 Revises: 504a7bd32680
