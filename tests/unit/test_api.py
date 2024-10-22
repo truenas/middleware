@@ -1,6 +1,7 @@
 from pydantic import Field
 
 from middlewared.api.base import BaseModel
+from middlewared.api.base.handler.result import serialize_result
 
 
 def test_dump_by_alias():
@@ -13,7 +14,6 @@ def test_dump_by_alias():
         result: AliasModel
 
     result = {'field1': 1, 'field2': 'two'}
-    result_model = AliasModelResult(result=result)
+    dump = serialize_result(AliasModelResult, result, False)
 
-    assert result_model.model_dump()['result'] == {'field1_': 1, 'field2': 'two', 'field3_': False}
-    assert result_model.model_dump(by_alias=True)['result'] == {'field1': 1, 'field2': 'two', 'field3': False}
+    assert dump == {'field1': 1, 'field2': 'two', 'field3': False}
