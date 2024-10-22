@@ -154,21 +154,25 @@ class FCPortService(CRUDService):
             naa = p[key]
             sessions_path = qla_target_path / wwn_as_colon_hex(naa) / 'sessions'
             sessions = []
-            with os.scandir(sessions_path) as iter:
-                for entry in iter:
-                    if not entry.is_dir():
-                        continue
-                    if with_lun_access:
-                        have_lun = False
-                        with os.scandir(Path(entry.path) / 'luns') as subdir:
-                            for subentry in subdir:
-                                if subentry.name.isnumeric():
-                                    have_lun = True
-                                    break
-                        if have_lun:
+            try:
+                with os.scandir(sessions_path) as iter:
+                    for entry in iter:
+                        if not entry.is_dir():
+                            continue
+                        if with_lun_access:
+                            have_lun = False
+                            with os.scandir(Path(entry.path) / 'luns') as subdir:
+                                for subentry in subdir:
+                                    if subentry.name.isnumeric():
+                                        have_lun = True
+                                        break
+                            if have_lun:
+                                sessions.append(entry.name)
+                        else:
                             sessions.append(entry.name)
-                    else:
-                        sessions.append(entry.name)
+            except FileNotFoundError:
+                # In HA when ALUA is disabled this path will not exist
+                pass
             # Take some data directly from fc.fc_hosts
             result[p['port']] = {
                 'port_type': naa_to_fc_host[naa]['port_type'],
