@@ -37,3 +37,10 @@ class B2RcloneRemote(BaseRcloneRemote):
         if chunk_size > 200:
             extra["upload_cutoff"] = f"{chunk_size}M"
         return extra
+
+    async def get_task_extra_args(self, task):
+        chunk_size = task["attributes"].get("chunk_size", 96)
+        if chunk_size > 128:
+            return [f"--multi-thread-cutoff={chunk_size * 2 + 1}M"]
+
+        return []

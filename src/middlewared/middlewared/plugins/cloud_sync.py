@@ -74,7 +74,7 @@ class RcloneConfig:
             config["pass"] = rclone_encrypt_password(config["pass"])
 
         remote_path = None
-        extra_args = []
+        extra_args = await self.provider.get_task_extra_args(self.cloud_sync)
 
         if "attributes" in self.cloud_sync:
             config.update(dict(self.cloud_sync["attributes"], **await self.provider.get_task_extra(self.cloud_sync)))
