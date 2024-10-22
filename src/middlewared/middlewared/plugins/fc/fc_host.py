@@ -252,7 +252,7 @@ class FCHostService(CRUDService):
         if await self.middleware.call('failover.licensed'):
             # HA
             if (fo_status := await self.middleware.call('failover.status')) != 'MASTER':
-                self.logger.error('Cannot wire fc_host if not ACTIVE node: %r', fo_status)
+                self.logger.info('Cannot wire fc_host if not ACTIVE node: %r', fo_status)
                 # If we're the BACKUP node then we don't need to keep trying
                 return fo_status == 'BACKUP'
             node = await self.middleware.call('failover.node')
