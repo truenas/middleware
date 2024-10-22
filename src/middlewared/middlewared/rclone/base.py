@@ -40,10 +40,13 @@ class BaseRcloneRemote:
         pass
 
     async def get_credentials_extra(self, credentials):
-        return dict()
+        return {}
 
     async def get_task_extra(self, task):
-        return dict()
+        return {}
+
+    async def get_task_extra_args(self, task):
+        return []
 
     async def cleanup(self, task, config):
         pass
