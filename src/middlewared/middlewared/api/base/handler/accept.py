@@ -72,4 +72,9 @@ def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, e
 
         raise verrors from None
 
-    return instance.model_dump(context={"expose_secrets": expose_secrets}, exclude_unset=exclude_unset, warnings=False)
+    return instance.model_dump(
+        context={"expose_secrets": expose_secrets},
+        exclude_unset=exclude_unset,
+        warnings=False,
+        by_alias=True
+    )
