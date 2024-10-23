@@ -25,6 +25,7 @@ class FCHostService(CRUDService):
     # Initialize wired to False on middlewared start.  fcport.query will call
     # ensure_wired (indirectly)
     wired = False
+    do_reset_wired = False
 
     class Config:
         private = True
@@ -254,7 +255,10 @@ class FCHostService(CRUDService):
             if (fo_status := await self.middleware.call('failover.status')) != 'MASTER':
                 self.logger.info('Cannot wire fc_host if not ACTIVE node: %r', fo_status)
                 # If we're the BACKUP node then we don't need to keep trying
-                return fo_status == 'BACKUP'
+                if fo_status == 'BACKUP':
+                    self.do_reset_wired = True
+                    return True
+                return False
             node = await self.middleware.call('failover.node')
             slot_2_fc_host_wwpn = defaultdict(dict)
             physical_port_filter = [["physical", "=", True]]
@@ -298,6 +302,9 @@ class FCHostService(CRUDService):
                     }
                     await self.middleware.call('fc.fc_host.create', new_fc_host)
                     self.logger.info('Wired new FC Host %r wwpn: %r wwpn_b: %r', new_fc_host['alias'], wwpn, wwpn_b)
+                    if wwpn is None or wwpn_b is None:
+                        # We need to do better / try again
+                        result = False
                 else:
                     # Maybe update record
                     if len(existing) == 1:
@@ -308,11 +315,15 @@ class FCHostService(CRUDService):
                                 update_fc_host['wwpn'] = wwpn
                             else:
                                 result = False
+                        elif wwpn is None:
+                            result = False
                         if existing['wwpn_b'] != wwpn_b:
                             if existing['wwpn_b'] is None or overwrite:
                                 update_fc_host['wwpn_b'] = wwpn_b
                             else:
                                 result = False
+                        elif wwpn_b is None:
+                            result = False
                         if update_fc_host:
                             await self.middleware.call('fc.fc_host.update', existing['id'], update_fc_host)
                             self.logger.info('Updated FC Host %r wwpn: %r wwpn_b: %r', existing['alias'], wwpn, wwpn_b)
@@ -347,3 +358,21 @@ class FCHostService(CRUDService):
                 self.wired = True
                 return True
         return False
+
+    @private
+    async def reset_wired(self):
+        if self.do_reset_wired:
+            self.logger.info('Reset wired')
+            self.wired = False
+            self.do_reset_wired = False
+
+
+async def _failover_status_change(middleware, event_type, args):
+    if event_type == 'CHANGED' and args.get('fields', {}).get('status') == 'MASTER':
+        # We have just become the ACTIVE node.  If we previously set wired on the
+        # STANDBY, then clear it again.
+        await middleware.call('fc.fc_host.reset_wired')
+
+
+async def setup(middleware):
+    middleware.event_subscribe("failover.status", _failover_status_change)
