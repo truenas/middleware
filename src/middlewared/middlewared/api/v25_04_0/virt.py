@@ -88,7 +88,7 @@ class Device(BaseModel):
 
 
 class Disk(Device):
-    dev_type: Literal['Disk']
+    dev_type: Literal['DISK']
     source: Optional[str] = None
     destination: Optional[str] = None
 
