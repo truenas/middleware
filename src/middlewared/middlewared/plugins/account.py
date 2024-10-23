@@ -531,7 +531,6 @@ class UserService(CRUDService):
                     'smb': False,
                     'sudo_commands': [],
                     'sudo_commands_nopasswd': [],
-                    'allow_duplicate_gid': False
                 }, False)
                 group = self.middleware.call_sync('group.query', [
                     ('id', '=', group), ('local', '=', True)
@@ -684,9 +683,6 @@ class UserService(CRUDService):
                 'Two-factor authentication is enabled globally but not configured for this user.'
             )
 
-        if data.get('uid') == user['uid']:
-            data.pop('uid')  # Only check for duplicate UID if we are updating it
-
         group_ids = [group['id']]
         if data.get('groups'):
             group_ids.extend(data['groups'])
@@ -717,7 +713,7 @@ class UserService(CRUDService):
             if 'home_mode' in data:
                 verrors.add('user_update.home_mode', 'This attribute cannot be changed')
 
-            for i in ('group', 'home', 'uid', 'username', 'smb'):
+            for i in ('group', 'home', 'username', 'smb'):
                 if i in data and data[i] != user[i]:
                     verrors.add(f'user_update.{i}', 'This attribute cannot be changed')
 
@@ -1964,8 +1960,7 @@ class GroupService(CRUDService):
 
             pw_checkname(verrors, f'{schema}.name', data['name'])
 
-        allow_duplicate_gid = data.pop('allow_duplicate_gid', False)
-        if data.get('gid') and not allow_duplicate_gid:
+        if data.get('gid') is not None:
             try:
                 existing = await self.middleware.call(
                     'group.get_group_obj', {'gid': data['gid']},
@@ -1979,7 +1974,6 @@ class GroupService(CRUDService):
                     errno.EEXIST,
                 )
 
-        if data.get('gid'):
             if privilege := (await self.middleware.call('privilege.used_local_gids')).get(data['gid']):
                 verrors.add(
                     f'{schema}.gid',
