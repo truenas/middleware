@@ -216,9 +216,8 @@ class Port(Range):
 
 
 class QueryFilters(ValidatorBase):
-    def __call__(self, value: list) -> list:
+    def __call__(self, value):
         validate_filters(value)
-        return value
 
 
 class QueryOptions(ValidatorBase):

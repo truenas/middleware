@@ -1,18 +1,21 @@
-from typing import Any
 from typing_extensions import Annotated, Self
 
 from middlewared.api.base import BaseModel
-from middlewared.validators import QueryFilters as QueryFiltersValidator
-from middlewared.validators import QueryOptions as QueryOptionsValidator
+from middlewared.utils import filters
 
 from pydantic import AfterValidator, model_validator
 
 __all__ = ["QueryFilters", "QueryOptions", "QueryArgs"]
 
-qf_validator = QueryFiltersValidator()
-qo_validator = QueryOptionsValidator()
+filter_obj = filters()
 
-QueryFilters = Annotated[list, AfterValidator(qf_validator)]
+
+def validate_query_filters(qf: list) -> list:
+    filter_obj.validate_filters(qf)
+    return qf
+
+
+QueryFilters = Annotated[list, AfterValidator(validate_query_filters)]
 
 
 class QueryOptions(BaseModel):
@@ -31,7 +34,7 @@ class QueryOptions(BaseModel):
 
     @model_validator(mode='after')
     def validate_query_options(self) -> Self:
-        qo_validator(self.dict())
+        filter_obj.validate_options(self.dict())
         return self
 
 
