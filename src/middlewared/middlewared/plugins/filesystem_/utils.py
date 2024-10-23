@@ -1,10 +1,16 @@
 import enum
+from middlewared.utils.filesystem.acl import (
+    ACL_XATTRS,
+    NFS4ACE_Flag,
+    NFS4ACE_FlagSimple,
+    NFS4ACE_Type,
+)
 
 
 class ACLType(enum.Enum):
-    NFS4 = (['tag', 'id', 'perms', 'flags', 'type'], ["owner@", "group@", "everyone@"])
-    POSIX1E = (['default', 'tag', 'id', 'perms'], ["USER_OBJ", "GROUP_OBJ", "OTHER", "MASK"])
-    DISABLED = ([], [])
+    NFS4 = (('tag', 'perms', 'flags', 'type'), ("owner@", "group@", "everyone@"))
+    POSIX1E = (('default', 'tag', 'perms'), ("USER_OBJ", "GROUP_OBJ", "OTHER", "MASK"))
+    DISABLED = ((), ())
 
     def _validate_id(self, id_, special):
         if id_ is None or id_ < 0:
@@ -15,7 +21,7 @@ class ACLType(enum.Enum):
     def _validate_entry(self, idx, entry, errors):
         is_special = entry['tag'] in self.value[1]
 
-        if is_special and entry.get('type') == 'DENY':
+        if is_special and entry.get('type') == NFS4ACE_Type.DENY:
             errors.append((
                 idx,
                 f'{entry["tag"]}: DENY entries for this principal are not permitted.',
@@ -29,24 +35,38 @@ class ACLType(enum.Enum):
 
     def validate(self, theacl):
         errors = []
-        ace_keys = self.value[0]
+        ace_keys = set(self.value[0])
+        id_keys = set(('who', 'id'))
 
-        if self != ACLType.NFS4 and theacl.get('nfs41flags'):
+        if self is not ACLType.NFS4 and theacl.get('nfs41flags'):
             errors.append(f"NFS41 ACL flags are not valid for ACLType [{self.name}]")
 
         for idx, entry in enumerate(theacl['dacl']):
-            extra = set(entry.keys()) - set(ace_keys)
-            missing = set(ace_keys) - set(entry.keys())
+            entry_keys = set(entry.keys())
+            extra = entry_keys - ace_keys - id_keys
+            missing = ace_keys - entry_keys
+
             if extra:
                 errors.append(
                     (idx, f"ACL entry contains invalid extra key(s): {extra}", None)
                 )
+                continue
             if missing:
                 errors.append(
                     (idx, f"ACL entry is missing required keys(s): {missing}", None)
                 )
+                continue
 
-            if extra or missing:
+            if not ace_keys & id_keys:
+                errors.append(
+                    (idx, 'Numeric ID "id" or account name "who" must be specified', None)
+                )
+                continue
+
+            if len(ace_keys & id_keys) == 2:
+                errors.append(
+                    (idx, 'Numeric ID "id" and account name "who" may not be specified simultaneously', None)
+                )
                 continue
 
             self._validate_entry(idx, entry, errors)
@@ -91,11 +111,7 @@ class ACLType(enum.Enum):
         return out
 
     def xattr_names():
-        return set([
-            "system.posix_acl_access",
-            "system.posix_acl_default",
-            "system.nfs4_acl_xdr"
-        ])
+        return ACL_XATTRS
 
     def __calculate_inherited_posix1e(self, theacl, isdir):
         inherited = []
@@ -118,45 +134,45 @@ class ACLType(enum.Enum):
             if not (flags := entry.get('flags', {}).copy()):
                 continue
 
-            if (basic := flags.get('BASIC')) == 'NOINHERIT':
+            if (basic := flags.get('BASIC')) == NFS4ACE_FlagSimple.NOINHERIT:
                 continue
-            elif basic == 'INHERIT':
-                flags['INHERITED'] = True
+            elif basic == NFS4ACE_FlagSimple.INHERIT:
+                flags[NFS4ACE_Flag.INHERITED] = True
                 inherited.append(entry)
                 continue
-            elif not flags.get('FILE_INHERIT', False) and not flags.get('DIRECTORY_INHERIT', False):
+            elif not flags.get(NFS4ACE_Flag.FILE_INHERIT, False) and not flags.get(NFS4ACE_Flag.DIRECTORY_INHERIT, False):
                 # Entry has no inherit flags
                 continue
-            elif not isdir and not flags.get('FILE_INHERIT'):
+            elif not isdir and not flags.get(NFS4ACE_Flag.FILE_INHERIT):
                 # File and this entry doesn't inherit on files
                 continue
 
             if isdir:
-                if not flags.get('DIRECTORY_INHERIT', False):
-                    if flags['NO_PROPAGATE_INHERIT']:
+                if not flags.get(NFS4ACE_Flag.DIRECTORY_INHERIT, False):
+                    if flags[NFS4ACE_Flag.NO_PROPAGATE_INHERIT]:
                         # doesn't apply to this dir and shouldn't apply to contents.
                         continue
 
                     # This is a directory ACL and we have entry that only applies to files.
-                    flags['INHERIT_ONLY'] = True
-                elif flags.get('INHERIT_ONLY', False):
-                    flags['INHERIT_ONLY'] = False
-                elif flags.get('NO_PROPAGATE_INHERIT'):
-                    flags['DIRECTORY_INHERIT'] = False
-                    flags['FILE_INHERIT'] = False
-                    flags['NO_PROPAGATE_INHERIT'] = False
+                    flags[NFS4ACE_Flag.INHERIT_ONLY] = True
+                elif flags.get(NFS4ACE_Flag.INHERIT_ONLY, False):
+                    flags[NFS4ACE_Flag.INHERIT_ONLY] = False
+                elif flags.get(NFS4ACE_Flag.NO_PROPAGATE_INHERIT):
+                    flags[NFS4ACE_Flag.DIRECTORY_INHERIT] = False
+                    flags[NFS4ACE_Flag.FILE_INHERIT] = False
+                    flags[NFS4ACE_Flag.NO_PROPAGATE_INHERIT] = False
             else:
-                flags['DIRECTORY_INHERIT'] = False
-                flags['FILE_INHERIT'] = False
-                flags['NO_PROPAGATE_INHERIT'] = False
-                flags['INHERIT_ONLY'] = False
+                flags[NFS4ACE_Flag.DIRECTORY_INHERIT] = False
+                flags[NFS4ACE_Flag.FILE_INHERIT] = False
+                flags[NFS4ACE_Flag.NO_PROPAGATE_INHERIT] = False
+                flags[NFS4ACE_Flag.INHERIT_ONLY] = False
 
             inherited.append({
                 'tag': entry['tag'],
                 'id': entry['id'],
                 'type': entry['type'],
                 'perms': entry['perms'],
-                'flags': flags | {'INHERITED': True}
+                'flags': flags | {NFS4ACE_Flag.INHERITED: True}
             })
 
         return inherited
