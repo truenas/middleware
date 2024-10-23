@@ -843,7 +843,7 @@ class FilesystemService(Service):
             if entry.get('who') in (None, ''):
                 continue
 
-            if entry.get('id') is not None:
+            if entry.get('id') in (None, -1):
                 continue
 
             # We're using user.query and group.query to intialize cache entries if required

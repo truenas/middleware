@@ -6,6 +6,8 @@ from middlewared.utils.filesystem.acl import (
     NFS4ACE_Type,
 )
 
+WHO_KEYS = set(['who', 'id'])
+
 
 class ACLType(enum.Enum):
     NFS4 = (('tag', 'perms', 'flags', 'type'), ("owner@", "group@", "everyone@"))
@@ -36,14 +38,13 @@ class ACLType(enum.Enum):
     def validate(self, theacl):
         errors = []
         ace_keys = set(self.value[0])
-        id_keys = set(('who', 'id'))
 
         if self is not ACLType.NFS4 and theacl.get('nfs41flags'):
             errors.append(f"NFS41 ACL flags are not valid for ACLType [{self.name}]")
 
         for idx, entry in enumerate(theacl['dacl']):
             entry_keys = set(entry.keys())
-            extra = entry_keys - ace_keys - id_keys
+            extra = entry_keys - ace_keys - WHO_KEYS
             missing = ace_keys - entry_keys
 
             if extra:
@@ -57,13 +58,13 @@ class ACLType(enum.Enum):
                 )
                 continue
 
-            if not ace_keys & id_keys:
+            if not entry_keys & id_keys:
                 errors.append(
                     (idx, 'Numeric ID "id" or account name "who" must be specified', None)
                 )
                 continue
 
-            if len(ace_keys & id_keys) == 2:
+            if len(entry_keys & id_keys) == 2:
                 errors.append(
                     (idx, 'Numeric ID "id" and account name "who" may not be specified simultaneously', None)
                 )
