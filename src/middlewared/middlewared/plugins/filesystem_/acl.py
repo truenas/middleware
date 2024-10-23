@@ -867,11 +867,13 @@ class FilesystemService(Service):
                 raise ValidationError(f'filesystem.setacl.{idx}.who', f'{entry["who"]}: account does not exist')
 
         if acltype == ACLType.NFS4:
-            return self.setacl_nfs4(job, data)
+            self.setacl_nfs4(job, data)
         elif acltype == ACLType.POSIX1E:
-            return self.setacl_posix1e(job, data)
+            self.setacl_posix1e(job, data)
         else:
             raise CallError(f"{data['path']}: ACLs disabled on path.", errno.EOPNOTSUPP)
+
+        return self.getacl(data['path'])
 
     @private
     def add_to_acl_posix(self, acl, entries):
