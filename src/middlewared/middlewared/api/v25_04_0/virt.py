@@ -84,20 +84,22 @@ class VirtInstanceImageChoicesResult(BaseModel):
 
 class Device(BaseModel):
     name: Optional[NonEmptyString] = None
-    dev_type: Literal['USB', 'TPM', 'DISK', 'GPU', 'NIC', 'PROXY']
     readonly: bool = False
 
 
 class Disk(Device):
+    dev_type: Literal['Disk']
     source: Optional[str] = None
     destination: Optional[str] = None
 
 
 class NIC(Device):
+    dev_type: Literal['NIC']
     network: NonEmptyString
 
 
 class USB(Device):
+    dev_type: Literal['USB']
     bus: Optional[int] = None
     dev: Optional[int] = None
     product_id: Optional[str] = None
@@ -108,6 +110,7 @@ Proto: TypeAlias = Literal['UDP', 'TCP']
 
 
 class Proxy(Device):
+    dev_type: Literal['PROXY']
     source_proto: Proto
     source_port: int
     dest_proto: Proto
@@ -115,6 +118,7 @@ class Proxy(Device):
 
 
 class TPM(Device):
+    dev_type: Literal['TPM']
     path: Optional[str] = None
     pathrm: Optional[str] = None
 
@@ -123,6 +127,7 @@ GPUType: TypeAlias = Literal['PHYSICAL', 'MDEV', 'MIG', 'SRIOV']
 
 
 class GPU(Device):
+    dev_type: Literal['GPU']
     gpu_type: GPUType
     id: str | None = None
     gid: LocalGID | None = None
