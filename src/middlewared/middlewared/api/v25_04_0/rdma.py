@@ -1,6 +1,36 @@
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, single_argument_result
+from typing import Literal
 
-__all__ = ["RdmaCapableServicesArgs", "RdmaCapableServicesResult"]
+__all__ = [
+    "RdmaLinkConfigArgs", "RdmaLinkConfigResult",
+    "RdmaCardConfigArgs", "RdmaCardConfigResult",
+    "RdmaCapableServicesArgs", "RdmaCapableServicesResult"
+]
+
+
+class RdmaLinkConfigArgs(BaseModel):
+    all: bool = False
+
+
+class RdmaLinkConfig(BaseModel):
+    rdma: str
+    netdev: str
+
+
+class RdmaLinkConfigResult(BaseModel):
+    result: list[RdmaLinkConfig]
+
+
+class RdmaCardConfigArgs(BaseModel):
+    pass
+
+
+@single_argument_result
+class RdmaCardConfigResult(BaseModel):
+    serial: str
+    product: str
+    part_number: str
+    links: list[RdmaLinkConfig]
 
 
 class RdmaCapableServicesArgs(BaseModel):
@@ -8,28 +38,4 @@ class RdmaCapableServicesArgs(BaseModel):
 
 
 class RdmaCapableServicesResult(BaseModel):
-    result: list[str]
-
-# class NvmeSelfTest(BaseModel):
-#     num: int
-#     description: str
-#     status: str
-#     status_verbose: str
-#     power_on_hours: int
-#     power_on_hours_ago: int
-#     failing_lba: int | None = None
-#     nsid: int | None = None
-#     seg: int | None = None
-#     sct: int | None = 0x0
-#     code: int | None = 0x0
-
-
-# class ScsiSelfTest(BaseModel):
-#     num: int
-#     description: str
-#     status: str
-#     status_verbose: str
-#     power_on_hours_ago: int
-#     segment_number: int | None = None
-#     lifetime: int | None = None
-#     lba_of_first_error: int | None = None
+    result: list[Literal["NFS"]]
