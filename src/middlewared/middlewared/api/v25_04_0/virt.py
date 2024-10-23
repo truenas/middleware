@@ -135,7 +135,7 @@ class GPU(Device):
     vendorid: Optional[NonEmptyString] = None
 
 
-Device: TypeAlias = Annotated[
+DeviceType: TypeAlias = Annotated[
     Union[Disk, GPU, Proxy, TPM, USB, NIC],
     Field(discriminator='dev_type')
 ]
@@ -173,7 +173,7 @@ class VirtInstanceCreateArgs(BaseModel):
     autostart: bool | None = None
     cpu: str | None = None
     memory: int | None = None
-    devices: List[Device] = None
+    devices: List[DeviceType] = None
 
 
 class VirtInstanceCreateResult(BaseModel):
@@ -209,12 +209,12 @@ class VirtInstanceDeviceListArgs(BaseModel):
 
 
 class VirtInstanceDeviceListResult(BaseModel):
-    result: List[Device]
+    result: List[DeviceType]
 
 
 class VirtInstanceDeviceAddArgs(BaseModel):
     id: str
-    device: Device
+    device: DeviceType
 
 
 class VirtInstanceDeviceAddResult(BaseModel):
