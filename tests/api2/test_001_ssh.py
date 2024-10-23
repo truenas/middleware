@@ -145,7 +145,7 @@ def test_008_check_root_dataset_settings(ws_client):
             # This is a run where root filesystem is unlocked. Don't obther checking remaining
             continue
 
-        for opt in filter(lambda x: x != 'NOSUID', fhs_entry['options']):
+        for opt in fhs_entry['options']:
             if opt not in fs['mount_opts'] and opt not in fs['super_opts']:
                 assert opt in fs['mount_opts'], f'{opt}: mount option not present for {mp}: {fs["mount_opts"]}'
 
