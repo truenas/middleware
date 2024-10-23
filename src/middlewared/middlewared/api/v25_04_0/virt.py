@@ -17,7 +17,7 @@ class VirtGlobalEntry(BaseModel):
     bridge: str | None = None
     v4_network: str | None = None
     v6_network: str | None = None
-    state: str | None = None
+    state: Literal['INITIALIZING', 'INITIALIZED', 'NO_POOL', 'ERROR', 'LOCKED'] | None = None
 
 
 @single_argument_args('virt_global_update')
@@ -75,7 +75,7 @@ class ImageChoiceItem(BaseModel):
     os: str
     release: str
     arch: str
-    variant: int
+    variant: str
 
 
 class VirtInstanceImageChoicesResult(BaseModel):
@@ -84,20 +84,22 @@ class VirtInstanceImageChoicesResult(BaseModel):
 
 class Device(BaseModel):
     name: Optional[NonEmptyString] = None
-    dev_type: Literal['USB', 'TPM', 'DISK', 'GPU', 'NIC', 'PROXY']
     readonly: bool = False
 
 
 class Disk(Device):
+    dev_type: Literal['DISK']
     source: Optional[str] = None
     destination: Optional[str] = None
 
 
 class NIC(Device):
+    dev_type: Literal['NIC']
     network: NonEmptyString
 
 
 class USB(Device):
+    dev_type: Literal['USB']
     bus: Optional[int] = None
     dev: Optional[int] = None
     product_id: Optional[str] = None
@@ -108,6 +110,7 @@ Proto: TypeAlias = Literal['UDP', 'TCP']
 
 
 class Proxy(Device):
+    dev_type: Literal['PROXY']
     source_proto: Proto
     source_port: int
     dest_proto: Proto
@@ -115,6 +118,7 @@ class Proxy(Device):
 
 
 class TPM(Device):
+    dev_type: Literal['TPM']
     path: Optional[str] = None
     pathrm: Optional[str] = None
 
@@ -123,6 +127,7 @@ GPUType: TypeAlias = Literal['PHYSICAL', 'MDEV', 'MIG', 'SRIOV']
 
 
 class GPU(Device):
+    dev_type: Literal['GPU']
     gpu_type: GPUType
     id: str | None = None
     gid: LocalGID | None = None
@@ -135,7 +140,10 @@ class GPU(Device):
     vendorid: Optional[NonEmptyString] = None
 
 
-Devices: TypeAlias = List[Union[Disk, GPU, Proxy, TPM, USB]]
+DeviceType: TypeAlias = Annotated[
+    Union[Disk, GPU, Proxy, TPM, USB, NIC],
+    Field(discriminator='dev_type')
+]
 
 
 class VirtInstanceAlias(BaseModel):
@@ -170,7 +178,7 @@ class VirtInstanceCreateArgs(BaseModel):
     autostart: bool | None = None
     cpu: str | None = None
     memory: int | None = None
-    devices: Devices = None
+    devices: List[DeviceType] = None
 
 
 class VirtInstanceCreateResult(BaseModel):
@@ -206,12 +214,12 @@ class VirtInstanceDeviceListArgs(BaseModel):
 
 
 class VirtInstanceDeviceListResult(BaseModel):
-    result: List[Devices]
+    result: List[DeviceType]
 
 
 class VirtInstanceDeviceAddArgs(BaseModel):
     id: str
-    device: Union[Disk, GPU, NIC, Proxy, TPM, USB] = Field(..., descriminator='dev_type')
+    device: DeviceType
 
 
 class VirtInstanceDeviceAddResult(BaseModel):
