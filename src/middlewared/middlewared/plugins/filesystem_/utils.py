@@ -64,7 +64,7 @@ class ACLType(enum.Enum):
                 )
                 continue
 
-            if len(entry_keys & WHO_KEYS) == 2:
+            if entry.get('who') and entry.get('id') not in (None, -1):
                 errors.append(
                     (idx, 'Numeric ID "id" and account name "who" may not be specified simultaneously', None)
                 )
