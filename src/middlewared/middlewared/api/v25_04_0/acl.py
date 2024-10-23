@@ -101,11 +101,11 @@ class NFS4ACE_BasicFlags(BaseModel):
 
 class NFS4ACE(BaseModel):
     tag: NFS4ACE_Tags
-    id: AceWhoId
+    id: AceWhoId | None
     type: NFS4ACE_EntryTypes
     perms: NFS4ACE_AdvancedPerms | NFS4ACE_BasicPerms
     flags: NFS4ACE_AdvancedFlags | NFS4ACE_BasicFlags
-    who: Optional[LocalUsername | RemoteUsername | None]
+    who: LocalUsername | RemoteUsername | None = None
 
 
 class NFS4ACL_Flags(BaseModel):
@@ -132,10 +132,10 @@ class POSIXACE_Perms(BaseModel):
 
 class POSIXACE(BaseModel):
     tag: POSIXACE_Tags
-    id: AceWhoId
+    id: AceWhoId | None
     perms: POSIXACE_Perms
     default: bool
-    who: Optional[LocalUsername | RemoteUsername | None]
+    who: LocalUsername | RemoteUsername | None = None
 
 
 class AclBaseFileInfo(BaseModel):
