@@ -109,9 +109,9 @@ class NFS4ACE(BaseModel):
 
 
 class NFS4ACL_Flags(BaseModel):
-    NFS4ACL_Flag.AUTOINHERIT: bool
-    NFS4ACL_Flag.PROTECTED: bool
-    NFS4ACL_Flag.DEFAULT: bool
+    NFS4ACL_Flag.AUTOINHERIT: bool = False
+    NFS4ACL_Flag.PROTECTED: bool = False
+    NFS4ACL_Flag.DEFAULT: bool = False
 
 
 POSIXACE_Tags = Literal[
@@ -139,8 +139,8 @@ class POSIXACE(BaseModel):
 
 
 class AclBaseFileInfo(BaseModel):
-    uid: int
-    gid: int
+    uid: AceWhoId | None
+    gid: AceWhoId | None
     path: str
 
 
@@ -183,11 +183,14 @@ class FilesystemSetaclOptions(BaseModel):
 
 
 @single_argument_args('filesystem_acl')
-class FilesystemSetaclArgs(AclBaseFileInfo):
+class FilesystemSetaclArgs(BaseModel):
+    path: NonEmptyString
     dacl: list[NFS4ACE] | list[POSIXACE]
-    nfs41_flags: Optional[NFS4ACL_Flags]
-    acltype: Literal[FS_ACL_Type.NFS4, FS_ACL_Type.POSIX1E]
+    acltype: Literal[FS_ACL_Type.NFS4, FS_ACL_Type.POSIX1E] | None
     options: FilesystemSetaclOptions = Field(default=FilesystemSetaclOptions())
+    nfs41_flags: NFS4ACL_Flags = Field(default=NFS4ACL_Flags())
+    uid: AceWhoId | None = ACL_UNDEFINED_ID
+    gid: AceWhoId | None = ACL_UNDEFINED_ID
 
 
 class FilesystemSetaclResult(FilesystemGetaclResult):
