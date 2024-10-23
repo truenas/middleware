@@ -3,7 +3,12 @@ import subprocess
 from pathlib import Path
 from .constants import RDMAprotocols
 
-from middlewared.schema import Bool, Dict, List, Ref, Str, accepts, returns
+from middlewared.api import api_method
+from middlewared.api.current import (
+    RdmaLinkConfigArgs, RdmaLinkConfigResult,
+    RdmaCardConfigArgs, RdmaCardConfigResult,
+    RdmaCapableServicesArgs, RdmaCapableServicesResult
+)
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
 from middlewared.utils.functools_ import cache
@@ -40,14 +45,7 @@ class RDMAService(Service):
                 result['part'] = sline[len(PART_NUMBER_PREFIX):]
         return result
 
-    @private
-    @accepts(Bool('all', default=False))
-    @returns(List(items=[Dict(
-        'rdma_link_config',
-        Str('rdma', required=True),
-        Str('netdev', required=True),
-        register=True
-    )]))
+    @api_method(RdmaLinkConfigArgs, RdmaLinkConfigResult, private=True)
     async def get_link_choices(self, all):
         """Return a list containing dictionaries with keys 'rdma' and 'netdev'.
 
@@ -83,14 +81,7 @@ class RDMAService(Service):
                 result.append({'rdma': link['ifname'], 'netdev': link['netdev']})
         return result
 
-    @accepts()
-    @returns(List(items=[Dict(
-        'rdma_card_config',
-        Str('serial'),
-        Str('product'),
-        Str('part_number'),
-        List('links', items=[Ref('rdma_link_config')])
-    )], register=True))
+    @api_method(RdmaCardConfigArgs, RdmaCardConfigResult)
     @cache
     def get_card_choices(self):
         """Return a list containing details about each RDMA card.  Dual cards
@@ -135,7 +126,7 @@ class RDMAService(Service):
             v['name'] = ':'.join(sorted(names))
         return list(grouper.values())
 
-    @private
+    @api_method(RdmaCapableServicesArgs, RdmaCapableServicesResult)
     async def capable_services(self):
         result = []
         is_ent = await self.middleware.call('system.is_enterprise')
