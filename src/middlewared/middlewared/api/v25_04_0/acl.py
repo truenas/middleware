@@ -109,9 +109,9 @@ class NFS4ACE(BaseModel):
 
 
 class NFS4ACL_Flags(BaseModel):
-    NFS4ACL_Flag.AUTOINHERIT: bool
-    NFS4ACL_Flag.PROTECTED: bool
-    NFS4ACL_Flag.DEFAULT: bool
+    autoinherit: bool
+    protected: bool
+    defaulted: bool
 
 
 POSIXACE_Tags = Literal[
