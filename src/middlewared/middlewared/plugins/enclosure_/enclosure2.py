@@ -11,7 +11,7 @@ from middlewared.utils import filter_list
 
 from .constants import SUPPORTS_IDENTIFY_KEY
 from .enums import JbofModels
-from .fseries_drive_identify import set_slot_status as fseries_set_slot_status
+from .fseries_drive_identify import InsufficientPrivilege, set_slot_status as fseries_set_slot_status
 from .jbof_enclosures import map_jbof, set_slot_status as _jbof_set_slot_status
 from .map2 import combine_enclosures
 from .nvme2 import map_nvme
@@ -94,7 +94,14 @@ class Enclosure2Service(Service):
                 # in a completely different way than sata/scsi
                 return r30_set_slot_status(data['slot'], data['status'])
             elif enc_info['id'].startswith(('f60', 'f100', 'f130')):
-                return fseries_set_slot_status(data['slot'], data['status'])
+                try:
+                    return fseries_set_slot_status(data['slot'], data['status'])
+                except InsufficientPrivilege:
+                    if self.middleware.call_sync('failover.licensed'):
+                        opts = {'raise_connect_error': False}
+                        return self.middleware.call_sync(
+                            'failover.call_remote', 'enclosure2.set_slot_status', [data], opts
+                        )
             else:
                 # mseries, and some rseries have mapped nvme enclosures but they
                 # don't support drive LED identification
