@@ -181,7 +181,7 @@ async def reboot_info(middleware, *args, **kwargs):
 
 
 def remote_reboot_info(middleware, *args, **kwargs):
-    middleware.call_sync('failover.reboot.send_event', background=True)
+    asyncio.run_coroutine_threadsafe(middleware.call('failover.reboot.send_event'), loop=middleware.loop)
 
 
 async def setup(middleware):
