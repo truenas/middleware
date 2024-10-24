@@ -245,6 +245,8 @@ class FilesystemSetaclArgs(BaseModel):
                 'Simultaneosuly setting and removing ACL from path is not supported' 
             )
 
+        return self
+
 
 class FilesystemSetaclResult(FilesystemGetaclResult):
     pass
