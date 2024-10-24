@@ -32,6 +32,9 @@ class AppService(Service):
         Upgrade `app_name` app to `app_version`.
         """
         app = self.middleware.call_sync('app.get_instance', app_name)
+        if app['state'] == 'STOPPED':
+            raise CallError('In order to upgrade an app, it must not be in stopped state')
+
         if app['upgrade_available'] is False:
             raise CallError(f'No upgrade available for {app_name!r}')
 
