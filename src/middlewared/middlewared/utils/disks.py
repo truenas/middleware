@@ -1,18 +1,19 @@
-import pathlib
+import os
 import re
-import typing
 
 import pyudev
 
 
 DISKS_TO_IGNORE = ('sr', 'md', 'dm-', 'loop', 'zd')
 RE_IS_PART = re.compile(r'p\d{1,3}$')
+# sda, vda, nvme0n1 but not sda1/vda1/nvme0n1p1
+VALID_WHOLE_DISK = re.compile(r'^sd[a-z]+$|^vd[a-z]+$|^nvme\d+n\d+$')
 
 
-def safe_retrieval(prop, key, default, as_int=False) -> typing.Any:
+def safe_retrieval(prop, key, default, as_int=False):
     value = prop.get(key)
     if value is not None:
-        if type(value) is bytes:
+        if isinstance(value, bytes):
             value = value.strip().decode()
         else:
             value = value.strip()
@@ -62,21 +63,9 @@ def get_disk_names() -> list[str]:
     NOTE: The return of this method should match the keys retrieve when running `self.get_disks`.
     """
     disks = []
-    try:
-        for disk in pathlib.Path('/sys/class/block').iterdir():
-            if disk.name.startswith(DISKS_TO_IGNORE):
-                continue
-            elif RE_IS_PART.search(disk.name):
-                # sdap1/nvme0n1p12/pmem0p1/etc
-                continue
-            elif disk.name[:2] in ('sd', 'vd') and disk.name[-1].isdigit():
-                # sda1/sda2/vda1/vda2/etc
-                continue
-            else:
-                disks.append(disk.name)
-    except FileNotFoundError:
-        pass
-
+    with os.scandir('/dev') as sdir:
+        for i in filter(lambda x: VALID_WHOLE_DISK.match(x.name), sdir):
+            disks.append(i.name)
     return disks
 
 
