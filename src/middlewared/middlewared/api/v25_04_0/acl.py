@@ -131,7 +131,7 @@ class NFS4ACE(BaseModel):
                     f'tags: {", ".join([tag for tag in NFS4_SPECIAL_ENTRIES])}'
                 )
         else:
-            if not ace_in.who and ace_in.id in (None, -1):
+            if not self.who and self.id in (None, -1):
                 raise ValueError(
                     'Numeric ID "id" or account name "who" must be specified'
                 )
