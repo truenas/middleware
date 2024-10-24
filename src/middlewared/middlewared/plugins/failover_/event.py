@@ -962,19 +962,8 @@ class FailoverEventsService(Service):
             return
 
         logger.info('Going to initialize apps plugin as %r pool is configured for apps', pool)
-        logger.info('Mounting relevant docker datasets')
         try:
-            self.run_call('docker.fs_manage.mount')
-        except Exception:
-            self.middleware.call_sync('docker.state.set_status', Status.FAILED.value, 'Failed to mount docker datasets')
-            logger.error('Failed to mount docker datasets', exc_info=True)
-            return
-        else:
-            logger.info('Mounted docker datasets successfully')
-
-        logger.info('Starting docker service')
-        try:
-            self.run_call('docker.state.start_service')
+            self.run_call('docker.state.start_service', True)
         except Exception:
             logger.error('Failed to start docker service', exc_info=True)
         else:
