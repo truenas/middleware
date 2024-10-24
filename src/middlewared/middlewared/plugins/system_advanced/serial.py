@@ -49,7 +49,7 @@ class SystemAdvancedService(Service):
                         'Failed to %r %r serialport service: %r', command[1], command[2], cp.stderr.decode()
                     )
 
-        if restart_ttys or new['consolemenu'] != new['consolemenu']:
+        if restart_ttys or old['consolemenu'] != new['consolemenu']:
             serial_action = 'restart' if new['serialconsole'] else 'stop'
             cp = await run(['systemctl', serial_action, f'serial-getty@{new["serialport"]}.service'], check=False)
             if cp.returncode:
@@ -57,7 +57,7 @@ class SystemAdvancedService(Service):
                     'Failed to %r %r serial port: %r', serial_action, new['serialport'], cp.stderr.decode()
                 )
 
-        if new['consolemenu'] != new['consolemenu']:
+        if old['consolemenu'] != new['consolemenu']:
             cp = await run(['systemctl', 'restart', 'getty@tty1.service'], check=False)
             if cp.returncode:
                 self.middleware.logger.error('Failed to restart tty service: %r', cp.stderr.decode())
