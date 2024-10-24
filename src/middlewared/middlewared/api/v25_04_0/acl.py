@@ -238,6 +238,9 @@ class FilesystemSetaclArgs(BaseModel):
     uid: AceWhoId | None = ACL_UNDEFINED_ID
     gid: AceWhoId | None = ACL_UNDEFINED_ID
 
+    # acltype is explicitly added to preserve compatibility with older setacl API
+    acltype: Literal[FS_ACL_Type.NFS4, FS_ACL_Type.POSIX1E] | None = None
+
     @model_validator(mode='after')
     def check_setacl_valid(self) -> Self:
         if len(self.dacl) != 0 and self.options.stripacl:
