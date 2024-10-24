@@ -1,8 +1,18 @@
 import ipaddress
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    StaticRouteEntry,
+    StaticRouteUpdateArgs,
+    StaticRouteUpdateResult,
+    StaticRouteCreateArgs,
+    StaticRouteCreateResult,
+    StaticRouteDeleteArgs,
+    StaticRouteDeleteResult,
+)
 import middlewared.sqlalchemy as sa
 from middlewared.service import CRUDService, private
-from middlewared.schema import Dict, Str, Int, IPAddr, ValidationErrors
+from middlewared.schema import ValidationErrors
 from middlewared.plugins.interface.netif import netif
 
 
@@ -21,15 +31,9 @@ class StaticRouteService(CRUDService):
         datastore_prefix = 'sr_'
         datastore_extend = 'staticroute.upper'
         cli_namespace = 'network.static_route'
+        entry = StaticRouteEntry
 
-    ENTRY = Dict(
-        'staticroute_entry',
-        IPAddr('destination', network=True, required=True),
-        IPAddr('gateway', allow_zone_index=True, required=True),
-        Str('description', required=True, default=''),
-        Int('id', required=True),
-    )
-
+    @api_method(StaticRouteCreateArgs, StaticRouteCreateResult)
     async def do_create(self, data):
         """
         Create a Static Route.
@@ -50,6 +54,7 @@ class StaticRouteService(CRUDService):
 
         return await self.get_instance(id_)
 
+    @api_method(StaticRouteUpdateArgs, StaticRouteUpdateResult)
     async def do_update(self, id_, data):
         """
         Update Static Route of `id`.
@@ -69,6 +74,7 @@ class StaticRouteService(CRUDService):
 
         return await self.get_instance(id_)
 
+    @api_method(StaticRouteDeleteArgs, StaticRouteDeleteResult)
     def do_delete(self, id_):
         """
         Delete Static Route of `id`.

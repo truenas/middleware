@@ -13,6 +13,7 @@ from .keychain import *  # noqa
 from .privilege import *  # noqa
 from .rdma import *  # noqa
 from .smartctl import * # noqa
+from .static_route import * # noqa
 from .system_reboot import *  # noqa
 from .system_lifecycle import *  # noqa
 from .user import *  # noqa
