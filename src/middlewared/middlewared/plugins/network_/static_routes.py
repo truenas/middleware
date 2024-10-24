@@ -87,9 +87,11 @@ class StaticRouteService(CRUDService):
 
     @private
     def sync(self):
-        rt = netif.RoutingTable()
-        new_routes = [self._netif_route(route) for route in self.middleware.call_sync('staticroute.query')]
+        new_routes = list()
+        for route in self.middleware.call_sync('staticroute.query'):
+            new_routes.append(self._netif_route(route))
 
+        rt = netif.RoutingTable()
         default_route_ipv4 = rt.default_route_ipv4
         default_route_ipv6 = rt.default_route_ipv6
         for route in rt.routes:
@@ -101,15 +103,15 @@ class StaticRouteService(CRUDService):
                 self.logger.debug('Removing route %r', route.asdict())
                 try:
                     rt.delete(route)
-                except Exception as e:
-                    self.logger.warning('Failed to remove route: %r', e)
+                except Exception:
+                    self.logger.exception('Failed to remove route')
 
         for route in new_routes:
             self.logger.debug('Adding route %r', route.asdict())
             try:
                 rt.add(route)
-            except Exception as e:
-                self.logger.warning('Failed to add route: %r', e)
+            except Exception:
+                self.logger.exception('Failed to add route')
 
     def _validate(self, schema_name, data):
         dst, gw = data.pop('destination'), data.pop('gateway')
