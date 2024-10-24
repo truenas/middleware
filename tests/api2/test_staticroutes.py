@@ -1,43 +1,52 @@
 import pytest
 
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call, ssh
 
-DESTINATION = '127.1.1.1'
-GATEWAY = '127.0.0.1'
-
-@pytest.fixture(scope='module')
-def sr_dict():
-    return {}
-
-
-def test_creating_staticroute(sr_dict):
-    sr_dict['newroute'] = call('staticroute.create', {
-        'destination': DESTINATION,
-        'gateway': GATEWAY,
-        'description': 'test route',
-    })
+ROUTE = {
+    "destination": "127.1.1.1",
+    "gateway": "127.0.0.1",
+    "description": "Test Route",
+}
+BAD_ROUTE = {"destination": "fe80:aaaa:bbbb:cccc::1/64", "gateway": ROUTE["gateway"]}
 
 
-def test_check_staticroute_configured_using_api(sr_dict):
-    data = call('staticroute.query', [['id', '=', sr_dict['newroute']['id']]], {'get': True})
-    assert DESTINATION in data['destination']
-    assert data['gateway'] == GATEWAY
+def test_staticroute():
+    """
+    1. try to create invalid route
+    2. create valid route
+    3. validate route was added to OS
+    4. try to update valid route with invalid data
+    5. delete route
+    6. validate route was removed from OS
+    """
+    # try to create bad route
+    with pytest.raises(ValidationErrors):
+        call("staticroute.create", BAD_ROUTE)
 
+    # now create valid one
+    id_ = call("staticroute.create", ROUTE)["id"]
 
-def test_checking_staticroute_configured_using_ssh(request):
-    results = ssh(f'netstat -4rn|grep -E ^{DESTINATION}', complete_response=True)
-    assert results['result'] is True
-    assert results['stdout'].strip().split()[1] == GATEWAY
+    # validate query
+    qry = call("staticroute.query", [["id", "=", id_]], {"get": True})
+    assert ROUTE["destination"] in qry["destination"]
+    assert ROUTE["gateway"] == qry["gateway"]
+    assert ROUTE["description"] == qry["description"]
 
+    # validate route was added to OS
+    results = ssh(f"ip route show {ROUTE['destination']}", complete_response=True)
+    assert f"{ROUTE['destination']} via {ROUTE['gateway']}" in results["stdout"]
 
-def test_delete_staticroute(sr_dict):
-    call('staticroute.delete', sr_dict['newroute']['id'])
+    # update it with bad data
+    with pytest.raises(ValidationErrors):
+        call("staticroute.update", id_, {"destination": BAD_ROUTE["destination"]})
 
+    # now delete
+    assert call("staticroute.delete", id_)
+    assert not call("staticroute.query", [["id", "=", id_]])
 
-def test_check_staticroute_unconfigured_using_api(sr_dict):
-    assert call('staticroute.query', [['destination', '=', DESTINATION]]) == []
-
-
-def test_checking_staticroute_unconfigured_using_ssh(request):
-    results = ssh(f'netstat -4rn|grep -E ^{DESTINATION}', complete_response=True, check=False)
-    assert results['result'] is False
+    # validate route was removed from OS
+    results = ssh(
+        f"ip route show {ROUTE['destination']}", complete_response=True, check=False
+    )
+    assert ROUTE["destination"] not in results["stdout"]

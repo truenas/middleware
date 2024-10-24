@@ -1,8 +1,18 @@
-import ipaddress
+from ipaddress import ip_interface
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    StaticRouteEntry,
+    StaticRouteUpdateArgs,
+    StaticRouteUpdateResult,
+    StaticRouteCreateArgs,
+    StaticRouteCreateResult,
+    StaticRouteDeleteArgs,
+    StaticRouteDeleteResult,
+)
 import middlewared.sqlalchemy as sa
 from middlewared.service import CRUDService, private
-from middlewared.schema import Dict, Str, Int, IPAddr, ValidationErrors
+from middlewared.service_exception import ValidationError
 from middlewared.plugins.interface.netif import netif
 
 
@@ -19,17 +29,10 @@ class StaticRouteService(CRUDService):
     class Config:
         datastore = 'network.staticroute'
         datastore_prefix = 'sr_'
-        datastore_extend = 'staticroute.upper'
         cli_namespace = 'network.static_route'
+        entry = StaticRouteEntry
 
-    ENTRY = Dict(
-        'staticroute_entry',
-        IPAddr('destination', network=True, required=True),
-        IPAddr('gateway', allow_zone_index=True, required=True),
-        Str('description', required=True, default=''),
-        Int('id', required=True),
-    )
-
+    @api_method(StaticRouteCreateArgs, StaticRouteCreateResult)
     async def do_create(self, data):
         """
         Create a Static Route.
@@ -40,8 +43,6 @@ class StaticRouteService(CRUDService):
         """
         self._validate('staticroute_create', data)
 
-        await self.lower(data)
-
         id_ = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
@@ -50,6 +51,7 @@ class StaticRouteService(CRUDService):
 
         return await self.get_instance(id_)
 
+    @api_method(StaticRouteUpdateArgs, StaticRouteUpdateResult)
     async def do_update(self, id_, data):
         """
         Update Static Route of `id`.
@@ -60,7 +62,6 @@ class StaticRouteService(CRUDService):
 
         self._validate('staticroute_update', new)
 
-        await self.lower(new)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix})
@@ -69,27 +70,28 @@ class StaticRouteService(CRUDService):
 
         return await self.get_instance(id_)
 
+    @api_method(StaticRouteDeleteArgs, StaticRouteDeleteResult)
     def do_delete(self, id_):
         """
         Delete Static Route of `id`.
         """
-        staticroute = self.middleware.call_sync('staticroute.get_instance', id_)
+        st = self.middleware.call_sync('staticroute.get_instance', id_)
         rv = self.middleware.call_sync('datastore.delete', self._config.datastore, id_)
         try:
             rt = netif.RoutingTable()
-            rt.delete(self._netif_route(staticroute))
-        except Exception as e:
-            self.logger.warn(
-                'Failed to delete static route %s: %s', staticroute['destination'], e,
-            )
+            rt.delete(self._netif_route(st))
+        except Exception:
+            self.logger.exception('Failed to delete static route %r', st['destination'])
 
         return rv
 
     @private
     def sync(self):
-        rt = netif.RoutingTable()
-        new_routes = [self._netif_route(route) for route in self.middleware.call_sync('staticroute.query')]
+        new_routes = list()
+        for route in self.middleware.call_sync('staticroute.query'):
+            new_routes.append(self._netif_route(route))
 
+        rt = netif.RoutingTable()
         default_route_ipv4 = rt.default_route_ipv4
         default_route_ipv6 = rt.default_route_ipv6
         for route in rt.routes:
@@ -101,36 +103,30 @@ class StaticRouteService(CRUDService):
                 self.logger.debug('Removing route %r', route.asdict())
                 try:
                     rt.delete(route)
-                except Exception as e:
-                    self.logger.warning('Failed to remove route: %r', e)
+                except Exception:
+                    self.logger.exception('Failed to remove route')
 
         for route in new_routes:
             self.logger.debug('Adding route %r', route.asdict())
             try:
                 rt.add(route)
-            except Exception as e:
-                self.logger.warning('Failed to add route: %r', e)
-
-    @private
-    async def lower(self, data):
-        data['description'] = data['description'].lower()
-        return data
-
-    @private
-    async def upper(self, data):
-        data['description'] = data['description'].upper()
-        return data
+            except Exception:
+                self.logger.exception('Failed to add route')
 
     def _validate(self, schema_name, data):
-        verrors = ValidationErrors()
-
-        if (':' in data['destination']) != (':' in data['gateway']):
-            verrors.add(f'{schema_name}.destination', 'Destination and gateway address families must match')
-
-        verrors.check()
+        dst, gw = data.pop('destination'), data.pop('gateway')
+        dst, gw = ip_interface(dst), ip_interface(gw)
+        if dst.version != gw.version:
+            raise ValidationError(
+                f'{schema_name}.destination',
+                'Destination and gateway address families must match'
+            )
+        else:
+            data['destination'] = dst.exploded
+            data['gateway'] = gw.ip.exploded
 
     def _netif_route(self, staticroute):
-        ip_interface = ipaddress.ip_interface(staticroute['destination'])
+        ip_info = ip_interface(staticroute['destination'])
         return netif.Route(
-            str(ip_interface.ip), str(ip_interface.netmask), gateway=staticroute['gateway']
+            str(ip_info.ip), str(ip_info.netmask), gateway=staticroute['gateway']
         )
