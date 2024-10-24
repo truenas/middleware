@@ -71,18 +71,18 @@ NFS4ACE_EntryTypes = Literal[
 
 
 class NFS4ACE_AdvancedPerms(BaseModel):
-    READ_DATA: bool
-    WRITE_DATA: bool
-    APPEND_DATA: bool
-    READ_NAMED_ATTRS: bool
-    EXECUTE: bool
-    DELETE: bool
-    DELETE_CHILD: bool
-    READ_ATTRIBUTES: bool
-    WRITE_ATTRIBUTES: bool
-    READ_ACL: bool
-    WRITE_ACL: bool
-    SYNCHRONIZE: bool
+    READ_DATA: bool = False
+    WRITE_DATA: bool = False
+    APPEND_DATA: bool = False
+    READ_NAMED_ATTRS: bool = False
+    EXECUTE: bool = False
+    DELETE: bool = False
+    DELETE_CHILD: bool = False
+    READ_ATTRIBUTES: bool = False
+    WRITE_ATTRIBUTES: bool = False
+    READ_ACL: bool = False
+    WRITE_ACL: bool = False
+    SYNCHRONIZE: bool = False
 
 
 class NFS4ACE_BasicPerms(BaseModel):
