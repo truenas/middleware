@@ -33,8 +33,8 @@ class StaticRouteCreateResult(BaseModel):
     result: StaticRouteEntry
 
 
-class StaticRouteUpdate(StaticRouteEntry, metaclass=ForUpdateMetaclass):
-    id: Excluded = excluded_field()
+class StaticRouteUpdate(StaticRouteCreate, metaclass=ForUpdateMetaclass):
+    pass
 
 
 class StaticRouteUpdateArgs(BaseModel):
