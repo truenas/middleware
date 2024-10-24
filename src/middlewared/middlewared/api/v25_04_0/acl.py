@@ -69,18 +69,18 @@ NFS4ACE_EntryTypes = Literal[
 
 
 class NFS4ACE_AdvancedPerms(BaseModel):
-    read_data: bool
-    write_data: bool
-    append_data: bool
-    read_named_attrs: bool
-    execute: bool
-    delete: bool
-    delete_child: bool
-    read_attributes: bool
-    write_attributes: bool
-    read_acl: bool
-    write_acl: bool
-    synchronize: bool
+    READ_DATA: bool
+    WRITE_DATA: bool
+    APPEND_DATA: bool
+    READ_NAMED_ATTRS: bool
+    EXECUTE: bool
+    DELETE: bool
+    DELETE_CHILD: bool
+    READ_ATTRIBUTES: bool
+    WRITE_ATTRIBUTES: bool
+    READ_ACL: bool
+    WRITE_ACL: bool
+    SYNCHRONIZE: bool
 
 
 class NFS4ACE_BasicPerms(BaseModel):
@@ -88,11 +88,11 @@ class NFS4ACE_BasicPerms(BaseModel):
 
 
 class NFS4ACE_AdvancedFlags(BaseModel):
-    file_inherit: bool
-    directory_inherit: bool
-    no_propagate_inherit: bool
-    inherit_only: bool
-    inherited: bool
+    FILE_INHERIT: bool
+    DIRECTORY_INHERIT: bool
+    NO_PROPAGATE_INHERIT: bool
+    INHERIT_ONLY: bool
+    INHERITED: bool
 
 
 class NFS4ACE_BasicFlags(BaseModel):
@@ -125,9 +125,9 @@ POSIXACE_Tags = Literal[
 
 
 class POSIXACE_Perms(BaseModel):
-    read: bool
-    write: bool
-    execute: bool
+    READ: bool
+    WRITE: bool
+    EXECUTE: bool
 
 
 class POSIXACE(BaseModel):
