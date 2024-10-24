@@ -5,9 +5,13 @@ from pydantic import Secret
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
 
 __all__ = [
-    "IscsiAuthCreateArgs", "IscsiAuthCreateResult",
-    "IscsiAuthUpdateArgs", "IscsiAuthUpdateResult",
-    "IscsiAuthDeleteArgs", "IscsiAuthDeleteResult",
+    "IscsiAuthEntry",
+    "IscsiAuthCreateArgs",
+    "IscsiAuthCreateResult",
+    "IscsiAuthUpdateArgs",
+    "IscsiAuthUpdateResult",
+    "IscsiAuthDeleteArgs",
+    "IscsiAuthDeleteResult",
 ]
 
 
