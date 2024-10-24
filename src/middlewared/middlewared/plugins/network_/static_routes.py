@@ -29,7 +29,6 @@ class StaticRouteService(CRUDService):
     class Config:
         datastore = 'network.staticroute'
         datastore_prefix = 'sr_'
-        datastore_extend = 'staticroute.upper'
         cli_namespace = 'network.static_route'
         entry = StaticRouteEntry
 
@@ -43,8 +42,6 @@ class StaticRouteService(CRUDService):
         `description` is an optional attribute for any notes regarding the static route.
         """
         self._validate('staticroute_create', data)
-
-        await self.lower(data)
 
         id_ = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
@@ -65,7 +62,6 @@ class StaticRouteService(CRUDService):
 
         self._validate('staticroute_update', new)
 
-        await self.lower(new)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix})
@@ -114,16 +110,6 @@ class StaticRouteService(CRUDService):
                 rt.add(route)
             except Exception as e:
                 self.logger.warning('Failed to add route: %r', e)
-
-    @private
-    async def lower(self, data):
-        data['description'] = data['description'].lower()
-        return data
-
-    @private
-    async def upper(self, data):
-        data['description'] = data['description'].upper()
-        return data
 
     def _validate(self, schema_name, data):
         dst, gw = data.pop('destination'), data.pop('gateway')
