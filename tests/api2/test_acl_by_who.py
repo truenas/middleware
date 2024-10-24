@@ -11,13 +11,13 @@ permset_nfsv4_full = {"BASIC": "FULL_CONTROL"}
 flagset_nfsv4_inherit = {"BASIC": "INHERIT"}
 
 
-@pytest.fixture(scopy='module')
+@pytest.fixture(scope='module')
 def posix_acl_dataset():
     with dataset('posix') as ds:
         yield ds
 
 
-@pytest.fixture(scopy='module')
+@pytest.fixture(scope='module')
 def nfsv4_acl_dataset():
     with dataset('nfs4', data={'share_type': 'SMB'}) as ds:
         yield ds
