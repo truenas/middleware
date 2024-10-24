@@ -1,7 +1,10 @@
 import asyncio
 from dataclasses import dataclass
+from datetime import timedelta
+import json
 import subprocess
 
+from middlewared.job import JobProgressBuffer
 from middlewared.plugins.cloud.path import get_remote_path
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.service import CallError
@@ -21,7 +24,7 @@ def get_restic_config(cloud_backup):
 
     url, env = remote.get_restic_config(cloud_backup)
 
-    cmd = ["restic", "--no-cache", "-r", f"{remote.rclone_type}:{url}/{remote_path}"]
+    cmd = ["restic", "--no-cache", "--json", "-r", f"{remote.rclone_type}:{url}/{remote_path}"]
 
     env["RESTIC_PASSWORD"] = cloud_backup["password"]
 
@@ -37,24 +40,23 @@ async def run_restic(job, cmd, env, stdin=None):
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
-    check_progress = asyncio.ensure_future(restic_check_progress(job, proc))
+    check_progress = asyncio.ensure_future(restic_check_progress(job, proc, cmd))
     cancelled_error = None
     try:
+        await proc.wait()
+    except asyncio.CancelledError as e:
+        cancelled_error = e
         try:
-            await proc.wait()
-        except asyncio.CancelledError as e:
-            cancelled_error = e
-            try:
-                await job.middleware.call("service.terminate_process", proc.pid)
-            except CallError as e:
-                job.middleware.logger.warning(f"Error terminating restic on cloud backup abort: {e!r}")
+            await job.middleware.call("service.terminate_process", proc.pid)
+        except CallError as e:
+            job.middleware.logger.warning(f"Error terminating restic on cloud backup abort: {e!r}")
     finally:
         await asyncio.wait_for(check_progress, None)
 
     if cancelled_error is not None:
         raise cancelled_error
     if proc.returncode != 0:
-        message = "".join(job.internal_data.get("messages", []))
+        message = "\n".join(job.internal_data.get("messages", []))
         if message and proc.returncode != 1:
             if not message.endswith("\n"):
                 message += "\n"
@@ -62,13 +64,44 @@ async def run_restic(job, cmd, env, stdin=None):
         raise CallError(message)
 
 
-async def restic_check_progress(job, proc):
+async def restic_check_progress(job, proc, cmd: list[str]):
+    if "forget" in cmd:
+        read = await proc.stdout.read()
+        await job.logs_fd_write(read)
+        return
+
+    # backup or restore
+    job.internal_data.setdefault("messages", [])
+    progress_buffer = JobProgressBuffer(job)
     while True:
         read = (await proc.stdout.readline()).decode("utf-8", "ignore")
         if read == "":
             break
 
-        await job.logs_fd_write(read.encode("utf-8", "ignore"))
+        read = json.loads(read)
+        msg_type = read["message_type"]
+        if msg_type == "status":
+            remaining = read.get("seconds_remaining")
+            progress_buffer.set_progress(
+                read["percent_done"] * 100,
+                f"{timedelta(seconds=remaining)} remaining" if remaining else ""
+            )
+            continue
 
-        job.internal_data.setdefault("messages", [])
-        job.internal_data["messages"] = job.internal_data["messages"][-4:] + [read]
+        await job.logs_fd_write(json.dumps(read).encode("utf-8", "ignore"))
+        if msg_type == "summary":
+            continue
+
+        if msg_type == "error":
+            msg = "".join([
+                "Error",
+                f" in {item}" if (item := read.get("item")) else "",
+                f" while {during}" if (during := read.get("during")) else "",
+                ": ",
+                read["error.message"]
+            ])
+        else:
+            # verbose_status
+            msg = " ".join([read[key] for key in ("item", "action") if key in read])
+
+        job.internal_data["messages"] = job.internal_data["messages"][-4:] + [msg]
