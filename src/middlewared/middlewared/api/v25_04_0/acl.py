@@ -69,18 +69,18 @@ NFS4ACE_EntryTypes = Literal[
 
 
 class NFS4ACE_AdvancedPerms(BaseModel):
-    NFS4ACE_Mask.READ_DATA: bool
-    NFS4ACE_Mask.WRITE_DATA: bool
-    NFS4ACE_Mask.APPEND_DATA: bool
-    NFS4ACE_Mask.READ_NAMED_ATTRS: bool
-    NFS4ACE_Mask.EXECUTE: bool
-    NFS4ACE_Mask.DELETE: bool
-    NFS4ACE_Mask.DELETE_CHILD: bool
-    NFS4ACE_Mask.READ_ATTRIBUTES: bool
-    NFS4ACE_Mask.WRITE_ATTRIBUTES: bool
-    NFS4ACE_Mask.READ_ACL: bool
-    NFS4ACE_Mask.WRITE_ACL: bool
-    NFS4ACE_Mask.SYNCHRONIZE: bool
+    read_data: bool
+    write_data: bool
+    append_data: bool
+    read_named_attrs: bool
+    execute: bool
+    delete: bool
+    delete_child: bool
+    read_attributes: bool
+    write_attributes: bool
+    read_acl: bool
+    write_acl: bool
+    synchronize: bool
 
 
 class NFS4ACE_BasicPerms(BaseModel):
@@ -88,11 +88,11 @@ class NFS4ACE_BasicPerms(BaseModel):
 
 
 class NFS4ACE_AdvancedFlags(BaseModel):
-    NFS4ACE_Flag.FILE_INHERIT: bool
-    NFS4ACE_Flag.DIRECTORY_INHERIT: bool
-    NFS4ACE_Flag.NO_PROPAGATE_INHERIT: bool
-    NFS4ACE_Flag.INHERIT_ONLY: bool
-    NFS4ACE_Flag.INHERITED: bool
+    file_inherit: bool
+    directory_inherit: bool
+    no_propagate_inherit: bool
+    inherit_only: bool
+    inherited: bool
 
 
 class NFS4ACE_BasicFlags(BaseModel):
@@ -125,9 +125,9 @@ POSIXACE_Tags = Literal[
 
 
 class POSIXACE_Perms(BaseModel):
-    POSIXACE_Mask.READ: bool
-    POSIXACE_Mask.WRITE: bool
-    POSIXACE_Mask.EXECUTE: bool
+    read: bool
+    write: bool
+    execute: bool
 
 
 class POSIXACE(BaseModel):
