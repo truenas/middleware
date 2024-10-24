@@ -8,6 +8,10 @@ from subprocess import run, PIPE, STDOUT
 from middlewared.service_exception import CallError
 
 
+class InsufficientPrivilege(Exception):
+    pass
+
+
 def get_cmd(slot, status):
     base = [
         'ipmi-raw',
@@ -58,3 +62,5 @@ def set_slot_status(slot, status):
         ret = run(cmd, stdout=PIPE, stderr=STDOUT)
         if ret.returncode != 0:
             raise CallError(f'Failed to run {cmd!r}: {ret.stderr.decode()}')
+        elif ret.stdout.decode().strip().split()[-1].lower() == 'd4':
+            raise InsufficientPrivilege()
