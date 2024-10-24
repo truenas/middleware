@@ -37,11 +37,13 @@ class DockerStateService(Service):
                 'error': 'Docker service could not be started'
             })
 
-    async def start_service(self):
+    async def start_service(self, mount_datasets: bool = False):
         await self.set_status(Status.INITIALIZING.value)
         try:
             # TODO: Check license active
             await self.before_start_check()
+            if mount_datasets:
+                await self.middleware.call('docker.fs_manage.mount')
             await self.middleware.call('service.start', 'docker')
         except Exception as e:
             await self.set_status(Status.FAILED.value, str(e))
@@ -113,8 +115,7 @@ async def _event_system_ready(middleware, event_type, args):
         await middleware.call('nvidia.install', False)
 
     if (await middleware.call('docker.config'))['pool']:
-        await middleware.call('docker.fs_manage.mount')
-        middleware.create_task(middleware.call('docker.state.start_service'))
+        middleware.create_task(middleware.call('docker.state.start_service', True))
     else:
         await middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 
