@@ -12,7 +12,7 @@ VALID_WHOLE_DISK = re.compile(r'^sd[a-z]+$|^vd[a-z]+$|^nvme\d+n\d+$')
 def safe_retrieval(prop, key, default, as_int=False):
     value = prop.get(key)
     if value is not None:
-        if type(value) is bytes:
+        if isinstance(value, bytes):
             value = value.strip().decode()
         else:
             value = value.strip()
