@@ -1,3 +1,4 @@
+import os
 import re
 
 import pyudev
@@ -62,7 +63,7 @@ def get_disk_names() -> list[str]:
     NOTE: The return of this method should match the keys retrieve when running `self.get_disks`.
     """
     disks = []
-    with open('/dev') as sdir:
+    with os.scandir('/dev') as sdir:
         for i in filter(lambda x: VALID_WHOLE_DISK.match(x.name), sdir):
             disks.append(i.name)
     return disks
