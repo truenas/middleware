@@ -15,6 +15,7 @@ from middlewared.api.current import (
 from middlewared.schema import Bool, Dict, Int, Str, UnixPerm
 from middlewared.service import accepts, private, returns, job, ValidationErrors, Service
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
+from middlewared.utils.filesystem.acl import gen_aclstring_posix1e
 from middlewared.utils.filesystem.directory import directory_is_empty
 from middlewared.utils.path import FSLocation, path_location
 from middlewared.validators import Range
@@ -577,104 +578,6 @@ class FilesystemService(Service):
         job.set_progress(100, 'Finished setting NFSv4 ACL.')
 
     @private
-    def gen_aclstring_posix1e(self, dacl, recursive, verrors):
-        """
-        This method iterates through provided POSIX1e ACL and
-        performs addtional validation before returning the ACL
-        string formatted for the setfacl command. In case
-        of ValidationError, None is returned.
-        """
-        has_tag = {
-            "USER_OBJ": False,
-            "GROUP_OBJ": False,
-            "OTHER": False,
-            "MASK": False,
-            "DEF_USER_OBJ": False,
-            "DEF_GROUP_OBJ": False,
-            "DEF_OTHER": False,
-            "DEF_MASK": False,
-        }
-        required_entries = ["USER_OBJ", "GROUP_OBJ", "OTHER"]
-        has_named = False
-        has_def_named = False
-        has_default = False
-        aclstring = ""
-
-        for idx, ace in enumerate(dacl):
-            if idx != 0:
-                aclstring += ","
-
-            if ace['id'] == -1:
-                ace['id'] = ''
-
-            who = "DEF_" if ace['default'] else ""
-            who += ace['tag']
-            duplicate_who = has_tag.get(who)
-
-            if duplicate_who is True:
-                verrors.add(
-                    'filesystem_acl.dacl.{idx}',
-                    f'More than one {"default" if ace["default"] else ""} '
-                    f'{ace["tag"]} entry is not permitted'
-                )
-
-            elif duplicate_who is False:
-                has_tag[who] = True
-
-            if ace['tag'] in ["USER", "GROUP"]:
-                if ace['default']:
-                    has_def_named = True
-                else:
-                    has_named = True
-
-            ace['tag'] = ace['tag'].rstrip('_OBJ').lower()
-
-            if ace['default']:
-                has_default = True
-                aclstring += "default:"
-
-            aclstring += f"{ace['tag']}:{ace['id']}:"
-            aclstring += 'r' if ace['perms']['READ'] else '-'
-            aclstring += 'w' if ace['perms']['WRITE'] else '-'
-            aclstring += 'x' if ace['perms']['EXECUTE'] else '-'
-
-        if has_named and not has_tag['MASK']:
-            verrors.add(
-                'filesystem_acl.dacl',
-                'Named (user or group) POSIX ACL entries '
-                'require a mask entry to be present in the ACL.'
-            )
-
-        elif has_def_named and not has_tag['DEF_MASK']:
-            verrors.add(
-                'filesystem_acl.dacl',
-                'Named default (user or group) POSIX ACL entries '
-                'require a default mask entry to be present in the ACL.'
-            )
-
-        if recursive and not has_default:
-            verrors.add(
-                'filesystem_acl.dacl',
-                'Default ACL entries are required in order to apply '
-                'ACL recursively.'
-            )
-
-        for entry in required_entries:
-            if not has_tag[entry]:
-                verrors.add(
-                    'filesystem_acl.dacl',
-                    f'Presence of [{entry}] entry is required.'
-                )
-
-            if has_default and not has_tag[f"DEF_{entry}"]:
-                verrors.add(
-                    'filesystem_acl.dacl',
-                    f'Presence of default [{entry}] entry is required.'
-                )
-
-        return aclstring
-
-    @private
     def setacl_posix1e(self, job, data):
         job.set_progress(0, 'Preparing to set acl.')
         verrors = ValidationErrors()
@@ -730,7 +633,7 @@ class FilesystemService(Service):
                         e.errmsg
                     )
 
-            aclstring = self.gen_aclstring_posix1e(dacl, recursive, verrors)
+            aclstring = gen_aclstring_posix1e(dacl, recursive, verrors)
 
         verrors.check()
 

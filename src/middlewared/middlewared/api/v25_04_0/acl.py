@@ -9,8 +9,8 @@ from middlewared.api.base import (
     RemoteUsername,
     single_argument_args,
 )
-from pydantic import Field
-from typing import Annotated, Literal, Optional
+from pydantic import Field, model_validator
+from typing import Annotated, Literal, Optional, Self
 from middlewared.utils.filesystem.acl import (
     FS_ACL_Type,
     NFS4ACE_Tag,
@@ -22,6 +22,8 @@ from middlewared.utils.filesystem.acl import (
     NFS4ACL_Flag,
     POSIXACE_Tag,
     POSIXACE_Mask,
+    NFS4_SPECIAL_ENTRIES,
+    POSIX_SPECIAL_ENTRIES,
 )
 from .common import QueryFilters, QueryOptions
 
@@ -94,6 +96,19 @@ class NFS4ACE_AdvancedFlags(BaseModel):
     INHERIT_ONLY: bool
     INHERITED: bool
 
+    @model_validator(mode='after')
+    def check_inherit_only(self) -> Self:
+        if not self.INHERIT_ONLY:
+            return self
+
+        if not self.FILE_INHERIT and not self.DIRECTORY_INHERIT:
+            raise ValueError(
+                'At least one of FILE_INHERIT or DIRECTORY_INHERIT must '
+                'be set if INHERIT_ONLY is present in the ACE flags'
+            )
+
+        return self
+
 
 class NFS4ACE_BasicFlags(BaseModel):
     BASIC: NFS4ACE_BasicFlagset
@@ -106,6 +121,22 @@ class NFS4ACE(BaseModel):
     perms: NFS4ACE_AdvancedPerms | NFS4ACE_BasicPerms
     flags: NFS4ACE_AdvancedFlags | NFS4ACE_BasicFlags
     who: LocalUsername | RemoteUsername | None = None
+
+    @model_validator(mode='after')
+    def check_ace_valid(self) -> Self:
+        if self.tag in NFS4_SPECIAL_ENTRIES:
+            if self.id not in (-1, None):
+                raise ValueError(
+                    f'{self.id}: id may not be specified for the following ACL entry '
+                    f'tags: {", ".join([tag for tag in NFS4_SPECIAL_ENTRIES])}'
+                )
+        else:
+            if not ace_in.who and ace_in.id in (None, -1):
+                raise ValueError(
+                    'Numeric ID "id" or account name "who" must be specified'
+                )
+
+        return self
 
 
 class NFS4ACL_Flags(BaseModel):
@@ -136,6 +167,22 @@ class POSIXACE(BaseModel):
     perms: POSIXACE_Perms
     default: bool
     who: LocalUsername | RemoteUsername | None = None
+
+    @model_validator(mode='after')
+    def check_ace_valid(self) -> Self:
+        if self.tag in POSIX_SPECIAL_ENTRIES:
+            if self.id not in (-1, None):
+                raise ValueError(
+                    f'{self.id}: id may not be specified for the following ACL entry '
+                    f'tags: {", ".join([tag for tag in POSIX_SPECIAL_ENTRIES])}'
+                )
+        else:
+            if not ace_in.who and ace_in.id in (None, -1):
+                raise ValueError(
+                    'Numeric ID "id" or account name "who" must be specified'
+                )
+
+        return self
 
 
 class AclBaseFileInfo(BaseModel):
@@ -190,6 +237,13 @@ class FilesystemSetaclArgs(BaseModel):
     nfs41_flags: NFS4ACL_Flags = Field(default=NFS4ACL_Flags())
     uid: AceWhoId | None = ACL_UNDEFINED_ID
     gid: AceWhoId | None = ACL_UNDEFINED_ID
+
+    @model_validator(mode='after')
+    def check_setacl_valid(self) -> Self:
+        if len(self.dacl) != 0 and self.options.stripacl:
+            raise ValueError(
+                'Simultaneosuly setting and removing ACL from path is not supported' 
+            )
 
 
 class FilesystemSetaclResult(FilesystemGetaclResult):

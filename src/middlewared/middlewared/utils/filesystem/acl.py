@@ -1,5 +1,7 @@
 import enum
 
+from middlewared.service_exception import ValidationErrors
+
 
 class ACLXattr(enum.Enum):
     POSIX_ACCESS = "system.posix_acl_access"
@@ -120,3 +122,133 @@ class POSIXACE_Mask(enum.StrEnum):
     READ = 'READ'
     WRITE = 'WRITE'
     EXECUTE = 'EXECUTE'
+
+
+NFS4_SPECIAL_ENTRIES = frozenset([
+    NFS4ACE_Tag.SPECIAL_OWNER,
+    NFS4ACE_Tag.SPECIAL_GROUP,
+    NFS4ACE_Tag.SPECIAL_EVERYONE,
+])
+
+POSIX_SPECIAL_ENTRIES = frozenset([
+    POSIXACE_Tag.USER_OBJ,
+    POSIXACE_Tag.GROUP_OBJ,
+    POSIXACE_Tag.OTHER,
+    POSIXACE_Tag.MASK,
+])
+
+
+def validate_nfs4_ace_full(ace_in: dict) -> None:
+    """
+    This is further validation that occurs in filesystem.setacl. By this point
+    ACE should have already passed through `validate_nfs4_ace_model` above.
+    """
+    if not isinstance(ace_in, dict):
+        raise TypeError(f'{type(ace_in)}: expected dict')
+
+    if ace_in['tag'] in NFS4_SPECIAL_ENTRIES:
+        if ace_in['type'] == NFS4ACE_Type.DENY:
+            raise ValueError(f'{ace_in["tag"]}: DENY entries for specified tag are not permitted.')
+
+    else:
+        if ace_in.get('id') is not None and ace_in.get('who'):
+            raise ValueError('Numeric ID "id" and account name "who" may not be specified simultaneously')
+
+
+def gen_aclstring_posix1e(dacl: list, recursive: bool, verrors: ValidationErrors) -> str:
+    """
+    This method iterates through provided POSIX1e ACL and
+    performs addtional validation before returning the ACL
+    string formatted for the setfacl command. In case
+    of ValidationError, None is returned.
+    """
+    has_tag = {
+        "USER_OBJ": False,
+        "GROUP_OBJ": False,
+        "OTHER": False,
+        "MASK": False,
+        "DEF_USER_OBJ": False,
+        "DEF_GROUP_OBJ": False,
+        "DEF_OTHER": False,
+        "DEF_MASK": False,
+    }
+    required_entries = ["USER_OBJ", "GROUP_OBJ", "OTHER"]
+    has_named = False
+    has_def_named = False
+    has_default = False
+    aclstring = ""
+
+    for idx, ace in enumerate(dacl):
+        if idx != 0:
+            aclstring += ","
+
+        if ace['id'] == -1:
+            ace['id'] = ''
+
+        who = "DEF_" if ace['default'] else ""
+        who += ace['tag']
+        duplicate_who = has_tag.get(who)
+
+        if duplicate_who is True:
+            verrors.add(
+                'filesystem_acl.dacl.{idx}',
+                f'More than one {"default" if ace["default"] else ""} '
+                f'{ace["tag"]} entry is not permitted'
+            )
+
+        elif duplicate_who is False:
+            has_tag[who] = True
+
+        if ace['tag'] in ["USER", "GROUP"]:
+            if ace['default']:
+                has_def_named = True
+            else:
+                has_named = True
+
+        ace['tag'] = ace['tag'].rstrip('_OBJ').lower()
+
+        if ace['default']:
+            has_default = True
+            aclstring += "default:"
+
+        aclstring += f"{ace['tag']}:{ace['id']}:"
+        aclstring += 'r' if ace['perms']['READ'] else '-'
+        aclstring += 'w' if ace['perms']['WRITE'] else '-'
+        aclstring += 'x' if ace['perms']['EXECUTE'] else '-'
+
+    if has_named and not has_tag['MASK']:
+        verrors.add(
+            'filesystem_acl.dacl',
+            'Named (user or group) POSIX ACL entries '
+            'require a mask entry to be present in the ACL.'
+        )
+
+
+    elif has_def_named and not has_tag['DEF_MASK']:
+        verrors.add(
+            'filesystem_acl.dacl',
+            'Named default (user or group) POSIX ACL entries '
+            'require a default mask entry to be present in the ACL.'
+        )
+
+    if recursive and not has_default:
+        verrors.add(
+            'filesystem_acl.dacl',
+            'Default ACL entries are required in order to apply '
+            'ACL recursively.'
+        )
+
+    for entry in required_entries:
+        if not has_tag[entry]:
+            verrors.add(
+                'filesystem_acl.dacl',
+                f'Presence of [{entry}] entry is required.'
+            )
+
+        if has_default and not has_tag[f"DEF_{entry}"]:
+            verrors.add(
+                'filesystem_acl.dacl',
+                f'Presence of default [{entry}] entry is required.'
+            )
+
+    return aclstring
