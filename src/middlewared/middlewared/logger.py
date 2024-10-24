@@ -3,6 +3,7 @@ import logging.handlers
 import os
 import queue
 import typing
+import warnings
 from .logging.console_formatter import ConsoleLogFormatter
 
 # markdown debug is also considered useless
@@ -37,6 +38,15 @@ logging.getLogger('charset_normalizer').setLevel(logging.INFO)
 # Prevent debug docker logs
 logging.getLogger('docker.utils.config').setLevel(logging.ERROR)
 logging.getLogger('docker.auth').setLevel(logging.ERROR)
+
+# /usr/lib/python3/dist-packages/pydantic/json_schema.py:2158: PydanticJsonSchemaWarning:
+# Default value <object object at 0x7fa8ac040d30> is not JSON serializable; excluding default from JSON schema
+# [non-serializable-default]
+# This default value is `middlewared.utils.lang.undefined`. It must be there for our
+# `middlewared.api.base.ForUpdateMetaclass` to work so this warning is false positive.
+# Excluding this default from the generated JSON schema is the correct behavior, so there is no real issue here.
+warnings.filterwarnings("ignore", module="pydantic.json_schema")
+
 logging.TRACE = 6
 
 APP_LIFECYCLE_LOGFILE = '/var/log/app_lifecycle.log'
