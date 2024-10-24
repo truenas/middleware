@@ -1,4 +1,4 @@
-import ipaddress
+from ipaddress import ip_interface
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -12,7 +12,7 @@ from middlewared.api.current import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.service import CRUDService, private
-from middlewared.schema import ValidationErrors
+from middlewared.service_exception import ValidationError
 from middlewared.plugins.interface.netif import netif
 
 
@@ -128,15 +128,19 @@ class StaticRouteService(CRUDService):
         return data
 
     def _validate(self, schema_name, data):
-        verrors = ValidationErrors()
-
-        if (':' in data['destination']) != (':' in data['gateway']):
-            verrors.add(f'{schema_name}.destination', 'Destination and gateway address families must match')
-
-        verrors.check()
+        dst, gw = data.pop('destination'), data.pop('gateway')
+        dst, gw = ip_interface(dst), ip_interface(gw)
+        if dst.version != gw.version:
+            raise ValidationError(
+                f'{schema_name}.destination',
+                'Destination and gateway address families must match'
+            )
+        else:
+            data['destination'] = dst.exploded
+            data['gateway'] = gw.ip.exploded
 
     def _netif_route(self, staticroute):
-        ip_interface = ipaddress.ip_interface(staticroute['destination'])
+        ip_info = ip_interface(staticroute['destination'])
         return netif.Route(
-            str(ip_interface.ip), str(ip_interface.netmask), gateway=staticroute['gateway']
+            str(ip_info.ip), str(ip_info.netmask), gateway=staticroute['gateway']
         )
