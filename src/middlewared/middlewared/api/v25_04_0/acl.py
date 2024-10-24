@@ -75,6 +75,7 @@ class NFS4ACE_AdvancedPerms(BaseModel):
     WRITE_DATA: bool = False
     APPEND_DATA: bool = False
     READ_NAMED_ATTRS: bool = False
+    WRITE_NAMED_ATTRS: bool = False
     EXECUTE: bool = False
     DELETE: bool = False
     DELETE_CHILD: bool = False
