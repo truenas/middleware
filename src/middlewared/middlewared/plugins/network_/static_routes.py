@@ -79,15 +79,13 @@ class StaticRouteService(CRUDService):
         """
         Delete Static Route of `id`.
         """
-        staticroute = self.middleware.call_sync('staticroute.get_instance', id_)
+        st = self.middleware.call_sync('staticroute.get_instance', id_)
         rv = self.middleware.call_sync('datastore.delete', self._config.datastore, id_)
         try:
             rt = netif.RoutingTable()
-            rt.delete(self._netif_route(staticroute))
-        except Exception as e:
-            self.logger.warn(
-                'Failed to delete static route %s: %s', staticroute['destination'], e,
-            )
+            rt.delete(self._netif_route(st))
+        except Exception:
+            self.logger.exception('Failed to delete static route %r', st['destination'])
 
         return rv
 
