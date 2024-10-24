@@ -5,8 +5,17 @@ import subprocess
 import stat as pystat
 from pathlib import Path
 
-from middlewared.schema import Bool, Dict, Int, List, Str, Ref, UnixPerm, OROperator
-from middlewared.service import accepts, private, returns, job, CallError, ValidationErrors, Service
+from middlewared.api import api_method
+from middlewared.api.current import (
+    FilesystemAddToAclArgs, FilesystemAddToAclResult,
+    FilesystemGetaclArgs, FilesystemGetaclResult,
+    FilesystemSetaclArgs, FilesystemSetaclResult,
+    FilesystemGetInheritedAclArgs, FilesystemGetInheritedAclResult,
+)
+from middlewared.schema import Bool, Dict, Int, Str, UnixPerm
+from middlewared.service import accepts, private, returns, job, ValidationErrors, Service
+from middlewared.service_exception import CallError, MatchNotFound, ValidationError
+from middlewared.utils.filesystem.acl import gen_aclstring_posix1e
 from middlewared.utils.filesystem.directory import directory_is_empty
 from middlewared.utils.path import FSLocation, path_location
 from middlewared.validators import Range
@@ -329,7 +338,7 @@ class FilesystemService(Service):
             ace['flags'].pop('FAILED_ACCESS', None)
 
         na41flags = output.pop('nfs41_flags')
-        output['nfs41_flags'] = {
+        output['aclflags'] = {
             "protected": na41flags['PROTECTED'],
             "defaulted": na41flags['DEFAULTED'],
             "autoinherit": na41flags['AUTOINHERIT']
@@ -427,23 +436,11 @@ class FilesystemService(Service):
             'trivial': True,
         }
 
-    @accepts(
-        Str('path'),
-        Bool('simplified', default=True),
-        Bool('resolve_ids', default=False),
-        roles=['FILESYSTEM_ATTRS_READ']
+    @api_method(
+        FilesystemGetaclArgs,
+        FilesystemGetaclResult,
+        roles=['FILESYSTEM_ATTRS_READ'],
     )
-    @returns(Dict(
-        'truenas_acl',
-        Str('path'),
-        Bool('trivial'),
-        Str('acltype', enum=[x.name for x in ACLType], null=True),
-        OROperator(
-            Ref('nfs4_acl'),
-            Ref('posix1e_acl'),
-            name='acl'
-        )
-    ))
     def getacl(self, path, simplified, resolve_ids):
         """
         Return ACL of a given path. This may return a POSIX1e ACL or a NFSv4 ACL. The acl type is indicated
@@ -581,104 +578,6 @@ class FilesystemService(Service):
         job.set_progress(100, 'Finished setting NFSv4 ACL.')
 
     @private
-    def gen_aclstring_posix1e(self, dacl, recursive, verrors):
-        """
-        This method iterates through provided POSIX1e ACL and
-        performs addtional validation before returning the ACL
-        string formatted for the setfacl command. In case
-        of ValidationError, None is returned.
-        """
-        has_tag = {
-            "USER_OBJ": False,
-            "GROUP_OBJ": False,
-            "OTHER": False,
-            "MASK": False,
-            "DEF_USER_OBJ": False,
-            "DEF_GROUP_OBJ": False,
-            "DEF_OTHER": False,
-            "DEF_MASK": False,
-        }
-        required_entries = ["USER_OBJ", "GROUP_OBJ", "OTHER"]
-        has_named = False
-        has_def_named = False
-        has_default = False
-        aclstring = ""
-
-        for idx, ace in enumerate(dacl):
-            if idx != 0:
-                aclstring += ","
-
-            if ace['id'] == -1:
-                ace['id'] = ''
-
-            who = "DEF_" if ace['default'] else ""
-            who += ace['tag']
-            duplicate_who = has_tag.get(who)
-
-            if duplicate_who is True:
-                verrors.add(
-                    'filesystem_acl.dacl.{idx}',
-                    f'More than one {"default" if ace["default"] else ""} '
-                    f'{ace["tag"]} entry is not permitted'
-                )
-
-            elif duplicate_who is False:
-                has_tag[who] = True
-
-            if ace['tag'] in ["USER", "GROUP"]:
-                if ace['default']:
-                    has_def_named = True
-                else:
-                    has_named = True
-
-            ace['tag'] = ace['tag'].rstrip('_OBJ').lower()
-
-            if ace['default']:
-                has_default = True
-                aclstring += "default:"
-
-            aclstring += f"{ace['tag']}:{ace['id']}:"
-            aclstring += 'r' if ace['perms']['READ'] else '-'
-            aclstring += 'w' if ace['perms']['WRITE'] else '-'
-            aclstring += 'x' if ace['perms']['EXECUTE'] else '-'
-
-        if has_named and not has_tag['MASK']:
-            verrors.add(
-                'filesystem_acl.dacl',
-                'Named (user or group) POSIX ACL entries '
-                'require a mask entry to be present in the ACL.'
-            )
-
-        elif has_def_named and not has_tag['DEF_MASK']:
-            verrors.add(
-                'filesystem_acl.dacl',
-                'Named default (user or group) POSIX ACL entries '
-                'require a default mask entry to be present in the ACL.'
-            )
-
-        if recursive and not has_default:
-            verrors.add(
-                'filesystem_acl.dacl',
-                'Default ACL entries are required in order to apply '
-                'ACL recursively.'
-            )
-
-        for entry in required_entries:
-            if not has_tag[entry]:
-                verrors.add(
-                    'filesystem_acl.dacl',
-                    f'Presence of [{entry}] entry is required.'
-                )
-
-            if has_default and not has_tag[f"DEF_{entry}"]:
-                verrors.add(
-                    'filesystem_acl.dacl',
-                    f'Presence of default [{entry}] entry is required.'
-                )
-
-        return aclstring
-
-    @private
     def setacl_posix1e(self, job, data):
         job.set_progress(0, 'Preparing to set acl.')
         verrors = ValidationErrors()
@@ -734,7 +633,7 @@ class FilesystemService(Service):
                         e.errmsg
                     )
 
-            aclstring = self.gen_aclstring_posix1e(dacl, recursive, verrors)
+            aclstring = gen_aclstring_posix1e(dacl, recursive, verrors)
 
         verrors.check()
 
@@ -761,90 +660,78 @@ class FilesystemService(Service):
 
         job.set_progress(100, 'Finished setting POSIX1e ACL.')
 
-    @accepts(
-        Dict(
-            'filesystem_acl',
-            Str('path', required=True),
-            Int('uid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
-            Int('gid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
-            OROperator(
-                List(
-                    'nfs4_acl',
-                    items=[Dict(
-                        'nfs4_ace',
-                        Str('tag', enum=['owner@', 'group@', 'everyone@', 'USER', 'GROUP']),
-                        Int('id', null=True, validators=[Range(min_=-1, max_=2147483647)]),
-                        Str('type', enum=['ALLOW', 'DENY']),
-                        Dict(
-                            'perms',
-                            Bool('READ_DATA'),
-                            Bool('WRITE_DATA'),
-                            Bool('APPEND_DATA'),
-                            Bool('READ_NAMED_ATTRS'),
-                            Bool('WRITE_NAMED_ATTRS'),
-                            Bool('EXECUTE'),
-                            Bool('DELETE_CHILD'),
-                            Bool('READ_ATTRIBUTES'),
-                            Bool('WRITE_ATTRIBUTES'),
-                            Bool('DELETE'),
-                            Bool('READ_ACL'),
-                            Bool('WRITE_ACL'),
-                            Bool('WRITE_OWNER'),
-                            Bool('SYNCHRONIZE'),
-                            Str('BASIC', enum=['FULL_CONTROL', 'MODIFY', 'READ', 'TRAVERSE']),
-                        ),
-                        Dict(
-                            'flags',
-                            Bool('FILE_INHERIT'),
-                            Bool('DIRECTORY_INHERIT'),
-                            Bool('NO_PROPAGATE_INHERIT'),
-                            Bool('INHERIT_ONLY'),
-                            Bool('INHERITED'),
-                            Str('BASIC', enum=['INHERIT', 'NOINHERIT']),
-                        ),
-                        register=True
-                    )],
-                    register=True
-                ),
-                List(
-                    'posix1e_acl',
-                    items=[Dict(
-                        'posix1e_ace',
-                        Bool('default', default=False),
-                        Str('tag', enum=['USER_OBJ', 'GROUP_OBJ', 'USER', 'GROUP', 'OTHER', 'MASK']),
-                        Int('id', default=-1, validators=[Range(min_=-1, max_=2147483647)]),
-                        Dict(
-                            'perms',
-                            Bool('READ', default=False),
-                            Bool('WRITE', default=False),
-                            Bool('EXECUTE', default=False),
-                        ),
-                        register=True
-                    )],
-                    register=True
-                ),
-                name='dacl',
-            ),
-            Dict(
-                'nfs41_flags',
-                Bool('autoinherit', default=False),
-                Bool('protected', default=False),
-                Bool('defaulted', default=False),
-            ),
-            Str('acltype', enum=[x.name for x in ACLType], null=True),
-            Dict(
-                'options',
-                Bool('stripacl', default=False),
-                Bool('recursive', default=False),
-                Bool('traverse', default=False),
-                Bool('canonicalize', default=True),
-                Bool('validate_effective_acl', default=True)
-            )
-        ), roles=['FILESYSTEM_ATTRS_WRITE'], audit='Filesystem set ACL', audit_extended=lambda data: data['path']
+    @api_method(
+        FilesystemSetaclArgs,
+        FilesystemSetaclResult,
+        roles=['FILESYSTEM_ATTRS_WRITE'],
+        audit='Filesystem set ACL',
+        audit_extended=lambda data: data['path']
     )
-    @returns()
     @job(lock="perm_change")
     def setacl(self, job, data):
+        """
+        Set ACL of a given path. Takes the following parameters:
+        `path` full path to directory or file.
+
+        `dacl` ACL entries. Formatting depends on the underlying `acltype`. NFS4ACL requires
+        NFSv4 entries. POSIX1e requires POSIX1e entries.
+
+        `uid` the desired UID of the file user. If set to None (the default), then user is not changed.
+
+        `gid` the desired GID of the file group. If set to None (the default), then group is not changed.
+
+        `recursive` apply the ACL recursively
+
+        `traverse` traverse filestem boundaries (ZFS datasets)
+
+        `strip` convert ACL to trivial. ACL is trivial if it can be expressed as a file mode without
+        losing any access rules.
+
+        `canonicalize` reorder ACL entries so that they are in concanical form as described
+        in the Microsoft documentation MS-DTYP 2.4.5 (ACL). This only applies to NFSv4 ACLs.
+
+        The following notes about ACL entries are necessarily terse. If more detail is requried
+        please consult relevant TrueNAS documentation.
+
+        Notes about NFSv4 ACL entry fields:
+
+        `tag` refers to the type of principal to whom the ACL entries applies. USER and GROUP have
+        conventional meanings. `owner@` refers to the owning user of the file, `group@` refers to the owning
+        group of the file, and `everyone@` refers to ALL users (including the owning user and group)..
+
+        `id` refers to the numeric user id or group id associatiated with USER or GROUP entries.
+
+        `who` a user or group name may be specified in lieu of numeric ID for USER or GROUP entries
+
+        `type` may be ALLOW or DENY. Deny entries take precedence over allow when the ACL is evaluated.
+
+        `perms` permissions allowed or denied by the entry. May be set as a simlified BASIC type or
+        more complex type detailing specific permissions.
+
+        `flags` inheritance flags determine how this entry will be presented (if at all) on newly-created
+        files or directories within the specified path. Only valid for directories.
+
+        Notes about posix1e ACL entry fields:
+
+        `default` the ACL entry is in the posix default ACL (will be copied to new files and directories)
+        created within the directory where it is set. These are _NOT_ evaluated when determining access for
+        the file on which they're set. If default is false then the entry applies to the posix access ACL,
+        which is used to determine access to the directory, but is not inherited on new files / directories.
+
+        `tag` the type of principal to whom the ACL entry apples. USER and GROUP have conventional meanings
+        USER_OBJ refers to the owning user of the file and is also denoted by "user" in conventional POSIX
+        UGO permissions. GROUP_OBJ refers to the owning group of the file and is denoted by "group" in the
+        same. OTHER refers to POSIX other, which applies to all users and groups who are not USER_OBJ or
+        GROUP_OBJ. MASK sets maximum permissions granted to all USER and GROUP entries. A valid POSIX1 ACL
+        entry contains precisely one USER_OBJ, GROUP_OBJ, OTHER, and MASK entry for the default and access
+        list.
+
+        `id` refers to the numeric user id or group id associatiated with USER or GROUP entries.
+
+        `who` a user or group name may be specified in lieu of numeric ID for USER or GROUP entries
+
+        `perms` - object containing posix permissions.
+        """
         verrors = ValidationErrors()
         data['loc'] = self._common_perm_path_validate("filesystem.setacl", data, verrors)
         verrors.check()
@@ -855,12 +742,41 @@ class FilesystemService(Service):
             path_acltype = self.path_get_acltype(data['path'])
             acltype = ACLType[path_acltype]
 
+        for idx, entry in enumerate(data['dacl']):
+            if entry.get('who') in (None, ''):
+                continue
+
+            if entry.get('id') in (None, -1):
+                continue
+
+            # We're using user.query and group.query to intialize cache entries if required
+            match entry['tag']:
+                case 'USER':
+                    method = 'user.query'
+                    filters = [['username', '=', entry['who']]]
+                    key = 'uid'
+                case 'GROUP':
+                    method = 'group.query'
+                    filters = [['group', '=', entry['who']]]
+                    key = 'gid'
+                case _:
+                    raise ValidationError(
+                        f'filesystem.setacl.{idx}.who',
+                        'Name may only be specified for USER and GROUP entries'
+                    )
+            try:
+                entry['id'] = self.middleware.call_sync(method, filters, {'get': True})[key]
+            except MatchNotFound:
+                raise ValidationError(f'filesystem.setacl.{idx}.who', f'{entry["who"]}: account does not exist')
+
         if acltype == ACLType.NFS4:
-            return self.setacl_nfs4(job, data)
+            self.setacl_nfs4(job, data)
         elif acltype == ACLType.POSIX1E:
-            return self.setacl_posix1e(job, data)
+            self.setacl_posix1e(job, data)
         else:
             raise CallError(f"{data['path']}: ACLs disabled on path.", errno.EOPNOTSUPP)
+
+        return self.getacl(data['path'])
 
     @private
     def add_to_acl_posix(self, acl, entries):
@@ -1014,21 +930,14 @@ class FilesystemService(Service):
 
         return changed
 
-    @private
-    @accepts(Dict(
-        'add_to_acl',
-        Str('path', required=True),
-        List('entries', required=True, items=[Dict(
-            'simplified_acl_entry',
-            Str('id_type', enum=['USER', 'GROUP'], required=True),
-            Int('id', required=True),
-            Str('access', enum=['READ', 'MODIFY', 'FULL_CONTROL'], required=True)
-        )]),
-        Dict(
-            'options',
-            Bool('force', default=False),
-        )
-    ), roles=['FILESYSTEM_ATTRS_WRITE'], audit='Filesystem add to ACL', audit_extended=lambda data: data['path'])
+    @api_method(
+        FilesystemAddToAclArgs,
+        FilesystemAddToAclResult,
+        roles=['FILESYSTEM_ATTRS_WRITE'],
+        audit='Filesystem add to ACL',
+        audit_extended=lambda data: data['path'],
+        private=True
+    )
     @job()
     def add_to_acl(self, job, data):
         """
@@ -1080,15 +989,7 @@ class FilesystemService(Service):
         job.wrap_sync(setacl_job)
         return changed
 
-    @private
-    @accepts(Dict(
-        'calculate_inherited_acl',
-        Str('path', required=True),
-        Dict(
-            'options',
-            Bool('directory', default=True)
-        )
-    ))
+    @api_method(FilesystemGetInheritedAclArgs, FilesystemGetInheritedAclResult, private=True)
     def get_inherited_acl(self, data):
         """
         Generate an inherited ACL based on given `path`
