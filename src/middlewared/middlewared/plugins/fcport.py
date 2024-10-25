@@ -35,6 +35,7 @@ class FCPortService(CRUDService):
         namespace = "fcport"
         datastore = "services.fibrechanneltotarget"
         datastore_prefix = 'fc_'
+        datastore_extend_context = "fcport.extend_context"
         datastore_extend = 'fcport.extend'
         cli_namespace = "sharing.fc_port"
         entry = FCPortEntry
@@ -310,7 +311,13 @@ class FCPortService(CRUDService):
         return data
 
     @private
-    async def extend(self, data):
+    async def extend_context(self, rows, extra):
+        return {
+            "fc.fc_host.query": await self.middleware.call('fc.fc_host.query')
+        }
+
+    @private
+    async def extend(self, data, context):
         data['wwpn'] = None
         data['wwpn_b'] = None
         # We want to retrieve the WWPN associated with the port name
@@ -321,7 +328,7 @@ class FCPortService(CRUDService):
             fc_host_alias = data['port']
             chan = None
         try:
-            fc_host_pair = await self.middleware.call('fc.fc_host.query', [['alias', '=', fc_host_alias]], {'get': True})
+            fc_host_pair = filter_list(context['fc.fc_host.query'], [('alias', '=', fc_host_alias)], {'get': True})
         except MatchNotFound:
             pass
         else:
