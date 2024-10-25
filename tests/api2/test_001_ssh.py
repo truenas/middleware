@@ -146,6 +146,10 @@ def test_008_check_root_dataset_settings(ws_client):
             continue
 
         for opt in fhs_entry['options']:
+            # setuid=off translates to nosuid in mountpoint opts
+            # NOSUID also means NODEV which is why NOSETUID was added
+            if opt == 'NOSETUID':
+                opt = 'NOSUID'
             if opt not in fs['mount_opts'] and opt not in fs['super_opts']:
                 assert opt in fs['mount_opts'], f'{opt}: mount option not present for {mp}: {fs["mount_opts"]}'
 
