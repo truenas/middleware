@@ -58,6 +58,23 @@ METADATA = {
 }
 
 
+def common_impl(
+    mock_get_collective_metadata, mock_list_resources_by_project,
+    mock_translate_resources_to_desired_workflow, scandir, workload, desired_state
+):
+    mock_get_collective_metadata.return_value = METADATA
+    mock_list_resources_by_project.return_value = collections.defaultdict(None, workload)
+    mock_translate_resources_to_desired_workflow.return_value = workload['ix-actual-budget']
+    mock_entry1 = unittest.mock.Mock(is_file=lambda: True, name='config1.json')
+    scandir.return_value.__enter__.return_value = [mock_entry1]
+
+    result = list_apps(AVAILABLE_MAPPING, **KWARGS)
+    assert result is not None
+    assert isinstance(result, list)
+    assert isinstance(result[0], dict)
+    assert result[0]['state'] == desired_state
+
+
 @pytest.mark.parametrize('workload', [
     {
         'ix-actual-budget': {
@@ -259,17 +276,10 @@ def test_app_event_crashed(
     mock_get_collective_metadata, mock_list_resources_by_project,
     mock_translate_resources_to_desired_workflow, scandir, workload
 ):
-    mock_get_collective_metadata.return_value = METADATA
-    mock_list_resources_by_project.return_value = collections.defaultdict(None, workload)
-    mock_translate_resources_to_desired_workflow.return_value = workload['ix-actual-budget']
-    mock_entry1 = unittest.mock.Mock(is_file=lambda: True, name='config1.json')
-    scandir.return_value.__enter__.return_value = [mock_entry1]
-
-    result = list_apps(AVAILABLE_MAPPING, **KWARGS)
-    assert result is not None
-    assert isinstance(result, list)
-    assert isinstance(result[0], dict)
-    assert result[0]['state'] == 'CRASHED'
+    common_impl(
+        mock_get_collective_metadata, mock_list_resources_by_project, mock_translate_resources_to_desired_workflow,
+        scandir, workload, 'CRASHED',
+    )
 
 
 @pytest.mark.parametrize('workload', [
@@ -374,17 +384,10 @@ def test_app_event_deploying(
     mock_get_collective_metadata, mock_list_resources_by_project,
     mock_translate_resources_to_desired_workflow, scandir, workload
 ):
-    mock_get_collective_metadata.return_value = METADATA
-    mock_list_resources_by_project.return_value = collections.defaultdict(None, workload)
-    mock_translate_resources_to_desired_workflow.return_value = workload['ix-actual-budget']
-    mock_entry1 = unittest.mock.Mock(is_file=lambda: True, name='config1.json')
-    scandir.return_value.__enter__.return_value = [mock_entry1]
-
-    result = list_apps(AVAILABLE_MAPPING, **KWARGS)
-    assert result is not None
-    assert isinstance(result, list)
-    assert isinstance(result[0], dict)
-    assert result[0]['state'] == 'DEPLOYING'
+    common_impl(
+        mock_get_collective_metadata, mock_list_resources_by_project, mock_translate_resources_to_desired_workflow,
+        scandir, workload, 'DEPLOYING',
+    )
 
 
 @pytest.mark.parametrize('workload', [
@@ -420,17 +423,10 @@ def test_app_event_running(
     mock_get_collective_metadata, mock_list_resources_by_project,
     mock_translate_resources_to_desired_workflow, scandir, workload
 ):
-    mock_get_collective_metadata.return_value = METADATA
-    mock_list_resources_by_project.return_value = collections.defaultdict(None, workload)
-    mock_translate_resources_to_desired_workflow.return_value = workload['ix-actual-budget']
-    mock_entry1 = unittest.mock.Mock(is_file=lambda: True, name='config1.json')
-    scandir.return_value.__enter__.return_value = [mock_entry1]
-
-    result = list_apps(AVAILABLE_MAPPING, **KWARGS)
-    assert result is not None
-    assert isinstance(result, list)
-    assert isinstance(result[0], dict)
-    assert result[0]['state'] == 'RUNNING'
+    common_impl(
+        mock_get_collective_metadata, mock_list_resources_by_project, mock_translate_resources_to_desired_workflow,
+        scandir, workload, 'RUNNING',
+    )
 
 
 @pytest.mark.parametrize('workload', [
@@ -489,14 +485,7 @@ def test_app_event_stopped(
     mock_get_collective_metadata, mock_list_resources_by_project,
     mock_translate_resources_to_desired_workflow, scandir, workload
 ):
-    mock_get_collective_metadata.return_value = METADATA
-    mock_list_resources_by_project.return_value = collections.defaultdict(None, workload)
-    mock_translate_resources_to_desired_workflow.return_value = workload['ix-actual-budget']
-    mock_entry1 = unittest.mock.Mock(is_file=lambda: True, name='config1.json')
-    scandir.return_value.__enter__.return_value = [mock_entry1]
-
-    result = list_apps(AVAILABLE_MAPPING, **KWARGS)
-    assert result is not None
-    assert isinstance(result, list)
-    assert isinstance(result[0], dict)
-    assert result[0]['state'] == 'STOPPED'
+    common_impl(
+        mock_get_collective_metadata, mock_list_resources_by_project, mock_translate_resources_to_desired_workflow,
+        scandir, workload, 'STOPPED',
+    )
