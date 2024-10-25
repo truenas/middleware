@@ -135,20 +135,19 @@ services:
 '''
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='module')
 def docker_pool():
     with another_pool() as pool:
-        yield pool['name']
+        docker_config = call('docker.update', {'pool': pool['name']}, job=True)
+        assert docker_config['pool'] == pool['name'], docker_config
+        try:
+            yield docker_config
+        finally:
+            docker_config = call('docker.update', {'pool': None}, job=True)
+            assert docker_config['pool'] is None, docker_config
 
 
-@pytest.mark.dependency(name='docker_setup')
-def test_docker_setup(docker_pool):
-    docker_config = call('docker.update', {'pool': docker_pool}, job=True)
-    assert docker_config['pool'] == docker_pool, docker_config
-
-
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_create_catalog_app():
+def test_create_catalog_app(docker_pool):
     with app('actual-budget', {
         'train': 'community',
         'catalog_app': 'actual-budget',
@@ -159,8 +158,7 @@ def test_create_catalog_app():
         assert volume_ds is not None, volume_ds
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_create_custom_app():
+def test_create_custom_app(docker_pool):
     with app('custom-budget', {
         'custom_app': True,
         'custom_compose_config': CUSTOM_CONFIG,
@@ -169,8 +167,7 @@ def test_create_custom_app():
         assert app_info['state'] == 'DEPLOYING'
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_create_custom_app_validation_error():
+def test_create_custom_app_validation_error(docker_pool):
     with pytest.raises(ValidationErrors):
         with app('custom-budget', {
             'custom_app': False,
@@ -179,8 +176,7 @@ def test_create_custom_app_validation_error():
             pass
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_create_custom_app_invalid_yaml():
+def test_create_custom_app_invalid_yaml(docker_pool):
     with pytest.raises(ValidationErrors):
         with app('custom-budget', {
             'custom_app': True,
@@ -189,14 +185,12 @@ def test_create_custom_app_invalid_yaml():
             pass
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_delete_app_validation_error_for_non_existent_app():
+def test_delete_app_validation_error_for_non_existent_app(docker_pool):
     with pytest.raises(ValidationErrors):
         call('app.delete', 'actual-budget', {'remove_ix_volumes': True, 'remove_images': True}, job=True)
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_delete_app_options():
+def test_delete_app_options(docker_pool):
     with app(
         'custom-budget',
         {
@@ -214,8 +208,7 @@ def test_delete_app_options():
     assert volume_ds is None
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_update_app():
+def test_update_app(docker_pool):
     values = {
         'values': {
             'network': {
@@ -236,8 +229,7 @@ def test_update_app():
         assert app_info['active_workloads']['used_ports'][0]['host_ports'][0]['host_port'] == 32000
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_stop_start_app():
+def test_stop_start_app(docker_pool):
     with app('actual-budget', {
         'train': 'community',
         'catalog_app': 'actual-budget'
@@ -253,8 +245,7 @@ def test_stop_start_app():
         assert states['state'] == 'DEPLOYING'
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_event_subscribe():
+def test_event_subscribe(docker_pool):
     with client(py_exceptions=False) as c:
         expected_event_type_order = ['ADDED', 'CHANGED']
         expected_event_order = ['STOPPING', 'STOPPED', 'DEPLOYING']
@@ -280,9 +271,3 @@ def test_event_subscribe():
             assert expected_event_order == events
 
         assert expected_event_type_order == event_types
-
-
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_unset_apps():
-    docker_config = call('docker.update', {'pool': None}, job=True)
-    assert docker_config['pool'] is None, docker_config
