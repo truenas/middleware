@@ -297,13 +297,16 @@ class DiskService(CRUDService):
         return await self.query([['identifier', '=', id_]], {'get': True})
 
     @private
-    async def copy_settings(self, old, new):
-        await self.middleware.call('disk.update', new['identifier'], {
-            k: v for k, v in old.items() if k in [
-                'togglesmart', 'advpowermgmt', 'description', 'hddstandby',
-                'smartoptions', 'critical', 'difference', 'informational',
+    async def copy_settings(self, old, new, copy_settings, copy_description):
+        keys = []
+        if copy_settings:
+            keys += [
+                'togglesmart', 'advpowermgmt', 'hddstandby', 'smartoptions', 'critical', 'difference', 'informational',
             ]
-        })
+        if copy_description:
+            keys += ['description']
+
+        await self.middleware.call('disk.update', new['identifier'], {k: v for k, v in old.items() if k in keys})
 
         changed = False
         for row in await self.middleware.call('datastore.query', 'tasks.smarttest_smarttest_disks', [
