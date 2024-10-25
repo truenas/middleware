@@ -7,6 +7,7 @@ from .cloud_sync import *  # noqa
 from .common import *  # noqa
 from .core import *  # noqa
 from .disk import *  # noqa
+from .docker import *  # noqa
 from .failover_reboot import *  # noqa
 from .fc_host import *  # noqa
 from .fcport import *  # noqa
