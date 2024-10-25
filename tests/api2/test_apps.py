@@ -192,25 +192,25 @@ def test_create_custom_app_invalid_yaml():
 @pytest.mark.dependency(depends=['docker_setup'])
 def test_delete_app_validation_error_for_non_existent_app():
     with pytest.raises(ValidationErrors):
-        call('app.delete', 'actual-budget', {'remove_volumes': True, 'remove_images': True}, job=True)
+        call('app.delete', 'actual-budget', {'remove_ix_volumes': True, 'remove_images': True}, job=True)
 
 
 @pytest.mark.dependency(depends=['docker_setup'])
 def test_delete_app_options():
     with create_app(
-        'custom_budget',
+        'custom-budget',
         {
             'custom_app': True,
             'custom_compose_config': CUSTOM_CONFIG,
         },
         {'remove_ix_volumes': True, 'remove_images': True}
     ) as app:
-        assert app['name'] == 'actual-budget'
+        assert app['name'] == 'custom-budget'
         assert app['state'] == 'DEPLOYING'
 
     app_images = call('app.image.query', [['repo_tags', '=', ['actualbudget/actual-server:24.10.1']]])
     assert len(app_images) == 0
-    volume_ds = call('app.get_app_volume_ds', 'actual-budget')
+    volume_ds = call('app.get_app_volume_ds', 'custom-budget')
     assert volume_ds is None
 
 
@@ -237,6 +237,66 @@ def test_update_app():
 
 
 @pytest.mark.dependency(depends=['docker_setup'])
+def test_stop_start_app():
+    with create_app('actual-budget', {
+        'train': 'community',
+        'catalog_app': 'actual-budget'
+    }):
+        # stop running app
+        call('app.stop', 'actual-budget', job=True)
+        states = call('app.query', [], {'select': ['state']})[0]
+        assert states['state'] == 'STOPPED'
+
+        # start stopped app
+        call('app.start', 'actual-budget', job=True)
+        states = call('app.query', [], {'select': ['state']})[0]
+        assert states['state'] == 'DEPLOYING'
+
+
+@pytest.mark.dependency(depends=['docker_setup'])
+def test_event_subscribe():
+    def assert_list_order(event_list, expected_list):
+        """
+        Assert each event in the expected order as they occur
+        """
+        expected_index = 0
+        filtered_list = []
+        for event in event_list:
+            if expected_index < len(expected_list) and event == expected_list[expected_index]:
+                assert event == expected_list[expected_index]
+                filtered_list.append(event)
+                expected_index += 1
+        return filtered_list
+
+    with client(py_exceptions=False) as c:
+        expected_event_type_order = ['ADDED', 'CHANGED']
+        expected_event_order = ['STOPPING', 'STOPPED', 'DEPLOYING']
+        events = []
+        event_types = []
+
+        def callback(event_type, **message):
+            if events and events[-1] != message['fields']['state']:
+                events.append(message['fields']['state'])
+            if event_types and event_types[-1] != event_type:
+                event_types.append(event_type)
+
+        c.subscribe('app.query', callback, sync=True)
+
+        with create_app('ipfs', {
+            'train': 'community',
+            'catalog_app': 'ipfs'
+        }):
+            events = []
+            call('app.stop', 'ipfs', job=True)
+            call('app.start', 'ipfs', job=True)
+            # filtered_events = assert_list_order(events, expected_event_order)
+            assert expected_event_order == events
+
+        filtered_event_types = assert_list_order(event_types, expected_event_type_order)
+        assert expected_event_type_order == filtered_event_types
+
+
+@pytest.mark.dependency(depends=['docker_setup'])
 def test_unset_apps():
     docker_config = call('docker.update', {'pool': None}, job=True)
-    assert docker_config['pool'] == None, docker_config
+    assert docker_config['pool'] is None, docker_config
