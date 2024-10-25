@@ -9,7 +9,8 @@ NAA_PATTERN = re.compile(r"^naa.[0-9a-fA-F]{16}$")
 
 def wwn_as_colon_hex(hexstr):
     """
-    Given a hex string '0xaabbccdd' (or 'naa.aabbccdd') return 'aa:bb:cc:dd'.
+    Given a hex string '0xaabbccdd11223344' (or 'naa.aabbccdd11223344')
+    return 'aa:bb:cc:dd:11:22:33:44'.
     """
     if isinstance(hexstr, str):
         if hexstr.startswith('0x'):
@@ -24,32 +25,32 @@ def wwn_as_colon_hex(hexstr):
 
 def colon_hex_as_naa(hexstr):
     """
-    Given a colon hex string 'aa:bb:cc:dd'  return 'naa.aabbccdd'.
+    Given a colon hex string 'aa:bb:cc:dd:11:22:33:44'  return 'naa.aabbccdd11223344'.
     """
-    return 'naa.' + ''.join(hexstr.split(':'))
+    if isinstance(hexstr, str) and HEX_COLON.match(hexstr):
+        return 'naa.' + ''.join(hexstr.split(':'))
 
 
 def str_to_naa(string):
-    if string is None:
-        return None
-    if string.startswith('0x'):
-        return 'naa.' + string[2:]
-    if HEX_COLON.match(string):
-        return 'naa.' + ''.join(string.split(':')).lower()
-    if string.startswith('naa.'):
-        return string
+    if isinstance(string, str):
+        if string.startswith('0x'):
+            return 'naa.' + string[2:]
+        if HEX_COLON.match(string):
+            return 'naa.' + ''.join(string.split(':')).lower()
+        if NAA_PATTERN.match(string):
+            return string
 
 
 def naa_to_int(string):
-    if string.startswith('naa.'):
+    if isinstance(string, str) and NAA_PATTERN.match(string):
         return int(f'0x{string[4:]}', 16)
 
 
 def wwpn_to_vport_naa(wwpn, chan):
-    if wwpn is None:
-        return None
     if isinstance(wwpn, str):
         wwpn = naa_to_int(str_to_naa(wwpn))
+    if wwpn is None:
+        return None
     # Similar to some code in isp_default_wwn (CORE os)
     seed = wwpn
     seed ^= 0x0100000000000000
@@ -90,4 +91,6 @@ def filter_by_wwpns_hex_string(wwpn_naa, wwpn_b_naa):
 
 
 def is_fc_addr(addr):
-    return bool(HEX_COLON.match(addr) or NAA_PATTERN.match(addr))
+    if isinstance(addr, str):
+        return bool(HEX_COLON.match(addr) or NAA_PATTERN.match(addr))
+    return False
