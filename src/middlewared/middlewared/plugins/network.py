@@ -7,11 +7,13 @@ from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
 
 import middlewared.sqlalchemy as sa
+from middlewared.restful import Application as RestfulApplication
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
-from middlewared.utils import filter_list
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str, ValidationErrors
+from middlewared.utils import filter_list
 from middlewared.utils.network_.procfs import read_proc_net
 from middlewared.validators import Range
+
 from .interface.netif import netif
 from .interface.interface_types import InterfaceType
 from .interface.lag_options import XmitHashChoices, LacpduRateChoices
@@ -1453,7 +1455,7 @@ class InterfaceService(CRUDService):
     @pass_app()
     async def websocket_local_ip(self, app):
         """Returns the local ip address for this websocket session."""
-        if app is None:
+        if app is None or isinstance(app, RestfulApplication):
             return
 
         sock = app.request.transport.get_extra_info('socket')
