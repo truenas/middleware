@@ -65,6 +65,11 @@ async def run_restic(job, cmd, env, stdin=None):
 
 
 async def restic_check_progress(job, proc, cmd: list[str]):
+    """Record progress of restic backup, restore, and forget commands.
+
+    Relevant documentation: https://restic.readthedocs.io/en/stable/075_scripting.html#json-output
+
+    """
     if "forget" in cmd:
         read = await proc.stdout.read()
         await job.logs_fd_write(read)
@@ -73,6 +78,8 @@ async def restic_check_progress(job, proc, cmd: list[str]):
     # backup or restore
     job.internal_data.setdefault("messages", [])
     progress_buffer = JobProgressBuffer(job)
+    time_delta = ""
+    action = ""
     while True:
         read = (await proc.stdout.readline()).decode("utf-8", "ignore")
         if read == "":
@@ -81,27 +88,32 @@ async def restic_check_progress(job, proc, cmd: list[str]):
         read = json.loads(read)
         msg_type = read["message_type"]
         if msg_type == "status":
-            remaining = read.get("seconds_remaining")
+            if (remaining := read.get("seconds_remaining")) is not None:
+                time_delta = str(timedelta(seconds=remaining))
+
             progress_buffer.set_progress(
                 read["percent_done"] * 100,
-                f"{timedelta(seconds=remaining)} remaining" if remaining else ""
+                (f"{time_delta} remaining: " if time_delta else "") + action
             )
             continue
 
-        await job.logs_fd_write(json.dumps(read).encode("utf-8", "ignore"))
+        await job.logs_fd_write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
         if msg_type == "summary":
             continue
 
         if msg_type == "error":
+            action = read["error.message"]
             msg = "".join([
                 "Error",
                 f" in {item}" if (item := read.get("item")) else "",
                 f" while {during}" if (during := read.get("during")) else "",
                 ": ",
-                read["error.message"]
+                action
             ])
         else:
             # verbose_status
-            msg = " ".join([read[key] for key in ("item", "action") if key in read])
+            action = " ".join([read[key] for key in ("item", "action") if key in read])
+            msg = action
 
         job.internal_data["messages"] = job.internal_data["messages"][-4:] + [msg]
+        progress_buffer.set_progress(description=(f"{time_delta} remaining: " if time_delta else "") + action)
