@@ -6,9 +6,23 @@ from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.docker import dataset_props, IX_APPS_MOUNT_PATH
 
 
+ENC_POOL_PASSWORD = 'test1234'
+
+
 @pytest.fixture(scope='module')
 def docker_pool():
     with another_pool() as pool:
+        with docker(pool) as docker_config:
+            yield docker_config
+
+
+@pytest.fixture(scope='module')
+def docker_encrypted_pool():
+    with another_pool({
+        'name': 'docker_enc_pool',
+        'encryption': True,
+        'encryption_options': {'passphrase': ENC_POOL_PASSWORD}
+    }) as pool:
         with docker(pool) as docker_config:
             yield docker_config
 
@@ -53,3 +67,24 @@ def test_apps_dataset_after_address_pool_update(docker_pool):
     assert docker_config['address_pools'] == [{'base': '172.17.0.0/12', 'size': 27}]
     assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] == docker_config['dataset']
     assert call('docker.status')['status'] == 'RUNNING'
+
+
+def test_correct_docker_dataset_is_mounted_on_enc_pool(docker_encrypted_pool):
+    docker_config = call('docker.config')
+    assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] == docker_config['dataset']
+
+
+def test_docker_locked_dataset_mount(docker_encrypted_pool):
+    docker_config = call('docker.config')
+    call('pool.dataset.lock', docker_encrypted_pool['pool'], job=True)
+    assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] != docker_config['dataset']
+
+
+def test_docker_unlocked_dataset_mount(docker_encrypted_pool):
+    docker_config = call('docker.config')
+    call(
+        'pool.dataset.unlock', docker_encrypted_pool['pool'], {
+            'datasets': [{'passphrase': ENC_POOL_PASSWORD, 'name': docker_encrypted_pool['pool']}], 'recursive': True
+        }, job=True
+    )
+    assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] == docker_config['dataset']
