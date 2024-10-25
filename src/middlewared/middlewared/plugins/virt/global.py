@@ -25,6 +25,9 @@ if TYPE_CHECKING:
 INCUS_PATH = '/var/lib/incus'
 INCUS_BRIDGE = 'incusbr0'
 
+BRIDGE_AUTO = '[AUTO]'
+POOL_DISABLED = '[DISABLED]'
+
 
 class NoPoolConfigured(Exception):
     pass
@@ -52,6 +55,7 @@ class VirtGlobalService(ConfigService):
         namespace = 'virt.global'
         cli_namespace = 'virt.global'
         role_prefix = 'VIRT_GLOBAL'
+        entry = VirtGlobalEntry
 
     @private
     async def extend(self, data):
@@ -68,13 +72,21 @@ class VirtGlobalService(ConfigService):
     @private
     async def validate(self, new: dict, schema_name: str, verrors: ValidationErrors):
 
-        bridge = new['bridge'] or ''
+        bridge = new['bridge']
+        if not bridge:
+            bridge = BRIDGE_AUTO
         if bridge not in await self.bridge_choices():
             verrors.add(f'{schema_name}.bridge', 'Invalid bridge')
+        if bridge == BRIDGE_AUTO:
+            new['bridge'] = None
 
-        pool = new['pool'] or ''
+        pool = new['pool']
+        if not pool:
+            pool = POOL_DISABLED
         if pool not in await self.pool_choices():
             verrors.add(f'{schema_name}.pool', 'Invalid pool')
+        if pool == POOL_DISABLED:
+            new['pool'] = None
 
     @api_method(VirtGlobalUpdateArgs, VirtGlobalUpdateResult)
     @job()
@@ -83,6 +95,10 @@ class VirtGlobalService(ConfigService):
         Update global virtualization settings.
 
         `pool` which pool to use to store instances.
+        None will disable the service.
+
+        `bridge` which bridge interface to use by default.
+        None means it will automatically create one.
         """
         old = await self.config()
 
@@ -114,8 +130,7 @@ class VirtGlobalService(ConfigService):
 
         Empty means it will be managed/created automatically.
         """
-        choices = {'': 'Automatic'}
-
+        choices = {BRIDGE_AUTO: 'Automatic'}
         # We do not allow custom bridge on HA because it might have bridge STP issues
         # causing failover problems.
         if not await self.middleware.call('failover.licensed'):
@@ -130,7 +145,7 @@ class VirtGlobalService(ConfigService):
         """
         Pool choices for virtualization purposes.
         """
-        pools = {'': '[Disabled]'}
+        pools = {POOL_DISABLED: '[Disabled]'}
         for p in (await self.middleware.call('zfs.pool.query_imported_fast')).values():
             if p['name'] in BOOT_POOL_NAME_VALID:
                 continue
