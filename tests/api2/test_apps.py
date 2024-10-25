@@ -2,6 +2,7 @@ import pytest
 
 from middlewared.test.integration.utils import call, client
 from middlewared.test.integration.assets.apps import app
+from middlewared.test.integration.assets.docker import docker
 from middlewared.test.integration.assets.pool import another_pool
 from truenas_api_client import ValidationErrors
 
@@ -138,13 +139,8 @@ services:
 @pytest.fixture(scope='module')
 def docker_pool():
     with another_pool() as pool:
-        docker_config = call('docker.update', {'pool': pool['name']}, job=True)
-        assert docker_config['pool'] == pool['name'], docker_config
-        try:
+        with docker(pool) as docker_config:
             yield docker_config
-        finally:
-            docker_config = call('docker.update', {'pool': None}, job=True)
-            assert docker_config['pool'] is None, docker_config
 
 
 def test_create_catalog_app(docker_pool):

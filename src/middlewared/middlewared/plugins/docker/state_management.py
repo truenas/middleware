@@ -37,9 +37,12 @@ class DockerStateService(Service):
                 'error': 'Docker service could not be started'
             })
 
-    async def start_service(self):
+    async def start_service(self, mount_datasets: bool = False):
         await self.set_status(Status.INITIALIZING.value)
+        catalog_sync_job = None
         try:
+            if mount_datasets:
+                catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
             # TODO: Check license active
             await self.before_start_check()
             await self.middleware.call('service.start', 'docker')
@@ -48,6 +51,9 @@ class DockerStateService(Service):
             raise
         else:
             await self.middleware.call('app.certificate.redeploy_apps_consuming_outdated_certs')
+        finally:
+            if catalog_sync_job:
+                await catalog_sync_job.wait()
 
     async def set_status(self, new_status, extra=None):
         assert new_status in Status.__members__
@@ -113,8 +119,7 @@ async def _event_system_ready(middleware, event_type, args):
         await middleware.call('nvidia.install', False)
 
     if (await middleware.call('docker.config'))['pool']:
-        await middleware.call('docker.fs_manage.mount')
-        middleware.create_task(middleware.call('docker.state.start_service'))
+        middleware.create_task(middleware.call('docker.state.start_service', True))
     else:
         await middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 
