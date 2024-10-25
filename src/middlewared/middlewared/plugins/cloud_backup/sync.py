@@ -131,6 +131,8 @@ class CloudBackupService(Service):
 
             if "id" in cloud_backup:
                 await self.middleware.call("alert.oneshot_delete", "CloudBackupTaskFailed", cloud_backup["id"])
+            
+            job.set_progress(description="Done")
         except Exception:
             if "id" in cloud_backup:
                 await self.middleware.call("alert.oneshot_create", "CloudBackupTaskFailed", {
