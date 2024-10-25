@@ -1,12 +1,12 @@
 import asyncio
 import copy
 
-from pydantic import create_model, ConfigDict, Field
+from pydantic import create_model, Field
 from typing_extensions import Annotated, Type
 
 from middlewared.api import api_method
 from middlewared.api.base import Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
-from middlewared.api.base.model import BaseModel
+from middlewared.api.base.model import AllowExtraBaseModel, BaseModel
 from middlewared.schema import accepts, Dict, Patch, returns
 
 from .base import ServiceBase
@@ -60,7 +60,7 @@ class ConfigServiceMetabase(ServiceBase):
             if klass._config.entry is None:
                 klass._config.entry = create_model(
                     f'{namespace.capitalize()}Entry',
-                    __config__={'extra': 'allow'}
+                    __base__=(AllowExtraBaseModel,),
                 )
 
             result_model = create_model(

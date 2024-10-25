@@ -12,6 +12,7 @@ from typing_extensions import Annotated
 from middlewared.api.base.types.base import SECRET_VALUE
 from middlewared.utils.lang import undefined
 
+
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "single_argument_args", "single_argument_result"]
 
 
@@ -95,6 +96,14 @@ class BaseModel(PydanticBaseModel):
         return value
 
 
+class AllowExtraBaseModel(BaseModel):
+    model_config = ConfigDict(
+        extra="allow",  # Allow extra fields
+        strict=True,
+        str_max_length=1024,
+    )
+
+
 class ForUpdateMetaclass(ModelMetaclass):
     """
     Using this metaclass on a model will change all of its fields default values to `undefined`.
@@ -150,10 +159,8 @@ def single_argument_args(name: str):
             __module__=klass.__module__,
             **{name: Annotated[klass, Field()]},
         )
-        if hasattr(klass, 'from_previous'):
-            model.from_previous = classmethod(klass.from_previous)
-        if hasattr(klass, 'to_previous'):
-            model.to_previous = classmethod(klass.to_previous)
+        model.from_previous = classmethod(klass.from_previous)
+        model.to_previous = classmethod(klass.to_previous)
         return model
 
     return wrapper
