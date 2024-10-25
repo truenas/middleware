@@ -1,6 +1,11 @@
 import asyncio
 import copy
 
+from pydantic import create_model, Field
+from typing_extensions import Annotated
+
+from middlewared.api import api_method
+from middlewared.api.base.model import BaseModel
 from middlewared.schema import accepts, Dict, Patch, returns
 
 from .base import ServiceBase
@@ -30,14 +35,33 @@ class ConfigServiceMetabase(ServiceBase):
         namespace = klass._config.namespace.replace('.', '_')
         config_entry_key = f'{namespace}_entry'
 
-        if klass.ENTRY == NotImplementedError:
-            klass.ENTRY = Dict(config_entry_key, additional_attrs=True)
+        if klass._config.entry is not None:
+            # FIXME: We do this temporarily to avoid breaking existing code
+            klass.ENTRY = None
+            klass.config = api_method(
+                create_model(
+                    f'{namespace.capitalize()}Config',
+                    __base__=(BaseModel,),
+                    __module__=klass._config.entry.__module__,
+                ),
+                create_model(
+                    klass._config.entry.__name__.removesuffix('Entry') + 'ConfigResult',
+                    __base__=(BaseModel,),
+                    __module__=klass._config.entry.__module__,
+                    result=Annotated[klass._config.entry, Field()]
+                )
+            )(klass.config)
+        else:
+            if klass.ENTRY == NotImplementedError:
+                klass.ENTRY = Dict(config_entry_key, additional_attrs=True)
 
-        config_entry_key = klass.ENTRY.name
+            config_entry_key = klass.ENTRY.name
 
-        config_entry = copy.deepcopy(klass.ENTRY)
-        config_entry.register = True
-        klass.config = returns(config_entry)(klass.config)
+            config_entry = copy.deepcopy(klass.ENTRY)
+            config_entry.register = True
+            if not hasattr(klass.config, 'accepts'):
+                klass.config = accepts()(klass.config)
+            klass.config = returns(config_entry)(klass.config)
 
         if hasattr(klass, 'do_update'):
             for m_name, decorator in filter(
@@ -70,7 +94,6 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
 
     ENTRY = NotImplementedError
 
-    @accepts()
     async def config(self):
         options = {}
         options['extend'] = self._config.datastore_extend
