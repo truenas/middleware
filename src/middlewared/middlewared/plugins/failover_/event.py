@@ -992,6 +992,7 @@ class FailoverEventsService(Service):
             logger.info('Docker service stopped gracefully')
 
     def start_virt(self):
+        logger.info('Going to initialize virt plugin')
         job = self.run_call('virt.global.setup')
         job.wait_sync(timeout=10)
         if job.error:
@@ -1004,6 +1005,7 @@ class FailoverEventsService(Service):
                 logger.warning('Virtualization failed to initialize with state %r.', config['state'])
 
     def stop_virt(self):
+        logger.info('Going to stop virt plugin')
         job = self.run_call('virt.global.reset')
         # virt instances have a timeout of 10 seconds to stop
         job.wait_sync(timeout=15)
