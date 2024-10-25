@@ -271,12 +271,12 @@ class FCHostService(CRUDService):
                     node_b_fc_hosts = await self.middleware.call('fc.fc_hosts', physical_port_filter)
                 case _:
                     raise CallError('Cannot configure FC until HA is configured')
-            # Match pairs by slow (includes PCI function)
+            # Match pairs by slot (includes PCI function)
             for fc_host in node_a_fc_hosts:
                 slot_2_fc_host_wwpn[fc_host['slot']]['A'] = str_to_naa(fc_host.get('port_name'))
             for fc_host in node_b_fc_hosts:
                 slot_2_fc_host_wwpn[fc_host['slot']]['B'] = str_to_naa(fc_host.get('port_name'))
-            # Iterate over each slot and make sure the corresponding fc_host entry is preent
+            # Iterate over each slot and make sure the corresponding fc_host entry is present
             sorted_slots = sorted(list(slot_2_fc_host_wwpn.keys()))
             result = True
             for slot in sorted_slots:
