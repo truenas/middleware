@@ -1,7 +1,7 @@
 import pytest
 
 from middlewared.test.integration.utils import call, client
-from middlewared.test.integration.assets.apps import create_app
+from middlewared.test.integration.assets.apps import app
 from middlewared.test.integration.assets.pool import another_pool
 from truenas_api_client import ValidationErrors
 
@@ -149,30 +149,30 @@ def test_docker_setup(docker_pool):
 
 @pytest.mark.dependency(depends=['docker_setup'])
 def test_create_catalog_app():
-    with create_app('actual-budget', {
+    with app('actual-budget', {
         'train': 'community',
         'catalog_app': 'actual-budget',
-    }) as app:
-        assert app['name'] == 'actual-budget', app
-        assert app['state'] == 'DEPLOYING', app
+    }) as app_info:
+        assert app_info['name'] == 'actual-budget', app_info
+        assert app_info['state'] == 'DEPLOYING', app_info
         volume_ds = call('app.get_app_volume_ds', 'actual-budget')
         assert volume_ds is not None, volume_ds
 
 
 @pytest.mark.dependency(depends=['docker_setup'])
 def test_create_custom_app():
-    with create_app('custom-budget', {
+    with app('custom-budget', {
         'custom_app': True,
         'custom_compose_config': CUSTOM_CONFIG,
-    }) as app:
-        assert app['name'] == 'custom-budget'
-        assert app['state'] == 'DEPLOYING'
+    }) as app_info:
+        assert app_info['name'] == 'custom-budget'
+        assert app_info['state'] == 'DEPLOYING'
 
 
 @pytest.mark.dependency(depends=['docker_setup'])
 def test_create_custom_app_validation_error():
     with pytest.raises(ValidationErrors):
-        with create_app('custom-budget', {
+        with app('custom-budget', {
             'custom_app': False,
             'custom_compose_config': CUSTOM_CONFIG,
         }):
@@ -182,7 +182,7 @@ def test_create_custom_app_validation_error():
 @pytest.mark.dependency(depends=['docker_setup'])
 def test_create_custom_app_invalid_yaml():
     with pytest.raises(ValidationErrors):
-        with create_app('custom-budget', {
+        with app('custom-budget', {
             'custom_app': True,
             'custom_compose_config': INVALID_YAML,
         }):
@@ -197,16 +197,16 @@ def test_delete_app_validation_error_for_non_existent_app():
 
 @pytest.mark.dependency(depends=['docker_setup'])
 def test_delete_app_options():
-    with create_app(
+    with app(
         'custom-budget',
         {
             'custom_app': True,
             'custom_compose_config': CUSTOM_CONFIG,
         },
         {'remove_ix_volumes': True, 'remove_images': True}
-    ) as app:
-        assert app['name'] == 'custom-budget'
-        assert app['state'] == 'DEPLOYING'
+    ) as app_info:
+        assert app_info['name'] == 'custom-budget'
+        assert app_info['state'] == 'DEPLOYING'
 
     app_images = call('app.image.query', [['repo_tags', '=', ['actualbudget/actual-server:24.10.1']]])
     assert len(app_images) == 0
@@ -228,17 +228,17 @@ def test_update_app():
             }
         }
     }
-    with create_app('actual-budget', {
+    with app('actual-budget', {
         'train': 'community',
         'catalog_app': 'actual-budget',
-    }) as app:
-        app = call('app.update', app['name'], values, job=True)
-        assert app['active_workloads']['used_ports'][0]['host_ports'][0]['host_port'] == 32000
+    }) as app_info:
+        app_info = call('app.update', app_info['name'], values, job=True)
+        assert app_info['active_workloads']['used_ports'][0]['host_ports'][0]['host_port'] == 32000
 
 
 @pytest.mark.dependency(depends=['docker_setup'])
 def test_stop_start_app():
-    with create_app('actual-budget', {
+    with app('actual-budget', {
         'train': 'community',
         'catalog_app': 'actual-budget'
     }):
@@ -270,7 +270,7 @@ def test_event_subscribe():
 
         c.subscribe('app.query', callback, sync=True)
 
-        with create_app('ipfs', {
+        with app('ipfs', {
             'train': 'community',
             'catalog_app': 'ipfs'
         }):
