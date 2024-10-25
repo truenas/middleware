@@ -1,5 +1,6 @@
 import pytest
 
+from middlewared.test.integration.assets.docker import docker
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.docker import dataset_props, IX_APPS_MOUNT_PATH
@@ -8,17 +9,11 @@ from middlewared.test.integration.utils.docker import dataset_props, IX_APPS_MOU
 @pytest.fixture(scope='module')
 def docker_pool():
     with another_pool() as pool:
-        yield pool['name']
+        with docker(pool) as docker_config:
+            yield docker_config
 
 
-@pytest.mark.dependency(name='docker_setup')
-def test_docker_setup(docker_pool):
-    docker_config = call('docker.update', {'pool': docker_pool}, job=True)
-    assert docker_config['pool'] == docker_pool, docker_config
-
-
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_docker_datasets_properties():
+def test_docker_datasets_properties(docker_pool):
     docker_config = call('docker.config')
     datasets = {
         ds['name']: ds['properties'] for ds in call('zfs.dataset.query', [['id', '^', docker_config['dataset']]])
@@ -32,42 +27,29 @@ def test_docker_datasets_properties():
         assert invalid_props == {}, f'{ds_name} has invalid properties: {invalid_props}'
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_correct_docker_dataset_is_mounted():
+def test_correct_docker_dataset_is_mounted(docker_pool):
     docker_config = call('docker.config')
     assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] == docker_config['dataset']
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_catalog_synced_properly():
+def test_catalog_synced_properly(docker_pool):
     assert call('catalog.synced') is True
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_catalog_sync_location():
+def test_catalog_sync_location(docker_pool):
     assert call('catalog.config')['location'] == '/mnt/.ix-apps/truenas_catalog'
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_apps_being_reported():
+def test_apps_being_reported(docker_pool):
     assert call('app.available', [], {'count': True}) != 0
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_apps_are_running():
+def test_apps_are_running(docker_pool):
     assert call('docker.status')['status'] == 'RUNNING'
 
 
-@pytest.mark.dependency(depends=['docker_setup'])
-def test_apps_dataset_after_address_pool_update():
+def test_apps_dataset_after_address_pool_update(docker_pool):
     docker_config = call('docker.update', {'address_pools': [{'base': '172.17.0.0/12', 'size': 27}]}, job=True)
     assert docker_config['address_pools'] == [{'base': '172.17.0.0/12', 'size': 27}]
     assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] == docker_config['dataset']
     assert call('docker.status')['status'] == 'RUNNING'
-
-
-def test_unset_docker_pool(docker_pool):
-    docker_config = call(
-        'docker.update', {'pool': None, 'address_pools': [{'base': '172.17.0.0/12', 'size': 24}]}, job=True
-    )
-    assert docker_config['pool'] is None, docker_config
