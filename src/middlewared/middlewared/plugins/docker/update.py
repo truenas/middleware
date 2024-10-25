@@ -2,6 +2,7 @@ import errno
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.api.current import DockerEntry
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Str, ValidationErrors
 from middlewared.service import CallError, ConfigService, job, private, returns
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -29,37 +30,13 @@ class DockerService(ConfigService):
         datastore_extend = 'docker.config_extend'
         cli_namespace = 'app.docker'
         role_prefix = 'DOCKER'
-
-    ENTRY = Dict(
-        'docker_entry',
-        Bool('enable_image_updates', required=True),
-        Int('id', required=True),
-        Str('dataset', required=True),
-        Str('pool', required=True, null=True),
-        Bool('nvidia', required=True),
-        List('address_pools', items=[
-             Dict(
-                 'address_pool',
-                 IPAddr('base', cidr=True),
-                 Int('size', validators=[Range(min_=1, max_=32)])
-             )
-        ]),
-        update=True,
-    )
+        entry = DockerEntry
 
     @private
     async def config_extend(self, data):
         data['dataset'] = applications_ds_name(data['pool']) if data.get('pool') else None
         return data
 
-    @accepts(
-        Patch(
-            'docker_entry', 'docker_update',
-            ('rm', {'name': 'id'}),
-            ('rm', {'name': 'dataset'}),
-            ('attr', {'update': True}),
-        )
-    )
     @job(lock='docker_update')
     async def do_update(self, job, data):
         """
