@@ -95,6 +95,10 @@ class VirtGlobalService(ConfigService):
         Update global virtualization settings.
 
         `pool` which pool to use to store instances.
+        None will disable the service.
+
+        `bridge` which bridge interface to use by default.
+        None means it will automatically create one.
         """
         old = await self.config()
 
