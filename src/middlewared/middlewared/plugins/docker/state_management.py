@@ -39,17 +39,21 @@ class DockerStateService(Service):
 
     async def start_service(self, mount_datasets: bool = False):
         await self.set_status(Status.INITIALIZING.value)
+        catalog_sync_job = None
         try:
+            if mount_datasets:
+                catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
             # TODO: Check license active
             await self.before_start_check()
-            if mount_datasets:
-                await self.middleware.call('docker.fs_manage.mount')
             await self.middleware.call('service.start', 'docker')
         except Exception as e:
             await self.set_status(Status.FAILED.value, str(e))
             raise
         else:
             await self.middleware.call('app.certificate.redeploy_apps_consuming_outdated_certs')
+        finally:
+            if catalog_sync_job:
+                await catalog_sync_job.wait()
 
     async def set_status(self, new_status, extra=None):
         assert new_status in Status.__members__
