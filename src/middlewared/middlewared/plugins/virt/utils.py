@@ -1,5 +1,6 @@
 import asyncio
 import aiohttp
+import enum
 from collections.abc import Callable
 
 from .websocket import IncusWS
@@ -8,6 +9,14 @@ from middlewared.service import CallError
 
 SOCKET = '/var/lib/incus/unix.socket'
 HTTP_URI = 'http://unix.socket'
+
+
+class Status(enum.Enum):
+    INITIALIZING = 'INITIALIZING'
+    INITIALIZED = 'INITIALIZED'
+    NO_POOL = 'NO_POOL'
+    LOCKED = 'LOCKED'
+    ERROR = 'ERROR'
 
 
 async def incus_call(path: str, method: str, request_kwargs: dict = None):

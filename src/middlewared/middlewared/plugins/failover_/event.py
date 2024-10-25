@@ -16,10 +16,11 @@ from middlewared.utils import filter_list
 from middlewared.service import Service, job, accepts
 from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Bool, Int
-from middlewared.plugins.docker.state_utils import Status
+from middlewared.plugins.docker.state_utils import Status as DockerStatus
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
+from middlewared.plugins.virt.utils import Status as VirtStatus
 
 logger = logging.getLogger('failover')
 FAILOVER_LOCK_NAME = 'vrrp_event'
@@ -743,6 +744,7 @@ class FailoverEventsService(Service):
             logger.info('Done syncing encryption keys with KMIP server')
 
         self.start_apps()
+        self.start_virt()
 
         logger.info('Migrating interface information (if required)')
         self.run_call('interface.persist_link_addresses')
@@ -810,6 +812,14 @@ class FailoverEventsService(Service):
             name='failover_stop_docker',
         )
         stop_docker_thread.start()
+
+        # We will try to give some time to containers to gracefully stop before zpools will be forcefully
+        # exported. This is to avoid any potential data corruption.
+        stop_virt_thread = threading.Thread(
+            target=self.stop_virt,
+            name='failover_stop_virt',
+        )
+        stop_virt_thread.start()
 
         # We stop netdata before exporting pools because otherwise we might have erroneous stuff
         # getting logged and causing spam
@@ -943,7 +953,7 @@ class FailoverEventsService(Service):
 
         logger.info('Retasting disks (if required)')
         self.run_call('disk.retaste')
-        logger.info ('Done retasting disks (if required)')
+        logger.info('Done retasting disks (if required)')
 
         logger.info('Successfully became the BACKUP node.')
         self.FAILOVER_RESULT = 'SUCCESS'
@@ -957,7 +967,7 @@ class FailoverEventsService(Service):
     def start_apps_impl(self):
         pool = self.run_call('docker.config')['pool']
         if not pool:
-            self.middleware.call_sync('docker.state.set_status', Status.UNCONFIGURED.value)
+            self.middleware.call_sync('docker.state.set_status', DockerStatus.UNCONFIGURED.value)
             logger.info('Skipping starting apps as they are not configured')
             return
 
@@ -980,6 +990,29 @@ class FailoverEventsService(Service):
             logger.error('Failed to stop docker service gracefully', exc_info=True)
         else:
             logger.info('Docker service stopped gracefully')
+
+    def start_virt(self):
+        logger.info('Going to initialize virt plugin')
+        job = self.run_call('virt.global.setup')
+        job.wait_sync(timeout=10)
+        if job.error:
+            logger.info('Failed to setup virtualization: %r', job.error)
+        else:
+            config = self.run_call('virt.global.config')
+            if config['state'] == VirtStatus.INITIALIZED.value:
+                logger.info('Virtualization initalized.')
+            elif config['state'] != VirtStatus.NO_POOL.value:
+                logger.warning('Virtualization failed to initialize with state %r.', config['state'])
+
+    def stop_virt(self):
+        logger.info('Going to stop virt plugin')
+        job = self.run_call('virt.global.reset')
+        # virt instances have a timeout of 10 seconds to stop
+        job.wait_sync(timeout=15)
+        if job.error:
+            logger.warning('Failed to reset virtualization state.')
+        else:
+            logger.info('Virtualization has been successfully resetted.')
 
 
 async def vrrp_fifo_hook(middleware, data):
