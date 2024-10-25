@@ -150,8 +150,10 @@ def single_argument_args(name: str):
             __module__=klass.__module__,
             **{name: Annotated[klass, Field()]},
         )
-        model.from_previous = classmethod(klass.from_previous)
-        model.to_previous = classmethod(klass.to_previous)
+        if hasattr(klass, 'from_previous'):
+            model.from_previous = classmethod(klass.from_previous)
+        if hasattr(klass, 'to_previous'):
+            model.to_previous = classmethod(klass.to_previous)
         return model
 
     return wrapper

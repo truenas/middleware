@@ -1,10 +1,11 @@
 import asyncio
 import copy
 
-from pydantic import create_model, Field
-from typing_extensions import Annotated
+from pydantic import create_model, ConfigDict, Field
+from typing_extensions import Annotated, Type
 
 from middlewared.api import api_method
+from middlewared.api.base import Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
 from middlewared.api.base.model import BaseModel
 from middlewared.schema import accepts, Dict, Patch, returns
 
@@ -15,6 +16,23 @@ from .service_mixin import ServiceChangeMixin
 
 
 get_or_insert_lock = asyncio.Lock()
+
+
+def create_update_model(base_class: Type[BaseModel], fields_to_exclude: list[str]) -> Type[BaseModel]:
+    # Prepare fields, excluding specified fields and setting them to Excluded
+    model_fields = {
+        field: (Excluded, excluded_field())
+        if field in fields_to_exclude else (field_type, ...)
+        for field, field_type in base_class.__annotations__.items()
+    }
+
+    return create_model(
+        base_class.__name__ + 'Update',
+        __base__=base_class,
+        __module__=base_class.__module__,
+        __cls_kwargs__={'metaclass': ForUpdateMetaclass},
+        **model_fields
+    )
 
 
 class ConfigServiceMetabase(ServiceBase):
@@ -34,29 +52,33 @@ class ConfigServiceMetabase(ServiceBase):
 
         namespace = klass._config.namespace.replace('.', '_')
         config_entry_key = f'{namespace}_entry'
+        config_model_name = f'{namespace.capitalize()}Config'
 
-        if klass._config.entry is not None:
+        if klass._config.entry is not None or klass.ENTRY == NotImplementedError:
             # FIXME: We do this temporarily to avoid breaking existing code
             klass.ENTRY = None
+            if klass._config.entry is None:
+                klass._config.entry = create_model(
+                    f'{namespace.capitalize()}Entry',
+                    __config__={'extra': 'allow'}
+                )
+
+            result_model = create_model(
+                klass._config.entry.__name__.removesuffix('Entry') + 'ConfigResult',
+                __base__=(BaseModel,),
+                __module__=klass._config.entry.__module__,
+                result=Annotated[klass._config.entry, Field()]
+            )
             klass.config = api_method(
                 create_model(
-                    f'{namespace.capitalize()}Config',
+                    config_model_name,
                     __base__=(BaseModel,),
                     __module__=klass._config.entry.__module__,
                 ),
-                create_model(
-                    klass._config.entry.__name__.removesuffix('Entry') + 'ConfigResult',
-                    __base__=(BaseModel,),
-                    __module__=klass._config.entry.__module__,
-                    result=Annotated[klass._config.entry, Field()]
-                )
+                result_model
             )(klass.config)
         else:
-            if klass.ENTRY == NotImplementedError:
-                klass.ENTRY = Dict(config_entry_key, additional_attrs=True)
-
             config_entry_key = klass.ENTRY.name
-
             config_entry = copy.deepcopy(klass.ENTRY)
             config_entry.register = True
             if not hasattr(klass.config, 'accepts'):
@@ -64,6 +86,23 @@ class ConfigServiceMetabase(ServiceBase):
             klass.config = returns(config_entry)(klass.config)
 
         if hasattr(klass, 'do_update'):
+            # There are 2 cases which we need to handle
+            # 1) New style api_method
+            # 2) Old style accepts/returns
+            if klass._config.entry:
+                if hasattr(klass.do_update, 'new_style_accepts'):
+                    return klass
+
+                # If a decorator is not explicitly specified, usually what happens for a config service
+                # is that we have it as a single argument and it returns entry
+                # We build the update model here
+                update_model = create_update_model(klass._config.entry, [klass._config.datastore_primary_key])
+                klass.do_update = api_method(
+                    single_argument_args(config_entry_key.removesuffix('_entry') + '_update')(update_model),
+                    result_model
+                )(klass.do_update)
+                return klass
+
             for m_name, decorator in filter(
                 lambda m: not hasattr(klass.do_update, m[0]),
                 (('returns', returns), ('accepts', accepts))
