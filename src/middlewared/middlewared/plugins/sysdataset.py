@@ -714,6 +714,8 @@ class SystemDatasetService(ConfigService):
             # a file descriptor underneath /var/log will no longer need to be
             # stopped/restarted to allow the system dataset to migrate
             restart = ['netdata']
+            if self.middleware.call_sync('service.started', 'nfs'):
+                restart.append('nfs')
             if self.middleware.call_sync('service.started', 'cifs'):
                 restart.insert(0, 'cifs')
             if self.middleware.call_sync('service.started', 'open-vm-tools'):
