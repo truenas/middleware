@@ -93,7 +93,7 @@ async def restic_check_progress(job, proc, cmd: list[str]):
 
             progress_buffer.set_progress(
                 read["percent_done"] * 100,
-                (f"{time_delta} remaining.  " if time_delta else "") + action
+                (f"{time_delta} remaining\n" if time_delta else "") + action
             )
             continue
 
@@ -116,4 +116,4 @@ async def restic_check_progress(job, proc, cmd: list[str]):
             msg = action
 
         job.internal_data["messages"] = job.internal_data["messages"][-4:] + [msg]
-        progress_buffer.set_progress(description=(f"{time_delta} remaining.  " if time_delta else "") + action)
+        progress_buffer.set_progress(description=(f"{time_delta} remaining\n" if time_delta else "") + action)
