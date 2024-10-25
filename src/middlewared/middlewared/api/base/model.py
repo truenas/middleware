@@ -99,8 +99,6 @@ class BaseModel(PydanticBaseModel):
 class AllowExtraBaseModel(BaseModel):
     model_config = ConfigDict(
         extra="allow",  # Allow extra fields
-        strict=True,
-        str_max_length=1024,
     )
 
 
