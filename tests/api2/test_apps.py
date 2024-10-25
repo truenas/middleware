@@ -255,19 +255,6 @@ def test_stop_start_app():
 
 @pytest.mark.dependency(depends=['docker_setup'])
 def test_event_subscribe():
-    def assert_list_order(event_list, expected_list):
-        """
-        Assert each event in the expected order as they occur
-        """
-        expected_index = 0
-        filtered_list = []
-        for event in event_list:
-            if expected_index < len(expected_list) and event == expected_list[expected_index]:
-                assert event == expected_list[expected_index]
-                filtered_list.append(event)
-                expected_index += 1
-        return filtered_list
-
     with client(py_exceptions=False) as c:
         expected_event_type_order = ['ADDED', 'CHANGED']
         expected_event_order = ['STOPPING', 'STOPPED', 'DEPLOYING']
@@ -275,9 +262,10 @@ def test_event_subscribe():
         event_types = []
 
         def callback(event_type, **message):
-            if events and events[-1] != message['fields']['state']:
+            nonlocal events, event_types
+            if not events or events[-1] != message['fields']['state']:
                 events.append(message['fields']['state'])
-            if event_types and event_types[-1] != event_type:
+            if not event_types or event_types[-1] != event_type:
                 event_types.append(event_type)
 
         c.subscribe('app.query', callback, sync=True)
@@ -289,11 +277,9 @@ def test_event_subscribe():
             events = []
             call('app.stop', 'ipfs', job=True)
             call('app.start', 'ipfs', job=True)
-            # filtered_events = assert_list_order(events, expected_event_order)
             assert expected_event_order == events
 
-        filtered_event_types = assert_list_order(event_types, expected_event_type_order)
-        assert expected_event_type_order == filtered_event_types
+        assert expected_event_type_order == event_types
 
 
 @pytest.mark.dependency(depends=['docker_setup'])
