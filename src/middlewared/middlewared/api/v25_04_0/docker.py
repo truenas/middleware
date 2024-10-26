@@ -1,11 +1,12 @@
-from pydantic import conint, IPvAnyNetwork
+from pydantic import conint
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
 )
+from middlewared.api.base.types.base import IPAddr, IPAddr
 
 class AddressPool(BaseModel):
-    base: IPvAnyNetwork
+    base: IPAddr(cidr=True)
     size: conint(ge=1, le=32)
 
 
