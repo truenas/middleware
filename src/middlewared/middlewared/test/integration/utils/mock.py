@@ -25,8 +25,11 @@ def mock(method, declaration="", **kwargs):
         can be normal function or `async` and must accept `self` argument and all other arguments the function being
         replaced accepts. No `@accepts`, `@job` or other decorators are required, but if a method being replaced is a
         job, then mock signature must also accept `job` argument.
+
+    :param remote: Optional boolean to allow the mock to be sent to other node in HA-pair.
     """
     args = kwargs.pop("args", None)
+    remote = kwargs.pop("remote", False)
 
     if declaration and kwargs:
         raise ValueError("Mock `declaration` is not allowed with kwargs")
@@ -36,10 +39,16 @@ def mock(method, declaration="", **kwargs):
         description = kwargs
 
     with client() as c:
-        c.call("test.set_mock", method, args, description)
+        if remote:
+            c.call("failover.call_remote", "test.set_mock", [method, args, description])
+        else:
+            c.call("test.set_mock", method, args, description)
 
     try:
         yield
     finally:
         with client() as c:
-            c.call("test.remove_mock", method, args)
+            if remote:
+                c.call("failover.call_remote", "test.remove_mock", [method, args])
+            else:
+                c.call("test.remove_mock", method, args)
