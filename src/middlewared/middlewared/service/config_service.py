@@ -2,12 +2,12 @@ import asyncio
 import copy
 
 from pydantic import create_model, Field
-from typing_extensions import Annotated, Type
+from typing_extensions import Annotated
 
 from middlewared.api import api_method
-from middlewared.api.base import Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
-from middlewared.api.base.model import AllowExtraBaseModel, BaseModel
-from middlewared.schema import accepts, Dict, Patch, returns
+from middlewared.api.base import ForUpdateMetaclass, single_argument_args
+from middlewared.api.base.model import AllowExtraBaseModel, BaseModel, create_model_excluding_fields
+from middlewared.schema import accepts, Patch, returns
 
 from .base import ServiceBase
 from .decorators import private
@@ -16,23 +16,6 @@ from .service_mixin import ServiceChangeMixin
 
 
 get_or_insert_lock = asyncio.Lock()
-
-
-def create_update_model(base_class: Type[BaseModel], fields_to_exclude: list[str]) -> Type[BaseModel]:
-    # Prepare fields, excluding specified fields and setting them to Excluded
-    model_fields = {
-        field: (Excluded, excluded_field())
-        if field in fields_to_exclude else (field_type, ...)
-        for field, field_type in base_class.__annotations__.items()
-    }
-
-    return create_model(
-        base_class.__name__ + 'Update',
-        __base__=base_class,
-        __module__=base_class.__module__,
-        __cls_kwargs__={'metaclass': ForUpdateMetaclass},
-        **model_fields
-    )
 
 
 class ConfigServiceMetabase(ServiceBase):
@@ -96,7 +79,12 @@ class ConfigServiceMetabase(ServiceBase):
                 # If a decorator is not explicitly specified, usually what happens for a config service
                 # is that we have it as a single argument and it returns entry
                 # We build the update model here
-                update_model = create_update_model(klass._config.entry, [klass._config.datastore_primary_key])
+                update_model = create_model_excluding_fields(
+                    klass._config.entry, [klass._config.datastore_primary_key],
+                    klass._config.entry.__name__.removesuffix('Entry') + 'Update', {
+                        '__cls_kwargs__': {'metaclass': ForUpdateMetaclass},
+                    }
+                )
                 klass.do_update = api_method(
                     single_argument_args(config_entry_key.removesuffix('_entry') + '_update')(update_model),
                     result_model
