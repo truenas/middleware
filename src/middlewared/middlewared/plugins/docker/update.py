@@ -2,11 +2,11 @@ import errno
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.api.current import DockerEntry
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Str, ValidationErrors
+from middlewared.api import api_method
+from middlewared.api.current import DockerEntry, DockerUpdateArgs, DockerUpdateResult
+from middlewared.schema import accepts, Bool, Dict, Str, ValidationErrors
 from middlewared.service import CallError, ConfigService, job, private, returns
 from middlewared.utils.zfs import query_imported_fast_impl
-from middlewared.validators import Range
 
 from .state_utils import Status
 from .utils import applications_ds_name
@@ -37,6 +37,7 @@ class DockerService(ConfigService):
         data['dataset'] = applications_ds_name(data['pool']) if data.get('pool') else None
         return data
 
+    @api_method(DockerUpdateArgs, DockerUpdateResult)
     @job(lock='docker_update')
     async def do_update(self, job, data):
         """
