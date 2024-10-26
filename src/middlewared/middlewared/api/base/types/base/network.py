@@ -34,15 +34,17 @@ def IPAddr(
 
         @classmethod
         def __get_pydantic_core_schema__(
-            cls, source_type: Any, handler: GetCoreSchemaHandler
+                cls, source_type: Any, handler: GetCoreSchemaHandler
         ) -> CoreSchema:
-            return core_schema.json_or_python_schema(
-                json_schema=core_schema.str_schema(),
-                python_schema=core_schema.no_info_after_validator_function(
-                    cls,
-                    core_schema.str_schema(),
-                ),
+            schema = core_schema.no_info_after_validator_function(
+                cls,
+                core_schema.str_schema(),
             )
+            schema['serialization'] = core_schema.plain_serializer_function_ser_schema(
+                lambda x: str(x),
+                info_arg=False,
+            )
+            return schema
 
     CustomIPAddr.__name__ = f'IPAddr(cidr={cidr}, network={network}, v4={v4}, v6={v6})'
     return CustomIPAddr
