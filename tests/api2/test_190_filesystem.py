@@ -10,9 +10,10 @@ from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.filesystem import directory
 from middlewared.test.integration.assets.pool import dataset as create_dataset
 from middlewared.test.integration.utils import call, ssh
+from truenas_api_client import ClientException
 
 
-@pytest.mark.parametrize('path', ('/boot/grub', '/root', '/bin', '/usr/bin'))
+@pytest.mark.parametrize('spath', ('/boot/grub', '/root', '/bin', '/usr/bin'))
 def test_filesystem_stat_results_for_path_(spath):
     results = call('filesystem.stat', spath)
     for key in (
@@ -143,13 +144,12 @@ def test_fiilesystem_statfs_flags():
     )
     with create_dataset('statfs_test') as ds:
         base = f'/mnt/{ds}'
-        payload = {'name': ds}
         for p in properties:
             # set option we're checking and make sure it's really set
-            payload.update({p[0]: p[1]})
+            payload = {p[0]: p[1]}
             if p[0] == 'acltype':
                 payload.update({'aclmode': 'RESTRICTED' if p[1] == 'NFSV4' else 'DISCARD'})
-            assert call('pool.dataset.update', payload)['value'] == p[1]
+            assert call('pool.dataset.update', ds, payload)[p[0]]['value'] == p[1]
 
             # check statfs results
             mount_flags = call('filesystem.statfs', base)['flags']
@@ -183,9 +183,9 @@ def test_acl_path_execute_validation():
         {'tag': 'GROUP', 'id': 65534, 'type': 'ALLOW', 'perms': perm, 'flags': flag},
     ]
     with create_dataset(
-        'acl_ex_test',
-        {'acltype': 'NFSV4', 'aclmode': 'PASSTHROUGH'},
-        {'mode': 770}
+        'acl_execute_test',
+        data={'acltype': 'NFSV4', 'aclmode': 'PASSTHROUGH'},
+        mode=770
     ) as ds:
         path = f'/mnt/{ds}'
         """
@@ -196,56 +196,61 @@ def test_acl_path_execute_validation():
         4) USER will test the `id` in mayload with USER id_type
         """
         # Start with testing denials
-        with create_dataset(f'{ds}/sub', {'acltype': 'NFSV4', 'aclmode': 'PASSTHROUGH'}) as sub_ds:
+        with create_dataset(
+            'acl_execute_test/sub',
+            data={'acltype': 'NFSV4', 'aclmode': 'PASSTHROUGH'}
+        ) as sub_ds:
             sub_path = f'/mnt/{sub_ds}'
             acl = deepcopy(NFSV4_DACL)
             names = ('daemon', 'apps', 'nobody', 'nogroup')
             for idx, entry in enumerate(NFSV4_DACL):
-                rv = call('filesystem.setacl', {'path': sub_path, "dacl": acl, 'uid': 1, 'gid': 568})
-                # all of these tests should fail
-                assert rv['state'] == 'FAILED', rv
-                assert names[idx] in rv['results']['error'], rv['results']['error']
+                with pytest.raises(ClientException, match=f'{names[idx]}'):
+                    # all of these tests should fail and the user account
+                    # should be in the error message raised
+                    call(
+                        'filesystem.setacl',
+                        {'path': sub_path, "dacl": acl, 'uid': 1, 'gid': 568},
+                        job=True,
+                    )
                 acl.pop(0)
 
             # when this test starts, we have 770 perms on parent
             for entry in NFSV4_DACL:
                 # first set permissions on parent dataset
                 if entry['tag'] == 'owner@':
-                    job_status = call('filesystem.chown', {
+                    call('filesystem.chown', {
                         'path': path,
                         'uid': 1,
                         'gid': 0
-                    })
+                    }, job=True)
                 elif entry['tag'] == 'group@':
-                    job_status = call('filesystem.chown', {
+                    call('filesystem.chown', {
                         'path': path,
                         'uid': 0,
                         'gid': 568
-                    })
+                    }, job=True)
                 elif entry['tag'] == 'USER':
-                    job_status = call('filesystem.setacl', {
+                    call('filesystem.setacl', {
                         'path': path,
                         'uid': 0,
                         'gid': 0,
                         'dacl': [entry]
-                    })
+                    }, job=True)
                 elif entry['tag'] == 'GROUP':
-                    job_status = call('filesystem.setacl', {
+                    call('filesystem.setacl', {
                         'path': path,
                         'uid': 0,
                         'gid': 0,
                         'dacl': [entry]
-                    })
-                assert job_status['state'] == 'SUCCESS', job_status
+                    }, job=True)
 
                 # Now set the acl on child dataset. This should succeed
-                job_status = call('filesystem.setacl', {
+                call('filesystem.setacl', {
                     'path': sub_path,
                     'uid': 1,
                     'gid': 568,
                     'dacl': [entry]
-                })
-                assert job_status['state'] == 'SUCCESS', job_status
+                }, job=True)
 
 
 @pytest.fixture(scope="module")
