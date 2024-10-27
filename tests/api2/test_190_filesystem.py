@@ -174,11 +174,13 @@ def test_dosmodes():
 
 
 def test_acl_path_execute_validation():
+    perm = {'BASIC': 'FULL_CONTROL'}
+    flag = {'BASIC': 'INHERIT'}
     NFSV4_DACL = [
-        {'tag': 'owner@', 'id': -1, 'type': 'ALLOW', 'perms': {'BASIC': 'FULL_CONTROL'}, 'flags': {'BASIC': 'INHERIT'}},
-        {'tag': 'group@', 'id': -1, 'type': 'ALLOW', 'perms': {'BASIC': 'FULL_CONTROL'}, 'flags': {'BASIC': 'INHERIT'}},
-        {'tag': 'USER', 'id': 65534, 'type': 'ALLOW', 'perms': {'BASIC': 'FULL_CONTROL'}, 'flags': {'BASIC': 'INHERIT'}},
-        {'tag': 'GROUP', 'id': 65534, 'type': 'ALLOW', 'perms': {'BASIC': 'FULL_CONTROL'}, 'flags': {'BASIC': 'INHERIT'}},
+        {'tag': 'owner@', 'id': -1, 'type': 'ALLOW', 'perms': perm, 'flags': flag},
+        {'tag': 'group@', 'id': -1, 'type': 'ALLOW', 'perms': perm, 'flags': flag},
+        {'tag': 'USER', 'id': 65534, 'type': 'ALLOW', 'perms': perm, 'flags': flag},
+        {'tag': 'GROUP', 'id': 65534, 'type': 'ALLOW', 'perms': perm, 'flags': flag},
     ]
     with create_dataset(
         'acl_ex_test',
@@ -285,5 +287,5 @@ def test_mkdir_chmod_failure():
         st = call("filesystem.stat", testdir)
         # Verify that mode output returned from mkdir matches what was actually set
         assert st['mode'] == mkdir_st['mode']
-        # mkdir succeeded, but chmod failed so we get mode based on inherited ACL (SMB preset) 
+        # mkdir succeeded, but chmod failed so we get mode based on inherited ACL (SMB preset)
         assert stat.S_IMODE(st["mode"]) == 0o770
