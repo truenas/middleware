@@ -15,7 +15,7 @@ __all__ = [
 class NTPPeerEntry(BaseModel):
     mode: Literal['SERVER', 'PEER', 'LOCAL']
     state: Literal['BEST', 'SELECTED', 'SELECTABLE', 'FALSE_TICKER', 'TOO_VARIABLE', 'NOT_SELECTABLE']
-    remote: IPvAnyAddress
+    remote: str
     stratum: int
     poll_interval: int
     reach: int
