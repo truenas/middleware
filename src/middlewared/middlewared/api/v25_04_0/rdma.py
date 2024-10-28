@@ -4,7 +4,7 @@ from typing import Literal
 __all__ = [
     "RdmaLinkConfigArgs", "RdmaLinkConfigResult",
     "RdmaCardConfigArgs", "RdmaCardConfigResult",
-    "RdmaCapableServicesArgs", "RdmaCapableServicesResult"
+    "RdmaCapableProtocolsArgs", "RdmaCapableProtocolsResult"
 ]
 
 
@@ -33,9 +33,9 @@ class RdmaCardConfigResult(BaseModel):
     links: list[RdmaLinkConfig]
 
 
-class RdmaCapableServicesArgs(BaseModel):
+class RdmaCapableProtocolsArgs(BaseModel):
     pass
 
 
-class RdmaCapableServicesResult(BaseModel):
+class RdmaCapableProtocolsResult(BaseModel):
     result: list[Literal["NFS"]]
