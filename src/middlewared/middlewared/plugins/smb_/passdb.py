@@ -1,7 +1,7 @@
 import os
 
 from middlewared.api.current import UserEntry
-from middlewared.service import filterable, Service, job, private
+from middlewared.service import filterable_api_method, Service, job, private
 from middlewared.utils.sid import get_domain_rid
 from .util_passdb import (
     delete_passdb_entry,
@@ -20,8 +20,7 @@ class SMBService(Service):
         service = 'cifs'
         service_verb = 'restart'
 
-    @private
-    @filterable
+    @filterable_api_method
     def passdb_list(self, filters, options):
         """ query existing passdb users """
         try:

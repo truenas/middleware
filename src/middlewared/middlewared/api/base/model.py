@@ -12,7 +12,7 @@ from typing_extensions import Annotated
 from middlewared.api.base.types.base import SECRET_VALUE
 from middlewared.utils.lang import undefined
 
-__all__ = ["BaseModel", "ForUpdateMetaclass", "single_argument_args", "single_argument_result"]
+__all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "single_argument_args", "single_argument_result"]
 
 
 class BaseModel(PydanticBaseModel):
@@ -189,3 +189,12 @@ def single_argument_result(klass, klass_name=None):
         model.from_previous = classmethod(klass.from_previous)
         model.to_previous = classmethod(klass.to_previous)
     return model
+
+
+def query_result(item):
+    return create_model(
+        item.__name__.removesuffix("Entry") + "QueryResult",
+        __base__=(BaseModel,),
+        __module__=item.__module__,
+        result=Annotated[list[item] | item | int, Field()],
+    )
