@@ -17,6 +17,7 @@ from middlewared.utils.lang import undefined
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "single_argument_args", "single_argument_result"]
 
 
+
 class BaseModel(PydanticBaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -95,12 +96,6 @@ class BaseModel(PydanticBaseModel):
         :return: value of the same model in the preceding API version.
         """
         return value
-
-
-class AllowExtraBaseModel(BaseModel):
-    model_config = ConfigDict(
-        extra="allow",  # Allow extra fields
-    )
 
 
 class ForUpdateMetaclass(ModelMetaclass):

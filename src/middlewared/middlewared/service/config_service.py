@@ -5,8 +5,7 @@ from pydantic import create_model, Field
 from typing_extensions import Annotated
 
 from middlewared.api import api_method
-from middlewared.api.base import ForUpdateMetaclass, single_argument_args
-from middlewared.api.base.model import AllowExtraBaseModel, BaseModel, create_model_excluding_fields
+from middlewared.api.base.model import BaseModel
 from middlewared.schema import accepts, Dict, Patch, returns
 
 from .base import ServiceBase
