@@ -1,6 +1,6 @@
-from typing import Any, Type
+from typing import Annotated, Any, Type
 
-from pydantic import GetCoreSchemaHandler
+from pydantic import BeforeValidator, GetCoreSchemaHandler, IPvAnyNetwork as PydanticIPvAnyNetwork, PlainSerializer
 from pydantic_core import CoreSchema, core_schema
 
 from middlewared.schema.processor import clean_and_validate_arg
@@ -48,3 +48,20 @@ def IPAddr(
 
     CustomIPAddr.__name__ = f'IPAddr(cidr={cidr}, network={network}, v4={v4}, v6={v6})'
     return CustomIPAddr
+
+
+def validate_ip_subnet(value: str) -> str:
+    # Ensure the input is a string
+    if not isinstance(value, str):
+        raise TypeError('Value must be a string in IP/subnet format, e.g., "192.168.0.0/24"')
+    # Check if the input contains a '/'
+    if '/' not in value:
+        raise ValueError('Value must include a subnet mask in IP/subnet format, e.g., "192.168.0.0/24"')
+    return value
+
+
+IPvAnyNetwork = Annotated[
+    PydanticIPvAnyNetwork,
+    BeforeValidator(validate_ip_subnet),
+    PlainSerializer(lambda x: str(x), when_used='always')
+]
