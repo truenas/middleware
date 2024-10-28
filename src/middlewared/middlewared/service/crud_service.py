@@ -6,7 +6,7 @@ from pydantic import create_model, Field
 from typing_extensions import Annotated
 
 from middlewared.api import api_method
-from middlewared.api.base.model import BaseModel
+from middlewared.api.base.model import BaseModel, query_result
 from middlewared.api.current import QueryArgs, QueryOptions
 from middlewared.service_exception import CallError, InstanceNotFound
 from middlewared.schema import accepts, Any, Bool, convert_schema, Dict, Int, List, OROperator, Patch, Ref, returns
@@ -44,15 +44,6 @@ def get_instance_result(entry):
         __base__=(BaseModel,),
         __module__=entry.__module__,
         result=Annotated[entry, Field()],
-    )
-
-
-def query_result(item):
-    return create_model(
-        item.__name__.removesuffix("Entry") + "QueryResult",
-        __base__=(BaseModel,),
-        __module__=item.__module__,
-        result=Annotated[list[item] | item | int, Field()],
     )
 
 
