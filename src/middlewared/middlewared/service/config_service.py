@@ -7,7 +7,7 @@ from typing_extensions import Annotated
 from middlewared.api import api_method
 from middlewared.api.base import ForUpdateMetaclass, single_argument_args
 from middlewared.api.base.model import AllowExtraBaseModel, BaseModel, create_model_excluding_fields
-from middlewared.schema import accepts, Patch, returns
+from middlewared.schema import accepts, Dict, Patch, returns
 
 from .base import ServiceBase
 from .decorators import private
@@ -37,15 +37,8 @@ class ConfigServiceMetabase(ServiceBase):
         config_entry_key = f'{namespace}_entry'
         config_model_name = f'{namespace.capitalize()}Config'
 
-        if klass._config.entry is not None or klass.ENTRY == NotImplementedError:
-            # FIXME: We do this temporarily to avoid breaking existing code
+        if klass._config.entry is not None and not hasattr(klass.config, 'new_style_accepts'):
             klass.ENTRY = None
-            if klass._config.entry is None:
-                klass._config.entry = create_model(
-                    f'{namespace.capitalize()}Entry',
-                    __base__=(AllowExtraBaseModel,),
-                )
-
             result_model = create_model(
                 klass._config.entry.__name__.removesuffix('Entry') + 'ConfigResult',
                 __base__=(BaseModel,),
@@ -61,6 +54,9 @@ class ConfigServiceMetabase(ServiceBase):
                 result_model
             )(klass.config)
         else:
+            if klass.ENTRY == NotImplementedError:
+                klass.ENTRY = Dict(config_entry_key, additional_attrs=True)
+
             config_entry_key = klass.ENTRY.name
             config_entry = copy.deepcopy(klass.ENTRY)
             config_entry.register = True
@@ -69,26 +65,9 @@ class ConfigServiceMetabase(ServiceBase):
             klass.config = returns(config_entry)(klass.config)
 
         if hasattr(klass, 'do_update'):
-            # There are 2 cases which we need to handle
-            # 1) New style api_method
-            # 2) Old style accepts/returns
+            # We are not going to dynamically update do_update method with new api style
             if klass._config.entry:
-                if hasattr(klass.do_update, 'new_style_accepts'):
-                    return klass
-
-                # If a decorator is not explicitly specified, usually what happens for a config service
-                # is that we have it as a single argument and it returns entry
-                # We build the update model here
-                update_model = create_model_excluding_fields(
-                    klass._config.entry, [klass._config.datastore_primary_key],
-                    klass._config.entry.__name__.removesuffix('Entry') + 'Update', {
-                        '__cls_kwargs__': {'metaclass': ForUpdateMetaclass},
-                    }
-                )
-                klass.do_update = api_method(
-                    single_argument_args(config_entry_key.removesuffix('_entry') + '_update')(update_model),
-                    result_model
-                )(klass.do_update)
+                # We are not going to patch do_update with old accepts/returns if entry is already defined
                 return klass
 
             for m_name, decorator in filter(
