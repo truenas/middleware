@@ -212,6 +212,8 @@ class VirtGlobalService(ConfigService):
             raise
         else:
             await self.middleware.call('cache.put', 'VIRT_STATE', Status.INITIALIZED.value)
+        finally:
+            self.middleware.send_event('virt.global.config', 'CHANGED', fields=await self.config())
 
     async def _setup_impl(self, job):
         config = await self.config()
@@ -395,6 +397,11 @@ async def _event_system_ready(middleware: 'Middleware', event_type, args):
 
 
 async def setup(middleware: 'Middleware'):
+    middleware.event_register(
+        'virt.global.config',
+        'Sent on virtualziation configuration changes.',
+        roles=['VIRT_GLOBAL_READ']
+    )
     middleware.event_subscribe('system.ready', _event_system_ready)
     # Should only happen if middlewared crashes or during development
     failover_licensed = await middleware.call('failover.licensed')

@@ -51,10 +51,20 @@ class VirtInstanceService(CRUDService):
                 'type': 'CONTAINER' if i['type'] == 'container' else 'VM',
                 'status': i['state']['status'].upper(),
                 'cpu': i['config'].get('limits.cpu'),
-                'autostart': i['config'].get('boot.autostart') or False,
+                'autostart': bool(i['config'].get('boot.autostart')) or False,
                 'environment': {},
                 'aliases': [],
+                'image': {
+                    'architecture': i['config'].get('image.architecture'),
+                    'description': i['config'].get('image.description'),
+                    'os': i['config'].get('image.os'),
+                    'release': i['config'].get('image.release'),
+                    'serial': i['config'].get('image.serial'),
+                    'type': i['config'].get('image.type'),
+                    'variant': i['config'].get('image.variant'),
+                }
             }
+
 
             if options.get('extra').get('raw'):
                 entry['raw'] = i
@@ -195,7 +205,7 @@ class VirtInstanceService(CRUDService):
         instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
 
         verrors = ValidationErrors()
-        await self.validate(data, 'virt_instance_create', verrors, old=instance)
+        await self.validate(data, 'virt_instance_update', verrors, old=instance)
         verrors.check()
 
         instance['raw']['config'].update(self.__data_to_config(data))
