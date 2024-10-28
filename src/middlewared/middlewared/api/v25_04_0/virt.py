@@ -155,6 +155,16 @@ class VirtInstanceAlias(BaseModel):
 InstanceType: TypeAlias = Literal['CONTAINER', 'VM']
 
 
+class Image(BaseModel):
+    architecture: str | None
+    description: str | None
+    os: str | None
+    release: str | None
+    serial: str | None
+    type: str | None
+    variant: str | None
+
+
 class VirtInstanceEntry(BaseModel):
     id: str
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
@@ -165,6 +175,7 @@ class VirtInstanceEntry(BaseModel):
     autostart: bool
     environment: dict[str, str]
     aliases: List[VirtInstanceAlias]
+    image: Image
     raw: dict
 
 
@@ -174,19 +185,19 @@ class VirtInstanceCreateArgs(BaseModel):
     image: Annotated[NonEmptyString, StringConstraints(max_length=200)]
     remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
     instance_type: InstanceType = 'CONTAINER'
-    environment: dict | None = None
-    autostart: bool | None = None
+    environment: dict[str, str] | None = None
+    autostart: bool | None = True
     cpu: str | None = None
     memory: int | None = None
     devices: List[DeviceType] = None
 
 
 class VirtInstanceCreateResult(BaseModel):
-    result: dict
+    result: VirtInstanceEntry
 
 
 class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
-    environment: dict | None = None
+    environment: dict[str, str] | None = None
     autostart: bool | None = None
     cpu: str | None = None
     memory: int | None = None
