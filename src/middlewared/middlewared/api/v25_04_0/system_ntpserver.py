@@ -1,4 +1,4 @@
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
 
 from pydantic import IPvAnyAddress
 from typing import Literal
@@ -13,14 +13,14 @@ __all__ = [
 
 
 class NTPPeerEntry(BaseModel):
-    mode: Literal['SERVER', 'PEER', 'LOCAL'] 
-    state: Literal['BEST', 'SELECTED', 'SELECTABLE', 'FALSE_TICKER', 'TOO_VARIABLE', 'NOT_SELECTABLE'] 
+    mode: Literal['SERVER', 'PEER', 'LOCAL']
+    state: Literal['BEST', 'SELECTED', 'SELECTABLE', 'FALSE_TICKER', 'TOO_VARIABLE', 'NOT_SELECTABLE']
     remote: IPvAnyAddress
     stratum: int
     poll_interval: int
     reach: int
     lastrx: int
-    offset: float 
+    offset: float
     offset_measured: float
     jitter: float
     active: bool
