@@ -7,6 +7,7 @@ from middlewared.api.current import (FCHostCreateArgs, FCHostCreateResult, FCHos
                                      FCHostEntry, FCHostUpdateArgs, FCHostUpdateResult)
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
+from middlewared.utils import filter_list
 from .utils import filter_by_wwpns_hex_string, str_to_naa
 
 
@@ -188,8 +189,11 @@ class FCHostService(CRUDService):
                         # to a NPIV port that would disappear
                         usage_check = True
                 if bounds_check:
-                    fc_host_filter = filter_by_wwpns_hex_string(wwpn, wwpn_b)
-                    fc_hosts = await self.middleware.call('fc.fc_hosts', fc_host_filter)
+                    # Can only set NPIV for physical ports.  Use that as a filter first, and *then*
+                    # use filter_by_wwpns_hex_string for easier mocking.
+                    physical_port_filter = [["physical", "=", True]]
+                    fc_hosts = await self.middleware.call('fc.fc_hosts', physical_port_filter)
+                    fc_hosts = filter_list(fc_hosts, filter_by_wwpns_hex_string(wwpn, wwpn_b))
                     if len(fc_hosts) != 1:
                         verrors.add(
                             f'{schema_name}.npiv',
@@ -204,7 +208,6 @@ class FCHostService(CRUDService):
                             )
                 if usage_check:
                     vpfilter = [['port', '~', f'^{data["alias"]}/[1-9][0-9]*$']]
-                    vports = [p['port'].split('/')[-1] for p in await self.middleware.call('fcport.query', vpfilter, {'select': ['port']})]
                     vports = [int(p['port'].split('/')[-1]) for p in await self.middleware.call('fcport.query', vpfilter, {'select': ['port']})]
                     for chan in vports:
                         if chan > npiv:
