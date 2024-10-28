@@ -363,8 +363,9 @@ class FCHostService(CRUDService):
         return False
 
     @private
-    async def reset_wired(self):
-        if self.do_reset_wired:
+    async def reset_wired(self, force=False):
+        # force param just used by CI
+        if self.do_reset_wired or force:
             self.logger.info('Reset wired')
             self.wired = False
             self.do_reset_wired = False
