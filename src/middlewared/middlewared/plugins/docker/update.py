@@ -3,9 +3,12 @@ import errno
 import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
-from middlewared.api.current import DockerEntry, DockerUpdateArgs, DockerUpdateResult
-from middlewared.schema import accepts, Bool, Dict, Str, ValidationErrors
-from middlewared.service import CallError, ConfigService, job, private, returns
+from middlewared.api.current import (
+    DockerEntry, DockerStatusArgs, DockerStatusResult, DockerUpdateArgs, DockerUpdateResult,
+    LacksNvidiaDriverArgs, LacksNvidiaDriverResult,
+)
+from middlewared.schema import ValidationErrors
+from middlewared.service import CallError, ConfigService, job, private
 from middlewared.utils.zfs import query_imported_fast_impl
 
 from .state_utils import Status
@@ -122,19 +125,14 @@ class DockerService(ConfigService):
         job.set_progress(100, 'Requested configuration applied')
         return await self.config()
 
-    @accepts(roles=['DOCKER_READ'])
-    @returns(Dict(
-        Str('status', enum=[e.value for e in Status]),
-        Str('description'),
-    ))
+    @api_method(DockerStatusArgs, DockerStatusResult, roles=['DOCKER_READ'])
     async def status(self):
         """
         Returns the status of the docker service.
         """
         return await self.middleware.call('docker.state.get_status_dict')
 
-    @accepts(roles=['DOCKER_READ'])
-    @returns(Bool())
+    @api_method(LacksNvidiaDriverArgs, LacksNvidiaDriverResult, roles=['DOCKER_READ'])
     async def lacks_nvidia_drivers(self):
         """
         Returns true if an NVIDIA GPU is present, but NVIDIA drivers are not installed.

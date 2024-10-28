@@ -1,9 +1,12 @@
+import typing
+
 from pydantic import conint
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
 )
 from middlewared.api.base.types.base import IPvAnyNetwork
+from middlewared.plugins.docker.state_utils import Status
 
 class AddressPool(BaseModel):
     base: IPvAnyNetwork
@@ -27,3 +30,24 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
 
 class DockerUpdateResult(BaseModel):
     result: DockerEntry
+
+
+class DockerStatusArgs(BaseModel):
+    pass
+
+
+class StatusResult(BaseModel):
+    description: str
+    status: typing.Literal[tuple(e.value for e in Status)]
+
+
+class DockerStatusResult(BaseModel):
+    result: StatusResult
+
+
+class LacksNvidiaDriverArgs(BaseModel):
+    pass
+
+
+class LacksNvidiaDriverResult(BaseModel):
+    result: bool
