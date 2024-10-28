@@ -7,7 +7,7 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     RdmaLinkConfigArgs, RdmaLinkConfigResult,
     RdmaCardConfigArgs, RdmaCardConfigResult,
-    RdmaCapableServicesArgs, RdmaCapableServicesResult
+    RdmaCapableProtocolsArgs, RdmaCapableProtocolsResult
 )
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError
@@ -126,8 +126,8 @@ class RDMAService(Service):
             v['name'] = ':'.join(sorted(names))
         return list(grouper.values())
 
-    @api_method(RdmaCapableServicesArgs, RdmaCapableServicesResult)
-    async def capable_services(self):
+    @api_method(RdmaCapableProtocolsArgs, RdmaCapableProtocolsResult)
+    async def capable_protocols(self):
         result = []
         is_ent = await self.middleware.call('system.is_enterprise')
         if is_ent and 'MINI' not in await self.middleware.call('truenas.get_chassis_hardware'):
