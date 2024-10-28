@@ -173,7 +173,7 @@ class NTPServerService(CRUDService):
         except Exception:
             return False
 
-    @filterable_api_method(item=NTPPeerEntry)
+    @filterable_api_method(item=NTPPeerEntry, roles=['READONLY_ADMIN'])
     def peers(self, filters, options):
         peers = []
 

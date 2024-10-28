@@ -62,7 +62,7 @@ def filterable_api_method(fn=None, /, *, roles=None, item=None, private=True):
         else:
             returns = GenericQueryResult
 
-        return api_method(QueryArgs, returns, private=private)(fn)
+        return api_method(QueryArgs, returns, private=private, roles=roles)(fn)
 
     # See if we're being called as @filterable or @filterable().
     if fn is None:
