@@ -76,6 +76,20 @@ def target(target_name, groups, alias=None):
 
 
 @contextlib.contextmanager
+def zvol_extent(zvol, extent_name):
+    payload = {
+        'type': 'DISK',
+        'disk': f'zvol/{zvol}',
+        'name': extent_name,
+    }
+    config = call('iscsi.extent.create', payload)
+    try:
+        yield config
+    finally:
+        call('iscsi.extent.delete', config['id'], True, True)
+
+
+@contextlib.contextmanager
 def target_extent_associate(target_id, extent_id, lun_id=0):
     alua_enabled = call('iscsi.global.alua_enabled')
     payload = {
