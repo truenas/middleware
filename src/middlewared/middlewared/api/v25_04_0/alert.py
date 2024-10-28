@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, LongString
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString
 
 
 __all__ = [
@@ -45,12 +45,13 @@ class AlertCategory(BaseModel):
     classes: list[AlertCategoryClass]
 
 
-class AlertClassesUpdate(BaseModel):
-    classes: dict = {}
-
-
-class AlertClassesEntry(AlertClassesUpdate):
+class AlertClassesEntry(BaseModel):
     id: int
+    classes: dict
+
+
+class AlertClassesUpdate(AlertClassesEntry, metaclass=ForUpdateMetaclass):
+    id: Excluded = excluded_field()
 
 
 class AlertDismissArgs(BaseModel):
@@ -113,7 +114,7 @@ class AlertRestoreResult(BaseModel):
 
 
 class AlertClassesUpdateArgs(BaseModel):
-    alertclasses_update: AlertClassesUpdate = Field(default=AlertClassesUpdate())
+    data: AlertClassesUpdate
 
 
 class AlertClassesUpdateResult(BaseModel):
