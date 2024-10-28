@@ -1,5 +1,5 @@
+from middlewared.api.current import DockerNetworkEntry
 from middlewared.plugins.apps.ix_apps.docker.networks import list_networks
-from middlewared.schema import Dict, Str
 from middlewared.service import CRUDService, filterable, private
 from middlewared.utils import filter_list
 
@@ -11,19 +11,7 @@ class DockerNetworkService(CRUDService):
         datastore_primary_key_type = 'string'
         cli_namespace = 'docker.network'
         role_prefix = 'DOCKER'
-
-    ENTRY = Dict(
-        'docker_network_entry',
-        Dict('ipam', additional_attrs=True, null=True),
-        Dict('labels', additional_attrs=True, null=True),
-        Str('created', required=True, null=True),
-        Str('driver', required=True, null=True),
-        Str('id', required=True, null=True),
-        Str('name', required=True, null=True),
-        Str('scope', required=True, null=True),
-        Str('short_id', required=True, null=True),
-        additional_attrs=True,
-    )
+        entry = DockerNetworkEntry
 
     @filterable
     def query(self, filters, options):
