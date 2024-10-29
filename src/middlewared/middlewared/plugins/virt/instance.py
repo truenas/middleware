@@ -36,7 +36,7 @@ class VirtInstanceService(CRUDService):
         """
         Query all instances with `query-filters` and `query-options`.
         """
-        if not options.get('extra').get('skip_state'):
+        if not options['extra'].get('skip_state'):
             config = await self.middleware.call('virt.global.config')
             if config['state'] != Status.INITIALIZED.value:
                 return []
@@ -66,7 +66,7 @@ class VirtInstanceService(CRUDService):
                 }
             }
 
-            if options.get('extra').get('raw'):
+            if options['extra'].get('raw'):
                 entry['raw'] = i
 
             if memory := i['config'].get('limits.memory'):
