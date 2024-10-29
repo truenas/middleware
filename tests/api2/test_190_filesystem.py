@@ -80,7 +80,6 @@ def test_immutable_flag():
                 call("filesystem.mkdir", f"{t_child_path}_{flag_set}")
 
             is_immutable = 'IMMUTABLE' in call('filesystem.stat', t_path)['attributes']
-            is_immutable = call("filesystem.is_immutable", t_path)
             err = "Immutable flag is still not set"
             if not flag_set:
                 err = "Immutable flag is still set"
