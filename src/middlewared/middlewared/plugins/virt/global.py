@@ -168,6 +168,11 @@ class VirtGlobalService(ConfigService):
             raise CallError('Virtualization not initialized.')
 
     @private
+    async def check_started(self):
+        if not await self.middleware.call('service.started', 'incus'):
+            raise CallError('Virtualization service not started.')
+
+    @private
     async def get_default_profile(self):
         result = await incus_call('1.0/profiles/default', 'get')
         if result.get('status_code') != 200:
@@ -202,7 +207,7 @@ class VirtGlobalService(ConfigService):
         """
         try:
             await self.middleware.call('cache.put', 'VIRT_STATE', Status.INITIALIZING.value)
-            await self._setup_impl(job)
+            await self._setup_impl()
         except NoPoolConfigured:
             await self.middleware.call('cache.put', 'VIRT_STATE', Status.NO_POOL.value)
         except LockedDataset:
@@ -215,12 +220,12 @@ class VirtGlobalService(ConfigService):
         finally:
             self.middleware.send_event('virt.global.config', 'CHANGED', fields=await self.config())
 
-    async def _setup_impl(self, job):
+    async def _setup_impl(self):
         config = await self.config()
 
         if not config['pool']:
             if await self.middleware.call('service.started', 'incus'):
-                job = await self.middleware.call('virt.global.reset')
+                job = await self.middleware.call('virt.global.reset', False, config)
                 await job.wait(raise_error=True)
 
             self.logger.debug('No pool set for virtualization, skipping.')
@@ -263,7 +268,7 @@ class VirtGlobalService(ConfigService):
                 self.logger.debug('Storage pool for virt already configured.')
                 import_storage = False
             else:
-                job = await self.middleware.call('virt.global.reset', True)
+                job = await self.middleware.call('virt.global.reset', True, config)
                 await job.wait(raise_error=True)
 
         # If no bridge interface has been set, use incus managed
@@ -291,6 +296,36 @@ class VirtGlobalService(ConfigService):
                 if result.get('status_code') != 200:
                     raise CallError(result.get('error'))
 
+                update_network = True
+            else:
+
+                # In case user sets empty v4/v6 network we need to generate another
+                # range automatically.
+                update_network = False
+                netconfig = {'ipv4.nat': 'true', 'ipv6.nat': 'true'}
+                if not config['v4_network']:
+                    update_network = True
+                    netconfig['ipv4.address'] = 'auto'
+                else:
+                    netconfig['ipv4.address'] = config['v4_network']
+                if not config['v6_network']:
+                    update_network = True
+                    netconfig['ipv6.address'] = 'auto'
+                else:
+                    netconfig['ipv6.address'] = config['v6_network']
+
+                if update_network:
+                    result = await incus_call(f'1.0/networks/{INCUS_BRIDGE}', 'put', {'json': {
+                        'config': netconfig,
+                    }})
+                    if result.get('status_code') != 200:
+                        raise CallError(result.get('error'))
+
+                    result = await incus_call(f'1.0/networks/{INCUS_BRIDGE}', 'get')
+                    if result.get('status_code') != 200:
+                        raise CallError(result.get('error'))
+
+            if update_network:
                 # Update automatically selected networks into our database
                 # so it can persist upgrades.
                 await self.middleware.call('datastore.update', 'virt_global', config['id'], {
@@ -352,15 +387,17 @@ class VirtGlobalService(ConfigService):
 
     @private
     @job()
-    async def reset(self, job, start: bool = False):
-        config = await self.config()
+    async def reset(self, job, start: bool = False, config: dict | None = None):
+        if config is None:
+            config = await self.config()
 
         if await self.middleware.call('service.started', 'incus'):
             # Stop running instances
             params = [
                 [i['id'], {'force': True, 'timeout': 10}]
                 for i in await self.middleware.call(
-                    'virt.instance.query', [('status', '=', 'RUNNING')]
+                    'virt.instance.query', [('status', '=', 'RUNNING')],
+                    {'extra': {'skip_state': True}},
                 )
             ]
             job = await self.middleware.call('core.bulk', 'virt.instance.stop', params, 'Stopping instances')
