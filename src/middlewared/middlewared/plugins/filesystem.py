@@ -205,7 +205,7 @@ class FilesystemService(Service):
             'type': 'DIRECTORY',
             'size': stat.st_size,
             'mode': stat.st_mode,
-            'acl': False if self.acl_is_trivial(path) else True,
+            'acl': acl_is_present(os.listxattr(path)),
             'uid': stat.st_uid,
             'gid': stat.st_gid,
             'is_mountpoint': False,
@@ -477,7 +477,7 @@ class FilesystemService(Service):
         except KeyError:
             stat['group'] = None
 
-        stat['acl'] = False if self.acl_is_trivial(_path) else True
+        stat['acl'] = acl_is_present(os.listxattr(path))
 
         return stat
 
@@ -640,18 +640,6 @@ class FilesystemService(Service):
         for k in ['total_blocks', 'free_blocks', 'avail_blocks', 'total_bytes', 'free_bytes', 'avail_bytes']:
             result[f'{k}_str'] = str(result[k])
         return result
-
-    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
-    @returns(Bool('paths_acl_is_trivial'))
-    def acl_is_trivial(self, path):
-        """
-        Returns True if the ACL can be fully expressed as a file mode without losing
-        any access rules.
-        """
-        if not os.path.exists(path):
-            raise CallError(f'Path not found [{path}].', errno.ENOENT)
-
-        return not acl_is_present(os.listxattr(path))
 
 
 class FileFollowTailEventSource(EventSource):

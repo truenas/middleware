@@ -279,17 +279,6 @@ class SMBService(ConfigService):
                 continue
 
             path = p.platform()
-            try:
-                if not await self.middleware.call('filesystem.acl_is_trivial', path):
-                    self.logger.warning("Inappropriate ACL detected on path [%s] stripping ACL", path)
-                    stripacl = await run(['setfacl', '-b', path], check=False)
-                    if stripacl.returncode != 0:
-                        self.logger.warning("Failed to strip ACL from path %s: %s", path,
-                                            stripacl.stderr.decode())
-            except CallError:
-                # Currently only time CallError is raise here is on ENOENT, which may be expected
-                pass
-
             await self.middleware.run_in_thread(create_dirs, p, path)
 
     @private
@@ -1413,7 +1402,8 @@ class SharingSMBService(SharingService):
             except ValidationErrors as errs:
                 verrors.add_child(f'{schema_name}.auxsmbconf', errs)
 
-        if not data['acl'] and not await self.middleware.call('filesystem.acl_is_trivial', data['path']):
+        stat_info = await self.middleware.call('filesystem.stat', data['path'])
+        if not data['acl'] and stat_info['acl']:
             verrors.add(
                 f'{schema_name}.acl',
                 f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '

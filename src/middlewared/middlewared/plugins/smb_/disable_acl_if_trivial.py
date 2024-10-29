@@ -22,7 +22,7 @@ class SMBService(Service):
                 continue
 
             try:
-                acl_is_trivial = await self.middleware.call("filesystem.acl_is_trivial", share["path"])
+                acl_is_trivial = not (await self.middleware.call("filesystem.stat", share["path"]))["acl"]
             except Exception:
                 self.middleware.logger.warning("Error running filesystem.acl_is_trivial for share %r", share["id"],
                                                exc_info=True)
