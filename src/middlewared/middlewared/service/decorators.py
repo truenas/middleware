@@ -4,6 +4,9 @@ import threading
 from collections import defaultdict, namedtuple
 from functools import wraps
 
+from middlewared.api import api_method
+from middlewared.api.base import query_result
+from middlewared.api.current import QueryArgs, GenericQueryResult
 from middlewared.schema import accepts, Int, List, OROperator, Ref, returns
 
 
@@ -46,6 +49,29 @@ def filterable_returns(schema):
             fn.wraps._filterable_schema = operator
         return returns(operator)(fn)
     return filterable_internal
+
+
+def filterable_api_method(fn=None, /, *, roles=None, item=None, private=True):
+    def filterable_internal(fn):
+        fn._filterable = True
+        if hasattr(fn, 'wraps'):
+            fn.wraps._filterable = True
+
+        if item:
+            returns = query_result(item)
+        else:
+            if not private:
+                raise ValueError('Public methods may not use GenericQueryResult.')
+
+            returns = GenericQueryResult
+
+        return api_method(QueryArgs, returns, private=private, roles=roles)(fn)
+
+    # See if we're being called as @filterable or @filterable().
+    if fn is None:
+        return filterable_internal
+
+    return filterable_internal(fn)
 
 
 def item_method(fn):

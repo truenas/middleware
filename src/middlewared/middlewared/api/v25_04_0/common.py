@@ -5,7 +5,7 @@ from middlewared.utils import filters
 
 from pydantic import AfterValidator, model_validator
 
-__all__ = ["QueryFilters", "QueryOptions", "QueryArgs"]
+__all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult"]
 
 filter_obj = filters()
 
@@ -41,3 +41,7 @@ class QueryOptions(BaseModel):
 class QueryArgs(BaseModel):
     filters: QueryFilters = []
     options: QueryOptions = QueryOptions()
+
+
+class GenericQueryResult(BaseModel):
+    result: list[dict] | dict | int
