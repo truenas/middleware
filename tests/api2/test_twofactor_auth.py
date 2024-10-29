@@ -1,12 +1,7 @@
-#!/usr/bin/env python3
 import contextlib
 import errno
-import os
-import sys
-import pytest
 
-apifolder = os.getcwd()
-sys.path.append(apifolder)
+import pytest
 
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import user as user_create
@@ -66,7 +61,7 @@ def do_login(username, password, otp=None, expected=True):
             assert resp['response_type'] == 'OTP_REQUIRED'
 
 
-def test_login_without_2fa():
+def test_login_without_2fa(clear_ratelimit):
     with user({
         'username': TEST_USERNAME,
         'password': TEST_PASSWORD,
@@ -80,7 +75,7 @@ def test_login_without_2fa():
     ('test_user2', 'test_password2', {'interval': 60, 'otp_digits': 7}),
     ('test_user3', 'test_password3', {'interval': 50, 'otp_digits': 8}),
 ])
-def test_secret_generation_for_user(user_name, password, renew_options):
+def test_secret_generation_for_user(user_name, password, renew_options, clear_ratelimit):
     with user({
         'username': user_name,
         'password': password,
@@ -97,7 +92,7 @@ def test_secret_generation_for_user(user_name, password, renew_options):
             assert user_secret_obj[k] == renew_options[k]
 
 
-def test_secret_generation_for_multiple_users():
+def test_secret_generation_for_multiple_users(clear_ratelimit):
     with user({
         'username': TEST_USERNAME,
         'password': TEST_PASSWORD,
@@ -117,7 +112,7 @@ def test_secret_generation_for_multiple_users():
                     assert user_secret_obj[k] == USERS_2FA_CONF[user_obj['username']][k]
 
 
-def test_login_without_otp_for_user_without_2fa():
+def test_login_without_otp_for_user_without_2fa(clear_ratelimit):
     with user({
         'username': TEST_USERNAME_2,
         'password': TEST_PASSWORD_2,
@@ -127,7 +122,7 @@ def test_login_without_otp_for_user_without_2fa():
             do_login(TEST_USERNAME_2, TEST_PASSWORD_2)
 
 
-def test_login_with_otp_for_user_with_2fa():
+def test_login_with_otp_for_user_with_2fa(clear_ratelimit):
     with user({
         'username': TEST_USERNAME_2,
         'password': TEST_PASSWORD_2,
