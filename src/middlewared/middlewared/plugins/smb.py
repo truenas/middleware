@@ -368,18 +368,6 @@ class SMBService(ConfigService):
         job.set_progress(20, 'Wait for ix-netif completion.')
         await self.netif_wait()
 
-        """
-        Since some NSS modules will default to setting home directory to /var/empty,
-        verify that this path is immutable during setup for SMB service (prior to
-        initializing directory services).
-        """
-        try:
-            is_immutable = await self.middleware.call('filesystem.is_immutable', '/var/empty')
-            if not is_immutable:
-                await self.middleware.call('filesystem.set_immutable', True, '/var/empty')
-        except Exception:
-            self.logger.warning("Failed to set immutable flag on /var/empty", exc_info=True)
-
         job.set_progress(30, 'Setting up server SID.')
         await self.middleware.call('smb.set_system_sid')
 

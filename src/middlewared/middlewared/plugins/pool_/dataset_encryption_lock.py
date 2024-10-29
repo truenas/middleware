@@ -75,7 +75,10 @@ class PoolDatasetService(Service):
             await self.middleware.call('cache.pop', 'about_to_lock_dataset')
 
         if ds['mountpoint']:
-            await self.middleware.call('filesystem.set_immutable', True, ds['mountpoint'])
+            await self.middleware.call('filesystem.set_zfs_attributes', {
+                'path': ds['mountpoint'],
+                'zfs_file_attributes': {'immutable': True}
+            })
 
         await self.middleware.call_hook('dataset.post_lock', id_)
 
@@ -248,7 +251,10 @@ class PoolDatasetService(Service):
                 mount_path = os.path.join('/mnt', name)
                 if os.path.exists(mount_path):
                     try:
-                        self.middleware.call_sync('filesystem.set_immutable', False, mount_path)
+                        self.middleware.call_sync('filesystem.set_zfs_attributes', {
+                            'path': mount_path,
+                            'zfs_file_attributes': {'immutable': False}
+                        })
                     except OSError as e:
                         # It's ok to get `EROFS` because the dataset can have `readonly=on`
                         if e.errno != errno.EROFS:
@@ -270,7 +276,10 @@ class PoolDatasetService(Service):
                 else:
                     unlocked.append(name)
                     try:
-                        self.middleware.call_sync('filesystem.set_immutable', False, mount_path)
+                        self.middleware.call_sync('filesystem.set_zfs_attributes', {
+                            'path': mount_path,
+                            'zfs_file_attributes': {'immutable': False}
+                        })
                     except Exception:
                         pass
 
@@ -280,7 +289,10 @@ class PoolDatasetService(Service):
                 mount_path = os.path.join('/mnt', ds)
                 if os.path.exists(mount_path):
                     try:
-                        self.middleware.call_sync('filesystem.set_immutable', True, mount_path)
+                        self.middleware.call_sync('filesystem.set_zfs_attributes', {
+                            'path': mount_path,
+                            'zfs_file_attributes': {'immutable': True}
+                        })
                     except OSError as e:
                         # It's ok to get `EROFS` because the dataset can have `readonly=on`
                         if e.errno != errno.EROFS:

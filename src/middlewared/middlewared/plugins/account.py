@@ -380,7 +380,8 @@ class UserService(CRUDService):
                 self.validate_homedir_mountinfo(verrors, schema, p.parent)
 
         elif self.validate_homedir_mountinfo(verrors, schema, p):
-            if self.middleware.call_sync('filesystem.is_immutable', data['home']):
+            attrs = self.middleware.call_sync('filesystem.stat', data['home'])['attributes']
+            if 'IMMUTABLE' in attrs:
                 verrors.add(
                     f'{schema}.home',
                     f'{data["home"]}: home directory path is immutable.'
@@ -2027,5 +2028,13 @@ class GroupService(CRUDService):
 
 
 async def setup(middleware):
+    try:
+        await middleware.call('filesystem.set_zfs_attributes', {
+            'path': DEFAULT_HOME_PATH,
+            'zfs_file_attributes': {'immutable': True}
+        })
+    except Exception:
+        middleware.logger.error('Failed to set immmutable property on /var/empty', exc_info=True)
+
     if await middleware.call('keyvalue.get', 'run_migration', False):
         await middleware.call('user.sync_builtin')
