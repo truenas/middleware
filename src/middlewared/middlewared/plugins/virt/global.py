@@ -296,6 +296,36 @@ class VirtGlobalService(ConfigService):
                 if result.get('status_code') != 200:
                     raise CallError(result.get('error'))
 
+                update_network = True
+            else:
+
+                # In case user sets empty v4/v6 network we need to generate another
+                # range automatically.
+                update_network = False
+                netconfig = {'ipv4.nat': 'true', 'ipv6.nat': 'true'}
+                if not config['v4_network']:
+                    update_network = True
+                    netconfig['ipv4.address'] = 'auto'
+                else:
+                    netconfig['ipv4.address'] = config['v4_network']
+                if not config['v6_network']:
+                    update_network = True
+                    netconfig['ipv6.address'] = 'auto'
+                else:
+                    netconfig['ipv6.address'] = config['v6_network']
+
+                if update_network:
+                    result = await incus_call(f'1.0/networks/{INCUS_BRIDGE}', 'put', {'json': {
+                        'config': netconfig,
+                    }})
+                    if result.get('status_code') != 200:
+                        raise CallError(result.get('error'))
+
+                    result = await incus_call(f'1.0/networks/{INCUS_BRIDGE}', 'get')
+                    if result.get('status_code') != 200:
+                        raise CallError(result.get('error'))
+
+            if update_network:
                 # Update automatically selected networks into our database
                 # so it can persist upgrades.
                 await self.middleware.call('datastore.update', 'virt_global', config['id'], {
