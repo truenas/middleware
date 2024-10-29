@@ -222,9 +222,13 @@ def set_immutable_state(path: str, want_immutable=True):
     '''
     Used by exportsd test
     '''
-    call('filesystem.set_immutable', want_immutable, path)
-    res = call('filesystem.is_immutable', '/etc/exports.d')
-    assert res is want_immutable, f"Expected mutable filesystem: {res}"
+    call('filesystem.set_zfs_attributes', {
+        'path': d,
+        'zfs_file_attributes': {'immutable': flag_set}
+    })
+    is_immutable = 'IMMUTABLE' in call('filesystem.stat', '/etc/exports.d')['attributes']
+
+    assert is_immutable is want_immutable, f"Expected mutable filesystem: {is_immutable}"
 
 
 def confirm_nfsd_processes(expected):

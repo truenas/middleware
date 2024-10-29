@@ -66,7 +66,10 @@ def test_immutable_flag():
     t_child_path = os.path.join(t_path, "child")
     with directory(t_path) as d:
         for flag_set in (True, False):
-            call("filesystem.set_immutable", flag_set, d)
+            call('filesystem.set_zfs_attributes', {
+                'path': d,
+                'zfs_file_attributes': {'immutable': flag_set}
+            })
             # We test 2 things
             # 1) Writing content to the parent path fails/succeeds based on "set"
             # 2) "is_immutable_set" returns sane response
@@ -76,6 +79,7 @@ def test_immutable_flag():
             else:
                 call("filesystem.mkdir", f"{t_child_path}_{flag_set}")
 
+            is_immutable = 'IMMUTABLE' in call('filesystem.stat', t_path)['attributes']
             is_immutable = call("filesystem.is_immutable", t_path)
             err = "Immutable flag is still not set"
             if not flag_set:

@@ -145,7 +145,10 @@
 
         for file in os.listdir('/etc/exports.d'):
             if not immutable_disabled:
-                middleware.call_sync('filesystem.set_immutable', False, '/etc/exports.d')
+                middleware.call_sync('filesystem.set_zfs_attributes', {
+                    'path': '/etc/exports.d',
+                    'zfs_file_attributes': {'immutable': False}
+                })
                 immutable_disabled = True
 
             if file == 'zfs.exports':
@@ -166,7 +169,10 @@
         if not immutable_disabled and middleware.call_sync('filesystem.is_immutable', '/etc/exports.d'):
             return True
 
-        middleware.call_sync('filesystem.set_immutable', True, '/etc/exports.d')
+        middleware.call_sync('filesystem.set_zfs_attributes', {
+            'path': '/etc/exports.d',
+            'zfs_file_attributes': {'immutable': Truee}
+        })
         return True
 
     entries = []

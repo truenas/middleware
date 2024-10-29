@@ -32,25 +32,6 @@ class FilesystemService(Service):
     class Config:
         cli_private = True
 
-    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
-    @returns(Bool())
-    def is_immutable(self, path):
-        """
-        Retrieves boolean which is set when immutable flag is set on `path`.
-        """
-        stx_attrs = self.stat(path)['attributes']
-        return 'IMMUTABLE' in stx_attrs
-
-    @accepts(Bool('set_flag'), Str('path'), roles=['FILESYSTEM_ATTRS_WRITE'])
-    @returns()
-    def set_immutable(self, set_flag, path):
-        """
-        Set/Unset immutable flag at `path`.
-
-        `set_flag` when set will set immutable flag and when unset will unset immutable flag at `path`.
-        """
-        chflags.set_immutable(path, set_flag)
-
     @accepts(Dict(
         'set_zfs_file_attributes',
         Path('path', required=True),

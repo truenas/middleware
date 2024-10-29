@@ -2027,5 +2027,13 @@ class GroupService(CRUDService):
 
 
 async def setup(middleware):
+    try:
+        await self.middleware.call_sync('filesystem.set_zfs_attributes', {
+            'path': DEFAULT_HOME_PATH,
+            'zfs_file_attributes': {'immutable': True}
+        })
+    except Exception:
+        self.logger.error('Failed to set immmutable property on /var/empty', exc_info=True)
+
     if await middleware.call('keyvalue.get', 'run_migration', False):
         await middleware.call('user.sync_builtin')
