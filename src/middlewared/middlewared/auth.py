@@ -182,6 +182,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
     def dump(self):
         data = {
             "parent": dump_credentials(self.token.parent_credentials),
+            "username": None
         }
         if self.is_user_session:
             data["username"] = self.user["username"]
@@ -189,7 +190,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         return data
 
 
-class TrueNasNodeSessionManagerCredentials(SessionManagerCredentials):
+class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
     def authorize(self, method, resource):
         return True
 

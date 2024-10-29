@@ -2,7 +2,7 @@ import pytest
 
 from middlewared.auth import (
     UserSessionManagerCredentials,
-    TrueNasNodeSessionManagerCredentials
+    TruenasNodeSessionManagerCredentials
 )
 
 from middlewared.utils.audit import audit_username_from_session
@@ -12,7 +12,7 @@ from types import SimpleNamespace
 
 USER_SESSION = UserSessionManagerCredentials({'username': 'bob', 'privilege': {'allowlist': []}}, AA_LEVEL1)
 TOKEN_USER_SESSION = SimpleNamespace(root_credentials=USER_SESSION, is_user_session=True, user=USER_SESSION.user)
-NODE_SESSION = TrueNasNodeSessionManagerCredentials()
+NODE_SESSION = TruenasNodeSessionManagerCredentials()
 
 
 @pytest.mark.parametrize('cred,expected', [

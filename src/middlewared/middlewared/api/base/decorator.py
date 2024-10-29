@@ -19,6 +19,8 @@ def api_method(
     rate_limit=True,
     roles: list[str] | None = None,
     private: bool = False,
+    authentication_required: bool = True,
+    authorization_required: bool = True,
 ):
     """
     Mark a `Service` class method as an API method.
@@ -40,6 +42,14 @@ def api_method(
     `roles` is a list of user roles that will gain access to this method.
 
     `private` is `True` when the method should not be exposed in the public API. By default, the method is public.
+
+    `authentication_required` is False when API endpoint does not require authentication. This should generally
+    *not* be set and requires appropriate review and approval to validate that its use complies with security
+    standards. This is incompatible with `roles`.
+
+    `authorization_required` is False API endpoint does not require authorization, but does require authentication.
+    This is incompatible with `roles`. Additional review will be required in order to validate that its use complies
+    with security standards.
     """
     if list(returns.model_fields.keys()) != ["result"]:
         raise TypeError("`returns` model must only have one field called `result`")
@@ -63,6 +73,17 @@ def api_method(
                 result = func(*args)
 
                 return result
+
+        if roles:
+            if not authorization_required or not authentication_required:
+                raise ValueError('Authentication and authorization must be enabled in order to use roles.')
+        elif not authentication_required and not authorization_required:
+            # Although this is technically valid the concern is that dev has fat-fingered something
+            raise ValueError('Either authentication or authorization may be disabled, but not both simultaneously.')
+        elif not authentication_required:
+            wrapped._no_auth_required = True
+        elif not authorization_required:
+            wrapped._no_authz_required = True
 
         wrapped.audit = audit
         wrapped.audit_callback = audit_callback

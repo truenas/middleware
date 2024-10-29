@@ -1,6 +1,6 @@
 from middlewared.auth import (
     TokenSessionManagerCredentials,
-    TrueNasNodeSessionManagerCredentials
+    TruenasNodeSessionManagerCredentials
 )
 
 # Special values start with dot to ensure they cannot collide with local usernames
@@ -23,7 +23,7 @@ def audit_username_from_session(cred) -> str:
     if isinstance(cred, TokenSessionManagerCredentials):
         cred = cred.root_credentials
 
-    elif isinstance(cred, TrueNasNodeSessionManagerCredentials):
+    elif isinstance(cred, TruenasNodeSessionManagerCredentials):
         return NODE_SESSION
 
     return UNKNOWN_SESSION

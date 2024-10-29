@@ -27,7 +27,7 @@ def test_remote_ssh_semiautomatic_setup_invalid_homedir(credential):
         "home_create": False,
         "password": "test1234",
     }):
-        token = call("auth.generate_token")
+        token = call("auth.generate_token", 600, {}, False)
         with pytest.raises(CallError) as ve:
             call("keychaincredential.remote_ssh_semiautomatic_setup", {
                 "name": "localhost",
@@ -51,7 +51,7 @@ def test_remote_ssh_semiautomatic_setup_sets_user_attributes(credential):
             "smb": False,
             "shell": "/usr/sbin/nologin",
         }):
-            token = call("auth.generate_token")
+            token = call("auth.generate_token", 600, {}, False)
             connection = call("keychaincredential.remote_ssh_semiautomatic_setup", {
                 "name": "localhost",
                 "url": "http://localhost",
@@ -66,7 +66,7 @@ def test_remote_ssh_semiautomatic_setup_sets_user_attributes(credential):
 
 
 def test_ssl_certificate_error(credential):
-    token = call("auth.generate_token")
+    token = call("auth.generate_token", 600, {}, False)
     with pytest.raises(CallError) as ve:
         call("keychaincredential.remote_ssh_semiautomatic_setup", {
             "name": "localhost",
@@ -80,7 +80,7 @@ def test_ssl_certificate_error(credential):
 
 
 def test_ignore_ssl_certificate_error(credential):
-    token = call("auth.generate_token")
+    token = call("auth.generate_token", 600, {}, False)
     connection = call("keychaincredential.remote_ssh_semiautomatic_setup", {
         "name": "localhost",
         "url": "https://localhost",

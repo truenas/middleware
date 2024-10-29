@@ -13,16 +13,21 @@ from middlewared.api.current import (
     AuthLoginExArgs, AuthLoginExContinueArgs, AuthLoginExResult,
     AuthMeArgs, AuthMeResult,
     AuthMechChoicesArgs, AuthMechChoicesResult,
+    AuthSessionEntry,
+    AuthGenerateTokenArgs, AuthGenerateTokenResult,
+    AuthSessionLogoutArgs, AuthSessionLogoutResult,
+    AuthSetAttributeArgs, AuthSetAttributeResult,
+    AuthTerminateSessionArgs, AuthTerminateSessionResult,
+    AuthTerminateOtherSessionsArgs, AuthTerminateOtherSessionsResult,
 )
 from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionManagerCredentials,
                               ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
                               LoginTwofactorSessionManagerCredentials, AuthenticationContext,
-                              TrueNasNodeSessionManagerCredentials, TokenSessionManagerCredentials,
+                              TruenasNodeSessionManagerCredentials, TokenSessionManagerCredentials,
                               dump_credentials)
 from middlewared.plugins.account_.constants import MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE
-from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, Password, returns, Str
 from middlewared.service import (
-    Service, filterable, filterable_returns, filter_list, no_auth_required, no_authz_required,
+    Service, filterable_api_method, filter_list,
     pass_app, private, cli_private, CallError,
 )
 from middlewared.service_exception import MatchNotFound
@@ -183,7 +188,7 @@ def is_internal_session(session) -> bool:
         # session.app.origin can be NoneType
         pass
 
-    if isinstance(session.app.authenticated_credentials, TrueNasNodeSessionManagerCredentials):
+    if isinstance(session.app.authenticated_credentials, TruenasNodeSessionManagerCredentials):
         return True
 
     return False
@@ -210,17 +215,7 @@ class AuthService(Service):
         super(AuthService, self).__init__(*args, **kwargs)
         self.session_manager.middleware = self.middleware
 
-    @filterable(roles=['AUTH_SESSIONS_READ'])
-    @filterable_returns(Dict(
-        'session',
-        Str('id'),
-        Bool('current'),
-        Bool('internal'),
-        Str('origin'),
-        Str('credentials'),
-        Dict('credentials_data', additional_attrs=True),
-        Datetime('created_at'),
-    ))
+    @filterable_api_method(item=AuthSessionEntry, private=False, roles=['AUTH_SESSIONS_READ'])
     @pass_app()
     def sessions(self, app, filters, options):
         """
@@ -269,8 +264,7 @@ class AuthService(Service):
             options,
         )
 
-    @accepts(Str('id'), roles=['AUTH_SESSIONS_WRITE'])
-    @returns(Bool(description='Is `true` if session was terminated successfully'))
+    @api_method(AuthTerminateSessionArgs, AuthTerminateSessionResult, roles=['AUTH_SESSIONS_WRITE'])
     async def terminate_session(self, id_):
         """
         Terminates session `id`.
@@ -282,9 +276,9 @@ class AuthService(Service):
         self.token_manager.destroy_by_session_id(id_)
 
         await session.app.ws.close()
+        return True
 
-    @accepts(roles=['AUTH_SESSIONS_WRITE'])
-    @returns()
+    @api_method(AuthTerminateOtherSessionsArgs, AuthTerminateOtherSessionsResult, roles=['AUTH_SESSIONS_WRITE'])
     @pass_app()
     async def terminate_other_sessions(self, app):
         """
@@ -306,13 +300,9 @@ class AuthService(Service):
         if errors:
             raise CallError("\n".join(["Unable to terminate all sessions:"] + errors))
 
-    @no_auth_required
-    @accepts(
-        Int('ttl', default=600, null=True),
-        Dict('attrs', additional_attrs=True),
-        Bool('match_origin', default=False),
-    )
-    @returns(Str('token'))
+        return True
+
+    @api_method(AuthGenerateTokenArgs, AuthGenerateTokenResult, authorization_required=False)
     @pass_app(rest=True)
     def generate_token(self, app, ttl, attrs, match_origin):
         """
@@ -325,9 +315,6 @@ class AuthService(Service):
 
         `match_origin` will only allow using this token from the same IP address or with the same user UID.
         """
-        if not app.authenticated:
-            raise CallError('Not authenticated', errno.EACCES)
-
         if ttl is None:
             ttl = 600
 
@@ -382,8 +369,7 @@ class AuthService(Service):
             'username': root_credentials.user['username'],
         }
 
-    @no_auth_required
-    @api_method(AuthLegacyTwoFactorArgs, AuthLegacyResult)
+    @api_method(AuthLegacyTwoFactorArgs, AuthLegacyResult, authentication_required=False)
     async def two_factor_auth(self, username, password):
         """
         Returns true if two-factor authorization is required for authorizing user's login.
@@ -394,8 +380,7 @@ class AuthService(Service):
         )['enabled'] and '2FA' in user_authenticated['account_attributes']
 
     @cli_private
-    @no_auth_required
-    @api_method(AuthLegacyPasswordLoginArgs, AuthLegacyResult)
+    @api_method(AuthLegacyPasswordLoginArgs, AuthLegacyResult, authentication_required=False)
     @pass_app()
     async def login(self, app, username, password, otp_token):
         """
@@ -461,24 +446,24 @@ class AuthService(Service):
         if auth_ctx.next_mech and mechanism is not auth_ctx.next_mech:
             expected = auth_ctx.auth_data['user']['username']
             self.logger.debug('%s: received auth mechanism for user %s while expecting next auth mechanism: %s',
-                               mechanism, expected, auth_ctx.next_mech)
+                              mechanism, expected, auth_ctx.next_mech)
 
             expected = auth_ctx.auth_data['user']['username']
             if auth_ctx.next_mech is AuthMech.OTP_TOKEN:
-                    errmsg = (
-                        'Abandoning login attempt after being presented wtih '
-                        'requirement for second factor for authentication.'
-                    )
+                errmsg = (
+                    'Abandoning login attempt after being presented wtih '
+                    'requirement for second factor for authentication.'
+                )
 
-                    await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                        'credentials': {
-                            'credentials': 'LOGIN_TWOFACTOR',
-                            'credentials_data': {
-                                'username': expected,
-                            },
+                await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                    'credentials': {
+                        'credentials': 'LOGIN_TWOFACTOR',
+                        'credentials_data': {
+                            'username': expected,
                         },
-                        'error': errmsg
-                    }, False)
+                    },
+                    'error': errmsg
+                }, False)
 
             # Discard in-progress auth attempt
             auth_ctx.next_mech = None
@@ -496,16 +481,14 @@ class AuthService(Service):
                 errno.EOPNOTSUPP
             )
 
-    @no_auth_required
-    @api_method(AuthMechChoicesArgs, AuthMechChoicesResult)
+    @api_method(AuthMechChoicesArgs, AuthMechChoicesResult, authentication_required=False)
     async def mechanism_choices(self) -> list:
         """ Get list of available authentication mechanisms available for auth.login_ex """
         aal = CURRENT_AAL.level
         return [mech.name for mech in aal.mechanisms]
 
     @cli_private
-    @no_auth_required
-    @api_method(AuthLoginExContinueArgs, AuthLoginExResult)
+    @api_method(AuthLoginExContinueArgs, AuthLoginExResult, authentication_required=False)
     @pass_app()
     async def login_ex_continue(self, app, data):
         """
@@ -536,8 +519,7 @@ class AuthService(Service):
         return await self.login_ex(app, data)
 
     @cli_private
-    @no_auth_required
-    @api_method(AuthLoginExArgs, AuthLoginExResult)
+    @api_method(AuthLoginExArgs, AuthLoginExResult, authentication_required=False)
     @pass_app()
     async def login_ex(self, app, data):
         """
@@ -898,8 +880,7 @@ class AuthService(Service):
         return resp | {'otp_required': otp_required}
 
     @cli_private
-    @no_auth_required
-    @api_method(AuthLegacyApiKeyLoginArgs, AuthLegacyResult)
+    @api_method(AuthLegacyApiKeyLoginArgs, AuthLegacyResult, authentication_required=False)
     @pass_app()
     async def login_with_api_key(self, app, api_key):
         """
@@ -935,8 +916,7 @@ class AuthService(Service):
         return resp['response_type'] == AuthResp.SUCCESS
 
     @cli_private
-    @no_auth_required
-    @api_method(AuthLegacyTokenLoginArgs, AuthLegacyResult)
+    @api_method(AuthLegacyTokenLoginArgs, AuthLegacyResult, authentication_required=False)
     @pass_app()
     async def login_with_token(self, app, token_str):
         """
@@ -950,8 +930,7 @@ class AuthService(Service):
         return resp['response_type'] == AuthResp.SUCCESS
 
     @cli_private
-    @accepts()
-    @returns(Bool('successful_logout'))
+    @api_method(AuthSessionLogoutArgs, AuthSessionLogoutResult, authorization_required=False)
     @pass_app()
     async def logout(self, app):
         """
@@ -961,8 +940,7 @@ class AuthService(Service):
         await self.session_manager.logout(app)
         return True
 
-    @no_authz_required
-    @api_method(AuthMeArgs, AuthMeResult)
+    @api_method(AuthMeArgs, AuthMeResult, authorization_required=False)
     @pass_app()
     async def me(self, app):
         """
@@ -983,12 +961,7 @@ class AuthService(Service):
 
         return {**user, 'attributes': attributes, 'two_factor_config': twofactor_config}
 
-    @no_authz_required
-    @accepts(
-        Str('key'),
-        Any('value'),
-    )
-    @returns()
+    @api_method(AuthSetAttributeArgs, AuthSetAttributeResult, authorization_required=False)
     @pass_app()
     async def set_attribute(self, app, key, value):
         """
