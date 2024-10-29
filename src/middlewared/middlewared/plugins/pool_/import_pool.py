@@ -160,7 +160,10 @@ class PoolService(Service):
             encrypted_mountpoint = os.path.join('/mnt', encrypted_ds)
             if os.path.exists(encrypted_mountpoint):
                 try:
-                    await self.middleware.call('filesystem.set_immutable', True, encrypted_mountpoint)
+                    await self.middleware.call('filesystem.set_zfs_attributes', {
+                        'path': encrypted_mountpoint,
+                        'zfs_file_attributes': {'immutable': True}
+                    })
                 except Exception as e:
                     self.logger.warning('Failed to set immutable flag at %r: %r', encrypted_mountpoint, e)
 
@@ -409,7 +412,10 @@ class PoolService(Service):
                     # setting the root path as immutable, in a perfect world, will prevent
                     # the scenario that is describe above
                     self.logger.debug('Setting immutable flag at %r', pool_mount)
-                    self.middleware.call_sync('filesystem.set_immutable', True, pool_mount)
+                    self.middleware.call_sync('filesystem.set_zfs_attributes', {
+                        'path': pool_mount,
+                        'zfs_file_attributes': {'immutable': True}
+                    })
                 except CallError as e:
                     self.logger.error('Unable to set immutable flag at %r: %s', pool_mount, e)
 
