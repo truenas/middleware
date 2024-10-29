@@ -7,6 +7,17 @@ from middlewared.plugins.truecommand.enums import Status as TrueCommandStatus
 from middlewared.schema import accepts, Bool, Patch, returns, Str
 from middlewared.service import cli_private, job, no_auth_required, private, Service
 from middlewared.utils.functools_ import cache
+from middlewared.api.current import (
+    TrueNASSetProductionArgs, TrueNASSetProductionResult,
+    TrueNASIsProductionArgs, TrueNASIsProductionResult,
+    TrueNASAcceptEULAArgs, TrueNASAcceptEULAResult,
+    TrueNASIsEULAAcceptedArgs, TrueNASIsEULAAcceptedResult,
+    TrueNASGetEULAArgs, TrueNASGetEULAResult,
+    TrueNASIsIXHardwareArgs, TrueNASIsIXHardwareResult,
+    TrueNASGetChassisHardwareArgs, TrueNASGetChassisHardwareResult,
+    TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult
+)
+from middlewared.api import api_method
 
 EULA_FILE = '/usr/local/share/truenas/eula.html'
 EULA_PENDING_PATH = "/data/truenas-eula-pending"
@@ -18,8 +29,7 @@ class TrueNASService(Service):
         cli_namespace = 'system.truenas'
 
     @no_auth_required
-    @accepts()
-    @returns(Bool())
+    @api_method(TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult)
     async def managed_by_truecommand(self):
         """
         Returns whether TrueNAS is being managed by TrueCommand or not.
@@ -31,8 +41,7 @@ class TrueNASService(Service):
             (await self.middleware.call('truecommand.config'))['status']
         ) == TrueCommandStatus.CONNECTED
 
-    @accepts()
-    @returns(Str('system_chassis_hardware'))
+    @api_method(TrueNASGetChassisHardwareArgs, TrueNASGetChassisHardwareResult)
     @cli_private
     @cache
     async def get_chassis_hardware(self):
@@ -42,16 +51,14 @@ class TrueNASService(Service):
         dmi = await self.middleware.call('system.dmidecode_info_internal')
         return get_chassis_hardware(dmi)
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Bool('is_ix_hardware'))
+    @api_method(TrueNASIsIXHardwareArgs, TrueNASIsIXHardwareResult, roles=['READONLY_ADMIN'])
     async def is_ix_hardware(self):
         """
         Return a boolean value on whether this is hardware that iXsystems sells.
         """
         return await self.get_chassis_hardware() != TRUENAS_UNKNOWN
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Str('eula', max_length=None, null=True))
+    @api_method(TrueNASGetEULAArgs, TrueNASGetEULAResult, roles=['READONLY_ADMIN'])
     @cli_private
     def get_eula(self):
         """
@@ -63,8 +70,7 @@ class TrueNASService(Service):
         except FileNotFoundError:
             pass
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Bool('system_eula_accepted'))
+    @api_method(TrueNASIsEULAAcceptedArgs, TrueNASIsEULAAcceptedResult, roles=['READONLY_ADMIN'])
     @cli_private
     def is_eula_accepted(self):
         """
@@ -72,8 +78,7 @@ class TrueNASService(Service):
         """
         return not os.path.exists(EULA_PENDING_PATH)
 
-    @accepts()
-    @returns()
+    @api_method(TrueNASAcceptEULAArgs, TrueNASAcceptEULAResult)
     def accept_eula(self):
         """
         Accept TrueNAS EULA.
@@ -89,19 +94,14 @@ class TrueNASService(Service):
         with open(EULA_PENDING_PATH, "w") as f:
             os.fchmod(f.fileno(), 0o600)
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Bool('is_production_system'))
+    @api_method(TrueNASIsProductionArgs, TrueNASIsProductionResult, roles=['READONLY_ADMIN'])
     async def is_production(self):
         """
         Returns if system is marked as production.
         """
         return await self.middleware.call('keyvalue.get', 'truenas:production', False)
 
-    @accepts(Bool('production'), Bool('attach_debug', default=False))
-    @returns(Patch(
-        'new_ticket_response', 'set_production',
-        ('attr', {'null': True}),
-    ))
+    @api_method(TrueNASSetProductionArgs, TrueNASSetProductionResult)
     @job()
     async def set_production(self, job, production, attach_debug):
         """
