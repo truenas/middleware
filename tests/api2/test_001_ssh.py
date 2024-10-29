@@ -150,7 +150,12 @@ def test_008_check_root_dataset_settings(ws_client):
             # NOSUID also means NODEV which is why NOSETUID was added
             if opt == 'NOSETUID':
                 opt = 'NOSUID'
-            if opt not in fs['mount_opts'] and opt not in fs['super_opts']:
+            # DEV is used to change inherited datasets where parent is using NODEV option
+            # which means we need to make sure NODEV is not in the mount options
+            if opt == 'DEV':
+                if 'NODEV' in fs['mount_opts'] or 'NODEV' in fs['super_opts']:
+                    assert 'NODEV' not in fs['mount_opts'] and 'NODEV' not in fs['super_opts'], f"NODEV: present in mount opts for {mp}: {fs['mount_opts']} - {fs['super_opts']}"
+            elif opt not in fs['mount_opts'] and opt not in fs['super_opts']:
                 assert opt in fs['mount_opts'], f'{opt}: mount option not present for {mp}: {fs["mount_opts"]}'
 
 
