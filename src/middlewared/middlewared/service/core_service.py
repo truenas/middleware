@@ -156,7 +156,7 @@ class CoreService(Service):
 
         if job.credentials is None:
             raise CallError(
-                'Only users with full administrative privileges can download internal job logs', errno.EPERM,
+                'Only users with full administrative privileges can access internally ran jobs', errno.EPERM,
             )
 
         if job.credentials.user['username'] == credential.user['username']:
