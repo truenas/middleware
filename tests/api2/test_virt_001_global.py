@@ -12,7 +12,7 @@ def test_virt_pool():
 
 def test_virt_no_pool():
     call('virt.global.update', {'pool': None}, job=True)
-    ssh('incus storage show default 2>&1 | grep "not found"')
+    ssh('incus storage show default 2>&1 | grep "incus daemon doesn\'t appear to be started"')
 
 
 def test_virt_pool_auto_bridge():
