@@ -380,7 +380,8 @@ class UserService(CRUDService):
                 self.validate_homedir_mountinfo(verrors, schema, p.parent)
 
         elif self.validate_homedir_mountinfo(verrors, schema, p):
-            if self.middleware.call_sync('filesystem.is_immutable', data['home']):
+            attrs = self.middleware.call_sync('filesystem.stat', data['home'])['attributes']
+            if 'IMMUTABLE' in attrs:
                 verrors.add(
                     f'{schema}.home',
                     f'{data["home"]}: home directory path is immutable.'

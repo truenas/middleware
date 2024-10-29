@@ -13,7 +13,6 @@ from itertools import product
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
-from middlewared.plugins.filesystem_ import chflags
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str, UnixPerm
 from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
 from middlewared.utils import filter_list

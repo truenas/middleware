@@ -166,8 +166,9 @@
                 )
                 return False
 
-        if not immutable_disabled and middleware.call_sync('filesystem.is_immutable', '/etc/exports.d'):
-            return True
+        if not immutable_disabled:
+            if 'IMMUTABLE' in middleware.call_sync('filesystem.stat', '/etc/exports.d')['attributes']:
+                return True
 
         middleware.call_sync('filesystem.set_zfs_attributes', {
             'path': '/etc/exports.d',
