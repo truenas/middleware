@@ -60,6 +60,9 @@ def filterable_api_method(fn=None, /, *, roles=None, item=None, private=True):
         if item:
             returns = query_result(item)
         else:
+            if not private:
+                raise ValueError('Public methods may not use GenericQueryResult.')
+
             returns = GenericQueryResult
 
         return api_method(QueryArgs, returns, private=private, roles=roles)(fn)
