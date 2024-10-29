@@ -4,6 +4,10 @@ import ipaddress
 import os
 import contextlib
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    ActivedirectoryLeaveArgs, ActivedirectoryLeaveResult,
+)
 from middlewared.plugins.smb import SMBCmd
 from middlewared.plugins.kerberos import krb5ccache
 from middlewared.schema import (
@@ -776,8 +780,11 @@ class ActiveDirectoryService(ConfigService):
         out = json.loads(lookup.stdout.decode())
         return out
 
-    @accepts(Ref('kerberos_username_password'), roles=['DIRECTORY_SERVICE_WRITE'], audit='Active directory leave')
-    @returns()
+    @api_method(
+        ActivedirectoryLeaveArgs, ActivedirectoryLeaveResult,
+        roles=['DIRECTORY_SERVICE_WRITE'],
+        audit='Active directory leave',
+    )
     @job(lock="AD_start_stop")
     async def leave(self, job, data):
         """
@@ -880,4 +887,4 @@ class ActiveDirectoryService(ConfigService):
         await self.middleware.call('service.restart', 'cifs')
         await self.middleware.call('service.restart', 'idmap')
         job.set_progress(100, 'Successfully left activedirectory domain.')
-        return
+        return True
