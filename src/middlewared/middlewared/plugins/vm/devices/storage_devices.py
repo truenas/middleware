@@ -4,6 +4,7 @@ import os
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.schema import Bool, Dict, Int, Str
+from middlewared.utils.crypto import generate_string
 from middlewared.validators import Match
 
 from .device import Device
@@ -39,6 +40,7 @@ class StorageDevice(Device):
                         'target', bus='sata' if not virtio else 'virtio',
                         dev=f'{"vd" if virtio else "sd"}{disk_from_number(disk_number)}'
                     ),
+                    create_element('serial', attribute_dict={'text': self.data['attributes']['serial']}),
                     create_element('boot', order=str(kwargs.pop('boot_number'))),
                     *([] if not logical_sectorsize else [create_element(
                         'blockio', logical_block_size=str(logical_sectorsize), **({} if not physical_sectorsize else {
@@ -65,6 +67,15 @@ class StorageDevice(Device):
                 'This field must be provided when physical_sectorsize is specified.'
             )
 
+        if update is False:
+            device['attributes']['serial'] = generate_string(8)
+        elif not device['attributes'].get('serial'):
+            # As this is a json field, ensure that some consumer does not remove this value, in that case
+            # we preserve the original value
+            device['attributes']['serial'] = old['attributes']['serial']
+        elif device['attributes']['serial'] != old['attributes']['serial']:
+            verrors.add('attributes.serial', 'This field is read-only.')
+
 
 class RAW(StorageDevice):
 
@@ -82,6 +93,7 @@ class RAW(StorageDevice):
         Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Str('iotype', enum=IOTYPE_CHOICES, default='THREADS'),
+        Str('serial'),
     )
 
     def create_source_element(self):
@@ -123,6 +135,7 @@ class DISK(StorageDevice):
         Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Str('iotype', enum=IOTYPE_CHOICES, default='THREADS'),
+        Str('serial'),
     )
 
     def create_source_element(self):
