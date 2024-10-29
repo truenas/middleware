@@ -16,7 +16,7 @@ from middlewared.api.current import (
     VirtInstanceRestartArgs, VirtInstanceRestartResult,
     VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult,
 )
-from .utils import incus_call, incus_call_and_wait
+from .utils import Status, incus_call, incus_call_and_wait
 
 
 LC_IMAGES_SERVER = 'https://images.linuxcontainers.org'
@@ -36,9 +36,10 @@ class VirtInstanceService(CRUDService):
         """
         Query all instances with `query-filters` and `query-options`.
         """
-        config = await self.middleware.call('virt.global.config')
-        if config['state'] != 'INITIALIZED':
-            return []
+        if not options.get('extra').get('skip_state'):
+            config = await self.middleware.call('virt.global.config')
+            if config['state'] != Status.INITIALIZED.value:
+                return []
         results = (await incus_call('1.0/instances?filter=&recursion=2', 'get'))['metadata']
         entries = []
         for i in results:
@@ -64,7 +65,6 @@ class VirtInstanceService(CRUDService):
                     'variant': i['config'].get('image.variant'),
                 }
             }
-
 
             if options.get('extra').get('raw'):
                 entry['raw'] = i
@@ -253,7 +253,8 @@ class VirtInstanceService(CRUDService):
 
         Timeout is how long it should wait for the instance to shutdown cleanly.
         """
-        await self.middleware.call('virt.global.check_initialized')
+        # Only check started because its used when tearing the service down
+        await self.middleware.call('virt.global.check_started')
         await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
             'action': 'stop',
             'timeout': data['timeout'],
