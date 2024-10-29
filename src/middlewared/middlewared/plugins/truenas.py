@@ -4,7 +4,6 @@ import os
 from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware
 
 from middlewared.plugins.truecommand.enums import Status as TrueCommandStatus
-from middlewared.schema import accepts, Bool, Patch, returns, Str
 from middlewared.service import cli_private, job, no_auth_required, private, Service
 from middlewared.utils.functools_ import cache
 from middlewared.api.current import (
