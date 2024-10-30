@@ -183,7 +183,7 @@ def single_argument_result(klass, klass_name=None):
         klass_name,
         __base__=(BaseModel,),
         __module__=inspect.getmodule(inspect.stack()[1][0]),
-        **{"result": Annotated[klass, Field()]},
+        result=Annotated[klass, Field()],
     )
     if issubclass(klass, BaseModel):
         model.from_previous = classmethod(klass.from_previous)
@@ -192,9 +192,20 @@ def single_argument_result(klass, klass_name=None):
 
 
 def query_result(item):
+    result_item = query_result_item(item)
     return create_model(
         item.__name__.removesuffix("Entry") + "QueryResult",
         __base__=(BaseModel,),
         __module__=item.__module__,
-        result=Annotated[list[item] | item | int, Field()],
+        result=Annotated[list[result_item] | result_item | int, Field()],
+    )
+
+
+def query_result_item(item):
+    # All fields must be non-required since we can query subsets of fields
+    return create_model(
+        item.__name__.removesuffix("Entry") + "QueryResultItem",
+        __base__=(item,),
+        __module__=item.__module__,
+        __cls_kwargs__={"metaclass": ForUpdateMetaclass},
     )
