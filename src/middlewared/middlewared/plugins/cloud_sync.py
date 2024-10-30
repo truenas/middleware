@@ -1036,7 +1036,8 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         ),
         roles=["CLOUD_SYNC_WRITE"],
     )
-    @job(lock=lambda args: "cloud_sync:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True)
+    @job(lock=lambda args: "cloud_sync:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True,
+         read_roles=["CLOUD_SYNC_READ"])
     async def sync(self, job, id_, options):
         """
         Run the cloud_sync job `id`, syncing the local data to remote.

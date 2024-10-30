@@ -84,7 +84,7 @@ def item_method(fn):
 
 def job(
     lock=None, lock_queue_size=5, logs=False, process=False, pipes=None, check_pipes=True, transient=False,
-    description=None, abortable=False
+    description=None, abortable=False, read_roles: list[str] | None = None,
 ):
     """
     Flag method as a long-running job. This must be the first decorator to be applied (meaning that it must be specified
@@ -162,6 +162,12 @@ def job(
     :param abortable: If `True` then the job can be aborted in the task manager UI. When the job is aborted,
         `asyncio.CancelledError` is raised inside the job method (meaning that only asynchronous job methods can be
         aborted). By default, jobs are not abortable.
+
+    :param read_roles: A list of roles that will allow a non-full-admin user to see this job in `core.get_jobs`
+        and download its logs even if the job was launched by another user or by the system.
+
+        By default, non-full-admin users already can see their own jobs and download their logs, so this only should
+        be used when the job is launched externally (i.e., using crontab).
     """
     def check_job(fn):
         fn._job = {
@@ -174,6 +180,7 @@ def job(
             'transient': transient,
             'description': description,
             'abortable': abortable,
+            'read_roles': read_roles or [],
         }
         return fn
     return check_job
