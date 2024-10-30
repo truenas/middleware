@@ -2,9 +2,15 @@ import errno
 import subprocess
 
 import middlewared.sqlalchemy as sa
+from middlewared.api import api_method
+from middlewared.api.current import (
+    NTPPeerEntry, NTPServerEntry,
+    NTPServerCreateArgs, NTPServerCreateResult,
+    NTPServerUpdateArgs, NTPServerUpdateResult,
+    NTPServerDeleteArgs, NTPServerDeleteResult,
+)
 from middlewared.plugins.ntp_.enums import Mode, State
-from middlewared.schema import Bool, Dict, Int, IPAddr, Patch, Str, accepts
-from middlewared.service import CRUDService, ValidationErrors, filterable, private
+from middlewared.service import CRUDService, ValidationErrors, filterable_api_method, private
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 from middlewared.plugins.ntp_.client import NTPClient
@@ -27,7 +33,6 @@ class NTPPeer:
         self._mode = Mode.from_str(initial_data['mode'])
         self._state = State.from_str(initial_data['state'])
         self._remote = initial_data['remote']
-        IPAddr().validate(self._remote)
         self._stratum = initial_data['stratum']
         self._poll_interval = initial_data['poll_interval']
         self._reach = initial_data['reach']
@@ -94,24 +99,9 @@ class NTPServerService(CRUDService):
         datastore = 'system.ntpserver'
         datastore_prefix = 'ntp_'
         cli_namespace = 'system.ntp_server'
+        entry = NTPServerEntry
 
-    ENTRY = Patch(
-        'ntp_create', 'ntp_entry',
-        ('rm', {'name': 'force'}),
-        ('add', Int('id')),
-    )
-
-    @accepts(Dict(
-        'ntp_create',
-        Str('address'),
-        Bool('burst', default=False),
-        Bool('iburst', default=True),
-        Bool('prefer', default=False),
-        Int('minpoll', default=6),
-        Int('maxpoll', default=10),
-        Bool('force'),
-        register=True
-    ))
+    @api_method(NTPServerCreateArgs, NTPServerCreateResult)
     async def do_create(self, data):
         """
         Add an NTP Server.
@@ -143,14 +133,7 @@ class NTPServerService(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'ntp_create',
-            'ntp_update',
-            ('attr', {'update': True})
-        )
-    )
+    @api_method(NTPServerUpdateArgs, NTPServerUpdateResult)
     async def do_update(self, id_, data):
         """
         Update NTP server of `id`.
@@ -170,6 +153,7 @@ class NTPServerService(CRUDService):
 
         return await self.get_instance(id_)
 
+    @api_method(NTPServerDeleteArgs, NTPServerDeleteResult)
     async def do_delete(self, id_):
         """
         Delete NTP server of `id`.
@@ -188,8 +172,7 @@ class NTPServerService(CRUDService):
         except Exception:
             return False
 
-    @private
-    @filterable
+    @filterable_api_method(item=NTPPeerEntry, roles=['READONLY_ADMIN'])
     def peers(self, filters, options):
         peers = []
 

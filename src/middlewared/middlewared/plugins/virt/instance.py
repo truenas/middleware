@@ -16,7 +16,7 @@ from middlewared.api.current import (
     VirtInstanceRestartArgs, VirtInstanceRestartResult,
     VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult,
 )
-from .utils import incus_call, incus_call_and_wait
+from .utils import Status, incus_call, incus_call_and_wait
 
 
 LC_IMAGES_SERVER = 'https://images.linuxcontainers.org'
@@ -36,9 +36,10 @@ class VirtInstanceService(CRUDService):
         """
         Query all instances with `query-filters` and `query-options`.
         """
-        config = await self.middleware.call('virt.global.config')
-        if config['state'] != 'INITIALIZED':
-            return []
+        if not options['extra'].get('skip_state'):
+            config = await self.middleware.call('virt.global.config')
+            if config['state'] != Status.INITIALIZED.value:
+                return []
         results = (await incus_call('1.0/instances?filter=&recursion=2', 'get'))['metadata']
         entries = []
         for i in results:
@@ -51,12 +52,21 @@ class VirtInstanceService(CRUDService):
                 'type': 'CONTAINER' if i['type'] == 'container' else 'VM',
                 'status': i['state']['status'].upper(),
                 'cpu': i['config'].get('limits.cpu'),
-                'autostart': i['config'].get('boot.autostart') or False,
+                'autostart': bool(i['config'].get('boot.autostart')) or False,
                 'environment': {},
                 'aliases': [],
+                'image': {
+                    'architecture': i['config'].get('image.architecture'),
+                    'description': i['config'].get('image.description'),
+                    'os': i['config'].get('image.os'),
+                    'release': i['config'].get('image.release'),
+                    'serial': i['config'].get('image.serial'),
+                    'type': i['config'].get('image.type'),
+                    'variant': i['config'].get('image.variant'),
+                }
             }
 
-            if options.get('extra').get('raw'):
+            if options['extra'].get('raw'):
                 entry['raw'] = i
 
             if memory := i['config'].get('limits.memory'):
@@ -195,7 +205,7 @@ class VirtInstanceService(CRUDService):
         instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
 
         verrors = ValidationErrors()
-        await self.validate(data, 'virt_instance_create', verrors, old=instance)
+        await self.validate(data, 'virt_instance_update', verrors, old=instance)
         verrors.check()
 
         instance['raw']['config'].update(self.__data_to_config(data))
@@ -243,7 +253,8 @@ class VirtInstanceService(CRUDService):
 
         Timeout is how long it should wait for the instance to shutdown cleanly.
         """
-        await self.middleware.call('virt.global.check_initialized')
+        # Only check started because its used when tearing the service down
+        await self.middleware.call('virt.global.check_started')
         await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
             'action': 'stop',
             'timeout': data['timeout'],

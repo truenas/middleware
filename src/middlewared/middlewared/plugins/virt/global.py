@@ -17,13 +17,16 @@ from middlewared.service_exception import CallError
 from middlewared.utils import run
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 
-from .utils import incus_call
+from .utils import Status, incus_call
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
 INCUS_PATH = '/var/lib/incus'
 INCUS_BRIDGE = 'incusbr0'
+
+BRIDGE_AUTO = '[AUTO]'
+POOL_DISABLED = '[DISABLED]'
 
 
 class NoPoolConfigured(Exception):
@@ -52,6 +55,7 @@ class VirtGlobalService(ConfigService):
         namespace = 'virt.global'
         cli_namespace = 'virt.global'
         role_prefix = 'VIRT_GLOBAL'
+        entry = VirtGlobalEntry
 
     @private
     async def extend(self, data):
@@ -62,19 +66,27 @@ class VirtGlobalService(ConfigService):
         try:
             data['state'] = await self.middleware.call('cache.get', 'VIRT_STATE')
         except KeyError:
-            data['state'] = 'INITIALIZING'
+            data['state'] = Status.INITIALIZING.value
         return data
 
     @private
     async def validate(self, new: dict, schema_name: str, verrors: ValidationErrors):
 
-        bridge = new['bridge'] or ''
+        bridge = new['bridge']
+        if not bridge:
+            bridge = BRIDGE_AUTO
         if bridge not in await self.bridge_choices():
             verrors.add(f'{schema_name}.bridge', 'Invalid bridge')
+        if bridge == BRIDGE_AUTO:
+            new['bridge'] = None
 
-        pool = new['pool'] or ''
+        pool = new['pool']
+        if not pool:
+            pool = POOL_DISABLED
         if pool not in await self.pool_choices():
             verrors.add(f'{schema_name}.pool', 'Invalid pool')
+        if pool == POOL_DISABLED:
+            new['pool'] = None
 
     @api_method(VirtGlobalUpdateArgs, VirtGlobalUpdateResult)
     @job()
@@ -83,6 +95,10 @@ class VirtGlobalService(ConfigService):
         Update global virtualization settings.
 
         `pool` which pool to use to store instances.
+        None will disable the service.
+
+        `bridge` which bridge interface to use by default.
+        None means it will automatically create one.
         """
         old = await self.config()
 
@@ -114,11 +130,14 @@ class VirtGlobalService(ConfigService):
 
         Empty means it will be managed/created automatically.
         """
-        choices = {'': 'Automatic'}
-        choices.update({
-            i['name']: i['name'] for i in await self.middleware.call('interface.query')
-            if i['type'] == 'BRIDGE'
-        })
+        choices = {BRIDGE_AUTO: 'Automatic'}
+        # We do not allow custom bridge on HA because it might have bridge STP issues
+        # causing failover problems.
+        if not await self.middleware.call('failover.licensed'):
+            choices.update({
+                i['name']: i['name']
+                for i in await self.middleware.call('interface.query', [['type', '=', 'BRIDGE']])
+            })
         return choices
 
     @api_method(VirtGlobalPoolChoicesArgs, VirtGlobalPoolChoicesResult, roles=['VIRT_GLOBAL_READ'])
@@ -126,7 +145,7 @@ class VirtGlobalService(ConfigService):
         """
         Pool choices for virtualization purposes.
         """
-        pools = {'': '[Disabled]'}
+        pools = {POOL_DISABLED: '[Disabled]'}
         for p in (await self.middleware.call('zfs.pool.query_imported_fast')).values():
             if p['name'] in BOOT_POOL_NAME_VALID:
                 continue
@@ -145,8 +164,13 @@ class VirtGlobalService(ConfigService):
     async def check_initialized(self, config=None):
         if config is None:
             config = await self.config()
-        if config['state'] != 'INITIALIZED':
+        if config['state'] != Status.INITIALIZED.value:
             raise CallError('Virtualization not initialized.')
+
+    @private
+    async def check_started(self):
+        if not await self.middleware.call('service.started', 'incus'):
+            raise CallError('Virtualization service not started.')
 
     @private
     async def get_default_profile(self):
@@ -182,24 +206,26 @@ class VirtGlobalService(ConfigService):
         Will create necessary storage datasets if required.
         """
         try:
-            await self.middleware.call('cache.put', 'VIRT_STATE', 'INITIALIZING')
-            await self._setup_impl(job)
+            await self.middleware.call('cache.put', 'VIRT_STATE', Status.INITIALIZING.value)
+            await self._setup_impl()
         except NoPoolConfigured:
-            await self.middleware.call('cache.put', 'VIRT_STATE', 'NO_POOL')
+            await self.middleware.call('cache.put', 'VIRT_STATE', Status.NO_POOL.value)
         except LockedDataset:
-            await self.middleware.call('cache.put', 'VIRT_STATE', 'LOCKED')
+            await self.middleware.call('cache.put', 'VIRT_STATE', Status.LOCKED.value)
         except Exception:
-            await self.middleware.call('cache.put', 'VIRT_STATE', 'ERROR')
+            await self.middleware.call('cache.put', 'VIRT_STATE', Status.ERROR.value)
             raise
         else:
-            await self.middleware.call('cache.put', 'VIRT_STATE', 'INITIALIZED')
+            await self.middleware.call('cache.put', 'VIRT_STATE', Status.INITIALIZED.value)
+        finally:
+            self.middleware.send_event('virt.global.config', 'CHANGED', fields=await self.config())
 
-    async def _setup_impl(self, job):
+    async def _setup_impl(self):
         config = await self.config()
 
         if not config['pool']:
             if await self.middleware.call('service.started', 'incus'):
-                job = await self.middleware.call('virt.global.reset')
+                job = await self.middleware.call('virt.global.reset', False, config)
                 await job.wait(raise_error=True)
 
             self.logger.debug('No pool set for virtualization, skipping.')
@@ -242,7 +268,7 @@ class VirtGlobalService(ConfigService):
                 self.logger.debug('Storage pool for virt already configured.')
                 import_storage = False
             else:
-                job = await self.middleware.call('virt.global.reset', True)
+                job = await self.middleware.call('virt.global.reset', True, config)
                 await job.wait(raise_error=True)
 
         # If no bridge interface has been set, use incus managed
@@ -270,6 +296,36 @@ class VirtGlobalService(ConfigService):
                 if result.get('status_code') != 200:
                     raise CallError(result.get('error'))
 
+                update_network = True
+            else:
+
+                # In case user sets empty v4/v6 network we need to generate another
+                # range automatically.
+                update_network = False
+                netconfig = {'ipv4.nat': 'true', 'ipv6.nat': 'true'}
+                if not config['v4_network']:
+                    update_network = True
+                    netconfig['ipv4.address'] = 'auto'
+                else:
+                    netconfig['ipv4.address'] = config['v4_network']
+                if not config['v6_network']:
+                    update_network = True
+                    netconfig['ipv6.address'] = 'auto'
+                else:
+                    netconfig['ipv6.address'] = config['v6_network']
+
+                if update_network:
+                    result = await incus_call(f'1.0/networks/{INCUS_BRIDGE}', 'put', {'json': {
+                        'config': netconfig,
+                    }})
+                    if result.get('status_code') != 200:
+                        raise CallError(result.get('error'))
+
+                    result = await incus_call(f'1.0/networks/{INCUS_BRIDGE}', 'get')
+                    if result.get('status_code') != 200:
+                        raise CallError(result.get('error'))
+
+            if update_network:
                 # Update automatically selected networks into our database
                 # so it can persist upgrades.
                 await self.middleware.call('datastore.update', 'virt_global', config['id'], {
@@ -324,17 +380,24 @@ class VirtGlobalService(ConfigService):
         if result.get('status') != 'Success':
             raise CallError(result.get('error'))
 
+        # If storage was imported we need to restart incus service so instances
+        # with autostart can be started
+        if import_storage:
+            await self.middleware.call('service.restart', 'incus')
+
     @private
     @job()
-    async def reset(self, job, start: bool = False):
-        config = await self.config()
+    async def reset(self, job, start: bool = False, config: dict | None = None):
+        if config is None:
+            config = await self.config()
 
         if await self.middleware.call('service.started', 'incus'):
             # Stop running instances
             params = [
                 [i['id'], {'force': True, 'timeout': 10}]
                 for i in await self.middleware.call(
-                    'virt.instance.query', [('status', '=', 'RUNNING')]
+                    'virt.instance.query', [('status', '=', 'RUNNING')],
+                    {'extra': {'skip_state': True}},
                 )
             ]
             job = await self.middleware.call('core.bulk', 'virt.instance.stop', params, 'Stopping instances')
@@ -359,18 +422,26 @@ class VirtGlobalService(ConfigService):
         # Have incus start fresh
         # Use subprocess because shutil.rmtree will traverse filesystems
         # and we do have instances datasets that might be mounted beneath
-        await run(['rm', '-rf', '--one-file-system', INCUS_PATH], check=True)
+        await run(f'rm -rf --one-file-system {INCUS_PATH}/*', shell=True, check=True)
 
         if start and not await self.middleware.call('service.start', 'incus'):
             raise CallError('Failed to start virtualization service')
 
 
 async def _event_system_ready(middleware: 'Middleware', event_type, args):
-    middleware.create_task(middleware.call('virt.global.setup'))
+    if not await middleware.call('failover.licensed'):
+        middleware.create_task(middleware.call('virt.global.setup'))
 
 
 async def setup(middleware: 'Middleware'):
+    middleware.event_register(
+        'virt.global.config',
+        'Sent on virtualziation configuration changes.',
+        roles=['VIRT_GLOBAL_READ']
+    )
     middleware.event_subscribe('system.ready', _event_system_ready)
     # Should only happen if middlewared crashes or during development
-    if await middleware.call('system.ready'):
+    failover_licensed = await middleware.call('failover.licensed')
+    ready = await middleware.call('system.ready')
+    if ready and not failover_licensed:
         await middleware.call('virt.global.setup')

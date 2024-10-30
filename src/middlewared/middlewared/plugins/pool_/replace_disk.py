@@ -20,6 +20,7 @@ class PoolService(Service):
         Str('disk', required=True),
         Bool('force', default=False),
         Bool('preserve_settings', default=True),
+        Bool('preserve_description', default=True),
     ))
     @returns(Bool('replaced_successfully'))
     @job(lock='pool_replace')
@@ -96,12 +97,15 @@ class PoolService(Service):
             raise
 
         if options['preserve_settings']:
-            filters = [['zfs_guid', '=', options['label']]]
-            options = {'extra': {'include_expired': True}, 'get': True}
             try:
-                old_disk = await self.middleware.call('disk.query', filters, options)
+                old_disk = await self.middleware.call(
+                    'disk.query',
+                    [['zfs_guid', '=', options['label']]],
+                    {'extra': {'include_expired': True}, 'get': True},
+                )
                 job.set_progress(98, 'Copying old disk settings to new')
-                await self.middleware.call('disk.copy_settings', old_disk, disk)
+                await self.middleware.call('disk.copy_settings', old_disk, disk, options['preserve_settings'],
+                                           options['preserve_description'])
             except MatchNotFound:
                 pass
 

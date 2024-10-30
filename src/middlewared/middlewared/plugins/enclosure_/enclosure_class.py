@@ -179,7 +179,7 @@ class Enclosure:
             case 'CELESTIC_X2012' | 'CELESTIC_X2012-MT':
                 self.model = JbodModels.ES12.value
                 self.controller = False
-            case 'ECStream_4024J' | 'iX_4024J':
+            case x if x.startswith(('ECStream_4024J', 'iX_4024J')):
                 self.model = JbodModels.ES24.value
                 self.controller = False
             case 'ECStream_2024Jp' | 'ECStream_2024Js' | 'iX_2024Jp' | 'iX_2024Js':

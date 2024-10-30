@@ -417,8 +417,8 @@ class NFSService(SystemServiceService):
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
 
         if new["rdma"]:
-            available_rdma_services = await self.middleware.call('rdma.capable_services')
-            if "NFS" not in available_rdma_services:
+            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
+            if 'NFS' not in available_rdma_protocols:
                 verrors.add(
                     "nfs_update.rdma",
                     "This platform cannot support NFS over RDMA or is missing an RDMA capable NIC."

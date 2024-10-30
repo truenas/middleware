@@ -11,6 +11,7 @@ from .crud_service import CRUDService # noqa
 from .decorators import ( # noqa
     cli_private, filterable, filterable_returns, item_method, job, lock, no_auth_required,
     no_authz_required, pass_app, periodic, private, rest_api_metadata, skip_arg, threaded,
+    filterable_api_method
 )
 from .service import Service # noqa
 from .service_mixin import ServiceChangeMixin # noqa

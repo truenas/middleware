@@ -1,14 +1,12 @@
-import pytest
-
 from copy import deepcopy
-from middlewared.plugins.filesystem_.utils import ACLType
+from middlewared.plugins.filesystem_.utils import calculate_inherited_acl
 
 
 NFS4_ACL = {'acl': [
     {
         'tag': 'GROUP',
         'id': 100,
-        'perms': { 'BASIC': 'FULL_CONTROL' },
+        'perms': {'BASIC': 'FULL_CONTROL'},
         'flags': {
             'FILE_INHERIT': True,
             'DIRECTORY_INHERIT': True,
@@ -21,7 +19,7 @@ NFS4_ACL = {'acl': [
     {
         'tag': 'GROUP',
         'id': 200,
-        'perms': { 'BASIC': 'MODIFY' },
+        'perms': {'BASIC': 'MODIFY'},
         'flags': {
             'FILE_INHERIT': False,
             'DIRECTORY_INHERIT': True,
@@ -34,7 +32,7 @@ NFS4_ACL = {'acl': [
     {
         'tag': 'GROUP',
         'id': 300,
-        'perms': { 'BASIC': 'MODIFY' },
+        'perms': {'BASIC': 'MODIFY'},
         'flags': {
             'FILE_INHERIT': True,
             'DIRECTORY_INHERIT': False,
@@ -47,7 +45,7 @@ NFS4_ACL = {'acl': [
     {
         'tag': 'GROUP',
         'id': 400,
-        'perms': { 'BASIC': 'MODIFY' },
+        'perms': {'BASIC': 'MODIFY'},
         'flags': {
             'FILE_INHERIT': True,
             'DIRECTORY_INHERIT': True,
@@ -60,7 +58,7 @@ NFS4_ACL = {'acl': [
     {
         'tag': 'GROUP',
         'id': 500,
-        'perms': { 'BASIC': 'MODIFY' },
+        'perms': {'BASIC': 'MODIFY'},
         'flags': {
             'FILE_INHERIT': False,
             'DIRECTORY_INHERIT': False,
@@ -73,7 +71,7 @@ NFS4_ACL = {'acl': [
     {
         'tag': 'GROUP',
         'id': 600,
-        'perms': { 'BASIC': 'MODIFY' },
+        'perms': {'BASIC': 'MODIFY'},
         'flags': {
             'FILE_INHERIT': True,
             'DIRECTORY_INHERIT': True,
@@ -87,8 +85,8 @@ NFS4_ACL = {'acl': [
 
 
 def test__nfs4_acl_inheritance():
-    dir_inherited = ACLType.NFS4.calculate_inherited(deepcopy(NFS4_ACL), True)
-    file_inherited = ACLType.NFS4.calculate_inherited(deepcopy(NFS4_ACL), False)
+    dir_inherited = calculate_inherited_acl(deepcopy(NFS4_ACL), True)
+    file_inherited = calculate_inherited_acl(deepcopy(NFS4_ACL), False)
 
     for entry in dir_inherited:
         match entry['id']:

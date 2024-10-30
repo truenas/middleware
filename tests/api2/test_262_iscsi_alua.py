@@ -5,7 +5,7 @@ from time import sleep
 
 import pytest
 from assets.websocket.iscsi import (alua_enabled, initiator_portal, target, target_extent_associate, verify_capacity,
-                                    verify_ha_inquiry, verify_luns)
+                                    verify_ha_inquiry, verify_luns, zvol_extent)
 from assets.websocket.service import ensure_service_enabled
 from auto_config import ha, pool_name
 from protocols import iscsi_scsi_connection
@@ -42,20 +42,6 @@ def zvol(name, volsizeMB):
         yield config
     finally:
         call('pool.dataset.delete', config['id'])
-
-
-@contextlib.contextmanager
-def zvol_extent(zvol, extent_name):
-    payload = {
-        'type': 'DISK',
-        'disk': f'zvol/{zvol}',
-        'name': extent_name,
-    }
-    config = call('iscsi.extent.create', payload)
-    try:
-        yield config
-    finally:
-        call('iscsi.extent.delete', config['id'], True, True)
 
 
 class TestFixtureConfiguredALUA:

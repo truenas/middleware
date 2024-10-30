@@ -12,7 +12,7 @@ from typing_extensions import Annotated
 from middlewared.api.base.types.base import SECRET_VALUE
 from middlewared.utils.lang import undefined
 
-__all__ = ["BaseModel", "ForUpdateMetaclass", "single_argument_args", "single_argument_result"]
+__all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "single_argument_args", "single_argument_result"]
 
 
 class BaseModel(PydanticBaseModel):
@@ -183,9 +183,29 @@ def single_argument_result(klass, klass_name=None):
         klass_name,
         __base__=(BaseModel,),
         __module__=inspect.getmodule(inspect.stack()[1][0]),
-        **{"result": Annotated[klass, Field()]},
+        result=Annotated[klass, Field()],
     )
     if issubclass(klass, BaseModel):
         model.from_previous = classmethod(klass.from_previous)
         model.to_previous = classmethod(klass.to_previous)
     return model
+
+
+def query_result(item):
+    result_item = query_result_item(item)
+    return create_model(
+        item.__name__.removesuffix("Entry") + "QueryResult",
+        __base__=(BaseModel,),
+        __module__=item.__module__,
+        result=Annotated[list[result_item] | result_item | int, Field()],
+    )
+
+
+def query_result_item(item):
+    # All fields must be non-required since we can query subsets of fields
+    return create_model(
+        item.__name__.removesuffix("Entry") + "QueryResultItem",
+        __base__=(item,),
+        __module__=item.__module__,
+        __cls_kwargs__={"metaclass": ForUpdateMetaclass},
+    )
