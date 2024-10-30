@@ -7,7 +7,7 @@ import typing
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, model_serializer, Secret
 from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.main import IncEx
-from typing_extensions import Annotated, Type
+from typing_extensions import Annotated
 
 from middlewared.api.base.types.base import SECRET_VALUE
 from middlewared.utils.lang import undefined
