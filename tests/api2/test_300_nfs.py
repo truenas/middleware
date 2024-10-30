@@ -1689,7 +1689,7 @@ class TestNFSops:
                                     flag_is_set = acl_flag
 
                                 # Now ensure that only the expected flag is set
-                                nfs41_flags = result['nfs41_flags']
+                                nfs41_flags = result['aclflags']
                                 for flag in ['autoinherit', 'protected', 'defaulted']:
                                     if flag == flag_is_set:
                                         assert nfs41_flags[flag], nfs41_flags

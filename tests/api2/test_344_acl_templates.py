@@ -1,174 +1,127 @@
 #!/usr/bin/env python3
 
-import pytest
-import sys
 import os
-from pytest_dependency import depends
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import POST, GET, PUT, DELETE
-from auto_config import pool_name
+import pytest
+from contextlib import contextmanager
+from middlewared.test.integration.utils import call
+from middlewared.test.integration.assets.pool import dataset as make_dataset
 
 
-@pytest.mark.dependency(name="ACLTEMPLATE_DATASETS_CREATED")
-@pytest.mark.parametrize('acltype', ['NFSV4', 'POSIX'])
-def test_01_create_test_datasets(request, acltype):
+@pytest.fixture(scope='module')
+def acltemplate_ds():
     """
     Setup of datasets for testing templates.
     This test shouldn't fail unless pool.dataset endpoint is
     thoroughly broken.
     """
-    result = POST(
-        '/pool/dataset/', {
-            'name': f'{pool_name}/acltemplate_{acltype.lower()}',
-            'acltype': acltype,
-            'aclmode': 'DISCARD' if acltype == 'POSIX' else 'PASSTHROUGH'
-        }
-    )
+    with make_dataset('acltemplate_posix', data={
+        'acltype': 'POSIX',
+        'aclmode': 'DISCARD'
+    }) as posix_ds:
+        with make_dataset('acltemplate_nfsv4', data={
+            'acltype': 'NFSV4',
+            'aclmode': 'PASSTHROUGH'
+        }) as nfsv4_ds:
+            yield {'POSIX': posix_ds, 'NFSV4': nfsv4_ds}
 
-    assert result.status_code == 200, result.text
+
+@contextmanager
+def create_entry_type(acltype):
+    entry = call('filesystem.acltemplate.query', [['name', '=', f'{acltype}_RESTRICTED']], {'get': True})
+    acl = entry['acl']
+
+    payload = {
+        'name': f'{acltype}_TEST',
+        'acl': acl,
+        'acltype': entry['acltype']
+    }
+
+    template = call('filesystem.acltemplate.create', payload)
+
+    try:
+        yield template
+    finally:
+        call('filesystem.acltemplate.delete', template['id'])
+
+    # Verify actually deleted
+    assert call('filesystem.acltemplate.query', [['name', '=', f'{acltype}_TEST']]) == []
+
+
+@pytest.fixture(scope='function')
+def tmp_posix_entry():
+    with create_entry_type('POSIX') as entry:
+        yield entry
+
+
+@pytest.fixture(scope='function')
+def tmp_nfs_entry():
+    with create_entry_type('NFS4') as entry:
+        yield entry
+
+
+@pytest.fixture(scope='function')
+def tmp_acltemplates(tmp_posix_entry, tmp_nfs_entry):
+    yield {'POSIX': tmp_posix_entry, 'NFSV4': tmp_nfs_entry}
+
+
+def dataset_path(data, acltype):
+    return os.path.join('/mnt', data[acltype])
 
 
 @pytest.mark.parametrize('acltype', ['NFSV4', 'POSIX'])
-def test_02_check_builtin_types_by_path(request, acltype):
+def test_check_builtin_types_by_path(acltemplate_ds, acltype):
     """
     This test verifies that we can query builtins by paths, and
     that the acltype of the builtins matches that of the
     underlying path.
     """
-    depends(request, ["ACLTEMPLATE_DATASETS_CREATED"], scope="session")
     expected_acltype = 'POSIX1E' if acltype == 'POSIX' else 'NFS4'
-    payload = {
-        'path': f'/mnt/{pool_name}/acltemplate_{acltype.lower()}',
-    }
-    results = POST('/filesystem/acltemplate/by_path', payload)
-    assert results.status_code == 200, results.text
-    for entry in results.json():
-        assert entry['builtin'], results.text
-        assert entry['acltype'] == expected_acltype, results.text
+    payload = {'path': dataset_path(acltemplate_ds, acltype)}
+    for entry in call('filesystem.acltemplate.by_path', payload):
+        assert entry['builtin'], str(entry)
+        assert entry['acltype'] == expected_acltype, str(entry)
 
-    payload['format-options'] = {
-        'resolve_names': True,
-        'ensure_builtins': True
-    }
-
-    results = POST('/filesystem/acltemplate/by_path', payload)
-    assert results.status_code == 200, results.text
-    for entry in results.json():
+    payload['format-options'] = {'resolve_names': True, 'ensure_builtins': True}
+    for entry in call('filesystem.acltemplate.by_path', payload):
         for ace in entry['acl']:
             if ace['tag'] not in ('USER_OBJ', 'GROUP_OBJ', 'USER', 'GROUP'):
                 continue
 
-            assert ace.get('who') is not None, results.text
+            assert ace.get('who') is not None, str(ace)
 
 
-@pytest.mark.dependency(name="NEW_ACLTEMPLATES_CREATED")
-@pytest.mark.parametrize('acltype', ['NFS4', 'POSIX'])
-def test_03_create_new_template(request, acltype):
-    """
-    This method queries an existing builtin and creates a
-    new acltemplate based on the data. Test of new ACL template
-    insertion.
-    """
-    depends(request, ["ACLTEMPLATE_DATASETS_CREATED"], scope="session")
-    results = GET(
-        '/filesystem/acltemplate', payload={
-            'query-filters': [['name', '=', f'{acltype}_RESTRICTED']],
-            'query-options': {'get': True},
-        }
-    )
-    assert results.status_code == 200, results.text
-
-    acl = results.json()['acl']
-    for entry in acl:
-        if entry['id'] is None:
-            entry['id'] = -1
-
-    payload = {
-        'name': f'{acltype}_TEST',
-        'acl': acl,
-        'acltype': results.json()['acltype']
-    }
-
-    results = POST('/filesystem/acltemplate', payload)
-    assert results.status_code == 200, results.text
- 
-
-@pytest.mark.dependency(name="NEW_ACLTEMPLATES_UPDATED")
-@pytest.mark.parametrize('acltype', ['NFS4', 'POSIX'])
-def test_09_update_new_template(request, acltype):
+@pytest.mark.parametrize('acltype', ['NFSV4', 'POSIX'])
+def test_update_new_template(tmp_acltemplates, acltype):
     """
     Rename the template we created to validated that `update`
     method works.
     """
-    depends(request, ["NEW_ACLTEMPLATES_CREATED"], scope="session")
-    results = GET(
-        '/filesystem/acltemplate', payload={
-            'query-filters': [['name', '=', f'{acltype}_TEST']],
-            'query-options': {'get': True},
-        }
-    )
+    # shallow copy is sufficient since we're not changing nested values
+    payload = tmp_acltemplates[acltype].copy()
 
-    assert results.status_code == 200, results.text
-
-    payload = results.json()
-    id = payload.pop('id')
+    template_id = payload.pop('id')
     payload.pop('builtin')
-    payload['name'] = f'{payload["name"]}2'
+    orig_name = payload.pop('name')
 
-    results = PUT(f'/filesystem/acltemplate/id/{id}/', payload)
-    assert results.status_code == 200, results.text
+    payload['name'] = f'{orig_name}2'
 
-
-@pytest.mark.parametrize('acltype', ['NFS4', 'POSIX'])
-def test_10_delete_new_template(request, acltype):
-    depends(request, ["NEW_ACLTEMPLATES_UPDATED"], scope="session")
-    results = GET(
-        '/filesystem/acltemplate', payload={
-            'query-filters': [['name', '=', f'{acltype}_TEST2']],
-            'query-options': {'get': True},
-        }
-    )
-    assert results.status_code == 200, results.text
-
-    results = DELETE(f'/filesystem/acltemplate/id/{results.json()["id"]}')
-    assert results.status_code == 200, results.text
+    result = call('filesystem.acltemplate.update', template_id, payload)
+    assert result['name'] == payload['name']
 
 
-def test_40_knownfail_builtin_delete(request):
-    results = GET(
-        '/filesystem/acltemplate', payload={
-            'query-filters': [['builtin', '=', True]],
-            'query-options': {'get': True},
-        }
-    )
-    assert results.status_code == 200, results.text
-    id = results.json()['id']
+def test_knownfail_builtin_delete(request):
+    builtin_templ = call('filesystem.acltemplate.query', [['builtin', '=', True]], {'get': True})
 
-    results = DELETE(f'/filesystem/acltemplate/id/{id}')
-    assert results.status_code == 422, results.text
+    with pytest.raises(Exception):
+        call('filesystem.acltemplate.delete', builtin_templ['id'])
 
 
-def test_41_knownfail_builtin_update(request):
-    results = GET(
-        '/filesystem/acltemplate', payload={
-            'query-filters': [['builtin', '=', True]],
-            'query-options': {'get': True},
-        }
-    )
-    assert results.status_code == 200, results.text
-    payload = results.json()
-    id = payload.pop('id')
+def test_knownfail_builtin_update(request):
+    payload = call('filesystem.acltemplate.query', [['builtin', '=', True]], {'get': True})
+
+    tmpl_id = payload.pop('id')
     payload.pop('builtin')
     payload['name'] = 'CANARY'
 
-    results = PUT(f'/filesystem/acltemplate/id/{id}/', payload)
-    assert results.status_code == 422, results.text
-
-
-@pytest.mark.parametrize('acltype', ['NFSV4', 'POSIX'])
-def test_50_delete_test1_dataset(request, acltype):
-    depends(request, ["ACLTEMPLATE_DATASETS_CREATED"], scope="session")
-    dataset_name = f'{pool_name}/acltemplate_{acltype.lower()}'
-    results = DELETE(f'/pool/dataset/id/{dataset_name.replace("/", "%2F")}/')
-    assert results.status_code == 200, results.text
+    with pytest.raises(Exception):
+        call('filesystem.acltemplate.update', tmpl_id, payload)
