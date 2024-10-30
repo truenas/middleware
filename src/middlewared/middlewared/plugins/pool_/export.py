@@ -82,7 +82,10 @@ class PoolService(Service):
         root_ds = await self.middleware.call('pool.dataset.query', [['id', '=', pool['name']]])
         if root_ds and root_ds[0]['locked'] and os.path.exists(root_ds[0]['mountpoint']):
             # We should be removing immutable flag in this case if the path exists
-            await self.middleware.call('filesystem.set_immutable', False, root_ds[0]['mountpoint'])
+            await self.middleware.call('filesystem.set_zfs_attributes', {
+               'path': root_ds[0]['mountpoint'],
+               'zfs_file_attributes': {'immutable': False}
+            })
 
         pool_count = await self.middleware.call('pool.query', [], {'count': True})
         if pool_count == 1 and await self.middleware.call('failover.licensed'):

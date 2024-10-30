@@ -981,7 +981,10 @@ class PoolDatasetService(CRUDService):
         if dataset['locked'] and mountpoint and os.path.exists(mountpoint):
             # We would like to remove the immutable flag in this case so that it's mountpoint can be
             # cleaned automatically when we delete the dataset
-            await self.middleware.call('filesystem.set_immutable', False, mountpoint)
+            await self.middleware.call('filesystem.set_zfs_attributes', {
+                'path': mountpoint,
+                'zfs_file_attributes': {'immutable': False}
+            })
 
         result = await self.middleware.call('zfs.dataset.delete', id_, {
             'force': options['force'],

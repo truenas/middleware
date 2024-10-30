@@ -26,7 +26,10 @@ def test_encrypted_dataset_unlock_mount_validation(nested_dir, lock_dataset):
 
         if lock_dataset:
             call('pool.dataset.lock', encrypted_ds, job=True)
-            call('filesystem.set_immutable', False, mount_point)
+            call('filesystem.set_zfs_attributes', {
+                'path': mount_point,
+                'zfs_file_attributes': {'immutable': False}
+            })
 
         ssh(f'mkdir -p {os.path.join(mount_point, nested_dir)}')
 
