@@ -1,15 +1,15 @@
 import typing
 
-from pydantic import conint
+from pydantic import conint, IPvAnyInterface
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
 )
-from middlewared.api.base.types.base import IPvAnyNetwork
 from middlewared.plugins.docker.state_utils import Status
 
+
 class AddressPool(BaseModel):
-    base: IPvAnyNetwork
+    base: IPvAnyInterface
     size: conint(ge=1, le=32)
 
 
