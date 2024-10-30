@@ -220,7 +220,7 @@ def test_acl_path_execute_validation():
     with create_dataset(
         "acl_execute_test",
         data={"acltype": "NFSV4", "aclmode": "PASSTHROUGH"},
-        mode=770,
+        mode="770",
     ) as ds:
         path = f"/mnt/{ds}"
         """
