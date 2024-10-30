@@ -17,7 +17,7 @@ def validate_address_pools(system_ips: list[dict], user_specified_networks: list
     for index, user_network in enumerate(user_specified_networks):
         if isinstance(user_network['base'], ipaddress.IPv4Interface):
             base_network = user_network['base'].network
-            user_network['base'] = str(base_network)
+            user_network['base'] = str(user_network['base'])
         else:
             base_network = ipaddress.ip_network(user_network['base'], False)
 
