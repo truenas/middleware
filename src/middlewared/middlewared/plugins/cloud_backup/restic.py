@@ -31,7 +31,7 @@ def get_restic_config(cloud_backup):
     return ResticConfig(cmd, env)
 
 
-async def run_restic(job, cmd, env, stdin=None):
+async def run_restic(job, cmd, env, stdin=None, track_progress=False):
     job.middleware.logger.debug("Running %r", cmd)
     proc = await Popen(
         cmd,
@@ -40,7 +40,7 @@ async def run_restic(job, cmd, env, stdin=None):
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
-    check_progress = asyncio.ensure_future(restic_check_progress(job, proc, cmd))
+    check_progress = asyncio.ensure_future(restic_check_progress(job, proc, track_progress))
     cancelled_error = None
     try:
         await proc.wait()
@@ -64,13 +64,15 @@ async def run_restic(job, cmd, env, stdin=None):
         raise CallError(message)
 
 
-async def restic_check_progress(job, proc, cmd: list[str]):
+async def restic_check_progress(job, proc, track_progress=False):
     """Record progress of restic backup, restore, and forget commands.
+
+    `track_progress` cannot be set when running "restic forget".
 
     Relevant documentation: https://restic.readthedocs.io/en/stable/075_scripting.html#json-output
 
     """
-    if "forget" in cmd:
+    if not track_progress:
         read = await proc.stdout.read()
         await job.logs_fd_write(read)
         return
@@ -98,22 +100,24 @@ async def restic_check_progress(job, proc, cmd: list[str]):
             continue
 
         await job.logs_fd_write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
-        if msg_type == "summary":
-            continue
 
-        if msg_type == "error":
-            action = read["error.message"]
-            msg = "".join([
-                "Error",
-                f" in {item}" if (item := read.get("item")) else "",
-                f" while {during}" if (during := read.get("during")) else "",
-                ": ",
-                action
-            ])
-        else:
-            # verbose_status
-            action = " ".join([read[key] for key in ("item", "action") if key in read])
-            msg = action
+        match msg_type:
+            case "verbose_status":
+                action = " ".join([read[key] for key in ("item", "action") if key in read])
+                msg = action
+
+            case "summary":
+                continue
+
+            case "error":
+                action = read["error.message"]
+                msg = "".join([
+                    "Error",
+                    f" in {item}" if (item := read.get("item")) else "",
+                    f" while {during}" if (during := read.get("during")) else "",
+                    ": ",
+                    action
+                ])
 
         job.internal_data["messages"] = job.internal_data["messages"][-4:] + [msg]
         progress_buffer.set_progress(description=(f"{time_delta} remaining\n" if time_delta else "") + action)

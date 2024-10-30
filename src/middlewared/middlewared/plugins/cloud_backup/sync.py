@@ -65,7 +65,7 @@ async def restic(middleware, job, cloud_backup, dry_run):
 
         cmd = restic_config.cmd + ["--verbose", "backup"] + cmd
 
-        await run_restic(job, cmd, restic_config.env, stdin)
+        await run_restic(job, cmd, restic_config.env, stdin, track_progress=True)
     finally:
         if stdin:
             try:
