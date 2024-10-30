@@ -215,7 +215,7 @@ class AuthService(Service):
         super(AuthService, self).__init__(*args, **kwargs)
         self.session_manager.middleware = self.middleware
 
-    @filterable_api_method(item=AuthSessionEntry, private=False, roles=['AUTH_SESSIONS_READ'])
+    @filterable_api_method(item=AuthSessionEntry, roles=['AUTH_SESSIONS_READ'])
     @pass_app()
     def sessions(self, app, filters, options):
         """
