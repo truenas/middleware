@@ -10,6 +10,7 @@ from middlewared.service.crud_service import query_result
     ([{"username": "ivan", "password": "pass"}, {"username": "pyotr", "password": "p@ss"}],
      [{"username": "ivan", "password": "********"}, {"username": "pyotr", "password": "********"}]),
     ({"username": "ivan", "password": "pass"}, {"username": "ivan", "password": "********"}),
+    ({"username": "ivan"}, {"username": "ivan"}),
     (10, 10),
 ])
 def test_query_result(result, serialized):
