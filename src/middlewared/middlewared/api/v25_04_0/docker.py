@@ -5,7 +5,6 @@ from pydantic import conint, IPvAnyInterface, field_validator
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
 )
-from middlewared.plugins.docker.state_utils import Status
 
 
 class AddressPool(BaseModel):
@@ -44,7 +43,7 @@ class DockerStatusArgs(BaseModel):
 
 class StatusResult(BaseModel):
     description: str
-    status: typing.Literal[tuple(e.value for e in Status)]
+    status: typing.Literal['PENDING', 'RUNNING', 'STOPPED', 'INITIALIZING', 'STOPPING', 'UNCONFIGURED', 'FAILED']
 
 
 class DockerStatusResult(BaseModel):
