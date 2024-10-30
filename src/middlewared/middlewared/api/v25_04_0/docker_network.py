@@ -4,11 +4,6 @@ from middlewared.api.base import BaseModel, NonEmptyString
 
 
 class DockerNetworkEntry(BaseModel):
-
-    model_config = ConfigDict(
-        extra='allow',
-    )
-
     ipam: dict | None
     labels: dict | None
     created: NonEmptyString | None
