@@ -1,11 +1,7 @@
-import errno
-
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Dict, Int, IPAddr, List, Patch, Str
 from middlewared.service import CRUDService, private, ValidationErrors
-
-from .utils import AUTHMETHOD_LEGACY_MAP
 
 
 def portal_summary(data):
@@ -69,17 +65,8 @@ class ISCSIPortalService(CRUDService):
                 'port': context['global_config']['listen_port'],
             })
         # Temporary until new API being used: START
-        # data['discovery_authmethod'] = AUTHMETHOD_LEGACY_MAP.get(
-        #     data.pop('discoveryauthmethod')
-        # )
-        # data['discovery_authgroup'] = data.pop('discoveryauthgroup')
-        auths = await self.middleware.call('iscsi.discoveryauth.query')
-        if auths:
-            data['discovery_authmethod'] = auths[0]['authmethod']
-            data['discovery_authgroup'] = auths[0]['authgroup']
-        else:
-            data['discovery_authmethod'] = "NONE"
-            data['discovery_authgroup'] = None
+        data['discovery_authmethod'] = "NONE"
+        data['discovery_authgroup'] = None
         # Temporary until new API being used: END
         return data
 
@@ -134,22 +121,6 @@ class ISCSIPortalService(CRUDService):
                 ):
                     verrors.add(f'{schema}.listen', f'IP {i["ip"]} not configured on this system.')
 
-        # Temporary until new API being used: START
-        if data['discovery_authgroup']:
-            if not await self.middleware.call(
-                'datastore.query', 'services.iscsitargetauthcredential',
-                [('iscsi_target_auth_tag', '=', data['discovery_authgroup'])]
-            ):
-                verrors.add(
-                    f'{schema}.discovery_authgroup',
-                    f'Auth Group "{data["discovery_authgroup"]}" not found.',
-                    errno.ENOENT,
-                )
-        elif data['discovery_authmethod'] in ('CHAP', 'CHAP_MUTUAL'):
-            verrors.add(f'{schema}.discovery_authgroup', 'This field is required if discovery method is '
-                                                         'set to CHAP or CHAP Mutual.')
-        # Temporary until new API being used: END
-
     @accepts(Dict(
         'iscsiportal_create',
         Str('comment'),
@@ -166,8 +137,6 @@ class ISCSIPortalService(CRUDService):
     async def do_create(self, data):
         """
         Create a new iSCSI Portal.
-
-        `discovery_authgroup` is required for CHAP and CHAP_MUTUAL.
         """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'iscsiportal_create')
@@ -180,13 +149,8 @@ class ISCSIPortalService(CRUDService):
 
         listen = data.pop('listen')
         # Temporary until new API being used: START
-        authgroup = data.pop('discovery_authgroup', None)
-        authmethod = AUTHMETHOD_LEGACY_MAP.inv.get(data.pop('discovery_authmethod'), 'None')
-        if authmethod in ['CHAP', 'CHAP_MUTUAL']:
-            filters = [['authmethod', '=', authmethod], ['authgroup', '=', authgroup]]
-            if not await self.middleware.call('iscsi.discoveryauth.query', filters):
-                await self.middleware.call('iscsi.discoveryauth.create', {'authmethod': authmethod,
-                                                                          'authgroup': authgroup})
+        data.pop('discovery_authgroup')
+        data.pop('discovery_authmethod')
         # Temporary until new API being used: END
 
         pk = await self.middleware.call(
@@ -260,8 +224,6 @@ class ISCSIPortalService(CRUDService):
 
         listen = new.pop('listen')
         # Temporary until new API being used: START
-        # new['discoveryauthgroup'] = new.pop('discovery_authgroup', None)
-        # new['discoveryauthmethod'] = AUTHMETHOD_LEGACY_MAP.inv.get(new.pop('discovery_authmethod'), 'None')
         new.pop('discovery_authgroup')
         new.pop('discovery_authmethod')
         # Temporary until new API being used: END

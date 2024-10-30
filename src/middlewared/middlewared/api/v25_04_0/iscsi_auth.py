@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Secret
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, IscsiAuthType
 
 __all__ = [
     "IscsiAuthEntry",
@@ -22,6 +22,7 @@ class IscsiAuthEntry(BaseModel):
     secret: Secret[str]
     peeruser: str = ''
     peersecret: Secret[str] = ''
+    discovery_auth: IscsiAuthType = 'NONE'
 
 
 class IscsiAuthCreate(IscsiAuthEntry):
