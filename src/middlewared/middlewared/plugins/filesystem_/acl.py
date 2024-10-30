@@ -10,9 +10,10 @@ from middlewared.api.current import (
     FilesystemGetAclArgs, FilesystemGetAclResult,
     FilesystemSetAclArgs, FilesystemSetAclResult,
     FilesystemGetInheritedAclArgs, FilesystemGetInheritedAclResult,
+    FilesystemChownArgs, FilesystemChownResult,
+    FilesystemSetPermArgs, FilesystemSetPermResult,
 )
-from middlewared.schema import Bool, Dict, Int, Str, UnixPerm
-from middlewared.service import accepts, private, returns, job, ValidationErrors, Service
+from middlewared.service import private, job, ValidationErrors, Service
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
@@ -26,7 +27,6 @@ from middlewared.utils.filesystem.acl import (
 )
 from middlewared.utils.filesystem.directory import directory_is_empty
 from middlewared.utils.path import FSLocation, path_location
-from middlewared.validators import Range
 from .utils import acltool, AclToolAction, calculate_inherited_acl, canonicalize_nfs4_acl, gen_aclstring_posix1e
 
 
@@ -101,22 +101,11 @@ class FilesystemService(Service):
 
         return path_get_acltype(path)
 
-    @accepts(
-        Dict(
-            'filesystem_ownership',
-            Str('path', required=True),
-            Int('uid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
-            Int('gid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
-            Dict(
-                'options',
-                Bool('recursive', default=False),
-                Bool('traverse', default=False)
-            )
-        ),
+    @api_method(
+        FilesystemChownArgs, FilesystemChownResult,
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem change owner', audit_extended=lambda data: data['path']
     )
-    @returns()
     @job(lock="perm_change")
     def chown(self, job, data):
         """
@@ -125,6 +114,9 @@ class FilesystemService(Service):
         `uid` and `gid` specify new owner of the file. If either
         key is absent or None, then existing value on the file is not
         changed.
+
+        `user` and `group` alternatively allow specifying a uid gid by
+        user name or group name.
 
         `recursive` performs action recursively, but does
         not traverse filesystem mount points.
@@ -139,9 +131,19 @@ class FilesystemService(Service):
         gid = -1 if data['gid'] is None else data.get('gid', -1)
         options = data['options']
 
-        if uid == -1 and gid == -1:
-            verrors.add("filesystem.chown.uid",
-                        "Please specify either user or group to change.")
+        if data['user']:
+            user = self.middleware.call_sync('user.query', [['username', '=', data['user']]])
+            if user:
+                uid = user[0]['uid']
+            else:
+                verrors.add('filesystem.chown.user', f'{data["user"]}: user does not exist')
+
+        if data['group']:
+            group = self.middleware.call_sync('group.query', [['group', '=', data['group']]])
+            if group:
+                gid = group[0]['gid']
+            else:
+                verrors.add('filesystem.chown.group', f'{data["group"]}: group does not exist')
 
         self._common_perm_path_validate("filesystem.chown", data, verrors)
         verrors.check()
@@ -156,24 +158,11 @@ class FilesystemService(Service):
         acltool(data['path'], AclToolAction.CHOWN, uid, gid, options)
         job.set_progress(100, 'Finished changing owner.')
 
-    @accepts(
-        Dict(
-            'filesystem_permission',
-            Str('path', required=True),
-            UnixPerm('mode', null=True),
-            Int('uid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
-            Int('gid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
-            Dict(
-                'options',
-                Bool('stripacl', default=False),
-                Bool('recursive', default=False),
-                Bool('traverse', default=False),
-            )
-        ),
+    @api_method(
+        FilesystemSetPermArgs, FilesystemSetPermResult,
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem set permission', audit_extended=lambda data: data['path']
     )
-    @returns()
     @job(lock="perm_change")
     def setperm(self, job, data):
         """
@@ -187,6 +176,11 @@ class FilesystemService(Service):
         `uid` the desired UID of the file user. If set to None (the default), then user is not changed.
 
         `gid` the desired GID of the file group. If set to None (the default), then group is not changed.
+
+        `user` and `group` alternatively allow specifying the owner by name.
+
+        WARNING: `uid`, `gid, `user`, and `group` _should_ remain unset _unless_
+        the administrator wishes to change the owner or group of files.
 
         `stripacl` setperm will fail if an extended ACL is present on `path`,
         unless `stripacl` is set to True.
@@ -208,6 +202,20 @@ class FilesystemService(Service):
 
         uid = -1 if data['uid'] is None else data.get('uid', -1)
         gid = -1 if data['gid'] is None else data.get('gid', -1)
+
+        if data['user']:
+            user = self.middleware.call_sync('user.query', [['username', '=', data['user']]])
+            if user:
+                uid = user[0]['uid']
+            else:
+                verrors.add('filesystem.setperm.user', f'{data["user"]}: user does not exist')
+
+        if data['group']:
+            group = self.middleware.call_sync('group.query', [['group', '=', data['group']]])
+            if group:
+                gid = group[0]['gid']
+            else:
+                verrors.add('filesystem.setperm.group', f'{data["group"]}: group does not exist')
 
         self._common_perm_path_validate("filesystem.setperm", data, verrors)
 
