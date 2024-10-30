@@ -73,7 +73,7 @@ def test_login_with_token_match_origin(unprivileged_user):
 
 def test_login_with_token_no_match_origin(unprivileged_user):
     token = ssh(
-        "sudo -u test midclt -u ws://localhost/api/current -U test -P test1234 call auth.generate_token 300"
+        "sudo -u test midclt -u ws://localhost/api/current -U test -P test1234 call auth.generate_token 300 '{}' false"
     ).strip()
 
     with client(auth=None) as c:
