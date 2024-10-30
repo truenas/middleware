@@ -191,11 +191,12 @@ class ZFSDatasetService(CRUDService):
     def do_delete(self, id_, options):
         force = options['force']
         recursive = options['recursive']
+        recursively_remove_dependents = options['recursively_remove_dependents']
 
         args = []
         if force:
             args += ['-f']
-        if options['recursively_remove_dependents']:
+        if recursively_remove_dependents:
             args += ['-R']
         elif recursive:
             args += ['-r']
