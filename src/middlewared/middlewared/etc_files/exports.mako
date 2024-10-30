@@ -172,7 +172,7 @@
 
         middleware.call_sync('filesystem.set_zfs_attributes', {
             'path': '/etc/exports.d',
-            'zfs_file_attributes': {'immutable': Truee}
+            'zfs_file_attributes': {'immutable': True}
         })
         return True
 
