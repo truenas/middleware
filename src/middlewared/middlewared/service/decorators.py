@@ -51,7 +51,7 @@ def filterable_returns(schema):
     return filterable_internal
 
 
-def filterable_api_method(fn=None, /, *, roles=None, item=None, private=True):
+def filterable_api_method(fn=None, /, *, roles=None, item=None, private=False):
     def filterable_internal(fn):
         fn._filterable = True
         if hasattr(fn, 'wraps'):

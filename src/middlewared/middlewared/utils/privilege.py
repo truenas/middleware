@@ -1,5 +1,5 @@
 import enum
-from middlewared.auth import TrueNasNodeSessionManagerCredentials
+from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.role import ROLES
 
 
@@ -28,7 +28,7 @@ def credential_has_full_admin(credential: object) -> bool:
     if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege']['roles']:
         return True
 
-    if isinstance(credential, TrueNasNodeSessionManagerCredentials):
+    if isinstance(credential, TruenasNodeSessionManagerCredentials):
         return True
 
     if credential.allowlist is None:

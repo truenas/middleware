@@ -28,7 +28,7 @@ def localhost_ssh_credentials(**data):
         credentials = call("keychaincredential.remote_ssh_semiautomatic_setup", {
             "name": str(uuid.uuid4()),
             "url": url,
-            "token": call("auth.generate_token"),
+            "token": call("auth.generate_token", 600, {}, False),
             "private_key": keypair["id"],
             **data,
         })

@@ -1,7 +1,8 @@
 from middlewared.api.base import BaseModel, single_argument_result
 from middlewared.utils.auth import AuthMech, AuthResp
+from datetime import datetime
 from pydantic import Field, Secret
-from typing import Literal
+from typing import Any, Literal
 from .user import UserGetUserObjResult
 
 
@@ -112,3 +113,87 @@ class AuthMechChoicesArgs(BaseModel):
 
 class AuthMechChoicesResult(BaseModel):
     result: list[str]
+
+
+class BaseCredentialData(BaseModel):
+    pass
+
+
+class UserCredentialData(BaseCredentialData):
+    username: str
+    login_at: datetime
+
+
+class APIKeySessionData(BaseModel):
+    id: int
+    name: str
+
+
+class APIKeyCredentialData(UserCredentialData):
+    api_key: APIKeySessionData
+
+
+class TokenCredentialData(BaseCredentialData):
+    parent: BaseCredentialData | UserCredentialData | APIKeyCredentialData
+    username: str | None
+
+
+class AuthSessionEntry(BaseModel):
+    id: str
+    current: bool
+    internal: bool
+    origin: str
+    credentials: Literal[
+        'UNIX_SOCKET',
+        'LOGIN_PASSWORD',
+        'LOGIN_TWOFACTOR',
+        'API_KEY',
+        'TOKEN',
+        'TRUENAS_NODE',
+    ]
+    credentials_data: BaseCredentialData | UserCredentialData | APIKeyCredentialData | TokenCredentialData
+    created_at: datetime
+
+
+class AuthTerminateSessionArgs(BaseModel):
+    id: str
+
+
+class AuthTerminateSessionResult(BaseModel):
+    result: bool
+
+
+class AuthTerminateOtherSessionsArgs(BaseModel):
+    pass
+
+
+class AuthTerminateOtherSessionsResult(AuthTerminateSessionResult):
+    result: Literal[True]
+
+
+class AuthSessionLogoutArgs(BaseModel):
+    pass
+
+
+class AuthSessionLogoutResult(BaseModel):
+    result: Literal[True]
+
+
+class AuthGenerateTokenArgs(BaseModel):
+    ttl: int | None = 600
+    attrs: dict = {}  # XXX should we have some actual validation here?
+    match_origin: bool = True  # NOTE: this is change in default from before 25.04
+
+
+class AuthGenerateTokenResult(BaseModel):
+    result: str
+
+
+class AuthSetAttributeArgs(BaseModel):
+    """ WebUI attributes """
+    key: str
+    value: Any
+
+
+class AuthSetAttributeResult(BaseModel):
+    result: Literal[None]

@@ -10,7 +10,7 @@ import stat
 import time
 from functools import partial
 
-from middlewared.auth import TrueNasNodeSessionManagerCredentials
+from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
 from middlewared.service import (
     job, no_auth_required, no_authz_required, pass_app, private, CallError, ConfigService,
@@ -1028,7 +1028,7 @@ class FailoverService(ConfigService):
 async def ha_permission(middleware, app):
     try:
         if not app.authenticated and app.origin.is_ha_connection:
-            await AuthService.session_manager.login(app, TrueNasNodeSessionManagerCredentials())
+            await AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
     except AttributeError:
         pass
 
