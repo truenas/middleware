@@ -33,15 +33,15 @@ def test_virt_instance_create():
         ssh('incus exec void cat /etc/os-release | grep "Void Linux"')
 
         call('virt.instance.create', {
-            'name': 'arch',
-            'image': 'archlinux/current/default',
+            'name': 'centos',
+            'image': 'centos/9-Stream',
             'devices': [
                 {'name': 'tpm', 'dev_type': 'TPM', 'path': '/dev/tpm0', 'pathrm': '/dev/tmprm0'},
             ],
         }, job=True)
-        ssh('incus exec arch cat /etc/os-release | grep "Arch Linux"')
+        ssh('incus exec centos cat /etc/os-release | grep "CentOS"')
 
-        devices = call('virt.instance.device_list', 'arch')
+        devices = call('virt.instance.device_list', 'centos')
         assert any(i for i in devices if i['name'] == 'tpm'), devices
 
         assert wait_agent.wait(timeout=60)
@@ -78,7 +78,7 @@ def test_virt_instance_device_add():
         'dev_type': 'TPM',
     })
 
-    call('virt.instance.device_add', 'arch', {
+    call('virt.instance.device_add', 'centos', {
         'name': 'proxy',
         'dev_type': 'PROXY',
         'source_proto': 'TCP',
@@ -97,7 +97,7 @@ def test_virt_instance_device_add():
 
     devices = call('virt.instance.device_list', 'debian')
     assert any(i for i in devices if i['name'] == 'tpm'), devices
-    devices = call('virt.instance.device_list', 'arch')
+    devices = call('virt.instance.device_list', 'centos')
     assert any(i for i in devices if i['name'] == 'proxy'), devices
     # assert 'disk1' in devices, devices
 
@@ -115,24 +115,24 @@ def test_virt_instance_device_add():
     # ssh('incus exec debian ls /host')
 
     with dataset('virtshare') as ds:
-        call('virt.instance.device_add', 'arch', {
+        call('virt.instance.device_add', 'centos', {
             'name': 'disk1',
             'dev_type': 'DISK',
             'source': f'/mnt/{ds}',
             'destination': '/host',
         })
-        devices = call('virt.instance.device_list', 'arch')
+        devices = call('virt.instance.device_list', 'centos')
         assert any(i for i in devices if i['name'] == 'disk1'), devices
         with mkfile(f'/mnt/{ds}/testfile'):
-            ssh('incus exec arch ls /host/testfile')
-        call('virt.instance.device_delete', 'arch', 'disk1')
+            ssh('incus exec centos ls /host/testfile')
+        call('virt.instance.device_delete', 'centos', 'disk1')
 
 
 def test_virt_instance_proxy():
-    ssh('incus exec arch -- pacman -S --noconfirm openbsd-netcat')
-    ssh('incus exec -T arch -- bash -c "nohup nc -l 0.0.0.0 80 > /tmp/nc 2>&1 &"')
+    ssh('incus exec centos -- yum install -y nmap-ncat')
+    ssh('incus exec -T centos -- bash -c "nohup nc -l 0.0.0.0 80 > /tmp/nc 2>&1 &"')
     ssh('echo "foo" | nc -w 1 localhost 8005 || true')
-    rv = ssh('incus exec arch -- cat /tmp/nc')
+    rv = ssh('incus exec centos -- cat /tmp/nc')
 
     assert rv.strip() == 'foo'
 
@@ -148,8 +148,8 @@ def test_virt_instance_delete():
     call('virt.instance.delete', 'void', job=True)
     ssh('incus config show void 2>&1 | grep "not found"')
 
-    call('virt.instance.delete', 'arch', job=True)
-    ssh('incus config show arch 2>&1 | grep "not found"')
+    call('virt.instance.delete', 'centos', job=True)
+    ssh('incus config show centos 2>&1 | grep "not found"')
 
     call('virt.instance.delete', 'debian', job=True)
     ssh('incus config show debian 2>&1 | grep "not found"')
