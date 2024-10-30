@@ -1,4 +1,3 @@
-from collections import defaultdict
 import errno
 import glob
 import json
@@ -17,9 +16,7 @@ from sqlalchemy.orm import relationship
 from dataclasses import asdict
 from middlewared.api import api_method
 from middlewared.api.current import *
-from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, no_auth_required, no_authz_required, pass_app, private, filterable, job
-)
+from middlewared.service import CallError, CRUDService, ValidationErrors, pass_app, private, job
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
@@ -1091,8 +1088,10 @@ class UserService(CRUDService):
 
         return last_uid + 1
 
-    @no_auth_required
-    @api_method(UserHasLocalAdministratorSetUpArgs, UserHasLocalAdministratorSetUpResult)
+    @api_method(
+        UserHasLocalAdministratorSetUpArgs, UserHasLocalAdministratorSetUpResult,
+        authentication_required=False
+    )
     async def has_local_administrator_set_up(self):
         """
         Return whether a local administrator with a valid password exists.
@@ -1102,8 +1101,11 @@ class UserService(CRUDService):
         """
         return len(await self.middleware.call('privilege.local_administrators')) > 0
 
-    @no_auth_required
-    @api_method(UserSetupLocalAdministratorArgs, UserSetupLocalAdministratorResult, audit='Set up local administrator')
+    @api_method(
+        UserSetupLocalAdministratorArgs, UserSetupLocalAdministratorResult,
+        audit='Set up local administrator',
+        authentication_required=False
+    )
     @pass_app()
     async def setup_local_administrator(self, app, username, password, options):
         """
@@ -1414,9 +1416,9 @@ class UserService(CRUDService):
             os.fchown(f.fileno(), user['uid'], gid)
             f.write(f'{pubkey}\n')
 
-    @no_authz_required
     @api_method(UserSetPasswordArgs, UserSetPasswordResult,
-                audit='Set account password', audit_extended=lambda data: data['username'])
+                audit='Set account password', audit_extended=lambda data: data['username'],
+                authorization_required=False)
     @pass_app(require=True)
     async def set_password(self, app, data):
         """
@@ -1606,7 +1608,6 @@ class GroupService(CRUDService):
 
         return group
 
-    @filterable
     async def query(self, filters, options):
         """
         Query groups with `query-filters` and `query-options`.
