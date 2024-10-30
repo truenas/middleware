@@ -1,6 +1,6 @@
 import typing
 
-from pydantic import conint, IPvAnyInterface
+from pydantic import conint, IPvAnyInterface, field_validator
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
@@ -11,6 +11,12 @@ from middlewared.plugins.docker.state_utils import Status
 class AddressPool(BaseModel):
     base: IPvAnyInterface
     size: conint(ge=1, le=32)
+
+    @field_validator('base')
+    def check_prefixlen(cls, v):
+        if v.network.prefixlen in (32, 128):
+            raise ValueError('Prefix length of base network cannot be 32 or 128.')
+        return v
 
 
 class DockerEntry(BaseModel):
