@@ -23,13 +23,12 @@ from middlewared.api.current import (
     CoreUnsubscribeResult,
 )
 from middlewared.common.environ import environ_update
-from middlewared.job import Job
+from middlewared.job import Job, JobAccess
 from middlewared.pipe import Pipes
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Str
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
-from middlewared.utils.privilege import credential_has_full_admin, credential_is_limited_to_own_jobs
 from middlewared.validators import IpAddress, Range
 
 from .compound_service import CompoundService
@@ -83,33 +82,22 @@ class CoreService(Service):
                 'frames': frames,
             }
 
-    def _job_by_app_and_id(self, app, job_id):
+    def _job_by_app_and_id(self, app, job_id, access):
         if app is None:
             try:
                 return self.middleware.jobs[job_id]
             except KeyError:
                 raise CallError('Job does not exist', errno.ENOENT)
         else:
-            return self.__job_by_credential_and_id(app.authenticated_credentials, job_id)
+            return self.__job_by_credential_and_id(app.authenticated_credentials, job_id, access)
 
-    def __job_by_credential_and_id(self, credential, job_id):
-        if not credential_is_limited_to_own_jobs(credential):
-            return self.middleware.jobs[job_id]
-
-        if not credential.is_user_session or credential_has_full_admin(credential):
-            return self.middleware.jobs[job_id]
-
+    def __job_by_credential_and_id(self, credential, job_id, access):
         job = self.middleware.jobs[job_id]
 
-        if job.credentials is None:
-            raise CallError(
-                'Only users with full administrative privileges can access internally ran jobs', errno.EPERM,
-            )
+        if (error := job.credential_access_error(credential, access)) is not None:
+            raise CallError(error, errno.EPERM)
 
-        if job.credentials.user['username'] == credential.user['username']:
-            return job
-
-        raise CallError(f'{job_id}: job is not owned by current session.', errno.EPERM)
+        return job
 
     @no_authz_required
     @filterable
@@ -172,9 +160,8 @@ class CoreService(Service):
 
         raw_result_default = False if app else True
 
-        if app and credential_is_limited_to_own_jobs(app.authenticated_credentials):
-            username = app.authenticated_credentials.user['username']
-            jobs = list(self.middleware.jobs.for_username(username).values())
+        if app:
+            jobs = list(self.middleware.jobs.for_credential(app.authenticated_credentials, JobAccess.READ).values())
         else:
             jobs = list(self.middleware.jobs.all().values())
 
@@ -194,7 +181,7 @@ class CoreService(Service):
         Please see `core.download` method documentation for explanation on `filename` and `buffered` arguments,
         and return value.
         """
-        job = self._job_by_app_and_id(app, id_)
+        job = self._job_by_app_and_id(app, id_, JobAccess.READ)
 
         if job.logs_path is None:
             raise CallError('This job has no logs')
@@ -205,7 +192,7 @@ class CoreService(Service):
     @accepts(Int('id'))
     @job()
     async def job_wait(self, job, id_):
-        target_job = self.__job_by_credential_and_id(job.credentials, id_)
+        target_job = self.__job_by_credential_and_id(job.credentials, id_, JobAccess.READ)
 
         return await job.wrap(target_job)
 
@@ -247,7 +234,7 @@ class CoreService(Service):
     @accepts(Int('id'))
     @pass_app(rest=True)
     def job_abort(self, app, id_):
-        job = self._job_by_app_and_id(app, id_)
+        job = self._job_by_app_and_id(app, id_, JobAccess.ABORT)
         return job.abort()
 
     def _should_list_service(self, name, service, target):
