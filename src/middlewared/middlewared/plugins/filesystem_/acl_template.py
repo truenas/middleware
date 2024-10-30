@@ -53,6 +53,8 @@ class ACLTemplateService(CRUDService):
         for ace in data['acl']:
             ace['who'] = None
 
+        return data
+
     @private
     async def validate_acl(self, data, schema, verrors, template_id):
         await self._ensure_unique(verrors, schema, 'name', data['name'], template_id)
