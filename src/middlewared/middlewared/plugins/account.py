@@ -2029,12 +2029,14 @@ class GroupService(CRUDService):
 
 async def setup(middleware):
     try:
+        # ensure that our default home path is always immutable. If it's not immutable then
+        # pam_mkhomedir will start creating dirs within it on user login
         await middleware.call('filesystem.set_zfs_attributes', {
             'path': DEFAULT_HOME_PATH,
             'zfs_file_attributes': {'immutable': True}
         })
     except Exception:
-        middleware.logger.error('Failed to set immmutable property on %r', DEFAULT_HOME_PATH, exc_info=True)
+        middleware.logger.error('Failed to set immutable property on %r', DEFAULT_HOME_PATH, exc_info=True)
 
     if await middleware.call('keyvalue.get', 'run_migration', False):
         await middleware.call('user.sync_builtin')
