@@ -48,4 +48,5 @@ class CloudBackupService(Service):
             job,
             restic_config.cmd + cmd,
             restic_config.env,
+            track_progress=True,
         )
