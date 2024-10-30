@@ -20,7 +20,7 @@ class SMBService(Service):
         service = 'cifs'
         service_verb = 'restart'
 
-    @filterable_api_method
+    @filterable_api_method(private=True)
     def passdb_list(self, filters, options):
         """ query existing passdb users """
         try:
