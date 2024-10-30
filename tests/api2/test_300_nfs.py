@@ -228,7 +228,7 @@ def set_immutable_state(path: str, want_immutable=True):
     })
     is_immutable = 'IMMUTABLE' in call('filesystem.stat', '/etc/exports.d')['attributes']
 
-    assert is_immutable is want_immutable, f"Expected mutable filesystem: {is_immutable}"
+    assert is_immutable is want_immutable, f"Expected mutable filesystem: {want_immutable}"
 
 
 def confirm_nfsd_processes(expected):

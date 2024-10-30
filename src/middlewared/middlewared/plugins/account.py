@@ -2034,7 +2034,7 @@ async def setup(middleware):
             'zfs_file_attributes': {'immutable': True}
         })
     except Exception:
-        middleware.logger.error('Failed to set immmutable property on /var/empty', exc_info=True)
+        middleware.logger.error('Failed to set immmutable property on %r', DEFAULT_HOME_PATH, exc_info=True)
 
     if await middleware.call('keyvalue.get', 'run_migration', False):
         await middleware.call('user.sync_builtin')
