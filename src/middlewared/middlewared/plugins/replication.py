@@ -471,7 +471,7 @@ class ReplicationService(CRUDService):
         Bool("really_run", default=True, hidden=True),
         roles=["REPLICATION_TASK_WRITE"],
     )
-    @job(logs=True)
+    @job(logs=True, read_roles=["REPLICATION_TASK_READ"])
     async def run(self, job, id_, really_run):
         """
         Run Replication Task of `id`.
