@@ -16,7 +16,7 @@ from assets.websocket.iscsi import (alua_enabled, initiator, initiator_portal,
                                     portal, read_capacity16, target,
                                     target_extent_associate, verify_capacity,
                                     verify_luns, verify_ha_inquiry, verify_ha_device_identification, TUR)
-from middlewared.service_exception import CallError, InstanceNotFound, ValidationError, ValidationErrors
+from middlewared.service_exception import InstanceNotFound, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.iscsi import target_login_test
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call, ssh
@@ -117,7 +117,7 @@ def get_ip_addr(ip):
 
 
 @contextlib.contextmanager
-def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None):
+def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None, discovery_auth=None):
     payload = {
         'tag': tag,
         'user': user,
@@ -128,21 +128,16 @@ def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None):
             'peeruser': peeruser,
             'peersecret': peersecret
         })
+    if discovery_auth:
+        payload.update({
+            'discovery_auth': discovery_auth
+        })
     auth_config = call('iscsi.auth.create', payload)
 
     try:
         yield auth_config
     finally:
         call('iscsi.auth.delete', auth_config['id'])
-
-
-@contextlib.contextmanager
-def iscsi_discovery_auth(authmethod, authgroup):
-    config = call('iscsi.discoveryauth.create', {'authmethod': authmethod, 'authgroup': authgroup})
-    try:
-        yield config
-    finally:
-        call('iscsi.discoveryauth.delete', config['id'])
 
 
 @contextlib.contextmanager
@@ -717,55 +712,87 @@ def test_06_mutual_chap(request):
                                     _verify_inquiry(s)
 
 
+def _assert_auth(auth, tag, user, secret, peeruser, peersecret, discovery_auth):
+    assert auth['tag'] == tag
+    assert auth['user'] == user
+    assert auth['secret'] == secret
+    assert auth['peeruser'] == peeruser
+    if peeruser:
+        assert auth['peersecret'] == peersecret
+    assert auth['discovery_auth'] == discovery_auth
+
+
 def test_06_discovery_auth():
     """
     Test Discovery Auth
     """
-    assert [] == call('iscsi.discoveryauth.query')
-
-    with pytest.raises(ValidationErrors) as ve:
-        call('iscsi.discoveryauth.create', {'authmethod': 'CHAP', 'authgroup': 100})
-    assert ve.value.errors == [
-        ValidationError(
-            'iscsi_discoveryauth_create.authgroup',
-            'The specified authgroup does not contain any entries.'
-        )]
-
-    with pytest.raises(ValidationErrors) as ve:
-        call('iscsi.discoveryauth.create', {'authmethod': 'None', 'authgroup': 0})
-    assert ve.value.errors == [
-        ValidationError(
-            'iscsi_discoveryauth_create.authmethod',
-            'Invalid choice: None',
-            errno.EINVAL
-        )]
-
     randsec = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
-    with iscsi_auth(1, 'user1', 'sec1' + randsec) as auth_config:
-        with iscsi_discovery_auth('CHAP', 1) as item:
-            assert item['authmethod'] == 'CHAP'
-            assert item['authgroup'] == 1
+    assert [] == call('iscsi.auth.query')
+
+    # Create a regular auth (without discovery auth) and then try to modify it.
+    with iscsi_auth(1, 'user1', 'sec1' + randsec) as config1:
+        _assert_auth(config1, 1, 'user1', 'sec1' + randsec, '', None, 'NONE')
+
+        # Change discovery_auth to CHAP
+        config2 = call('iscsi.auth.update', config1['id'], {'discovery_auth': 'CHAP'})
+        _assert_auth(config2, 1, 'user1', 'sec1' + randsec, '', None, 'CHAP')
+
+        # Try to change discovery_auth to CHAP_MUTUAL (will fail, no peeruser)
+        with pytest.raises(ValidationErrors) as ve:
+            call('iscsi.auth.update', config1['id'], {'discovery_auth': 'CHAP_MUTUAL'})
+        assert ve.value.errors == [
+            ValidationError(
+                'iscsi_auth_update.discovery_auth',
+                'Cannot specify CHAP_MUTUAL if peer_user has not been defined.'
+            )]
+
+        # Change discovery_auth to CHAP_MUTUAL (incl add peeruser)
+        call('iscsi.auth.update', config1['id'], {'peeruser': 'user2',
+                                                  'peersecret': 'sec2' + randsec,
+                                                  'discovery_auth': 'CHAP_MUTUAL'})
+        config3 = call('iscsi.auth.query', [['id', '=', config1['id']]], {'get': True})
+        _assert_auth(config3, 1, 'user1', 'sec1' + randsec, 'user2', 'sec2' + randsec, 'CHAP_MUTUAL')
+
+        # Try to create 2nd discovery_auth with CHAP_MUTUAL (will fail, too many CHAP_MUTUAL)
+        second_auth = {
+            'tag': 2,
+            'user': 'user3',
+            'secret': 'sec3' + randsec,
+            'peeruser': 'user4',
+            'peersecret': 'sec4' + randsec,
+            'discovery_auth': 'CHAP_MUTUAL',
+        }
+        with pytest.raises(ValidationErrors) as ve:
+            call('iscsi.auth.create', second_auth | {'discovery_auth': 'CHAP_MUTUAL'})
+        assert ve.value.errors == [
+            ValidationError(
+                'iscsi_auth_create.discovery_auth',
+                'Cannot specify CHAP_MUTUAL as only one such entry is permitted.'
+            )]
+
+        # Create 2nd discovery_auth with CHAP
+        with iscsi_auth(2, 'user3', 'sec3' + randsec, 'user4', 'sec4' + randsec, 'CHAP') as config4:
+            _assert_auth(config4, 2, 'user3', 'sec3' + randsec, 'user4', 'sec4' + randsec, 'CHAP')
+
+            # Try to change 2nd discovery_auth to CHAP_MUTUAL (will fail, too many CHAP_MUTUAL)
             with pytest.raises(ValidationErrors) as ve:
-                call('iscsi.discoveryauth.create', {'authmethod': 'CHAP', 'authgroup': 1})
+                call('iscsi.auth.update', config4['id'], {'discovery_auth': 'CHAP_MUTUAL'})
             assert ve.value.errors == [
                 ValidationError(
-                    'iscsi_discoveryauth_create.authgroup',
-                    'The specified authgroup is already in use.'
+                    'iscsi_auth_update.discovery_auth',
+                    'Cannot specify CHAP_MUTUAL as only one such entry is permitted.'
                 )]
-            # Now that the auth is in use, we should NOT be able to delete it
-            with pytest.raises(CallError) as e:
-                call('iscsi.auth.delete', auth_config['id'])
-            assert f'Authorized access of {auth_config["id"]} is being used by discovery auth(s): {item["id"]}' in str(e), e
+            _assert_auth(config4, 2, 'user3', 'sec3' + randsec, 'user4', 'sec4' + randsec, 'CHAP')
 
-            with iscsi_auth(2, 'user2', 'sec2' + randsec, 'peeruser2', 'psec2' + randsec) as auth_config:
-                with iscsi_discovery_auth('CHAP_MUTUAL', 2) as item:
-                    with pytest.raises(ValidationErrors) as ve:
-                        call('iscsi.discoveryauth.create', {'authmethod': 'CHAP', 'authgroup': 2})
-                    assert ve.value.errors == [
-                        ValidationError(
-                            'iscsi_discoveryauth_create.authgroup',
-                            'The specified authgroup is already in use.'
-                        )]
+            # Change 1st discovery_auth to NONE
+            config5 = call('iscsi.auth.update', config1['id'], {'discovery_auth': 'NONE'})
+            _assert_auth(config5, 1, 'user1', 'sec1' + randsec, 'user2', 'sec2' + randsec, 'NONE')
+
+            # Change 2nd discovery_auth to CHAP_MUTUAL
+            config6 = call('iscsi.auth.update', config4['id'], {'discovery_auth': 'CHAP_MUTUAL'})
+            _assert_auth(config6, 2, 'user3', 'sec3' + randsec, 'user4', 'sec4' + randsec, 'CHAP_MUTUAL')
+
+    assert [] == call('iscsi.auth.query')
 
 
 def test_07_report_luns(request):
@@ -1044,7 +1071,6 @@ def test_11_modify_portal(request):
         assert new_config['comment'] == 'New comment', new_config
         # Then try to reapply everything
         payload = {'comment': 'test1', 'discovery_authmethod': 'NONE', 'discovery_authgroup': None, 'listen': [{'ip': '0.0.0.0'}]}
-        # payload = {'comment': 'test1', 'discovery_authmethod': 'NONE', 'discovery_authgroup': None, 'listen': [{'ip': '0.0.0.0'}, {'ip': '::'}]}
         call('iscsi.portal.update', portal_config['id'], payload)
         new_config = call('iscsi.portal.get_instance', portal_config['id'])
         assert new_config['comment'] == 'test1', new_config

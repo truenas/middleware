@@ -1,10 +1,18 @@
+from enum import StrEnum
+
 import bidict
 
 
+class IscsiAuthType(StrEnum):
+    NONE = 'NONE'
+    CHAP = 'CHAP'
+    CHAP_MUTUAL = 'CHAP_MUTUAL'
+
+
 AUTHMETHOD_LEGACY_MAP = bidict.bidict({
-    'None': 'NONE',
-    'CHAP': 'CHAP',
-    'CHAP Mutual': 'CHAP_MUTUAL',
+    'None': IscsiAuthType.NONE,
+    'CHAP': IscsiAuthType.CHAP,
+    'CHAP Mutual': IscsiAuthType.CHAP_MUTUAL,
 })
 
 # Currently SCST has this limit (scst_vdisk_dev->name)
