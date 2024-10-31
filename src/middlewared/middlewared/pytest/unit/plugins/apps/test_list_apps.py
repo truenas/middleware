@@ -60,11 +60,13 @@ METADATA = {
 
 def common_impl(
     mock_get_collective_metadata, mock_list_resources_by_project,
-    mock_translate_resources_to_desired_workflow, scandir, workload, desired_state
+    mock_translate_resources_to_desired_workflow, mock_upgrade_available_for_app,
+    scandir, workload, desired_state
 ):
     mock_get_collective_metadata.return_value = METADATA
     mock_list_resources_by_project.return_value = collections.defaultdict(None, workload)
     mock_translate_resources_to_desired_workflow.return_value = workload['ix-actual-budget']
+    mock_upgrade_available_for_app.return_value = (False, '1.21.0')
     mock_entry1 = unittest.mock.Mock(is_file=lambda: True, name='config1.json')
     scandir.return_value.__enter__.return_value = [mock_entry1]
 
@@ -269,16 +271,18 @@ def common_impl(
     ]
 )
 @unittest.mock.patch('os.scandir')
+@unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.upgrade_available_for_app')
 @unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.translate_resources_to_desired_workflow')
 @unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.list_resources_by_project')
 @unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.get_collective_metadata')
 def test_app_event_crashed(
     mock_get_collective_metadata, mock_list_resources_by_project,
-    mock_translate_resources_to_desired_workflow, scandir, workload
+    mock_translate_resources_to_desired_workflow, mock_upgrade_available_for_app,
+    scandir, workload
 ):
     common_impl(
         mock_get_collective_metadata, mock_list_resources_by_project, mock_translate_resources_to_desired_workflow,
-        scandir, workload, 'CRASHED',
+        mock_upgrade_available_for_app, scandir, workload, 'CRASHED',
     )
 
 
@@ -377,16 +381,18 @@ def test_app_event_crashed(
     },
 ], ids=['starting-created', 'running-starting', 'exited-starting', 'created-created'])
 @unittest.mock.patch('os.scandir')
+@unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.upgrade_available_for_app')
 @unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.translate_resources_to_desired_workflow')
 @unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.list_resources_by_project')
 @unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.get_collective_metadata')
 def test_app_event_deploying(
     mock_get_collective_metadata, mock_list_resources_by_project,
-    mock_translate_resources_to_desired_workflow, scandir, workload
+    mock_translate_resources_to_desired_workflow, mock_upgrade_available_for_app,
+    scandir, workload
 ):
     common_impl(
         mock_get_collective_metadata, mock_list_resources_by_project, mock_translate_resources_to_desired_workflow,
-        scandir, workload, 'DEPLOYING',
+        mock_upgrade_available_for_app, scandir, workload, 'DEPLOYING',
     )
 
 
@@ -416,16 +422,18 @@ def test_app_event_deploying(
     },
 ], ids=['running-running'])
 @unittest.mock.patch('os.scandir')
+@unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.upgrade_available_for_app')
 @unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.translate_resources_to_desired_workflow')
 @unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.list_resources_by_project')
 @unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.get_collective_metadata')
 def test_app_event_running(
     mock_get_collective_metadata, mock_list_resources_by_project,
-    mock_translate_resources_to_desired_workflow, scandir, workload
+    mock_translate_resources_to_desired_workflow, mock_upgrade_available_for_app,
+    scandir, workload
 ):
     common_impl(
         mock_get_collective_metadata, mock_list_resources_by_project, mock_translate_resources_to_desired_workflow,
-        scandir, workload, 'RUNNING',
+        mock_upgrade_available_for_app, scandir, workload, 'RUNNING',
     )
 
 
@@ -478,14 +486,16 @@ def test_app_event_running(
     },
 ], ids=['exited-exited', 'stopping-stopping'])
 @unittest.mock.patch('os.scandir')
+@unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.upgrade_available_for_app')
 @unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.translate_resources_to_desired_workflow')
 @unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.list_resources_by_project')
 @unittest.mock.patch('middlewared.plugins.apps.ix_apps.query.get_collective_metadata')
 def test_app_event_stopped(
     mock_get_collective_metadata, mock_list_resources_by_project,
-    mock_translate_resources_to_desired_workflow, scandir, workload
+    mock_translate_resources_to_desired_workflow, mock_upgrade_available_for_app,
+    scandir, workload
 ):
     common_impl(
         mock_get_collective_metadata, mock_list_resources_by_project, mock_translate_resources_to_desired_workflow,
-        scandir, workload, 'STOPPED',
+        mock_upgrade_available_for_app, scandir, workload, 'STOPPED',
     )
