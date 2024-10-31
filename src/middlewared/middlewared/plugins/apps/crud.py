@@ -341,12 +341,19 @@ class AppService(CRUDService):
             'options',
             Bool('remove_images', default=True),
             Bool('remove_ix_volumes', default=False),
+            Bool('force_remove_ix_volumes', default=False),
         )
     )
     @job(lock=lambda args: f'app_delete_{args[0]}')
     def do_delete(self, job, app_name, options):
         """
         Delete `app_name` app.
+
+        `force_remove_ix_volumes` should be set when the ix-volumes were created by the system for apps which were
+        migrated from k8s to docker and the user wants to remove them. This is to prevent accidental deletion of
+        the original ix-volumes which were created in dragonfish and before for kubernetes based apps. When this
+        is set, it will result in the deletion of ix-volumes from both docker based apps and k8s based apps and should
+        be carefully set.
         """
         app_config = self.get_instance__sync(app_name)
         return self.delete_internal(job, app_name, app_config, options)
@@ -364,7 +371,11 @@ class AppService(CRUDService):
         job.set_progress(80, 'Cleaning up resources')
         shutil.rmtree(get_installed_app_path(app_name))
         if options['remove_ix_volumes'] and (apps_volume_ds := self.get_app_volume_ds(app_name)):
-            self.middleware.call_sync('zfs.dataset.delete', apps_volume_ds, {'recursive': True})
+            self.middleware.call_sync(
+                'zfs.dataset.delete', apps_volume_ds, {
+                    'recursively_remove_dependents' if options.get('force_remove_ix_volumes') else 'recursive': True,
+                }
+            )
 
         if options.get('send_event', True):
             self.middleware.send_event('app.query', 'REMOVED', id=app_name)
