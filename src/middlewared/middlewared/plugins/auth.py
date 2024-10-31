@@ -307,7 +307,7 @@ class AuthService(Service):
     @accepts(
         Int('ttl', default=600, null=True),
         Dict('attrs', additional_attrs=True),
-        Bool('match_origin', default=False),
+        Bool('match_origin', default=True),
     )
     @returns(Str('token'))
     @pass_app(rest=True)

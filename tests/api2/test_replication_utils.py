@@ -11,7 +11,7 @@ def localhost_ssh_connection():
         "attributes": call("keychaincredential.generate_ssh_key_pair"),
     })
     try:
-        token = call("auth.generate_token")
+        token = call("auth.generate_token", 600, {}, False)
         connection = call("keychaincredential.remote_ssh_semiautomatic_setup", {
             "name": "localhost",
             "url": "http://localhost",
