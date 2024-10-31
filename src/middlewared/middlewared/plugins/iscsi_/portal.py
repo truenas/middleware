@@ -2,6 +2,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Dict, Int, IPAddr, List, Patch, Str
 from middlewared.service import CRUDService, private, ValidationErrors
+from .utils import IscsiAuthType
 
 
 def portal_summary(data):
@@ -65,7 +66,7 @@ class ISCSIPortalService(CRUDService):
                 'port': context['global_config']['listen_port'],
             })
         # Temporary until new API being used: START
-        data['discovery_authmethod'] = "NONE"
+        data['discovery_authmethod'] = IscsiAuthType.NONE
         data['discovery_authgroup'] = None
         # Temporary until new API being used: END
         return data
