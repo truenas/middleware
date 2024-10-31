@@ -185,16 +185,20 @@ class ZFSDatasetService(CRUDService):
             'options',
             Bool('force', default=False),
             Bool('recursive', default=False),
+            Bool('recursively_remove_dependents', default=False),
         )
     )
     def do_delete(self, id_, options):
         force = options['force']
         recursive = options['recursive']
+        recursively_remove_dependents = options['recursively_remove_dependents']
 
         args = []
         if force:
             args += ['-f']
-        if recursive:
+        if recursively_remove_dependents:
+            args += ['-R']
+        elif recursive:
             args += ['-r']
 
         # If dataset is mounted and has receive_resume_token, we should destroy it or ZFS will say
