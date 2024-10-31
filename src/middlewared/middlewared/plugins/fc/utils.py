@@ -68,7 +68,14 @@ def dmi_pci_slot_info():
         if mat := BUS_ADDRESS.search(line):
             bus_addr = mat.group(0)
             result[bus_addr] = designation
-    return result
+    # If any slots are missing a .0 function then fill it in
+    additional = {}
+    for bus_addr in result:
+        if not bus_addr.endswith('.0'):
+            new_addr = bus_addr.rsplit('.', 1)[0] + '.0'
+            if new_addr not in result:
+                additional[new_addr] = result[bus_addr]
+    return result | additional
 
 
 def filter_by_wwpns_hex_string(wwpn_naa, wwpn_b_naa):
