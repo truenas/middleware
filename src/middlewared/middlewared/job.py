@@ -16,7 +16,7 @@ import threading
 
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.pipe import Pipes
-from middlewared.utils.privilege import credential_is_limited_to_own_jobs
+from middlewared.utils.privilege import credential_is_limited_to_own_jobs, credential_has_full_admin
 
 logger = logging.getLogger(__name__)
 
@@ -29,14 +29,8 @@ def send_job_event(middleware, event_type, job, fields):
 
 
 def should_send_job_event(job, wsclient):
-    if wsclient.authenticated_credentials and credential_is_limited_to_own_jobs(wsclient.authenticated_credentials):
-        if job.credentials is None:
-            return False
-
-        if not job.credentials.is_user_session:
-            return False
-
-        return job.credentials.user['username'] == wsclient.authenticated_credentials.user['username']
+    if wsclient.authenticated_credentials:
+        return job.credential_can_access(wsclient.authenticated_credentials, JobAccess.READ)
 
     return True
 
@@ -82,6 +76,11 @@ class JobSharedLock:
         return self.lock.release()
 
 
+class JobAccess(enum.Enum):
+    READ = "READ"
+    ABORT = "ABORT"
+
+
 class JobsQueue:
     def __init__(self, middleware):
         self.middleware = middleware
@@ -106,13 +105,13 @@ class JobsQueue:
     def all(self) -> dict[int, "Job"]:
         return self.deque.all()
 
-    def for_username(self, username):
+    def for_credential(self, credential, access: JobAccess):
+        if not credential_is_limited_to_own_jobs(credential):
+            return self.all()
+
         out = {}
         for jid, job in self.all().items():
-            if job.credentials is None or not job.credentials.is_user_session:
-                continue
-
-            if job.credentials.user['username'] != username:
+            if not job.credential_can_access(credential, access):
                 continue
 
             out[jid] = job
@@ -217,7 +216,7 @@ class JobsQueue:
         await self.deque.receive(self.middleware, job, logs)
 
 
-class JobsDeque(object):
+class JobsDeque:
     """
     A jobs deque to do not keep more than `maxlen` in memory
     with a `id` assigner.
@@ -334,6 +333,28 @@ class Job:
             return None
 
         return self.app.authenticated_credentials
+
+    def credential_can_access(self, credential, access: JobAccess):
+        return self.credential_access_error(credential, access) is None
+
+    def credential_access_error(self, credential, access: JobAccess):
+        if not credential_is_limited_to_own_jobs(credential):
+            return
+
+        if access == JobAccess.READ:
+            if credential.is_user_session and any(credential.has_role(role) for role in self.options['read_roles']):
+                return
+
+        if not credential.is_user_session or credential_has_full_admin(credential):
+            return
+
+        if self.credentials is None or not self.credentials.is_user_session:
+            return 'Only users with full administrative privileges can access internally ran jobs'
+
+        if self.credentials.user['username'] == credential.user['username']:
+            return
+
+        return 'Job is not owned by current session'
 
     def check_pipe(self, pipe):
         """
