@@ -8,7 +8,7 @@ class HasUpdateAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.INFO
     title = "Update Available"
-    text = "A system update is available. Go to System Settings → Update to download and apply the update."
+    text = "A system update is available. Go to System → Update to download and apply the update."
 
 
 class HasUpdateAlertSource(AlertSource):
