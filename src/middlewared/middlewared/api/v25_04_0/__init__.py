@@ -18,6 +18,7 @@ from .filesystem import *  # noqa
 from .group import *  # noqa
 from .iscsi_auth import *  # noqa
 from .keychain import *  # noqa
+from .pool import *  # noqa
 from .privilege import *  # noqa
 from .rdma import *  # noqa
 from .rdma_interface import *  # noqa
