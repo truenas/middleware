@@ -15,7 +15,11 @@ def validate_address_pools(system_ips: list[dict], user_specified_networks: list
     ])
     seen_networks = set()
     for index, user_network in enumerate(user_specified_networks):
-        base_network = ipaddress.ip_network(user_network['base'], False)
+        if isinstance(user_network['base'], ipaddress.IPv4Interface):
+            base_network = user_network['base'].network
+            user_network['base'] = str(user_network['base'])
+        else:
+            base_network = ipaddress.ip_network(user_network['base'], False)
 
         # Validate subnet size vs. base network
         if base_network.prefixlen > user_network['size']:

@@ -12,6 +12,7 @@ from typing_extensions import Annotated
 from middlewared.api.base.types.base import SECRET_VALUE
 from middlewared.utils.lang import undefined
 
+
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "single_argument_args", "single_argument_result"]
 
 
