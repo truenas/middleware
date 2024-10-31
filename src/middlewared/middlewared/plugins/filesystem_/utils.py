@@ -201,7 +201,7 @@ def gen_aclstring_posix1e(dacl: list, recursive: bool, verrors: ValidationErrors
         if idx != 0:
             aclstring += ","
 
-        if ace['who'] and ace['id'] not in (None, ACL_UNDEFINED_ID):
+        if ace.get('who') and ace['id'] not in (None, ACL_UNDEFINED_ID):
             verrors.add(
                 'filesystem_acl.dacl.{idx}.who',
                 f'Numeric ID {ace["id"]} and account name {ace["who"]} may not be specified simultaneously'
