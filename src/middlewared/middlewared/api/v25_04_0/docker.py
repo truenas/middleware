@@ -1,6 +1,7 @@
 import typing
+from typing_extensions import Annotated
 
-from pydantic import conint, IPvAnyInterface, field_validator
+from pydantic import conint, IPvAnyInterface, Field, field_validator
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
@@ -50,9 +51,30 @@ class DockerStatusResult(BaseModel):
     result: StatusResult
 
 
-class LacksNvidiaDriverArgs(BaseModel):
+class NvidiaNormalStatus(BaseModel):
+    status: typing.Literal['ABSENT', 'NOT_INSTALLED', 'INSTALLED']
+
+
+class NvidiaInstallingStatus(BaseModel):
+    status: typing.Literal['INSTALLING']
+    progress: int
+    description: str
+
+
+class NvidiaInstallErrorStatus(BaseModel):
+    status: typing.Literal['INSTALL_ERROR']
+    error: str
+
+
+NvidiaStatus = Annotated[
+    typing.Union[NvidiaNormalStatus, NvidiaInstallingStatus, NvidiaInstallErrorStatus],
+    Field(discriminator='status'),
+]
+
+
+class NvidiaStatusArgs(BaseModel):
     pass
 
 
-class LacksNvidiaDriverResult(BaseModel):
-    result: bool
+class NvidiaStatusResult(BaseModel):
+    result: NvidiaStatus
