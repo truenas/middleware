@@ -295,10 +295,10 @@ class FailoverEventsService(Service):
 
             # If there is a state change on a non-critical interface then
             # ignore the event and return
-            ignore = [i for i in fobj['non_crit_interfaces'] if i in ifname]
-            if ignore:
-                logger.warning('Ignoring state change on non-critical interface "%s".', ifname)
-                raise IgnoreFailoverEvent()
+            for i in fobj['non_crit_interfaces']:
+                if i == ifname:
+                    logger.warning('Ignoring state change on non-critical interface "%s".', ifname)
+                    raise IgnoreFailoverEvent()
 
             needs_imported = False
             for pool in self.run_call('pool.query', [('name', 'in', [i['name'] for i in fobj['volumes']])]):
