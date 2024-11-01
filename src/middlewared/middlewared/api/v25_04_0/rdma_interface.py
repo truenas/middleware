@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import IPvAnyAddress
 
@@ -31,7 +31,7 @@ class RdmaInterfaceCreateCheck(BaseModel):
 
 class RdmaInterfaceCreate(RdmaInterfaceEntry):
     id: Excluded = excluded_field()
-    check: RdmaInterfaceCreateCheck
+    check: Optional[RdmaInterfaceCreateCheck] = None
 
 
 class RdmaInterfaceCreateArgs(BaseModel):
