@@ -1,6 +1,12 @@
+
 import middlewared.sqlalchemy as sa
-from middlewared.schema import (Dict, Int, IPAddr, Patch, Str,
-                                accepts)
+
+from middlewared.api import api_method
+from middlewared.api.current import (
+    RdmaInterfaceCreateArgs, RdmaInterfaceCreateResult,
+    RdmaInterfaceUpdateArgs, RdmaInterfaceUpdateResult,
+    RdmaInterfaceDeleteArgs, RdmaInterfaceDeleteResult
+)
 from middlewared.service import CallError, CRUDService
 
 from pyroute2 import NDB
@@ -41,29 +47,11 @@ class RDMAInterfaceService(CRUDService):
         datastore = 'rdma.interface'
         datastore_prefix = "rdmaif_"
 
-    ENTRY = Dict(
-        'rdma_interface_entry',
-        Str('id', required=True),
-        Str('node', default=''),
-        Str('ifname', required=True),
-        IPAddr('address', required=True),
-        Int('prefixlen', required=True),
-        Int('mtu', default=5000),
-    )
-
     async def compress(self, data):
         if 'check' in data:
             del data['check']
 
-    @accepts(
-        Patch(
-            'rdma_interface_entry', 'rdma_interface_create',
-            ('rm', {'name': 'id'}),
-            ('add', Dict('check',
-                         Str('ping_ip'),
-                         Str('ping_mac'))),
-        )
-    )
+    @api_method(RdmaInterfaceCreateArgs, RdmaInterfaceCreateResult)
     async def do_create(self, data):
         result = await self.middleware.call('rdma.interface.configure_interface',
                                             data['node'], data['ifname'], data['address'],
@@ -77,16 +65,7 @@ class RDMAInterfaceService(CRUDService):
         else:
             return None
 
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            'rdma_interface_entry', 'rdma_interface_update',
-            ('add', Dict('check',
-                         Str('ping_ip'),
-                         Str('ping_mac'))),
-            ('attr', {'update': True})
-        )
-    )
+    @api_method(RdmaInterfaceUpdateArgs, RdmaInterfaceUpdateResult)
     async def do_update(self, id_, data):
         """
         Update RDMA interface of `id`
@@ -110,7 +89,7 @@ class RDMAInterfaceService(CRUDService):
         else:
             raise CallError("Failed to update active RDMA interface configuration")
 
-    @accepts(Int('id'))
+    @api_method(RdmaInterfaceDeleteArgs, RdmaInterfaceDeleteResult)
     async def do_delete(self, id_):
         """
         Delete a RDMA interface by ID.
