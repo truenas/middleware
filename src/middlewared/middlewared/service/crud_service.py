@@ -306,8 +306,10 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             raise InstanceNotFound(f'{self._config.verbose_name} {id_} does not exist')
         return instance[0]
 
-    async def _ensure_unique(self, verrors, schema_name, field_name, value, id_=None):
-        f = [(field_name, '=', value)]
+    async def _ensure_unique(self, verrors, schema_name, field_name, value, id_=None, query_field_name=None):
+        if query_field_name is None:
+            query_field_name = field_name
+        f = [(query_field_name, '=', value)]
         if id_ is not None:
             f.append(('id', '!=', id_))
         instance = await self.middleware.call(f'{self._config.namespace}.query', f)
