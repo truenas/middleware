@@ -19,6 +19,7 @@ from .iscsi_auth import *  # noqa
 from .keychain import *  # noqa
 from .privilege import *  # noqa
 from .rdma import *  # noqa
+from .rdma_interface import *  # noqa
 from .smartctl import *  # noqa
 from .static_route import *  # noqa
 from .system_lifecycle import *  # noqa
