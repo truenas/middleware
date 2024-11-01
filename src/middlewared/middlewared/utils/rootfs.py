@@ -96,6 +96,12 @@ class ReadonlyRootfsManager:
                 check=True,
                 text=True,
             )
+            subprocess.run(
+                ["mount", "-o", f"{'ro' if readonly else 'rw'},remount", self.datasets[name].mountpoint],
+                capture_output=True,
+                check=True,
+                text=True,
+            )
             self.datasets[name].readonly.current = readonly
 
         if state.get("usr") is False:
