@@ -5,7 +5,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
     DockerEntry, DockerStatusArgs, DockerStatusResult, DockerUpdateArgs, DockerUpdateResult,
-    LacksNvidiaDriverArgs, LacksNvidiaDriverResult,
+    NvidiaStatusArgs, NvidiaStatusResult,
 )
 from middlewared.schema import ValidationErrors
 from middlewared.service import CallError, ConfigService, job, private
@@ -132,9 +132,54 @@ class DockerService(ConfigService):
         """
         return await self.middleware.call('docker.state.get_status_dict')
 
-    @api_method(LacksNvidiaDriverArgs, LacksNvidiaDriverResult, roles=['DOCKER_READ'])
-    async def lacks_nvidia_drivers(self):
+    @api_method(NvidiaStatusArgs, NvidiaStatusResult, roles=['DOCKER_READ'])
+    async def nvidia_status(self):
         """
-        Returns true if an NVIDIA GPU is present, but NVIDIA drivers are not installed.
+        Returns Nvidia hardware and drivers installation status.
         """
-        return await self.middleware.call('nvidia.present') and not await self.middleware.call('nvidia.installed')
+        return await self.nvidia_status_for_job()
+
+    @private
+    async def nvidia_status_for_job(self, job=None):
+        if job is None:
+            jobs = await self.middleware.call('core.get_jobs', [['method', '=', 'nvidia.install']])
+            if not jobs:
+                return {'status': 'NOT_INSTALLED'}
+
+            job = jobs[-1]
+
+        match job['state']:
+            case 'WAITING':
+                return {'status': 'INSTALLING', 'progress': 0, 'description': 'Waiting for installation to begin...'}
+            case 'RUNNING':
+                return {
+                    'status': 'INSTALLING',
+                    'progress': job['progress']['percent'],
+                    'description': job['progress']['description'],
+                }
+            case 'FAILED':
+                return {'status': 'INSTALL_ERROR', 'error': job['error']}
+
+        if not await self.middleware.call('nvidia.present'):
+            return {'status': 'ABSENT'}
+
+        if await self.middleware.call('nvidia.installed'):
+            return {'status': 'INSTALLED'}
+
+
+async def update_nvidia_status(middleware, event_type, args):
+    if event_type == 'CHANGED' and args['fields']['method'] == 'nvidia.install':
+        middleware.send_event(
+            'docker.nvidia_status',
+            'CHANGED',
+            fields=await middleware.call('docker.nvidia_status_for_job', args['fields']),
+        )
+
+
+async def setup(middleware):
+    middleware.event_register(
+        'docker.nvidia_status',
+        'Sent on Nvidia hardware and drivers installation status change.',
+        roles=['DOCKER_READ'],
+    )
+    middleware.event_subscribe('core.get_jobs', update_nvidia_status)
