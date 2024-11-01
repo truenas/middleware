@@ -545,7 +545,8 @@ class Enclosure(object):
                     disk
                 )
 
-            self.append(info)
+            if info:
+                self.append(info)
 
         return mapping
 
