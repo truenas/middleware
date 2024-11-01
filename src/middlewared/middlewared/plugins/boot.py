@@ -1,7 +1,6 @@
 import asyncio
 import os
 
-from contextlib import asynccontextmanager
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, returns, Patch
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
@@ -216,22 +215,6 @@ class BootService(Service):
         """
         return (await self.middleware.call('system.advanced.config'))['boot_scrub']
 
-    @asynccontextmanager
-    async def __toggle_rootfs_readwrite(self):
-        mnt = await self.middleware.call('filesystem.mount_info', [['mountpoint', '=', '/']], {'get': True})
-        if 'RO' in mnt['super_opts']:
-            try:
-                await self.middleware.call('zfs.dataset.update', mnt['mount_source'], {
-                    "properties": {"readonly": {"parsed": False}}
-                })
-                yield
-            finally:
-                await self.middleware.call('zfs.dataset.update', mnt['mount_source'], {
-                    "properties": {"readonly": {"parsed": True}}
-                })
-        else:
-            yield
-
     @accepts(Dict(
         'options',
         Str('database', default=None, null=True),
@@ -242,19 +225,18 @@ class BootService(Service):
         """
         Returns true if initramfs was updated and false otherwise.
         """
-        async with self.__toggle_rootfs_readwrite():
-            args = ['/']
-            if options['database']:
-                args.extend(['-d', options['database']])
-            if options['force']:
-                args.extend(['-f'])
+        args = ['/']
+        if options['database']:
+            args.extend(['-d', options['database']])
+        if options['force']:
+            args.extend(['-f'])
 
-            cp = await run(
-                '/usr/local/bin/truenas-initrd.py', *args,
-                encoding='utf8', errors='ignore', check=False
-            )
-            if cp.returncode > 1:
-                raise CallError(f'Failed to update initramfs: {cp.stderr}')
+        cp = await run(
+            '/usr/local/bin/truenas-initrd.py', *args,
+            encoding='utf8', errors='ignore', check=False
+        )
+        if cp.returncode > 1:
+            raise CallError(f'Failed to update initramfs: {cp.stdout} {cp.stderr}')
 
         return cp.returncode == 1
 
