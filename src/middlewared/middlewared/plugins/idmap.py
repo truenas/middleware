@@ -5,7 +5,9 @@ import datetime
 import wbclient
 
 from middlewared.schema import accepts, Bool, Dict, Int, Password, Patch, Ref, Str, LDAP_DN, OROperator
-from middlewared.service import CallError, CRUDService, job, private, ValidationErrors, filterable
+from middlewared.service import (
+    CallError, CRUDService, job, private, ValidationErrors, filterable, filterable_api_method
+)
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.directoryservices.constants import SSL
 from middlewared.utils.directoryservices.constants import DSType as DirectoryServiceType
@@ -326,8 +328,7 @@ class IdmapDomainService(CRUDService):
         await self.middleware.call('zfs.snapshot.create', {'dataset': f'{sysdataset}/samba4',
                                                            'name': f'wbc-{ts}'})
 
-    @private
-    @filterable
+    @filterable_api_method(private=True)
     def known_domains(self, query_filters, query_options):
         try:
             entries = [entry.domain_info() for entry in WBClient().all_domains()]
@@ -344,8 +345,7 @@ class IdmapDomainService(CRUDService):
 
         return filter_list(entries, query_filters, query_options)
 
-    @private
-    @filterable
+    @filterable_api_method(private=True)
     def online_status(self, query_filters, query_options):
         try:
             all_info = self.known_domains()
@@ -1123,8 +1123,7 @@ class IdmapDomainService(CRUDService):
             'sid': sid
         }
 
-    @private
-    @filterable
+    @filterable_api_method(private=True)
     async def builtins(self, filters, options):
         out = []
         idmap_backend = await self.middleware.call("smb.getparm", "idmap config * : backend", "GLOBAL")

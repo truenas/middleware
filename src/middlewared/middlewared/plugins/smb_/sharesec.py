@@ -2,7 +2,7 @@ import os
 
 from base64 import b64encode, b64decode
 from middlewared.plugins.sysdataset import SYSDATASET_PATH
-from middlewared.service import filterable, periodic, private, CRUDService
+from middlewared.service import filterable_api_method, periodic, Service
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import filter_list
 from middlewared.utils.security_descriptor import (
@@ -55,14 +55,13 @@ def dup_share_acl(src: str, dst: str) -> None:
     store_share_acl(dst, val)
 
 
-class ShareSec(CRUDService):
+class ShareSec(Service):
 
     class Config:
         namespace = 'smb.sharesec'
-        cli_namespace = 'sharing.smb.sharesec'
         private = True
 
-    @filterable
+    @filterable_api_method(private=True)
     def entries(self, filters, options):
         # TDB file contains INFO/version key that we don't want to return
         try:
@@ -142,7 +141,6 @@ class ShareSec(CRUDService):
             {'cifs_share_acl': share_sd_bytes}
         )
 
-    @private
     def flush_share_info(self):
         """
         Write stored share acls to share_info.tdb. This should only be called
