@@ -137,6 +137,16 @@ class AppService(Service):
         if app['upgrade_available'] is False:
             raise CallError(f'No upgrade available for {app_name!r}')
 
+        if app['custom_app']:
+            return {
+                'latest_version': app['version'],
+                'latest_human_version': app['human_version'],
+                'upgrade_version': app['version'],
+                'upgrade_human_version': app['human_version'],
+                'changelog': 'Image updates are available for this app',
+                'available_versions_for_upgrade': [],
+            }
+
         versions_config = await self.get_versions(app, options)
         return {
             'latest_version': versions_config['latest_version']['version'],
