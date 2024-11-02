@@ -1072,8 +1072,22 @@ class InterfaceService(CRUDService):
                 # newly created laggs.
                 if not update:
                     if data.get('failover_critical') and data.get('lag_protocol') == 'FAILOVER':
-                        msg = 'A lagg interface using the "Failover" protocol '
+                        msg = 'A bond interface using the "Failover" protocol '
                         msg += 'is not allowed to be marked critical for failover.'
+                        verrors.add(f'{schema_name}.failover_critical', msg)
+                    elif virtual_node_ips == 0 and data.get('failover_critical'):
+                        # We allow "empty" bond configurations because, most often times,
+                        # the user will put vlans on top of it. However, some users
+                        # will mark the bond interface as critical for failover and
+                        # will NOT mark the child interfaces critical for failover. This
+                        # paints the false impression that when the bond goes down, a
+                        # failover event will be generated. This is not the case because
+                        # we act upon network events for generating failover events. If
+                        # the bond has no IP address, then it will not generate a failover
+                        # event and because the child interface isn't marked critical for
+                        # failover, a failover will not take place.
+                        msg = 'A bond interface that is marked critical for failover must'
+                        msg += ' have ip addresses configured.'
                         verrors.add(f'{schema_name}.failover_critical', msg)
 
     def __validate_aliases(self, verrors, schema_name, data, ifaces):
