@@ -10,6 +10,8 @@ It is up to script implementation to handle both calls and perform the record cr
 """
 import logging
 
+from middlewared.api import api_method
+from middlewared.api.current import ACMECustomDNSAuthenticatorReturns, ShellSchemaArgs
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Dict, Str, File, Int
 from middlewared.service import CallError, skip_arg, ValidationErrors
@@ -33,6 +35,7 @@ class ShellAuthenticator(Authenticator):
         Int('timeout', default=60, title='Timeout'),
         Int('delay', default=60, title='Propagation delay'),
     )
+    SCHEMA_MODEL = ShellSchemaArgs
 
     def initialize_credentials(self):
         self.script = self.attributes['script']
@@ -41,7 +44,7 @@ class ShellAuthenticator(Authenticator):
         self.PROPAGATION_DELAY = self.attributes['delay']
 
     @staticmethod
-    @accepts(SCHEMA)
+    @api_method(ShellSchemaArgs, ACMECustomDNSAuthenticatorReturns)
     @skip_arg(count=1)
     async def validate_credentials(middleware, data):
         # We would like to validate the following bits:

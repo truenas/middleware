@@ -1,4 +1,5 @@
 from middlewared.api import api_method
+from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.api.current import ACMEDNSAuthenticatorSchemasArgs, ACMEDNSAuthenticatorSchemasResult
 from middlewared.service import private, Service
 
@@ -21,10 +22,10 @@ class DNSAuthenticatorService(Service):
         required for connecting to them while validating a DNS Challenge
         """
         return [
-            {'schema': [v.to_json_schema() for v in value.attrs.values()], 'key': key}
-            for key, value in self.schemas.items()
+            {'schema': get_json_schema(model), 'key': key}
+            for key, model in self.schemas.items()
         ]
 
     @private
     def get_authenticator_schemas(self):
-        return {k: klass.SCHEMA for k, klass in auth_factory.get_authenticators().items()}
+        return {k: klass.SCHEMA_MODEL for k, klass in auth_factory.get_authenticators().items()}

@@ -3,6 +3,8 @@ import logging
 from lexicon.providers.ovh import ENDPOINTS
 from certbot_dns_ovh._internal.dns_ovh import _OVHLexiconClient
 
+from middlewared.api import api_method
+from middlewared.api.current import OVHSchemaArgs, ACMECustomDNSAuthenticatorReturns
 from middlewared.schema import accepts, Dict, Password, Str
 from middlewared.service import skip_arg
 
@@ -24,6 +26,7 @@ class OVHAuthenticator(Authenticator):
         Str('consumer_key', empty=False, null=False, title='OVH Consumer Key', required=True),
         Str('endpoint', empty=False, default='ovh-eu', title='OVH Endpoint', enum=OVH_ENDPOINTS, required=True),
     )
+    SCHEMA_MODEL = OVHSchemaArgs
 
     def initialize_credentials(self):
         self.application_key = self.attributes.get('application_key')
@@ -32,7 +35,7 @@ class OVHAuthenticator(Authenticator):
         self.endpoint = self.attributes.get('endpoint')
 
     @staticmethod
-    @accepts(SCHEMA)
+    @api_method(OVHSchemaArgs, ACMECustomDNSAuthenticatorReturns)
     @skip_arg(count=1)
     async def validate_credentials(middleware, data):
         return data
