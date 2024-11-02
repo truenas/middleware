@@ -13,7 +13,6 @@ import logging
 from middlewared.api import api_method
 from middlewared.api.current import ACMECustomDNSAuthenticatorReturns, ShellSchemaArgs
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.schema import accepts, Dict, Str, File, Int
 from middlewared.service import CallError, skip_arg, ValidationErrors
 from middlewared.utils.user_context import run_command_with_user_context
 
@@ -27,14 +26,6 @@ class ShellAuthenticator(Authenticator):
 
     NAME = 'shell'
     PROPAGATION_DELAY = 60
-
-    SCHEMA = Dict(
-        'shell',
-        File('script', required=True, empty=False, title='Authenticator script'),
-        Str('user', default='nobody', title='Running user', empty=False),
-        Int('timeout', default=60, title='Timeout'),
-        Int('delay', default=60, title='Propagation delay'),
-    )
     SCHEMA_MODEL = ShellSchemaArgs
 
     def initialize_credentials(self):

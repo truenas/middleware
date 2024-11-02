@@ -7,7 +7,6 @@ from botocore import exceptions as boto_exceptions
 
 from middlewared.api import api_method
 from middlewared.api.current import ACMECustomDNSAuthenticatorReturns, Route53SchemaArgs
-from middlewared.schema import accepts, Dict, Password, Str
 from middlewared.service import CallError, skip_arg
 
 from .base import Authenticator
@@ -16,11 +15,6 @@ from .base import Authenticator
 class Route53Authenticator(Authenticator):
 
     NAME = 'route53'
-    SCHEMA = Dict(
-        'route53',
-        Str('access_key_id', required=True, empty=False, title='Access Key Id'),
-        Password('secret_access_key', required=True, empty=False, title='Secret Access Key'),
-    )
     SCHEMA_MODEL = Route53SchemaArgs
 
     def initialize_credentials(self):

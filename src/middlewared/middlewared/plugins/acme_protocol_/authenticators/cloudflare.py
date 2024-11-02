@@ -4,7 +4,7 @@ from certbot_dns_cloudflare._internal.dns_cloudflare import _CloudflareClient
 
 from middlewared.api import api_method
 from middlewared.api.current import CloudFlareSchemaArgs, ACMECustomDNSAuthenticatorReturns
-from middlewared.schema import accepts, Dict, Password, Str, ValidationErrors
+from middlewared.schema import ValidationErrors
 from middlewared.service import skip_arg
 
 from .base import Authenticator
@@ -17,12 +17,6 @@ class CloudFlareAuthenticator(Authenticator):
 
     NAME = 'cloudflare'
     PROPAGATION_DELAY = 60
-    SCHEMA = Dict(
-        'cloudflare',
-        Str('cloudflare_email', empty=False, null=True, title='Cloudflare Email'),
-        Password('api_key', empty=False, null=True, title='API Key'),
-        Password('api_token', empty=False, null=True, title='API Token'),
-    )
     SCHEMA_MODEL = CloudFlareSchemaArgs
 
     def initialize_credentials(self):
