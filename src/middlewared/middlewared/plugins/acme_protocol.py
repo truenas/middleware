@@ -4,9 +4,9 @@ import requests
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ACMERegistrationCreateArgs, ACMERegistrationCreateResult, DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult,
-    DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult, DNSAuthenticatorDeleteArgs, DNSAuthenticatorDeleteResult,
-    ACMERegistrationEntry, ACMEDNSAuthenticatorEntry,
+    ACMERegistrationCreateArgs, ACMERegistrationCreateResult, ACMERegistrationEntry, ACMEDNSAuthenticatorEntry,
+    ACMEDNSAuthenticatorCreateArgs, ACMEDNSAuthenticatorCreateResult, ACMEDNSAuthenticatorUpdateArgs,
+    ACMEDNSAuthenticatorUpdateResult, ACMEDNSAuthenticatorDeleteArgs, ACMEDNSAuthenticatorDeleteResult,
 )
 from middlewared.schema import ValidationErrors
 from middlewared.service import CallError, CRUDService, private
@@ -226,7 +226,7 @@ class DNSAuthenticatorService(CRUDService):
 
         verrors.check()
 
-    @api_method(DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult)
+    @api_method(ACMEDNSAuthenticatorCreateArgs, ACMEDNSAuthenticatorCreateResult)
     async def do_create(self, data):
         """
         Create a DNS Authenticator
@@ -263,7 +263,7 @@ class DNSAuthenticatorService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult)
+    @api_method(ACMEDNSAuthenticatorUpdateArgs, ACMEDNSAuthenticatorUpdateResult)
     async def do_update(self, id_, data):
         """
         Update DNS Authenticator of `id`
@@ -304,7 +304,7 @@ class DNSAuthenticatorService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(DNSAuthenticatorDeleteArgs, DNSAuthenticatorDeleteResult)
+    @api_method(ACMEDNSAuthenticatorDeleteArgs, ACMEDNSAuthenticatorDeleteResult)
     async def do_delete(self, id_):
         """
         Delete DNS Authenticator of `id`

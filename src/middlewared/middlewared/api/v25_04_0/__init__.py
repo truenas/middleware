@@ -1,4 +1,5 @@
 from .acl import *  # noqa
+from .acme_dns_authenticator import *  # noqa
 from .acme_registration import *  # noqa
 from .alert import *  # noqa
 from .alertservice import *  # noqa
