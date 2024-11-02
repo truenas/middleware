@@ -30,6 +30,7 @@ class CloudFlareSchema(BaseModel):
     api_key: Secret[NonEmptyString] = Field(..., description='API Key')
     api_token: Secret[NonEmptyString] = Field(..., description='API Token')
 
+
 @single_argument_args('attributes')
 class CloudFlareSchemaArgs(CloudFlareSchema):
     pass
