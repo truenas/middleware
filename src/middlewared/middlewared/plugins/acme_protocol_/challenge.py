@@ -3,7 +3,8 @@ import json
 
 from acme import messages
 
-from middlewared.schema import accepts, Dict, Int, Str
+from middlewared.api import api_method
+from middlewared.api.current import ACMEDNSAuthenticatorPerformChallengeArgs, ACMEDNSAuthenticatorPerformChallengeResult
 from middlewared.service import private, Service
 
 from .authenticators.factory import auth_factory
@@ -14,16 +15,7 @@ class DNSAuthenticatorService(Service):
     class Config:
         namespace = 'acme.dns.authenticator'
 
-    @accepts(
-        Dict(
-            'perform_challenge',
-            Int('authenticator', required=True),
-            Str('key', required=True, max_length=None),
-            Str('domain', required=True),
-            Str('challenge', required=True, max_length=None),
-        )
-    )
-    @private
+    @api_method(ACMEDNSAuthenticatorPerformChallengeArgs, ACMEDNSAuthenticatorPerformChallengeResult, private=True)
     def perform_challenge(self, data):
         authenticator = self.get_authenticator(data['authenticator'])
         authenticator.perform(*self.get_validation_parameters(data['challenge'], data['domain'], data['key']))

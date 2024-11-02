@@ -1,12 +1,14 @@
 from pydantic import ConfigDict, Field, Secret
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, single_argument_args, ForUpdateMetaclass
-
+from middlewared.api.base import (
+    BaseModel, Excluded, excluded_field, single_argument_args, ForUpdateMetaclass, LongString,
+)
 
 __all__ = [
     'ACMEDNSAuthenticatorEntry', 'ACMEDNSAuthenticatorCreateArgs', 'ACMEDNSAuthenticatorCreateResult',
     'ACMEDNSAuthenticatorUpdateArgs', 'ACMEDNSAuthenticatorUpdateResult', 'ACMEDNSAuthenticatorDeleteArgs',
     'ACMEDNSAuthenticatorDeleteResult', 'ACMEDNSAuthenticatorSchemasArgs', 'ACMEDNSAuthenticatorSchemasResult',
+    'ACMEDNSAuthenticatorPerformChallengeArgs', 'ACMEDNSAuthenticatorPerformChallengeResult',
 ]
 
 
@@ -46,6 +48,18 @@ class ACMEDNSAuthenticatorDeleteArgs(BaseModel):
 
 class ACMEDNSAuthenticatorDeleteResult(BaseModel):
     result: bool
+
+
+@single_argument_args('acme_dns_authenticator_performance_challenge')
+class ACMEDNSAuthenticatorPerformChallengeArgs(BaseModel):
+    authenticator: int
+    key: LongString
+    domain: str
+    challenge: LongString
+
+
+class ACMEDNSAuthenticatorPerformChallengeResult(BaseModel):
+    result: None
 
 
 ### Custom ACME DNS Authenticator Schemas
