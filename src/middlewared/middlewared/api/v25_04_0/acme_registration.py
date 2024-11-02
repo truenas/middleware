@@ -1,13 +1,10 @@
-from pydantic import ConfigDict, Field, Secret
+from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, single_argument_args, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, single_argument_args
 
 
 __all__ = [
-    'ACMERegistrationCreateArgs', 'ACMERegistrationCreateResult', 'DNSAuthenticatorUpdateArgs',
-    'DNSAuthenticatorUpdateResult', 'DNSAuthenticatorCreateArgs', 'DNSAuthenticatorCreateResult',
-    'DNSAuthenticatorDeleteArgs', 'DNSAuthenticatorDeleteResult', 'DNSAuthenticatorSchemasArgs',
-    'DNSAuthenticatorSchemasResult', 'ACMERegistrationEntry', 'ACMEDNSAuthenticatorEntry',
+    'ACMERegistrationCreateArgs', 'ACMERegistrationCreateResult', 'ACMERegistrationEntry',
 ]
 
 
@@ -27,37 +24,6 @@ class ACMERegistrationEntry(BaseModel):
     revoke_cert_uri: str
 
 
-class ACMEDNSAuthenticatorEntry(BaseModel):
-    id: int
-    authenticator: str
-    attributes: Secret[dict]
-    name: str
-
-
-class DNSAuthenticatorCreate(ACMEDNSAuthenticatorEntry):
-    id: Excluded = excluded_field()
-
-
-class DNSAuthenticatorUpdate(DNSAuthenticatorCreate, metaclass=ForUpdateMetaclass):
-    authenticator: Excluded = excluded_field()
-
-
-class DNSAuthenticatorAttributeSchema(BaseModel):
-    _name_: str
-    title: str
-    _required_: bool
-
-    model_config = ConfigDict(extra='allow')  # FIXME: Remove this once we have proper schema
-
-
-class DNSAuthenticatorSchemaEntry(BaseModel):
-    key: str
-    schema_: list[DNSAuthenticatorAttributeSchema] = Field(..., alias='schema')
-
-
-###################   Arguments   ###################
-
-
 @single_argument_args('acme_registration_create')
 class ACMERegistrationCreateArgs(BaseModel):
     tos: bool = False
@@ -65,41 +31,5 @@ class ACMERegistrationCreateArgs(BaseModel):
     acme_directory_uri: str
 
 
-class DNSAuthenticatorCreateArgs(BaseModel):
-    dns_authenticator_create: DNSAuthenticatorCreate
-
-
-class DNSAuthenticatorUpdateArgs(BaseModel):
-    id: int
-    dns_authenticator_update: DNSAuthenticatorUpdate
-
-
-class DNSAuthenticatorDeleteArgs(BaseModel):
-    id: int
-
-
-class DNSAuthenticatorSchemasArgs(BaseModel):
-    pass
-
-
-###################   Returns   ###################
-
-
 class ACMERegistrationCreateResult(BaseModel):
     result: ACMERegistrationEntry
-
-
-class DNSAuthenticatorCreateResult(BaseModel):
-    result: ACMEDNSAuthenticatorEntry
-
-
-class DNSAuthenticatorUpdateResult(BaseModel):
-    result: ACMEDNSAuthenticatorEntry
-
-
-class DNSAuthenticatorDeleteResult(BaseModel):
-    result: bool
-
-
-class DNSAuthenticatorSchemasResult(BaseModel):
-    result: list[DNSAuthenticatorSchemaEntry]

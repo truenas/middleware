@@ -32,7 +32,7 @@ class ACMEDNSAuthenticatorUpdate(ACMEDNSAuthenticatorEntry, metaclass=ForUpdateM
 
 
 class ACMEDNSAuthenticatorUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
-    id: Excluded = excluded_field()
+    id: int
     dns_authenticator_update: ACMEDNSAuthenticatorUpdate
 
 
