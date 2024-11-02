@@ -18,10 +18,64 @@ __all__ = [
 ]
 
 
+### Custom ACME DNS Authenticator Schemas
+
+
+class ACMECustomDNSAuthenticatorReturns(BaseModel):
+    result: dict
+
+
+class CloudFlareSchema(BaseModel):
+    cloudflare_email: NonEmptyString = Field(..., description='Cloudflare Email')
+    api_key: Secret[NonEmptyString] = Field(..., description='API Key')
+    api_token: Secret[NonEmptyString] = Field(..., description='API Token')
+
+@single_argument_args('attributes')
+class CloudFlareSchemaArgs(CloudFlareSchema):
+    pass
+
+
+class OVHSchema(BaseModel):
+    application_key: NonEmptyString = Field(..., description='OVH Application Key')
+    application_secret: NonEmptyString = Field(..., description='OVH Application Secret')
+    consumer_key: NonEmptyString = Field(..., description='OVH Consumer Key')
+    endpoint: Literal[tuple(ENDPOINTS.keys())] = Field(..., description='OVH Endpoint')
+
+
+@single_argument_args('attributes')
+class OVHSchemaArgs(OVHSchema):
+    pass
+
+
+class Route53Schema(BaseModel):
+    access_key_id: NonEmptyString = Field(..., description='AWS Access Key ID')
+    secret_access_key: NonEmptyString = Field(..., description='AWS Secret Access Key')
+
+
+@single_argument_args('attributes')
+class Route53SchemaArgs(Route53Schema):
+    pass
+
+
+class ShellSchema(BaseModel):
+    script: FilePath = Field(..., description='Authentication Script')
+    user: NonEmptyString = Field(description='Running user', default='nobody')
+    timeout: conint(ge=5) = Field(description='Script Timeout', default=60)
+    delay: conint(ge=10) = Field(description='Propagation delay', default=60)
+
+
+@single_argument_args('attributes')
+class ShellSchemaArgs(ShellSchema):
+    pass
+
+
+## ACME DNS Authenticator
+
+
 class ACMEDNSAuthenticatorEntry(BaseModel):
     id: int
     authenticator: str
-    attributes: Secret[dict]
+    attributes: Secret[CloudFlareSchema | OVHSchema | Route53Schema | ShellSchema]
     name: str
 
 
@@ -37,6 +91,7 @@ class ACMEDNSAuthenticatorCreateResult(BaseModel):
 class ACMEDNSAuthenticatorUpdate(ACMEDNSAuthenticatorEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     authenticator: Excluded = excluded_field()
+    attributes: dict
 
 
 class ACMEDNSAuthenticatorUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
@@ -68,53 +123,17 @@ class ACMEDNSAuthenticatorPerformChallengeResult(BaseModel):
     result: None
 
 
-### Custom ACME DNS Authenticator Schemas
-
-
-class ACMECustomDNSAuthenticatorReturns(BaseModel):
-    result: dict
-
-
-@single_argument_args('cloudflare')
-class CloudFlareSchemaArgs(BaseModel):
-    cloudflare_email: NonEmptyString = Field(..., description='Cloudflare Email')
-    api_key: Secret[NonEmptyString] = Field(..., description='API Key')
-    api_token: Secret[NonEmptyString] = Field(..., description='API Token')
-
-
-@single_argument_args('ovh')
-class OVHSchemaArgs(BaseModel):
-    application_key: NonEmptyString = Field(..., description='OVH Application Key')
-    application_secret: NonEmptyString = Field(..., description='OVH Application Secret')
-    consumer_key: NonEmptyString = Field(..., description='OVH Consumer Key')
-    endpoint: Literal[tuple(ENDPOINTS.keys())] = Field(..., description='OVH Endpoint')
-
-
-@single_argument_args('route53')
-class Route53SchemaArgs(BaseModel):
-    access_key_id: NonEmptyString = Field(..., description='AWS Access Key ID')
-    secret_access_key: NonEmptyString = Field(..., description='AWS Secret Access Key')
-
-
-@single_argument_args('shell')
-class ShellSchemaArgs(BaseModel):
-    script: FilePath = Field(..., description='Authentication Script')
-    user: NonEmptyString = Field(description='Running user', default='nobody')
-    timeout: conint(ge=5) = Field(description='Script Timeout', default=60)
-    delay: conint(ge=10) = Field(description='Propagation delay', default=60)
-
-
 class ACMEDNSAuthenticatorAttributeSchema(BaseModel):
     _name_: str
     title: str
     _required_: bool
 
-    model_config = ConfigDict(extra='allow')  # FIXME: Remove this once we have proper schema
+    model_config = ConfigDict(extra='allow')
 
 
 class ACMEDNSAuthenticatorSchema(BaseModel):
     key: str
-    schema_: list[ACMEDNSAuthenticatorAttributeSchema] = Field(..., alias='schema')
+    schema_: ACMEDNSAuthenticatorAttributeSchema = Field(..., alias='schema')
 
 
 class ACMEDNSAuthenticatorSchemasArgs(BaseModel):

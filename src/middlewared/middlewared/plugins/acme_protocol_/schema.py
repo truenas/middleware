@@ -22,7 +22,7 @@ class DNSAuthenticatorService(Service):
         required for connecting to them while validating a DNS Challenge
         """
         return [
-            {'schema': get_json_schema(model), 'key': key}
+            {'schema': get_json_schema(model)[0], 'key': key}
             for key, model in self.schemas.items()
         ]
 
