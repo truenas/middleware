@@ -82,6 +82,7 @@ class ACMEDNSAuthenticatorEntry(BaseModel):
 @single_argument_args('dns_authenticator_create')
 class ACMEDNSAuthenticatorCreateArgs(ACMEDNSAuthenticatorEntry):
     id: Excluded = excluded_field()
+    attributes: dict
 
 
 class ACMEDNSAuthenticatorCreateResult(BaseModel):
