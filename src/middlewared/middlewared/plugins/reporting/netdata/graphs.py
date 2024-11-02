@@ -142,69 +142,230 @@ class UptimePlugin(GraphBase):
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return 'system.uptime'
 
-# TODO: Revisit these zfs plugins and see the maximum parity we can achieve with old stats
-#  we were collecting
 
-
-class ARCActualRatePlugin(GraphBase):
-
-    title = 'ZFS Actual Cache Hits Rate'
+class ARCFreeMemoryPlugin(GraphBase):
+    title = 'ARC Free Memory'
     uses_identifiers = False
-    vertical_label = 'Events/s'
+    vertical_label = 'bytes'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return 'zfs.actual_hits_rate'
+        return 'truenas_arcstats.free'
 
 
-class ARCRatePlugin(GraphBase):
-
-    title = 'ZFS ARC Hits Rate'
+class ARCAvailableMemoryPlugin(GraphBase):
+    title = 'ARC Available Memory'
     uses_identifiers = False
-    vertical_label = 'Events/s'
+    vertical_label = 'bytes'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return 'zfs.hits_rate'
+        return 'truenas_arcstats.avail'
 
 
 class ARCSizePlugin(GraphBase):
-
-    title = 'ZFS ARC Size'
+    title = 'ARC Size'
     uses_identifiers = False
-    vertical_label = 'Mebibytes'
-
-    LABEL_MAPPING = {
-        'arcsz': 'arc_size',
-    }
+    vertical_label = 'bytes'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return 'zfs.arc_size'
-
-    def query_parameters(self) -> dict:
-        return super().query_parameters() | {
-            'dimensions': 'arcsz',
-        }
-
-    def normalize_metrics(self, metrics) -> dict:
-        metrics = super().normalize_metrics(metrics)
-        metrics['legend'] = [self.LABEL_MAPPING.get(legend, legend) for legend in metrics['legend']]
-        return metrics
+        return 'truenas_arcstats.size'
 
 
-class ARCResultPlugin(GraphBase):
+class DemandAccessesPerSecondPlugin(GraphBase):
+    title = 'Demand Accesses per Second'
+    uses_identifiers = False
+    vertical_label = 'accesses/s'
 
-    title = 'ZFS ARC Result'
-    vertical_label = 'Percentage'
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.dread'
 
-    IDENTIFIER_MAPPING = {
-        'demand_data': 'zfs.demand_data_hits',
-        'prefetch_data': 'zfs.prefetch_data_hits',
-    }
 
-    async def get_identifiers(self) -> typing.Optional[list]:
-        return list(self.IDENTIFIER_MAPPING.keys())
+class DemandDataAccessesPerSecondPlugin(GraphBase):
+    title = 'Demand Data Accesses per Second'
+    uses_identifiers = False
+    vertical_label = 'accesses/s'
 
-    def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return self.IDENTIFIER_MAPPING[identifier]
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.ddread'
+
+
+class DemandMetadataAccessesPerSecondPlugin(GraphBase):
+    title = 'Demand Metadata Accesses per Second'
+    uses_identifiers = False
+    vertical_label = 'accesses/s'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.dmread'
+
+
+class DemandDataHitsPerSecondPlugin(GraphBase):
+    title = 'Demand Data Hits per Second'
+    uses_identifiers = False
+    vertical_label = 'hits/s'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.ddhit'
+
+
+class DemandDataIOHitsPerSecondPlugin(GraphBase):
+    title = 'Demand Data I/O Hits per Second'
+    uses_identifiers = False
+    vertical_label = 'hits/s'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.ddioh'
+
+
+class DemandDataMissesPerSecondPlugin(GraphBase):
+    title = 'Demand Data Misses per Second'
+    uses_identifiers = False
+    vertical_label = 'misses/s'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.ddmis'
+
+
+class DemandDataHitPercentagePlugin(GraphBase):
+    title = 'Demand Data Hit Percentage'
+    uses_identifiers = False
+    vertical_label = 'hit%'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.ddh_p'
+
+
+class DemandDataIOHitPercentagePlugin(GraphBase):
+    title = 'Demand Data I/O Hit Percentage'
+    uses_identifiers = False
+    vertical_label = 'hit%'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.ddi_p'
+
+
+class DemandDataMissPercentagePlugin(GraphBase):
+    title = 'Demand Data Miss Percentage'
+    uses_identifiers = False
+    vertical_label = 'misses%'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.ddm_p'
+
+
+class DemandMetadataHitsPerSecondPlugin(GraphBase):
+    title = 'Demand Metadata Hits per Second'
+    uses_identifiers = False
+    vertical_label = 'hits/s'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.dmhit'
+
+
+class DemandMetadataIOHitsPerSecondPlugin(GraphBase):
+    title = 'Demand Metadata I/O Hits per Second'
+    uses_identifiers = False
+    vertical_label = 'hits/s'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.dmioh'
+
+
+class DemandMetadataMissesPerSecondPlugin(GraphBase):
+    title = 'Demand Metadata Misses per Second'
+    uses_identifiers = False
+    vertical_label = 'misses/s'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.dmmis'
+
+
+class DemandMetadataHitPercentagePlugin(GraphBase):
+    title = 'Demand Metadata Hit Percentage'
+    uses_identifiers = False
+    vertical_label = 'hit%'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.dmh_p'
+
+
+class DemandMetadataIOHitPercentagePlugin(GraphBase):
+    title = 'Demand Metadata I/O Hit Percentage'
+    uses_identifiers = False
+    vertical_label = 'hit%'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.dmi_p'
+
+
+class DemandMetadataMissPercentagePlugin(GraphBase):
+    title = 'Demand Metadata Miss Percentage'
+    uses_identifiers = False
+    vertical_label = 'misses%'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.dmm_p'
+
+
+class L2ARCHHitsPerSecondPlugin(GraphBase):
+    title = 'L2ARC Hits per Second'
+    uses_identifiers = False
+    vertical_label = 'hits/s'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.l2hits'
+
+
+class L2ARCMissesPerSecondPlugin(GraphBase):
+    title = 'L2ARC Misses per Second'
+    uses_identifiers = False
+    vertical_label = 'misses/s'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.l2miss'
+
+
+class TotalL2ARCAccessesPerSecondPlugin(GraphBase):
+    title = 'Total L2ARC Accesses per Second'
+    uses_identifiers = False
+    vertical_label = 'accesses/s'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.l2read'
+
+
+class L2ARCHitPercentagePlugin(GraphBase):
+    title = 'L2ARC Hit Percentage'
+    uses_identifiers = False
+    vertical_label = 'hit%'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.l2hit_p'
+
+
+class L2ARCMissPercentagePlugin(GraphBase):
+    title = 'L2ARC Miss Percentage'
+    uses_identifiers = False
+    vertical_label = 'misses%'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.l2miss_p'
+
+
+class L2ARCBytesReadPerSecondPlugin(GraphBase):
+    title = 'L2ARC Bytes Read per Second'
+    uses_identifiers = False
+    vertical_label = 'bytes/s'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.l2bytes'
+
+
+class L2ARCBytesWrittenPerSecondPlugin(GraphBase):
+    title = 'L2ARC Bytes Written per Second'
+    uses_identifiers = False
+    vertical_label = 'bytes/s'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_arcstats.l2wbytes'
 
 
 class DiskTempPlugin(GraphBase):

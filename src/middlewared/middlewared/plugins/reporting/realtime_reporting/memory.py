@@ -30,7 +30,7 @@ def get_memory_info(netdata_metrics: dict) -> dict:
             safely_retrieve_dimension(netdata_metrics, 'system.ram', 'free', 0), multiplier=1024 * 1024,
         ),
         'arc': normalize_value(
-            safely_retrieve_dimension(netdata_metrics, 'zfs.arc_size', 'size', 0), multiplier=1024 * 1024,
+            safely_retrieve_dimension(netdata_metrics, 'truenas_arcstats.size', 'size', 0),
         ),
         'apps': normalize_value(
             safely_retrieve_dimension(netdata_metrics, 'system.ram', 'used', 0), multiplier=1024 * 1024,
