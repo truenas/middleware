@@ -1,4 +1,4 @@
-from pydantic import Field, Secret
+from pydantic import ConfigDict, Field, Secret
 
 from middlewared.api.base import BaseModel, Excluded, excluded_field, single_argument_args, ForUpdateMetaclass
 
@@ -47,6 +47,8 @@ class DNSAuthenticatorAttributeSchema(BaseModel):
     title: str
     _required_: bool
 
+    model_config = ConfigDict(extra='allow')  # FIXME: Remove this once we have proper schema
+
 
 class DNSAuthenticatorSchemaEntry(BaseModel):
     key: str
@@ -59,7 +61,7 @@ class DNSAuthenticatorSchemaEntry(BaseModel):
 @single_argument_args('acme_registration_create')
 class ACMERegistrationCreateArgs(BaseModel):
     tos: bool = False
-    jwk_create: JWKCreate = Field(default=JWKCreate())
+    JWK_create: JWKCreate = Field(default=JWKCreate())
     acme_directory_uri: str
 
 
