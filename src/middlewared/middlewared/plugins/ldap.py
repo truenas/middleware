@@ -14,6 +14,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.plugins.ldap_.ldap_client import LdapClient
 from middlewared.plugins.ldap_ import constants
 from middlewared.utils.directoryservices.constants import DomainJoinResponse, DSStatus, DSType, SSL
+from middlewared.utils.directoryservices.ipa import ldap_dn_to_realm
 from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
 from middlewared.utils.directoryservices.krb5_constants import krb5ccache
 from middlewared.utils.directoryservices.krb5_error import KRB5Error
@@ -821,10 +822,10 @@ class LDAPService(ConfigService):
                 'kerberos.realm.query', [['id', '=', conf['kerberos_realm']]], {'get': True}
             ))['realm']
         elif conf['basedn']:
-            # No realm in ldap config and so we need to guess at it
-            realm = '.'.join(
-                [x.strip().strip('dc=') for x in conf['basedn'].split(',')]
-            ).upper()
+            # No realm in ldap config and so we need to guess it through the
+            # domain components of LDAP base DN.
+            if not (realm := ldap_dn_to_realm(conf['basedn']).upper()):
+                raise CallError(f'{conf["basedn"]}: failed to convert LDAP DN to realm')
         else:
             raise CallError('Unable to determine kerberos realm')
 
