@@ -58,6 +58,12 @@ async def restic(middleware, job, cloud_backup, dry_run):
         if cmd is None:
             cmd = [local_path]
 
+        match cloud_backup["transfer_setting"]:
+            case "PERFORMANCE":
+                cmd.extend(["--pack-size", "29"])
+            case "FAST_STORAGE":
+                cmd.extend(["--pack-size", "58", "--read-concurrency", "100"])
+
         if dry_run:
             cmd.append("-n")
 

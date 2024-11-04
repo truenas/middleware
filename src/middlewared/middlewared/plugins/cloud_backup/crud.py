@@ -2,7 +2,7 @@ from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel,
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_schema
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, Password, Patch
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, Password, Patch, Str
 from middlewared.service import pass_app, private, TaskPathService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
@@ -16,6 +16,7 @@ class CloudBackupModel(CloudTaskModelMixin, sa.Model):
 
     password = sa.Column(sa.EncryptedText())
     keep_last = sa.Column(sa.Integer())
+    transfer_setting = sa.Column(sa.String(16), default="DEFAULT")
 
 
 class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
@@ -74,6 +75,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         *cloud_task_schema,
         Password("password", required=True, empty=False),
         Int("keep_last", required=True, validators=[Range(min_=1)]),
+        Str("transfer_setting", enum=["DEFAULT", "PERFORMANCE", "FAST_STORAGE"], default="DEFAULT"),
         register=True,
     ))
     @pass_app(rest=True)
