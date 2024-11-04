@@ -63,18 +63,20 @@ class VirtGlobalGetNetworkResult(BaseModel):
 
 
 REMOTE_CHOICES: TypeAlias = Literal['LINUX_CONTAINERS']
+InstanceType: TypeAlias = Literal['CONTAINER', 'VM']
 
 
 @single_argument_args('virt_instances_image_choices')
 class VirtInstanceImageChoicesArgs(BaseModel):
     remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
+    instance_type: InstanceType = 'CONTAINER'
 
 
 class ImageChoiceItem(BaseModel):
     label: str
     os: str
     release: str
-    arch: str
+    archs: list[str]
     variant: str
 
 
@@ -150,9 +152,6 @@ class VirtInstanceAlias(BaseModel):
     type: Literal['INET', 'INET6']
     address: NonEmptyString
     netmask: int
-
-
-InstanceType: TypeAlias = Literal['CONTAINER', 'VM']
 
 
 class Image(BaseModel):

@@ -128,16 +128,20 @@ class VirtInstanceService(CRUDService):
 
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
-                data = await resp.json()
-                for v in data['products'].values():
+                for v in (await resp.json())['products'].values():
+                    if data['instance_type'] == 'CONTAINER' and v['arch'] != 'amd64':
+                        continue
                     alias = v['aliases'].split(',', 1)[0]
-                    choices[alias] = {
-                        'label': f'{v["os"]} {v["release"]} ({v["arch"]}, {v["variant"]})',
-                        'os': v['os'],
-                        'release': v['release'],
-                        'arch': v['arch'],
-                        'variant': v['variant'],
-                    }
+                    if alias not in choices:
+                        choices[alias] = {
+                            'label': f'{v["os"]} {v["release"]} ({v["arch"]}, {v["variant"]})',
+                            'os': v['os'],
+                            'release': v['release'],
+                            'archs': [v['arch']],
+                            'variant': v['variant'],
+                        }
+                    else:
+                        choices[alias]['archs'].append(v['arch'])
         return choices
 
     @api_method(VirtInstanceCreateArgs, VirtInstanceCreateResult)
