@@ -134,6 +134,7 @@ class VirtInstanceService(CRUDService):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 for v in (await resp.json())['products'].values():
+                    # For containers we only want images matching current platform
                     if data['instance_type'] == 'CONTAINER' and v['arch'] != current_arch:
                         continue
                     alias = v['aliases'].split(',', 1)[0]
