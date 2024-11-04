@@ -167,8 +167,7 @@ class EtcService(Service):
         },
         'pam': {
             'ctx': [
-                {'method': 'activedirectory.config'},
-                {'method': 'ldap.config'},
+                {'method': 'directoryservices.config'},
             ],
             'entries': [
                 {'type': 'mako', 'path': 'pam.d/common-account'},
@@ -324,8 +323,7 @@ class EtcService(Service):
         'ssh': {
             "ctx": [
                 {'method': 'ssh.config'},
-                {'method': 'activedirectory.config'},
-                {'method': 'ldap.config'},
+                {'method': 'directoryservices.config'},
                 {'method': 'auth.twofactor.config'},
                 {'method': 'interface.query'},
                 {'method': 'system.advanced.login_banner'},

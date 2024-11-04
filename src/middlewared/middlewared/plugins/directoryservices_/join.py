@@ -25,15 +25,8 @@ class DomainConnection(
         private = True
 
     def _get_enabled_ds(self):
-        ad = self.middleware.call_sync('datastore.config', 'directoryservice.activedirectory')
-        if ad['ad_enable']:
-            return DSType.AD
-
-        ldap = self.middleware.call_sync('datastore.config', 'directoryservice.ldap')
-        if ldap['ldap_enable'] is False:
-            return None
-
-        return DSType.IPA if ldap['ldap_server_type'] == SERVER_TYPE_FREEIPA else DSType.LDAP
+        dstype = self.midleware.call_sync('directoryservices.config')['dstype']
+        return DSType(dstype)
 
     def activate(self) -> int:
         """ Generate etc files and start services, then start cache fill job and return job id """
@@ -189,9 +182,44 @@ class DomainConnection(
 
         return is_joined_fn(ds_type, domain)
 
+    def join_status(self, ds_type_str: DSType, ds_config: dict) -> DomainJoinResponse:
+        """ External method to check whether we need to perform a domain join
+
+        Args:
+            ds_type: Type of directory service that is being tested. Choices
+                are DSType.AD and DSType.IPA
+            ds_config: `configuration` key from directoryservices.config output 
+
+        Returns:
+            DomainJoinResponse
+
+        Raises:
+            CallError
+            TypeError
+        """
+        ds_type = DSType(ds_type_str)
+
+        match ds_type:
+            case DSType.AD | DSType.IPA:
+                if self._test_is_joined(ds_type, ds_config['domainname'])
+                    return DomainJoinResponse.ALREADY_JOINED
+                else:
+                    return DomainJoinResponse.NOT_JOINED
+            case DSType.LDAP | DSType.STANDALONE:
+                # There is no real join process for openldap server
+                # and so just respond we're already joined.
+                return DomainJoinResponse.ALREADY_JOINED
+            case _:
+                raise CallError(f'{ds_type}: unknown DSType')
+
     @job(lock="directoryservices_join_leave")
     @kerberos_ticket
-    def join_domain(self, job: Job, ds_type_str: str, domain: str, force: bool = False) -> None:
+    def join_domain(
+        self, job: Job,
+        ds_type_str: str,
+        domain: str,
+        force: bool = False
+    ) -> DomainJoinResponse:
         """ Join an IPA or active directory domain
 
         Create TrueNAS account on remote domain controller (DC) and clean

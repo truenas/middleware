@@ -404,14 +404,15 @@ class NFSService(SystemServiceService):
             usernames with the short form of the AD domain. Directly update the db and regenerate
             the smb.conf to avoid having a service disruption due to restarting the samba server.
             """
-            ad_config = await self.middleware.call('activedirectory.config')
-            if ad_config['enable'] and not ad_config['use_default_domain']:
-                await self.middleware.call(
-                    'datastore.update', 'directoryservice.activedirectory', ad_config['id'],
-                    {'use_default_domain': True}, {'prefix': 'ad_'}
-                )
-                await self.middleware.call('etc.generate', 'smb')
-                await self.middleware.call('service.reload', 'idmap')
+            ds_config = await self.middleware.call('directoryservices.config')
+            if ds_config['enable'] and ds_config['dstype'] == DSType.AD: and not ad_config['use_default_domain']:
+                if not ds_config['configuration']['use_default_domain']:
+                    await self.middleware.call(
+                        'datastore.update', 'directoryservice.connection', ds_config['id'],
+                        {'ad_use_default_domain': True}
+                    )
+                    await self.middleware.call('etc.generate', 'smb')
+                    await self.middleware.call('service.reload', 'idmap')
 
         if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_domain"]:
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")

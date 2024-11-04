@@ -116,33 +116,22 @@ class SMBService(ConfigService):
         if self.middleware.call_sync('failover.status') not in ('SINGLE', 'MASTER'):
             return {'netbiosname': 'TN_STANDBY'}
 
-        if (ds_type := self.middleware.call_sync('directoryservices.status')['type']) is not None:
-            ds_type = DSType(ds_type)
+        ds_config = self.middleware.call_sync('directoryservices.config')
+        ds_type = DSType(ds_config['dstype'])
 
         match ds_type:
-            case DSType.AD:
-                ds_config = self.middleware.call_sync('activedirectory.config')
+            case DSType.AD | DSType.LDAP:
+                pass
             case DSType.IPA:
-                ds_config = self.middleware.call_sync('ldap.config')
                 try:
                     ipa_domain = self.middleware.call_sync('directoryservices.connection.ipa_get_smb_domain_info')
                 except Exception:
                     ipa_domain = None
-                try:
-                    ipa_config = self.middleware.call_sync('ldap.ipa_config')
-                except Exception:
-                    self.middleware.logger.warning(
-                        'Failed to retrieve IPA configuration. Disabling IPA SMB support',
-                        exc_info=True
-                    )
-                    ipa_config = {}
-                    ipa_domain = None
 
-                ds_config |= {'ipa_domain': ipa_domain, 'ipa_config': ipa_config}
-            case DSType.LDAP:
-                ds_config = self.middleware.call_sync('ldap.config')
+                ds_config |= {'ipa_domain': ipa_domain}
             case _:
                 ds_config = None
+                ds_type = None
 
         idmap_config = self.middleware.call_sync('idmap.query')
         smb_config = self.middleware.call_sync('smb.config')
@@ -392,16 +381,7 @@ class SMBService(ConfigService):
         if they are missing from the current running configuration.
         """
         job.set_progress(65, 'Initializing directory services')
-        ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']
-        if ad_enabled:
-            ldap_enabled = False
-        else:
-            ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
-
-        ds_job = await self.middleware.call(
-            "directoryservices.initialize",
-            {"activedirectory": ad_enabled, "ldap": ldap_enabled}
-        )
+        ds_job = await self.middleware.call('directoryservices.initialize')
         await ds_job.wait()
 
         job.set_progress(70, 'Checking SMB server status.')
@@ -1458,8 +1438,8 @@ class SharingSMBService(SharingService):
     @accepts(Dict('share_validate_payload', Str('name')), roles=['READONLY_ADMIN'])
     async def share_precheck(self, data):
         verrors = ValidationErrors()
-        ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']
-        if not ad_enabled:
+        ds_enabled = (await self.middleware.call('directoryservices.config'))['enable']
+        if not ds_enabled:
             local_smb_user_cnt = await self.middleware.call(
                 'user.query',
                 [['smb', '=', True], ['local', '=', True]],
@@ -1468,7 +1448,7 @@ class SharingSMBService(SharingService):
             if local_smb_user_cnt == 0:
                 verrors.add(
                     'sharing.smb.share_precheck',
-                    'TrueNAS server must be joined to Active Directory or have '
+                    'TrueNAS server must be joined to a directory service or have '
                     'at least one local SMB user before creating an SMB share.'
                 )
 

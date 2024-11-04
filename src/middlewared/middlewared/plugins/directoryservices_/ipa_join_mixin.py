@@ -50,7 +50,7 @@ class IPAJoinMixin:
 
     def _ipa_remove_kerberos_cert_config(self, job: Job | None, ldap_config: dict | None):
         if ldap_config is None:
-            ldap_config = self.middleware.call_sync('ldap.config')
+            ldap_config = self.middleware.call_sync('directoryservice.config')['configuration']
 
         if job:
             job.set_progress(80, 'Removing kerberos configuration.')
@@ -74,11 +74,11 @@ class IPAJoinMixin:
         """
         Leave the IPA domain
         """
-        ldap_config = self.middleware.call_sync('ldap.config')
-        ipa_config = self.middleware.call_sync('ldap.ipa_config', ldap_config)
+        config = self.middleware.call_sync('directoryservices.config')
+        ipa_config = config['configuration']
 
-        if ipa_config['domain'] != domain:
-            raise CallError(f'{domain}: TrueNAS is joined to {ipa_config["domain"]}')
+        if ipa_config['domainname'] != domain:
+            raise CallError(f'{domain}: TrueNAS is joined to {ipa_config["domainname"]}')
 
         job.set_progress(0, 'Deleting NFS and SMB service principals.')
         self._ipa_del_spn()
@@ -115,7 +115,7 @@ class IPAJoinMixin:
 
         ldap_update_job.wait_sync()
 
-        self._ipa_remove_kerberos_cert_config(job, ldap_config)
+        self._ipa_remove_kerberos_cert_config(job, ipa_config)
 
         job.set_progress(95, 'Removing privileges.')
         if (priv := self.middleware.call_sync('privilege.query', [

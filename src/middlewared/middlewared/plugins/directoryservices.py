@@ -2,15 +2,24 @@ import enum
 import struct
 
 from base64 import b64decode
-from middlewared.schema import accepts, Dict, List, OROperator, returns, Str
-from middlewared.service import no_authz_required, Service, private, job
+from middlewared.api import api_method
+from middlewared.api.current import (
+    DirectoryServicesEntry,
+    DirectoryServicesUpdateArgs, DirectoryServicesUpdateResult,
+    DirectoryServicesStatusArgs, DirectoryServicesStatusResult,
+    DirectoryServicesGetStateArgs, DirectoryServicesGetStateResult,
+)
+from middlewared.schema import accepts, List, OROperator, returns, Str
+from middlewared.service import ConfigService, private, job
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.directoryservices.constants import (
-    DSStatus, DSType, NSS_Info
+    DomainJoinResponse, DSStatus, DSType, NSS_Info
 )
+from middlewared.utils.directoryservices.krb5_constants import krb5ccache
 from middlewared.utils.directoryservices.health import DSHealthObj
 
-DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh']
+DEPENDENT_SHARING_SERVICES = frozenset(['smb', 'nfs', 'ftp'])
+DEPENDENT_SERVICES = frozenset(['ssh']) | DEPENDENT_SHARING_SERVICES
 
 
 class SSL(enum.Enum):
@@ -25,19 +34,124 @@ class SASL_Wrapping(enum.Enum):
     SEAL = 'SEAL'
 
 
-class DirectoryServices(Service):
+class DirectoryServices(ConfigService):
     class Config:
-        service = "directoryservices"
-        cli_namespace = "directory_service"
+        service = 'directoryservices'
+        datastore = 'directoryservice_configuration'
+        datastore_extend = 'directoryservices.extend'
+        cli_namespace = 'directory_service'
+        entry = DirectoryServicesEntry
+        role_prefix = 'DIRECTORY_SERVICE'
 
-    @no_authz_required
-    @accepts()
-    @returns(Dict(
-        'directoryservices_status',
-        Str('type', enum=[x.value for x in DSType], null=True),
-        Str('status', enum=[status.name for status in DSStatus], null=True),
-        Str('status_msg', null=True)
-    ))
+    @api_method(
+        DirectoryServicesUpdateArgs, DirectoryServicesUpdateResult,
+    )
+    @job(lock='directoryservices.update')
+    async def update(self, job, data):
+        old = await self.config()
+        new = await self.middleware.call('directoryservices.validate_and_clean', old, data)
+        ds = DSType(new['dstype'])
+
+        if ds is DSType.STANDALONE:
+            # Nothing to change if we're standalone.
+            return await self.config()
+
+        if not old['enable'] and new['enable']:
+            # START directory services
+            resp = await self.middleware.call('directoryservices.connection.is_joined')
+            if resp == DomainJoinResponse.NOT_JOINED:
+                # We're not joined to the directory service and so we need to perform join
+
+                # Only IPA and AD will respond with NOT_JOINED
+                assert ds in (DSType.AD, DSType.IPA), 'Unexpected DSType'
+
+                await self.middleware.call('directoryservices.health.set_state', ds, DSStatus.JOINING)
+                join = await self.middleware.call(
+                    'directoryservices.connection.join', ds, new['configuration']['domainname'],
+                )
+
+                try:
+                    resp = await job.wrap(join)
+                except Exception:
+                    self.logger.warning('Failed to join domain. Disabling service.', exc_info=True)
+                    await self.middleware.call('datastore.update', 'directoryservices.configuraiton', new['id'], {
+                        'common_enable': False
+                    })
+                    raise
+
+            # By this point we should be joined to domain and just need to activate connection fully.
+            cache_job_id = await self.middleware.call('directoryservices.connection.activate')
+            try:
+                # Cache fill should be non-fatal, but we want to update watcher on progress
+                await job.wrap(cache_job_id)
+            except Exception:
+                self.logger.warning('Failed to fill directory services cache', exc_info=True)
+
+            if resp == DomainJoinResponse.PERFORMED_JOIN:
+                try:
+                    await self.middleware.call(
+                        'directoryservices.connection.grant_privileges',
+                        ds, new['configuration']['domainname'],
+                    )
+                except Exception:
+                    # This should be non-fatal error
+                    self.logger.warning(
+                        'Failed to grant privileges to domain admin group. '
+                        'Further administrative action may be required in order '
+                        'to use TrueNAS RBAC with directory services groups.',
+                        exc_info=True
+                    )
+
+            # Change state to HEALTHY before performing final health check
+            await self.middleware.call('directoryservices.health.set_state', ds, DSStatus.HEALTHY)
+
+            # Force health check so that user gets immediate feedback if something
+            # went sideways while enabling
+            await self.middleware.call('directoryservices.health.check')
+            await self.middleware.call('directoryservices.restart_dependent_services')
+
+        elif not new['enable'] and old['enable']:
+            # STOP directory services
+            await self.middleware.call('directoryservices.health.set_state', ds, DSStatus.DISABLED)
+            to_start = []
+
+            # stop sharing services that depend on DS
+            for service in DEPENDENT_SHARING_SERVICES:
+                if await self.middleware.call('service.started', service):
+                    await self.middleware.call('service.stop', service)
+                    to_start.append(service)
+
+            ds = DSType(new['dstype'])
+            await self.middleware.call('service.stop', ds.middleware_service)
+
+            for etc_file in ds.etc_files:
+                await self.middleware.call('etc.generate', etc_file)
+
+            # clear any kerberos tickets
+            if await self.middleware.call('kerberos.check_ticket', {'ccache': krb5ccache.SYSTEM.name}, False):
+                await self.middleware.call('kerberos.kdestroy')
+
+            await self.middleware.call('directoryservices.cache.abort_refresh')
+
+            # toggle ssh if required
+            if await self.middleware.call('service.started', 'ssh'):
+                await self.middleware.call('service.restart', 'ssh')
+
+            # start any services we stopped
+            for service in to_start:
+                await self.middleware.call('service.start', service)
+
+        elif new['enable'] and old['enable']:
+            # RESTART directory services
+            await self.middleware.call('service.restart', ds.middleware_service)
+
+        return await self.config()
+
+    @api_method(
+        DirectoryServicesStatusArgs,
+        DirectoryServicesStatusResult,
+        authorization_required=False
+    )
     def status(self):
         """
         Provide the type and status of the currently-enabled directory service
@@ -50,13 +164,11 @@ class DirectoryServices(Service):
 
         return DSHealthObj.dump()
 
-    @no_authz_required
-    @accepts()
-    @returns(Dict(
-        'directory_services_states',
-        Str(DSType.AD.value.lower(), enum=[status.name for status in DSStatus]),
-        Str(DSType.LDAP.value.lower(), enum=[status.name for status in DSStatus]),
-    ))
+    @api_method(
+        DirectoryServicesGetStateArgs,
+        DirectoryServicesGetStateResult,
+        authorization_required=False
+    )
     def get_state(self):
         """
         `DISABLED` Directory Service is disabled.

@@ -243,12 +243,13 @@ class ADJoinMixin:
                 'TrueNAS API.', exc_info=True
             )
 
-    def _ad_post_join_actions(self, job: Job):
+    def _ad_post_join_actions(self, job: Job, conf: dict) -> None:
         self._ad_set_spn()
         # The password in secrets.tdb has been replaced so make
         # sure we have it backed up in our config.
         self.middleware.call_sync('directoryservices.secrets.backup')
-        self.middleware.call_sync('activedirectory.register_dns')
+
+        self.register_dns(f'{conf["netbiosname"]}@{conf["domainname"]}.', True)
 
         # start up AD service
         try:
@@ -302,7 +303,7 @@ class ADJoinMixin:
 
     @kerberos_ticket
     def _ad_join(self, job: Job, ds_type: DSType, domain: str):
-        ad_config = self.middleware.call_sync('activedirectory.config')
+        ad_config = self.middleware.call_sync('directoryservices.config')['configuration']
         smb = self.middleware.call_sync('smb.config')
         workgroup = smb['workgroup']
 
@@ -337,8 +338,8 @@ class ADJoinMixin:
                 )
 
             self.middleware.call_sync(
-                'datastore.update', 'directoryservice.activedirectory', ad_config['id'],
-                {"kerberos_realm": realm_id}, {'prefix': 'ad_'}
+                'datastore.update', 'directoryservice.configuration', ad_config['id'],
+                {'common_kerberos_realm': realm_id},
             )
             ad_config['kerberos_realm'] = realm_id
 
@@ -356,13 +357,13 @@ class ADJoinMixin:
         self.middleware.call_sync('etc.generate', 'smb')
 
         job.set_progress(50, 'Performing domain join.')
-        self._ad_join_impl(job, ad_config)
-        machine_acct = f'{ad_config["netbiosname"].upper()}$@{ad_config["domainname"]}'
-        self.middleware.call_sync('datastore.update', 'directoryservice.activedirectory', ad_config['id'], {
-            'kerberos_principal': machine_acct,
-            'site': site,
-            'kerberos_realm': ad_config['kerberos_realm']
-        }, {'prefix': 'ad_'})
+        self._ad_join_impl(job, ad_config | {'netbiosname': smb['netbiosname']})
+        machine_acct = f'{smb["netbiosname"].upper()}$@{ad_config["domainname"]}'
+        self.middleware.call_sync('datastore.update', 'directoryservice.configuration', ad_config['id'], {
+            'common_kerberos_principal': machine_acct,
+            'ad_site': site,
+            'common_kerberos_realm': ad_config['kerberos_realm']
+        })
 
         job.set_progress(75, 'Performing kinit using new computer account.')
         # Remove our temporary administrative ticket and replace with machine account.

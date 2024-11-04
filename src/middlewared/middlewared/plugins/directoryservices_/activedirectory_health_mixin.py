@@ -25,12 +25,13 @@ class ADHealthMixin:
         """
         Validate that our machine account password can be used to kinit
         """
-        config = self.middleware.call_sync('activedirectory.config')
+        netbiosname = self.middleware.call_sync('smb.config')['netbiosname']
+        config = self.middleware.call_sync('directoryservices.config')['configuration']
 
         cred = self.middleware.call_sync('kerberos.get_cred', {
             'dstype': DSType.AD.value,
             'conf': {
-                'bindname': config['netbiosname'].upper() + '$',
+                'bindname': netbiosname.upper() + '$',
                 'bindpw': b64decode(account_password).decode(),
                 'domainname': config['domainname']
             }
@@ -75,7 +76,7 @@ class ADHealthMixin:
         credentials it contains.
         """
         self.logger.warning('Attempting to recover from broken or missing AD secrets file')
-        config = self.middleware.call_sync('activedirectory.config')
+        config = self.middleware.call_sync('directoryservices.config')['configuration']
         smb_config = self.middleware.call_sync('smb.config')
         domain_info = get_domain_info(config['domainname'])
 
@@ -133,7 +134,7 @@ class ADHealthMixin:
         # We should validate some basic AD configuration before the common
         # kerberos health checks. This will expose issues with clock slew
         # and invalid stored machine account passwords
-        config = self.middleware.call_sync('activedirectory.config')
+        config = self.middleware.call_sync('directoryservices.config')['configuration']
         try:
             domain_info = get_domain_info(config['domainname'])
         except Exception:

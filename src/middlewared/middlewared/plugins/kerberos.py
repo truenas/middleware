@@ -267,66 +267,6 @@ class KerberosService(ConfigService):
         return verrors
 
     @private
-    @accepts(Dict(
-        "get-kerberos-creds",
-        Str("dstype", required=True, enum=[x.value for x in DSType]),
-        OROperator(
-            Dict(
-                'ad_parameters',
-                Str('bindname'),
-                Str('bindpw'),
-                Str('domainname'),
-                Str('kerberos_principal')
-            ),
-            Dict(
-                'ldap_parameters',
-                Str('binddn'),
-                Str('bindpw'),
-                Int('kerberos_realm'),
-                Str('kerberos_principal')
-            ),
-            name='conf',
-            required=True
-        )
-    ))
-    async def get_cred(self, data):
-        '''
-        Get kerberos cred from directory services config to use for `do_kinit`.
-        '''
-        conf = data.get('conf', {})
-        if conf.get('kerberos_principal'):
-            return {'kerberos_principal': conf['kerberos_principal']}
-
-        verrors = ValidationErrors()
-        dstype = DSType(data['dstype'])
-        if dstype is DSType.AD:
-            for k in ['bindname', 'bindpw', 'domainname']:
-                if not conf.get(k):
-                    verrors.add(f'conf.{k}', 'Parameter is required.')
-
-            verrors.check()
-            return {
-                'username': f'{conf["bindname"]}@{conf["domainname"].upper()}',
-                'password': conf['bindpw']
-            }
-
-        for k in ['binddn', 'bindpw', 'kerberos_realm']:
-            if not conf.get(k):
-                verrors.add(f'conf.{k}', 'Parameter is required.')
-
-        verrors.check()
-        krb_realm = await self.middleware.call(
-            'kerberos.realm.query',
-            [('id', '=', conf['kerberos_realm'])],
-            {'get': True}
-        )
-        bind_cn = (conf['binddn'].split(','))[0].split("=")
-        return {
-            'username': f'{bind_cn[1]}@{krb_realm["realm"]}',
-            'password': conf['bindpw']
-        }
-
-    @private
     def _dump_current_cred(self, credential, ccache_path):
         """ returns dump of kerberos ccache if valid and not about to expire """
         if (current_cred := gss_get_current_cred(ccache_path, False)) is None:
@@ -479,37 +419,31 @@ class KerberosService(ConfigService):
         """
         For now we only check for kerberos realms explicitly configured in AD and LDAP.
         """
-        ad = await self.middleware.call('activedirectory.config')
-        ldap = await self.middleware.call('ldap.config')
-        await self.middleware.call('etc.generate', 'kerberos')
-        payload = {}
-
-        if ad['enable']:
-            payload = {
-                'dstype': DSType.AD.value,
-                'conf': {
-                    'bindname': ad['bindname'],
-                    'bindpw': ad.get('bindpw', ''),
-                    'domainname': ad['domainname'],
-                    'kerberos_principal': ad['kerberos_principal'],
-                }
-            }
-
-        if ldap['enable'] and ldap['kerberos_realm']:
-            payload = {
-                'dstype': DSType.LDAP.value,
-                'conf': {
-                    'binddn': ldap['binddn'],
-                    'bindpw': ldap['bindpw'],
-                    'kerberos_realm': ldap['kerberos_realm'],
-                    'kerberos_principal': ldap['kerberos_principal'],
-                }
-            }
-
-        if not payload:
+        ds_config = await self.middleware.call('directoryservices.config')
+        if not ds_config['enable'] or not ds_config['configuration']['kerberos_realm']:
             return
 
-        cred = await self.get_cred(payload)
+        ds_cred = ds_config['configuration']['credential']
+        match ds_cred['credential_type']:
+            case DSCredentialType.KERBEROS_PRINCIPAL:
+                cred = {'kerberos_principal': ds_cred['kerberos_principal']}
+            case DSCredentialType.USERNAME_PASSWORD:
+                username = ds_cred['bindname'] + '@' + ds_config['kerberos_realm']
+                cred = {
+                    'username': username,
+                    'password': ds_cred['bindpw']
+                }
+            case DSCredentialType.LDAPDN_PASSWORD:
+                dn = ds_cred['binddn'].split(',')[0]
+                username = dn.split('=')[1]
+                cred = {
+                    'username': username,
+                    'password': ds_cred['bindpw']
+                }
+            case _:
+                raise ValueError(f'{ds_cred["credential_type"]}: unexpected credential type.')
+
+        await self.middleware.call('etc.generate', 'kerberos')
         return await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
 
     @private
@@ -814,17 +748,18 @@ class KerberosKeytabService(CRUDService):
         """
         kt = await self.get_instance(id_)
         audit_callback(kt['name'])
-        if kt['name'] == 'AD_MACHINE_ACCOUNT':
-            ad_config = await self.middleware.call('activedirectory.config')
-            if ad_config['enable']:
+
+        if kt['name'] in ('AD_MACHINE_ACCOUNT', 'IPA_MACHINE_ACCOUNT'):
+            ds_config = await self.middleware.call('directoryservices.config')
+            if ds_config['enable']:
                 raise CallError(
-                    'Active Directory machine account keytab may not be deleted while '
-                    'the Active Directory service is enabled.'
+                    'Machine account keytab may not be deleted while '
+                    'the directory services are enabled.'
                 )
 
             await self.middleware.call(
-                'datastore.update', 'directoryservice.activedirectory',
-                ad_config['id'], {'kerberos_principal': ''}, {'prefix': 'ad_'}
+                'datastore.update', 'directoryservice.configuration',
+                ds_config['id'], {'common_kerberos_principal': ''}
             )
 
         await self.middleware.call('datastore.delete', self._config.datastore, id_)
@@ -840,13 +775,19 @@ class KerberosKeytabService(CRUDService):
 
     @private
     async def _cleanup_kerberos_principals(self):
+        """ Remove any kerberos principal from running ocnfig that isn't in kerberos principal choices """
         principal_choices = await self.middleware.call('kerberos.keytab.kerberos_principal_choices')
-        ad = await self.middleware.call('activedirectory.config')
-        ldap = await self.middleware.call('ldap.config')
-        if ad['kerberos_principal'] and ad['kerberos_principal'] not in principal_choices:
-            await self.middleware.call('activedirectory.update', {'kerberos_principal': ''})
-        if ldap['kerberos_principal'] and ldap['kerberos_principal'] not in principal_choices:
-            await self.middleware.call('ldap.update', {'kerberos_principal': ''})
+        ds_config = await self.middleware.call('directoryservices.config')
+        if ds_config['dstype'] == DSType.STANDALONE:
+            return
+
+        if ds_config['configuration']['credential_type'] == DSCredentialType.KERBEROS_PRINCIPAL:
+            if ds_config['configuration']['kerberos_principal'] not in principal_choices:
+                self.logger.debug('Removing kerberos principal from directoryservices configuration')
+                await self.middleware.call(
+                    'datastore.update', 'directoryservice.configuration',
+                    ds_config['id'], {'common_kerberos_principal': ''}
+                )
 
     @private
     def _validate_impl(self, data):
