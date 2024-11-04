@@ -1,4 +1,5 @@
 import aiohttp
+import platform
 
 from middlewared.service import (
     CRUDService, ValidationErrors, filterable, job, private
@@ -126,10 +127,14 @@ class VirtInstanceService(CRUDService):
         if data['remote'] == 'LINUX_CONTAINERS':
             url = LC_IMAGES_JSON
 
+        current_arch = platform.machine()
+        if current_arch == 'x86_64':
+            current_arch = 'amd64'
+
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 for v in (await resp.json())['products'].values():
-                    if data['instance_type'] == 'CONTAINER' and v['arch'] != 'amd64':
+                    if data['instance_type'] == 'CONTAINER' and v['arch'] != current_arch:
                         continue
                     alias = v['aliases'].split(',', 1)[0]
                     if alias not in choices:
