@@ -2,7 +2,6 @@ from sqlalchemy.ext.declarative import declared_attr
 
 from middlewared.schema import Bool, Cron, Dict, Int, List, Str
 import middlewared.sqlalchemy as sa
-from middlewared.validators import Range, Time
 
 
 class CloudTaskModelMixin:
@@ -23,10 +22,8 @@ class CloudTaskModelMixin:
     pre_script = sa.Column(sa.Text())
     post_script = sa.Column(sa.Text())
     snapshot = sa.Column(sa.Boolean())
-    bwlimit = sa.Column(sa.JSON(list))
     include = sa.Column(sa.JSON(list))
     exclude = sa.Column(sa.JSON(list))
-    transfers = sa.Column(sa.Integer(), nullable=True)
     args = sa.Column(sa.Text())
     enabled = sa.Column(sa.Boolean(), default=True)
     job = sa.Column(sa.JSON(None))
@@ -45,12 +42,8 @@ cloud_task_schema = [
     Str("pre_script", default="", max_length=None),
     Str("post_script", default="", max_length=None),
     Bool("snapshot", default=False),
-    List("bwlimit", items=[Dict("cloud_sync_bwlimit",
-                                Str("time", validators=[Time()]),
-                                Int("bandwidth", validators=[Range(min_=1)], null=True))]),
     List("include", items=[Str("path", empty=False)]),
     List("exclude", items=[Str("path", empty=False)]),
-    Int("transfers", null=True, default=None, validators=[Range(min_=1)]),
     Str("args", default="", max_length=None),
     Bool("enabled", default=True),
 ]

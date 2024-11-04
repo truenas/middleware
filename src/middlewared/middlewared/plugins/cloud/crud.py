@@ -78,10 +78,6 @@ class CloudTaskServiceMixin:
 
             await provider.validate_task_full(data, credentials, verrors)
 
-        for i, (limit1, limit2) in enumerate(zip(data["bwlimit"], data["bwlimit"][1:])):
-            if limit1["time"] >= limit2["time"]:
-                verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
-
         if self.allow_zvol and (path := await self.get_path_field(data)).startswith("/dev/zvol/"):
             zvol = zvol_path_to_name(path)
             if not await self.middleware.call('pool.dataset.query', [['name', '=', zvol], ['type', '=', 'VOLUME']]):
