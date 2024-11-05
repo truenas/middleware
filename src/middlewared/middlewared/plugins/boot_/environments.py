@@ -23,17 +23,18 @@ from middlewared.utils.size import format_size
 
 
 def run_zectl_cmd(cmd):
+    try:
+        cmd.remove("zectl")
+    except ValueError:
+        pass
+
     cmd.insert(0, "zectl")
     try:
         cp = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=True,
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
         )
     except subprocess.CalledProcessError as cpe:
-        err = f"STDOUT: {cpe.stdout.strip()!r} STDERR: {cpe.stderr.strip()!r}"
-        raise CallError(f"Unexpected error: {err}")
+        raise CallError(f"Unexpected error: {cpe.stdout.decode()!r}")
     else:
         return cp.returncode == 0
 
@@ -53,12 +54,15 @@ class BootEnvironmentService(Service):
         json_flags = "-j --json-int"  # json format, raw numbers
         try:
             cp = subprocess.run(
-                " ".join([zget, root, json_flags]), shell=True, capture_output=True
+                " ".join([zget, root, json_flags]),
+                shell=True,
+                check=True,
+                capture_output=True,
             )
+        except subprocess.CalledProcessError as cpe:
+            self.logger.error("getting zfs properties failed: %r", cpe.stderr)
         except Exception:
-            self.logger.exception(
-                "Unexpected failure list zfs properties of boot dataset"
-            )
+            self.logger.exception("Unexpected failure getting zfs properties")
         else:
             return json.loads(cp.stdout), bp_name
 
