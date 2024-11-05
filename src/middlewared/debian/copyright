@@ -3,7 +3,7 @@ Upstream-Name: middlewared
 Source: https://github.com/truenas/middleware
 
 Files: *
-Copyright: 2016 William Grzybowski <william@grzy.org>
+Copyright: 2024 iX Engineering <dev@ixsystems.net>
 License: BSD-2-Clause
 
 Files: debian/*

@@ -1,7 +1,7 @@
 Source: middlewared-docs
 Section: admin
 Priority: optional
-Maintainer: William Grzybowski <william@grzy.org>
+Maintainer: iX Engineering <dev@ixsystems.net>
 Build-Depends: debhelper-compat (= 12),
                middlewared,
                python3-virtualenv
