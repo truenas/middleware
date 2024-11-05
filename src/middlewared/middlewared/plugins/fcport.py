@@ -173,7 +173,15 @@ class FCPortService(CRUDService):
                             sessions.append(entry.name)
             except FileNotFoundError:
                 # In HA when ALUA is disabled this path will not exist
-                pass
+                result[p['port']] = {
+                    'port_type': 'Unknown',
+                    'port_state': 'Offline',
+                    'speed': 'Unknown',
+                    'physical': False,
+                    key: naa,
+                    'sessions': [],
+                }
+                continue
             # Take some data directly from fc.fc_hosts
             result[p['port']] = {
                 'port_type': naa_to_fc_host[naa]['port_type'],
