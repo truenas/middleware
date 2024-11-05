@@ -285,14 +285,3 @@ class BootEnvService(CRUDService):
                     await self.middleware.call("pool.dataset.promote", dataset["name"])
                 except Exception as e:
                     self.middleware.logger.error(f"Error promoting dataset: {e}")
-
-
-async def setup(middleware):
-    if not await middleware.call("system.ready"):
-        # Installer clones `/var/log` dataset of the previous install to avoid copying logs. When booting, we must
-        # promote the clone to be an independent dataset so that the origin dataset becomes deletable.
-        # Only perform this operation on boot time to save a few seconds on middleware restart.
-        try:
-            await middleware.call("bootenv.promote_current_be_datasets")
-        except Exception:
-            middleware.logger.error("Unhandled exception promoting active BE datasets", exc_info=True)
