@@ -40,9 +40,18 @@ class AppService(Service):
 
         if app['custom_app']:
             job.set_progress(20, 'Pulling app images')
-            self.middleware.call_sync('app.pull_images_internal', app_name, app, {'redeploy': True})
+            try:
+                self.middleware.call_sync('app.pull_images_internal', app_name, app, {'redeploy': True})
+            finally:
+                app = self.middleware.call_sync('app.get_instance', app_name)
+                if app['upgrade_available'] is False:
+                    # This conditional is for the case that maybe pull was successful but redeploy failed,
+                    # so we make sure that when we are returning from here, we don't have any alert left
+                    # if the image has actually been updated
+                    self.middleware.call_sync('alert.oneshot_delete', 'AppUpdate', app_name)
+
             job.set_progress(100, 'App successfully upgraded and redeployed')
-            return
+            return app
 
         job.set_progress(0, f'Retrieving versions for {app_name!r} app')
         versions_config = self.middleware.call_sync('app.get_versions', app, options)
