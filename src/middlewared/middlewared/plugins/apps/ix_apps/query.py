@@ -120,6 +120,12 @@ def list_apps(
             'image_updates_available': image_updates_available,
             **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
         }
+        if app_data['custom_app'] and image_updates_available:
+            # We want to mark custom apps as upgrade available if image updates are available
+            # so if user tries to upgrade, we will just be pulling a newer version of the image
+            # against the same docker tag
+            app_data['upgrade_available'] = True
+
         apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
 
     if specific_app and specific_app in app_names:

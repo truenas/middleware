@@ -50,6 +50,14 @@ class AppService(Service):
 
         compose_action(app_name, app['version'], action='pull')
         job.set_progress(80 if options['redeploy'] else 100, 'Images pulled successfully')
+
+        # We will update image cache so that it reflects the fact that image has been pulled again
+        # We won't really check again here but rather just update the cache directly because we know
+        # compose action didn't fail and that means the pull succeeded and we should have the newer version
+        # already in the system
+        for image_tag in app['active_workloads']['images']:
+            self.middleware.call_sync('app.image.op.clear_update_flag_for_tag', image_tag)
+
         if options['redeploy']:
             self.middleware.call_sync('app.redeploy', app_name).wait_sync(raise_error=True)
             job.set_progress(100, 'App redeployed successfully')
