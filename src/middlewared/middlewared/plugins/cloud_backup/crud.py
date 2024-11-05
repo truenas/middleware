@@ -44,6 +44,14 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     )
 
     @private
+    def transfer_setting_args(self):
+        return {
+            "DEFAULT": [],
+            "PERFORMANCE": ["--pack-size", "29"],
+            "FAST_STORAGE": ["--pack-size", "58", "--read-concurrency", "100"]
+        }
+
+    @private
     async def extend_context(self, rows, extra):
         return {
             "task_state": await self.get_task_state_context(),
@@ -69,6 +77,11 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         cloud_backup.pop(self.locked_field, None)
 
         return cloud_backup
+
+    @accepts()
+    def transfer_setting_choices(self):
+        args = self.transfer_setting_args()
+        return list(args.keys())
 
     @accepts(Dict(
         "cloud_backup_create",
