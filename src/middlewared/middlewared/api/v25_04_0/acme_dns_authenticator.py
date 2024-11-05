@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Literal, TypeAlias
 
 from lexicon.providers.ovh import ENDPOINTS
 from pydantic import BeforeValidator, ConfigDict, conint, Field, FilePath, PlainSerializer, Secret
@@ -33,6 +33,7 @@ class ACMECustomDNSAuthenticatorReturns(BaseModel):
 
 
 class CloudFlareSchema(BaseModel):
+    authenticator: Literal['cloudflare']
     cloudflare_email: NonEmptyString | None = Field(default=None, description='Cloudflare Email')
     api_key: Secret[NonEmptyString | None] = Field(default=None, description='API Key')
     api_token: Secret[NonEmptyString | None] = Field(default=None, description='API Token')
@@ -44,6 +45,7 @@ class CloudFlareSchemaArgs(CloudFlareSchema):
 
 
 class OVHSchema(BaseModel):
+    authenticator: Literal['ovh']
     application_key: NonEmptyString = Field(..., description='OVH Application Key')
     application_secret: NonEmptyString = Field(..., description='OVH Application Secret')
     consumer_key: NonEmptyString = Field(..., description='OVH Consumer Key')
@@ -56,6 +58,7 @@ class OVHSchemaArgs(OVHSchema):
 
 
 class Route53Schema(BaseModel):
+    authenticator: Literal['route53']
     access_key_id: NonEmptyString = Field(..., description='AWS Access Key ID')
     secret_access_key: NonEmptyString = Field(..., description='AWS Secret Access Key')
 
@@ -66,6 +69,7 @@ class Route53SchemaArgs(Route53Schema):
 
 
 class ShellSchema(BaseModel):
+    authenticator: Literal['shell']
     script: FilePathStr = Field(..., description='Authentication Script')
     user: NonEmptyString = Field(description='Running user', default='nobody')
     timeout: conint(ge=5) = Field(description='Script Timeout', default=60)
@@ -77,12 +81,18 @@ class ShellSchemaArgs(ShellSchema):
     pass
 
 
+AuthType: TypeAlias = Annotated[
+    CloudFlareSchema | OVHSchema | Route53Schema | ShellSchema,
+    Field(discriminator='authenticator')
+]
+
+
 ## ACME DNS Authenticator
 
 
 class ACMEDNSAuthenticatorEntry(BaseModel):
     id: int
-    authenticator: str
+    authenticator: Literal['cloudflare', 'ovh', 'route53', 'shell']
     attributes: Secret[CloudFlareSchema | OVHSchema | Route53Schema | ShellSchema]
     name: str
 
@@ -90,7 +100,7 @@ class ACMEDNSAuthenticatorEntry(BaseModel):
 @single_argument_args('dns_authenticator_create')
 class ACMEDNSAuthenticatorCreateArgs(ACMEDNSAuthenticatorEntry):
     id: Excluded = excluded_field()
-    attributes: dict
+    attributes: AuthType
 
 
 class ACMEDNSAuthenticatorCreateResult(BaseModel):
@@ -100,7 +110,6 @@ class ACMEDNSAuthenticatorCreateResult(BaseModel):
 class ACMEDNSAuthenticatorUpdate(ACMEDNSAuthenticatorEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     authenticator: Excluded = excluded_field()
-    attributes: dict
 
 
 class ACMEDNSAuthenticatorUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
