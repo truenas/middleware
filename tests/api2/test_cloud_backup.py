@@ -62,7 +62,7 @@ def s3_credential():
 
 
 @pytest.fixture(scope="function")
-def cloud_backup_task(s3_credential):
+def cloud_backup_task(s3_credential, request):
     clean()
 
     with dataset("cloud_backup") as local_dataset:
@@ -75,6 +75,7 @@ def cloud_backup_task(s3_credential):
             },
             "password": "test",
             "keep_last": 100,
+            **request.param
         }) as t:
             yield types.SimpleNamespace(
                 local_dataset=local_dataset,
@@ -288,3 +289,23 @@ def test_sync_initializes_repo(cloud_backup_task):
     clean()
 
     call("cloud_backup.sync", cloud_backup_task.task["id"], job=True)
+
+
+def test_transfer_setting_choices():
+    assert call("cloud_backup.transfer_setting_choices") == ["DEFAULT", "PERFORMANCE", "FAST_STORAGE"]
+
+
+@pytest.mark.parametrize("cloud_backup_task, options", [
+    (
+        {"transfer_setting": "PERFORMANCE"},
+        "--pack-size 29"
+    ),
+    (
+        {"transfer_setting": "FAST_STORAGE"},
+        "--pack-size 58 --read-concurrency 100"
+    )
+], indirect=["cloud_backup_task"])
+def test_other_transfer_settings(cloud_backup_task, options):
+    run_task(cloud_backup_task.task)
+    result = ssh(f"grep '{options}' /var/log/middlewared.log")
+    assert result.strip() != ""
