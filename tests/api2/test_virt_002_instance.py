@@ -16,9 +16,9 @@ INS2_NAME = 'void'
 INS2_OS = 'Void Linux'
 INS2_IMAGE = 'voidlinux/musl'
 
-INS3_NAME = 'centos'
-INS3_OS = 'CentOS'
-INS3_IMAGE = 'centos/9-Stream'
+INS3_NAME = 'ubuntu'
+INS3_OS = 'Ubuntu'
+INS3_IMAGE = 'ubuntu/oracular/default'
 
 
 def clean():
@@ -141,7 +141,6 @@ def test_virt_instance_device_add():
 
 
 def test_virt_instance_proxy():
-    ssh(f'incus exec {INS3_NAME} -- yum install -y nmap-ncat')
     ssh(f'incus exec -T {INS3_NAME} -- bash -c "nohup nc -l 0.0.0.0 80 > /tmp/nc 2>&1 &"')
     ssh('echo "foo" | nc -w 1 localhost 8005 || true')
     rv = ssh(f'incus exec {INS3_NAME} -- cat /tmp/nc')
