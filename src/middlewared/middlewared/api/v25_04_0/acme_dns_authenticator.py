@@ -92,24 +92,22 @@ AuthType: TypeAlias = Annotated[
 
 class ACMEDNSAuthenticatorEntry(BaseModel):
     id: int
-    authenticator: Literal['cloudflare', 'ovh', 'route53', 'shell']
-    attributes: Secret[CloudFlareSchema | OVHSchema | Route53Schema | ShellSchema]
+    attributes: Secret[AuthType]
     name: str
 
 
 @single_argument_args('dns_authenticator_create')
-class ACMEDNSAuthenticatorCreateArgs(ACMEDNSAuthenticatorEntry):
-    id: Excluded = excluded_field()
+class ACMEDNSAuthenticatorCreateArgs(BaseModel):
     attributes: AuthType
+    name: str
 
 
 class ACMEDNSAuthenticatorCreateResult(BaseModel):
     result: ACMEDNSAuthenticatorEntry
 
 
-class ACMEDNSAuthenticatorUpdate(ACMEDNSAuthenticatorEntry, metaclass=ForUpdateMetaclass):
-    id: Excluded = excluded_field()
-    authenticator: Excluded = excluded_field()
+class ACMEDNSAuthenticatorUpdate(ACMEDNSAuthenticatorCreateArgs, metaclass=ForUpdateMetaclass):
+    pass
 
 
 class ACMEDNSAuthenticatorUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):

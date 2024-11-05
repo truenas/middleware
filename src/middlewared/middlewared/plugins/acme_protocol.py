@@ -194,7 +194,6 @@ class ACMEDNSAuthenticatorModel(sa.Model):
     __tablename__ = 'system_acmednsauthenticator'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    authenticator = sa.Column(sa.String(64))
     name = sa.Column(sa.String(64), unique=True)
     attributes = sa.Column(sa.JSON(encrypted=True))
 
@@ -215,14 +214,13 @@ class DNSAuthenticatorService(CRUDService):
         if await self.query(filters):
             verrors.add(f'{schema_name}.name', 'Specified name is already in use')
 
-        if data['authenticator'] not in await self.middleware.call('acme.dns.authenticator.get_authenticator_schemas'):
-            verrors.add(
-                f'{schema_name}.authenticator',
-                f'System does not support {data["authenticator"]} as an Authenticator'
-            )
-        else:
-            authenticator_obj = await self.middleware.call('acme.dns.authenticator.get_authenticator_internal', data)
-            data['attributes'] = await authenticator_obj.validate_credentials(self.middleware, data['attributes'])
+        if old and old['attributes']['authenticator'] != data['attributes']['authenticator']:
+            verrors.add(f'{schema_name}.attributes.authenticator', 'Authenticator cannot be changed')
+
+        authenticator_obj = await self.middleware.call(
+            'acme.dns.authenticator.get_authenticator_internal', data['attributes']['authenticator']
+        )
+        data['attributes'] = await authenticator_obj.validate_credentials(self.middleware, data['attributes'])
 
         verrors.check()
 
@@ -245,10 +243,10 @@ class DNSAuthenticatorService(CRUDService):
                 "method": "acme.dns.authenticator.create",
                 "params": [{
                     "name": "route53_authenticator",
-                    "authenticator": "route53",
                     "attributes": {
                         "access_key_id": "AQX13",
-                        "secret_access_key": "JKW90"
+                        "secret_access_key": "JKW90",
+                        "authenticator": "route53"
                     }
                 }]
             }
@@ -283,7 +281,8 @@ class DNSAuthenticatorService(CRUDService):
                         "name": "route53_authenticator",
                         "attributes": {
                             "access_key_id": "AQX13",
-                            "secret_access_key": "JKW90"
+                            "secret_access_key": "JKW90",
+                            "authenticator": "route53"
                         }
                     }
                 ]
@@ -291,6 +290,8 @@ class DNSAuthenticatorService(CRUDService):
         """
         old = await self.get_instance(id_)
         new = old.copy()
+        attrs = data.pop('attributes', {})
+        new['attributes'].update(attrs)
         new.update(data)
 
         await self.common_validation(new, 'dns_authenticator_update', old)
