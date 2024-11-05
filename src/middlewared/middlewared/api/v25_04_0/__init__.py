@@ -17,6 +17,7 @@ from .fcport import *  # noqa
 from .filesystem import *  # noqa
 from .group import *  # noqa
 from .iscsi_auth import *  # noqa
+from .iscsi_extent import *  # noqa
 from .keychain import *  # noqa
 from .privilege import *  # noqa
 from .rdma import *  # noqa
