@@ -75,7 +75,7 @@ def cloud_backup_task(s3_credential, request):
             },
             "password": "test",
             "keep_last": 100,
-            **request.param
+            **getattr(request, "param", {})
         }) as t:
             yield types.SimpleNamespace(
                 local_dataset=local_dataset,
@@ -298,11 +298,11 @@ def test_transfer_setting_choices():
 @pytest.mark.parametrize("cloud_backup_task, options", [
     (
         {"transfer_setting": "PERFORMANCE"},
-        "--pack-size 29"
+        "\\--pack-size 29"
     ),
     (
         {"transfer_setting": "FAST_STORAGE"},
-        "--pack-size 58 --read-concurrency 100"
+        "\\--pack-size 58 --read-concurrency 100"
     )
 ], indirect=["cloud_backup_task"])
 def test_other_transfer_settings(cloud_backup_task, options):
