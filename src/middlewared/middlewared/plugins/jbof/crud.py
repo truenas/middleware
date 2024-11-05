@@ -793,19 +793,23 @@ class JBOFService(CRUDService):
             possible_shelf_ips.append(jbof_static_ip(shelf_index, eth_index))
 
         # Disconnect NVMe disks
-        if await self.middleware.call('failover.licensed'):
-            # HA system
-            try:
-                await asyncio.gather(
-                    self.middleware.call('jbof.nvme_disconnect', possible_shelf_ips),
-                    self.middleware.call('failover.call_remote', 'jbof.nvme_disconnect', [possible_shelf_ips])
-                )
-            except CallError as e:
-                if e.errno != CallError.ENOMETHOD:
-                    raise
-                # If other controller is not updated to include this method then nothing to tear down
-        else:
-            await self.middleware.call('jbof.nvme_disconnect', possible_shelf_ips)
+        try:
+            if await self.middleware.call('failover.licensed'):
+                # HA system
+                try:
+                    await asyncio.gather(
+                        self.middleware.call('jbof.nvme_disconnect', possible_shelf_ips),
+                        self.middleware.call('failover.call_remote', 'jbof.nvme_disconnect', [possible_shelf_ips])
+                    )
+                except CallError as e:
+                    if e.errno != CallError.ENOMETHOD:
+                        raise
+                    # If other controller is not updated to include this method then nothing to tear down
+            else:
+                await self.middleware.call('jbof.nvme_disconnect', possible_shelf_ips)
+        except Exception:
+            # Log the exception, but continue to cleanup RDMA interfaces
+            self.logger.error('Failed to disconnect NVMe disks', exc_info=True)
 
         # Disconnect interfaces
         for interface in await self.middleware.call('rdma.interface.query', [['address', 'in', possible_host_ips]]):
