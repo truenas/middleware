@@ -1,12 +1,12 @@
-from typing import Literal
+from pathlib import Path
+from typing import Annotated, Literal
 
 from lexicon.providers.ovh import ENDPOINTS
-from pydantic import ConfigDict, conint, Field, Secret
+from pydantic import BeforeValidator, ConfigDict, conint, Field, FilePath, PlainSerializer, Secret
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, single_argument_args, ForUpdateMetaclass, LongString, NonEmptyString,
 )
-from middlewared.api.base.types import FilePath
 
 
 __all__ = [
@@ -15,6 +15,13 @@ __all__ = [
     'ACMEDNSAuthenticatorDeleteResult', 'ACMEDNSAuthenticatorSchemasArgs', 'ACMEDNSAuthenticatorSchemasResult',
     'ACMEDNSAuthenticatorPerformChallengeArgs', 'ACMEDNSAuthenticatorPerformChallengeResult', 'Route53SchemaArgs',
     'ACMECustomDNSAuthenticatorReturns', 'CloudFlareSchemaArgs', 'OVHSchemaArgs', 'ShellSchemaArgs',
+]
+
+
+FilePathStr = Annotated[
+    FilePath,
+    BeforeValidator(lambda v: Path(v) if isinstance(v, str) else v),
+    PlainSerializer(lambda x: str(x)),
 ]
 
 
@@ -59,7 +66,7 @@ class Route53SchemaArgs(Route53Schema):
 
 
 class ShellSchema(BaseModel):
-    script: FilePath = Field(..., description='Authentication Script')
+    script: FilePathStr = Field(..., description='Authentication Script')
     user: NonEmptyString = Field(description='Running user', default='nobody')
     timeout: conint(ge=5) = Field(description='Script Timeout', default=60)
     delay: conint(ge=10) = Field(description='Propagation delay', default=60)
