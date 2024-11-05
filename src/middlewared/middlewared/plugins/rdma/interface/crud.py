@@ -102,7 +102,7 @@ class RDMAInterfaceService(CRUDService):
             if not result:
                 self.logger.warning("Failed to delete active RDMA interface configuration")
         except Exception:
-            self.logger.error('Failed to remove live RDMA configuration', exc_info=True)
+            self.logger.exception('Failed to remove live RDMA configuration')
 
         # Now delete the entry
         return await self.middleware.call('datastore.delete', self._config.datastore, id_)
