@@ -24,14 +24,11 @@ from middlewared.utils.size import format_size
 
 def run_zectl_cmd(cmd):
     try:
-        cmd.remove("zectl")
-    except ValueError:
-        pass
-
-    cmd.insert(0, "zectl")
-    try:
         cp = subprocess.run(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
+            ["zectl"] + cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=True,
         )
     except subprocess.CalledProcessError as cpe:
         raise CallError(f"Unexpected error: {cpe.stdout.decode()!r}")
