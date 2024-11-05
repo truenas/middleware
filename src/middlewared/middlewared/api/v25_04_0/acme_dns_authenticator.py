@@ -33,9 +33,9 @@ class ACMECustomDNSAuthenticatorReturns(BaseModel):
 
 
 class CloudFlareSchema(BaseModel):
-    cloudflare_email: NonEmptyString = Field(..., description='Cloudflare Email')
-    api_key: Secret[NonEmptyString] = Field(..., description='API Key')
-    api_token: Secret[NonEmptyString] = Field(..., description='API Token')
+    cloudflare_email: NonEmptyString | None = Field(default=None, description='Cloudflare Email')
+    api_key: Secret[NonEmptyString | None] = Field(default=None, description='API Key')
+    api_token: Secret[NonEmptyString | None] = Field(default=None, description='API Token')
 
 
 @single_argument_args('attributes')
