@@ -2,10 +2,8 @@ import logging
 
 from certbot_dns_cloudflare._internal.dns_cloudflare import _CloudflareClient
 
-from middlewared.api import api_method
-from middlewared.api.current import CloudFlareSchemaArgs, ACMECustomDNSAuthenticatorReturns
+from middlewared.api.current import CloudFlareSchemaArgs
 from middlewared.schema import ValidationErrors
-from middlewared.service import skip_arg
 
 from .base import Authenticator
 
@@ -25,8 +23,6 @@ class CloudFlareAuthenticator(Authenticator):
         self.api_token = self.attributes.get('api_token')
 
     @staticmethod
-    @api_method(CloudFlareSchemaArgs, ACMECustomDNSAuthenticatorReturns)
-    @skip_arg(count=1)
     async def validate_credentials(middleware, data):
         verrors = ValidationErrors()
         if data.get('api_token'):

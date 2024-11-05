@@ -5,9 +5,8 @@ import time
 
 from botocore import exceptions as boto_exceptions
 
-from middlewared.api import api_method
-from middlewared.api.current import ACMECustomDNSAuthenticatorReturns, Route53SchemaArgs
-from middlewared.service import CallError, skip_arg
+from middlewared.api.current import Route53SchemaArgs
+from middlewared.service import CallError
 
 from .base import Authenticator
 
@@ -26,8 +25,6 @@ class Route53Authenticator(Authenticator):
         ).client('route53')
 
     @staticmethod
-    @api_method(Route53SchemaArgs, ACMECustomDNSAuthenticatorReturns)
-    @skip_arg(count=1)
     async def validate_credentials(middleware, data):
         return data
 

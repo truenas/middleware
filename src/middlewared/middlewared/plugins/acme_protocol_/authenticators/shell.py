@@ -10,10 +10,9 @@ It is up to script implementation to handle both calls and perform the record cr
 """
 import logging
 
-from middlewared.api import api_method
-from middlewared.api.current import ACMECustomDNSAuthenticatorReturns, ShellSchemaArgs
+from middlewared.api.current import ShellSchemaArgs
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.service import CallError, skip_arg, ValidationErrors
+from middlewared.service import CallError, ValidationErrors
 from middlewared.utils.user_context import run_command_with_user_context
 
 from .base import Authenticator
@@ -35,8 +34,6 @@ class ShellAuthenticator(Authenticator):
         self.PROPAGATION_DELAY = self.attributes['delay']
 
     @staticmethod
-    @api_method(ShellSchemaArgs, ACMECustomDNSAuthenticatorReturns)
-    @skip_arg(count=1)
     async def validate_credentials(middleware, data):
         # We would like to validate the following bits:
         # 1) script exists and is executable

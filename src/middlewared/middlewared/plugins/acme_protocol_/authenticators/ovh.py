@@ -2,9 +2,7 @@ import logging
 
 from certbot_dns_ovh._internal.dns_ovh import _OVHLexiconClient
 
-from middlewared.api import api_method
-from middlewared.api.current import OVHSchemaArgs, ACMECustomDNSAuthenticatorReturns
-from middlewared.service import skip_arg
+from middlewared.api.current import OVHSchemaArgs
 
 from .base import Authenticator
 
@@ -25,8 +23,6 @@ class OVHAuthenticator(Authenticator):
         self.endpoint = self.attributes.get('endpoint')
 
     @staticmethod
-    @api_method(OVHSchemaArgs, ACMECustomDNSAuthenticatorReturns)
-    @skip_arg(count=1)
     async def validate_credentials(middleware, data):
         return data
 
