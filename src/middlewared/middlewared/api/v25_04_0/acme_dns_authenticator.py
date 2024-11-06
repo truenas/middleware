@@ -45,7 +45,7 @@ class CloudFlareSchemaArgs(CloudFlareSchema):
 
 
 class OVHSchema(BaseModel):
-    authenticator: Literal['ovh']
+    authenticator: Literal['OVH']
     application_key: NonEmptyString = Field(..., description='OVH Application Key')
     application_secret: NonEmptyString = Field(..., description='OVH Application Secret')
     consumer_key: NonEmptyString = Field(..., description='OVH Consumer Key')
@@ -96,21 +96,25 @@ class ACMEDNSAuthenticatorEntry(BaseModel):
     name: str
 
 
-@single_argument_args('dns_authenticator_create')
-class ACMEDNSAuthenticatorCreateArgs(BaseModel):
+class ACMEDNSAuthenticatorCreate(BaseModel):
     attributes: AuthType
     name: str
+
+
+@single_argument_args('dns_authenticator_create')
+class ACMEDNSAuthenticatorCreateArgs(ACMEDNSAuthenticatorCreate):
+    pass
 
 
 class ACMEDNSAuthenticatorCreateResult(BaseModel):
     result: ACMEDNSAuthenticatorEntry
 
 
-class ACMEDNSAuthenticatorUpdate(ACMEDNSAuthenticatorCreateArgs, metaclass=ForUpdateMetaclass):
+class ACMEDNSAuthenticatorUpdate(ACMEDNSAuthenticatorCreate, metaclass=ForUpdateMetaclass):
     pass
 
 
-class ACMEDNSAuthenticatorUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
+class ACMEDNSAuthenticatorUpdateArgs(BaseModel):
     id: int
     dns_authenticator_update: ACMEDNSAuthenticatorUpdate
 

@@ -1,3 +1,4 @@
+import copy
 import josepy as jose
 import json
 import requests
@@ -289,7 +290,7 @@ class DNSAuthenticatorService(CRUDService):
             }
         """
         old = await self.get_instance(id_)
-        new = old.copy()
+        new = copy.deepcopy(old)
         attrs = data.pop('attributes', {})
         new['attributes'].update(attrs)
         new.update(data)
