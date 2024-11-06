@@ -145,6 +145,9 @@ class DockerService(ConfigService):
 
     @private
     async def nvidia_status_for_job(self, job=None):
+        if not await self.middleware.call('nvidia.present'):
+            return {'status': 'ABSENT'}
+
         if job is None:
             jobs = await self.middleware.call('core.get_jobs', [['method', '=', 'nvidia.install']])
             if not jobs:
@@ -164,11 +167,10 @@ class DockerService(ConfigService):
             case 'FAILED':
                 return {'status': 'INSTALL_ERROR', 'error': job['error']}
 
-        if not await self.middleware.call('nvidia.present'):
-            return {'status': 'ABSENT'}
-
         if await self.middleware.call('nvidia.installed'):
             return {'status': 'INSTALLED'}
+
+        return {'status': 'NOT_INSTALLED'}
 
 
 async def update_nvidia_status(middleware, event_type, args):
