@@ -51,11 +51,12 @@ def filterable_returns(schema):
     return filterable_internal
 
 
-def filterable_api_method(fn=None, /, *, roles=None, item=None, private=False):
+def filterable_api_method(fn=None, /, *, roles=None, item=None, private=False, cli_private=False):
     def filterable_internal(fn):
         fn._filterable = True
         if hasattr(fn, 'wraps'):
             fn.wraps._filterable = True
+
 
         if item:
             returns = query_result(item)
@@ -65,7 +66,7 @@ def filterable_api_method(fn=None, /, *, roles=None, item=None, private=False):
 
             returns = GenericQueryResult
 
-        return api_method(QueryArgs, returns, private=private, roles=roles)(fn)
+        return api_method(QueryArgs, returns, private=private, roles=roles, cli_private=cli_private)(fn)
 
     # See if we're being called as @filterable or @filterable().
     if fn is None:

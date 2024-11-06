@@ -19,6 +19,7 @@ def api_method(
     rate_limit=True,
     roles: list[str] | None = None,
     private: bool = False,
+    cli_private: bool = False,
     authentication_required: bool = True,
     authorization_required: bool = True,
 ):
@@ -42,6 +43,8 @@ def api_method(
     `roles` is a list of user roles that will gain access to this method.
 
     `private` is `True` when the method should not be exposed in the public API. By default, the method is public.
+
+    `cli_private` is `True` when the method should not be exposed in the CLI. By default, the method is public.
 
     `authentication_required` is False when API endpoint does not require authentication. This should generally
     *not* be set and requires appropriate review and approval to validate that its use complies with security
@@ -91,6 +94,7 @@ def api_method(
         wrapped.rate_limit = rate_limit
         wrapped.roles = roles or []
         wrapped._private = private
+        wrapped._cli_private = cli_private
 
         # FIXME: This is only here for backwards compatibility and should be removed eventually
         wrapped.accepts = []
