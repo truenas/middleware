@@ -1,5 +1,3 @@
-from middlewared.schema import accepts
-
 from .config_service import ConfigService
 from .decorators import private
 
@@ -10,16 +8,6 @@ class SystemServiceService(ConfigService):
 
     Meant for services that manage system services configuration.
     """
-
-    @accepts()
-    async def config(self):
-        return await self._get_or_insert(
-            self._config.datastore, {
-                'extend': self._config.datastore_extend,
-                'extend_context': self._config.datastore_extend_context,
-                'prefix': self._config.datastore_prefix
-            }
-        )
 
     @private
     async def _update_service(self, old, new, verb=None, options=None):
