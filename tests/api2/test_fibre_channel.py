@@ -1,4 +1,5 @@
 import contextlib
+import copy
 import errno
 
 import pytest
@@ -128,12 +129,21 @@ def parse_targets(lines):
             return targets
 
 
-def parse_qla2x00t(lines):
+def parse_target_driver(target_driver, lines):
+    needle = f'TARGET_DRIVER {target_driver} ' + '{'
     while lines:
         line = lines.pop(0).strip()
-        if line == 'TARGET_DRIVER qla2x00t {':
+        if line == needle:
             targets = parse_targets(lines)
             return targets
+
+
+def parse_qla2x00t(lines):
+    return parse_target_driver('qla2x00t', copy.copy(lines))
+
+
+def parse_iscsi(lines):
+    return parse_target_driver('iscsi', copy.copy(lines))
 
 
 @contextlib.contextmanager
@@ -304,6 +314,87 @@ class TestFixtureFibreChannel:
                     'enabled': '1',
                     'rel_tgt_id': str(rel_tgt_id)
                 }
+
+                # OK, now let's create another FC target
+                with target_lun_zero('fctarget2', 'fcextent2', 200) as config2:
+                    target2_id = config2['target']['id']
+                    # Change the mode of the target
+                    call('iscsi.target.update', target2_id, {'mode': 'BOTH'})
+
+                    # Make sure we can't create a new fcport using the in-use port
+                    with pytest.raises(ValidationErrors) as ve:
+                        call('fcport.create', {'port': fc_hosts[0]['alias'], 'target_id': target2_id})
+                    assert ve.value.errors == [
+                        ValidationError(
+                            'fcport_create.port',
+                            'Object with this port already exists',
+                            errno.EINVAL,
+                        )
+                    ]
+
+                    # Make sure we can't create a new fcport using the in-use target
+                    with pytest.raises(ValidationErrors) as ve:
+                        call('fcport.create', {'port': fc_hosts[1]['alias'], 'target_id': target_id})
+                    assert ve.value.errors == [
+                        ValidationError(
+                            'fcport_create.target_id',
+                            'Object with this target_id already exists',
+                            errno.EINVAL,
+                        )
+                    ]
+
+                    # OK, now map the 2nd target
+                    with fcport_create(fc_hosts[1]['alias'], target2_id) as map1:
+                        maps = call('fcport.query')
+                        assert len(maps) == 2
+                        assert (maps[0] == map0 and maps[1] == map1) or (maps[0] == map1 and maps[1] == map0)
+
+                        # Let's regenerate the /etc/scst.conf and just make sure it has the expected targets
+                        call('etc.generate', 'scst')
+                        lines = ssh("cat /etc/scst.conf").splitlines()
+                        scst_qla_targets = parse_qla2x00t(lines)
+                        assert len(scst_qla_targets) == 2
+                        iscsi_targets = parse_iscsi(lines)
+                        assert len(iscsi_targets) == 1
+                        assert 'iqn.2005-10.org.freenas.ctl:fctarget2' in iscsi_targets
+
+                        # Make sure we can't update the old fcport using the in-use port
+                        with pytest.raises(ValidationErrors) as ve:
+                            call('fcport.update', map0['id'], {'port': fc_hosts[1]['alias']})
+                        assert ve.value.errors == [
+                            ValidationError(
+                                'fcport_update.port',
+                                'Object with this port already exists',
+                                errno.EINVAL,
+                            )
+                        ]
+
+                        # Make sure we can't update the old fcport using the in-use target
+                        with pytest.raises(ValidationErrors) as ve:
+                            call('fcport.update', map0['id'], {'target_id': target2_id})
+                        assert ve.value.errors == [
+                            ValidationError(
+                                'fcport_update.target_id',
+                                'Object with this target_id already exists',
+                                errno.EINVAL,
+                            )
+                        ]
+
+                        # OK, now let's create a third FC target
+                        with target_lun_zero('fctarget3', 'fcextent3', 300) as config3:
+                            target3_id = config3['target']['id']
+                            call('iscsi.target.update', target3_id, {'mode': 'FC'})
+
+                            # Make sure we CAN update the old fcport to this target
+                            assert call('fcport.update', map0['id'], {'target_id': target3_id})['target']['id'] == target3_id
+                            # Then put is back
+                            assert call('fcport.update', map0['id'], {'target_id': target_id})['target']['id'] == target_id
+
+                    # We've just left the context where the 2nd fcport was created
+                    # So now ensure we CAN update the old fcport to this port
+                    assert call('fcport.update', map0['id'], {'port': fc_hosts[1]['alias']})['port'] == fc_hosts[1]['alias']
+                    # Then put is back
+                    assert call('fcport.update', map0['id'], {'port': fc_hosts[0]['alias']})['port'] == fc_hosts[0]['alias']
 
     def test_npiv_setting(self, fc_hosts):
         # Try to set NPIV to -1

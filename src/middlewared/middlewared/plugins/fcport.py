@@ -71,6 +71,8 @@ class FCPortService(CRUDService):
         """
         old = await self.get_instance(id_)
         audit_callback(old['port'])
+        # Reflatten target_id
+        old['target_id'] = old.pop('target')['id']
         new = old.copy()
         new.update(data)
 
@@ -244,10 +246,10 @@ class FCPortService(CRUDService):
 
     async def _validate(self, schema_name: str, data: dict, id_: int = None):
         verrors = ValidationErrors()
-
-        # Make sure we don't reuse either port or target_id
-        for key in ['port', 'target_id']:
-            await self._ensure_unique(verrors, schema_name, key, data[key], id_)
+        # Make sure we don't reuse either port or target_id.  Need to special case
+        # map "target_id" to "target.id" because of how query is nesting target.
+        await self._ensure_unique(verrors, schema_name, 'port', data['port'], id_)
+        await self._ensure_unique(verrors, schema_name, 'target_id', data['target_id'], id_, 'target.id')
 
         # Make sure that the port base is a valid fc_host alias
         fc_hosts = {host['alias']: host for host in await self.middleware.call('fc.fc_host.query')}
