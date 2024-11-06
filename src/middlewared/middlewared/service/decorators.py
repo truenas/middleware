@@ -57,7 +57,6 @@ def filterable_api_method(fn=None, /, *, roles=None, item=None, private=False, c
         if hasattr(fn, 'wraps'):
             fn.wraps._filterable = True
 
-
         if item:
             returns = query_result(item)
         else:

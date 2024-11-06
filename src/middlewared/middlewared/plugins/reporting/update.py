@@ -1,10 +1,11 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str, Timestamp
-from middlewared.service import cli_private, filterable, filterable_returns, ConfigService, private
-from middlewared.validators import Range
-
-from .netdata import GRAPH_PLUGINS
+from middlewared.api import api_method
+from middlewared.api.current import (
+    ReportingEntry, ReportingGraph, ReportingUpdateArgs, ReportingUpdateResult, ReportingGetDataArgs,
+    ReportingGetDataResult, ReportingGraphArgs,
+)
+from middlewared.service import filterable_api_method, ConfigService, private
 
 
 class ReportingModel(sa.Model):
@@ -22,12 +23,9 @@ class ReportingService(ConfigService):
         cli_namespace = 'system.reporting'
         datastore = 'reporting'
         role_prefix = 'REPORTING'
+        entry = ReportingEntry
 
-    ENTRY = Dict(
-        'reporting_entry',
-        Int('tier1_days', validators=[Range(min_=1)], required=True),
-    )
-
+    @api_method(ReportingUpdateArgs, ReportingUpdateResult)
     async def do_update(self, data):
         """
         `tier1_days` can be set to specify for how many days we want to store reporting history which in netdata
@@ -42,33 +40,11 @@ class ReportingService(ConfigService):
         await self.middleware.call('service.restart', 'netdata')
         return await self.config()
 
-    @cli_private
-    @filterable(roles=['REPORTING_READ'])
-    @filterable_returns(Ref('reporting_graph'))
+    @filterable_api_method(roles=['REPORTING_READ'], item=ReportingGraph, cli_private=True)
     async def graphs(self, filters, options):
         return await self.middleware.call('reporting.netdata_graphs', filters, options)
 
-    @cli_private
-    @accepts(
-        List('graphs', items=[
-            Dict(
-                'graph',
-                Str('name', required=True, enum=[i for i in GRAPH_PLUGINS]),
-                Str('identifier', default=None, null=True),
-            ),
-        ], empty=False),
-        Dict(
-            'reporting_query',
-            Str('unit', enum=['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR']),
-            Int('page', default=1, validators=[Range(min_=1)]),
-            Timestamp('start'),
-            Timestamp('end'),
-            Bool('aggregate', default=True),
-            register=True,
-        ),
-        roles=['REPORTING_READ']
-    )
-    @returns(Ref('netdata_graph_reporting_data'))
+    @api_method(ReportingGetDataArgs, ReportingGetDataResult, roles=['REPORTING_READ'], cli_private=True)
     async def get_data(self, graphs, query):
         """
         Get reporting data for given graphs.
@@ -99,17 +75,10 @@ class ReportingService(ConfigService):
         return await self.middleware.call('reporting.netdata_get_data', graphs, query)
 
     @private
-    @accepts(Ref('reporting_query'))
     async def get_all(self, query):
         return await self.middleware.call('reporting.netdata_get_all', query)
 
-    @cli_private
-    @accepts(
-        Str('name', required=True),
-        Ref('reporting_query'),
-        roles=['REPORTING_READ']
-    )
-    @returns(Ref('netdata_graph_reporting_data'))
+    @api_method(ReportingGraphArgs, ReportingGetDataResult, roles=['REPORTING_READ'], cli_private=True)
     async def graph(self, name, query):
         """
         Get reporting data for `name` graph.

@@ -3,10 +3,11 @@ import errno
 import time
 import typing
 
-from middlewared.schema import accepts, Dict, List, Ref, returns, Str
-from middlewared.service import (
-    CallError, cli_private, filterable, filterable_returns, private, Service, ValidationErrors
+from middlewared.api import api_method
+from middlewared.api.current import (
+    ReportingGraphArgs, ReportingGetDataResult, ReportingGraph, ReportingGetDataArgs,
 )
+from middlewared.service import CallError, filterable_api_method, private, Service, ValidationErrors
 from middlewared.utils import filter_list
 
 from .netdata import GRAPH_PLUGINS
@@ -29,13 +30,7 @@ class ReportingService(Service):
     async def graph_names(self):
         return list(self.__graphs.keys())
 
-    @cli_private
-    @accepts(
-        Str('name', required=True),
-        Ref('reporting_query'),
-        roles=['REPORTING_READ']
-    )
-    @returns(Ref('netdata_graph_reporting_data'))
+    @api_method(ReportingGraphArgs, ReportingGetDataResult, roles=['REPORTING_READ'], cli_private=True)
     async def netdata_graph(self, name, query):
         """
         Get reporting data for `name` graph.
@@ -50,48 +45,14 @@ class ReportingService(Service):
 
         return await graph_plugin.export_multiple_identifiers(query_params, identifiers, query['aggregate'])
 
-    @cli_private
-    @filterable(roles=['REPORTING_READ'])
-    @filterable_returns(Dict(
-        'reporting_graph',
-        Str('name'),
-        Str('title'),
-        Str('vertical_label'),
-        List('identifiers', items=[Str('identifier')], null=True),
-        register=True
-    ))
+    @filterable_api_method(roles=['REPORTING_READ'], item=ReportingGraph, cli_private=True)
     async def netdata_graphs(self, filters, options):
         """
         Get reporting netdata graphs.
         """
         return filter_list([await i.as_dict() for i in self.__graphs.values()], filters, options)
 
-    @cli_private
-    @accepts(
-        List('graphs', items=[
-            Dict(
-                'graph',
-                Str('name', required=True, enum=[i for i in GRAPH_PLUGINS]),
-                Str('identifier', default=None, null=True),
-            ),
-        ], empty=False),
-        Ref('reporting_query'),
-        roles=['REPORTING_READ']
-    )
-    @returns(List('reporting_data', items=[Dict(
-        'netdata_graph_reporting_data',
-        Str('name', required=True),
-        Str('identifier', required=True, null=True),
-        List('data'),
-        Dict(
-            'aggregations',
-            List('min'),
-            List('max'),
-            List('mean'),
-        ),
-        additional_attrs=True,
-        register=True,
-    )]))
+    @api_method(ReportingGetDataArgs, ReportingGetDataResult, roles=['REPORTING_READ'], cli_private=True)
     async def netdata_get_data(self, graphs, query):
         """
         Get reporting data for given graphs.
@@ -131,7 +92,6 @@ class ReportingService(Service):
         return results
 
     @private
-    @accepts(Ref('reporting_query'))
     async def netdata_get_all(self, query):
         query_params = await self.middleware.call('reporting.translate_query_params', query)
         rv = []
@@ -143,18 +103,19 @@ class ReportingService(Service):
 
     @private
     def translate_query_params(self, query):
+        # TODO: Add unit tests for this please
         unit = query.get('unit')
         if unit:
             verrors = ValidationErrors()
             for i in ('start', 'end'):
-                if i in query:
+                if query.get(i) is not None:
                     verrors.add(
                         f'reporting_query.{i}',
                         f'{i!r} should only be used if "unit" attribute is not provided.',
                     )
             verrors.check()
         else:
-            if 'start' not in query:
+            if query.get('start') is None:
                 unit = 'HOUR'
             else:
                 start_time = int(query['start'])

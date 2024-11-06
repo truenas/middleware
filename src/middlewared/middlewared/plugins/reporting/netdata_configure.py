@@ -1,5 +1,4 @@
 import os
-import subprocess
 
 from middlewared.service import private, Service
 from middlewared.utils.filesystem.copy import copytree, CopyTreeConfig
