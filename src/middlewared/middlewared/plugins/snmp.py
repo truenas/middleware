@@ -3,14 +3,18 @@ import subprocess
 import os
 
 from contextlib import suppress
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SnmpEntry,
+    SnmpUpdateArgs, SnmpUpdateResult
+)
+
 from middlewared.common.ports import ServicePortDelegate
 from middlewared.plugins.snmp_.utils_snmp_user import (
     SNMPSystem, _add_system_user,
     add_snmp_user, delete_snmp_user, get_users_cmd
 )
-from middlewared.schema import Bool, Dict, Int, Password, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
-from middlewared.validators import Email, Match, Or, Range
 
 
 class SNMPModel(sa.Model):
@@ -40,24 +44,7 @@ class SNMPService(SystemServiceService):
         datastore = 'services.snmp'
         datastore_prefix = 'snmp_'
         cli_namespace = 'service.snmp'
-
-    ENTRY = Dict(
-        'snmp_entry',
-        Str('location', required=True),
-        Str('contact', required=True, validators=[Or(Email(), Match(r'^[-_a-zA-Z0-9\s]*$'))]),
-        Bool('traps', required=True),
-        Bool('v3', required=True),
-        Str('community', validators=[Match(r'^[-_.a-zA-Z0-9\s]*$')], default='public', required=True),
-        Str('v3_username', max_length=20, required=True),
-        Str('v3_authtype', enum=['', 'MD5', 'SHA'], required=True),
-        Password('v3_password', required=True),
-        Str('v3_privproto', enum=[None, 'AES', 'DES'], null=True, required=True),
-        Password('v3_privpassphrase', required=True, null=True),
-        Int('loglevel', validators=[Range(min_=0, max_=7)], required=True),
-        Str('options', max_length=None, required=True),
-        Bool('zilstat', required=True),
-        Int('id', required=True),
-    )
+        entry = SnmpEntry
 
     @private
     def get_snmp_users(self):
@@ -159,6 +146,7 @@ class SNMPService(SystemServiceService):
         if snmp_service['state'] == "STOPPED":
             await self.middleware.call("service.stop", "snmp")
 
+    @api_method(SnmpUpdateArgs, SnmpUpdateResult)
     async def do_update(self, data):
         """
         Update SNMP Service Configuration.
