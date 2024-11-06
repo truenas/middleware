@@ -312,11 +312,13 @@ def parse_test_name(test):
         return f"{filename}.py::{testname}"
     return test
 
+def parse_test_name_prefix_dir(test_name):
+    return f"api2/{parse_test_name(test_name)}"
 
 if tests:
-    pytest_command.extend(list(map(parse_test_name, tests)))
+    pytest_command.extend(list(map(parse_test_name_prefix_dir, tests)))
 else:
-    pytest_command.append(f"api2/{parse_test_name(testName)}")
+    pytest_command.append(parse_test_name_prefix_dir(testName))
 
 proc_returncode = call(pytest_command)
 
