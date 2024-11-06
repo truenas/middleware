@@ -183,6 +183,25 @@ class InterfaceService(CRUDService):
     async def query_names_only(self):
         return [i['int_interface'] for i in await self.middleware.call('datastore.query', 'network.interfaces')]
 
+    @private
+    def ignore_usb_nics(self, ha_hardware=None):
+        """Currently, there is 0 reason to expose USB based NICs
+        using our API on most of the platforms we sell."""
+        if ha_hardware is None:
+            ha_hardware = self.middleware.call_sync('system.is_ha_capable')
+
+        if ha_hardware:
+            # if it's HA capable, 0 reason to show a USB NIC
+            # since it's guaranteed to be coming from IPMI or
+            # 100% _not_ qualified by our platform team
+            return True
+
+        platform = self.middleware.call_sync('truenas.get_chassis_hardware')
+        if platform == 'TRUENAS-UNKNOWN' or 'MINI' in platform:
+            return False
+
+        return True
+
     @filterable
     def query(self, filters, options):
         """
@@ -196,22 +215,11 @@ class InterfaceService(CRUDService):
         }
         ha_hardware = self.middleware.call_sync('system.is_ha_capable')
         ignore = self.middleware.call_sync('interface.internal_interfaces')
-
-        # need to handle these platforms specially
-        fseries = hseries = False
-        platform = self.middleware.call_sync('truenas.get_chassis_hardware')
-        if platform.startswith('TRUENAS-F'):
-            fseries = True
-        elif platform.startswith('TRUENAS-H'):
-            hseries = True
-
+        ignore_usb_nics = self.ignore_usb_nics(ha_hardware)
         for name, iface in netif.list_interfaces().items():
             if (name in ignore) or (iface.cloned and name not in configs):
                 continue
-            elif any((fseries, hseries)) and iface.bus == 'usb':
-                # The {f/h}-series platforms will add a usb ethernet device to the system
-                # when someone opens up the ikvm html5 console. We need to hide this
-                # interface so users can't configure it
+            elif ignore_usb_nics and iface.bus == 'usb':
                 continue
 
             if retrieve_names_only:
