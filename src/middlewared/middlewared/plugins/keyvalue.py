@@ -1,6 +1,7 @@
+from typing import Any
+
 from truenas_api_client import json
 
-from middlewared.schema import Any, Str, accepts, Dict
 from middlewared.service import Service
 import middlewared.sqlalchemy as sa
 
@@ -18,16 +19,14 @@ class KeyValueService(Service):
     class Config:
         private = True
 
-    @accepts(Str('key'))
-    async def has_key(self, key):
+    async def has_key(self, key: str):
         try:
             await self.get(key)
             return True
         except KeyError:
             return False
 
-    @accepts(Str('key'), Any('default', null=True, default=None))
-    async def get(self, key, default):
+    async def get(self, key: str, default: Any | None = None):
         try:
             return json.loads(
                 (await self.middleware.call(
@@ -38,12 +37,7 @@ class KeyValueService(Service):
 
             raise KeyError(key)
 
-    @accepts(
-        Str('key'),
-        Any('value'),
-        Dict('options', additional_attrs=True),
-    )
-    async def set(self, key, value, options):
+    async def set(self, key: str, value: Any, options: dict):
         try:
             row = await self.middleware.call("datastore.query", "system.keyvalue", [["key", "=", key]], {"get": True})
         except IndexError:
@@ -57,9 +51,5 @@ class KeyValueService(Service):
 
         return value
 
-    @accepts(
-        Str('key'),
-        Dict('options', additional_attrs=True),
-    )
-    async def delete(self, key, options):
+    async def delete(self, key: str, options: dict):
         await self.middleware.call("datastore.delete", "system.keyvalue", [["key", "=", key]], options)
