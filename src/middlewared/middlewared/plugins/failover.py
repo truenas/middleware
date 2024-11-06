@@ -760,15 +760,26 @@ class FailoverService(ConfigService):
 
                 bootenv_name = manifest['version']
 
-            existing_bootenvs = set([
-                be['name'] for be in self.middleware.call_sync('bootenv.query')
-            ] + [
-                be['name'] for be in self.middleware.call_sync('failover.call_remote', 'bootenv.query')
-            ])
-            if bootenv_name in existing_bootenvs:
+            existing_bes = set()
+            for i in self.middleware.call_sync('boot.environment.query'):
+                existing_bes.add(i['id'])
+
+            try:
+                for i in self.middleware.call_sync(
+                    'failover.call_remote', 'boot.environment.query'
+                ):
+                    existing_bes.add(i['id'])
+            except CallError as e:
+                if e.errno == CallError.ENOMETHOD:
+                    for i in self.middleware.call_sync('failover.call_remote', 'bootenv.query'):
+                        existing_bes.add(i['name'])
+                else:
+                    raise
+
+            if bootenv_name in existing_bes:
                 for i in itertools.count(1):
                     probe_bootenv_name = f"{bootenv_name}-{i}"
-                    if probe_bootenv_name not in existing_bootenvs:
+                    if probe_bootenv_name not in existing_bes:
                         bootenv_name = probe_bootenv_name
                         break
 

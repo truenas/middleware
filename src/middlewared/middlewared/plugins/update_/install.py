@@ -87,31 +87,29 @@ class UpdateService(Service):
     @private
     def ensure_free_space(self, pool_name, size):
         space_left = self._space_left(pool_name)
-
         if space_left > size:
             return
 
-        for bootenv in reversed(self.middleware.call_sync(
-            "bootenv.query",
-            [
-                ["keep", "=", False],
-                ["mountpoint", "=", "-"],
-                ["activated", "=", False],
-            ],
-            {"order_by": ["created"]},
-        )):
+        filters = [
+            # ignore BE that is explicitly marked to be kept
+            ["keep", "=", False],
+            # ignore current BE
+            ["active", "=", False],
+            # ignore active BE on next reboot
+            ["activated", "=", False],
+        ]
+        # ascending order (i.e. oldest comes first)
+        opts = {"order_by": ["created"]}
+        for be in self.middleware.call_sync(
+            "boot.environment.query", filters, opts
+        ):
             space_left_before_prune = space_left
+            logger.info("Pruning %r", be["id"])
+            self.middleware.call_sync("boot.environment.destroy", be["id"])
 
-            logger.info("Pruning %r", bootenv["id"])
-            self.middleware.call_sync("bootenv.delete", bootenv["id"])
-
-            be_size = bootenv["rawspace"]
-            if be_size is None:
-                be_size = 0
-
+            be_size = be["used_bytes"]
             for i in range(10):
                 space_left = self._space_left(pool_name)
-
                 if space_left > size:
                     return
 
@@ -119,8 +117,11 @@ class UpdateService(Service):
                 if freed_space >= be_size * 0.5:
                     return
 
-                logger.debug("Only freed %d bytes of %d, waiting for deferred operation to complete...", freed_space,
-                             be_size)
+                logger.debug(
+                    "Only freed %d bytes of %d, waiting for deferred operation to complete...",
+                    freed_space,
+                    be_size
+                )
                 time.sleep(1)
 
         raise CallError(
