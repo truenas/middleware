@@ -1155,17 +1155,25 @@ def test_13_test_target_name(request, extent_type):
     depends(request, ["iscsi_cmd_00"], scope="session")
 
     with initiator_portal() as config:
+        name63 = generate_name(63)
         name64 = generate_name(64)
-        with configured_target(config, name64, extent_type):
+        name65 = generate_name(65)
+        with configured_target(config, name64, extent_type) as config:
             iqn = f'{basename}:{name64}'
             target_test_readwrite16(truenas_server.ip, iqn)
+            # Now try to change the length of the extent name
+            call('iscsi.extent.update', config['extent']['id'], {'name': name63})
+            with pytest.raises(ValidationErrors) as ve:
+                call('iscsi.extent.update', config['extent']['id'], {'name': name65})
+            assert ve.value.errors == [
+                ValidationError('iscsi_extent_update.name', 'String should have at most 64 characters', errno.EINVAL),
+            ]
 
-        name65 = generate_name(65)
         with pytest.raises(ValidationErrors) as ve:
             with configured_target(config, name65, extent_type):
                 assert False, f"Should not have been able to create a target with name length {len(name65)}."
         assert ve.value.errors == [
-            ValidationError('iscsi_extent_create.name', 'The value may not be longer than 64 characters', errno.EINVAL),
+            ValidationError('iscsi_extent_create.name', 'String should have at most 64 characters', errno.EINVAL),
         ]
 
 
