@@ -119,7 +119,7 @@ class BootEnvironmentService(Service):
                     "activated": activated_be == ds_name,
                     "created": datetime.datetime.utcfromtimestamp(
                         props["creation"]["value"]
-                    ).strftime("%Y-%m-%d %H:%M"),
+                    ),
                     "used_bytes": props["used"]["value"],
                     "used": format_size(props["used"]["value"]),
                     "keep": props["zectl:keep"]["value"] == "True",
