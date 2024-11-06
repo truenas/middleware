@@ -3,8 +3,10 @@ import libzfs
 import subprocess
 import functools
 
-from middlewared.schema import accepts, Bool, Dict, Str
+from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
+from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import CallError, Service
+from middlewared.validators import Range
 
 from .pool_utils import find_vdev, SEARCH_PATHS
 
@@ -237,6 +239,37 @@ class ZFSPoolService(Service):
                     self.logger.error(
                         'Failed to mount datasets after importing "%s" pool: %s', name_or_guid, str(e), exc_info=True
                     )
+
+    def ddt_prefetch(self, pool_name):
+        with libzfs.ZFS() as zfs:
+            try:
+                zfs.get(pool_name).ddt_prefetch()
+            except libzfs.ZFSException as e:
+                raise CallError(str(e), e.code)
+
+    def ddt_prefetch_pools(self):
+        # We have this method so to avoid making excessive calls to process pool service
+        for pool_info in (self.middleware.call_sync('zfs.pool.query_imported_fast')).values():
+            if pool_info['name'] in BOOT_POOL_NAME_VALID:
+                continue
+
+            try:
+                self.middleware.logger.info('Prefetching ddt table of %r pool', pool_info['name'])
+                self.ddt_prefetch(pool_info['name'])
+            except CallError as e:
+                self.logger.error('Failed to prefetch DDT for pool %r: %s', pool_info['name'], e)
+
+    def ddt_prune(self, options):
+        if options['percentage'] and options['days']:
+            raise CallError('Percentage or days must be provided, not both')
+        if options['percentage'] is None and options['days'] is None:
+            raise CallError('Percentage or days must be provided')
+
+        try:
+            with libzfs.ZFS() as zfs:
+                zfs.get(options['pool_name']).ddt_prune(percentage=options['percentage'], days=options['days'])
+        except libzfs.ZFSException as e:
+            raise CallError(str(e), e.code)
 
     @accepts(Str('pool'))
     def find_not_online(self, pool):

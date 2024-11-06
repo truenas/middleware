@@ -676,6 +676,9 @@ class FailoverEventsService(Service):
         self.run_call('directoryservices.setup')
         logger.info('Done starting background job for directoryservices.setup')
 
+        logger.info('Starting background job for prefetching DDT for zpools')
+        self.middleware.create_task(self.middleware.call('zfs.pool.ddt_prefetch_pools'))
+
         logger.info('Allowing network traffic.')
         fw_accept_job = self.run_call('failover.firewall.accept_all')
         fw_accept_job.wait_sync()

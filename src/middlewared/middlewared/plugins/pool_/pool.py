@@ -80,6 +80,9 @@ class PoolService(CRUDService):
         Int('allocated', required=True, null=True),
         Int('free', required=True, null=True),
         Int('freeing', required=True, null=True),
+        Int('dedupcached', required=True, null=True),
+        Int('dedup_table_size', required=True, null=True),
+        Str('dedup_table_quota', required=True, null=True),
         Str('fragmentation', required=True, null=True),
         Str('size_str', required=True, null=True),
         Str('allocated_str', required=True, null=True),
@@ -159,6 +162,9 @@ class PoolService(CRUDService):
             'allocated_str': None,
             'free_str': None,
             'freeing_str': None,
+            'dedup_table_quota': None,
+            'dedup_table_size': None,
+            'dedupcached': None,
             'autotrim': {
                 'parsed': 'off',
                 'rawvalue': 'off',
@@ -196,6 +202,9 @@ class PoolService(CRUDService):
                 'free_str': info['properties']['free']['rawvalue'],
                 'freeing_str': info['properties']['freeing']['rawvalue'],
                 'autotrim': info['properties']['autotrim'],
+                'dedup_table_quota': info['properties']['dedup_table_quota']['parsed'],
+                'dedup_table_size': info['properties']['dedup_table_size']['parsed'],
+                'dedupcached': info['properties']['dedupcached']['parsed'],
             })
 
         return rv
@@ -408,6 +417,8 @@ class PoolService(CRUDService):
         'pool_create',
         Str('name', max_length=50, required=True),
         Bool('encryption', default=False),
+        Str('dedup_table_quota', default='AUTO', enum=['AUTO', None, 'CUSTOM'], null=True),
+        Int('dedup_table_quota_value', null=True, default=None, validators=[Range(min_=1)]),
         Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
         Str('checksum', enum=[None] + ZFS_CHECKSUM_CHOICES, default=None, null=True),
         Dict(
@@ -551,6 +562,10 @@ class PoolService(CRUDService):
             }, 'pool_create.encryption_options',
         )
 
+        dedup_table_quota_value = None
+        if data['deduplication'] == 'ON':
+            dedup_table_quota_value = await self.validate_dedup_table_quota(data, verrors)
+
         verrors.check()
 
         is_ha = await self.middleware.call('failover.licensed')
@@ -602,6 +617,8 @@ class PoolService(CRUDService):
         dedup = data.get('deduplication')
         if dedup:
             fsoptions['dedup'] = dedup.lower()
+        if dedup_table_quota_value is not None:
+            options['dedup_table_quota'] = dedup_table_quota_value
 
         if data['checksum'] is not None:
             fsoptions['checksum'] = data['checksum'].lower()
@@ -680,6 +697,31 @@ class PoolService(CRUDService):
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
         return pool
 
+    @private
+    async def validate_dedup_table_quota(self, data, verrors, schema='pool_create'):
+        dedup_table_quota = data.get('dedup_table_quota')
+        dedup_table_quota_value = data.get('dedup_table_quota_value')
+        if dedup_table_quota != 'CUSTOM' and dedup_table_quota_value is not None:
+            verrors.add(
+                f'{schema}.dedup_table_quota',
+                'You must set Deduplication Table Quota to CUSTOM to specify a value.',
+            )
+        elif dedup_table_quota == 'CUSTOM' and dedup_table_quota_value is None:
+            verrors.add(
+                f'{schema}.dedup_table_quota_value',
+                'This field is required when Deduplication Table Quota is set to CUSTOM.',
+            )
+
+        if verrors or 'dedup_table_quota' not in data:
+            return
+
+        if dedup_table_quota is None:
+            return 'none'
+        elif dedup_table_quota == 'CUSTOM':
+            return str(dedup_table_quota_value)
+        else:
+            return dedup_table_quota.lower()
+
     @accepts(Int('id'), Patch(
         'pool_create', 'pool_update',
         ('add', {'name': 'autotrim', 'type': 'str', 'enum': ['ON', 'OFF']}),
@@ -722,6 +764,10 @@ class PoolService(CRUDService):
         if 'topology' in data:
             disks, vdevs = await self._process_topology('pool_update', data, pool)
 
+        verrors = ValidationErrors()
+        dedup_table_quota_value = await self.validate_dedup_table_quota(data, verrors, 'pool_update')
+        verrors.check()
+
         if disks and vdevs:
             await self.middleware.call('pool.format_disks', job, disks, 0, 80)
 
@@ -735,6 +781,9 @@ class PoolService(CRUDService):
         properties = {}
         if 'autotrim' in data:
             properties['autotrim'] = {'value': data['autotrim'].lower()}
+
+        if dedup_table_quota_value is not None:
+            properties['dedup_table_quota'] = {'value': dedup_table_quota_value}
 
         if (
             zfs_pool := await self.middleware.call('zfs.pool.query', [['name', '=', pool['name']]])
