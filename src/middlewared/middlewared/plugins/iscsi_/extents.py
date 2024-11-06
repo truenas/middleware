@@ -4,18 +4,17 @@ import pathlib
 import secrets
 import subprocess
 import uuid
-
-import middlewared.sqlalchemy as sa
-
-from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.plugins.zfs_.utils import zvol_path_to_name
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
-from middlewared.service import CallError, private, SharingService, ValidationErrors
-from middlewared.utils.size import format_size
-from middlewared.validators import Range
 from collections import defaultdict
 
-from .utils import MAX_EXTENT_NAME_LEN
+import middlewared.sqlalchemy as sa
+from middlewared.api import api_method
+from middlewared.api.current import (IscsiExtentCreateArgs, IscsiExtentCreateResult, IscsiExtentDeleteArgs,
+                                     IscsiExtentDeleteResult, IscsiExtentDiskChoicesArgs, IscsiExtentDiskChoicesResult,
+                                     IscsiExtentEntry, IscsiExtentUpdateArgs, IscsiExtentUpdateResult)
+from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.plugins.zfs_.utils import zvol_path_to_name
+from middlewared.service import CallError, private, SharingService, ValidationErrors
+from middlewared.utils.size import format_size
 
 
 class iSCSITargetExtentModel(sa.Model):
@@ -51,6 +50,7 @@ class iSCSITargetExtentService(SharingService):
         datastore_extend = 'iscsi.extent.extend'
         cli_namespace = 'sharing.iscsi.extent'
         role_prefix = 'SHARING_ISCSI_EXTENT'
+        entry = IscsiExtentEntry
 
     @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
@@ -68,26 +68,12 @@ class iSCSITargetExtentService(SharingService):
 
         return await self.middleware.call('pool.dataset.path_in_locked_datasets', path, locked_datasets)
 
-    @accepts(Dict(
-        'iscsi_extent_create',
-        Str('name', required=True, max_length=MAX_EXTENT_NAME_LEN),
-        Str('type', enum=['DISK', 'FILE'], default='DISK'),
-        Str('disk', default=None, null=True),
-        Str('serial', default=None, null=True),
-        Str('path', default=None, null=True),
-        Int('filesize', default=0),
-        Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
-        Bool('pblocksize'),
-        Int('avail_threshold', validators=[Range(min_=1, max_=99)], null=True),
-        Str('comment'),
-        Bool('insecure_tpc', default=True),
-        Bool('xen'),
-        Str('rpm', enum=['UNKNOWN', 'SSD', '5400', '7200', '10000', '15000'],
-            default='SSD'),
-        Bool('ro', default=False),
-        Bool('enabled', default=True),
-        register=True
-    ), audit='Create iSCSI extent', audit_extended=lambda data: data["name"])
+    @api_method(
+        IscsiExtentCreateArgs,
+        IscsiExtentCreateResult,
+        audit='Create iSCSI extent',
+        audit_extended=lambda data: data['name']
+    )
     async def do_create(self, data):
         """
         Create an iSCSI Extent.
@@ -123,15 +109,11 @@ class iSCSITargetExtentService(SharingService):
 
         return await self.get_instance(data['id'])
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'iscsi_extent_create',
-            'iscsi_extent_update',
-            ('attr', {'update': True})
-        ),
+    @api_method(
+        IscsiExtentUpdateArgs,
+        IscsiExtentUpdateResult,
         audit='Update iSCSI extent',
-        audit_callback=True,
+        audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
         """
@@ -166,12 +148,11 @@ class iSCSITargetExtentService(SharingService):
 
         return await self.get_instance(id_)
 
-    @accepts(
-        Int('id'),
-        Bool('remove', default=False),
-        Bool('force', default=False),
+    @api_method(
+        IscsiExtentDeleteArgs,
+        IscsiExtentDeleteResult,
         audit='Delete iSCSI extent',
-        audit_callback=True,
+        audit_callback=True
     )
     async def do_delete(self, audit_callback, id_, remove, force):
         """
@@ -413,7 +394,7 @@ class iSCSITargetExtentService(SharingService):
         else:
             return naa
 
-    @accepts()
+    @api_method(IscsiExtentDiskChoicesArgs, IscsiExtentDiskChoicesResult)
     async def disk_choices(self):
         """
         Return a dict of available zvols that can be used
