@@ -39,7 +39,7 @@ class CacheService(Service):
     def pop(self, key: str):
         """Removes and returns `key` from cache."""
         try:
-            self.__cache.pop(key, None).value
+            return self.__cache.pop(key, None).value
         except AttributeError:
             pass
 
