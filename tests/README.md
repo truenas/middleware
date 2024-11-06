@@ -10,16 +10,18 @@ In middleware/tests run the command bellow
 `pip3 install -r requirements.txt`
 
 ## Running the API test(s)
-runtests.py is the mechanism to kick off API runs. To see usage, call it without arguments.
+`runtests.py` is the mechanism to kick off API runs. To see usage, call it without arguments.
 
 ### Example of command
 
 `./runtests.py --ip 192.168.2.45 --interface em0 --password testing`
 
 Below is a command to run a specific test:
+
 `./runtests.py --ip 192.168.2.45 --interface em0 --password testing --test test_lock.py`
 
 Below is a command to run specific tests:
+
 `./runtests.py --ip 192.168.2.45 --interface em0 --password testing --test test_lock.py,test_mail.py`
 
 ## How should a Websocket API test be written?
