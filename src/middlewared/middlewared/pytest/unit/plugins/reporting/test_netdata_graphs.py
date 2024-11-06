@@ -4,7 +4,8 @@ from unittest.mock import AsyncMock, patch
 
 from middlewared.plugins.reporting.netdata.graphs import (
     CPUPlugin, CPUTempPlugin, DiskTempPlugin, DISKPlugin, InterfacePlugin, LoadPlugin, MemoryPlugin,
-    UptimePlugin, ARCActualRatePlugin, ARCRatePlugin, ARCSizePlugin
+    UptimePlugin, ARCSizePlugin, ARCFreeMemoryPlugin, ARCAvailableMemoryPlugin, DemandAccessesPerSecondPlugin,
+    DemandDataAccessesPerSecondPlugin, DemandMetadataAccessesPerSecondPlugin,
 )
 from middlewared.pytest.unit.middleware import Middleware
 
@@ -17,9 +18,13 @@ from middlewared.pytest.unit.middleware import Middleware
     (LoadPlugin, 'load', ['time']),
     (MemoryPlugin, 'memory', ['time']),
     (UptimePlugin, 'uptime', ['time']),
-    (ARCActualRatePlugin, 'arcactualrate', ['time']),
-    (ARCRatePlugin, 'arcrate', ['time']),
     (ARCSizePlugin, 'arcsize', ['time']),
+    (ARCFreeMemoryPlugin, 'arc_free_memory', ['time']),
+    (ARCAvailableMemoryPlugin, 'arc_available_memory', ['time']),
+    (DemandAccessesPerSecondPlugin, 'demand_accesses_per_second', ['time']),
+    (DemandDataAccessesPerSecondPlugin, 'demand_data_accesses_per_second', ['time']),
+    (DemandMetadataAccessesPerSecondPlugin, 'demand_metadata_accesses_per_second', ['time']),
+    (ARCSizePlugin, 'arc_size', ['time']),
     (DiskTempPlugin, 'sda', ['time', 'temperature_value']),
 ])
 @pytest.mark.asyncio

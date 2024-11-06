@@ -491,48 +491,332 @@ NETDATA_ALL_METRICS = {
             }
         }
     },
-    'zfs.arc_size': {
-        'name': 'zfs.arc_size',
-        'family': 'size',
-        'context': 'zfs.arc_size',
-        'units': 'MiB',
-        'last_updated': 1691150349,
+    'truenas_arcstats.free': {
+        'name': 'truenas_arcstats.free',
+        'family': 'free',
+        'context': 'ARC free memory',
+        'units': 'Bytes',
+        'last_updated': 1730482785,
         'dimensions': {
-            'size': {
-                'name': 'arcsz',
-                'value': 210.9588394
-            },
-            'target': {
-                'name': 'target',
-                'value': 256.2307129
-            },
-            'min': {
-                'name': 'min (hard limit)',
-                'value': 61.4807129
-            },
-            'max': {
-                'name': 'max (high water)',
-                'value': 983.6914062
+            'free': {
+                'name': 'free',
+                'value': 2432081920
             }
         }
     },
-    'zfs.hits': {
-        'name': 'zfs.hits',
-        'family': 'efficiency',
-        'context': 'zfs.hits',
-        'units': 'percentage',
-        'last_updated': 1691150349,
+    'truenas_arcstats.avail': {
+        'name': 'truenas_arcstats.avail',
+        'family': 'avail',
+        'context': 'ARC available memory',
+        'units': 'Bytes',
+        'last_updated': 1730482785,
         'dimensions': {
-            'hits': {
-                'name': 'hits',
-                'value': 3
-            },
-            'misses': {
-                'name': 'misses',
-                'value': 4
+            'avail': {
+                'name': 'avail',
+                'value': 2165650048
             }
         }
-    }
+    },
+    'truenas_arcstats.size': {
+        'name': 'truenas_arcstats.size',
+        'family': 'size',
+        'context': 'ARC size',
+        'units': 'Bytes',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'size': {
+                'name': 'size',
+                'value': 1371942144
+            }
+        }
+    },
+    'truenas_arcstats.dread': {
+        'name': 'truenas_arcstats.dread',
+        'family': 'dread',
+        'context': 'Demand accesses per second',
+        'units': 'dread/s',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'dread': {
+                'name': 'dread',
+                'value': 93.6866928
+            }
+        }
+    },
+    'truenas_arcstats.ddread': {
+        'name': 'truenas_arcstats.ddread',
+        'family': 'ddread',
+        'context': 'Demand data accesses per second',
+        'units': 'ddread/s',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'ddread': {
+                'name': 'ddread',
+                'value': 48.2190993
+            }
+        }
+    },
+    'truenas_arcstats.dmread': {
+        'name': 'truenas_arcstats.dmread',
+        'family': 'dmread',
+        'context': 'Demand metadata accesses per second',
+        'units': 'dmread/s',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'dmread': {
+                'name': 'dmread',
+                'value': 45.4620412
+            }
+        }
+    },
+    'truenas_arcstats.ddhit': {
+        'name': 'truenas_arcstats.ddhit',
+        'family': 'ddhit',
+        'context': 'Demand data hits per second',
+        'units': 'ddhit/s',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'ddhit': {
+                'name': 'ddhit',
+                'value': 48.2155335
+            }
+        }
+    },
+    'truenas_arcstats.ddioh': {
+        'name': 'truenas_arcstats.ddioh',
+        'family': 'ddioh',
+        'context': 'Demand data I/O hits per second',
+        'units': 'ddioh/s',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'ddioh': {
+                'name': 'ddioh',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.ddmis': {
+        'name': 'truenas_arcstats.ddmis',
+        'family': 'ddmis',
+        'context': 'Demand data misses per second',
+        'units': 'ddmis/s',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'ddmis': {
+                'name': 'ddmis',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.ddh_p': {
+        'name': 'truenas_arcstats.ddh_p',
+        'family': 'ddh',
+        'context': 'Demand data hit percentage',
+        'units': 'ddh%',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'ddh_p': {
+                'name': 'ddh',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.ddi_p': {
+        'name': 'truenas_arcstats.ddi_p',
+        'family': 'ddi',
+        'context': 'Demand data I/O hit percentage',
+        'units': 'ddi%',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'ddi_p': {
+                'name': 'ddi',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.ddm_p': {
+        'name': 'truenas_arcstats.ddm_p',
+        'family': 'ddm',
+        'context': 'Demand data miss percentage',
+        'units': 'ddm%',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'ddm_p': {
+                'name': 'ddm',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.dmhit': {
+        'name': 'truenas_arcstats.dmhit',
+        'family': 'dmhit',
+        'context': 'Demand metadata hits per second',
+        'units': 'dmhit',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'dmhit': {
+                'name': 'dmhit',
+                'value': 45.4499775
+            }
+        }
+    },
+    'truenas_arcstats.dmioh': {
+        'name': 'truenas_arcstats.dmioh',
+        'family': 'dmioh',
+        'context': 'Demand metadata I/O hits per second',
+        'units': 'dmioh',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'dmioh': {
+                'name': 'dmioh',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.dmmis': {
+        'name': 'truenas_arcstats.dmmis',
+        'family': 'dmmis',
+        'context': 'Demand metadata misses per second',
+        'units': 'dmmis',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'dmmis': {
+                'name': 'dmmis',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.dmh_p': {
+        'name': 'truenas_arcstats.dmh_p',
+        'family': 'dmh',
+        'context': 'Demand metadata hit percentage',
+        'units': 'dmh%',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'dmh_p': {
+                'name': 'dmh',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.dmi_p': {
+        'name': 'truenas_arcstats.dmi_p',
+        'family': 'dmi',
+        'context': 'Demand metadata I/O hit percentage',
+        'units': 'dmi%',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'dmi_p': {
+                'name': 'dmi',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.dmm_p': {
+        'name': 'truenas_arcstats.dmm_p',
+        'family': 'dmm',
+        'context': 'Demand metadata miss percentage',
+        'units': 'dmm%',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'dmm_p': {
+                'name': 'dmm',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.l2hits': {
+        'name': 'truenas_arcstats.l2hits',
+        'family': 'l2hits',
+        'context': 'L2ARC hits per second',
+        'units': 'l2hits',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'l2hits': {
+                'name': 'l2hits',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.l2miss': {
+        'name': 'truenas_arcstats.l2miss',
+        'family': 'l2miss',
+        'context': 'L2ARC misses per second',
+        'units': 'l2miss',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'l2miss': {
+                'name': 'l2miss',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.l2read': {
+        'name': 'truenas_arcstats.l2read',
+        'family': 'l2read',
+        'context': 'Total L2ARC accesses per second',
+        'units': 'l2read',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'l2read': {
+                'name': 'l2read',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.l2hit_p': {
+        'name': 'truenas_arcstats.l2hit_p',
+        'family': 'l2hit',
+        'context': 'L2ARC access hit percentage',
+        'units': 'l2hit%',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'l2hit_p': {
+                'name': 'l2hit',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.l2miss_p': {
+        'name': 'truenas_arcstats.l2miss_p',
+        'family': 'l2miss',
+        'context': 'L2ARC access miss percentage',
+        'units': 'l2miss%',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'l2miss_p': {
+                'name': 'l2miss',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.l2bytes': {
+        'name': 'truenas_arcstats.l2bytes',
+        'family': 'l2bytes',
+        'context': 'Bytes read per second from the L2ARC',
+        'units': 'l2bytes',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'l2bytes': {
+                'name': 'l2bytes',
+                'value': 0
+            }
+        }
+    },
+    'truenas_arcstats.l2wbytes': {
+        'name': 'truenas_arcstats.l2wbytes',
+        'family': 'l2wbytes',
+        'context': 'Bytes written per second to the L2ARC',
+        'units': 'l2wbytes',
+        'last_updated': 1730482785,
+        'dimensions': {
+            'l2wbytes': {
+                'name': 'l2wbytes',
+                'value': 0
+            }
+        }
+    },
+
 }
 MEM_INFO = '''Active:            67772 kB
 Inactive:        1379892 kB
@@ -542,17 +826,82 @@ Mapped:            54768 kB
 
 def test_arc_stats():
     arc_stats = get_arc_stats(NETDATA_ALL_METRICS)
-    assert arc_stats['arc_max_size'] == normalize_value(
-        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'zfs.arc_size', 'max', 0), multiplier=1024 * 1024,
+
+    assert arc_stats['arc_free_memory'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.free', 'free', 0)
+    )
+    assert arc_stats['arc_available_memory'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.avail', 'avail', 0)
     )
     assert arc_stats['arc_size'] == normalize_value(
-        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'zfs.arc_size', 'size', 0), multiplier=1024 * 1024,
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.size', 'size', 0)
     )
-    total = safely_retrieve_dimension(NETDATA_ALL_METRICS, 'zfs.hits', 'hits', 0) + safely_retrieve_dimension(
-        NETDATA_ALL_METRICS, 'zfs.hits', 'misses', 0)
-    assert arc_stats['cache_hit_ratio'] == safely_retrieve_dimension(
-        NETDATA_ALL_METRICS, 'zfs.hits', 'hits', 0
-    ) / total
+    assert arc_stats['demand_accesses_per_second'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.dread', 'dread', 0)
+    )
+    assert arc_stats['demand_data_accesses_per_second'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.ddread', 'ddread', 0)
+    )
+    assert arc_stats['demand_metadata_accesses_per_second'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.dmread', 'dmread', 0)
+    )
+    assert arc_stats['demand_data_hits_per_second'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.ddhit', 'ddhit', 0)
+    )
+    assert arc_stats['demand_data_io_hits_per_second'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.ddioh', 'ddioh', 0)
+    )
+    assert arc_stats['demand_data_misses_per_second'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.ddmis', 'ddmis', 0)
+    )
+    assert arc_stats['demand_data_hit_percentage'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.ddh_p', 'ddh_p', 0)
+    )
+    assert arc_stats['demand_data_io_hit_percentage'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.ddi_p', 'ddi_p', 0)
+    )
+    assert arc_stats['demand_data_miss_percentage'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.ddm_p', 'ddm_p', 0)
+    )
+    assert arc_stats['demand_metadata_hits_per_second'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.dmhit', 'dmhit', 0)
+    )
+    assert arc_stats['demand_metadata_io_hits_per_second'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.dmioh', 'dmioh', 0)
+    )
+    assert arc_stats['demand_metadata_misses_per_second'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.dmmis', 'dmmis', 0)
+    )
+    assert arc_stats['demand_metadata_hit_percentage'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.dmh_p', 'dmh_p', 0)
+    )
+    assert arc_stats['demand_metadata_io_hit_percentage'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.dmi_p', 'dmi_p', 0)
+    )
+    assert arc_stats['demand_metadata_miss_percentage'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.dmm_p', 'dmm_p', 0)
+    )
+    assert arc_stats['l2arc_hits_per_second'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.l2hits', 'l2hits', 0)
+    )
+    assert arc_stats['l2arc_misses_per_second'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.l2miss', 'l2miss', 0)
+    )
+    assert arc_stats['total_l2arc_accesses_per_second'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.l2read', 'l2read', 0)
+    )
+    assert arc_stats['l2arc_access_hit_percentage'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.l2hit_p', 'l2hit_p', 0)
+    )
+    assert arc_stats['l2arc_miss_percentage'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.l2miss_p', 'l2miss_p', 0)
+    )
+    assert arc_stats['bytes_read_per_second_from_the_l2arc'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.l2bytes', 'l2bytes', 0)
+    )
+    assert arc_stats['bytes_written_per_second_to_the_l2arc'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.l2wbytes', 'l2wbytes', 0)
+    )
 
 
 def test_cpu_stats():
@@ -647,7 +996,7 @@ def test_memory_stats():
             safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.ram', 'free', 0), multiplier=1024 * 1024
         )
         assert memory_stats['classes']['arc'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'zfs.arc_size', 'size', 0), multiplier=1024 * 1024
+            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.size', 'size', 0)
         )
         assert memory_stats['classes']['apps'] == normalize_value(
             safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.ram', 'used', 0), multiplier=1024 * 1024

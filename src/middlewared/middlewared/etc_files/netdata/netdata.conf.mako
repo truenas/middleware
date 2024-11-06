@@ -93,7 +93,7 @@
 	/proc/mdstat = no
 	/proc/net/rpc/nfsd = yes
 	/proc/net/rpc/nfs = yes
-	/proc/spl/kstat/zfs/arcstats = yes
+	/proc/spl/kstat/zfs/arcstats = no
 	/sys/fs/btrfs = no
 	ipc = no
 	/sys/class/power_supply = no
