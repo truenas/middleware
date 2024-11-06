@@ -37,7 +37,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         'cloud_backup_create',
         'cloud_backup_entry',
         ('add', Int('id')),
-        ("replace", Dict("credentials", additional_attrs=True, private_keys=["attributes"])),
+        ("replace", Dict("credentials", additional_attrs=True, private_keys=["provider"])),
         ("add", Dict("job", additional_attrs=True, null=True)),
         ("add", Bool("locked")),
     )
@@ -50,7 +50,10 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
     @private
     async def extend(self, cloud_backup, context):
-        cloud_backup["credentials"] = cloud_backup.pop("credential")
+        cloud_backup["credentials"] = await self.middleware.call(
+            "cloudsync.credentials.extend", cloud_backup.pop("credential"),
+        )
+
         if job := await self.get_task_state_job(context["task_state"], cloud_backup["id"]):
             cloud_backup["job"] = job
 

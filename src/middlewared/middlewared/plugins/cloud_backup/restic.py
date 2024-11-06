@@ -18,7 +18,7 @@ class ResticConfig:
 
 
 def get_restic_config(cloud_backup):
-    remote = REMOTES[cloud_backup["credentials"]["provider"]]
+    remote = REMOTES[cloud_backup["credentials"]["provider"]["type"]]
 
     remote_path = get_remote_path(remote, cloud_backup["attributes"])
 

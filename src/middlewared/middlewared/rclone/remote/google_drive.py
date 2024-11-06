@@ -1,7 +1,7 @@
 import textwrap
 
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Bool, Password, Str
+from middlewared.schema import Bool
 
 
 class GoogleDriveRcloneRemote(BaseRcloneRemote):
@@ -12,12 +12,6 @@ class GoogleDriveRcloneRemote(BaseRcloneRemote):
 
     rclone_type = "drive"
 
-    credentials_schema = [
-        Str("client_id", title="OAuth Client ID", default=""),
-        Password("client_secret", title="OAuth Client Secret", default=""),
-        Password("token", title="Access Token", required=True, max_length=None),
-        Str("team_drive", title="Team Drive ID (if connecting to Team Drive)"),
-    ]
     credentials_oauth = True
     refresh_credentials = ["token"]
 
@@ -32,7 +26,7 @@ class GoogleDriveRcloneRemote(BaseRcloneRemote):
     ]
 
     async def get_credentials_extra(self, credentials):
-        if credentials["attributes"].get("team_drive"):
+        if credentials["provider"].get("team_drive"):
             return dict()
 
         return dict(root_folder_id="root")

@@ -1,1 +1,5 @@
-undefined = object()
+class Undefined:
+    pass
+
+
+undefined = Undefined()

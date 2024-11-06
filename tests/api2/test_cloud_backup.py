@@ -52,8 +52,8 @@ def validate_log(task_id, **kwargs):
 @pytest.fixture(scope="module")
 def s3_credential():
     with credential({
-        "provider": "S3",
-        "attributes": {
+        "provider": {
+            "type": "S3",
             "access_key_id": AWS_ACCESS_KEY_ID,
             "secret_access_key": AWS_SECRET_ACCESS_KEY,
         },

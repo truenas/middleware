@@ -4,6 +4,7 @@ from types import ModuleType
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
 from .accept import validate_model
 from .inspect import model_field_is_model, model_field_is_list_of_models
+from middlewared.utils.lang import Undefined
 
 
 class Direction(enum.StrEnum):
@@ -167,6 +168,10 @@ class APIVersionsAdapter:
 
         for k in list(value):
             if k in current_model.model_fields and k not in new_model.model_fields:
+                value.pop(k)
+
+        for k, v in list(value.items()):
+            if isinstance(v, Undefined):
                 value.pop(k)
 
         return value

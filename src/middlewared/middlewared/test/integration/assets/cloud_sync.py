@@ -46,8 +46,8 @@ def task(data):
 def local_ftp_credential_data():
     with anonymous_ftp_server(dataset_name="cloudsync_remote") as ftp:
         yield {
-            "provider": "FTP",
-            "attributes": {
+            "provider": {
+                "type": "FTP",
                 "host": "localhost",
                 "port": 21,
                 "user": ftp.username,

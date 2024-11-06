@@ -56,7 +56,7 @@ class RcloneConfig:
     def __init__(self, cloud_sync):
         self.cloud_sync = cloud_sync
 
-        self.provider = REMOTES[self.cloud_sync["credentials"]["provider"]]
+        self.provider = REMOTES[self.cloud_sync["credentials"]["provider"]["type"]]
 
         self.config = None
         self.tmp_file = None
@@ -68,7 +68,7 @@ class RcloneConfig:
         # Make sure only root can read it as there is sensitive data
         os.chmod(self.tmp_file.name, 0o600)
 
-        config = dict(self.cloud_sync["credentials"]["attributes"], type=self.provider.rclone_type)
+        config = dict(self.cloud_sync["credentials"]["provider"], type=self.provider.rclone_type)
         config = dict(config, **await self.provider.get_credentials_extra(self.cloud_sync["credentials"]))
         if "pass" in config:
             config["pass"] = rclone_encrypt_password(config["pass"])
@@ -217,7 +217,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
             [(k, v) for (k, v) in cloud_sync.items()
              if k in ["id", "description", "direction", "transfer_mode", "encryption", "filename_encryption",
                       "encryption_password", "encryption_salt", "snapshot"]] +
-            list(cloud_sync["credentials"]["attributes"].items()) +
+            list(cloud_sync["credentials"]["provider"].items()) +
             list(cloud_sync["attributes"].items())
         ):
             if type(v) in (bool,):
@@ -263,22 +263,24 @@ async def rclone(middleware, job, cloud_sync, dry_run):
 
         await run_script(job, env, cloud_sync["post_script"], "Post-script")
 
-        refresh_credentials = REMOTES[cloud_sync["credentials"]["provider"]].refresh_credentials
+        refresh_credentials = REMOTES[cloud_sync["credentials"]["provider"]["type"]].refresh_credentials
         if refresh_credentials:
-            credentials_attributes = cloud_sync["credentials"]["attributes"].copy()
+            credentials_attributes = cloud_sync["credentials"]["provider"].copy()
             updated = False
             ini = configparser.ConfigParser()
             ini.read(config.config_path)
             for key, value in ini["remote"].items():
-                if (key in refresh_credentials and
+                if (
+                        key in refresh_credentials and
                         key in credentials_attributes and
-                        credentials_attributes[key] != value):
+                        credentials_attributes[key] != value
+                ):
                     logger.debug("Updating credentials attributes key %r", key)
                     credentials_attributes[key] = value
                     updated = True
             if updated:
                 await middleware.call("cloudsync.credentials.update", cloud_sync["credentials"]["id"], {
-                    "attributes": credentials_attributes
+                    "provider": credentials_attributes
                 })
 
 
@@ -580,12 +582,27 @@ class CredentialsService(CRUDService):
         namespace = "cloudsync.credentials"
 
         datastore = "system.cloudcredentials"
+        datastore_extend = 'cloudsync.credentials.extend'
 
         cli_namespace = "task.cloud_sync.credential"
 
         role_prefix = "CLOUD_SYNC"
 
         entry = CloudCredentialEntry
+
+    @private
+    async def extend(self, data):
+        data["provider"] = {
+            "type": data["provider"],
+            **data.pop("attributes"),
+        }
+        return data
+
+    @private
+    async def compress(self, data):
+        data["attributes"] = data["provider"]
+        data["provider"] = data["attributes"].pop("type")
+        return data
 
     @api_method(CloudCredentialVerifyArgs, CloudCredentialVerifyResult, roles=["CLOUD_SYNC_WRITE"])
     async def verify(self, data):
@@ -594,7 +611,7 @@ class CredentialsService(CRUDService):
         """
         await self.middleware.call("network.general.will_perform_activity", "cloud_sync")
 
-        data = dict(data, name="")
+        data = dict(name="", provider=data)
         await self._validate("cloud_sync_credentials_create", data)
 
         async with RcloneConfig({"credentials": data}) as config:
@@ -615,11 +632,13 @@ class CredentialsService(CRUDService):
         """
         await self._validate("cloud_sync_credentials_create", data)
 
+        await self.compress(data)
         data["id"] = await self.middleware.call(
             "datastore.insert",
             "system.cloudcredentials",
             data,
         )
+        await self.extend(data)
         return data
 
     @api_method(CloudCredentialUpdateArgs, CloudCredentialUpdateResult)
@@ -634,16 +653,16 @@ class CredentialsService(CRUDService):
 
         await self._validate("cloud_sync_credentials_update", new, id_)
 
+        await self.compress(new)
         await self.middleware.call(
             "datastore.update",
             "system.cloudcredentials",
             id_,
             new,
         )
+        await self.extend(new)
 
-        data["id"] = id_
-
-        return data
+        return new
 
     @api_method(CloudCredentialDeleteArgs, CloudCredentialDeleteResult)
     async def do_delete(self, id_):
@@ -666,14 +685,6 @@ class CredentialsService(CRUDService):
         verrors = ValidationErrors()
 
         await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
-
-        if data["provider"] not in REMOTES:
-            verrors.add(f"{schema_name}.provider", "Invalid provider")
-        else:
-            provider = REMOTES[data["provider"]]
-
-            attributes_verrors = validate_schema(provider.credentials_schema, data["attributes"])
-            verrors.add_child(f"{schema_name}.attributes", attributes_verrors)
 
         verrors.check()
 
@@ -712,7 +723,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         'cloud_sync_create',
         'cloud_sync_entry',
         ('add', Int('id')),
-        ("replace", Dict("credentials", additional_attrs=True, private_keys=["attributes"])),
+        ("replace", Dict("credentials", additional_attrs=True, private_keys=["provider"])),
         ("add", Dict("job", additional_attrs=True, null=True)),
         ("add", Bool("locked")),
     )
@@ -725,7 +736,10 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
     @private
     async def extend(self, cloud_sync, context):
-        cloud_sync["credentials"] = cloud_sync.pop("credential")
+        cloud_sync["credentials"] = await self.middleware.call(
+            "cloudsync.credentials.extend", cloud_sync.pop("credential"),
+        )
+
         if job := await self.get_task_state_job(context["task_state"], cloud_sync["id"]):
             cloud_sync["job"] = job
 
@@ -791,7 +805,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         if data["direction"] == "PUSH":
             credentials = await self._get_credentials(data["credentials"])
 
-            provider = REMOTES[credentials["provider"]]
+            provider = REMOTES[credentials["provider"]["type"]]
 
             if provider.readonly:
                 verrors.add(f"{name}.direction", "This remote is read-only")
@@ -911,7 +925,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         if not credentials:
             raise CallError("Invalid credentials")
 
-        provider = REMOTES[credentials["provider"]]
+        provider = REMOTES[credentials["provider"]["type"]]
 
         if not provider.can_create_bucket:
             raise CallError("This provider can't create buckets")
@@ -927,7 +941,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         if not credentials:
             raise CallError("Invalid credentials")
 
-        provider = REMOTES[credentials["provider"]]
+        provider = REMOTES[credentials["provider"]["type"]]
 
         if not provider.buckets:
             raise CallError("This provider does not use buckets")
@@ -985,7 +999,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         credentials = await self._get_credentials(cloud_sync["credentials"])
 
-        path = get_remote_path(REMOTES[credentials["provider"]], cloud_sync["attributes"])
+        path = get_remote_path(REMOTES[credentials["provider"]["type"]], cloud_sync["attributes"])
 
         return await self.ls(dict(cloud_sync, credentials=credentials), path)
 
@@ -1088,7 +1102,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         local_path = cloud_sync["path"]
         local_direction = FsLockDirection.READ if cloud_sync["direction"] == "PUSH" else FsLockDirection.WRITE
 
-        remote_path = get_remote_path(REMOTES[credentials["provider"]], cloud_sync["attributes"])
+        remote_path = get_remote_path(REMOTES[credentials["provider"]["type"]], cloud_sync["attributes"])
         remote_direction = FsLockDirection.READ if cloud_sync["direction"] == "PULL" else FsLockDirection.WRITE
 
         directions = {
@@ -1136,8 +1150,6 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         """
         Returns a list of dictionaries of supported providers for Cloud Sync Tasks.
 
-        `credentials_schema` is JSON schema for credentials attributes.
-
         `task_schema` is JSON schema for task attributes.
 
         `buckets` is a boolean value which is set to "true" if provider supports buckets.
@@ -1148,24 +1160,6 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
             {
                 "name": "AMAZON_CLOUD_DRIVE",
                 "title": "Amazon Cloud Drive",
-                "credentials_schema": [
-                    {
-                        "property": "client_id",
-                        "schema": {
-                            "title": "Amazon Application Client ID",
-                            "_required_": true,
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "property": "client_secret",
-                        "schema": {
-                            "title": "Application Key",
-                            "_required_": true,
-                            "type": "string"
-                        }
-                    }
-                ],
                 "credentials_oauth": null,
                 "buckets": false,
                 "bucket_title": "Bucket",
@@ -1178,13 +1172,6 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
                 {
                     "name": provider.name,
                     "title": provider.title,
-                    "credentials_schema": [
-                        {
-                            "property": field.name,
-                            "schema": field.to_json_schema()
-                        }
-                        for field in provider.credentials_schema
-                    ],
                     "credentials_oauth": (
                         f"{OAUTH_URL}/{(provider.credentials_oauth_name or provider.name.lower())}"
                         if provider.credentials_oauth else None

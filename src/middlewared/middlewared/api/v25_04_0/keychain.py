@@ -2,8 +2,8 @@ from typing import Literal
 
 from pydantic import Field, Secret
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, NonEmptyString,
-                                  single_argument_args, single_argument_result)
+from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, LongString,
+                                  NonEmptyString, single_argument_args, single_argument_result)
 
 __all__ = ["KeychainCredentialEntry",
            "KeychainCredentialCreateArgs", "KeychainCredentialCreateResult",
@@ -133,8 +133,10 @@ class KeychainCredentialSSHPairArgs(BaseModel):
     public_key: NonEmptyString
 
 
+@single_argument_result
 class KeychainCredentialSSHPairResult(BaseModel):
-    result: None
+    port: int
+    host_key: LongString
 
 
 class KeychainCredentialSetupSSHConnectionPrivateKey(BaseModel):

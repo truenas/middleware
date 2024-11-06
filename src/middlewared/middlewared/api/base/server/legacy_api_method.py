@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from middlewared.api.base.handler.accept import model_dict_from_list
 from middlewared.api.base.handler.dump_params import dump_params
-from middlewared.api.base.handler.version import APIVersionsAdapter
+from middlewared.api.base.handler.version import APIVersionsAdapter, APIVersionDoesNotContainModelException
 from middlewared.api.base.server.method import Method
 from middlewared.utils.service.call import MethodNotFoundError
 from middlewared.utils.service.crud import real_crud_method
@@ -18,7 +18,8 @@ class LegacyAPIMethod(Method):
     between most recent API version (used in the code) and predetermined legacy API version.
     """
 
-    def __init__(self, middleware: "Middleware", name: str, api_version: str, adapter: APIVersionsAdapter):
+    def __init__(self, middleware: "Middleware", name: str, api_version: str, adapter: APIVersionsAdapter, *,
+                 passthrough_nonexistent_methods=False):
         """
         :param middleware: `Middleware` instance
         :param name: method name
@@ -28,6 +29,8 @@ class LegacyAPIMethod(Method):
         super().__init__(middleware, name)
         self.api_version = api_version
         self.adapter = adapter
+        # FIXME: Remove this when legacy WS API is removed
+        self.passthrough_nonexistent_methods = passthrough_nonexistent_methods
 
         methodobj = self.methodobj
         if crud_methodobj := real_crud_method(methodobj):
@@ -49,6 +52,9 @@ class LegacyAPIMethod(Method):
         try:
             legacy_accepts_model = self.adapter.versions[self.api_version].models[self.accepts_model.__name__]
         except KeyError:
+            if self.passthrough_nonexistent_methods:
+                return params
+
             # The legacy API does not contain signature definition for this method, which means it didn't exist
             # when that API was released.
             raise MethodNotFoundError(*self.name.rsplit(".", 1))
@@ -65,12 +71,18 @@ class LegacyAPIMethod(Method):
         return [adapted_params_dict[field] for field in self.accepts_model.model_fields]
 
     def _adapt_result(self, result):
-        return self.adapter.adapt(
-            {"result": result},
-            self.returns_model.__name__,
-            self.adapter.current_version,
-            self.api_version,
-        )["result"]
+        try:
+            return self.adapter.adapt(
+                {"result": result},
+                self.returns_model.__name__,
+                self.adapter.current_version,
+                self.api_version,
+            )["result"]
+        except APIVersionDoesNotContainModelException:
+            if self.passthrough_nonexistent_methods:
+                return result
+
+            raise
 
     def dump_args(self, params):
         if self.accepts_model:

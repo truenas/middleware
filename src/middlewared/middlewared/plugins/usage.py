@@ -230,7 +230,7 @@ class UsageService(Service):
     async def gather_cloud_services(self, context):
         return {
             'cloud_services': list({
-                t['credentials']['provider']
+                t['credentials']['provider']['type']
                 for t in await self.middleware.call(
                     'cloudsync.query', [['enabled', '=', True]], {'select': ['enabled', 'credentials']}
                 )

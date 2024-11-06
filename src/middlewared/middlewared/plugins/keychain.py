@@ -105,8 +105,10 @@ class SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate(KeychainCredentialUsedByD
 
     async def query(self, id_):
         result = []
-        for cloud_credentials in await self.middleware.call("cloudsync.credentials.query", [["provider", "=", "SFTP"]]):
-            if cloud_credentials["attributes"].get("private_key") == id_:
+        for cloud_credentials in await self.middleware.call(
+            "cloudsync.credentials.query", [["provider.type", "=", "SFTP"]]
+        ):
+            if cloud_credentials["provider"].get("private_key") == id_:
                 result.append(cloud_credentials)
 
         return result
