@@ -37,19 +37,21 @@ class KeyValueService(Service):
 
             raise KeyError(key)
 
-    async def set(self, key: str, value: Any, options: dict):
+    async def set(self, key: str, value: Any, options: dict | None = None):
+        opts = options if options is not None else dict()
         try:
             row = await self.middleware.call("datastore.query", "system.keyvalue", [["key", "=", key]], {"get": True})
         except IndexError:
             await self.middleware.call(
-                "datastore.insert", "system.keyvalue", {"key": key, "value": json.dumps(value)}, options
+                "datastore.insert", "system.keyvalue", {"key": key, "value": json.dumps(value)}, opts
             )
         else:
             await self.middleware.call(
-                "datastore.update", "system.keyvalue", row["id"], {"value": json.dumps(value)}, options
+                "datastore.update", "system.keyvalue", row["id"], {"value": json.dumps(value)}, opts
             )
 
         return value
 
-    async def delete(self, key: str, options: dict):
-        await self.middleware.call("datastore.delete", "system.keyvalue", [["key", "=", key]], options)
+    async def delete(self, key: str, options: dict | None = None):
+        opts = options if options is not None else dict()
+        await self.middleware.call("datastore.delete", "system.keyvalue", [["key", "=", key]], opts)
