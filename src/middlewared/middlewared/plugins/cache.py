@@ -38,10 +38,10 @@ class CacheService(Service):
 
     def pop(self, key: str):
         """Removes and returns `key` from cache."""
-        try:
-            return self.__cache.pop(key, None).value
-        except AttributeError:
-            pass
+        cache = self.__cache.pop(key, None)
+        if cache is not None:
+            cache = cache.value
+        return cache
 
     def get_timeout(self, key: str):
         """Check if 'key' has expired"""
