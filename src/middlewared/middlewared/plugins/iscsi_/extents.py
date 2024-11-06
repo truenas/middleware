@@ -68,7 +68,12 @@ class iSCSITargetExtentService(SharingService):
 
         return await self.middleware.call('pool.dataset.path_in_locked_datasets', path, locked_datasets)
 
-    @api_method(IscsiExtentCreateArgs, IscsiExtentCreateResult, audit='Create iSCSI extent', audit_extended=lambda data: data['name'])
+    @api_method(
+        IscsiExtentCreateArgs,
+        IscsiExtentCreateResult,
+        audit='Create iSCSI extent',
+        audit_extended=lambda data: data['name']
+    )
     async def do_create(self, data):
         """
         Create an iSCSI Extent.
@@ -104,7 +109,12 @@ class iSCSITargetExtentService(SharingService):
 
         return await self.get_instance(data['id'])
 
-    @api_method(IscsiExtentUpdateArgs, IscsiExtentUpdateResult, audit='Update iSCSI extent', audit_callback=True)
+    @api_method(
+        IscsiExtentUpdateArgs,
+        IscsiExtentUpdateResult,
+        audit='Update iSCSI extent',
+        audit_callback=True
+    )
     async def do_update(self, audit_callback, id_, data):
         """
         Update iSCSI Extent of `id`.
@@ -138,7 +148,12 @@ class iSCSITargetExtentService(SharingService):
 
         return await self.get_instance(id_)
 
-    @api_method(IscsiExtentDeleteArgs, IscsiExtentDeleteResult, audit='Delete iSCSI extent', audit_callback=True)
+    @api_method(
+        IscsiExtentDeleteArgs,
+        IscsiExtentDeleteResult,
+        audit='Delete iSCSI extent',
+        audit_callback=True
+    )
     async def do_delete(self, audit_callback, id_, remove, force):
         """
         Delete iSCSI Extent of `id`.
