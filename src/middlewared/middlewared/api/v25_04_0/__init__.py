@@ -1,9 +1,10 @@
 from .acme_protocol import *  # noqa
-from .acl import * # noqa
+from .acl import *  # noqa
 from .alert import *  # noqa
 from .alertservice import *  # noqa
 from .api_key import *  # noqa
 from .auth import *  # noqa
+from .boot_environments import *  # noqa
 from .cloud_sync import *  # noqa
 from .common import *  # noqa
 from .core import *  # noqa
@@ -23,9 +24,9 @@ from .rdma_interface import *  # noqa
 from .smartctl import *  # noqa
 from .static_route import *  # noqa
 from .system_lifecycle import *  # noqa
-from .system_ntpserver import * # noqa
+from .system_ntpserver import *  # noqa
 from .system_reboot import *  # noqa
-from .truenas import * # noqa
+from .truenas import *  # noqa
 from .user import *  # noqa
 from .vendor import *  # noqa
 from .virt import *  # noqa
