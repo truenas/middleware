@@ -11,7 +11,7 @@ from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_sche
 from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
 from middlewared.rclone.remote.storjix import StorjIxError
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, Password, Patch, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Password, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, item_method, job, pass_app, private, TaskPathService,
 )
@@ -20,7 +20,7 @@ from middlewared.utils import Popen, run
 from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
-from middlewared.validators import validate_schema
+from middlewared.validators import Range, Time, validate_schema
 
 import aiorwlock
 import asyncio
@@ -683,6 +683,8 @@ class CloudSyncModel(CloudTaskModelMixin, sa.Model):
 
     direction = sa.Column(sa.String(10))
     transfer_mode = sa.Column(sa.String(20))
+    bwlimit = sa.Column(sa.JSON(list))
+    transfers = sa.Column(sa.Integer(), nullable=True)
 
     encryption = sa.Column(sa.Boolean())
     filename_encryption = sa.Column(sa.Boolean())
@@ -756,6 +758,10 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
     async def _validate(self, app, verrors, name, data):
         await super()._validate(app, verrors, name, data)
 
+        for i, (limit1, limit2) in enumerate(zip(data["bwlimit"], data["bwlimit"][1:])):
+            if limit1["time"] >= limit2["time"]:
+                verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
+
         if data["snapshot"]:
             if data["direction"] != "PUSH":
                 verrors.add(f"{name}.snapshot", "This option can only be enabled for PUSH tasks")
@@ -799,6 +805,13 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
     @accepts(Dict(
         "cloud_sync_create",
         *cloud_task_schema,
+
+        List("bwlimit", items=[Dict(
+            "cloud_sync_bwlimit",
+            Str("time", validators=[Time()]),
+            Int("bandwidth", validators=[Range(min_=1)], null=True)
+        )]),
+        Int("transfers", null=True, default=None, validators=[Range(min_=1)]),
 
         Str("direction", enum=["PUSH", "PULL"], required=True),
         Str("transfer_mode", enum=["SYNC", "COPY", "MOVE"], required=True),
