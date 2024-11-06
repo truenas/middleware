@@ -22,7 +22,7 @@ Below is a command to run a specific test:
 
 Below is a command to run specific tests:
 
-`./runtests.py --ip 192.168.2.45 --interface em0 --password testing --test test_lock.py,test_mail.py`
+`./runtests.py --ip 192.168.2.45 --interface em0 --password testing --tests test_lock.py,test_mail.py`
 
 ## How should a Websocket API test be written?
 
