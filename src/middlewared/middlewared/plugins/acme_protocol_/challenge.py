@@ -3,7 +3,8 @@ import json
 
 from acme import messages
 
-from middlewared.schema import accepts, Dict, Int, Str
+from middlewared.api import api_method
+from middlewared.api.current import ACMEDNSAuthenticatorPerformChallengeArgs, ACMEDNSAuthenticatorPerformChallengeResult
 from middlewared.service import private, Service
 
 from .authenticators.factory import auth_factory
@@ -14,16 +15,7 @@ class DNSAuthenticatorService(Service):
     class Config:
         namespace = 'acme.dns.authenticator'
 
-    @accepts(
-        Dict(
-            'perform_challenge',
-            Int('authenticator', required=True),
-            Str('key', required=True, max_length=None),
-            Str('domain', required=True),
-            Str('challenge', required=True, max_length=None),
-        )
-    )
-    @private
+    @api_method(ACMEDNSAuthenticatorPerformChallengeArgs, ACMEDNSAuthenticatorPerformChallengeResult, private=True)
     def perform_challenge(self, data):
         authenticator = self.get_authenticator(data['authenticator'])
         authenticator.perform(*self.get_validation_parameters(data['challenge'], data['domain'], data['key']))
@@ -36,11 +28,13 @@ class DNSAuthenticatorService(Service):
     @private
     def get_authenticator(self, authenticator):
         auth_details = self.middleware.call_sync('acme.dns.authenticator.get_instance', authenticator)
-        return self.get_authenticator_internal(auth_details)(self.middleware, auth_details['attributes'])
+        return self.get_authenticator_internal(
+            auth_details['attributes']['authenticator']
+        )(self.middleware, auth_details['attributes'])
 
     @private
-    def get_authenticator_internal(self, auth_details):
-        return auth_factory.authenticator(auth_details['authenticator'])
+    def get_authenticator_internal(self, authenticator_name):
+        return auth_factory.authenticator(authenticator_name)
 
     @private
     def get_validation_parameters(self, challenge, domain, key):

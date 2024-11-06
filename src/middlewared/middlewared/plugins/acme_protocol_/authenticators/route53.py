@@ -5,8 +5,8 @@ import time
 
 from botocore import exceptions as boto_exceptions
 
-from middlewared.schema import accepts, Dict, Password, Str
-from middlewared.service import CallError, skip_arg
+from middlewared.api.current import Route53SchemaArgs
+from middlewared.service import CallError
 
 from .base import Authenticator
 
@@ -14,11 +14,7 @@ from .base import Authenticator
 class Route53Authenticator(Authenticator):
 
     NAME = 'route53'
-    SCHEMA = Dict(
-        'route53',
-        Str('access_key_id', required=True, empty=False, title='Access Key Id'),
-        Password('secret_access_key', required=True, empty=False, title='Secret Access Key'),
-    )
+    SCHEMA_MODEL = Route53SchemaArgs
 
     def initialize_credentials(self):
         self.access_key_id = self.attributes['access_key_id']
@@ -29,8 +25,6 @@ class Route53Authenticator(Authenticator):
         ).client('route53')
 
     @staticmethod
-    @accepts(SCHEMA)
-    @skip_arg(count=1)
     async def validate_credentials(middleware, data):
         return data
 

@@ -1,12 +1,13 @@
+import copy
 import josepy as jose
 import json
 import requests
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ACMERegistrationCreateArgs, ACMERegistrationCreateResult, DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult,
-    DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult, DNSAuthenticatorDeleteArgs, DNSAuthenticatorDeleteResult,
-    ACMERegistrationEntry, ACMEDNSAuthenticatorEntry,
+    ACMERegistrationCreateArgs, ACMERegistrationCreateResult, ACMERegistrationEntry, ACMEDNSAuthenticatorEntry,
+    ACMEDNSAuthenticatorCreateArgs, ACMEDNSAuthenticatorCreateResult, ACMEDNSAuthenticatorUpdateArgs,
+    ACMEDNSAuthenticatorUpdateResult, ACMEDNSAuthenticatorDeleteArgs, ACMEDNSAuthenticatorDeleteResult,
 )
 from middlewared.schema import ValidationErrors
 from middlewared.service import CallError, CRUDService, private
@@ -194,7 +195,6 @@ class ACMEDNSAuthenticatorModel(sa.Model):
     __tablename__ = 'system_acmednsauthenticator'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    authenticator = sa.Column(sa.String(64))
     name = sa.Column(sa.String(64), unique=True)
     attributes = sa.Column(sa.JSON(encrypted=True))
 
@@ -215,18 +215,17 @@ class DNSAuthenticatorService(CRUDService):
         if await self.query(filters):
             verrors.add(f'{schema_name}.name', 'Specified name is already in use')
 
-        if data['authenticator'] not in await self.middleware.call('acme.dns.authenticator.get_authenticator_schemas'):
-            verrors.add(
-                f'{schema_name}.authenticator',
-                f'System does not support {data["authenticator"]} as an Authenticator'
-            )
-        else:
-            authenticator_obj = await self.middleware.call('acme.dns.authenticator.get_authenticator_internal', data)
-            data['attributes'] = await authenticator_obj.validate_credentials(self.middleware, data['attributes'])
+        if old and old['attributes']['authenticator'] != data['attributes']['authenticator']:
+            verrors.add(f'{schema_name}.attributes.authenticator', 'Authenticator cannot be changed')
+
+        authenticator_obj = await self.middleware.call(
+            'acme.dns.authenticator.get_authenticator_internal', data['attributes']['authenticator']
+        )
+        data['attributes'] = await authenticator_obj.validate_credentials(self.middleware, data['attributes'])
 
         verrors.check()
 
-    @api_method(DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult)
+    @api_method(ACMEDNSAuthenticatorCreateArgs, ACMEDNSAuthenticatorCreateResult)
     async def do_create(self, data):
         """
         Create a DNS Authenticator
@@ -245,10 +244,10 @@ class DNSAuthenticatorService(CRUDService):
                 "method": "acme.dns.authenticator.create",
                 "params": [{
                     "name": "route53_authenticator",
-                    "authenticator": "route53",
                     "attributes": {
                         "access_key_id": "AQX13",
-                        "secret_access_key": "JKW90"
+                        "secret_access_key": "JKW90",
+                        "authenticator": "route53"
                     }
                 }]
             }
@@ -263,7 +262,7 @@ class DNSAuthenticatorService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult)
+    @api_method(ACMEDNSAuthenticatorUpdateArgs, ACMEDNSAuthenticatorUpdateResult)
     async def do_update(self, id_, data):
         """
         Update DNS Authenticator of `id`
@@ -283,14 +282,17 @@ class DNSAuthenticatorService(CRUDService):
                         "name": "route53_authenticator",
                         "attributes": {
                             "access_key_id": "AQX13",
-                            "secret_access_key": "JKW90"
+                            "secret_access_key": "JKW90",
+                            "authenticator": "route53"
                         }
                     }
                 ]
             }
         """
         old = await self.get_instance(id_)
-        new = old.copy()
+        new = copy.deepcopy(old)
+        attrs = data.pop('attributes', {})
+        new['attributes'].update(attrs)
         new.update(data)
 
         await self.common_validation(new, 'dns_authenticator_update', old)
@@ -304,7 +306,7 @@ class DNSAuthenticatorService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(DNSAuthenticatorDeleteArgs, DNSAuthenticatorDeleteResult)
+    @api_method(ACMEDNSAuthenticatorDeleteArgs, ACMEDNSAuthenticatorDeleteResult)
     async def do_delete(self, id_):
         """
         Delete DNS Authenticator of `id`
