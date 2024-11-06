@@ -81,6 +81,17 @@ def test_virt_instance_stop():
     assert ssh(f'incus list {INS2_NAME} -f json| jq ".[].status"').strip() == '"Stopped"'
 
 
+def test_virt_instance_restart():
+    # Stop only one of them so the others are stopped during delete
+    assert ssh(f'incus list {INS3_NAME} -f json| jq ".[].status"').strip() == '"Running"'
+    instance = call('virt.instance.query', [['id', '=', INS3_NAME]], {'get': True})
+    assert instance['status'] == 'RUNNING'
+    call('virt.instance.restart', INS3_NAME, {'force': True}, job=True)
+    instance = call('virt.instance.query', [['id', '=', INS3_NAME]], {'get': True})
+    assert instance['status'] == 'RUNNING'
+    assert ssh(f'incus list {INS3_NAME} -f json| jq ".[].status"').strip() == '"Running"'
+
+
 def test_virt_instance_device_add():
     assert ssh(f'incus list {INS1_NAME} -f json| jq ".[].status"').strip() == '"Running"'
     call('virt.instance.stop', INS1_NAME, {'force': True}, job=True)

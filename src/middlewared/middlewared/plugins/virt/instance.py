@@ -283,7 +283,7 @@ class VirtInstanceService(CRUDService):
         """
         await self.middleware.call('virt.global.check_initialized')
         instance = await self.middleware.call('virt.instance.get_instance', id)
-        if instance['state'] == 'RUNNING':
+        if instance['status'] == 'RUNNING':
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
                 'action': 'stop',
                 'timeout': data['timeout'],
