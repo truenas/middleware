@@ -50,7 +50,7 @@ def get_secret_contents(secret_path: str, helm_secret: bool = False) -> dict:
 
     contents = {}
     for k, v in secret['data'].items():
-        with contextlib.suppress(binascii.Error, gzip.BadGzipFile, KeyError):
+        with contextlib.suppress(binascii.Error, gzip.BadGzipFile, KeyError, UnicodeDecodeError):
             if helm_secret:
                 v = json.loads(gzip.decompress(b64decode(b64decode(v))).decode())
                 for pop_k in ('manifest', 'info', 'version', 'namespace'):
