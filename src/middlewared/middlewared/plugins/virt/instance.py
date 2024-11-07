@@ -2,7 +2,7 @@ import aiohttp
 import platform
 
 from middlewared.service import (
-    CRUDService, ValidationErrors, filterable, job, private
+    CallError, CRUDService, ValidationErrors, filterable, job, private
 )
 from middlewared.utils import filter_list
 
@@ -53,7 +53,7 @@ class VirtInstanceService(CRUDService):
                 'type': 'CONTAINER' if i['type'] == 'container' else 'VM',
                 'status': i['state']['status'].upper(),
                 'cpu': i['config'].get('limits.cpu'),
-                'autostart': bool(i['config'].get('boot.autostart')) or False,
+                'autostart': True if i['config'].get('boot.autostart') == 'true' else False,
                 'environment': {},
                 'aliases': [],
                 'image': {
@@ -200,7 +200,7 @@ class VirtInstanceService(CRUDService):
             'devices': devices,
             'source': source,
             'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
-            'start': True,
+            'start': data['autostart'],
         }}, running_cb)
 
         return await self.middleware.call('virt.instance.get_instance', data['name'])
@@ -243,15 +243,27 @@ class VirtInstanceService(CRUDService):
         return True
 
     @api_method(VirtInstanceStartArgs, VirtInstanceStartResult, roles=['VIRT_INSTANCE_WRITE'])
-    @job()
+    @job(logs=True)
     async def start(self, job, id):
         """
         Start an instance.
         """
         await self.middleware.call('virt.global.check_initialized')
-        await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
-            'action': 'start',
-        }})
+        instance = await self.middleware.call('virt.instance.get_instance', id)
+
+        try:
+            await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
+                'action': 'start',
+            }})
+        except CallError:
+            log = 'lxc.log' if instance['type'] == 'CONTAINER' else 'qemu.log'
+            content = await incus_call(f'1.0/instances/{id}/logs/{log}', 'get', json=False)
+            output = []
+            while line := await content.readline():
+                output.append(line)
+                output = output[-10:]
+            await job.logs_fd_write(b''.join(output).strip())
+            raise CallError('Failed to start instance. Please check job logs.')
 
         return True
 
