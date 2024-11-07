@@ -1,12 +1,12 @@
 import os
 import shutil
 
-from middlewared.plugins.vm.utils import SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name
+from middlewared.plugins.vm.utils import (
+    get_vm_nvram_file_name, LIBVIRT_QEMU_UID, LIBVIRT_QEMU_GID, SYSTEM_NVRAM_FOLDER_PATH,
+)
 
 
 DEFAULT_NVRAM_FOLDER_PATH = '/var/lib/libvirt/qemu/nvram'
-LIBVIRT_QEMU_UID = 64055
-LIBVIRT_QEMU_GID = 64055
 
 
 def migrate(middleware):
