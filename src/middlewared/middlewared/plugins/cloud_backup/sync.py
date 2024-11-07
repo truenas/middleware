@@ -64,8 +64,7 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
         if dry_run:
             cmd.append("-n")
 
-        for excl in cloud_backup["exclude"]:
-            cmd.extend(["--exclude", excl])
+        cmd.extend(["--exclude=" + excl for excl in cloud_backup["exclude"]])
 
         restic_config = get_restic_config(cloud_backup)
 
