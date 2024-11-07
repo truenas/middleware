@@ -1,0 +1,14 @@
+Source: middlewared-docs
+Section: admin
+Priority: optional
+Maintainer: iX Engineering <dev@ixsystems.net>
+Build-Depends: debhelper-compat (= 12),
+               middlewared,
+               python3-virtualenv
+Standards-Version: 4.4.0
+Homepage: https://github.com/truenas/middleware
+
+Package: middlewared-docs
+Architecture: all
+Description: TrueNAS API documentation
+ This package provides the TrueNAS JSON-RPC 2.0 API documentation.

@@ -1,18 +1,21 @@
-${'##'} Query Methods
+Query Methods
+-------------
 
 TrueNAS API has multiple query methods including `pool.query`, `disk.query`, `vm.query`, and many more.
 
 The arguments for these methods support multiple options and filters that are similar to SQL queries.
 
-${'###'} Query Filters
+Query Filters
+=============
 
-${'####'} Basic Usage
+Basic Usage
+***********
 
 Query Filters are primarily an array of conditions, with each condition also represented as an array.
 
 Each condition in the filter list should compare a field with a value.
 
-eg. Filter Syntax: `["field", "operator", value]` 
+eg. Filter Syntax: `["field", "operator", value]`
 
 For example, to filter the data returned by `disk.query`, we provide a list of conditions:
 
@@ -20,11 +23,13 @@ Javascript:
 
     :::javascript
     [
-      ["name","=","ada1"] 
+      ["name","=","ada1"]
     ]
 
 
-${'####'} Supported Operators
+Supported Operators
+*******************
+
 | Operator       | Description     |
 | :------------- | :----------: |
 | '=' |  x == y |
@@ -45,7 +50,8 @@ ${'####'} Supported Operators
 
 Specifing the prefix 'C' will perform a case-insensitive version of the filter, e.g. `C=`.
 
-${'####'} Multiple Filters
+Multiple Filters
+****************
 
 We can use `disk.query` with the "type" and "rotationrate" filters to find hard drives with a rotation rate higher than 5400 RPM:
 
@@ -58,7 +64,8 @@ Javascript:
     ]
 
 
-${'####'} Connectives
+Connectives
+***********
 
 Queries with no explicitly defined logical connectives assume conjunction `AND`. The disjunction `OR` is also supported by using the syntax illustrated below. We can use `disk.query` with `OR` to filter disks by name. Note that the operand for the disjunction contains an array of conditions.
 
@@ -66,7 +73,7 @@ The following is a valid example.
 Javascript:
 
     :::javascript
-    ["OR", 
+    ["OR",
       [
         ["name","=", "first"],
         ["name","=", "second"],
@@ -153,7 +160,8 @@ Javascript:
     ]
 
 
-${'####'} Datetime information
+Datetime information
+********************
 
 Some query results may include datetime information encoded in JSON object via
 key with designator `.$date`. In this case, query filter using an ISO-8601
@@ -167,13 +175,15 @@ Javascript:
     ]
 
 
-${'###'} Query Options
+Query Options
+=============
 
 Query Options are objects that can further customize the results returned by a Query Method.
 
 Properties of a Query Option include `extend | extend_context | prefix | extra | order_by | select | count | get | limit | offset`
 
-${'####'} Count
+Count
+*****
 
 Use the `count` option to get the number of results returned.
 
@@ -185,7 +195,8 @@ Javascript:
     }
 
 
-${'####'} Limit
+Limit
+*****
 
 Use the `limit` option to limit the number of results returned.
 
@@ -197,7 +208,8 @@ Javascript:
     }
 
 
-${'####'} Offset
+Offset
+******
 
 Use the `offset` option to remove the first items from a returned list.
 
@@ -209,7 +221,8 @@ Javascript:
     }
 
 
-${'####'} Select
+Select
+******
 
 Use the `select` option to specify the exact fields to return. Fields must be provided in an array of strings. The dot character (".") may be used to explicitly select only subkeys of the query result.
 
@@ -247,7 +260,8 @@ Javascript:
     }
 
 
-${'####'} Order By
+Order By
+********
 
 Use the `order_by` option to specify which field determines the sort order. Fields must be provided in an
 array of strings.
@@ -268,12 +282,15 @@ Javascript:
     }
 
 
-${'####'} Sample SQL statements translated into Query Filters and Query Options
+Sample SQL statements translated into Query Filters and Query Options
+*********************************************************************
+
 NOTE: these are examples of syntax translation, they are not intended as queries
 to perform on the TrueNAS server.
-    
 
-${'#####'} "SELECT * FROM table;"
+
+"SELECT * FROM table;"
+^^^^^^^^^^^^^^^^^^^^^^
 
 `query-filters`
 
@@ -291,7 +308,8 @@ Javascript:
     {}
 
 
-${'#####'} "SELECT username,uid FROM table WHERE builtin=FALSE ORDER BY -uid;"
+"SELECT username,uid FROM table WHERE builtin=FALSE ORDER BY -uid;"
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 `query-filters`
 
@@ -318,7 +336,8 @@ Javascript:
     }
 
 
-${'#####'} "SELECT username AS locked_user,uid FROM table WHERE builtin=FALSE AND locked=TRUE;"
+"SELECT username AS locked_user,uid FROM table WHERE builtin=FALSE AND locked=TRUE;"
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 `query-filters`
 
@@ -346,7 +365,8 @@ Javascript:
     }
 
 
-${'#####'} "SELECT username FROM table WHERE builtin=False OR (locked=FALSE AND ssh=TRUE);"
+"SELECT username FROM table WHERE builtin=False OR (locked=FALSE AND ssh=TRUE);"
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 `query-filters`
 

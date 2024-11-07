@@ -75,7 +75,7 @@ Build-Depends: alembic,
                truenas-sssd,
                truenas-files
 Standards-Version: 4.4.0
-Homepage: https://github.com/freenas/freenas
+Homepage: https://github.com/truenas/middleware
 
 Package: middlewared
 Architecture: all
@@ -179,7 +179,6 @@ Depends: alembic,
          squashfs-tools,
          sqlite3,
          spice-html5,
-         swagger-ui-dist,
          syslog-ng-core,
          syslog-ng-mod-sql,
          tcpdump,

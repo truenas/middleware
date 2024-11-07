@@ -229,12 +229,12 @@ http {
             proxy_set_header Connection "upgrade";
         }
 
-        location /api/docs {
-            proxy_pass http://127.0.0.1:6000/api/docs;
+        location ~ ^/api/docs/?$ {
+            rewrite .* /api/docs/current redirect;
         }
 
-        location /api/docs/restful/static {
-            alias /usr/local/share/swagger-ui-dist;
+        location /api/docs {
+            alias /usr/share/middlewared/docs;
         }
 
         location @index {

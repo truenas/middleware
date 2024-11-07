@@ -24,10 +24,6 @@ setup(
     description='TrueNAS Middleware Daemon',
     packages=find_packages(),
     package_data={
-        'middlewared.apidocs': [
-            'templates/websocket/*',
-            'templates/*.*',
-        ],
         'middlewared': (
             get_assets('alembic') +
             ['alembic.ini'] +
