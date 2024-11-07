@@ -1,5 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.validators import Port, Range
+from middlewared.api.current import GraphiteExporter as GraphiteExporterModel
 
 from .base import Export
 
@@ -7,19 +6,8 @@ from .base import Export
 class GraphiteExporter(Export):
 
     NAME = 'graphite'
-    SCHEMA = Dict(
-        'graphite',
-        Str('destination_ip', required=True),
-        Int('destination_port', required=True, validators=[Port()]),
-        Str('prefix', default='scale'),
-        Str('namespace', required=True),
-        Int('update_every', validators=[Range(min_=1)], default=1),
-        Int('buffer_on_failures', validators=[Range(min_=1)], default=10),
-        Bool('send_names_instead_of_ids', default=True),
-        Str('matching_charts', default='*'),
-    )
+    SCHEMA_MODEL = GraphiteExporterModel
 
     @staticmethod
-    @accepts(SCHEMA)
     async def validate_config(data):
         return data
