@@ -342,6 +342,7 @@ class AppService(CRUDService):
             Bool('remove_images', default=True),
             Bool('remove_ix_volumes', default=False),
             Bool('force_remove_ix_volumes', default=False),
+            Bool('force_remove_custom_app', default=False),
         )
     )
     @job(lock=lambda args: f'app_delete_{args[0]}')
@@ -354,17 +355,40 @@ class AppService(CRUDService):
         the original ix-volumes which were created in dragonfish and before for kubernetes based apps. When this
         is set, it will result in the deletion of ix-volumes from both docker based apps and k8s based apps and should
         be carefully set.
+
+        `force_remove_custom_app` should be set when the app being deleted is a custom app and the user wants to
+        forcefully remove the app. A use-case for this attribute is that user had an invalid yaml in his custom
+        app and there are no actual docker resources (network/containers/volumes) in place for the custom app, then
+        docker compose down will fail as the yaml itself is invalid. In this case this flag can be set to proceed
+        with the deletion of the custom app. However if this app had any docker resources in place, then this flag
+        will have no effect.
         """
         app_config = self.get_instance__sync(app_name)
+        if options['force_remove_custom_app'] and not app_config['custom_app']:
+            raise CallError('`force_remove_custom_app` flag is only valid for a custom app', errno=errno.EINVAL)
+
         return self.delete_internal(job, app_name, app_config, options)
 
     @private
     def delete_internal(self, job, app_name, app_config, options):
         job.set_progress(20, f'Deleting {app_name!r} app')
-        compose_action(
-            app_name, app_config['version'], 'down', remove_orphans=True,
-            remove_volumes=True, remove_images=options['remove_images'],
-        )
+        try:
+            compose_action(
+                app_name, app_config['version'], 'down', remove_orphans=True,
+                remove_volumes=True, remove_images=options['remove_images'],
+            )
+        except Exception:
+            # We want to make sure if this fails for a custom app which has no resources deployed, and the explicit
+            # boolean flag is set, we allow the deletion of the app as there really isn't anything which compose down
+            # is going to accomplish as there are no containers/networks/volumes in place for the app
+            if not (
+                app_config.get('custom_app') and options.get('force_remove_custom_app') and all(
+                    app_config.get('active_workloads', {}).get(k, []) == []
+                    for k in ('container_details', 'volumes', 'networks')
+                )
+            ):
+                raise
+
         # Remove app from metadata first as if someone tries to query filesystem info of the app
         # where the app resources have been nuked from filesystem, it will error out
         self.middleware.call_sync('app.metadata.generate', [app_name]).wait_sync(raise_error=True)
