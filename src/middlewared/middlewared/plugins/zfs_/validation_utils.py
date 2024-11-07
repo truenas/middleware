@@ -1,9 +1,8 @@
 import libzfs
 
-from .utils import zvol_name_to_path
-
 
 def check_zvol_in_boot_pool_using_name(zvol_name: str) -> bool:
+    from .utils import zvol_name_to_path
     return check_zvol_in_boot_pool_using_path(zvol_name_to_path(zvol_name))
 
 
