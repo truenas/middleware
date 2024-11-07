@@ -22,7 +22,7 @@ class VMDeviceModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     dtype = sa.Column(sa.String(50))
-    attributes = sa.Column(sa.JSON())
+    attributes = sa.Column(sa.JSON(encrypted=True))
     vm_id = sa.Column(sa.ForeignKey('vm_vm.id'), index=True)
     order = sa.Column(sa.Integer(), nullable=True)
 
