@@ -19,12 +19,15 @@ class Status(enum.Enum):
     ERROR = 'ERROR'
 
 
-async def incus_call(path: str, method: str, request_kwargs: dict = None):
+async def incus_call(path: str, method: str, request_kwargs: dict = None, json: bool = True):
     async with aiohttp.UnixConnector(path=SOCKET) as conn:
         async with aiohttp.ClientSession(connector=conn) as session:
             methodobj = getattr(session, method)
             r = await methodobj(f'{HTTP_URI}/{path}', **(request_kwargs or {}))
-            return await r.json()
+            if json:
+                return await r.json()
+            else:
+                return r.content
 
 
 async def incus_call_and_wait(
