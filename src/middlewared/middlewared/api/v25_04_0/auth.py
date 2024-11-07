@@ -22,10 +22,6 @@ class AuthLegacyUsernamePassword(BaseModel):
     password: Secret[str]
 
 
-class AuthLegacyTwoFactorArgs(AuthLegacyUsernamePassword):
-    pass
-
-
 class AuthLegacyPasswordLoginArgs(AuthLegacyUsernamePassword):
     otp_token: Secret[str | None] = None
 

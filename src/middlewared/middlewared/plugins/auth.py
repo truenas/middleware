@@ -9,7 +9,7 @@ from middlewared.api import api_method
 from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
 from middlewared.api.current import (
     AuthLegacyPasswordLoginArgs, AuthLegacyApiKeyLoginArgs, AuthLegacyTokenLoginArgs,
-    AuthLegacyTwoFactorArgs, AuthLegacyResult,
+    AuthLegacyResult,
     AuthLoginExArgs, AuthLoginExContinueArgs, AuthLoginExResult,
     AuthMeArgs, AuthMeResult,
     AuthMechChoicesArgs, AuthMechChoicesResult,
@@ -368,16 +368,6 @@ class AuthService(Service):
         return {
             'username': root_credentials.user['username'],
         }
-
-    @api_method(AuthLegacyTwoFactorArgs, AuthLegacyResult, authentication_required=False)
-    async def two_factor_auth(self, username, password):
-        """
-        Returns true if two-factor authorization is required for authorizing user's login.
-        """
-        user_authenticated = await self.middleware.call('auth.authenticate_plain', username, password)
-        return user_authenticated and (
-            await self.middleware.call('auth.twofactor.config')
-        )['enabled'] and '2FA' in user_authenticated['account_attributes']
 
     @cli_private
     @api_method(AuthLegacyPasswordLoginArgs, AuthLegacyResult, authentication_required=False)
