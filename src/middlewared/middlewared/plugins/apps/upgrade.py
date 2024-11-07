@@ -50,6 +50,7 @@ class AppService(Service):
                     # if the image has actually been updated
                     self.middleware.call_sync('alert.oneshot_delete', 'AppUpdate', app_name)
 
+            self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app)
             job.set_progress(100, 'App successfully upgraded and redeployed')
             return app
 
@@ -85,15 +86,14 @@ class AppService(Service):
 
             job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
 
-        self.middleware.send_event(
-            'app.query', 'CHANGED', id=app_name, fields=self.middleware.call_sync('app.get_instance', app_name)
-        )
         try:
             compose_action(
                 app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True, pull_images=True,
             )
         finally:
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
+            new_app_instance = self.middleware.call_sync('app.get_instance', app_name)
+            self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=new_app_instance)
 
         job.set_progress(50, 'Created snapshot for upgrade')
         if app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name):
@@ -108,13 +108,12 @@ class AppService(Service):
             )
 
         job.set_progress(100, 'Upgraded app successfully')
-        app = self.middleware.call_sync('app.get_instance', app_name)
-        if app['upgrade_available'] is False:
+        if new_app_instance['upgrade_available'] is False:
             # We have this conditional for the case if user chose not to upgrade to latest version
             # and jump to some intermediate version which is not latest
             self.middleware.call_sync('alert.oneshot_delete', 'AppUpdate', app_name)
 
-        return app
+        return new_app_instance
 
     @accepts(
         Str('app_name'),
