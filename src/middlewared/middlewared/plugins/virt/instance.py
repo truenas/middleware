@@ -101,14 +101,6 @@ class VirtInstanceService(CRUDService):
         if not old and await self.query([('name', '=', new['name'])]):
             verrors.add(f'{schema_name}.name', f'Name {new["name"]!r} already exists')
 
-        if memory := new.get('memory'):
-            # Lets require at least 32MiB of reserved memory
-            # This value is somewhat arbitrary but hard to think lower value would have to be used
-            # (would most likely be a typo).
-            # Running container with very low memory will probably cause it to be killed by the cgroup OOM
-            if memory < 33554432:
-                verrors.add(f'{schema_name}.memory', 'At least 32MiB of memory is required for a container')
-
         # Do not validate image_choices because its an expansive operation, just fail on creation
 
     def __data_to_config(self, data):
