@@ -71,9 +71,10 @@ def dns_authenticator():
     with row(
         "system.acmednsauthenticator",
         {
-            "authenticator": "cloudflare",
             "name": "test",
             "attributes": {
+                "authenticator": "cloudflare",
+                "cloudflare_email": "test@gmail.com",
                 "api_key": "key",
                 "api_token": "token",
             },
