@@ -165,6 +165,7 @@ def get_default_workload_values() -> dict:
         'container_details': [],  # This would contain service name and image in use
         'volumes': [],  # This would be docker volumes
         'images': [],
+        'networks': [],
     }
 
 
@@ -235,5 +236,6 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
     workloads.update({
         'images': list(images),
         'volumes': [v.__dict__ for v in volumes],
+        'networks': app_resources['networks'],
     })
     return workloads
