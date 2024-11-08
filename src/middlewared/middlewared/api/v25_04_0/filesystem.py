@@ -62,8 +62,19 @@ class FilesystemChownResult(BaseModel):
 
 @single_argument_args('filesystem_setperm')
 class FilesystemSetPermArgs(FilesystemPermChownBase):
-    mode: UnixPerm
+    mode: UnixPerm | None = None
     options: FilesystemSetpermOptions = Field(default=FilesystemSetpermOptions())
+
+    @model_validator(mode='after')
+    def payload_is_actionable(self) -> Self:
+        """ User should be changing something. Either stripping ACL or setting mode """
+        if self.mode is None and self.options.stripacl is False:
+            raise ValueError(
+                'Payload must either explicitly specify permissions or '
+                'contain the stripacl option.'
+            )
+
+        return self
 
 
 class FilesystemSetPermResult(BaseModel):
