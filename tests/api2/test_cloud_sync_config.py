@@ -10,8 +10,8 @@ def test_rclone_config_writer_bool():
     with dataset("test_cloud_sync_config") as ds:
         with credential({
             "name": "Google Cloud Storage",
-            "provider": "GOOGLE_CLOUD_STORAGE",
-            "attributes": {
+            "provider": {
+                "type": "GOOGLE_CLOUD_STORAGE",
                 "service_account_credentials": "{\"project_id\": 1}",
             },
         }) as c:

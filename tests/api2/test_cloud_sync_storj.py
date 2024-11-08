@@ -11,8 +11,8 @@ from middlewared.test.integration.assets.pool import dataset
 
 
 CREDENTIAL = {
-    "provider": "STORJ_IX",
-    "attributes": {
+    "provider": {
+        "type": "STORJ_IX",
         "access_key_id": STORJ_IX_AWS_ACCESS_KEY_ID,
         "secret_access_key": STORJ_IX_AWS_SECRET_ACCESS_KEY,
     }
@@ -26,11 +26,9 @@ FILENAME = "a"
 
 def test_storj_verify():
     result = call("cloudsync.credentials.verify", {
-        "provider": "STORJ_IX",
-        "attributes": {
-            "access_key_id": STORJ_IX_AWS_ACCESS_KEY_ID,
-            "secret_access_key": STORJ_IX_AWS_SECRET_ACCESS_KEY,
-        }
+        "type": "STORJ_IX",
+        "access_key_id": STORJ_IX_AWS_ACCESS_KEY_ID,
+        "secret_access_key": STORJ_IX_AWS_SECRET_ACCESS_KEY,
     })
 
     assert result["valid"], result

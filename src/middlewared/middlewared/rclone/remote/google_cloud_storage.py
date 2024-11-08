@@ -2,7 +2,7 @@ import json
 import textwrap
 
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Bool, Str
+from middlewared.schema import Bool
 
 
 class GoogleCloudStorageRcloneRemote(BaseRcloneRemote):
@@ -15,10 +15,6 @@ class GoogleCloudStorageRcloneRemote(BaseRcloneRemote):
 
     rclone_type = "google cloud storage"
 
-    credentials_schema = [
-        Str("service_account_credentials", title="Service Account", required=True, max_length=None),
-    ]
-
     task_schema = [
         Bool("bucket_policy_only", title="Bucket Policy Only", description=textwrap.dedent("""\
             Access checks should use bucket-level IAM policies.
@@ -28,8 +24,8 @@ class GoogleCloudStorageRcloneRemote(BaseRcloneRemote):
 
     async def get_credentials_extra(self, credentials):
         return dict(
-            service_account_credentials=(credentials["attributes"]["service_account_credentials"].
+            service_account_credentials=(credentials["provider"]["service_account_credentials"].
                                          replace("\r", "").
                                          replace("\n", "")),
-            project_number=json.loads(credentials["attributes"]["service_account_credentials"])["project_id"],
+            project_number=json.loads(credentials["provider"]["service_account_credentials"])["project_id"],
         )

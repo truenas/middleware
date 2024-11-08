@@ -1,7 +1,7 @@
 import textwrap
 
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Int, Str
+from middlewared.schema import Int
 from middlewared.validators import Range
 
 
@@ -14,14 +14,6 @@ class B2RcloneRemote(BaseRcloneRemote):
     fast_list = True
 
     rclone_type = "b2"
-
-    credentials_schema = [
-        Str("account", title="Account ID or Application Key ID", description=textwrap.dedent("""\
-            Put your Account ID here and use your Master Application Key as Application Key or create separate
-            Application Key and use it with its own Application Key ID
-        """), required=True),
-        Str("key", title="Application Key", required=True),
-    ]
 
     task_schema = [
         Int("chunk_size", title="Upload chunk size (in megabytes)", description=textwrap.dedent("""\

@@ -19,8 +19,8 @@ except ImportError:
 @pytest.fixture(scope='module')
 def credentials():
     with _credential({
-        "provider": "S3",
-        "attributes": {
+        "provider": {
+            "type": "S3",
             "access_key_id": AWS_ACCESS_KEY_ID,
             "secret_access_key": AWS_SECRET_ACCESS_KEY,
         }
@@ -46,16 +46,18 @@ def task(credentials):
 
 def test_update_cloud_credentials(credentials):
     call("cloudsync.credentials.update", credentials["id"], {
-        "attributes": {
+        "provider": {
+            "type": "S3",
             "access_key_id": "garbage",
             "secret_access_key": AWS_SECRET_ACCESS_KEY,
         }
     })
 
-    assert call("cloudsync.credentials.get_instance", credentials["id"])["attributes"]["access_key_id"] == "garbage"
+    assert call("cloudsync.credentials.get_instance", credentials["id"])["provider"]["access_key_id"] == "garbage"
 
     call("cloudsync.credentials.update", credentials["id"], {
-        "attributes": {
+        "provider": {
+            "type": "S3",
             "access_key_id": AWS_ACCESS_KEY_ID,
             "secret_access_key": AWS_SECRET_ACCESS_KEY,
         },

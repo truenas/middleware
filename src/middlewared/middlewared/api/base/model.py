@@ -10,10 +10,12 @@ from pydantic.main import IncEx
 from typing_extensions import Annotated
 
 from middlewared.api.base.types.base import SECRET_VALUE
+from middlewared.api.base.types.base.string import LongStringWrapper
 from middlewared.utils.lang import undefined
 
 
-__all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "single_argument_args", "single_argument_result"]
+__all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item",
+           "single_argument_args", "single_argument_result"]
 
 
 class BaseModel(PydanticBaseModel):
@@ -72,7 +74,12 @@ class BaseModel(PydanticBaseModel):
     def _model_dump_fallback(self, context, value):
         if isinstance(value, Secret):
             if context["expose_secrets"]:
-                return value.get_secret_value()
+                value = value.get_secret_value()
+
+                if isinstance(value, LongStringWrapper):
+                    value = value.value
+
+                return value
             else:
                 return SECRET_VALUE
 
@@ -152,8 +159,8 @@ def single_argument_args(name: str):
             __module__=klass.__module__,
             **{name: Annotated[klass, Field()]},
         )
-        model.from_previous = classmethod(klass.from_previous)
-        model.to_previous = classmethod(klass.to_previous)
+        model.from_previous = klass.from_previous
+        model.to_previous = klass.to_previous
         return model
 
     return wrapper
@@ -188,8 +195,8 @@ def single_argument_result(klass, klass_name=None):
         result=Annotated[klass, Field()],
     )
     if issubclass(klass, BaseModel):
-        model.from_previous = classmethod(klass.from_previous)
-        model.to_previous = classmethod(klass.to_previous)
+        model.from_previous = klass.from_previous
+        model.to_previous = klass.to_previous
     return model
 
 

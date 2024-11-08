@@ -68,7 +68,14 @@ def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, e
     except ValidationError as e:
         verrors = ValidationErrors()
         for error in e.errors():
-            verrors.add(".".join(map(str, error["loc"])), error["msg"])
+            loc = list(map(str, error["loc"]))
+            msg = error["msg"]
+
+            if error["type"] == "union_tag_not_found":
+                loc.append(error["ctx"]["discriminator"].strip("'"))
+                msg = "Field required"
+
+            verrors.add(".".join(loc), msg)
 
         raise verrors from None
 

@@ -64,8 +64,8 @@ def test_ftp_subfolder(anonymous, defaultroot, has_leading_slash):
 
             with credential({
                 "name": "Test",
-                "provider": "FTP",
-                "attributes": {
+                "provider": {
+                    "type": "FTP",
                     "host": "localhost",
                     "port": 21,
                     "user": ftp.username,
@@ -180,8 +180,8 @@ def test_create_empty_src_dirs(create_empty_src_dirs):
         with anonymous_ftp_server() as ftp:
             with credential({
                 "name": "Test",
-                "provider": "FTP",
-                "attributes": {
+                "provider": {
+                    "type": "FTP",
                     "host": "localhost",
                     "port": 21,
                     "user": ftp.username,

@@ -8,7 +8,6 @@ import botocore
 import requests
 
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Password, Str
 from middlewared.service_exception import CallError
 from middlewared.utils.network import INTERNET_TIMEOUT
 
@@ -29,11 +28,6 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
 
     rclone_type = "s3"
 
-    credentials_schema = [
-        Str("access_key_id", title="Access Key ID", required=True),
-        Password("secret_access_key", title="Secret Access Key", required=True),
-    ]
-
     task_schema = []
 
     async def create_bucket(self, credentials, name):
@@ -42,8 +36,8 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
                 "s3",
                 config=botocore.config.Config(user_agent="ix-storj-1"),
                 endpoint_url="https://gateway.storjshare.io",
-                aws_access_key_id=credentials["attributes"]["access_key_id"],
-                aws_secret_access_key=credentials["attributes"]["secret_access_key"],
+                aws_access_key_id=credentials["provider"]["access_key_id"],
+                aws_secret_access_key=credentials["provider"]["secret_access_key"],
             )
             # s3 bucket naming rules: https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
             try:
@@ -63,8 +57,8 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
 
     async def list_buckets(self, credentials):
         def list_buckets_sync():
-            auth = AWSRequestsAuth(aws_access_key=credentials["attributes"]["access_key_id"],
-                                   aws_secret_access_key=credentials["attributes"]["secret_access_key"],
+            auth = AWSRequestsAuth(aws_access_key=credentials["provider"]["access_key_id"],
+                                   aws_secret_access_key=credentials["provider"]["secret_access_key"],
                                    aws_host="gateway.storjshare.io",
                                    aws_region="",
                                    aws_service="s3")
@@ -100,8 +94,8 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
         url = "gateway.storjshare.io"
 
         env = {
-            "AWS_ACCESS_KEY_ID": task["credentials"]["attributes"]["access_key_id"],
-            "AWS_SECRET_ACCESS_KEY": task["credentials"]["attributes"]["secret_access_key"],
+            "AWS_ACCESS_KEY_ID": task["credentials"]["provider"]["access_key_id"],
+            "AWS_SECRET_ACCESS_KEY": task["credentials"]["provider"]["secret_access_key"],
         }
 
         return url, env

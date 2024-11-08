@@ -32,6 +32,7 @@ class ArgsV2(BaseModel):
     exclude: list[str] = []
     force: bool = False
 
+    @classmethod
     def from_previous(cls, value):
         return {
             "options": value,
@@ -58,6 +59,7 @@ class ResultV2(BaseModel):
     value: int
     status: str
 
+    @classmethod
     def from_previous(cls, value):
         return {
             "result": {

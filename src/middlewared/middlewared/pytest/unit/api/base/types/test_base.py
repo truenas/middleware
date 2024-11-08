@@ -1,3 +1,4 @@
+from pydantic import Secret
 import pytest
 
 from middlewared.api.base import BaseModel, LongString
@@ -31,3 +32,11 @@ class LongStringDict(BaseModel):
 def test_long_string():
     data = ["test1" * 1000, {"str": "test2" * 1000, "list": ["test3" * 1000, "test4" * 1000]}]
     assert accept_params(LongStringMethodArgs, data) == data
+
+
+class SecretLongStringMethodArgs(BaseModel):
+    password: Secret[LongString]
+
+
+def test_secret_long_string():
+    assert accept_params(SecretLongStringMethodArgs, ["test"]) == ["test"]

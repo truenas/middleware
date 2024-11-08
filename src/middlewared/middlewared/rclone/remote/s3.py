@@ -4,7 +4,7 @@ import boto3
 from botocore.client import Config
 
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Bool, Int, Password, Str
+from middlewared.schema import Str
 from middlewared.utils.lang import undefined
 
 
@@ -18,19 +18,6 @@ class S3RcloneRemote(BaseRcloneRemote):
 
     rclone_type = "s3"
 
-    credentials_schema = [
-        Str("access_key_id", title="Access Key ID", required=True),
-        Password("secret_access_key", title="Secret Access Key", required=True),
-        Str("endpoint", title="Endpoint URL", default=""),
-        Str("region", title="Region", default=""),
-        Bool("skip_region", title="Endpoint does not support regions", default=False),
-        Bool("signatures_v2", title="Use v2 signatures", default=False),
-        Int("max_upload_parts", title="Maximum number of parts in a multipart upload", description=textwrap.dedent("""\
-            This option defines the maximum number of multipart chunks to use when doing a multipart upload.
-            This can be useful if a service does not support the AWS S3 specification of 10,000 chunks (e.g. Scaleway).
-        """), default=10000),
-    ]
-
     task_schema = [
         Str("region", title="Region", default=""),
         Str("encryption", title="Server-Side Encryption", enum=[None, "AES256"], default=None, null=True),
@@ -42,16 +29,16 @@ class S3RcloneRemote(BaseRcloneRemote):
     def _get_client(self, credentials):
         config = None
 
-        if credentials["attributes"].get("signatures_v2", False):
+        if credentials["provider"].get("signatures_v2", False):
             config = Config(signature_version="s3")
 
         client = boto3.client(
             "s3",
             config=config,
-            endpoint_url=credentials["attributes"].get("endpoint", "").strip() or None,
-            region_name=credentials["attributes"].get("region", "").strip() or None,
-            aws_access_key_id=credentials["attributes"]["access_key_id"],
-            aws_secret_access_key=credentials["attributes"]["secret_access_key"],
+            endpoint_url=credentials["provider"].get("endpoint", "").strip() or None,
+            region_name=credentials["provider"].get("region", "").strip() or None,
+            aws_access_key_id=credentials["provider"]["access_key_id"],
+            aws_secret_access_key=credentials["provider"]["secret_access_key"],
         )
         return client
 
@@ -59,8 +46,8 @@ class S3RcloneRemote(BaseRcloneRemote):
         if task["attributes"]["encryption"] not in (None, "", "AES256"):
             verrors.add("encryption", 'Encryption should be null or "AES256"')
 
-        if not credentials["attributes"].get("skip_region", False):
-            if not credentials["attributes"].get("region", "").strip():
+        if not credentials["provider"].get("skip_region", False):
+            if not credentials["provider"].get("region", "").strip():
                 response = await self.middleware.run_in_thread(
                     self._get_client(credentials).get_bucket_location, Bucket=task["attributes"]["bucket"]
                 )
@@ -69,8 +56,8 @@ class S3RcloneRemote(BaseRcloneRemote):
     async def get_credentials_extra(self, credentials):
         result = {}
 
-        if (credentials["attributes"].get("endpoint") or "").rstrip("/").endswith(".scw.cloud"):
-            if credentials["attributes"].get("max_upload_parts", 10000) == 10000:
+        if (credentials["provider"].get("endpoint") or "").rstrip("/").endswith(".scw.cloud"):
+            if credentials["provider"].get("max_upload_parts", 10000) == 10000:
                 result["max_upload_parts"] = 1000
 
         return result
@@ -84,15 +71,15 @@ class S3RcloneRemote(BaseRcloneRemote):
             provider="Other",
         )
 
-        if not task["credentials"]["attributes"].get("skip_region", False):
-            if task["credentials"]["attributes"].get("region", "").strip():
+        if not task["credentials"]["provider"].get("skip_region", False):
+            if task["credentials"]["provider"].get("region", "").strip():
                 if not (task["attributes"].get("region") or "").strip():
-                    result["region"] = task["credentials"]["attributes"]["region"]
+                    result["region"] = task["credentials"]["provider"]["region"]
             else:
                 # Some legacy tasks have region=None, it's easier to fix it here than in migration
                 result["region"] = task["attributes"].get("region") or "us-east-1"
         else:
-            if task["credentials"]["attributes"].get("signatures_v2", False):
+            if task["credentials"]["provider"].get("signatures_v2", False):
                 result["region"] = "other-v2-signature"
             else:
                 result["region"] = ""
@@ -100,13 +87,13 @@ class S3RcloneRemote(BaseRcloneRemote):
         return result
 
     def get_restic_config(self, task):
-        url = task["credentials"]["attributes"].get("endpoint", "").rstrip("/")
+        url = task["credentials"]["provider"].get("endpoint", "").rstrip("/")
         if not url:
             url = "s3.amazonaws.com"
 
         env = {
-            "AWS_ACCESS_KEY_ID": task["credentials"]["attributes"]["access_key_id"],
-            "AWS_SECRET_ACCESS_KEY": task["credentials"]["attributes"]["secret_access_key"],
+            "AWS_ACCESS_KEY_ID": task["credentials"]["provider"]["access_key_id"],
+            "AWS_SECRET_ACCESS_KEY": task["credentials"]["provider"]["secret_access_key"],
         }
 
         return url, env

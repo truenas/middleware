@@ -193,14 +193,27 @@ class Application(RpcWebSocketApp):
             methodobj = mock
 
         try:
+            # For any legacy websocket API method call not defined in 24.10 models we assume its made using the most
+            # recent API.
+            # If the method is defined there, we perform conversion to the recent API.
+            lam = LegacyAPIMethod(self.middleware, message['method'], 'v24.10', self.middleware.api_versions_adapter,
+                                  passthrough_nonexistent_methods=True)
+            if lam.accepts_model:
+                params = lam._adapt_params(params)
+
             async with self._softhardsemaphore:
                 result = await self.middleware.call_with_audit(message['method'], serviceobj, methodobj, params, self)
+
             if isinstance(result, Job):
                 result = result.id
             elif isinstance(result, types.GeneratorType):
                 result = list(result)
             elif isinstance(result, types.AsyncGeneratorType):
                 result = [i async for i in result]
+            else:
+                if lam.returns_model:
+                    result = lam._adapt_result(result)
+
             self._send({
                 'id': message['id'],
                 'msg': 'result',
@@ -899,6 +912,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.jobs = JobsQueue(self)
         self.mocks: typing.Dict[str, list[tuple[list, typing.Callable]]] = defaultdict(list)
         self.tasks = set()
+        self.api_versions = None
+        self.api_versions_adapter = None
 
     def create_task(self, coro, *, name=None):
         task = self.loop.create_task(coro, name=name)
@@ -909,6 +924,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def _load_apis(self) -> dict[str, API]:
         api_versions = self._load_api_versions()
         api_versions_adapter = APIVersionsAdapter(api_versions)
+        self.api_versions = api_versions  # FIXME: Only necessary as a class member for legacy WS API
+        self.api_versions_adapter = api_versions_adapter  # FIXME: Only necessary as a class member for legacy WS API
         return self._create_apis(api_versions, api_versions_adapter)
 
     def _load_api_versions(self) -> [APIVersion]:
@@ -2117,6 +2134,18 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         setup_funcs = self.__plugins_load()
 
         apis = self._load_apis()
+
+        # FIXME: handle this in a more appropriate place
+        for service in self.get_services().values():
+            for current_api_model, model_factory, arg_model_name in getattr(service, '_register_models', []):
+                self.api_versions[-1].models[current_api_model.__name__] = current_api_model
+                for api_version in self.api_versions[:-1]:
+                    try:
+                        arg = api_version.models[arg_model_name]
+                    except KeyError:
+                        pass
+                    else:
+                        api_version.models[current_api_model.__name__] = model_factory(arg)
 
         self._console_write('registering services')
 

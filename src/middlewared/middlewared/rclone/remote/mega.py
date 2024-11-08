@@ -1,5 +1,4 @@
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Str
 
 
 class MegaRcloneRemote(BaseRcloneRemote):
@@ -7,8 +6,3 @@ class MegaRcloneRemote(BaseRcloneRemote):
     title = "Mega"
 
     rclone_type = "mega"
-
-    credentials_schema = [
-        Str("user", title="Username", required=True),
-        Str("pass", title="Password", required=True),
-    ]

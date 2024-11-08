@@ -1,6 +1,7 @@
+from pydantic import Secret
+
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
-                                  single_argument_result)
-from .cloud_sync_providers import CloudCredentialProvider
+                                  single_argument_args, single_argument_result)
 
 __all__ = ["CloudCredentialEntry",
            "CloudCredentialCreateArgs", "CloudCredentialCreateResult",
@@ -12,24 +13,8 @@ __all__ = ["CloudCredentialEntry",
 class CloudCredentialEntry(BaseModel):
     id: int
     name: NonEmptyString
-    provider: CloudCredentialProvider
-
-    @classmethod
-    def from_previous(cls, value):
-        attributes = value.pop("attributes")
-        return {
-            **value,
-            "provider": {
-                "type": value["provider"],
-                **attributes,
-            }
-        }
-
-    @classmethod
-    def to_previous(cls, value):
-        value["attributes"] = value["provider"]
-        value["provider"] = value["attributes"].pop("type")
-        return value
+    provider: str
+    attributes: Secret[dict]
 
 
 class CloudCredentialCreate(CloudCredentialEntry):
@@ -65,17 +50,10 @@ class CloudCredentialDeleteResult(BaseModel):
     result: bool
 
 
+@single_argument_args("cloud_sync_credentials_create")
 class CloudCredentialVerifyArgs(BaseModel):
-    cloud_sync_credentials_create: CloudCredentialProvider
-
-    @classmethod
-    def from_previous(cls, value):
-        return {
-            "cloud_sync_credentials_create": {
-                "type": value["cloud_sync_credentials_create"]["provider"],
-                **value["cloud_sync_credentials_create"]["attributes"]
-            }
-        }
+    provider: str
+    attributes: Secret[dict]
 
 
 @single_argument_result

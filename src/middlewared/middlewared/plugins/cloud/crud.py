@@ -6,6 +6,7 @@ from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.schema import Bool, Str
 from middlewared.service import CallError, private
+from middlewared.service_exception import InstanceNotFound
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.validators import validate_schema
 
@@ -16,9 +17,8 @@ class CloudTaskServiceMixin:
     @private
     async def _get_credentials(self, credentials_id):
         try:
-            return await self.middleware.call("datastore.query", "system.cloudcredentials",
-                                              [("id", "=", credentials_id)], {"get": True})
-        except IndexError:
+            return await self.middleware.call("cloudsync.credentials.get_instance", credentials_id)
+        except InstanceNotFound:
             return None
 
     @private
@@ -47,7 +47,7 @@ class CloudTaskServiceMixin:
         if verrors:
             return
 
-        provider = REMOTES[credentials["provider"]]
+        provider = REMOTES[credentials["provider"]["type"]]
 
         schema = []
 
@@ -74,7 +74,7 @@ class CloudTaskServiceMixin:
         if not verrors:
             credentials = await self._get_credentials(data["credentials"])
 
-            provider = REMOTES[credentials["provider"]]
+            provider = REMOTES[credentials["provider"]["type"]]
 
             await provider.validate_task_full(data, credentials, verrors)
 

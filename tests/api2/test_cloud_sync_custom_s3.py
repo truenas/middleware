@@ -24,8 +24,8 @@ def test_custom_s3(credential_attributes, result):
     with dataset("test_cloudsync_custom_s3") as ds:
         with credential({
             "name": "S3",
-            "provider": "S3",
-            "attributes": {
+            "provider": {
+                "type": "S3",
                 "access_key_id": "test",
                 "secret_access_key": "test",
                 **credential_attributes,

@@ -6,7 +6,7 @@ from typing_extensions import Annotated
 
 from middlewared.utils.lang import undefined
 
-__all__ = ["HttpUrl", "LongString", "NonEmptyString", "SECRET_VALUE"]
+__all__ = ["HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE"]
 
 HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
 
@@ -30,6 +30,9 @@ class LongStringWrapper:
 
         self.value = value
 
+    def __len__(self):
+        return len(self.value)
+
     @classmethod
     def __get_pydantic_core_schema__(
         cls, source_type: Any, handler: GetCoreSchemaHandler
@@ -51,5 +54,6 @@ LongString = Annotated[
 ]
 
 NonEmptyString = Annotated[str, Field(min_length=1)]
+LongNonEmptyString = Annotated[LongString, Field(min_length=1)]
 
 SECRET_VALUE = "********"
