@@ -10,6 +10,7 @@ from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_schema
 from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
+from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.rclone.remote.storjix import StorjIxError
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Password, Patch, Str
 from middlewared.service import (
@@ -21,7 +22,7 @@ from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
 from middlewared.utils.time_utils import utc_now
-from middlewared.validators import Range, Time, validate_schema
+from middlewared.validators import Range, Time
 
 import aiorwlock
 import asyncio
@@ -212,20 +213,15 @@ async def rclone(middleware, job, cloud_sync, dry_run):
         else:
             args.extend([config.remote_path, path])
 
-        env = {}
-        for k, v in (
-            [(k, v) for (k, v) in cloud_sync.items()
-             if k in ["id", "description", "direction", "transfer_mode", "encryption", "filename_encryption",
-                      "encryption_password", "encryption_salt", "snapshot"]] +
-            list(cloud_sync["credentials"]["provider"].items()) +
-            list(cloud_sync["attributes"].items())
-        ):
-            if type(v) in (bool,):
-                env[f"CLOUD_SYNC_{k.upper()}"] = str(int(v))
-            if type(v) in (int, str):
-                env[f"CLOUD_SYNC_{k.upper()}"] = str(v)
-        env["CLOUD_SYNC_PATH"] = path
-
+        env = env_mapping("CLOUD_SYNC_", {
+            **{k: v for k, v in cloud_sync.items() if k in [
+                "id", "description", "direction", "transfer_mode", "encryption", "filename_encryption",
+                "encryption_password", "encryption_salt", "snapshot"
+            ]},
+            **cloud_sync["credentials"]["provider"],
+            **cloud_sync["attributes"],
+            "path": path
+        })
         await run_script(job, env, cloud_sync["pre_script"], "Pre-script")
 
         job.middleware.logger.trace("Running %r", args)
@@ -282,43 +278,6 @@ async def rclone(middleware, job, cloud_sync, dry_run):
                 await middleware.call("cloudsync.credentials.update", cloud_sync["credentials"]["id"], {
                     "provider": credentials_attributes
                 })
-
-
-async def run_script(job, env, hook, script_name):
-    hook = hook.strip()
-    if not hook:
-        return
-
-    if hook.startswith("#!"):
-        shebang = shlex.split(hook.splitlines()[0][2:].strip())
-    else:
-        shebang = ["/bin/bash"]
-
-    # It is ok to do synchronous I/O here since we are operating in ramfs which will never block
-    with tempfile.NamedTemporaryFile("w+") as f:
-        os.chmod(f.name, 0o700)
-        f.write(hook)
-        f.flush()
-
-        proc = await Popen(
-            shebang + [f.name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            env=dict(os.environ, **env),
-        )
-        future = asyncio.ensure_future(run_script_check(job, proc, script_name))
-        await proc.wait()
-        await asyncio.wait_for(future, None)
-        if proc.returncode != 0:
-            raise CallError(f"{script_name} failed with exit code {proc.returncode}")
-
-
-async def run_script_check(job, proc, name):
-    while True:
-        read = await proc.stdout.readline()
-        if read == b"":
-            break
-        await job.logs_fd_write(f"[{name}] ".encode("utf-8") + read)
 
 
 # Prevents clogging job logs with progress reports every second
