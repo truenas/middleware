@@ -308,4 +308,4 @@ def test_transfer_setting_choices():
 def test_other_transfer_settings(cloud_backup_task, options):
     run_task(cloud_backup_task.task)
     result = ssh(f'grep "{options}" /var/log/middlewared.log')
-    assert result.strip() != ""
+    assert options in result
