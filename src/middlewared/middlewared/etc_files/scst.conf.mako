@@ -7,7 +7,7 @@
     from pathlib import Path
 
     from middlewared.service import CallError
-    from middlewared.plugins.fc.utils import is_fc_addr, wwn_as_colon_hex
+    from middlewared.plugins.fc.utils import is_fc_addr, str_to_naa, wwn_as_colon_hex
 
     REL_TGT_ID_NODEB_OFFSET = 32000
     REL_TGT_ID_FC_OFFSET = 5000
@@ -95,6 +95,19 @@
                     initiator_access.add(wwn)
         return initiator_access
 
+    if render_ctx['fc.capable']:
+        # Physical devices are added to the config automatically.  We want to
+        # identify any that are not being used and select a rel_tgt_id in the
+        # 10K range for them.
+        physical_naa = {str_to_naa(entry['port_name']) for entry in middleware.call_sync('fc.fc_hosts', [['physical', '=', True]], {'select': ['port_name']})}
+        used_physical_naa = set()
+        for entry in render_ctx['fcport.query']:
+            if '/' not in entry['port']:
+                for key in ['wwpn', 'wwpn_b']:
+                    if naa := entry.get(key):
+                        used_physical_naa.add(naa)
+        unused_physical = sorted([wwn_as_colon_hex(naa) for naa in (physical_naa - used_physical_naa)])
+
     # There are several changes that must occur if ALUA is enabled,
     # and these are different depending on whether this is the
     # MASTER node, or BACKUP node.
@@ -134,6 +147,7 @@
     cluster_mode_luns = {}
     clustered_extents = set()
     active_extents = []
+    standby_write_empty_config = False
     if failover_status == "MASTER":
         local_ip = middleware.call_sync("failover.local_ip")
         dlm_ready = middleware.call_sync("dlm.node_ready")
@@ -143,7 +157,7 @@
             cluster_mode_targets = middleware.call_sync("iscsi.target.cluster_mode_targets")
     elif failover_status == "BACKUP":
         if alua_enabled:
-            if middleware.call_sync("iscsi.alua.standby_write_empty_config"):
+            if standby_write_empty_config := middleware.call_sync("iscsi.alua.standby_write_empty_config"):
                 logged_in_targets = {}
             else:
                 retries = 5
@@ -541,6 +555,17 @@ ${retrieve_luns(target['id'],'')}\
 % if render_ctx['fc.capable']:
 %   if render_ctx['fcport.query']:
 TARGET_DRIVER qla2x00t {
+##
+## Write out any unused physical portals
+##
+% for rel_tgt_id, wwpn in enumerate(unused_physical, start=10000):
+
+    TARGET ${wwpn} {
+        rel_tgt_id ${rel_tgt_id}
+        enabled 0
+    }
+% endfor
+
 ## How we populate the FC targets depends on the configuration / node status
 % if is_ha:
 ##
@@ -549,6 +574,9 @@ TARGET_DRIVER qla2x00t {
 % for fcport in render_ctx['fcport.query']:
 % if alua_enabled:
 ##    ALUA enabled - write out the target for this node
+% if standby_write_empty_config and "/" in fcport['port']:
+<% continue %>
+% endif
 <%
     wwpn = ha_node_wwpn_for_fcport(fcport)
     target = fcport_to_target(fcport)
