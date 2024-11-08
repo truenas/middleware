@@ -89,7 +89,14 @@ class DockerService(ConfigService):
                 try:
                     await self.middleware.call('service.stop', 'docker')
                 except Exception as e:
-                    raise CallError(f'Failed to stop docker service: {e}')
+                    # If for X reason, ix-apps dataset got deleted somehow by the user - we should allow
+                    # switching to another pool as that won't be possible currently otherwise
+                    if (config['pool'] != old_config['pool'] and not await self.middleware.call(
+                        'zfs.dataset.query', [['id', '=', applications_ds_name(old_config['pool'])]], {
+                            'extra': {'retrieve_children': False, 'retrieve_properties': False}
+                        }
+                    )) is False:
+                        raise CallError(f'Failed to stop docker service: {e}')
 
                 await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 
