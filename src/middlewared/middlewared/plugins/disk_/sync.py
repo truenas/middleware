@@ -59,11 +59,6 @@ class DiskService(Service, ServiceChangeMixin):
 
         await self.restart_services_after_sync()
 
-        # We have expansion shelves that take up to 60 seconds before the disk will be mapped to the enclosure slot in
-        # the sysfs structure. There is no way around it, unfortunately. We should ask `enclosure.sync_disk` to retry
-        # itself if it fails to map the disk to enclosure.
-        await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'], None, True)
-
     @private
     def log_disk_info(self, sys_disks):
         number_of_disks = len(sys_disks)
@@ -134,7 +129,6 @@ class DiskService(Service, ServiceChangeMixin):
         dif_formatted_disks = []
         increment = round((40 - 20) / number_of_disks, 3)  # 20% of the total percentage
         progress_percent = 40
-        encs = self.middleware.call_sync('enclosure.query')
         for idx, disk in enumerate(db_disks, start=1):
             progress_percent += increment
             job.set_progress(progress_percent, f'Syncing disk {idx}/{number_of_disks}')
@@ -179,13 +173,6 @@ class DiskService(Service, ServiceChangeMixin):
                 self.middleware.call_sync('datastore.update', 'storage.disk', disk['disk_identifier'], disk, options)
                 changed.add(disk['disk_identifier'])
 
-            try:
-                self.middleware.call_sync('enclosure.sync_disk', disk['disk_identifier'], encs)
-            except Exception:
-                self.logger.error(
-                    'Unhandled exception in enclosure.sync_disk for %r', disk['disk_identifier'], exc_info=True
-                )
-
             seen_disks[name] = disk
 
         qs = None
@@ -221,13 +208,6 @@ class DiskService(Service, ServiceChangeMixin):
             else:
                 self.middleware.call_sync('datastore.insert', 'storage.disk', disk, options)
                 changed.add(disk['disk_identifier'])
-
-            try:
-                self.middleware.call_sync('enclosure.sync_disk', disk['disk_identifier'], encs)
-            except Exception:
-                self.logger.error(
-                    'Unhandled exception in enclosure.sync_disk for %r', disk['disk_identifier'], exc_info=True
-                )
 
         if dif_formatted_disks:
             self.middleware.call_sync('alert.oneshot_create', 'DifFormatted', dif_formatted_disks)
