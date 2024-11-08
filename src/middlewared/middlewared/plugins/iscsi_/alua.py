@@ -343,6 +343,7 @@ class iSCSITargetAluaService(Service):
                     return
                 else:
                     job.set_progress(25, 'Logged in HA targets')
+                    self.logger.debug('Logged in HA targets')
 
                 # Now that we've logged in the HA targets, regenerate the config so that the
                 # dev_disk DEVICEs are present (we cleared _standby_write_empty_config above).
@@ -353,6 +354,7 @@ class iSCSITargetAluaService(Service):
                 # Sanity check that all the targets surfaced up thru SCST okay.
                 devices = list(itertools.chain.from_iterable([x for x in after_iqns.values() if x is not None]))
                 if await self.middleware.call('iscsi.scst.check_cluster_mode_paths_present', devices):
+                    self.logger.debug(f'cluster_mode surfaced for {devices}')
                     break
 
                 self.logger.debug('Detected missing cluster_mode.  Retrying.')
@@ -505,9 +507,10 @@ class iSCSITargetAluaService(Service):
             # it will now offer the targets to the world.
             await self.middleware.call('service.reload', 'iscsitarget')
             job.set_progress(100, 'Reloaded iscsitarget service')
+            self.logger.debug(f'Fixed cluster_mode for {len(devices)} extents (reloaded)')
         else:
             job.set_progress(100, 'Fixed cluster_mode')
-        self.logger.debug(f'Fixed cluster_mode for {len(devices)} extents')
+            self.logger.debug(f'Fixed cluster_mode for {len(devices)} extents')
 
     async def wait_cluster_mode(self, target_id, extent_id):
         """After we add a target/extent mapping we wish to wait for the ALUA state to settle."""
