@@ -124,11 +124,17 @@ class iSCSITargetService(Service):
         else:
             return False
 
-    def delete_lun(self, iqn, lun):
+    def delete_iscsi_lun(self, iqn, lun):
         pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt').write_text(f'del {lun}\n')
 
-    def replace_lun(self, iqn, extent, lun):
+    def replace_iscsi_lun(self, iqn, extent, lun):
         pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}/ini_groups/security_group/luns/mgmt').write_text(f'replace {extent} {lun}\n')
+
+    def delete_fc_lun(self, wwpn, lun):
+        pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt').write_text(f'del {lun}\n')
+
+    def replace_fc_lun(self, wwpn, extent, lun):
+        pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt').write_text(f'replace {extent} {lun}\n')
 
     def set_node_optimized(self, node):
         """Update which node is reported as being the active/optimized path."""
