@@ -296,23 +296,33 @@ class TestFixtureFibreChannel:
                 call('etc.generate', 'scst')
                 lines = ssh("cat /etc/scst.conf").splitlines()
                 scst_qla_targets = parse_qla2x00t(lines)
-                assert len(scst_qla_targets) == 1
-                rel_tgt_id = 5001
+                # The 2nd physical port will also be written, albeit disabled
+                assert len(scst_qla_targets) == 2
+                rel_tgt_id_node_offset = 0
                 if ha:
                     node = call('failover.node')
                     if node == 'A':
-                        key = str_to_colon_hex(NODE_A_0_WWPN)
+                        key0 = str_to_colon_hex(NODE_A_0_WWPN)
+                        key1 = str_to_colon_hex(NODE_A_1_WWPN)
                     else:
-                        key = str_to_colon_hex(NODE_B_0_WWPN)
+                        key0 = str_to_colon_hex(NODE_B_0_WWPN)
+                        key1 = str_to_colon_hex(NODE_B_1_WWPN)
                         if call('iscsi.global.alua_enabled'):
-                            rel_tgt_id += 32000
+                            rel_tgt_id_node_offset = 32000
                 else:
-                    key = str_to_colon_hex(NODE_A_0_WWPN)
-                assert key in scst_qla_targets
-                assert scst_qla_targets[key] == {
+                    key0 = str_to_colon_hex(NODE_A_0_WWPN)
+                    key1 = str_to_colon_hex(NODE_A_1_WWPN)
+                assert key0 in scst_qla_targets
+                assert scst_qla_targets[key0] == {
                     'LUN': {'0': 'fcextent0'},
                     'enabled': '1',
-                    'rel_tgt_id': str(rel_tgt_id)
+                    'rel_tgt_id': str(5001 + rel_tgt_id_node_offset)
+                }
+                assert key1 in scst_qla_targets
+                assert scst_qla_targets[key1] == {
+                    'LUN': {},
+                    'enabled': '0',
+                    'rel_tgt_id': '10000'
                 }
 
                 # OK, now let's create another FC target
@@ -352,11 +362,32 @@ class TestFixtureFibreChannel:
                         # Let's regenerate the /etc/scst.conf and just make sure it has the expected targets
                         call('etc.generate', 'scst')
                         lines = ssh("cat /etc/scst.conf").splitlines()
+                        # Check FC targets
                         scst_qla_targets = parse_qla2x00t(lines)
                         assert len(scst_qla_targets) == 2
+                        assert key0 in scst_qla_targets
+                        assert scst_qla_targets[key0] == {
+                            'LUN': {'0': 'fcextent0'},
+                            'enabled': '1',
+                            'rel_tgt_id': str(5001 + rel_tgt_id_node_offset)
+                        }
+                        assert key1 in scst_qla_targets
+                        assert scst_qla_targets[key1] == {
+                            'LUN': {'0': 'fcextent2'},
+                            'enabled': '1',
+                            'rel_tgt_id': str(5002 + rel_tgt_id_node_offset)
+                        }
+                        # Check iSCSI target
+                        iqn2 = 'iqn.2005-10.org.freenas.ctl:fctarget2'
                         iscsi_targets = parse_iscsi(lines)
                         assert len(iscsi_targets) == 1
-                        assert 'iqn.2005-10.org.freenas.ctl:fctarget2' in iscsi_targets
+                        assert iqn2 in iscsi_targets
+                        assert iscsi_targets[iqn2] == {
+                            'LUN': {'0': 'fcextent2'},
+                            'rel_tgt_id': str(2 + rel_tgt_id_node_offset),
+                            'enabled': '1',
+                            'per_portal_acl': '1'
+                        }
 
                         # Make sure we can't update the old fcport using the in-use port
                         with pytest.raises(ValidationErrors) as ve:
@@ -493,23 +524,41 @@ class TestFixtureFibreChannel:
                 call('etc.generate', 'scst')
                 lines = ssh("cat /etc/scst.conf").splitlines()
                 scst_qla_targets = parse_qla2x00t(lines)
-                assert len(scst_qla_targets) == 1
-                rel_tgt_id = 5001
+                assert len(scst_qla_targets) == 3
+                rel_tgt_id_node_offset = 0
                 if ha:
                     node = call('failover.node')
                     if node == 'A':
-                        key = str_to_colon_hex(NODE_A_0_WWPN_NPIV_1)
+                        key0 = str_to_colon_hex(NODE_A_0_WWPN)
+                        key1 = str_to_colon_hex(NODE_A_1_WWPN)
+                        key2 = str_to_colon_hex(NODE_A_0_WWPN_NPIV_1)
                     else:
-                        key = str_to_colon_hex(NODE_B_0_WWPN_NPIV_1)
+                        key0 = str_to_colon_hex(NODE_B_0_WWPN)
+                        key1 = str_to_colon_hex(NODE_B_1_WWPN)
+                        key2 = str_to_colon_hex(NODE_B_0_WWPN_NPIV_1)
                         if call('iscsi.global.alua_enabled'):
-                            rel_tgt_id += 32000
+                            rel_tgt_id_node_offset = 32000
                 else:
-                    key = str_to_colon_hex(NODE_A_0_WWPN_NPIV_1)
-                assert key in scst_qla_targets
-                assert scst_qla_targets[key] == {
+                    key0 = str_to_colon_hex(NODE_A_0_WWPN)
+                    key1 = str_to_colon_hex(NODE_A_1_WWPN)
+                    key2 = str_to_colon_hex(NODE_A_0_WWPN_NPIV_1)
+                assert key0 in scst_qla_targets
+                assert scst_qla_targets[key0] == {
+                    'LUN': {},
+                    'enabled': '0',
+                    'rel_tgt_id': '10000'
+                }
+                assert key1 in scst_qla_targets
+                assert scst_qla_targets[key1] == {
+                    'LUN': {},
+                    'enabled': '0',
+                    'rel_tgt_id': '10001'
+                }
+                assert key2 in scst_qla_targets
+                assert scst_qla_targets[key2] == {
                     'LUN': {'0': 'fcextent1'},
                     'enabled': '1',
-                    'rel_tgt_id': str(rel_tgt_id)
+                    'rel_tgt_id': str(5001 + rel_tgt_id_node_offset)
                 }
 
             # NPIV target no longer mapped.  Now reduce npiv to zero
