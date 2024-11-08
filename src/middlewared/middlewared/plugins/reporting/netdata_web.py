@@ -3,8 +3,9 @@ import shutil
 import threading
 import time
 
-from middlewared.schema import accepts, returns, Str
-from middlewared.service import cli_private, job, pass_app, periodic, private, CallError, Service
+from middlewared.api import api_method
+from middlewared.api.current import ReportingGeneratePasswordArgs, ReportingGeneratePasswordResult
+from middlewared.service import job, pass_app, periodic, private, CallError, Service
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.crypto import generate_string
 from passlib.apache import HtpasswdFile
@@ -20,9 +21,9 @@ class ReportingService(Service):
     async def netdataweb_basic_file(self):
         return BASIC_FILE
 
-    @cli_private
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Str('password'))
+    @api_method(
+        ReportingGeneratePasswordArgs, ReportingGeneratePasswordResult, roles=['READONLY_ADMIN'], cli_private=True
+    )
     @pass_app()
     def netdataweb_generate_password(self, app):
         """

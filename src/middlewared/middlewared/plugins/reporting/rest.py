@@ -1,8 +1,9 @@
 import glob
 import logging
 
-from middlewared.service import accepts, Service
-from middlewared.schema import Str, Dict, Int
+from middlewared.api import api_method
+from middlewared.api.current import ChartMetricsArgs, ChartMetricsResult, ChartDetailsArgs, ChartDetailsResult
+from middlewared.service import Service
 from middlewared.utils.cpu import cpu_info
 from middlewared.utils.disk_stats import get_disk_stats
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -28,17 +29,11 @@ class NetdataService(Service):
             number += len(chart_details['dimensions'])
         return number
 
-    @accepts(Str('chart', required=True))
+    @api_method(ChartDetailsArgs, ChartDetailsResult, private=True)
     async def get_chart_details(self, chart):
         return await Netdata.get_chart_details(chart)
 
-    @accepts(
-        Str('chart', required=True),
-        Dict(
-            Int('before', required=False, default=0),
-            Int('after', required=False, default=-1),
-        ),
-    )
+    @api_method(ChartMetricsArgs, ChartMetricsResult, private=True)
     async def get_chart_metrics(self, chart, data):
         return await Netdata.get_chart_metrics(chart, data)
 
