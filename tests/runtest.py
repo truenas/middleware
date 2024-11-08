@@ -313,7 +313,11 @@ def parse_test_name(test):
     return test
 
 def parse_test_name_prefix_dir(test_name):
-    return f"api2/{parse_test_name(test_name)}"
+    name = parse_test_name(test_name)
+    if name.startswith('/'):
+        return name
+    else:
+        return f"api2/{name}"
 
 if tests:
     pytest_command.extend(list(map(parse_test_name_prefix_dir, tests)))
