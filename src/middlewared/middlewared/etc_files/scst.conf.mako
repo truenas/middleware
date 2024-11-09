@@ -148,6 +148,7 @@
     clustered_extents = set()
     active_extents = []
     standby_write_empty_config = False
+    skipped_wwpns = set()
     if failover_status == "MASTER":
         local_ip = middleware.call_sync("failover.local_ip")
         dlm_ready = middleware.call_sync("dlm.node_ready")
@@ -574,15 +575,18 @@ TARGET_DRIVER qla2x00t {
 % for fcport in render_ctx['fcport.query']:
 % if alua_enabled:
 ##    ALUA enabled - write out the target for this node
-% if standby_write_empty_config and "/" in fcport['port']:
-<% continue %>
-% endif
 <%
     wwpn = ha_node_wwpn_for_fcport(fcport)
     target = fcport_to_target(fcport)
     fc_initiator_access = fc_initiator_access_for_target(target)
     parent_host = fcport_to_parent_host(fcport)
+    skip_wwpn = standby_write_empty_config and "/" in fcport['port']
+    if skip_wwpn:
+        skipped_wwpns.add(wwpn)
 %>\
+% if skip_wwpn:
+<% continue %>
+% endif
 % if wwpn and target:
     TARGET ${wwpn} {
 % if parent_host:
@@ -816,7 +820,7 @@ DEVICE_GROUP targets {
 % endif  ## is_iscsi_target
 % if is_fc_target(target):
 <% wwpn = ha_node_wwpn_for_target(target, node) %>\
-% if wwpn:
+% if wwpn and not wwpn in skipped_wwpns:
                 TARGET ${wwpn}
 % endif  ## wwpn
 % endif  ## is_fc_target
