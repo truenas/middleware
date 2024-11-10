@@ -1,9 +1,6 @@
-import josepy as jose
-import json
-
-from acme import client, messages
-
 from middlewared.service import Service
+
+from .client_utils import get_acme_client_and_key
 
 
 class ACMEService(Service):
@@ -21,30 +18,5 @@ class ACMEService(Service):
             )
         else:
             data = data[0]
-        # Making key now
-        key = jose.JWKRSA.fields_from_json(json.loads(data['body']['key']))
-        key_dict = key.fields_to_partial_json()
-        # Making registration resource now
-        registration = messages.RegistrationResource.from_json({
-            'uri': data['uri'],
-            'terms_of_service': data['tos'],
-            'body': {
-                'contact': [data['body']['contact']],
-                'status': data['body']['status'],
-                'key': {
-                    'e': key_dict['e'],
-                    'kty': 'RSA',
-                    'n': key_dict['n']
-                }
-            }
-        })
 
-        return client.ClientV2(
-            messages.Directory({
-                'newAccount': data['new_account_uri'],
-                'newNonce': data['new_nonce_uri'],
-                'newOrder': data['new_order_uri'],
-                'revokeCert': data['revoke_cert_uri']
-            }),
-            client.ClientNetwork(key, account=registration)
-        ), key
+        return get_acme_client_and_key(data)
