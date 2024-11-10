@@ -17,6 +17,7 @@ class NIC(Device):
         Str('type', enum=['E1000', 'VIRTIO'], default='E1000'),
         Str('nic_attach', default=None, null=True),
         Str('mac', default=None, null=True, validators=[MACAddr(separator=':')]),
+        Str('dtype', enum=['NIC'], required=True),
     )
 
     def __init__(self, *args, **kwargs):

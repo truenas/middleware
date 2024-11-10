@@ -16,9 +16,9 @@ AVAILABLE_NIC_INTERFACES = ['br0', 'eth0']
                 'type': 'VIRTIO',
                 'mac': '00:a0:99:7e:bb:8a',
                 'nic_attach': 'br0',
-                'trust_guest_rx_filters': False
+                'trust_guest_rx_filters': False,
+                'dtype': 'NIC',
             },
-            'dtype': 'NIC',
         },
         ''
     ),
@@ -28,9 +28,9 @@ AVAILABLE_NIC_INTERFACES = ['br0', 'eth0']
                 'type': 'VIRTIO',
                 'mac': '00:a0:99:7e:bb:8a',
                 'nic_attach': 'br2',
+                'dtype': 'NIC',
                 'trust_guest_rx_filters': False
             },
-            'dtype': 'NIC',
         },
         '[EINVAL] attributes.nic_attach: Not a valid choice.'
     ),
@@ -40,9 +40,9 @@ AVAILABLE_NIC_INTERFACES = ['br0', 'eth0']
                 'type': 'VIRTIO',
                 'mac': 'ff:a0:99:7e:bb:8a',
                 'nic_attach': 'br0',
+                'dtype': 'NIC',
                 'trust_guest_rx_filters': False
             },
-            'dtype': 'NIC',
         },
         '[EINVAL] attributes.mac: MAC address must not start with `ff`'
     ),
@@ -52,9 +52,9 @@ AVAILABLE_NIC_INTERFACES = ['br0', 'eth0']
                 'type': 'VIRTIO',
                 'mac': 'ff:a0:99:7e:bb:8a',
                 'nic_attach': 'br0',
+                'dtype': 'NIC',
                 'trust_guest_rx_filters': True
             },
-            'dtype': 'NIC',
         },
         '[EINVAL] attributes.trust_guest_rx_filters: This can only be set when "nic_attach" is not a bridge device'
     ),
@@ -64,9 +64,9 @@ AVAILABLE_NIC_INTERFACES = ['br0', 'eth0']
                 'type': 'E1000',
                 'mac': 'ff:a0:99:7e:bb:8a',
                 'nic_attach': 'eth0',
+                'dtype': 'NIC',
                 'trust_guest_rx_filters': True
             },
-            'dtype': 'NIC',
         },
         '[EINVAL] attributes.trust_guest_rx_filters: This can only be set when "type" of NIC device is "VIRTIO"'
     ),

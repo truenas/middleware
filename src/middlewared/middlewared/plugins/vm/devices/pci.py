@@ -25,7 +25,7 @@ class PCIBase(Device):
 
     def pre_start_vm_device_setup(self, context):
         if self.in_use_by_vm(context['vms'], context['vm_devices']):
-            raise CallError(f'{self.data["dtype"]} device is already being used by another active VM')
+            raise CallError(f'{self.data["attributes"]["dtype"]} device is already being used by another active VM')
 
 
 class PCI(PCIBase):
@@ -33,10 +33,11 @@ class PCI(PCIBase):
     schema = Dict(
         'attributes',
         Str('pptdev', required=True, empty=False),
+        Str('dtype', enum=['PCI'], required=True),
     )
 
     def vm_device_filters(self):
-        return [['attributes.pptdev', '=', self.passthru_device()], ['dtype', '=', 'PCI']]
+        return [['attributes.pptdev', '=', self.passthru_device()], ['attributes.dtype', '=', 'PCI']]
 
     def detach_device(self):
         cp = subprocess.Popen(

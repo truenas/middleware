@@ -407,7 +407,7 @@ class UsageService(Service):
             nics = disks = 0
             display_list = []
             for d in v['devices']:
-                dtype = d['dtype']
+                dtype = d['attributes']['dtype']
                 if dtype == 'NIC':
                     nics += 1
                 elif dtype == 'DISK':

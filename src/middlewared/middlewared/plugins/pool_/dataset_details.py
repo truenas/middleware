@@ -318,8 +318,8 @@ class PoolDatasetService(Service):
             results['rsync'].append(task)
 
         # vm
-        for vm in self.middleware.call_sync('datastore.query', 'vm.device', [['dtype', 'in', ['RAW', 'DISK']]]):
-            if vm['dtype'] == 'DISK':
+        for vm in self.middleware.call_sync('vm.device.query', [['attributes.dtype', 'in', ['RAW', 'DISK']]]):
+            if vm['attributes']['dtype'] == 'DISK':
                 # disk type is always a zvol
                 vm['zvol'] = zvol_path_to_name(vm['attributes']['path'])
             else:

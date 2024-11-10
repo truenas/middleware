@@ -34,7 +34,9 @@ class VMService(Service):
     async def all_used_display_device_ports(self, additional_filters=None):
         all_ports = [6000]
         additional_filters = additional_filters or []
-        for device in await self.middleware.call('vm.device.query', [['dtype', '=', 'DISPLAY']] + additional_filters):
+        for device in await self.middleware.call(
+            'vm.device.query', [['attributes.dtype', '=', 'DISPLAY']] + additional_filters
+        ):
             all_ports.extend([device['attributes']['port'], device['attributes']['web_port']])
         return all_ports
 
@@ -54,7 +56,6 @@ class VMService(Service):
             Dict(
                 'vmdevice',
                 Int('id'),
-                Str('dtype'),
                 DISPLAY.schema,
                 Int('order'),
                 Int('vm'),
@@ -67,7 +68,9 @@ class VMService(Service):
         `attributes.password_configured` will be set to `true`.
         """
         devices = []
-        for device in await self.middleware.call('vm.device.query', [['vm', '=', id_], ['dtype', '=', 'DISPLAY']]):
+        for device in await self.middleware.call(
+            'vm.device.query', [['vm', '=', id_], ['attributes.dtype', '=', 'DISPLAY']]
+        ):
             device['attributes']['password_configured'] = bool(device['attributes'].get('password'))
             devices.append(device)
         return devices
@@ -117,7 +120,7 @@ class VMService(Service):
     @private
     async def get_display_devices_ui_info(self):
         devices = []
-        for device in await self.middleware.call('vm.device.query', [['dtype', '=', 'DISPLAY']]):
+        for device in await self.middleware.call('vm.device.query', [['attributes.dtype', '=', 'DISPLAY']]):
             devices.append(DISPLAY(device, middleware=self.middleware).get_webui_info())
         return devices
 

@@ -130,7 +130,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             [('vm', '=', vm['id'])],
             {'force_sql_filters': True},
         )
-        vm['display_available'] = any(device['dtype'] == 'DISPLAY' for device in vm['devices'])
+        vm['display_available'] = any(device['attributes']['dtype'] == 'DISPLAY' for device in vm['devices'])
         vm['status'] = context['status'][vm['id']]
         return vm
 
@@ -430,7 +430,7 @@ class VMService(CRUDService, VMSupervisorMixin):
 
             if data['zvols']:
                 devices = await self.middleware.call('vm.device.query', [
-                    ('vm', '=', id_), ('dtype', '=', 'DISK')
+                    ('vm', '=', id_), ('attributes.dtype', '=', 'DISK')
                 ])
 
                 for zvol in devices:
