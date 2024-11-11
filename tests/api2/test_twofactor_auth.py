@@ -1,4 +1,5 @@
 import contextlib
+from datetime import datetime, timezone
 import errno
 
 import pytest
@@ -32,6 +33,14 @@ def user(data: dict):
 @pytest.fixture(scope='function')
 def clear_ratelimit():
     call('rate.limit.cache_clear')
+
+
+@pytest.fixture(scope='module', autouse=True)
+def ensure_small_time_difference():
+    nas_time = call('system.info')['datetime']
+    local_time = datetime.now(timezone.utc)
+    if abs((nas_time - local_time).total_seconds()) > 5:
+        raise Exception(f'Time difference between NAS ({nas_time!r}) and test client ({local_time}) is too large')
 
 
 def do_login(username, password, otp=None, expected=True):
