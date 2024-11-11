@@ -3,6 +3,7 @@ import itertools
 
 from middlewared.plugins.cloud.path import check_local_path
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
+from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int
 from middlewared.service import CallError, Service, item_method, job, private
@@ -68,7 +69,9 @@ async def restic(middleware, job, cloud_backup, dry_run):
 
         cmd = restic_config.cmd + ["--verbose", "backup"] + cmd
 
+        await run_script(job, "Pre-script", cloud_backup["pre_script"])
         await run_restic(job, cmd, restic_config.env, stdin, track_progress=True)
+        await run_script(job, "Post-script", cloud_backup["post_script"])
     finally:
         if stdin:
             try:

@@ -222,7 +222,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
             **cloud_sync["attributes"],
             "path": path
         })
-        await run_script(job, env, cloud_sync["pre_script"], "Pre-script")
+        await run_script(job, "Pre-script", cloud_sync["pre_script"], env)
 
         job.middleware.logger.trace("Running %r", args)
         proc = await Popen(
@@ -257,7 +257,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
                 message += f"rclone failed with exit code {proc.returncode}"
             raise CallError(message)
 
-        await run_script(job, env, cloud_sync["post_script"], "Post-script")
+        await run_script(job, "Post-script", cloud_sync["post_script"], env)
 
         refresh_credentials = REMOTES[cloud_sync["credentials"]["provider"]["type"]].refresh_credentials
         if refresh_credentials:
