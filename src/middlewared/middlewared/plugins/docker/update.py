@@ -74,38 +74,45 @@ class DockerService(ConfigService):
 
         verrors.check()
 
-        if config['address_pools'] != old_config['address_pools']:
+        address_pool_changed = config['address_pools'] != old_config['address_pools']
+        if address_pool_changed:
             validate_address_pools(
                 await self.middleware.call('interface.ip_in_use', {'static': True}), config['address_pools']
             )
 
-        if old_config != config:
-            if config['pool'] != old_config['pool']:
+        if address_pool_changed or old_config != config:
+            apps_pool_changed = config['pool'] != old_config['pool']
+            if apps_pool_changed:
                 # We want to clear upgrade alerts for apps at this point
                 await self.middleware.call('app.clear_upgrade_alerts_for_all')
 
-            if any(config[k] != old_config[k] for k in ('pool', 'address_pools')):
+            if address_pool_changed or apps_pool_changed:
                 job.set_progress(20, 'Stopping Docker service')
                 try:
                     await self.middleware.call('service.stop', 'docker')
                 except Exception as e:
-                    # If for X reason, ix-apps dataset got deleted somehow by the user - we should allow
-                    # switching to another pool as that won't be possible currently otherwise
-                    if (config['pool'] != old_config['pool'] and not await self.middleware.call(
-                        'zfs.dataset.query', [['id', '=', applications_ds_name(old_config['pool'])]], {
-                            'extra': {'retrieve_children': False, 'retrieve_properties': False}
-                        }
-                    )) is False:
-                        raise CallError(f'Failed to stop docker service: {e}')
+                    if apps_pool_changed:
+                        filters = [['id', '=', applications_ds_name(old_config['pool'])]]
+                        opts = {'extra': {'retrieve_children': False, 'retrieve_properties': False}}
+                        old_apps_pool_exists = await self.middleware.call('zfs.dataset.query', filters, opts)
+                        if old_apps_pool_exists:
+                            # If the old apps dataset exists AND we get an error trying to
+                            # stop the docker service, then we DO NOT want to crash here
+                            # since it means the user won't be able to change the zpool that
+                            # the apps are using. In this scenario, we'll ignore the crash
+                            # and fallthrough to the logic below. HOWEVER, if the old apps
+                            # dataset does exist and we get an exception, then we consider
+                            # this unexpected and we'll raise an error.
+                            raise CallError(f'Failed to stop docker service: {e}')
 
-                await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
+                    await self.middleware.call('docker.state.set_status', Status.UNCONFIGURED.value)
 
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
 
-            if config['pool'] != old_config['pool']:
+            if apps_pool_changed:
                 job.set_progress(60, 'Applying requested configuration')
                 await self.middleware.call('docker.setup.status_change')
-            elif config['pool'] and config['address_pools'] != old_config['address_pools']:
+            elif config['pool'] and address_pool_changed:
                 job.set_progress(60, 'Starting docker')
                 await self.middleware.call('service.start', 'docker')
 
