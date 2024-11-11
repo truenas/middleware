@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import contextlib
+from datetime import datetime, timezone
 import errno
 import os
 import sys
@@ -25,6 +26,13 @@ USERS_2FA_CONF = {
     TEST_USERNAME: {'interval': 30, 'otp_digits': 6},
     TEST_USERNAME_2: {'interval': 40, 'otp_digits': 7}
 }
+
+@pytest.fixture(scope='module', autouse=True)
+def ensure_small_time_difference():
+    nas_time = call('system.info')['datetime']
+    local_time = datetime.now(timezone.utc)
+    if abs((nas_time - local_time).total_seconds()) > 5:
+        raise Exception(f'Time difference between NAS ({nas_time!r}) and test client ({local_time}) is too large')
 
 
 @contextlib.contextmanager
