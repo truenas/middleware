@@ -1,7 +1,6 @@
-import typing
-from typing_extensions import Annotated
+from typing import Annotated, Literal
 
-from pydantic import conint, IPvAnyInterface, Field, field_validator
+from pydantic import IPvAnyInterface, Field, field_validator
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
@@ -10,7 +9,7 @@ from middlewared.api.base import (
 
 class AddressPool(BaseModel):
     base: IPvAnyInterface
-    size: conint(ge=1, le=32)
+    size: Annotated[int, Field(ge=1, le=32)]
 
     @field_validator('base')
     def check_prefixlen(cls, v):
@@ -44,7 +43,7 @@ class DockerStatusArgs(BaseModel):
 
 class StatusResult(BaseModel):
     description: str
-    status: typing.Literal['PENDING', 'RUNNING', 'STOPPED', 'INITIALIZING', 'STOPPING', 'UNCONFIGURED', 'FAILED']
+    status: Literal['PENDING', 'RUNNING', 'STOPPED', 'INITIALIZING', 'STOPPING', 'UNCONFIGURED', 'FAILED']
 
 
 class DockerStatusResult(BaseModel):
@@ -52,22 +51,22 @@ class DockerStatusResult(BaseModel):
 
 
 class NvidiaNormalStatus(BaseModel):
-    status: typing.Literal['ABSENT', 'NOT_INSTALLED', 'INSTALLED']
+    status: Literal['ABSENT', 'NOT_INSTALLED', 'INSTALLED']
 
 
 class NvidiaInstallingStatus(BaseModel):
-    status: typing.Literal['INSTALLING']
+    status: Literal['INSTALLING']
     progress: int
     description: str
 
 
 class NvidiaInstallErrorStatus(BaseModel):
-    status: typing.Literal['INSTALL_ERROR']
+    status: Literal['INSTALL_ERROR']
     error: str
 
 
 NvidiaStatus = Annotated[
-    typing.Union[NvidiaNormalStatus, NvidiaInstallingStatus, NvidiaInstallErrorStatus],
+    NvidiaNormalStatus | NvidiaInstallingStatus | NvidiaInstallErrorStatus,
     Field(discriminator='status'),
 ]
 

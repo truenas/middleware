@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Annotated, Literal, TypeAlias
 
 from lexicon.providers.ovh import ENDPOINTS
-from pydantic import BeforeValidator, ConfigDict, conint, Field, FilePath, PlainSerializer, Secret
+from pydantic import BeforeValidator, ConfigDict, Field, FilePath, PlainSerializer, Secret
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, single_argument_args, ForUpdateMetaclass, LongString, NonEmptyString,
@@ -72,8 +72,8 @@ class ShellSchema(BaseModel):
     authenticator: Literal['shell']
     script: FilePathStr = Field(..., description='Authentication Script')
     user: NonEmptyString = Field(description='Running user', default='nobody')
-    timeout: conint(ge=5) = Field(description='Script Timeout', default=60)
-    delay: conint(ge=10) = Field(description='Propagation delay', default=60)
+    timeout: Annotated[int, Field(ge=5, description='Script Timeout', default=60)]
+    delay: Annotated[int, Field(ge=10, description='Propagation delay', default=60)]
 
 
 @single_argument_args('attributes')
