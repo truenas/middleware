@@ -69,9 +69,19 @@ async def restic(middleware, job, cloud_backup, dry_run):
 
         cmd = restic_config.cmd + ["--verbose", "backup"] + cmd
 
-        await run_script(job, "Pre-script", cloud_backup["pre_script"])
+        env = env_mapping("CLOUD_BACKUP_", {
+            **{k: v for k, v in cloud_backup.items() if k in [
+                "id", "description", "snapshot", "password", "keep_last", "transfer_setting"
+            ]},
+            **cloud_backup["credentials"]["provider"],
+            **cloud_backup["attributes"],
+            "path": local_path
+        })
+        await run_script(job, "Pre-script", cloud_backup["pre_script"], env)
+
         await run_restic(job, cmd, restic_config.env, stdin, track_progress=True)
-        await run_script(job, "Post-script", cloud_backup["post_script"])
+
+        await run_script(job, "Post-script", cloud_backup["post_script"], env)
     finally:
         if stdin:
             try:
