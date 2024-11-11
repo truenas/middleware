@@ -38,11 +38,11 @@ async def create_snapshot(middleware, path, name="cloud_task-onetime") -> tuple[
     )
     snapshot_name = f"{name}-{utc_now().strftime('%Y%m%d%H%M%S')}"
 
-    snapshot = await middleware.call("zfs.snapshot.create", {
+    snapshot = (await middleware.call("zfs.snapshot.create", {
         "dataset": dataset["name"],
         "name": snapshot_name,
         "recursive": recursive
-    })["name"]
+    }))["name"]
 
     mountpoint = dataset["properties"]["mountpoint"]["value"]
     path = os.path.normpath(os.path.join(
