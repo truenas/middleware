@@ -11,6 +11,7 @@ from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_sche
 from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
 from middlewared.plugins.cloud.script import env_mapping, run_script
+from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.rclone.remote.storjix import StorjIxError
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Password, Patch, Str
 from middlewared.service import (
@@ -21,7 +22,6 @@ from middlewared.utils import Popen, run
 from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
-from middlewared.utils.time_utils import utc_now
 from middlewared.validators import Range, Time
 
 import aiorwlock
@@ -167,7 +167,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
             args.append("--fast-list")
 
         if cloud_sync["follow_symlinks"]:
-            args.extend(["-L"])
+            args.append("-L")
 
         if cloud_sync["transfers"]:
             args.extend(["--transfers", str(cloud_sync["transfers"])])
@@ -179,7 +179,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
             ])])
 
         if dry_run:
-            args.extend(["--dry-run"])
+            args.append("--dry-run")
 
         args += config.extra_args
 
@@ -188,26 +188,13 @@ async def rclone(middleware, job, cloud_sync, dry_run):
         args += [cloud_sync["transfer_mode"].lower()]
 
         if cloud_sync["create_empty_src_dirs"]:
-            args.extend(["--create-empty-src-dirs"])
+            args.append("--create-empty-src-dirs")
 
         snapshot = None
         if cloud_sync["direction"] == "PUSH":
             if cloud_sync["snapshot"]:
-                dataset, recursive = get_dataset_recursive(
-                    await middleware.call("zfs.dataset.query", [["type", "=", "FILESYSTEM"]]),
-                    cloud_sync["path"],
-                )
-                snapshot_name = (
-                    f"cloud_sync-{cloud_sync.get('id', 'onetime')}-{utc_now().strftime('%Y%m%d%H%M%S')}"
-                )
-
-                snapshot = {"dataset": dataset["name"], "name": snapshot_name}
-                await middleware.call("zfs.snapshot.create", dict(snapshot, recursive=recursive))
-
-                relpath = os.path.relpath(path, dataset["properties"]["mountpoint"]["value"])
-                path = os.path.normpath(os.path.join(
-                    dataset["properties"]["mountpoint"]["value"], ".zfs", "snapshot", snapshot_name, relpath
-                ))
+                snapshot_name = f"cloud_sync-{cloud_sync.get('id', 'onetime')}"
+                snapshot, path = await create_snapshot(middleware, path, snapshot_name)
 
             args.extend([path, config.remote_path])
         else:
@@ -244,7 +231,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
             await asyncio.wait_for(check_cloud_sync, None)
 
         if snapshot:
-            await middleware.call("zfs.snapshot.delete", f"{snapshot['dataset']}@{snapshot['name']}")
+            await middleware.call("zfs.snapshot.delete", snapshot)
 
         if cancelled_error is not None:
             raise cancelled_error
@@ -423,33 +410,6 @@ def rclone_encrypt_password(password):
     cipher = AES.new(key, AES.MODE_CTR, counter=counter)
     encrypted = iv + cipher.encrypt(password.encode("utf-8"))
     return base64.urlsafe_b64encode(encrypted).decode("ascii").rstrip("=")
-
-
-def get_dataset_recursive(datasets, directory):
-    datasets = [
-        dict(dataset, prefixlen=len(
-            os.path.dirname(os.path.commonprefix(
-                [dataset["properties"]["mountpoint"]["value"] + "/", directory + "/"]))
-        ))
-        for dataset in datasets
-        if dataset["properties"]["mountpoint"]["value"] != "none"
-    ]
-
-    dataset = sorted(
-        [
-            dataset
-            for dataset in datasets
-            if (directory + "/").startswith(dataset["properties"]["mountpoint"]["value"] + "/")
-        ],
-        key=lambda dataset: dataset["prefixlen"],
-        reverse=True
-    )[0]
-
-    return dataset, any(
-        (ds["properties"]["mountpoint"]["value"] + "/").startswith(directory + "/")
-        for ds in datasets
-        if ds != dataset
-    )
 
 
 class _FsLockCore(aiorwlock._RWLockCore):

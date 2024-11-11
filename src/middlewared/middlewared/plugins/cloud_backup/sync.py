@@ -4,6 +4,7 @@ import itertools
 from middlewared.plugins.cloud.path import check_local_path
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
 from middlewared.plugins.cloud.script import env_mapping, run_script
+from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int
 from middlewared.service import CallError, Service, item_method, job, private
@@ -16,7 +17,6 @@ async def restic(middleware, job, cloud_backup, dry_run):
     snapshot = None
     clone = None
     stdin = None
-    cmd = None
     try:
         local_path = cloud_backup["path"]
         if local_path.startswith("/dev/zvol"):
@@ -55,8 +55,10 @@ async def restic(middleware, job, cloud_backup, dry_run):
             cmd = ["--stdin", "--stdin-filename", "volume"]
         else:
             await check_local_path(middleware, local_path)
+            if cloud_backup["snapshot"]:
+                snapshot_name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}"
+                snapshot, local_path = await create_snapshot(middleware, local_path, snapshot_name)
 
-        if cmd is None:
             cmd = [local_path]
 
         args = await middleware.call("cloud_backup.transfer_setting_args")
@@ -66,7 +68,6 @@ async def restic(middleware, job, cloud_backup, dry_run):
             cmd.append("-n")
 
         restic_config = get_restic_config(cloud_backup)
-
         cmd = restic_config.cmd + ["--verbose", "backup"] + cmd
 
         env = env_mapping("CLOUD_BACKUP_", {
