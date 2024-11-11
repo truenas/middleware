@@ -286,7 +286,7 @@ class Cron(Dict):
             verrors.add(self.name, 'Please ensure fields match cron syntax - ' + str(e))
 
         if value.get('begin') and value.get('end') and not (value.get('begin') <= value.get('end')):
-            verrors.add(self.name, 'Begin time should be less or equal than end time')
+            verrors.add(self.name, 'Begin time should be less than or equal to end time')
 
         if iter_ is not None and (value.get('begin') or value.get('end')):
             begin = value.get('begin') or time(0, 0)
