@@ -236,8 +236,8 @@ class Enclosure:
         # different revisions
         vers_key = 'DEFAULT'
         if not mapped_info['any_version']:
-            for key, vers in mapped_info['versions'].items():
-                if self.dmi.system_version == key:
+            for vers in mapped_info['versions']:
+                if self.dmi.system_version == vers:
                     vers_key = vers
                     break
 
