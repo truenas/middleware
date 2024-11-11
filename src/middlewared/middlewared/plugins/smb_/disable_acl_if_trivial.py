@@ -29,12 +29,12 @@ class SMBService(Service):
                 continue
 
             if acl_is_trivial:
-                self.middleware.logger.info("ACL is trivial for migrated AFP share %r, disabling ACL", share["id"])
+                self.middleware.logger.info("ACL is not present on migrated AFP share %r, disabling ACL", share["id"])
                 await self.middleware.call(
                     "datastore.update", "sharing.cifs_share", share["id"], {"cifs_acl": False},
                 )
             else:
-                self.middleware.logger.info("ACL is not trivial for migrated AFP share %r, not disabling ACL",
+                self.middleware.logger.info("ACL is present on migrated AFP share %r, not disabling ACL",
                                             share["id"])
 
             share_ids.discard(share["id"])
