@@ -98,19 +98,19 @@ def test_virt_instance_device_add():
     assert ssh(f'incus list {INS1_NAME} -f json| jq ".[].status"').strip() == '"Running"'
     call('virt.instance.stop', INS1_NAME, {'force': True}, job=True)
 
-    call('virt.instance.device_add', INS1_NAME, {
+    assert call('virt.instance.device_add', INS1_NAME, {
         'name': 'tpm',
         'dev_type': 'TPM',
-    })
+    }) is True
 
-    call('virt.instance.device_add', INS3_NAME, {
+    assert call('virt.instance.device_add', INS3_NAME, {
         'name': 'proxy',
         'dev_type': 'PROXY',
         'source_proto': 'TCP',
         'source_port': 8005,
         'dest_proto': 'TCP',
         'dest_port': 80,
-    })
+    }) is True
 
     # TODO: adding to a VM causes start to hang at the moment (zombie process)
     # call('virt.instance.device_add', 'debian', {
@@ -150,7 +150,7 @@ def test_virt_instance_device_add():
         assert any(i for i in devices if i['name'] == 'disk1'), devices
         with mkfile(f'/mnt/{ds}/testfile'):
             ssh(f'incus exec {INS3_NAME} ls /host/testfile')
-        call('virt.instance.device_delete', INS3_NAME, 'disk1')
+        assert call('virt.instance.device_delete', INS3_NAME, 'disk1') is True
 
 
 def test_virt_instance_proxy():
@@ -163,7 +163,7 @@ def test_virt_instance_proxy():
 
 def test_virt_instance_device_delete():
     call('virt.instance.stop', INS1_NAME, {'force': True}, job=True)
-    call('virt.instance.device_delete', INS1_NAME, 'tpm')
+    assert call('virt.instance.device_delete', INS1_NAME, 'tpm') is True
     devices = call('virt.instance.device_list', INS1_NAME)
     assert not any(i for i in devices if i['name'] == 'tpm'), devices
 
