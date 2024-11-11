@@ -164,6 +164,8 @@ class VirtInstanceService(CRUDService):
         devices = {}
         for i in (data['devices'] or []):
             await self.middleware.call('virt.instance.validate', i, 'virt_instance_create', verrors)
+            if i['name'] is None:
+                i['name'] = await self.middleware.call('virt.instance.generate_device_name', devices.keys(), i['dev_type'])
             devices[i['name']] = await self.middleware.call('virt.instance.device_to_incus', data['instance_type'], i)
 
         verrors.check()

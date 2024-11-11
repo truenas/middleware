@@ -48,13 +48,15 @@ def test_virt_instance_create():
             'name': INS3_NAME,
             'image': INS3_IMAGE,
             'devices': [
-                {'name': 'tpm', 'dev_type': 'TPM', 'path': '/dev/tpm0', 'pathrm': '/dev/tmprm0'},
+                {'dev_type': 'TPM', 'path': '/dev/tpm0', 'pathrm': '/dev/tmprm0'},
+                {'dev_type': 'PROXY', 'source_proto': 'TCP', 'source_port': 60123, 'dest_proto': 'TCP', 'dest_port': 2000},
             ],
         }, job=True)
         ssh(f'incus exec {INS3_NAME} cat /etc/os-release | grep "{INS3_OS}"')
 
         devices = call('virt.instance.device_list', INS3_NAME)
-        assert any(i for i in devices if i['name'] == 'tpm'), devices
+        assert any(i for i in devices if i['name'] == 'tpm0'), devices
+        assert any(i for i in devices if i['name'] == 'proxy0'), devices
 
         assert wait_agent.wait(timeout=60)
         ssh(f'incus exec {INS1_NAME} cat /etc/os-release | grep "{INS1_OS}"')

@@ -186,7 +186,8 @@ class VirtInstanceDeviceService(Service):
                 raise Exception('Invalid device type')
         return new
 
-    async def __generate_device_name(self, device_names: list[str], device_type: str) -> str:
+    @private
+    async def generate_device_name(self, device_names: list[str], device_type: str) -> str:
         name = device_type.lower()
         i = 0
         while True:
@@ -215,7 +216,7 @@ class VirtInstanceDeviceService(Service):
         instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
         data = instance['raw']
         if device['name'] is None:
-            device['name'] = await self.__generate_device_name(data['devices'].keys(), device['dev_type'])
+            device['name'] = await self.generate_device_name(data['devices'].keys(), device['dev_type'])
 
         verrors = ValidationErrors()
         await self.__validate_device(device, 'virt_device_add', verrors)
