@@ -1,4 +1,6 @@
-from pydantic import conint, Field
+from typing import Annotated
+
+from pydantic import Field
 
 from middlewared.api.base import BaseModel, NonEmptyString, single_argument_args
 
@@ -6,8 +8,8 @@ from middlewared.api.base import BaseModel, NonEmptyString, single_argument_args
 @single_argument_args('options')
 class DDTPruneArgs(BaseModel):
     pool_name: NonEmptyString
-    percentage: conint(ge=1, le=100) | None = Field(default=None)
-    days: conint(ge=1) | None = Field(default=None)
+    percentage: Annotated[int | None, Field(ge=1, le=100, default=None)]
+    days: Annotated[int | None, Field(ge=1, default=None)]
 
 
 class DDTPruneResult(BaseModel):
