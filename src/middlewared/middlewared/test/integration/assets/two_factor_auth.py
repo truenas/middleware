@@ -1,6 +1,9 @@
 import contextlib
-import pyotp
+from datetime import datetime
+import time
 import typing
+
+import pyotp
 
 from middlewared.test.integration.utils import call
 
@@ -18,6 +21,12 @@ def get_user_secret(user_id: int, get: typing.Optional[bool] = True) -> typing.U
 
 
 def get_2fa_totp_token(users_config: dict) -> str:
+    second = datetime.now().second
+    if second >= 55 or second < 5:
+        # We allow 5 seconds time difference between NAS and test client, and OTP expiry interval is 60 seconds.
+        # So tokens generated within 5 seconds of :00 are not safe to use
+        time.sleep(10)
+
     return pyotp.TOTP(
         users_config['secret'],
         interval=users_config['interval'],
