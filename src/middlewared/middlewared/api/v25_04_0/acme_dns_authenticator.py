@@ -5,7 +5,7 @@ from lexicon.providers.ovh import ENDPOINTS
 from pydantic import BeforeValidator, ConfigDict, Field, FilePath, PlainSerializer, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, single_argument_args, ForUpdateMetaclass, LongString, NonEmptyString,
+    BaseModel, single_argument_args, ForUpdateMetaclass, LongString, NonEmptyString,
 )
 
 
@@ -25,7 +25,7 @@ FilePathStr = Annotated[
 ]
 
 
-### Custom ACME DNS Authenticator Schemas
+# Custom ACME DNS Authenticator Schemas
 
 
 class ACMECustomDNSAuthenticatorReturns(BaseModel):
@@ -87,7 +87,7 @@ AuthType: TypeAlias = Annotated[
 ]
 
 
-## ACME DNS Authenticator
+# ACME DNS Authenticator
 
 
 class ACMEDNSAuthenticatorEntry(BaseModel):
