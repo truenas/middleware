@@ -1,5 +1,7 @@
 import enum
+import functools
 from types import ModuleType
+from typing import Callable
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
 from .accept import validate_model
@@ -97,7 +99,8 @@ class APIVersionsAdapter:
             current_version_model = current_version.models[model_name]
         except KeyError:
             raise APIVersionDoesNotContainModelException(current_version.version, model_name)
-        value = validate_model(current_version_model, value)
+
+        value_factory = functools.partial(validate_model, current_version_model, value)
 
         if version1_index < version2_index:
             step = 1
@@ -109,14 +112,16 @@ class APIVersionsAdapter:
         for version_index in range(version1_index + step, version2_index + step, step):
             new_version = self.versions[self.versions_history[version_index]]
 
-            value = self._adapt_model(value, model_name, current_version, new_version, direction)
+            value_factory = functools.partial(
+                self._adapt_model, value_factory, model_name, current_version, new_version, direction,
+            )
 
             current_version = new_version
 
-        return value
+        return value_factory()
 
-    def _adapt_model(self, value: dict, model_name: str, current_version: APIVersion, new_version: APIVersion,
-                     direction: Direction):
+    def _adapt_model(self, value_factory: Callable[[], dict], model_name: str, current_version: APIVersion,
+                     new_version: APIVersion, direction: Direction):
         try:
             current_model = current_version.models[model_name]
         except KeyError:
@@ -127,7 +132,7 @@ class APIVersionsAdapter:
         except KeyError:
             raise APIVersionDoesNotContainModelException(new_version.version, model_name) from None
 
-        return self._adapt_value(value, current_model, new_model, direction)
+        return self._adapt_value(value_factory(), current_model, new_model, direction)
 
     def _adapt_value(self, value: dict, current_model: type[BaseModel], new_model: type[BaseModel],
                      direction: Direction):
