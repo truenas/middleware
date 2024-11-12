@@ -45,7 +45,16 @@ class APIDumper:
         name = f"{plugin}.{method_name}"
 
         if doc := inspect.getdoc(method.methodobj):
-            doc = re.sub(r"(\S)\n[ ]*(\S)", "\\1 \\2", doc)
+            doc = re.sub(r"(\S)\n[ ]*(\S)", "\\1 \\2", doc).strip()
+
+        if hasattr(method, "_job"):
+            # FIXME: If we decide to keep the jobs, make this nicer (a badge?)
+            if doc:
+                doc = doc + "\r\n\r\n"
+            else:
+                doc = ""
+
+            doc += "This method is a job."
 
         return APIDumpMethod(
             name=name,
