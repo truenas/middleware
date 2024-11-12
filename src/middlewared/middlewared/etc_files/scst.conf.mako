@@ -99,7 +99,8 @@
         # Physical devices are added to the config automatically.  We want to
         # identify any that are not being used and select a rel_tgt_id in the
         # 10K range for them.
-        physical_naa = {str_to_naa(entry['port_name']) for entry in middleware.call_sync('fc.fc_hosts', [['physical', '=', True]], {'select': ['port_name']})}
+        ports_in_use = middleware.call_sync('fc.fc_hosts', [['physical', '=', True]], {'select': ['port_name']})
+        physical_naa = {str_to_naa(entry['port_name']) for entry in ports_in_use}
         used_physical_naa = set()
         for entry in render_ctx['fcport.query']:
             if '/' not in entry['port']:
