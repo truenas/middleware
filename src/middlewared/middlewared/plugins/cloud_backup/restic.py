@@ -89,24 +89,23 @@ async def restic_check_progress(job, proc, track_progress=False):
 
         read = json.loads(read)
         msg_type = read["message_type"]
-        if msg_type == "status":
-            if (remaining := read.get("seconds_remaining")) is not None:
-                time_delta = str(timedelta(seconds=remaining))
-
-            progress_buffer.set_progress(
-                read["percent_done"] * 100,
-                (f"{time_delta} remaining\n" if time_delta else "") + action
-            )
-            continue
-
-        await job.logs_fd_write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
-
         match msg_type:
+            case "status":
+                if (remaining := read.get("seconds_remaining")) is not None:
+                    time_delta = str(timedelta(seconds=remaining))
+
+                progress_buffer.set_progress(
+                    read["percent_done"] * 100,
+                    (f"{time_delta} remaining\n" if time_delta else "") + action
+                )
+                continue
+
             case "verbose_status":
                 action = " ".join([read[key] for key in ("item", "action") if key in read])
                 msg = action
 
             case "summary":
+                await job.logs_fd_write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
                 continue
 
             case "error":
@@ -118,6 +117,7 @@ async def restic_check_progress(job, proc, track_progress=False):
                     ": ",
                     action
                 ])
+                await job.logs_fd_write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
 
         job.internal_data["messages"] = job.internal_data["messages"][-4:] + [msg]
         progress_buffer.set_progress(description=(f"{time_delta} remaining\n" if time_delta else "") + action)
