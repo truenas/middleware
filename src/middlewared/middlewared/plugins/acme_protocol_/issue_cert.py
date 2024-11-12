@@ -73,12 +73,15 @@ class ACMEService(Service):
 
         verrors.check()
 
+        return self.issue_certificate_impl(job, progress, data, csr_data['CSR'], dns_mapping_copy)
+
+    def issue_certificate_impl(self, job, progress, data, csr, dns_mapping_copy):
         acme_client, key = self.middleware.call_sync(
             'acme.get_acme_client_and_key', data['acme_directory_uri'], data['tos']
         )
         try:
             # perform operations and have a cert issued
-            order = acme_client.new_order(csr_data['CSR'])
+            order = acme_client.new_order(csr)
         except messages.Error as e:
             raise CallError(f'Failed to issue a new order for Certificate : {e}')
         else:
