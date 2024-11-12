@@ -45,7 +45,7 @@ class VMService(Service, VMSupervisorMixin):
 
         if await self.middleware.call('system.is_ha_capable'):
             for device in vm['devices']:
-                if device['dtype'] in ('PCI', 'USB'):
+                if device['attributes']['dtype'] in ('PCI', 'USB'):
                     raise CallError(
                         'Please remove PCI/USB devices from VM before starting it in HA capable machines as '
                         'they are not supported.'

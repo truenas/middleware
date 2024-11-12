@@ -13,7 +13,7 @@ async def determine_recursive_search(recursive, device, child_datasets):
     # TODO: Add unit tests for this please
     if recursive:
         return True
-    elif device['dtype'] == 'DISK':
+    elif device['attributes']['dtype'] == 'DISK':
         return False
 
     # What we want to do here is make sure that any raw files or cdrom files are not living in the child
@@ -45,7 +45,7 @@ class VMService(Service):
         to_ignore_vms = await self.get_vms_to_ignore_for_querying_attachments(True, [['suspend_on_snapshot', '=', False]])
         for device in await self.middleware.call(
             'vm.device.query', [
-                ['dtype', 'in', ('DISK', 'RAW', 'CDROM')],
+                ['attributes.dtype', 'in', ('DISK', 'RAW', 'CDROM')],
                 ['vm', 'nin', to_ignore_vms],
             ]
         ):
@@ -82,7 +82,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
         vms_attached = []
         ignored_vms = await self.middleware.call('vm.get_vms_to_ignore_for_querying_attachments', enabled)
         for device in await self.middleware.call('datastore.query', 'vm.device'):
-            if (device['dtype'] not in ('DISK', 'RAW', 'CDROM')) or device['vm']['id'] in ignored_vms:
+            if (device['attributes']['dtype'] not in ('DISK', 'RAW', 'CDROM')) or device['vm']['id'] in ignored_vms:
                 continue
 
             disk = device['attributes'].get('path')
@@ -133,7 +133,7 @@ class VMPortDelegate(PortDelegate):
     async def get_ports(self):
         ports = []
         vms = {vm['id']: vm['name'] for vm in await self.middleware.call('vm.query')}
-        for device in await self.middleware.call('vm.device.query', [['dtype', '=', 'DISPLAY']]):
+        for device in await self.middleware.call('vm.device.query', [['attributes.dtype', '=', 'DISPLAY']]):
             ports.append({
                 'description': f'{vms[device["vm"]]!r} VM',
                 'ports': [

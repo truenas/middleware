@@ -94,6 +94,7 @@ class RAW(StorageDevice):
         Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Str('iotype', enum=IOTYPE_CHOICES, default='THREADS'),
         Str('serial'),
+        Str('dtype', enum=['RAW'], required=True),
     )
 
     def create_source_element(self):
@@ -136,6 +137,7 @@ class DISK(StorageDevice):
         Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Str('iotype', enum=IOTYPE_CHOICES, default='THREADS'),
         Str('serial'),
+        Str('dtype', enum=['DISK'], required=True),
     )
 
     def create_source_element(self):

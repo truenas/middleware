@@ -127,7 +127,7 @@ class VMSupervisor(LibvirtConnectionMixin):
     def update_vm_data(self, vm_data=None):
         self.vm_data = vm_data or self.vm_data
         self.devices = [
-            getattr(sys.modules[__name__], device['dtype'])(device, self.middleware)
+            getattr(sys.modules[__name__], device['attributes']['dtype'])(device, self.middleware)
             for device in sorted(self.vm_data['devices'], key=lambda x: (x['order'], x['id']))
         ]
 
@@ -169,13 +169,15 @@ class VMSupervisor(LibvirtConnectionMixin):
             try:
                 device.pre_start_vm()
             except Exception as e:
-                errors.append(f'Failed to setup {device.data["dtype"]} device: {e}')
+                device_dtype = device.data['attributes']['dtype']
+                errors.append(f'Failed to setup {device_dtype} device: {e}')
                 for d in itertools.chain([device], successful):
                     try:
                         d.pre_start_vm_rollback()
                     except Exception as d_error:
+                        d_dtype = d.data['attributes']['dtype']
                         errors.append(
-                            f'Failed to rollback pre start changes for {d.data["dtype"]} device: {d_error}'
+                            f'Failed to rollback pre start changes for {d_dtype} device: {d_error}'
                         )
                 break
             else:
@@ -194,7 +196,8 @@ class VMSupervisor(LibvirtConnectionMixin):
                 try:
                     device.pre_start_vm_rollback()
                 except Exception as d_error:
-                    errors.append(f'Failed to rollback pre start changes for {device.data["dtype"]} device: {d_error}')
+                    device_dtype = device.data['attributes']['dtype']
+                    errors.append(f'Failed to rollback pre start changes for {device_dtype} device: {d_error}')
             raise CallError('\n'.join(errors))
 
         # We initialize this when we are certain that the VM has indeed booted
@@ -208,7 +211,8 @@ class VMSupervisor(LibvirtConnectionMixin):
             try:
                 device.post_start_vm()
             except Exception as e:
-                errors.append(f'Failed to execute post start actions for {device.data["dtype"]} device: {e}')
+                device_dtype = device.data['attributes']['dtype']
+                errors.append(f'Failed to execute post start actions for {device_dtype} device: {e}')
         else:
             if errors:
                 raise CallError('\n'.join(errors))
@@ -227,7 +231,8 @@ class VMSupervisor(LibvirtConnectionMixin):
             try:
                 device.post_stop_vm(context)
             except Exception as e:
-                errors.append(f'Failed to execute post stop actions for {device.data["dtype"]} device: {e}')
+                device_dtype = device.data['attributes']['dtype']
+                errors.append(f'Failed to execute post stop actions for {device_dtype} device: {e}')
         else:
             if errors:
                 raise CallError('\n'.join(errors))

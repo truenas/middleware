@@ -22,8 +22,7 @@ def test_basic_devices_xml(vm_data, expected_xml):
 
 @pytest.mark.parametrize('vm_data,expected_xml', [
     ({'ensure_display_device': False, 'trusted_platform_module': False, 'min_memory': None, 'devices': [{
-        'attributes': {'path': '/mnt/tank/disk.iso'},
-        'dtype': 'CDROM',
+        'attributes': {'path': '/mnt/tank/disk.iso', 'dtype': 'CDROM'},
     }]}, '<devices><disk type="file" device="cdrom"><driver name="qemu" type="raw" />'
          '<source file="/mnt/tank/disk.iso" /><target dev="sda" bus="sata" /><boot order="1" />'
          f'</disk>{GUEST_CHANEL}<serial type="pty" /></devices>'
@@ -40,8 +39,8 @@ def test_cdrom_xml(vm_data, expected_xml):
 
 @pytest.mark.parametrize('vm_data,expected_xml', [
     ({'ensure_display_device': False, 'trusted_platform_module': False, 'min_memory': None, 'devices': [{
-        'dtype': 'DISPLAY',
         'attributes': {
+            'dtype': 'DISPLAY',
             'bind': '0.0.0.0',
             'password': '',
             'web': True,
@@ -72,9 +71,9 @@ def test_display_xml(vm_data, expected_xml):
             'type': 'VIRTIO',
             'mac': '00:a0:99:7e:bb:8a',
             'nic_attach': 'br0',
-            'trust_guest_rx_filters': False
+            'trust_guest_rx_filters': False,
+            'dtype': 'NIC',
         },
-        'dtype': 'NIC',
     }]}, '<devices><interface type="bridge"><source bridge="br0" /><model type="virtio" />'
          '<mac address="00:a0:99:7e:bb:8a" /></interface>'
          f'{GUEST_CHANEL}<serial type="pty" /></devices>'
@@ -84,9 +83,9 @@ def test_display_xml(vm_data, expected_xml):
             'type': 'VIRTIO',
             'mac': '00:a0:99:7e:bb:8a',
             'nic_attach': 'ens3',
-            'trust_guest_rx_filters': False
+            'trust_guest_rx_filters': False,
+            'dtype': 'NIC',
         },
-        'dtype': 'NIC',
     }]}, '<devices><interface type="direct" trustGuestRxFilters="no"><source dev="ens3" mode="bridge" />'
          '<model type="virtio" /><mac address="00:a0:99:7e:bb:8a" /></interface>'
          f'{GUEST_CHANEL}<serial type="pty" /></devices>'
@@ -96,9 +95,9 @@ def test_display_xml(vm_data, expected_xml):
             'type': 'VIRTIO',
             'mac': '00:a0:99:7e:bb:8a',
             'nic_attach': 'ens3',
-            'trust_guest_rx_filters': True
+            'trust_guest_rx_filters': True,
+            'dtype': 'NIC',
         },
-        'dtype': 'NIC',
     }]}, '<devices><interface type="direct" trustGuestRxFilters="yes"><source dev="ens3" mode="bridge" />'
          '<model type="virtio" /><mac address="00:a0:99:7e:bb:8a" /></interface>'
          f'{GUEST_CHANEL}<serial type="pty" /></devices>'
@@ -125,9 +124,9 @@ def test_nic_xml(vm_data, expected_xml):
             'logical_sectorsize': None,
             'physical_sectorsize': None,
             'iotype': 'THREADS',
-            'serial': 'test-serial'
+            'serial': 'test-serial',
+            'dtype': 'DISK',
         },
-        'dtype': 'DISK',
     }]}, '<devices><disk type="block" device="disk"><driver name="qemu" type="raw" cache="none" io="threads" discard="unmap" />'
          '<source dev="/dev/zvol/pool/boot_1" /><target bus="sata" dev="sda" /><serial>test-serial</serial><boot order="1" />'
          f'</disk>{GUEST_CHANEL}<serial type="pty" /></devices>'
@@ -150,9 +149,9 @@ def test_disk_xml(vm_data, expected_xml):
             'logical_sectorsize': None,
             'physical_sectorsize': None,
             'iotype': 'THREADS',
-            'serial': 'test-serial'
+            'serial': 'test-serial',
+            'dtype': 'RAW',
         },
-        'dtype': 'RAW',
     }]}, '<devices><disk type="file" device="disk"><driver name="qemu" type="raw" cache="none" io="threads" discard="unmap" />'
          '<source file="/mnt/tank/somefile" /><target bus="sata" dev="sda" /><serial>test-serial</serial><boot order="1" />'
          f'</disk>{GUEST_CHANEL}<serial type="pty" /></devices>'
@@ -164,9 +163,9 @@ def test_disk_xml(vm_data, expected_xml):
             'logical_sectorsize': 512,
             'physical_sectorsize': 512,
             'iotype': 'THREADS',
-            'serial': 'test-serial'
+            'serial': 'test-serial',
+            'dtype': 'RAW',
         },
-        'dtype': 'RAW',
     }]}, '<devices><disk type="file" device="disk"><driver name="qemu" type="raw" cache="none" io="threads" discard="unmap" />'
          '<source file="/mnt/tank/somefile" /><target bus="sata" dev="sda" /><serial>test-serial</serial><boot order="1" />'
          '<blockio logical_block_size="512" physical_block_size="512" /></disk>'

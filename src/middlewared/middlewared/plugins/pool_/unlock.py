@@ -45,7 +45,7 @@ class PoolDatasetService(Service):
         result = []
         for vm in await self.middleware.call('vm.query', [('autostart', '=', True)]):
             for device in vm['devices']:
-                if device['dtype'] not in ('DISK', 'RAW'):
+                if device['attributes']['dtype'] not in ('DISK', 'RAW'):
                     continue
 
                 path = device['attributes'].get('path')

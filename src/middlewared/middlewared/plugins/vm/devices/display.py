@@ -20,6 +20,7 @@ class DISPLAY(Device):
 
     schema = Dict(
         'attributes',
+        Str('dtype', enum=['DISPLAY'], required=True),
         Str('resolution', enum=RESOLUTION_ENUM, default='1024x768'),
         Int('port', default=None, null=True, validators=[Range(min_=5900, max_=65535)]),
         Int('web_port', default=None, null=True, validators=[Range(min_=5900, max_=65535)]),
