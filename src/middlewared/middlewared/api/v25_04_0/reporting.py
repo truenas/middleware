@@ -5,7 +5,6 @@ from typing_extensions import Annotated
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
-    single_argument_result,
 )
 
 
@@ -35,11 +34,11 @@ timestamp: typing.TypeAlias = Annotated[int, Field(gt=0)]
 
 
 class ReportingQuery(BaseModel):
-    unit: typing.Literal['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'] | None = Field(default=None)
+    unit: typing.Literal['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'] | None = None
     page: int = Field(default=1, ge=1)
     aggregate: bool = True
-    start: timestamp | None = Field(default=None)
-    end: timestamp | None = Field(default=None)
+    start: timestamp | None = None
+    end: timestamp | None = None
 
 
 class GraphIdentifier(BaseModel):
@@ -48,11 +47,11 @@ class GraphIdentifier(BaseModel):
         'arcsize', 'arcresult', 'disktemp', 'upscharge', 'upsruntime', 'upsvoltage', 'upscurrent', 'upsfrequency',
         'upsload', 'upstemperature',
     ]
-    identifier: NonEmptyString | None = Field(default=None)
+    identifier: NonEmptyString | None = None
 
 
 class ReportingGetDataArgs(BaseModel):
-    graphs: list[GraphIdentifier] = Field(..., min_length=1)
+    graphs: list[GraphIdentifier] = Field(min_length=1)
     query: ReportingQuery = Field(default_factory=lambda: ReportingQuery())
 
 

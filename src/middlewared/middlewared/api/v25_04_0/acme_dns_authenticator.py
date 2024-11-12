@@ -46,10 +46,10 @@ class CloudFlareSchemaArgs(CloudFlareSchema):
 
 class OVHSchema(BaseModel):
     authenticator: Literal['OVH']
-    application_key: NonEmptyString = Field(..., description='OVH Application Key')
-    application_secret: NonEmptyString = Field(..., description='OVH Application Secret')
-    consumer_key: NonEmptyString = Field(..., description='OVH Consumer Key')
-    endpoint: Literal[tuple(ENDPOINTS.keys())] = Field(..., description='OVH Endpoint')
+    application_key: NonEmptyString = Field(description='OVH Application Key')
+    application_secret: NonEmptyString = Field(description='OVH Application Secret')
+    consumer_key: NonEmptyString = Field(description='OVH Consumer Key')
+    endpoint: Literal[tuple(ENDPOINTS.keys())] = Field(description='OVH Endpoint')
 
 
 @single_argument_args('attributes')
@@ -59,8 +59,8 @@ class OVHSchemaArgs(OVHSchema):
 
 class Route53Schema(BaseModel):
     authenticator: Literal['route53']
-    access_key_id: NonEmptyString = Field(..., description='AWS Access Key ID')
-    secret_access_key: NonEmptyString = Field(..., description='AWS Secret Access Key')
+    access_key_id: NonEmptyString = Field(description='AWS Access Key ID')
+    secret_access_key: NonEmptyString = Field(description='AWS Secret Access Key')
 
 
 @single_argument_args('attributes')
@@ -70,7 +70,7 @@ class Route53SchemaArgs(Route53Schema):
 
 class ShellSchema(BaseModel):
     authenticator: Literal['shell']
-    script: FilePathStr = Field(..., description='Authentication Script')
+    script: FilePathStr = Field(description='Authentication Script')
     user: NonEmptyString = Field(description='Running user', default='nobody')
     timeout: Annotated[int, Field(ge=5, description='Script Timeout', default=60)]
     delay: Annotated[int, Field(ge=10, description='Propagation delay', default=60)]
@@ -153,7 +153,7 @@ class ACMEDNSAuthenticatorAttributeSchema(BaseModel):
 
 class ACMEDNSAuthenticatorSchema(BaseModel):
     key: str
-    schema_: ACMEDNSAuthenticatorAttributeSchema = Field(..., alias='schema')
+    schema_: ACMEDNSAuthenticatorAttributeSchema = Field(alias='schema')
 
 
 class ACMEDNSAuthenticatorSchemasArgs(BaseModel):
