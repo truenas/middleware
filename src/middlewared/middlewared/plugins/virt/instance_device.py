@@ -199,9 +199,12 @@ class VirtInstanceDeviceService(Service):
             i += 1
         return name
 
-    async def __validate_device(self, device, schema, verrors: ValidationErrors, instance: str = None):
+    async def __validate_device(self, device, schema, verrors: ValidationErrors, old: dict = None, instance: str = None):
         match device['dev_type']:
             case 'PROXY':
+                # Skip validation if we are updating and port has not changed
+                if old and old['source_port'] == device['source_port']:
+                    return
                 # We want to make sure there are no other instances using that port
                 ports = await self.middleware.call('port.ports_mapping')
                 if device['source_port'] in ports:
@@ -244,12 +247,14 @@ class VirtInstanceDeviceService(Service):
         instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
         data = instance['raw']
 
+        for old in await self.device_list(id):
+            if old['name'] == device['name']:
+                break
+        else:
+            raise CallError('Device does not exist.', errno.ENOENT)
+
         verrors = ValidationErrors()
-        await self.__validate_device(device, 'virt_device_update', verrors, instance['name'])
-
-        if device['name'] not in data['devices']:
-            verrors.add('virt_device_update.name', 'Device name does not exist.')
-
+        await self.__validate_device(device, 'virt_device_update', verrors, old, instance['name'])
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)
