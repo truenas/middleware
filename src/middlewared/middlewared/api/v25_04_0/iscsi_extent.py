@@ -1,7 +1,7 @@
 from typing import Literal
 
 from annotated_types import Ge, Le
-from pydantic import StringConstraints
+from pydantic import Field, StringConstraints
 from typing_extensions import Annotated
 
 from middlewared.api.base import (BaseModel, Excluded, ForUpdateMetaclass, IscsiExtentBlockSize, IscsiExtentRPM,
@@ -24,23 +24,29 @@ class IscsiExtentEntry(BaseModel):
     id: int
     name: Annotated[NonEmptyString, StringConstraints(max_length=64)]
     type: IscsiExtentType = 'DISK'
-    disk: str = None
-    serial: str = None
-    path: str = None
-    filesize: int = 0
+    disk: str | None = None
+    serial: str | None = None
+    path: str | None = None
+    filesize: str | int = '0'
     blocksize: IscsiExtentBlockSize = 512
     pblocksize: bool = False
     avail_threshold: Annotated[int, Ge(1), Le(99)] | None = None
     comment: str = ''
+    naa: str = Field(max_length=34)
     insecure_tpc: bool = True
     xen: bool = False
     rpm: IscsiExtentRPM = 'SSD'
     ro: bool = False
     enabled: bool = True
+    vendor: str
+    locked: bool
 
 
 class IscsiExtentCreate(IscsiExtentEntry):
     id: Excluded = excluded_field()
+    naa: Excluded = excluded_field()
+    vendor: Excluded = excluded_field()
+    locked: Excluded = excluded_field()
 
 
 class IscsiExtentCreateArgs(BaseModel):
