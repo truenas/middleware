@@ -21,7 +21,7 @@ class Alert(BaseModel):
     args: Any
     node: str
     key: LongString
-    datetime_: datetime = Field(..., alias='datetime')
+    datetime_: datetime = Field(alias='datetime')
     last_occurrence: datetime
     dismissed: bool
     mail: Any
