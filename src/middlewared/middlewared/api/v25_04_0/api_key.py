@@ -31,7 +31,7 @@ class ApiKeyEntry(BaseModel):
 
 
 class ApiKeyEntryWithKey(ApiKeyEntry):
-    key: Secret[str]
+    key: Secret[str | None]
 
 
 class ApiKeyCreate(ApiKeyEntry):

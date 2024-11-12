@@ -256,7 +256,7 @@ class ApiKeyService(CRUDService):
         )
 
         if not key:
-            return new
+            return new | {'key': None}
 
         self.middleware.call_sync('etc.generate', 'pam_middleware')
         self.middleware.call_sync('api_key.check_status')
