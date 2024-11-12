@@ -14,6 +14,7 @@ from middlewared.utils.directoryservices.ad_constants import (
 )
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5 import (
+    gss_dump_cred,
     gss_get_current_cred,
     kerberos_ticket,
 )
@@ -26,16 +27,34 @@ from time import sleep, time
 
 
 class ADJoinMixin:
+    def __ad_has_tkt_principal(self):
+        """
+        Check whether our current kerberos ticket is based on a kerberos keytab
+        or simply user performing kinit with username/password combination.
+        """
+        cred = gss_get_current_cred(krb5ccache.SYSTEM.value, False)
+        if cred is None:
+            # No ticket at all
+            return False
 
-    def _ad_activate(self) -> None:
+        cred_info = gss_dump_cred(cred)
+        return cred_info['name_type'] == 'KERBEROS_PRINCIPAL'
+
+    def _ad_activate(self, perform_kinit=True) -> None:
         for etc_file in DSType.AD.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
 
         self.middleware.call_sync('service.stop', 'idmap')
         self.middleware.call_sync('service.start', 'idmap', {'silent': False})
+
         # Wait for winbind to come online to provide some time for sysvol replication
         self._ad_wait_wbclient()
-        self.middleware.call_sync('kerberos.start')
+
+        # Reuse existing kerberos ticket if possible. If we're joining AD then it's possible
+        # that a call to kerberos.start would fail due to lack of replication.
+        if perform_kinit and not self.__ad_has_tkt_principal():
+            self.logger.debug('No ticket detected for domain. Starting kerberos service.')
+            self.middleware.call_sync('kerberos.start')
 
     def _ad_wait_wbclient(self) -> None:
         waited = 0
@@ -250,12 +269,8 @@ class ADJoinMixin:
         self.middleware.call_sync('directoryservices.secrets.backup')
         self.middleware.call_sync('activedirectory.register_dns')
 
-        # start up AD service
-        try:
-            self._ad_activate()
-        except KRB5Error:
-            job.set_progress(65, 'Waiting for active directory to replicate machine account changes.')
-            self._ad_wait_kerberos_start()
+        # start up AD service, but skip kerberos start for now
+        self._ad_activate(False)
 
     def _ad_join_impl(self, job: Job, conf: dict):
         """
@@ -383,13 +398,21 @@ class ADJoinMixin:
 
         # remove stub krb5.conf to allow overriding with fix on KDC
         os.remove('/etc/krb5.conf')
-        self.middleware.call_sync('kerberos.do_kinit', {
-            'krb5_cred': cred,
-            'kinit-options': {
-                'kdc_override': {'domain': ad_config['domainname'], 'kdc': domain_info['kdc_server']}
-            }
-        })
-        self.middleware.call_sync('kerberos.wait_for_renewal')
-        self.middleware.call_sync('etc.generate', 'kerberos')
+        try:
+            self.middleware.call_sync('kerberos.do_kinit', {
+                'krb5_cred': cred,
+                'kinit-options': {
+                    'kdc_override': {'domain': ad_config['domainname'], 'kdc': domain_info['kdc_server']}
+                }
+            })
+        except KRB5Error:
+            # Attempt to kinit against DC we were talking to failed and so we'll switch to generic
+            # kinit loop to wait for things to settle.
+            self.logger.debug('Initial attempt to kinit with new kerberos pricipal failed. Starting kinit loop.', exc_info=True)
+            job.set_progress(80, 'Waiting for active directory to replicate machine account changes.')
+            self._ad_wait_kerberos_start()
+        else:
+            self.middleware.call_sync('kerberos.wait_for_renewal')
+            self.middleware.call_sync('etc.generate', 'kerberos')
 
         self.middleware.call_sync('service.update', 'cifs', {'enable': True})
