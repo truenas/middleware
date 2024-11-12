@@ -10,6 +10,7 @@ from middlewared.api.current import (
     VirtInstanceDeviceListArgs, VirtInstanceDeviceListResult,
     VirtInstanceDeviceAddArgs, VirtInstanceDeviceAddResult,
     VirtInstanceDeviceDeleteArgs, VirtInstanceDeviceDeleteResult,
+    VirtInstanceDeviceUpdateArgs, VirtInstanceDeviceUpdateResult,
 )
 from .utils import incus_call_and_wait
 
@@ -130,7 +131,7 @@ class VirtInstanceDeviceService(Service):
                         raise CallError('Destination is required for filesystem paths.')
                     if instance_type == 'VM':
                         raise CallError('Destination is not valid for VM')
-                    new['path'] = device['destination']
+                new['path'] = device['destination']
             case 'NIC':
                 new['type'] = 'nic'
                 new['network'] = device['network']
@@ -198,11 +199,20 @@ class VirtInstanceDeviceService(Service):
             i += 1
         return name
 
-    async def __validate_device(self, device, schema, verrors: ValidationErrors):
+    async def __validate_device(self, device, schema, verrors: ValidationErrors, instance: str = None):
         match device['dev_type']:
             case 'PROXY':
-                verror = await self.middleware.call('port.validate_port', schema, device['source_port'])
-                verrors.extend(verror)
+                # We want to make sure there are no other instances using that port
+                ports = await self.middleware.call('port.ports_mapping')
+                if device['source_port'] in ports:
+                    for attachment in ports[device['source_port']].values():
+                        # Only add error if the port is not in use by current instance
+                        if instance is None or attachment['namespace'] != 'virt.device' or any(True for i in attachment['port_details'] if i['instance'] != instance):
+                            verror = await self.middleware.call(
+                                'port.validate_port', schema, device['source_port'],
+                            )
+                            verrors.extend(verror)
+                            break
             case 'DISK':
                 if device['source'] and device['source'].startswith('/dev/zvol/'):
                     if device['source'] not in await self.middleware.call('virt.device.disk_choices'):
@@ -220,6 +230,26 @@ class VirtInstanceDeviceService(Service):
 
         verrors = ValidationErrors()
         await self.__validate_device(device, 'virt_device_add', verrors)
+        verrors.check()
+
+        data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)
+        await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': data})
+        return True
+
+    @api_method(VirtInstanceDeviceUpdateArgs, VirtInstanceDeviceUpdateResult, roles=['VIRT_INSTANCE_WRITE'])
+    async def device_update(self, id, device):
+        """
+        Update a device in an instance.
+        """
+        instance = await self.middleware.call('virt.instance.get_instance', id, {'extra': {'raw': True}})
+        data = instance['raw']
+
+        verrors = ValidationErrors()
+        await self.__validate_device(device, 'virt_device_update', verrors, instance['name'])
+
+        if device['name'] not in data['devices']:
+            verrors.add('virt_device_update.name', 'Device name does not exist.')
+
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)
