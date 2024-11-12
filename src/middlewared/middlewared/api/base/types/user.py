@@ -65,7 +65,7 @@ def validate_sid(value: str) -> str:
 
 
 LocalUsername = Annotated[str, AfterValidator(validate_local_username)]
-RemoteUsername = Annotated[str, Field(str, Field(min_length=1)]
+RemoteUsername = Annotated[str, Field(str, Field(min_length=1))]
 LocalUID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
 
 LocalGID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
