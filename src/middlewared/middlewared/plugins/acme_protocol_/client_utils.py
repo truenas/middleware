@@ -1,10 +1,27 @@
 import json
+import typing
 
 import josepy as jose
 from acme import client, messages
 
 
-def get_acme_client_and_key(data: dict) -> tuple[client.ClientV2, jose.JWKRSA]:
+class BodyDict(typing.TypedDict):
+    contact: str
+    status: str
+    key: str
+
+
+class ACMEClientAndKeyData(typing.TypedDict):
+    uri: str
+    tos: bool
+    new_account_uri: str
+    new_nonce_uri: str
+    new_order_uri: str
+    revoke_cert_uri: str
+    body: BodyDict
+
+
+def get_acme_client_and_key(data: ACMEClientAndKeyData) -> tuple[client.ClientV2, jose.JWKRSA]:
     """
     Expected data dict should contain the following
     - uri: str
