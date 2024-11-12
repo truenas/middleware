@@ -329,7 +329,6 @@ class TestAuditOpsHA:
             "query-options": {"select": ["event_data", "success"]},
             "remote_controller": True
         }
-        job_id = None
         if not remote_available:
             job_id = call('failover.reboot.other_node')
             # Let the reboot get churning

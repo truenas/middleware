@@ -1,6 +1,6 @@
-from middlewared.api.base import BaseModel, single_argument_result
+from middlewared.api.base import BaseModel
 
-__all__ = ["SystemRebootInfoArgs", "SystemRebootInfoResult"]
+__all__ = ["SystemRebootInfoArgs", "RebootInfo", "SystemRebootInfoResult"]
 
 
 class SystemRebootInfoArgs(BaseModel):
@@ -12,7 +12,10 @@ class RebootRequiredReason(BaseModel):
     reason: str
 
 
-@single_argument_result
-class SystemRebootInfoResult(BaseModel):
+class RebootInfo(BaseModel):
     boot_id: str
     reboot_required_reasons: list[RebootRequiredReason]
+
+
+class SystemRebootInfoResult(BaseModel):
+    result: RebootInfo
