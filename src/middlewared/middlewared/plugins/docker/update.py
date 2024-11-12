@@ -96,7 +96,7 @@ class DockerService(ConfigService):
                         opts = {'extra': {'retrieve_children': False, 'retrieve_properties': False}}
                         old_apps_pool_exists = await self.middleware.call('zfs.dataset.query', filters, opts)
                         if old_apps_pool_exists:
-                            # If the old apps dataset exists AND we get an error trying to
+                            # If the old apps dataset does not exist AND we get an error trying to
                             # stop the docker service, then we DO NOT want to crash here
                             # since it means the user won't be able to change the zpool that
                             # the apps are using. In this scenario, we'll ignore the crash
