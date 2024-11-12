@@ -142,14 +142,14 @@ class BootEnvironmentService(Service):
             )
         else:
             run_zectl_cmd(["activate", data["id"]])
-            return self.query([["id", "=", data["id"]]])
+            return self.query([["id", "=", data["id"]]], {"get": True})
 
     @api_method(BootEnvironmentCloneArgs, BootEnvironmentCloneResult)
     def clone(self, data):
         be = self.validate_be("boot.environment.clone", data["id"])
         self.validate_be("boot.environment.clone", data["target"], should_exist=False)
         run_zectl_cmd(["create", "-r", "-e", be["dataset"], data["target"]])
-        return self.query([["id", "=", data["target"]]])
+        return self.query([["id", "=", data["target"]]], {"get": True})
 
     @api_method(BootEnvironmentDestroyArgs, BootEnvironmentDestroyResult)
     def destroy(self, data):
@@ -169,7 +169,7 @@ class BootEnvironmentService(Service):
                 "properties": {"zectl:keep": {"value": str(data["value"])}},
             },
         )
-        return self.query([["id", "=", data["id"]]])
+        return self.query([["id", "=", data["id"]]], {"get": True})
 
 
 async def setup(middleware):
