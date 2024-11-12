@@ -1,7 +1,7 @@
 class Export:
 
     NAME = NotImplementedError()
-    SCHEMA = NotImplementedError()
+    SCHEMA_MODEL = NotImplementedError()
 
     @staticmethod
     async def validate_config(data):

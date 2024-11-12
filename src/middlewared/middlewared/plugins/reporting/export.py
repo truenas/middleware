@@ -1,5 +1,12 @@
 import middlewared.sqlalchemy as sa
 
+from middlewared.api import api_method
+from middlewared.api.base.jsonschema import get_json_schema
+from middlewared.api.current import (
+    ReportingExporterEntry, ReportingExporterCreateArgs, ReportingExporterCreateResult, ReportingExporterUpdateArgs,
+    ReportingExporterUpdateResult, ReportingExporterDeleteArgs, ReportingExporterDeleteResult,
+    ReportingExporterSchemasArgs, ReportingExporterSchemasResult,
+)
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str, returns
 from middlewared.service import CRUDService, private, ValidationErrors
 
@@ -11,7 +18,6 @@ class ReportingExportsModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     enabled = sa.Column(sa.Boolean())
-    type = sa.Column(sa.String())
     name = sa.Column(sa.String())
     attributes = sa.Column(sa.JSON())
 
@@ -23,22 +29,7 @@ class ReportingExportsService(CRUDService):
         datastore = 'reporting.exporters'
         cli_namespace = 'reporting.exporters'
         role_prefix = 'REPORTING'
-
-    ENTRY = Dict(
-        'reporting_exporter_entry',
-        Int('id', required=True),
-        Bool('enabled', required=True),
-        Str(
-            'type', enum=[authenticator for authenticator in export_factory.get_exporters()],
-            required=True,
-        ),
-        Dict(
-            'attributes',
-            additional_attrs=True,
-            description='Specific attributes of each `exporter`'
-        ),
-        Str('name', description='User defined name of exporter configuration', required=True),
-    )
+        entry = ReportingExporterEntry
 
     def __init__(self, *args, **kwargs):
         super(ReportingExportsService, self).__init__(*args, **kwargs)
@@ -52,20 +43,15 @@ class ReportingExportsService(CRUDService):
         if await self.query(filters):
             verrors.add(f'{schema_name}.name', 'Specified name is already in use')
 
-        if data['type'] not in self.exporters:
-            verrors.add(
-                f'{schema_name}.type',
-                f'System does not support {data["type"]} as a reporting exporter type.'
-            )
-        else:
-            exporter_obj = self.get_exporter_object(data)
-            try:
-                data['attributes'] = await exporter_obj.validate_config(data['attributes'])
-            except ValidationErrors as ve:
-                verrors.extend(ve)
+        exporter_obj = self.get_exporter_object(data)
+        try:
+            data['attributes'] = await exporter_obj.validate_config(data['attributes'])
+        except ValidationErrors as ve:
+            verrors.extend(ve)
 
         verrors.check()
 
+    @api_method(ReportingExporterCreateArgs, ReportingExporterCreateResult)
     async def do_create(self, data):
         """
         Create a specific reporting exporter configuration containing required details for exporting reporting metrics.
@@ -84,16 +70,7 @@ class ReportingExportsService(CRUDService):
 
         return await self.get_instance(oid)
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'reporting_exporter_entry',
-            'reporting_exporter_update',
-            ('rm', {'name': 'id'}),
-            ('rm', {'name': 'type'}),
-            ('attr', {'update': True}),
-        ),
-    )
+    @api_method(ReportingExporterUpdateArgs, ReportingExporterUpdateResult)
     async def do_update(self, oid, data):
         """
         Update Reporting Exporter of `id`.
@@ -117,6 +94,7 @@ class ReportingExportsService(CRUDService):
 
         return await self.get_instance(oid)
 
+    @api_method(ReportingExporterDeleteArgs, ReportingExporterDeleteResult)
     async def do_delete(self, oid):
         """
         Delete Reporting Exporter of `id`.
@@ -129,37 +107,21 @@ class ReportingExportsService(CRUDService):
         await self.middleware.call('service.restart', 'netdata')
         return True
 
-    @accepts(roles=['REPORTING_READ'])
-    @returns(List(
-        title='Reporting Exporter Schemas',
-        items=[Dict(
-            'schema_entry',
-            Str('key', required=True),
-            List(
-                'schema',
-                items=[Dict(
-                    'attribute_schema',
-                    additional_attrs=True,
-                    title='Attribute Schema',
-                )],
-            ),
-            title='Reporting Exporter Schema'
-        )],
-    ))
+    @api_method(ReportingExporterSchemasArgs, ReportingExporterSchemasResult, roles=['REPORTING_READ'])
     def exporter_schemas(self):
         """
         Get the schemas for all the reporting export types we support with their respective attributes
         required for successfully exporting reporting metrics to them.
         """
         return [
-            {'schema': [v.to_json_schema() for v in value.attrs.values()], 'key': key}
-            for key, value in self.exporters.items()
+            {'schema': get_json_schema(model), 'key': key}
+            for key, model in self.exporters.items()
         ]
 
     @private
     def get_exporter_object(self, data):
-        return export_factory.exporter(data['type'])()
+        return export_factory.exporter(data['attributes']['exporter_type'])()
 
     @private
     def get_exporter_schemas(self):
-        return {k: klass.SCHEMA for k, klass in export_factory.get_exporters().items()}
+        return {k: klass.SCHEMA_MODEL for k, klass in export_factory.get_exporters().items()}
