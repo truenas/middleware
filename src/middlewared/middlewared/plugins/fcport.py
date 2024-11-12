@@ -41,7 +41,8 @@ class FCPortService(CRUDService):
         entry = FCPortEntry
         role_prefix = 'SHARING_ISCSI_TARGET'
 
-    @api_method(FCPortCreateArgs, FCPortCreateResult, audit='Create FC port mapping', audit_extended=lambda data: data['alias'])
+    @api_method(FCPortCreateArgs, FCPortCreateResult, audit='Create FC port mapping',
+                audit_extended=lambda data: data['alias'])
     async def do_create(self, data: dict) -> dict:
         """
         Creates mapping between a FC port and a target.

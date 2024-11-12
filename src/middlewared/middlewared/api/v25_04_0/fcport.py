@@ -11,13 +11,15 @@ class FCPortEntry(BaseModel):
     port: FibreChannelPortAlias
     wwpn: WWPN | None
     wwpn_b: WWPN | None
-    target_id: int
+    target: dict | None
 
 
 class FCPortCreate(FCPortEntry):
     id: Excluded = excluded_field()
     wwpn: Excluded = excluded_field()
     wwpn_b: Excluded = excluded_field()
+    target: Excluded = excluded_field()
+    target_id: int
 
 
 class FCPortCreateArgs(BaseModel):

@@ -39,7 +39,7 @@ class IscsiExtentEntry(BaseModel):
     ro: bool = False
     enabled: bool = True
     vendor: str
-    locked: bool
+    locked: bool | None
 
 
 class IscsiExtentCreate(IscsiExtentEntry):

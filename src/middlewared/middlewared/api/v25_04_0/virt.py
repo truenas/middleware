@@ -171,7 +171,7 @@ class VirtInstanceEntry(BaseModel):
     type: InstanceType = 'CONTAINER'
     status: Literal['RUNNING', 'STOPPED']
     cpu: str | None
-    memory: int
+    memory: int | None
     autostart: bool
     environment: dict[str, str]
     aliases: List[VirtInstanceAlias]

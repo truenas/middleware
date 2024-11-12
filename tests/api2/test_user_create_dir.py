@@ -46,7 +46,6 @@ def test_create_homedir(setup_user):
     assert new2['home'] == new['home']
 
 
-
 def test_user_change_homedir_no_traverse(setup_user):
     """ we should not recurse into child datasets """
     with dataset(f'{DS_NAME}/subds') as subds:
@@ -95,7 +94,8 @@ def test_user_change_homedir_acl_preserve(setup_user):
         'id': -1,
         'perms': {'BASIC': 'FULL_CONTROL'},
         'flags': {'BASIC': 'INHERIT'},
-        'type': 'ALLOW'
+        'type': 'ALLOW',
+        'who': None,
     }]
     call('filesystem.mkdir', {'path': os.path.join(setup_user['home'], 'canary')})
 

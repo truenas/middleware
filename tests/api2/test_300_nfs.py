@@ -1664,7 +1664,7 @@ class TestNFSops:
 
                             result = call('filesystem.getacl', acl_nfs_path, not simplified)
                             for idx, ace in enumerate(result['acl']):
-                                assert ace == nfsacl[idx], str(ace)
+                                assert ace == {**nfsacl[idx], "who": None}, str(ace)
 
                         for flag in ("INHERIT_ONLY", "NO_PROPAGATE_INHERIT"):
                             theacl[4]['flags'][flag] = True
@@ -1675,7 +1675,7 @@ class TestNFSops:
 
                             result = call('filesystem.getacl', acl_nfs_path, not simplified)
                             for idx, ace in enumerate(result['acl']):
-                                assert ace == nfsacl[idx], str(ace)
+                                assert ace == {**nfsacl[idx], "who": None}, str(ace)
 
                         if test_acl_flag:
                             assert 'none' == n.getaclflag(".")
