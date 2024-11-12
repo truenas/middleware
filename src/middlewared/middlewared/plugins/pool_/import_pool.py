@@ -3,6 +3,7 @@ import errno
 import os
 import subprocess
 
+from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, InstanceNotFound, job, private, Service
 
@@ -133,6 +134,13 @@ class PoolService(Service):
                 # We exclude `ix-applications` dataset since resetting it will
                 # cause PVC's to not mount because "mountpoint=legacy" is expected.
                 # We exclude `ix-apps` dataset since it has a custom mountpoint in place
+                # If user downgrades to DF or earlier and he had ix-apps dataset, and he comes back
+                # to EE or later, what will happen is that the mountpoint for ix-apps would be reset
+                # because of the logic we have below, hence we just set and it's children will inherit it
+                if child == os.path.join(pool_name, 'ix-apps'):
+                    await self.middleware.call(
+                        'zfs.dataset.update', child, {'properties': {'mountpoint': {'value': f'/{IX_APPS_DIR_NAME}'}}}
+                    )
                 continue
             try:
                 # Reset all mountpoints
