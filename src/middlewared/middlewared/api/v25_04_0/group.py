@@ -101,8 +101,8 @@ class GroupGetGroupObjResult(BaseModel):
     "name of the group"
     gr_gid: int
     "group id of the group"
-    gr_mem: list[int]
-    "list of gids that are members of the group"
+    gr_mem: list[str]
+    "list of group names that are members of the group"
     sid: str | None = None
     "optional SID value for the account that is present if `sid_info` is specified in payload."
     source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']
