@@ -9,7 +9,7 @@ class ACMEService(Service):
         namespace = 'acme'
         private = True
 
-    def get_acme_client_and_key(self, acme_directory_uri, tos=False):
+    def get_acme_client_and_key_payload(self, acme_directory_uri, tos=False):
         data = self.middleware.call_sync('acme.registration.query', [['directory', '=', acme_directory_uri]])
         if not data:
             data = self.middleware.call_sync(
@@ -19,4 +19,7 @@ class ACMEService(Service):
         else:
             data = data[0]
 
-        return get_acme_client_and_key(data)
+        return data
+
+    def get_acme_client_and_key(self, acme_directory_uri, tos=False):
+        return get_acme_client_and_key(self.get_acme_client_and_key_payload(acme_directory_uri, tos))
