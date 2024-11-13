@@ -116,7 +116,9 @@ class TrueNAS_Server:
             raise RuntimeError('IP is not set')
 
         uri = host_websocket_uri(addr)
-        cl = Client(uri, py_exceptions=True, log_py_exceptions=True)
+        cl = Client(uri)
+        cl._log_py_exceptions = True
+        cl._py_exceptions = True
         try:
             resp = cl.call('auth.login_ex', {
                 'mechanism': 'PASSWORD_PLAIN',
@@ -166,7 +168,9 @@ def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exc
 
     uri = host_websocket_uri(host_ip)
     try:
-        with Client(uri, py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions) as c:
+        with Client(uri) as c:
+            c._log_py_exceptions = log_py_exceptions
+            c._py_exceptions = py_exceptions
             if auth is not None:
                 auth_req = {
                     "mechanism": "PASSWORD_PLAIN",
