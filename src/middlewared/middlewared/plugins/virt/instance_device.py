@@ -47,7 +47,11 @@ class VirtInstanceDeviceService(Service):
 
     @private
     async def incus_to_device(self, name: str, incus: dict[str, Any]):
-        device = {'name': name, 'readonly': incus.get('readonly') or False}
+        device = {
+            'name': name,
+            'description': None,
+            'readonly': incus.get('readonly') or False,
+        }
 
         def unsupported():
             self.logger.trace('Proxy device not supported by API, skipping.')
@@ -58,9 +62,11 @@ class VirtInstanceDeviceService(Service):
                 device['dev_type'] = 'DISK'
                 device['source'] = incus.get('source')
                 device['destination'] = incus.get('path')
+                device['description'] = f'Disk: {device["source"]} -> {device["destination"]}'
             case 'nic':
                 device['dev_type'] = 'NIC'
                 device['network'] = incus.get('network')
+                device['description'] = f'NIC: {device["network"]}'
             case 'proxy':
                 device['dev_type'] = 'PROXY'
                 # For now follow docker lead for simplification
@@ -81,10 +87,13 @@ class VirtInstanceDeviceService(Service):
 
                 device['dest_proto'] = proto.upper()
                 device['dest_port'] = int(ports)
+
+                device['description'] = f'Proxy: {device["source_proto"]}/{device["source_port"]} -> {device["dest_proto"]}/{device["dest_port"]}'
             case 'tpm':
                 device['dev_type'] = 'TPM'
                 device['path'] = incus.get('path')
                 device['pathrm'] = incus.get('pathrm')
+                device['description'] = 'TPM'
             case 'usb':
                 device['dev_type'] = 'USB'
                 if incus.get('busnum') is not None:
@@ -94,20 +103,35 @@ class VirtInstanceDeviceService(Service):
                 if incus.get('productid') is not None:
                     device['product_id'] = incus['productid']
                 if incus.get('vendorid') is not None:
-                    device['vendir_id'] = incus['vendorid']
+                    device['vendor_id'] = incus['vendorid']
+
+                for choice in (await self.middleware.call('virt.device.usb_choices')).values():
+                    if device.get('bus') and choice['bus'] != device['bus']:
+                        continue
+                    if device.get('dev') and choice['dev'] != device['dev']:
+                        continue
+                    if device.get('product_id') and choice['product_id'] != device['product_id']:
+                        continue
+                    if device.get('vendor_id') and choice['vendor_id'] != device['product_id']:
+                        continue
+                    device['description'] = f'USB: {choice["product"]}'
+                    break
+                else:
+                    device['description'] = 'USB: Unknown'
             case 'gpu':
                 device['dev_type'] = 'USB'
-                device['id'] = incus['id']
                 device['gpu_type'] = incus['gputype'].upper()
                 match incus['gputype']:
                     case 'physical':
-                        pass
-                    case 'mdev':
-                        pass
-                    case 'mig':
-                        device['mig_uuid'] = incus['mig.uuid']
-                    case 'sriov':
-                        pass
+                        device['pci'] = incus['pci']
+                        for key, choice in (await self.middleware.call('virt.device.gpu_choices', 'CONTAINER', 'PHYSICAL')).items():
+                            if key == incus['pci']:
+                                device['description'] = f'GPU: {choice["description"]}'
+                                break
+                        else:
+                            device['description'] = 'GPU: Unknown'
+                    case 'mdev' | 'mig' | 'srviov':
+                        return unsupported()
             case _:
                 return unsupported()
 
