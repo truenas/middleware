@@ -18,7 +18,6 @@ import errno
 import html
 import json
 import os
-import pickle
 import smtplib
 import socket
 import syslog
@@ -53,9 +52,9 @@ class MailQueue(object):
 
     def _get_queue(self):
         try:
-            with open(self.QUEUE_FILE, 'rb') as f:
-                self.queue = pickle.loads(f.read())
-        except (pickle.PickleError, EOFError):
+            with open(self.QUEUE_FILE, 'r') as f:
+                self.queue = json.load(f)
+        except Exception:
             self.queue = []
 
     def __enter__(self):
@@ -74,9 +73,9 @@ class MailQueue(object):
 
     def __exit__(self, typ, value, traceback):
 
-        with open(self.QUEUE_FILE, 'wb+') as f:
+        with open(self.QUEUE_FILE, 'w') as f:
             if self.queue:
-                f.write(pickle.dumps(self.queue))
+                json.dump(self.queue, f)
 
         self._lock.release()
         if typ is not None:
