@@ -198,8 +198,7 @@ class AppService(Service):
 
     @private
     async def clear_upgrade_alerts_for_all(self):
-        for app in await self.middleware.call('app.query'):
-            await self.middleware.call('alert.oneshot_delete', 'AppUpdate', app['id'])
+        await self.middleware.call('alert.oneshot_delete', 'AppUpdate', None)
 
     @private
     async def check_upgrade_alerts(self):

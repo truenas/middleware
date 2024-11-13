@@ -56,7 +56,8 @@ class AppUpdateAlertClass(AlertClass, OneShotAlertClass):
         return Alert(AppUpdateAlertClass, args, _key=args['name'])
 
     async def delete(self, alerts, query):
+        # If query is None, it means we are deleting all alerts
         return list(filter(
-            lambda alert: alert.key != query,
+            lambda alert: alert.key != query and query is not None,
             alerts
         ))
