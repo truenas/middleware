@@ -1,6 +1,6 @@
 from lockfile import LockFile, LockTimeout
 import os
-import pickle
+import json
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
@@ -40,9 +40,9 @@ class CollectdAlertSource(ThreadedAlertSource):
             except LockTimeout:
                 return
 
-        with open(COLLECTD_FILE, "rb") as f:
+        with open(COLLECTD_FILE, "r") as f:
             try:
-                data = pickle.loads(f.read())
+                data = json.load(f)
             except Exception:
                 data = {}
 
