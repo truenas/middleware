@@ -1,11 +1,7 @@
-#!/usr/bin/env python3
+import os
 
 import pytest
-import sys
-import os
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import GET, POST
+
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.smb import smb_share
@@ -51,16 +47,14 @@ def test_001_net_share_enum(setup_smb_user, setup_smb_share):
 
 
 def test_002_enum_users(setup_smb_user, setup_smb_share):
-    results = GET('/user', payload={
+    payload = {
         'query-filters': [['username', '=', SMB_USER]],
         'query-options': {
             'get': True,
             'extra': {'additional_information': ['SMB']}
         }
-    })
-    assert results.status_code == 200, results.text
-    user_info = results.json()
-
+    }
+    user_info = call('user.query', payload['query-filters'], payload['query-options'])
     with MS_RPC(username=SMB_USER, password=SMB_PWD) as hdl:
         entry = None
         users = hdl.users()
@@ -77,7 +71,7 @@ def test_002_enum_users(setup_smb_user, setup_smb_share):
 
 
 def test_003_access_based_share_enum(setup_smb_user, setup_smb_share):
-    payload = {
+    call('sharing.smb.setacl', {
         'share_name': "RPC_TEST",
         'share_acl': [
             {
@@ -86,16 +80,11 @@ def test_003_access_based_share_enum(setup_smb_user, setup_smb_share):
                 'ae_type': 'ALLOWED'
             }
         ]
-    }
-    results = POST("/sharing/smb/setacl", payload)
-    assert results.status_code == 200, results.text
-
-    results = GET("/sharing/smb")
-    assert results.status_code == 200, results.text
-
+    })
+    results = call("sharing.smb.query")
     with MS_RPC(username=SMB_USER, password=SMB_PWD) as hdl:
         shares = hdl.shares()
-        assert len(shares) == 1, str({"enum": shares, "shares": results.json()})
+        assert len(shares) == 1, str({"enum": shares, "shares": results})
 
 
 def test_share_name_restricutions(setup_smb_share):
