@@ -26,9 +26,9 @@ def test_restart_vm_on_dataset_unlock(zvol):
         call("pool.dataset.lock", ds, job=True)
 
         if zvol:
-            device = {"dtype": "DISK", "attributes": {"path": f"/dev/zvol/{ds}"}}
+            device = {"attributes": {"path": f"/dev/zvol/{ds}", "dtype": "DISK"}}
         else:
-            device = {"dtype": "RAW", "attributes": {"path": f"/mnt/{ds}/child"}}
+            device = {"attributes": {"path": f"/mnt/{ds}/child", "dtype": "RAW"}}
 
         with mock("vm.query", return_value=[{"id": 1, "devices": [device]}]):
             with mock("vm.status", return_value={"state": "RUNNING"}):
