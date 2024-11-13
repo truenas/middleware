@@ -338,3 +338,35 @@ def test_snapshot():
 
         time.sleep(1)
         assert call("zfs.snapshot.query", [["dataset", "=", ds]]) == []
+
+
+@pytest.mark.parametrize("cloud_backup_task", [
+    {"post_script": "#!/usr/bin/env python3\nprint('Test' * 2)"}
+], indirect=True)
+def test_script_shebang(cloud_backup_task):
+    run_task(cloud_backup_task.task)
+    job = call("core.get_jobs", [["method", "=", "cloud_backup.sync"]], {"order_by": ["-id"], "get": True})
+    assert job["logs_excerpt"].endswith("[Post-script] TestTest\n")
+
+
+@pytest.mark.parametrize("cloud_backup_task", [
+    {"pre_script": "touch /tmp/cloud_backup_test"},
+    {"post_script": "touch /tmp/cloud_backup_test"}
+], indirect=True)
+def test_scripts_ok(cloud_backup_task):
+    ssh("rm /tmp/cloud_backup_test", check=False)
+    run_task(cloud_backup_task.task)
+    ssh("cat /tmp/cloud_backup_test")
+
+
+@pytest.mark.parametrize("cloud_backup_task", [
+    {"pre_script": "echo Custom error\nexit 123"}
+], indirect=True)
+def test_pre_script_failure(cloud_backup_task):
+    with pytest.raises(ClientException) as ve:
+        run_task(cloud_backup_task.task)
+
+    assert ve.value.error == "[EFAULT] Pre-script failed with exit code 123"
+
+    job = call("core.get_jobs", [["method", "=", "cloud_backup.sync"]], {"order_by": ["-id"], "get": True})
+    assert job["logs_excerpt"] == "[Pre-script] Custom error\n"
