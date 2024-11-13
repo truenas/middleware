@@ -17,6 +17,7 @@ from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
 from middlewared.utils.crypto import generate_pbkdf2_512, generate_string
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.sid import sid_is_valid
+from middlewared.utils.user_api_keys import PAM_TDB_MAX_KEYS
 from middlewared.utils.time_utils import utc_now
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -196,6 +197,18 @@ class ApiKeyService(CRUDService):
             # from the UID of user)
             user_identifier = str(user[0]['id'])
 
+        if self.middleware.call_sync(
+            'datastore.query', self._config.datastore,
+            [['user_identifer', '=', user_identifer]],
+            {'count': True}
+        ) >= PAM_TDB_MAX_KEYS:
+            verrors.add(
+                'api_key_create',
+                f'{user["username"]}: user has too many API keys. Maximum permitted is {PAM_TDB_MAX_KEYS}.'
+            )
+
+        verrors.check()
+
         key = generate_string(string_size=64)
         data['keyhash'] = generate_pbkdf2_512(key)
         data['created_at'] = utc_now()
@@ -294,7 +307,7 @@ class ApiKeyService(CRUDService):
         if self.middleware.call_sync('datastore.query', self._config.datastore, [
             ['name', '=', data['name']], ['id', '!=', id_]
         ]):
-            verrors.add(schema_name, "name must be unique")
+            verrors.add(schema_name, 'name must be unique')
 
         if (expiration := data.get('expires_at')) is not None:
             if utc_now(naive=False) > expiration:

@@ -9,6 +9,7 @@ from time import sleep
 
 LEGACY_ENTRY_KEY = 'rtpz6u16l42XJJGy5KMJOVfkiQH7CyitaoplXy7TqFTmY7zHqaPXuA1ob07B9bcB'
 LEGACY_ENTRY_HASH = '$pbkdf2-sha256$29000$CyGktHYOwXgvBYDQOqc05g$nK1MMvVuPGHMvUENyR01qNsaZjgGmlt3k08CRuC4aTI'
+API_KEY_COUNT_TEST_LIMIT = 25
 
 
 @pytest.fixture(scope='function')
@@ -256,3 +257,17 @@ def test_api_key_restrict_admin_other_keys_fail(sharing_admin_user):
             })
 
         assert ce.value.errno == errno.EACCES
+
+
+def test_api_key_max(sharing_admin_user):
+    to_delete = []
+    with pytest.raises(ValidationErrors) as ve:
+        for i in range(0, API_KEY_TEST_LIMIT):
+            to_delete.append(call('api_key.create', {
+                'username': sharing_admin_user.username, 'name': f'MAX_KEY_{i}'
+            })['id'])
+
+    assert 'user has too many API keys' in str(ve)
+
+    for i in to_delete:
+        call('api_key.delete', i)

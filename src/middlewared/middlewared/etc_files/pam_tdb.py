@@ -1,6 +1,7 @@
 from middlewared.utils.user_api_key import (
     UserApiKey,
     PamTdbEntry,
+    PAM_TDB_MAX_KEYS,
     flush_user_api_keys
 )
 
@@ -41,6 +42,15 @@ def render(service, middleware, render_ctx):
             entries[key['username']].append(key)
 
     for user, keys in entries.items():
+        if len(keys) > PAM_TDB_MAX_KEYS:
+            middleware.logger.error(
+                '%s: user has too many API keys. Omitting from backend configuration. '
+                'Specified user will be unable to authenticate by API key until issue is '
+                'resolved.',
+                user
+            )
+            continue
+
         entry = convert_keys(user, keys)
         pdb_entries.append(entry)
 
