@@ -243,6 +243,15 @@ class VirtInstanceDeviceAddResult(BaseModel):
     result: Literal[True]
 
 
+class VirtInstanceDeviceUpdateArgs(BaseModel):
+    id: str
+    device: DeviceType
+
+
+class VirtInstanceDeviceUpdateResult(BaseModel):
+    result: Literal[True]
+
+
 class VirtInstanceDeviceDeleteArgs(BaseModel):
     id: str
     name: str

@@ -75,6 +75,7 @@ class VirtPortDelegate(PortDelegate):
                 ports.append({
                     'description': f'{instance["id"]!r} instance',
                     'ports': instance_ports,
+                    'instance': instance['id'],
                 })
         return ports
 
