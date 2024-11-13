@@ -197,7 +197,9 @@ class InterfaceRenamer:
                     "datastore.update", "network.vlan", vlan["id"], {"vlan_pint": new_name}, {"ha_sync": False},
                 )
 
-        for vm_device in await self.middleware.call("datastore.query", "vm.device", [["dtype", "=", "NIC"]]):
+        # We use vm.device.query because attributes.dtype filter won't work with datastore plugin as attributes
+        # column is not serialized at the point datastore plugin applies filters
+        for vm_device in await self.middleware.call("vm.device.query", [["attributes.dtype", "=", "NIC"]]):
             if new_name := self.mapping.get(vm_device["attributes"].get("nic_attach")):
                 self.middleware.logger.info("Changing VM NIC device %r from %r to %r", vm_device["id"],
                                             vm_device["attributes"]["nic_attach"], new_name)

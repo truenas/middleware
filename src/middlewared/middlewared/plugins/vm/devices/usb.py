@@ -30,6 +30,7 @@ class USB(PCIBase):
         ),
         Str('controller_type', empty=False, default='nec-xhci', enum=USB_CONTROLLER_CHOICES),
         Str('device', empty=False, null=True, default=None),
+        Str('dtype', enum=['USB'], required=True),
     )
 
     @property

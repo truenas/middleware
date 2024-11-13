@@ -1,8 +1,9 @@
 <%
-    graphite_confs = middleware.call_sync('reporting.exporters.query', [['type', '=', 'GRAPHITE']])
+    from middlewared.utils import filter_list
+    graphite_confs = filter_list(middleware.call_sync('reporting.exporters.query'), [['attributes.exporter_type', '=', 'GRAPHITE']])
 %>\
 % for graphite_conf in graphite_confs:
-[${graphite_conf['type'].lower()}:${graphite_conf['name']}]
+[${graphite_conf['attributes']['exporter_type'].lower()}:${graphite_conf['name']}]
     enabled = ${"yes" if graphite_conf['enabled'] else "no"}
     destination = ${graphite_conf['attributes']['destination_ip']}:${graphite_conf['attributes']['destination_port']}
     prefix = ${graphite_conf['attributes']['prefix']}

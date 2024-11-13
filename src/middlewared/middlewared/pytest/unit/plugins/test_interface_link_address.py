@@ -64,7 +64,6 @@ class VMDeviceModel(Model):
     __tablename__ = 'vm_device'
 
     id = sa.Column(sa.Integer(), primary_key=True)  # noqa
-    dtype = sa.Column(sa.String(50))
     attributes = sa.Column(sa.JSON())
 
 
@@ -214,10 +213,12 @@ async def test__interface_link_address_setup(before, after):
             }, {"prefix": "vlan_"})
 
         for interface in before.get("vm", []):
-            await ds.insert("vm.device", {
-                "dtype": "NIC",
-                "attributes": {"nic_attach": interface},
+            id_ = await ds.insert("vm.device", {
+                "attributes": {"nic_attach": interface, "dtype": "NIC"},
             })
+            ds.middleware["vm.device.query"] = lambda *args: [
+                {'id': id_, "attributes": {"nic_attach": interface, "dtype": "NIC"}}
+            ]
 
         ds.middleware["interface.query"] = AsyncMock(return_value=[
             {
@@ -298,8 +299,7 @@ async def test__interface_link_address_setup(before, after):
         assert await ds.query("vm.device") == [
             {
                 "id": ANY,
-                "dtype": "NIC",
-                "attributes": {"nic_attach": interface},
+                "attributes": {"nic_attach": interface, "dtype": "NIC"},
             }
             for interface in after.get("vm", [])
         ]

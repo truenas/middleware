@@ -11,7 +11,7 @@ from middlewared.service import CallError, Service, item_method, job, private
 from middlewared.utils.time_utils import utc_now
 
 
-async def restic(middleware, job, cloud_backup, dry_run):
+async def restic_backup(middleware, job, cloud_backup, dry_run):
     await middleware.call("network.general.will_perform_activity", "cloud_backup")
 
     snapshot = None
@@ -66,6 +66,8 @@ async def restic(middleware, job, cloud_backup, dry_run):
 
         if dry_run:
             cmd.append("-n")
+
+        cmd.extend(["--exclude=" + excl for excl in cloud_backup["exclude"]])
 
         restic_config = get_restic_config(cloud_backup)
         cmd = restic_config.cmd + ["--verbose", "backup"] + cmd
@@ -136,7 +138,7 @@ class CloudBackupService(Service):
         try:
             await self.middleware.call("cloud_backup.ensure_initialized", cloud_backup)
 
-            await restic(self.middleware, job, cloud_backup, options["dry_run"])
+            await restic_backup(self.middleware, job, cloud_backup, options["dry_run"])
 
             job.set_progress(100, "Cleaning up")
             restic_config = get_restic_config(cloud_backup)

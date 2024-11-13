@@ -1,3 +1,4 @@
+import copy
 import os
 import re
 
@@ -21,7 +22,6 @@ class VMDeviceModel(sa.Model):
     __tablename__ = 'vm_device'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    dtype = sa.Column(sa.String(50))
     attributes = sa.Column(sa.JSON(encrypted=True))
     vm_id = sa.Column(sa.ForeignKey('vm_vm.id'), index=True)
     order = sa.Column(sa.Integer(), nullable=True)
@@ -78,9 +78,9 @@ class VMDeviceService(CRUDService):
         if device['vm']:
             device['vm'] = device['vm']['id']
         if not device['order']:
-            if device['dtype'] == 'CDROM':
+            if device['attributes']['dtype'] == 'CDROM':
                 device['order'] = 1000
-            elif device['dtype'] in ('DISK', 'RAW'):
+            elif device['attributes']['dtype'] in ('DISK', 'RAW'):
                 device['order'] = 1001
             else:
                 device['order'] = 1002
@@ -108,7 +108,8 @@ class VMDeviceService(CRUDService):
 
     @private
     async def update_device(self, data, old=None):
-        if data['dtype'] == 'DISK':
+        device_dtype = data['attributes']['dtype']
+        if device_dtype == 'DISK':
             create_zvol = data['attributes'].pop('create_zvol', False)
 
             if create_zvol:
@@ -126,7 +127,7 @@ class VMDeviceService(CRUDService):
                 ds_options['volblocksize'] = zvol_blocksize
 
                 await self.middleware.call('pool.dataset.create', ds_options)
-        elif data['dtype'] == 'RAW' and (
+        elif device_dtype == 'RAW' and (
             not data['attributes'].pop('exists', True) or (
                 old and old['attributes']['size'] != data['attributes']['size']
             )
@@ -141,9 +142,12 @@ class VMDeviceService(CRUDService):
     @accepts(
         Dict(
             'vmdevice_create',
-            Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'PCI', 'DISPLAY', 'RAW', 'USB'], required=True),
             Int('vm', required=True),
-            Dict('attributes', additional_attrs=True, default=None),
+            Dict(
+                'attributes',
+                Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'PCI', 'DISPLAY', 'RAW', 'USB'], required=True),
+                additional_attrs=True,
+            ),
             Int('order', default=None, null=True),
             register=True,
         ),
@@ -152,11 +156,12 @@ class VMDeviceService(CRUDService):
         """
         Create a new device for the VM of id `vm`.
 
-        If `dtype` is the `RAW` type and a new raw file is to be created, `attributes.exists` will be passed as false.
-        This means the API handles creating the raw file and raises the appropriate exception if file creation fails.
+        If `attributes.dtype` is the `RAW` type and a new raw file is to be created, `attributes.exists` will be
+        passed as false. This means the API handles creating the raw file and raises the appropriate exception if
+        file creation fails.
 
-        If `dtype` is of `DISK` type and a new Zvol is to be created, `attributes.create_zvol` will be passed as
-        true with valid `attributes.zvol_name` and `attributes.zvol_volsize` values.
+        If `attributes.dtype` is of `DISK` type and a new Zvol is to be created, `attributes.create_zvol` will be
+        passed as true with valid `attributes.zvol_name` and `attributes.zvol_volsize` values.
         """
         data = await self.validate_device(data, update=False)
         data = await self.update_device(data)
@@ -175,8 +180,10 @@ class VMDeviceService(CRUDService):
         Pass `attributes.size` to resize a `dtype` `RAW` device. The raw file will be resized.
         """
         device = await self.get_instance(id_)
-        new = device.copy()
+        new = copy.deepcopy(device)
+        new_attrs = data.pop('attributes', {})
         new.update(data)
+        new['attributes'].update(new_attrs)
 
         new = await self.validate_device(new, device)
         new = await self.update_device(new, device)
@@ -188,8 +195,9 @@ class VMDeviceService(CRUDService):
 
     @private
     async def delete_resource(self, options, device):
+        device_dtype = device['attributes']['dtype']
         if options['zvol']:
-            if device['dtype'] != 'DISK':
+            if device_dtype != 'DISK':
                 raise CallError('The device is not a disk and has no zvol to destroy.')
             if not device['attributes'].get('path', '').startswith('/dev/zvol'):
                 raise CallError('Unable to destroy zvol as disk device has misconfigured path')
@@ -200,7 +208,7 @@ class VMDeviceService(CRUDService):
                 # attachment ?
                 await self.middleware.call('zfs.dataset.delete', zvol_id)
         if options['raw_file']:
-            if device['dtype'] != 'RAW':
+            if device_dtype != 'RAW':
                 raise CallError('Device is not of RAW type.')
             try:
                 os.unlink(device['attributes']['path'])
@@ -263,7 +271,7 @@ class VMDeviceService(CRUDService):
 
         disks = [
             d for d in vm['devices']
-            if d['dtype'] in ('DISK', 'RAW', 'CDROM') and translate_device(d) == translate_device(device)
+            if d['attributes']['dtype'] in ('DISK', 'RAW', 'CDROM') and translate_device(d) == translate_device(device)
         ]
         if not disks:
             # We don't have that disk path in vm devices, we are good to go
@@ -288,7 +296,7 @@ class VMDeviceService(CRUDService):
     @private
     async def validate_device(self, device, old=None, update=True):
         vm_instance = await self.middleware.call('vm.get_instance', device['vm'])
-        device_obj = DEVICES[device['dtype']](device, self.middleware)
+        device_obj = DEVICES[device['attributes']['dtype']](device, self.middleware)
         await self.middleware.run_in_thread(device_obj.validate, device, old, vm_instance, update)
 
         return device
@@ -302,7 +310,7 @@ class VMDeviceService(CRUDService):
     @private
     async def get_display_devices(self, vm_instance):
         devs = {'spice': []}
-        for dev in filter(lambda d: d['dtype'] == 'DISPLAY', vm_instance['devices']):
+        for dev in filter(lambda d: d['attributes']['dtype'] == 'DISPLAY', vm_instance['devices']):
             if dev['attributes']['type'] == 'SPICE':
                 devs['spice'].append(dev)
         return devs

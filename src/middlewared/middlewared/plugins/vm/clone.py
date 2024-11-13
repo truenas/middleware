@@ -105,20 +105,21 @@ class VMService(Service):
             for item in devices:
                 item.pop('id', None)
                 item['vm'] = new_vm['id']
-                if item['dtype'] == 'NIC':
+                item_dtype = item['attributes']['dtype']
+                if item_dtype == 'NIC':
                     if 'mac' in item['attributes']:
                         del item['attributes']['mac']
-                if item['dtype'] == 'DISPLAY':
+                if item_dtype == 'DISPLAY':
                     if 'port' in item['attributes']:
                         dev_dict = await self.middleware.call('vm.port_wizard')
                         item['attributes']['port'] = dev_dict['port']
                         item['attributes']['web_port'] = dev_dict['web']
-                if item['dtype'] == 'DISK':
+                if item_dtype == 'DISK':
                     zvol = zvol_path_to_name(item['attributes']['path'])
                     item['attributes']['path'] = zvol_name_to_path(
                         await self.__clone_zvol(vm['name'], zvol, created_snaps, created_clones)
                     )
-                if item['dtype'] == 'RAW':
+                if item_dtype == 'RAW':
                     self.logger.warning('RAW disks must be copied manually. Skipping...')
                     continue
 
@@ -148,7 +149,7 @@ class VMService(Service):
     async def validate(self, vm):
         verrors = ValidationErrors()
         for index, device in enumerate(vm['devices']):
-            if device['dtype'] == 'DISPLAY' and not device['attributes'].get('password'):
+            if device['attributes']['dtype'] == 'DISPLAY' and not device['attributes'].get('password'):
                 verrors.add(
                     f'vm.devices.{index}.attributes.password',
                     'Password must be configured for display device in order to clone the VM.'

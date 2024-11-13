@@ -240,7 +240,16 @@ class VirtInstanceDeviceAddArgs(BaseModel):
 
 
 class VirtInstanceDeviceAddResult(BaseModel):
-    result: dict
+    result: Literal[True]
+
+
+class VirtInstanceDeviceUpdateArgs(BaseModel):
+    id: str
+    device: DeviceType
+
+
+class VirtInstanceDeviceUpdateResult(BaseModel):
+    result: Literal[True]
 
 
 class VirtInstanceDeviceDeleteArgs(BaseModel):
@@ -249,7 +258,7 @@ class VirtInstanceDeviceDeleteArgs(BaseModel):
 
 
 class VirtInstanceDeviceDeleteResult(BaseModel):
-    result: dict
+    result: Literal[True]
 
 
 class VirtInstanceStartArgs(BaseModel):

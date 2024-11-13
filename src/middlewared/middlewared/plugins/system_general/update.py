@@ -4,7 +4,7 @@ import syslog
 import middlewared.sqlalchemy as sa
 
 from middlewared.async_validators import validate_port
-from middlewared.schema import accepts, Bool, Datetime, Dict, Int, IPAddr, List, Patch, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.utils import run
 from middlewared.validators import Range
@@ -98,13 +98,19 @@ class SystemGeneralService(ConfigService):
         return data
 
     @private
-    async def validate_general_settings(self, data, schema):
+    async def validate_general_settings(self, data, old_config, schema):
         verrors = ValidationErrors()
 
-        for k in ('ui_port', 'ui_httpsport'):
+        if data['ui_port'] != old_config['ui_port']:
             for ui_address in data['ui_address']:
                 verrors.extend(await validate_port(
-                    self.middleware, f'{schema}.{k}', data[k], 'system.general', ui_address
+                    self.middleware, f'{schema}.ui_port', data['ui_port'], 'system.general', ui_address
+                ))
+
+        if data['ui_httpsport'] != old_config['ui_httpsport']:
+            for ui_address in data['ui_address']:
+                verrors.extend(await validate_port(
+                    self.middleware, f'{schema}.ui_httpsport', data['ui_httpsport'], 'system.general', ui_address
                 ))
 
         if data['ui_port'] == data['ui_httpsport']:
@@ -112,7 +118,7 @@ class SystemGeneralService(ConfigService):
 
         if data['ds_auth'] and not await self.middleware.call('system.is_enterprise'):
             verrors.add(
-                f'{schema}.ds_auth',
+               f'{schema}.ds_auth',
                'Directory services authentication for UI and API access requires an Enterprise license.'
             )
 
@@ -247,7 +253,7 @@ class SystemGeneralService(ConfigService):
         new_config = config.copy()
         new_config.update(data)
 
-        verrors = await self.validate_general_settings(new_config, 'general_settings_update')
+        verrors = await self.validate_general_settings(new_config, config, 'general_settings_update')
         verrors.check()
 
         db_config = new_config.copy()

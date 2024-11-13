@@ -1,7 +1,7 @@
 import os
 
 from middlewared.plugins.boot import BOOT_POOL_NAME
-from middlewared.schema import Dict, File
+from middlewared.schema import Dict, File, Str
 from middlewared.service import CallError
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.validators import check_path_resides_within_volume_sync, Match
@@ -22,6 +22,7 @@ class CDROM(Device):
                 ),
             ], empty=False
         ),
+        Str('dtype', enum=['CDROM'], required=True),
     )
 
     def identity(self):

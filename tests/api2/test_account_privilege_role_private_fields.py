@@ -118,9 +118,9 @@ def vm_device():
             "vm.device",
             {
                 "id": 7,
-                "dtype": "DISPLAY",
                 "vm": 5,
                 "attributes": {
+                    "dtype": "DISPLAY",
                     "bind": "127.0.0.1",
                     "port": 1,
                     "web_port": 1,

@@ -48,13 +48,15 @@ def test_virt_instance_create():
             'name': INS3_NAME,
             'image': INS3_IMAGE,
             'devices': [
-                {'name': 'tpm', 'dev_type': 'TPM', 'path': '/dev/tpm0', 'pathrm': '/dev/tmprm0'},
+                {'dev_type': 'TPM', 'path': '/dev/tpm0', 'pathrm': '/dev/tmprm0'},
+                {'dev_type': 'PROXY', 'source_proto': 'TCP', 'source_port': 60123, 'dest_proto': 'TCP', 'dest_port': 2000},
             ],
         }, job=True)
         ssh(f'incus exec {INS3_NAME} cat /etc/os-release | grep "{INS3_OS}"')
 
         devices = call('virt.instance.device_list', INS3_NAME)
-        assert any(i for i in devices if i['name'] == 'tpm'), devices
+        assert any(i for i in devices if i['name'] == 'tpm0'), devices
+        assert any(i for i in devices if i['name'] == 'proxy0'), devices
 
         assert wait_agent.wait(timeout=60)
         ssh(f'incus exec {INS1_NAME} cat /etc/os-release | grep "{INS1_OS}"')
@@ -96,19 +98,19 @@ def test_virt_instance_device_add():
     assert ssh(f'incus list {INS1_NAME} -f json| jq ".[].status"').strip() == '"Running"'
     call('virt.instance.stop', INS1_NAME, {'force': True}, job=True)
 
-    call('virt.instance.device_add', INS1_NAME, {
+    assert call('virt.instance.device_add', INS1_NAME, {
         'name': 'tpm',
         'dev_type': 'TPM',
-    })
+    }) is True
 
-    call('virt.instance.device_add', INS3_NAME, {
+    assert call('virt.instance.device_add', INS3_NAME, {
         'name': 'proxy',
         'dev_type': 'PROXY',
         'source_proto': 'TCP',
         'source_port': 8005,
         'dest_proto': 'TCP',
         'dest_port': 80,
-    })
+    }) is True
 
     # TODO: adding to a VM causes start to hang at the moment (zombie process)
     # call('virt.instance.device_add', 'debian', {
@@ -148,11 +150,35 @@ def test_virt_instance_device_add():
         assert any(i for i in devices if i['name'] == 'disk1'), devices
         with mkfile(f'/mnt/{ds}/testfile'):
             ssh(f'incus exec {INS3_NAME} ls /host/testfile')
-        call('virt.instance.device_delete', INS3_NAME, 'disk1')
+        assert call('virt.instance.device_delete', INS3_NAME, 'disk1') is True
+
+    with dataset('virtshare', {'type': 'VOLUME', 'volsize': 200 * 1024 * 1024, 'sparse': True}) as ds:
+        ssh(f'mkfs.ext3 /dev/zvol/{ds}')
+        call('virt.instance.device_add', INS3_NAME, {
+            'name': 'disk2',
+            'dev_type': 'DISK',
+            'source': f'/dev/zvol/{ds}',
+            'destination': '/zvol',
+        })
+        devices = call('virt.instance.device_list', INS3_NAME)
+        assert any(i for i in devices if i['name'] == 'disk2'), devices
+        ssh(f'incus exec {INS3_NAME} mount|grep "on /zvol"|grep ext3')
+        assert call('virt.instance.device_delete', INS3_NAME, 'disk2') is True
+
+
+def test_virt_instance_device_update():
+    assert call('virt.instance.device_update', INS3_NAME, {
+        'name': 'proxy',
+        'dev_type': 'PROXY',
+        'source_proto': 'TCP',
+        'source_port': 8005,
+        'dest_proto': 'TCP',
+        'dest_port': 81,
+    }) is True
 
 
 def test_virt_instance_proxy():
-    ssh(f'incus exec -T {INS3_NAME} -- bash -c "nohup nc -l 0.0.0.0 80 > /tmp/nc 2>&1 &"')
+    ssh(f'incus exec -T {INS3_NAME} -- bash -c "nohup nc -l 0.0.0.0 81 > /tmp/nc 2>&1 &"')
     ssh('echo "foo" | nc -w 1 localhost 8005 || true')
     rv = ssh(f'incus exec {INS3_NAME} -- cat /tmp/nc')
 
@@ -161,7 +187,7 @@ def test_virt_instance_proxy():
 
 def test_virt_instance_device_delete():
     call('virt.instance.stop', INS1_NAME, {'force': True}, job=True)
-    call('virt.instance.device_delete', INS1_NAME, 'tpm')
+    assert call('virt.instance.device_delete', INS1_NAME, 'tpm') is True
     devices = call('virt.instance.device_list', INS1_NAME)
     assert not any(i for i in devices if i['name'] == 'tpm'), devices
 

@@ -62,7 +62,7 @@ class ApiKeyUpdateArgs(BaseModel):
 
 
 class ApiKeyUpdateResult(BaseModel):
-    result: ApiKeyEntryWithKey
+    result: ApiKeyEntryWithKey | ApiKeyEntry
 
 
 class ApiKeyDeleteArgs(BaseModel):

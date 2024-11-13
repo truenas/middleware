@@ -1,4 +1,4 @@
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, LongString
 
 
 __all__ = [
@@ -42,7 +42,7 @@ class TrueNASGetEULAArgs(BaseModel):
 
 
 class TrueNASGetEULAResult(BaseModel):
-    result: str | None
+    result: LongString | None
 
 
 class TrueNASIsEULAAcceptedArgs(BaseModel):

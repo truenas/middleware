@@ -1,7 +1,9 @@
 import asyncio
 import itertools
 
+from middlewared.plugins.fc.utils import wwn_as_colon_hex
 from middlewared.service import CallError, Service, job
+from middlewared.service_exception import MatchNotFound
 from middlewared.utils import run
 
 CHUNK_SIZE = 20
@@ -178,8 +180,14 @@ class iSCSITargetAluaService(Service):
                                                                         [['enabled', '=', True], ['locked', '=', False]],
                                                                         {'select': ['name', 'id', 'type']})}
 
-        # targets: dict[id]: name
-        targets = {t['id']: t['name'] for t in await self.middleware.call('iscsi.target.query', [], {'select': ['id', 'name']})}
+        # targets: dict[id]: {'name': name, 'mode': mode}
+        targets = {t['id']: t for t in await self.middleware.call('iscsi.target.query',
+                                                                  [],
+                                                                  {'select': ['id', 'name', 'mode']})}
+
+        # fcports: dict[id]: wwpn
+        key = 'wwpn_b' if thisnode == 'B' else 'wwpn'
+        fcports = {t['target']['id']: t[key] for t in await self.middleware.call('fcport.query')}
 
         assocs = await self.middleware.call('iscsi.targetextent.query')
 
@@ -205,8 +213,20 @@ class iSCSITargetAluaService(Service):
             if extent_id in extents:
                 target_id = assoc['target']
                 if target_id in targets:
-                    iqn = f'{iqn_basename}:{targets[target_id]}'
-                    await self.middleware.call('iscsi.scst.replace_lun', iqn, extents[extent_id]['name'], assoc['lunid'])
+                    target_name = targets[target_id]['name']
+                    target_mode = targets[target_id]['mode']
+                    if target_mode in ['ISCSI', 'BOTH']:
+                        iqn = f'{iqn_basename}:{target_name}'
+                        await self.middleware.call('iscsi.scst.replace_iscsi_lun',
+                                                   iqn,
+                                                   extents[extent_id]['name'],
+                                                   assoc['lunid'])
+                    if target_mode in ['FC', 'BOTH'] and target_id in fcports:
+                        if wwpn := wwn_as_colon_hex(fcports[target_id]):
+                            await self.middleware.call('iscsi.scst.replace_fc_lun',
+                                                       wwpn,
+                                                       extents[extent_id]['name'],
+                                                       assoc['lunid'])
         self.logger.debug('Updated LUNs')
         await self.middleware.call('iscsi.scst.set_node_optimized', thisnode)
         self.logger.debug('Switched optimized node')
@@ -343,6 +363,7 @@ class iSCSITargetAluaService(Service):
                     return
                 else:
                     job.set_progress(25, 'Logged in HA targets')
+                    self.logger.debug('Logged in HA targets')
 
                 # Now that we've logged in the HA targets, regenerate the config so that the
                 # dev_disk DEVICEs are present (we cleared _standby_write_empty_config above).
@@ -353,6 +374,7 @@ class iSCSITargetAluaService(Service):
                 # Sanity check that all the targets surfaced up thru SCST okay.
                 devices = list(itertools.chain.from_iterable([x for x in after_iqns.values() if x is not None]))
                 if await self.middleware.call('iscsi.scst.check_cluster_mode_paths_present', devices):
+                    self.logger.debug(f'cluster_mode surfaced for {devices}')
                     break
 
                 self.logger.debug('Detected missing cluster_mode.  Retrying.')
@@ -505,9 +527,10 @@ class iSCSITargetAluaService(Service):
             # it will now offer the targets to the world.
             await self.middleware.call('service.reload', 'iscsitarget')
             job.set_progress(100, 'Reloaded iscsitarget service')
+            self.logger.debug(f'Fixed cluster_mode for {len(devices)} extents (reloaded)')
         else:
             job.set_progress(100, 'Fixed cluster_mode')
-        self.logger.debug(f'Fixed cluster_mode for {len(devices)} extents')
+            self.logger.debug(f'Fixed cluster_mode for {len(devices)} extents')
 
     async def wait_cluster_mode(self, target_id, extent_id):
         """After we add a target/extent mapping we wish to wait for the ALUA state to settle."""
@@ -575,10 +598,47 @@ class iSCSITargetAluaService(Service):
         """This is called on the STANDBY node to remove an extent from a target."""
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call("failover.status") == 'BACKUP':
             try:
-                # First we will remove the LUN from the target.
+                # First we will remove the LUN from the target.  We need to determine whether it
+                # is ISCSI, FC, or BOTH
                 global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
-                iqn = f'{global_basename}:{target_name}'
-                await self.middleware.call('iscsi.scst.delete_lun', iqn, lun)
+                try:
+                    filters = [['name', '=', target_name]]
+                    options = {'select': ['mode', 'id'], 'get': True}
+                    attrs = await self.middleware.call('iscsi.target.query', filters, options)
+
+                    # iSCSI
+                    if attrs['mode'] in ['ISCSI', 'BOTH']:
+                        iqn = f'{global_basename}:{target_name}'
+                        try:
+                            await self.middleware.call('iscsi.scst.delete_iscsi_lun', iqn, lun)
+                            self.logger.debug('Deleted iSCSI LUN %r for target: %r', lun, target_name)
+                        except Exception:
+                            self.logger.warning('Failed to delete iSCSI LUN %r for target: %r', lun, target_name)
+
+                    # Fibre Channel
+                    if attrs['mode'] in ['FC', 'BOTH']:
+                        filters = [['target.id', '=', attrs['id']]]
+                        options = {'select': ['wwpn', 'wwpn_b']}
+                        fcport = await self.middleware.call('fcport.query', filters, options)
+                        if fcport:
+                            this_node = await self.middleware.call('failover.node')
+                            if this_node == 'A':
+                                wwpn = fcport[0].get('wwpn')
+                            elif this_node == 'B':
+                                wwpn = fcport[0].get('wwpn_b')
+                            else:
+                                wwpn = None
+                        if wwpn:
+                            wwpn = wwn_as_colon_hex(wwpn)
+                            if wwpn:
+                                try:
+                                    await self.middleware.call('iscsi.scst.delete_fc_lun', wwpn, lun)
+                                    self.logger.debug('Deleted Fibre Channel LUN %r for target: %r', lun, target_name)
+                                except Exception:
+                                    self.logger.warning('Failed to delete Fibre Channel LUN %r for target: %r',
+                                                        lun, target_name)
+                except MatchNotFound:
+                    self.logger.warning('Could not retrieve mode for target: %r', target_name)
 
                 # Next we will disable cluster_mode for the extent
                 ha_iqn = f'{global_basename}:HA:{target_name}'

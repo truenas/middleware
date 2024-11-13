@@ -1315,6 +1315,13 @@ class UserService(CRUDService):
                     'A user cannot belong to more than 64 auxiliary groups.'
                 )
 
+            for idx, dbid in enumerate(data.get('groups') or []):
+                if dbid >= BASE_SYNTHETIC_DATASTORE_ID:
+                    verrors.add(
+                        f'{schema}.groups.{idx}',
+                        'Local users may not be members of directory services groups.'
+                    )
+
         if 'full_name' in data and ':' in data['full_name']:
             verrors.add(
                 f'{schema}.full_name',
@@ -1982,6 +1989,14 @@ class GroupService(CRUDService):
                     f'A privilege {privilege["name"]!r} already uses this group ID.',
                     errno.EINVAL,
                 )
+
+        for idx, dbid in enumerate(data.get('users', [])):
+            if dbid >= BASE_SYNTHETIC_DATASTORE_ID:
+                verrors.add(
+                    f'{schema}.users.{idx}',
+                    'Directory services users may not be added as members of local groups.'
+                )
+                return
 
         if 'users' in data:
             existing = {

@@ -1,6 +1,13 @@
+import pytest
+
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.utils import call, client
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
+
+BASE_SYNTHETIC_DATASTORE_ID = 100000000
+DS_USR_VERR_STR = "Directory services users may not be added as members of local groups."
+DS_GRP_VERR_STR = "Local users may not be members of directory services groups."
 
 
 def test_create_account_audit():
@@ -126,3 +133,25 @@ def test_update_account_using_token():
         assert c.call("auth.login_with_token", token)
 
         c.call("user.update", 1, {})
+
+
+def test_create_local_group_ds_user():
+    with pytest.raises(ValidationErrors) as ve:
+        with group({"name": "local_ds", "users": [BASE_SYNTHETIC_DATASTORE_ID + 1]}):
+            pass
+
+    assert DS_USR_VERR_STR in str(ve)
+
+
+def test_create_local_user_ds_group():
+    with pytest.raises(ValidationErrors) as ve:
+        with user({
+            "username": "local_ds",
+            "groups": [BASE_SYNTHETIC_DATASTORE_ID + 1],
+            "full_name": "user_ds",
+            "group_create": True,
+            "password": "test1234",
+        }):
+            pass
+
+    assert DS_GRP_VERR_STR in str(ve)

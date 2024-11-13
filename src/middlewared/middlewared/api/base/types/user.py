@@ -1,6 +1,7 @@
 import string
 
 from annotated_types import Ge, Le
+from pydantic import Field
 from pydantic.functional_validators import AfterValidator
 from typing_extensions import Annotated
 
@@ -52,12 +53,6 @@ def validate_local_username(val: str) -> str:
     return validate_username(val)
 
 
-def validate_remote_username(val: str) -> str:
-    # Restrictions on names returned by nss_winbind are more lax than we place
-    # on our local usernames. \\ is used as a separator for domain and username
-    return validate_username(val, DEFAULT_VALID_CHARS + '\\', None, None)
-
-
 def validate_sid(value: str) -> str:
     value = value.strip()
     value = value.upper()
@@ -70,7 +65,7 @@ def validate_sid(value: str) -> str:
 
 
 LocalUsername = Annotated[str, AfterValidator(validate_local_username)]
-RemoteUsername = Annotated[str, AfterValidator(validate_remote_username)]
+RemoteUsername = Annotated[str, Field(min_length=1)]
 LocalUID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
 
 LocalGID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
