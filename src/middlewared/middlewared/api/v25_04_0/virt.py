@@ -86,6 +86,7 @@ class VirtInstanceImageChoicesResult(BaseModel):
 
 class Device(BaseModel):
     name: Optional[NonEmptyString] = None
+    description: Optional[NonEmptyString] = None
     readonly: bool = False
 
 

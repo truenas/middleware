@@ -39,52 +39,63 @@ class VirtInstanceDeviceService(Service):
         raw_devices.update(instance['raw']['devices'])
 
         devices = []
+        context = {}
         for k, v in raw_devices.items():
-            if (device := await self.incus_to_device(k, v)) is not None:
+            if (device := await self.incus_to_device(k, v, context)) is not None:
                 devices.append(device)
 
         return devices
 
     @private
-    async def incus_to_device(self, name: str, incus: dict[str, Any]):
-        device = {'name': name, 'readonly': incus.get('readonly') or False}
+    def unsupported():
+        self.logger.trace('Proxy device not supported by API, skipping.')
+        return None
 
-        def unsupported():
-            self.logger.trace('Proxy device not supported by API, skipping.')
-            return None
+    @private
+    async def incus_to_device(self, name: str, incus: dict[str, Any], context: dict):
+        device = {
+            'name': name,
+            'description': None,
+            'readonly': incus.get('readonly') or False,
+        }
 
         match incus['type']:
             case 'disk':
                 device['dev_type'] = 'DISK'
                 device['source'] = incus.get('source')
                 device['destination'] = incus.get('path')
+                device['description'] = f'Disk: {device["source"]} -> {device["destination"]}'
             case 'nic':
                 device['dev_type'] = 'NIC'
                 device['network'] = incus.get('network')
+                device['description'] = f'NIC: {device["network"]}'
             case 'proxy':
                 device['dev_type'] = 'PROXY'
                 # For now follow docker lead for simplification
                 # only allowing to bind on host (host -> container)
                 if incus.get('bind') == 'instance':
-                    return unsupported()
+                    return self.unsupported()
 
                 proto, addr, ports = incus['listen'].split(':')
                 if proto == 'unix' or '-' in ports or ',' in ports:
-                    return unsupported()
+                    return self.unsupported()
 
                 device['source_proto'] = proto.upper()
                 device['source_port'] = int(ports)
 
                 proto, addr, ports = incus['connect'].split(':')
                 if proto == 'unix' or '-' in ports or ',' in ports:
-                    return unsupported()
+                    return self.unsupported()
 
                 device['dest_proto'] = proto.upper()
                 device['dest_port'] = int(ports)
+
+                device['description'] = f'Proxy: {device["source_proto"]}/{device["source_port"]} -> {device["dest_proto"]}/{device["dest_port"]}'
             case 'tpm':
                 device['dev_type'] = 'TPM'
                 device['path'] = incus.get('path')
                 device['pathrm'] = incus.get('pathrm')
+                device['description'] = 'TPM'
             case 'usb':
                 device['dev_type'] = 'USB'
                 if incus.get('busnum') is not None:
@@ -94,22 +105,44 @@ class VirtInstanceDeviceService(Service):
                 if incus.get('productid') is not None:
                     device['product_id'] = incus['productid']
                 if incus.get('vendorid') is not None:
-                    device['vendir_id'] = incus['vendorid']
+                    device['vendor_id'] = incus['vendorid']
+
+                if 'usb_choices' not in context:
+                    context['usb_choices'] = await self.middleware.call('virt.device.usb_choices')
+
+                for choice in context['usb_choices'].values():
+                    if device.get('bus') and choice['bus'] != device['bus']:
+                        continue
+                    if device.get('dev') and choice['dev'] != device['dev']:
+                        continue
+                    if device.get('product_id') and choice['product_id'] != device['product_id']:
+                        continue
+                    if device.get('vendor_id') and choice['vendor_id'] != device['product_id']:
+                        continue
+                    device['description'] = f'USB: {choice["product"]}'
+                    break
+                else:
+                    device['description'] = 'USB: Unknown'
             case 'gpu':
                 device['dev_type'] = 'USB'
-                device['id'] = incus['id']
                 device['gpu_type'] = incus['gputype'].upper()
                 match incus['gputype']:
                     case 'physical':
-                        pass
-                    case 'mdev':
-                        pass
-                    case 'mig':
-                        device['mig_uuid'] = incus['mig.uuid']
-                    case 'sriov':
-                        pass
+                        device['pci'] = incus['pci']
+                        if 'gpu_choices' not in context:
+                            context['gpu_choices'] = await self.middleware.call(
+                                'virt.device.gpu_choices', 'CONTAINER', 'PHYSICAL',
+                            )
+                        for key, choice in context['gpu_choices'].items():
+                            if key == incus['pci']:
+                                device['description'] = f'GPU: {choice["description"]}'
+                                break
+                        else:
+                            device['description'] = 'GPU: Unknown'
+                    case 'mdev' | 'mig' | 'srviov':
+                        return self.unsupported()
             case _:
-                return unsupported()
+                return self.unsupported()
 
         return device
 
