@@ -1,25 +1,22 @@
-#!/usr/bin/env python3
-
-import pytest
-import sys
 import os
 import enum
 import secrets
 import string
 from base64 import b64decode, b64encode
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import PUT, GET, SSH_TEST
-from auto_config import (
-    user,
-    password,
-)
+
+import pytest
+from pytest_dependency import depends
+
+from functions import SSH_TEST
+from auto_config import user, password
 from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.smb import copy_stream, get_stream, smb_share, smb_mount
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
-from pytest_dependency import depends
+
+# DO NOT change the order of these imports
+# or the ntstatus import will fail
 from protocols import SMB, smb_connection
 from samba import ntstatus
 from samba import NTSTATUSError
@@ -129,7 +126,7 @@ def test_002_check_client_count(request):
         username=SMB_USER,
         password=SMB_PWD,
         smb1=False
-    ) as c:
+    ):
         assert call("smb.client_count") == 1
 
 
@@ -194,11 +191,7 @@ def test_011_check_dos_ro_cred_handling(request):
 @pytest.mark.dependency(name="SMB1_ENABLED")
 def test_050_enable_smb1(request):
     depends(request, ["SMB_SHARE_CREATED"])
-    payload = {
-        "enable_smb1": True,
-    }
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
+    call("smb.update", {"enable_smb1": True})
 
 
 @pytest.mark.dependency(name="SHARE_IS_WRITABLE_SMB1")
@@ -508,16 +501,15 @@ SMB quotas.
 def test_089_add_to_builtin_admins(request):
     depends(request, ["SHARE_IS_WRITABLE"])
     smbuser_id = TEST_DATA['user']['id']
-    ba = GET('/group?group=builtin_administrators').json()
-    assert len(ba) != 0
-
-    userinfo = GET(f'/user/id/{smbuser_id}').json()
+    ba = call(
+        'group.query',
+        [['group', '=', 'builtin_administrators']],
+        {'get': True}
+    )
+    userinfo = call('user.query', [['id', '=', smbuser_id]], {'get': True})
     groups = userinfo['groups']
-    groups.append(ba[0]['id'])
-
-    payload = {'groups': groups}
-    results = PUT(f"/user/id/{smbuser_id}/", payload)
-    assert results.status_code == 200, f"res: {results.text}, payload: {payload}"
+    groups.append(ba['id'])
+    call("user.update", smbuser_id, {'groups': groups})
 
 
 @pytest.mark.parametrize('proto', ["SMB2"])
