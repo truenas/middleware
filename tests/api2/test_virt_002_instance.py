@@ -71,6 +71,11 @@ def test_virt_instance_update():
     rv = ssh(f'incus exec {INS2_NAME} env | grep ^FOO=')
     assert rv.strip() == 'FOO=BAR'
 
+    call('virt.instance.update', INS2_NAME, {'cpu': None, 'memory': None, 'environment': {}}, job=True)
+
+    rv = ssh(f'incus exec {INS2_NAME} env | grep ^FOO= || true')
+    assert rv.strip() == ''
+
 
 def test_virt_instance_stop():
     # Stop only one of them so the others are stopped during delete

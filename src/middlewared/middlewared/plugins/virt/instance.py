@@ -103,16 +103,25 @@ class VirtInstanceService(CRUDService):
 
         # Do not validate image_choices because its an expansive operation, just fail on creation
 
-    def __data_to_config(self, data):
+    def __data_to_config(self, data: dict, raw: dict = None):
         config = {}
-        if data.get('environment'):
-            for k, v in data['environment'].items():
-                config[f'environment.{k}'] = v
-        if data.get('cpu'):
+        if 'environment' in data:
+            # If we are updating environment we need to remove current values
+            if raw:
+                for i in list(filter(lambda x: x.startswith('environment.'), raw.keys())):
+                    raw.pop(i)
+            if data['environment']:
+                for k, v in data['environment'].items():
+                    config[f'environment.{k}'] = v
+
+        if 'cpu' in data:
             config['limits.cpu'] = data['cpu']
 
-        if data.get('memory'):
-            config['limits.memory'] = str(int(data['memory'] / 1024 / 1024)) + 'MiB'
+        if 'memory' in data:
+            if data['memory']:
+                config['limits.memory'] = str(int(data['memory'] / 1024 / 1024)) + 'MiB'
+            else:
+                config['limits.memory'] = None
 
         if data.get('autostart') is not None:
             config['boot.autostart'] = str(data['autostart']).lower()
@@ -220,7 +229,7 @@ class VirtInstanceService(CRUDService):
         await self.validate(data, 'virt_instance_update', verrors, old=instance)
         verrors.check()
 
-        instance['raw']['config'].update(self.__data_to_config(data))
+        instance['raw']['config'].update(self.__data_to_config(data, instance['raw']['config']))
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': instance['raw']})
 
         return await self.middleware.call('virt.instance.get_instance', id)
