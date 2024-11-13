@@ -1,5 +1,7 @@
 import json
 import os
+import re
+import time
 import types
 
 import boto3
@@ -309,3 +311,30 @@ def test_other_transfer_settings(cloud_backup_task, options):
     run_task(cloud_backup_task.task)
     result = ssh(f'grep "{options}" /var/log/middlewared.log')
     assert options in result
+
+
+def test_snapshot():
+    with dataset("cloud_backup_snapshot") as ds:
+        ssh(f"mkdir -p /mnt/{ds}/dir1/dir2")
+        ssh(f"dd if=/dev/urandom of=/mnt/{ds}/dir1/dir2/blob bs=1M count=1024")
+
+        with task({
+            "path": f"/mnt/{ds}",
+            "credentials": s3_credential["id"],
+            "attributes": {
+                "bucket": AWS_BUCKET,
+                "folder": "cloud_backup",
+            },
+            "password": "test",
+            "snapshot": True
+        }) as t:
+            job_id = call("cloud_backup.sync", t["id"], {"dry_run": True})
+            time.sleep(2)
+
+            ps_ax = ssh("ps ax | grep restic")
+            call("core.job_wait", job_id, job=True)
+
+            assert re.search(rf"restic .+ /mnt/{ds}/.zfs/snapshot/cloud_backup-[0-9]+-[0-9]+/dir1/dir2", ps_ax)
+
+        time.sleep(1)
+        assert call("zfs.snapshot.query", [["dataset", "=", ds]]) == []
