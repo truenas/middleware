@@ -1390,13 +1390,14 @@ class SharingSMBService(SharingService):
             except ValidationErrors as errs:
                 verrors.add_child(f'{schema_name}.auxsmbconf', errs)
 
-        stat_info = await self.middleware.call('filesystem.stat', data['path'])
-        if not data['acl'] and stat_info['acl']:
-            verrors.add(
-                f'{schema_name}.acl',
-                f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
-                'of SMB share.'
-            )
+        if data.get('path') and path_location(data['path']) is FSLocation.LOCAL:
+            stat_info = await self.middleware.call('filesystem.stat', data['path'])
+            if not data['acl'] and stat_info['acl']:
+                verrors.add(
+                    f'{schema_name}.acl',
+                    f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
+                    'of SMB share.'
+                )
 
         if data.get('name') is not None:
             await self.validate_share_name(data['name'], schema_name, verrors)
