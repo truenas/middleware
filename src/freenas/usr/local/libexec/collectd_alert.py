@@ -25,7 +25,7 @@
 # SUCH DAMAGE.
 #
 
-import pickle as pickle
+import json
 import os
 import re
 import sys
@@ -46,9 +46,9 @@ def main():
 
     data = {}
     if os.path.exists(COLLECTD_FILE):
-        with open(COLLECTD_FILE, 'rb') as f:
+        with open(COLLECTD_FILE, 'r') as f:
             try:
-                data = pickle.loads(f.read())
+                data = json.load(f)
             except:
                 pass
 
@@ -67,8 +67,8 @@ def main():
     else:
         data[k] = v;
 
-    with open(COLLECTD_FILE, 'wb') as f:
-        f.write(pickle.dumps(data))
+    with open(COLLECTD_FILE, 'w') as f:
+        json.dump(data, f)
 
     lock.release()
 
