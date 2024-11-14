@@ -4,6 +4,8 @@ import itertools
 
 from middlewared.plugins.cloud.path import check_local_path
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
+from middlewared.plugins.cloud.script import env_mapping, run_script
+from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int
 from middlewared.service import CallError, Service, item_method, job, private
@@ -15,7 +17,6 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
     snapshot = None
     clone = None
     stdin = None
-    cmd = None
     try:
         local_path = cloud_backup["path"]
         if local_path.startswith("/dev/zvol"):
@@ -54,8 +55,10 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
             cmd = ["--stdin", "--stdin-filename", "volume"]
         else:
             await check_local_path(middleware, local_path)
+            if cloud_backup["snapshot"]:
+                snapshot_name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}"
+                snapshot, local_path = await create_snapshot(middleware, local_path, snapshot_name)
 
-        if cmd is None:
             cmd = [local_path]
 
         args = await middleware.call("cloud_backup.transfer_setting_args")
@@ -67,10 +70,21 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
         cmd.extend(["--exclude=" + excl for excl in cloud_backup["exclude"]])
 
         restic_config = get_restic_config(cloud_backup)
-
         cmd = restic_config.cmd + ["--verbose", "backup"] + cmd
 
+        env = env_mapping("CLOUD_BACKUP_", {
+            **{k: v for k, v in cloud_backup.items() if k in [
+                "id", "description", "snapshot", "password", "keep_last", "transfer_setting"
+            ]},
+            **cloud_backup["credentials"]["provider"],
+            **cloud_backup["attributes"],
+            "path": local_path
+        })
+        await run_script(job, "Pre-script", cloud_backup["pre_script"], env)
+
         await run_restic(job, cmd, restic_config.env, stdin, track_progress=True)
+
+        await run_script(job, "Post-script", cloud_backup["post_script"], env)
     finally:
         if stdin:
             try:

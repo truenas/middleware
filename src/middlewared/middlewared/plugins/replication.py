@@ -585,7 +585,7 @@ class ReplicationService(CRUDService):
             if data["netcat_active_side_port_min"] is not None and data["netcat_active_side_port_max"] is not None:
                 if data["netcat_active_side_port_min"] > data["netcat_active_side_port_max"]:
                     verrors.add("netcat_active_side_port_max",
-                                "Please specify value greater or equal than netcat_active_side_port_min")
+                                "Please specify value greater than or equal to netcat_active_side_port_min")
 
             if data["compression"] is not None:
                 verrors.add("compression", "Compression is not supported for SSH+netcat replication")
