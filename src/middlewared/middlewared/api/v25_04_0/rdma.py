@@ -1,4 +1,4 @@
-from middlewared.api.base import BaseModel, single_argument_result
+from middlewared.api.base import BaseModel
 from typing import Literal
 
 __all__ = [
@@ -25,12 +25,16 @@ class RdmaCardConfigArgs(BaseModel):
     pass
 
 
-@single_argument_result
-class RdmaCardConfigResult(BaseModel):
+class RdmaCardConfig(BaseModel):
+    name: str
     serial: str
     product: str
     part_number: str
     links: list[RdmaLinkConfig]
+
+
+class RdmaCardConfigResult(BaseModel):
+    result: list[RdmaCardConfig]
 
 
 class RdmaCapableProtocolsArgs(BaseModel):

@@ -87,7 +87,7 @@ class RDMAService(Service):
         """Return a list containing details about each RDMA card.  Dual cards
         will contain two RDMA links."""
         self.logger.info('Fetching RDMA card choices')
-        links = self.middleware.call_sync('rdma.get_link_choices')
+        links = self.middleware.call_sync('rdma.get_link_choices', True)
         grouper = {}
         for link in links:
             rdma = link["rdma"]
