@@ -1,8 +1,10 @@
 import middlewared.sqlalchemy as sa
+from middlewared.api import api_method
+from middlewared.api.current import TNCEntry, TNCUpdateArgs, TNCUpdateResult
 from middlewared.service import ConfigService
 
 
-class TrueCommandModel(sa.Model):
+class TrueNASConnectModel(sa.Model):
     __tablename__ = 'truenas_connect'
 
     id = sa.Column(sa.Integer(), primary_key=True)
@@ -22,3 +24,17 @@ class TrueNASConnectService(ConfigService):
         datastore = 'truenas_connect'
         cli_private = True
         namespace = 'tn_connect'
+        entry = TNCEntry
+
+    @api_method(TNCUpdateArgs, TNCUpdateResult)
+    async def do_update(self, data):
+        """
+        Update TrueNAS Connect configuration.
+        """
+        config = await self.config()
+        config.update(data)
+        # TODO: Handle the case where user imports same db in a different system
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, config['id'], {'enabled': config['enabled']}
+        )
+        return await self.config()
