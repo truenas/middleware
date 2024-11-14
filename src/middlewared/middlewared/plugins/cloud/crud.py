@@ -100,5 +100,5 @@ class CloudTaskServiceMixin:
         if app and not credential_has_full_admin(app.authenticated_credentials):
             for k in ["pre_script", "post_script"]:
                 if data[k]:
-                    verrors.add(f"{name}.{k}", "The ability to edit cloud sync pre and post scripts is limited to "
+                    verrors.add(f"{name}.{k}", "The ability to edit pre-scripts and post-scripts is limited to "
                                                "users who have full administrative credentials")

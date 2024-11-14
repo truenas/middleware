@@ -5,9 +5,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from middlewared.plugins.cloud_sync import (
-    get_dataset_recursive, FsLockManager, lsjson_error_excerpt, RcloneVerboseLogCutter
-)
+from middlewared.plugins.cloud_sync import FsLockManager, lsjson_error_excerpt, RcloneVerboseLogCutter
+from middlewared.plugins.cloud.snapshot import get_dataset_recursive
 
 
 def test__get_dataset_recursive_1():

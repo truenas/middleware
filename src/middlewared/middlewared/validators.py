@@ -195,8 +195,8 @@ class Range(ValidatorBase):
 
         error = {
             (True, True): f"between {self.min} and {self.max}",
-            (False, True): f"less or equal than {self.max}",
-            (True, False): f"greater or equal than {self.min}",
+            (False, True): f"less than or equal to {self.max}",
+            (True, False): f"greater than or equal to {self.min}",
             (False, False): "",
         }[self.min is not None, self.max is not None]
 

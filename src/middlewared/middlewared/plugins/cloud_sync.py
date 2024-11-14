@@ -10,6 +10,8 @@ from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_schema
 from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
+from middlewared.plugins.cloud.script import env_mapping, run_script
+from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.rclone.remote.storjix import StorjIxError
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Password, Patch, Str
 from middlewared.service import (
@@ -20,8 +22,7 @@ from middlewared.utils import Popen, run
 from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
-from middlewared.utils.time_utils import utc_now
-from middlewared.validators import Range, Time, validate_schema
+from middlewared.validators import Range, Time
 
 import aiorwlock
 import asyncio
@@ -166,7 +167,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
             args.append("--fast-list")
 
         if cloud_sync["follow_symlinks"]:
-            args.extend(["-L"])
+            args.append("-L")
 
         if cloud_sync["transfers"]:
             args.extend(["--transfers", str(cloud_sync["transfers"])])
@@ -178,7 +179,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
             ])])
 
         if dry_run:
-            args.extend(["--dry-run"])
+            args.append("--dry-run")
 
         args += config.extra_args
 
@@ -187,46 +188,28 @@ async def rclone(middleware, job, cloud_sync, dry_run):
         args += [cloud_sync["transfer_mode"].lower()]
 
         if cloud_sync["create_empty_src_dirs"]:
-            args.extend(["--create-empty-src-dirs"])
+            args.append("--create-empty-src-dirs")
 
         snapshot = None
         if cloud_sync["direction"] == "PUSH":
             if cloud_sync["snapshot"]:
-                dataset, recursive = get_dataset_recursive(
-                    await middleware.call("zfs.dataset.query", [["type", "=", "FILESYSTEM"]]),
-                    cloud_sync["path"],
-                )
-                snapshot_name = (
-                    f"cloud_sync-{cloud_sync.get('id', 'onetime')}-{utc_now().strftime('%Y%m%d%H%M%S')}"
-                )
-
-                snapshot = {"dataset": dataset["name"], "name": snapshot_name}
-                await middleware.call("zfs.snapshot.create", dict(snapshot, recursive=recursive))
-
-                relpath = os.path.relpath(path, dataset["properties"]["mountpoint"]["value"])
-                path = os.path.normpath(os.path.join(
-                    dataset["properties"]["mountpoint"]["value"], ".zfs", "snapshot", snapshot_name, relpath
-                ))
+                snapshot_name = f"cloud_sync-{cloud_sync.get('id', 'onetime')}"
+                snapshot, path = await create_snapshot(middleware, path, snapshot_name)
 
             args.extend([path, config.remote_path])
         else:
             args.extend([config.remote_path, path])
 
-        env = {}
-        for k, v in (
-            [(k, v) for (k, v) in cloud_sync.items()
-             if k in ["id", "description", "direction", "transfer_mode", "encryption", "filename_encryption",
-                      "encryption_password", "encryption_salt", "snapshot"]] +
-            list(cloud_sync["credentials"]["provider"].items()) +
-            list(cloud_sync["attributes"].items())
-        ):
-            if type(v) in (bool,):
-                env[f"CLOUD_SYNC_{k.upper()}"] = str(int(v))
-            if type(v) in (int, str):
-                env[f"CLOUD_SYNC_{k.upper()}"] = str(v)
-        env["CLOUD_SYNC_PATH"] = path
-
-        await run_script(job, env, cloud_sync["pre_script"], "Pre-script")
+        env = env_mapping("CLOUD_SYNC_", {
+            **{k: v for k, v in cloud_sync.items() if k in [
+                "id", "description", "direction", "transfer_mode", "encryption", "filename_encryption",
+                "encryption_password", "encryption_salt", "snapshot"
+            ]},
+            **cloud_sync["credentials"]["provider"],
+            **cloud_sync["attributes"],
+            "path": path
+        })
+        await run_script(job, "Pre-script", cloud_sync["pre_script"], env)
 
         job.middleware.logger.trace("Running %r", args)
         proc = await Popen(
@@ -237,31 +220,30 @@ async def rclone(middleware, job, cloud_sync, dry_run):
         check_cloud_sync = asyncio.ensure_future(rclone_check_progress(job, proc))
         cancelled_error = None
         try:
+            await proc.wait()
+        except asyncio.CancelledError as e:
+            cancelled_error = e
             try:
-                await proc.wait()
-            except asyncio.CancelledError as e:
-                cancelled_error = e
-                try:
-                    await middleware.call("service.terminate_process", proc.pid)
-                except CallError as e:
-                    job.middleware.logger.warning(f"Error terminating rclone on cloud sync abort: {e!r}")
+                await middleware.call("service.terminate_process", proc.pid)
+            except CallError as e:
+                job.middleware.logger.warning(f"Error terminating rclone on cloud sync abort: {e!r}")
         finally:
             await asyncio.wait_for(check_cloud_sync, None)
 
         if snapshot:
-            await middleware.call("zfs.snapshot.delete", f"{snapshot['dataset']}@{snapshot['name']}")
+            await middleware.call("zfs.snapshot.delete", snapshot)
 
         if cancelled_error is not None:
             raise cancelled_error
         if proc.returncode != 0:
             message = "".join(job.internal_data.get("messages", []))
             if message and proc.returncode != 1:
-                if message and not message.endswith("\n"):
+                if not message.endswith("\n"):
                     message += "\n"
                 message += f"rclone failed with exit code {proc.returncode}"
             raise CallError(message)
 
-        await run_script(job, env, cloud_sync["post_script"], "Post-script")
+        await run_script(job, "Post-script", cloud_sync["post_script"], env)
 
         refresh_credentials = REMOTES[cloud_sync["credentials"]["provider"]["type"]].refresh_credentials
         if refresh_credentials:
@@ -282,43 +264,6 @@ async def rclone(middleware, job, cloud_sync, dry_run):
                 await middleware.call("cloudsync.credentials.update", cloud_sync["credentials"]["id"], {
                     "provider": credentials_attributes
                 })
-
-
-async def run_script(job, env, hook, script_name):
-    hook = hook.strip()
-    if not hook:
-        return
-
-    if hook.startswith("#!"):
-        shebang = shlex.split(hook.splitlines()[0][2:].strip())
-    else:
-        shebang = ["/bin/bash"]
-
-    # It is ok to do synchronous I/O here since we are operating in ramfs which will never block
-    with tempfile.NamedTemporaryFile("w+") as f:
-        os.chmod(f.name, 0o700)
-        f.write(hook)
-        f.flush()
-
-        proc = await Popen(
-            shebang + [f.name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            env=dict(os.environ, **env),
-        )
-        future = asyncio.ensure_future(run_script_check(job, proc, script_name))
-        await proc.wait()
-        await asyncio.wait_for(future, None)
-        if proc.returncode != 0:
-            raise CallError(f"{script_name} failed with exit code {proc.returncode}")
-
-
-async def run_script_check(job, proc, name):
-    while True:
-        read = await proc.stdout.readline()
-        if read == b"":
-            break
-        await job.logs_fd_write(f"[{name}] ".encode("utf-8") + read)
 
 
 # Prevents clogging job logs with progress reports every second
@@ -465,33 +410,6 @@ def rclone_encrypt_password(password):
     cipher = AES.new(key, AES.MODE_CTR, counter=counter)
     encrypted = iv + cipher.encrypt(password.encode("utf-8"))
     return base64.urlsafe_b64encode(encrypted).decode("ascii").rstrip("=")
-
-
-def get_dataset_recursive(datasets, directory):
-    datasets = [
-        dict(dataset, prefixlen=len(
-            os.path.dirname(os.path.commonprefix(
-                [dataset["properties"]["mountpoint"]["value"] + "/", directory + "/"]))
-        ))
-        for dataset in datasets
-        if dataset["properties"]["mountpoint"]["value"] != "none"
-    ]
-
-    dataset = sorted(
-        [
-            dataset
-            for dataset in datasets
-            if (directory + "/").startswith(dataset["properties"]["mountpoint"]["value"] + "/")
-        ],
-        key=lambda dataset: dataset["prefixlen"],
-        reverse=True
-    )[0]
-
-    return dataset, any(
-        (ds["properties"]["mountpoint"]["value"] + "/").startswith(directory + "/")
-        for ds in datasets
-        if ds != dataset
-    )
 
 
 class _FsLockCore(aiorwlock._RWLockCore):
