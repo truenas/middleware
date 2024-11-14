@@ -313,7 +313,7 @@ def test_other_transfer_settings(cloud_backup_task, options):
     assert options in result
 
 
-def test_snapshot():
+def test_snapshot(s3_credential):
     with dataset("cloud_backup_snapshot") as ds:
         ssh(f"mkdir -p /mnt/{ds}/dir1/dir2")
         ssh(f"dd if=/dev/urandom of=/mnt/{ds}/dir1/dir2/blob bs=1M count=1024")
@@ -328,25 +328,33 @@ def test_snapshot():
             "password": "test",
             "snapshot": True
         }) as t:
+            pattern = rf"restic .+ /mnt/{ds}/.zfs/snapshot/cloud_backup-[0-9]+-[0-9]+/dir1/dir2"
+
             job_id = call("cloud_backup.sync", t["id"], {"dry_run": True})
-            time.sleep(2)
 
-            ps_ax = ssh("ps ax | grep restic")
+            end = time.time() + 5
+            while time.time() <= end:
+                ps_ax = ssh("ps ax | grep restic")
+                if re.search(pattern, ps_ax):
+                    break
+                time.sleep(0.1)
+            else:
+                pytest.fail(f"Couldn't validate snapshot backup.\n{ps_ax}")
+
             call("core.job_wait", job_id, job=True)
-
-            assert re.search(rf"restic .+ /mnt/{ds}/.zfs/snapshot/cloud_backup-[0-9]+-[0-9]+/dir1/dir2", ps_ax)
 
         time.sleep(1)
         assert call("zfs.snapshot.query", [["dataset", "=", ds]]) == []
 
 
-@pytest.mark.parametrize("cloud_backup_task", [
-    {"post_script": "#!/usr/bin/env python3\nprint('Test' * 2)"}
-], indirect=True)
-def test_script_shebang(cloud_backup_task):
+@pytest.mark.parametrize("cloud_backup_task, expected", [(
+    {"post_script": "#!/usr/bin/env python3\nprint('Test' * 2)"},
+    "[Post-script] TestTest"
+)], indirect=["cloud_backup_task"])
+def test_script_shebang(cloud_backup_task, expected):
     run_task(cloud_backup_task.task)
     job = call("core.get_jobs", [["method", "=", "cloud_backup.sync"]], {"order_by": ["-id"], "get": True})
-    assert job["logs_excerpt"].endswith("[Post-script] TestTest\n")
+    assert job["logs_excerpt"].strip().split("\n")[-2] == expected
 
 
 @pytest.mark.parametrize("cloud_backup_task", [
@@ -359,14 +367,16 @@ def test_scripts_ok(cloud_backup_task):
     ssh("cat /tmp/cloud_backup_test")
 
 
-@pytest.mark.parametrize("cloud_backup_task", [
-    {"pre_script": "echo Custom error\nexit 123"}
-], indirect=True)
-def test_pre_script_failure(cloud_backup_task):
+@pytest.mark.parametrize("cloud_backup_task, error, expected", [(
+    {"pre_script": "echo Custom error\nexit 123"},
+    "[EFAULT] Pre-script failed with exit code 123",
+    "[Pre-script] Custom error"
+)], indirect=["cloud_backup_task"])
+def test_pre_script_failure(cloud_backup_task, error, expected):
     with pytest.raises(ClientException) as ve:
         run_task(cloud_backup_task.task)
 
-    assert ve.value.error == "[EFAULT] Pre-script failed with exit code 123"
+    assert ve.value.error == error
 
     job = call("core.get_jobs", [["method", "=", "cloud_backup.sync"]], {"order_by": ["-id"], "get": True})
-    assert job["logs_excerpt"] == "[Pre-script] Custom error\n"
+    assert job["logs_excerpt"].strip() == expected
