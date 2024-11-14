@@ -319,7 +319,7 @@ def test_snapshot(s3_credential):
         ssh(f"dd if=/dev/urandom of=/mnt/{ds}/dir1/dir2/blob bs=1M count=1024")
 
         with task({
-            "path": f"/mnt/{ds}",
+            "path": f"/mnt/{ds}/dir1/dir2",
             "credentials": s3_credential["id"],
             "attributes": {
                 "bucket": AWS_BUCKET,
