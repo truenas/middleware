@@ -1,6 +1,5 @@
+from datetime import datetime
 import os
-
-from middlewared.utils.time_utils import utc_now
 
 
 def get_dataset_recursive(datasets, directory):
@@ -36,7 +35,7 @@ async def create_snapshot(middleware, path, name="cloud_task-onetime") -> tuple[
         await middleware.call("zfs.dataset.query", [["type", "=", "FILESYSTEM"]]),
         path,
     )
-    snapshot_name = f"{name}-{utc_now().strftime('%Y%m%d%H%M%S')}"
+    snapshot_name = f"{name}-{datetime.utc_now().strftime('%Y%m%d%H%M%S')}"
 
     snapshot = (await middleware.call("zfs.snapshot.create", {
         "dataset": dataset["name"],
