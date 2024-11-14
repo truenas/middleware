@@ -114,6 +114,8 @@ class SharingTaskService(CRUDService):
             data[self.locked_field] = await self.middleware.call(
                 f'{self._config.namespace}.sharing_task_determine_locked', data, context['locked_datasets']
             )
+        else:
+            data[self.locked_field] = None
 
         return data
 

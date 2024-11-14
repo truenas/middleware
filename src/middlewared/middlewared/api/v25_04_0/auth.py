@@ -2,7 +2,7 @@ from middlewared.api.base import BaseModel, single_argument_result
 from middlewared.utils.auth import AuthMech, AuthResp
 from datetime import datetime
 from pydantic import Field, Secret
-from typing import Any, Literal
+from typing import Any, ForwardRef, Literal
 from .user import UserGetUserObjResult
 
 
@@ -129,8 +129,20 @@ class APIKeyCredentialData(UserCredentialData):
     api_key: APIKeySessionData
 
 
+class TokenParentCredentialsData(BaseModel):
+    credentials: Literal[
+        'UNIX_SOCKET',
+        'LOGIN_PASSWORD',
+        'LOGIN_TWOFACTOR',
+        'API_KEY',
+        'TOKEN',
+        'TRUENAS_NODE',
+    ]
+    credentials_data: BaseCredentialData | UserCredentialData | APIKeyCredentialData | ForwardRef("TokenCredentialData")
+
+
 class TokenCredentialData(BaseCredentialData):
-    parent: BaseCredentialData | UserCredentialData | APIKeyCredentialData
+    parent: TokenParentCredentialsData
     username: str | None
 
 

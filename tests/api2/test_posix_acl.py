@@ -37,18 +37,21 @@ class ACLBrand(enum.Enum):
                 "id": -1,
                 "perms": permfull,
                 "default": default,
+                "who": None,
             },
             {
                 "tag": "GROUP_OBJ",
                 "id": -1,
                 "perms": permfull,
                 "default": default,
+                "who": None,
             },
             {
                 "tag": "OTHER",
                 "id": -1,
                 "perms": permempty,
                 "default": default,
+                "who": None,
             },
         ]
 
@@ -166,6 +169,7 @@ def test_set_tag_(temp_ds, tag):
             "perms": test_permset,
             "id": 1000,
             "default": False,
+            "who": None,
         }
         if tag == "MASK":
             new_entry["id"] = -1
@@ -184,6 +188,7 @@ def test_set_tag_(temp_ds, tag):
             "perms": test_permset,
             "id": -1,
             "default": False,
+            "who": None,
         }
         payload["dacl"].insert(3, new_entry)
 
@@ -221,6 +226,7 @@ def test_set_default_tag_(temp_ds, tag):
             "perms": test_permset,
             "id": 1000,
             "default": True,
+            "who": None,
         }
         if tag == "MASK":
             new_entry["id"] = -1
@@ -239,6 +245,7 @@ def test_set_default_tag_(temp_ds, tag):
             "perms": test_permset,
             "id": -1,
             "default": True,
+            "who": None,
         }
         default.insert(3, new_entry)
 
