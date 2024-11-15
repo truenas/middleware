@@ -24,7 +24,11 @@ class DockerModel(sa.Model):
     pool = sa.Column(sa.String(255), default=None, nullable=True)
     enable_image_updates = sa.Column(sa.Boolean(), default=True)
     nvidia = sa.Column(sa.Boolean(), default=False)
-    address_pools = sa.Column(sa.JSON(list), default=[{'base': '172.17.0.0/12', 'size': 24}])
+    cidr_v6 = sa.Column(sa.String(), default='fdd0::/64', nullable=False)
+    address_pools = sa.Column(sa.JSON(list), default=[
+        {'base': '172.17.0.0/12', 'size': 24},
+        {'base': 'fdd0::/48', 'size': 64},
+    ])
 
 
 class DockerService(ConfigService):
@@ -51,6 +55,7 @@ class DockerService(ConfigService):
         old_config.pop('dataset')
         config = old_config.copy()
         config.update(data)
+        config['cidr_v6'] = str(config['cidr_v6'])
 
         verrors = ValidationErrors()
         if config['pool'] and not await self.middleware.run_in_thread(query_imported_fast_impl, [config['pool']]):
@@ -64,11 +69,13 @@ class DockerService(ConfigService):
             )
 
         if old_config != config:
-            if config['pool'] != old_config['pool']:
+            address_pools_changed = any(config[k] != old_config[k] for k in ('address_pools', 'cidr_v6'))
+            pool_changed = config['pool'] != old_config['pool']
+            if pool_changed:
                 # We want to clear upgrade alerts for apps at this point
                 await self.middleware.call('app.clear_upgrade_alerts_for_all')
 
-            if any(config[k] != old_config[k] for k in ('pool', 'address_pools')):
+            if pool_changed or address_pools_changed:
                 job.set_progress(20, 'Stopping Docker service')
                 try:
                     await self.middleware.call('service.stop', 'docker')
@@ -93,10 +100,10 @@ class DockerService(ConfigService):
 
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
 
-            if config['pool'] != old_config['pool']:
+            if pool_changed:
                 job.set_progress(60, 'Applying requested configuration')
                 await self.middleware.call('docker.setup.status_change')
-            elif config['pool'] and config['address_pools'] != old_config['address_pools']:
+            elif config['pool'] and address_pools_changed:
                 job.set_progress(60, 'Starting docker')
                 catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
                 if catalog_sync_job:
@@ -107,7 +114,7 @@ class DockerService(ConfigService):
             if old_config['nvidia'] != config['nvidia']:
                 await self.middleware.call('docker.configure_nvidia')
 
-            if config['pool'] and config['address_pools'] != old_config['address_pools']:
+            if config['pool'] and address_pools_changed:
                 job.set_progress(95, 'Initiating redeployment of applications to apply new address pools changes')
                 await self.middleware.call(
                     'core.bulk', 'app.redeploy', [

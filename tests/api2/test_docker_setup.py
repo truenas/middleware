@@ -63,8 +63,19 @@ def test_apps_are_running(docker_pool):
 
 
 def test_apps_dataset_after_address_pool_update(docker_pool):
-    docker_config = call('docker.update', {'address_pools': [{'base': '172.17.0.0/12', 'size': 27}]}, job=True)
-    assert docker_config['address_pools'] == [{'base': '172.17.0.0/12', 'size': 27}]
+    docker_config = call('docker.update', {'address_pools': [
+        {'base': '172.17.0.0/12', 'size': 27}, {"base": '2024:db8::/48', 'size': 64}]
+    }, job=True)
+    assert docker_config['address_pools'] == [
+        {'base': '172.17.0.0/12', 'size': 27}, {"base": '2024:db8::/48', 'size': 64}
+    ]
+    assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] == docker_config['dataset']
+    assert call('docker.status')['status'] == 'RUNNING'
+
+
+def test_apps_dataset_after_cidr_v6_update(docker_pool):
+    docker_config = call('docker.update', {'cidr_v6': 'fc98:dead:beef::/64'}, job=True)
+    assert docker_config['cidr_v6'] == 'fc98:dead:beef::/64'
     assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] == docker_config['dataset']
     assert call('docker.status')['status'] == 'RUNNING'
 
