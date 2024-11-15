@@ -1516,7 +1516,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         if method_self := getattr(method, "__self__", None):
             if method.__name__ in ["create", "update", "delete"]:
-                if do_method := getattr(method_self, f"do_{method.__name__}"):
+                if do_method := getattr(method_self, f"do_{method.__name__}", None):
                     if hasattr(do_method, "new_style_returns"):
                         # FIXME: Get rid of `create`/`do_create` duality
                         method = do_method
