@@ -159,7 +159,7 @@ def test_try_to_create_an_encrypted_dataset_with_pbkdf2itersl_zero(request):
     }
     results = POST('/pool/dataset/', payload)
     assert results.status_code == 422, results.text
-    assert 'Should be greater or equal than 100000' in results.text, results.text
+    assert 'Should be greater than or equal to 100000' in results.text, results.text
 
 
 def test_try_to_create_an_encrypted_dataset_with_inherit_encryption_true(request):
