@@ -100,23 +100,24 @@ def test_011_add_devices_to_vm(device, request):
             VmAssets.VM_DEVICES[vm_name] = dict()
 
         dev_info = {
-            'dtype': device,
             'vm': info['query_response']['id'],
+            'attributes': {
+                'dtype': device,
+            }
         }
         if device == 'DISK':
             zvol_name = f'{pool_name}/{device}_for_{vm_name}'
-            dev_info.update({
-                'attributes': {
-                    'create_zvol': True,
-                    'zvol_name': zvol_name,
-                    'zvol_volsize': 1048576
-                }
+            dev_info['attributes'].update({
+                'dtype': device,
+                'create_zvol': True,
+                'zvol_name': zvol_name,
+                'zvol_volsize': 1048576
             })
         elif device == 'DISPLAY':
-            dev_info.update({'attributes': {'resolution': '1024x768', 'password': 'displaypw'}})
+            dev_info['attributes'].update({'resolution': '1024x768', 'password': 'displaypw'})
         elif device == 'NIC':
             for nic_name in call('vm.device.nic_attach_choices'):
-                dev_info.update({'attributes': {'nic_attach': nic_name}})
+                dev_info['attributes'].update({'nic_attach': nic_name, 'dtype': device})
                 break
         else:
             assert False, f'Unhandled device type: ({device!r})'
@@ -132,7 +133,6 @@ def test_012_verify_devices_for_vm(vm_name, request):
     depends(request, ['ADD_DEVICES_TO_VM'])
     for device, info in VmAssets.VM_DEVICES[vm_name].items():
         qry = call('vm.device.query', [['id', '=', info['id']]], {'get': True})
-        assert qry['dtype'] == device
         assert qry['vm'] == VmAssets.VM_INFO[vm_name]['query_response']['id']
         assert qry['attributes'] == VmAssets.VM_DEVICES[vm_name][device]['attributes']
 
@@ -255,7 +255,7 @@ def test_024_clone_powered_off_vm(vm_name, request):
 
     VmAssets.VM_DEVICES.update({new_name: dict()})
     for dev in call('vm.device.query', [['vm', '=', qry['id']]]):
-        if dev['dtype'] in ('DISK', 'NIC', 'DEVICE'):
+        if dev['attributes']['dtype'] in ('DISK', 'NIC', 'DEVICE'):
             # add this to VM_DEVICES so we properly clean-up after
             # the test module runs
             VmAssets.VM_DEVICES[new_name].update({dev['dtype']: dev})
