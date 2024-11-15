@@ -206,7 +206,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
                 "id", "description", "direction", "transfer_mode", "encryption", "filename_encryption",
                 "encryption_password", "encryption_salt", "snapshot"
             ]},
-            **cloud_sync["credentials"]["provider"],
+            **cloud_sync["credentials"]["attributes"],
             **cloud_sync["attributes"],
             "path": path
         })

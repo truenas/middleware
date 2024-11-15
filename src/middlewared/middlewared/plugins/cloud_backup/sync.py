@@ -76,7 +76,7 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
             **{k: v for k, v in cloud_backup.items() if k in [
                 "id", "description", "snapshot", "password", "keep_last", "transfer_setting"
             ]},
-            **cloud_backup["credentials"]["provider"],
+            **cloud_backup["credentials"]["attributes"],
             **cloud_backup["attributes"],
             "path": local_path
         })
