@@ -87,6 +87,10 @@ class MegaCredentialsModel(BaseModel):
     pass_: Secret[NonEmptyString] = Field(alias="pass")
 
 
+class OneDriveModel(BaseModel):
+    type: Literal["ONEDRIVE"]
+
+
 class PCloudCredentialsModel(BaseModel):
     type: Literal["PCLOUD"]
     client_id: Secret[str] = ""
@@ -169,6 +173,7 @@ CloudCredentialProvider = Annotated[
         HTTPCredentialsModel,
         HubicCredentialsModel,
         MegaCredentialsModel,
+        OneDriveModel,
         PCloudCredentialsModel,
         S3CredentialsModel,
         SFTPCredentialsModel,
