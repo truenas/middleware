@@ -119,3 +119,9 @@
 
 [plugin:cgroups]
         enable by default cgroups names matching = !*udev* *
+
+[plugin:proc:/proc/stat]
+    per cpu core utilization = no
+    context switches = no
+    processes started = no
+    processes running = no
