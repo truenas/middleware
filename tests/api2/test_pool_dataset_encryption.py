@@ -127,7 +127,7 @@ class TestNormalPool:
                 'encryption_options': {'pbkdf2iters': 0},
                 'inherit_encryption': False
             },
-            'Should be greater or equal than 100000'
+            'Should be greater than or equal to 100000'
         ),
         (
             {
