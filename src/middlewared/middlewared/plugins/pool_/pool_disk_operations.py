@@ -16,9 +16,9 @@ class PoolService(Service):
     @accepts(Int('id'), Dict(
         'options',
         Str('label', required=True),
-    ))
+    ), audit='Disk Detach', audit_callback=True)
     @returns(Bool('detached'))
-    async def detach(self, oid, options):
+    async def detach(self, audit_callback, oid, options):
         """
         Detach a disk from pool of id `id`.
 
@@ -49,7 +49,7 @@ class PoolService(Service):
         disk = await self.middleware.call(
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
-
+        audit_callback(disk)
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
 
         if disk:
@@ -64,9 +64,9 @@ class PoolService(Service):
     @accepts(Int('id'), Dict(
         'options',
         Str('label', required=True),
-    ))
+    ), audit='Disk Offline', audit_callback=True)
     @returns(Bool('offline_successful'))
-    async def offline(self, oid, options):
+    async def offline(self, audit_callback, oid, options):
         """
         Offline a disk from pool of id `id`.
 
@@ -93,6 +93,12 @@ class PoolService(Service):
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
         verrors.check()
+
+        if found[1]['type'] != 'DISK':
+            disk_paths = [d['path'] for d in found[1]['children']]
+        else:
+            disk_paths = [found[1]['path']]
+        audit_callback(', '.join(disk_paths))
 
         await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
 
