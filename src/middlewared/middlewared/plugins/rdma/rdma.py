@@ -126,7 +126,7 @@ class RDMAService(Service):
             v['name'] = ':'.join(sorted(names))
         return list(grouper.values())
 
-    @api_method(RdmaCapableProtocolsArgs, RdmaCapableProtocolsResult)
+    @api_method(RdmaCapableProtocolsArgs, RdmaCapableProtocolsResult, roles=['SHARING_ADMIN'])
     async def capable_protocols(self):
         result = []
         is_ent = await self.middleware.call('system.is_enterprise')
