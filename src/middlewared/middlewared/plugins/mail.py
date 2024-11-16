@@ -3,6 +3,7 @@ from middlewared.service import CallError, ConfigService, ValidationErrors, job,
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc
 from middlewared.validators import Email
+from middlewared.main import RUNDIR
 
 from datetime import datetime, timedelta
 from email.header import Header
@@ -18,6 +19,7 @@ import errno
 import html
 import json
 import os
+import pickle
 import smtplib
 import socket
 import syslog
@@ -32,7 +34,7 @@ class QueueItem(object):
 
 class MailQueue(object):
 
-    QUEUE_FILE = '/tmp/mail.queue'
+    QUEUE_FILE = os.path.join(RUNDIR, "mail.queue")
     MAX_ATTEMPTS = 3
 
     def __init__(self):
@@ -52,9 +54,9 @@ class MailQueue(object):
 
     def _get_queue(self):
         try:
-            with open(self.QUEUE_FILE, 'r') as f:
-                self.queue = json.load(f)
-        except Exception:
+            with open(self.QUEUE_FILE, 'rb') as f:
+                self.queue = pickle.loads(f.read())
+        except (pickle.PickleError, EOFError):
             self.queue = []
 
     def __enter__(self):
@@ -73,9 +75,9 @@ class MailQueue(object):
 
     def __exit__(self, typ, value, traceback):
 
-        with open(self.QUEUE_FILE, 'w') as f:
+        with open(self.QUEUE_FILE, 'wb+') as f:
             if self.queue:
-                json.dump(self.queue, f)
+                f.write(pickle.dumps(self.queue))
 
         self._lock.release()
         if typ is not None:

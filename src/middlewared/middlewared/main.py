@@ -59,6 +59,8 @@ from . import logger
 if osc.IS_LINUX:
     from systemd.daemon import notify as systemd_notify
 
+RUNDIR = '/var/run/middlewared'
+
 
 class Application(object):
 
@@ -1727,6 +1729,12 @@ def main():
     if args.pidfile:
         with open(pidpath, "w") as _pidfile:
             _pidfile.write(f"{str(os.getpid())}\n")
+
+    try:
+        os.makedirs(RUNDIR, exist_ok=True)
+        os.chmod(RUNDIR, 0o700)
+    except Exception:
+        pass
 
     Middleware(
         loop_debug=args.loop_debug,
