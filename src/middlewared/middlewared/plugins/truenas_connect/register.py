@@ -28,7 +28,10 @@ class TrueNASConnectService(Service):
         config = await self.middleware.call('tn_connect.config')
         config['claim_token'] = str(uuid.uuid4())
         await self.middleware.call(
-            'datastore.update', 'truenas_connect', config['id'], {'claim_token': config['claim_token']}
+            'datastore.update', 'truenas_connect', config['id'], {
+                'claim_token': config['claim_token'],
+                'claim_token_system_id': await self.middleware.call('system.host_id'),
+            }
         )
         return config['claim_token']
 
