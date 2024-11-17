@@ -12,6 +12,7 @@ from middlewared.schema import accepts, Bool, Dict, returns
 from middlewared.service import CallError, Service, job, pass_app, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.db import FREENAS_DATABASE
+from samba import safe_tarfile
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
@@ -117,7 +118,18 @@ class ConfigService(Service):
     def upload_impl(self, file_or_tar, is_tar_file=False):
         with tempfile.TemporaryDirectory() as temp_dir:
             if is_tar_file:
-                with tarfile.open(file_or_tar, 'r') as tar:
+                # FIXME: following uses Samba's safe_tarfile to try to ameliorate CVE-2007-4559.
+                #
+                # When we have debian python version with tarfile extraction fix, replace samba safe_tarfile
+                # with appropriate parameters to avoid dir traversal issues.
+                #
+                # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.extraction_filter
+                # https://peps.python.org/pep-0706/
+                #
+                # e.g.
+                # with tarfile.open(file_or_tar, 'r') as tar:
+                #    tar.extractall(temp_dir, filter='tar')
+                with safe_tarfile.open(file_or_tar, 'r') as tar:
                     tar.extractall(temp_dir)
             else:
                 # if it's just the db then copy it to the same
