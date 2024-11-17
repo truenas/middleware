@@ -8,7 +8,7 @@ import async_timeout
 class TNCAPIMixin:
 
     async def _call(
-        self, endpoint: str, mode: str, options: dict | None = None, payload: dict | None = None,
+        self, endpoint: str, mode: str, *, options: dict | None = None, payload: dict | None = None,
         headers: dict | None = None,
     ):
         # FIXME: Add network activity check for TNC
@@ -20,7 +20,7 @@ class TNCAPIMixin:
                 async with aiohttp.ClientSession(raise_for_status=True, trust_env=True) as session:
                     req = await getattr(session, mode)(
                         endpoint,
-                        data=json.dumps(payload or {}),
+                        data=json.dumps(payload) if payload else payload,
                         headers=headers,
                     )
         except asyncio.TimeoutError:
