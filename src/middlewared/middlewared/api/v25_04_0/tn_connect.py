@@ -12,7 +12,8 @@ class TNCEntry(BaseModel):
     enabled: bool
     claim_token: NonEmptyString | None
     jwt_token: NonEmptyString | None
-    system_id: NonEmptyString | None
+    claim_token_system_id: NonEmptyString | None
+    jwt_token_system_id: NonEmptyString | None
     acme_key: NonEmptyString | None
     acme_account_uri: NonEmptyString | None
     acme_directory_uri: NonEmptyString | None
