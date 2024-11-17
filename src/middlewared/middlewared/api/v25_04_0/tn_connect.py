@@ -3,6 +3,7 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, 
 
 __all__ = [
     'TNCEntry', 'TNCGetRegistrationURIArgs', 'TNCGetRegistrationURIResult', 'TNCUpdateArgs', 'TNCUpdateResult',
+    'TNCGenerateClaimTokenArgs', 'TNCGenerateClaimTokenResult',
 ]
 
 
@@ -31,4 +32,12 @@ class TNCGetRegistrationURIArgs(BaseModel):
 
 
 class TNCGetRegistrationURIResult(BaseModel):
+    result: NonEmptyString
+
+
+class TNCGenerateClaimTokenArgs(BaseModel):
+    pass
+
+
+class TNCGenerateClaimTokenResult(BaseModel):
     result: NonEmptyString
