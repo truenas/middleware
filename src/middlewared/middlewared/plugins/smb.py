@@ -1277,7 +1277,7 @@ class SharingSMBService(SharingService):
 
         this_mnt = getmnttree(st['mount_id'])
         if this_mnt['fs_type'] != 'zfs':
-            verrors.add(schema, f'{this_mnt["fstype"]}: path is not a ZFS dataset')
+            verrors.add(schema, f'{this_mnt["fs_type"]}: path is not a ZFS dataset')
 
         if not is_child_realpath(path, this_mnt['mountpoint']):
             verrors.add(
