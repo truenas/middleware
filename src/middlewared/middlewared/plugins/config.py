@@ -28,6 +28,12 @@ TRUENAS_ADMIN_KEYS_UPLOADED = '/data/truenas_admin_authorized_keys_uploaded'
 ROOT_KEYS_UPLOADED = '/data/root_authorized_keys_uploaded'
 DATABASE_NAME = os.path.basename(FREENAS_DATABASE)
 
+try:
+    tarfile.tar_filter
+    TARFILE_HAS_FILTER = True
+except AttributeError:
+    TARFILE_HAS_FILTER = False
+
 
 class ConfigService(Service):
 
@@ -123,8 +129,16 @@ class ConfigService(Service):
                 # e.g.
                 # with tarfile.open(file_or_tar, 'r') as tar:
                 #    tar.extractall(temp_dir, filter='tar')
-                with safe_tarfile.open(file_or_tar, 'r') as tar:
-                    tar.extractall(temp_dir)
+                if TARFILE_HAS_FILTER:
+                    self.logger.error(
+                        'tarfile version now properly supports filter kwarg. Mitigation '
+                        'may be removed.'
+                    )
+                    with tarfile.open(file_or_tar, 'r') as tar:
+                        tar.extractall(temp_dir, filter='tar')
+                else:
+                    with safe_tarfile.open(file_or_tar, 'r') as tar:
+                        tar.extractall(temp_dir)
             else:
                 # if it's just the db then copy it to the same
                 # temp directory to keep the logic simple(ish).
