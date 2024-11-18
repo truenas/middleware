@@ -115,9 +115,9 @@ Proto: TypeAlias = Literal['UDP', 'TCP']
 class Proxy(Device):
     dev_type: Literal['PROXY']
     source_proto: Proto
-    source_port: int
+    source_port: int = Field(ge=1, le=65535)
     dest_proto: Proto
-    dest_port: int
+    dest_port: int = Field(ge=1, le=65535)
 
 
 class TPM(Device):
