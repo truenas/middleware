@@ -52,7 +52,7 @@ class PoolService(Service):
     )
     @returns()
     @job(lock='pool_export')
-    async def export(self, audit_callback, job, oid, options):
+    async def export(self, job, audit_callback, oid, options):
         """
         Export pool of `id`.
 
