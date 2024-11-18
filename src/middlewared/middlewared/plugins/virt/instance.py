@@ -104,10 +104,20 @@ class VirtInstanceService(CRUDService):
 
     @private
     async def validate(self, new, schema_name, verrors, old=None):
+        # Do not validate image_choices because its an expansive operation, just fail on creation
+
         if not old and await self.query([('name', '=', new['name'])]):
             verrors.add(f'{schema_name}.name', f'Name {new["name"]!r} already exists')
 
-        # Do not validate image_choices because its an expansive operation, just fail on creation
+        if new.get('memory'):
+            meminfo = await self.middleware.call('system.mem_info')
+            if new['memory'] > meminfo['physmem_size']:
+                verrors.add(f'{schema_name}.memory', 'Cannot reserve more than physical memory')
+
+        if new.get('cpu') and new['cpu'].isdigit():
+            cpuinfo = await self.middleware.call('system.cpu_info')
+            if int(new['cpu']) > cpuinfo['core_count']:
+                verrors.add(f'{schema_name}.cpu', 'Cannot reserve more than system cores')
 
     def __data_to_config(self, data: dict, raw: dict = None):
         config = {}
