@@ -44,14 +44,20 @@ class VirtInstanceService(CRUDService):
         results = (await incus_call('1.0/instances?filter=&recursion=2', 'get'))['metadata']
         entries = []
         for i in results:
-            # If entry has no config or state its probably in an unknown state, skip it
-            if not i.get('config') or not i.get('state'):
-                continue
+            # config may be empty due to a race condition during stop
+            # if thats the case grab instance details without recursion
+            # which means aliases and state will be unknown
+            if not i.get('config'):
+                i = (await incus_call(f'1.0/instances/{i["name"]}', 'get'))['metadata']
+            if not i.get('state'):
+                status = 'UNKNOWN'
+            else:
+                status = i['state']['status'].upper()
             entry = {
                 'id': i['name'],
                 'name': i['name'],
                 'type': 'CONTAINER' if i['type'] == 'container' else 'VM',
-                'status': i['state']['status'].upper(),
+                'status': status,
                 'cpu': i['config'].get('limits.cpu'),
                 'autostart': True if i['config'].get('boot.autostart') == 'true' else False,
                 'environment': {},
@@ -84,7 +90,7 @@ class VirtInstanceService(CRUDService):
                 entry['environment'][k[12:]] = v
             entries.append(entry)
 
-            for v in (i['state']['network'] or {}).values():
+            for v in ((i.get('state') or {}).get('network') or {}).values():
                 for address in v['addresses']:
                     if address['scope'] != 'global':
                         continue
