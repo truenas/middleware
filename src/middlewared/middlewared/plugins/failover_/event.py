@@ -402,8 +402,6 @@ class FailoverEventsService(Service):
                 jbof_job.wait_sync(timeout=60)
             except TimeoutError:
                 logger.error('Timed out attaching JBOFs.')
-            except Exception:
-                logger.error('Unexpected error', exc_info=True)
             else:
                 logger.info('Done bring up of NVMe/RoCE')
         except Exception:
