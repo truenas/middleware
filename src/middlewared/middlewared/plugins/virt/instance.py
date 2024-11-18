@@ -31,6 +31,7 @@ class VirtInstanceService(CRUDService):
         cli_namespace = 'virt.instance'
         entry = VirtInstanceEntry
         role_prefix = 'VIRT_INSTANCE'
+        event_register = True
 
     @filterable
     async def query(self, filters, options):

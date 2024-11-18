@@ -58,6 +58,26 @@ class IncusWS(object, metaclass=Singleton):
                                     self._incoming[data['metadata']['id']].append(data)
                                     for i in self._waiters[data['metadata']['id']]:
                                         i.set()
+                                    if data['metadata'].get('class') == 'task':
+                                        if data['metadata'].get('description') in (
+                                                'Starting instance',
+                                                'Stopping instance',
+                                        ) and data['metadata']['status_code'] == 200:
+                                            for instance in data['metadata']['resources']['instances']:
+                                                instance_id = instance.replace('/1.0/instances/', '')
+                                                self.middleware.send_event(
+                                                    'virt.instance.query',
+                                                    'CHANGED',
+                                                    id=instance_id,
+                                                    fields={
+                                                        'status': (
+                                                            'RUNNING'
+                                                            if data['metadata']['description'] == 'Starting instance'
+                                                            else
+                                                            'STOPPED'
+                                                        ),
+                                                    },
+                                                )
                             case 'logging':
                                 if data['metadata']['message'] == 'Instance agent started':
                                     self.middleware.send_event(

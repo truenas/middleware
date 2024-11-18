@@ -78,14 +78,26 @@ def test_virt_instance_update():
 
 
 def test_virt_instance_stop():
-    # Stop only one of them so the others are stopped during delete
-    assert ssh(f'incus list {INS2_NAME} -f json| jq ".[].status"').strip() == '"Running"'
-    instance = call('virt.instance.query', [['id', '=', INS2_NAME]], {'get': True})
-    assert instance['status'] == 'RUNNING'
-    call('virt.instance.stop', INS2_NAME, {'force': True}, job=True)
-    instance = call('virt.instance.query', [['id', '=', INS2_NAME]], {'get': True})
-    assert instance['status'] == 'STOPPED'
-    assert ssh(f'incus list {INS2_NAME} -f json| jq ".[].status"').strip() == '"Stopped"'
+    wait_status_event = Event()
+
+    def wait_status(event_type, **kwargs):
+        if kwargs['collection'] == 'virt.instance.query' and kwargs['id'] == INS2_NAME:
+            fields = kwargs.get('fields')
+            if fields and fields.get('status') == 'STOPPED':
+                wait_status_event.set()
+
+    with client() as c:
+        c.subscribe('virt.instance.query', wait_status, sync=True)
+
+        # Stop only one of them so the others are stopped during delete
+        assert ssh(f'incus list {INS2_NAME} -f json| jq ".[].status"').strip() == '"Running"'
+        instance = c.call('virt.instance.query', [['id', '=', INS2_NAME]], {'get': True})
+        assert instance['status'] == 'RUNNING'
+        call('virt.instance.stop', INS2_NAME, {'force': True}, job=True)
+        instance = c.call('virt.instance.query', [['id', '=', INS2_NAME]], {'get': True})
+        assert instance['status'] == 'STOPPED'
+        assert wait_status_event.wait(timeout=1)
+        assert ssh(f'incus list {INS2_NAME} -f json| jq ".[].status"').strip() == '"Stopped"'
 
 
 def test_virt_instance_restart():
