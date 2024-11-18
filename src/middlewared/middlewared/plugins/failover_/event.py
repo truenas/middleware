@@ -389,7 +389,7 @@ class FailoverEventsService(Service):
         try:
             # Request fenced_reload just in case the job does not complete in time
             jbof_job = self.run_call('jbof.configure_job', True)
-            jbof_job.wait_sync(timeout=10)
+            jbof_job.wait_sync(timeout=60)
             if jbof_job.error:
                 logger.error(f'Error attaching JBOFs: {jbof_job.error}')
             elif jbof_job.result['failed']:
@@ -397,7 +397,13 @@ class FailoverEventsService(Service):
             else:
                 logger.info(jbof_job.result['message'])
         except TimeoutError:
-            logger.error('Timed out attaching JBOFs - will continue in background')
+            logger.error('Timed out attaching JBOFs.  Retrying')
+            try:
+                jbof_job.wait_sync(timeout=60)
+            except TimeoutError:
+                logger.error('Timed out attaching JBOFs.')
+            else:
+                logger.info('Done bring up of NVMe/RoCE')
         except Exception:
             logger.error('Unexpected error', exc_info=True)
         else:
