@@ -274,7 +274,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             app.send_error(id_, JSONRPCError.METHOD_NOT_FOUND.value, "Method does not exist")
             return
 
-        asyncio.ensure_future(self.process_method_call(app, id_, method, message["params"]))
+        asyncio.ensure_future(self.process_method_call(app, id_, method, message.get("params", [])))
 
     async def process_method_call(self, app: RpcWebSocketApp, id_: Any, method: Method, params: list):
         try:
