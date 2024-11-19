@@ -440,7 +440,7 @@ class PoolService(Service):
             self.logger.info('Start bring up of NVMe/RoCE')
             try:
                 jbof_job = self.middleware.call_sync('jbof.configure_job')
-                jbof_job.wait_sync(timeout=10)
+                jbof_job.wait_sync(timeout=60)
                 if jbof_job.error:
                     self.logger.error(f'Error attaching JBOFs: {jbof_job.error}')
                 elif jbof_job.result['failed']:
@@ -448,7 +448,19 @@ class PoolService(Service):
                 else:
                     self.logger.info(jbof_job.result['message'])
             except TimeoutError:
-                self.logger.error('Timed out attaching JBOFs - will continue in background')
+                self.logger.error('Timed out attaching JBOFs.  Waiting again.')
+                try:
+                    jbof_job.wait_sync(timeout=60)
+                    if jbof_job.error:
+                        self.logger.error(f'Error attaching JBOFs: {jbof_job.error}')
+                    elif jbof_job.result['failed']:
+                        self.logger.error(f'Failed to attach JBOFs:{jbof_job.result["message"]}')
+                    else:
+                        self.logger.info(jbof_job.result['message'])
+                except TimeoutError:
+                    self.logger.error('Timed out attaching JBOFs - will continue in background.')
+                else:
+                    self.logger.info('Done bring up of NVMe/RoCE')
             except Exception:
                 self.logger.error('Unexpected error', exc_info=True)
 
