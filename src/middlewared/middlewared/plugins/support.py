@@ -9,6 +9,7 @@ import aiohttp
 import async_timeout
 import requests
 
+from licenselib.utils import proactive_support_allowed
 from middlewared.pipe import Pipes
 from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
 from middlewared.schema import accepts, Bool, Dict, Int, List, Password, returns, Str
@@ -118,7 +119,7 @@ class SupportService(ConfigService):
         if license_ is None:
             return False
 
-        return license_['contract_type'] in ['SILVER', 'GOLD']
+        return proactive_support_allowed(license_['contract_type'])
 
     @accepts(roles=['SUPPORT_READ'])
     @returns(Bool('proactive_support_is_available_and_enabled'))
