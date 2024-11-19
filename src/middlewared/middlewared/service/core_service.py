@@ -19,7 +19,13 @@ import middlewared.main
 from middlewared.api import api_method
 from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.api.current import (
-    CoreSetOptionsArgs, CoreSetOptionsResult, CoreSubscribeArgs, CoreSubscribeResult, CoreUnsubscribeArgs,
+    CorePingArgs,
+    CorePingResult,
+    CoreSetOptionsArgs,
+    CoreSetOptionsResult,
+    CoreSubscribeArgs,
+    CoreSubscribeResult,
+    CoreUnsubscribeArgs,
     CoreUnsubscribeResult,
 )
 from middlewared.common.environ import environ_update
@@ -522,8 +528,7 @@ class CoreService(Service):
         kwargs = kwargs or {}
         self.middleware.send_event(name, event_type, **kwargs)
 
-    @no_authz_required
-    @accepts()
+    @api_method(CorePingArgs, CorePingResult, authorization_required=False)
     def ping(self):
         """
         Utility method which just returns "pong".
