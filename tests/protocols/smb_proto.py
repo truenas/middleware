@@ -1,6 +1,8 @@
 import sys
 import enum
+import struct
 import subprocess
+from dataclasses import dataclass
 from functions import SRVTarget, get_host_ip
 from platform import system
 from time import sleep
@@ -32,6 +34,64 @@ from samba import ntstatus
 from samba import NTSTATUSError
 
 libsmb_has_rename = 'rename' in dir(libsmb.Conn)
+
+
+class Fsctl(enum.IntEnum):
+    QUERY_FILE_REGIONS = 0x00090284
+
+
+
+QFR_MAX_OUT = 64
+
+
+class FileUsage(enum.IntEnum):
+    VALID_CACHED_DATA = 0x00000001  # NTFS
+    VALID_NONCACHED_DATA = 0x00000002  # REFS
+
+
+@dataclass(frozen=True)
+class FileRegionInfo:
+    """ MS-FSCC 2.3.56.1 """
+    offset: int
+    length: int
+    desired_usage: FileUsage = FileUsage.VALID_CACHED_DATA
+    reserved: int = 0  # by protocol must be zero
+
+
+@dataclass(frozen=True)
+class FsctlQueryFileRegionsReply:
+    """ MS-FSCC 2.3.56 """
+    flags: int  # by protocol must be zero
+    total_region_entry_count: int
+    region_entry_count: int
+    reserved: int  # by protocol must be zero
+    region: FileRegionInfo
+
+
+@dataclass()
+class FsctlQueryFileRegionsRequest:
+    """ MS-FSCC 2.3.55 """
+    region_info: FileRegionInfo | None
+
+    def __post_init__(self):
+        self.fsctl = Fsctl.QUERY_FILE_REGIONS
+
+    def pack(self):
+        if self.region_info is None:
+            return b''
+
+        return struct.pack(
+            '<qqII',
+            self.region_info.offset,
+            self.region_info.length,
+            self.region_info.desired_usage,
+            self.region_info.reserved
+        )
+
+    def unpack(self, buf):
+        unpacked_resp = list(struct.unpack('<IIII', buf[0:16]))
+        unpacked_resp.append(FileRegionInfo(*struct.unpack('<qqII', buf[16:])))
+        return FsctlQueryFileRegionsReply(*unpacked_resp)
 
 
 class ACLControl(enum.IntFlag):
@@ -370,3 +430,10 @@ class SMB(object):
         cl = subprocess.run(cmd, capture_output=True)
         if cl.returncode != 0:
             raise RuntimeError(cl.stdout.decode() or cl.stderr.decode())
+
+    def fsctl(self, idx, fsctl_request, max_out):
+        resp = self._connection.fsctl(
+            self._open_files[idx]["fh"], fsctl_request.fsctl, fsctl_request.pack(), max_out
+        )
+
+        return fsctl_request.unpack(resp)
