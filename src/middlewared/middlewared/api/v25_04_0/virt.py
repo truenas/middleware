@@ -320,6 +320,7 @@ class GPUChoice(BaseModel):
     slot: int
     description: str
     vendor: Optional[str] = None
+    pci: str
 
 
 class VirtDeviceGPUChoicesResult(BaseModel):

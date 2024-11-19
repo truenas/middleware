@@ -55,6 +55,7 @@ class VirtDeviceService(Service):
                 'slot': i['addr']['slot'],
                 'description': i['description'],
                 'vendor': i['vendor'],
+                'pci': i['addr']['pci_slot'],
             }
         return choices
 
