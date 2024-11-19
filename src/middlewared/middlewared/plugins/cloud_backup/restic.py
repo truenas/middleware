@@ -87,7 +87,14 @@ async def restic_check_progress(job, proc, track_progress=False):
         if read == "":
             break
 
-        read = json.loads(read)
+        try:
+            read = json.loads(read)
+        except json.JSONDecodeError:
+            # Can happen with some error messages
+            job.internal_data["messages"] = job.internal_data["messages"][-4:] + [read]
+            await job.logs_fd_write((read + "\n").encode("utf-8", "ignore"))
+            continue
+
         msg_type = read["message_type"]
         match msg_type:
             case "status":
