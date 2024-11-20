@@ -1,5 +1,6 @@
 import pytest
 
+from contextlib import contextmanager
 from middlewared.test.integration.assets.directory_service import ipa, FREEIPA_ADMIN_BINDPW
 from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client
@@ -28,6 +29,34 @@ def enable_ds_auth(override_product):
         yield sys_config
     finally:
         call('system.general.update', {'ds_auth': False})
+
+
+@contextmanager
+def switch_to_legacy_bind():
+    kt_id = call('kerberos.keytab.query', [['name', '=', 'IPA_MACHINE_ACCOUNT']], {'get': True})['id']
+    call('kerberos.keytab.update', kt_id, {'name': 'TMP_IPA_MACHINE_ACCOUNT'})
+
+    try:
+        yield
+    finally:
+        call('kerberos.keytab.update', kt_id, {'name': 'IPA_MACHINE_ACCOUNT'})
+
+
+@contextmanager
+def toggle_ldap(ldap_conf, enable):
+    payload = {
+        'hostname': ldap_conf['hostname'],
+        'validate_certificates': ldap_conf['validate_certificates'],
+        'enable': enable
+    }
+
+    call('ldap.update', payload, job=True)
+
+    try:
+        yield
+    finally:
+        payload['enable'] = not enable
+        call('ldap.update', payload, job=True)
 
 
 def test_setup_and_enabling_freeipa(do_freeipa_connection):
@@ -114,3 +143,20 @@ def test_dns_resolution(do_freeipa_connection):
 
     addresses = call('dnsclient.forward_lookup', {'names': [ipa_config['host']]})
     assert len(addresses) != 0
+
+
+def test_ldap_bind_legacy_kerberos_principal(do_freeipa_connection):
+    """
+    Do proper IPA join to get kerberos principal,
+    Disable LDAP
+    Rename keytab entry so that we switch to legacy bind type
+    Re-enable LDAP and verify dstype is LDAP and not IPA
+    Then roll back changes so that we can cleanly leave the IPA domain
+    """
+    config = do_freeipa_connection
+    with toggle_ldap(config, False):
+        with switch_to_legacy_bind():
+            with toggle_ldap(config, True):
+                ds = call('directoryservices.status')
+                assert ds['type'] == 'LDAP'
+                assert ds['status'] == 'HEALTHY'
