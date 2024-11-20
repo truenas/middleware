@@ -56,9 +56,11 @@ def test_pool_create_and_export_audit():
     }]):
         pool_id = call('pool.create', create_payload, job=True)['id']
 
+    export_payload = {'destroy': True}
+
     with expect_audit_method_calls([{
         'method': 'pool.export',
-        'params': [pool_id],
+        'params': [pool_id, export_payload],
         'description': f'Pool Export {pool_name}',
     }]):
-        call('pool.export', pool_id, job=True)
+        call('pool.export', pool_id, export_payload, job=True)
