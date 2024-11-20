@@ -57,104 +57,6 @@ NETDATA_ALL_METRICS = {
             }
         }
     },
-    'cpu.cpu0': {
-        'name': 'cpu.cpu0',
-        'family': 'utilization',
-        'context': 'cpu.cpu',
-        'units': 'percentage',
-        'last_updated': 1691150349,
-        'dimensions': {
-            'guest_nice': {
-                'name': 'guest_nice',
-                'value': 0.2575124
-            },
-            'guest': {
-                'name': 'guest',
-                'value': 0.2575124
-            },
-            'steal': {
-                'name': 'steal',
-                'value': 0.2575124
-            },
-            'softirq': {
-                'name': 'softirq',
-                'value': 0.2375124
-            },
-            'irq': {
-                'name': 'irq',
-                'value': 0.2075124
-            },
-            'user': {
-                'name': 'user',
-                'value': 0.3275124
-            },
-            'system': {
-                'name': 'system',
-                'value': 0.3275124
-            },
-            'nice': {
-                'name': 'nice',
-                'value': 26.75124
-            },
-            'iowait': {
-                'name': 'iowait',
-                'value': 2.75124
-            },
-            'idle': {
-                'name': 'idle',
-                'value': 49.0049751
-            }
-        }
-    },
-    'cpu.cpu1': {
-        'name': 'cpu.cpu1',
-        'family': 'utilization',
-        'context': 'cpu.cpu',
-        'units': 'percentage',
-        'last_updated': 1691150349,
-        'dimensions': {
-            'guest_nice': {
-                'name': 'guest_nice',
-                'value': 0.2575124
-            },
-            'guest': {
-                'name': 'guest',
-                'value': 0.2575124
-            },
-            'steal': {
-                'name': 'steal',
-                'value': 0.2575124
-            },
-            'softirq': {
-                'name': 'softirq',
-                'value': 0.2375124
-            },
-            'irq': {
-                'name': 'irq',
-                'value': 0.2075124
-            },
-            'user': {
-                'name': 'user',
-                'value': 0.3275124
-            },
-            'system': {
-                'name': 'system',
-                'value': 0.3275124
-            },
-            'nice': {
-                'name': 'nice',
-                'value': 26.75124
-            },
-            'iowait': {
-                'name': 'iowait',
-                'value': 2.75124
-            },
-            'idle': {
-                'name': 'idle',
-                'value': 49.0049751
-            }
-        }
-    },
     'system.ram': {
         'name': 'system.ram',
         'family': 'ram',
@@ -905,21 +807,14 @@ def test_arc_stats():
 
 
 def test_cpu_stats():
-    cpu_stats = get_cpu_stats(NETDATA_ALL_METRICS, 2)
-    cpu_stat = {'system.cpu': cpu_stats['average'], 'cpu.cpu0': cpu_stats['0'], 'cpu.cpu1': cpu_stats['1']}
-    for chart_name, metrics in cpu_stat.items():
-        total_sum = sum(metrics.values()) - metrics['usage']
-        assert metrics['user'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'user', 0)
-        assert metrics['nice'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'nice', 0)
-        assert metrics['system'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'system', 0)
-        assert metrics['idle'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'idle', 0)
-        assert metrics['iowait'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'iowait', 0)
-        assert metrics['irq'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'irq', 0)
-        assert metrics['softirq'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'softirq', 0)
-        assert metrics['steal'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'steal', 0)
-        assert metrics['guest'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'guest', 0)
-        assert metrics['guest_nice'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'guest_nice', 0)
-        assert metrics['usage'] == ((total_sum - metrics['idle'] - metrics['iowait']) / total_sum) * 100
+    cpu_stat = get_cpu_stats(NETDATA_ALL_METRICS)
+    total_sum = 0
+    for metric, value in cpu_stat.items():
+        if metric == 'usage':
+            assert value == ((total_sum - cpu_stat['idle'] - cpu_stat['iowait']) / total_sum) * 100
+        else:
+            assert value == safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.cpu', metric, 0)
+            total_sum += value
 
 
 def test_disk_stats():

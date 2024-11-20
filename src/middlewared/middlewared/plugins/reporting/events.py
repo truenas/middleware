@@ -76,7 +76,6 @@ class RealtimeEventSource(EventSource):
 
     def run_sync(self):
         interval = self.arg['interval']
-        cores = self.middleware.call_sync('system.info')['cores']
         disk_mapping = get_disks_with_identifiers()
 
         while not self._cancel_sync.is_set():
@@ -105,7 +104,7 @@ class RealtimeEventSource(EventSource):
                     'zfs': get_arc_stats(netdata_metrics),  # ZFS ARC Size
                     'memory': get_memory_info(netdata_metrics),
                     'virtual_memory': psutil.virtual_memory()._asdict(),
-                    'cpu': get_cpu_stats(netdata_metrics, cores),
+                    'cpu': get_cpu_stats(netdata_metrics),
                     'disks': get_disk_stats(netdata_metrics, disks, disk_mapping),
                     'interfaces': get_interface_stats(
                         netdata_metrics, [
