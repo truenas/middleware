@@ -48,10 +48,11 @@ class PoolService(Service):
             Bool('restart_services', default=False),
             Bool('destroy', default=False),
         ),
+        audit="Pool Export", audit_callback=True,
     )
     @returns()
     @job(lock='pool_export')
-    async def export(self, job, oid, options):
+    async def export(self, job, audit_callback, oid, options):
         """
         Export pool of `id`.
 
@@ -79,6 +80,7 @@ class PoolService(Service):
         be disabled before exporting the last zpool on the system.
         """
         pool = await self.middleware.call('pool.get_instance', oid)
+        audit_callback(pool['name'])
         root_ds = await self.middleware.call('pool.dataset.query', [['id', '=', pool['name']]])
         if root_ds and root_ds[0]['locked'] and os.path.exists(root_ds[0]['mountpoint']):
             # We should be removing immutable flag in this case if the path exists
