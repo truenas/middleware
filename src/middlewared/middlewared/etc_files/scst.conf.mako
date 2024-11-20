@@ -51,8 +51,22 @@
     fcports_by_port_name = {d['port']: d for d in render_ctx['fcport.query']}
     targets_by_id = {d['id']: d for d in targets}
     authenticators = defaultdict(list)
-    for auth in middleware.call_sync('iscsi.auth.query'):
+
+    discovery_incoming = []
+    discovery_outgoing = []
+    for auth in render_ctx['iscsi.auth.query']:
         authenticators[auth['tag']].append(auth)
+        disc_auth = auth.get('discovery_auth')
+        if disc_auth in ['CHAP', 'CHAP_MUTUAL']:
+            user = auth.get('user')
+            secret = auth.get('secret')
+            if user and secret:
+                discovery_incoming.append(f'{user} {secret}')
+        if disc_auth in ['CHAP_MUTUAL']:
+            user = auth.get('peeruser')
+            secret = auth.get('peersecret')
+            if user and secret:
+                discovery_outgoing.append(f'{user} {secret}')
 
     def ha_node_wwpn_for_fcport(fcport):
         if render_ctx['failover.node'] == 'A':
@@ -388,6 +402,17 @@ HANDLER ${handler} {
 ##
 ####################################################################################
 TARGET_DRIVER iscsi {
+%   if node == 'A':
+    internal_portal 169.254.10.1
+%   elif node == 'B':
+    internal_portal 169.254.10.2
+%   endif
+%   for chap_auth in discovery_incoming:
+    IncomingUser "${chap_auth}"
+%   endfor
+%   if discovery_outgoing:
+    OutgoingUser "${discovery_outgoing[0]}"
+%   endif
     enabled 1
     link_local 0
 ## Currently SCST only supports one iSNS server
