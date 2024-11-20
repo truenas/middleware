@@ -16,6 +16,7 @@ from assets.websocket.iscsi import (alua_enabled, initiator, initiator_portal,
                                     portal, read_capacity16, target,
                                     target_extent_associate, verify_capacity,
                                     verify_luns, verify_ha_inquiry, verify_ha_device_identification, TUR)
+from assets.websocket.service import ensure_service_enabled, ensure_service_started
 from middlewared.service_exception import InstanceNotFound, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.iscsi import target_login_test
 from middlewared.test.integration.assets.pool import dataset, snapshot
@@ -81,6 +82,7 @@ PR_KEY1 = 0xABCDEFAABBCCDDEE
 PR_KEY2 = 0x00000000DEADBEEF
 CONTROLLER_A_TARGET_PORT_GROUP_ID = 101
 CONTROLLER_B_TARGET_PORT_GROUP_ID = 102
+SERVICE_NAME = 'iscsitarget'
 
 # Some variables
 digit = ''.join(random.choices(string.digits, k=2))
@@ -448,25 +450,18 @@ def _get_service(service_name='iscsitarget'):
     return call('service.query', [['service', '=', service_name]], {'get': True})
 
 
-@pytest.mark.dependency(name="iscsi_cmd_00")
-def test_00_setup(request):
-    # Enable iSCSI service
-    payload = {"enable": True}
-    call('service.update', 'iscsitarget', payload)
-    # Start iSCSI service
-    call('service.start', 'iscsitarget')
-    sleep(1)
-    # Verify running
-    service = _get_service()
-    assert service['state'] == "RUNNING", service
+@pytest.fixture(scope='module')
+def iscsi_running():
+    with ensure_service_enabled(SERVICE_NAME):
+        with ensure_service_started(SERVICE_NAME, 3):
+            yield
 
 
-def test_01_inquiry(request):
+def test_01_inquiry(iscsi_running):
     """
     This tests the Vendor and Product information in an INQUIRY response
     are 'TrueNAS' and 'iSCSI Disk' respectively.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     with initiator():
         with portal() as portal_config:
             portal_id = portal_config['id']
@@ -481,13 +476,12 @@ def test_01_inquiry(request):
                                 _verify_inquiry(s)
 
 
-def test_02_read_capacity16(request):
+def test_02_read_capacity16(iscsi_running):
     """
     This tests that the target created returns the correct size to READ CAPACITY (16).
 
     It performs this test with a couple of sizes for both file & zvol based targets.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     with initiator():
         with portal() as portal_config:
             portal_id = portal_config['id']
@@ -594,24 +588,22 @@ def target_test_readwrite16(ip, iqn):
         assert r.datain == deadbeef * 2, r.datain
 
 
-def test_03_readwrite16_file_extent(request):
+def test_03_readwrite16_file_extent(iscsi_running):
     """
     This tests WRITE SAME (16), READ (16) and WRITE (16) operations with
     a file extent based iSCSI target.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     with initiator_portal() as config:
         with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name):
             iqn = f'{basename}:{target_name}'
             target_test_readwrite16(truenas_server.ip, iqn)
 
 
-def test_04_readwrite16_zvol_extent(request):
+def test_04_readwrite16_zvol_extent(iscsi_running):
     """
     This tests WRITE SAME (16), READ (16) and WRITE (16) operations with
     a zvol extent based iSCSI target.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol):
             iqn = f'{basename}:{target_name}'
@@ -619,11 +611,10 @@ def test_04_readwrite16_zvol_extent(request):
 
 
 @skip_invalid_initiatorname
-def test_05_chap(request):
+def test_05_chap(iscsi_running):
     """
     This tests that CHAP auth operates as expected.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     user = "user1"
     secret = 'sec1' + ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
     with initiator():
@@ -659,11 +650,10 @@ def test_05_chap(request):
 
 
 @skip_invalid_initiatorname
-def test_06_mutual_chap(request):
+def test_06_mutual_chap(iscsi_running):
     """
     This tests that Mutual CHAP auth operates as expected.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     user = "user1"
     secret = 'sec1' + ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
     peer_user = "user2"
@@ -795,11 +785,10 @@ def test_06_discovery_auth():
     assert [] == call('iscsi.auth.query')
 
 
-def test_07_report_luns(request):
+def test_07_report_luns(iscsi_running):
     """
     This tests REPORT LUNS and accessing multiple LUNs on a target.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
     with initiator():
         with portal() as portal_config:
@@ -984,11 +973,10 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
                 assert r.datain == zeros, r.datain
 
 
-def test_08_snapshot_zvol_extent(request):
+def test_08_snapshot_zvol_extent(iscsi_running):
     """
     This tests snapshots with a zvol extent based iSCSI target.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
@@ -997,11 +985,10 @@ def test_08_snapshot_zvol_extent(request):
             target_test_snapshot_multiple_login(truenas_server.ip, iqn, iscsi_config['dataset'])
 
 
-def test_09_snapshot_file_extent(request):
+def test_09_snapshot_file_extent(iscsi_running):
     """
     This tests snapshots with a file extent based iSCSI target.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
     with initiator_portal() as config:
         with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name) as iscsi_config:
@@ -1010,15 +997,13 @@ def test_09_snapshot_file_extent(request):
             target_test_snapshot_multiple_login(truenas_server.ip, iqn, iscsi_config['dataset'])
 
 
-def test_10_target_alias(request):
+def test_10_target_alias(iscsi_running):
     """
     This tests iSCSI target alias.
 
     At the moment SCST does not use the alias usefully (e.g. TargetAlias in
     LOGIN response).  When this is rectified this test should be extended.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     data = {}
     for t in ["A", "B"]:
         data[t] = {}
@@ -1057,11 +1042,10 @@ def test_10_target_alias(request):
                         assert targets[B['name']]['alias'] is None, targets[B['name']]['alias']
 
 
-def test_11_modify_portal(request):
+def test_11_modify_portal(iscsi_running):
     """
     Test that we can modify a target portal.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     with portal() as portal_config:
         assert portal_config['comment'] == 'Default portal', portal_config
         # First just change the comment
@@ -1076,12 +1060,11 @@ def test_11_modify_portal(request):
         assert new_config['comment'] == 'test1', new_config
 
 
-def test_12_pblocksize_setting(request):
+def test_12_pblocksize_setting(iscsi_running):
     """
     This tests whether toggling pblocksize has the desired result on READ CAPACITY 16, i.e.
     whether setting it results in LOGICAL BLOCKS PER PHYSICAL BLOCK EXPONENT being zero.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
     with initiator_portal() as config:
         with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name) as iscsi_config:
@@ -1148,12 +1131,10 @@ def generate_name(length, base="target"):
 
 
 @pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
-def test_13_test_target_name(request, extent_type):
+def test_13_test_target_name(iscsi_running, extent_type):
     """
     Test the user-supplied target name.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     with initiator_portal() as config:
         name63 = generate_name(63)
         name64 = generate_name(64)
@@ -1178,13 +1159,11 @@ def test_13_test_target_name(request, extent_type):
 
 
 @pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
-def test_14_target_lun_extent_modify(request, extent_type):
+def test_14_target_lun_extent_modify(iscsi_running, extent_type):
     """
     Perform some tests of the iscsi.targetextent.update API, including
     trying tp provide invalid
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     name1 = f'{target_name}1'
     name2 = f'{target_name}2'
     name3 = f'{target_name}3'
@@ -1328,13 +1307,12 @@ def _isns_wait_for_iqn(isns_client, iqn, timeout=10):
     return iqns
 
 
-def test_15_test_isns(request):
+def test_15_test_isns(iscsi_running):
     """
     Test ability to register targets with iSNS.
     """
     # Will use a more unique target name than usual, just in case several test
     # runs are hitting the same iSNS server at the same time.
-    depends(request, ["iscsi_cmd_00"], scope="session")
     _host = socket.gethostname()
     _rand = ''.join(random.choices(string.digits + string.ascii_lowercase, k=12))
     _name_base = f'isnstest:{_host}:{_rand}'
@@ -1415,12 +1393,10 @@ class TestFixtureInitiatorName:
     ]
 
     @pytest.mark.parametrize("initiator_name, expected", params)
-    def test_16_invalid_initiator_name(self, request, create_target, initiator_name, expected):
+    def test_16_invalid_initiator_name(self, iscsi_running, create_target, initiator_name, expected):
         """
         Deliberately send SCST some invalid initiator names and ensure it behaves OK.
         """
-        depends(request, ["iscsi_cmd_00"], scope="session")
-
         if expected:
             with iscsi_scsi_connection(truenas_server.ip, TestFixtureInitiatorName.iqn, initiator_name=initiator_name) as s:
                 _verify_inquiry(s)
@@ -1512,8 +1488,7 @@ def _pr_reservation(s, pr_type, scope=LU_SCOPE, other_connections=[], **kwargs):
 
 @skip_persistent_reservations
 @pytest.mark.dependency(name="iscsi_basic_persistent_reservation")
-def test_17_basic_persistent_reservation(request):
-    depends(request, ["iscsi_cmd_00"], scope="session")
+def test_17_basic_persistent_reservation(iscsi_running):
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol):
             iqn = f'{basename}:{target_name}'
@@ -1700,8 +1675,7 @@ def _check_persistent_reservations(s1, s2):
 
 @skip_persistent_reservations
 @skip_multi_initiator
-def test_18_persistent_reservation_two_initiators(request):
-    depends(request, ["iscsi_cmd_00"], scope="session")
+def test_18_persistent_reservation_two_initiators(iscsi_running):
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol):
             iqn = f'{basename}:{target_name}'
@@ -1887,7 +1861,7 @@ def _ensure_alua_state(state):
 
 @pytest.mark.dependency(name="iscsi_alua_config")
 @pytest.mark.timeout(900)
-def test_19_alua_config(request):
+def test_19_alua_config(iscsi_running):
     """
     Test various aspects of ALUA configuration.
 
@@ -2056,7 +2030,7 @@ def test_19_alua_config(request):
 @skip_persistent_reservations
 @skip_multi_initiator
 @skip_ha_tests
-def test_20_alua_basic_persistent_reservation(request):
+def test_20_alua_basic_persistent_reservation(request, iscsi_running):
     # Don't need to specify "iscsi_cmd_00" here
     depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
     # Turn on ALUA
@@ -2102,7 +2076,7 @@ def test_20_alua_basic_persistent_reservation(request):
 @skip_persistent_reservations
 @skip_multi_initiator
 @skip_ha_tests
-def test_21_alua_persistent_reservation_two_initiators(request):
+def test_21_alua_persistent_reservation_two_initiators(request, iscsi_running):
     depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
     with alua_enabled():
         with initiator_portal() as config:
@@ -2200,9 +2174,8 @@ def _xcopy_test(s1, s2, adds1=None, adds2=None):
 
 @pytest.mark.parametrize('extent2', ["FILE", "VOLUME"])
 @pytest.mark.parametrize('extent1', ["FILE", "VOLUME"])
-def test_22_extended_copy(request, extent1, extent2):
+def test_22_extended_copy(iscsi_running, extent1, extent2):
     # print(f"Extended copy {extent1} -> {extent2}")
-    depends(request, ["iscsi_cmd_00"], scope="session")
 
     name1 = f"{target_name}x1"
     name2 = f"{target_name}x2"
@@ -2247,11 +2220,10 @@ def test_23_ha_extended_copy(request, extent1, extent2):
                                     _xcopy_test(sb1, sb2, sa1, sa2)
 
 
-def test_24_iscsi_target_disk_login(request):
+def test_24_iscsi_target_disk_login(iscsi_running):
     """
     Tests whether a logged in iSCSI target shows up in disks.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
 
     def fetch_disk_data(fetch_remote=False):
@@ -2321,13 +2293,11 @@ def test_24_iscsi_target_disk_login(request):
                     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
-def test_25_resize_target_zvol(request):
+def test_25_resize_target_zvol(iscsi_running):
     """
     Verify that an iSCSI client is notified when the size of a ZVOL underlying
     an iSCSI extent is modified.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol, volsize=MB_100) as config:
             iqn = f'{basename}:{target_name}'
@@ -2350,13 +2320,11 @@ def test_25_resize_target_zvol(request):
                 assert MB_512 == read_capacity16(s)
 
 
-def test_26_resize_target_file(request):
+def test_26_resize_target_file(iscsi_running):
     """
     Verify that an iSCSI client is notified when the size of a file-based
     iSCSI extent is modified.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     with initiator_portal() as config:
         with configured_target_to_file_extent(config,
                                               target_name,
@@ -2383,9 +2351,7 @@ def test_26_resize_target_file(request):
 
 
 @skip_multi_initiator
-def test_27_initiator_group(request):
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
+def test_27_initiator_group(iscsi_running):
     initiator_base = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}"
     initiator_iqn1 = f"{initiator_base}:one"
     initiator_iqn2 = f"{initiator_base}:two"
@@ -2430,7 +2396,7 @@ def test_27_initiator_group(request):
                     TUR(s)
 
 
-def test_28_portal_access(request):
+def test_28_portal_access(iscsi_running):
     """
     Verify that an iSCSI client can access a target on the specified
     portal.
@@ -2520,11 +2486,9 @@ def check_inq_enabled_state(iqn, expected):
     assert actual == expected, f'IQN {iqn} has an unexpected enabled state - was {actual}, expected {expected}'
 
 
-def test_30_target_without_active_extent(request):
+def test_30_target_without_active_extent(iscsi_running):
     """Validate that a target will not be enabled if it does not have
     and enabled associated extents"""
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     name1 = f"{target_name}x1"
     name2 = f"{target_name}x2"
     iqn1 = f'{basename}:{name1}'
@@ -2586,10 +2550,8 @@ def test_30_target_without_active_extent(request):
                 assert 'Unable to connect to' in str(ve), ve
 
 
-def test_31_iscsi_sessions(request):
+def test_31_iscsi_sessions(iscsi_running):
     """Validate that we can get a list of currently running iSCSI sessions."""
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     name1 = f"{target_name}x1"
     name2 = f"{target_name}x2"
     name3 = f"{target_name}x3"
@@ -2667,10 +2629,8 @@ def test_31_iscsi_sessions(request):
                     get_iscsi_sessions(check_length=0)
 
 
-def test_32_multi_lun_targets(request):
+def test_32_multi_lun_targets(iscsi_running):
     """Validate that we can create and access multi-LUN targets."""
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     name1 = f"{target_name}x1"
     name2 = f"{target_name}x2"
     iqn1 = f'{basename}:{name1}'
@@ -2756,16 +2716,3 @@ def test_35_delete_extent_no_dataset(extent_type):
                 with zvol_dataset(zvol, MB_100, True, True):
                     with zvol_extent(zvol, extent_name='zvolextent1'):
                         ssh(DESTROY_CMD)
-
-
-def test_99_teardown(request):
-    # Disable iSCSI service
-    depends(request, ["iscsi_cmd_00"])
-    payload = {'enable': False}
-    call('service.update', 'iscsitarget', payload)
-    # Stop iSCSI service.
-    call('service.stop', 'iscsitarget')
-    sleep(1)
-    # Verify stopped
-    service = _get_service()
-    assert service['state'] == "STOPPED", service
