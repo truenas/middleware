@@ -4,8 +4,10 @@ from .acme_registration import *  # noqa
 from .alert import *  # noqa
 from .alertservice import *  # noqa
 from .api_key import *  # noqa
+from .app import *  # noqa
 from .auth import *  # noqa
 from .boot_environments import *  # noqa
+from .catalog import *  # noqa
 from .cloud_sync import *  # noqa
 from .common import *  # noqa
 from .core import *  # noqa
