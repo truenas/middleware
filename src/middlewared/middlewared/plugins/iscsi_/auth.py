@@ -125,9 +125,12 @@ class iSCSITargetAuthCredentialService(CRUDService):
             if usages['in_use']:
                 raise CallError(usages['usages'])
 
-        return await self.middleware.call(
+        result = await self.middleware.call(
             'datastore.delete', self._config.datastore, id_
         )
+        await self._service_change('iscsitarget', 'reload')
+
+        return result
 
     @private
     async def is_in_use_by_portals_targets(self, id_):
