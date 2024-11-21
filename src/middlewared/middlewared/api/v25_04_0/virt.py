@@ -96,9 +96,14 @@ class Disk(Device):
     destination: Optional[str] = None
 
 
+NicType: TypeAlias = Literal['BRIDGED', 'MACVLAN']
+
+
 class NIC(Device):
     dev_type: Literal['NIC']
-    network: NonEmptyString
+    network: Optional[NonEmptyString] = None
+    nic_type: Optional[NicType] = None
+    parent: Optional[NonEmptyString] = None
 
 
 class USB(Device):
@@ -332,6 +337,14 @@ class VirtDeviceDiskChoicesArgs(BaseModel):
 
 
 class VirtDeviceDiskChoicesResult(BaseModel):
+    result: dict[str, str]
+
+
+class VirtDeviceNICChoicesArgs(BaseModel):
+    nic_type: NicType
+
+
+class VirtDeviceNICChoicesResult(BaseModel):
     result: dict[str, str]
 
 
