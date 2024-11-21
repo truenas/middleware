@@ -17,6 +17,7 @@ class TNCEntry(BaseModel):
     acme_key: NonEmptyString | None
     acme_account_uri: NonEmptyString | None
     acme_directory_uri: NonEmptyString | None
+    jwt_details: dict
 
 
 @single_argument_args('tn_connect_update')

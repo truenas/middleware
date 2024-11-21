@@ -27,6 +27,7 @@ def upgrade():
         sa.Column('acme_key', sa.TEXT(), nullable=True),
         sa.Column('acme_account_uri', sa.String(length=255), nullable=True),
         sa.Column('acme_directory_uri', sa.String(length=255), nullable=True),
+        sa.Column('jwt_details', sa.TEXT(), nullable=False, server_default='{}'),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_truenas_connect')),
         sqlite_autoincrement=True,
     )
