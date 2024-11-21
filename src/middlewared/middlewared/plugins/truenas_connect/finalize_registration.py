@@ -1,5 +1,7 @@
 import asyncio
 
+import jwt
+
 from middlewared.service import job, Service
 
 from .mixin import TNCAPIMixin
@@ -36,12 +38,22 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
                     )
                 else:
                     token = status['response']['token']
+                    decoded_token = {}
+                    try:
+                        decoded_token = jwt.decode(token, options={'verify_signature': False})
+                    except jwt.exceptions.DecodeError:
+                        self.logger.error('Invalid JWT token received from TNC')
+                    else:
+                        if diff := {'account_id', 'system_id'} - set(decoded_token):
+                            self.logger.error('JWT token does not contain required fields: %r', diff)
+
                     await self.middleware.call(
                         'datastore.update', 'truenas_connect', config['id'], {
                             'jwt_token': token,
                             'jwt_token_system_id': config['claim_token_system_id'],  # FIXME: Sanity check
                             'claim_token': None,
                             'claim_token_system_id': None,
+                            'jwt_details': decoded_token,
                         }
                     )
 
