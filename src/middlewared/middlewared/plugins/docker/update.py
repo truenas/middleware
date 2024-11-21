@@ -1,5 +1,7 @@
-import middlewared.sqlalchemy as sa
+import os
+import subprocess
 
+import middlewared.sqlalchemy as sa
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Str, ValidationErrors
 from middlewared.service import CallError, ConfigService, job, private, returns
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -116,16 +118,8 @@ class DockerService(ConfigService):
                 job.set_progress(60, 'Starting docker')
                 await self.middleware.call('service.start', 'docker')
 
-            if not old_config['nvidia'] and config['nvidia']:
-                await (
-                    await self.middleware.call(
-                        'nvidia.install',
-                        job_on_progress_cb=lambda encoded: job.set_progress(
-                            70 + int(encoded['progress']['percent'] * 0.2),
-                            encoded['progress']['description'],
-                        )
-                    )
-                ).wait(raise_error=True)
+            if old_config['nvidia'] != config['nvidia']:
+                await self.middleware.call('docker.configure_nvidia')
 
             if config['pool'] and config['address_pools'] != old_config['address_pools']:
                 job.set_progress(95, 'Initiating redeployment of applications to apply new address pools changes')
@@ -149,57 +143,31 @@ class DockerService(ConfigService):
         """
         return await self.middleware.call('docker.state.get_status_dict')
 
-    @accepts(roles=['DOCKER_READ'])
-    @returns(Bool())
-    async def nvidia_status(self):
-        """
-        Returns Nvidia hardware and drivers installation status.
-        """
-        return await self.nvidia_status_for_job()
-
     @private
-    async def nvidia_status_for_job(self, job=None):
-        if not await self.middleware.call('nvidia.present'):
-            return {'status': 'ABSENT'}
+    def configure_nvidia(self):
+        config = self.middleware.call_sync('docker.config')
+        nvidia_sysext_path = '/run/extensions/nvidia.raw'
+        if config['nvidia'] and not os.path.exists(nvidia_sysext_path):
+            os.makedirs('/run/extensions', exist_ok=True)
+            os.symlink('/usr/share/truenas/sysext-extensions/nvidia.raw', nvidia_sysext_path)
+            refresh = True
+        elif not config['nvidia'] and os.path.exists(nvidia_sysext_path):
+            os.unlink(nvidia_sysext_path)
+            refresh = True
+        else:
+            refresh = False
 
-        if job is None:
-            jobs = await self.middleware.call('core.get_jobs', [['method', '=', 'nvidia.install']])
-            if not jobs:
-                return {'status': 'NOT_INSTALLED'}
+        if refresh:
+            subprocess.run(['systemd-sysext', 'refresh'], capture_output=True, check=True, text=True)
 
-            job = jobs[-1]
-
-        match job['state']:
-            case 'WAITING':
-                return {'status': 'INSTALLING', 'progress': 0, 'description': 'Waiting for installation to begin...'}
-            case 'RUNNING':
-                return {
-                    'status': 'INSTALLING',
-                    'progress': job['progress']['percent'],
-                    'description': job['progress']['description'],
-                }
-            case 'FAILED':
-                return {'status': 'INSTALL_ERROR', 'error': job['error']}
-
-        if await self.middleware.call('nvidia.installed'):
-            return {'status': 'INSTALLED'}
-
-        return {'status': 'NOT_INSTALLED'}
-
-
-async def update_nvidia_status(middleware, event_type, args):
-    if event_type == 'CHANGED' and args['fields']['method'] == 'nvidia.install':
-        middleware.send_event(
-            'docker.nvidia_status',
-            'CHANGED',
-            fields=await middleware.call('docker.nvidia_status_for_job', args['fields']),
-        )
+        if config['nvidia']:
+            cp = subprocess.run(['modprobe', 'nvidia'], capture_output=True, text=True)
+            if cp.returncode != 0:
+                self.logger.error('Error loading nvidia driver: %s', cp.stderr)
 
 
 async def setup(middleware):
-    middleware.event_register(
-        'docker.nvidia_status',
-        'Sent on Nvidia hardware and drivers installation status change.',
-        roles=['DOCKER_READ'],
-    )
-    middleware.event_subscribe('core.get_jobs', update_nvidia_status)
+    try:
+        await middleware.call('docker.configure_nvidia')
+    except Exception:
+        middleware.logger.error('Unhandled exception configuring nvidia', exc_info=True)
