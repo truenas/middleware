@@ -7,6 +7,9 @@ import async_timeout
 
 class TNCAPIMixin:
 
+    async def auth_headers(self, config: dict) -> dict:
+        return {'Authorization': f'Bearer {config["jwt_token"]}'}
+
     async def _call(
         self, endpoint: str, mode: str, *, options: dict | None = None, payload: dict | None = None,
         headers: dict | None = None,
