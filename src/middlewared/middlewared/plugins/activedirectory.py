@@ -71,7 +71,7 @@ class ActiveDirectoryService(ConfigService):
         Str('createcomputer'),
         NetbiosName('netbiosname'),
         NetbiosName('netbiosname_b'),
-        List('netbiosalias', items=[NetbiosName('alias')]),
+        List('netbiosalias', items=[NetbiosName('alias')], default=None),
         Bool('enable'),
         register=True
     )
@@ -122,6 +122,11 @@ class ActiveDirectoryService(ConfigService):
     @private
     async def update_netbios_data(self, old, new):
         must_update = False
+
+        # None here as opposed to empty list indicates to preserve current value
+        if new['netbiosalias'] is None:
+            new['netbiosalias'] = old['netbiosalias']
+
         for key in ['netbiosname', 'netbiosalias']:
             # netbios names are case-insensitive
             if key in new and old[key] != new[key]:
