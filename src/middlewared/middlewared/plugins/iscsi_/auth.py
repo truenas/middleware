@@ -119,6 +119,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         )
         if orig_peerusers:
             await self.middleware.call('iscsi.auth.recalc_mutual_chap_alert', orig_peerusers)
+        await self._service_change('iscsitarget', 'reload')
 
         return result
 
