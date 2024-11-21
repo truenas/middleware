@@ -828,20 +828,27 @@ def test__discover_from_initiator(iscsi_running):
     EMPTY_SET = set()
     ONE_IQN_SET = set([iqn1])
     TWO_IQNS_SET = set([iqn1, iqn2])
+    DISCOVER_DELAY = 10
 
-    def _discovery_validate_two_targets(ip: str, discs: dict):
+    def _discovery_validate_two_targets(ip: str, discs: dict, delay: int | None = None):
+        if delay:
+            sleep(delay)
         _discovery_validate_one(discs['nocred'], TWO_IQNS_SET)
         _discovery_validate_one(discs['user1'], TWO_IQNS_SET)
         _discovery_validate_one(discs['user2'], EMPTY_SET)
         # Create an auth without discovery_auth and ensure it has
         # no impact.
         with iscsi_auth(1, CHAPUSER1, CHAPPASS1):
+            if delay:
+                sleep(delay)
             _discovery_validate_one(discs['nocred'], TWO_IQNS_SET)
             _discovery_validate_one(discs['user1'], TWO_IQNS_SET)
             _discovery_validate_one(discs['user2'], EMPTY_SET)
         # Create an auth with CHAP discovery_auth and ensure it means only
         # a discovery with the correct cred works.
         with iscsi_auth(1, CHAPUSER1, CHAPPASS1, discovery_auth='CHAP'):
+            if delay:
+                sleep(delay)
             _discovery_validate_one(discs['nocred'], EMPTY_SET)
             _discovery_validate_one(discs['user1'], TWO_IQNS_SET)
             _discovery_validate_one(discs['user2'], EMPTY_SET)
@@ -853,6 +860,8 @@ def test__discover_from_initiator(iscsi_running):
                 _discovery_validate_one(baddisc, EMPTY_SET)
             # Create a 2nd auth and ensure they both work
             with iscsi_auth(2, CHAPUSER2, CHAPPASS2, discovery_auth='CHAP'):
+                if delay:
+                    sleep(delay)
                 _discovery_validate_one(discs['nocred'], EMPTY_SET)
                 _discovery_validate_one(discs['user1'], TWO_IQNS_SET)
                 _discovery_validate_one(discs['user2'], EMPTY_SET)
@@ -864,6 +873,8 @@ def test__discover_from_initiator(iscsi_running):
         with iscsi_auth(2, CHAPUSER2, CHAPPASS2,
                         CHAPPEERUSER2, CHAPPEERPASS2,
                         discovery_auth='CHAP_MUTUAL'):
+            if delay:
+                sleep(delay)
             _discovery_validate_one(discs['nocred'], EMPTY_SET)
             _discovery_validate_one(discs['user1'], EMPTY_SET)
             _discovery_validate_one(discs['user2'], TWO_IQNS_SET)
@@ -909,8 +920,12 @@ def test__discover_from_initiator(iscsi_running):
                         _discovery_validate_all(nodeb_discs, EMPTY_SET)
                         with configured_target(config, name1, "VOLUME"):
                             with configured_target(config, name2, "VOLUME"):
-                                _discovery_validate_two_targets(truenas_server.nodea_ip, nodea_discs)
-                                _discovery_validate_two_targets(truenas_server.nodeb_ip, nodeb_discs)
+                                # We will delay after changes when querying the STANDBY node
+                                node = call('failover.node')
+                                nodeb_delay = DISCOVER_DELAY if node == 'A' else None
+                                nodea_delay = DISCOVER_DELAY if node == 'B' else None
+                                _discovery_validate_two_targets(truenas_server.nodea_ip, nodea_discs, nodea_delay)
+                                _discovery_validate_two_targets(truenas_server.nodeb_ip, nodeb_discs, nodeb_delay)
 
             # Turned off ALUA again
             _wait_for_alua_settle()
