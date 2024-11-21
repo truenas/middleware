@@ -48,32 +48,3 @@ class StatusResult(BaseModel):
 
 class DockerStatusResult(BaseModel):
     result: StatusResult
-
-
-class NvidiaNormalStatus(BaseModel):
-    status: Literal['ABSENT', 'NOT_INSTALLED', 'INSTALLED']
-
-
-class NvidiaInstallingStatus(BaseModel):
-    status: Literal['INSTALLING']
-    progress: int
-    description: str
-
-
-class NvidiaInstallErrorStatus(BaseModel):
-    status: Literal['INSTALL_ERROR']
-    error: str
-
-
-NvidiaStatus = Annotated[
-    NvidiaNormalStatus | NvidiaInstallingStatus | NvidiaInstallErrorStatus,
-    Field(discriminator='status'),
-]
-
-
-class NvidiaStatusArgs(BaseModel):
-    pass
-
-
-class NvidiaStatusResult(BaseModel):
-    result: NvidiaStatus
