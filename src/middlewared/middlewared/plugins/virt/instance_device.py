@@ -70,7 +70,8 @@ class VirtInstanceDeviceService(Service):
                 device['network'] = incus.get('network')
                 if device['network']:
                     device['parent'] = None
-                else:
+                    device['nic_type'] = None
+                elif incus.get('nictype'):
                     device['nic_type'] = incus.get('nictype').upper()
                     device['parent'] = incus.get('parent')
                 device['description'] = device['network']
