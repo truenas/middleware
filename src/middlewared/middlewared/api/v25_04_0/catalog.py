@@ -16,6 +16,7 @@ class CatalogEntry(BaseModel):
     id: NonEmptyString
     label: NonEmptyString = Field(pattern=r'^\w+[\w.-]*$')
     preferred_trains: list[NonEmptyString]
+    location: NonEmptyString
 
 
 @single_argument_args('catalog_update')
