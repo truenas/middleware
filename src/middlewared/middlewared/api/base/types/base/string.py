@@ -5,8 +5,9 @@ from pydantic_core import CoreSchema, core_schema, PydanticKnownError
 from typing_extensions import Annotated
 
 from middlewared.utils.lang import undefined
+from middlewared.validators import Time
 
-__all__ = ["HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE"]
+__all__ = ["HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString"]
 
 HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
 
@@ -55,5 +56,6 @@ LongString = Annotated[
 
 NonEmptyString = Annotated[str, Field(min_length=1)]
 LongNonEmptyString = Annotated[LongString, Field(min_length=1)]
+TimeString = Annotated[str, AfterValidator(Time())]
 
 SECRET_VALUE = "********"

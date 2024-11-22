@@ -45,3 +45,11 @@ class QueryArgs(BaseModel):
 
 class GenericQueryResult(BaseModel):
     result: list[dict] | dict | int
+
+
+class CronModel(BaseModel):
+    minute: str = "*"
+    hour: str = "*"
+    dom: str = "*"
+    month: str = "*"
+    dow: str = "*"

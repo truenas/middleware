@@ -8,6 +8,7 @@ from .app import *  # noqa
 from .auth import *  # noqa
 from .boot_environments import *  # noqa
 from .catalog import *  # noqa
+from .cloud_backup import *  # noqa
 from .cloud_sync import *  # noqa
 from .common import *  # noqa
 from .core import *  # noqa

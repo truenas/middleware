@@ -1,8 +1,8 @@
+from middlewared.api import api_method
+from middlewared.api.current import CloudBackupRestoreArgs, CloudBackupRestoreResult
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
-from middlewared.schema import accepts, Dict, Int, List, Str
 from middlewared.service import job, Service, ValidationErrors
-from middlewared.validators import NotMatch
 
 
 class CloudBackupService(Service):
@@ -11,17 +11,7 @@ class CloudBackupService(Service):
         cli_namespace = "task.cloud_backup"
         namespace = "cloud_backup"
 
-    @accepts(
-        Int("id"),
-        Str("snapshot_id", validators=[NotMatch(r"^-")]),
-        Str("subfolder"),
-        Str("destination_path"),
-        Dict(
-            "options",
-            List("exclude", items=[Str("item")]),
-            List("include", items=[Str("item")]),
-        ),
-    )
+    @api_method(CloudBackupRestoreArgs, CloudBackupRestoreResult)
     @job(logs=True)
     async def restore(self, job, id_, snapshot_id, subfolder, destination_path, options):
         """
