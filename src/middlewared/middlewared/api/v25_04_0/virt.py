@@ -1,4 +1,4 @@
-from typing import Literal, List, Union, Optional, TypeAlias
+from typing import Literal, List, Union, TypeAlias
 from typing_extensions import Annotated
 
 from pydantic import Field, StringConstraints
@@ -85,28 +85,33 @@ class VirtInstanceImageChoicesResult(BaseModel):
 
 
 class Device(BaseModel):
-    name: Optional[NonEmptyString] = None
-    description: Optional[NonEmptyString] = None
+    name: NonEmptyString | None = None
+    description: NonEmptyString | None = None
     readonly: bool = False
 
 
 class Disk(Device):
     dev_type: Literal['DISK']
-    source: Optional[str] = None
-    destination: Optional[str] = None
+    source: str | None = None
+    destination: str | None = None
+
+
+NicType: TypeAlias = Literal['BRIDGED', 'MACVLAN']
 
 
 class NIC(Device):
     dev_type: Literal['NIC']
-    network: NonEmptyString
+    network: NonEmptyString | None = None
+    nic_type: NicType | None = None
+    parent: NonEmptyString | None = None
 
 
 class USB(Device):
     dev_type: Literal['USB']
-    bus: Optional[int] = None
-    dev: Optional[int] = None
-    product_id: Optional[str] = None
-    vendor_id: Optional[str] = None
+    bus: int | None = None
+    dev: int | None = None
+    product_id: str | None = None
+    vendor_id: str | None = None
 
 
 Proto: TypeAlias = Literal['UDP', 'TCP']
@@ -122,8 +127,8 @@ class Proxy(Device):
 
 class TPM(Device):
     dev_type: Literal['TPM']
-    path: Optional[str] = None
-    pathrm: Optional[str] = None
+    path: str | None = None
+    pathrm: str | None = None
 
 
 GPUType: TypeAlias = Literal['PHYSICAL', 'MDEV', 'MIG', 'SRIOV']
@@ -135,12 +140,12 @@ class GPU(Device):
     id: str | None = None
     gid: LocalGID | None = None
     uid: LocalUID | None = None
-    mode: Optional[str] = None
-    mdev: Optional[NonEmptyString] = None
-    mig_uuid: Optional[NonEmptyString] = None
-    pci: Optional[NonEmptyString] = None
-    productid: Optional[NonEmptyString] = None
-    vendorid: Optional[NonEmptyString] = None
+    mode: str | None = None
+    mdev: NonEmptyString | None = None
+    mig_uuid: NonEmptyString | None = None
+    pci: NonEmptyString | None = None
+    productid: NonEmptyString | None = None
+    vendorid: NonEmptyString | None = None
 
 
 DeviceType: TypeAlias = Annotated[
@@ -195,7 +200,7 @@ class VirtInstanceCreateArgs(BaseModel):
     environment: dict[str, str] | None = None
     autostart: bool | None = True
     cpu: str | None = None
-    devices: List[DeviceType] = None
+    devices: List[DeviceType] | None = None
     memory: MemoryType | None = None
 
 
@@ -319,7 +324,7 @@ class GPUChoice(BaseModel):
     bus: int
     slot: int
     description: str
-    vendor: Optional[str] = None
+    vendor: str | None = None
     pci: str
 
 
@@ -332,6 +337,14 @@ class VirtDeviceDiskChoicesArgs(BaseModel):
 
 
 class VirtDeviceDiskChoicesResult(BaseModel):
+    result: dict[str, str]
+
+
+class VirtDeviceNICChoicesArgs(BaseModel):
+    nic_type: NicType
+
+
+class VirtDeviceNICChoicesResult(BaseModel):
     result: dict[str, str]
 
 

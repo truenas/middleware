@@ -44,12 +44,16 @@ def test_virt_instance_create():
         call('virt.instance.create', {'name': INS2_NAME, 'image': INS2_IMAGE}, job=True)
         ssh(f'incus exec {INS2_NAME} cat /etc/os-release | grep "{INS2_OS}"')
 
+        nics = list(call('virt.device.nic_choices', 'MACVLAN').keys())
+        assert len(nics) > 0
+
         call('virt.instance.create', {
             'name': INS3_NAME,
             'image': INS3_IMAGE,
             'devices': [
                 {'dev_type': 'TPM', 'path': '/dev/tpm0', 'pathrm': '/dev/tmprm0'},
                 {'dev_type': 'PROXY', 'source_proto': 'TCP', 'source_port': 60123, 'dest_proto': 'TCP', 'dest_port': 2000},
+                {'dev_type': 'NIC', 'name': 'eth1', 'nic_type': 'MACVLAN', 'parent': nics[0]},
             ],
         }, job=True)
         ssh(f'incus exec {INS3_NAME} cat /etc/os-release | grep "{INS3_OS}"')
@@ -57,6 +61,7 @@ def test_virt_instance_create():
         devices = call('virt.instance.device_list', INS3_NAME)
         assert any(i for i in devices if i['name'] == 'tpm0'), devices
         assert any(i for i in devices if i['name'] == 'proxy0'), devices
+        assert any(i for i in devices if i['name'] == 'eth1'), devices
 
         assert wait_agent.wait(timeout=60)
         ssh(f'incus exec {INS1_NAME} cat /etc/os-release | grep "{INS1_OS}"')

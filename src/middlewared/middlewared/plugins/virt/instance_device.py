@@ -68,6 +68,12 @@ class VirtInstanceDeviceService(Service):
             case 'nic':
                 device['dev_type'] = 'NIC'
                 device['network'] = incus.get('network')
+                if device['network']:
+                    device['parent'] = None
+                    device['nic_type'] = None
+                elif incus.get('nictype'):
+                    device['nic_type'] = incus.get('nictype').upper()
+                    device['parent'] = incus.get('parent')
                 device['description'] = device['network']
             case 'proxy':
                 device['dev_type'] = 'PROXY'
@@ -168,6 +174,8 @@ class VirtInstanceDeviceService(Service):
             case 'NIC':
                 new['type'] = 'nic'
                 new['network'] = device['network']
+                new['nictype'] = device['nic_type'].lower()
+                new['parent'] = device['parent']
             case 'PROXY':
                 new['type'] = 'proxy'
                 # For now follow docker lead for simplification
@@ -223,6 +231,8 @@ class VirtInstanceDeviceService(Service):
     @private
     async def generate_device_name(self, device_names: list[str], device_type: str) -> str:
         name = device_type.lower()
+        if name == 'nic':
+            name = 'eth'
         i = 0
         while True:
             new_name = f'{name}{i}'
@@ -252,6 +262,13 @@ class VirtInstanceDeviceService(Service):
                 if device['source'] and device['source'].startswith('/dev/zvol/'):
                     if device['source'] not in await self.middleware.call('virt.device.disk_choices'):
                         verrors.add(schema, 'Invalid ZVOL choice.')
+            case 'NIC':
+                if device['nic_type'] == 'BRIDGED':
+                    if await self.middleware.call('failover.licensed'):
+                        verrors.add(schema, 'Bridge interface not allowed for HA')
+                    choices = await self.middleware.call('virt.device.nic_choices', device['nic_type'])
+                    if device['parent'] not in choices:
+                        verrors.add(schema, 'Invalid parent interface')
 
     @api_method(VirtInstanceDeviceAddArgs, VirtInstanceDeviceAddResult, roles=['VIRT_INSTANCE_WRITE'])
     async def device_add(self, id, device):
