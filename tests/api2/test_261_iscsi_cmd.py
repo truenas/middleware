@@ -12,23 +12,21 @@ import iscsi
 import pyscsi
 import pytest
 import requests
-from assets.websocket.iscsi import (alua_enabled, initiator, initiator_portal,
-                                    portal, read_capacity16, target,
-                                    target_extent_associate, verify_capacity,
-                                    verify_luns, verify_ha_inquiry, verify_ha_device_identification, TUR)
+from assets.websocket.iscsi import (TUR, alua_enabled, initiator, initiator_portal, portal, read_capacity16, target,
+                                    target_extent_associate, verify_capacity, verify_ha_device_identification,
+                                    verify_ha_inquiry, verify_luns)
 from assets.websocket.service import ensure_service_enabled, ensure_service_started
+from auto_config import ha, hostname, isns_ip, password, pool_name, user
+from functions import SSH_TEST
+from protocols import ISCSIDiscover, initiator_name_supported, iscsi_scsi_connection, isns_connection
+from pyscsi.pyscsi.scsi_sense import sense_ascq_dict
+from pytest_dependency import depends
+
 from middlewared.service_exception import InstanceNotFound, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.iscsi import target_login_test
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
-from pyscsi.pyscsi.scsi_sense import sense_ascq_dict
-from pytest_dependency import depends
-
-from auto_config import ha, hostname, isns_ip, password, pool_name, user
-from functions import SSH_TEST
-from protocols import (initiator_name_supported, iscsi_scsi_connection,
-                       isns_connection)
 
 # Setup some flags that will enable/disable tests based upon the capabilities of the
 # python-scsi package in use
@@ -83,6 +81,14 @@ PR_KEY2 = 0x00000000DEADBEEF
 CONTROLLER_A_TARGET_PORT_GROUP_ID = 101
 CONTROLLER_B_TARGET_PORT_GROUP_ID = 102
 SERVICE_NAME = 'iscsitarget'
+
+CHAPUSER1 = 'chapuser1'
+CHAPPASS1 = 'chappassword1'
+
+CHAPUSER2 = 'chapuser2'
+CHAPPASS2 = 'userpassword2'
+CHAPPEERUSER2 = 'chappeer2'
+CHAPPEERPASS2 = 'peerpassword2'
 
 # Some variables
 digit = ''.join(random.choices(string.digits, k=2))
@@ -783,6 +789,146 @@ def test__discovery_auth():
             _assert_auth(config6, 2, 'user3', 'sec3' + randsec, 'user4', 'sec4' + randsec, 'CHAP_MUTUAL')
 
     assert [] == call('iscsi.auth.query')
+
+
+@contextlib.contextmanager
+def _discovery(ip):
+    with ISCSIDiscover(ip) as nocred:
+        with ISCSIDiscover(ip, CHAPUSER1, CHAPPASS1) as user1:
+            with ISCSIDiscover(ip,
+                               CHAPUSER2, CHAPPASS2,
+                               CHAPPEERUSER2, CHAPPEERPASS2) as user2:
+                yield {
+                    'nocred': nocred,
+                    'user1': user1,
+                    'user2': user2,
+                }
+
+
+def _discovery_validate_one(disc: ISCSIDiscover, iqns: set):
+    result = disc.discover()
+    assert set(result.keys()) == iqns
+
+
+def _discovery_validate_all(discs: dict, iqns: set):
+    for disc in discs.values():
+        _discovery_validate_one(disc, iqns)
+
+
+def test__discover_from_initiator(iscsi_running):
+    """
+    Verify that discovery auth operates as expected, by performing iSCSI
+    discovery operations from the initiator in various configs.
+    """
+    name1 = f"{target_name}x1"
+    name2 = f"{target_name}x2"
+    iqn1 = f'{basename}:{name1}'
+    iqn2 = f'{basename}:{name2}'
+
+    EMPTY_SET = set()
+    ONE_IQN_SET = set([iqn1])
+    TWO_IQNS_SET = set([iqn1, iqn2])
+    DISCOVER_DELAY = 10
+
+    def _discovery_validate_two_targets(ip: str, discs: dict, delay: int | None = None):
+        if delay:
+            sleep(delay)
+        _discovery_validate_one(discs['nocred'], TWO_IQNS_SET)
+        _discovery_validate_one(discs['user1'], TWO_IQNS_SET)
+        _discovery_validate_one(discs['user2'], EMPTY_SET)
+        # Create an auth without discovery_auth and ensure it has
+        # no impact.
+        with iscsi_auth(1, CHAPUSER1, CHAPPASS1):
+            if delay:
+                sleep(delay)
+            _discovery_validate_one(discs['nocred'], TWO_IQNS_SET)
+            _discovery_validate_one(discs['user1'], TWO_IQNS_SET)
+            _discovery_validate_one(discs['user2'], EMPTY_SET)
+        # Create an auth with CHAP discovery_auth and ensure it means only
+        # a discovery with the correct cred works.
+        with iscsi_auth(1, CHAPUSER1, CHAPPASS1, discovery_auth='CHAP'):
+            if delay:
+                sleep(delay)
+            _discovery_validate_one(discs['nocred'], EMPTY_SET)
+            _discovery_validate_one(discs['user1'], TWO_IQNS_SET)
+            _discovery_validate_one(discs['user2'], EMPTY_SET)
+            with ISCSIDiscover(ip,
+                               CHAPUSER1, "WrongChapPass") as baddisc:
+                _discovery_validate_one(baddisc, EMPTY_SET)
+            with ISCSIDiscover(ip,
+                               "WrongChapUser", CHAPPASS1) as baddisc:
+                _discovery_validate_one(baddisc, EMPTY_SET)
+            # Create a 2nd auth and ensure they both work
+            with iscsi_auth(2, CHAPUSER2, CHAPPASS2, discovery_auth='CHAP'):
+                if delay:
+                    sleep(delay)
+                _discovery_validate_one(discs['nocred'], EMPTY_SET)
+                _discovery_validate_one(discs['user1'], TWO_IQNS_SET)
+                _discovery_validate_one(discs['user2'], EMPTY_SET)
+                with ISCSIDiscover(ip,
+                                   CHAPUSER2, CHAPPASS2) as gooddisc:
+                    _discovery_validate_one(gooddisc, TWO_IQNS_SET)
+        # Create an auth with CHAP_MUTUAL discovery_auth and ensure it means only
+        # a discovery with the correct cred works.
+        with iscsi_auth(2, CHAPUSER2, CHAPPASS2,
+                        CHAPPEERUSER2, CHAPPEERPASS2,
+                        discovery_auth='CHAP_MUTUAL'):
+            if delay:
+                sleep(delay)
+            _discovery_validate_one(discs['nocred'], EMPTY_SET)
+            _discovery_validate_one(discs['user1'], EMPTY_SET)
+            _discovery_validate_one(discs['user2'], TWO_IQNS_SET)
+            with ISCSIDiscover(ip,
+                               "WrongChapUser", CHAPPASS2,
+                               CHAPPEERUSER2, CHAPPEERPASS2) as baddisc:
+                _discovery_validate_one(baddisc, EMPTY_SET)
+            with ISCSIDiscover(ip,
+                               CHAPUSER2, "WrongChapPass",
+                               CHAPPEERUSER2, CHAPPEERPASS2) as baddisc:
+                _discovery_validate_one(baddisc, EMPTY_SET)
+            with ISCSIDiscover(ip,
+                               CHAPUSER2, CHAPPASS2,
+                               "WrongChapPeer", CHAPPEERPASS2) as baddisc:
+                _discovery_validate_one(baddisc, EMPTY_SET)
+            with ISCSIDiscover(ip,
+                               CHAPUSER2, CHAPPASS2,
+                               CHAPPEERUSER2, "WrongPeerPass") as baddisc:
+                _discovery_validate_one(baddisc, EMPTY_SET)
+
+    with initiator_portal() as config:
+        with _discovery(truenas_server.ip) as discs:
+            # No targets published yet, ensure we see none via discovery
+            _discovery_validate_all(discs, EMPTY_SET)
+            with configured_target(config, name1, "VOLUME"):
+                # One target published, ensure we see it via discovery
+                _discovery_validate_one(discs['nocred'], ONE_IQN_SET)
+                _discovery_validate_one(discs['user1'], ONE_IQN_SET)
+                _discovery_validate_one(discs['user2'], EMPTY_SET)
+                with configured_target(config, name2, "VOLUME"):
+                    # Two target published, ensure we see them via discovery
+                    _discovery_validate_two_targets(truenas_server.ip, discs)
+        if ha:
+            # If we are a HA system then enable ALUA and perform a bunch of
+            # similar tests
+            with alua_enabled():
+                _ensure_alua_state(True)
+                _wait_for_alua_settle()
+                with _discovery(truenas_server.nodea_ip) as nodea_discs:
+                    with _discovery(truenas_server.nodeb_ip) as nodeb_discs:
+                        # No targets published yet, ensure we see none via discovery
+                        _discovery_validate_all(nodea_discs, EMPTY_SET)
+                        _discovery_validate_all(nodeb_discs, EMPTY_SET)
+                        with configured_target(config, name1, "VOLUME"):
+                            with configured_target(config, name2, "VOLUME"):
+                                # We will delay after changes when querying the STANDBY node
+                                node = call('failover.node')
+                                nodeb_delay = DISCOVER_DELAY if node == 'A' else None
+                                nodea_delay = DISCOVER_DELAY if node == 'B' else None
+                                _discovery_validate_two_targets(truenas_server.nodea_ip, nodea_discs, nodea_delay)
+                                _discovery_validate_two_targets(truenas_server.nodeb_ip, nodeb_discs, nodeb_delay)
+
+            # Turned off ALUA again
+            _wait_for_alua_settle()
 
 
 def test__report_luns(iscsi_running):
