@@ -312,7 +312,7 @@ class AclTemplateDeleteArgs(BaseModel):
 
 
 class AclTemplateDeleteResult(BaseModel):
-    result: int
+    result: Literal[True]
 
 
 class AclTemplateFormatOptions(BaseModel):
