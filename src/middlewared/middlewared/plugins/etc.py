@@ -226,6 +226,7 @@ class EtcService(Service):
                 {'method': 'failover.status'},
                 {'method': 'fc.capable'},
                 {'method': 'fcport.query'},
+                {'method': 'iscsi.auth.query'},
                 {'method': 'iscsi.global.alua_enabled'},
                 {'method': 'iscsi.global.config'},
                 {'method': 'iscsi.target.query'},
