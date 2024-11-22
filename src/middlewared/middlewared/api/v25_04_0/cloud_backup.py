@@ -53,8 +53,8 @@ class CloudBackupUpdate(CloudBackupCreate, metaclass=ForUpdateMetaclass):
 
 
 class CloudBackupRestoreOptions(BaseModel):
-    exclude: list[str]
-    include: list[str]
+    exclude: list[str] = []
+    include: list[str] = []
 
 
 class CloudBackupSnapshot(BaseModel):
@@ -159,7 +159,7 @@ class CloudBackupDeleteSnapshotResult(BaseModel):
 
 class CloudBackupSyncArgs(BaseModel):
     id_: int
-    options: CloudBackupSyncOptions
+    options: CloudBackupSyncOptions = Field(default_factory=CloudBackupSyncOptions)
 
 
 class CloudBackupSyncResult(BaseModel):
