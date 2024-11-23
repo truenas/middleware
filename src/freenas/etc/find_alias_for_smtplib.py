@@ -2,7 +2,6 @@ import argparse
 import email
 import email.parser
 import json
-import os
 import re
 import requests
 import sys
