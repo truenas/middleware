@@ -26,7 +26,7 @@ class MattermostAlertService(ThreadedAlertService):
                 "username": self.attributes["username"],
                 "channel": self.attributes["channel"],
                 "icon_url": self.attributes["icon_url"],
-                "text": self._format_alerts(alerts, gone_alerts, new_alerts),
+                "text": self._format_alerts(alerts, gone_alerts, new_alerts).replace("<il>","+ ").replace("<br>","\n").replace("<ul>","").replace("</ul>","").replace("</il>",""),
             }),
             timeout=INTERNET_TIMEOUT,
         )
