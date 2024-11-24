@@ -38,4 +38,6 @@ from .system_reboot import *  # noqa
 from .truenas import *  # noqa
 from .user import *  # noqa
 from .vendor import *  # noqa
-from .virt import *  # noqa
+from .virt_device import *  # noqa
+from .virt_global import *  # noqa
+from .virt_instance import *  # noqa
