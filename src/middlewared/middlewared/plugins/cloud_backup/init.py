@@ -25,16 +25,21 @@ class CloudBackupService(Service):
                                                          cloud_backup["credentials"]),
             }
 
-        if self.is_initialized(cloud_backup):
+        restic_config = get_restic_config(cloud_backup)
+        subprocess.run(
+            restic_config.cmd + ["unlock"],
+            env=restic_config.env,
+            text=True
+        )
+
+        if self.is_initialized(restic_config):
             return
 
         self.init(cloud_backup)
 
     @private
-    def is_initialized(self, cloud_backup):
+    def is_initialized(self, restic_config):
         self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
-
-        restic_config = get_restic_config(cloud_backup)
 
         try:
             subprocess.run(
