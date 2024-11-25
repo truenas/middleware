@@ -108,8 +108,8 @@ class VirtDeviceGPUChoicesArgs(BaseModel):
 
 
 class GPUChoice(BaseModel):
-    bus: int
-    slot: int
+    bus: str
+    slot: str
     description: str
     vendor: str | None = None
     pci: str
