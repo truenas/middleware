@@ -12,6 +12,6 @@ requests
 websocket-client>=1.4.2
 pyotp
 cython-iscsi @ git+https://github.com/truenas/cython-iscsi.git@tester
-PYSCSI @ git+https://github.com/truenas/python-scsi.git@tester
+PYSCSI @ git+https://github.com/truenas/python-scsi.git@master
 pysnmplib
 zeroconf
