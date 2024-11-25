@@ -25,6 +25,13 @@ class CloudBackupService(Service):
                                                          cloud_backup["credentials"]),
             }
 
+        restic_config = get_restic_config(cloud_backup)
+        subprocess.run(
+            restic_config.cmd + ["unlock"],
+            env=restic_config.env,
+            text=True
+        )
+
         if self.is_initialized(cloud_backup):
             return
 
