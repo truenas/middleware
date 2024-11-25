@@ -105,7 +105,7 @@ class UpdateService(Service):
         ):
             space_left_before_prune = space_left
             logger.info("Pruning %r", be["id"])
-            self.middleware.call_sync("boot.environment.destroy", be["id"])
+            self.middleware.call_sync("boot.environment.destroy", {"id": be["id"]})
 
             be_size = be["used_bytes"]
             for i in range(10):
