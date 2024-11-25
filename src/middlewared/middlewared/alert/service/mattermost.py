@@ -1,5 +1,7 @@
 import json
 import requests
+import html
+import html2text
 
 from middlewared.alert.base import ThreadedAlertService
 from middlewared.schema import Dict, Str
@@ -26,7 +28,7 @@ class MattermostAlertService(ThreadedAlertService):
                 "username": self.attributes["username"],
                 "channel": self.attributes["channel"],
                 "icon_url": self.attributes["icon_url"],
-                "text": self._format_alerts(alerts, gone_alerts, new_alerts),
+                "text": html.escape(html2text.html2text(self._format_alerts(alerts, gone_alerts, new_alerts))),
             }),
             timeout=INTERNET_TIMEOUT,
         )
