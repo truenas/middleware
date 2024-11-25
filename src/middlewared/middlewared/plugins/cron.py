@@ -1,6 +1,5 @@
 import contextlib
 import errno
-import syslog
 
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
@@ -209,10 +208,6 @@ class CronJobService(CRUDService):
         """
         Job to run cronjob task of `id`.
         """
-        def __cron_log(line):
-            job.logs_fd.write(line)
-            syslog.syslog(syslog.LOG_INFO, line.decode())
-
         cron_task = self.middleware.call_sync('cronjob.get_instance', id_)
         if skip_disabled and not cron_task['enabled']:
             raise CallError('Cron job is disabled', errno.EINVAL)
@@ -224,26 +219,11 @@ class CronJobService(CRUDService):
             )[7:]
         )
 
-        job.set_progress(
-            10,
-            'Executing Cron Task'
-        )
+        job.set_progress(10, 'Executing Cron Task')
 
-        syslog.openlog('cron', facility=syslog.LOG_CRON)
+        cp = run_command_with_user_context(cron_cmd, cron_task['user'], callback=job.logs_fd.write)
 
-        syslog.syslog(syslog.LOG_INFO, f'({cron_task["user"]}) CMD ({cron_cmd})')
-
-        cp = run_command_with_user_context(
-            cron_cmd, cron_task['user'], callback=__cron_log,
-        )
-
-        syslog.closelog()
-
-        job.set_progress(
-            85,
-            'Executed Cron Task'
-        )
-
+        job.set_progress(85, 'Executed Cron Task')
         if cp.stdout:
             email = (
                 self.middleware.call_sync('user.query', [['username', '=', cron_task['user']]], {'get': True})
