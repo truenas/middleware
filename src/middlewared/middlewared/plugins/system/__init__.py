@@ -40,5 +40,4 @@ async def setup(middleware):
     settings = await middleware.call('system.general.config')
     middleware.logger.debug('Setting timezone to %r', settings['timezone'])
     await middleware.call('core.environ_update', {'TZ': settings['timezone']})
-    await middleware.call('system.general.set_language')
     await middleware.call('sysctl.set_zvol_volmode', 2)

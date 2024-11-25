@@ -277,9 +277,6 @@ class SystemGeneralService(ConfigService):
             await self.middleware.call('service.reload', 'timeservices')
             await self.middleware.call('service.restart', 'cron')
 
-        if config['language'] != new_config['language']:
-            await self.middleware.call('system.general.set_language')
-
         if config['ds_auth'] != new_config['ds_auth']:
             await self.middleware.call('etc.generate', 'pam_middleware')
 
