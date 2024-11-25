@@ -7,12 +7,12 @@ from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.schema import Bool, Str
 from middlewared.service import CallError, private
 from middlewared.service_exception import InstanceNotFound
+from middlewared.utils.path import FSLocation, path_location
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.validators import validate_schema
 
 
 class CloudTaskServiceMixin:
-    allow_zvol = False
 
     @private
     async def _get_credentials(self, credentials_id):
@@ -78,17 +78,16 @@ class CloudTaskServiceMixin:
 
             await provider.validate_task_full(data, credentials, verrors)
 
-        if self.allow_zvol and (path := await self.get_path_field(data)).startswith("/dev/zvol/"):
-            zvol = zvol_path_to_name(path)
-            if not await self.middleware.call('pool.dataset.query', [['name', '=', zvol], ['type', '=', 'VOLUME']]):
-                verrors.add(f'{name}.{self.path_field}', 'Volume does not exist')
-            else:
-                try:
-                    await self.middleware.call(f'{self._config.namespace}.validate_zvol', path)
-                except CallError as e:
-                    verrors.add(f'{name}.{self.path_field}', e.errmsg)
-        else:
-            await self.validate_path_field(data, name, verrors)
+
+        # perform basic validation of path field
+        await self.validate_path_field(data, name, verrors)
+        verrors.check()
+
+        if (await self.get_path_location(data)) is FSLocation.ZVOL:
+            try:
+                await self.middleware.call(f'{self._config.namespace}.validate_zvol', path)
+            except CallError as e:
+                verrors.add(f'{name}.{self.path_field}', e.errmsg)
 
         if data["snapshot"]:
             if await self.middleware.call("pool.dataset.query",

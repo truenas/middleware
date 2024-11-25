@@ -25,10 +25,8 @@ class CloudBackupModel(CloudTaskModelMixin, sa.Model):
 
 
 class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
-    allow_zvol = True
-
     share_task_type = "CloudBackup"
-    allowed_path_types = [FSLocation.CLUSTER, FSLocation.LOCAL]
+    allowed_path_types = [FSLocation.ZVOL, FSLocation.LOCAL]
     task_state_methods = ["cloud_backup.sync", "cloud_backup.restore"]
 
     class Config:

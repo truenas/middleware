@@ -14,18 +14,18 @@ logger = logging.getLogger(__name__)
 __all__ = ["pathref_open", "pathref_reopen", "is_child", "is_child_realpath", "path_location", "strip_location_prefix"]
 
 EXTERNAL_PATH_PREFIX = 'EXTERNAL:'
-CLUSTER_PATH_PREFIX = 'CLUSTER:'
+ZVOL_PATH_PREFIX = '/dev/zvol'
 
 
-class FSLocation(enum.Enum):
-    CLUSTER = enum.auto()
-    EXTERNAL = enum.auto()
-    LOCAL = enum.auto()
+class FSLocation(enum.StrEnum):
+    EXTERNAL = 'EXTERNAL'
+    ZVOL = 'ZVOL'
+    LOCAL = 'LOCAL'
 
 
 def path_location(path):
-    if path.startswith(CLUSTER_PATH_PREFIX):
-        return FSLocation.CLUSTER
+    if path.startswith(ZVOL_PATH_PREFIX):
+        return FSLocation.ZVOL
 
     if path.startswith(EXTERNAL_PATH_PREFIX):
         return FSLocation.EXTERNAL
@@ -34,7 +34,13 @@ def path_location(path):
 
 
 def strip_location_prefix(path):
-    return path.lstrip(f'{path_location(path).name}:')
+    match (loc := path_location(path)):
+        case FSLocation.LOCAL | FSLocation.ZVOL:
+            return path
+        case FSLocation.EXTERNAL:
+            return path[len(FSLocation.EXTERNAL.value) + 1:]
+        case _:
+            raise TypeError(f'{loc}: unsupported path location type')
 
 
 def pathref_reopen(fd_in: int, flags: int, **kwargs) -> int:

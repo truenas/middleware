@@ -1,5 +1,6 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
+from middlewared.service_exception import CallError
 from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
 
 from .crud_service import CRUDService
@@ -18,6 +19,11 @@ class SharingTaskService(CRUDService):
     @private
     async def get_path_field(self, data):
         return data[self.path_field]
+
+    @private
+    async def get_path_location(self, data):
+        path = await self.get_path_field(data)
+        return path_location(path)
 
     @private
     async def sharing_task_extend_context(self, rows, extra):
@@ -63,6 +69,15 @@ class SharingTaskService(CRUDService):
     async def validate_zvol_path(self, verrors, name, path):
         if check_zvol_in_boot_pool_using_path(path):
             verrors.add(name, 'Disk residing in boot pool cannot be consumed and is not supported')
+            return
+
+        try:
+            await self.middleware.call('filesystem.stat', path)
+        except CallError as e:
+            if e.errno == errno.ENOENT:
+                verrors.add(name, 'Volume does not exist')
+            else:
+                verrors.add(name, e.errmsg)
 
     @private
     async def validate_local_path(self, verrors, name, path):
@@ -78,8 +93,8 @@ class SharingTaskService(CRUDService):
         if loc not in self.allowed_path_types:
             verrors.add(name, f'{loc.name}: path type is not allowed.')
 
-        elif loc is FSLocation.CLUSTER:
-            verrors.add(name, f'{path}: path within cluster volume must be specified.')
+        elif loc is FSLocation.ZVOL:
+            await self.validate_zvol_path(verrors, name, path)
 
         elif loc is FSLocation.EXTERNAL:
             await self.validate_external_path(verrors, name, strip_location_prefix(path))
