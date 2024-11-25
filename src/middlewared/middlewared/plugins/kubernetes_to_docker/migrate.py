@@ -187,7 +187,22 @@ class K8stoDockerMigrationService(Service):
                 app_volume_ds = get_app_parent_volume_ds_name(
                     os.path.join(kubernetes_pool, 'ix-apps'), chart_release['release_name']
                 )
-                for snapshot in available_snapshots:
+                if (app_ds := self.middleware.call_sync('zfs.dataset.query', [['id', '=', app_volume_ds]], {
+                    'extra': {'retrieve_properties': False}
+                })) and len(app_ds[0]['children']) > 0:
+                    # If there are already ix volumes under app volume ds, it means migration had already been
+                    # performed for this app and we don't need to do it again - it will only result in more edge
+                    # cases - this happens when user migrated and then deleted the app but left ix-volumes and
+                    # migrated it again
+                    logger.debug(
+                        'Skipping migrating ix-volumes for %r app as app volumes dataset already has children',
+                        chart_release['release_name']
+                    )
+                    to_clone_promote_snaps = []
+                else:
+                    to_clone_promote_snaps = available_snapshots
+
+                for snapshot in to_clone_promote_snaps:
                     # We will do a zfs clone and promote here
                     destination_ds = os.path.join(app_volume_ds, snapshot.split('@')[0].split('/')[-1])
                     self.middleware.call_sync('zfs.snapshot.clone', {
