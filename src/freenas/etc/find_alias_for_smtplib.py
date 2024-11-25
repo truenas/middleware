@@ -2,52 +2,42 @@ import argparse
 import email
 import email.parser
 import json
-import re
 import requests
 import sys
-import syslog
 
 from truenas_api_client import Client
 
-ALIASES = re.compile(r"^(?P<from>[^#]\S*?):\s*(?P<to>\S+)$")
-
 
 def do_sendmail(msg, to_addrs=None, parse_recipients=False):
-    if to_addrs is None:
-        if not parse_recipients:
-            syslog.syslog("Do not know who to send the message to." + msg[0:140])
-            raise ValueError("Do not know who to send the message to.")
-        to_addrs = []
+    to_addrs = ["root"] if to_addrs is None else to_addrs
+    if to_addrs is None and not parse_recipients:
+        raise ValueError("Do not know who to send the message to.")
 
-    # XXX: this should probably be a FeedParser because reading from sys.stdin
-    # is blocking.
-    em_parser = email.parser.Parser()
-    em = em_parser.parsestr(msg)
+    em = email.parser.Parser().parsestr(msg)
     if parse_recipients:
         # Strip away the comma based delimiters and whitespace.
-        to_addrs = list(map(str.strip, em.get("To").split(",")))
-
-    if not to_addrs or not to_addrs[0]:
-        to_addrs = ["root"]
+        for addr in map(str.strip, em.get("To", "").split(",")):
+            if addr:
+                to_addrs.append(addr)
 
     to_addrs_repl = []
-    if to_addrs:
-        aliases = get_aliases()
-        for to_addr in to_addrs:
-            for to_addr in to_addr.split(","):
-                if to_addr.find("@") != -1:
-                    to_addrs_repl.append(to_addr)
-                elif to_addr.find("@") == -1 and to_addr in aliases:
-                    to_addrs_repl.append(aliases[to_addr])
+    aliases = get_aliases()
+    for i in to_addrs:
+        for to_addr in i.split(","):
+            if "@" in to_addr:
+                to_addrs_repl.append(to_addr)
+            elif to_addr in aliases:
+                to_addrs_repl.append(aliases[to_addr])
 
     if not to_addrs_repl:
-        syslog.syslog(f'No aliases found to send email to {", ".join(to_addrs)}')
+        print(
+            f'No aliases found to send email to {", ".join(to_addrs)}', file=sys.stderr
+        )
         sys.exit(1)
 
     with Client() as c:
         sw_name = "TrueNAS"
-
-        margs = {}
+        margs = dict()
         margs["extra_headers"] = dict(em)
         margs["extra_headers"].update(
             {
@@ -57,7 +47,6 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
             }
         )
         margs["subject"] = em.get("Subject")
-
         if em.is_multipart():
             attachments = [
                 part for part in em.walk() if part.get_content_maintype() != "multipart"
@@ -73,7 +62,6 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
             margs["text"] = "".join(email.iterators.body_line_iterator(em))
 
         margs["to"] = to_addrs_repl
-
         if not margs.get("attachments"):
             c.call("mail.send", margs)
         else:
@@ -96,31 +84,22 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
 
 
 def get_aliases():
+    aliases = {}
     with open("/etc/aliases", "r") as f:
-        aliases = {}
-
-        for line in f.readlines():
-            search = ALIASES.search(line)
-            if search:
-                _from, _to = search.groups()
-                aliases[_from] = _to
-
-        while True:
-            oldaliases = set(aliases.items())
-            for key, val in aliases.items():
-                if key == val:
-                    syslog.syslog(
-                        syslog.LOG_ERR, f"Found a recursive dependency for {key}"
-                    )
-                elif val in aliases:
-                    aliases[key] = aliases[val]
-            if set(aliases.items()) == oldaliases:
-                break
-        return aliases
+        for line in f:
+            # looks like
+            # admin1: name@domain.com, another@domain.com
+            # admin2: name@domain.com
+            try:
+                name, addresses = line.strip().split(":")
+                if name != addresses:
+                    aliases[name] = addresses
+            except ValueError:
+                continue
+    return aliases
 
 
 def main():
-    syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_MAIL)
     parser = argparse.ArgumentParser(description="Process email")
     parser.add_argument(
         "-i",
@@ -142,7 +121,6 @@ def main():
     if not to and not args.parse_recipients:
         parser.exit(message=parser.format_usage())
     msg = sys.stdin.read()
-    syslog.syslog("sending mail to " + ", ".join(to) + "\n" + msg[0:140])
     do_sendmail(msg, to_addrs=to, parse_recipients=args.parse_recipients)
 
 
