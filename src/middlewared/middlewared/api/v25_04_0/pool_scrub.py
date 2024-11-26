@@ -34,8 +34,8 @@ class PoolScrubCreate(PoolScrubEntry):
     pool_name: Excluded = excluded_field()
 
 
-class PoolScrubUpdate(PoolScrubEntry, metaclass=ForUpdateMetaclass):
-    id: Excluded = excluded_field()
+class PoolScrubUpdate(PoolScrubCreate, metaclass=ForUpdateMetaclass):
+    pass
 
 
 class PoolScrubCreateArgs(BaseModel):
