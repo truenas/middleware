@@ -4,7 +4,6 @@ import glob
 import io
 import os
 import re
-import syslog
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
@@ -313,13 +312,11 @@ class UPSService(SystemServiceService):
                 # first and then shut the active node down
                 if await self.middleware.call('failover.licensed'):
                     if await self.middleware.call('failover.status') == 'MASTER':
-                        syslog.syslog(syslog.LOG_NOTICE, 'upssched-cmd "issuing shutdown" for passive node')
                         try:
                             await self.middleware.call('failover.call_remote', 'ups.upssched_event', ['shutdown'])
-                        except Exception as e:
-                            syslog.syslog(syslog.LOG_ERR, f'failed shutting down passive node with error {e}')
+                        except Exception:
+                            self.logger.error('failed shutting down passive node', exc_info=True)
 
-                syslog.syslog(syslog.LOG_NOTICE, 'upssched-cmd "issuing shutdown"')
                 await run('upsmon', '-c', 'fsd', check=False)
 
         elif 'notify' in notify_type.lower():
