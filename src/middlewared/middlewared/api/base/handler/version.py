@@ -84,6 +84,12 @@ class APIVersionsAdapter:
         :param version2: target API version that needs `value`
         :return: converted value
         """
+        return self.adapt_model(value, model_name, version1, version2)[1]
+
+    def adapt_model(self, value: dict, model_name: str, version1: str, version2: str) -> tuple[type[BaseModel], dict]:
+        """
+        Same as `adapt`, but returned value will be a tuple of `version2` model instance and converted value.
+        """
         try:
             version1_index = self.versions_history.index(version1)
         except ValueError:
@@ -101,6 +107,7 @@ class APIVersionsAdapter:
             raise APIVersionDoesNotContainModelException(current_version.version, model_name)
 
         value_factory = functools.partial(validate_model, current_version_model, value)
+        model = current_version_model
 
         if version1_index < version2_index:
             step = 1
@@ -115,10 +122,11 @@ class APIVersionsAdapter:
             value_factory = functools.partial(
                 self._adapt_model, value_factory, model_name, current_version, new_version, direction,
             )
+            model = new_version.models.get(model_name)
 
             current_version = new_version
 
-        return value_factory()
+        return model, value_factory()
 
     def _adapt_model(self, value_factory: Callable[[], dict], model_name: str, current_version: APIVersion,
                      new_version: APIVersion, direction: Direction):

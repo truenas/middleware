@@ -212,7 +212,9 @@ class Application(RpcWebSocketApp):
                 result = [i async for i in result]
             else:
                 if lam.returns_model:
-                    result = lam._adapt_result(result)
+                    result = lam._dump_result(self, methodobj, result)
+                else:
+                    result = self.middleware.dump_result(serviceobj, methodobj, self, result)
 
             self._send({
                 'id': message['id'],
@@ -1510,22 +1512,37 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         return [method.accepts[i].dump(arg) if i < len(method.accepts) else arg
                 for i, arg in enumerate(args)]
 
-    def dump_result(self, method, result, expose_secrets):
+    def dump_result(self, serviceobj, methodobj, app, result, *, new_style_returns_model=None):
+        expose_secrets = True
+        if app and app.authenticated_credentials:
+            if app.authenticated_credentials.is_user_session and not (
+                credential_has_full_admin(app.authenticated_credentials) or
+                (
+                    serviceobj._config.role_prefix and
+                    app.authenticated_credentials.has_role(f'{serviceobj._config.role_prefix}_WRITE')
+                )
+            ):
+                expose_secrets = False
+
         if isinstance(result, Job):
             return result
 
-        if method_self := getattr(method, "__self__", None):
-            if method.__name__ in ["create", "update", "delete"]:
-                if do_method := getattr(method_self, f"do_{method.__name__}", None):
+        if method_self := getattr(methodobj, "__self__", None):
+            if methodobj.__name__ in ["create", "update", "delete"]:
+                if do_method := getattr(method_self, f"do_{methodobj.__name__}", None):
                     if hasattr(do_method, "new_style_returns"):
                         # FIXME: Get rid of `create`/`do_create` duality
-                        method = do_method
+                        methodobj = do_method
 
-        if hasattr(method, "new_style_returns"):
-            return serialize_result(method.new_style_returns, result, expose_secrets)
+        if hasattr(methodobj, "new_style_returns"):
+            # FIXME: When all models become new style, this should be passed explicitly
+            if new_style_returns_model is None:
+                new_style_returns_model = methodobj.new_style_returns
 
-        if not expose_secrets and hasattr(method, "returns") and method.returns:
-            schema = method.returns[0]
+            return serialize_result(new_style_returns_model, result, expose_secrets)
+
+        if not expose_secrets and hasattr(methodobj, "returns") and methodobj.returns:
+            schema = methodobj.returns[0]
             if isinstance(schema, OROperator):
                 result = schema.dump(result, False)
             else:
@@ -1620,18 +1637,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 job = result
                 await job.set_on_finish_cb(job_on_finish_cb)
 
-            expose_secrets = True
-            if app and app.authenticated_credentials:
-                if app.authenticated_credentials.is_user_session and not (
-                    credential_has_full_admin(app.authenticated_credentials) or
-                    (
-                        serviceobj._config.role_prefix and
-                        app.authenticated_credentials.has_role(f'{serviceobj._config.role_prefix}_WRITE')
-                    )
-                ):
-                    expose_secrets = False
-
-            result = self.dump_result(methodobj, result, expose_secrets)
+            return result
         finally:
             # If the method is a job, audit message will be logged by `job_on_finish_cb`
             if job is None:
