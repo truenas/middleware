@@ -188,7 +188,7 @@ class PoolScrubService(CRUDService):
             f"Scrub of pool {name!r}" if action == "START"
             else f"{action.title()} scrubbing pool {name!r}"
         ),
-        lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}',
+        lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}' if i else '',
     )
     async def scrub(self, job, name, action):
         """
