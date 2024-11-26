@@ -22,7 +22,6 @@ import html
 import json
 import os
 import smtplib
-import syslog
 
 
 class DenyNetworkActivity(Exception):
@@ -370,7 +369,6 @@ class MailService(ConfigService):
             else:
                 msg[key] = val
 
-        syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_MAIL)
         try:
             if config['oauth']:
                 self.middleware.call_sync('mail.gmail_send', msg, config)
@@ -384,20 +382,15 @@ class MailService(ConfigService):
                 # This is because FreeNAS doesn't run a full MTA.
                 # else:
                 #    server.connect()
-                headers = '\n'.join([f'{k}: {v}' for k, v in msg._headers])
-                syslog.syslog(f"sending mail to {', '.join(to)}\n{headers}")
                 server.sendmail(from_addr.encode(), to, msg.as_string())
                 server.quit()
         except DenyNetworkActivity:
             self.logger.warning('Sending email denied')
             return False
         except Exception as e:
-            # Don't spam syslog with these messages. They should only end up in the
-            # test-email pane.
             # We are only interested in ValueError, not subclasses.
             if e.__class__ is ValueError:
                 raise CallError(str(e))
-            syslog.syslog(f'Failed to send email to {", ".join(to)}: {str(e)}')
             if isinstance(e, smtplib.SMTPAuthenticationError):
                 raise CallError(
                     f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EPERM
