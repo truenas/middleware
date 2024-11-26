@@ -81,7 +81,7 @@ class PoolScrubService(CRUDService):
                     pool_pk != data['original_pool_id']
                 )
             ):
-                scrub_obj = await self.query(filters=[('pool', '=', pool_pk)])
+                scrub_obj = await self.query([('pool', '=', pool_pk)])
                 if len(scrub_obj) != 0:
                     verrors.add(
                         f'{schema}.pool',
