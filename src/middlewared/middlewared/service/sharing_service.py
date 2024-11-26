@@ -1,3 +1,5 @@
+import errno
+
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.service_exception import CallError
