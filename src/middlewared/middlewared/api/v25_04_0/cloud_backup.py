@@ -31,8 +31,8 @@ class CloudBackupCreate(BaseModel):
     pre_script: LongString = ""
     post_script: LongString = ""
     snapshot: bool = False
-    include: list[NonEmptyString]
-    exclude: list[NonEmptyString]
+    include: list[NonEmptyString] = []
+    exclude: list[NonEmptyString] = []
     args: LongString = ""
     enabled: bool = True
 

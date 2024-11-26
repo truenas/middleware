@@ -51,7 +51,7 @@ class LongStringWrapper:
 LongString = Annotated[
     LongStringWrapper,
     BeforeValidator(LongStringWrapper),
-    PlainSerializer(lambda x: undefined if x == undefined else x.value),
+    PlainSerializer(lambda x: x.value if isinstance(x, LongStringWrapper) else x),
 ]
 
 NonEmptyString = Annotated[str, Field(min_length=1)]

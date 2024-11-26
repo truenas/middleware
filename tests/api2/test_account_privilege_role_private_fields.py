@@ -168,7 +168,7 @@ def vmware():
     ("acme.dns.authenticator", dns_authenticator, {}, ["attributes"]),
     ("certificate", 1, {}, ["privatekey", "issuer"]),
     ("certificateauthority", certificateauthority, {}, ["privatekey", "issuer"]),
-    ("cloud_backup", cloudbackup, {}, ["credentials.provider", "password"]),
+    ("cloud_backup", cloudbackup, {}, ["credentials.provider.pass", "password"]),
     ("cloudsync.credentials", cloudsync_credential, {}, ["provider.pass"]),
     ("cloudsync", cloudsync, {}, ["credentials.provider", "encryption_password"]),
     ("disk", disk, {"extra": {"passwords": True}}, ["passwd"]),
