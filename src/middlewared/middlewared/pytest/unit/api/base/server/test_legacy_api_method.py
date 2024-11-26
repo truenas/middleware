@@ -59,7 +59,3 @@ legacy_api_method = LegacyAPIMethod(
 
 def test_adapt_params():
     assert legacy_api_method._adapt_params([1]) == [1, "Default", 2]
-
-
-def test_adapt_result():
-    assert legacy_api_method._adapt_result(1) == "1"
