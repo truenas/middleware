@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, TimeString, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, TimeString, ForUpdateMetaclass, Excluded, excluded_field
 
 
 __all__ = ["PoolResilverEntry", "PoolResilverUpdateArgs", "PoolResilverUpdateResult"]
@@ -17,7 +17,7 @@ class PoolResilverEntry(BaseModel):
 
 
 class PoolResilverUpdate(PoolResilverEntry, metaclass=ForUpdateMetaclass):
-    pass
+    id: Excluded = excluded_field()
 
 
 class PoolResilverUpdateArgs(BaseModel):
