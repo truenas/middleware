@@ -95,47 +95,46 @@ class ZPoolService(Service):
                   ]
                 }
               },
-              "evo": {
-                "spares": {},
-                "logs": {},
-                "dedup": {},
-                "special": {},
-                "l2cache": {},
-                "data": {
-                  "/dev/disk/by-partuuid/d9cfa346-8623-402f-9bfe-a8256de902ec": {
-                    "pool_name": "evo",
-                    "disk_status": "ONLINE",
-                    "disk_read_errors": 0,
-                    "disk_write_errors": 0,
-                    "disk_checksum_errors": 0,
-                    "vdev_name": "stripe",
-                    "vdev_type": "data",
-                    "vdev_disks": [
-                      "/dev/disk/by-partuuid/d9cfa346-8623-402f-9bfe-a8256de902ec"
-                    ]
-                  }
+              "pools": {
+                "evo": {
+                    "spares": {},
+                    "logs": {},
+                    "dedup": {},
+                    "special": {},
+                    "l2cache": {},
+                    "data": {
+                        "/dev/disk/by-partuuid/d9cfa346-8623-402f-9bfe-a8256de902ec": {
+                            "pool_name": "evo",
+                            "disk_status": "ONLINE",
+                            "disk_read_errors": 0,
+                            "disk_write_errors": 0,
+                            "disk_checksum_errors": 0,
+                            "vdev_name": "stripe",
+                            "vdev_type": "data",
+                            "vdev_disks": [
+                            "/dev/disk/by-partuuid/d9cfa346-8623-402f-9bfe-a8256de902ec"
+                            ]
+                        }
+                    }
                 }
-              }
             }
         """
-        pools = get_zpool_status(data.get('name'))
-
-        final = {'disks': dict()}
-        for pool_name, pool_info in pools.items():
-            final[pool_name] = dict()
+        final = {'disks': dict(), 'pools': dict()}
+        for pool_name, pool_info in get_zpool_status(data.get('name')).items():
+            final['pools'][pool_name] = dict()
             # We need some normalization for data vdev here
             pool_info['data'] = pool_info.get('vdevs', {}).get(pool_name, {}).get('vdevs', {})
             for vdev_type in ('spares', 'logs', 'dedup', 'special', 'l2cache', 'data'):
                 vdev_members = pool_info.get(vdev_type, {})
                 if not vdev_members:
-                    final[pool_name][vdev_type] = dict()
+                    final['pools'][pool_name][vdev_type] = dict()
                     continue
 
                 info = self.status_impl(pool_name, vdev_type, vdev_members, **data)
                 # we key on pool name and disk id because
                 # this was designed, primarily, for the
                 # `webui.enclosure.dashboard` endpoint
-                final[pool_name][vdev_type] = info
+                final['pools'][pool_name][vdev_type] = info
                 final['disks'].update(info)
 
         return final
