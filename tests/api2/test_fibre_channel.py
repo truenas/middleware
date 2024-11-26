@@ -4,12 +4,11 @@ import errno
 
 import pytest
 from assets.websocket.iscsi import target, target_extent_associate, zvol_extent
+from assets.websocket.pool import zvol
 from auto_config import ha, pool_name
 
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.utils import call, mock, ssh
-
-MB = 1024 * 1024
 
 NODE_A_0_WWPN = '0x210000aaaaaaaa01'
 NODE_A_0_WWPN_NPIV_1 = '0x220000aaaaaaaa01'
@@ -147,23 +146,8 @@ def parse_iscsi(lines):
 
 
 @contextlib.contextmanager
-def zvol(name, volsizeMB):
-    payload = {
-        'name': f'{pool_name}/{name}',
-        'type': 'VOLUME',
-        'volsize': volsizeMB * MB,
-        'volblocksize': '16K'
-    }
-    config = call('pool.dataset.create', payload)
-    try:
-        yield config
-    finally:
-        call('pool.dataset.delete', config['id'])
-
-
-@contextlib.contextmanager
 def target_lun(target_config, zvol_name, mb, lun):
-    with zvol(zvol_name, mb) as zvol_config:
+    with zvol(zvol_name, mb, pool_name) as zvol_config:
         with zvol_extent(zvol_config['id'], zvol_name) as extent_config:
             with target_extent_associate(target_config['id'], extent_config['id'], lun) as associate_config:
                 yield {

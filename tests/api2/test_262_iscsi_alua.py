@@ -6,6 +6,7 @@ from time import sleep
 import pytest
 from assets.websocket.iscsi import (alua_enabled, initiator_portal, target, target_extent_associate, verify_capacity,
                                     verify_ha_inquiry, verify_luns, zvol_extent)
+from assets.websocket.pool import zvol
 from assets.websocket.service import ensure_service_enabled
 from auto_config import ha, pool_name
 from protocols import iscsi_scsi_connection
@@ -27,21 +28,6 @@ def other_domain(hadomain):
     elif hadomain.endswith('_c2'):
         return f'{hadomain[:-1]}1'
     raise ValueError(f'Invalid HA domain name: {hadomain}')
-
-
-@contextlib.contextmanager
-def zvol(name, volsizeMB):
-    payload = {
-        'name': f'{pool_name}/{name}',
-        'type': 'VOLUME',
-        'volsize': volsizeMB * MB,
-        'volblocksize': '16K'
-    }
-    config = call('pool.dataset.create', payload)
-    try:
-        yield config
-    finally:
-        call('pool.dataset.delete', config['id'])
 
 
 class TestFixtureConfiguredALUA:
@@ -196,7 +182,7 @@ class TestFixtureConfiguredALUA:
 
     @contextlib.contextmanager
     def target_lun(self, target_id, zvol_name, mb, lun):
-        with zvol(zvol_name, mb) as zvol_config:
+        with zvol(zvol_name, mb, pool_name) as zvol_config:
             with zvol_extent(zvol_config['id'], zvol_name) as extent_config:
                 with target_extent_associate(target_id, extent_config['id'], lun) as associate_config:
                     yield {
