@@ -326,7 +326,8 @@ tests = ['api2/test_001_ssh.py',
          'api2/test_006_pool_and_sysds.py',
          'api2/test_009_fenced.py',
          'api2/test_014_failover_related.py',
-         'api2/test_261_iscsi_cmd.py']
+         'api2/test_261_iscsi_cmd.py',
+         'api2/test_262_iscsi_alua.py']
 
 if tests:
     pytest_command.extend(list(map(parse_test_name_prefix_dir, tests)))
