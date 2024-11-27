@@ -79,7 +79,7 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
         return await self.middleware.run_in_thread(list_buckets_sync)
 
     async def get_credentials_extra(self, credentials):
-        return {"endpoint": "https://gateway.storjshare.io"}
+        return {"endpoint": "https://gateway.storjshare.io", "provider": "Other"}
 
     async def get_task_extra(self, task):
         # Storj recommended these settings
@@ -87,7 +87,6 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
             "chunk_size": "64M",
             "disable_http2": "true",
             "upload_cutoff": "64M",
-            "provider": "Other",
         }
 
     def get_restic_config(self, task):
