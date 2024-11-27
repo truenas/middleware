@@ -15,6 +15,7 @@ import requests
 from assets.websocket.iscsi import (TUR, alua_enabled, initiator, initiator_portal, portal, read_capacity16, target,
                                     target_extent_associate, verify_capacity, verify_ha_device_identification,
                                     verify_ha_inquiry, verify_luns)
+from assets.websocket.pool import zvol as zvol_dataset
 from assets.websocket.service import ensure_service_enabled, ensure_service_started
 from auto_config import ha, hostname, isns_ip, password, pool_name, user
 from functions import SSH_TEST
@@ -149,11 +150,11 @@ def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None, discovery_auth
 
 
 @contextlib.contextmanager
-def file_extent(pool_name, dataset_name, file_name, filesize=MB_512, extent_name='extent', serial=None):
+def file_extent(pool_name, dataset_name, file_name, filesize_mb=512, extent_name='extent', serial=None):
     payload = {
         'type': 'FILE',
         'name': extent_name,
-        'filesize': filesize,
+        'filesize': filesize_mb * MB,
         'path': f'/mnt/{pool_name}/{dataset_name}/{file_name}'
     }
     # We want to allow any non-None serial to be specified (even '')
@@ -167,32 +168,13 @@ def file_extent(pool_name, dataset_name, file_name, filesize=MB_512, extent_name
         call('iscsi.extent.delete', extent_config['id'], True, True)
 
 
-@contextlib.contextmanager
-def zvol_dataset(zvol, volsize=MB_512, recursive=False, force=False):
-    payload = {
-        'name': zvol,
-        'type': 'VOLUME',
-        'volsize': volsize,
-        'volblocksize': '16K'
-    }
-    dataset_config = call('pool.dataset.create', payload)
-
-    try:
-        yield dataset_config
-    finally:
-        try:
-            call('pool.dataset.delete', dataset_config['id'], {'recursive': recursive, 'force': force})
-        except InstanceNotFound:
-            pass
-
-
 def modify_extent(ident, payload):
     call('iscsi.extent.update', ident, payload)
 
 
-def file_extent_resize(ident, filesize):
+def file_extent_resize(ident, filesize_mb):
     payload = {
-        'filesize': filesize,
+        'filesize': filesize_mb * MB,
     }
     modify_extent(ident, payload)
 
@@ -205,9 +187,9 @@ def extent_enable(ident):
     modify_extent(ident, {'enabled': True})
 
 
-def zvol_resize(zvol, volsize):
+def zvol_resize(zvol, volsize_mb):
     payload = {
-        'volsize': volsize,
+        'volsize': volsize_mb * MB,
     }
     call('pool.dataset.update', zvol, payload)
 
@@ -272,12 +254,12 @@ def zvol_extent(zvol, extent_name='zvol_extent'):
 
 
 @contextlib.contextmanager
-def configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name, alias=None, filesize=MB_512, extent_name='extent'):
+def configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name, alias=None, filesize_mb=512, extent_name='extent'):
     portal_id = config['portal']['id']
     with target(target_name, [{'portal': portal_id}], alias) as target_config:
         target_id = target_config['id']
         with dataset(dataset_name) as dataset_config:
-            with file_extent(pool_name, dataset_name, file_name, filesize=filesize, extent_name=extent_name) as extent_config:
+            with file_extent(pool_name, dataset_name, file_name, filesize_mb=filesize_mb, extent_name=extent_name) as extent_config:
                 extent_id = extent_config['id']
                 with target_extent_associate(target_id, extent_id):
                     newconfig = config.copy()
@@ -290,14 +272,14 @@ def configured_target_to_file_extent(config, target_name, pool_name, dataset_nam
 
 
 @contextlib.contextmanager
-def add_file_extent_target_lun(config, lun, filesize=MB_512, extent_name=None):
+def add_file_extent_target_lun(config, lun, filesize_mb=512, extent_name=None):
     name = config['target']['name']
     target_id = config['target']['id']
     dataset_name = f"iscsids{name}"
     lun_file_name = f'{name}_lun{lun}'
     if not extent_name:
         extent_name = lun_file_name
-    with file_extent(pool_name, dataset_name, lun_file_name, filesize=filesize, extent_name=extent_name) as extent_config:
+    with file_extent(pool_name, dataset_name, lun_file_name, filesize_mb=filesize_mb, extent_name=extent_name) as extent_config:
         extent_id = extent_config['id']
         with target_extent_associate(target_id, extent_id, lun):
             newconfig = config.copy()
@@ -308,11 +290,11 @@ def add_file_extent_target_lun(config, lun, filesize=MB_512, extent_name=None):
 
 
 @contextlib.contextmanager
-def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, extent_name='zvol_extent', volsize=MB_512):
+def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, extent_name='zvol_extent', volsize_mb=512):
     portal_id = config['portal']['id']
     with target(target_name, [{'portal': portal_id}], alias) as target_config:
         target_id = target_config['id']
-        with zvol_dataset(zvol, volsize) as dataset_config:
+        with zvol_dataset(zvol, volsize_mb) as dataset_config:
             with zvol_extent(zvol, extent_name=extent_name) as extent_config:
                 extent_id = extent_config['id']
                 with target_extent_associate(target_id, extent_id) as associate_config:
@@ -327,7 +309,7 @@ def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, exte
 
 
 @contextlib.contextmanager
-def add_zvol_extent_target_lun(config, lun, volsize=MB_512, extent_name=None):
+def add_zvol_extent_target_lun(config, lun, volsize_mb=512, extent_name=None):
     name = config['target']['name']
     zvol_name = f"ds{name}"
     zvol = f'{pool_name}/{zvol_name}_lun{lun}'
@@ -335,7 +317,7 @@ def add_zvol_extent_target_lun(config, lun, volsize=MB_512, extent_name=None):
     lun_file_name = f'{name}_lun{lun}'
     if not extent_name:
         extent_name = lun_file_name
-        with zvol_dataset(zvol, volsize) as dataset_config:
+        with zvol_dataset(zvol, volsize_mb) as dataset_config:
             with zvol_extent(zvol, extent_name=extent_name) as extent_config:
                 extent_id = extent_config['id']
                 with target_extent_associate(target_id, extent_id, lun) as associate_config:
@@ -349,16 +331,16 @@ def add_zvol_extent_target_lun(config, lun, volsize=MB_512, extent_name=None):
 
 
 @contextlib.contextmanager
-def configured_target(config, name, extent_type, alias=None, extent_size=MB_512):
+def configured_target(config, name, extent_type, alias=None, extent_size_mb=512):
     assert extent_type in ["FILE", "VOLUME"]
     if extent_type == "FILE":
         ds_name = f"iscsids{name}"
-        with configured_target_to_file_extent(config, name, pool_name, ds_name, file_name, alias, extent_size, name) as newconfig:
+        with configured_target_to_file_extent(config, name, pool_name, ds_name, file_name, alias, extent_size_mb, name) as newconfig:
             yield newconfig
     elif extent_type == "VOLUME":
         zvol_name = f"ds{name}"
         zvol = f'{pool_name}/{zvol_name}'
-        with configured_target_to_zvol_extent(config, name, zvol, alias, name, extent_size) as newconfig:
+        with configured_target_to_zvol_extent(config, name, zvol, alias, name, extent_size_mb) as newconfig:
             yield newconfig
 
 
@@ -495,21 +477,21 @@ def test__read_capacity16(iscsi_running):
                 target_id = target_config['id']
                 with dataset(dataset_name):
                     # 100 MB file extent
-                    with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
+                    with file_extent(pool_name, dataset_name, file_name, 100) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
                             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 verify_capacity(s, MB_100)
                     # 512 MB file extent
-                    with file_extent(pool_name, dataset_name, file_name, MB_512) as extent_config:
+                    with file_extent(pool_name, dataset_name, file_name, 512) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
                             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 verify_capacity(s, MB_512)
                 # 100 MB zvol extent
-                with zvol_dataset(zvol, MB_100):
+                with zvol_dataset(zvol, 100):
                     with zvol_extent(zvol) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
@@ -517,7 +499,7 @@ def test__read_capacity16(iscsi_running):
                             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 verify_capacity(s, MB_100)
                 # 512 MB zvol extent
-                with zvol_dataset(zvol):
+                with zvol_dataset(zvol, 512):
                     with zvol_extent(zvol) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
@@ -943,14 +925,14 @@ def test__report_luns(iscsi_running):
                 target_id = target_config['id']
                 with dataset(dataset_name):
                     # LUN 0 (100 MB file extent)
-                    with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
+                    with file_extent(pool_name, dataset_name, file_name, 100) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 verify_luns(s, [0])
                                 verify_capacity(s, MB_100)
                             # Now create a 512 MB zvol and associate with LUN 1
-                            with zvol_dataset(zvol):
+                            with zvol_dataset(zvol, 512):
                                 with zvol_extent(zvol) as extent_config:
                                     extent_id = extent_config['id']
                                     with target_extent_associate(target_id, extent_id, 1):
@@ -2445,24 +2427,24 @@ def test__resize_target_zvol(iscsi_running):
     an iSCSI extent is modified.
     """
     with initiator_portal() as config:
-        with configured_target_to_zvol_extent(config, target_name, zvol, volsize=MB_100) as config:
+        with configured_target_to_zvol_extent(config, target_name, zvol, volsize_mb=100) as config:
             iqn = f'{basename}:{target_name}'
             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 TUR(s)
                 assert MB_100 == read_capacity16(s)
                 # Have checked using tcpdump/wireshark that a SCSI Asynchronous Event Notification
                 # gets sent 0x2A09: "CAPACITY DATA HAS CHANGED"
-                zvol_resize(zvol, MB_256)
+                zvol_resize(zvol, 256)
                 assert MB_256 == read_capacity16(s)
                 # But we can do better (in terms of test) ... turn AEN off,
                 # which means we will get a CHECK CONDITION on the next resize
                 SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password)
-                zvol_resize(zvol, MB_512)
+                zvol_resize(zvol, 512)
                 expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
                 assert MB_512 == read_capacity16(s)
                 # Try to shrink the ZVOL again.  Expect an error
                 with pytest.raises(ValidationErrors):
-                    zvol_resize(zvol, MB_256)
+                    zvol_resize(zvol, 256)
                 assert MB_512 == read_capacity16(s)
 
 
@@ -2477,22 +2459,22 @@ def test__resize_target_file(iscsi_running):
                                               pool_name,
                                               dataset_name,
                                               file_name,
-                                              filesize=MB_100) as config:
+                                              filesize_mb=100) as config:
             iqn = f'{basename}:{target_name}'
             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 extent_id = config['extent']['id']
                 TUR(s)
                 assert MB_100 == read_capacity16(s)
-                file_extent_resize(extent_id, MB_256)
+                file_extent_resize(extent_id, 256)
                 assert MB_256 == read_capacity16(s)
                 # Turn AEN off so that we will get a CHECK CONDITION on the next resize
                 SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password)
-                file_extent_resize(extent_id, MB_512)
+                file_extent_resize(extent_id, 512)
                 expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
                 assert MB_512 == read_capacity16(s)
                 # Try to shrink the file again.  Expect an error
                 with pytest.raises(ValidationErrors):
-                    file_extent_resize(extent_id, MB_256)
+                    file_extent_resize(extent_id, 256)
                 assert MB_512 == read_capacity16(s)
 
 
@@ -2553,7 +2535,7 @@ def test__portal_access(iscsi_running):
     with initiator() as initiator_config:
         with portal(listen=[{'ip': get_ip_addr(truenas_server.ip)}]) as portal_config:
             config1 = {'initiator': initiator_config, 'portal': portal_config}
-            with configured_target_to_zvol_extent(config1, target_name, zvol, volsize=MB_100):
+            with configured_target_to_zvol_extent(config1, target_name, zvol, volsize_mb=100):
                 with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                     TUR(s)
                     assert MB_100 == read_capacity16(s)
@@ -2592,8 +2574,8 @@ def test__multiple_extents():
         with target(target_name, [{'portal': portal_id}]) as target_config:
             target_id = target_config['id']
             with dataset(dataset_name):
-                with file_extent(pool_name, dataset_name, "target.extent1", filesize=MB_100, extent_name="extent1") as extent1_config:
-                    with file_extent(pool_name, dataset_name, "target.extent2", filesize=MB_256, extent_name="extent2") as extent2_config:
+                with file_extent(pool_name, dataset_name, "target.extent1", filesize_mb=100, extent_name="extent1") as extent1_config:
+                    with file_extent(pool_name, dataset_name, "target.extent2", filesize_mb=256, extent_name="extent2") as extent2_config:
                         with target_extent_associate(target_id, extent1_config['id'], 0):
                             with target_extent_associate(target_id, extent2_config['id'], 1):
                                 with iscsi_scsi_connection(truenas_server.ip, iqn, 0) as s:
@@ -2606,14 +2588,14 @@ def test__multiple_extents():
                                 # Now try to create another extent using the same serial number
                                 # We expect this to fail.
                                 with pytest.raises(ValidationErrors) as ve:
-                                    with file_extent(pool_name, dataset_name, "target.extent3", filesize=MB_512,
+                                    with file_extent(pool_name, dataset_name, "target.extent3", filesize_mb=512,
                                                      extent_name="extent3", serial=extent1_config['serial']):
                                         pass
                                 assert ve.value.errors == [
                                     ValidationError('iscsi_extent_create.serial', 'Serial number must be unique', errno.EINVAL)
                                 ]
 
-                                with file_extent(pool_name, dataset_name, "target.extent3", filesize=MB_512,
+                                with file_extent(pool_name, dataset_name, "target.extent3", filesize_mb=512,
                                                  extent_name="extent3", serial='') as extent3_config:
                                     # We expect this to complete, but generate a serial number
                                     assert len(extent3_config['serial']) == 15, extent3_config['serial']
@@ -2793,10 +2775,10 @@ def test__multi_lun_targets(iscsi_running):
             verify_capacity(s, MB_512)
 
     with initiator_portal() as config:
-        with configured_target(config, name1, 'FILE', extent_size=MB_100) as config1:
-            with add_file_extent_target_lun(config1, 1, MB_200):
-                with configured_target(config, name2, 'VOLUME', extent_size=MB_256) as config1:
-                    with add_zvol_extent_target_lun(config1, 1, volsize=MB_512):
+        with configured_target(config, name1, 'FILE', extent_size_mb=100) as config1:
+            with add_file_extent_target_lun(config1, 1, 200):
+                with configured_target(config, name2, 'VOLUME', extent_size_mb=256) as config1:
+                    with add_zvol_extent_target_lun(config1, 1, volsize_mb=512):
                         # Check that we can connect to each LUN and that it has the expected capacity
                         test_target_sizes(truenas_server.ip)
                         if ha:
@@ -2817,8 +2799,8 @@ def test__no_lun_zero():
         with target(target_name, [{'portal': portal_id}]) as target_config:
             target_id = target_config['id']
             with dataset(dataset_name):
-                with file_extent(pool_name, dataset_name, "target.extent1", filesize=MB_100, extent_name="extent1") as extent1_config:
-                    with file_extent(pool_name, dataset_name, "target.extent2", filesize=MB_256, extent_name="extent2") as extent2_config:
+                with file_extent(pool_name, dataset_name, "target.extent1", filesize_mb=100, extent_name="extent1") as extent1_config:
+                    with file_extent(pool_name, dataset_name, "target.extent2", filesize_mb=256, extent_name="extent2") as extent2_config:
                         with target_extent_associate(target_id, extent1_config['id'], 100):
                             with target_extent_associate(target_id, extent2_config['id'], 101):
                                 # libiscsi sends a TUR to the lun on connect, so cannot properly test using it.
@@ -2837,7 +2819,7 @@ def test__zvol_extent_volthreading():
     """
     zvol_name = f"zvol_volthreading_test{digit}"
     zvol = f'{pool_name}/{zvol_name}'
-    with zvol_dataset(zvol, MB_100, True, True):
+    with zvol_dataset(zvol_name, 100, pool_name, True, True):
         assert get_volthreading(zvol) == 'on'
         with zvol_extent(zvol, extent_name='zvolextent1'):
             assert get_volthreading(zvol) == 'off'
@@ -2859,6 +2841,6 @@ def test__delete_extent_no_dataset(extent_type):
                     ssh(DESTROY_CMD)
             case 'VOLUME':
                 zvol = f'{dspath}/zvol{digit}'
-                with zvol_dataset(zvol, MB_100, True, True):
+                with zvol_dataset(zvol, 100, None, True, True):
                     with zvol_extent(zvol, extent_name='zvolextent1'):
                         ssh(DESTROY_CMD)
