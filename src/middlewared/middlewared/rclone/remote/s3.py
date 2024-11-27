@@ -67,7 +67,7 @@ class S3RcloneRemote(BaseRcloneRemote):
                 task["attributes"]["region"] = response["LocationConstraint"] or "us-east-1"
 
     async def get_credentials_extra(self, credentials):
-        result = {}
+        result = {"provider": "Other"}
 
         if (credentials["attributes"].get("endpoint") or "").rstrip("/").endswith(".scw.cloud"):
             if credentials["attributes"].get("max_upload_parts", 10000) == 10000:
@@ -81,7 +81,6 @@ class S3RcloneRemote(BaseRcloneRemote):
             server_side_encryption=task["attributes"].get("encryption") or "",
             skip_region=undefined,
             signatures_v2=undefined,
-            provider="Other",
         )
 
         if not task["credentials"]["attributes"].get("skip_region", False):
