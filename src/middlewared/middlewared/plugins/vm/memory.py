@@ -1,6 +1,7 @@
 import errno
 
-from middlewared.schema import accepts, Int, returns
+from middlewared.api import api_method
+from middlewared.api.current import VMGetMemoryUsageArgs, VMGetMemoryUsageResult
 from middlewared.service import CallError, private, Service
 
 from .utils import ACTIVE_STATES
@@ -55,8 +56,7 @@ class VMService(Service, VMSupervisorMixin):
                     f'Not giving back memory to ARC because new arc_max ({new_arc_max}) <= arc_min ({arc_min})'
                 )
 
-    @accepts(Int('vm_id'), roles=['VM_READ'])
-    @returns(Int('memory_usage', description='Memory usage of a VM in bytes'))
+    @api_method(VMGetMemoryUsageArgs, VMGetMemoryUsageResult, roles=['VM_READ'])
     def get_memory_usage(self, vm_id):
         return self.get_memory_usage_internal(self.middleware.call_sync('vm.get_instance', vm_id))
 

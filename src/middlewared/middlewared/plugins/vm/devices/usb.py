@@ -1,5 +1,5 @@
-from middlewared.schema import Dict, Str
-from middlewared.validators import Match
+from middlewared.api.current import VMUSBDevice
+from middlewared.schema import Dict
 
 from .pci import PCIBase
 from .utils import create_element
@@ -15,23 +15,8 @@ class USB(PCIBase):
 
     schema = Dict(
         'attributes',
-        Dict(
-            'usb',
-            Str(
-                'vendor_id', empty=False, required=True, validators=[Match(r'^0x.*')],
-                description='Vendor id must start with "0x" prefix e.g 0x0451'
-            ),
-            Str(
-                'product_id', empty=False, required=True, validators=[Match(r'^0x.*')],
-                description='Product id must start with "0x" prefix e.g 0x16a8'
-            ),
-            default=None,
-            null=True,
-        ),
-        Str('controller_type', empty=False, default='nec-xhci', enum=USB_CONTROLLER_CHOICES),
-        Str('device', empty=False, null=True, default=None),
-        Str('dtype', enum=['USB'], required=True),
     )
+    schema_model = VMUSBDevice
 
     @property
     def usb_device(self):
