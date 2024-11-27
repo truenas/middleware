@@ -263,6 +263,8 @@ class VirtInstanceDeviceService(Service):
                     if device['source'] not in await self.middleware.call('virt.device.disk_choices'):
                         verrors.add(schema, 'Invalid ZVOL choice.')
             case 'NIC':
+                if await self.middleware.call('interface.has_pending_changes'):
+                    raise CallError('There are pending network changes, please resolve before proceeding.')
                 if device['nic_type'] == 'BRIDGED':
                     if await self.middleware.call('failover.licensed'):
                         verrors.add(schema, 'Bridge interface not allowed for HA')
