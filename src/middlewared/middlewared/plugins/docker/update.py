@@ -4,6 +4,7 @@ import subprocess
 import middlewared.sqlalchemy as sa
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Str, ValidationErrors
 from middlewared.service import CallError, ConfigService, job, private, returns
+from middlewared.utils.gpu import get_gpus
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.validators import Range
 
@@ -142,6 +143,20 @@ class DockerService(ConfigService):
         Returns the status of the docker service.
         """
         return await self.middleware.call('docker.state.get_status_dict')
+
+    @accepts()
+    @returns(Bool())
+    def nvidia_present(self):
+        adv_config = self.middleware.call_sync("system.advanced.config")
+
+        for gpu in get_gpus():
+            if gpu["addr"]["pci_slot"] in adv_config["isolated_gpu_pci_ids"]:
+                continue
+
+            if gpu["vendor"] == "NVIDIA":
+                return True
+
+        return False
 
     @private
     def configure_nvidia(self):
