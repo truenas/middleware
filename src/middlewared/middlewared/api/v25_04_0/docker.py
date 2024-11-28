@@ -1,4 +1,3 @@
-from ipaddress import IPv4Interface, IPv6Interface
 from typing import Annotated, Literal
 
 from pydantic import IPvAnyInterface, Field, field_validator, model_validator
@@ -68,3 +67,11 @@ class StatusResult(BaseModel):
 
 class DockerStatusResult(BaseModel):
     result: StatusResult
+
+
+class DockerNvidiaPresentArgs(BaseModel):
+    pass
+
+
+class DockerNvidiaPresentResult(BaseModel):
+    result: bool
