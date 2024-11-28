@@ -123,11 +123,26 @@ def standby_audit_event():
     event = "user.delete"
     username = "backup"
     user = call('user.query', [["username", "=", username]], {"select": ["id"], "get": True})
+
+    # NOTE: This assumes we're not asynchously generating audit events
+    #       concurrent with this test run.
+    audit_payload = {
+        "query-filters": [["event_data.method", "=", event], ["success", "=", False]],
+        "query-options": {"select": ["event_data", "success"]},
+        "remote_controller": True
+    }
+    audit_start_len = len(call('audit.query', audit_payload))
+
     # Generate an audit entry on the remote node
     with pytest.raises(CallError):
         call('failover.call_remote', event, [user['id']])
 
-    yield {"event": event, "username": username}
+    yield {
+        "event": event,
+        "username": username,
+        "audit_start_len": audit_start_len,
+        "audit_payload": audit_payload,
+    }
 
 
 # =====================================================================
@@ -322,19 +337,21 @@ class TestAuditOpsHA:
             2) Generate an exception on remote node audit event get if the remote node is unavailable.
         NOTE: The standby_audit_event fixture generates the remote node audit event.
         '''
-        event = standby_audit_event['event']
+        # event = standby_audit_event['event']
         username = standby_audit_event['username']
-        payload = {
-            "query-filters": [["event_data.method", "=", event], ["success", "=", False]],
-            "query-options": {"select": ["event_data", "success"]},
-            "remote_controller": True
-        }
+        audit_start_len = standby_audit_event['audit_start_len']
+        audit_payload = standby_audit_event['audit_payload']
+        # payload = {
+        #     "query-filters": [["event_data.method", "=", event], ["success", "=", False]],
+        #     "query-options": {"select": ["event_data", "success"]},
+        #     "remote_controller": True
+        # }
         if not remote_available:
             job_id = call('failover.reboot.other_node')
             # Let the reboot get churning
             sleep(2)
             with pytest.raises(ValidationError) as e:
-                call('audit.query', payload)
+                call('audit.query', audit_payload)
             assert "failed to communicate" in str(e.value)
 
             # Wait for the remote to return
@@ -342,18 +359,25 @@ class TestAuditOpsHA:
         else:
             # Handle delays in the audit database
             remote_audit_entry = []
+            remote_audit_len = 0
             tries = 3
-            while tries > 0 and remote_audit_entry == []:
+            # while tries > 0 and remote_audit_entry == []:
+            while tries > 0 and audit_start_len < remote_audit_len:
                 sleep(1)
-                remote_audit_entry = call('audit.query', payload)
-                if remote_audit_entry != []:
-                    break
+                remote_audit_entry = call('audit.query', audit_payload)
+                # if remote_audit_entry != []:
+                remote_audit_len = len(remote_audit_entry)
+                # if audit_start_len < remote_audit_len:
+                #     break
                 tries -= 1
 
-            assert tries > 0, "Failed to get expected audit entry"
-            assert remote_audit_entry != []
+            assert tries > 0, f"Failed to get expected audit entry. tries={tries}"
+            # assert remote_audit_entry != []
+            assert remote_audit_len > 0, f"audit_start_len = {audit_start_len}, tries={tries}"
             description = remote_audit_entry[0]['event_data']['description']
-            assert username in description, remote_audit_entry[0]['event_data']
+            evt0 = remote_audit_entry[0]['event_data']
+            evt1 = remote_audit_entry[0]['event_data'] if remote_audit_len > 0 else {}
+            assert username in description, f"tries={tries}\nENTRIES:\n{evt0}\n{evt1}"
 
     def test_audit_ha_export(self, standby_audit_event):
         """
