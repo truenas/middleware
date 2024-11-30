@@ -24,10 +24,23 @@ class TNCHostnameService(Service, TNCAPIMixin):
         if not config['enabled'] or creds is None:
             return {
                 'error': 'TrueNAS Connect is not enabled or not configured properly',
-                'configured': False,
+                'tnc_configured': False,
                 'hostname_details': {},
+                'base_domain': None,
+                'hostname_configured': False,
             }
 
         resp = await self.call('get')
-        resp['hostname_details'] = resp.pop('response')
-        return resp | {'configured': True}
+        resp['hostname_details'] = resp.pop('response') | {'base_domain': None}
+        for domain in resp['hostname_details']:
+            if len(domain.rsplit('.', maxsplit=4)) == 4:
+                resp['base_domain'] = domain
+                break
+
+        return resp | {
+            'tnc_configured': True,
+            'hostname_configured': bool(resp['hostname_details']),
+        }
+
+    async def register_update_ips(self, payload):
+        return await self.call('post', payload=payload)
