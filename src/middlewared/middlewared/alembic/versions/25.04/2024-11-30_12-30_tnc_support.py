@@ -24,6 +24,7 @@ def upgrade():
         sa.Column('jwt_token', sa.TEXT(), nullable=True),
         sa.Column('claim_token_system_id', sa.String(length=255), nullable=True),
         sa.Column('jwt_token_system_id', sa.String(length=255), nullable=True),
+        sa.Column('ip', sa.String(length=255), nullable=True),
         sa.Column('acme_key', sa.TEXT(), nullable=True),
         sa.Column('acme_account_uri', sa.String(length=255), nullable=True),
         sa.Column('acme_directory_uri', sa.String(length=255), nullable=True),
