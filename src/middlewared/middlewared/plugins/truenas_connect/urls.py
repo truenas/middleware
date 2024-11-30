@@ -2,6 +2,7 @@ import urllib.parse
 
 
 ACCOUNT_SERVICE_BASE_URL = 'https://account-service.dev.ixsystems.net/'
+ACME_CONFIG_URL = urllib.parse.urljoin(ACCOUNT_SERVICE_BASE_URL, '/v1/accounts/{account_id}/acme')
 BASE_URL = 'https://truenas.connect.dev.ixsystems.net/'
 HOSTNAME_URL = urllib.parse.urljoin(
     ACCOUNT_SERVICE_BASE_URL, '/v1/accounts/{account_id}/systems/{system_id}/hostnames/'
