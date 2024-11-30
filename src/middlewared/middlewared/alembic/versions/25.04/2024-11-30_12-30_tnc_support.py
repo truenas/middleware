@@ -2,15 +2,15 @@
 TNC Support
 
 Revision ID: 83d9689fcbc8
-Revises: 2b59607575b8
-Create Date: 2024-11-14 12:30:41.855489+00:00
+Revises: bb352e66987f
+Create Date: 2024-11-30 12:30:41.855489+00:00
 """
 from alembic import op
 import sqlalchemy as sa
 
 
 revision = '83d9689fcbc8'
-down_revision = '2b59607575b8'
+down_revision = 'bb352e66987f'
 branch_labels = None
 depends_on = None
 
