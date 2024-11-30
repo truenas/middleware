@@ -29,7 +29,7 @@ class TNCAPIMixin:
         except asyncio.TimeoutError:
             response['error'] = f'Unable to connect with TNC in {timeout} seconds.'
         except aiohttp.ClientResponseError as e:
-            response['error'] = f'Error Code ({req.status}): {e}'
+            response['error'] = str(e)
         except aiohttp.ClientConnectorError as e:
             response['error'] = f'Failed to connect to TNC: {e}'
         else:
