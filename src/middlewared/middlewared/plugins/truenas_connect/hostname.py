@@ -18,10 +18,16 @@ class TNCHostnameService(Service, TNCAPIMixin):
             HOSTNAME_URL.format(**creds), mode, payload=payload, headers=await self.auth_headers(config)
         )
 
-    async def query(self, filters, options):
+    async def config(self):
         config = await self.middleware.call('tn_connect.config')
         creds = get_account_id_and_system_id(config)
         if not config['enabled'] or creds is None:
-            return []
+            return {
+                'error': 'TrueNAS Connect is not enabled or not configured properly',
+                'configured': False,
+                'hostname_details': {},
+            }
 
-        return await self.call('get')
+        resp = await self.call('get')
+        resp['hostname_details'] = resp.pop('response')
+        return resp | {'configured': True}
