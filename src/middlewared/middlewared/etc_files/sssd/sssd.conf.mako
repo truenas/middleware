@@ -1,5 +1,5 @@
 #
-# NSLCD.CONF(5)		The configuration file for LDAP nameservice daemon
+# SSSD.CONF(5)		The configuration file for SSSD
 #
 <%
     from middlewared.plugins.etc import FileShouldNotExist
