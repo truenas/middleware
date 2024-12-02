@@ -27,7 +27,7 @@ class CloudBackupCreate(BaseModel):
     path: str
     credentials: int
     attributes: dict
-    schedule: CloudBackupCron
+    schedule: CloudBackupCron = CloudBackupCron()
     pre_script: LongString = ""
     post_script: LongString = ""
     snapshot: bool = False
@@ -71,7 +71,7 @@ class CloudBackupSnapshotItem(BaseModel):
     name: str
     path: str
     type: Literal["dir", "file"]
-    size: int
+    size: int | None
     mtime: datetime
 
     class Config:
