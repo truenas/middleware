@@ -7,11 +7,12 @@ from truenas_api_client import Client
 
 from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.assets.cloud_sync import credential
-from middlewared.test.integration.utils import password, websocket_url
+from middlewared.test.integration.utils import call, password, websocket_url
 
 
 @pytest.fixture(scope="module")
 def c():
+    call("rate.limit.cache_clear")
     with Client(websocket_url() + "/websocket") as c:
         c.call("auth.login_ex", {
             "mechanism": "PASSWORD_PLAIN",
@@ -23,6 +24,7 @@ def c():
 
 @pytest.fixture(scope="module")
 def unprivileged_client():
+    call("rate.limit.cache_clear")
     suffix = "".join([random.choice(string.ascii_lowercase + string.digits) for _ in range(8)])
     with unprivileged_user(
         username=f"unprivileged_{suffix}",
@@ -39,6 +41,11 @@ def unprivileged_client():
                 "password": t.password,
             })
             yield c
+
+
+@pytest.fixture(scope="function")
+def clear_ratelimit():
+    call("rate.limit.cache_clear")
 
 
 @pytest.fixture(scope="module")
