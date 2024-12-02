@@ -21,9 +21,9 @@ class PoolScrubCron(CronModel):
 
 class PoolScrubEntry(BaseModel):
     pool: PositiveInt
-    threshold: Annotated[int, Field(ge=0)]
-    description: str
-    schedule: PoolScrubCron
+    threshold: Annotated[int, Field(ge=0)] = 35
+    description: str = ""
+    schedule: PoolScrubCron = Field(default_factory=PoolScrubCron)
     enabled: bool = True
     id: int
     pool_name: str
