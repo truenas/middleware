@@ -1,12 +1,13 @@
 import contextlib
+import datetime
 import secrets
 import string
 import time
 
 import pytest
+
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.utils import call, ssh
-from datetime import datetime, timezone
 
 EVENT_KEYS = {'timestamp', 'message_timestamp', 'service_data', 'username', 'service', 'audit_id', 'address', 'event_data', 'event', 'session', 'success'}
 ACCEPT_KEYS = {'command', 'submituser', 'lines', 'submithost', 'uuid', 'runenv', 'server_time', 'runcwd', 'submitcwd', 'runuid', 'runargv', 'columns', 'runuser', 'submit_time'}
@@ -20,7 +21,7 @@ SUDO_TO_PASSWORD = ''.join(secrets.choice(string.ascii_letters + string.digits) 
 
 
 def get_utc():
-    utc_time = int(datetime.utcnow().replace(tzinfo=timezone.utc).timestamp())
+    utc_time = int(datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).timestamp())
     return utc_time
 
 
@@ -181,7 +182,7 @@ class SudoTests:
         # Now create an event and do some basic checking to ensure it failed
         with pytest.raises(AssertionError) as ve:
             self.sudo_command('ls /etc')
-        assert 'is not allowed to execute ' in str(ve), str(ve)
+        assert f'{self.USER} is not in the sudoers file.' in str(ve), str(ve)
         assert count + 1 == wait_for_events(self.USER, count + 1)
         event = user_sudo_events(self.USER)[-1]
         reject = assert_reject(event)
@@ -189,7 +190,7 @@ class SudoTests:
         assert reject['command'] == LS_COMMAND
         assert reject['runuser'] == 'root'
         assert reject['runargv'].split(',') == ['ls', '/etc']
-        assert reject['reason'] == 'command not allowed'
+        assert reject['reason'] == 'user NOT in sudoers'
         # NAS-130373
         assert_timestamp(event, reject)
 
