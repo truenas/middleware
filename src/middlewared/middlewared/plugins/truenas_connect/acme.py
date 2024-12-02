@@ -1,5 +1,6 @@
 from middlewared.service import Service
 
+from .acme_utils import normalize_acme_config
 from .mixin import TNCAPIMixin
 from .urls import ACME_CONFIG_URL
 from .utils import get_account_id_and_system_id
@@ -27,6 +28,7 @@ class TNCACMEService(Service, TNCAPIMixin):
 
         resp = await self.call(ACME_CONFIG_URL.format(account_id=creds['account_id']), 'get')
         resp['acme_details'] = resp.pop('response')
+        resp = normalize_acme_config(resp)
         return resp | {
             'tnc_configured': True,
         }
