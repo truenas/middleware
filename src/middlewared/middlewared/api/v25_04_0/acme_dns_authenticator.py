@@ -143,7 +143,7 @@ class ACMEDNSAuthenticatorDeleteResult(BaseModel):
 
 @single_argument_args('acme_dns_authenticator_performance_challenge')
 class ACMEDNSAuthenticatorPerformChallengeArgs(BaseModel):
-    authenticator: int
+    authenticator: int | None
     key: LongString
     domain: str
     challenge: LongString
