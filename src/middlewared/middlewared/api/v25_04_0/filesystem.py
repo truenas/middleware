@@ -6,7 +6,7 @@ from middlewared.api.base import (
     query_result
 )
 from pydantic import Field, model_validator
-from typing import Literal, Self
+from typing import Any, Literal, Self
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
 )
@@ -21,6 +21,8 @@ __all__ = [
     'FilesystemSetPermArgs', 'FilesystemSetPermResult',
     'FilesystemListdirArgs', 'FilesystemListdirResult',
     'FilesystemMkdirArgs', 'FilesystemMkdirResult',
+    'FilesystemStatArgs', 'FilesystemStatResult',
+    'FilesystemStatfsArgs', 'FilesystemStatfsResult',
 ]
 
 
@@ -118,6 +120,14 @@ FILESYSTEM_ZFS_ATTRS = Literal[
 ]
 
 
+FileType = Literal[
+    StatxEtype.DIRECTORY,
+    StatxEtype.FILE,
+    StatxEtype.SYMLINK,
+    StatxEtype.OTHER,
+]
+
+
 class FilesystemDirEntry(BaseModel):
     name: NonEmptyString
     """ Entry's base name. """
@@ -125,12 +135,7 @@ class FilesystemDirEntry(BaseModel):
     """ Entry's full path. """
     realpath: NonEmptyString
     """ Canonical path of the entry, eliminating any symbolic links"""
-    type: Literal[
-        StatxEtype.DIRECTORY,
-        StatxEtype.FILE,
-        StatxEtype.SYMLINK,
-        StatxEtype.OTHER,
-    ]
+    type: FileType
     size: int
     """ Size in bytes of a plain file. This corresonds with stx_size. """
     allocation_size: int
@@ -181,3 +186,115 @@ class FilesystemMkdirArgs(BaseModel):
 
 class FilesystemMkdirResult(BaseModel):
     result: FilesystemDirEntry
+
+
+class FilesystemStatData(BaseModel):
+    realpath: NonEmptyString
+    """ Canonical path of the entry, eliminating any symbolic links"""
+    type: FileType
+    size: int
+    """ Size in bytes of a plain file. This corresonds with stx_size. """
+    allocation_size: int
+    """ Allocated size of file. Calculated by multiplying stx_blocks by 512. """
+    mode: int
+    """ Entry's mode including file type information and file permission bits. This corresponds with stx_mode. """
+    mount_id: int
+    """ The mount ID of the mount containing the entry. This corresponds to the number in first
+    field of /proc/self/mountinfo and stx_mnt_id. """
+    uid: int
+    """ User ID of the entry's owner. This corresponds with stx_uid. """
+    gid: int
+    """ Group ID of the entry's owner. This corresponds with stx_gid. """
+    atime: float
+    """ Time of last access. Corresponds with stx_atime. This is mutable from userspace. """
+    mtime: float
+    """ Time of last modification. Corresponds with stx_mtime. This is mutable from userspace. """
+    ctime: float
+    """ Time of last status change. Corresponds with stx_ctime. """
+    btime: float
+    """ Time of creation. Corresponds with stx_btime. """
+    dev: int
+    """ The ID of the device containing the filesystem where the file resides. This is not sufficient to uniquely
+    identify a particular filesystem mount. mount_id must be used for that purpose. This corresponds with st_dev. """
+    inode: int
+    """ The inode number of the file. This corresponds with stx_ino. """
+    nlink: int
+    """ Number of hard links. Corresponds with stx_nlinks. """
+    acl: bool
+    """ Specifies whether ACL is present on the entry. If this is the case then file permission
+    bits as reported in `mode` may not be representative of the actual permissions. """
+    is_mountpoint: bool
+    """ Specifies whether the entry is also the mountpoint of a filesystem. """
+    is_ctldir: bool
+    """ Specifies whether the entry is located within the ZFS ctldir (for example a snapshot). """
+    attributes: list[FILESYSTEM_STATX_ATTRS]
+    """ Extra file attribute indicators for entry as returned by statx. Expanded from stx_attributes. """
+    user: NonEmptyString | None
+    """ Username associated with `uid`. Will be None if the User ID does not map to existing user. """
+    group: NonEmptyString | None
+    """ Groupname associated with `gid`. Will be None if the Group ID does not map to existing group. """
+
+
+class FilesystemStatArgs(BaseModel):
+    path: NonEmptyString
+
+
+class FilesystemStatResult(BaseModel):
+    result: FilesystemStatData
+
+
+StatfsFlags = Literal[
+    'RW', 'RO',
+    'XATTR',
+    'NOACL', 'NFS4ACL', 'POSIXACL',
+    'CASESENSITIVE', 'CASEINSENSITIVE',
+    'NOATIME', 'RELATIME',
+    'NOSUID', 'NODEV', 'NOEXEC',
+]
+
+
+StatfsFstype = Literal['zfs', 'tmpfs']
+
+
+class FilesystemStatfsData(BaseModel):
+    flags: list[StatfsFlags | Any]  # ANY is here because we can't predict what random FS will have
+    """ Combined per-mount options and per-superblock options for mounted filesystem. """
+    fsid: NonEmptyString
+    """ Unique filesystem ID as returned by statvfs. """
+    fstype: StatfsFlags | Any  # Same as with flags
+    """ String representation of filesystem type from mountinfo. """
+    source: NonEmptyString
+    """ Source for the mounted filesystem. For ZFS this will be dataset name. """
+    dest: NonEmptyString
+    """ Local path on which filesystem is mounted. """
+    blocksize: int
+    """ Filesystem block size as reported by statvfs. """
+    total_blocks: int
+    """ Filesystem size as reported in blocksize blocks as reported by statvfs. """
+    free_blocks: int
+    """ Number of free blocks as reported by statvfs. """
+    avail_blocks: int
+    """ Number of available blocks as reported by statvfs. """
+    total_blocks_str: NonEmptyString
+    free_blocks_str: NonEmptyString
+    avail_blocks_str: NonEmptyString
+    files: int
+    """ Number of inodes in use as reported by statvfs. """
+    free_files: int
+    """ Number of free inodes as reported by statvfs. """
+    name_max: int
+    """ Maximum filename length as reported by statvfs. """
+    total_bytes: int
+    free_bytes: int
+    avail_bytes: int
+    total_bytes_str: NonEmptyString
+    free_bytes_str: NonEmptyString
+    avail_bytes_str: NonEmptyString
+
+
+class FilesystemStatfsArgs(BaseModel):
+    path: NonEmptyString
+
+
+class FilesystemStatfsResult(BaseModel):
+    result: FilesystemStatfsData
