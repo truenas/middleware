@@ -16,6 +16,7 @@ import html2text
 from threading import Lock
 
 import base64
+import contextlib
 import errno
 import html
 import json
@@ -369,17 +370,16 @@ class MailService(ConfigService):
             if config['oauth'] and config['oauth']['provider'] == 'gmail':
                 self.middleware.call_sync('mail.gmail_send', msg, config)
             else:
-                server = self._get_smtp_server(config, message['timeout'], local_hostname=local_hostname)
-                # NOTE: Don't do this.
-                #
-                # If smtplib.SMTP* tells you to run connect() first, it's because the
-                # mailserver it tried connecting to via the outgoing server argument
-                # was unreachable and it tried to connect to 'localhost' and barfed.
-                # This is because FreeNAS doesn't run a full MTA.
-                # else:
-                #    server.connect()
-                server.sendmail(from_addr.encode(), to, msg.as_string())
-                server.quit()
+                with self._get_smtp_server(config, message['timeout'], local_hostname=local_hostname) as server:
+                    # NOTE: Don't do this.
+                    #
+                    # If smtplib.SMTP* tells you to run connect() first, it's because the
+                    # mailserver it tried connecting to via the outgoing server argument
+                    # was unreachable, and it tried to connect to 'localhost' and barfed.
+                    # This is because FreeNAS doesn't run a full MTA.
+                    # else:
+                    #    server.connect()
+                    server.sendmail(from_addr.encode(), to, msg.as_string())
         except DenyNetworkActivity:
             self.logger.warning('Sending email denied')
             return False
@@ -398,6 +398,7 @@ class MailService(ConfigService):
             raise CallError(f'Failed to send email: {e}')
         return True
 
+    @contextlib.contextmanager
     def _get_smtp_server(self, config, timeout=300, local_hostname=None):
         try:
             self.middleware.call_sync('network.general.will_perform_activity', 'mail')
@@ -408,29 +409,28 @@ class MailService(ConfigService):
             local_hostname = self.middleware.call_sync('system.hostname')
 
         if not config['outgoingserver'] or not config['port']:
-            # See NOTE below.
-            raise ValueError('you must provide an outgoing mailserver and mail'
-                             ' server port when sending mail')
+            raise ValueError('You must provide an outgoing mailserver and mail server port when sending mail')
+
         if config['security'] == 'SSL':
-            server = smtplib.SMTP_SSL(
-                config['outgoingserver'],
-                config['port'],
-                timeout=timeout,
-                local_hostname=local_hostname)
+            factory = smtplib.SMTP_SSL
         else:
-            server = smtplib.SMTP(
-                config['outgoingserver'],
-                config['port'],
-                timeout=timeout,
-                local_hostname=local_hostname)
+            factory = smtplib.SMTP
+
+        with factory(
+            config['outgoingserver'],
+            config['port'],
+            timeout=timeout,
+            local_hostname=local_hostname,
+        ) as server:
             if config['security'] == 'TLS':
                 server.starttls()
-        if config['oauth'] and config['oauth']['provider'] == 'outlook':
-            self.middleware.call_sync('mail.outlook_xoauth2', server, config)
-        elif config['smtp']:
-            server.login(config['user'], config['pass'])
 
-        return server
+            if config['oauth'] and config['oauth']['provider'] == 'outlook':
+                self.middleware.call_sync('mail.outlook_xoauth2', server, config)
+            elif config['smtp']:
+                server.login(config['user'], config['pass'])
+
+            yield server
 
     @periodic(600, run_on_start=False)
     @private
@@ -442,14 +442,14 @@ class MailService(ConfigService):
                     if config['oauth'] and config['oauth']['provider'] == 'gmail':
                         self.middleware.call_sync('mail.gmail_send', queue.message, config)
                     else:
-                        server = self._get_smtp_server(config)
-                        # Update `From` address from currently used config because if the SMTP user changes,
-                        # already queued messages might not be sent due to (553, b'Relaying disallowed as xxx') error
-                        queue.message['From'] = self._from_addr(config)
-                        server.sendmail(queue.message['From'].encode(),
-                                        queue.message['To'].split(', '),
-                                        queue.message.as_string())
-                        server.quit()
+                        with self._get_smtp_server(config) as server:
+                            # Update `From` address from currently used config because if the SMTP user changes,
+                            # already queued messages might not be sent due to (553, b'Relaying disallowed as xxx')
+                            # error
+                            queue.message['From'] = self._from_addr(config)
+                            server.sendmail(queue.message['From'].encode(),
+                                            queue.message['To'].split(', '),
+                                            queue.message.as_string())
                 except DenyNetworkActivity:
                     # no reason to queue up email since network activity was
                     # explicitly denied by end-user
