@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class TrueNASConnectAuthenticator(Authenticator):
 
     NAME = 'tn_connect'
-    PROPAGATION_DELAY = 60
+    PROPAGATION_DELAY = 20
     SCHEMA_MODEL = TrueNASConnectSchemaArgs
     INTERNAL = True
 
@@ -33,10 +33,14 @@ class TrueNASConnectAuthenticator(Authenticator):
             raise CallError(f'Failed to perform {self.NAME} challenge for {domain!r} domain: {e}')
 
     def _perform_internal(self, domain, validation_name, validation_content):
+        self.middleware.logger.error(
+            'Performing %r challenge for %r domain with %r validation name and %r validation content',
+            self.NAME, domain, validation_name, validation_content,
+        )
         response = requests.post(LECA_DNS_URL, data=json.dumps({
             'token': validation_content,
-            'hostnames': [validation_name],
-        }), auth=auth_headers(self.attributes))
+            'hostnames': [domain],  # We should be using validation name here
+        }), headers=auth_headers(self.attributes))
         if response.status_code != 201:
             raise CallError(
                 f'Failed to perform {self.NAME} challenge for {domain!r} domain with '
