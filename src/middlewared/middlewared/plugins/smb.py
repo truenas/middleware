@@ -10,9 +10,14 @@ import unicodedata
 
 from copy import deepcopy
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    GetSmbAclArgs, GetSmbAclResult,
+    SetSmbAclArgs, SetSmbAclResult,
+)
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.schema import Bool, Dict, IPAddr, List, NetbiosName, NetbiosDomain, Ref, returns, SID, Str, Int, Patch
+from middlewared.schema import Bool, Dict, IPAddr, List, NetbiosName, NetbiosDomain, Str, Int, Patch
 from middlewared.schema import Path as SchemaPath
 # List schema defaults to [], supplying NOT_PROVIDED avoids having audit update that
 # defaults for ignore_list or watch_list from overrwriting previous value
@@ -1529,25 +1534,12 @@ class SharingSMBService(SharingService):
         """
         return {x.name: x.value for x in SMBSharePreset}
 
-    @accepts(Dict(
-        'smb_share_acl',
-        Str('share_name', required=True),
-        List('share_acl', items=[
-            Dict(
-                'aclentry',
-                SID('ae_who_sid', default=None),
-                Dict(
-                    'ae_who_id',
-                    Str('id_type', enum=['USER', 'GROUP', 'BOTH']),
-                    Int('id')
-                ),
-                Str('ae_perm', enum=['FULL', 'CHANGE', 'READ'], required=True),
-                Str('ae_type', enum=['ALLOWED', 'DENIED'], required=True)
-            ),
-        ], default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}]),
-        register=True
-    ), roles=['SHARING_SMB_WRITE'], audit='Setacl SMB share', audit_extended=lambda data: data['share_name'])
-    @returns(Ref('smb_share_acl'))
+    @api_method(
+        SetSmbAclArgs, SetSmbAclResult,
+        roles=['SHARING_SMB_WRITE'],
+        audit='Setacl SMB share',
+        audit_extended=lambda data: data['share_name']
+    )
     async def setacl(self, data):
         """
         Set an ACL on `share_name`. This only impacts access through the SMB protocol.
@@ -1657,11 +1649,12 @@ class SharingSMBService(SharingService):
             })
         return await self.getacl({'share_name': data['share_name']})
 
-    @accepts(Dict(
-        'smb_getacl',
-        Str('share_name', required=True)
-    ), roles=['SHARING_SMB_READ'], audit='Getacl SMB share', audit_extended=lambda data: data['share_name'])
-    @returns(Ref('smb_share_acl'))
+    @api_method(
+        GetSmbAclArgs, GetSmbAclResult,
+        roles=['SHARING_SMB_READ'],
+        audit='Getacl SMB share',
+        audit_extended=lambda data: data['share_name']
+    )
     async def getacl(self, data):
         verrors = ValidationErrors()
 
