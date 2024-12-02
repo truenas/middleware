@@ -27,15 +27,13 @@ class DenyNetworkActivity(Exception):
     pass
 
 
-class QueueItem(object):
-
+class QueueItem:
     def __init__(self, message):
         self.attempts = 0
         self.message = message
 
 
-class MailQueue(object):
-
+class MailQueue:
     MAX_ATTEMPTS = 3
     MAX_QUEUE_LIMIT = 20
 
@@ -72,10 +70,7 @@ class MailModel(sa.Model):
 
 
 class MailService(ConfigService):
-
     mail_queue = MailQueue()
-    oauth_access_token = None
-    oauth_access_token_expires_at = None
 
     class Config:
         datastore = 'system.email'
@@ -95,6 +90,7 @@ class MailService(ConfigService):
         Password('pass', null=True, required=True),
         Dict(
             'oauth',
+            Str('provider'),
             Str('client_id'),
             Str('client_secret'),
             Password('refresh_token'),
@@ -118,6 +114,7 @@ class MailService(ConfigService):
             (
                 'replace', Dict(
                     'oauth',
+                    Str('provider'),
                     Str('client_id', required=True),
                     Str('client_secret', required=True),
                     Password('refresh_token', required=True),
@@ -369,7 +366,7 @@ class MailService(ConfigService):
                 msg[key] = val
 
         try:
-            if config['oauth']:
+            if config['oauth'] and config['oauth']['provider'] == 'gmail':
                 self.middleware.call_sync('mail.gmail_send', msg, config)
             else:
                 server = self._get_smtp_server(config, message['timeout'], local_hostname=local_hostname)
@@ -428,7 +425,9 @@ class MailService(ConfigService):
                 local_hostname=local_hostname)
             if config['security'] == 'TLS':
                 server.starttls()
-        if config['smtp']:
+        if config['oauth'] and config['oauth']['provider'] == 'outlook':
+            self.middleware.call_sync('mail.outlook_xoauth2', server, config)
+        elif config['smtp']:
             server.login(config['user'], config['pass'])
 
         return server
@@ -440,7 +439,7 @@ class MailService(ConfigService):
             for queue in list(mq.queue):
                 try:
                     config = self.middleware.call_sync('mail.config')
-                    if config['oauth']:
+                    if config['oauth'] and config['oauth']['provider'] == 'gmail':
                         self.middleware.call_sync('mail.gmail_send', queue.message, config)
                     else:
                         server = self._get_smtp_server(config)
