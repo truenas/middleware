@@ -10,10 +10,10 @@ __all__ = ["PoolResilverEntry", "PoolResilverUpdateArgs", "PoolResilverUpdateRes
 
 class PoolResilverEntry(BaseModel):
     id: int
-    begin: TimeString
-    end: TimeString
-    enabled: bool
-    weekday: list[Annotated[int, Field(ge=1, le=7)]]
+    begin: TimeString = "18:00"
+    end: TimeString = "9:00"
+    enabled: bool = True
+    weekday: list[Annotated[int, Field(ge=1, le=7)]] = list(range(1,8))
 
 
 class PoolResilverUpdate(PoolResilverEntry, metaclass=ForUpdateMetaclass):
