@@ -113,7 +113,7 @@ def test_readonly_can_not_call_method():
 
         with pytest.raises(CallError) as ve:
             # fails with EPERM if API access granted
-            c.call("filesystem.mkdir", "/foo")
+            c.call("filesystem.mkdir", {"path": "/foo"})
 
         assert ve.value.errno == errno.EACCES
 

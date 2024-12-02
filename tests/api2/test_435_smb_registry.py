@@ -70,7 +70,7 @@ def create_smb_share(path, share_name, mkdir=False, options=None):
     cr_opts = options or {}
 
     if mkdir:
-        call('filesystem.mkdir', path)
+        call('filesystem.mkdir', {'path': path, 'options': {'raise_chmod_error': False}})
 
     with smb_share(path, share_name, cr_opts) as share:
         yield share
@@ -82,7 +82,7 @@ def setup_smb_shares(mountpoint):
 
     for share in SHARES:
         share_path = os.path.join(mountpoint, share)
-        call('filesystem.mkdir', share_path)
+        call('filesystem.mkdir', {'path': share_path, 'options': {'raise_chmod_error': False}})
         new_share = call('sharing.smb.create', {
             'comment': 'My Test SMB Share',
             'name': share,
@@ -342,7 +342,7 @@ with regard to homes shares
 def test__create_homes_share(setup_for_tests):
     mp, ds, share_dict = setup_for_tests
     home_path = os.path.join(mp, 'HOME_SHARE')
-    call('filesystem.mkdir', home_path)
+    call('filesystem.mkdir', {'path': home_path, 'options': {'raise_chmod_error': False}})
 
     new_share = call('sharing.smb.create', {
         "comment": "My Test SMB Share",
