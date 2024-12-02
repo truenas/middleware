@@ -59,7 +59,7 @@ class MailService(Service):
 
     @private
     def gmail_build_service(self, config):
-        if config["oauth"] and config["oauth"]["provider"] == "gmail":
+        if config["oauth"]:
             return GmailService(config)
 
         return None
