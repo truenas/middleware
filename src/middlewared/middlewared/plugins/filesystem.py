@@ -10,11 +10,16 @@ import time
 import pyinotify
 
 from itertools import product
+from middlewared.api import api_method
+from middlewared.api.current import (
+    FilesystemListdirArgs, FilesystemListdirResult,
+    FilesystemMkdirArgs, FilesystemMkdirResult,
+)
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
-from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str, UnixPerm
-from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
+from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
+from middlewared.service import private, CallError, filterable, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import acl_is_present
@@ -116,21 +121,7 @@ class FilesystemService(Service):
         mntinfo = getmntinfo()
         return filter_list(list(mntinfo.values()), filters, options)
 
-    @accepts(Dict(
-        'filesystem_mkdir',
-        Str('path'),
-        Dict(
-            'options',
-            UnixPerm('mode', default='755'),
-            Bool('raise_chmod_error', default=True)
-        ),
-    ), deprecated=[(
-        lambda args: len(args) == 1 and isinstance(args[0], str),
-        lambda mkdir_path: [{
-            'path': mkdir_path
-        }]
-    )], roles=['FILESYSTEM_DATA_WRITE'])
-    @returns(Ref('path_entry'))
+    @api_method(FilesystemMkdirArgs, FilesystemMkdirResult, roles=['FILESYSTEM_DATA_WRITE'])
     def mkdir(self, data):
         """
         Create a directory at the specified path.
@@ -162,8 +153,10 @@ class FilesystemService(Service):
             raise CallError(f'{path}: path not permitted', errno.EPERM)
 
         os.mkdir(path, mode=mode)
-        stat = p.stat()
-        if statlib.S_IMODE(stat.st_mode) != mode:
+        st = stat_x.statx_entry_impl(p, None)
+        stat = st['st']
+
+        if statlib.S_IMODE(stat.stx_mode) != mode:
             # This may happen if requested mode is greater than umask
             # or if underlying dataset has restricted aclmode and ACL is present
             try:
@@ -183,13 +176,16 @@ class FilesystemService(Service):
             'path': path,
             'realpath': realpath,
             'type': 'DIRECTORY',
-            'size': stat.st_size,
-            'mode': stat.st_mode,
+            'size': stat.stx_size,
+            'allocation_size': stat.stx_blocks * 512,
+            'mode': stat.stx_mode,
             'acl': acl_is_present(os.listxattr(path)),
-            'uid': stat.st_uid,
-            'gid': stat.st_gid,
+            'uid': stat.stx_uid,
+            'gid': stat.stx_gid,
             'is_mountpoint': False,
             'is_ctldir': False,
+            'mount_id': st['st'].stx_mnt_id,
+            'attributes': st['attributes'],
             'xattrs': [],
             'zfs_attrs': ['ARCHIVE']
         }
@@ -221,36 +217,7 @@ class FilesystemService(Service):
 
         return request_mask
 
-    @accepts(
-        Str('path', required=True),
-        Ref('query-filters'),
-        Ref('query-options'),
-        roles=['FILESYSTEM_ATTRS_READ']
-    )
-    @filterable_returns(Dict(
-        'path_entry',
-        Str('name', required=True),
-        Path('path', required=True),
-        Path('realpath', required=True),
-        Str('type', required=True, enum=['DIRECTORY', 'FILE', 'SYMLINK', 'OTHER']),
-        Int('size', required=True, null=True),
-        Int('allocation_size', required=True, null=True),
-        Int('mode', required=True, null=True),
-        Int('mount_id', required=True, null=True),
-        Bool('acl', required=True, null=True),
-        Int('uid', required=True, null=True),
-        Int('gid', required=True, null=True),
-        Bool('is_mountpoint', required=True),
-        Bool('is_ctldir', required=True),
-        List(
-            'attributes',
-            required=True,
-            items=[Str('statx_attribute', enum=[attr.name for attr in stat_x.StatxAttr])]
-        ),
-        List('xattrs', required=True, null=True),
-        List('zfs_attrs', required=True, null=True),
-        register=True
-    ))
+    @api_method(FilesystemListdirArgs, FilesystemListdirResult, roles=['FILESYSTEM_ATTRS_READ'])
     def listdir(self, path, filters, options):
         """
         Get the contents of a directory.
