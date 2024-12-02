@@ -132,26 +132,27 @@ class FilesystemDirEntry(BaseModel):
         StatxEtype.OTHER,
     ]
     size: int
-    """ Size in bytes of a plain file. """
+    """ Size in bytes of a plain file. This corresonds with stx_size. """
     allocation_size: int
+    """ Allocated size of file. Calculated by multiplying stx_blocks by 512. """
     mode: int
-    """ Entry's mode including file type information and file permission bits. """
+    """ Entry's mode including file type information and file permission bits. This corresponds with stx_mode. """
     mount_id: int
     """ The mount ID of the mount containing the entry. This corresponds to the number in first
-    field of /proc/self/mountinfo. """
+    field of /proc/self/mountinfo and stx_mnt_id. """
     acl: bool
     """ Specifies whether ACL is present on the entry. If this is the case then file permission
     bits as reported in `mode` may not be representative of the actual permissions. """
     uid: int
-    """ User ID of the entry's owner. """
+    """ User ID of the entry's owner. This corresponds with stx_uid. """
     gid: int
-    """ Group ID of the entry's owner. """
+    """ Group ID of the entry's owner. This corresponds with stx_gid. """
     is_mountpoint: bool
     """ Specifies whether the entry is also the mountpoint of a filesystem. """
     is_ctldir: bool
     """ Specifies whether the entry is located within the ZFS ctldir (for example a snapshot). """
     attributes: list[FILESYSTEM_STATX_ATTRS]
-    """ Extra file attribute indicators for entry as returned by statx. """
+    """ Extra file attribute indicators for entry as returned by statx. Expanded from stx_attributes. """
     xattrs: list[NonEmptyString]
     """ List of xattr names of extended attributes on file. """
     zfs_attrs: list[FILESYSTEM_ZFS_ATTRS] | None
