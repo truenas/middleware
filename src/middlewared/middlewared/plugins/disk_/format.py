@@ -20,7 +20,7 @@ class DiskService(Service):
             raise CallError(f'Disk: {disk!r} is incorrectly formatted with Data Integrity Feature (DIF).')
 
         # wipe the disk (quickly) of any existing filesystems
-        self.middleware.call_sync('disk.wipe', disk, 'QUICK').wait_sync(raise_error=True)
+        self.middleware.call_sync('disk.wipe', disk, 'QUICK', False).wait_sync(raise_error=True)
 
         dev = parted.getDevice(f'/dev/{disk}')
         parted_disk = parted.freshDisk(dev, 'gpt')
