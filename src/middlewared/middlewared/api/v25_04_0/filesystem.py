@@ -23,6 +23,8 @@ __all__ = [
     'FilesystemMkdirArgs', 'FilesystemMkdirResult',
     'FilesystemStatArgs', 'FilesystemStatResult',
     'FilesystemStatfsArgs', 'FilesystemStatfsResult',
+    'FilesystemSetZfsAttrsArgs', 'FilesystemSetZfsAttrsResult',
+    'FilesystemGetZfsAttrsArgs', 'FilesystemGetZfsAttrsResult',
 ]
 
 
@@ -298,3 +300,46 @@ class FilesystemStatfsArgs(BaseModel):
 
 class FilesystemStatfsResult(BaseModel):
     result: FilesystemStatfsData
+
+
+class ZFSFileAttrsData(BaseModel):
+    readonly: bool | None = None
+    """ READONLY MS-DOS attribute. When set, file may not be written to (toggling
+    does not impact existing file opens). """
+    hidden: bool | None = None
+    """ HIDDEN MS-DOS attribute. When set, the SMB HIDDEN flag is set and file
+    is "hidden" from the perspective of SMB clients. """
+    system: bool | None = None
+    """ SYSTEM MS-DOS attribute. Is presented to SMB clients, but has no impact on local filesystem. """
+    archive: bool | None = None
+    """ ARCHIVE MS-DOS attribute. Value is reset to True whenever file is modified. """
+    immutable: bool | None = None
+    """ File may not be altered or deleted. Also appears as IMMUTABLE in attributes in
+    `filesystem.stat` output and as STATX_ATTR_IMMUTABLE in statx() response. """
+    nounlink: bool | None = None
+    """ File may be altered but not deleted. """
+    appendonly: bool | None = None
+    """ File may only be opened with O_APPEND flag. Also appears as APPEND in
+    attributes in `filesystem.stat` output and as STATX_ATTR_APPEND in statx() response. """
+    offline: bool | None = None
+    """ OFFLINE MS-DOS attribute. Is presented to SMB clients, but has no impact on local filesystem. """
+    sparse: bool | None = None
+    """ SPARSE MS-DOS attribute. Is presented to SMB clients, but has no impact on local filesystem. """
+
+
+@single_argument_args('set_zfs_file_attributes')
+class FilesystemSetZfsAttrsArgs(BaseModel):
+    path: NonEmptyString
+    zfs_file_attributes: ZFSFileAttrsData
+
+
+class FilesystemSetZfsAttrsResult(BaseModel):
+    result: ZFSFileAttrsData
+
+
+class FilesystemGetZfsAttrsArgs(BaseModel):
+    path: NonEmptyString
+
+
+class FilesystemGetZfsAttrsResult(BaseModel):
+    result: ZFSFileAttrsData

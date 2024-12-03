@@ -16,11 +16,13 @@ from middlewared.api.current import (
     FilesystemMkdirArgs, FilesystemMkdirResult,
     FilesystemStatArgs, FilesystemStatResult,
     FilesystemStatfsArgs, FilesystemStatfsResult,
+    FilesystemSetZfsAttrsArgs, FilesystemSetZfsAttrsResult,
+    FilesystemGetZfsAttrsArgs, FilesystemGetZfsAttrsResult,
 )
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
-from middlewared.schema import accepts, Bool, Dict, Int, Ref, returns, Path, Str
+from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import private, CallError, filterable, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.filesystem import attrs, stat_x
@@ -38,24 +40,12 @@ class FilesystemService(Service):
     class Config:
         cli_private = True
 
-    @accepts(Dict(
-        'set_zfs_file_attributes',
-        Path('path', required=True),
-        Dict(
-            'zfs_file_attributes',
-            Bool('readonly'),
-            Bool('hidden'),
-            Bool('system'),
-            Bool('archive'),
-            Bool('immutable'),
-            Bool('nounlink'),
-            Bool('appendonly'),
-            Bool('offline'),
-            Bool('sparse'),
-            register=True
-        ),
-    ), roles=['FILESYSTEM_ATTRS_WRITE'], audit='Filesystem set ZFS attributes', audit_extended=lambda data: data['path'])
-    @returns()
+    @api_method(
+        FilesystemSetZfsAttrsArgs, FilesystemSetZfsAttrsResult,
+        roles=['FILESYSTEM_ATTRS_WRITE'],
+        audit='Filesystem set ZFS attributes',
+        audit_extended=lambda data: data['path']
+    )
     def set_zfs_attributes(self, data):
         """
         Set special ZFS-related file flags on the specified path
@@ -88,8 +78,7 @@ class FilesystemService(Service):
         """
         return attrs.set_zfs_file_attributes_dict(data['path'], data['zfs_file_attributes'])
 
-    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
-    @returns(Ref('zfs_file_attributes'))
+    @api_method(FilesystemGetZfsAttrsArgs, FilesystemGetZfsAttrsResult, roles=['FILESYSTEM_ATTRS_READ'])
     def get_zfs_attributes(self, path):
         """
         Get the current ZFS attributes for the file at the given path
