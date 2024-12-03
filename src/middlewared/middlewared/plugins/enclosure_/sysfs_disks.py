@@ -99,7 +99,11 @@ def toggle_enclosure_slot_identifier(
 
     slot_errmsg = f"Slot: {slot!r} not found"
     slot = str(slot)
-    if model in (ControllerModels.H10.value, ControllerModels.H20.value):
+    if model in (
+        ControllerModels.H10.value,
+        ControllerModels.H20.value,
+        ControllerModels.H30.value,
+    ):
         # kernel bug for hseries where the slot files report duplicate numbers
         # between the array device slots so until that can be fixed, we have to
         # use the directory name where the slot file exists. Only applies to 4
