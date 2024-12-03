@@ -14,11 +14,13 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     FilesystemListdirArgs, FilesystemListdirResult,
     FilesystemMkdirArgs, FilesystemMkdirResult,
+    FilesystemStatArgs, FilesystemStatResult,
+    FilesystemStatfsArgs, FilesystemStatfsResult,
 )
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
-from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Ref, returns, Path, Str
 from middlewared.service import private, CallError, filterable, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.filesystem import attrs, stat_x
@@ -299,34 +301,7 @@ class FilesystemService(Service):
         with DirectoryIterator(path, file_type=file_type, request_mask=request_mask) as d_iter:
             return filter_list(d_iter, filters, options)
 
-    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
-    @returns(Dict(
-        'path_stats',
-        Str('realpath', required=True),
-        Int('size', required=True),
-        Int('allocation_size', required=True),
-        Int('mode', required=True),
-        Int('uid', required=True),
-        Int('gid', required=True),
-        Float('atime', required=True),
-        Float('mtime', required=True),
-        Float('ctime', required=True),
-        Float('btime', required=True),
-        Int('dev', required=True),
-        Int('mount_id', required=True),
-        Int('inode', required=True),
-        Int('nlink', required=True),
-        Bool('is_mountpoint', required=True),
-        Bool('is_ctldir', required=True),
-        List(
-            'attributes',
-            required=True,
-            items=[Str('statx_attribute', enum=[attr.name for attr in stat_x.StatxAttr])]
-        ),
-        Str('user', null=True, required=True),
-        Str('group', null=True, required=True),
-        Bool('acl', required=True),
-    ))
+    @api_method(FilesystemStatArgs, FilesystemStatResult, roles=['FILESYSTEM_ATTRS_READ'])
     def stat(self, _path):
         """
         Return filesystem information for a given path.
@@ -512,31 +487,7 @@ class FilesystemService(Service):
             os.chmod(path, mode)
         return True
 
-    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
-    @returns(Dict(
-        'path_statfs',
-        List('flags', required=True),
-        List('fsid', required=True),
-        Str('fstype', required=True),
-        Str('source', required=True),
-        Str('dest', required=True),
-        Int('blocksize', required=True),
-        Int('total_blocks', required=True),
-        Int('free_blocks', required=True),
-        Int('avail_blocks', required=True),
-        Str('total_blocks_str', required=True),
-        Str('free_blocks_str', required=True),
-        Str('avail_blocks_str', required=True),
-        Int('files', required=True),
-        Int('free_files', required=True),
-        Int('name_max', required=True),
-        Int('total_bytes', required=True),
-        Int('free_bytes', required=True),
-        Int('avail_bytes', required=True),
-        Str('total_bytes_str', required=True),
-        Str('free_bytes_str', required=True),
-        Str('avail_bytes_str', required=True),
-    ))
+    @api_method(FilesystemStatfsArgs, FilesystemStatfsResult, roles=['FILESYSTEM_ATTRS_READ'])
     def statfs(self, path):
         """
         Return stats from the filesystem of a given path.
@@ -579,7 +530,7 @@ class FilesystemService(Service):
             'files': st.f_files,
             'free_files': st.f_ffree,
             'name_max': st.f_namemax,
-            'fsid': [str(st.f_fsid)],
+            'fsid': str(st.f_fsid),
             'total_bytes': st.f_blocks * st.f_frsize,
             'free_bytes': st.f_bfree * st.f_frsize,
             'avail_bytes': st.f_bavail * st.f_frsize,
