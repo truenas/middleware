@@ -718,7 +718,7 @@ class UserService(CRUDService):
         if not user['smb'] and data.get('smb') and not data.get('password'):
             # Changing from non-smb user to smb user requires re-entering password.
             verrors.add('user_update.smb',
-                        'Password must be changed in order to enable SMB authentication')
+                        'Password must be reset in order to enable SMB authentication')
 
         verrors.check()
 
