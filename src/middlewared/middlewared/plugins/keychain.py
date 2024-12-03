@@ -11,7 +11,7 @@ import urllib.parse
 
 from truenas_api_client import Client, ClientException
 
-from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.service_exception import CallError, MatchNotFound, ValidationError
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Password, Ref, returns, Str, ValidationErrors
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
@@ -398,12 +398,14 @@ class KeychainCredentialService(CRUDService):
         """
 
         instance = await self.get_instance(id_)
-
         for delegate in TYPES[instance["type"]].used_by_delegates:
             delegate = delegate(self.middleware)
             for row in await delegate.query(instance["id"]):
                 if not options["cascade"]:
-                    raise CallError("This credential is used and no cascade option is specified")
+                    raise ValidationError(
+                        "options.cascade",
+                        "This credential is used and no cascade option is specified"
+                    )
 
                 await delegate.unbind(row)
 
