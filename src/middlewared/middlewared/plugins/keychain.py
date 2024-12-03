@@ -273,7 +273,12 @@ class KeychainCredentialService(CRUDService):
         role_prefix = "KEYCHAIN_CREDENTIAL"
         entry = KeychainCredentialEntry
 
-    @api_method(KeychainCredentialCreateArgs, KeychainCredentialCreateResult)
+    @api_method(
+        KeychainCredentialCreateArgs,
+        KeychainCredentialCreateResult,
+        audit="Keychain Credential Create:",
+        audit_extended=lambda data: data["name"]
+    )
     async def do_create(self, data):
         """
         Create a Keychain Credential
@@ -324,8 +329,13 @@ class KeychainCredentialService(CRUDService):
         )
         return data
 
-    @api_method(KeychainCredentialUpdateArgs, KeychainCredentialUpdateResult)
-    async def do_update(self, id_, data):
+    @api_method(
+        KeychainCredentialUpdateArgs,
+        KeychainCredentialUpdateResult,
+        audit="Keychain Credential Update:",
+        audit_callback=True
+    )
+    async def do_update(self, audit_callback, id_, data):
         """
         Update a Keychain Credential with specific `id`
 
@@ -357,6 +367,7 @@ class KeychainCredentialService(CRUDService):
         """
 
         old = await self.get_instance(id_)
+        audit_callback(old["name"])
 
         new = old.copy()
         new.update(data)
@@ -375,8 +386,13 @@ class KeychainCredentialService(CRUDService):
 
         return new
 
-    @api_method(KeychainCredentialDeleteArgs, KeychainCredentialDeleteResult)
-    async def do_delete(self, id_, options):
+    @api_method(
+        KeychainCredentialDeleteArgs,
+        KeychainCredentialDeleteResult,
+        audit="Keychain Credential Delete:",
+        audit_callback=True
+    )
+    async def do_delete(self, audit_callback, id_, options):
         """
         Delete Keychain Credential with specific `id`
 
@@ -394,6 +410,8 @@ class KeychainCredentialService(CRUDService):
         """
 
         instance = await self.get_instance(id_)
+        audit_callback(instance["name"])
+
         for delegate in TYPES[instance["type"]].used_by_delegates:
             delegate = delegate(self.middleware)
             for row in await delegate.query(instance["id"]):
