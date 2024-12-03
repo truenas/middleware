@@ -399,7 +399,7 @@ class KeychainCredentialService(CRUDService):
             for row in await delegate.query(instance["id"]):
                 if not options["cascade"]:
                     raise ValidationError(
-                        "keychaincredential.delegate",
+                        "options.cascade",
                         "This credential is used and no cascade option is specified"
                     )
                 await delegate.unbind(row)
