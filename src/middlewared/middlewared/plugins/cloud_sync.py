@@ -263,7 +263,7 @@ async def rclone(middleware, job, cloud_sync, dry_run):
                     updated = True
             if updated:
                 await middleware.call("cloudsync.credentials.update", cloud_sync["credentials"]["id"], {
-                    "provider": credentials_attributes
+                    "attributes": credentials_attributes
                 })
 
 
