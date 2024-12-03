@@ -17,7 +17,7 @@ class LongStringWrapper:
     We have to box our long strings in this class to bypass the global limit for string length.
     """
 
-    max_length = 2 ** 31 - 1
+    max_length = 2048000  # historic maximum length of string in filesystem.file_receive
 
     def __init__(self, value):
         if isinstance(value, LongStringWrapper):
