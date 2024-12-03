@@ -422,6 +422,7 @@ class FilesystemService(Service):
         return True
 
     @api_method(FilesystemGetFileArgs, FilesystemGetFileResult, audit='Filesystem get')
+    @job(pipes=["output"])
     def get(self, job, path):
         """
         Job to get contents of `path`.
