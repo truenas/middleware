@@ -350,7 +350,7 @@ class CoreService(Service):
                 # Skip private methods
                 if hasattr(method, '_private') and method._private is True:
                     continue
-                if target == 'CLI' and hasattr(method, '_cli_private'):
+                if target == 'CLI' and getattr(method, '_cli_private', False):
                     continue
 
                 # terminate is a private method used to clean up a service on shutdown
