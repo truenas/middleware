@@ -4,7 +4,7 @@ from logging import getLogger
 from middlewared.utils import filter_list
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.plugins.account import DEFAULT_HOME_PATH
-from middlewared.plugins.smb_.constants import LOGLEVEL_MAP, SMBEncryption, SMBPath
+from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath
 
 LOGGER = getLogger(__name__)
 
@@ -49,7 +49,11 @@ def generate_smb_conf_dict(
     else:
         home_path = DEFAULT_HOME_PATH
 
-    loglevelint = int(LOGLEVEL_MAP.inv.get(smb_service_config['loglevel'], 1))
+    loglevelint = 10 if smb_service_config['debug'] else 1
+
+    for key in ('filemask', 'dirmask'):
+        if smb_service_config[key] == 'DEFAULT':
+            smb_service_config[key] = None
 
     """
     First set up our legacy / default SMB parameters. Several are related to
@@ -107,7 +111,7 @@ def generate_smb_conf_dict(
         'winbind request timeout': 60 if ds_type is DSType.AD else 2,
         'passdb backend': f'tdbsam:{SMBPath.PASSDB_DIR.value[0]}/passdb.tdb',
         'workgroup': smb_service_config['workgroup'],
-        'netbios name': smb_service_config['netbiosname_local'],
+        'netbios name': smb_service_config['netbiosname'],
         'netbios aliases': ' '.join(smb_service_config['netbiosalias']),
         'guest account': smb_service_config['guest'] if smb_service_config['guest'] else 'nobody',
         'obey pam restrictions': any(home_share),
@@ -212,7 +216,6 @@ def generate_smb_conf_dict(
             'template shell': '/bin/sh',
             'allow trusted domains': ac['allow_trusted_doms'],
             'realm': ac['domainname'],
-            'ads dns update': False,
             'winbind nss info': ac['nss_info'].lower(),
             'template homedir': home_path,
             'winbind enum users': not ac['disable_freenas_cache'],

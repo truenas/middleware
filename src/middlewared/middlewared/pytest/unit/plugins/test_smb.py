@@ -10,7 +10,6 @@ BASE_SMB_CONFIG = {
     'workgroup': 'TESTDOMAIN',
     'description': 'TrueNAS Server',
     'unixcharset': 'UTF-8',
-    'loglevel': 'MINIMUM',
     'syslog': False,
     'aapl_extensions': False,
     'localmaster': False,
@@ -26,7 +25,7 @@ BASE_SMB_CONFIG = {
     'next_rid': 0,
     'multichannel': False,
     'encryption': 'DEFAULT',
-    'netbiosname_local': 'TESTSERVER'
+    'debug': False
 }
 
 SMB_SYSLOG = BASE_SMB_CONFIG | {'syslog': True}

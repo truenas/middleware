@@ -1,3 +1,5 @@
+import re
+
 from typing import Any
 
 from pydantic import AfterValidator, BeforeValidator, Field, GetCoreSchemaHandler, HttpUrl as _HttpUrl, PlainSerializer
@@ -5,9 +7,10 @@ from pydantic_core import CoreSchema, core_schema, PydanticKnownError
 from typing_extensions import Annotated
 
 from middlewared.utils.lang import undefined
+from middlewared.utils.netbios import validate_netbios_name, validate_netbios_domain
 from middlewared.validators import Time
 
-__all__ = ["HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString"]
+__all__ = ["HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString", "NetbiosDomain", "NetbiosName"]
 
 HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
 
@@ -57,5 +60,7 @@ LongString = Annotated[
 NonEmptyString = Annotated[str, Field(min_length=1)]
 LongNonEmptyString = Annotated[LongString, Field(min_length=1)]
 TimeString = Annotated[str, AfterValidator(Time())]
+NetbiosDomain = Annotated[str, AfterValidator(validate_netbios_domain)]
+NetbiosName = Annotated[str, AfterValidator(validate_netbios_name)]
 
 SECRET_VALUE = "********"

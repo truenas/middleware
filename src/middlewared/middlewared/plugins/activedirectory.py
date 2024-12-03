@@ -70,7 +70,6 @@ class ActiveDirectoryService(ConfigService):
         Str('nss_info', null=True, enum=['TEMPLATE', 'SFU', 'SFU20', 'RFC2307']),
         Str('createcomputer'),
         NetbiosName('netbiosname'),
-        NetbiosName('netbiosname_b'),
         List('netbiosalias', items=[NetbiosName('alias')], default=None),
         Bool('enable'),
         register=True
@@ -81,7 +80,7 @@ class ActiveDirectoryService(ConfigService):
         smb = await self.middleware.call('smb.config')
 
         ad.update({
-            'netbiosname': smb['netbiosname_local'],
+            'netbiosname': smb['netbiosname'],
             'netbiosalias': smb['netbiosalias']
         })
 
@@ -102,7 +101,7 @@ class ActiveDirectoryService(ConfigService):
         foreign entries.
         kinit will fail if domain name is lower-case.
         """
-        for key in ['netbiosname', 'netbiosname_b', 'netbiosalias', 'bindpw']:
+        for key in ['netbiosname', 'netbiosalias', 'bindpw']:
             if key in ad:
                 ad.pop(key)
 
