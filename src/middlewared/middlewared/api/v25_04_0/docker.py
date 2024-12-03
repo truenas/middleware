@@ -33,6 +33,14 @@ class DockerEntry(BaseModel):
     dataset: NonEmptyString | None
     pool: NonEmptyString | None
     nvidia: bool
+    address_pools: list[dict]
+    cidr_v6: str
+
+
+@single_argument_args('docker_update')
+class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
+    id: Excluded = excluded_field()
+    dataset: Excluded = excluded_field()
     address_pools: list[AddressPool]
     cidr_v6: IPvAnyInterface
 
@@ -44,12 +52,6 @@ class DockerEntry(BaseModel):
         if v.network.prefixlen == 128:
             raise ValueError('Prefix length of cidr_v6 network cannot be 128.')
         return v
-
-
-@single_argument_args('docker_update')
-class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
-    id: Excluded = excluded_field()
-    dataset: Excluded = excluded_field()
 
 
 class DockerUpdateResult(BaseModel):
