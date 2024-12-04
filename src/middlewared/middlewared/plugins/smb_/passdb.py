@@ -32,7 +32,7 @@ class SMBService(Service):
 
     @private
     def update_passdb_user(self, user: UserEntry):
-        server_name = self.middleware.call_sync('smb.config')['netbiosname_local']
+        server_name = self.middleware.call_sync('smb.config')['netbiosname']
 
         existing_entry = self.passdb_list([['username', '=', user['username']]])
         passdb_entry = user_entry_to_passdb_entry(
@@ -59,7 +59,7 @@ class SMBService(Service):
             PassdbMustReinit - the synchronize job must be rerun with force command
             RuntimeError - TDB library error
         """
-        server_name = self.middleware.call_sync('smb.config')['netbiosname_local']
+        server_name = self.middleware.call_sync('smb.config')['netbiosname']
         if force:
             try:
                 os.unlink(PASSDB_PATH)

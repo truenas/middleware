@@ -1,5 +1,6 @@
 from middlewared.api.base import (
     BaseModel,
+    LongNonEmptyString,
     NonEmptyString,
     UnixPerm,
     single_argument_args,
@@ -25,6 +26,9 @@ __all__ = [
     'FilesystemStatfsArgs', 'FilesystemStatfsResult',
     'FilesystemSetZfsAttrsArgs', 'FilesystemSetZfsAttrsResult',
     'FilesystemGetZfsAttrsArgs', 'FilesystemGetZfsAttrsResult',
+    'FilesystemGetFileArgs', 'FilesystemGetFileResult',
+    'FilesystemPutFileArgs', 'FilesystemPutFileResult',
+    'FilesystemReceiveFileArgs', 'FilesystemReceiveFileResult',
 ]
 
 
@@ -343,3 +347,42 @@ class FilesystemGetZfsAttrsArgs(BaseModel):
 
 class FilesystemGetZfsAttrsResult(BaseModel):
     result: ZFSFileAttrsData
+
+
+class FilesystemGetFileArgs(BaseModel):
+    path: NonEmptyString
+
+
+class FilesystemGetFileResult(BaseModel):
+    result: Literal[None]
+
+
+class FilesystemPutOptions(BaseModel):
+    append: bool = False
+    mode: int | None = None
+
+
+class FilesystemPutFileArgs(BaseModel):
+    path: NonEmptyString
+    options: FilesystemPutOptions = FilesystemPutOptions()
+
+
+class FilesystemPutFileResult(BaseModel):
+    result: Literal[True]
+
+
+class FilesystemReceiveFileOptions(BaseModel):
+    append: bool = False
+    mode: int = None
+    uid: int = ACL_UNDEFINED_ID
+    gid: int = ACL_UNDEFINED_ID
+
+
+class FilesystemReceiveFileArgs(BaseModel):
+    path: NonEmptyString
+    content: LongNonEmptyString
+    options: FilesystemReceiveFileOptions = FilesystemReceiveFileOptions()
+
+
+class FilesystemReceiveFileResult(BaseModel):
+    result: Literal[True]

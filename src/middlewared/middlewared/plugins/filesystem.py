@@ -18,12 +18,14 @@ from middlewared.api.current import (
     FilesystemStatfsArgs, FilesystemStatfsResult,
     FilesystemSetZfsAttrsArgs, FilesystemSetZfsAttrsResult,
     FilesystemGetZfsAttrsArgs, FilesystemGetZfsAttrsResult,
+    FilesystemGetFileArgs, FilesystemGetFileResult,
+    FilesystemPutFileArgs, FilesystemPutFileResult,
+    FilesystemReceiveFileArgs, FilesystemReceiveFileResult,
 )
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
-from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
-from middlewared.service import private, CallError, filterable, Service, job
+from middlewared.service import private, CallError, filterable_api_method, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import acl_is_present
@@ -106,8 +108,7 @@ class FilesystemService(Service):
     def is_dataset_path(self, path):
         return path.startswith('/mnt/') and os.stat(path).st_dev != os.stat('/mnt').st_dev
 
-    @private
-    @filterable
+    @filterable_api_method(private=True)
     def mount_info(self, filters, options):
         mntinfo = getmntinfo()
         return filter_list(list(mntinfo.values()), filters, options)
@@ -392,18 +393,9 @@ class FilesystemService(Service):
 
         return stat
 
-    @private
-    @accepts(
-        Str('path'),
-        Str('content', max_length=2048000),
-        Dict(
-            'options',
-            Bool('append', default=False),
-            Int('mode'),
-            Int('uid'),
-            Int('gid'),
-        ),
-    )
+    # WARNING: following method cannot currently be audited properly due to RFC limitations on
+    # syslog message size.
+    @api_method(FilesystemReceiveFileArgs, FilesystemReceiveFileResult, private=True)
     def file_receive(self, path, content, options):
         """
         Simplified file receiving method for small files.
@@ -429,8 +421,7 @@ class FilesystemService(Service):
 
         return True
 
-    @accepts(Str('path'))
-    @returns()
+    @api_method(FilesystemGetFileArgs, FilesystemGetFileResult, audit='Filesystem get')
     @job(pipes=["output"])
     def get(self, job, path):
         """
@@ -443,15 +434,7 @@ class FilesystemService(Service):
         with open(path, 'rb') as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
-    @accepts(
-        Str('path'),
-        Dict(
-            'options',
-            Bool('append', default=False),
-            Int('mode'),
-        ),
-    )
-    @returns(Bool('successful_put'))
+    @api_method(FilesystemPutFileArgs, FilesystemPutFileResult, audit='Filesystem put')
     @job(pipes=["input"])
     def put(self, job, path, options):
         """

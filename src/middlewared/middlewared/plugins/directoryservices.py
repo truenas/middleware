@@ -162,7 +162,7 @@ class DirectoryServices(Service):
             passwd_ts = None
 
         db_secrets = await self.middleware.call('directoryservices.secrets.get_db_secrets')
-        server_secrets = db_secrets.get(f"{smb_config['netbiosname_local'].upper()}$")
+        server_secrets = db_secrets.get(f"{smb_config['netbiosname'].upper()}$")
         if server_secrets is None:
             return {"dbconfig": None, "secrets": passwd_ts}
 

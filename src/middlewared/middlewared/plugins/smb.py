@@ -1,9 +1,7 @@
 import asyncio
-import codecs
 import errno
 import middlewared.sqlalchemy as sa
 import os
-import re
 from pathlib import Path
 import uuid
 import unicodedata
@@ -14,10 +12,11 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     GetSmbAclArgs, GetSmbAclResult,
     SetSmbAclArgs, SetSmbAclResult,
+    SmbServiceEntry, SmbServiceUpdateArgs, SmbServiceUpdateResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.schema import Bool, Dict, IPAddr, List, NetbiosName, NetbiosDomain, Str, Int, Patch
+from middlewared.schema import Bool, Dict, List, Str, Int, Patch
 from middlewared.schema import Path as SchemaPath
 # List schema defaults to [], supplying NOT_PROVIDED avoids having audit update that
 # defaults for ignore_list or watch_list from overrwriting previous value
@@ -30,7 +29,6 @@ from middlewared.plugins.smb_.constants import (
     CONFIGURED_SENTINEL,
     SMB_AUDIT_DEFAULTS,
     INVALID_SHARE_NAME_CHARACTERS,
-    LOGLEVEL_MAP,
     RESERVED_SHARE_NAMES,
     SMBHAMODE,
     SMBCmd,
@@ -49,6 +47,7 @@ from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.utils.mount import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 from middlewared.utils.privilege import credential_has_full_admin
+from middlewared.utils.smb import SMBUnixCharset
 from middlewared.utils.tdb import TDBError
 
 
@@ -61,7 +60,7 @@ class SMBModel(sa.Model):
     cifs_srv_workgroup = sa.Column(sa.String(120))
     cifs_srv_description = sa.Column(sa.String(120))
     cifs_srv_unixcharset = sa.Column(sa.String(120), default="UTF-8")
-    cifs_srv_loglevel = sa.Column(sa.String(120), default="0")
+    cifs_srv_debug = sa.Column(sa.Boolean(), default=False)
     cifs_srv_syslog = sa.Column(sa.Boolean(), default=False)
     cifs_srv_aapl_extensions = sa.Column(sa.Boolean(), default=False)
     cifs_srv_localmaster = sa.Column(sa.Boolean(), default=False)
@@ -74,7 +73,6 @@ class SMBModel(sa.Model):
     cifs_srv_ntlmv1_auth = sa.Column(sa.Boolean(), default=False)
     cifs_srv_enable_smb1 = sa.Column(sa.Boolean(), default=False)
     cifs_srv_admin_group = sa.Column(sa.String(120), nullable=True, default="")
-    cifs_srv_next_rid = sa.Column(sa.Integer(), nullable=False)
     cifs_srv_secrets = sa.Column(sa.EncryptedText(), nullable=True)
     cifs_srv_multichannel = sa.Column(sa.Boolean, default=False)
     cifs_srv_encryption = sa.Column(sa.String(120), nullable=True)
@@ -90,6 +88,7 @@ class SMBService(ConfigService):
         datastore_prefix = 'cifs_srv_'
         cli_namespace = 'service.smb'
         role_prefix = 'SHARING_SMB'
+        entry = SmbServiceEntry
 
     @private
     def is_configured(self):
@@ -103,18 +102,18 @@ class SMBService(ConfigService):
     @private
     async def smb_extend(self, smb):
         """Extend smb for netbios."""
-        smb['netbiosname_local'] = smb['netbiosname']
+        smb['guest'] = smb['guest'] or 'nobody'
         smb['netbiosalias'] = (smb['netbiosalias'] or '').split()
-        smb['loglevel'] = LOGLEVEL_MAP.get(smb['loglevel'])
         smb['encryption'] = smb['encryption'] or 'DEFAULT'
+        smb['server_sid'] = smb.pop('cifs_SID')
+        smb['dirmask'] = smb['dirmask'] or 'DEFAULT'
+        smb['filemask'] = smb['filemask'] or 'DEFAULT'
         smb.pop('secrets', None)
         return smb
 
     @accepts()
     async def unixcharset_choices(self):
-        return await self.generate_choices(
-            ['UTF-8', 'ISO-8859-1', 'ISO-8859-15', 'GB2312', 'EUC-JP', 'ASCII']
-        )
+        return {str(charset): charset for charset in SMBUnixCharset}
 
     @private
     def generate_smb_configuration(self):
@@ -159,22 +158,6 @@ class SMBService(ConfigService):
             ds_type, ds_config, smb_config, smb_shares, bind_ip_choices, idmap_config, is_enterprise
         )
 
-    @private
-    async def generate_choices(self, initial):
-        def key_cp(encoding):
-            cp = re.compile(r"(?P<name>CP|GB|ISO-8859-|UTF-)(?P<num>\d+)").match(encoding)
-            if cp:
-                return tuple((cp.group('name'), int(cp.group('num'), 10)))
-            else:
-                return tuple((encoding, float('inf')))
-
-        charset = await self.common_charset_choices()
-        return {
-            v: v for v in [
-                c for c in sorted(charset, key=key_cp) if c not in initial
-            ] + initial
-        }
-
     @accepts()
     async def bindip_choices(self):
         """
@@ -197,7 +180,7 @@ class SMBService(ConfigService):
 
         return choices
 
-    @accepts()
+    @private
     async def domain_choices(self):
         """
         List of domains visible to winbindd. Returns empty list if winbindd is
@@ -205,33 +188,6 @@ class SMBService(ConfigService):
         """
         domains = await self.middleware.call('idmap.known_domains')
         return [dom['netbios_domain'] for dom in domains]
-
-    @private
-    async def common_charset_choices(self):
-
-        def check_codec(encoding):
-            try:
-                return encoding.upper() if codecs.lookup(encoding) else False
-            except LookupError:
-                return False
-
-        proc = await run(['/usr/bin/iconv', '-l'], check=False)
-        output = proc.stdout.decode()
-
-        encodings = set()
-        for line in output.splitlines():
-            enc = [e for e in line.split() if check_codec(e)]
-
-            if enc:
-                cp = enc[0]
-                for e in enc:
-                    if e in ('UTF-8', 'ASCII', 'GB2312', 'HZ-GB-2312', 'CP1361'):
-                        cp = e
-                        break
-
-                encodings.add(cp)
-
-        return encodings
 
     @private
     async def store_ldap_admin_password(self):
@@ -551,7 +507,7 @@ class SMBService(ConfigService):
             verrors.add('smb_update.netbiosname', 'NetBIOS name is required.')
 
         for i in ('filemask', 'dirmask'):
-            if not new[i]:
+            if new[i] == 'DEFAULT':
                 continue
             try:
                 if int(new[i], 8) & ~0o11777:
@@ -578,30 +534,7 @@ class SMBService(ConfigService):
                     f'The following SMB shares have auditing enabled: {", ".join([x["name"] for x in audited_shares])}'
                 )
 
-    @accepts(Dict(
-        'smb_update',
-        NetbiosName('netbiosname', max_length=15),
-        NetbiosName('netbiosname_b', max_length=15),
-        List('netbiosalias', items=[NetbiosName('netbios_alias')]),
-        NetbiosDomain('workgroup'),
-        Str('description'),
-        Bool('enable_smb1'),
-        Str('unixcharset'),
-        Str('loglevel', enum=['NONE', 'MINIMUM', 'NORMAL', 'FULL', 'DEBUG']),
-        Bool('syslog'),
-        Bool('aapl_extensions'),
-        Bool('localmaster'),
-        Str('guest'),
-        Str('admin_group', required=False, default=None, null=True),
-        Str('filemask'),
-        Str('dirmask'),
-        Bool('ntlmv1_auth'),
-        Bool('multichannel', default=False),
-        Str('encryption', enum=['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']),
-        List('bindip', items=[IPAddr('ip')]),
-        Str('smb_options', max_length=None),
-        update=True,
-    ), audit='Update SMB configuration')
+    @api_method(SmbServiceUpdateArgs, SmbServiceUpdateResult, audit='Update SMB configuration')
     @pass_app(rest=True)
     async def do_update(self, app, data):
         """
@@ -688,7 +621,7 @@ class SMBService(ConfigService):
         if old['aapl_extensions'] != new['aapl_extensions']:
             await self.apply_aapl_changes()
 
-        if old['netbiosname_local'] != new_config['netbiosname_local']:
+        if old['netbiosname'] != new_config['netbiosname']:
             await self.middleware.call('smb.set_system_sid')
             # we need to update domain field in passdb.tdb
             pdb_job = await self.middleware.call('smb.synchronize_passdb')
@@ -710,10 +643,13 @@ class SMBService(ConfigService):
         if data['encryption'] == 'DEFAULT':
             data['encryption'] = None
 
-        data.pop('netbiosname_local', None)
-        data.pop('netbiosname_b', None)
-        data.pop('next_rid')
-        data['loglevel'] = LOGLEVEL_MAP.inv.get(data['loglevel'], 1)
+        if data['dirmask'] == 'DEFAULT':
+            data['dirmask'] = ''
+
+        if data['filemask'] == 'DEFAULT':
+            data['filemask'] = ''
+
+        data.pop('server_sid')
         data['netbiosalias'] = ' '.join(data['netbiosalias'])
         return data
 

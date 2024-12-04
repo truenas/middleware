@@ -1444,14 +1444,19 @@ class InterfaceService(CRUDService):
         return oid
 
     @private
-    async def delete_network_interface(self, oid):
+    async def delete_network_interface(self, oid, *, parents=None):
+        parents = (parents or set()) | {oid}
+
         for lagg in await self.middleware.call(
             'datastore.query', 'network.lagginterface', [('lagg_interface__int_interface', '=', oid)]
         ):
             for lagg_member in await self.middleware.call(
                 'datastore.query', 'network.lagginterfacemembers', [('lagg_interfacegroup', '=', lagg['id'])]
             ):
-                await self.delete_network_interface(lagg_member['lagg_physnic'])
+                if lagg_member['lagg_physnic'] in parents:
+                    continue
+
+                await self.delete_network_interface(lagg_member['lagg_physnic'], parents=parents)
 
             await self.middleware.call('datastore.delete', 'network.lagginterface', lagg['id'])
 

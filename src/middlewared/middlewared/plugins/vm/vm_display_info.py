@@ -1,6 +1,10 @@
 from socket import AF_INET6
 
-from middlewared.schema import accepts, Dict, Int, List, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    VMPortWizardArgs, VMPortWizardResult, VMResolutionChoicesArgs, VMResolutionChoicesResult, VMGetDisplayDevicesArgs,
+    VMGetDisplayDevicesResult, VMDisplayWebURIArgs, VMDisplayWebURIResult,
+)
 from middlewared.service import pass_app, private, Service
 
 from .devices import DISPLAY
@@ -9,12 +13,7 @@ from .utils import NGINX_PREFIX
 
 class VMService(Service):
 
-    @accepts(roles=['VM_READ'])
-    @returns(Dict(
-        'available_display_port',
-        Int('port', required=True, description='Available server port'),
-        Int('web', required=True, description='Web port to be used based on available `port`'),
-    ))
+    @api_method(VMPortWizardArgs, VMPortWizardResult, roles=['VM_READ'])
     async def port_wizard(self):
         """
         It returns the next available Display Server Port and Web Port.
@@ -40,28 +39,14 @@ class VMService(Service):
             all_ports.extend([device['attributes']['port'], device['attributes']['web_port']])
         return all_ports
 
-    @accepts()
-    @returns(Dict(
-        *[Str(r, enum=[r]) for r in DISPLAY.RESOLUTION_ENUM]
-    ))
+    @api_method(VMResolutionChoicesArgs, VMResolutionChoicesResult, roles=['VM_READ'])
     async def resolution_choices(self):
         """
         Retrieve supported resolution choices for VM Display devices.
         """
         return {r: r for r in DISPLAY.RESOLUTION_ENUM}
 
-    @accepts(Int('id'), roles=['VM_READ'])
-    @returns(List(
-        'vmdevice', items=[
-            Dict(
-                'vmdevice',
-                Int('id'),
-                DISPLAY.schema,
-                Int('order'),
-                Int('vm'),
-            ),
-        ]
-    ))
+    @api_method(VMGetDisplayDevicesArgs, VMGetDisplayDevicesResult, roles=['VM_READ'])
     async def get_display_devices(self, id_):
         """
         Get the display devices from a given guest. If a display device has password configured,
@@ -75,20 +60,7 @@ class VMService(Service):
             devices.append(device)
         return devices
 
-    @accepts(
-        Int('id'),
-        Str('host', default=''),
-        Dict(
-            'options',
-            Str('protocol', default='HTTP', enum=['HTTP', 'HTTPS']),
-        ),
-        roles=['VM_READ']
-    )
-    @returns(Dict(
-        'display_devices_uri',
-        Str('error', null=True),
-        Str('uri', null=True),
-    ))
+    @api_method(VMDisplayWebURIArgs, VMDisplayWebURIResult, roles=['VM_READ'])
     @pass_app()
     async def get_display_web_uri(self, app, id_, host, options):
         """
