@@ -617,7 +617,7 @@ class UserService(CRUDService):
             try:
                 self.update_sshpubkey(data['home'], data, group['group'])
             except PermissionError as e:
-                self.logger.warn('Failed to update authorized keys', exc_info=True)
+                self.logger.warning('Failed to update authorized keys', exc_info=True)
                 raise CallError(f'Failed to update authorized keys: {e}')
 
         return pk
@@ -779,7 +779,7 @@ class UserService(CRUDService):
             ]
             self.update_sshpubkey(*update_sshpubkey_args)
         except PermissionError as e:
-            self.logger.warn('Failed to update authorized keys', exc_info=True)
+            self.logger.warning('Failed to update authorized keys', exc_info=True)
             raise CallError(f'Failed to update authorized keys: {e}')
         else:
             if user['uid'] == 0:
@@ -873,6 +873,15 @@ class UserService(CRUDService):
         user = self.middleware.call_sync('user.get_instance', pk)
         audit_callback(user['username'])
 
+        current_username = self.middleware.call_sync(
+            'auth.sessions',
+            [['current', '=', True]],
+            {'get': True}
+        )['credentials_data']['username']
+
+        if user['username'] == current_username:
+            raise CallError('Cannot delete the currently active user', errno.EINVAL)
+
         if user['builtin']:
             raise CallError('Cannot delete a built-in user', errno.EINVAL)
 
@@ -894,7 +903,7 @@ class UserService(CRUDService):
                 try:
                     self.middleware.call_sync('group.delete', user['group']['id'])
                 except Exception:
-                    self.logger.warn(f'Failed to delete primary group of {user["username"]}', exc_info=True)
+                    self.logger.warning(f'Failed to delete primary group of {user["username"]}', exc_info=True)
 
         if user['home'] and user['home'] not in DEFAULT_HOME_PATHS:
             try:
