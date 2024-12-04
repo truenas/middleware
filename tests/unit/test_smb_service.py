@@ -18,7 +18,7 @@ BASE_SMB_CONFIG = {
     'dirmask': '',
     'smb_options': '',
     'bindip': [],
-    'cifs_SID': 'S-1-5-21-732395397-2008429054-3061640861',
+    'server_sid': 'S-1-5-21-732395397-2008429054-3061640861',
     'ntlmv1_auth': False,
     'enable_smb1': False,
     'admin_group': None,

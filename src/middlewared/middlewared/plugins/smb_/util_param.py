@@ -1,12 +1,7 @@
-import os
+import errno
 import threading
 
-from middlewared.service_exception import CallError, MatchNotFound
-
-try:
-    from samba.samba3 import param as s3param
-except ImportError:
-    s3param = None
+from middlewared.service_exception import CallError
 
 try:
     from samba import param
@@ -14,34 +9,50 @@ except ImportError:
     param = None
 
 from .constants import SMBPath
-from .util_net_conf import reg_getparm
 
-LP_CTX = s3param.get_context()
+LP_CTX = param.LoadParm()
 LP_CTX_LOCK = threading.Lock()
 
+AUX_PARAM_BLACKLIST = frozenset([
+    'state directory',
+    'private directory',
+    'lock directory',
+    'lock dir',
+    'config backend',
+    'private dir',
+    'log level',
+    'cache directory',
+    'clustering',
+    'ctdb socket',
+    'socket options',
+    'include',
+    'wide links',
+    'insecure wide links',
+    'zfs_core:zfs_block_cloning',
+    'zfs_core:zfs_integrity_streams',
+    'use sendfile',
+    'vfs objects',
+])
 
-def smbconf_getparm_lpctx(parm):
+
+def smbconf_getparm_lpctx(parm, section):
     with LP_CTX_LOCK:
         LP_CTX.load(SMBPath.GLOBALCONF.platform())
-        return LP_CTX.get(parm)
+        shares = set([s.casefold() for s in LP_CTX.services()])
+        if section.upper() != 'GLOBAL' and section.casefold() not in shares:
+            raise CallError(f'{section}: share does not exist in running configuration', errno.ENOENT)
+
+        return LP_CTX.get(parm, section)
+
+
+def smbconf_list_shares() -> list[str]:
+    with LP_CTX_LOCK:
+        LP_CTX.load(SMBPath.GLOBALCONF.platform())
+        return LP_CTX.services()
 
 
 def smbconf_getparm(parm, section='GLOBAL'):
-    """
-    The global SMB server settings can be retrieved using a samba3 loadparm
-    context. This is required (as opposed to importing `param` from samba
-    due to presence of registry shares.
-
-    Share parameter must be queried directly from libsmbconf using `net conf`.
-    """
-
-    if section.upper() == 'GLOBAL':
-        return smbconf_getparm_lpctx(parm)
-
-    try:
-        return reg_getparm(section, parm)
-    except Exception as e:
-        raise CallError(f'Attempt to query smb4.conf parameter [{parm}] failed with error: {e}')
+    return smbconf_getparm_lpctx(parm, section)
 
 
 def lpctx_validate_global_parm(parm, value):
