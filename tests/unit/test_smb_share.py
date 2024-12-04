@@ -109,7 +109,7 @@ def noacl_dataset(create_dataset):
 def test__base_parameters(nfsacl_dataset):
     conf = generate_smb_share_conf_dict(None, BASE_SMB_SHARE | {'path': nfsacl_dataset}, BASE_SMB_CONFIG)
 
-    assert conf['smbd max xattr size'] = 2097152
+    assert conf['smbd max xattr size'] == 2097152
     assert conf['comment'] == BASE_SMB_SHARE['comment']
     assert conf['browseable'] == BASE_SMB_SHARE['browsable']
 
@@ -305,10 +305,14 @@ def test__aapl_name_mangling(nfsacl_dataset, fruit_enabled):
     )
 
     if fruit_enabled:
+        assert TrueNASVfsObjects.FRUIT in conf['vfs objects']
+        assert TrueNASVfsObjects.CATIA in conf['vfs objects']
         assert conf['fruit:encoding'] == 'native'
         assert conf['mangled names'] is False
         assert 'catia:mappings' not in conf
     else:
+        assert TrueNASVfsObjects.FRUIT not in conf['vfs objects']
+        assert TrueNASVfsObjects.CATIA in conf['vfs objects']
         assert conf['mangled names'] is False
         assert 'fruit:encoding' not in conf
         assert 'catia:mappings' in conf
@@ -405,6 +409,7 @@ def test__timemachine(nfsacl_dataset, enabled):
     else:
         assert 'fruit:timemachine' not in conf
 
+
 @pytest.mark.parametrize('hostsconfig', [
     ('hostsallow', 'hosts allow'),
     ('hostsdeny', 'hosts deny')
@@ -451,3 +456,44 @@ def test__timemachine_preset(nfsacl_dataset):
     }, BASE_SMB_CONFIG)
 
     assert conf['fruit:timemachine'] is True
+
+
+@pytest.mark.parametrize('audit_config', [
+    {'enable': True, 'watch_list': [], 'ignore_list': []},
+    {'enable': True, 'watch_list': ['jenny'], 'ignore_list': []},
+    {'enable': True, 'watch_list': [], 'ignore_list': ['jenny']},
+])
+def test__audit_config(nfsacl_dataset, audit_config):
+    conf = generate_smb_share_conf_dict(DSType.AD, BASE_SMB_SHARE | {
+        'path': nfsacl_dataset,
+        'audit': audit_config 
+    }, BASE_SMB_CONFIG | {'aapl_extensions': True})
+
+
+    assert conf['vfs objects'] == [
+        TrueNASVfsObjects.TRUENAS_AUDIT,
+        TrueNASVfsObjects.FRUIT,
+        TrueNASVfsObjects.STREAMS_XATTR,
+        TrueNASVfsObjects.SHADOW_COPY_ZFS,
+        TrueNASVfsObjects.IXNAS,
+        TrueNASVfsObjects.ZFS_CORE,
+        TrueNASVfsObjects.IO_URING,
+    ]
+
+    if audit_config['watch_list']:
+        assert 'truenas_audit:watch_list' in conf, str(conf)
+        assert conf['truenas_audit:watch_list'] == audit_config['watch_list'], str(conf)
+
+    if audit_config['ignore_list']:
+        assert 'truenas_audit:ignore_list' in conf, str(conf)
+        assert conf['truenas_audit:ignore_list'] == audit_config['ignore_list'], str(conf)
+
+
+def test__smb_external_share(nfsacl_dataset):
+    conf = generate_smb_share_conf_dict(DSType.AD, BASE_SMB_SHARE | {
+        'path': 'EXTERNAL:127.0.0.1\\SHARE',
+    }, BASE_SMB_CONFIG | {'aapl_extensions': True})
+
+    assert conf['path'] == '/var/empty'
+    assert conf['msdfs root'] is True
+    assert conf['msdfs proxy'] == '127.0.0.1\\SHARE'

@@ -41,7 +41,8 @@ from middlewared.plugins.smb_.util_param import (
     AUX_PARAM_BLACKLIST,
     smbconf_getparm,
     smbconf_list_shares,
-    lpctx_validate_global_parm
+    smbconf_sanity_check,
+    lpctx_validate_parm
 )
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.plugins.smb_.utils import apply_presets, is_time_machine_share, smb_strip_comments
@@ -760,6 +761,23 @@ class SharingSMBService(SharingService):
 
         do_global_reload = await self.must_reload_globals(data)
         await self.middleware.call('etc.generate', 'smb')
+
+        if data['auxsmbconf']:
+            # Auxiliary parameters may contain invalid values for known parameters
+            # that fail in such a way that break ability to create a loadparm context.
+            # This was seen in wild with user who was blindly copy-pasting things from
+            # internet.
+            try:
+                await self.middleware.run_in_thread(smbconf_sanity_check)
+            except ValueError:
+                # Delete the share and regenerate config so that we're not broken
+                await self.middleware.call('datastore.delete', self._config.datastore, data['id'])
+                await self.middleware.call('etc.generate', 'smb')
+                raise ValidationError(
+                    'sharingsmb_create.auxsmbconf',
+                    'Auxiliary parameters rejected because they would break the SMB server'
+                )
+
         if do_global_reload:
             ds = await self.middleware.call('directoryservices.status')
             if ds['type'] == DSType.AD.value and ds['status'] == DSStatus.HEALTHY.name:
@@ -861,6 +879,30 @@ class SharingSMBService(SharingService):
             {'prefix': self._config.datastore_prefix})
 
         new['auxsmbconf'] = smb_strip_comments(new['auxsmbconf'])
+
+        if new['auxsmbconf']:
+            # Auxiliary parameters may contain invalid values for known parameters
+            # that fail in such a way that break ability to create a loadparm context.
+            # This was seen in wild with user who was blindly copy-pasting things from
+            # internet.
+            await self.middleware.call('etc.generate', 'smb')
+            try:
+                await self.middleware.run_in_thread(smbconf_sanity_check)
+            except ValueError:
+                # restore original configuration
+                compressed = await self.compress(old)
+
+                await self.middleware.call(
+                    'datastore.update', self._config.datastore, id_, compressed,
+                    {'prefix': self._config.datastore_prefix}
+                )
+                await self.middleware.call('etc.generate', 'smb')
+
+                raise ValidationError(
+                    'sharingsmb_update.auxsmbconf',
+                    'Auxiliary parameters rejected because they would break the SMB server'
+                )
+
         if not new_is_locked:
             """
             Enabling AAPL SMB2 extensions globally affects SMB shares. If this
@@ -1027,7 +1069,7 @@ class SharingSMBService(SharingService):
             kv = entry.split('=', 1)
             if len(kv) != 2:
                 verrors.add(
-                    f'{schema_name}.auxsmbconf',
+                    f'{schema_name}',
                     f'Auxiliary parameters must be in the format of "key = value": {entry}'
                 )
                 continue
@@ -1038,7 +1080,7 @@ class SharingSMBService(SharingService):
                 Parameters are blacklisted if incorrect values can prevent smbd from starting.
                 """
                 verrors.add(
-                    f'{schema_name}.auxsmbconf',
+                    f'{schema_name}',
                     f'{kv[0]} is a blacklisted auxiliary parameter. Changes to this parameter '
                     'are not permitted.'
                 )
@@ -1047,15 +1089,16 @@ class SharingSMBService(SharingService):
                 """
                 lib/param doesn't validate params containing a colon.
                 """
+                section = 'GLOBAL' if schema_name == 'smb_update.smb_options' else 'SHARE'
                 param = kv[0].strip()
                 value = kv[1].strip()
                 try:
                     await self.middleware.run_in_thread(
-                        lpctx_validate_global_parm, param, value
+                        lpctx_validate_parm, param, value, section
                     )
                 except RuntimeError:
                     verrors.add(
-                        f'{schema_name}.auxsmbconf',
+                        f'{schema_name}',
                         f'{param}: unable to set parameter to value: [{value}]'
                     )
 

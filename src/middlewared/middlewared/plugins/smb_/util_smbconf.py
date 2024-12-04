@@ -103,7 +103,7 @@ def __transform_share_path(ds_type: DSType, share_config: dict, config_out: dict
     if path_location(path) is FSLocation.EXTERNAL:
         config_out.update({
             'msdfs root': True,
-            'msdfs proxy': path,
+            'msdfs proxy': path[len('EXTERNAL:'):],
             'path': '/var/empty'
         })
         return
@@ -190,13 +190,14 @@ def generate_smb_share_conf_dict(
     if share_config['aapl_name_mangling']:
         # Apply SFM mangling to share. This takes different form depending
         # on whether fruit is enabled. The end result is the same.
+        vfs_objects.add(TrueNASVfsObjects.CATIA)
+
         if fruit_enabled:
             config_out.update({
                 'fruit:encoding': 'native',
                 'mangled names': False
             })
         else:
-            vfs_objects.add(TrueNASVfsObjects.CATIA)
             config_out.update({
                 'catia:mappings': ','.join(FRUIT_CATIA_MAPS),
                 'mangled names': False
@@ -214,6 +215,14 @@ def generate_smb_share_conf_dict(
             'streams_xattr:store_stream_type': False,
             'streams_xattr:xattr_compat': True
         })
+
+    if share_config['audit']['enable']:
+        vfs_objects.add(TrueNASVfsObjects.TRUENAS_AUDIT)
+        for key in ('watch_list', 'ignore_list'):
+            if not share_config['audit'][key]:
+                continue
+
+            config_out[f'truenas_audit:{key}'] = share_config['audit'][key]
 
     ordered_vfs_objects = __order_vfs_objects(vfs_objects, fruit_enabled, share_config['purpose'])
     config_out['vfs objects'] = ordered_vfs_objects

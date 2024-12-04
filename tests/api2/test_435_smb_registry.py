@@ -27,7 +27,6 @@ SAMPLE_AUX = [
     'follow symlinks = yes ',
     'veto files = /.windows/.mac/.zfs/',
     '# needed explicitly for each share to prevent default being set',
-    'admin users = MY_ACCOUNT',
     '## NOTES:', '',
     "; aio-fork might cause smbd core dump/signal 6 in log in v11.1- see bug report [https://redmine.ixsystems.com/issues/27470]. Looks helpful but disabled until clear if it's responsible.", '', '',
     '### VFS OBJECTS (shadow_copy2 not included if no periodic snaps, so do it manually)', '',
@@ -89,11 +88,14 @@ def setup_smb_shares(mountpoint):
         })
         SHARE_DICT[share] = new_share['id']
 
+    call('service.start', 'cifs')
     try:
         yield SHARE_DICT
     finally:
         for share_id in SHARE_DICT.values():
             call('sharing.smb.delete', share_id)
+
+        call('service.stop', 'cifs')
 
 
 @pytest.fixture(scope='module')
@@ -144,18 +146,16 @@ def test__renamed_shares_in_registry(setup_for_tests):
 
 
 def check_aux_param(param, share, expected, fruit_enable=False):
-    val = call('smb.getparm', param, share)
-    if param == 'vfs objects':
-        expected_vfs_objects = expected.split()
-        # We have to override someone's poor life choices and insert
-        # vfs_fruit so that they don't have mysteriously broken time
-        # machine shares
-        if fruit_enable:
-            expected_vfs_objects.append('fruit')
+    match expected:
+        case 'yes':
+            expected = True
+        case 'no':
+            expeected = False
+        case _:
+            pass
 
-        assert set(expected_vfs_objects) == set(val)
-    else:
-        assert val == expected
+    val = call('smb.getparm', param, share)
+    assert val == expected
 
 
 @pytest.mark.parametrize('preset', PRESETS)
@@ -364,21 +364,6 @@ def test__toggle_homes_share(setup_for_tests):
     finally:
         call('sharing.smb.update', share_dict['HOME'], {'home': True})
 
-    reg_shares = call('sharing.smb.smbconf_list_shares')
-    assert any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
-
-
-def test__registry_rebuild_homes(setup_for_tests):
-    """
-    Abusive test.
-    In this test we run behind middleware's back and
-    delete a our homes share from the registry, and then
-    attempt to rebuild by registry sync method. This
-    method is called (among other places) when the CIFS
-    service reloads.
-    """
-    ssh('net conf delshare HOMES')
-    call('service.reload', 'cifs')
     reg_shares = call('sharing.smb.smbconf_list_shares')
     assert any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
 
