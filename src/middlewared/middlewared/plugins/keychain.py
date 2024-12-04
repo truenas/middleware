@@ -276,7 +276,7 @@ class KeychainCredentialService(CRUDService):
     @api_method(
         KeychainCredentialCreateArgs,
         KeychainCredentialCreateResult,
-        audit="Keychain Credential Create:",
+        audit="Create Keychain Credential",
         audit_extended=lambda data: data["name"]
     )
     async def do_create(self, data):
@@ -332,7 +332,7 @@ class KeychainCredentialService(CRUDService):
     @api_method(
         KeychainCredentialUpdateArgs,
         KeychainCredentialUpdateResult,
-        audit="Keychain Credential Update:",
+        audit="Update Keychain Credential",
         audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
@@ -389,7 +389,7 @@ class KeychainCredentialService(CRUDService):
     @api_method(
         KeychainCredentialDeleteArgs,
         KeychainCredentialDeleteResult,
-        audit="Keychain Credential Delete:",
+        audit="Delete Keychain Credential",
         audit_callback=True
     )
     async def do_delete(self, audit_callback, id_, options):
@@ -428,12 +428,18 @@ class KeychainCredentialService(CRUDService):
             id_,
         )
 
-    @api_method(KeychainCredentialUsedByArgs, KeychainCredentialUsedByResult)
-    async def used_by(self, id_):
+    @api_method(
+        KeychainCredentialUsedByArgs,
+        KeychainCredentialUsedByResult,
+        audit="keychaincredential.used_by:",
+        audit_callback=True
+    )
+    async def used_by(self, audit_callback, id_):
         """
         Returns list of objects that use this credential.
         """
         instance = await self.get_instance(id_)
+        audit_callback(instance["name"])
 
         result = []
         for delegate in TYPES[instance["type"]].used_by_delegates:
@@ -482,8 +488,12 @@ class KeychainCredentialService(CRUDService):
 
             return credential
 
-    @api_method(KeychainCredentialGenerateSSHKeyPairArgs, KeychainCredentialGenerateSSHKeyPairResult,
-                roles=["KEYCHAIN_CREDENTIAL_WRITE"])
+    @api_method(
+        KeychainCredentialGenerateSSHKeyPairArgs,
+        KeychainCredentialGenerateSSHKeyPairResult,
+        roles=["KEYCHAIN_CREDENTIAL_WRITE"],
+        audit="Generate SSH Key Pair"
+    )
     def generate_ssh_key_pair(self):
         """
         Generate a public/private key pair
@@ -514,8 +524,13 @@ class KeychainCredentialService(CRUDService):
             "public_key": public_key,
         }
 
-    @api_method(KeychainCredentialRemoteSSHHostKeyScanArgs, KeychainCredentialRemoteSSHHostKeyScanResult,
-                roles=["KEYCHAIN_CREDENTIAL_WRITE"])
+    @api_method(
+        KeychainCredentialRemoteSSHHostKeyScanArgs,
+        KeychainCredentialRemoteSSHHostKeyScanResult,
+        roles=["KEYCHAIN_CREDENTIAL_WRITE"],
+        audit="Remote Host Key Scan:",
+        audit_extended=lambda data: data["host"]
+    )
     async def remote_ssh_host_key_scan(self, data):
         """
         Discover a remote host key
@@ -550,8 +565,13 @@ class KeychainCredentialService(CRUDService):
         else:
             raise CallError(f"ssh-keyscan failed: {proc.stdout + proc.stderr}")
 
-    @api_method(KeychainCredentialRemoteSSHSemiautomaticSetupArgs, KeychainCredentialRemoteSSHSemiautomaticSetupResult,
-                roles=["KEYCHAIN_CREDENTIAL_WRITE"])
+    @api_method(
+        KeychainCredentialRemoteSSHSemiautomaticSetupArgs,
+        KeychainCredentialRemoteSSHSemiautomaticSetupResult,
+        roles=["KEYCHAIN_CREDENTIAL_WRITE"],
+        audit="SSH Semi-automatic Setup:",
+        audit_extended=lambda data: data["name"]
+    )
     def remote_ssh_semiautomatic_setup(self, data):
         """
         Perform semi-automatic SSH connection setup with other FreeNAS machine
