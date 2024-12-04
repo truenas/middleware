@@ -276,7 +276,7 @@ class KeychainCredentialService(CRUDService):
     @api_method(
         KeychainCredentialCreateArgs,
         KeychainCredentialCreateResult,
-        audit="Create Keychain Credential",
+        audit="Create Keychain Credential:",
         audit_extended=lambda data: data["name"]
     )
     async def do_create(self, data):
@@ -332,7 +332,7 @@ class KeychainCredentialService(CRUDService):
     @api_method(
         KeychainCredentialUpdateArgs,
         KeychainCredentialUpdateResult,
-        audit="Update Keychain Credential",
+        audit="Update Keychain Credential:",
         audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
@@ -389,7 +389,7 @@ class KeychainCredentialService(CRUDService):
     @api_method(
         KeychainCredentialDeleteArgs,
         KeychainCredentialDeleteResult,
-        audit="Delete Keychain Credential",
+        audit="Delete Keychain Credential:",
         audit_callback=True
     )
     async def do_delete(self, audit_callback, id_, options):
