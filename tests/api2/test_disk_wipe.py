@@ -127,7 +127,16 @@ def test_disk_format():
     disk = call("disk.get_unused")[0]["name"]
     # create a GPT label and a 100MiB EXT4 partition
     ssh(f"parted -s /dev/{disk} mklabel gpt mkpart ext4 16384s 100MiB; mkfs.ext4 /dev/{disk}1")
-    info = call("disk.list_partitions", disk)
+    for i in range(20):
+        # Depending on the load of the CI infrastructure
+        # this can take a bit of time for the partition
+        # to surface.
+        info = call("disk.list_partitions", disk)
+        if len(info) == 0:
+            time.sleep(0.5)
+        else:
+            break
+
     assert len(info) == 1, info
     assert info[0]["partition_type"] == "0fc63daf-8483-4772-8e79-3d69d8477de4"
     assert info[0]["start_sector"] == 16384
