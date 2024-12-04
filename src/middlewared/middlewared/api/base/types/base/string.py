@@ -1,5 +1,3 @@
-import re
-
 from typing import Any
 
 from pydantic import AfterValidator, BeforeValidator, Field, GetCoreSchemaHandler, HttpUrl as _HttpUrl, PlainSerializer
