@@ -130,7 +130,7 @@ def test_disk_format():
     for i in range(20):
         # Depending on the load of the CI infrastructure
         # this can take a bit of time for the partition
-        # to surface. Let's give it a bit of time.
+        # to surface.
         info = call("disk.list_partitions", disk)
         if len(info) == 0:
             time.sleep(0.5)
