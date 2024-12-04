@@ -846,7 +846,8 @@ class UserService(CRUDService):
                 }).wait_sync(raise_error=True)
 
     @api_method(UserDeleteArgs, UserDeleteResult, audit='Delete user', audit_callback=True)
-    def do_delete(self, audit_callback, pk, options):
+    @pass_app(require=True)
+    def do_delete(self, app, audit_callback, pk, options):
         """
         Delete user `id`.
 
@@ -876,7 +877,8 @@ class UserService(CRUDService):
         current_username = self.middleware.call_sync(
             'auth.sessions',
             [['current', '=', True]],
-            {'get': True}
+            {'get': True},
+            app=app
         )['credentials_data']['username']
 
         if user['username'] == current_username:
