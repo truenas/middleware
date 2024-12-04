@@ -4,6 +4,7 @@ import re
 # This is not true for NetBIOS computer names
 RE_NETBIOSNAME = re.compile(r"^(?![0-9]*$)[a-zA-Z0-9-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 RE_NETBIOSDOM = re.compile(r"^(?![0-9]*$)[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
+NETBIOSNAME_MAX_LEN = 15
 
 MS_RESERVED_WORDS = frozenset([
     'ANONYMOUS'.casefold(),
@@ -45,6 +46,11 @@ def __validate_netbios_name(val: str, regex: re.Pattern) -> str:
     if val.casefold() in RESERVED_WORDS:
         raise ValueError(
             f'NetBIOS names may not be one of following reserved names: {", ".join(RESERVED_WORDS)}'
+        )
+
+    if len(val) > NETBIOSNAME_MAX_LEN:
+        raise ValueError(
+            'NetBIOS names may not exceed 15 characters.'
         )
 
     return val
