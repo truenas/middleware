@@ -1,8 +1,11 @@
 import psutil
 
-from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    VMGetVMMemoryInfoArgs, VMGetVMMemoryInfoResult, VMGetAvailableMemoryArgs, VMGetAvailableMemoryResult,
+    VMGetVMemoryInUseArgs, VMGetVMemoryInUseResult, VMRandomMacArgs, VMRandomMacResult,
+)
 from middlewared.service import CallError, Service
-from middlewared.validators import MACAddr
 
 from .devices import NIC
 from .utils import ACTIVE_STATES
@@ -10,13 +13,7 @@ from .utils import ACTIVE_STATES
 
 class VMService(Service):
 
-    @accepts()
-    @returns(Dict(
-        'vmemory_in_use',
-        Int('RNP', required=True, description='Running but not provisioned'),
-        Int('PRD', required=True, description='Provisioned but not running'),
-        Int('RPRD', required=True, description='Running and provisioned'),
-    ))
+    @api_method(VMGetVMemoryInUseArgs, VMGetVMemoryInUseResult, roles=['VM_READ'])
     async def get_vmemory_in_use(self):
         """
         The total amount of virtual memory in MB used by guests
@@ -37,8 +34,7 @@ class VMService(Service):
 
         return memory_allocation
 
-    @accepts(Bool('overcommit', default=False), roles=['VM_READ'])
-    @returns(Int('available_memory'))
+    @api_method(VMGetAvailableMemoryArgs, VMGetAvailableMemoryResult, roles=['VM_READ'])
     async def get_available_memory(self, overcommit):
         """
         Get the current maximum amount of available memory to be allocated for VMs.
@@ -85,26 +81,7 @@ class VMService(Service):
 
         return max(0, total_free - vms_memory_used)
 
-    @accepts(Int('vm_id'), roles=['VM_READ'])
-    @returns(Dict(
-        Int('minimum_memory_requested', description='Minimum memory requested by the VM'),
-        Int('total_memory_requested', description='Maximum / total memory requested by the VM'),
-        Bool('overcommit_required', description='Overcommit of memory is required to start VM'),
-        Bool(
-            'memory_req_fulfilled_after_overcommit',
-            description='Memory requirements of VM are fulfilled if over-committing memory is specified'
-        ),
-        Int('arc_to_shrink', description='Size of ARC to shrink in bytes', null=True),
-        Int('current_arc_max', description='Current size of max ARC in bytes'),
-        Int('arc_min', description='Minimum size of ARC in bytes'),
-        Int('arc_max_after_shrink', description='Size of max ARC in bytes after shrinking'),
-        Int(
-            'actual_vm_requested_memory',
-            description='VM memory in bytes to consider when making calculations for available/required memory.'
-                        ' If VM ballooning is specified for the VM, the minimum VM memory specified by user will'
-                        ' be taken into account otherwise total VM memory requested will be taken into account.'
-        ),
-    ))
+    @api_method(VMGetVMMemoryInfoArgs, VMGetVMMemoryInfoResult, roles=['VM_READ'])
     async def get_vm_memory_info(self, vm_id):
         """
         Returns memory information for `vm_id` VM if it is going to be started.
@@ -144,8 +121,7 @@ class VMService(Service):
             'actual_vm_requested_memory': vm_requested_memory,
         }
 
-    @accepts()
-    @returns(Str('mac', validators=[MACAddr(separator=':')]),)
+    @api_method(VMRandomMacArgs, VMRandomMacResult, roles=['VM_READ'])
     def random_mac(self):
         """
         Create a random mac address.

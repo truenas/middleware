@@ -122,8 +122,8 @@ def vm_device():
                 "attributes": {
                     "dtype": "DISPLAY",
                     "bind": "127.0.0.1",
-                    "port": 1,
-                    "web_port": 1,
+                    "port": 5900,
+                    "web_port": 5901,
                     "password": "pass",
                 }
             }

@@ -2,8 +2,9 @@ import errno
 import re
 import uuid
 
+from middlewared.api import api_method
+from middlewared.api.current import VMCloneArgs, VMCloneResult
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
-from middlewared.schema import accepts, Bool, Int, returns, Str
 from middlewared.service import CallError, item_method, Service, private
 from middlewared.service_exception import ValidationErrors
 
@@ -69,12 +70,7 @@ class VMService(Service):
         return clone_dst
 
     @item_method
-    @accepts(
-        Int('id'),
-        Str('name', default=None),
-        roles=['VM_WRITE']
-    )
-    @returns(Bool())
+    @api_method(VMCloneArgs, VMCloneResult, roles=['VM_WRITE'])
     async def clone(self, id_, name):
         """
         Clone the VM `id`.
