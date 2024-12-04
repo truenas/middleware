@@ -4,7 +4,6 @@ from pydantic import AfterValidator, BeforeValidator, Field, GetCoreSchemaHandle
 from pydantic_core import CoreSchema, core_schema, PydanticKnownError
 from typing_extensions import Annotated
 
-from middlewared.utils.lang import undefined
 from middlewared.utils.netbios import validate_netbios_name, validate_netbios_domain
 from middlewared.validators import Time
 
