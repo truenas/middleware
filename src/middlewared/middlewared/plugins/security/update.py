@@ -1,6 +1,6 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.plugins.failover_.disabled_reasons import DisabledReasonsEnum
+from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
 from middlewared.service import ConfigService, ValidationError, job, private
