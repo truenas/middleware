@@ -3,11 +3,12 @@ import contextlib
 import glob
 import os
 import pathlib
+import time
 
 import pyudev
 
 from middlewared.service import CallError, private, Service
-
+from .gpt_utils import read_gpt_partitions
 
 # The basic unit of a block I/O is a sector. A sector is
 # 512 (2 ** 9) bytes. In sysfs, the files (sector_t type)
@@ -120,22 +121,70 @@ class DiskService(Service):
         return parts
 
     @private
-    def gptid_from_part_type(self, disk, part_type):
+    def get_part_uuid_from_udev(self, disk, part_type):
         try:
-            block_device = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
+            bd = pyudev.Devices.from_name(pyudev.Context(), 'block', disk)
+            for i in bd.children:
+                if (pguid := i.get('ID_PART_ENTRY_UUID')) and (tguid := i.get('ID_PART_ENTRY_TYPE')):
+                    if tguid == part_type:
+                        return pguid
         except pyudev.DeviceNotFoundByNameError:
-            raise CallError(f'{disk} not found')
+            raise CallError(f'Disk {disk!r} not found!')
 
-        if not block_device.children:
-            raise CallError(f'{disk} has no partitions')
+    @private
+    def gptid_from_part_type(self, disk, part_type, retries=10, sleep_time=0.5):
+        # max time to sleep and retry is 10 * 6.0 (60 seconds)
+        # if a drive is taking longer than that to bubble
+        # up partition information, we have other problems
+        retries = max(min(retries, 10), 2)
+        sleep_time = max(min(sleep_time, 6.0), 0.2)
+        part_entry_guid_on_disk = None
+        for i in filter(lambda x: x.part_type_guid == part_type, read_gpt_partitions(disk)):
+            # Let's read directly from the disk to see if there is a
+            # partition on it.
+            part_entry_guid_on_disk = i.part_entry_guid
+            break
 
-        part = next(
-            (p['ID_PART_ENTRY_UUID'] for p in block_device.children if all(
-                p.get(k) for k in ('ID_PART_ENTRY_UUID', 'ID_PART_ENTRY_TYPE')
-            ) and p['ID_PART_ENTRY_TYPE'] == part_type), None
-        )
+        do_retry = False
+        part = self.get_part_uuid_from_udev(disk, part_type)
         if not part:
-            raise CallError(f'Partition type {part_type} not found on {disk}')
+            if part_entry_guid_on_disk:
+                # udevd's miserable design is built-around the ridiculous
+                # notion of symlinks and just willy-nilly removing/re-adding
+                # them for seemingly no good reason. (i.e. just open
+                # a disk with a gpt parition on it in write mode and close it)
+                # For whatever reason, that generates a remove event so the
+                # symlink gets torn-down and re-added. Most of the time, this
+                # happens in 100th's of a single second. Sometimes, again randomly,
+                # this takes many seconds. When it takes many seconds and we're
+                # depending on that symlink to exist for ZFS, it's a race condition
+                # which ultimately leads to formatting the drive successfully, but
+                # failing to create the zpool because the symlink pointing to the
+                # block device node doesn't exist at that specific time.
+                # SO, if we're at this point it means the block device really has
+                # a GPT partition on it and it matches what we expect but the udevd
+                # cache has been looked at incorrectly and has decided to remove it.
+                # We'll just retry a few times here and hope the sun doesn't have
+                # too strong of a solar flare and cause udevd to run off and do dumb
+                # things.
+                do_retry = True
+            else:
+                # maybe someone called this on a drive with no GPT partitions
+                raise CallError(f'Partition type {part_type} not found on {disk}')
+
+        if do_retry:
+            for i in range(retries):
+                if part := self.get_part_uuid_from_udev(disk, part_type):
+                    return f'disk/by-partuuid/{part}'
+                else:
+                    time.sleep(sleep_time)
+
+            if part_entry_guid_on_disk:
+                return f'disk/by-partuuid/{part_entry_guid_on_disk}'
+
+            total_wait = retries * sleep_time
+            raise CallError(f'Partition type {part_type} not found on {disk} after waiting {total_wait} seconds')
+
         return f'disk/by-partuuid/{part}'
 
     @private
