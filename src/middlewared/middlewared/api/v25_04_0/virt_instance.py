@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Field, StringConstraints
+from pydantic import Field, model_validator, StringConstraints
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args
 
@@ -15,7 +15,6 @@ __all__ = [
     'VirtInstanceImageChoicesResult', 'VirtInstanceDeviceListArgs', 'VirtInstanceDeviceListResult',
     'VirtInstanceDeviceAddArgs', 'VirtInstanceDeviceAddResult', 'VirtInstanceDeviceUpdateArgs',
     'VirtInstanceDeviceUpdateResult', 'VirtInstanceDeviceDeleteArgs', 'VirtInstanceDeviceDeleteResult',
-
 ]
 
 
@@ -49,7 +48,9 @@ class VirtInstanceEntry(BaseModel):
     environment: dict[str, str]
     aliases: list[VirtInstanceAlias]
     image: Image
-    raw: dict
+    raw: dict | None
+    vnc_enabled: bool
+    vnc_port: int | None
 
 
 # Lets require at least 32MiB of reserved memory
@@ -62,7 +63,8 @@ MemoryType: TypeAlias = Annotated[int, Field(strict=True, ge=33554432)]
 @single_argument_args('virt_instance_create')
 class VirtInstanceCreateArgs(BaseModel):
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
-    image: Annotated[NonEmptyString, StringConstraints(max_length=200)]
+    source_type: Literal[None, 'IMAGE'] = 'IMAGE'
+    image: Annotated[NonEmptyString, StringConstraints(max_length=200)] | None = None
     remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
     instance_type: InstanceType = 'CONTAINER'
     environment: dict[str, str] | None = None
@@ -70,6 +72,24 @@ class VirtInstanceCreateArgs(BaseModel):
     cpu: str | None = None
     devices: list[DeviceType] | None = None
     memory: MemoryType | None = None
+    enable_vnc: bool = False
+    vnc_port: int | None = Field(ge=5900, le=65535, default=None)
+
+    @model_validator(mode='after')
+    def validate_attrs(self):
+        if self.instance_type == 'CONTAINER':
+            if self.source_type != 'IMAGE':
+                raise ValueError('Source type must be set to "IMAGE" when instance type is CONTAINER')
+            if self.enable_vnc:
+                raise ValueError('VNC is not supported for containers and `enable_vnc` should be unset')
+        else:
+            if self.enable_vnc and self.vnc_port is None:
+                raise ValueError('VNC port must be set when VNC is enabled')
+
+        if self.source_type == 'IMAGE' and self.image is None:
+            raise ValueError('Image must be set when source type is "IMAGE"')
+
+        return self
 
 
 class VirtInstanceCreateResult(BaseModel):
@@ -81,6 +101,7 @@ class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     autostart: bool | None = None
     cpu: str | None = None
     memory: MemoryType | None = None
+    vnc_port: int | None = Field(ge=5900, le=65535)
 
 
 class VirtInstanceUpdateArgs(BaseModel):
@@ -115,7 +136,7 @@ class StopArgs(BaseModel):
 
 class VirtInstanceStopArgs(BaseModel):
     id: str
-    stop_args: StopArgs
+    stop_args: StopArgs = StopArgs()
 
 
 class VirtInstanceStopResult(BaseModel):
@@ -124,16 +145,19 @@ class VirtInstanceStopResult(BaseModel):
 
 class VirtInstanceRestartArgs(BaseModel):
     id: str
-    stop_args: StopArgs
+    stop_args: StopArgs = StopArgs()
 
 
 class VirtInstanceRestartResult(BaseModel):
     result: bool
 
 
-@single_argument_args('virt_instances_image_choices')
-class VirtInstanceImageChoicesArgs(BaseModel):
+class VirtInstanceImageChoices(BaseModel):
     remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
+
+
+class VirtInstanceImageChoicesArgs(BaseModel):
+    virt_instances_image_choices: VirtInstanceImageChoices = VirtInstanceImageChoices()
 
 
 class ImageChoiceItem(BaseModel):

@@ -36,7 +36,7 @@ class VirtDeviceService(Service):
         return choices
 
     @api_method(VirtDeviceGPUChoicesArgs, VirtDeviceGPUChoicesResult, roles=['VIRT_INSTANCE_READ'])
-    async def gpu_choices(self, instance_type, gpu_type):
+    async def gpu_choices(self, gpu_type):
         """
         Provide choices for GPU devices.
         """
@@ -44,9 +44,6 @@ class VirtDeviceService(Service):
 
         if gpu_type != 'PHYSICAL':
             raise CallError('Only PHYSICAL type is supported for now.')
-
-        if instance_type != 'CONTAINER':
-            raise CallError('Only CONTAINER supported for now.')
 
         for i in await self.middleware.call('device.get_gpus'):
             if not i['available_to_host'] or i['uses_system_critical_devices']:

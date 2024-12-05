@@ -1,7 +1,9 @@
-import aiohttp
+import collections
 import json
 import os
 import platform
+
+import aiohttp
 
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, job, private
@@ -19,7 +21,7 @@ from middlewared.api.current import (
     VirtInstanceRestartArgs, VirtInstanceRestartResult,
     VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult,
 )
-from .utils import Status, incus_call, incus_call_and_wait
+from .utils import get_vnc_info_from_config, Status, incus_call, incus_call_and_wait, VNC_BASE_PORT
 
 
 LC_IMAGES_SERVER = 'https://images.linuxcontainers.org'
@@ -73,7 +75,9 @@ class VirtInstanceService(CRUDService):
                     'serial': i['config'].get('image.serial'),
                     'type': i['config'].get('image.type'),
                     'variant': i['config'].get('image.variant'),
-                }
+                },
+                **get_vnc_info_from_config(i['config']),
+                'raw': None,  # Default required by pydantic
             }
 
             if options['extra'].get('raw'):
@@ -122,7 +126,39 @@ class VirtInstanceService(CRUDService):
             if int(new['cpu']) > cpuinfo['core_count']:
                 verrors.add(f'{schema_name}.cpu', 'Cannot reserve more than system cores')
 
-    def __data_to_config(self, data: dict, raw: dict = None):
+        if old:
+            if new.get('vnc_port'):
+                # If in update case, user specifies a vnc port, we automatically assume he wants to enable vnc
+                # this makes it easier to change existing vnc port and set it as well
+                new['enable_vnc'] = True
+            elif 'vnc_port' in new and new['vnc_port'] is None:
+                # This is the case to handle when we want to disable VNC
+                new['enable_vnc'] = False
+            elif 'vnc_port' not in new and old['vnc_enabled'] and old['vnc_port']:
+                # We want to handle the case where nothing has been changed on vnc attrs
+                new.update({
+                    'enable_vnc': True,
+                    'vnc_port': old['vnc_port'],
+                })
+
+        if (
+            new.get('instance_type') == 'VM' or (old and old['type'] == 'VM')
+        ) and new.get('enable_vnc'):
+            if not new.get('vnc_port'):
+                verrors.add(f'{schema_name}.vnc_port', 'VNC port is required when VNC is enabled')
+            else:
+                port_verrors = await self.middleware.call(
+                    'port.validate_port',
+                    f'{schema_name}.vnc_port',
+                    new['vnc_port'], '0.0.0.0', 'virt',
+                )
+                verrors.extend(port_verrors)
+                if not port_verrors:
+                    port_mapping = await self.get_ports_mapping([['id', '!=', old['id']]] if old else [])
+                    if any(new['vnc_port'] in v for v in port_mapping.values()):
+                        verrors.add(f'{schema_name}.vnc_port', 'VNC port is already in use by another virt instance')
+
+    def __data_to_config(self, data: dict, raw: dict = None, instance_type=None):
         config = {}
         if 'environment' in data:
             # If we are updating environment we need to remove current values
@@ -144,12 +180,21 @@ class VirtInstanceService(CRUDService):
 
         if data.get('autostart') is not None:
             config['boot.autostart'] = str(data['autostart']).lower()
+
+        if instance_type == 'VM':
+            if data.get('enable_vnc') and data.get('vnc_port'):
+                config['user.ix_old_raw_qemu_config'] = raw.get('raw.qemu', '') if raw else ''
+                config['raw.qemu'] = f'-vnc :{data["vnc_port"] - VNC_BASE_PORT}'
+            if data.get('enable_vnc') is False:
+                config['user.ix_old_raw_qemu_config'] = raw['raw.qemu'] if raw else ''
+                config['raw.qemu'] = ''
+
         return config
 
     @api_method(VirtInstanceImageChoicesArgs, VirtInstanceImageChoicesResult, roles=['VIRT_INSTANCE_READ'])
     async def image_choices(self, data):
         """
-        Provice choices for instance image from a remote repository.
+        Provide choices for instance image from a remote repository.
         """
         choices = {}
         if data['remote'] == 'LINUX_CONTAINERS':
@@ -188,16 +233,17 @@ class VirtInstanceService(CRUDService):
     @job()
     async def do_create(self, job, data):
         """
-        Create a new virtualizated instance.
+        Create a new virtualized instance.
         """
-
         await self.middleware.call('virt.global.check_initialized')
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_create', verrors)
 
         devices = {}
         for i in (data['devices'] or []):
-            await self.middleware.call('virt.instance.validate_device', i, 'virt_instance_create', verrors)
+            await self.middleware.call(
+                'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['instance_type'],
+            )
             if i['name'] is None:
                 i['name'] = await self.middleware.call('virt.instance.generate_device_name', devices.keys(), i['dev_type'])
             devices[i['name']] = await self.middleware.call('virt.instance.device_to_incus', data['instance_type'], i)
@@ -218,7 +264,7 @@ class VirtInstanceService(CRUDService):
             url = LC_IMAGES_SERVER
 
         source = {
-            'type': 'image',
+            'type': (data['source_type'] or 'none').lower(),
         }
 
         result = await incus_call(f'1.0/images/{data["image"]}', 'get')
@@ -235,7 +281,7 @@ class VirtInstanceService(CRUDService):
         await incus_call_and_wait('1.0/instances', 'post', {'json': {
             'name': data['name'],
             'ephemeral': False,
-            'config': self.__data_to_config(data),
+            'config': self.__data_to_config(data, instance_type=data['instance_type']),
             'devices': devices,
             'source': source,
             'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
@@ -255,9 +301,12 @@ class VirtInstanceService(CRUDService):
 
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_update', verrors, old=instance)
+        if instance['type'] == 'CONTAINER' and data.get('enable_vnc'):
+            verrors.add('virt_instance_update.vnc_port', 'VNC is not supported for containers')
+
         verrors.check()
 
-        instance['raw']['config'].update(self.__data_to_config(data, instance['raw']['config']))
+        instance['raw']['config'].update(self.__data_to_config(data, instance['raw']['config'], instance['type']))
         await incus_call_and_wait(f'1.0/instances/{id}', 'put', {'json': instance['raw']})
 
         return await self.middleware.call('virt.instance.get_instance', id)
@@ -367,10 +416,26 @@ class VirtInstanceService(CRUDService):
         if instance['status'] != 'RUNNING':
             raise CallError('Container must be running.')
         config = self.middleware.call_sync('virt.global.config')
-        mount_info = self.middleware.call_sync('filesystem.mount_info', [['mount_source', '=', f'{config["dataset"]}/containers/{id}']])
+        mount_info = self.middleware.call_sync(
+            'filesystem.mount_info', [['mount_source', '=', f'{config["dataset"]}/containers/{id}']]
+        )
         if not mount_info:
             return None
         rootfs = f'{mount_info[0]["mountpoint"]}/rootfs'
         for i in ('/bin/bash', '/bin/zsh', '/bin/csh', '/bin/sh'):
             if os.path.exists(f'{rootfs}{i}'):
                 return i
+
+    @private
+    async def get_ports_mapping(self, filters=None):
+        ports = collections.defaultdict(list)
+        for instance in await self.middleware.call('virt.instance.query', filters or []):
+            if instance['vnc_enabled']:
+                ports[instance['id']].append(instance['vnc_port'])
+            for device in await self.middleware.call('virt.instance.device_list', instance['id']):
+                if device['dev_type'] != 'PROXY':
+                    continue
+
+                ports[instance['id']].append(device['source_port'])
+
+        return ports

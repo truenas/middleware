@@ -38,6 +38,8 @@ logging.getLogger('charset_normalizer').setLevel(logging.INFO)
 # Prevent debug docker logs
 logging.getLogger('docker.utils.config').setLevel(logging.ERROR)
 logging.getLogger('docker.auth').setLevel(logging.ERROR)
+# Prevent httpx debug spam
+logging.getLogger('httpx._client').setLevel(logging.ERROR)
 
 # /usr/lib/python3/dist-packages/pydantic/json_schema.py:2158: PydanticJsonSchemaWarning:
 # Default value <object object at 0x7fa8ac040d30> is not JSON serializable; excluding default from JSON schema
