@@ -846,7 +846,7 @@ class UserService(CRUDService):
                 }).wait_sync(raise_error=True)
 
     @api_method(UserDeleteArgs, UserDeleteResult, audit='Delete user', audit_callback=True)
-    @pass_app(require=True)
+    @pass_app(rest=True)
     def do_delete(self, app, audit_callback, pk, options):
         """
         Delete user `id`.
@@ -874,7 +874,7 @@ class UserService(CRUDService):
         user = self.middleware.call_sync('user.get_instance', pk)
         audit_callback(user['username'])
 
-        if user['username'] == app.authenticated_credentials.user['username']:
+        if app and user['username'] == app.authenticated_credentials.user['username']:
             raise CallError('Cannot delete the currently active user', errno.EINVAL)
 
         if user['builtin']:
