@@ -13,6 +13,10 @@ from middlewared.api.current import (
     GetSmbAclArgs, GetSmbAclResult,
     SetSmbAclArgs, SetSmbAclResult,
     SmbServiceEntry, SmbServiceUpdateArgs, SmbServiceUpdateResult,
+    SmbServiceUnixCharsetChoicesArgs, SmbServiceUnixCharsetChoicesResult,
+    SmbServiceBindIPChoicesArgs, SmbServiceBindIPChoicesResult,
+    SmbSharePresetsArgs, SmbSharePresetsResult,
+    SmbSharePrecheckArgs, SmbSharePrecheckResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
@@ -116,7 +120,7 @@ class SMBService(ConfigService):
         smb.pop('secrets', None)
         return smb
 
-    @accepts()
+    @api_method(SmbServiceUnixCharsetChoicesArgs, SmbServiceUnixCharsetChoicesResult)
     async def unixcharset_choices(self):
         return {str(charset): charset for charset in SMBUnixCharset}
 
@@ -163,7 +167,7 @@ class SMBService(ConfigService):
             ds_type, ds_config, smb_config, smb_shares, bind_ip_choices, idmap_config, is_enterprise
         )
 
-    @accepts()
+    @api_method(SmbServiceBindIPChoicesArgs, SmbServiceBindIPChoicesResult)
     async def bindip_choices(self):
         """
         List of valid choices for IP addresses to which to bind the SMB service.
@@ -1315,8 +1319,7 @@ class SharingSMBService(SharingService):
                     'This feature may be enabled in the general SMB server configuration.'
                 )
 
-    @private
-    @accepts(Dict('share_validate_payload', Str('name')), roles=['READONLY_ADMIN'])
+    @api_method(SmbSharePrecheckArgs, SmbSharePrecheckResult, roles=['READONLY_ADMIN'], private=True)
     async def share_precheck(self, data):
         verrors = ValidationErrors()
         ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']
@@ -1391,7 +1394,7 @@ class SharingSMBService(SharingService):
 
         return data
 
-    @accepts(roles=['SHARING_SMB_READ'])
+    @api_method(SmbSharePresetsArgs, SmbSharePresetsResult, roles=['SHARING_SMB_READ'])
     async def presets(self):
         """
         Retrieve pre-defined configuration sets for specific use-cases. These parameter
