@@ -931,7 +931,7 @@ class AuthService(Service):
         return True
 
     @api_method(AuthMeArgs, AuthMeResult, authorization_required=False)
-    @pass_app()
+    @pass_app(require=True)
     async def me(self, app):
         """
         Returns currently logged-in user.
