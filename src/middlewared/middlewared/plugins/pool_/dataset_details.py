@@ -437,13 +437,14 @@ class PoolDatasetService(Service):
     @private
     def get_vms(self, ds, _vms):
         vms = []
+        vms_mapping = {vm['id']: vm for vm in self.middleware.call_sync('datastore.query', 'vm.vm')}
         for i in _vms:
             if (
                 'zvol' in i and i['zvol'] == ds['id'] or
                 i['attributes']['path'] == ds['mountpoint'] or
                 i.get('mount_info', {}).get('mount_source') == ds['id']
             ):
-                vms.append({'name': i['vm']['name'], 'path': i['attributes']['path']})
+                vms.append({'name': vms_mapping[i['vm']]['name'], 'path': i['attributes']['path']})
 
         return vms
 
