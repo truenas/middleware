@@ -10,7 +10,6 @@ import subprocess
 
 
 class InfoLevel(enum.Enum):
-    AUTH_LOG = 'l'
     ALL = ''
     SESSIONS = 'p'
     SHARES = 'S'
@@ -58,12 +57,6 @@ class SMBService(Service):
         this information level will be removed in a future version.
         """
         lvl = InfoLevel[info_level]
-        if lvl == InfoLevel.AUTH_LOG:
-            return self.middleware.call_sync('audit.query', {
-                'services': ['SMB'],
-                'query-filters': filters + [['event', '=', 'AUTHENTICATION']],
-                'query-options': options
-            })
 
         """
         Apply some optimizations for case where filter is only asking
