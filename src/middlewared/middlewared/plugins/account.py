@@ -874,7 +874,7 @@ class UserService(CRUDService):
         user = self.middleware.call_sync('user.get_instance', pk)
         audit_callback(user['username'])
 
-        if user['username'] == self.middleware.call_sync('auth.me', app=app)['pw_name']:
+        if user['username'] == app.authenticated_credentials.user['username']:
             raise CallError('Cannot delete the currently active user', errno.EINVAL)
 
         if user['builtin']:
