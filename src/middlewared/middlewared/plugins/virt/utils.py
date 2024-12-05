@@ -1,6 +1,7 @@
 import asyncio
 import aiohttp
 import enum
+import httpx
 from collections.abc import Callable
 
 from .websocket import IncusWS
@@ -17,6 +18,32 @@ class Status(enum.Enum):
     NO_POOL = 'NO_POOL'
     LOCKED = 'LOCKED'
     ERROR = 'ERROR'
+
+
+def incus_call_sync(path: str, method: str, request_kwargs: dict = None, json: bool = True):
+    request_kwargs = request_kwargs or {}
+    headers = request_kwargs.get('headers', {})
+    data = request_kwargs.get('data', None)
+    files = request_kwargs.get('files', None)
+
+    url = f'{HTTP_URI}/{path.lstrip("/")}'
+
+    transport = httpx.HTTPTransport(uds=SOCKET)
+    with httpx.Client(transport=transport) as client:
+        response = client.request(
+            method.upper(),
+            url,
+            headers=headers,
+            data=data,
+            files=files,
+        )
+
+        response.raise_for_status()
+
+        if json:
+            return response.json()
+        else:
+            return response.content
 
 
 async def incus_call(path: str, method: str, request_kwargs: dict = None, json: bool = True):
