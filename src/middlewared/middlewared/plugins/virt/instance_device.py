@@ -1,4 +1,5 @@
 import errno
+import os
 from typing import Any
 
 from middlewared.service import (
@@ -158,19 +159,17 @@ class VirtInstanceDeviceService(Service):
 
         match device['dev_type']:
             case 'DISK':
-                new['type'] = 'disk'
-                source = device.get('source') or ''
-                if not source.startswith(('/dev/zvol/', '/mnt/')):
-                    raise CallError('Only pool paths are allowed.')
-                new['source'] = device['source']
-                if source.startswith('/mnt/'):
-                    if source.startswith('/mnt/.ix-apps'):
-                        raise CallError('Invalid source')
-                    if not device.get('destination'):
-                        raise CallError('Destination is required for filesystem paths.')
-                    if instance_type == 'VM':
-                        raise CallError('Destination is not valid for VM')
-                new['path'] = device['destination']
+                new.update({
+                    'type': 'disk',
+                    'source': device['source'],
+                    'path': device['destination'],
+                })
+                if device['boot_priority'] is not None:
+                    new['boot.priority'] = str(device['boot_priority'])
+                if '/' not in new['source']:
+                    # When incus volumes are used, we need to specify that incus needs to look in the default
+                    # already configured pool
+                    new['pool'] = 'default'
             case 'NIC':
                 new['type'] = 'nic'
                 new['network'] = device['network']
@@ -262,7 +261,10 @@ class VirtInstanceDeviceService(Service):
                         unique_dst_proxies.append(dst)
 
     @private
-    async def validate_device(self, device, schema, verrors: ValidationErrors, old: dict = None, instance: str = None):
+    async def validate_device(
+        self, device, schema, verrors: ValidationErrors, instance_type: str, old: dict = None,
+        instance_config: dict = None,
+    ):
         match device['dev_type']:
             case 'PROXY':
                 # Skip validation if we are updating and port has not changed
@@ -272,16 +274,50 @@ class VirtInstanceDeviceService(Service):
                 ports = await self.middleware.call('port.ports_mapping')
                 for attachment in ports.get(device['source_port'], {}).values():
                     # Only add error if the port is not in use by current instance
-                    if instance is None or attachment['namespace'] != 'virt.device' or any(True for i in attachment['port_details'] if i['instance'] != instance):
+                    if instance_config is None or attachment['namespace'] != 'virt.device' or any(
+                        True for i in attachment['port_details'] if i['instance'] != instance_config['name']
+                    ):
                         verror = await self.middleware.call(
                             'port.validate_port', schema, device['source_port'],
                         )
                         verrors.extend(verror)
                         break
             case 'DISK':
-                if device['source'] and device['source'].startswith('/dev/zvol/'):
-                    if device['source'] not in await self.middleware.call('virt.device.disk_choices'):
-                        verrors.add(schema, 'Invalid ZVOL choice.')
+                source = device['source'] or ''
+                if source == '':
+                    verrors.add(schema, 'Source is required.')
+                elif source.startswith('/'):
+                    if instance_type == 'CONTAINER':
+                        if device['boot_priority'] is not None:
+                            verrors.add(schema, 'Boot priority is not valid for filesystem paths.')
+
+                        if not source.startswith('/mnt/'):
+                            verrors.add(schema, 'Source must be a path starting with /mnt/ for container.')
+                        elif await self.middleware.run_in_thread(os.path.exists, source) is False:
+                            verrors.add(schema, 'Source path does not exist.')
+                        if not device.get('destination'):
+                            verrors.add(schema, 'Destination is required for filesystem paths.')
+                        else:
+                            if device['destination'].startswith('/') is False:
+                                verrors.add(schema, 'Destination must be an absolute path.')
+                            elif device['destination'] == '/':
+                                verrors.add(schema, 'Destination cannot be /')
+                    else:
+                        if device.get('destination'):
+                            verrors.add(schema, 'Destination is not valid for VM')
+                        if source.startswith('/dev/zvol/') is False:
+                            verrors.add(schema, 'Source must be a path starting with /dev/zvol/ for VM.')
+                        elif source not in await self.middleware.call('virt.device.disk_choices'):
+                            verrors.add(schema, 'Invalid ZVOL choice.')
+                else:
+                    if instance_type == 'CONTAINER':
+                        verrors.add(schema, 'Source must be a filesystem path for CONTAINER')
+                    available_volumes = {v['id']: v for v in await self.middleware.call('virt.volume.query')}
+                    if source not in available_volumes:
+                        verrors.add(schema, f'No {source!r} incus volume found which can be used for source')
+                    elif available_volumes[source]['content_type'] == 'iso' and device['boot_priority'] is None:
+                        verrors.add(schema, 'Boot priority is required for ISO volumes.')
+
             case 'NIC':
                 if await self.middleware.call('interface.has_pending_changes'):
                     raise CallError('There are pending network changes, please resolve before proceeding.')
@@ -303,7 +339,7 @@ class VirtInstanceDeviceService(Service):
             device['name'] = await self.generate_device_name(data['devices'].keys(), device['dev_type'])
 
         verrors = ValidationErrors()
-        await self.validate_device(device, 'virt_device_add', verrors)
+        await self.validate_device(device, 'virt_device_add', verrors, instance['type'], instance_config=instance)
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)
@@ -325,7 +361,7 @@ class VirtInstanceDeviceService(Service):
             raise CallError('Device does not exist.', errno.ENOENT)
 
         verrors = ValidationErrors()
-        await self.validate_device(device, 'virt_device_update', verrors, old, instance['name'])
+        await self.validate_device(device, 'virt_device_update', verrors, instance['type'], old, instance)
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)

@@ -1,6 +1,7 @@
 import asyncio
 import aiohttp
 import enum
+import httpx
 from collections.abc import Callable
 
 from .websocket import IncusWS
@@ -19,6 +20,32 @@ class Status(enum.Enum):
     ERROR = 'ERROR'
 
 
+def incus_call_sync(path: str, method: str, request_kwargs: dict = None, json: bool = True):
+    request_kwargs = request_kwargs or {}
+    headers = request_kwargs.get('headers', {})
+    data = request_kwargs.get('data', None)
+    files = request_kwargs.get('files', None)
+
+    url = f'{HTTP_URI}/{path.lstrip("/")}'
+
+    transport = httpx.HTTPTransport(uds=SOCKET)
+    with httpx.Client(transport=transport) as client:
+        response = client.request(
+            method.upper(),
+            url,
+            headers=headers,
+            data=data,
+            files=files,
+        )
+
+        response.raise_for_status()
+
+        if json:
+            return response.json()
+        else:
+            return response.content
+
+
 async def incus_call(path: str, method: str, request_kwargs: dict = None, json: bool = True):
     async with aiohttp.UnixConnector(path=SOCKET) as conn:
         async with aiohttp.ClientSession(connector=conn) as session:
@@ -30,6 +57,25 @@ async def incus_call(path: str, method: str, request_kwargs: dict = None, json: 
                 return r.content
 
 
+async def incus_wait(result, running_cb: Callable[[dict], None] = None, timeout: int = 300):
+    async def callback(data):
+        if data['metadata']['status'] == 'Failure':
+            return 'ERROR', data['metadata']['err']
+        if data['metadata']['status'] == 'Success':
+            return 'SUCCESS', data['metadata']['metadata']
+        if data['metadata']['status'] == 'Running':
+            if running_cb:
+                await running_cb(data)
+            return 'RUNNING', None
+
+    task = asyncio.ensure_future(IncusWS().wait(result['metadata']['id'], callback))
+    try:
+        await asyncio.wait_for(task, timeout)
+    except asyncio.TimeoutError:
+        raise CallError('Timed out')
+    return task.result()
+
+
 async def incus_call_and_wait(
     path: str, method: str, request_kwargs: dict = None,
     running_cb: Callable[[dict], None] = None, timeout: int = 300,
@@ -39,19 +85,4 @@ async def incus_call_and_wait(
     if result.get('type') == 'error':
         raise CallError(result['error'])
 
-    async def callback(data):
-        if data['metadata']['status'] == 'Failure':
-            return ('ERROR', data['metadata']['err'])
-        if data['metadata']['status'] == 'Success':
-            return ('SUCCESS', data['metadata']['metadata'])
-        if data['metadata']['status'] == 'Running':
-            if running_cb:
-                await running_cb(data)
-            return ('RUNNING', None)
-
-    task = asyncio.ensure_future(IncusWS().wait(result['metadata']['id'], callback))
-    try:
-        await asyncio.wait_for(task, timeout)
-    except asyncio.TimeoutError:
-        raise CallError('Timed out')
-    return task.result()
+    return await incus_wait(result, running_cb, timeout)
