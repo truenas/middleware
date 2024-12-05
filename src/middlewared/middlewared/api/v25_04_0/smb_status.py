@@ -1,9 +1,10 @@
 from middlewared.api.base import (
-    SmbStatusResult,
+    BaseModel,
     NonEmptyString,
     query_result,
 )
 from pydantic import Field
+from typing import Literal
 from .common import QueryFilters, QueryOptions
 
 __all__ = ['SmbStatusArgs', 'SmbStatusResult']
@@ -102,7 +103,7 @@ class SmbOpenFileId(BaseModel):
     extid: int
 
 
-class SmbShareConnectionEntry:
+class ShareEntry:
     service: NonEmptyString
     server_id: SmbServerId
     tcon_id: NonEmptyString
@@ -127,7 +128,7 @@ class SmbOpenFile(BaseModel):
     opened_at: NonEmptyString
 
 
-class SmbStatusLocksEntry(BaseModel):
+class LocksEntry(BaseModel):
     service_path: NonEmptyString
     filename: NonEmptyString
     fileid: SmbOpenFileId
@@ -135,7 +136,7 @@ class SmbStatusLocksEntry(BaseModel):
     opens: dict[str, SmbOpenFile]
 
 
-class SmbStatusSessionsEntry(BaseModel):
+class SessionsEntry(BaseModel):
     session_id: NonEmptyString
     server_id: SmbServerId
     uid: int
@@ -154,11 +155,11 @@ class SmbStatusSessionsEntry(BaseModel):
     channels: dict[str, SmbServerChannel]
 
 
-class SmbStatusAllEntry(SmbStatusSessionsEntry):
-    share_connections: list[SmbShareConnectionEntry]
+class AllEntry(SmbStatusSessionsEntry):
+    share_connections: list[ShareEntry]
 
 
-class SmbStatusNotificationsEntry(BaseModel):
+class NotificationsEntry(BaseModel):
     server_id: SmbServerId
     path: NonEmptyString
     notification_filter: NonEmptyString = Field(alias='filter')
