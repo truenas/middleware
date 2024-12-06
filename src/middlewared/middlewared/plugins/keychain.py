@@ -428,18 +428,12 @@ class KeychainCredentialService(CRUDService):
             id_,
         )
 
-    @api_method(
-        KeychainCredentialUsedByArgs,
-        KeychainCredentialUsedByResult,
-        audit="keychaincredential.used_by:",
-        audit_callback=True
-    )
-    async def used_by(self, audit_callback, id_):
+    @api_method(KeychainCredentialUsedByArgs, KeychainCredentialUsedByResult)
+    async def used_by(self, id_):
         """
         Returns list of objects that use this credential.
         """
         instance = await self.get_instance(id_)
-        audit_callback(instance["name"])
 
         result = []
         for delegate in TYPES[instance["type"]].used_by_delegates:
@@ -488,12 +482,7 @@ class KeychainCredentialService(CRUDService):
 
             return credential
 
-    @api_method(
-        KeychainCredentialGenerateSSHKeyPairArgs,
-        KeychainCredentialGenerateSSHKeyPairResult,
-        roles=["KEYCHAIN_CREDENTIAL_WRITE"],
-        audit="Generate SSH Key Pair"
-    )
+    @api_method(KeychainCredentialGenerateSSHKeyPairArgs, KeychainCredentialGenerateSSHKeyPairResult)
     def generate_ssh_key_pair(self):
         """
         Generate a public/private key pair
