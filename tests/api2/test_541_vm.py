@@ -154,7 +154,7 @@ def test_013_delete_vm_devices(vm_name, request):
 def test_014_start_vm(vm_name, request):
     depends(request, ['VM_CREATED'])
     _id = VmAssets.VM_INFO[vm_name]['query_response']['id']
-    call('vm.start', _id)
+    call('vm.start', _id, {'overcommit': True})
     vm_status = call('vm.status', _id)
     assert all((vm_status[key] == 'RUNNING' for key in ('state', 'domain_state')))
     assert all((vm_status['pid'], isinstance(vm_status['pid'], int)))
@@ -205,6 +205,7 @@ def test_021_resume_vm(vm_name, request):
             time.sleep(1)
     else:
         assert False, f'Timed out after {retry} seconds waiting on {vm_name!r} to resume'
+
 
 @pytest.mark.skip(reason='Takes > 60 seconds and is flaky')
 @pytest.mark.parametrize('vm_name', VmAssets.VM_NAMES)

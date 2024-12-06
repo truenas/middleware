@@ -242,7 +242,27 @@ class VirtInstanceDeviceService(Service):
             i += 1
         return name
 
-    async def __validate_device(self, device, schema, verrors: ValidationErrors, old: dict = None, instance: str = None):
+    @private
+    async def validate_devices(self, devices, schema, verrors: ValidationErrors):
+        unique_src_proxies = []
+        unique_dst_proxies = []
+
+        for device in devices:
+            match device['dev_type']:
+                case 'PROXY':
+                    source = (device['source_proto'], device['source_port'])
+                    if source in unique_src_proxies:
+                        verrors.add(f'{schema}.source_port', 'Source proto/port already in use.')
+                    else:
+                        unique_src_proxies.append(source)
+                    dst = (device['dest_proto'], device['dest_port'])
+                    if dst in unique_dst_proxies:
+                        verrors.add(f'{schema}.dest_port', 'Destination proto/port already in use.')
+                    else:
+                        unique_dst_proxies.append(dst)
+
+    @private
+    async def validate_device(self, device, schema, verrors: ValidationErrors, old: dict = None, instance: str = None):
         match device['dev_type']:
             case 'PROXY':
                 # Skip validation if we are updating and port has not changed
@@ -263,6 +283,8 @@ class VirtInstanceDeviceService(Service):
                     if device['source'] not in await self.middleware.call('virt.device.disk_choices'):
                         verrors.add(schema, 'Invalid ZVOL choice.')
             case 'NIC':
+                if await self.middleware.call('interface.has_pending_changes'):
+                    raise CallError('There are pending network changes, please resolve before proceeding.')
                 if device['nic_type'] == 'BRIDGED':
                     if await self.middleware.call('failover.licensed'):
                         verrors.add(schema, 'Bridge interface not allowed for HA')
@@ -281,7 +303,7 @@ class VirtInstanceDeviceService(Service):
             device['name'] = await self.generate_device_name(data['devices'].keys(), device['dev_type'])
 
         verrors = ValidationErrors()
-        await self.__validate_device(device, 'virt_device_add', verrors)
+        await self.validate_device(device, 'virt_device_add', verrors)
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)
@@ -303,7 +325,7 @@ class VirtInstanceDeviceService(Service):
             raise CallError('Device does not exist.', errno.ENOENT)
 
         verrors = ValidationErrors()
-        await self.__validate_device(device, 'virt_device_update', verrors, old, instance['name'])
+        await self.validate_device(device, 'virt_device_update', verrors, old, instance['name'])
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)

@@ -7,6 +7,12 @@ def normalized_port_value(scheme: str, port: int) -> str:
     return '' if ((scheme == 'http' and port == 80) or (scheme == 'https' and port == 443)) else f':{port}'
 
 
+def normalized_host_value(host: str) -> str:
+    if ':' in host:
+        return f'[{host}]'
+    return host
+
+
 def get_portals_and_app_notes(app_name: str, version: str) -> dict:
     rendered_config = get_rendered_template_config_of_app(app_name, version)
     portal_and_notes_config = {
@@ -27,7 +33,8 @@ def get_portals_and_app_notes(app_name: str, version: str) -> dict:
     portals = {}
     for portal in portal_and_notes_config.get(IX_PORTAL_KEY, []):
         port_value = normalized_port_value(portal['scheme'], portal['port'])
-        portals[portal['name']] = f'{portal["scheme"]}://{portal["host"]}{port_value}{portal.get("path", "")}'
+        host_value = normalized_host_value(portal['host'])
+        portals[portal['name']] = f'{portal["scheme"]}://{host_value}{port_value}{portal.get("path", "")}'
 
     return {
         'portals': portals,

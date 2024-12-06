@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import Field, PositiveInt, Secret
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, LongString, NonEmptyString
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, NonEmptyString
 from .cloud_sync import CloudCredentialEntry
 from .common import CronModel
 
@@ -27,18 +27,19 @@ class CloudBackupCreate(BaseModel):
     path: str
     credentials: int
     attributes: dict
-    schedule: CloudBackupCron
+    schedule: CloudBackupCron = CloudBackupCron()
     pre_script: LongString = ""
     post_script: LongString = ""
     snapshot: bool = False
-    include: list[NonEmptyString]
-    exclude: list[NonEmptyString]
+    include: list[NonEmptyString] = []
+    exclude: list[NonEmptyString] = []
     args: LongString = ""
     enabled: bool = True
 
     password: Secret[NonEmptyString]
     keep_last: PositiveInt
     transfer_setting: Literal["DEFAULT", "PERFORMANCE", "FAST_STORAGE"] = "DEFAULT"
+    absolute_paths: bool = False
 
 
 class CloudBackupEntry(CloudBackupCreate):
@@ -49,7 +50,7 @@ class CloudBackupEntry(CloudBackupCreate):
 
 
 class CloudBackupUpdate(CloudBackupCreate, metaclass=ForUpdateMetaclass):
-    pass
+    absolute_paths: Excluded = excluded_field()
 
 
 class CloudBackupRestoreOptions(BaseModel):
@@ -71,7 +72,7 @@ class CloudBackupSnapshotItem(BaseModel):
     name: str
     path: str
     type: Literal["dir", "file"]
-    size: int
+    size: int | None
     mtime: datetime
 
     class Config:

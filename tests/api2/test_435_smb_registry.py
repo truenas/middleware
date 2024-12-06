@@ -27,13 +27,11 @@ SAMPLE_AUX = [
     'follow symlinks = yes ',
     'veto files = /.windows/.mac/.zfs/',
     '# needed explicitly for each share to prevent default being set',
-    'admin users = MY_ACCOUNT',
     '## NOTES:', '',
     "; aio-fork might cause smbd core dump/signal 6 in log in v11.1- see bug report [https://redmine.ixsystems.com/issues/27470]. Looks helpful but disabled until clear if it's responsible.", '', '',
     '### VFS OBJECTS (shadow_copy2 not included if no periodic snaps, so do it manually)', '',
     '# Include recycle, crossrename, and exclude readonly, as share=RW', '',
     '#vfs objects = zfs_space zfsacl winmsa streams_xattr recycle shadow_copy2 crossrename aio_pthread', '',
-    'vfs objects = aio_pthread streams_xattr shadow_copy_zfs acl_xattr crossrename winmsa recycle', '',
     '# testing without shadow_copy2', '',
     'valid users = MY_ACCOUNT @ALLOWED_USERS',
     'invalid users = root anonymous guest',
@@ -47,7 +45,6 @@ SAMPLE_OPTIONS = [
     'strict sync = no',
     '',
     'min protocol = SMB2',
-    'vfs objects = fruit streams_xattr  ',
     'fruit:model = MacSamba', 'fruit:posix_rename = yes ',
     'fruit:veto_appledouble = no',
     'fruit:wipe_intentionally_left_blank_rfork = yes ',
@@ -70,7 +67,7 @@ def create_smb_share(path, share_name, mkdir=False, options=None):
     cr_opts = options or {}
 
     if mkdir:
-        call('filesystem.mkdir', path)
+        call('filesystem.mkdir', {'path': path, 'options': {'raise_chmod_error': False}})
 
     with smb_share(path, share_name, cr_opts) as share:
         yield share
@@ -82,7 +79,7 @@ def setup_smb_shares(mountpoint):
 
     for share in SHARES:
         share_path = os.path.join(mountpoint, share)
-        call('filesystem.mkdir', share_path)
+        call('filesystem.mkdir', {'path': share_path, 'options': {'raise_chmod_error': False}})
         new_share = call('sharing.smb.create', {
             'comment': 'My Test SMB Share',
             'name': share,
@@ -91,11 +88,14 @@ def setup_smb_shares(mountpoint):
         })
         SHARE_DICT[share] = new_share['id']
 
+    call('service.start', 'cifs')
     try:
         yield SHARE_DICT
     finally:
         for share_id in SHARE_DICT.values():
             call('sharing.smb.delete', share_id)
+
+        call('service.stop', 'cifs')
 
 
 @pytest.fixture(scope='module')
@@ -118,7 +118,7 @@ def share_presets():
 
 
 def test__setup_for_tests(setup_for_tests):
-    reg_shares = call('sharing.smb.reg_listshares')
+    reg_shares = call('sharing.smb.smbconf_list_shares')
     for share in SHARES:
         assert share in reg_shares
 
@@ -138,7 +138,7 @@ def test__renamed_shares_in_registry(setup_for_tests):
     it will actually result in share being removed from
     registry and re-added with different name.
     """
-    reg_shares = call('sharing.smb.reg_listshares')
+    reg_shares = call('sharing.smb.smbconf_list_shares')
     for share in SHARES:
         assert f'NEW_{share}' in reg_shares
 
@@ -146,18 +146,16 @@ def test__renamed_shares_in_registry(setup_for_tests):
 
 
 def check_aux_param(param, share, expected, fruit_enable=False):
-    val = call('smb.getparm', param, share)
-    if param == 'vfs objects':
-        expected_vfs_objects = expected.split()
-        # We have to override someone's poor life choices and insert
-        # vfs_fruit so that they don't have mysteriously broken time
-        # machine shares
-        if fruit_enable:
-            expected_vfs_objects.append('fruit')
+    match expected:
+        case 'yes':
+            expected = True
+        case 'no':
+            expeected = False
+        case _:
+            pass
 
-        assert set(expected_vfs_objects) == set(val)
-    else:
-        assert val == expected
+    val = call('smb.getparm', param, share)
+    assert val == expected
 
 
 @pytest.mark.parametrize('preset', PRESETS)
@@ -326,7 +324,7 @@ def test__delete_shares(setup_for_tests):
         call('sharing.smb.delete', SHARE_DICT[key])
         SHARE_DICT.pop(key)
 
-    reg_shares = call('sharing.smb.reg_listshares')
+    reg_shares = call('sharing.smb.smbconf_list_shares')
     assert len(reg_shares) == 0, str(reg_shares)
 
     share_count = call('sharing.smb.query', [], {'count': True})
@@ -342,7 +340,7 @@ with regard to homes shares
 def test__create_homes_share(setup_for_tests):
     mp, ds, share_dict = setup_for_tests
     home_path = os.path.join(mp, 'HOME_SHARE')
-    call('filesystem.mkdir', home_path)
+    call('filesystem.mkdir', {'path': home_path, 'options': {'raise_chmod_error': False}})
 
     new_share = call('sharing.smb.create', {
         "comment": "My Test SMB Share",
@@ -353,7 +351,7 @@ def test__create_homes_share(setup_for_tests):
     })
     share_dict['HOME'] = new_share['id']
 
-    reg_shares = call('sharing.smb.reg_listshares')
+    reg_shares = call('sharing.smb.smbconf_list_shares')
     assert any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
 
 
@@ -361,27 +359,12 @@ def test__toggle_homes_share(setup_for_tests):
     mp, ds, share_dict = setup_for_tests
     try:
         call('sharing.smb.update', share_dict['HOME'], {'home': False})
-        reg_shares = call('sharing.smb.reg_listshares')
+        reg_shares = call('sharing.smb.smbconf_list_shares')
         assert not any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
     finally:
         call('sharing.smb.update', share_dict['HOME'], {'home': True})
 
-    reg_shares = call('sharing.smb.reg_listshares')
-    assert any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
-
-
-def test__registry_rebuild_homes(setup_for_tests):
-    """
-    Abusive test.
-    In this test we run behind middleware's back and
-    delete a our homes share from the registry, and then
-    attempt to rebuild by registry sync method. This
-    method is called (among other places) when the CIFS
-    service reloads.
-    """
-    ssh('net conf delshare HOMES')
-    call('service.reload', 'cifs')
-    reg_shares = call('sharing.smb.reg_listshares')
+    reg_shares = call('sharing.smb.smbconf_list_shares')
     assert any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
 
 

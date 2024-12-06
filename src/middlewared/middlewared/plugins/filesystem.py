@@ -10,11 +10,22 @@ import time
 import pyinotify
 
 from itertools import product
+from middlewared.api import api_method
+from middlewared.api.current import (
+    FilesystemListdirArgs, FilesystemListdirResult,
+    FilesystemMkdirArgs, FilesystemMkdirResult,
+    FilesystemStatArgs, FilesystemStatResult,
+    FilesystemStatfsArgs, FilesystemStatfsResult,
+    FilesystemSetZfsAttrsArgs, FilesystemSetZfsAttrsResult,
+    FilesystemGetZfsAttrsArgs, FilesystemGetZfsAttrsResult,
+    FilesystemGetFileArgs, FilesystemGetFileResult,
+    FilesystemPutFileArgs, FilesystemPutFileResult,
+    FilesystemReceiveFileArgs, FilesystemReceiveFileResult,
+)
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
-from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str, UnixPerm
-from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
+from middlewared.service import private, CallError, filterable_api_method, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import acl_is_present
@@ -31,24 +42,12 @@ class FilesystemService(Service):
     class Config:
         cli_private = True
 
-    @accepts(Dict(
-        'set_zfs_file_attributes',
-        Path('path', required=True),
-        Dict(
-            'zfs_file_attributes',
-            Bool('readonly'),
-            Bool('hidden'),
-            Bool('system'),
-            Bool('archive'),
-            Bool('immutable'),
-            Bool('nounlink'),
-            Bool('appendonly'),
-            Bool('offline'),
-            Bool('sparse'),
-            register=True
-        ),
-    ), roles=['FILESYSTEM_ATTRS_WRITE'], audit='Filesystem set ZFS attributes', audit_extended=lambda data: data['path'])
-    @returns()
+    @api_method(
+        FilesystemSetZfsAttrsArgs, FilesystemSetZfsAttrsResult,
+        roles=['FILESYSTEM_ATTRS_WRITE'],
+        audit='Filesystem set ZFS attributes',
+        audit_extended=lambda data: data['path']
+    )
     def set_zfs_attributes(self, data):
         """
         Set special ZFS-related file flags on the specified path
@@ -81,8 +80,7 @@ class FilesystemService(Service):
         """
         return attrs.set_zfs_file_attributes_dict(data['path'], data['zfs_file_attributes'])
 
-    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
-    @returns(Ref('zfs_file_attributes'))
+    @api_method(FilesystemGetZfsAttrsArgs, FilesystemGetZfsAttrsResult, roles=['FILESYSTEM_ATTRS_READ'])
     def get_zfs_attributes(self, path):
         """
         Get the current ZFS attributes for the file at the given path
@@ -110,27 +108,12 @@ class FilesystemService(Service):
     def is_dataset_path(self, path):
         return path.startswith('/mnt/') and os.stat(path).st_dev != os.stat('/mnt').st_dev
 
-    @private
-    @filterable
+    @filterable_api_method(private=True)
     def mount_info(self, filters, options):
         mntinfo = getmntinfo()
         return filter_list(list(mntinfo.values()), filters, options)
 
-    @accepts(Dict(
-        'filesystem_mkdir',
-        Str('path'),
-        Dict(
-            'options',
-            UnixPerm('mode', default='755'),
-            Bool('raise_chmod_error', default=True)
-        ),
-    ), deprecated=[(
-        lambda args: len(args) == 1 and isinstance(args[0], str),
-        lambda mkdir_path: [{
-            'path': mkdir_path
-        }]
-    )], roles=['FILESYSTEM_DATA_WRITE'])
-    @returns(Ref('path_entry'))
+    @api_method(FilesystemMkdirArgs, FilesystemMkdirResult, roles=['FILESYSTEM_DATA_WRITE'])
     def mkdir(self, data):
         """
         Create a directory at the specified path.
@@ -162,8 +145,10 @@ class FilesystemService(Service):
             raise CallError(f'{path}: path not permitted', errno.EPERM)
 
         os.mkdir(path, mode=mode)
-        stat = p.stat()
-        if statlib.S_IMODE(stat.st_mode) != mode:
+        st = stat_x.statx_entry_impl(p, None)
+        stat = st['st']
+
+        if statlib.S_IMODE(stat.stx_mode) != mode:
             # This may happen if requested mode is greater than umask
             # or if underlying dataset has restricted aclmode and ACL is present
             try:
@@ -183,13 +168,16 @@ class FilesystemService(Service):
             'path': path,
             'realpath': realpath,
             'type': 'DIRECTORY',
-            'size': stat.st_size,
-            'mode': stat.st_mode,
+            'size': stat.stx_size,
+            'allocation_size': stat.stx_blocks * 512,
+            'mode': stat.stx_mode,
             'acl': acl_is_present(os.listxattr(path)),
-            'uid': stat.st_uid,
-            'gid': stat.st_gid,
+            'uid': stat.stx_uid,
+            'gid': stat.stx_gid,
             'is_mountpoint': False,
             'is_ctldir': False,
+            'mount_id': st['st'].stx_mnt_id,
+            'attributes': st['attributes'],
             'xattrs': [],
             'zfs_attrs': ['ARCHIVE']
         }
@@ -221,36 +209,7 @@ class FilesystemService(Service):
 
         return request_mask
 
-    @accepts(
-        Str('path', required=True),
-        Ref('query-filters'),
-        Ref('query-options'),
-        roles=['FILESYSTEM_ATTRS_READ']
-    )
-    @filterable_returns(Dict(
-        'path_entry',
-        Str('name', required=True),
-        Path('path', required=True),
-        Path('realpath', required=True),
-        Str('type', required=True, enum=['DIRECTORY', 'FILE', 'SYMLINK', 'OTHER']),
-        Int('size', required=True, null=True),
-        Int('allocation_size', required=True, null=True),
-        Int('mode', required=True, null=True),
-        Int('mount_id', required=True, null=True),
-        Bool('acl', required=True, null=True),
-        Int('uid', required=True, null=True),
-        Int('gid', required=True, null=True),
-        Bool('is_mountpoint', required=True),
-        Bool('is_ctldir', required=True),
-        List(
-            'attributes',
-            required=True,
-            items=[Str('statx_attribute', enum=[attr.name for attr in stat_x.StatxAttr])]
-        ),
-        List('xattrs', required=True, null=True),
-        List('zfs_attrs', required=True, null=True),
-        register=True
-    ))
+    @api_method(FilesystemListdirArgs, FilesystemListdirResult, roles=['FILESYSTEM_ATTRS_READ'])
     def listdir(self, path, filters, options):
         """
         Get the contents of a directory.
@@ -332,34 +291,7 @@ class FilesystemService(Service):
         with DirectoryIterator(path, file_type=file_type, request_mask=request_mask) as d_iter:
             return filter_list(d_iter, filters, options)
 
-    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
-    @returns(Dict(
-        'path_stats',
-        Str('realpath', required=True),
-        Int('size', required=True),
-        Int('allocation_size', required=True),
-        Int('mode', required=True),
-        Int('uid', required=True),
-        Int('gid', required=True),
-        Float('atime', required=True),
-        Float('mtime', required=True),
-        Float('ctime', required=True),
-        Float('btime', required=True),
-        Int('dev', required=True),
-        Int('mount_id', required=True),
-        Int('inode', required=True),
-        Int('nlink', required=True),
-        Bool('is_mountpoint', required=True),
-        Bool('is_ctldir', required=True),
-        List(
-            'attributes',
-            required=True,
-            items=[Str('statx_attribute', enum=[attr.name for attr in stat_x.StatxAttr])]
-        ),
-        Str('user', null=True, required=True),
-        Str('group', null=True, required=True),
-        Bool('acl', required=True),
-    ))
+    @api_method(FilesystemStatArgs, FilesystemStatResult, roles=['FILESYSTEM_ATTRS_READ'])
     def stat(self, _path):
         """
         Return filesystem information for a given path.
@@ -461,18 +393,9 @@ class FilesystemService(Service):
 
         return stat
 
-    @private
-    @accepts(
-        Str('path'),
-        Str('content', max_length=2048000),
-        Dict(
-            'options',
-            Bool('append', default=False),
-            Int('mode'),
-            Int('uid'),
-            Int('gid'),
-        ),
-    )
+    # WARNING: following method cannot currently be audited properly due to RFC limitations on
+    # syslog message size.
+    @api_method(FilesystemReceiveFileArgs, FilesystemReceiveFileResult, private=True)
     def file_receive(self, path, content, options):
         """
         Simplified file receiving method for small files.
@@ -498,8 +421,7 @@ class FilesystemService(Service):
 
         return True
 
-    @accepts(Str('path'))
-    @returns()
+    @api_method(FilesystemGetFileArgs, FilesystemGetFileResult, audit='Filesystem get')
     @job(pipes=["output"])
     def get(self, job, path):
         """
@@ -512,15 +434,7 @@ class FilesystemService(Service):
         with open(path, 'rb') as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
-    @accepts(
-        Str('path'),
-        Dict(
-            'options',
-            Bool('append', default=False),
-            Int('mode'),
-        ),
-    )
-    @returns(Bool('successful_put'))
+    @api_method(FilesystemPutFileArgs, FilesystemPutFileResult, audit='Filesystem put')
     @job(pipes=["input"])
     def put(self, job, path, options):
         """
@@ -545,31 +459,7 @@ class FilesystemService(Service):
             os.chmod(path, mode)
         return True
 
-    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
-    @returns(Dict(
-        'path_statfs',
-        List('flags', required=True),
-        List('fsid', required=True),
-        Str('fstype', required=True),
-        Str('source', required=True),
-        Str('dest', required=True),
-        Int('blocksize', required=True),
-        Int('total_blocks', required=True),
-        Int('free_blocks', required=True),
-        Int('avail_blocks', required=True),
-        Str('total_blocks_str', required=True),
-        Str('free_blocks_str', required=True),
-        Str('avail_blocks_str', required=True),
-        Int('files', required=True),
-        Int('free_files', required=True),
-        Int('name_max', required=True),
-        Int('total_bytes', required=True),
-        Int('free_bytes', required=True),
-        Int('avail_bytes', required=True),
-        Str('total_bytes_str', required=True),
-        Str('free_bytes_str', required=True),
-        Str('avail_bytes_str', required=True),
-    ))
+    @api_method(FilesystemStatfsArgs, FilesystemStatfsResult, roles=['FILESYSTEM_ATTRS_READ'])
     def statfs(self, path):
         """
         Return stats from the filesystem of a given path.
@@ -612,7 +502,7 @@ class FilesystemService(Service):
             'files': st.f_files,
             'free_files': st.f_ffree,
             'name_max': st.f_namemax,
-            'fsid': [str(st.f_fsid)],
+            'fsid': str(st.f_fsid),
             'total_bytes': st.f_blocks * st.f_frsize,
             'free_bytes': st.f_bfree * st.f_frsize,
             'avail_bytes': st.f_bavail * st.f_frsize,

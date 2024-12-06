@@ -40,3 +40,11 @@ class SecretLongStringMethodArgs(BaseModel):
 
 def test_secret_long_string():
     assert accept_params(SecretLongStringMethodArgs, ["test"]) == ["test"]
+
+
+class LongStringDefaultMethodArgs(BaseModel):
+    str: LongString = ""
+
+
+def test_long_string_default():
+    assert accept_params(LongStringDefaultMethodArgs, []) == [""]

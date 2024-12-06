@@ -31,10 +31,11 @@ def get_restic_config(cloud_backup):
     return ResticConfig(cmd, env)
 
 
-async def run_restic(job, cmd, env, stdin=None, track_progress=False):
-    job.middleware.logger.debug("Running %r", cmd)
+async def run_restic(job, cmd, env, *, cwd=None, stdin=None, track_progress=False):
+    job.middleware.logger.trace("Running %r", cmd)
     proc = await Popen(
         cmd,
+        cwd=cwd,
         env=env,
         stdin=stdin,
         stdout=subprocess.PIPE,

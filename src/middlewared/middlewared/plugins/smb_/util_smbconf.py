@@ -1,12 +1,257 @@
 import os
+import enum
 
 from logging import getLogger
 from middlewared.utils import filter_list
 from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
+from middlewared.utils.path import FSLocation, path_location
 from middlewared.plugins.account import DEFAULT_HOME_PATH
-from middlewared.plugins.smb_.constants import LOGLEVEL_MAP, SMBEncryption, SMBPath
+from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath, SMBSharePreset
+from middlewared.plugins.smb_.utils import apply_presets, smb_strip_comments
+from middlewared.plugins.smb_.util_param import AUX_PARAM_BLACKLIST
 
 LOGGER = getLogger(__name__)
+
+# These maps are used to implement SFM mappings
+FRUIT_CATIA_MAPS = (
+    "0x01:0xf001,0x02:0xf002,0x03:0xf003,0x04:0xf004",
+    "0x05:0xf005,0x06:0xf006,0x07:0xf007,0x08:0xf008",
+    "0x09:0xf009,0x0a:0xf00a,0x0b:0xf00b,0x0c:0xf00c",
+    "0x0d:0xf00d,0x0e:0xf00e,0x0f:0xf00f,0x10:0xf010",
+    "0x11:0xf011,0x12:0xf012,0x13:0xf013,0x14:0xf014",
+    "0x15:0xf015,0x16:0xf016,0x17:0xf017,0x18:0xf018",
+    "0x19:0xf019,0x1a:0xf01a,0x1b:0xf01b,0x1c:0xf01c",
+    "0x1d:0xf01d,0x1e:0xf01e,0x1f:0xf01f",
+    "0x22:0xf020,0x2a:0xf021,0x3a:0xf022,0x3c:0xf023",
+    "0x3e:0xf024,0x3f:0xf025,0x5c:0xf026,0x7c:0xf027"
+)
+
+
+class TrueNASVfsObjects(enum.StrEnum):
+    # Ordering here determines order in which objects entered into
+    # SMB configuration, which has functional impact on SMB server
+    TRUENAS_AUDIT = 'truenas_audit'
+    CATIA = 'catia'
+    FRUIT = 'fruit'
+    STREAMS_XATTR = 'streams_xattr'
+    SHADOW_COPY_ZFS = 'shadow_copy_zfs'
+    ACL_XATTR = 'acl_xattr'
+    IXNAS = 'ixnas'
+    WINMSA = 'winmsa'
+    RECYCLE = 'recycle'
+    ZFS_CORE = 'zfs_core'
+    IO_URING = 'io_uring'
+    WORM = 'worm'
+    TMPROTECT = 'tmprotect'
+    ZFS_FSRVP = 'zfs_fsrvp'
+
+
+def __order_vfs_objects(vfs_objects: set, fruit_enabled: bool, purpose: str):
+    vfs_objects_ordered = []
+
+    if fruit_enabled:
+        # vfs_fruit must be globally enabled
+        vfs_objects.add(TrueNASVfsObjects.FRUIT)
+
+    if TrueNASVfsObjects.FRUIT in vfs_objects:
+        # vfs_fruit requires streams_xattr
+        vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
+
+    if purpose == 'WORM_DROPBOX':
+        vfs_objects.add(TrueNASVfsObjects.WORM)
+
+    elif purpose == 'ENHANCED_TIMEMACHINE':
+        vfs_objects.add(TrueNASVfsObjects.TMPROTECT)
+
+    for obj in TrueNASVfsObjects:
+        if obj in vfs_objects:
+            vfs_objects_ordered.append(obj)
+
+    return vfs_objects_ordered
+
+
+def __parse_share_fs_acl(share_path: str, vfs_objects: set) -> None:
+    """
+    Add required VFS objects based on ZFS acltype to vfs_objects
+    set.
+
+    Raises:
+       FileNotFoundError - share path doesn't exist (possibly locked)
+       TypeError - really unexpected breakage in enum
+       NotImplementedError - ACLs disabled at ZFS level
+    """
+    if path_location(share_path) is FSLocation.EXTERNAL:
+        # This isn't a local filesystem path and so don't
+        # try to read ACL type.
+        return
+
+    match (acltype := path_get_acltype(share_path)):
+        case FS_ACL_Type.POSIX1E:
+            vfs_objects.add(TrueNASVfsObjects.ACL_XATTR)
+        case FS_ACL_Type.NFS4:
+            vfs_objects.add(TrueNASVfsObjects.IXNAS)
+        case FS_ACL_Type.DISABLED:
+            raise NotImplementedError
+        case _:
+            raise TypeError(f'{acltype}: unknown ACL type')
+
+
+def __transform_share_path(ds_type: DSType, share_config: dict, config_out: dict) -> None:
+    path = share_config['path']
+
+    if path_location(path) is FSLocation.EXTERNAL:
+        config_out.update({
+            'msdfs root': True,
+            'msdfs proxy': path[len('EXTERNAL:'):],
+            'path': '/var/empty'
+        })
+        return
+
+    if share_config['home'] and not share_config['path_suffix']:
+        if ds_type is DSType.AD:
+            share_config['path_suffix'] = '%D/%U'
+        else:
+            share_config['path_suffix'] = '%U'
+
+    if share_config['path_suffix']:
+        path = os.path.join(path, share_config['path_suffix'])
+
+    config_out['path'] = path
+
+
+def generate_smb_share_conf_dict(
+    ds_type: DSType,
+    share_config_in: dict,
+    smb_service_config: dict,
+) -> dict:
+    # apply any presets to the config here
+    share_config = apply_presets(share_config_in)
+    fruit_enabled = smb_service_config['aapl_extensions']
+    vfs_objects = set([TrueNASVfsObjects.ZFS_CORE, TrueNASVfsObjects.IO_URING])
+
+    config_out = {
+        'hosts allow': share_config['hostsallow'],
+        'hosts deny': share_config['hostsdeny'],
+        'access based share enum': share_config['abe'],
+        'readonly': share_config['ro'],
+        'available': share_config['enabled'] and not share_config['locked'],
+        'guest ok': share_config['guestok'],
+        'nt acl support': share_config['acl'],
+        'smbd max xattr size': 2097152,
+        'fruit:metadata': 'stream',
+        'fruit:resource': 'stream',
+        'comment': share_config['comment'],
+        'browseable': share_config['browsable'],
+    }
+
+    __transform_share_path(ds_type, share_config, config_out)
+
+    if share_config['streams']:
+        vfs_objects.add(TrueNASVfsObjects.STREAMS_XATTR)
+
+    if share_config['recyclebin']:
+        vfs_objects.add(TrueNASVfsObjects.RECYCLE)
+        config_out.update({
+            'recycle:repository': '.recycle/%D/%U' if ds_type is DSType.AD else '.recycle/%U',
+            'recycle:keeptree': True,
+            'recycle:versions': True,
+            'recycle:touch': True,
+            'recycle:directory_mode': '0777',
+            'recycle:subdir_mode': '0700'
+        })
+
+    if share_config['shadowcopy']:
+        vfs_objects.add(TrueNASVfsObjects.SHADOW_COPY_ZFS)
+
+    if share_config['fsrvp']:
+        vfs_objects.add(TrueNASVfsObjects.ZFS_FSRVP)
+
+    if share_config['durablehandle']:
+        config_out['posix locking'] = False
+    else:
+        config_out['kernel oplocks'] = True
+
+    if share_config['timemachine']:
+        config_out['fruit:timemachine'] = True
+
+        if share_config['timemachine_quota']:
+            config_out['fruit:time machine max size'] = share_config['timemachine_quota']
+
+    if share_config['acl']:
+        # Add vfs object for our ACL type
+        try:
+            __parse_share_fs_acl(share_config['path'], vfs_objects)
+        except NotImplementedError:
+            # User has disabled ACLs at ZFS level but not in SMB config
+            # We'll disable NT ACL support proactively
+            config_out['nt acl support'] = False
+
+    if share_config['aapl_name_mangling']:
+        # Apply SFM mangling to share. This takes different form depending
+        # on whether fruit is enabled. The end result is the same.
+        vfs_objects.add(TrueNASVfsObjects.CATIA)
+
+        if fruit_enabled:
+            config_out.update({
+                'fruit:encoding': 'native',
+                'mangled names': False
+            })
+        else:
+            config_out.update({
+                'catia:mappings': ','.join(FRUIT_CATIA_MAPS),
+                'mangled names': False
+            })
+
+    if share_config['afp']:
+        # Parameters for compatibility with how data was written by Netatalk
+        vfs_objects.add(TrueNASVfsObjects.FRUIT)
+        vfs_objects.add(TrueNASVfsObjects.CATIA)
+        config_out.update({
+            'fruit:encoding': 'native',
+            'fruit:metadata': 'netatalk',
+            'fruit:resource': 'file',
+            'streams_xattr:prefix': 'user.',
+            'streams_xattr:store_stream_type': False,
+            'streams_xattr:xattr_compat': True
+        })
+
+    if share_config['audit']['enable']:
+        vfs_objects.add(TrueNASVfsObjects.TRUENAS_AUDIT)
+        for key in ('watch_list', 'ignore_list'):
+            if not share_config['audit'][key]:
+                continue
+
+            config_out[f'truenas_audit:{key}'] = share_config['audit'][key]
+
+    ordered_vfs_objects = __order_vfs_objects(vfs_objects, fruit_enabled, share_config['purpose'])
+    config_out['vfs objects'] = ordered_vfs_objects
+
+    # Some presets contain aux parameters. Set them proior to aux parameter processing
+    if share_config['purpose'] not in ('NO_PRESET', 'DEFAULT_SHARE'):
+        preset_params = SMBSharePreset[share_config['purpose']].value['params']
+        for param in preset_params['auxsmbconf'].splitlines():
+            auxparam, val = param.split('=', 1)
+            config_out[auxparam.strip()] = val.strip()
+
+    # Apply auxiliary parameters
+    for param in smb_strip_comments(share_config['auxsmbconf']).splitlines():
+        if not param.strip():
+            # user has inserted an empty line
+            continue
+
+        auxparam, value = param.split('=', 1)
+        auxparam = auxparam.strip()
+        value = value.strip()
+
+        # User may have inserted garbage in a previous release or have manually
+        # modified sqlite database
+        if auxparam in AUX_PARAM_BLACKLIST:
+            continue
+
+        config_out[auxparam] = value
+
+    return config_out
 
 
 def generate_smb_conf_dict(
@@ -49,7 +294,11 @@ def generate_smb_conf_dict(
     else:
         home_path = DEFAULT_HOME_PATH
 
-    loglevelint = int(LOGLEVEL_MAP.inv.get(smb_service_config['loglevel'], 1))
+    loglevelint = 10 if smb_service_config['debug'] else 1
+
+    for key in ('filemask', 'dirmask'):
+        if smb_service_config[key] == 'DEFAULT':
+            smb_service_config[key] = None
 
     """
     First set up our legacy / default SMB parameters. Several are related to
@@ -107,7 +356,7 @@ def generate_smb_conf_dict(
         'winbind request timeout': 60 if ds_type is DSType.AD else 2,
         'passdb backend': f'tdbsam:{SMBPath.PASSDB_DIR.value[0]}/passdb.tdb',
         'workgroup': smb_service_config['workgroup'],
-        'netbios name': smb_service_config['netbiosname_local'],
+        'netbios name': smb_service_config['netbiosname'],
         'netbios aliases': ' '.join(smb_service_config['netbiosalias']),
         'guest account': smb_service_config['guest'] if smb_service_config['guest'] else 'nobody',
         'obey pam restrictions': any(home_share),
@@ -212,7 +461,6 @@ def generate_smb_conf_dict(
             'template shell': '/bin/sh',
             'allow trusted domains': ac['allow_trusted_doms'],
             'realm': ac['domainname'],
-            'ads dns update': False,
             'winbind nss info': ac['nss_info'].lower(),
             'template homedir': home_path,
             'winbind enum users': not ac['disable_freenas_cache'],
@@ -311,5 +559,16 @@ def generate_smb_conf_dict(
         'zfs_core:zfs_block_cloning': is_enterprise,
         'registry shares': True,
         'include': 'registry',
+        'SHARES': {}
     })
+
+    for share in smb_shares:
+        try:
+            share_conf = generate_smb_share_conf_dict(ds_type, share, smb_service_config)
+        except FileNotFoundError:
+            # Share path doesn't exist, exclude from config
+            continue
+        share_name = share['name'] if not share['home'] else 'homes'
+        smbconf['SHARES'][share_name] = share_conf
+
     return smbconf

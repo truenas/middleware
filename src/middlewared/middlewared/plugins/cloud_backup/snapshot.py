@@ -71,6 +71,8 @@ class CloudBackupService(Service):
             if item["struct_type"] != "node":
                 continue
 
+            item.setdefault("size", None)
+
             for k in ["atime", "ctime", "mtime"]:
                 item[k] = datetime.fromisoformat(item[k])
 
