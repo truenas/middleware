@@ -207,6 +207,10 @@ def test_virt_instance_proxy():
     assert rv.strip() == 'foo'
 
 
+def test_virt_instance_shell():
+    assert call('virt.instance.get_shell', INS2_NAME) == '/bin/bash'
+
+
 def test_virt_instance_device_delete():
     call('virt.instance.stop', INS1_NAME, {'force': True}, job=True)
     assert call('virt.instance.device_delete', INS1_NAME, 'tpm') is True
