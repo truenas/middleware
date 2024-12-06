@@ -1,4 +1,5 @@
 import errno
+import hashlib
 import json
 import logging
 import os
@@ -27,9 +28,13 @@ class UpdateService(Service):
 
         for file, checksum in manifest["checksums"].items():
             progress_callback(0, f"Verifying {file}")
-            our_checksum = subprocess.run(["sha1sum", os.path.join(mounted, file)], **run_kw).stdout.split()[0]
-            if our_checksum != checksum:
-                raise CallError(f"Checksum mismatch for {file!r}: {our_checksum} != {checksum}")
+            with open(os.path.join(mounted, file), 'rb') as f:
+                our_checksum = hashlib.file_digest(f, 'sha256').hexdigest()
+                if our_checksum != checksum:
+                    # try legacy sha1
+                    our_checksum = hashlib.file_digest(f, 'sha1').hexdigest()
+                    if our_checksum != checksum:
+                        raise CallError(f"Checksum mismatch for {file!r}: {our_checksum} != {checksum}")
 
         progress_callback(0, "Running pre-checks")
         warning = self._execute_truenas_install(mounted, {
