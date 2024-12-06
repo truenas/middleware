@@ -90,17 +90,26 @@ class iSCSITargetExtentService(SharingService):
 
         `ro` when set to true prevents the initiator from writing to this LUN.
         """
+        await self.validate(data)
         verrors = ValidationErrors()
-        await self.middleware.call('iscsi.extent.validate', data)
         await self.clean(data, 'iscsi_extent_create', verrors)
         verrors.check()
 
-        await self.middleware.call('iscsi.extent.save', data, 'iscsi_extent_create', verrors)
+        await self.save(data, 'iscsi_extent_create', verrors)
 
         # This change is being made in conjunction with threads_num being specified in scst.conf
         if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
             zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
-            await self.middleware.call('zfs.dataset.update', zvolname, {'properties': {'volthreading': {'value': 'off'}}})
+            await self.middleware.call(
+                'zfs.dataset.update',
+                zvolname,
+                {
+                    'properties': {
+                        'volthreading': {'value': 'off'},
+                        'readonly': {'value': 'on' if data['ro'] else 'off'}
+                    }
+                }
+            )
 
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, {**data, 'vendor': 'TrueNAS'},
@@ -127,14 +136,24 @@ class iSCSITargetExtentService(SharingService):
         new.update(data)
 
         await self.middleware.call('iscsi.extent.validate', new)
-        await self.clean(
-            new, 'iscsi_extent_update', verrors, old=old
-        )
+        await self.clean(new, 'iscsi_extent_update', verrors, old=old)
         verrors.check()
 
         await self.middleware.call('iscsi.extent.save', new, 'iscsi_extent_create', verrors, old)
         verrors.check()
         new.pop(self.locked_field)
+
+        if data['path'] is not None and data['path'].startswith('zvol/'):
+            zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
+            await self.middleware.call(
+                'zfs.dataset.update',
+                zvolname,
+                {
+                    'properties': {
+                        'readonly': {'value': 'on' if data['ro'] else 'off'}
+                    }
+                }
+            )
 
         await self.middleware.call(
             'datastore.update',
