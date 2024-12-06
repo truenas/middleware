@@ -52,6 +52,7 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
                 else:
                     break
 
+            cwd = None
             cmd = ["--stdin", "--stdin-filename", "volume"]
         else:
             await check_local_path(middleware, local_path)
@@ -59,7 +60,12 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
                 snapshot_name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}"
                 snapshot, local_path = await create_snapshot(middleware, local_path, snapshot_name)
 
-            cmd = [local_path]
+            if cloud_backup["absolute_paths"]:
+                cwd = None
+                cmd = [local_path]
+            else:
+                cwd = local_path
+                cmd = ["."]
 
         args = await middleware.call("cloud_backup.transfer_setting_args")
         cmd.extend(args[cloud_backup["transfer_setting"]])
@@ -82,7 +88,7 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
         })
         await run_script(job, "Pre-script", cloud_backup["pre_script"], env)
 
-        await run_restic(job, cmd, restic_config.env, stdin, track_progress=True)
+        await run_restic(job, cmd, restic_config.env, cwd=cwd, stdin=stdin, track_progress=True)
 
         await run_script(job, "Post-script", cloud_backup["post_script"], env)
     finally:

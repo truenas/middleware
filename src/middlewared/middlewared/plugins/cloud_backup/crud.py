@@ -16,7 +16,8 @@ class CloudBackupModel(CloudTaskModelMixin, sa.Model):
 
     password = sa.Column(sa.EncryptedText())
     keep_last = sa.Column(sa.Integer())
-    transfer_setting = sa.Column(sa.String(16), default="DEFAULT")
+    transfer_setting = sa.Column(sa.String(16))
+    absolute_paths = sa.Column(sa.Boolean())
 
 
 class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
@@ -89,6 +90,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         Password("password", required=True, empty=False),
         Int("keep_last", required=True, validators=[Range(min_=1)]),
         Str("transfer_setting", enum=["DEFAULT", "PERFORMANCE", "FAST_STORAGE"], default="DEFAULT"),
+        Bool("absolute_paths", default=False),
         register=True,
     ))
     @pass_app(rest=True)
@@ -110,7 +112,8 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
         return await self.get_instance(cloud_backup["id"])
 
-    @accepts(Int("id"), Patch("cloud_backup_create", "cloud_backup_update", ("attr", {"update": True})))
+    @accepts(Int("id"), Patch("cloud_backup_create", "cloud_backup_update", ("rm", {"name": "absolute_paths"}),
+                              ("attr", {"update": True})))
     @pass_app(rest=True)
     async def do_update(self, app, id_, data):
         """
@@ -151,6 +154,9 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     @private
     async def _validate(self, app, verrors, name, data):
         await super()._validate(app, verrors, name, data)
+
+        if data["snapshot"] and data["absolute_paths"]:
+            verrors.add(f"{name}.snapshot", "This option can't be used when absolute paths are enabled")
 
         if not verrors:
             try:
