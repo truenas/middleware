@@ -70,8 +70,8 @@ def test_delete_account_audit():
 
 
 @pytest.mark.parametrize("roles, message", [
-    (["FULL_ADMIN"], "Cannot delete the currently active user")
-    (["SHARING_ADMIN"], "Not authenticated")
+    (["FULL_ADMIN"], "Cannot delete the currently active user"),
+    (["SHARING_ADMIN"], "Not authorized")
 ])
 def test_delete_self(roles, message):
     with unprivileged_user_client(roles) as c:
