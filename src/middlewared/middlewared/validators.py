@@ -117,6 +117,7 @@ class Time(ValidatorBase):
                 time(int(hours), int(minutes))
             except TypeError:
                 raise ValueError('Time should be in 24 hour format like "18:00"')
+        return value
 
 
 class Match(ValidatorBase):

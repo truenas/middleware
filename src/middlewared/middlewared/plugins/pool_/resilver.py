@@ -1,10 +1,9 @@
 from datetime import time
 
-import middlewared.sqlalchemy as sa
-
-from middlewared.schema import Bool, Dict, Int, List, Time
+from middlewared.api import api_method
+from middlewared.api.current import PoolResilverEntry, PoolResilverUpdateArgs, PoolResilverUpdateResult
 from middlewared.service import ConfigService, private, ValidationErrors
-from middlewared.validators import Range
+import middlewared.sqlalchemy as sa
 
 
 class PoolResilverModel(sa.Model):
@@ -24,15 +23,7 @@ class PoolResilverService(ConfigService):
         datastore = 'storage.resilver'
         datastore_extend = 'pool.resilver.resilver_extend'
         cli_namespace = 'storage.resilver'
-
-    ENTRY = Dict(
-        'pool_resilver_entry',
-        Int('id', required=True),
-        Time('begin', required=True),
-        Time('end', required=True),
-        Bool('enabled', required=True),
-        List('weekday', required=True, items=[Int('weekday', validators=[Range(min_=1, max_=7)])])
-    )
+        entry = PoolResilverEntry
 
     @private
     async def resilver_extend(self, data):
@@ -46,16 +37,17 @@ class PoolResilverService(ConfigService):
         verrors = ValidationErrors()
 
         weekdays = data.get('weekday')
-        if not weekdays:
+        if weekdays:
+            data['weekday'] = ','.join([str(day) for day in weekdays])
+        else:
             verrors.add(
                 f'{schema}.weekday',
                 'At least one weekday should be selected'
             )
-        else:
-            data['weekday'] = ','.join([str(day) for day in weekdays])
 
         return verrors, data
 
+    @api_method(PoolResilverUpdateArgs, PoolResilverUpdateResult)
     async def do_update(self, data):
         """
         Configure Pool Resilver Priority.
