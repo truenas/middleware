@@ -600,7 +600,7 @@ class ShellWorkerThread(threading.Thread):
             if not shell_command:
                 shell_command = self.middleware.call_sync(
                     'virt.instance.get_shell', options['virt_instance_id'],
-                )
+                ) or '/bin/sh'
             command = ['/usr/bin/incus', 'exec', options['virt_instance_id'], shell_command]
             if not as_root:
                 command = ['/usr/bin/sudo', '-H', '-u', username] + command
