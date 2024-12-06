@@ -319,6 +319,7 @@ class SMBService(ConfigService):
         await pdb_job.wait()
         await grp_job.wait()
 
+        await self.middleware.call('smb.set_configured')
         """
         It is possible that system dataset was migrated or an upgrade
         wiped our secrets.tdb file. Re-import directory service secrets
