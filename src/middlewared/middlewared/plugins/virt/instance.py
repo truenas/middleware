@@ -1,4 +1,5 @@
 import aiohttp
+import os
 import platform
 
 from middlewared.service import (
@@ -338,3 +339,24 @@ class VirtInstanceService(CRUDService):
         }})
 
         return True
+
+    @private
+    def get_shell(self, id):
+        """
+        Method to get a valid shell to be used by default.
+        """
+
+        self.middleware.call_sync('virt.global.check_initialized')
+        instance = self.middleware.call_sync('virt.instance.get_instance', id)
+        if instance['type'] != 'CONTAINER':
+            raise CallError('Only available for containers.')
+        if instance['status'] != 'RUNNING':
+            raise CallError('Container must be running.')
+        config = self.middleware.call_sync('virt.global.config')
+        mount_info = self.middleware.call_sync('filesystem.mount_info', [['mount_source', '=', f'{config["dataset"]}/containers/{id}']])
+        if not mount_info:
+            return None
+        rootfs = f'{mount_info[0]["mountpoint"]}/rootfs'
+        for i in ('/bin/bash', '/bin/zsh', '/bin/csh', '/bin/sh'):
+            if os.path.exists(f'{rootfs}{i}'):
+                return i
