@@ -17,7 +17,7 @@ def dump_params(model: type[BaseModel], args: list, expose_secrets: bool) -> lis
 
     :param model: `BaseModel` that defines method args.
     :param args: a list of method args.
-    :param expose_secrets: if false, will replace `Private` parameters with a placeholder.
+    :param expose_secrets: if false, will replace `Secret` parameters with a placeholder.
     :return: A list of method call arguments ready to be printed.
     """
     try:
@@ -32,10 +32,10 @@ def dump_params(model: type[BaseModel], args: list, expose_secrets: bool) -> lis
 
 def remove_secrets(model: type[BaseModel], value):
     """
-    Removes `Private` values from a model value.
+    Removes `Secret` values from a model value.
     :param model: `BaseModel` that corresponds to `value`.
-    :param value: value that potentially contains `Private` data.
-    :return: `value` with `Private` parameters replaced with a placeholder.
+    :param value: value that potentially contains `Secret` data.
+    :return: `value` with `Secret` parameters replaced with a placeholder.
     """
     if isinstance(value, dict) and (nested_model := model_field_is_model(model)):
         return {
