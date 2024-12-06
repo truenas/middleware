@@ -155,7 +155,7 @@ class SessionsEntry(BaseModel):
     channels: dict[str, SmbServerChannel]
 
 
-class AllEntry(SmbStatusSessionsEntry):
+class AllEntry(SessionsEntry):
     share_connections: list[ShareEntry]
 
 
