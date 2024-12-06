@@ -17,7 +17,7 @@ class SFTPRcloneRemote(BaseRcloneRemote):
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp_file:
                 tmp_file.write((await self.middleware.call("keychaincredential.get_of_type",
                                                            credentials["provider"]["private_key"],
-                                                           "SSH_KEY_PAIR"))["provider"]["private_key"])
+                                                           "SSH_KEY_PAIR"))["attributes"]["private_key"])
 
                 result["key_file"] = tmp_file.name
 

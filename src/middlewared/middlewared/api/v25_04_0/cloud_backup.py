@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import Field, PositiveInt, Secret
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, LongString, NonEmptyString
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongString, NonEmptyString
 from .cloud_sync import CloudCredentialEntry
 from .common import CronModel
 
@@ -39,6 +39,7 @@ class CloudBackupCreate(BaseModel):
     password: Secret[NonEmptyString]
     keep_last: PositiveInt
     transfer_setting: Literal["DEFAULT", "PERFORMANCE", "FAST_STORAGE"] = "DEFAULT"
+    absolute_paths: bool = False
 
 
 class CloudBackupEntry(CloudBackupCreate):
@@ -49,7 +50,7 @@ class CloudBackupEntry(CloudBackupCreate):
 
 
 class CloudBackupUpdate(CloudBackupCreate, metaclass=ForUpdateMetaclass):
-    pass
+    absolute_paths: Excluded = excluded_field()
 
 
 class CloudBackupRestoreOptions(BaseModel):

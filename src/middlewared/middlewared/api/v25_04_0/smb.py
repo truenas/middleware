@@ -18,6 +18,10 @@ __all__ = [
     'GetSmbAclArgs', 'GetSmbAclResult',
     'SetSmbAclArgs', 'SetSmbAclResult',
     'SmbServiceEntry', 'SmbServiceUpdateArgs', 'SmbServiceUpdateResult',
+    'SmbServiceUnixCharsetChoicesArgs', 'SmbServiceUnixCharsetChoicesResult',
+    'SmbServiceBindIPChoicesArgs', 'SmbServiceBindIPChoicesResult',
+    'SmbSharePresetsArgs', 'SmbSharePresetsResult',
+    'SmbSharePrecheckArgs', 'SmbSharePrecheckResult',
 ]
 
 EMPTY_STRING = ''
@@ -161,3 +165,36 @@ class SmbServiceUpdateArgs(SmbServiceEntry, metaclass=ForUpdateMetaclass):
 
 class SmbServiceUpdateResult(BaseModel):
     result: SmbServiceEntry
+
+
+class SmbServiceUnixCharsetChoicesArgs(BaseModel):
+    pass
+
+
+class SmbServiceUnixCharsetChoicesResult(BaseModel):
+    result: dict[str, SMBCharsetType]
+
+
+class SmbServiceBindIPChoicesArgs(BaseModel):
+    pass
+
+
+class SmbServiceBindIPChoicesResult(BaseModel):
+    result: dict[str, str]
+
+
+class SmbSharePresetsArgs(BaseModel):
+    pass
+
+
+class SmbSharePresetsResult(BaseModel):
+    result: dict[str, dict]
+
+
+@single_argument_args('smb_share_precheck')
+class SmbSharePrecheckArgs(BaseModel):
+    name: NonEmptyString
+
+
+class SmbSharePrecheckResult(BaseModel):
+    result: Literal[None]

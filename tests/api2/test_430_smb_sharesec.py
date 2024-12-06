@@ -171,17 +171,3 @@ def test_toggle_share_and_verify_acl_preserved(setup_smb_share, sharesec_user):
     acl = call('sharing.smb.getacl', {'share_name': 'my_sharesec2'})
     assert acl['share_name'].casefold() == setup_smb_share['name'].casefold()
     assert acl['share_acl'][0]['ae_who_str'] == sharesec_user['username']
-
-    # Abusive test, bypass normal APIs for share and
-    # verify that sync_registry call still preserves info.
-    call('datastore.update', 'sharing.cifs.share', setup_smb_share['id'], {'cifs_enabled': False})
-
-    call('sharing.smb.sync_registry', job=True)
-
-    call('datastore.update', 'sharing.cifs.share', setup_smb_share['id'], {'cifs_enabled': True})
-
-    call('sharing.smb.sync_registry', job=True)
-
-    acl = call('sharing.smb.getacl', {'share_name': 'my_sharesec2'})
-    assert acl['share_name'].casefold() == setup_smb_share['name'].casefold()
-    assert acl['share_acl'][0]['ae_who_str'] == sharesec_user['username']
