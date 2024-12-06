@@ -1,11 +1,13 @@
 from abc import ABC
 
-from middlewared.validators import validate_schema
+from middlewared.api.base.handler.accept import validate_model
+from middlewared.schema import ValidationErrors
 
 
 class Device(ABC):
 
     schema = NotImplemented
+    schema_model = NotImplementedError
 
     def __init__(self, data, middleware=None):
         self.data = data
@@ -39,8 +41,12 @@ class Device(ABC):
         pass
 
     def validate(self, device, old=None, vm_instance=None, update=True):
-        verrors = validate_schema(list(self.schema.attrs.values()), device['attributes'])
-        verrors.check()
+        if self.schema_model is NotImplementedError:
+            raise NotImplementedError('schema_model is not implemented for this device')
+
+        dump = validate_model(self.schema_model, device['attributes'])
+        device['attributes'] = dump
+        verrors = ValidationErrors()
         self._validate(device, verrors, old, vm_instance, update)
         verrors.check()
 

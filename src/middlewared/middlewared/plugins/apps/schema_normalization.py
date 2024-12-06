@@ -28,6 +28,8 @@ class AppSchemaService(Service):
         for method in REF_MAPPING.values():
             assert isinstance(getattr(self, f'normalize_{method}'), Callable) is True
 
+        self.kfd_exists = os.path.exists('/dev/kfd')
+
     async def normalize_and_validate_values(
         self, item_details, values, update, app_dir, app_data=None, perform_actions=True,
     ):
@@ -114,6 +116,7 @@ class AppSchemaService(Service):
         }
         if not any(gpu['vendor'] != 'NVIDIA' for gpu in gpu_choices.values()):
             value['use_all_gpus'] = False
+            value['kfd_device_exists'] = self.kfd_exists
 
         for nvidia_gpu_pci_slot in list(value['nvidia_gpu_selection']):
             if nvidia_gpu_pci_slot not in gpu_choices or gpu_choices[nvidia_gpu_pci_slot]['vendor'] != 'NVIDIA':

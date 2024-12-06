@@ -1,9 +1,9 @@
 import random
 
+from middlewared.api.current import VMNICDevice
 from middlewared.plugins.interface.netif import netif
-from middlewared.schema import Bool, Dict, Str
+from middlewared.schema import Dict
 from middlewared.service import CallError
-from middlewared.validators import MACAddr
 
 from .device import Device
 from .utils import create_element
@@ -13,12 +13,8 @@ class NIC(Device):
 
     schema = Dict(
         'attributes',
-        Bool('trust_guest_rx_filters', default=False),
-        Str('type', enum=['E1000', 'VIRTIO'], default='E1000'),
-        Str('nic_attach', default=None, null=True),
-        Str('mac', default=None, null=True, validators=[MACAddr(separator=':')]),
-        Str('dtype', enum=['NIC'], required=True),
     )
+    schema_model = VMNICDevice
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

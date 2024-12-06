@@ -4,10 +4,10 @@ from pydantic import AfterValidator, BeforeValidator, Field, GetCoreSchemaHandle
 from pydantic_core import CoreSchema, core_schema, PydanticKnownError
 from typing_extensions import Annotated
 
-from middlewared.utils.lang import undefined
+from middlewared.utils.netbios import validate_netbios_name, validate_netbios_domain
 from middlewared.validators import Time
 
-__all__ = ["HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString"]
+__all__ = ["HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString", "NetbiosDomain", "NetbiosName"]
 
 HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
 
@@ -17,7 +17,7 @@ class LongStringWrapper:
     We have to box our long strings in this class to bypass the global limit for string length.
     """
 
-    max_length = 2 ** 31 - 1
+    max_length = 2048000  # historic maximum length of string in filesystem.file_receive
 
     def __init__(self, value):
         if isinstance(value, LongStringWrapper):
@@ -57,5 +57,7 @@ LongString = Annotated[
 NonEmptyString = Annotated[str, Field(min_length=1)]
 LongNonEmptyString = Annotated[LongString, Field(min_length=1)]
 TimeString = Annotated[str, AfterValidator(Time())]
+NetbiosDomain = Annotated[str, AfterValidator(validate_netbios_domain)]
+NetbiosName = Annotated[str, AfterValidator(validate_netbios_name)]
 
 SECRET_VALUE = "********"

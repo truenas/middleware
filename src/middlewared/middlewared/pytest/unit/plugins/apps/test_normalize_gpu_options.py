@@ -30,6 +30,7 @@ from middlewared.pytest.unit.middleware import Middleware
         ],
         {
             'use_all_gpus': True,
+            'kfd_device_exists': False,
             'nvidia_gpu_selection': {
                 '0000:01:00.0': 'NVIDIA GPU 1',
                 '0000:02:00.0': 'NVIDIA GPU 2'
@@ -37,6 +38,7 @@ from middlewared.pytest.unit.middleware import Middleware
         },
         {
             'use_all_gpus': False,
+            'kfd_device_exists': False,
             'nvidia_gpu_selection': {}
         }
 
@@ -63,10 +65,12 @@ from middlewared.pytest.unit.middleware import Middleware
         ],
         {
             'use_all_gpus': True,
+            'kfd_device_exists': False,
             'nvidia_gpu_selection': {}
         },
         {
             'use_all_gpus': True,
+            'kfd_device_exists': False,
             'nvidia_gpu_selection': {}
         }
 
@@ -110,10 +114,12 @@ from middlewared.pytest.unit.middleware import Middleware
         ],
         {
             'use_all_gpus': True,
+            'kfd_device_exists': False,
             'nvidia_gpu_selection': {}
         },
         {
             'use_all_gpus': True,
+            'kfd_device_exists': False,
             'nvidia_gpu_selection': {}
         }
 

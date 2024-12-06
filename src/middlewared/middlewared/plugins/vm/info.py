@@ -3,8 +3,13 @@ import re
 import subprocess
 from xml.etree import ElementTree as etree
 
-from middlewared.schema import Bool, Dict, Int, returns, Str
-from middlewared.service import accepts, private, Service
+from middlewared.api import api_method
+from middlewared.api.current import (
+    VMSupportsVirtualizationArgs, VMSupportsVirtualizationResult, VMVirtualizationDetailsArgs,
+    VMVirtualizationDetailsResult, VMMaximumSupportedVCPUsArgs, VMMaximumSupportedVCPUsResult, VMFlagsArgs,
+    VMFlagsResult, VMGetConsoleArgs, VMGetConsoleResult, VMCPUModelChoicesArgs, VMCPUModelChoicesResult,
+)
+from middlewared.service import private, Service
 from middlewared.utils import run
 
 from .connection import LibvirtConnectionMixin
@@ -20,8 +25,7 @@ class VMService(Service, LibvirtConnectionMixin):
 
     CPU_MODEL_CHOICES = {}
 
-    @accepts(roles=['VM_READ'])
-    @returns(Bool())
+    @api_method(VMSupportsVirtualizationArgs, VMSupportsVirtualizationResult, roles=['VM_READ'])
     def supports_virtualization(self):
         """
         Returns "true" if system supports virtualization, "false" otherwise
@@ -41,11 +45,7 @@ class VMService(Service, LibvirtConnectionMixin):
 
         return can_run_vms
 
-    @accepts(roles=['VM_READ'])
-    @returns(Dict(
-        Bool('supported', required=True),
-        Str('error', null=True, required=True),
-    ))
+    @api_method(VMVirtualizationDetailsArgs, VMVirtualizationDetailsResult, roles=['VM_READ'])
     def virtualization_details(self):
         """
         Retrieve details if virtualization is supported on the system and in case why it's not supported if it isn't.
@@ -55,22 +55,14 @@ class VMService(Service, LibvirtConnectionMixin):
             'error': None if self._is_kvm_supported() else 'Your CPU does not support KVM extensions',
         }
 
-    @accepts(roles=['VM_READ'])
-    @returns(Int())
+    @api_method(VMMaximumSupportedVCPUsArgs, VMMaximumSupportedVCPUsResult, roles=['VM_READ'])
     async def maximum_supported_vcpus(self):
         """
         Returns maximum supported VCPU's
         """
         return 255
 
-    @accepts(roles=['VM_READ'])
-    @returns(Dict(
-        'cpu_flags',
-        Bool('intel_vmx', required=True),
-        Bool('unrestricted_guest', required=True),
-        Bool('amd_rvi', required=True),
-        Bool('amd_asids', required=True),
-    ))
+    @api_method(VMFlagsArgs, VMFlagsResult, roles=['VM_READ'])
     async def flags(self):
         """
         Returns a dictionary with CPU flags for the hypervisor.
@@ -106,8 +98,7 @@ class VMService(Service, LibvirtConnectionMixin):
 
         return flags
 
-    @accepts(Int('id'))
-    @returns(Str('console_device'))
+    @api_method(VMGetConsoleArgs, VMGetConsoleResult, roles=['VM_READ'])
     async def get_console(self, id_):
         """
         Get the console device from a given guest.
@@ -115,14 +106,7 @@ class VMService(Service, LibvirtConnectionMixin):
         vm = await self.middleware.call('vm.get_instance', id_)
         return f'{vm["id"]}_{vm["name"]}'
 
-    @accepts(roles=['VM_READ'])
-    @returns(Dict(
-        additional_attrs=True,
-        example={
-            '486': '486',
-            'pentium': 'pentium',
-        }
-    ))
+    @api_method(VMCPUModelChoicesArgs, VMCPUModelChoicesResult, roles=['VM_READ'])
     def cpu_model_choices(self):
         """
         Retrieve CPU Model choices which can be used with a VM guest to emulate the CPU in the guest.

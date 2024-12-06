@@ -4,21 +4,20 @@ import re
 import shlex
 import subprocess
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    VMImportDiskImageArgs, VMImportDiskImageResult, VMExportDiskImageArgs, VMExportDiskImageResult,
+)
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from middlewared.schema import accepts, Bool, Dict, returns, Str
 from middlewared.service import CallError, Service, job
+
 
 # Valid Disk Formats we can export
 VALID_DISK_FORMATS = ['qcow2', 'qed', 'raw', 'vdi', 'vpc', 'vmdk' ]
 
 class VMService(Service):
 
-    @accepts(Dict(
-        'vm_info',
-        Str('diskimg', required=True),
-        Str('zvol', required=True)
-    ))
-    @returns(Bool())
+    @api_method(VMImportDiskImageArgs, VMImportDiskImageResult, roles=['VM_WRITE'])
     @job(lock_queue_size=1, lock=lambda args: f"zvol_disk_image_{args[-1]['zvol']}")
     def import_disk_image(self, job, data):
 
@@ -81,13 +80,7 @@ class VMService(Service):
 
         return True
 
-    @accepts(Dict(
-        'vm_info',
-        Str('format', required=True),
-        Str('directory', required=True),
-        Str('zvol', required=True)
-    ))
-    @returns(Bool())
+    @api_method(VMExportDiskImageArgs, VMExportDiskImageResult, roles=['VM_WRITE'])
     @job(lock_queue_size=1, lock=lambda args: f"zvol_disk_image_{args[-1]['zvol']}")
     def export_disk_image(self, job, data):
 

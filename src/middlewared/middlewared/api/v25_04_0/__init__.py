@@ -33,6 +33,7 @@ from .reporting_exporters import *  # noqa
 from .rdma import *  # noqa
 from .rdma_interface import *  # noqa
 from .smartctl import *  # noqa
+from .smb import *  # noqa
 from .snmp import *  # noqa
 from .static_route import *  # noqa
 from .system_lifecycle import *  # noqa
@@ -44,3 +45,5 @@ from .vendor import *  # noqa
 from .virt_device import *  # noqa
 from .virt_global import *  # noqa
 from .virt_instance import *  # noqa
+from .vm import *  # noqa
+from .vm_device import *  # noqa

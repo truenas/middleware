@@ -21,7 +21,8 @@ class CloudBackupModel(CloudTaskModelMixin, sa.Model):
 
     password = sa.Column(sa.EncryptedText())
     keep_last = sa.Column(sa.Integer())
-    transfer_setting = sa.Column(sa.String(16), default="DEFAULT")
+    transfer_setting = sa.Column(sa.String(16))
+    absolute_paths = sa.Column(sa.Boolean())
 
 
 class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
@@ -140,6 +141,9 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     @private
     async def _validate(self, app, verrors, name, data):
         await super()._validate(app, verrors, name, data)
+
+        if data["snapshot"] and data["absolute_paths"]:
+            verrors.add(f"{name}.snapshot", "This option can't be used when absolute paths are enabled")
 
         if not verrors:
             try:

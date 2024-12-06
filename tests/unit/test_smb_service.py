@@ -1,5 +1,3 @@
-import pytest
-
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.utils.directoryservices.constants import DSType
 
@@ -10,7 +8,6 @@ BASE_SMB_CONFIG = {
     'workgroup': 'TESTDOMAIN',
     'description': 'TrueNAS Server',
     'unixcharset': 'UTF-8',
-    'loglevel': 'MINIMUM',
     'syslog': False,
     'aapl_extensions': False,
     'localmaster': False,
@@ -19,14 +16,14 @@ BASE_SMB_CONFIG = {
     'dirmask': '',
     'smb_options': '',
     'bindip': [],
-    'cifs_SID': 'S-1-5-21-732395397-2008429054-3061640861',
+    'server_sid': 'S-1-5-21-732395397-2008429054-3061640861',
     'ntlmv1_auth': False,
     'enable_smb1': False,
     'admin_group': None,
     'next_rid': 0,
     'multichannel': False,
     'encryption': 'DEFAULT',
-    'netbiosname_local': 'TESTSERVER'
+    'debug': False
 }
 
 SMB_SYSLOG = BASE_SMB_CONFIG | {'syslog': True}
