@@ -124,7 +124,7 @@ class CloudBackupRestoreArgs(BaseModel):
     snapshot_id: str = Field(pattern=r"^[^-]")
     subfolder: str
     destination_path: str
-    options: CloudBackupRestoreOptions
+    options: CloudBackupRestoreOptions = CloudBackupRestoreOptions()
 
 
 class CloudBackupRestoreResult(BaseModel):
