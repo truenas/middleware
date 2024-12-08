@@ -63,12 +63,14 @@ class TrueNASConnectService(ConfigService):
         data = config | data
         await self.validate_data(config, data)
 
-        await self.middleware.call(
-            'datastore.update', self._config.datastore, config['id'], {
-                'enabled': data['enabled'],
-                'ips': data['ips'],
-            }
-        )
+        db_payload = {'enabled': data['enabled'], 'ips': data['ips']}
+        if config['enabled'] is False and data['enabled'] is True:
+            # TODO: We should make sure to reset any pending registration details
+            db_payload['status'] = Status.CLAIM_TOKEN_MISSING.name
+        elif config['enabled'] is True and data['enabled'] is False:
+            db_payload['status'] = Status.DISABLED.name
+
+        await self.middleware.call('datastore.update', self._config.datastore, config['id'], db_payload)
 
         # TODO: Handle the case where user imports same db in a different system
         # TODO: Trigger a job to update the registration details if ips are changed
