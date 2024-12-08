@@ -2,7 +2,7 @@
 TNC Support
 
 Revision ID: 83d9689fcbc8
-Revises: bb352e66987f
+Revises: 4e6f1334f0f0
 Create Date: 2024-11-30 12:30:41.855489+00:00
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 revision = '83d9689fcbc8'
-down_revision = 'bb352e66987f'
+down_revision = '4e6f1334f0f0'
 branch_labels = None
 depends_on = None
 
@@ -24,7 +24,7 @@ def upgrade():
         sa.Column('jwt_token', sa.TEXT(), nullable=True),
         sa.Column('claim_token_system_id', sa.String(length=255), nullable=True),
         sa.Column('jwt_token_system_id', sa.String(length=255), nullable=True),
-        sa.Column('ip', sa.String(length=255), nullable=True),
+        sa.Column('ips', sa.TEXT(), nullable=False, server_default='[]'),
         sa.Column('acme_key', sa.TEXT(), nullable=True),
         sa.Column('acme_account_uri', sa.String(length=255), nullable=True),
         sa.Column('acme_directory_uri', sa.String(length=255), nullable=True),

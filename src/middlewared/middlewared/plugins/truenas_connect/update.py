@@ -17,7 +17,7 @@ class TrueNASConnectModel(sa.Model):
     acme_account_uri = sa.Column(sa.String(255), default=None, nullable=True)
     acme_directory_uri = sa.Column(sa.String(255), default=None, nullable=True)
     jwt_details = sa.Column(sa.JSON(dict), nullable=False)
-    ip = sa.Column(sa.String(255), nullable=True, default=None)
+    ips = sa.Column(sa.JSON(list), nullable=False)
 
 
 class TrueNASConnectService(ConfigService):
