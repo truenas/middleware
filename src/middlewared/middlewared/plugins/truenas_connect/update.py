@@ -69,7 +69,12 @@ class TrueNASConnectService(ConfigService):
             # TODO: We should make sure to reset any pending registration details
             db_payload['status'] = Status.CLAIM_TOKEN_MISSING.name
         elif config['enabled'] is True and data['enabled'] is False:
-            db_payload['status'] = Status.DISABLED.name
+            db_payload.update({
+                'registration_details': {},
+                'jwt_token': None,
+                'status': Status.DISABLED.name,
+            })
+            # TODO: Makes ure to revoke any existing token/certs
 
         await self.middleware.call('datastore.update', self._config.datastore, config['id'], db_payload)
 
