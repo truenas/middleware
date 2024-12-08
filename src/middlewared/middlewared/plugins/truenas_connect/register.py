@@ -7,7 +7,9 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, Service
 
+from .status_utils import Status
 from .urls import REGISTRATION_URI
+from .utils import CLAIM_TOKEN_CACHE_KEY
 
 
 class TrueNASConnectService(Service):
@@ -24,16 +26,21 @@ class TrueNASConnectService(Service):
         This is used to claim the system with TrueNAS Connect. When this endpoint will be called, a token will
         be generated which will be used to assist with initial setup with truenas connect.
         """
-        # FIXME: Handle the case where TNC is already configured and this is called
         config = await self.middleware.call('tn_connect.config')
-        config['claim_token'] = str(uuid.uuid4())
-        await self.middleware.call(
-            'datastore.update', 'truenas_connect', config['id'], {
-                'claim_token': config['claim_token'],
-                'claim_token_system_id': await self.middleware.call('system.host_id'),
-            }
-        )
-        return config['claim_token']
+        if config['enabled'] is False:
+            raise CallError('TrueNAS Connect is not enabled')
+
+        if config['status'] != Status.CLAIM_TOKEN_MISSING.name:
+            raise CallError(
+                'Claim token has already been generated, either finalize registration '
+                'or re-enable TNC to reset claim token'
+            )
+
+        claim_token = str(uuid.uuid4())
+        # Claim token is going to be valid for 45 minutes
+        await self.middleware.call('cache.put', CLAIM_TOKEN_CACHE_KEY, claim_token, 45 * 60)
+        await self.middleware.call('tn_connect.set_status', Status.REGISTRATION_FINALIZATION_WAITING.name)
+        return claim_token
 
 
     @api_method(TNCGetRegistrationURIArgs, TNCGetRegistrationURIResult)
@@ -47,8 +54,13 @@ class TrueNASConnectService(Service):
         config = await self.middleware.call('tn_connect.config')
         if not config['enabled']:
             raise CallError('TrueNAS Connect is not enabled')
-        if not config['claim_token']:
-            raise CallError('Claim token must be explicitly generated before registration URI is requested')
+
+        try:
+            await self.middleware.call('cache.get', CLAIM_TOKEN_CACHE_KEY)
+        except KeyError:
+            raise CallError(
+                'Claim token is not generated. Please generate a claim token before trying to get registration URI'
+            )
 
         query_params = {
             'version': await self.middleware.call('system.version_short'),
