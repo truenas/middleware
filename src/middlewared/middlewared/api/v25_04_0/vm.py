@@ -40,7 +40,7 @@ class VMStatus(BaseModel):
 
 class VMEntry(BaseModel):
     command_line_args: str = ''
-    cpu_mode: Literal['CUSTOM', 'HOST-MODEL', 'HOST_PASSTHROUGH'] = 'CUSTOM'
+    cpu_mode: Literal['CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH'] = 'CUSTOM'
     cpu_model: str | None = None
     name: NonEmptyString
     description: str = ''
