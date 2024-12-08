@@ -1,3 +1,5 @@
+from pydantic import IPvAnyAddress
+
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args
 
 
@@ -12,12 +14,14 @@ class TNCEntry(BaseModel):
     enabled: bool
     jwt_token: NonEmptyString | None
     registration_details: dict
-    ips: list[str]
+    ips: list[IPvAnyAddress]
+    status_reason: NonEmptyString
 
 
 @single_argument_args('tn_connect_update')
 class TNCUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
+    ips: list[IPvAnyAddress]
 
 
 class TNCUpdateResult(BaseModel):
