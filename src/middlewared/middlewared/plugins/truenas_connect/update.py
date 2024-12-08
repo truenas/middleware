@@ -3,21 +3,18 @@ from middlewared.api import api_method
 from middlewared.api.current import TNCEntry, TNCUpdateArgs, TNCUpdateResult
 from middlewared.service import ConfigService
 
+from .status_utils import Status
+
 
 class TrueNASConnectModel(sa.Model):
     __tablename__ = 'truenas_connect'
 
     id = sa.Column(sa.Integer(), primary_key=True)
     enabled = sa.Column(sa.Boolean(), default=False, nullable=False)
-    claim_token = sa.Column(sa.EncryptedText(), default=None, nullable=True)
     jwt_token = sa.Column(sa.EncryptedText(), default=None, nullable=True)
-    claim_token_system_id = sa.Column(sa.String(255), default=None, nullable=True)
-    jwt_token_system_id = sa.Column(sa.String(255), default=None, nullable=True)
-    acme_key = sa.Column(sa.EncryptedText(), default=None, nullable=True)
-    acme_account_uri = sa.Column(sa.String(255), default=None, nullable=True)
-    acme_directory_uri = sa.Column(sa.String(255), default=None, nullable=True)
-    jwt_details = sa.Column(sa.JSON(dict), nullable=False)
+    registration_details = sa.Column(sa.JSON(dict), nullable=False)
     ips = sa.Column(sa.JSON(list), nullable=False)
+    status = sa.Column(sa.String(255), default=Status.DISABLED.name, nullable=False)
 
 
 class TrueNASConnectService(ConfigService):
