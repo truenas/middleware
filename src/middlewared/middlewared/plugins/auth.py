@@ -216,7 +216,7 @@ class AuthService(Service):
         self.session_manager.middleware = self.middleware
 
     @filterable_api_method(item=AuthSessionEntry, roles=['AUTH_SESSIONS_READ'])
-    @pass_app()
+    @pass_app(require=True)
     def sessions(self, app, filters, options):
         """
         Returns list of active auth sessions.
@@ -931,7 +931,7 @@ class AuthService(Service):
         return True
 
     @api_method(AuthMeArgs, AuthMeResult, authorization_required=False)
-    @pass_app()
+    @pass_app(require=True)
     async def me(self, app):
         """
         Returns currently logged-in user.
