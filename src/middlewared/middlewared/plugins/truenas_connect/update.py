@@ -86,3 +86,10 @@ class TrueNASConnectService(ConfigService):
             ip['address']: ip['address']
             for ip in await self.middleware.call('interface.ip_in_use', {'static': True, 'any': False})
         }
+
+    @private
+    async def set_status(self, new_status):
+        assert new_status in Status.__members__
+        config = await self.config()
+        await self.middleware.call('datastore.update', self._config.datastore, config['id'], {'status': new_status})
+        self.middleware.send_event('tn_connect.config', 'CHANGED', fields=(await self.config()))
