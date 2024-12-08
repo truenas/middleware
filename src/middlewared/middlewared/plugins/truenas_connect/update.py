@@ -30,6 +30,7 @@ class TrueNASConnectService(ConfigService):
     @private
     async def config_extend(self, config):
         config['status_reason'] = Status(config['status']).value
+        config.pop('jwt_token', None)
         return config
 
     @private
@@ -93,3 +94,8 @@ class TrueNASConnectService(ConfigService):
         config = await self.config()
         await self.middleware.call('datastore.update', self._config.datastore, config['id'], {'status': new_status})
         self.middleware.send_event('tn_connect.config', 'CHANGED', fields=(await self.config()))
+
+    @private
+    async def config_internal(self):
+        config = await self.config()
+        return (await self.middleware.call('datastore.config', self._config.datastore)) | config
