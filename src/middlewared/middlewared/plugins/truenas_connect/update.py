@@ -1,6 +1,6 @@
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
-from middlewared.api.current import TNCEntry, TNCUpdateArgs, TNCUpdateResult
+from middlewared.api.current import TNCEntry, TNCUpdateArgs, TNCUpdateResult, TNCIPChoicesArgs, TNCIPChoicesResult
 from middlewared.service import ConfigService
 
 from .status_utils import Status
@@ -38,3 +38,13 @@ class TrueNASConnectService(ConfigService):
             'datastore.update', self._config.datastore, config['id'], {'enabled': config['enabled']}
         )
         return await self.config()
+
+    @api_method(TNCIPChoicesArgs, TNCIPChoicesResult)
+    async def ip_choices(self):
+        """
+        Returns IP choices which can be used with TrueNAS Connect.
+        """
+        return {
+            ip['address']: ip['address']
+            for ip in await self.middleware.call('interface.ip_in_use', {'static': True, 'any': False})
+        }

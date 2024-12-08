@@ -3,21 +3,15 @@ from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, 
 
 __all__ = [
     'TNCEntry', 'TNCGetRegistrationURIArgs', 'TNCGetRegistrationURIResult', 'TNCUpdateArgs', 'TNCUpdateResult',
-    'TNCGenerateClaimTokenArgs', 'TNCGenerateClaimTokenResult',
+    'TNCGenerateClaimTokenArgs', 'TNCGenerateClaimTokenResult', 'TNCIPChoicesArgs', 'TNCIPChoicesResult',
 ]
 
 
 class TNCEntry(BaseModel):
     id: int
     enabled: bool
-    claim_token: NonEmptyString | None
     jwt_token: NonEmptyString | None
-    claim_token_system_id: NonEmptyString | None
-    jwt_token_system_id: NonEmptyString | None
-    acme_key: NonEmptyString | None
-    acme_account_uri: NonEmptyString | None
-    acme_directory_uri: NonEmptyString | None
-    jwt_details: dict
+    registration_details: dict
     ips: list[str]
 
 
@@ -44,3 +38,11 @@ class TNCGenerateClaimTokenArgs(BaseModel):
 
 class TNCGenerateClaimTokenResult(BaseModel):
     result: NonEmptyString
+
+
+class TNCIPChoicesArgs(BaseModel):
+    pass
+
+
+class TNCIPChoicesResult(BaseModel):
+    result: dict[str, str]
