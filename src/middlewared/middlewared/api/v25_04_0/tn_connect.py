@@ -12,7 +12,6 @@ __all__ = [
 class TNCEntry(BaseModel):
     id: int
     enabled: bool
-    jwt_token: NonEmptyString | None
     registration_details: dict
     ips: list[IPvAnyAddress]
     status_reason: NonEmptyString
