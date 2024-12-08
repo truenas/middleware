@@ -56,7 +56,7 @@ class TrueNASConnectService(Service):
             raise CallError('TrueNAS Connect is not enabled')
 
         try:
-            await self.middleware.call('cache.get', CLAIM_TOKEN_CACHE_KEY)
+            claim_token = await self.middleware.call('cache.get', CLAIM_TOKEN_CACHE_KEY)
         except KeyError:
             raise CallError(
                 'Claim token is not generated. Please generate a claim token before trying to get registration URI'
@@ -66,7 +66,7 @@ class TrueNASConnectService(Service):
             'version': await self.middleware.call('system.version_short'),
             'model': (await self.middleware.call('truenas.get_chassis_hardware')).removeprefix('TRUENAS-'),
             'system_id': await self.middleware.call('system.host_id'),
-            'token': config['claim_token'],
+            'token': claim_token,
         }
 
         return f'{REGISTRATION_URI}?{urlencode(query_params)}'
