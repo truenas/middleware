@@ -48,7 +48,7 @@ class TNCHostnameService(Service, TNCAPIMixin):
         register = config['hostname_configured'] is False
         if register:
             payload = {
-                'ips': [tnc_config['ip']],
+                'ips': tnc_config['ips'],
                 'system_id': tnc_config['jwt_details']['system_id'],
                 'create_wildcard': True,
             }
