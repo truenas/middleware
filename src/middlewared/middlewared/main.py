@@ -354,11 +354,6 @@ class Application(RpcWebSocketApp):
                     self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
                 else:
                     self.middleware.create_task(self.call_method(message, serviceobj, methodobj))
-        elif message['msg'] == 'ping':
-            pong = {'msg': 'pong'}
-            if 'id' in message:
-                pong['id'] = message['id']
-            self._send(pong)
         elif message['msg'] == 'sub':
             if not self.middleware.can_subscribe(self, message['name'].split(':', 1)[0]):
                 self.send_error(message, errno.EACCES, 'Not authorized')
