@@ -22,9 +22,15 @@ class TrueNASConnectService(ConfigService):
     # TODO: Add roles
     class Config:
         datastore = 'truenas_connect'
+        datastore_extend = 'tn_connect.config_extend'
         cli_private = True
         namespace = 'tn_connect'
         entry = TNCEntry
+
+    @private
+    async def config_extend(self, config):
+        config['status_reason'] = Status(config['status']).value
+        return config
 
     @private
     async def validate_data(self, old_config, data):
