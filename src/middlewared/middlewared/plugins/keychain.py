@@ -482,7 +482,11 @@ class KeychainCredentialService(CRUDService):
 
             return credential
 
-    @api_method(KeychainCredentialGenerateSSHKeyPairArgs, KeychainCredentialGenerateSSHKeyPairResult)
+    @api_method(
+        KeychainCredentialGenerateSSHKeyPairArgs,
+        KeychainCredentialGenerateSSHKeyPairResult,
+        roles=["KEYCHAIN_CREDENTIAL_WRITE"]
+    )
     def generate_ssh_key_pair(self):
         """
         Generate a public/private key pair
@@ -516,9 +520,7 @@ class KeychainCredentialService(CRUDService):
     @api_method(
         KeychainCredentialRemoteSSHHostKeyScanArgs,
         KeychainCredentialRemoteSSHHostKeyScanResult,
-        roles=["KEYCHAIN_CREDENTIAL_WRITE"],
-        audit="Remote Host Key Scan:",
-        audit_extended=lambda data: data["host"]
+        roles=["KEYCHAIN_CREDENTIAL_WRITE"]
     )
     async def remote_ssh_host_key_scan(self, data):
         """
