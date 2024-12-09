@@ -5,6 +5,7 @@ from logging import getLogger
 from middlewared.utils import filter_list
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
+from middlewared.utils.io import get_io_uring_enabled
 from middlewared.utils.path import FSLocation, path_location
 from middlewared.plugins.account import DEFAULT_HOME_PATH
 from middlewared.plugins.smb_.constants import SMBEncryption, SMBPath, SMBSharePreset
@@ -124,11 +125,15 @@ def generate_smb_share_conf_dict(
     ds_type: DSType,
     share_config_in: dict,
     smb_service_config: dict,
+    io_uring_enabled: bool = True
 ) -> dict:
     # apply any presets to the config here
     share_config = apply_presets(share_config_in)
     fruit_enabled = smb_service_config['aapl_extensions']
-    vfs_objects = set([TrueNASVfsObjects.ZFS_CORE, TrueNASVfsObjects.IO_URING])
+    vfs_objects = set([TrueNASVfsObjects.ZFS_CORE])
+
+    if io_uring_enabled:
+        vfs_objects.add(TrueNASVfsObjects.IO_URING)
 
     config_out = {
         'hosts allow': share_config['hostsallow'],
@@ -562,9 +567,11 @@ def generate_smb_conf_dict(
         'SHARES': {}
     })
 
+    io_uring_enabled = get_io_uring_enabled()
+
     for share in smb_shares:
         try:
-            share_conf = generate_smb_share_conf_dict(ds_type, share, smb_service_config)
+            share_conf = generate_smb_share_conf_dict(ds_type, share, smb_service_config, io_uring_enabled)
         except FileNotFoundError:
             # Share path doesn't exist, exclude from config
             continue

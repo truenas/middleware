@@ -36,6 +36,21 @@ class UnexpectedFileChange(Exception):
         return f'{self.path}: unexpected change in the following file attributes: {self.changes_str}'
 
 
+def get_io_uring_enabled() -> bool:
+    with open('/proc/sys/kernel/io_uring_disabled', 'r') as f:
+        disabled_val = int(f.read().strip())
+
+    return disabled_val == 0
+
+
+def set_io_uring_enabled(enabled_val: bool) -> bool:
+    with open('/proc/sys/kernel/io_uring_disabled', 'w') as f:
+        f.write('0' if enabled_val else '2')
+        f.flush()
+
+    return get_io_uring_enabled()
+
+
 def write_if_changed(path, data, uid=0, gid=0, perms=0o755, dirfd=None, raise_error=False):
     """
     Commit changes to a configuration file.
