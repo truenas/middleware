@@ -30,7 +30,7 @@ class TrueNASConnectService(ConfigService):
 
     @private
     async def config_extend(self, config):
-        config['status_reason'] = Status(config['status']).value
+        config['status_reason'] = Status[config['status']].value
         config.pop('jwt_token', None)
         if config['certificate']:
             config['certificate'] = config['certificate']['id']
