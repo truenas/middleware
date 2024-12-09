@@ -24,7 +24,7 @@ def upgrade():
         sa.Column('ips', sa.TEXT(), nullable=False, server_default='[]'),
         sa.Column('registration_details', sa.TEXT(), nullable=False, server_default='{}'),
         sa.Column('status', sa.String(length=255), nullable=False),
-        sa.Column('certificate_id', nullable=True),
+        sa.Column('certificate_id', sa.Integer(), nullable=True),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_truenas_connect')),
         sa.ForeignKeyConstraint(
             ['certificate_id'], ['system_certificate.id'],
@@ -32,6 +32,8 @@ def upgrade():
         ),
         sqlite_autoincrement=True,
     )
+    with op.batch_alter_table('truenas_connect', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_truenas_connect_certificate_id'), ['certificate_id'], unique=False)
 
 
 def downgrade():
