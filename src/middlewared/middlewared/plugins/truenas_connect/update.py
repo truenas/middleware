@@ -76,8 +76,9 @@ class TrueNASConnectService(ConfigService):
                 'registration_details': {},
                 'jwt_token': None,
                 'status': Status.DISABLED.name,
+                'certificate': None,
             })
-            # TODO: Makes ure to revoke any existing token/certs
+            # TODO: Make sure to revoke any existing token/certs
 
         await self.middleware.call('datastore.update', self._config.datastore, config['id'], db_payload)
 
@@ -97,10 +98,12 @@ class TrueNASConnectService(ConfigService):
         }
 
     @private
-    async def set_status(self, new_status):
+    async def set_status(self, new_status, db_payload=None):
         assert new_status in Status.__members__
         config = await self.config()
-        await self.middleware.call('datastore.update', self._config.datastore, config['id'], {'status': new_status})
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, config['id'], {'status': new_status} | (db_payload or {})
+        )
         self.middleware.send_event('tn_connect.config', 'CHANGED', fields=(await self.config()))
 
     @private
