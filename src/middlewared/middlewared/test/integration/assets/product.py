@@ -7,3 +7,10 @@ from middlewared.test.integration.utils import mock
 def product_type(product_type='SCALE_ENTERPRISE'):
     with mock('system.product_type', return_value=product_type):
         yield
+
+
+@contextlib.contextmanager
+def enable_stig():
+    with product_type():
+        with mock('system.product_type', return_value={'id': 1, 'enable_fips': True, 'enable_stig': True}):
+            yield
