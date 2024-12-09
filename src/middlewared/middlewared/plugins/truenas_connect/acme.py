@@ -1,8 +1,9 @@
-from middlewared.service import CallError, job, Service
+from middlewared.service import CallError, Service
 
 from .acme_utils import normalize_acme_config
 from .cert_utils import generate_csr, get_hostnames_from_hostname_config
 from .mixin import TNCAPIMixin
+from .status_utils import Status
 from .urls import ACME_CONFIG_URL
 from .utils import get_account_id_and_system_id
 
@@ -14,11 +15,11 @@ class TNCACMEService(Service, TNCAPIMixin):
         namespace = 'tn_connect.acme'
 
     async def call(self, url, mode, payload=None):
-        config = await self.middleware.call('tn_connect.config')
+        config = await self.middleware.call('tn_connect.config_internal')
         return await self._call(url, mode, payload=payload, headers=await self.auth_headers(config))
 
     async def config(self):
-        config = await self.middleware.call('tn_connect.config')
+        config = await self.middleware.call('tn_connect.config_internal')
         creds = get_account_id_and_system_id(config)
         if not config['enabled'] or creds is None:
             return {
@@ -36,8 +37,21 @@ class TNCACMEService(Service, TNCAPIMixin):
             'tnc_configured': True,
         }
 
-    @job()
-    async def create_cert(self, job):
+    async def initiate_cert_generation(self):
+        try:
+            await self.initiate_cert_generation_impl()
+        except Exception:
+            self.logger.error('Failed to complete certificate generation for TNC', exc_info=True)
+            await self.middleware.call('tn_connect.set_status', Status.CERT_GENERATION_FAILED.name)
+        else:
+            # TODO: Insert cert in the database
+            await self.middleware.call('tn_connect.set_status', Status.CONFIGURED.name)
+
+    async def initiate_cert_generation_impl(self):
+        await self.middleware.call('tn_connect.hostname.register_update_ips')
+        await self.create_cert()
+
+    async def create_cert(self):
         hostname_config = await self.middleware.call('tn_connect.hostname.config')
         if hostname_config['error']:
             raise CallError(f'Failed to fetch TNC hostname configuration: {hostname_config["error"]}')
