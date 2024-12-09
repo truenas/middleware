@@ -201,6 +201,7 @@ class UserService(CRUDService):
             user_api_keys[key['username']].append(key['id'])
 
         return {
+            'stig_enabled': (await self.middleware.call('system.security.config'))['enable_stig'],
             'server_sid': await self.middleware.call('smb.local_server_sid'),
             'user_2fa_mapping': ({
                 entry['user']['id']: bool(entry['secret']) for entry in await self.middleware.call(
@@ -253,6 +254,14 @@ class UserService(CRUDService):
             'roles': list(user_roles),
             'api_keys': ctx['user_api_keys'][user['username']]
         })
+        if ctx['stig_enabled']:
+            # NTLM authentication relies on non-FIPS crypto
+            user.update({
+                'smb': False,
+                'sid': None,
+                'smbhash': '*'
+            })
+
         return user
 
     @private
