@@ -13,9 +13,10 @@ class TNCEntry(BaseModel):
     id: int
     enabled: bool
     registration_details: dict
-    ips: list[IPvAnyAddress]
+    ips: list[NonEmptyString]
+    status: NonEmptyString
     status_reason: NonEmptyString
-    certificate: int
+    certificate: int | None
 
 
 @single_argument_args('tn_connect_update')
