@@ -636,7 +636,7 @@ class Job:
                 result = self.result
             else:
                 try:
-                    result = self.middleware.dump_result(self.method, self.result, False)
+                    result = self.middleware.dump_result(self.serviceobj, self.method, self.result, False)
                 except Exception as e:
                     result = None
                     result_encoding_error = repr(e)
