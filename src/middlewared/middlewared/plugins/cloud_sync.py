@@ -236,18 +236,6 @@ async def rclone(middleware, job, cloud_sync, dry_run):
         if snapshot:
             await middleware.call("zfs.snapshot.delete", snapshot)
 
-        if cancelled_error is not None:
-            raise cancelled_error
-        if proc.returncode != 0:
-            message = "".join(job.internal_data.get("messages", []))
-            if message and proc.returncode != 1:
-                if not message.endswith("\n"):
-                    message += "\n"
-                message += f"rclone failed with exit code {proc.returncode}"
-            raise CallError(message)
-
-        await run_script(job, "Post-script", cloud_sync["post_script"], env)
-
         refresh_credentials = REMOTES[cloud_sync["credentials"]["provider"]].refresh_credentials
         if refresh_credentials:
             credentials_attributes = cloud_sync["credentials"]["attributes"].copy()
@@ -265,6 +253,18 @@ async def rclone(middleware, job, cloud_sync, dry_run):
                 await middleware.call("cloudsync.credentials.update", cloud_sync["credentials"]["id"], {
                     "attributes": credentials_attributes
                 })
+
+        if cancelled_error is not None:
+            raise cancelled_error
+        if proc.returncode != 0:
+            message = "".join(job.internal_data.get("messages", []))
+            if message and proc.returncode != 1:
+                if not message.endswith("\n"):
+                    message += "\n"
+                message += f"rclone failed with exit code {proc.returncode}"
+            raise CallError(message)
+
+        await run_script(job, "Post-script", cloud_sync["post_script"], env)
 
 
 # Prevents clogging job logs with progress reports every second
