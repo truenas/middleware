@@ -35,7 +35,7 @@ class Email(ValidatorBase):
 
     def __call__(self, value):
         if value is None or (self.empty and not value):
-            return
+            return value
         elif len(value) > self.max_path:
             raise ValueError("Maximum length is {self.max_path} characters.")
         else:
@@ -62,6 +62,8 @@ class Email(ValidatorBase):
             domain_part = value[right_most_atsign:]
             if domain_part == '@':
                 raise ValueError("Missing domain part of email string (part after the '@').")
+        
+        return value
 
 
 class Exact(ValidatorBase):
@@ -71,6 +73,7 @@ class Exact(ValidatorBase):
     def __call__(self, value):
         if value != self.value:
             raise ValueError(f"Should be {self.value!r}")
+        return value
 
 
 class IpAddress(ValidatorBase):
@@ -79,6 +82,8 @@ class IpAddress(ValidatorBase):
             ipaddress.ip_address(value)
         except ValueError:
             raise ValueError('Not a valid IP address')
+
+        return value
 
 
 class Netmask(ValidatorBase):
@@ -105,6 +110,8 @@ class Netmask(ValidatorBase):
         except ValueError:
             raise ValueError('Not a valid netmask')
 
+        return value
+
 
 class Time(ValidatorBase):
     def __call__(self, value):
@@ -117,6 +124,7 @@ class Time(ValidatorBase):
                 time(int(hours), int(minutes))
             except TypeError:
                 raise ValueError('Time should be in 24 hour format like "18:00"')
+
         return value
 
 
@@ -131,6 +139,7 @@ class Match(ValidatorBase):
     def __call__(self, value):
         if value is not None and not self.regex.match(value):
             raise ValueError(self.explanation or f"Value does not match {self.pattern!r} pattern")
+        return value
 
     def __deepcopy__(self, memo):
         return Match(self.pattern, self.flags, self.explanation)
@@ -146,6 +155,7 @@ class NotMatch(ValidatorBase):
     def __call__(self, value):
         if value is not None and self.regex.match(value):
             raise ValueError(self.explanation or f"Value matches {self.pattern!r} pattern")
+        return value
 
     def __deepcopy__(self, memo):
         return NotMatch(self.pattern, self.flags, self.explanation)
@@ -173,7 +183,7 @@ class Or(ValidatorBase):
             except ValueError as e:
                 errors.append(str(e))
             else:
-                return
+                return value
 
         raise ValueError(" or ".join(errors))
 
@@ -207,6 +217,8 @@ class Range(ValidatorBase):
         if self.max is not None and value > self.max:
             raise ValueError(f"Should be {error}")
 
+        return value
+
 
 class Port(Range):
     ''' Example usage with exclude:
@@ -219,11 +231,13 @@ class Port(Range):
 class QueryFilters(ValidatorBase):
     def __call__(self, value):
         validate_filters(value)
+        return value
 
 
 class QueryOptions(ValidatorBase):
     def __call__(self, value):
         validate_options(value)
+        return value
 
 
 class Unique(ValidatorBase):
@@ -231,6 +245,7 @@ class Unique(ValidatorBase):
         for item in value:
             if value.count(item) > 1:
                 raise ValueError(f"Duplicate values are not allowed: {item!r}")
+        return value
 
 
 class IpInUse(ValidatorBase):
@@ -248,6 +263,7 @@ class IpInUse(ValidatorBase):
                 raise ValueError(
                     f'{ip} is already being used by the system. Please select another IP'
                 )
+        return ip
 
 
 class MACAddr(ValidatorBase):
@@ -266,11 +282,13 @@ class MACAddr(ValidatorBase):
             )
         ):
             raise ValueError('Please provide a valid MAC address')
+        return value
 
 
 class ReplicationSnapshotNamingSchema(ValidatorBase):
     def __call__(self, value):
         validate_snapshot_naming_schema(value)
+        return value
 
 
 class UUID(ValidatorBase):
@@ -282,6 +300,8 @@ class UUID(ValidatorBase):
             uuid.UUID(value, version=4)
         except ValueError as e:
             raise ValueError(f'Invalid UUID: {e}')
+        
+        return value
 
 
 class PasswordComplexity(ValidatorBase):
@@ -334,6 +354,8 @@ class PasswordComplexity(ValidatorBase):
 
         if errstr:
             raise ValueError(errstr)
+        
+        return value
 
 
 def validate_schema(schema, data, additional_attrs=False, dict_kwargs=None):
@@ -375,7 +397,7 @@ class URL(ValidatorBase):
 
     def __call__(self, value):
         if self.empty and not value:
-            return
+            return value
 
         try:
             result = urlparse(value)
@@ -390,6 +412,8 @@ class URL(ValidatorBase):
 
         if not result.netloc:
             raise ValueError('Invalid URL: no netloc specified')
+        
+        return value
 
 
 def check_path_resides_within_volume_sync(verrors, schema_name, path, vol_names):
