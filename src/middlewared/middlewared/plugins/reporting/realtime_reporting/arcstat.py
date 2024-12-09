@@ -3,15 +3,6 @@ from .utils import normalize_value, safely_retrieve_dimension
 
 def get_arc_stats(netdata_metrics: dict) -> dict:
     data = {
-        'arc_free_memory': normalize_value(
-            safely_retrieve_dimension(netdata_metrics, 'truenas_arcstats.free', 'free', 0),
-        ),
-        'arc_available_memory': normalize_value(
-            safely_retrieve_dimension(netdata_metrics, 'truenas_arcstats.avail', 'avail', 0),
-        ),
-        'arc_size': normalize_value(
-            safely_retrieve_dimension(netdata_metrics, 'truenas_arcstats.size', 'size', 0),
-        ),
         'demand_accesses_per_second': normalize_value(
             safely_retrieve_dimension(netdata_metrics, 'truenas_arcstats.dread', 'dread', 0),
         ),

@@ -84,6 +84,7 @@ def get_metrics_approximation(
             'mem.kernel': 5,
             'mem.slab': 2,
             'mem.transparent_hugepages': 2,
+            'truenas_meminfo': 1,
 
             # net
             'system.net': 2,

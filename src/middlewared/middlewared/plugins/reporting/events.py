@@ -31,24 +31,13 @@ class RealtimeEventSource(EventSource):
         Dict('interfaces', additional_attrs=True),
         Dict(
             'memory',
-            Dict(
-                'classes',
-                Int('apps'),
-                Int('arc'),
-                Int('buffers'),
-                Int('cache'),
-                Int('page_tables'),
-                Int('slab_cache'),
-                Int('unused'),
-            ),
-            Dict('extra', additional_attrs=True),
-        ),
-        Dict('virtual_memory', additional_attrs=True),
-        Dict(
-            'zfs',
+            Int('arc_size'),
             Int('arc_free_memory'),
             Int('arc_available_memory'),
-            Int('arc_size'),
+            Int('physical_memory_total'),
+        ),
+        Dict(
+            'zfs',
             Int('demand_accesses_per_second'),
             Int('demand_data_accesses_per_second'),
             Int('demand_metadata_accesses_per_second'),
@@ -103,7 +92,6 @@ class RealtimeEventSource(EventSource):
                 data = {
                     'zfs': get_arc_stats(netdata_metrics),  # ZFS ARC Size
                     'memory': get_memory_info(netdata_metrics),
-                    'virtual_memory': psutil.virtual_memory()._asdict(),
                     'cpu': get_cpu_stats(netdata_metrics),
                     'disks': get_disk_stats(netdata_metrics, disks, disk_mapping),
                     'interfaces': get_interface_stats(
