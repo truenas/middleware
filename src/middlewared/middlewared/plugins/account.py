@@ -1351,6 +1351,25 @@ class UserService(CRUDService):
                 await self.middleware.run_in_thread(validate_sudo_commands, data['sudo_commands_nopasswd']),
             )
 
+        two_factor_config = await self.middleware.call('auth.twofactor.config')
+        if (
+            data.get(
+                'ssh_password_enabled', False
+            ) and two_factor_config['enabled'] and two_factor_config['services']['ssh']
+        ):
+            error = [
+                f'{schema}.ssh_password_enabled',
+                '2FA for this user needs to be explicitly configured before password based SSH access is enabled.'
+            ]
+            if old is None:
+                error[1] += (' User will be created with SSH password access disabled and after 2FA has been '
+                             'configured for this user, SSH password access can be enabled.')
+                verrors.add(*error)
+            elif (
+                await self.middleware.call('user.translate_username', old['username'])
+            )['twofactor_auth_configured'] is False:
+                verrors.add(*error)
+
     def __set_password(self, data):
         if 'password' not in data:
             return
