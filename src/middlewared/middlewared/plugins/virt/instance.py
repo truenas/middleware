@@ -72,7 +72,8 @@ class VirtInstanceService(CRUDService):
                     'serial': i['config'].get('image.serial'),
                     'type': i['config'].get('image.type'),
                     'variant': i['config'].get('image.variant'),
-                }
+                },
+                'raw': {},  # Default required by pydantic
             }
 
             if options['extra'].get('raw'):
@@ -181,16 +182,17 @@ class VirtInstanceService(CRUDService):
     @job()
     async def do_create(self, job, data):
         """
-        Create a new virtualizated instance.
+        Create a new virtualized instance.
         """
-
         await self.middleware.call('virt.global.check_initialized')
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_create', verrors)
 
         devices = {}
         for i in (data['devices'] or []):
-            await self.middleware.call('virt.instance.validate_device', i, 'virt_instance_create', verrors)
+            await self.middleware.call(
+                'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['instance_type'],
+            )
             if i['name'] is None:
                 i['name'] = await self.middleware.call('virt.instance.generate_device_name', devices.keys(), i['dev_type'])
             devices[i['name']] = await self.middleware.call('virt.instance.device_to_incus', data['instance_type'], i)
@@ -211,7 +213,7 @@ class VirtInstanceService(CRUDService):
             url = LC_IMAGES_SERVER
 
         source = {
-            'type': 'image',
+            'type': (data['source_type'] or 'none').lower(),
         }
 
         result = await incus_call(f'1.0/images/{data["image"]}', 'get')
