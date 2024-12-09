@@ -299,6 +299,10 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             if id_ != undefined:
                 app.send_error(id_, JSONRPCError.METHOD_NOT_FOUND.value, "Method does not exist")
             return
+        if not app.private_methods and method.private:
+            # FIXME: Eventually, prohibit this
+            self.middleware.logger.warning("Private method %r called on a connection without private method call "
+                                           "enabled", method.name)
 
         asyncio.ensure_future(
             self.process_method_call(app, id_, method, message["params"])
