@@ -1,7 +1,7 @@
 import pytest
 
-from middlewared.service_exception import ValidationErrors
-from middlewared.test.integration.assets.account import user, group
+from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.test.integration.assets.account import user, group, unprivileged_user_client
 from middlewared.test.integration.utils import call, client
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
@@ -67,6 +67,17 @@ def test_delete_account_audit():
             "description": "Delete user user2",
         }]):
             call("user.delete", u["id"], {})
+
+
+@pytest.mark.parametrize("roles, message", [
+    (["FULL_ADMIN"], "Cannot delete the currently active user"),
+    (["SHARING_ADMIN"], "Not authorized")
+])
+def test_delete_self(roles, message):
+    with unprivileged_user_client(roles) as c:
+        user_id = c.call("user.query", [["username", "=", c.username]], {"get": True})["id"]
+        with pytest.raises(CallError, match=message):
+            c.call("user.delete", user_id)
 
 
 def test_create_group_audit():
