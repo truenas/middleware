@@ -1,3 +1,4 @@
+from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, Service
 
 from .acme_utils import normalize_acme_config
@@ -5,7 +6,7 @@ from .cert_utils import generate_csr, get_hostnames_from_hostname_config
 from .mixin import TNCAPIMixin
 from .status_utils import Status
 from .urls import ACME_CONFIG_URL
-from .utils import get_account_id_and_system_id
+from .utils import CERT_RENEW_DAYS, get_account_id_and_system_id
 
 
 class TNCACMEService(Service, TNCAPIMixin):
@@ -39,17 +40,27 @@ class TNCACMEService(Service, TNCAPIMixin):
 
     async def initiate_cert_generation(self):
         try:
-            await self.initiate_cert_generation_impl()
+            cert_details = await self.initiate_cert_generation_impl()
         except Exception:
             self.logger.error('Failed to complete certificate generation for TNC', exc_info=True)
             await self.middleware.call('tn_connect.set_status', Status.CERT_GENERATION_FAILED.name)
         else:
             # TODO: Insert cert in the database
-            await self.middleware.call('tn_connect.set_status', Status.CONFIGURED.name)
+            cert_id = await self.middleware.call(
+                'datastore.insert',
+                'system.certificate', {
+                    'name': 'TNC',
+                    'type': CERT_TYPE_EXISTING,
+                    'certificate': cert_details['cert'],
+                    'privatekey': cert_details['private_key'],
+                    'renew_days': CERT_RENEW_DAYS,
+                }, {'prefix': 'cert_'}
+            )
+            await self.middleware.call('tn_connect.set_status', Status.CONFIGURED.name, {'certificate': cert_id})
 
     async def initiate_cert_generation_impl(self):
         await self.middleware.call('tn_connect.hostname.register_update_ips')
-        await self.create_cert()
+        return await self.create_cert()
 
     async def create_cert(self):
         hostname_config = await self.middleware.call('tn_connect.hostname.config')
