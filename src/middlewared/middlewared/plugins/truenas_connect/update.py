@@ -15,6 +15,7 @@ class TrueNASConnectModel(sa.Model):
     registration_details = sa.Column(sa.JSON(dict), nullable=False)
     ips = sa.Column(sa.JSON(list), nullable=False)
     status = sa.Column(sa.String(255), default=Status.DISABLED.name, nullable=False)
+    certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
 
 
 class TrueNASConnectService(ConfigService):
@@ -31,6 +32,8 @@ class TrueNASConnectService(ConfigService):
     async def config_extend(self, config):
         config['status_reason'] = Status(config['status']).value
         config.pop('jwt_token', None)
+        if config['certificate']:
+            config['certificate'] = config['certificate']['id']
         return config
 
     @private
