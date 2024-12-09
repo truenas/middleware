@@ -37,13 +37,6 @@
 
 	twofactor_auth = render_ctx['auth.twofactor.config']
 	twofactor_enabled = twofactor_auth['enabled'] and twofactor_auth['services']['ssh']
-	ad_allow_pam = False
-	ldap_enabled = False
-	ad = render_ctx["activedirectory.config"]
-	if ad['enable'] and not ad['restrict_pam']:
-		ad_allow_pam = True
-	if not ad['enable']:
-		ldap_enabled = render_ctx["ldap.config"]["enable"]
 
 	users = middleware.call_sync('user.query', [['local', '=', True]])
 	root_user = filter_list(users, [['username', '=', 'root']], {'get': True})
@@ -100,22 +93,23 @@ GSSAPIAuthentication yes
 % endif
 PubkeyAuthentication yes
 ${ssh_config['options']}
-% if twofactor_enabled or ad_allow_pam or ldap_enabled:
+
 # These are forced to be enabled with 2FA
 UsePAM yes
-ChallengeResponseAuthentication yes
-## We want to set this to no because in linux we have pam_motd being used as well when we use pam_oath.so resulting in duplicate motd's
+## Motd is handled by pam_motd
 PrintMotd no
-% endif
 SetEnv LC_ALL=C.UTF-8
+
 % if ssh_config['passwordauth']:
 % for user in filter_list(users, [['ssh_password_enabled', '=', True]]):
 Match User "${user['username']}"
 	PasswordAuthentication yes
+	ChallengeResponseAuthentication yes
 % endfor
 % for group in ssh_config['password_login_groups']:
 Match Group "${group}"
 	PasswordAuthentication yes
+	ChallengeResponseAuthentication yes
 % endfor
 % endif
 % if login_banner != '':
