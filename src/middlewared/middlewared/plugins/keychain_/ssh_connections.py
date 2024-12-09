@@ -30,6 +30,8 @@ class KeychainCredentialService(Service):
             )
         ),
         roles=['KEYCHAIN_CREDENTIAL_WRITE'],
+        audit="Setup SSH Connection:",
+        audit_extended=lambda options: options["connection_name"]
     )
     @returns(Ref('keychain_credential_entry'))
     async def setup_ssh_connection(self, options):

@@ -262,13 +262,17 @@ class KeychainCredentialService(CRUDService):
         ("add", Int("id")),
     )
 
-    @accepts(Dict(
-        "keychain_credential_create",
-        Str("name", required=True, empty=False),
-        Str("type", required=True),
-        Dict("attributes", additional_attrs=True, required=True, private=True),
-        register=True,
-    ))
+    @accepts(
+        Dict(
+            "keychain_credential_create",
+            Str("name", required=True, empty=False),
+            Str("type", required=True),
+            Dict("attributes", additional_attrs=True, required=True, private=True),
+            register=True,
+        ),
+        audit="Create Keychain Credential:",
+        audit_extended=lambda data: data["name"]
+    )
     async def do_create(self, data):
         """
         Create a Keychain Credential
@@ -326,9 +330,11 @@ class KeychainCredentialService(CRUDService):
             "keychain_credential_update",
             ("attr", {"update": True}),
             ("rm", {"name": "type"}),
-        )
+        ),
+        audit="Update Keychain Credential:",
+        audit_callback=True
     )
-    async def do_update(self, id_, data):
+    async def do_update(self, audit_callback, id_, data):
         """
         Update a Keychain Credential with specific `id`
 
@@ -360,6 +366,7 @@ class KeychainCredentialService(CRUDService):
         """
 
         old = await self.get_instance(id_)
+        audit_callback(old["name"])
 
         new = old.copy()
         new.update(data)
@@ -378,9 +385,14 @@ class KeychainCredentialService(CRUDService):
 
         return new
 
-    @accepts(Int("id"), Dict("options", Bool("cascade", default=False)))
+    @accepts(
+        Int("id"),
+        Dict("options", Bool("cascade", default=False)),
+        audit="Delete Keychain Credential:",
+        audit_callback=True
+    )
     @returns()
-    async def do_delete(self, id_, options):
+    async def do_delete(self, audit_callback, id_, options):
         """
         Delete Keychain Credential with specific `id`
 
@@ -398,6 +410,8 @@ class KeychainCredentialService(CRUDService):
         """
 
         instance = await self.get_instance(id_)
+        audit_callback(instance["name"])
+
         for delegate in TYPES[instance["type"]].used_by_delegates:
             delegate = delegate(self.middleware)
             for row in await delegate.query(instance["id"]):
@@ -573,6 +587,8 @@ class KeychainCredentialService(CRUDService):
             register=True,
         ),
         roles=["KEYCHAIN_CREDENTIAL_WRITE"],
+        audit="SSH Semi-automatic Setup:",
+        audit_extended=lambda data: data["name"]
     )
     @returns(Ref("keychain_credential_entry"))
     def remote_ssh_semiautomatic_setup(self, data):
