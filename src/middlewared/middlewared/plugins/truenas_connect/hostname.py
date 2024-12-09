@@ -12,11 +12,11 @@ class TNCHostnameService(Service, TNCAPIMixin):
         private = True
 
     async def call(self, url, mode, payload=None):
-        config = await self.middleware.call('tn_connect.config')
+        config = await self.middleware.call('tn_connect.config_internal')
         return await self._call(url, mode, payload=payload, headers=await self.auth_headers(config))
 
     async def config(self):
-        config = await self.middleware.call('tn_connect.config')
+        config = await self.middleware.call('tn_connect.config_internal')
         creds = get_account_id_and_system_id(config)
         if not config['enabled'] or creds is None:
             return {
@@ -40,7 +40,7 @@ class TNCHostnameService(Service, TNCAPIMixin):
         }
 
     async def register_update_ips(self):
-        tnc_config = await self.middleware.call('tn_connect.config')
+        tnc_config = await self.middleware.call('tn_connect.config_internal')
         config = await self.config()
         if config['error']:
             raise CallError(f'Failed to fetch TNC hostname configuration: {config["error"]}')
@@ -49,10 +49,11 @@ class TNCHostnameService(Service, TNCAPIMixin):
         if register:
             payload = {
                 'ips': tnc_config['ips'],
-                'system_id': tnc_config['jwt_details']['system_id'],
+                'system_id': tnc_config['registration_details']['system_id'],
                 'create_wildcard': True,
             }
         else:
+            # FIXME: This needs to be fixed
             payload = {config['base_domain']: tnc_config['ip']}
 
         # FIXME: Put does not give json in response, handle that and is broken upstream atm as well
