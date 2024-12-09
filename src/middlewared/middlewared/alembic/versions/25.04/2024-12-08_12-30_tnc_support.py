@@ -24,7 +24,12 @@ def upgrade():
         sa.Column('ips', sa.TEXT(), nullable=False, server_default='[]'),
         sa.Column('registration_details', sa.TEXT(), nullable=False, server_default='{}'),
         sa.Column('status', sa.String(length=255), nullable=False),
+        sa.Column('certificate_id', nullable=True),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_truenas_connect')),
+        sa.ForeignKeyConstraint(
+            ['certificate_id'], ['system_certificate.id'],
+            name=op.f('fk_truenas_connect_certificate_id_system_certificate')
+        ),
         sqlite_autoincrement=True,
     )
 
