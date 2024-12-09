@@ -208,7 +208,7 @@ def test_virt_instance_proxy():
 
 
 def test_virt_instance_shell():
-    assert call('virt.instance.get_shell', INS2_NAME) == '/bin/bash'
+    assert call('virt.instance.get_shell', INS3_NAME) == '/bin/bash'
 
 
 def test_virt_instance_device_delete():

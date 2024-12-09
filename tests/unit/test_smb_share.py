@@ -7,6 +7,7 @@ from middlewared.plugins.smb_.util_smbconf import (
     TrueNASVfsObjects
 )
 from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.io import set_io_uring_enabled
 
 BASE_SMB_CONFIG = {
     'id': 1,
@@ -105,6 +106,19 @@ def nfsacl_dataset(create_dataset):
 def noacl_dataset(create_dataset):
     create_dataset.update_properties({'acltype': {'parsed': 'off'}})
     yield create_dataset.mountpoint
+
+
+@pytest.fixture(scope='function')
+def disable_io_uring():
+    is_enabled = set_io_uring_enabled(False)
+    assert is_enabled is False
+
+    try:
+        yield False
+    finally:
+        is_enabled = set_io_uring_enabled(True)
+
+    assert is_enabled is True
 
 
 def test__base_parameters(nfsacl_dataset):
@@ -498,3 +512,11 @@ def test__smb_external_share(nfsacl_dataset):
     assert conf['path'] == '/var/empty'
     assert conf['msdfs root'] is True
     assert conf['msdfs proxy'] == '127.0.0.1\\SHARE'
+
+
+def test__disabled_io_uring(nfsacl_dataset, disable_io_uring):
+    conf = generate_smb_share_conf_dict(DSType.AD, BASE_SMB_SHARE | {
+        'path': nfsacl_dataset,
+    }, BASE_SMB_CONFIG, disable_io_uring)
+
+    assert TrueNASVfsObjects.IO_URING not in conf['vfs objects']

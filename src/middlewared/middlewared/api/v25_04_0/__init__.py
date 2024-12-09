@@ -25,6 +25,7 @@ from .iscsi_extent import *  # noqa
 from .keychain import *  # noqa
 from .netdata import *  # noqa
 from .pool import *  # noqa
+from .pool_resilver import *  # noqa
 from .pool_scrub import *  # noqa
 from .pool_snapshottask import *  # noqa
 from .privilege import *  # noqa

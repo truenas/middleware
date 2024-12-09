@@ -1,9 +1,9 @@
 <%
     ftp = render_ctx['ftp.config']
     if ftp["banner"]:
-        banner = ftp["banner"] + "\n"
+        banner = ftp["banner"]
     else:
-        banner = "Welcome to TrueNAS FTP Server\n"
+        banner = "Welcome to TrueNAS FTP Server"
 
-%>
+%>\
 ${banner}
