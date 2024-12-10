@@ -1,21 +1,19 @@
-from pathlib import Path
+import os
 
 from middlewared.service import Service
 from middlewared.service_exception import ValidationError
-from middlewared.schema import accepts, returns, Dict, Str
 from middlewared.utils.functools_ import cache
 
 
 class HardwareCpuService(Service):
 
     class Config:
+        private = True
         namespace = 'hardware.cpu'
         cli_namespace = 'system.hardware.cpu'
 
-    @accepts()
-    @returns(Dict('governor', additional_attrs=True))
     @cache
-    def available_governors(self):
+    def available_governors(self) -> dict[str, str] | dict:
         """Return available cpu governors"""
         try:
             with open('/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors') as f:
@@ -24,9 +22,7 @@ class HardwareCpuService(Service):
             # doesn't support changing governor
             return dict()
 
-    @accepts()
-    @returns(Str('governor'))
-    def current_governor(self):
+    def current_governor(self) -> str | None:
         """Returns currently set cpu governor"""
         try:
             with open('/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor') as f:
@@ -35,10 +31,10 @@ class HardwareCpuService(Service):
             # doesn't support changing governor
             return
 
-    @accepts(Str('governor', required=True))
-    @returns()
-    def set_governor(self, governor):
-        """Set the cpu governor to `governor` on all cpus"""
+    def set_governor(self, governor: str) -> None:
+        """Set the cpu governor to `governor` on all cpus.
+        Available governors may be determined by calling hardware.cpu.available_governors.
+        """
         curr_gov = self.current_governor()
         if curr_gov is None:
             raise ValidationError('hardware.cpu.governor', 'Changing cpu governor is not supported')
@@ -48,8 +44,10 @@ class HardwareCpuService(Service):
         elif governor not in self.available_governors():
             raise ValidationError('hardware.cpu.governor', f'{governor} is not available')
 
-        for i in Path('/sys/devices/system/cpu').iterdir():
-            if i.is_dir() and i.name.startswith('cpu'):
-                cpug = (i / 'cpufreq/scaling_governor')
-                if cpug.exists():
-                    cpug.write_text(governor)
+        try:
+            with os.scandir('/sys/devices/system/cpu') as sdir:
+                for i in filter(lambda x: x.is_dir() and x.name.starts('cpu'), sdir):
+                    with open(os.path.join(i.name, 'cpufreq/scaling_governonr'), 'w') as f:
+                        f.write(governor)
+        except FileNotFoundError:
+            pass
