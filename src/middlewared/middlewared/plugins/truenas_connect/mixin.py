@@ -4,6 +4,8 @@ import json
 import aiohttp
 import async_timeout
 
+from middlewared.service import private
+
 
 def auth_headers(config: dict) -> dict:
     return {'Authorization': f'Bearer {config["jwt_token"]}'}
@@ -11,12 +13,13 @@ def auth_headers(config: dict) -> dict:
 
 class TNCAPIMixin:
 
+    @private
     async def auth_headers(self, config: dict) -> dict:
         return auth_headers(config)
 
     async def _call(
         self, endpoint: str, mode: str, *, options: dict | None = None, payload: dict | None = None,
-        headers: dict | None = None,
+        headers: dict | None = None, json_response: bool = True,
     ):
         # FIXME: Add network activity check for TNC
         options = options or {}
@@ -37,5 +40,5 @@ class TNCAPIMixin:
         except aiohttp.ClientConnectorError as e:
             response['error'] = f'Failed to connect to TNC: {e}'
         else:
-            response['response'] = await req.json()
+            response['response'] = await req.json() if json_response else await req.text()
         return response
