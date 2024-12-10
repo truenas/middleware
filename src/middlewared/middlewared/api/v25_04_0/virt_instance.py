@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Field, StringConstraints
+from pydantic import Field, model_validator, StringConstraints
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args
 
@@ -62,7 +62,8 @@ MemoryType: TypeAlias = Annotated[int, Field(strict=True, ge=33554432)]
 @single_argument_args('virt_instance_create')
 class VirtInstanceCreateArgs(BaseModel):
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
-    image: Annotated[NonEmptyString, StringConstraints(max_length=200)]
+    source_type: Literal[None, 'IMAGE'] = 'IMAGE'
+    image: Annotated[NonEmptyString, StringConstraints(max_length=200)] | None = None
     remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
     instance_type: InstanceType = 'CONTAINER'
     environment: dict[str, str] | None = None
@@ -70,6 +71,16 @@ class VirtInstanceCreateArgs(BaseModel):
     cpu: str | None = None
     devices: list[DeviceType] | None = None
     memory: MemoryType | None = None
+
+    @model_validator(mode='after')
+    def validate_attrs(self):
+        if self.instance_type == 'CONTAINER' and self.source_type != 'IMAGE':
+            raise ValueError('Source type must be set to "IMAGE" when instance type is CONTAINER')
+
+        if self.source_type == 'IMAGE' and self.image is None:
+            raise ValueError('Image must be set when source type is "IMAGE"')
+
+        return self
 
 
 class VirtInstanceCreateResult(BaseModel):
