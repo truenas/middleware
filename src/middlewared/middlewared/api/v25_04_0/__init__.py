@@ -20,6 +20,7 @@ from .failover_reboot import *  # noqa
 from .fc_host import *  # noqa
 from .fcport import *  # noqa
 from .filesystem import *  # noqa
+from .ftp import *  # noqa
 from .group import *  # noqa
 from .iscsi_auth import *  # noqa
 from .iscsi_extent import *  # noqa

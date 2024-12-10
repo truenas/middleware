@@ -1,8 +1,12 @@
 from middlewared.async_validators import check_path_resides_within_volume, resolve_hostname, validate_port
-from middlewared.schema import accepts, Bool, Dict, Dir, Int, Patch, Str
-from middlewared.validators import Exact, Match, Or, Range
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
+
+from middlewared.api import api_method
+from middlewared.api.current import (
+    FtpEntry,
+    FtpUpdateArgs, FtpUpdateResult
+)
 
 
 class FTPModel(sa.Model):
@@ -59,52 +63,7 @@ class FTPService(SystemServiceService):
         datastore_extend = "ftp.ftp_extend"
         cli_namespace = "service.ftp"
         role_prefix = "SHARING_FTP"
-
-    ENTRY = Dict(
-        'ftp_entry',
-        Int('id', required=True),
-        Int('port', validators=[Range(min_=1, max_=65535)], required=True),
-        Int('clients', validators=[Range(min_=1, max_=10000)], required=True),
-        Int('ipconnections', validators=[Range(min_=0, max_=1000)], required=True),
-        Int('loginattempt', validators=[Range(min_=0, max_=1000)], required=True),
-        Int('timeout', validators=[Range(min_=0, max_=10000)], required=True),
-        Int('timeout_notransfer', validators=[Range(min_=0, max_=10000)]),
-        Bool('onlyanonymous', required=True),
-        Dir('anonpath', null=True, required=True),
-        Bool('onlylocal', required=True),
-        Str('banner', max_length=None, required=True),
-        Str('filemask', validators=[Match(r"^[0-7]{3}$")], required=True),
-        Str('dirmask', validators=[Match(r"^[0-7]{3}$")], required=True),
-        Bool('fxp', required=True),
-        Bool('resume', required=True),
-        Bool('defaultroot', required=True),
-        Bool('ident', required=True),
-        Bool('reversedns', required=True),
-        Str('masqaddress', required=True),
-        Int('passiveportsmin', validators=[Or(Exact(0), Range(min_=1024, max_=65535))], required=True),
-        Int('passiveportsmax', validators=[Or(Exact(0), Range(min_=1024, max_=65535))], required=True),
-        Int('localuserbw', validators=[Range(min_=0)], required=True),
-        Int('localuserdlbw', validators=[Range(min_=0)], required=True),
-        Int('anonuserbw', validators=[Range(min_=0)], required=True),
-        Int('anonuserdlbw', validators=[Range(min_=0)], required=True),
-        Bool('tls', required=True),
-        Str('tls_policy', enum=[
-            'on', 'off', 'data', '!data', 'auth', 'ctrl', 'ctrl+data', 'ctrl+!data', 'auth+data', 'auth+!data'
-        ], required=True),
-        Bool('tls_opt_allow_client_renegotiations', required=True),
-        Bool('tls_opt_allow_dot_login', required=True),
-        Bool('tls_opt_allow_per_user', required=True),
-        Bool('tls_opt_common_name_required', required=True),
-        Bool('tls_opt_enable_diags', required=True),
-        Bool('tls_opt_export_cert_data', required=True),
-        Bool('tls_opt_no_empty_fragments', required=True),
-        Bool('tls_opt_no_session_reuse_required', required=True),
-        Bool('tls_opt_stdenvvars', required=True),
-        Bool('tls_opt_dns_name_required', required=True),
-        Bool('tls_opt_ip_address_required', required=True),
-        Int('ssltls_certificate', null=True, required=True),
-        Str('options', max_length=None, required=True),
-    )
+        entry = FtpEntry
 
     @private
     async def ftp_extend(self, data):
@@ -112,14 +71,7 @@ class FTPService(SystemServiceService):
             data['ssltls_certificate'] = data['ssltls_certificate']['id']
         return data
 
-    @accepts(
-        Patch(
-            'ftp_entry', 'ftp_update',
-            ('rm', {'name': 'id'}),
-            ('attr', {'update': True}),
-        ),
-        audit='Update FTP configuration',
-    )
+    @api_method(FtpUpdateArgs, FtpUpdateResult, audit='Update FTP configuration')
     async def do_update(self, data):
         """
         Update ftp service configuration.
