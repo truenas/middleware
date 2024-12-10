@@ -197,7 +197,7 @@ ROLES = {
     'SYSTEM_ADVANCED_WRITE': Role(includes=['SYSTEM_ADVANCED_READ']),
 
     'SYSTEM_SECURITY_READ': Role(),
-    'SYSTEM_SECURITY_WRITE': Role(includes['SYSTEM_SECURITY_READ']),
+    'SYSTEM_SECURITY_WRITE': Role(includes=['SYSTEM_SECURITY_READ']),
 
     # Virtualization
     'VIRT_GLOBAL_READ': Role(),

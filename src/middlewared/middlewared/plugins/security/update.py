@@ -50,7 +50,7 @@ class SystemSecurityService(ConfigService):
                 await self.middleware.call('failover.reboot.add_remote_reason', RebootReason.FIPS.name,
                                            RebootReason.FIPS.value)
 
-    async def apply(self):
+    async def configure_stig(self):
         if not (await self.config())['stig_enabled']:
             await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
             return
@@ -127,14 +127,17 @@ class SystemSecurityService(ConfigService):
         is_ha = await self.middleware.call('failover.licensed')
         reasons = await self.middleware.call('failover.disabled.reasons')
         await self.validate(is_ha, reasons)
-        if new['enable_stig']:
-            await self.validate_stig()
 
         old = await self.config()
         new = old.copy()
         new.update(data)
         if new == old:
             return new
+
+        if new['enable_stig']:
+            await self.validate_stig()
+            if not new['enable_fips']:
+                raise ValueError('FIPS mode is required in STIG compatibility mode.')
 
         await self.middleware.call('datastore.update', self._config.datastore, old['id'], new)
 
@@ -145,8 +148,13 @@ class SystemSecurityService(ConfigService):
             await self.middleware.call('system.reboot.toggle_reason', RebootReason.FIPS.name, RebootReason.FIPS.value)
             await self.configure_fips_on_ha(is_ha, job)
 
+        if new['enable_stig'] != old['enable_stig']:
+            await self.middleware.call('system.reboot.toggle_reason', RebootReason.STIG.name, RebootReason.STIG.value)
+            # Trigger reboot on standby to apply STIG-related configuration
+            await self.configure_fips_on_ha(is_ha, job)
+
         return await self.config()
 
 
 async def setup(middleware):
-    await middleware.call('system.security.apply')
+    await middleware.call('system.security.configure_stig')
