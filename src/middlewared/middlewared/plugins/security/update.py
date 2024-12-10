@@ -115,7 +115,7 @@ class SystemSecurityService(ConfigService):
                 )
 
     @api_method(
-        SystemSecurityUpdateArgs, SystemSecurityUpdateResult
+        SystemSecurityUpdateArgs, SystemSecurityUpdateResult,
         audit='System security update:'
     )
     @job(lock='security_update')
