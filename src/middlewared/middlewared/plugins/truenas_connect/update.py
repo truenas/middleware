@@ -74,7 +74,6 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         db_payload = {'enabled': data['enabled'], 'ips': data['ips']}
         if config['enabled'] is False and data['enabled'] is True:
-            # TODO: We should make sure to reset any pending registration details
             db_payload['status'] = Status.CLAIM_TOKEN_MISSING.name
         elif config['enabled'] is True and data['enabled'] is False:
             await self.unset_registration_details()
@@ -84,7 +83,6 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
                 'status': Status.DISABLED.name,
                 'certificate': None,
             })
-            # TODO: Make sure to revoke any existing token/certs
 
         await self.middleware.call('datastore.update', self._config.datastore, config['id'], db_payload)
 
