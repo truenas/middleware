@@ -101,6 +101,12 @@ def test_no_full_admin_users_fail(enterprise_product, two_factor_non_admin):
         call('system.security.update', {'enable_fips': True, 'enable_stig': True}, job=True)
 
 
+def test_no_current_cred_no_2fa(enterprise_product, two_factor_full_admin):
+    with pytest.raises(ValidationErrors, match='Credential used to enable STIG compatibility'):
+        # root / truenas_admin does not have 2FA and so this should fail
+        call('system.security.update', {'enable_fips': True, 'enable_stig': True}, job=True)
+
+
 def test_stig_enabled_authenticator_assurance_level(setup_stig, two_factor_full_admin):
     # Validate that admin user can authenticate and perform operations
     user_obj, secret = two_factor_full_admin

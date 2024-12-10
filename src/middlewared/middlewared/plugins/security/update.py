@@ -82,9 +82,12 @@ class SystemSecurityService(ConfigService):
                  'enabling STIG compatibility mode.'
             )
 
+        # We want to make sure that at least one local user account is usable
+        # and has 2fa auth configured.
         two_factor_users = await self.middleware.call('user.query', [
             ['twofactor_auth_configured', '=', True],
-            ['locked', '=', False]
+            ['locked', '=', False],
+            ['local', '=', True]
         ])
 
         if not two_factor_users:
@@ -94,12 +97,19 @@ class SystemSecurityService(ConfigService):
                 'prior to enabling STIG compatibiltiy mode.'
             )
 
-        if not any([user for user in two_factor_users if 'FULL_ADMIN' in user['roles'] and user['local']]):
+        if not any([user for user in two_factor_users if 'FULL_ADMIN' in user['roles']]):
             raise ValidationError(
                 'system_security_update.enable_stig',
                 'At least one local user with full admin privileges and must be '
                 'configured with a two factor authentication token prior to enabling '
                 'STIG compatibility mode.'
+            )
+
+        if current_cred.is_user_session and '2FA' not in current_cred.user['account_attributes']: 
+            raise ValidationError(
+                'system_security_update.enable_stig',
+                'Credential used to enable STIG compatibility must have two factor authentication '
+                'enabled.'
             )
 
     @private
