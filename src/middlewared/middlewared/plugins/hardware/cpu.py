@@ -1,3 +1,4 @@
+import enum
 import os
 
 from middlewared.service import Service
@@ -5,18 +6,24 @@ from middlewared.service_exception import ValidationError
 from middlewared.utils.functools_ import cache
 
 
-class HardwareCpuService(Service):
+class SysfsCpuEnum(enum.StrEnum):
+    BASE = "/sys/devices/system/cpu/"
+    GOVERNOR_BASE = os.path.join(BASE, "cpu0/cpufreq")
+    CURRENT_GOVERNOR = os.path.join(GOVERNOR_BASE, "scaling_governor")
+    GOVERNORS_AVAIL = os.path.join(GOVERNOR_BASE, "scaling_available_governors")
 
+
+class HardwareCpuService(Service):
     class Config:
         private = True
-        namespace = 'hardware.cpu'
-        cli_namespace = 'system.hardware.cpu'
+        namespace = "hardware.cpu"
+        cli_namespace = "system.hardware.cpu"
 
     @cache
     def available_governors(self) -> dict[str, str] | dict:
         """Return available cpu governors"""
         try:
-            with open('/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors') as f:
+            with open(SysfsCpuEnum.GOVERNORS_AVAIL.value) as f:
                 return {i: i for i in f.read().split()}
         except FileNotFoundError:
             # doesn't support changing governor
@@ -25,7 +32,7 @@ class HardwareCpuService(Service):
     def current_governor(self) -> str | None:
         """Returns currently set cpu governor"""
         try:
-            with open('/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor') as f:
+            with open(SysfsCpuEnum.CURRENT_GOVERNOR.value) as f:
                 return f.read().strip()
         except FileNotFoundError:
             # doesn't support changing governor
@@ -37,17 +44,25 @@ class HardwareCpuService(Service):
         """
         curr_gov = self.current_governor()
         if curr_gov is None:
-            raise ValidationError('hardware.cpu.governor', 'Changing cpu governor is not supported')
+            raise ValidationError(
+                "hardware.cpu.governor", "Changing cpu governor is not supported"
+            )
         elif curr_gov == governor:
             # current governor is already set to what is being requested
             return
         elif governor not in self.available_governors():
-            raise ValidationError('hardware.cpu.governor', f'{governor} is not available')
+            raise ValidationError(
+                "hardware.cpu.governor", f"{governor} is not available"
+            )
 
         try:
-            with os.scandir('/sys/devices/system/cpu') as sdir:
-                for i in filter(lambda x: x.is_dir() and x.name.starts('cpu'), sdir):
-                    with open(os.path.join(i.name, 'cpufreq/scaling_governonr'), 'w') as f:
+            with os.scandir(SysfsCpuEnum.BASE.value) as sdir:
+                for i in filter(
+                    lambda x: x.is_dir() and x.name.startswith("cpu"), sdir
+                ):
+                    with open(
+                        os.path.join(i.path, "cpufreq/scaling_governonr"), "w"
+                    ) as f:
                         f.write(governor)
         except FileNotFoundError:
             pass
