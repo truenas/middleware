@@ -2,9 +2,10 @@ import logging
 import os.path
 import shutil
 
+from middlewared.api import api_method
+from middlewared.api.current import K8sToDockerMigrateArgs, K8sToDockerMigrateResult
 from middlewared.plugins.apps.ix_apps.path import get_app_parent_volume_ds_name, get_installed_app_path
 from middlewared.plugins.docker.state_utils import DatasetDefaults
-from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, job, Service
 
 from .migrate_config_utils import migrate_chart_release_config
@@ -20,23 +21,7 @@ class K8stoDockerMigrationService(Service):
         namespace = 'k8s_to_docker'
         cli_namespace = 'k8s_to_docker'
 
-    @accepts(
-        Str('kubernetes_pool'),
-        Dict(
-            'options',
-            Str('backup_name', null=True, default=None),
-        ),
-        roles=['DOCKER_WRITE']
-    )
-    @returns(List(
-        'app_migration_details',
-        items=[Dict(
-            'app_migration_detail',
-            Str('name'),
-            Bool('successfully_migrated'),
-            Str('error', null=True),
-        )]
-    ))
+    @api_method(K8sToDockerMigrateArgs, K8sToDockerMigrateResult, roles=['DOCKER_WRITE'])
     @job(lock='k8s_to_docker_migrate')
     def migrate(self, job, kubernetes_pool, options):
         """
