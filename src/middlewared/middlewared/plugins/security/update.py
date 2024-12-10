@@ -105,7 +105,7 @@ class SystemSecurityService(ConfigService):
                 'STIG compatibility mode.'
             )
 
-        if current_cred.is_user_session and '2FA' not in current_cred.user['account_attributes']: 
+        if current_cred.is_user_session and '2FA' not in current_cred.user['account_attributes']:
             raise ValidationError(
                 'system_security_update.enable_stig',
                 'Credential used to enable STIG compatibility must have two factor authentication '
