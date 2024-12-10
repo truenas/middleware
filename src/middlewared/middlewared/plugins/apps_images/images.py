@@ -1,5 +1,8 @@
+from middlewared.api import api_method
+from middlewared.api.current import (
+    AppImageEntry, AppImagePullArgs, AppImagePullResult, AppImageDeleteArgs, AppImageDeleteResult,
+)
 from middlewared.plugins.apps.ix_apps.docker.images import delete_image, list_images, pull_image
-from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
 from middlewared.service import CRUDService, filterable, job
 from middlewared.utils import filter_list
 
@@ -12,30 +15,7 @@ class AppImageService(CRUDService):
         cli_namespace = 'app.image'
         namespace = 'app.image'
         role_prefix = 'APPS'
-
-    ENTRY = Dict(
-        'app_image_entry',
-        Str('id'),
-        List('repo_tags', items=[Str('repo_tag')]),
-        List('repo_digests', items=[Str('repo_digest')]),
-        Int('size'),
-        Bool('dangling'),
-        Bool('update_available'),
-        Str('created'),
-        Str('author'),
-        Str('comment'),
-        List(
-            'parsed_repo_tags', items=[Dict(
-                'parsed_repo_tag',
-                Str('image'),
-                Str('tag'),
-                Str('registry'),
-                Str('complete_tag'),
-                additional_attrs=True,
-            )]
-        ),
-        additional_attrs=True,
-    )
+        entry = AppImageEntry
 
     @filterable
     def query(self, filters, options):
@@ -66,20 +46,7 @@ class AppImageService(CRUDService):
 
         return filter_list(images, filters, options)
 
-    @accepts(
-        Dict(
-            'image_pull',
-            Dict(
-                'auth_config',
-                Str('username', required=True),
-                Str('password', required=True, max_length=4096),
-                default=None,
-                null=True,
-            ),
-            Str('image', required=True),
-        ), roles=['APPS_WRITE']
-    )
-    @returns()
+    @api_method(AppImagePullArgs, AppImagePullResult, roles=['APPS_WRITE'])
     @job()
     def pull(self, job, data):
         """
@@ -115,13 +82,7 @@ class AppImageService(CRUDService):
         pull_image(image_tag, callback, auth_config.get('username'), auth_config.get('password'))
         job.set_progress(100, f'{image_tag!r} image pulled successfully')
 
-    @accepts(
-        Str('image_id'),
-        Dict(
-            'options',
-            Bool('force', default=False),
-        )
-    )
+    @api_method(AppImageDeleteArgs, AppImageDeleteResult)
     def do_delete(self, image_id, options):
         """
         Delete docker image `image_id`.
