@@ -4,7 +4,7 @@ import copy
 from middlewared.schema import accepts, Dict, Patch, returns
 
 from .base import ServiceBase
-from .decorators import private
+from .decorators import pass_app, private
 from .service import Service
 from .service_mixin import ServiceChangeMixin
 
@@ -78,9 +78,10 @@ class ConfigService(ServiceChangeMixin, Service, metaclass=ConfigServiceMetabase
         options['prefix'] = self._config.datastore_prefix
         return await self._get_or_insert(self._config.datastore, options)
 
-    async def update(self, data):
+    @pass_app(rest=True)
+    async def update(self, app, data):
         rv = await self.middleware._call(
-            f'{self._config.namespace}.update', self, self.do_update, [data]
+            f'{self._config.namespace}.update', self, self.do_update, [data], app=app
         )
         await self.middleware.call_hook(f'{self._config.namespace}.post_update', rv)
         return rv
