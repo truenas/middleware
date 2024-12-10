@@ -18,9 +18,9 @@ class SystemSecurityEntry(BaseModel):
 
 
 @single_argument_args('system_security_update')
-class SystemSecurityUpdateArgs(SystemSecuityEntry, metaclass=ForUpdateMetaclass):
+class SystemSecurityUpdateArgs(SystemSecurityEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
-class SystemSecurityUpdateResult(BaseModel:
+class SystemSecurityUpdateResult(BaseModel):
     result: SystemSecurityEntry
