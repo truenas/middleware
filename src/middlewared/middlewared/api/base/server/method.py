@@ -39,13 +39,17 @@ class Method:
 
         result = await self.middleware.call_with_audit(self.name, self.serviceobj, methodobj, params, app)
         if isinstance(result, Job):
-            result = result.id
-        elif isinstance(result, types.GeneratorType):
+            return result.id
+
+        if isinstance(result, types.GeneratorType):
             result = list(result)
         elif isinstance(result, types.AsyncGeneratorType):
             result = [i async for i in result]
 
-        return result
+        return self._dump_result(app, methodobj, result)
+
+    def _dump_result(self, app: "RpcWebSocketApp", methodobj, result):
+        return self.middleware.dump_result(self.serviceobj, methodobj, app, result)
 
     def dump_args(self, params: list) -> list:
         """

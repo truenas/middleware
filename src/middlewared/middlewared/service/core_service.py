@@ -804,11 +804,11 @@ class CoreService(Service):
                 # entries for external callers to methods. app is only None
                 # on internal calls to core.bulk.
                 if app:
-                    msg = await self.middleware.call_with_audit(method, serviceobj, methodobj, p, app=app)
+                    msg = await self.middleware.call_with_audit(method, serviceobj, methodobj, p, app)
                 else:
                     msg = await self.middleware.call(method, *p)
 
-                status = {"result": msg, "error": None}
+                status = {"error": None}
 
                 if isinstance(msg, Job):
                     b_job = msg
@@ -817,6 +817,8 @@ class CoreService(Service):
 
                     if b_job.error:
                         status["error"] = b_job.error
+                else:
+                    status["result"] = self.middleware.dump_result(serviceobj, methodobj, app, msg)
 
                 statuses.append(status)
             except Exception as e:

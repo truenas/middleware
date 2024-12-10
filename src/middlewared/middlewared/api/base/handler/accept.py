@@ -15,7 +15,7 @@ def accept_params(model: type[BaseModel], args: list, *, exclude_unset=False, ex
     :param model: `BaseModel` that defines method args.
     :param args: a list of method args.
     :param exclude_unset: if true, will not append default parameters to the list.
-    :param expose_secrets: if false, will replace `Private` parameters with a placeholder.
+    :param expose_secrets: if false, will replace `Secret` parameters with a placeholder.
     :return: a validated list of method args.
     """
     args_as_dict = model_dict_from_list(model, args)
@@ -60,7 +60,7 @@ def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, e
     :param model: `BaseModel` subclass.
     :param data: provided data.
     :param exclude_unset: if true, will not add default values.
-    :param expose_secrets: if false, will replace `Private` fields with a placeholder.
+    :param expose_secrets: if false, will replace `Secret` fields with a placeholder.
     :return: validated data.
     """
     try:
@@ -83,5 +83,5 @@ def validate_model(model: type[BaseModel], data: dict, *, exclude_unset=False, e
         context={"expose_secrets": expose_secrets},
         exclude_unset=exclude_unset,
         warnings=False,
-        by_alias=True
+        by_alias=True,
     )
