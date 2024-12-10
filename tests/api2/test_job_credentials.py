@@ -16,3 +16,14 @@ def test_job_credentials():
             job = call("core.get_jobs", [["id", "=", job_id]], {"get": True})
 
             assert job["credentials"] == {"type": "LOGIN_PASSWORD", "data": {"username": c.username}}
+
+
+def test_job_configservice_credentials():
+    # NOTE: using ldap plugin because it's a ConfigService
+    # for which do_update is also a job
+
+    # no-op job
+    job_id = call('ldap.update', {'enable': False})
+
+    job_data = call('core.get_jobs', [['id', '=', job_id]], {'get': True})
+    assert job_data['credentials'] is not None
