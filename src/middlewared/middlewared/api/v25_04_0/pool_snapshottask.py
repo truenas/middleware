@@ -1,9 +1,8 @@
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 
-from pydantic import AfterValidator, Field
+from pydantic import Field
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, TimeString
-from middlewared.validators import ReplicationSnapshotNamingSchema
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, TimeString, SnapshotNameSchema
 from .common import CronModel
 
 
@@ -16,9 +15,6 @@ __all__ = [
     "PoolSnapshotTaskUpdateWillChangeRetentionForResult", "PoolSnapshotTaskDeleteWillChangeRetentionForArgs",
     "PoolSnapshotTaskDeleteWillChangeRetentionForResult"
 ]
-
-
-SnapshotNameSchema = Annotated[str, AfterValidator(ReplicationSnapshotNamingSchema())]
 
 
 class PoolSnapshotTaskCron(CronModel):
@@ -88,7 +84,7 @@ class PoolSnapshotTaskMaxCountArgs(BaseModel):
 
 
 class PoolSnapshotTaskMaxCountResult(BaseModel):
-    result: Literal[512]
+    result: int
 
 
 class PoolSnapshotTaskMaxTotalCountArgs(BaseModel):
@@ -96,7 +92,7 @@ class PoolSnapshotTaskMaxTotalCountArgs(BaseModel):
 
 
 class PoolSnapshotTaskMaxTotalCountResult(BaseModel):
-    result: Literal[10000]
+    result: int
 
 
 class PoolSnapshotTaskRunArgs(BaseModel):
