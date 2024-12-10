@@ -1,7 +1,11 @@
 from collections import defaultdict
 
-from middlewared.schema import Dict, Int, Patch, returns
-from middlewared.service import accepts, item_method, Service
+from middlewared.api import api_method
+from middlewared.api.current import (
+    PoolSnapshotTaskUpdateWillChangeRetentionForArgs, PoolSnapshotTaskUpdateWillChangeRetentionForResult,
+    PoolSnapshotTaskDeleteWillChangeRetentionForArgs, PoolSnapshotTaskDeleteWillChangeRetentionForResult
+)
+from middlewared.service import item_method, Service
 
 
 class PeriodicSnapshotTaskService(Service):
@@ -10,15 +14,7 @@ class PeriodicSnapshotTaskService(Service):
         namespace = "pool.snapshottask"
 
     @item_method
-    @accepts(
-        Int("id"),
-        Patch(
-            "periodic_snapshot_create",
-            "periodic_snapshot_update_will_change_retention",
-            ("attr", {"update": True}),
-        ),
-    )
-    @returns(Dict("snapshots", additional_attrs=True))
+    @api_method(PoolSnapshotTaskUpdateWillChangeRetentionForArgs, PoolSnapshotTaskUpdateWillChangeRetentionForResult)
     async def update_will_change_retention_for(self, id_, data):
         """
         Returns a list of snapshots which will change the retention if periodic snapshot task `id` is updated
@@ -40,10 +36,7 @@ class PeriodicSnapshotTaskService(Service):
         return result
 
     @item_method
-    @accepts(
-        Int("id"),
-    )
-    @returns(Dict("snapshots", additional_attrs=True))
+    @api_method(PoolSnapshotTaskDeleteWillChangeRetentionForArgs, PoolSnapshotTaskDeleteWillChangeRetentionForResult)
     async def delete_will_change_retention_for(self, id_):
         """
         Returns a list of snapshots which will change the retention if periodic snapshot task `id` is deleted.

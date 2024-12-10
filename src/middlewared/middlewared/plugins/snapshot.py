@@ -1,13 +1,18 @@
-from datetime import datetime, time, timedelta
+from datetime import time
 import os
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    PoolSnapshotTaskEntry, PoolSnapshotTaskCreateArgs, PoolSnapshotTaskCreateResult, PoolSnapshotTaskUpdateArgs,
+    PoolSnapshotTaskUpdateResult, PoolSnapshotTaskDeleteArgs, PoolSnapshotTaskDeleteResult,
+    PoolSnapshotTaskMaxCountArgs, PoolSnapshotTaskMaxCountResult, PoolSnapshotTaskMaxTotalCountArgs,
+    PoolSnapshotTaskMaxTotalCountResult, PoolSnapshotTaskRunArgs, PoolSnapshotTaskRunResult
+)
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.schema import accepts, returns, Bool, Cron, Dataset, Dict, Int, List, Patch, Str
+from middlewared.schema import Cron
 from middlewared.service import CallError, CRUDService, item_method, private, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils.cron import croniter_for_schedule
 from middlewared.utils.path import is_child
-from middlewared.validators import ReplicationSnapshotNamingSchema
 
 
 class PeriodicSnapshotTaskModel(sa.Model):
@@ -40,6 +45,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         datastore_extend_context = 'pool.snapshottask.extend_context'
         namespace = 'pool.snapshottask'
         cli_namespace = 'task.snapshot'
+        entry = PoolSnapshotTaskEntry
 
     @private
     async def extend_context(self, rows, extra):
@@ -69,29 +75,9 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         return data
 
-    @accepts(
-        Dict(
-            'periodic_snapshot_create',
-            Dataset('dataset', required=True),
-            Bool('recursive', required=True),
-            List('exclude', items=[Dataset('item')]),
-            Int('lifetime_value', required=True),
-            Str('lifetime_unit', enum=['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR'], required=True),
-            Str('naming_schema', required=True, validators=[ReplicationSnapshotNamingSchema()]),
-            Cron(
-                'schedule',
-                defaults={
-                    'minute': '00',
-                    'begin': '00:00',
-                    'end': '23:59',
-                },
-                required=True,
-                begin_end=True
-            ),
-            Bool('allow_empty', default=True),
-            Bool('enabled', default=True),
-            register=True
-        ),
+    @api_method(
+        PoolSnapshotTaskCreateArgs,
+        PoolSnapshotTaskCreateResult,
         audit='Snapshot task create:',
         audit_extended=lambda data: data['dataset']
     )
@@ -158,16 +144,11 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            'periodic_snapshot_create',
-            'periodic_snapshot_update',
-            ('add', {'name': 'fixate_removal_date', 'type': 'bool'}),
-            ('attr', {'update': True})
-        ),
+    @api_method(
+        PoolSnapshotTaskUpdateArgs,
+        PoolSnapshotTaskUpdateResult,
         audit='Snapshot task update:',
-        audit_callback=True,
+        audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
         """
@@ -255,14 +236,11 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(
-        Int('id'),
-        Dict(
-            'options',
-            Bool('fixate_removal_date', default=False),
-        ),
+    @api_method(
+        PoolSnapshotTaskDeleteArgs,
+        PoolSnapshotTaskDeleteResult,
         audit='Snapshot task delete:',
-        audit_callback=True,
+        audit_callback=True
     )
     async def do_delete(self, audit_callback, id_, options):
         """
@@ -318,8 +296,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         return response
 
-    @accepts()
-    @returns(Int())
+    @api_method(PoolSnapshotTaskMaxCountArgs, PoolSnapshotTaskMaxCountResult)
     def max_count(self):
         """
         Returns a maximum amount of snapshots (per-dataset) the system can sustain.
@@ -329,8 +306,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         # with too many, then File Explorer will show no snapshots available.
         return 512
 
-    @accepts()
-    @returns(Int())
+    @api_method(PoolSnapshotTaskMaxTotalCountArgs, PoolSnapshotTaskMaxTotalCountResult)
     def max_total_count(self):
         """
         Returns a maximum amount of snapshots (total) the system can sustain.
@@ -341,7 +317,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         return 10000
 
     @item_method
-    @accepts(Int("id"))
+    @api_method(PoolSnapshotTaskRunArgs, PoolSnapshotTaskRunResult)
     async def run(self, id_):
         """
         Execute a Periodic Snapshot Task of `id`.

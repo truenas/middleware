@@ -4,12 +4,15 @@ from pydantic import AfterValidator, BeforeValidator, Field, GetCoreSchemaHandle
 from pydantic_core import CoreSchema, core_schema, PydanticKnownError
 from typing_extensions import Annotated
 
+from middlewared.api.base.validators import time_validator
 from middlewared.utils.netbios import validate_netbios_name, validate_netbios_domain
-from middlewared.validators import Time
+from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
-__all__ = ["HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString", "NetbiosDomain", "NetbiosName"]
 
-HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
+__all__ = [
+    "HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString", "NetbiosDomain",
+    "NetbiosName", "SnapshotNameSchema"
+]
 
 
 class LongStringWrapper:
@@ -47,17 +50,18 @@ class LongStringWrapper:
         )
 
 
+HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
 # By default, our strings are no more than 1024 characters long. This string is 2**31-1 characters long (SQLite limit).
 LongString = Annotated[
     LongStringWrapper,
     BeforeValidator(LongStringWrapper),
     PlainSerializer(lambda x: x.value if isinstance(x, LongStringWrapper) else x),
 ]
-
 NonEmptyString = Annotated[str, Field(min_length=1)]
 LongNonEmptyString = Annotated[LongString, Field(min_length=1)]
-TimeString = Annotated[str, AfterValidator(Time())]
+TimeString = Annotated[str, AfterValidator(time_validator)]
 NetbiosDomain = Annotated[str, AfterValidator(validate_netbios_domain)]
 NetbiosName = Annotated[str, AfterValidator(validate_netbios_name)]
+SnapshotNameSchema = Annotated[str, AfterValidator(lambda val: validate_snapshot_naming_schema(val) or val)]
 
 SECRET_VALUE = "********"
