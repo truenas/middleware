@@ -13,7 +13,8 @@ __all__ = ['SystemSecurityEntry', 'SystemSecurityUpdateArgs', 'SystemSecurityUpd
 
 class SystemSecurityEntry(BaseModel):
     id: int
-    stig_enabled: bool
+    enable_fips: bool
+    enable_stig: bool
 
 
 @single_argument_args('system_security_update')

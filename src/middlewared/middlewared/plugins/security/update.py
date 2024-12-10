@@ -1,9 +1,11 @@
 import middlewared.sqlalchemy as sa
 
+from middlewared.api.common import SystemSecurityEntry, SystemSecurityUpdateArgs, SystemSecurityUpdateResult
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
 from middlewared.service import ConfigService, ValidationError, job, private
+from middlewared.utils.io import set_io_uring_enabled
 
 
 class SystemSecurityModel(sa.Model):
@@ -11,6 +13,7 @@ class SystemSecurityModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     enable_fips = sa.Column(sa.Boolean(), default=False)
+    enable_stig = sa.Column(sa.Boolean(), default=False)
 
 
 class SystemSecurityService(ConfigService):
@@ -19,12 +22,8 @@ class SystemSecurityService(ConfigService):
         cli_namespace = 'system.security'
         datastore = 'system.security'
         namespace = 'system.security'
-
-    ENTRY = Dict(
-        'system_security_entry',
-        Bool('enable_fips', required=True),
-        Int('id', required=True),
-    )
+        role = 'SYSTEM_SECURITY'
+        entry = SystemSecurityEntry
 
     @private
     async def configure_fips_on_ha(self, is_ha, job):
@@ -51,6 +50,46 @@ class SystemSecurityService(ConfigService):
                 await self.middleware.call('failover.reboot.add_remote_reason', RebootReason.FIPS.name,
                                            RebootReason.FIPS.value)
 
+    async def apply(self):
+        if not (await self.config())['stig_enabled']:
+            await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
+            return
+
+        await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_2')
+        await self.middleware.run_in_thread(set_io_uring_enabled, False)
+
+    @private
+    async def validate_stig(self):
+        two_factor = await self.middleware.call('auth.twofactor.config')
+        if not two_factor['enabled']:
+            raise ValidationError(
+                 'system_security_update.stig_enabled',
+                 'Two factor authentication must be globally enabled before '
+                 'enabling STIG compatibility mode.'
+            )
+
+        two_factor_users = await self.middleware.call('user.query', [
+            'twofactor_auth_configured', '=', True
+        ])
+
+        if not two_factor_users:
+            raise ValidationError(
+                'system_security_update.stig_enabled',
+                'Two factor authentication tokens must be configured for users '
+                'prior to enabling STIG compatibiltiy mode.'
+            )
+
+        # We really want to make sure the administrator has ability to administer
+        # the server.
+        if not any([user for user in two_factor_users if 'FULL_ADMIN' in user['roles'] and user['local']]):
+            raise ValidationError(
+                'system_security_update.stig_enabled',
+                'At least one local user with full admin privileges and must be '
+                'configured with a two factor authentication token prior to enabling '
+                'STIG compatibility mode.'
+            )
+
+
     @private
     async def validate(self, is_ha, ha_disabled_reasons):
         schema = 'system_security_update.enable_fips'
@@ -73,12 +112,9 @@ class SystemSecurityService(ConfigService):
                     f'Security settings cannot be updated while HA is in an unhealthy state: ({formatted})'
                 )
 
-    @accepts(
-        Patch(
-            'system_security_entry', 'system_security_update',
-            ('rm', {'name': 'id'}),
-            ('attr', {'update': True}),
-        )
+    @api_method(
+        SystemSecurityUpdateArgs, SystemSecurityUpdateResult
+        audit='System security update:'
     )
     @job(lock='security_update')
     async def do_update(self, job, data):
@@ -86,10 +122,13 @@ class SystemSecurityService(ConfigService):
         Update System Security Service Configuration.
 
         `enable_fips` when set, enables FIPS mode.
+        `enable_stig` when set, enables STIG compatibiltiy mode
         """
         is_ha = await self.middleware.call('failover.licensed')
         reasons = await self.middleware.call('failover.disabled.reasons')
         await self.validate(is_ha, reasons)
+        if new['enable_stig']:
+            await self.validate_stig()
 
         old = await self.config()
         new = old.copy()
@@ -107,3 +146,7 @@ class SystemSecurityService(ConfigService):
             await self.configure_fips_on_ha(is_ha, job)
 
         return await self.config()
+
+
+async def setup(middleware):
+    await middleware.call('system.security.apply')
