@@ -1,6 +1,8 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.api.common import SystemSecurityEntry, SystemSecurityUpdateArgs, SystemSecurityUpdateResult
+from middlewared.api.common import (
+    SystemSecurityEntry, SystemSecurityUpdateArgs, SystemSecurityUpdateResult
+)
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
