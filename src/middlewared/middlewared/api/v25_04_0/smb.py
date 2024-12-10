@@ -193,7 +193,7 @@ class SmbSharePresetsResult(BaseModel):
 
 @single_argument_args('smb_share_precheck')
 class SmbSharePrecheckArgs(BaseModel):
-    name: NonEmptyString
+    name: NonEmptyString | None = None
 
 
 class SmbSharePrecheckResult(BaseModel):

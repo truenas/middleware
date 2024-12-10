@@ -33,8 +33,6 @@ SAMPLE_AUX = [
     '# Include recycle, crossrename, and exclude readonly, as share=RW', '',
     '#vfs objects = zfs_space zfsacl winmsa streams_xattr recycle shadow_copy2 crossrename aio_pthread', '',
     '# testing without shadow_copy2', '',
-    'valid users = MY_ACCOUNT @ALLOWED_USERS',
-    'invalid users = root anonymous guest',
     'hide dot files = yes',
 ]
 
