@@ -1,5 +1,6 @@
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, Service
+from middlewared.utils.time_utils import utc_now
 
 from .acme_utils import normalize_acme_config
 from .cert_utils import generate_csr, get_hostnames_from_hostname_config
@@ -84,3 +85,26 @@ class TNCACMEService(Service, TNCAPIMixin):
             'acme_uri': final_order.uri,
             'private_key': private_key,
         }
+
+    async def revoke_cert(self):
+        tnc_config = await self.middleware.call('tn_connect.config_internal')
+        certificate = await self.middleware.call('certificate.get_instance', tnc_config['certificate'])
+        acme_config = await self.middleware.call('tn_connect.acme.config')
+        if acme_config['error']:
+            self.logger.error(
+                'Failed to fetch TNC ACME configuration when trying to revoke TNC certificate: %r', acme_config['error']
+            )
+            return
+
+        try:
+            await self.middleware.call(
+                'acme.revoke_certificate', acme_config['acme_details'], certificate['certificate'],
+            )
+        except CallError:
+            self.logger.error('Failed to revoke TNC certificate', exc_info=True)
+        else:
+            await self.middleware.call(
+                'datastore.update', 'system.certificate', certificate['id'], {
+                    'revoked_date': utc_now(),
+                }, {'prefix': 'cert_'}
+            )
