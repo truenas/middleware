@@ -9,8 +9,7 @@ from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.main import IncEx
 from typing_extensions import Annotated
 
-from middlewared.api.base.types.base import SECRET_VALUE
-from middlewared.api.base.types.base.string import LongStringWrapper
+from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
 from middlewared.utils.lang import undefined
 
 
