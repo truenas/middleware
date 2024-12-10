@@ -24,6 +24,7 @@ from .group import *  # noqa
 from .iscsi_auth import *  # noqa
 from .iscsi_extent import *  # noqa
 from .keychain import *  # noqa
+from .k8s_to_docker import *  # noqa
 from .netdata import *  # noqa
 from .pool_scrub import *  # noqa
 from .pool import *  # noqa
