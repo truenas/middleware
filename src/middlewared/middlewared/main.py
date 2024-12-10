@@ -593,12 +593,7 @@ class ShellWorkerThread(threading.Thread):
 
             return command, not as_root
         elif options.get('virt_instance_id'):
-            shell_command = options.get('command')
-            if not shell_command:
-                shell_command = self.middleware.call_sync(
-                    'virt.instance.get_shell', options['virt_instance_id'],
-                ) or '/bin/sh'
-            command = ['/usr/bin/incus', 'exec', options['virt_instance_id'], shell_command]
+            command = ['/usr/bin/incus', 'exec', options['virt_instance_id'], options['command']]
             if not as_root:
                 command = ['/usr/bin/sudo', '-H', '-u', username] + command
 
@@ -788,6 +783,10 @@ class ShellApplication:
                 if options.get('virt_instance_id'):
                     try:
                         await self.middleware.call('virt.instance.get_instance', options['virt_instance_id'])
+                        if not options.get('command'):
+                            options['command'] = await self.middleware.call(
+                                'virt.instance.get_shell', options['virt_instance_id'],
+                            ) or '/bin/sh'
                     except InstanceNotFound:
                         raise CallError('Provided instance id is not valid')
                 if options.get('app_name'):
