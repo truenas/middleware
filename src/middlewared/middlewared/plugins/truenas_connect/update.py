@@ -103,6 +103,10 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         if creds is None:
             return
 
+        # If we have a cert set, we will try to revoke it
+        if config['certificate']:
+            await self.middleware.call('tn_connect.acme.revoke_cert')
+
         # We need to revoke the user account now
         response = await self._call(
             ACCOUNT_SERVICE_URL.format(**creds), 'delete', headers=await self.auth_headers(config),
