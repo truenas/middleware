@@ -4,8 +4,8 @@ from pydantic import AfterValidator, BeforeValidator, Field, GetCoreSchemaHandle
 from pydantic_core import CoreSchema, core_schema, PydanticKnownError
 from typing_extensions import Annotated
 
+from middlewared.api.base.validators import time_validator
 from middlewared.utils.netbios import validate_netbios_name, validate_netbios_domain
-from middlewared.validators import Time
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 
@@ -59,7 +59,7 @@ LongString = Annotated[
 ]
 NonEmptyString = Annotated[str, Field(min_length=1)]
 LongNonEmptyString = Annotated[LongString, Field(min_length=1)]
-TimeString = Annotated[str, AfterValidator(Time())]
+TimeString = Annotated[str, AfterValidator(time_validator)]
 NetbiosDomain = Annotated[str, AfterValidator(validate_netbios_domain)]
 NetbiosName = Annotated[str, AfterValidator(validate_netbios_name)]
 SnapshotNameSchema = Annotated[str, AfterValidator(lambda val: validate_snapshot_naming_schema(val) or val)]
