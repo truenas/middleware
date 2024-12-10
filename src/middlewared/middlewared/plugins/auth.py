@@ -403,8 +403,6 @@ class AuthService(Service):
     @private
     async def set_authenticator_assurance_level(self, level: str):
         """
-        This method is for CI tests. Currently we only support AA_LEVEL_1.
-
         See NIST SP 800-63B Section 4:
         https://nvlpubs.nist.gov/nistpubs/specialpublications/nist.sp.800-63b.pdf
         """
@@ -420,6 +418,23 @@ class AuthService(Service):
                 raise CallError(f'{level}: unknown authenticator assurance level')
 
         CURRENT_AAL.level = level
+
+    @private
+    async def get_authenticator_assurance_level(self):
+        """
+        See NIST SP 800-63B Section 4:
+        https://nvlpubs.nist.gov/nistpubs/specialpublications/nist.sp.800-63b.pdf
+
+        And descriptions in middlewared/utils/auth.py
+        """
+        if CURRENT_AAL.level is AA_LEVEL1:
+            return 'LEVEL_1'
+        elif CURRENT_AAL.level is AA_LEVEL2:
+            return 'LEVEL_2'
+        elif CURRENT_AAL.level is AA_LEVEL3:
+            return 'LEVEL_3'
+
+        raise CallError(f'{CURRENT_AAL.level}: unknown authenticator assurance level')
 
     @private
     async def check_auth_mechanism(

@@ -53,40 +53,50 @@ class SystemSecurityService(ConfigService):
                                            reason.value)
 
     @private
-    async def configure_stig(self):
-        if not (await self.config())['enable_stig']:
+    async def configure_stig(self, data=None):
+        if data is None:
+            data = await self.config()
+
+        if not data['enable_stig']:
             await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
             return
 
+        # Per security team STIG compatibility requires that authentication methods
+        # use two factors.
         await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_2')
+
+        # io_uring significantly complicates ability to use auditd to monitor file
+        # access and changes, and so we globally disable it when doing STIG
+        # compatibility.
         await self.middleware.run_in_thread(set_io_uring_enabled, False)
 
     @private
-    async def validate_stig(self):
+    async def validate_stig(self, current_cred):
+        # The following validation steps ensure that users have the ability to
+        # manage the TrueNAS server after enabling STIG compatibility.
         two_factor = await self.middleware.call('auth.twofactor.config')
         if not two_factor['enabled']:
             raise ValidationError(
-                 'system_security_update.stig_enabled',
+                 'system_security_update.enable_stig',
                  'Two factor authentication must be globally enabled before '
                  'enabling STIG compatibility mode.'
             )
 
         two_factor_users = await self.middleware.call('user.query', [
-            'twofactor_auth_configured', '=', True
+            ['twofactor_auth_configured', '=', True],
+            ['locked', '=', False]
         ])
 
         if not two_factor_users:
             raise ValidationError(
-                'system_security_update.stig_enabled',
+                'system_security_update.enable_stig',
                 'Two factor authentication tokens must be configured for users '
                 'prior to enabling STIG compatibiltiy mode.'
             )
 
-        # We really want to make sure the administrator has ability to administer
-        # the server.
         if not any([user for user in two_factor_users if 'FULL_ADMIN' in user['roles'] and user['local']]):
             raise ValidationError(
-                'system_security_update.stig_enabled',
+                'system_security_update.enable_stig',
                 'At least one local user with full admin privileges and must be '
                 'configured with a two factor authentication token prior to enabling '
                 'STIG compatibility mode.'
@@ -138,9 +148,13 @@ class SystemSecurityService(ConfigService):
             return new
 
         if new['enable_stig']:
-            await self.validate_stig()
             if not new['enable_fips']:
-                raise ValueError('FIPS mode is required in STIG compatibility mode.')
+                raise ValidationError(
+                    'system_security_update.enable_stig',
+                    'FIPS mode is required in STIG compatibility mode.'
+                )
+
+            await self.validate_stig(job.credentials)
 
         await self.middleware.call('datastore.update', self._config.datastore, old['id'], new)
 
