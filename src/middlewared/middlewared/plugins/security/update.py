@@ -143,7 +143,7 @@ class SystemSecurityService(ConfigService):
         audit='System security update:'
     )
     @job(lock='security_update')
-    async def do_update(self, job, data):
+    async def update(self, job, data):
         """
         Update System Security Service Configuration.
 
