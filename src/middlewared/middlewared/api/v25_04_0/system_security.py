@@ -6,7 +6,11 @@ from middlewared.api.base import (
     single_argument_args
 )
 
-__all__ = ['SystemSecurityEntry', 'SystemSecurityUpdateArgs', 'SystemSecurityUpdateResult']
+__all__ = [
+    'SystemSecurityEntry', 'SystemSecurityUpdateArgs', 'SystemSecurityUpdateResult',
+    'SystemSecurityFipsAvailableArgs', 'SystemSecurityFipsAvailableResult',
+    'SystemSecurityFipsEnabledArgs', 'SystemSecurityFipsEnabledResult',
+]
 
 
 class SystemSecurityEntry(BaseModel):
@@ -22,3 +26,19 @@ class SystemSecurityUpdateArgs(SystemSecurityEntry, metaclass=ForUpdateMetaclass
 
 class SystemSecurityUpdateResult(BaseModel):
     result: SystemSecurityEntry
+
+
+class SystemSecurityFipsAvailableArgs(BaseModel):
+    pass
+
+
+class SystemSecurityFipsAvailableResult(BaseModel):
+    result: bool
+
+
+class SystemSecurityFipsEnabledArgs(BaseModel):
+    pass
+
+
+class SystemSecurityFipsEnabledResult(BaseModel):
+    result: bool

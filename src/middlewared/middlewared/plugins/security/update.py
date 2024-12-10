@@ -53,6 +53,7 @@ class SystemSecurityService(ConfigService):
                 await self.middleware.call('failover.reboot.add_remote_reason', RebootReason.FIPS.name,
                                            RebootReason.FIPS.value)
 
+    @private
     async def configure_stig(self):
         if not (await self.config())['stig_enabled']:
             await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')

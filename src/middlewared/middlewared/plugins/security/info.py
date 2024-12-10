@@ -1,8 +1,12 @@
 from subprocess import run
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    SystemSecurityFipsAvailableArgs, SystemSecurityFipsAvailableResult,
+    SystemSecurityFipsEnabledArgs, SystemSecurityFipsEnabledResult,
+)
 from middlewared.schema import accepts, returns, Bool
 from middlewared.service import CallError, Service
-
 
 class SystemSecurityInfoService(Service):
 
@@ -10,8 +14,10 @@ class SystemSecurityInfoService(Service):
         namespace = 'system.security.info'
         cli_namespace = 'system.security.info'
 
-    @accepts(roles=['SYSTEM_SECURITY_READ'])
-    @returns(Bool('fips_available'))
+    @api_method(
+        SystemSecurityFipsAvailableArgs, SystemSecurityFipsAvailableResult,
+        roles=['SYSTEM_SECURITY_READ']
+    )
     def fips_available(self):
         """Returns a boolean identifying whether or not FIPS
         mode may be toggled on this system"""
@@ -19,8 +25,10 @@ class SystemSecurityInfoService(Service):
         # or not this is an iX licensed piece of hardware
         return bool(self.middleware.call_sync('system.license'))
 
-    @accepts(roles=['SYSTEM_SECURITY_READ'])
-    @returns(Bool('fips_available'))
+    @api_method(
+        SystemSecurityFipsEnabledArgs, SystemSecurityFipsEnabledResult,
+        roles=['SYSTEM_SECURITY_READ']
+    )
     def fips_enabled(self):
         """Returns a boolean identifying whether or not FIPS
         mode has been enabled on this system"""
