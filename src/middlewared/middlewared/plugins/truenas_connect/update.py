@@ -1,9 +1,14 @@
+import contextlib
+
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import TNCEntry, TNCUpdateArgs, TNCUpdateResult, TNCIPChoicesArgs, TNCIPChoicesResult
-from middlewared.service import ConfigService, private, ValidationErrors
+from middlewared.service import CallError, ConfigService, private, ValidationErrors
 
+from .mixin import TNCAPIMixin
 from .status_utils import Status
+from .urls import ACCOUNT_SERVICE_URL
+from .utils import CLAIM_TOKEN_CACHE_KEY, get_account_id_and_system_id
 
 
 class TrueNASConnectModel(sa.Model):
@@ -18,7 +23,7 @@ class TrueNASConnectModel(sa.Model):
     certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
 
 
-class TrueNASConnectService(ConfigService):
+class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
     # TODO: Add roles
     class Config:
@@ -72,6 +77,7 @@ class TrueNASConnectService(ConfigService):
             # TODO: We should make sure to reset any pending registration details
             db_payload['status'] = Status.CLAIM_TOKEN_MISSING.name
         elif config['enabled'] is True and data['enabled'] is False:
+            await self.unset_registration_details()
             db_payload.update({
                 'registration_details': {},
                 'jwt_token': None,
@@ -86,6 +92,23 @@ class TrueNASConnectService(ConfigService):
         # TODO: Trigger a job to update the registration details if ips are changed
 
         return await self.config()
+
+    @private
+    async def unset_registration_details(self):
+        with contextlib.suppress(KeyError):
+            await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
+
+        config = await self.config_internal()
+        creds = get_account_id_and_system_id(config)
+        if creds is None:
+            return
+
+        # We need to revoke the user account now
+        response = await self._call(
+            ACCOUNT_SERVICE_URL.format(**creds), 'delete', headers=await self.auth_headers(config),
+        )
+        if response['error']:
+            raise CallError(f'Failed to revoke account: {response["error"]}')
 
     @api_method(TNCIPChoicesArgs, TNCIPChoicesResult)
     async def ip_choices(self):
