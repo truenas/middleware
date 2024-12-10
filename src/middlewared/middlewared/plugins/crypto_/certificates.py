@@ -1,8 +1,4 @@
 import datetime
-import josepy as jose
-
-from acme import errors, messages
-from OpenSSL import crypto
 
 import middlewared.sqlalchemy as sa
 
@@ -717,17 +713,15 @@ class CertificateService(CRUDService):
 
         if certificate.get('acme') and not certificate['expired']:
             # We won't try revoking a certificate which has expired already
-            client, key = self.middleware.call_sync(
-                'acme.get_acme_client_and_key', certificate['acme']['directory'], True
-            )
-
             try:
-                client.revoke(
-                    jose.ComparableX509(crypto.load_certificate(crypto.FILETYPE_PEM, certificate['certificate'])), 0
+                self.middleware.call_sync(
+                    'acme.revoke_certificate', self.middleware.call_sync(
+                        'acme.get_acme_client_and_key_payload', certificate['acme']['directory'], True
+                    ), certificate['certificate'],
                 )
-            except (errors.ClientError, messages.Error) as e:
+            except CallError:
                 if not force:
-                    raise CallError(f'Failed to revoke certificate: {e}')
+                    raise
 
         response = self.middleware.call_sync(
             'datastore.delete',
