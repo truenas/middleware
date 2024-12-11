@@ -1,7 +1,8 @@
+import os
 from pydantic.functional_validators import AfterValidator
 from typing_extensions import Annotated
 
-__all__ = ["UnixPerm", ]
+__all__ = ["UnixPerm", "Directory"]
 
 
 def validate_unix_perm(value: str) -> str:
@@ -17,3 +18,13 @@ def validate_unix_perm(value: str) -> str:
 
 
 UnixPerm = Annotated[str, AfterValidator(validate_unix_perm)]
+
+
+def validate_dir_path(value: str) -> str:
+    if value and not os.path.isdir(value):
+        raise ValueError('This path is not a directory.')
+
+    return value
+
+
+Directory = Annotated[str, AfterValidator(validate_dir_path)]
