@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from middlewared.schema import accepts, Bool, Int, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import PoolScrubArgs, PoolScrubResult, PoolUpgradeArgs, PoolUpgradeResult
 from middlewared.service import item_method, job, private, Service
 
 
@@ -60,10 +61,7 @@ class PoolService(Service):
             f.write(str(scrub_max_active))
 
     @item_method
-    @accepts(
-        Int('id', required=True),
-        Str('action', enum=['START', 'STOP', 'PAUSE'], required=True)
-    )
+    @api_method(PoolScrubArgs, PoolScrubResult)
     @job(transient=True)
     async def scrub(self, job, oid, action):
         """
@@ -86,8 +84,7 @@ class PoolService(Service):
         pool = await self.middleware.call('pool.get_instance', oid)
         return await job.wrap(await self.middleware.call('pool.scrub.scrub', pool['name'], action))
 
-    @accepts(Int('id'))
-    @returns(Bool('upgraded'))
+    @api_method(PoolUpgradeArgs, PoolUpgradeResult)
     @item_method
     async def upgrade(self, oid):
         """

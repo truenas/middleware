@@ -3,8 +3,9 @@ import errno
 import os
 import subprocess
 
+from middlewared.api import api_method
+from middlewared.api.current import PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
-from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, InstanceNotFound, job, private, Service
 
 from .utils import ZPOOL_CACHE_FILE
@@ -16,18 +17,7 @@ class PoolService(Service):
         cli_namespace = 'storage.pool'
         event_send = False
 
-    @accepts()
-    @returns(List(
-        'pools_available_for_import',
-        title='Pools Available For Import',
-        items=[Dict(
-            'pool_info',
-            Str('name', required=True),
-            Str('guid', required=True),
-            Str('status', required=True),
-            Str('hostname', required=True),
-        )]
-    ))
+    @api_method(PoolImportFindArgs, PoolImportFindResult)
     @job()
     async def import_find(self, job):
         """
@@ -62,13 +52,7 @@ class PoolService(Service):
             }
         })
 
-    @accepts(Dict(
-        'pool_import',
-        Str('guid', required=True),
-        Str('name'),
-        Bool('enable_attachments'),
-    ))
-    @returns(Bool('successful_import'))
+    @api_method(PoolImportPoolArgs, PoolImportPoolResult)
     @job(lock='import_pool')
     async def import_pool(self, job, data):
         """
