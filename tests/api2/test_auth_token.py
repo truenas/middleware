@@ -56,7 +56,7 @@ def unprivileged_user():
         username="test",
         group_name="test",
         privilege_name="test",
-        allowlist=[{"method": "CALL", "resource": "system.info"}],
+        roles=['READONLY_ADMIN'],
         web_shell=True,
     ):
         yield

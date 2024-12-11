@@ -20,7 +20,7 @@ def test_shell_choices_has_privileges():
             "name": "Test",
             "local_groups": [g["gid"]],
             "ds_groups": [],
-            "allowlist": [{"method": "CALL", "resource": "system.info"}],
+            "roles": ["READONLY_ADMIN"],
             "web_shell": False,
         })
         try:
@@ -63,7 +63,7 @@ def test_can_create_user_with_cli_shell_with_privileges(group_payload):
             "name": "Test",
             "local_groups": [g["gid"]],
             "ds_groups": [],
-            "allowlist": [{"method": "CALL", "resource": "system.info"}],
+            "roles": ["READONLY_ADMIN"],
             "web_shell": False,
         })
         try:
@@ -116,7 +116,7 @@ def test_can_update_user_with_cli_shell_with_privileges(group_payload):
             "name": "Test",
             "local_groups": [g["gid"]],
             "ds_groups": [],
-            "allowlist": [{"method": "CALL", "resource": "system.info"}],
+            "roles": ["READONLY_ADMIN"],
             "web_shell": False,
         })
         try:

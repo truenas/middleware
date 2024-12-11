@@ -9,11 +9,3 @@ def test_user_role_in_account(role):
         this_user = c.call("user.query", [["username", "=", c.username]], {"get": True})
 
         assert this_user['roles'] == [role]
-
-
-def test_user_role_full_admin_map():
-    with unprivileged_user_client(allowlist=[{"method": "*", "resource": "*"}]) as c:
-        this_user = c.call("user.query", [["username", "=", c.username]], {"get": True})
-
-        assert "FULL_ADMIN" in this_user["roles"]
-        assert "HAS_ALLOW_LIST" in this_user["roles"]

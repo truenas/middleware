@@ -16,7 +16,7 @@ def product_type(product_type='SCALE_ENTERPRISE'):
 
 
 @contextlib.contextmanager
-def enable_stig():
+def set_stig_available():
     with product_type():
-        with mock('system.security.config', return_value={'id': 1, 'enable_fips': True, 'enable_gpos_stig': True}):
+        with set_fips_available():
             yield

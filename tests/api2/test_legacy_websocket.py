@@ -30,7 +30,6 @@ def unprivileged_client():
         username=f"unprivileged_{suffix}",
         group_name=f"unprivileged_users_{suffix}",
         privilege_name=f"Unprivileged users ({suffix})",
-        allowlist=[],
         roles=["READONLY_ADMIN"],
         web_shell=False,
     ) as t:

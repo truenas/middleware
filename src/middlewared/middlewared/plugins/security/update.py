@@ -24,7 +24,7 @@ class SystemSecurityService(ConfigService):
         cli_namespace = 'system.security'
         datastore = 'system.security'
         namespace = 'system.security'
-        role = 'SYSTEM_SECURITY'
+        role_prefix = 'SYSTEM_SECURITY'
         entry = SystemSecurityEntry
 
     @private
@@ -187,6 +187,8 @@ class SystemSecurityService(ConfigService):
                     'system.reboot.toggle_reason', RebootReason.GPOSSTIG.name, RebootReason.GPOSSTIG.value
                 )
                 await self.configure_security_on_ha(is_ha, job, RebootReason.GPOSSTIG)
+
+            await self.configure_stig(new)
 
         return await self.config()
 

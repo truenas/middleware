@@ -1,5 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
+from middlewared.utils.security import STIGType
 import typing
 
 
@@ -15,6 +16,7 @@ class Role:
     includes: typing.List[str] = field(default_factory=list)
     full_admin: bool = False
     builtin: bool = True
+    stig: STIGType = STIGType.GPOS  # By default roles are available under GPOS STIG
 
 
 ROLES = {
@@ -45,6 +47,11 @@ ROLES = {
     'FILESYSTEM_DATA_WRITE': Role(includes=['FILESYSTEM_DATA_READ']),
     'FILESYSTEM_FULL_CONTROL': Role(includes=['FILESYSTEM_ATTRS_WRITE',
                                               'FILESYSTEM_DATA_WRITE']),
+
+    # Interact with privilege framework
+    'PRIVILEGE_READ': Role(),
+    'PRIVILEGE_WRITE': Role(includes=['PRIVILEGE_WRITE']),
+
     'REPORTING_READ': Role(),
     'REPORTING_WRITE': Role(includes=['REPORTING_READ']),
 
@@ -79,9 +86,9 @@ ROLES = {
 
     # VM roles
     'VM_READ': Role(),
-    'VM_WRITE': Role(includes=['VM_READ']),
+    'VM_WRITE': Role(includes=['VM_READ'], stig=None),
     'VM_DEVICE_READ': Role(includes=['VM_READ']),
-    'VM_DEVICE_WRITE': Role(includes=['VM_WRITE', 'VM_DEVICE_READ']),
+    'VM_DEVICE_WRITE': Role(includes=['VM_WRITE', 'VM_DEVICE_READ'], stig=None),
 
     # JBOF roles
     'JBOF_READ': Role(),
@@ -89,7 +96,7 @@ ROLES = {
 
     # Truecommand roles
     'TRUECOMMAND_READ': Role(),
-    'TRUECOMMAND_WRITE': Role(includes=['TRUECOMMAND_READ']),
+    'TRUECOMMAND_WRITE': Role(includes=['TRUECOMMAND_READ'], stig=None),
 
     # Crypto roles
     'CERTIFICATE_READ': Role(),
@@ -99,11 +106,11 @@ ROLES = {
 
     # Apps roles
     'CATALOG_READ': Role(),
-    'CATALOG_WRITE': Role(includes=['CATALOG_READ']),
+    'CATALOG_WRITE': Role(includes=['CATALOG_READ'], stig=None),
     'DOCKER_READ': Role(includes=[]),
-    'DOCKER_WRITE': Role(includes=['DOCKER_READ']),
+    'DOCKER_WRITE': Role(includes=['DOCKER_READ'], stig=None),
     'APPS_READ': Role(includes=['CATALOG_READ']),
-    'APPS_WRITE': Role(includes=['CATALOG_WRITE', 'APPS_READ']),
+    'APPS_WRITE': Role(includes=['CATALOG_WRITE', 'APPS_READ'], stig=None),
 
     # FTP roles
     'SHARING_FTP_READ': Role(),
@@ -201,12 +208,12 @@ ROLES = {
 
     # Virtualization
     'VIRT_GLOBAL_READ': Role(),
-    'VIRT_GLOBAL_WRITE': Role(includes=['VIRT_GLOBAL_READ']),
+    'VIRT_GLOBAL_WRITE': Role(includes=['VIRT_GLOBAL_READ'], stig=None),
     'VIRT_INSTANCE_READ': Role(),
-    'VIRT_INSTANCE_WRITE': Role(includes=['VIRT_INSTANCE_READ']),
-    'VIRT_INSTANCE_DELETE': Role(),
+    'VIRT_INSTANCE_WRITE': Role(includes=['VIRT_INSTANCE_READ'], stig=None),
+    'VIRT_INSTANCE_DELETE': Role(stig=None),
     'VIRT_IMAGE_READ': Role(),
-    'VIRT_IMAGE_WRITE': Role(includes=['VIRT_IMAGE_READ']),
+    'VIRT_IMAGE_WRITE': Role(includes=['VIRT_IMAGE_READ'], stig=None),
 
 }
 ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
@@ -273,19 +280,45 @@ class RoleManager:
     def register_event(self, event_name: str, roles: typing.Iterable[str], *, exist_ok: bool = False):
         self.events.register_resource(event_name, roles, exist_ok)
 
-    def roles_for_role(self, role: str) -> typing.Set[str]:
+    def role_stig_check(self, role_name: str, enabled_stig: STIGType) -> bool:
+        role = self.roles[role_name]
+        if role.stig is None:
+            return False
+
+        return bool(role.stig & enabled_stig)
+
+    def roles_for_role(self, role: str, enabled_stig: STIGType | None) -> typing.Set[str]:
         if role not in self.roles:
             return set()
 
-        return set.union({role}, *[self.roles_for_role(included_role) for included_role in self.roles[role].includes])
+        if not enabled_stig:
+            return set.union({role}, *[
+                self.roles_for_role(included_role, enabled_stig) for included_role in self.roles[role].includes
+            ])
 
-    def allowlist_for_role(self, role: str) -> typing.List[dict[str, str]]:
+        if self.roles[role].full_admin:
+            # Convert FULL_ADMIN to all stig-allowed roles.
+            return set([role_name for role_name, role in self.roles.items() if self.role_stig_check(role_name, enabled_stig)])
+
+        return set.union({role}, *[
+            self.roles_for_role(included_role, enabled_stig)
+            for included_role in self.roles[role].includes if self.role_stig_check(included_role, enabled_stig)
+        ])
+
+    def allowlist_for_role(self, role: str, enabled_stig: STIGType) -> typing.List[dict[str, str]]:
         if role in self.roles and self.roles[role].full_admin:
-            return [{"method": "CALL", "resource": "*"}, {"method": "SUBSCRIBE", "resource": "*"}]
+            if enabled_stig:
+                return sum([
+                    self.methods.allowlists_for_roles[role] + self.events.allowlists_for_roles[role]
+                    for role in self.roles_for_role(role, enabled_stig)
+                ], [])
+
+            # Only non-stig FULL_ADMIN privilege can access REST endpoints
+            return [{"method": "*", "resource": "*"}]
 
         return sum([
             self.methods.allowlists_for_roles[role] + self.events.allowlists_for_roles[role]
-            for role in self.roles_for_role(role)
+            for role in self.roles_for_role(role, enabled_stig)
         ], [])
 
     def roles_for_method(self, method_name: str) -> typing.List[str]:

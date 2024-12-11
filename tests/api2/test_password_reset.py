@@ -26,7 +26,6 @@ def test_restricted_user_set_password():
         username=TEST_USERNAME,
         group_name=TEST_GROUPNAME,
         privilege_name='TEST_PASSWD_RESET_PRIVILEGE',
-        allowlist=[],
         web_shell=False,
         roles=['READONLY_ADMIN']
     ) as acct:

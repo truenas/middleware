@@ -12,6 +12,7 @@ from middlewared.utils.privilege import (
     privilege_has_webui_access,
     privileges_group_mapping
 )
+from middlewared.utils.security import system_security_config_to_stig_type
 import middlewared.sqlalchemy as sa
 
 
@@ -29,7 +30,6 @@ class PrivilegeModel(sa.Model):
     name = sa.Column(sa.String(200))
     local_groups = sa.Column(sa.JSON(list))
     ds_groups = sa.Column(sa.JSON(list))
-    allowlist = sa.Column(sa.JSON(list))
     roles = sa.Column(sa.JSON(list))
     web_shell = sa.Column(sa.Boolean())
 
@@ -45,6 +45,7 @@ class PrivilegeService(CRUDService):
         datastore_extend_context = "privilege.item_extend_context"
         cli_namespace = "auth.privilege"
         entry = PrivilegeEntry
+        role_prefix = 'PRIVILEGE'
 
     @private
     async def item_extend_context(self, rows, extra):
@@ -70,7 +71,7 @@ class PrivilegeService(CRUDService):
 
         `ds_groups` is list of Directory Service group GIDs that will gain this privilege.
 
-        `allowlist` is a list of API endpoints allowed for this privilege.
+        `roles` is a list of roles to be assigned to the privilege
 
         `web_shell` controls whether users with this privilege are allowed to log in to the Web UI.
         """
@@ -105,7 +106,7 @@ class PrivilegeService(CRUDService):
         verrors = ValidationErrors()
 
         if new["builtin_name"]:
-            for k in ["name", "allowlist", "roles"]:
+            for k in ["name", "roles"]:
                 if new[k] != old[k]:
                     verrors.add(f"privilege_update.{k}", "This field is read-only for built-in privileges")
 
@@ -192,7 +193,7 @@ class PrivilegeService(CRUDService):
 
         for i, role in enumerate(data["roles"]):
             if role not in self.middleware.role_manager.roles:
-                verrors.add(f"{schema_name}.roles.{i}", "Invalid role")
+                verrors.add(f"{schema_name}.roles.{i}", f"Invalid role: choices are {self.middleware.role_manager.roles.keys()}")
 
         verrors.check()
 
@@ -354,6 +355,9 @@ class PrivilegeService(CRUDService):
 
     @private
     async def compose_privilege(self, privileges):
+        security_config = await self.middleware.call('system.security.config')
+        enabled_stig = system_security_config_to_stig_type(security_config)
+
         compose = {
             'roles': set(),
             'allowlist': [],
@@ -362,19 +366,15 @@ class PrivilegeService(CRUDService):
         }
         for privilege in privileges:
             for role in privilege['roles']:
-                compose['roles'] |= self.middleware.role_manager.roles_for_role(role)
+                compose['roles'] |= self.middleware.role_manager.roles_for_role(role, enabled_stig)
 
-                compose['allowlist'].extend(self.middleware.role_manager.allowlist_for_role(role))
-
-            for item in privilege['allowlist']:
-                if item == {'method': '*', 'resource': '*'} and 'FULL_ADMIN' not in compose['roles']:
-                    compose['roles'] |= self.middleware.role_manager.roles_for_role('FULL_ADMIN')
-                    compose['webui_access'] = True
-
-                compose['allowlist'].append(item)
+                compose['allowlist'].extend(self.middleware.role_manager.allowlist_for_role(role, enabled_stig))
 
             compose['web_shell'] |= privilege['web_shell']
             compose['webui_access'] |= privilege_has_webui_access(privilege)
+
+        if enabled_stig:
+            compose['web_shell'] = False
 
         return compose
 
