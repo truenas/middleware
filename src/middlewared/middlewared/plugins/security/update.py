@@ -36,10 +36,11 @@ class SystemSecurityService(ConfigService):
 
         remote_reboot_reasons = await self.middleware.call('failover.call_remote', 'system.reboot.list_reasons')
         if reason.name in remote_reboot_reasons:
-            # means FIPS is being toggled but other node is already pending a reboot,
-            # so it means the user toggled FIPS twice and somehow the other node
-            # didn't reboot (even though we do this automatically). This is an edge
-            # case and means someone or something is doing things behind our backs
+            # This means the we're toggling a change in security settings but other node is
+            # already pending a reboot, which means the user has toggled changes twice and
+            # somehow the other node didn't reboot (even though this should be automatic).
+            # This is an edge case and means someone or something is doing things behind our backs
+            self.logger.error('%s: reboot is already pending on other controller for same reason.', reason.name)
             await self.middleware.call('failover.call_remote', 'system.reboot.remove_reason', [reason.name])
         else:
             try:
@@ -174,7 +175,7 @@ class SystemSecurityService(ConfigService):
             #  let's investigate the exact configuration there
             await self.middleware.call('etc.generate', 'fips')
             await self.middleware.call('system.reboot.toggle_reason', RebootReason.FIPS.name, RebootReason.FIPS.value)
-            await self.configure_fips_on_ha(is_ha, job, RebootReason.FIPS)
+            await self.configure_security_on_ha(is_ha, job, RebootReason.FIPS)
             fips_toggled = True
 
         if new['enable_gpos_stig'] != old['enable_gpos_stig']:
@@ -185,7 +186,7 @@ class SystemSecurityService(ConfigService):
                 await self.middleware.call(
                     'system.reboot.toggle_reason', RebootReason.GPOSSTIG.name, RebootReason.GPOSSTIG.value
                 )
-                await self.configure_fips_on_ha(is_ha, job, RebootReason.GPOSSTIG)
+                await self.configure_security_on_ha(is_ha, job, RebootReason.GPOSSTIG)
 
         return await self.config()
 
