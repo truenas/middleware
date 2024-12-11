@@ -97,7 +97,7 @@ def test_no_twofactor_users_fail(enterprise_product, two_factor_enabled):
 
 
 def test_no_full_admin_users_fail(enterprise_product, two_factor_non_admin):
-    with pytest.raises(ValidationErrors, match='At least one local user with full admin privileges and must be'):
+    with pytest.raises(ValidationErrors, match='At least one local user with full admin privileges must be'):
         call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
 
