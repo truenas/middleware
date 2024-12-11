@@ -82,7 +82,7 @@ def test_nonenterprise_fail(community_product):
 
 
 def test_nofips_fail(enterprise_product):
-    with pytest.raises(ValidationErrors, match='FIPS mode is required in STIG compatibility mode.'):
+    with pytest.raises(ValidationErrors, match='FIPS mode is required in General Purpose OS STIG compatibility mode.'):
         call('system.security.update', {'enable_fips': False, 'enable_gpos_stig': True}, job=True)
 
 
