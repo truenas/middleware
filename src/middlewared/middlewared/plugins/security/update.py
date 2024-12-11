@@ -101,7 +101,7 @@ class SystemSecurityService(ConfigService):
         if not any([user for user in two_factor_users if 'FULL_ADMIN' in user['roles']]):
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
-                'At least one local user with full admin privileges and must be '
+                'At least one local user with full admin privileges must be '
                 'configured with a two factor authentication token prior to enabling '
                 'General Purpose OS STIG compatibility mode.'
             )
