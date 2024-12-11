@@ -36,7 +36,7 @@ def setup_stig():
     with client() as c:
         with enable_stig():
             # Force reconfiguration for STIG
-            call('system.security.configure_stig', {'enable_stig': True})
+            call('system.security.configure_stig', {'enable_gpos_stig': True})
             aal = call('auth.get_authenticator_assurance_level')
             assert aal == 'LEVEL_2'
 
@@ -78,33 +78,33 @@ def two_factor_full_admin(two_factor_enabled, unprivileged_user_fixture):
 
 def test_nonenterprise_fail(community_product):
     with pytest.raises(ValidationErrors, match='Please contact iX sales for more information.'):
-        call('system.security.update', {'enable_stig': True}, job=True)
+        call('system.security.update', {'enable_gpos_stig': True}, job=True)
 
 
 def test_nofips_fail(enterprise_product):
     with pytest.raises(ValidationErrors, match='FIPS mode is required in STIG compatibility mode.'):
-        call('system.security.update', {'enable_fips': False, 'enable_stig': True}, job=True)
+        call('system.security.update', {'enable_fips': False, 'enable_gpos_stig': True}, job=True)
 
 
 def test_no_twofactor_fail(enterprise_product):
     with pytest.raises(ValidationErrors, match='Two factor authentication must be globally enabled.'):
-        call('system.security.update', {'enable_fips': True, 'enable_stig': True}, job=True)
+        call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
 
 def test_no_twofactor_users_fail(enterprise_product, two_factor_enabled):
     with pytest.raises(ValidationErrors, match='Two factor authentication tokens must be configured for users'):
-        call('system.security.update', {'enable_fips': True, 'enable_stig': True}, job=True)
+        call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
 
 def test_no_full_admin_users_fail(enterprise_product, two_factor_non_admin):
     with pytest.raises(ValidationErrors, match='At least one local user with full admin privileges and must be'):
-        call('system.security.update', {'enable_fips': True, 'enable_stig': True}, job=True)
+        call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
 
 def test_no_current_cred_no_2fa(enterprise_product, two_factor_full_admin):
-    with pytest.raises(ValidationErrors, match='Credential used to enable STIG compatibility'):
+    with pytest.raises(ValidationErrors, match='Credential used to enable General Purpose OS STIG compatibility'):
         # root / truenas_admin does not have 2FA and so this should fail
-        call('system.security.update', {'enable_fips': True, 'enable_stig': True}, job=True)
+        call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
 
 def test_stig_enabled_authenticator_assurance_level(setup_stig, two_factor_full_admin):

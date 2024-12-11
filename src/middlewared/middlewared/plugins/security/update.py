@@ -15,7 +15,7 @@ class SystemSecurityModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     enable_fips = sa.Column(sa.Boolean(), default=False)
-    enable_stig = sa.Column(sa.Boolean(), default=False)
+    enable_gpos_stig = sa.Column(sa.Boolean(), default=False)
 
 
 class SystemSecurityService(ConfigService):
@@ -57,7 +57,7 @@ class SystemSecurityService(ConfigService):
         if data is None:
             data = await self.config()
 
-        if not data['enable_stig']:
+        if not data['enable_gpos_stig']:
             await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
             return
 
@@ -77,9 +77,9 @@ class SystemSecurityService(ConfigService):
         two_factor = await self.middleware.call('auth.twofactor.config')
         if not two_factor['enabled']:
             raise ValidationError(
-                 'system_security_update.enable_stig',
+                 'system_security_update.enable_gpos_stig',
                  'Two factor authentication must be globally enabled before '
-                 'enabling STIG compatibility mode.'
+                 'enabling General Purpose OS STIG compatibility mode.'
             )
 
         # We want to make sure that at least one local user account is usable
@@ -92,17 +92,17 @@ class SystemSecurityService(ConfigService):
 
         if not two_factor_users:
             raise ValidationError(
-                'system_security_update.enable_stig',
+                'system_security_update.enable_gpos_stig',
                 'Two factor authentication tokens must be configured for users '
-                'prior to enabling STIG compatibiltiy mode.'
+                'prior to enabling General Purpose OS STIG compatibiltiy mode.'
             )
 
         if not any([user for user in two_factor_users if 'FULL_ADMIN' in user['roles']]):
             raise ValidationError(
-                'system_security_update.enable_stig',
+                'system_security_update.enable_gpos_stig',
                 'At least one local user with full admin privileges and must be '
                 'configured with a two factor authentication token prior to enabling '
-                'STIG compatibility mode.'
+                'General Purpose OS STIG compatibility mode.'
             )
 
         if (
@@ -111,9 +111,9 @@ class SystemSecurityService(ConfigService):
             and '2FA' not in current_cred.user['account_attributes']
         ):
             raise ValidationError(
-                'system_security_update.enable_stig',
-                'Credential used to enable STIG compatibility must have two factor authentication '
-                'enabled.'
+                'system_security_update.enable_gpos_stig',
+                'Credential used to enable General Purpose OS STIG compatibility '
+                'must have two factor authentication enabled.'
             )
 
     @private
@@ -148,7 +148,8 @@ class SystemSecurityService(ConfigService):
         Update System Security Service Configuration.
 
         `enable_fips` when set, enables FIPS mode.
-        `enable_stig` when set, enables STIG compatibiltiy mode
+        `enable_gpos_stig` when set, enables compatibility with the General
+        Purpose Operating System STIG.
         """
         is_ha = await self.middleware.call('failover.licensed')
         reasons = await self.middleware.call('failover.disabled.reasons')
@@ -161,11 +162,11 @@ class SystemSecurityService(ConfigService):
         if new == old:
             return new
 
-        if new['enable_stig']:
+        if new['enable_gpos_stig']:
             if not new['enable_fips']:
                 raise ValidationError(
-                    'system_security_update.enable_stig',
-                    'FIPS mode is required in STIG compatibility mode.'
+                    'system_security_update.enable_gpos_stig',
+                    'FIPS mode is required in General Purpose OS STIG compatibility mode.'
                 )
 
             await self.validate_stig(job.credentials)
@@ -180,15 +181,15 @@ class SystemSecurityService(ConfigService):
             await self.configure_fips_on_ha(is_ha, job, RebootReason.FIPS)
             fips_toggled = True
 
-        if new['enable_stig'] != old['enable_stig']:
+        if new['enable_gpos_stig'] != old['enable_gpos_stig']:
             if not fips_toggled:
                 # Trigger reboot on standby to apply STIG-related configuration
                 # This should only happen if user already set FIPS and is subsequently changing
                 # STIG as a separate operation.
                 await self.middleware.call(
-                    'system.reboot.toggle_reason', RebootReason.STIG.name, RebootReason.STIG.value
+                    'system.reboot.toggle_reason', RebootReason.GPOSSTIG.name, RebootReason.GPOSSTIG.value
                 )
-                await self.configure_fips_on_ha(is_ha, job, RebootReason.STIG)
+                await self.configure_fips_on_ha(is_ha, job, RebootReason.GPOSSTIG)
 
         return await self.config()
 

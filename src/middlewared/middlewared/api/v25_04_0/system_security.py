@@ -16,7 +16,9 @@ __all__ = [
 class SystemSecurityEntry(BaseModel):
     id: int
     enable_fips: bool
-    enable_stig: bool
+    """ When set, enables FIPS mode. """
+    enable_gpos_stig: bool
+    """ When set, enables compatibility with the General Purpose Operating System STIG. """
 
 
 @single_argument_args('system_security_update')

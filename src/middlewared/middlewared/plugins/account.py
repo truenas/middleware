@@ -201,7 +201,7 @@ class UserService(CRUDService):
             user_api_keys[key['username']].append(key['id'])
 
         return {
-            'stig_enabled': (await self.middleware.call('system.security.config'))['enable_stig'],
+            'stig_enabled': (await self.middleware.call('system.security.config'))['enable_gpos_stig'],
             'server_sid': await self.middleware.call('smb.local_server_sid'),
             'user_2fa_mapping': ({
                 entry['user']['id']: bool(entry['secret']) for entry in await self.middleware.call(
