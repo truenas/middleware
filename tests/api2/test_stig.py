@@ -7,7 +7,7 @@ from middlewared.test.integration.assets.two_factor_auth import (
     enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
 )
 from middlewared.test.integration.utils import call, client
-from truenas_api_client import ClientException, ValidationErrors
+from truenas_api_client import ValidationErrors
 
 
 @pytest.fixture(scope='function')

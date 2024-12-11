@@ -77,9 +77,9 @@ class SystemSecurityService(ConfigService):
         two_factor = await self.middleware.call('auth.twofactor.config')
         if not two_factor['enabled']:
             raise ValidationError(
-                 'system_security_update.enable_gpos_stig',
-                 'Two factor authentication must be globally enabled before '
-                 'enabling General Purpose OS STIG compatibility mode.'
+                'system_security_update.enable_gpos_stig',
+                'Two factor authentication must be globally enabled before '
+                'enabling General Purpose OS STIG compatibility mode.'
             )
 
         # We want to make sure that at least one local user account is usable
@@ -105,11 +105,7 @@ class SystemSecurityService(ConfigService):
                 'General Purpose OS STIG compatibility mode.'
             )
 
-        if (
-            current_cred
-            and current_cred.is_user_session
-            and '2FA' not in current_cred.user['account_attributes']
-        ):
+        if current_cred and current_cred.is_user_session and '2FA' not in current_cred.user['account_attributes']:
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
                 'Credential used to enable General Purpose OS STIG compatibility '
