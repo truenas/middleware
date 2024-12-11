@@ -26,7 +26,7 @@ def read_gpt_partitions(device: str) -> list[PartitionEntry] | list:
         # no changes to it. A miserable, undeterministic design.
         gpt_header = f.read(1024)[512:]  # GPT header starts at LBA 1
         if gpt_header[0:8] != b"EFI PART":
-            return False
+            return []
 
         # Unpack GPT header fields
         (
