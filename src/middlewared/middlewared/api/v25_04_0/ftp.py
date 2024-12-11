@@ -1,5 +1,3 @@
-import logging
-logger = logging.getLogger(__name__)
 from typing import Literal
 
 from pydantic import Field, field_validator, ValidationInfo
