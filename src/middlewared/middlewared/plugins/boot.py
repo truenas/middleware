@@ -1,8 +1,9 @@
 import asyncio
 import os
 
-from contextlib import asynccontextmanager
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str, returns, Patch
+from middlewared.api import api_method
+from middlewared.api.current import BootGetStateArgs, BootGetStateResult
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str, returns
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
 from middlewared.utils.disks import valid_zfs_partition_uuids
@@ -22,12 +23,7 @@ class BootService(Service):
     async def pool_name(self):
         return BOOT_POOL_NAME
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Patch(
-        'pool_entry', 'get_state',
-        ('rm', {'name': 'id'}),
-        ('rm', {'name': 'guid'}),
-    ))
+    @api_method(BootGetStateArgs, BootGetStateResult, roles=['READONLY_ADMIN'])
     async def get_state(self):
         """
         Returns the current state of the boot pool, including all vdevs, properties and datasets.

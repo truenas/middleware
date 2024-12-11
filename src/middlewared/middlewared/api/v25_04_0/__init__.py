@@ -7,6 +7,7 @@ from .api_key import *  # noqa
 from .app import *  # noqa
 from .app_image import *  # noqa
 from .auth import *  # noqa
+from .boot import *  # noqa
 from .boot_environments import *  # noqa
 from .catalog import *  # noqa
 from .cloud_backup import *  # noqa
