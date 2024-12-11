@@ -97,9 +97,6 @@ class ISCSIGlobalService(Service):
 
     @private
     def resync_readonly_property_for_zvol(self, id_, read_only_value):
-        if not self.middleware.call_sync('service.started', 'iscsitarget'):
-            return
-
         try:
             extent = self.middleware.call_sync(
                 'iscsi.extent.query',
