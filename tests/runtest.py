@@ -147,6 +147,9 @@ for output, arg in myopts:
     elif output == '--show_locals':
         show_locals = True
 
+# [MCG] Allow print to console
+callargs.append('-s')
+
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
     print(error_msg)
@@ -319,6 +322,13 @@ def parse_test_name_prefix_dir(test_name):
     else:
         return f"api2/{name}"
 
+tests = ['api2/test_001_ssh.py',
+         'api2/test_002_system_license.py',
+         'api2/test_003_network_global.py',
+         'api2/test_005_interface.py',
+         'api2/test_006_pool_and_sysds.py',
+         'api2/test_007_early_settings.py',
+         'api2/test_200_ftp.py']
 if tests:
     pytest_command.extend(list(map(parse_test_name_prefix_dir, tests)))
 else:
