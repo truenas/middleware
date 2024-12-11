@@ -939,7 +939,7 @@ class PoolDatasetService(CRUDService):
                 # as R/O (or R/W), we need to be sure and update the associated extent so
                 # that we don't get into a scenario where the iscsi extent is R/W but the
                 # underlying zvol is R/O. Windows clients seem to not handle this very well.
-                await self.middleware.call('iscsi.global.resync_readonly_property_for_zvol', id_)
+                await self.middleware.call('iscsi.global.resync_readonly_property_for_zvol', id_, data['readonly'])
 
         updated_ds = await self.get_instance(id_)
         self.middleware.send_event('pool.dataset.query', 'CHANGED', id=id_, fields=updated_ds)
