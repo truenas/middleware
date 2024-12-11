@@ -84,7 +84,7 @@ class PoolCreateTopologyDedupvdevs(BaseModel):
 
 
 class PoolCreateTopologyCachevdevs(BaseModel):
-    type: Literal["STRIPE"]
+    type: Literal["STRIPE"] = "STRIPE"
     disks: list[str]
 
 
@@ -94,12 +94,16 @@ class PoolCreateTopologyLogvdevs(BaseModel):
 
 
 class PoolCreateTopology(BaseModel):
-    data: list[PoolCreateTopologyDatavdevs]
-    special: list[PoolCreateTopologySpecialvdevs]
-    dedup: list[PoolCreateTopologyDedupvdevs]
-    cache: list[PoolCreateTopologyCachevdevs]
-    log: list[PoolCreateTopologyLogvdevs]
-    spares: list[str]
+    data: list[PoolCreateTopologyDatavdevs] = []
+    special: list[PoolCreateTopologySpecialvdevs] = []
+    dedup: list[PoolCreateTopologyDedupvdevs] = []
+    cache: list[PoolCreateTopologyCachevdevs] = []
+    log: list[PoolCreateTopologyLogvdevs] = []
+    spares: list[str] = []
+
+
+class PoolUpdateTopology(PoolCreateTopology, metaclass=ForUpdateMetaclass):
+    pass
 
 
 class PoolCreate(BaseModel):
@@ -123,7 +127,8 @@ class PoolUpdate(PoolCreate, metaclass=ForUpdateMetaclass):
     encryption_options: Excluded = excluded_field()
     deduplication: Excluded = excluded_field()
     checksum: Excluded = excluded_field()
-    
+    topology: PoolUpdateTopology
+
 
 class PoolExport(BaseModel):
     cascade: bool = False
@@ -145,6 +150,7 @@ class PoolLabel(BaseModel):
 class PoolPoolNormalizeInfo(PoolEntry):
     id: Excluded = excluded_field()
     guid: Excluded = excluded_field()
+    is_upgraded: Excluded = excluded_field()
 
 
 #################   Args and Results   #################
@@ -179,7 +185,7 @@ class PoolCreateResult(BaseModel):
 
 class PoolDetachArgs(BaseModel):
     id: int
-    options: PoolLabel
+    options: PoolLabel = Field(default_factory=PoolLabel)
 
 
 class PoolDetachResult(BaseModel):
@@ -215,8 +221,8 @@ class PoolImportFindResult(BaseModel):
 @single_argument_args("pool_import")
 class PoolImportPoolArgs(BaseModel):
     guid: str
-    name: str
-    enable_attachments: bool
+    name: str | None = None
+    enable_attachments: bool = False
 
 
 class PoolImportPoolResult(BaseModel):
@@ -260,7 +266,7 @@ class PoolRemoveResult(BaseModel):
 
 class PoolScrubArgs(BaseModel):
     id: int
-    action: Literal["START", "STOP", "PAUSE"]
+    action: Literal["START", "STOP", "PAUSE"] = "START"
 
 
 class PoolScrubResult(BaseModel):
