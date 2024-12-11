@@ -66,39 +66,39 @@ class PoolCreateEncryptionOptions(BaseModel):
     key: Secret[Annotated[str, Field(min_length=64, max_length=64)] | None] = None
 
 
-class PoolCreateTopologyDatavdevs(BaseModel):
+class PoolCreateTopologyDataVdev(BaseModel):
     type: Literal["DRAID1", "DRAID2", "DRAID3", "RAIDZ1", "RAIDZ2", "RAIDZ3", "MIRROR", "STRIPE"]
     disks: list[str]
     draid_data_disks: int
     draid_spare_disks: int
 
 
-class PoolCreateTopologySpecialvdevs(BaseModel):
+class PoolCreateTopologySpecialVdev(BaseModel):
     type: Literal["MIRROR", "STRIPE"]
     disks: list[str]
 
 
-class PoolCreateTopologyDedupvdevs(BaseModel):
+class PoolCreateTopologyDedupVdev(BaseModel):
     type: Literal["MIRROR", "STRIPE"]
     disks: list[str]
 
 
-class PoolCreateTopologyCachevdevs(BaseModel):
+class PoolCreateTopologyCacheVdev(BaseModel):
     type: Literal["STRIPE"] = "STRIPE"
     disks: list[str]
 
 
-class PoolCreateTopologyLogvdevs(BaseModel):
+class PoolCreateTopologyLogVdev(BaseModel):
     type: Literal["MIRROR", "STRIPE"]
     disks: list[str]
 
 
 class PoolCreateTopology(BaseModel):
-    data: list[PoolCreateTopologyDatavdevs] = []
-    special: list[PoolCreateTopologySpecialvdevs] = []
-    dedup: list[PoolCreateTopologyDedupvdevs] = []
-    cache: list[PoolCreateTopologyCachevdevs] = []
-    log: list[PoolCreateTopologyLogvdevs] = []
+    data: Annotated[list[PoolCreateTopologyDataVdev], Field(min_length=1)]
+    special: list[PoolCreateTopologySpecialVdev] = []
+    dedup: list[PoolCreateTopologyDedupVdev] = []
+    cache: list[PoolCreateTopologyCacheVdev] = []
+    log: list[PoolCreateTopologyLogVdev] = []
     spares: list[str] = []
 
 
