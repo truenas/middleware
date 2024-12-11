@@ -7,6 +7,7 @@ from middlewared.service import private, Service
 
 class RebootReason(enum.Enum):
     FIPS = 'FIPS configuration was changed.'
+    GPOSSTIG = 'General Purpose OS STIG configuration was changed.'
     UPGRADE = 'This system needs to be rebooted in order for the system upgrade to finish.'
 
 
