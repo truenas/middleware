@@ -21,7 +21,7 @@ UnixPerm = Annotated[str, AfterValidator(validate_unix_perm)]
 
 
 def validate_dir_path(value: str) -> str:
-    if not os.path.isdir(value):
+    if value and not os.path.isdir(value):
         raise ValueError('This path is not a directory.')
 
     return value

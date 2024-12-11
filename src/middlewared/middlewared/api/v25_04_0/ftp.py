@@ -1,3 +1,5 @@
+import logging
+logger = logging.getLogger(__name__)
 from typing import Literal
 
 from pydantic import Field, field_validator, ValidationInfo
@@ -17,7 +19,7 @@ __all__ = ["FtpEntry",
            "FtpUpdateArgs", "FtpUpdateResult"]
 
 TLS_PolicyOptions = Literal[
-    "on", "off", "data", "!data", "auth", "ctrl", "ctrl+data", "ctrl+!data", "auth+data", "auth+!data"
+    "", "on", "off", "data", "!data", "auth", "ctrl", "ctrl+data", "ctrl+!data", "auth+data", "auth+!data"
 ]
 
 
@@ -26,9 +28,9 @@ class FtpEntry(BaseModel):
     port: Annotated[int, Field(ge=1, le=65535)]
     clients: Annotated[int, Field(ge=1, le=10000)]
     ipconnections: Annotated[int, Field(ge=0, le=1000)]
-    loginattempt: Annotated[int, Field(le=0, ge=1000)]
-    timeout: Annotated[int, Field(le=0, ge=10000)]
-    timeout_notransfer: Annotated[int, Field(le=0, ge=10000)]
+    loginattempt: Annotated[int, Field(ge=0, le=1000)]
+    timeout: Annotated[int, Field(ge=0, le=10000)]
+    timeout_notransfer: Annotated[int, Field(ge=0, le=10000)]
     onlyanonymous: bool
     anonpath: Directory | None
     onlylocal: bool
@@ -63,18 +65,16 @@ class FtpEntry(BaseModel):
     ssltls_certificate: int | None
     options: str
 
-    @field_validator('passiveportsmin', 'passiveportsmax')
+    @field_validator("passiveportsmin", "passiveportsmax")
     @classmethod
-    def validate_passiveport(cls, v: int, info: ValidationInfo) -> int:
+    def validate_passiveport(cls, field_value: int, values: ValidationInfo):
         minport = 1024
         maxport = 65535
 
-        if not (v == 0 or (minport <= v <= maxport)):
-            raise ValueError("Must be 0 to reset else between %d and %d", minport, maxport)
-        if info.data['passiveportsmin'] >= info.data['passiveportsmax']:
-            raise ValueError("When specified, passiveportsmax should be greater than passiveportsmin")
+        if not (field_value == 0 or (minport <= field_value <= maxport)):
+            raise ValueError(f"Must be 0 (to reset) else between {minport} and {maxport}")
 
-        return v
+        return field_value
 
 
 @single_argument_args('ftp_update')
