@@ -146,3 +146,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
     async def config_internal(self):
         config = await self.config()
         return (await self.middleware.call('datastore.config', self._config.datastore)) | config
+
+
+async def setup(middleware):
+    middleware.event_register('tn_connect.config', 'Sent on TrueNAS Connect configuration changes')
