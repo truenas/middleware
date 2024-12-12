@@ -134,7 +134,6 @@ class VirtInstanceRestartResult(BaseModel):
 @single_argument_args('virt_instances_image_choices')
 class VirtInstanceImageChoicesArgs(BaseModel):
     remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
-    instance_type: InstanceType = 'CONTAINER'
 
 
 class ImageChoiceItem(BaseModel):
@@ -143,6 +142,7 @@ class ImageChoiceItem(BaseModel):
     release: str
     archs: list[str]
     variant: str
+    instance_types: list[InstanceType]
 
 
 class VirtInstanceImageChoicesResult(BaseModel):

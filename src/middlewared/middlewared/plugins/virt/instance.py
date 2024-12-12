@@ -162,17 +162,23 @@ class VirtInstanceService(CRUDService):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 for v in (await resp.json())['products'].values():
-                    # For containers we only want images matching current platform
-                    if data['instance_type'] == 'CONTAINER' and v['arch'] != current_arch:
-                        continue
                     alias = v['aliases'].split(',', 1)[0]
                     if alias not in choices:
+                        instance_types = set()
+                        for i in v['versions'].values():
+                            if 'incus.tar.xz' in i['items']:
+                                instance_types.add('CONTAINER')
+                            if 'disk.qcow2' in i['items']:
+                                instance_types.add('VM')
+                        if not instance_types:
+                            continue
                         choices[alias] = {
                             'label': f'{v["os"]} {v["release"]} ({v["arch"]}, {v["variant"]})',
                             'os': v['os'],
                             'release': v['release'],
                             'archs': [v['arch']],
                             'variant': v['variant'],
+                            'instance_types': list(instance_types),
                         }
                     else:
                         choices[alias]['archs'].append(v['arch'])
