@@ -1,7 +1,7 @@
 from middlewared.service import CallError, Service
 
 from .mixin import TNCAPIMixin
-from .urls import HOSTNAME_URL, LECA_HOSTNAME_URL
+from .urls import HOSTNAME_URL
 from .utils import get_account_id_and_system_id
 
 
