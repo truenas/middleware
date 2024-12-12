@@ -4,12 +4,19 @@ from subprocess import Popen
 from textwrap import dedent
 from time import sleep
 
+import pytest
+
 from middlewared.utils.os import terminate_pid
 
-# ignore SIGCHLD so child process is removed
-# from process table immediately without parent
-# process having to do any (formal) clean-up
-signal(SIGCHLD, SIG_IGN)
+
+@pytest.fixture(scope="module", autouse=True)
+def signal_handler():
+    # ignore SIGCHLD so child process is removed
+    # from process table immediately without parent
+    # process having to do any (formal) clean-up
+    orig = signal(SIGCHLD, SIG_IGN)
+    yield
+    signal(SIGCHLD, orig)
 
 
 def test_sigterm():
