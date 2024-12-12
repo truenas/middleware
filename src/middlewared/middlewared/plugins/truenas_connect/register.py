@@ -62,7 +62,7 @@ class TrueNASConnectService(Service):
         except KeyError:
             raise CallError(
                 'Claim token is not generated. Please generate a claim token before trying to get registration URI'
-            )
+            ) from None
 
         query_params = {
             'version': await self.middleware.call('system.version_short'),
