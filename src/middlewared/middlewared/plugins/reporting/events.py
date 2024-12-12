@@ -1,4 +1,3 @@
-import psutil
 import time
 
 from middlewared.event import EventSource
