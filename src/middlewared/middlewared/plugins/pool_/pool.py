@@ -80,7 +80,6 @@ class PoolService(CRUDService):
         Int('allocated', required=True, null=True),
         Int('free', required=True, null=True),
         Int('freeing', required=True, null=True),
-        Int('dedupcached', required=True, null=True),
         Int('dedup_table_size', required=True, null=True),
         Str('dedup_table_quota', required=True, null=True),
         Str('fragmentation', required=True, null=True),
@@ -164,7 +163,6 @@ class PoolService(CRUDService):
             'freeing_str': None,
             'dedup_table_quota': None,
             'dedup_table_size': None,
-            'dedupcached': None,
             'autotrim': {
                 'parsed': 'off',
                 'rawvalue': 'off',
@@ -204,7 +202,6 @@ class PoolService(CRUDService):
                 'autotrim': info['properties']['autotrim'],
                 'dedup_table_quota': info['properties']['dedup_table_quota']['parsed'],
                 'dedup_table_size': info['properties']['dedup_table_size']['parsed'],
-                'dedupcached': info['properties']['dedupcached']['parsed'],
             })
 
         return rv
