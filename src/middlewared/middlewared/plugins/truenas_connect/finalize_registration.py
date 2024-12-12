@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import jwt
 
@@ -8,6 +9,9 @@ from .mixin import TNCAPIMixin
 from .status_utils import Status
 from .urls import REGISTRATION_FINALIZATION_URI
 from .utils import CLAIM_TOKEN_CACHE_KEY
+
+
+logger = logging.getLogger('truenas_connect')
 
 
 class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
@@ -25,18 +29,22 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
 
     @job(lock='tnc_finalize_registration')
     async def registration(self, job):
+        logger.debug('Starting TNC registration finalization')
         config = await self.middleware.call('tn_connect.config')
         system_id = await self.middleware.call('system.host_id')
+        try_num = 1
         while config['status'] == Status.REGISTRATION_FINALIZATION_WAITING.name:
             try:
                 claim_token = await self.middleware.call('cache.get', CLAIM_TOKEN_CACHE_KEY)
             except KeyError:
                 # We have hit timeout
                 # TODO: Add alerts
+                logger.debug('TNC claim token has expired')
                 await self.status_update(Status.REGISTRATION_FINALIZATION_TIMEOUT, 'TNC claim token has expired')
                 return
 
             try:
+                logger.debug('Attempt %r: Polling for TNC registration finalization', try_num)
                 status = await self.poll_once(claim_token, system_id)
             except asyncio.CancelledError:
                 await self.status_update(
@@ -44,14 +52,15 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
                 )
                 raise
             except Exception as e:
-                # TODO: We need TNC team to give us something to identify a legit error
-                self.logger.error('Failed to finalize registration with TNC', exc_info=True)
+                logger.debug('TNC registration has not been finalized yet: %r', str(e))
                 status = {'error': str(e)}
+            finally:
+                try_num += 1
 
             if status['error'] is None:
                 # We have got the key now and the registration has been finalized
                 if 'token' not in status['response']:
-                    self.logger.error(
+                    logger.error(
                         'Registration finalization failed for TNC as token not found in response: %r',
                         status['response']
                     )
@@ -62,12 +71,12 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
                     try:
                         decoded_token = jwt.decode(token, options={'verify_signature': False})
                     except jwt.exceptions.DecodeError:
-                        self.logger.error('Invalid JWT token received from TNC')
+                        logger.error('Invalid JWT token received from TNC')
                         await self.status_update(Status.REGISTRATION_FINALIZATION_FAILED)
                         return
                     else:
                         if diff := {'account_id', 'system_id'} - set(decoded_token):
-                            self.logger.error('JWT token does not contain required fields: %r', diff)
+                            logger.error('JWT token does not contain required fields: %r', diff)
                             await self.status_update(Status.REGISTRATION_FINALIZATION_FAILED)
                             return
 
@@ -78,6 +87,7 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
                         }
                     )
                     await self.status_update(Status.CERT_GENERATION_IN_PROGRESS)
+                    logger.debug('TNC registration has been finalized')
                     self.middleware.create_task(self.middleware.call('tn_connect.acme.initiate_cert_generation'))
                     # Remove claim token from cache
                     await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)

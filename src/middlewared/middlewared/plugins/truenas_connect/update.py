@@ -1,4 +1,5 @@
 import contextlib
+import logging
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
@@ -9,6 +10,9 @@ from .mixin import TNCAPIMixin
 from .status_utils import Status
 from .urls import ACCOUNT_SERVICE_URL
 from .utils import CLAIM_TOKEN_CACHE_KEY, get_account_id_and_system_id
+
+
+logger = logging.getLogger('truenas_connect')
 
 
 class TrueNASConnectModel(sa.Model):
@@ -106,6 +110,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
     @private
     async def unset_registration_details(self):
+        logger.debug('Unsetting registration details')
         with contextlib.suppress(KeyError):
             await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
 
