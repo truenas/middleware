@@ -1,8 +1,6 @@
 import asyncio
 import errno
 import os
-import signal
-import time
 
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.service_.services.all import all_services
@@ -12,6 +10,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import filterable, CallError, CRUDService, pass_app, periodic, private
 from middlewared.service_exception import MatchNotFound, ValidationError
 from middlewared.utils import filter_list, filter_getattrs
+from middlewared.utils.os import terminate_pid
 
 
 class ServiceModel(sa.Model):
@@ -430,7 +429,7 @@ class ServiceService(CRUDService):
         return await service_object.become_standby()
 
     @private
-    def terminate_process(self, pid: int, timeout: int = 10) -> bool:
+    def terminate_process(self, pid, timeout = 10):
         """
         Terminate the process with the given `pid`.
 
@@ -443,34 +442,9 @@ class ServiceService(CRUDService):
         if pid == 0 or pid == os.getpid():
             raise ValidationError('terminate_process.pid', 'Invalid PID')
         try:
-            # Send SIGTERM to request the process to terminate
-            os.kill(pid, signal.SIGTERM)
+            return terminate_pid(pid, timeout)
         except ProcessLookupError:
-            # If the process does not exist or we lack permissions, exit the function
             raise ValidationError('terminate_process.pid', f'No such process with PID: {pid}')
-
-        start_time = time.time()
-        while True:
-            try:
-                os.kill(pid, 0)
-            except ProcessLookupError:
-                # Process has terminated
-                return True
-
-            if time.time() - start_time >= timeout:
-                # Timeout reached; break out of the loop to send SIGKILL
-                break
-
-            # Wait a bit before checking again
-            time.sleep(0.1)
-
-        try:
-            # Send SIGKILL to forcefully terminate the process
-            os.kill(pid, signal.SIGKILL)
-            return False
-        except ProcessLookupError:
-            # Process may have terminated between checks
-            return True
 
     @periodic(3600, run_on_start=False)
     @private
