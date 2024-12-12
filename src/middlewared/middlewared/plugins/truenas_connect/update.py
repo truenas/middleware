@@ -74,6 +74,10 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         db_payload = {'enabled': data['enabled'], 'ips': data['ips']}
         if config['enabled'] is False and data['enabled'] is True:
+            # Finalization registration is triggered when claim token is generated
+            # We make sure there is no pending claim token
+            with contextlib.suppress(KeyError):
+                await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
             db_payload['status'] = Status.CLAIM_TOKEN_MISSING.name
         elif config['enabled'] is True and data['enabled'] is False:
             await self.unset_registration_details()
@@ -86,10 +90,17 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         await self.middleware.call('datastore.update', self._config.datastore, config['id'], db_payload)
 
-        # TODO: Handle the case where user imports same db in a different system
-        # TODO: Trigger a job to update the registration details if ips are changed
+        new_config = await self.config()
+        if new_config['status'] is Status.CONFIGURED.name and config['ips'] != new_config['ips']:
+            # TODO: Please discuss what should be done if this errors out and how an automatic retrial
+            #  should be set in place
+            response = await self.middleware.call('tn_connect.hostname.register_update_ips')
+            if response['error']:
+                raise CallError(f'Failed to update IPs with TrueNAS Connect: {response["error"]}')
 
-        return await self.config()
+        # TODO: Handle the case where user imports same db in a different system
+
+        return new_config
 
     @private
     async def unset_registration_details(self):
