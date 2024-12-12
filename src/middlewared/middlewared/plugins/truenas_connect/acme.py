@@ -1,3 +1,5 @@
+import logging
+
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, Service
 from middlewared.utils.time_utils import utc_now
@@ -8,6 +10,9 @@ from .mixin import TNCAPIMixin
 from .status_utils import Status
 from .urls import ACME_CONFIG_URL
 from .utils import CERT_RENEW_DAYS, get_account_id_and_system_id
+
+
+logger = logging.getLogger('truenas_connect')
 
 
 class TNCACMEService(Service, TNCAPIMixin):
@@ -40,13 +45,13 @@ class TNCACMEService(Service, TNCAPIMixin):
         }
 
     async def initiate_cert_generation(self):
+        logger.debug('Initiating cert generation steps for TNC')
         try:
             cert_details = await self.initiate_cert_generation_impl()
         except Exception:
-            self.logger.error('Failed to complete certificate generation for TNC', exc_info=True)
+            logger.error('Failed to complete certificate generation for TNC', exc_info=True)
             await self.middleware.call('tn_connect.set_status', Status.CERT_GENERATION_FAILED.name)
         else:
-            # TODO: Insert cert in the database
             cert_id = await self.middleware.call(
                 'datastore.insert',
                 'system.certificate', {
@@ -57,6 +62,7 @@ class TNCACMEService(Service, TNCAPIMixin):
                     'renew_days': CERT_RENEW_DAYS,
                 }, {'prefix': 'cert_'}
             )
+            logger.debug('TNC certificate generated successfully')
             await self.middleware.call('tn_connect.set_status', Status.CONFIGURED.name, {'certificate': cert_id})
 
     async def initiate_cert_generation_impl(self):
@@ -64,6 +70,7 @@ class TNCACMEService(Service, TNCAPIMixin):
         return await self.create_cert()
 
     async def create_cert(self):
+
         hostname_config = await self.middleware.call('tn_connect.hostname.config')
         if hostname_config['error']:
             raise CallError(f'Failed to fetch TNC hostname configuration: {hostname_config["error"]}')
@@ -72,9 +79,12 @@ class TNCACMEService(Service, TNCAPIMixin):
         if acme_config['error']:
             raise CallError(f'Failed to fetch TNC ACME configuration: {acme_config["error"]}')
 
+        logger.debug('Generating CSR for TNC certificate')
         hostnames = get_hostnames_from_hostname_config(hostname_config)
         csr, private_key = generate_csr(hostnames)
         dns_mapping = {f'DNS:{hostname}': None for hostname in hostnames}
+
+        logger.debug('Performing ACME challenge for TNC certificate')
         final_order = await self.middleware.call(
             'acme.issue_certificate_impl', type('dummy_job', (object,), {'set_progress': lambda *args: None})(),
             10, acme_config['acme_details'], csr, dns_mapping,

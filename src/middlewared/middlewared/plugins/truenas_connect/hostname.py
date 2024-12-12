@@ -1,8 +1,13 @@
+import logging
+
 from middlewared.service import CallError, Service
 
 from .mixin import TNCAPIMixin
 from .urls import HOSTNAME_URL
 from .utils import get_account_id_and_system_id
+
+
+logger = logging.getLogger('truenas_connect')
 
 
 class TNCHostnameService(Service, TNCAPIMixin):
@@ -41,6 +46,7 @@ class TNCHostnameService(Service, TNCAPIMixin):
 
     async def register_update_ips(self):
         tnc_config = await self.middleware.call('tn_connect.config_internal')
+        logger.debug('Updating TNC hostname configuration with %r ips', ','.join(tnc_config['ips']))
         config = await self.config()
         if config['error']:
             raise CallError(f'Failed to fetch TNC hostname configuration: {config["error"]}')
