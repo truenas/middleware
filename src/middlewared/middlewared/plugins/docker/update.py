@@ -77,7 +77,9 @@ class DockerService(ConfigService):
                 # We want to clear upgrade alerts for apps at this point
                 await self.middleware.call('app.clear_upgrade_alerts_for_all')
 
-            if pool_changed or address_pools_changed:
+            nvidia_changed = old_config['nvidia'] != config['nvidia']
+
+            if pool_changed or address_pools_changed or nvidia_changed:
                 job.set_progress(20, 'Stopping Docker service')
                 try:
                     await self.middleware.call('service.stop', 'docker')
@@ -102,6 +104,9 @@ class DockerService(ConfigService):
 
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
 
+            if nvidia_changed:
+                await self.middleware.call('docker.configure_nvidia')
+
             if pool_changed:
                 job.set_progress(60, 'Applying requested configuration')
                 await self.middleware.call('docker.setup.status_change')
@@ -112,9 +117,6 @@ class DockerService(ConfigService):
                     await catalog_sync_job.wait()
 
                 await self.middleware.call('service.start', 'docker')
-
-            if old_config['nvidia'] != config['nvidia']:
-                await self.middleware.call('docker.configure_nvidia')
 
             if config['pool'] and address_pools_changed:
                 job.set_progress(95, 'Initiating redeployment of applications to apply new address pools changes')
@@ -163,6 +165,7 @@ class DockerService(ConfigService):
 
         if refresh:
             subprocess.run(['systemd-sysext', 'refresh'], capture_output=True, check=True, text=True)
+            subprocess.run(['ldconfig'], capture_output=True, check=True, text=True)
 
         if config['nvidia']:
             cp = subprocess.run(['modprobe', 'nvidia'], capture_output=True, text=True)
