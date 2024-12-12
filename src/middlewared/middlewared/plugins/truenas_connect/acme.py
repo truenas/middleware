@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, job, Service
@@ -55,7 +56,7 @@ class TNCACMEService(Service, TNCAPIMixin):
             cert_id = await self.middleware.call(
                 'datastore.insert',
                 'system.certificate', {
-                    'name': 'TNC',
+                    'name': f'truenas_connect_{str(uuid.uuid4())[-5:]}',
                     'type': CERT_TYPE_EXISTING,
                     'certificate': cert_details['cert'],
                     'privatekey': cert_details['private_key'],
