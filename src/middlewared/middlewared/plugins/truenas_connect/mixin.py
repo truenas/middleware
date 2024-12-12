@@ -25,6 +25,9 @@ class TNCAPIMixin:
         options = options or {}
         timeout = options.get('timeout', 15)
         response = {'error': None, 'response': {}}
+        if payload and (headers is None or 'Content-Type' not in headers):
+            headers = headers or {}
+            headers['Content-Type'] = 'application/json'
         try:
             async with async_timeout.timeout(timeout):
                 async with aiohttp.ClientSession(raise_for_status=True, trust_env=True) as session:
