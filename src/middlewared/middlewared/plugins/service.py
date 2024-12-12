@@ -1,16 +1,16 @@
 import asyncio
 import errno
+import os
+import signal
+import time
 
-import psutil
-
+import middlewared.sqlalchemy as sa
 from middlewared.plugins.service_.services.all import all_services
 from middlewared.plugins.service_.services.base import IdentifiableServiceInterface
 from middlewared.plugins.service_.utils import app_has_write_privilege_for_service
-
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import filterable, CallError, CRUDService, pass_app, periodic, private
-from middlewared.service_exception import MatchNotFound
-import middlewared.sqlalchemy as sa
+from middlewared.service_exception import MatchNotFound, ValidationError
 from middlewared.utils import filter_list, filter_getattrs
 
 
@@ -429,33 +429,48 @@ class ServiceService(CRUDService):
         service_object = await self.middleware.call('service.object', service)
         return await service_object.become_standby()
 
-    @accepts(Int("pid"), Int("timeout", default=10))
-    @returns(Bool(
-        "process_terminated_nicely",
-        description="`true` is process has been successfully terminated with `TERM` and `false` if we had to use `KILL`"
-    ))
-    def terminate_process(self, pid, timeout):
+    @private
+    def terminate_process(self, pid: int, timeout: int = 10) -> bool:
         """
-        Terminate process by `pid`.
+        Terminate the process with the given `pid`.
 
-        First send `TERM` signal, then, if was not terminated in `timeout` seconds, send `KILL` signal.
+        Send SIGTERM, wait up to `timeout` seconds for the process to terminate.
+        If the process is still running after the timeout, send SIGKILL.
+
+        Returns:
+            boolean: True if process was terminated with SIGTERM, false if SIGKILL was used
         """
+        if pid == 0 or pid == os.getpid():
+            raise ValidationError('terminate_process.pid', 'Invalid PID')
         try:
-            process = psutil.Process(pid)
-            process.terminate()
-            gone, alive = psutil.wait_procs([process], timeout)
-        except psutil.NoSuchProcess:
-            raise CallError("Process does not exist")
+            # Send SIGTERM to request the process to terminate
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            # If the process does not exist or we lack permissions, exit the function
+            raise ValidationError('terminate_process.pid', f'No such process with PID: {pid}')
 
-        if not alive:
-            return True
+        start_time = time.time()
+        while True:
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                # Process has terminated
+                return True
+
+            if time.time() - start_time >= timeout:
+                # Timeout reached; break out of the loop to send SIGKILL
+                break
+
+            # Wait a bit before checking again
+            time.sleep(0.1)
 
         try:
-            alive[0].kill()
-        except psutil.NoSuchProcess:
+            # Send SIGKILL to forcefully terminate the process
+            os.kill(pid, signal.SIGKILL)
+            return False
+        except ProcessLookupError:
+            # Process may have terminated between checks
             return True
-
-        return False
 
     @periodic(3600, run_on_start=False)
     @private
