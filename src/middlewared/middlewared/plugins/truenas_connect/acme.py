@@ -72,6 +72,8 @@ class TNCACMEService(Service, TNCAPIMixin):
         if cert_job.error:
             raise CallError(cert_job.error)
 
+        return cert_job.result
+
     @job(lock='tn_connect_cert_generation')
     async def create_cert(self, job):
         hostname_config = await self.middleware.call('tn_connect.hostname.config')
@@ -120,3 +122,10 @@ class TNCACMEService(Service, TNCAPIMixin):
                     'revoked_date': utc_now(),
                 }, {'prefix': 'cert_'}
             )
+
+
+async def setup(middleware):
+    tnc_config = await middleware.call('tn_connect.config')
+    if tnc_config['status'] is Status.CERT_GENERATION_IN_PROGRESS.name:
+        logger.debug('Middleware started and cert generation is in progress, initiating process')
+        middleware.create_task(middleware.call('tn_connect.acme.initiate_cert_generation'))
