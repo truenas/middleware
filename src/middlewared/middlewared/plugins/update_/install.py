@@ -14,6 +14,10 @@ logger = logging.getLogger(__name__)
 run_kw = dict(check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
 STARTING_INSTALLER = "Starting installer"
 
+def get_hash(file_path, digest="sha1"):
+    with open(file_path, 'rb') as f:
+        return hashlib.file_digest(f, digest).hexdigest()
+
 
 class UpdateService(Service):
     @private
@@ -28,13 +32,13 @@ class UpdateService(Service):
 
         for file, checksum in manifest["checksums"].items():
             progress_callback(0, f"Verifying {file}")
-            with open(os.path.join(mounted, file), 'rb') as f:
-                our_checksum = hashlib.file_digest(f, 'sha256').hexdigest()
+            file_path = os.path.join(mounted, file)
+            our_checksum = get_hash(file_path)
+            if our_checksum != checksum:
+                # eventually we will use sha256
+                our_checksum = get_hash(file_path, digest="sha256")
                 if our_checksum != checksum:
-                    # try legacy sha1
-                    our_checksum = hashlib.file_digest(f, 'sha1').hexdigest()
-                    if our_checksum != checksum:
-                        raise CallError(f"Checksum mismatch for {file!r}: {our_checksum} != {checksum}")
+                    raise CallError(f"Checksum mismatch for {file!r}: {our_checksum} != {checksum}")
 
         progress_callback(0, "Running pre-checks")
         warning = self._execute_truenas_install(mounted, {
