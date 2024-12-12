@@ -392,7 +392,7 @@ class URL(ValidatorBase):
             raise ValueError('Invalid URL: no netloc specified')
 
 
-def check_path_resides_within_volume_sync(verrors, schema_name, path, vol_names):
+def check_path_resides_within_volume_sync(verrors, schema_name, path, vol_names, must_be_dir=False):
     """
     This provides basic validation of whether a given `path` is allowed to
     be exposed to end-users.
@@ -404,6 +404,8 @@ def check_path_resides_within_volume_sync(verrors, schema_name, path, vol_names)
     `path` - path to validate
 
     `vol_names` - list of expected pool names
+
+    `must_be_dir` - optional check for directory
 
     It checks the following:
     * path is within /mnt
@@ -421,6 +423,9 @@ def check_path_resides_within_volume_sync(verrors, schema_name, path, vol_names)
         inode = None
 
     rp = Path(os.path.realpath(path))
+
+    if must_be_dir and not rp.is_dir():
+        verrors.add(schema_name, "The path must be a directory")
 
     vol_paths = [os.path.join("/mnt", vol_name) for vol_name in vol_names]
     if not path.startswith("/mnt/") or not any(

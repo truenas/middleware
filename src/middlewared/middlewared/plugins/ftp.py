@@ -157,7 +157,9 @@ class FTPService(SystemServiceService):
                 new["anonpath"] = None
 
         if new["anonpath"] is not None:
-            await check_path_resides_within_volume(verrors, self.middleware, "ftp_update.anonpath", new["anonpath"])
+            await check_path_resides_within_volume(
+                verrors, self.middleware, "ftp_update.anonpath", new["anonpath"], must_be_dir=True
+            )
 
         if new["tls"]:
             if not new["ssltls_certificate"]:
