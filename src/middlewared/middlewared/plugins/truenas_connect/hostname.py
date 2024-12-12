@@ -45,18 +45,7 @@ class TNCHostnameService(Service, TNCAPIMixin):
         if config['error']:
             raise CallError(f'Failed to fetch TNC hostname configuration: {config["error"]}')
 
-        register = config['hostname_configured'] is False
-        if register:
-            payload = {
-                'ips': tnc_config['ips'],
-                'system_id': tnc_config['registration_details']['system_id'],
-                'create_wildcard': True,
-            }
-        else:
-            # FIXME: This needs to be fixed
-            payload = {config['base_domain']: tnc_config['ip']}
-
-        # FIXME: Put does not give json in response, handle that and is broken upstream atm as well
+        creds = get_account_id_and_system_id(tnc_config)
         return await self.call(
-            LECA_HOSTNAME_URL, 'post' if register else 'put', payload=payload,
+            HOSTNAME_URL.format(**creds), 'put', payload={'ips': tnc_config['ips']},
         )
