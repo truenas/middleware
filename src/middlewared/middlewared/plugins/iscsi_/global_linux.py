@@ -3,6 +3,7 @@ import os
 
 from middlewared.schema import Bool, Dict, Int, Str
 from middlewared.service import filterable, filterable_returns, private, Service
+from middlewared.service_exception import MatchNotFound
 from middlewared.utils import filter_list, run
 
 
@@ -93,6 +94,20 @@ class ISCSIGlobalService(Service):
 
                 sessions.append(session_dict)
         return filter_list(sessions, filters, options)
+
+    @private
+    def resync_readonly_property_for_zvol(self, id_, read_only_value):
+        try:
+            extent = self.middleware.call_sync(
+                'iscsi.extent.query',
+                [['enabled', '=', True], ['path', '=', f'zvol/{id_}']],
+                {'get': True}
+            )
+            ro = True if read_only_value.lower() == 'on' else False
+            if extent['ro'] != ro:
+                self.middleware.call_sync('iscsi.extent.update', extent['id'], {'ro': ro})
+        except MatchNotFound:
+            return
 
     @private
     def resync_lun_size_for_zvol(self, id_):
