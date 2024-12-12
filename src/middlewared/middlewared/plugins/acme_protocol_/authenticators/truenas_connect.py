@@ -10,7 +10,7 @@ from middlewared.service import CallError
 from .base import Authenticator
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('truenas_connect')
 
 
 class TrueNASConnectAuthenticator(Authenticator):
@@ -33,7 +33,7 @@ class TrueNASConnectAuthenticator(Authenticator):
             raise CallError(f'Failed to perform {self.NAME} challenge for {domain!r} domain: {e}')
 
     def _perform_internal(self, domain, validation_name, validation_content):
-        self.middleware.logger.error(
+        logger.debug(
             'Performing %r challenge for %r domain with %r validation name and %r validation content',
             self.NAME, domain, validation_name, validation_content,
         )
@@ -46,6 +46,8 @@ class TrueNASConnectAuthenticator(Authenticator):
                 f'Failed to perform {self.NAME} challenge for {domain!r} domain with '
                 f'{response.status_code!r} status code: {response.text}'
             )
+
+        logger.debug('Successfully performed %r challenge for %r domain', self.NAME, domain)
 
     def _cleanup(self, domain, validation_name, validation_content):
         # We don't have any API in place to clean existing TXT records for TNC yet

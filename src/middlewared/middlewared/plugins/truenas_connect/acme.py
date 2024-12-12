@@ -1,7 +1,7 @@
 import logging
 
 from middlewared.plugins.crypto_.utils import CERT_TYPE_EXISTING
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, job, Service
 from middlewared.utils.time_utils import utc_now
 
 from .acme_utils import normalize_acme_config
@@ -67,10 +67,13 @@ class TNCACMEService(Service, TNCAPIMixin):
 
     async def initiate_cert_generation_impl(self):
         await self.middleware.call('tn_connect.hostname.register_update_ips')
-        return await self.create_cert()
+        cert_job = await self.middleware.call('tn_connect.acme.create_cert')
+        await cert_job.wait()
+        if cert_job.error:
+            raise CallError(cert_job.error)
 
-    async def create_cert(self):
-
+    @job(lock='tn_connect_cert_generation')
+    async def create_cert(self, job):
         hostname_config = await self.middleware.call('tn_connect.hostname.config')
         if hostname_config['error']:
             raise CallError(f'Failed to fetch TNC hostname configuration: {hostname_config["error"]}')
@@ -86,8 +89,7 @@ class TNCACMEService(Service, TNCAPIMixin):
 
         logger.debug('Performing ACME challenge for TNC certificate')
         final_order = await self.middleware.call(
-            'acme.issue_certificate_impl', type('dummy_job', (object,), {'set_progress': lambda *args: None})(),
-            10, acme_config['acme_details'], csr, dns_mapping,
+            'acme.issue_certificate_impl', job, 25, acme_config['acme_details'], csr, dns_mapping,
         )
 
         return {
@@ -111,7 +113,7 @@ class TNCACMEService(Service, TNCAPIMixin):
                 'acme.revoke_certificate', acme_config['acme_details'], certificate['certificate'],
             )
         except CallError:
-            self.logger.error('Failed to revoke TNC certificate', exc_info=True)
+            logger.error('Failed to revoke TNC certificate', exc_info=True)
         else:
             await self.middleware.call(
                 'datastore.update', 'system.certificate', certificate['id'], {
