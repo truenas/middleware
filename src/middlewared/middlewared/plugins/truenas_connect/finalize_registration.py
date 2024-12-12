@@ -78,7 +78,9 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
                         }
                     )
                     await self.status_update(Status.CERT_GENERATION_IN_PROGRESS)
-                    # TODO: Trigger a job to generate certs
+                    self.middleware.create_task(self.middleware.call('tn_connect.acme.initiate_cert_generation'))
+                    # Remove claim token from cache
+                    await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
 
             await asyncio.sleep(self.POLLING_GAP_MINUTES * 60)
             config = await self.middleware.call('tn_connect.config')

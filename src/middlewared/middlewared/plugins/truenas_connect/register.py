@@ -40,6 +40,8 @@ class TrueNASConnectService(Service):
         # Claim token is going to be valid for 45 minutes
         await self.middleware.call('cache.put', CLAIM_TOKEN_CACHE_KEY, claim_token, 45 * 60)
         await self.middleware.call('tn_connect.set_status', Status.REGISTRATION_FINALIZATION_WAITING.name)
+        # Triggering the job now to finalize registration
+        await self.middleware.call('tn_connect.finalize.registration')
         return claim_token
 
 
