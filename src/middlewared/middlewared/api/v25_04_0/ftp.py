@@ -5,7 +5,6 @@ from typing_extensions import Annotated
 
 from middlewared.api.base import (
     BaseModel,
-    Directory,
     Excluded,
     excluded_field,
     ForUpdateMetaclass,
@@ -30,7 +29,7 @@ class FtpEntry(BaseModel):
     timeout: Annotated[int, Field(ge=0, le=10000)]
     timeout_notransfer: Annotated[int, Field(ge=0, le=10000)]
     onlyanonymous: bool
-    anonpath: Directory | None
+    anonpath: str | None
     onlylocal: bool
     banner: str
     filemask: UnixPerm
