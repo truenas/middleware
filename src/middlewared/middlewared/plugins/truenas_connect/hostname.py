@@ -30,8 +30,8 @@ class TNCHostnameService(Service, TNCAPIMixin):
         resp = (await self.call(HOSTNAME_URL.format(**creds), 'get')) | {'base_domain': None}
         resp['hostname_details'] = resp.pop('response')
         for domain in resp['hostname_details']:
-            if len(domain.rsplit('.', maxsplit=4)) == 4:
-                resp['base_domain'] = domain
+            if len(domain.rsplit('.', maxsplit=4)) == 5 and domain.startswith('*.'):
+                resp['base_domain'] = domain.split('.', maxsplit=1)[-1]
                 break
 
         return resp | {
