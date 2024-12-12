@@ -1,4 +1,5 @@
 import aiohttp
+import json
 import os
 import platform
 
@@ -287,15 +288,22 @@ class VirtInstanceService(CRUDService):
             await incus_call_and_wait(f'1.0/instances/{id}/state', 'put', {'json': {
                 'action': 'start',
             }})
-        except CallError:
+        except CallError as e:
             log = 'lxc.log' if instance['type'] == 'CONTAINER' else 'qemu.log'
             content = await incus_call(f'1.0/instances/{id}/logs/{log}', 'get', json=False)
             output = []
             while line := await content.readline():
                 output.append(line)
                 output = output[-10:]
-            await job.logs_fd_write(b''.join(output).strip())
-            raise CallError('Failed to start instance. Please check job logs.')
+            output = b''.join(output).strip()
+            errmsg = f'Failed to start instance: {e.errmsg}.'
+            try:
+                # If we get a json means there is no log file
+                json.loads(output.decode())
+            except json.decoder.JSONDecodeError:
+                await job.logs_fd_write(output)
+                errmsg += ' Please check job logs.'
+            raise CallError(errmsg)
 
         return True
 
