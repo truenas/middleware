@@ -1,4 +1,5 @@
 import uuid
+import logging
 from urllib.parse import urlencode
 
 from middlewared.api import api_method
@@ -10,6 +11,9 @@ from middlewared.service import CallError, Service
 from .status_utils import Status
 from .urls import REGISTRATION_URI
 from .utils import CLAIM_TOKEN_CACHE_KEY
+
+
+logger = logging.getLogger('truenas_connect')
 
 
 class TrueNASConnectService(Service):
@@ -40,6 +44,7 @@ class TrueNASConnectService(Service):
         # Claim token is going to be valid for 45 minutes
         await self.middleware.call('cache.put', CLAIM_TOKEN_CACHE_KEY, claim_token, 45 * 60)
         await self.middleware.call('tn_connect.set_status', Status.REGISTRATION_FINALIZATION_WAITING.name)
+        logger.debug('Claim token for TNC generation has been generated, kicking off registration process')
         # Triggering the job now to finalize registration
         await self.middleware.call('tn_connect.finalize.registration')
         return claim_token
