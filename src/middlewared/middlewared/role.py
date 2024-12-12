@@ -98,6 +98,10 @@ ROLES = {
     'TRUECOMMAND_READ': Role(),
     'TRUECOMMAND_WRITE': Role(includes=['TRUECOMMAND_READ'], stig=None),
 
+    # Truenas connect roles
+    'TRUENAS_CONNECT_READ': Role(),
+    'TRUENAS_CONNECT_WRITE': Role(includes=['TRUENAS_CONNECT_READ']),
+
     # Crypto roles
     'CERTIFICATE_READ': Role(),
     'CERTIFICATE_WRITE': Role(includes=['CERTIFICATE_READ']),

@@ -25,13 +25,13 @@ class TrueNASConnectModel(sa.Model):
 
 class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
-    # TODO: Add roles
     class Config:
         datastore = 'truenas_connect'
         datastore_extend = 'tn_connect.config_extend'
         cli_private = True
         namespace = 'tn_connect'
         entry = TNCEntry
+        role_prefix = 'TRUENAS_CONNECT'
 
     @private
     async def config_extend(self, config):
@@ -123,7 +123,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         if response['error']:
             raise CallError(f'Failed to revoke account: {response["error"]}')
 
-    @api_method(TNCIPChoicesArgs, TNCIPChoicesResult)
+    @api_method(TNCIPChoicesArgs, TNCIPChoicesResult, roles=['TRUENAS_CONNECT_READ'])
     async def ip_choices(self):
         """
         Returns IP choices which can be used with TrueNAS Connect.

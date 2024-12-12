@@ -18,7 +18,7 @@ class TrueNASConnectService(Service):
         namespace = 'tn_connect'
         cli_private = True
 
-    @api_method(TNCGenerateClaimTokenArgs, TNCGenerateClaimTokenResult)
+    @api_method(TNCGenerateClaimTokenArgs, TNCGenerateClaimTokenResult, roles=['TRUENAS_CONNECT_WRITE'])
     async def generate_claim_token(self):
         """
         Generate a claim token for TrueNAS Connect.
@@ -45,7 +45,7 @@ class TrueNASConnectService(Service):
         return claim_token
 
 
-    @api_method(TNCGetRegistrationURIArgs, TNCGetRegistrationURIResult)
+    @api_method(TNCGetRegistrationURIArgs, TNCGetRegistrationURIResult, roles=['TRUENAS_CONNECT_READ'])
     async def get_registration_uri(self):
         """
         Return the registration URI for TrueNAS Connect.
