@@ -25,4 +25,4 @@ def get_memory_info() -> MemoryInfo:
                 avail = int(line.split()[1] * 1024)
                 continue
 
-    return MemoryInfo(total=total)
+    return MemoryInfo(total=total, available=avail)
