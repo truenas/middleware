@@ -1,11 +1,10 @@
-import psutil
-
 from middlewared.api import api_method
 from middlewared.api.current import (
     VMGetVMMemoryInfoArgs, VMGetVMMemoryInfoResult, VMGetAvailableMemoryArgs, VMGetAvailableMemoryResult,
     VMGetVMemoryInUseArgs, VMGetVMemoryInUseResult, VMRandomMacArgs, VMRandomMacResult,
 )
 from middlewared.service import CallError, Service
+from middlewared.utils.memory import get_memory_info
 
 from .devices import NIC
 from .utils import ACTIVE_STATES
@@ -54,7 +53,7 @@ class VMService(Service):
         available at the current moment and if a VM should be allowed to be launched.
         """
         # Use 90% of available memory to play safe
-        free = int(psutil.virtual_memory().available * 0.9)
+        free = get_memory_info()['available'] * 0.9
 
         # Difference between current ARC total size and the minimum allowed
         arc_total = await self.middleware.call('sysctl.get_arcstats_size')
