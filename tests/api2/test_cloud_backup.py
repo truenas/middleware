@@ -146,6 +146,12 @@ def test_cloud_backup(cloud_backup_task):
     assert all(snapshot["id"] != snapshot_to_delete_id for snapshot in snapshots)
 
 
+def test_cloud_backup_abort(cloud_backup_task):
+    task_id = cloud_backup_task.task["id"]
+    call("cloud_backup.sync", task_id, {"dry_run": True})
+    assert call("cloud_backup.abort", task_id)
+
+
 @pytest.fixture(scope="module")
 def completed_cloud_backup_task(s3_credential, request):
     clean()
