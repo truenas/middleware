@@ -900,11 +900,9 @@ class FailoverEventsService(Service):
             self.run_call(
                 'failover.call_remote',
                 'failover.send_small_file',
-                [PWENC_FILE_SECRET, f'{PWENC_FILE_SECRET}.tmp'],
+                [PWENC_FILE_SECRET],
                 {'raise_connect_error': False}
             )
-            os.rename(f'{PWENC_FILE_SECRET}.tmp', PWENC_FILE_SECRET)
-            self.run_call('pwenc.reset_secret_cache')
         except Exception:
             self.logger.error('Failed to reinitialize pwenc', exc_info=True)
 
