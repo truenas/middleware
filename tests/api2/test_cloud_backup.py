@@ -150,6 +150,8 @@ def test_cloud_backup_abort(cloud_backup_task):
     task_id = cloud_backup_task.task["id"]
     call("cloud_backup.sync", task_id, {"dry_run": True})
     assert call("cloud_backup.abort", task_id)
+    # Ensure backup works after an abort
+    run_task(cloud_backup_task.task)
 
 
 @pytest.fixture(scope="module")
