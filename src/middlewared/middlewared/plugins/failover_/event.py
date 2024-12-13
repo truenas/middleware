@@ -21,6 +21,7 @@ from middlewared.plugins.docker.state_utils import Status as DockerStatus
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 from middlewared.plugins.virt.utils import Status as VirtStatus
+from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 
 logger = logging.getLogger('failover')
 FAILOVER_LOCK_NAME = 'vrrp_event'
@@ -892,6 +893,18 @@ class FailoverEventsService(Service):
         # Pools are now exported and so we can make disks available to other controller
         logger.warning('Stopping fenced')
         self.run_call('failover.fenced.stop')
+
+        # In the rare case where the pwenc_secret file doesn't match, we'll
+        # copy over the secret seed file from the active and reinitialize
+        try:
+            self.run_call(
+                'failover.call_remote',
+                'failover.send_small_file',
+                [PWENC_FILE_SECRET],
+                {'raise_connect_error': False}
+            )
+        except Exception:
+            self.logger.error('Failed to reinitialize pwenc', exc_info=True)
 
         # Now that fenced is stopped, attach NVMe/RoCE.
         logger.info('Start bring up of NVMe/RoCE')
