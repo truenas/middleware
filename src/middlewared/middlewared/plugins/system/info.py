@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils import sw_buildtime
-from middlewared.utils.cpu import get_cpu_info
+from middlewared.utils.cpu import cpu_info
 
 
 class SystemService(Service):
@@ -36,7 +36,7 @@ class SystemService(Service):
         """CPU info could change after boot, but we
         cache it since hot-plugging cpus is something
         we've not accounted for."""
-        return get_cpu_info()
+        return cpu_info()
 
     @private
     async def time_info(self):
