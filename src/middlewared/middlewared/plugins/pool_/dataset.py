@@ -209,8 +209,8 @@ class PoolDatasetService(CRUDService):
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
         filters = filters or []
-        if len(filters) == 1 and len(filters[0]) == 3 and list(filters[0][:2]) == ['id', '=']:
-            zfsfilters.append(copy.deepcopy(filters[0]))
+        if len(filters) == 1 and len(f := filters[0]) == 3 and f[0] in ('id', 'name') and f[1] in ('=', 'in'):
+            zfsfilters.append(copy.deepcopy(f))
 
         internal_datasets_filters = self.middleware.call_sync('pool.dataset.internal_datasets_filters')
         filters.extend(internal_datasets_filters)
