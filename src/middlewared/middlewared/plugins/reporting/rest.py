@@ -6,7 +6,6 @@ from middlewared.api.current import ChartMetricsArgs, ChartMetricsResult, ChartD
 from middlewared.service import Service
 from middlewared.utils.cpu import cpu_info
 from middlewared.utils.disk_stats import get_disk_stats
-from middlewared.utils.zfs import query_imported_fast_impl
 
 from .netdata import ClientConnectError, Netdata
 from .utils import calculate_disk_space_for_netdata, get_metrics_approximation, TIER_0_POINT_SIZE, TIER_1_POINT_SIZE
@@ -49,7 +48,6 @@ class NetdataService(Service):
             len(self.middleware.call_sync('device.get_disks', False, True)),
             cpu_info()['core_count'],
             self.middleware.call_sync('interface.query', [], {'count': True}),
-            len(query_imported_fast_impl()),
             self.middleware.call_sync('datastore.query', 'vm.vm', [], {'count': True}),
             len(glob.glob('/sys/fs/cgroup/**/*.service')),
         )

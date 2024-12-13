@@ -34,6 +34,7 @@ class RealtimeEventSource(EventSource):
             Int('arc_free_memory'),
             Int('arc_available_memory'),
             Int('physical_memory_total'),
+            Int('physical_memory_available'),
         ),
         Dict(
             'zfs',

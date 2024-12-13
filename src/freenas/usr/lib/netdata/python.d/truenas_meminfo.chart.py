@@ -10,6 +10,12 @@ CHARTS = {
             ['total', 'total', 'absolute'],
         ]
     },
+    'available': {
+        'options': [None, 'total', 'Bytes', 'total', 'Available memory', 'line'],
+        'lines': [
+            ['available', 'available', 'absolute'],
+        ]
+    },
 }
 
 
@@ -20,7 +26,8 @@ class Service(SimpleService):
         self.definitions = CHARTS
 
     def get_data(self):
-        return {'total': get_memory_info()['total']}
+        mem_info = get_memory_info()
+        return {'total': mem_info['total'], 'available': mem_info['available']}
 
     def check(self):
         return True

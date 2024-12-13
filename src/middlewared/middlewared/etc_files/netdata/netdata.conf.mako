@@ -61,7 +61,7 @@
 [plugin:proc]
 	netdata server resources = yes
 	/proc/diskstats = no
-	/proc/meminfo = yes
+	/proc/meminfo = no
 	/proc/net/dev = yes
 	/proc/pagetypeinfo = no
 	# /proc/stat = yes - we keep this uncommented as by default that enables it, for some reason
@@ -94,6 +94,7 @@
 	/proc/net/rpc/nfsd = yes
 	/proc/net/rpc/nfs = yes
 	/proc/spl/kstat/zfs/arcstats = no
+	/proc/spl/kstat/zfs/pool/state = no
 	/sys/fs/btrfs = no
 	ipc = no
 	/sys/class/power_supply = no
@@ -123,5 +124,7 @@
 [plugin:proc:/proc/stat]
     per cpu core utilization = no
     context switches = no
+    cpu interrupts = no
     processes started = no
     processes running = no
+    cpu idle states = no
