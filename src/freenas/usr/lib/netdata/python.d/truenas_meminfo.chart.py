@@ -20,10 +20,7 @@ class Service(SimpleService):
         self.definitions = CHARTS
 
     def get_data(self):
-        data = {}
-        for key, value in get_memory_info().items():
-            data[key] = value
-        return data
+        return {'total': get_memory_info()['total']}
 
     def check(self):
         return True
