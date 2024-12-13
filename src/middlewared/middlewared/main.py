@@ -617,6 +617,9 @@ class ShellWorkerThread(threading.Thread):
                 'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin',
                 'LC_ALL': 'C.UTF-8',
             }
+            with open('/proc/self/loginuid', 'w') as f:
+                f.write('50')
+
             os.execve(self.command[0], self.command, env)
 
         # Terminal baudrate affects input queue size
