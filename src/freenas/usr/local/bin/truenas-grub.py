@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import math
-import psutil
 import os
 import json
 import logging
@@ -8,6 +7,7 @@ import logging
 from middlewared.utils.serial import serial_port_choices
 from middlewared.utils.db import query_config_table
 from middlewared.utils.vendor import Vendors
+from middlewared.utils.memory import get_memory_info
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         # With our custom kernel, having 256MB RAM as base is not enough.
         # In my tests it worked with having 400MB as base RAM.
         # TODO: Let's please see what we can do to bring this down on the kernel side perhaps
-        current_mem = psutil.virtual_memory().total / 1024
+        current_mem = get_memory_info()['total'] / 1024
         cmdline.append(f"crashkernel={400 + math.ceil(current_mem / 16 / 1024 / 1024)}M")
 
     config.append(f'GRUB_TERMINAL_INPUT="{" ".join(terminal_input)}"')
