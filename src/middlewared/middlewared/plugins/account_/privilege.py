@@ -193,7 +193,7 @@ class PrivilegeService(CRUDService):
 
         for i, role in enumerate(data["roles"]):
             if role not in self.middleware.role_manager.roles:
-                verrors.add(f"{schema_name}.roles.{i}", f"Invalid role: choices are {self.middleware.role_manager.roles.keys()}")
+                verrors.add(f"{schema_name}.roles.{i}", "Invalid role")
 
         verrors.check()
 
