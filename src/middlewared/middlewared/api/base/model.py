@@ -133,7 +133,16 @@ class ForUpdateMetaclass(ModelMetaclass):
 class _ForUpdateSerializerMixin(PydanticBaseModel):
     @model_serializer(mode="wrap")
     def serialize_model(self, serializer):
-        return {k: v for k, v in serializer(self).items() if v != undefined}
+        aliases = {field.alias or name: name for name, field in self.model_fields.items()}
+
+        return {
+            k: v
+            for k, v in serializer(self).items()
+            if (
+                (getattr(self, aliases[k]) != undefined) if k in aliases and hasattr(self, aliases[k])
+                else v != undefined
+            )
+        }
 
 
 def _field_for_update(field):
