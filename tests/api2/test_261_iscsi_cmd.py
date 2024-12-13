@@ -21,7 +21,7 @@ from middlewared.test.integration.assets.iscsi import target_login_test
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
-from pyscsi.pyscsi.scsi_sense import sense_ascq_dict
+from pyscsi.pyscsi.scsi_sense import sense_ascq_dict, sense_key_dict
 from pytest_dependency import depends
 
 from auto_config import ha, hostname, isns_ip, password, pool_name, user
@@ -224,8 +224,16 @@ def get_client_count():
     return call('iscsi.global.client_count')
 
 
+def get_zvol_property(zvolid, property_name):
+    return call('zfs.dataset.query', [['id', '=', zvolid]], {'get': True})['properties'][property_name]['value']
+
+
 def get_volthreading(zvolid):
-    return call('zfs.dataset.query', [['id', '=', zvolid]], {'get': True})['properties']['volthreading']['value']
+    return get_zvol_property(zvolid, 'volthreading')
+
+
+def get_readonly(zvolid):
+    return get_zvol_property(zvolid, 'readonly')
 
 
 def verify_client_count(count, retries=10):
@@ -405,6 +413,14 @@ def expect_check_condition(s, text=None, check_type=CheckType.CHECK_CONDITION):
             s.testunitready()
         except TypeError:
             s.testunitready()
+
+
+@contextlib.contextmanager
+def raises_check_condition(sense_key, ascq):
+    with pytest.raises(Exception) as excinfo:
+        yield
+    e = excinfo.value
+    assert f"Check Condition: {sense_key_dict[sense_key]}(0x{sense_key:02X}) ASC+Q:{sense_ascq_dict[ascq]}(0x{ascq:04X})" == str(e)
 
 
 def _verify_inquiry(s):
@@ -2721,6 +2737,95 @@ def test_35_delete_extent_no_dataset(extent_type):
                 with zvol_dataset(zvol, MB_100, True, True):
                     with zvol_extent(zvol, extent_name='zvolextent1'):
                         ssh(DESTROY_CMD)
+
+def test_36_target_readonly_extent():
+    """Validate a target that is made RO - either by modifying the extent
+    setting, or the underlying ZVOL - behaves correctly."""
+    name1 = f"{target_name}x1"
+    iqn = f'{basename}:{name1}'
+
+    zeros = bytearray(512)
+    deadbeef = bytearray.fromhex('deadbeef') * 128
+
+    def lba_data(flipped):
+        if flipped:
+            return deadbeef, zeros
+        else:
+            return zeros, deadbeef
+
+    def write_lbas(s, flipped=False):
+        lba0, lba1 = lba_data(flipped)
+        s.write16(0, 1, lba0)
+        s.write16(1, 1, lba1)
+
+    def read_lbas(s, flipped=False):
+        lba0, lba1 = lba_data(flipped)
+        r = s.read16(0, 1)
+        assert r.datain == lba0, r.datain
+        r = s.read16(1, 1)
+        assert r.datain == lba1, r.datain
+
+    def check_readonly_state(zvolid, extentid, readonly):
+        if readonly:
+            assert get_readonly(zvolid) == 'on'
+            assert call('iscsi.extent.get_instance', extentid)['ro'] is True
+        else:
+            assert get_readonly(zvolid) == 'off'
+            assert call('iscsi.extent.get_instance', extentid)['ro'] is False
+
+    with initiator_portal() as config:
+        with configured_target(config, name1, 'VOLUME') as target_config:
+            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
+                zvolid = target_config['dataset']
+                extentid = target_config['extent']['id']
+
+                # Ensure that we can read and write
+                write_lbas(s)
+                read_lbas(s)
+                check_readonly_state(zvolid, extentid, False)
+
+                # Set RO by updating the extent
+                call('iscsi.extent.update', extentid, {'ro': True})
+                expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                check_readonly_state(zvolid, extentid, True)
+
+                # Ensure that we can only READ
+                read_lbas(s)
+                # Write => Check Condition Sense key = 7 for Data Protect, ASCQ == 0
+                with raises_check_condition(7, 0):
+                    write_lbas(s, True)
+                read_lbas(s)
+
+                # Set RW by updating the extent
+                call('iscsi.extent.update', extentid, {'ro': False})
+                expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                check_readonly_state(zvolid, extentid, False)
+
+                # Ensure that we can read and write
+                read_lbas(s)
+                write_lbas(s, True)
+                read_lbas(s, True)
+
+                # Set RO by updating the ZVOL
+                call('pool.dataset.update', zvolid, {'readonly': 'ON'})
+                expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                check_readonly_state(zvolid, extentid, True)
+
+                # Ensure that we can only READ
+                read_lbas(s, True)
+                with raises_check_condition(7, 0):
+                    write_lbas(s)
+                read_lbas(s, True)
+
+                # Set RW by updating the ZVOL
+                call('pool.dataset.update', zvolid, {'readonly': 'OFF'})
+                expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                check_readonly_state(zvolid, extentid, False)
+
+                # Ensure that we can read and write
+                read_lbas(s, True)
+                write_lbas(s)
+                read_lbas(s)
 
 
 def test_99_teardown(request):
