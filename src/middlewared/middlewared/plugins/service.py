@@ -439,7 +439,7 @@ class ServiceService(CRUDService):
         Returns:
             boolean: True if process was terminated with SIGTERM, false if SIGKILL was used
         """
-        if pid == 0 or pid == os.getpid():
+        if pid <= 0 or pid == os.getpid():
             raise ValidationError('terminate_process.pid', 'Invalid PID')
         try:
             return terminate_pid(pid, timeout)
