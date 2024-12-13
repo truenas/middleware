@@ -24,6 +24,8 @@ from middlewared.service_exception import (
 )
 from middlewared.utils.os import close_fds
 
+__all__ = ("ShellApplication",)
+
 ShellResize = collections.namedtuple("ShellResize", ["cols", "rows"])
 
 
