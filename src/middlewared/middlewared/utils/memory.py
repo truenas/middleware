@@ -5,14 +5,24 @@ __all__ = ('get_memory_info')
 
 class MemoryInfo(TypedDict):
     total: int
+    """Total amount of memory in bytes"""
+    available: int
     """Total available memory in bytes"""
 
 
 def get_memory_info() -> MemoryInfo:
-    total = 0
+    total = avail = 0
     with open('/proc/meminfo') as f:
-        for line in filter(lambda x: 'MemTotal' in x, f):
-            total = int(line.split()[1]) * 1024
-            break
+        for line in f:
+            if total and avail:
+                break
+
+            if not total and 'MemTotal' in line:
+                total = int(line.split()[1]) * 1024
+                continue
+
+            if not avail and 'MemAvailable' in line:
+                avail = int(line.split()[1] * 1024)
+                continue
 
     return MemoryInfo(total=total)
