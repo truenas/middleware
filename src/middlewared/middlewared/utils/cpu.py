@@ -1,8 +1,8 @@
+import collections
 import functools
-import psutil
+import os
 import re
-
-from collections import defaultdict
+import typing
 
 
 AMD_PREFER_TDIE = (
@@ -16,26 +16,43 @@ AMD_PREFER_TDIE = (
     'AMD Ryzen Threadripper 29',
 )
 RE_CORE = re.compile(r'^Core ([0-9]+)$')
-RE_CPU_MODEL = re.compile(r'^model name\s*:\s*(.*)', flags=re.M)
+
+
+class CpuInfo(typing.TypedDict):
+    cpu_model: str | None
+    core_count: str | None
+    physical_core_count: str | None
 
 
 @functools.cache
-def cpu_info() -> dict:
-    return {
-        'cpu_model': get_cpu_model(),
-        'core_count': psutil.cpu_count(logical=True),
-        'physical_core_count': psutil.cpu_count(logical=False),
-    }
+def cpu_info() -> CpuInfo:
+    return cpu_info_impl()
 
 
-def get_cpu_model():
-    with open('/proc/cpuinfo', 'r') as f:
-        model = RE_CPU_MODEL.search(f.read())
-        return model.group(1) if model else None
+def cpu_info_impl() -> CpuInfo:
+    cc = os.sysconf('SC_NPROCESSORS_ONLN') or None
+
+    cm = None
+    with open('/proc/cpuinfo') as f:
+        for line in filter(lambda x: x.startswith('model name'), f):
+            cm = line.split(':')[-1].strip() or None
+            break
+
+    pcc = set()
+    with os.scandir('/sys/devices/system/cpu/') as sdir:
+        for i in filter(lambda x: x.is_dir() and x.name.startswith('cpu'), sdir):
+            try:
+                with open(os.path.join(i.path, 'topology/core_cpus_list')) as f:
+                    pcc.add(f.read().strip())
+            except FileNotFoundError:
+                continue
+    pcc = len(pcc) or None
+
+    return CpuInfo(cpu_model=cm, core_count=cc, physical_core_count=pcc)
 
 
 def generic_cpu_temperatures(cpu_metrics: dict) -> dict:
-    temperatures = defaultdict(dict)
+    temperatures = collections.defaultdict(dict)
     for chip_name in filter(lambda sen: sen.startswith('coretemp-isa'), cpu_metrics):
         for temp in cpu_metrics[chip_name].values():
             if not (m := RE_CORE.match(temp['name'])):
