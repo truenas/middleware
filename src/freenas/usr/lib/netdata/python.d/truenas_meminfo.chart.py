@@ -1,6 +1,4 @@
-from dataclasses import asdict
-
-from middlewared.utils.metrics.meminfo import get_memory_info
+from middlewared.utils.memory import get_memory_info
 
 from bases.FrameworkServices.SimpleService import SimpleService
 
@@ -23,7 +21,7 @@ class Service(SimpleService):
 
     def get_data(self):
         data = {}
-        for key, value in asdict(get_memory_info()).items():
+        for key, value in get_memory_info().items():
             data[key] = value
         return data
 
