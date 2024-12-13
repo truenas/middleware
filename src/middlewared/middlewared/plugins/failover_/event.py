@@ -895,7 +895,7 @@ class FailoverEventsService(Service):
         self.run_call('failover.fenced.stop')
 
         # In the rare case where the pwenc_secret file doesn't match, we'll
-        # copy over the secret seed file from the active and reinialitize
+        # copy over the secret seed file from the active and reinitialize
         try:
             self.run_call(
                 'failover.call_remote',
