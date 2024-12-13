@@ -22,7 +22,7 @@ def get_memory_info() -> MemoryInfo:
                 continue
 
             if not avail and 'MemAvailable' in line:
-                avail = int(line.split()[1] * 1024)
+                avail = int(line.split()[1]) * 1024
                 continue
 
     return MemoryInfo(total=total, available=avail)
