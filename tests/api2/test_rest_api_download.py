@@ -92,7 +92,7 @@ def test_download_authorization_ok():
         username="unprivileged",
         group_name="unprivileged_users",
         privilege_name="Unprivileged users",
-        allowlist=[{"method": "CALL", "resource": "resttest.test_download_slow_pipe"}],
+        roles=["FULL_ADMIN"],
         web_shell=False,
     ) as user:
         with client(auth=(user.username, user.password)) as c:
@@ -104,7 +104,7 @@ def test_download_authorization_fails():
         username="unprivileged",
         group_name="unprivileged_users",
         privilege_name="Unprivileged users",
-        allowlist=[],
+        roles=["READONLY_ADMIN"],
         web_shell=False,
     ) as user:
         with client(auth=(user.username, user.password)) as c:

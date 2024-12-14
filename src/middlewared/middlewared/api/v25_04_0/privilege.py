@@ -1,8 +1,8 @@
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, SID
-from .api_key import AllowListItem
+from middlewared.utils.security import STIGType
 from .group import GroupEntry
 
-__all__ = ["PrivilegeEntry",
+__all__ = ["PrivilegeEntry", "PrivilegeRoleEntry",
            "PrivilegeCreateArgs", "PrivilegeCreateResult",
            "PrivilegeUpdateArgs", "PrivilegeUpdateResult",
            "PrivilegeDeleteArgs", "PrivilegeDeleteResult"]
@@ -14,7 +14,6 @@ class PrivilegeEntry(BaseModel):
     name: NonEmptyString
     local_groups: list[GroupEntry]
     ds_groups: list[GroupEntry]
-    allowlist: list[AllowListItem] = []
     roles: list[str] = []
     web_shell: bool
 
@@ -53,3 +52,11 @@ class PrivilegeDeleteArgs(BaseModel):
 
 class PrivilegeDeleteResult(BaseModel):
     result: bool
+
+
+class PrivilegeRoleEntry(BaseModel):
+    name: NonEmptyString
+    title: NonEmptyString
+    includes: list[NonEmptyString]
+    builtin: bool
+    stig: STIGType | None

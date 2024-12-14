@@ -65,7 +65,7 @@ def test_account_privilege_authentication(do_ldap_connection):
             "name": "LDAP privilege",
             "local_groups": [],
             "ds_groups": [group["pw_gid"]],
-            "allowlist": [{"method": "CALL", "resource": "system.info"}],
+            "roles": ["READONLY_ADMIN"],
             "web_shell": False,
         }):
             with client(auth=(LDAPUSER, LDAPPASSWORD)) as c:

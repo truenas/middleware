@@ -23,7 +23,7 @@ def api_key_auth(allowlist):
         username="unprivileged2",
         group_name="unprivileged_users2",
         privilege_name="Unprivileged users",
-        allowlist=allowlist,
+        roles=allowlist,
         web_shell=False,
     ) as t:
         with api_key(t.username) as key:
@@ -36,7 +36,7 @@ def login_password_auth(allowlist):
         username="unprivileged",
         group_name="unprivileged_users",
         privilege_name="Unprivileged users",
-        allowlist=allowlist,
+        roles=allowlist,
         web_shell=False,
     ) as t:
         yield dict(auth=(t.username, t.password))
@@ -48,7 +48,7 @@ def token_auth(allowlist):
         username="unprivileged",
         group_name="unprivileged_users",
         privilege_name="Unprivileged users",
-        allowlist=allowlist,
+        roles=allowlist,
         web_shell=False,
     ) as t:
         with client(auth=(t.username, t.password)) as c:
@@ -61,23 +61,16 @@ def auth(request):
     return request.param
 
 
-def test_root_api_key_rest(auth):
-    """We should be able to call a method with a root credential using REST API."""
-    with auth([{"method": "*", "resource": "*"}]) as kwargs:
-        results = GET('/system/info/', **kwargs)
-        assert results.status_code == 200, results.text
-
-
 def test_allowed_api_key_rest_plain(auth):
     """We should be able to request an endpoint with a credential that allows that request using REST API."""
-    with auth([{"method": "GET", "resource": "/system/info/"}]) as kwargs:
+    with auth(["FULL_ADMIN"]) as kwargs:
         results = GET('/system/info/', **kwargs)
         assert results.status_code == 200, results.text
 
 
 def test_allowed_api_key_rest_dynamic(auth):
     """We should be able to request a dynamic endpoint with a credential that allows that request using REST API."""
-    with auth([{"method": "GET", "resource": "/user/id/{id_}/"}]) as kwargs:
+    with auth(["FULL_ADMIN"]) as kwargs:
         results = GET('/user/id/1/', **kwargs)
         assert results.status_code == 200, results.text
 
@@ -86,7 +79,7 @@ def test_denied_api_key_rest(auth):
     """
     We should not be able to request an endpoint with a credential that does not allow that request using REST API.
     """
-    with auth([{"method": "GET", "resource": "/system/info_/"}]) as kwargs:
+    with auth(["ACCOUNT_READ"]) as kwargs:
         results = GET('/system/info/', **kwargs)
         assert results.status_code == 403
 
@@ -94,29 +87,7 @@ def test_denied_api_key_rest(auth):
 def test_root_api_key_upload(auth):
     """We should be able to call a method with root a credential using file upload endpoint."""
     ip = truenas_server.ip
-    with auth([{"method": "*", "resource": "*"}]) as kwargs:
-        kwargs.pop("anonymous", None)  # This key is only used for our test requests library
-        r = requests.post(
-            f"http://{ip}/_upload",
-            **kwargs,
-            data={
-                "data": json.dumps({
-                    "method": "filesystem.put",
-                    "params": ["/tmp/upload"],
-                })
-            },
-            files={
-                "file": io.BytesIO(b"test"),
-            },
-            timeout=10
-        )
-        r.raise_for_status()
-
-
-def test_allowed_api_key_upload(auth):
-    """We should be able to call a method with an API that allows that call using file upload endpoint."""
-    ip = truenas_server.ip
-    with auth([{"method": "CALL", "resource": "filesystem.put"}]) as kwargs:
+    with auth(["FULL_ADMIN"]) as kwargs:
         kwargs.pop("anonymous", None)  # This key is only used for our test requests library
         r = requests.post(
             f"http://{ip}/_upload",
@@ -140,7 +111,7 @@ def test_denied_api_key_upload(auth):
     We should not be able to call a method with a credential that does not allow that call using file upload endpoint.
     """
     ip = truenas_server.ip
-    with auth([{"method": "CALL", "resource": "filesystem.put_"}]) as kwargs:
+    with auth(["SHARING_ADMIN"]) as kwargs:
         kwargs.pop("anonymous", None)  # This key is only used for our test requests library
         r = requests.post(
             f"http://{ip}/_upload",

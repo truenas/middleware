@@ -1291,6 +1291,13 @@ class UserService(CRUDService):
                 f'{schema}.password_disabled', 'Password authentication may not be disabled for SMB users.'
             )
 
+        if combined['smb'] and (await self.middleware.call('system.security.config'))['enable_gpos_stig']:
+            verrors.add(
+                f'{schema}.smb',
+                'SMB authentication for local user accounts is not permitted when General Purpose OS '
+                'STIG compatibility is enabled.'
+            )
+
         password = data.get('password')
         if not old and not password and not data.get('password_disabled'):
             verrors.add(f'{schema}.password', 'Password is required')
@@ -1593,10 +1600,6 @@ class GroupService(CRUDService):
         group['users'] = list({u['id'] for u in group['users']} | ctx['primary_memberships'][group['id']])
 
         privilege_mappings = privileges_group_mapping(ctx['privileges'], [group['gid']], 'local_groups')
-        if privilege_mappings['allowlist']:
-            privilege_mappings['roles'].append('HAS_ALLOW_LIST')
-            if {'method': '*', 'resource': '*'} in privilege_mappings['allowlist']:
-                privilege_mappings['roles'].append('FULL_ADMIN')
 
         match group['group']:
             case 'builtin_administrators':

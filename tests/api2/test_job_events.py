@@ -45,7 +45,7 @@ def test_unprivileged_user_only_sees_its_own_jobs_events():
         def mock(self, job, *args):
             return 42
     """):
-        with unprivileged_user_client(allowlist=[{"method": "CALL", "resource": "test.test1"}]) as c:
+        with unprivileged_user_client(roles=["MOCK"]) as c:
             events = []
 
             def callback(type, **message):

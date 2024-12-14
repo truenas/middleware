@@ -11,7 +11,8 @@ def test_job_credentials():
         def mock(self, job, *args):
             return 42
     """):
-        with unprivileged_user_client(allowlist=[{"method": "CALL", "resource": "test.test1"}]) as c:
+        with unprivileged_user_client(roles=["FULL_ADMIN"]) as c:
+
             job_id = c.call("test.test1")
 
             job = call("core.get_jobs", [["id", "=", job_id]], {"get": True})

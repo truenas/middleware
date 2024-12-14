@@ -131,7 +131,7 @@ def test_call_sync_a_job_with_lock():
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5)
 def test_lock_queue_unprivileged_user_can_access_own_jobs():
-    with unprivileged_user_client(allowlist=[{"method": "CALL", "resource": "test.test1"}]) as c:
+    with unprivileged_user_client(roles=["MOCK"]) as c:
         with mock("test.test1", """
             from middlewared.service import job
 
@@ -151,7 +151,7 @@ def test_lock_queue_unprivileged_user_can_access_own_jobs():
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5)
 def test_lock_queue_unprivileged_user_cant_access_others_jobs():
-    with unprivileged_user_client(allowlist=[{"method": "CALL", "resource": "test.test1"}]) as c:
+    with unprivileged_user_client(roles=["MOCK"]) as c:
         with mock("test.test1", """
             from middlewared.service import job
 

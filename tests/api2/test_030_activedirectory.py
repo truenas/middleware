@@ -199,7 +199,7 @@ def test_enable_leave_activedirectory():
         res = call('privilege.query', [['name', 'C=', AD_DOMAIN]], {'get': True})
         assert res['ds_groups'][0]['name'].endswith('domain admins')
         assert res['ds_groups'][0]['sid'].endswith('512')
-        assert res['allowlist'][0] == {'method': '*', 'resource': '*'}
+        assert res['roles'][0] == 'FULL_ADMIN'
 
     assert check_ad_started() is False
 
@@ -345,11 +345,7 @@ def test_account_privilege_authentication(set_product_type):
                 "name": "AD privilege",
                 "local_groups": [],
                 "ds_groups": [f"{domain_sid}-513"],
-                "allowlist": [
-                    {"method": "CALL", "resource": "system.info"},
-                    {"method": "CALL", "resource": "user.query"},
-                    {"method": "CALL", "resource": "group.query"},
-                ],
+                "roles": ["READONLY_ADMIN"],
                 "web_shell": False,
             }):
                 with client(auth=(f"limiteduser@{AD_DOMAIN}", ADPASSWORD)) as c:

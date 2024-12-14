@@ -1,4 +1,15 @@
+from middlewared.alert.base import  AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.role import Role
 from middlewared.service import CallError, Service
+
+
+class SystemTestingAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.CRITICAL
+    title = "System mocking endpoints used"
+    text = "System mocking endpoits used on server."
+
+    deleted_automatically = False
 
 
 class TestService(Service):
@@ -25,12 +36,31 @@ class TestService(Service):
         else:
             raise CallError("Invalid mock declaration")
 
+        await self.set_mock_role()
         self.middleware.set_mock(name, args, method)
 
     async def remove_mock(self, name, args):
         self.middleware.remove_mock(name, args)
 
+    async def set_mock_role(self):
+        """
+        adds a MOCK role to role_manager and grants access to test.test1 and test.test2
+
+        This allows testing RBAC against mocked endpoint
+        """
+        if 'MOCK' in self.middleware.role_manager.roles:
+            return
+
+        # There are no STIG requirements specified for MOCK role here because
+        # we need to be able to mock methods in CI testing while under STIG restrictions
+        self.middleware.role_manager.roles['MOCK'] = Role()
+        self.middleware.role_manager.register_method(method_name='test.test1', roles=['MOCK'])
+        self.middleware.role_manager.register_method(method_name='test.test2', roles=['MOCK'])
+
+        await self.middleware.call('alert.oneshot_create', 'SystemTesting')
+
     # Dummy methods to mock for internal infrastructure testing (i.e. jobs manager)
+    # When these are mocked over they will be available to users with the "MOCK" role.
 
     async def test1(self):
         pass
