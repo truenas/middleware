@@ -39,7 +39,6 @@ class TestService(Service):
         await self.set_mock_role()
         self.middleware.set_mock(name, args, method)
 
-
     async def remove_mock(self, name, args):
         self.middleware.remove_mock(name, args)
 
