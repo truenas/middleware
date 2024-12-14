@@ -14,7 +14,7 @@ from middlewared.api.base.server.ws_handler.rpc import (
     RpcWebSocketAppEvent,
 )
 from middlewared.job import Job
-from middlewared.logger import logger
+from middlewared.logger import Logger
 
 from middlewared.schema import Error as SchemaError
 from middlewared.service_exception import (
@@ -51,7 +51,7 @@ class WebSocketApplication(RpcWebSocketApp):
         self.request = request
         self.response = response
         self.handshake = False
-        self.logger = logger.Logger("application").getLogger()
+        self.logger = Logger("websock_app").getLogger()
         # Allow atmost 10 concurrent calls and only queue up until 20
         self._softhardsemaphore = SoftHardSemaphore(10, 20)
         self._py_exceptions = False

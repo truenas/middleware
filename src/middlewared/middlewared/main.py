@@ -70,7 +70,7 @@ from systemd.daemon import notify as systemd_notify
 
 from truenas_api_client import json
 
-from . import logger
+from .logger import Logger, setup_logging
 
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
@@ -99,9 +99,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         print_version=True,
     ):
         super().__init__()
-        self.logger = logger.Logger(
-            'middlewared', debug_level, log_format
-        ).getLogger()
+        self.logger = Logger('middlewared', debug_level, log_format).getLogger()
         if print_version:
             self.logger.info('Starting %s middleware', sw_version())
         self.loop_debug = loop_debug
@@ -1502,7 +1500,7 @@ def main():
     os.makedirs(MIDDLEWARE_RUN_DIR, exist_ok=True)
     pidpath = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.pid')
 
-    logger.setup_logging('middleware', args.debug_level, args.log_handler)
+    setup_logging('middleware', args.debug_level, args.log_handler)
 
     middleware = Middleware(
         loop_debug=args.loop_debug,
