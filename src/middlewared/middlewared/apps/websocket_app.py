@@ -5,7 +5,7 @@ from json import dumps as jdumps
 from pickle import dumps as pdumps
 from sys import exc_info
 from traceback import format_exception
-from typing import Any, Dict, Union
+from typing import Any
 from types import AsyncGeneratorType, GeneratorType, TracebackType
 
 from middlewared.api.base.server.legacy_api_method import LegacyAPIMethod
@@ -57,10 +57,10 @@ class WebSocketApplication(RpcWebSocketApp):
         self._py_exceptions = False
         self.__subscribed = {}
 
-    def _send(self, data: Dict[str, Any]):
+    def _send(self, data: dict[str, Any]):
         run_coroutine_threadsafe(self.response.send_str(jdumps(data)), loop=self.loop)
 
-    def _tb_error(self, exc_info: ExcInfoType) -> Dict[str, Union[str, list[dict]]]:
+    def _tb_error(self, exc_info: ExcInfoType) -> dict[str, str | list[dict]]:
         klass, exc, trace = exc_info
         frames = []
         cur_tb = trace
@@ -303,7 +303,7 @@ class WebSocketApplication(RpcWebSocketApp):
 
         self.middleware.unregister_wsclient(self)
 
-    async def on_message(self, message: Dict[str, Any]):
+    async def on_message(self, message: dict[str, Any]):
         await self.run_callback(RpcWebSocketAppEvent.MESSAGE, message)
 
         if message["msg"] == "connect":
