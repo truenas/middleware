@@ -8,7 +8,7 @@ from .api.base.server.method import Method
 from .api.base.server.ws_handler.base import BaseWebSocketHandler
 from .api.base.server.ws_handler.rpc import RpcWebSocketApp, RpcWebSocketAppEvent
 from .api.base.server.ws_handler.rpc import RpcWebSocketHandler
-from .apps import FileApplication
+from .apps import FileApplication, ShellApplication
 from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue, State
@@ -16,7 +16,6 @@ from .pipe import Pipe
 from .restful import RESTfulAPI
 from .role import ROLES, RoleManager
 from .schema import Error as SchemaError, OROperator
-from .webshellapp.webshell import ShellApplication
 import middlewared.service
 from .service_exception import (
     adapt_exception, CallError, CallException, ErrnoMixin, ValidationError, ValidationErrors,
