@@ -23,11 +23,10 @@ class FileApplication:
         self.jobs = {}
 
     def register_job(self, job_id, buffered):
+        # FIXME: Allow the job to run for infinite time + give 300 seconds to begin
+        # download instead of waiting 3600 seconds for the whole operation
         self.jobs[job_id] = self.middleware.loop.call_later(
-            3600
-            if buffered
-            else 60,  # FIXME: Allow the job to run for infinite time + give 300 seconds to begin
-            # download instead of waiting 3600 seconds for the whole operation
+            3600 if buffered else 60,
             lambda: self.middleware.create_task(self._cleanup_job(job_id)),
         )
 
