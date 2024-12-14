@@ -2,13 +2,12 @@ import errno
 import pytest
 
 from middlewared.service_exception import CallError
-from middlewared.service_exception import ValidationErrors as Verr 
-from middlewared.test.integration.assets.account import user
+from middlewared.service_exception import ValidationErrors as Verr
 from middlewared.test.integration.assets.product import product_type, set_fips_available
 from middlewared.test.integration.assets.two_factor_auth import (
     enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
 )
-from middlewared.test.integration.utils import call, client, ssh 
+from middlewared.test.integration.utils import call, client
 from truenas_api_client import ValidationErrors
 
 
@@ -109,7 +108,7 @@ def setup_stig(two_factor_full_admin):
                     c.call('system.security.update', {'enable_fips': False, 'enable_gpos_stig': False}, job=True)
 
 
-# The order of the following tests is significant. We gradully fixtures that have module scope
+# The order of the following tests is significant. We gradually add fixtures that have module scope
 # as we finish checking for correct ValidationErrors
 
 def test_nonenterprise_fail(community_product):
@@ -166,7 +165,7 @@ def test_stig_enabled_authenticator_assurance_level(setup_stig):
 
 def test_stig_roles_decrease(setup_stig):
 
-    # We need new webosocket connection to verify that privileges
+    # We need new websocket connection to verify that privileges
     # are appropriately decreased
     with client(auth=None) as c:
         do_stig_auth(c, setup_stig['user_obj'], setup_stig['secret'])
@@ -183,7 +182,7 @@ def test_stig_roles_decrease(setup_stig):
 
 
 def test_stig_smb_auth_disabled(setup_stig):
-    # We need new webosocket connection to verify that privileges
+    # We need new websocket connection to verify that privileges
     # are appropriately decreased
 
     smb_user_cnt = setup_stig['connection'].call('user.query', [['smb', '=', True]], {'count': True})

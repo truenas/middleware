@@ -63,7 +63,7 @@ def test__roles_have_correct_stig_assignment(nostig_roles, role_name):
     ('FULL_ADMIN', '*', None, {'*'}),
     ('FULL_ADMIN', 'CALL', security.STIGType.GPOS, FULL_ADMIN_STIG),
 ])
-def test__roles_have_corect_allowlist(role_manager, role, method, enabled_stig_type, resources):
+def test__roles_have_correct_allowlist(role_manager, role, method, enabled_stig_type, resources):
     allowlist = role_manager.allowlist_for_role(role, enabled_stig_type)
     allowlist_resources = set()
     for entry in allowlist:

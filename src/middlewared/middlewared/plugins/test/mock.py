@@ -1,6 +1,4 @@
-from middlewared.alert.base import (
-    AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
-)
+from middlewared.alert.base import  AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.role import Role
 from middlewared.service import CallError, Service
 
@@ -45,7 +43,6 @@ class TestService(Service):
     async def remove_mock(self, name, args):
         self.middleware.remove_mock(name, args)
 
-
     async def set_mock_role(self):
         """
         adds a MOCK role to role_manager and grants access to test.test1 and test.test2
@@ -62,7 +59,6 @@ class TestService(Service):
         self.middleware.role_manager.register_method(method_name='test.test2', roles=['MOCK'])
 
         await self.middleware.call('alert.oneshot_create', 'SystemTesting')
-
 
     # Dummy methods to mock for internal infrastructure testing (i.e. jobs manager)
     # When these are mocked over they will be available to users with the "MOCK" role.
