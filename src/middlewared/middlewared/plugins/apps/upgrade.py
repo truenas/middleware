@@ -60,6 +60,8 @@ class AppService(Service):
         job.set_progress(
             20, f'Validating {app_name!r} app upgrade to {upgrade_version["version"]!r} version'
         )
+        # Stop the app itself before we attempt to take snapshots
+        self.middleware.call_sync('app.stop', app_name).wait_sync()
         # In order for upgrade to complete, following must happen
         # 1) New version should be copied over to app config's dir
         # 2) Metadata should be updated to reflect new version
