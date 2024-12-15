@@ -1,9 +1,11 @@
+import logging
 from pkg_resources import parse_version
 
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
 )
+from middlewared.plugins.docker.state_utils import IX_APPS_MOUNT_PATH
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 
 from .compose_utils import compose_action
@@ -13,11 +15,51 @@ from .ix_apps.upgrade import upgrade_config
 from .version_utils import get_latest_version_from_app_versions
 
 
+logger = logging.getLogger('app_lifecycle')
+
+
 class AppService(Service):
 
     class Config:
         namespace = 'app'
         cli_namespace = 'app'
+
+    @private
+    def take_snapshot_of_hostpath(self, app, snapshot_hostpath):
+        app_info = self.middleware.call_sync('app.get_instance', app) if isinstance(app, str) else app
+        host_paths = [
+            volume['source_path'] for volume in app_info['active_workloads']['volumes']
+            if volume['source'].startswith(f'{IX_APPS_MOUNT_PATH}/') is False
+        ]
+        # Stop the app itself before we attempt to take snapshots
+        self.middleware.call_sync('app.stop', app_info['name']).wait_sync()
+        if not snapshot_hostpath:
+            return
+
+        if host_paths:
+            logger.debug('Taking snapshots of host paths for %r app', app_info['name'])
+
+        for host_path in host_paths:
+            if host_path.startswith('/mnt/') is False:
+                logger.debug(
+                    'Skipping %r host path for %r app\'s snapshot as it is not under /mnt', host_path, app_info['name']
+                )
+                continue
+
+            try:
+                dataset = self.middleware.call_sync('zfs.dataset.path_to_dataset', host_path)
+            except CallError:
+                logger.debug(
+                    'Skipping %r host path for %r app\'s snapshot as it is not a dataset', host_path, app_info['name']
+                )
+                continue
+
+            snap_name = f'{dataset}@{app_info["version"]}'
+            if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
+                logger.debug('Snapshot %r already exists for %r app', snap_name, app_info['name'])
+                continue
+
+            self.middleware.call_sync('zfs.snapshot.create', {'dataset': dataset, 'name': app_info['version']})
 
     @api_method(
         AppUpgradeArgs, AppUpgradeResult,
@@ -60,8 +102,7 @@ class AppService(Service):
         job.set_progress(
             20, f'Validating {app_name!r} app upgrade to {upgrade_version["version"]!r} version'
         )
-        # Stop the app itself before we attempt to take snapshots
-        self.middleware.call_sync('app.stop', app_name).wait_sync()
+        self.take_snapshot_of_hostpath(app, options['snapshot_hostpaths'])
         # In order for upgrade to complete, following must happen
         # 1) New version should be copied over to app config's dir
         # 2) Metadata should be updated to reflect new version

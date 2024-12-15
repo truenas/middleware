@@ -326,6 +326,7 @@ class AppRollbackVersionsResult(BaseModel):
 class UpgradeOptions(BaseModel):
     app_version: NonEmptyString = 'latest'
     values: Secret[dict] = Field(default_factory=dict)
+    snapshot_hostpaths: bool = False
 
 
 class AppUpgradeArgs(BaseModel):
