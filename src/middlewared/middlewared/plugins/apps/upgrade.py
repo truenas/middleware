@@ -85,6 +85,19 @@ class AppService(Service):
 
             job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
 
+            if app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name):
+                snap_name = f'{app_volume_ds}@{app["version"]}'
+                if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
+                    self.middleware.call_sync('zfs.snapshot.delete', snap_name, {'recursive': True})
+
+                self.middleware.call_sync(
+                    'zfs.snapshot.create', {
+                        'dataset': app_volume_ds, 'name': app['version'], 'recursive': True
+                    }
+                )
+
+                job.set_progress(50, 'Created snapshot for upgrade')
+
         try:
             compose_action(
                 app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True, pull_images=True,
@@ -93,18 +106,6 @@ class AppService(Service):
             self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
             new_app_instance = self.middleware.call_sync('app.get_instance', app_name)
             self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=new_app_instance)
-
-        job.set_progress(50, 'Created snapshot for upgrade')
-        if app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name):
-            snap_name = f'{app_volume_ds}@{app["version"]}'
-            if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
-                self.middleware.call_sync('zfs.snapshot.delete', snap_name, {'recursive': True})
-
-            self.middleware.call_sync(
-                'zfs.snapshot.create', {
-                    'dataset': app_volume_ds, 'name': app['version'], 'recursive': True
-                }
-            )
 
         job.set_progress(100, 'Upgraded app successfully')
         if new_app_instance['upgrade_available'] is False:
