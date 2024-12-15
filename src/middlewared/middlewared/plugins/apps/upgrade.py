@@ -1,6 +1,9 @@
 from pkg_resources import parse_version
 
-from middlewared.schema import accepts, Dict, List, Str, Ref, returns
+from middlewared.api import api_method
+from middlewared.api.current import (
+    AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
+)
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 
 from .compose_utils import compose_action
@@ -16,16 +19,7 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @accepts(
-        Str('app_name'),
-        Dict(
-            'options',
-            Dict('values', additional_attrs=True, private=True),
-            Str('app_version', empty=False, default='latest'),
-        ),
-        roles=['APPS_WRITE'],
-    )
-    @returns(Ref('app_entry'))
+    @api_method(AppUpgradeArgs, AppUpgradeResult, roles=['APPS_WRITE'])
     @job(lock=lambda args: f'app_upgrade_{args[0]}')
     def upgrade(self, job, app_name, options):
         """
@@ -115,28 +109,7 @@ class AppService(Service):
 
         return new_app_instance
 
-    @accepts(
-        Str('app_name'),
-        Dict(
-            'options',
-            Str('app_version', empty=False, default='latest'),
-        ),
-        roles=['APPS_READ'],
-    )
-    @returns(Dict(
-        Str('latest_version', description='Latest version available for the app'),
-        Str('latest_human_version', description='Latest human readable version available for the app'),
-        Str('upgrade_version', description='Version user has requested to be upgraded at'),
-        Str('upgrade_human_version', description='Human readable version user has requested to be upgraded at'),
-        Str('changelog', max_length=None, null=True, description='Changelog for the upgrade version'),
-        List('available_versions_for_upgrade', items=[
-            Dict(
-                'version_info',
-                Str('version', description='Version of the app'),
-                Str('human_version', description='Human readable version of the app'),
-            )
-        ], description='List of available versions for upgrade'),
-    ))
+    @api_method(AppUpgradeSummaryArgs, AppUpgradeSummaryResult, roles=['APPS_READ'])
     async def upgrade_summary(self, app_name, options):
         """
         Retrieve upgrade summary for `app_name`.

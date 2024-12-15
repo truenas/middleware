@@ -1,5 +1,8 @@
+from middlewared.api import api_method
+from middlewared.api.current import (
+    AppOutdatedDockerImagesArgs, AppOutdatedDockerImagesResult, AppPullImagesArgs, AppPullImagesResult,
+)
 from middlewared.plugins.apps_images.utils import normalize_reference
-from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import job, private, Service
 
 from .compose_utils import compose_action
@@ -11,8 +14,7 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @accepts(Str('name'), roles=['APPS_READ'])
-    @returns(List('images', items=[Str('image')]))
+    @api_method(AppOutdatedDockerImagesArgs, AppOutdatedDockerImagesResult, roles=['APPS_READ'])
     async def outdated_docker_images(self, app_name):
         """
         Returns a list of outdated docker images for the specified app `name`.
@@ -26,15 +28,7 @@ class AppService(Service):
 
         return images
 
-    @accepts(
-        Str('name'),
-        Dict(
-            'options',
-            Bool('redeploy', default=True),
-        ),
-        roles=['APPS_WRITE']
-    )
-    @returns()
+    @api_method(AppPullImagesArgs, AppPullImagesResult, roles=['APPS_WRITE'])
     @job(lock=lambda args: f'pull_images_{args[0]}')
     def pull_images(self, job, app_name, options):
         """
