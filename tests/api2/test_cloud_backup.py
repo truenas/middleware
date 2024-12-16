@@ -154,6 +154,7 @@ def test_cloud_backup_abort(cloud_backup_task):
     # Ensure backup works after an abort
     ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/testfile")
     run_task(cloud_backup_task.task)
+    validate_log(task_id, files_new=1)
 
 
 @pytest.fixture(scope="module")
