@@ -6,27 +6,21 @@ from .api.base.server.doc import APIDumper
 from .api.base.server.legacy_api_method import LegacyAPIMethod
 from .api.base.server.method import Method
 from .api.base.server.ws_handler.base import BaseWebSocketHandler
-from .api.base.server.ws_handler.rpc import RpcWebSocketApp, RpcWebSocketAppEvent
 from .api.base.server.ws_handler.rpc import RpcWebSocketHandler
+from .apps import FileApplication, ShellApplication, WebSocketApplication
 from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue, State
-from .pipe import Pipes, Pipe
-from .restful import parse_credentials, authenticate, create_application, copy_multipart_to_pipe, RESTfulAPI
+from .pipe import Pipe
+from .restful import RESTfulAPI
 from .role import ROLES, RoleManager
-from .schema import Error as SchemaError, OROperator
+from .schema import OROperator
 import middlewared.service
-from .service_exception import (
-    adapt_exception, CallError, CallException, ErrnoMixin, InstanceNotFound, MatchNotFound, ValidationError, ValidationErrors,
-    get_errname,
-)
+from .service_exception import CallError, ErrnoMixin
 from .utils import MIDDLEWARE_RUN_DIR, sw_version
 from .utils.audit import audit_username_from_session
-from .utils.debug import get_frame_details, get_threads_stacks
+from .utils.debug import get_threads_stacks
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
-from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
-from .utils.origin import ConnectionOrigin
-from .utils.os import close_fds
 from .utils.plugins import LoadPluginsMixin
 from .utils.privilege import credential_has_full_admin
 from .utils.profile import profile_wrap
@@ -47,15 +41,12 @@ from collections import defaultdict
 
 import argparse
 import asyncio
-import binascii
-from collections import namedtuple
 import concurrent.futures
 import concurrent.futures.process
 import concurrent.futures.thread
 import contextlib
 from dataclasses import dataclass
 import errno
-import fcntl
 import functools
 import importlib
 import inspect
@@ -63,39 +54,25 @@ import itertools
 import multiprocessing
 import os
 import pathlib
-import pickle
 import re
-import queue
 import setproctitle
 import signal
-import struct
 import sys
-import termios
 import threading
 import time
 import traceback
-import types
 import typing
-import urllib.parse
 import uuid
 import tracemalloc
 
 from anyio import create_connected_unix_datagram_socket
-import psutil
 from systemd.daemon import notify as systemd_notify
 
 from truenas_api_client import json
 
-from . import logger
+from .logger import Logger, setup_logging
 
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
-
-
-# Type of the output of sys.exc_info()
-ExcInfoType = typing.Union[
-    tuple[typing.Type[BaseException], BaseException, types.TracebackType],
-    tuple[None, None, None],
-]
 
 
 @dataclass
@@ -103,765 +80,6 @@ class LoopMonitorIgnoreFrame:
     regex: typing.Pattern
     substitute: str = None
     cut_below: bool = False
-
-
-class Application(RpcWebSocketApp):
-    def __init__(
-        self,
-        middleware,
-        origin: ConnectionOrigin,
-        loop: asyncio.AbstractEventLoop,
-        request,
-        response
-    ):
-        super().__init__(middleware, origin, response)
-        self.websocket = True
-        self.loop = loop
-        self.request = request
-        self.response = response
-        self.handshake = False
-        self.logger = logger.Logger('application').getLogger()
-        # Allow at most 10 concurrent calls and only queue up until 20
-        self._softhardsemaphore = SoftHardSemaphore(10, 20)
-        self._py_exceptions = False
-        self.__subscribed = {}
-
-    def _send(self, data: typing.Dict[str, typing.Any]):
-        serialized = json.dumps(data)
-        asyncio.run_coroutine_threadsafe(self.response.send_str(serialized), loop=self.loop)
-
-    def _tb_error(self, exc_info: ExcInfoType) -> typing.Dict[str, typing.Union[str, list[dict]]]:
-        klass, exc, trace = exc_info
-        frames = []
-        cur_tb = trace
-        while cur_tb:
-            tb_frame = cur_tb.tb_frame
-            cur_tb = cur_tb.tb_next
-            cur_frame = get_frame_details(tb_frame, self.logger)
-            if cur_frame:
-                frames.append(cur_frame)
-
-        return {
-            'class': klass.__name__,
-            'frames': frames,
-            'formatted': ''.join(traceback.format_exception(*exc_info)),
-            'repr': repr(exc_info[1]),
-        }
-
-    def get_error_dict(
-        self,
-        errno: int,
-        reason: str | None = None,
-        exc_info: ExcInfoType | None = None,
-        etype: str | None = None,
-        extra: list | None = None
-    ) -> dict[str, typing.Any]:
-        error_extra = {}
-        if self._py_exceptions and exc_info:
-            error_extra['py_exception'] = binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()
-        return dict({
-            'error': errno,
-            'errname': get_errname(errno),
-            'type': etype,
-            'reason': reason,
-            'trace': self._tb_error(exc_info) if exc_info else None,
-            'extra': extra,
-        }, **error_extra)
-
-    def send_error(
-        self,
-        message: dict[str, typing.Any],
-        errno: int,
-        reason: str | None = None,
-        exc_info: ExcInfoType | None = None,
-        etype: str | None = None,
-        extra: list | None = None
-    ):
-        self._send({
-            'msg': 'result',
-            'id': message['id'],
-            'error': self.get_error_dict(errno, reason, exc_info, etype, extra),
-        })
-
-    async def call_method(self, message, serviceobj, methodobj):
-        params = message.get('params') or []
-        if not isinstance(params, list):
-            self.send_error(message, errno.EINVAL, '`params` must be a list.')
-            return
-
-        if mock := self.middleware._mock_method(message['method'], params):
-            methodobj = mock
-
-        try:
-            # For any legacy websocket API method call not defined in 24.10 models we assume its made using the most
-            # recent API.
-            # If the method is defined there, we perform conversion to the recent API.
-            lam = LegacyAPIMethod(self.middleware, message['method'], 'v24.10', self.middleware.api_versions_adapter,
-                                  passthrough_nonexistent_methods=True)
-            if lam.accepts_model:
-                params = lam._adapt_params(params)
-
-            async with self._softhardsemaphore:
-                result = await self.middleware.call_with_audit(message['method'], serviceobj, methodobj, params, self)
-
-            if isinstance(result, Job):
-                result = result.id
-            elif isinstance(result, types.GeneratorType):
-                result = list(result)
-            elif isinstance(result, types.AsyncGeneratorType):
-                result = [i async for i in result]
-            else:
-                if lam.returns_model:
-                    result = lam._adapt_result(result)
-
-            self._send({
-                'id': message['id'],
-                'msg': 'result',
-                'result': result,
-            })
-        except SoftHardSemaphoreLimit as e:
-            self.send_error(
-                message,
-                errno.ETOOMANYREFS,
-                f'Maximum number of concurrent calls ({e.args[0]}) has exceeded.',
-            )
-        except ValidationError as e:
-            self.send_error(message, e.errno, str(e), sys.exc_info(), etype='VALIDATION', extra=[
-                (e.attribute, e.errmsg, e.errno),
-            ])
-        except ValidationErrors as e:
-            self.send_error(message, errno.EAGAIN, str(e), sys.exc_info(), etype='VALIDATION', extra=list(e))
-        except (CallException, SchemaError) as e:
-            # CallException and subclasses are the way to gracefully
-            # send errors to the client
-            self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
-        except Exception as e:
-            adapted = adapt_exception(e)
-            if adapted:
-                self.send_error(message, adapted.errno, str(adapted) or repr(adapted), sys.exc_info(),
-                                extra=adapted.extra)
-            else:
-                self.send_error(message, errno.EINVAL, str(e) or repr(e), sys.exc_info())
-                if not self._py_exceptions:
-                    self.logger.warn('Exception while calling {}(*{})'.format(
-                        message['method'],
-                        self.middleware.dump_args(message.get('params', []), method_name=message['method'])
-                    ), exc_info=True)
-
-    async def subscribe(self, ident, name):
-        shortname, arg = self.middleware.event_source_manager.short_name_arg(name)
-        if shortname in self.middleware.event_source_manager.event_sources:
-            await self.middleware.event_source_manager.subscribe_app(self, self.__esm_ident(ident), shortname, arg)
-        else:
-            self.__subscribed[ident] = name
-
-        self._send({
-            'msg': 'ready',
-            'subs': [ident],
-        })
-
-    async def unsubscribe(self, ident):
-        if ident in self.__subscribed:
-            self.__subscribed.pop(ident)
-        elif self.__esm_ident(ident) in self.middleware.event_source_manager.idents:
-            await self.middleware.event_source_manager.unsubscribe(self.__esm_ident(ident))
-
-    def __esm_ident(self, ident):
-        return self.session_id + ident
-
-    def send_event(self, name, event_type, **kwargs):
-        if (
-            not any(i == name or i == '*' for i in self.__subscribed.values()) and
-            self.middleware.event_source_manager.short_name_arg(
-                name
-            )[0] not in self.middleware.event_source_manager.event_sources
-        ):
-            return
-        event = {
-            'msg': event_type.lower(),
-            'collection': name,
-        }
-        kwargs = kwargs.copy()
-        if 'id' in kwargs:
-            event['id'] = kwargs.pop('id')
-        if event_type in ('ADDED', 'CHANGED'):
-            if 'fields' in kwargs:
-                event['fields'] = kwargs.pop('fields')
-        if kwargs:
-            event['extra'] = kwargs
-        self._send(event)
-
-    def notify_unsubscribed(self, collection, error):
-        error_dict = {}
-        if error:
-            if isinstance(error, ValidationErrors):
-                error_dict['error'] = self.get_error_dict(
-                    errno.EAGAIN, str(error), etype='VALIDATION', extra=list(error)
-                )
-            elif isinstance(error, CallError):
-                error_dict['error'] = self.get_error_dict(
-                    error.errno, str(error), extra=error.extra
-                )
-            else:
-                error_dict['error'] = self.get_error_dict(errno.EINVAL, str(error))
-
-        self._send({'msg': 'nosub', 'collection': collection, **error_dict})
-
-    async def __log_audit_message_for_method(self, message, methodobj, authenticated, authorized, success):
-        return await self.middleware.log_audit_message_for_method(
-            message['method'], methodobj, message.get('params') or [], self, authenticated, authorized, success,
-        )
-
-    def on_open(self):
-        self.middleware.register_wsclient(self)
-
-    async def on_close(self):
-        await self.run_callback(RpcWebSocketAppEvent.CLOSE)
-
-        await self.middleware.event_source_manager.unsubscribe_app(self)
-
-        self.middleware.unregister_wsclient(self)
-
-    async def on_message(self, message: typing.Dict[str, typing.Any]):
-        await self.run_callback(RpcWebSocketAppEvent.MESSAGE, message)
-
-        if message['msg'] == 'connect':
-            if message.get('version') != '1':
-                self._send({'msg': 'failed', 'version': '1'})
-            else:
-                features = message.get('features') or []
-                if 'PY_EXCEPTIONS' in features:
-                    self._py_exceptions = True
-                # aiohttp can cancel tasks if a request take too long to finish
-                # It is desired to prevent that in this stage in case we are debugging
-                # middlewared via gdb (which makes the program execution a lot slower)
-                await asyncio.shield(self.middleware.call_hook('core.on_connect', app=self))
-                self._send({'msg': 'connected', 'session': self.session_id})
-                self.handshake = True
-        elif not self.handshake:
-            self._send({'msg': 'failed', 'version': '1'})
-        elif message['msg'] == 'method':
-            if 'method' not in message:
-                self.send_error(message, errno.EINVAL, "Message is malformed: 'method' is absent.")
-            else:
-                try:
-                    serviceobj, methodobj = self.middleware.get_method(message['method'])
-
-                    await self.middleware.authorize_method_call(
-                        self, message['method'], methodobj, message.get('params') or [],
-                    )
-                except CallError as e:
-                    self.send_error(message, e.errno, str(e), sys.exc_info(), extra=e.extra)
-                else:
-                    self.middleware.create_task(self.call_method(message, serviceobj, methodobj))
-        elif message['msg'] == 'ping':
-            pong = {'msg': 'pong'}
-            if 'id' in message:
-                pong['id'] = message['id']
-            self._send(pong)
-        elif message['msg'] == 'sub':
-            if not self.middleware.can_subscribe(self, message['name'].split(':', 1)[0]):
-                self.send_error(message, errno.EACCES, 'Not authorized')
-            else:
-                await self.subscribe(message['id'], message['name'])
-        elif message['msg'] == 'unsub':
-            await self.unsubscribe(message['id'])
-
-    def __getstate__(self):
-        return {}
-
-    def __setstate__(self, newstate):
-        pass
-
-
-class FileApplication(object):
-
-    def __init__(self, middleware, loop):
-        self.middleware = middleware
-        self.loop = loop
-        self.jobs = {}
-
-    def register_job(self, job_id, buffered):
-        self.jobs[job_id] = self.middleware.loop.call_later(
-            3600 if buffered else 60,  # FIXME: Allow the job to run for infinite time + give 300 seconds to begin
-                                       # download instead of waiting 3600 seconds for the whole operation
-            lambda: self.middleware.create_task(self._cleanup_job(job_id)),
-        )
-
-    async def _cleanup_cancel(self, job_id):
-        job_cleanup = self.jobs.pop(job_id, None)
-        if job_cleanup:
-            job_cleanup.cancel()
-
-    async def _cleanup_job(self, job_id):
-        if job_id not in self.jobs:
-            return
-        self.jobs[job_id].cancel()
-        del self.jobs[job_id]
-
-        job = self.middleware.jobs[job_id]
-        await job.pipes.close()
-
-    async def download(self, request):
-        path = request.path.split('/')
-        if not request.path[-1].isdigit():
-            resp = web.Response()
-            resp.set_status(404)
-            return resp
-
-        job_id = int(path[-1])
-
-        qs = urllib.parse.parse_qs(request.query_string)
-        denied = False
-        filename = None
-        if 'auth_token' not in qs:
-            denied = True
-        else:
-            auth_token = qs.get('auth_token')[0]
-            token = await self.middleware.call('auth.get_token', auth_token)
-            if not token:
-                denied = True
-            else:
-                if token['attributes'].get('job') != job_id:
-                    denied = True
-                else:
-                    filename = token['attributes'].get('filename')
-        if denied:
-            resp = web.Response()
-            resp.set_status(401)
-            return resp
-
-        job = self.middleware.jobs.get(job_id)
-        if not job:
-            resp = web.Response()
-            resp.set_status(404)
-            return resp
-
-        if job_id not in self.jobs:
-            resp = web.Response()
-            resp.set_status(410)
-            return resp
-
-        resp = web.StreamResponse(status=200, reason='OK', headers={
-            'Content-Type': 'application/octet-stream',
-            'Content-Disposition': f'attachment; filename="{filename}"',
-            'Transfer-Encoding': 'chunked',
-        })
-        await resp.prepare(request)
-
-        def do_copy():
-            while True:
-                read = job.pipes.output.r.read(1048576)
-                if read == b'':
-                    break
-                asyncio.run_coroutine_threadsafe(resp.write(read), loop=self.loop).result()
-
-        try:
-            await self._cleanup_cancel(job_id)
-            await self.middleware.run_in_thread(do_copy)
-        finally:
-            await job.pipes.close()
-
-        await resp.drain()
-        return resp
-
-    async def upload(self, request):
-        reader = await request.multipart()
-
-        part = await reader.next()
-        if not part:
-            resp = web.Response(status=405, body='No part found on payload')
-            resp.set_status(405)
-            return resp
-
-        if part.name != 'data':
-            resp = web.Response(status=405, body='"data" part must be the first on payload')
-            resp.set_status(405)
-            return resp
-
-        try:
-            data = json.loads(await part.read())
-        except Exception as e:
-            return web.Response(status=400, body=str(e))
-
-        if 'method' not in data:
-            return web.Response(status=422)
-
-        try:
-            credentials = parse_credentials(request)
-            if credentials is None:
-                raise web.HTTPUnauthorized()
-        except web.HTTPException as e:
-            return web.Response(status=e.status_code, body=e.text)
-        app = await create_application(request)
-        try:
-            authenticated_credentials = await authenticate(self.middleware, request, credentials, 'CALL',
-                                                           data['method'])
-            if authenticated_credentials is None:
-                raise web.HTTPUnauthorized()
-        except web.HTTPException as e:
-            credentials['credentials_data'].pop('password', None)
-            await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-                'credentials': credentials,
-                'error': e.text,
-            }, False)
-            return web.Response(status=e.status_code, body=e.text)
-        app = await create_application(request, authenticated_credentials)
-        credentials['credentials_data'].pop('password', None)
-        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
-            'credentials': credentials,
-            'error': None,
-        }, True)
-
-        filepart = await reader.next()
-
-        if not filepart or filepart.name != 'file':
-            resp = web.Response(status=405, body='"file" not found as second part on payload')
-            resp.set_status(405)
-            return resp
-
-        try:
-            serviceobj, methodobj = self.middleware.get_method(data['method'])
-            if authenticated_credentials.authorize('CALL', data['method']):
-                job = await self.middleware.call_with_audit(data['method'], serviceobj, methodobj,
-                                                            data.get('params') or [], app,
-                                                            pipes=Pipes(input_=self.middleware.pipe()))
-            else:
-                await self.middleware.log_audit_message_for_method(data['method'], methodobj, data.get('params') or [],
-                                                                   app, True, False, False)
-                raise web.HTTPForbidden()
-            await self.middleware.run_in_thread(copy_multipart_to_pipe, self.loop, filepart, job.pipes.input)
-        except CallError as e:
-            if e.errno == CallError.ENOMETHOD:
-                status_code = 422
-            else:
-                status_code = 412
-            return web.Response(status=status_code, body=str(e))
-        except web.HTTPException as e:
-            return web.Response(status=e.status_code, body=e.text)
-        except Exception as e:
-            return web.Response(status=500, body=str(e))
-
-        resp = web.Response(
-            status=200,
-            headers={
-                'Content-Type': 'application/json',
-            },
-            body=json.dumps({'job_id': job.id}).encode(),
-        )
-        return resp
-
-
-ShellResize = namedtuple("ShellResize", ["cols", "rows"])
-
-
-class ShellWorkerThread(threading.Thread):
-    """
-    Worker thread responsible for forking and running the shell
-    and spawning the reader and writer threads.
-    """
-
-    def __init__(self, middleware, ws, input_queue, loop, username, as_root, options):
-        self.middleware = middleware
-        self.ws = ws
-        self.input_queue = input_queue
-        self.loop = loop
-        self.shell_pid = None
-        self.command, self.sudo_warning = self.get_command(username, as_root, options)
-        self._die = False
-        super(ShellWorkerThread, self).__init__(daemon=True)
-
-    def get_command(self, username, as_root, options):
-        allowed_options = ('vm_id', 'app_name', 'virt_instance_id')
-        if all(options.get(k) for k in allowed_options):
-            raise CallError(f'Only one option is supported from {", ".join(allowed_options)}')
-
-        if options.get('vm_id'):
-            command = [
-                '/usr/bin/virsh', '-c', 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock',
-                'console', f'{options["vm_data"]["id"]}_{options["vm_data"]["name"]}'
-            ]
-
-            if not as_root:
-                command = ['/usr/bin/sudo', '-H', '-u', username] + command
-
-            return command, not as_root
-        elif options.get('app_name'):
-            command = [
-                '/usr/bin/docker', 'exec', '-it', options['container_id'], options.get('command', '/bin/bash'),
-            ]
-
-            if not as_root:
-                command = ['/usr/bin/sudo', '-H', '-u', username] + command
-
-            return command, not as_root
-        elif options.get('virt_instance_id'):
-            command = ['/usr/bin/incus', 'exec', options['virt_instance_id'], options.get('command', '/bin/bash')]
-            if not as_root:
-                command = ['/usr/bin/sudo', '-H', '-u', username] + command
-
-            return command, not as_root
-        else:
-            return ['/usr/bin/login', '-p', '-f', username], False
-
-    def resize(self, cols, rows):
-        self.input_queue.put(ShellResize(cols, rows))
-
-    def run(self):
-        self.shell_pid, master_fd = os.forkpty()
-        if self.shell_pid == 0:
-            close_fds(3)
-
-            os.chdir('/root')
-            env = {
-                'TERM': 'xterm',
-                'HOME': '/root',
-                'LANG': 'en_US.UTF-8',
-                'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin',
-                'LC_ALL': 'C.UTF-8',
-            }
-            os.execve(self.command[0], self.command, env)
-
-        # Terminal baudrate affects input queue size
-        attr = termios.tcgetattr(master_fd)
-        attr[4] = attr[5] = termios.B921600
-        termios.tcsetattr(master_fd, termios.TCSANOW, attr)
-
-        if self.sudo_warning:
-            asyncio.run_coroutine_threadsafe(
-                self.ws.send_bytes(
-                    (
-                        f"WARNING: Your user does not have sudo privileges so {self.command[4]} command will run\r\n"
-                        f"on your behalf. This might cause permission issues.\r\n\r\n"
-                    ).encode("utf-8")
-                ), loop=self.loop
-            ).result()
-
-        def reader():
-            """
-            Reader thread for reading from pty file descriptor
-            and forwarding it to the websocket.
-            """
-            try:
-                while True:
-                    try:
-                        read = os.read(master_fd, 1024)
-                    except OSError:
-                        break
-                    if read == b'':
-                        break
-                    asyncio.run_coroutine_threadsafe(
-                        self.ws.send_bytes(read), loop=self.loop
-                    ).result()
-            except Exception:
-                self.middleware.logger.error("Error in ShellWorkerThread.reader", exc_info=True)
-                self.abort()
-
-        def writer():
-            """
-            Writer thread for reading from input_queue and write to
-            the shell pty file descriptor.
-            """
-            try:
-                while True:
-                    try:
-                        get = self.input_queue.get(timeout=1)
-                        if isinstance(get, ShellResize):
-                            fcntl.ioctl(master_fd, termios.TIOCSWINSZ, struct.pack("HHHH", get.rows, get.cols, 0, 0))
-                        else:
-                            os.write(master_fd, get)
-                    except queue.Empty:
-                        # If we timeout waiting in input query lets make sure
-                        # the shell process is still alive
-                        try:
-                            os.kill(self.shell_pid, 0)
-                        except ProcessLookupError:
-                            break
-            except Exception:
-                self.middleware.logger.error("Error in ShellWorkerThread.writer", exc_info=True)
-                self.abort()
-
-        t_reader = threading.Thread(target=reader, daemon=True)
-        t_reader.start()
-
-        t_writer = threading.Thread(target=writer, daemon=True)
-        t_writer.start()
-
-        # Wait for shell to exit
-        while True:
-            try:
-                pid, rv = os.waitpid(self.shell_pid, os.WNOHANG)
-            except ChildProcessError:
-                break
-            if self._die:
-                return
-            if pid <= 0:
-                time.sleep(1)
-
-        t_reader.join()
-        t_writer.join()
-        asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
-
-    def die(self):
-        self._die = True
-
-    def abort(self):
-        asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
-
-        with contextlib.suppress(ProcessLookupError):
-            os.kill(self.shell_pid, signal.SIGTERM)
-
-        self.die()
-
-
-class ShellConnectionData(object):
-    id = None
-    t_worker = None
-
-
-class ShellApplication:
-    shells = {}
-
-    def __init__(self, middleware):
-        self.middleware = middleware
-
-    async def ws_handler(self, request):
-        ws, prepared = await self.middleware.create_and_prepare_ws(request)
-        if not prepared:
-            return ws
-
-        handler = BaseWebSocketHandler(self.middleware)
-        origin = await handler.get_origin(request)
-        if not await self.middleware.ws_can_access(ws, origin):
-            return ws
-
-        conndata = ShellConnectionData()
-        conndata.id = str(uuid.uuid4())
-
-        try:
-            await self.run(ws, origin, conndata)
-        except Exception:
-            if conndata.t_worker:
-                await self.worker_kill(conndata.t_worker)
-        finally:
-            self.shells.pop(conndata.id, None)
-            return ws
-
-    async def run(self, ws, origin, conndata):
-
-        # Each connection will have its own input queue
-        input_queue = queue.Queue()
-        authenticated = False
-
-        async for msg in ws:
-            if authenticated:
-                # Add content of every message received in input queue
-                input_queue.put(msg.data)
-            else:
-                try:
-                    data = json.loads(msg.data)
-                except json.decoder.JSONDecodeError:
-                    continue
-
-                token = data.get('token')
-                if not token:
-                    continue
-
-                token = await self.middleware.call('auth.get_token_for_shell_application', token, origin)
-                if not token:
-                    await ws.send_json({
-                        'msg': 'failed',
-                        'error': {
-                            'error': ErrnoMixin.ENOTAUTHENTICATED,
-                            'reason': 'Invalid token',
-                        }
-                    })
-                    continue
-
-                authenticated = True
-
-                options = data.get('options', {})
-                if options.get('vm_id'):
-                    options['vm_data'] = await self.middleware.call('vm.get_instance', options['vm_id'])
-                if options.get('virt_instance_id'):
-                    try:
-                        await self.middleware.call('virt.instance.get_instance', options['virt_instance_id'])
-                    except InstanceNotFound:
-                        raise CallError('Provided instance id is not valid')
-                if options.get('app_name'):
-                    if not options.get('container_id'):
-                        raise CallError('Container id must be specified')
-                    if options['container_id'] not in await self.middleware.call(
-                        'app.container_console_choices', options['app_name']
-                    ):
-                        raise CallError('Provided container id is not valid')
-
-                # By default we want to run virsh with user's privileges and assume all "permission denied"
-                # errors this can cause, unless the user has a sudo permission for all commands; in that case, let's
-                # run them straight with root privileges.
-                as_root = False
-                try:
-                    user = await self.middleware.call(
-                        'user.query',
-                        [['username', '=', token['username']], ['local', '=', True]],
-                        {'get': True},
-                    )
-                except MatchNotFound:
-                    # Currently only local users can be sudoers
-                    pass
-                else:
-                    if 'ALL' in user['sudo_commands'] or 'ALL' in user['sudo_commands_nopasswd']:
-                        as_root = True
-                    else:
-                        for group in await self.middleware.call('group.query', [
-                            ['id', 'in', user['groups']], ['local', '=', True]
-                        ]):
-                            if 'ALL' in group['sudo_commands'] or 'ALL' in group['sudo_commands_nopasswd']:
-                                as_root = True
-                                break
-
-                conndata.t_worker = ShellWorkerThread(
-                    middleware=self.middleware, ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(),
-                    username=token['username'], as_root=as_root, options=options,
-                )
-                conndata.t_worker.start()
-
-                self.shells[conndata.id] = conndata.t_worker
-
-                await ws.send_json({
-                    'msg': 'connected',
-                    'id': conndata.id,
-                })
-
-        # If connection was not authenticated, return earlier
-        if not authenticated:
-            return ws
-
-        if conndata.t_worker:
-            self.middleware.create_task(self.worker_kill(conndata.t_worker))
-
-        return ws
-
-    async def worker_kill(self, t_worker):
-        def worker_kill_impl():
-            # If connection has been closed lets make sure shell is killed
-            if t_worker.shell_pid:
-                with contextlib.suppress(psutil.NoSuchProcess):
-                    shell = psutil.Process(t_worker.shell_pid)
-                    to_terminate = [shell] + shell.children(recursive=True)
-
-                    for p in to_terminate:
-                        with contextlib.suppress(psutil.NoSuchProcess):
-                            p.terminate()
-                    gone, alive = psutil.wait_procs(to_terminate, timeout=2)
-
-                    for p in alive:
-                        with contextlib.suppress(psutil.NoSuchProcess):
-                            p.kill()
-
-            t_worker.join()
-
-        await self.middleware.run_in_thread(worker_kill_impl)
 
 
 class PreparedCall(typing.NamedTuple):
@@ -881,9 +99,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         print_version=True,
     ):
         super().__init__()
-        self.logger = logger.Logger(
-            'middlewared', debug_level, log_format
-        ).getLogger()
+        self.logger = Logger('middlewared', debug_level, log_format).getLogger()
         if print_version:
             self.logger.info('Starting %s middleware', sw_version())
         self.loop_debug = loop_debug
@@ -1510,22 +726,37 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         return [method.accepts[i].dump(arg) if i < len(method.accepts) else arg
                 for i, arg in enumerate(args)]
 
-    def dump_result(self, method, result, expose_secrets):
+    def dump_result(self, serviceobj, methodobj, app, result, *, new_style_returns_model=None):
+        expose_secrets = True
+        if app and app.authenticated_credentials:
+            if app.authenticated_credentials.is_user_session and not (
+                credential_has_full_admin(app.authenticated_credentials) or
+                (
+                    serviceobj._config.role_prefix and
+                    app.authenticated_credentials.has_role(f'{serviceobj._config.role_prefix}_WRITE')
+                )
+            ):
+                expose_secrets = False
+
         if isinstance(result, Job):
             return result
 
-        if method_self := getattr(method, "__self__", None):
-            if method.__name__ in ["create", "update", "delete"]:
-                if do_method := getattr(method_self, f"do_{method.__name__}", None):
+        if method_self := getattr(methodobj, "__self__", None):
+            if methodobj.__name__ in ["create", "update", "delete"]:
+                if do_method := getattr(method_self, f"do_{methodobj.__name__}", None):
                     if hasattr(do_method, "new_style_returns"):
                         # FIXME: Get rid of `create`/`do_create` duality
-                        method = do_method
+                        methodobj = do_method
 
-        if hasattr(method, "new_style_returns"):
-            return serialize_result(method.new_style_returns, result, expose_secrets)
+        if hasattr(methodobj, "new_style_returns"):
+            # FIXME: When all models become new style, this should be passed explicitly
+            if new_style_returns_model is None:
+                new_style_returns_model = methodobj.new_style_returns
 
-        if not expose_secrets and hasattr(method, "returns") and method.returns:
-            schema = method.returns[0]
+            return serialize_result(new_style_returns_model, result, expose_secrets)
+
+        if not expose_secrets and hasattr(methodobj, "returns") and methodobj.returns:
+            schema = methodobj.returns[0]
             if isinstance(schema, OROperator):
                 result = schema.dump(result, False)
             else:
@@ -1620,18 +851,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 job = result
                 await job.set_on_finish_cb(job_on_finish_cb)
 
-            expose_secrets = True
-            if app and app.authenticated_credentials:
-                if app.authenticated_credentials.is_user_session and not (
-                    credential_has_full_admin(app.authenticated_credentials) or
-                    (
-                        serviceobj._config.role_prefix and
-                        app.authenticated_credentials.has_role(f'{serviceobj._config.role_prefix}_WRITE')
-                    )
-                ):
-                    expose_secrets = False
-
-            result = self.dump_result(methodobj, result, expose_secrets)
+            return result
         finally:
             # If the method is a job, audit message will be logged by `job_on_finish_cb`
             if job is None:
@@ -1974,7 +1194,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if not await self.ws_can_access(ws, origin):
             return ws
 
-        connection = Application(self, origin, self.loop, request, ws)
+        connection = WebSocketApplication(self, origin, self.loop, request, ws)
         connection.on_open()
 
         try:
@@ -2280,7 +1500,7 @@ def main():
     os.makedirs(MIDDLEWARE_RUN_DIR, exist_ok=True)
     pidpath = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.pid')
 
-    logger.setup_logging('middleware', args.debug_level, args.log_handler)
+    setup_logging('middleware', args.debug_level, args.log_handler)
 
     middleware = Middleware(
         loop_debug=args.loop_debug,

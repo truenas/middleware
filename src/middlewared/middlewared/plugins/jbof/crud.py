@@ -852,6 +852,7 @@ class JBOFService(CRUDService):
                                        interface['prefixlen'],
                                        interface['mtu'])
             jbof_ips.append(jbof_static_ip_from_initiator_ip(interface['address']))
+            self.logger.debug(f'Configured {interface["address"]} for NVMe/RoCE')
 
         # Next do the NVMe connect
         # Include some retry code, but expect it won't get used.

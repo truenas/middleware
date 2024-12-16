@@ -2,7 +2,11 @@ import re
 
 from xml.etree import ElementTree as etree
 
-from middlewared.schema import accepts, Bool, Dict, List, Ref, Str, returns
+from middlewared.api import api_method
+from middlewared.api.current import (
+    VMDeviceUSBPassthroughDeviceArgs, VMDeviceUSBPassthroughDeviceResult, VMDeviceUSBPassthroughDeviceChoicesArgs,
+    VMDeviceUSBPassthroughDeviceChoicesResult, VMDeviceUSBControllerChoicesArgs, VMDeviceUSBControllerChoicesResult,
+)
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
@@ -18,8 +22,7 @@ class VMDeviceService(Service):
     class Config:
         namespace = 'vm.device'
 
-    @accepts()
-    @returns(Dict(*[Str(k, enum=[k]) for k in USB_CONTROLLER_CHOICES]))
+    @api_method(VMDeviceUSBControllerChoicesArgs, VMDeviceUSBControllerChoicesResult, roles=['VM_DEVICE_READ'])
     async def usb_controller_choices(self):
         """
         Retrieve USB controller type choices
@@ -52,21 +55,7 @@ class VMDeviceService(Service):
             'device': None,
         }
 
-    @accepts(Str('device', empty=False), roles=['VM_DEVICE_READ'])
-    @returns(Dict(
-        Dict(
-            'capability',
-            Str('product', required=True, null=True),
-            Str('product_id', required=True, null=True),
-            Str('vendor', required=True, null=True),
-            Str('vendor_id', required=True, null=True),
-            Str('bus', required=True, null=True),
-            Str('device', required=True, null=True),
-        ),
-        Bool('available', required=True),
-        Str('error', required=True, null=True),
-        register=True,
-    ))
+    @api_method(VMDeviceUSBPassthroughDeviceArgs, VMDeviceUSBPassthroughDeviceResult, roles=['VM_DEVICE_READ'])
     async def usb_passthrough_device(self, device):
         """
         Retrieve details about `device` USB device.
@@ -99,8 +88,9 @@ class VMDeviceService(Service):
             'error': None,
         }
 
-    @accepts(roles=['VM_DEVICE_READ'])
-    @returns(List(items=[Ref('usb_passthrough_device')]))
+    @api_method(
+        VMDeviceUSBPassthroughDeviceChoicesArgs, VMDeviceUSBPassthroughDeviceChoicesResult, roles=['VM_DEVICE_READ']
+    )
     async def usb_passthrough_choices(self):
         """
         Available choices for USB passthrough devices.

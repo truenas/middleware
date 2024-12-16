@@ -2,11 +2,13 @@ import os
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CatalogEntry, CatalogUpdateArgs, CatalogUpdateResult, CatalogTrainsArgs, CatalogTrainsResult,
+)
 from middlewared.plugins.docker.state_utils import catalog_ds_path, CATALOG_DATASET_NAME
-from middlewared.schema import accepts, Dict, List, returns, Str
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.utils import ProductType
-from middlewared.validators import Match
 
 from .utils import OFFICIAL_ENTERPRISE_TRAIN, OFFICIAL_LABEL, TMP_IX_APPS_CATALOGS
 
@@ -29,20 +31,7 @@ class CatalogService(ConfigService):
         cli_namespace = 'app.catalog'
         namespace = 'catalog'
         role_prefix = 'CATALOG'
-
-    ENTRY = Dict(
-        'catalog_create',
-        List('preferred_trains'),
-        Str('id'),
-        Str(
-            'label', required=True, validators=[Match(
-                r'^\w+[\w.-]*$',
-                explanation='Label must start with an alphanumeric character and can include dots and dashes.'
-            )],
-            max_length=60,
-        ),
-        register=True,
-    )
+        entry = CatalogEntry
 
     @private
     def extend(self, data, context):
@@ -52,8 +41,7 @@ class CatalogService(ConfigService):
         })
         return data
 
-    @accepts()
-    @returns(List('trains', items=[Str('train')]))
+    @api_method(CatalogTrainsArgs, CatalogTrainsResult, roles=['CATALOG_READ'])
     async def trains(self):
         """
         Retrieve available trains.
@@ -103,13 +91,7 @@ class CatalogService(ConfigService):
 
         verrors.check()
 
-    @accepts(
-        Dict(
-            'catalog_update',
-            List('preferred_trains'),
-            update=True
-        )
-    )
+    @api_method(CatalogUpdateArgs, CatalogUpdateResult)
     async def do_update(self, data):
         """
         Update catalog preferences.

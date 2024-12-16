@@ -10,7 +10,7 @@
 
     conf = {
         'realm': middleware.call_sync('smb.getparm', 'realm', 'GLOBAL'),
-        'netbios_name': smb_config['netbiosname_local'],
+        'netbios_name': smb_config['netbiosname'],
         'workgroup': smb_config['workgroup'],
         'interfaces': interfaces,
         'enabled': middleware.call_sync('network.configuration.config')['service_announcement']['wsd']

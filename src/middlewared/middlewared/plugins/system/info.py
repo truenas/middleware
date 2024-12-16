@@ -1,7 +1,5 @@
 import hashlib
 import os
-import psutil
-import re
 import socket
 import time
 
@@ -10,13 +8,10 @@ from datetime import datetime, timedelta, timezone
 from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils import sw_buildtime
-
-
-RE_CPU_MODEL = re.compile(r'^model name\s*:\s*(.*)', flags=re.M)
+from middlewared.utils.cpu import cpu_info
 
 
 class SystemService(Service):
-    CPU_INFO = {'cpu_model': None, 'core_count': None, 'physical_core_count': None}
     HOST_ID = None
 
     class Config:
@@ -37,27 +32,11 @@ class SystemService(Service):
         return result
 
     @private
-    def get_cpu_model(self):
-        with open('/proc/cpuinfo', 'r') as f:
-            model = RE_CPU_MODEL.search(f.read())
-            return model.group(1) if model else None
-
-    @private
     async def cpu_info(self):
-        """
-        CPU info doesn't change after boot so cache the results
-        """
-
-        if self.CPU_INFO['cpu_model'] is None:
-            self.CPU_INFO['cpu_model'] = await self.middleware.call('system.get_cpu_model')
-
-        if self.CPU_INFO['core_count'] is None:
-            self.CPU_INFO['core_count'] = psutil.cpu_count(logical=True)
-
-        if self.CPU_INFO['physical_core_count'] is None:
-            self.CPU_INFO['physical_core_count'] = psutil.cpu_count(logical=False)
-
-        return self.CPU_INFO
+        """CPU info could change after boot, but we
+        cache it since hot-plugging cpus is something
+        we've not accounted for."""
+        return cpu_info()
 
     @private
     async def time_info(self):

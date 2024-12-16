@@ -209,8 +209,8 @@ class PoolDatasetService(CRUDService):
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
         filters = filters or []
-        if len(filters) == 1 and len(filters[0]) == 3 and list(filters[0][:2]) == ['id', '=']:
-            zfsfilters.append(copy.deepcopy(filters[0]))
+        if len(filters) == 1 and len(f := filters[0]) == 3 and f[0] in ('id', 'name') and f[1] in ('=', 'in'):
+            zfsfilters.append(copy.deepcopy(f))
 
         internal_datasets_filters = self.middleware.call_sync('pool.dataset.internal_datasets_filters')
         filters.extend(internal_datasets_filters)
@@ -928,10 +928,18 @@ class PoolDatasetService(CRUDService):
             verrors.add_child('pool_dataset_update', self.__handle_zfs_set_property_error(e, properties_definitions))
             raise verrors
 
-        if data['type'] == 'VOLUME' and 'volsize' in data and data['volsize'] > dataset[0]['volsize']['parsed']:
-            # means the zvol size has increased so we need to check if this zvol is shared via SCST (iscsi)
-            # and if it is, resync it so the connected initiators can see the new size of the zvol
-            await self.middleware.call('iscsi.global.resync_lun_size_for_zvol', id_)
+        if data['type'] == 'VOLUME':
+            if 'volsize' in data and data['volsize'] > dataset[0]['volsize']['parsed']:
+                # means the zvol size has increased so we need to check if this zvol is shared via SCST (iscsi)
+                # and if it is, resync it so the connected initiators can see the new size of the zvol
+                await self.middleware.call('iscsi.global.resync_lun_size_for_zvol', id_)
+
+            if 'readonly' in data:
+                # depending on the iscsi client connected to us, if someone marks a zvol
+                # as R/O (or R/W), we need to be sure and update the associated extent so
+                # that we don't get into a scenario where the iscsi extent is R/W but the
+                # underlying zvol is R/O. Windows clients seem to not handle this very well.
+                await self.middleware.call('iscsi.global.resync_readonly_property_for_zvol', id_, data['readonly'])
 
         updated_ds = await self.get_instance(id_)
         self.middleware.send_event('pool.dataset.query', 'CHANGED', id=id_, fields=updated_ds)

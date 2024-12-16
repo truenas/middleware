@@ -1,5 +1,4 @@
 import enum
-from bidict import bidict
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 
 
@@ -8,14 +7,6 @@ CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}
 INVALID_SHARE_NAME_CHARACTERS = {'%', '<', '>', '*', '?', '|', '/', '\\', '+', '=', ';', ':', '"', ',', '[', ']'}
 RESERVED_SHARE_NAMES = ('global', 'printers', 'homes')
-
-LOGLEVEL_MAP = bidict({
-    '0': 'NONE',
-    '1': 'MINIMUM',
-    '2': 'NORMAL',
-    '3': 'FULL',
-    '10': 'DEBUG',
-})
 
 
 class SMBHAMODE(enum.IntEnum):

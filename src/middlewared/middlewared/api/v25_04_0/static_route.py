@@ -1,4 +1,4 @@
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString
 
 from pydantic import IPvAnyAddress, IPvAnyNetwork
 
@@ -15,14 +15,16 @@ __all__ = [
 
 
 class StaticRouteEntry(BaseModel):
-    destination: IPvAnyNetwork
-    gateway: IPvAnyAddress
+    destination: NonEmptyString
+    gateway: NonEmptyString
     description: str = ""
     id: int
 
 
 class StaticRouteCreate(StaticRouteEntry):
     id: Excluded = excluded_field()
+    destination: IPvAnyNetwork
+    gateway: IPvAnyAddress
 
 
 class StaticRouteCreateArgs(BaseModel):

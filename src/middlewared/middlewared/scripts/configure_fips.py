@@ -5,7 +5,6 @@ import sqlite3
 import subprocess
 
 from middlewared.utils.db import query_config_table
-from middlewared.utils.rootfs import ReadonlyRootfsManager
 
 
 FIPS_MODULE_FILE = '/usr/lib/ssl/fipsmodule.cnf'
@@ -43,14 +42,12 @@ def main() -> None:
     try:
         security_settings = query_config_table('system_security')
     except (sqlite3.OperationalError, IndexError):
-        # This is for the case when users are upgrading and in that case table will not exist
+        # This is for the case when users are upgrading and in that case table will not exist,
         # so we should always disable fips as a default because users might not be able to ssh
         # into the system
         security_settings = {'enable_fips': False}
 
-    with ReadonlyRootfsManager('/') as readonly_rootfs:
-        readonly_rootfs.make_writeable()
-        configure_fips(security_settings['enable_fips'])
+    configure_fips(security_settings['enable_fips'])
 
 
 if __name__ == '__main__':

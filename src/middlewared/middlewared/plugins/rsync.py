@@ -110,9 +110,9 @@ class RsyncTaskModel(sa.Model):
     rsync_preserveattr = sa.Column(sa.Boolean(), default=False)
     rsync_extra = sa.Column(sa.Text())
     rsync_enabled = sa.Column(sa.Boolean(), default=True)
-    rsync_mode = sa.Column(sa.String(20), default='module')
+    rsync_mode = sa.Column(sa.String(20))
     rsync_remotepath = sa.Column(sa.String(255))
-    rsync_direction = sa.Column(sa.String(10), default='PUSH')
+    rsync_direction = sa.Column(sa.String(10))
     rsync_delayupdates = sa.Column(sa.Boolean(), default=True)
     rsync_job = sa.Column(sa.JSON(None))
 
@@ -149,8 +149,6 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             # Moving on, we are going to verify that it can be split successfully using shlex
             data['extra'] = data['extra'].split()
 
-        for field in ('mode', 'direction'):
-            data[field] = data[field].upper()
         Cron.convert_db_format_to_schedule(data)
         if job := await self.get_task_state_job(context['task_state'], data['id']):
             data['job'] = job
@@ -196,6 +194,9 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
             if not data['remotemodule']:
                 verrors.add(f'{schema}.remotemodule', 'This field is required')
+
+            if data['ssh_credentials']:
+                verrors.add(f'{schema}.ssh_credentials', "SSH credentials can't be used when mode is MODULE")
 
         if data['mode'] == 'SSH':
             connect_kwargs = None
@@ -384,10 +385,6 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
         data.pop('validate_rpath', None)
         data.pop('ssh_keyscan', None)
-
-        # Keeping compatibility with legacy UI
-        for field in ('mode', 'direction'):
-            data[field] = data[field].lower()
 
         return verrors, data
 

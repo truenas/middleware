@@ -1,14 +1,17 @@
 import errno
+import os
+import subprocess
 
 import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DockerEntry, DockerStatusArgs, DockerStatusResult, DockerUpdateArgs, DockerUpdateResult,
-    NvidiaStatusArgs, NvidiaStatusResult,
+    DockerEntry, DockerStatusArgs, DockerStatusResult, DockerUpdateArgs, DockerUpdateResult, DockerNvidiaPresentArgs,
+    DockerNvidiaPresentResult,
 )
 from middlewared.schema import ValidationErrors
 from middlewared.service import CallError, ConfigService, job, private
+from middlewared.utils.gpu import get_gpus
 from middlewared.utils.zfs import query_imported_fast_impl
 
 from .state_utils import Status
@@ -23,7 +26,11 @@ class DockerModel(sa.Model):
     pool = sa.Column(sa.String(255), default=None, nullable=True)
     enable_image_updates = sa.Column(sa.Boolean(), default=True)
     nvidia = sa.Column(sa.Boolean(), default=False)
-    address_pools = sa.Column(sa.JSON(list), default=[{'base': '172.17.0.0/12', 'size': 24}])
+    cidr_v6 = sa.Column(sa.String(), default='fdd0::/64', nullable=False)
+    address_pools = sa.Column(sa.JSON(list), default=[
+        {'base': '172.17.0.0/12', 'size': 24},
+        {'base': 'fdd0::/48', 'size': 64},
+    ])
 
 
 class DockerService(ConfigService):
@@ -50,6 +57,7 @@ class DockerService(ConfigService):
         old_config.pop('dataset')
         config = old_config.copy()
         config.update(data)
+        config['cidr_v6'] = str(config['cidr_v6'])
 
         verrors = ValidationErrors()
         if config['pool'] and not await self.middleware.run_in_thread(query_imported_fast_impl, [config['pool']]):
@@ -63,11 +71,15 @@ class DockerService(ConfigService):
             )
 
         if old_config != config:
-            if config['pool'] != old_config['pool']:
+            address_pools_changed = any(config[k] != old_config[k] for k in ('address_pools', 'cidr_v6'))
+            pool_changed = config['pool'] != old_config['pool']
+            if pool_changed:
                 # We want to clear upgrade alerts for apps at this point
                 await self.middleware.call('app.clear_upgrade_alerts_for_all')
 
-            if any(config[k] != old_config[k] for k in ('pool', 'address_pools')):
+            nvidia_changed = old_config['nvidia'] != config['nvidia']
+
+            if pool_changed or address_pools_changed or nvidia_changed:
                 job.set_progress(20, 'Stopping Docker service')
                 try:
                     await self.middleware.call('service.stop', 'docker')
@@ -92,10 +104,13 @@ class DockerService(ConfigService):
 
             await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
 
-            if config['pool'] != old_config['pool']:
+            if nvidia_changed:
+                await self.middleware.call('docker.configure_nvidia')
+
+            if pool_changed:
                 job.set_progress(60, 'Applying requested configuration')
                 await self.middleware.call('docker.setup.status_change')
-            elif config['pool'] and config['address_pools'] != old_config['address_pools']:
+            elif config['pool'] and address_pools_changed:
                 job.set_progress(60, 'Starting docker')
                 catalog_sync_job = await self.middleware.call('docker.fs_manage.mount')
                 if catalog_sync_job:
@@ -103,18 +118,7 @@ class DockerService(ConfigService):
 
                 await self.middleware.call('service.start', 'docker')
 
-            if not old_config['nvidia'] and config['nvidia']:
-                await (
-                    await self.middleware.call(
-                        'nvidia.install',
-                        job_on_progress_cb=lambda encoded: job.set_progress(
-                            70 + int(encoded['progress']['percent'] * 0.2),
-                            encoded['progress']['description'],
-                        )
-                    )
-                ).wait(raise_error=True)
-
-            if config['pool'] and config['address_pools'] != old_config['address_pools']:
+            if config['pool'] and address_pools_changed:
                 job.set_progress(95, 'Initiating redeployment of applications to apply new address pools changes')
                 await self.middleware.call(
                     'core.bulk', 'app.redeploy', [
@@ -132,56 +136,45 @@ class DockerService(ConfigService):
         """
         return await self.middleware.call('docker.state.get_status_dict')
 
-    @api_method(NvidiaStatusArgs, NvidiaStatusResult, roles=['DOCKER_READ'])
-    async def nvidia_status(self):
-        """
-        Returns Nvidia hardware and drivers installation status.
-        """
-        return await self.nvidia_status_for_job()
+    @api_method(DockerNvidiaPresentArgs, DockerNvidiaPresentResult)
+    def nvidia_present(self):
+        adv_config = self.middleware.call_sync("system.advanced.config")
+
+        for gpu in get_gpus():
+            if gpu["addr"]["pci_slot"] in adv_config["isolated_gpu_pci_ids"]:
+                continue
+
+            if gpu["vendor"] == "NVIDIA":
+                return True
+
+        return False
 
     @private
-    async def nvidia_status_for_job(self, job=None):
-        if not await self.middleware.call('nvidia.present'):
-            return {'status': 'ABSENT'}
+    def configure_nvidia(self):
+        config = self.middleware.call_sync('docker.config')
+        nvidia_sysext_path = '/run/extensions/nvidia.raw'
+        if config['nvidia'] and not os.path.exists(nvidia_sysext_path):
+            os.makedirs('/run/extensions', exist_ok=True)
+            os.symlink('/usr/share/truenas/sysext-extensions/nvidia.raw', nvidia_sysext_path)
+            refresh = True
+        elif not config['nvidia'] and os.path.exists(nvidia_sysext_path):
+            os.unlink(nvidia_sysext_path)
+            refresh = True
+        else:
+            refresh = False
 
-        if job is None:
-            jobs = await self.middleware.call('core.get_jobs', [['method', '=', 'nvidia.install']])
-            if not jobs:
-                return {'status': 'NOT_INSTALLED'}
+        if refresh:
+            subprocess.run(['systemd-sysext', 'refresh'], capture_output=True, check=True, text=True)
+            subprocess.run(['ldconfig'], capture_output=True, check=True, text=True)
 
-            job = jobs[-1]
-
-        match job['state']:
-            case 'WAITING':
-                return {'status': 'INSTALLING', 'progress': 0, 'description': 'Waiting for installation to begin...'}
-            case 'RUNNING':
-                return {
-                    'status': 'INSTALLING',
-                    'progress': job['progress']['percent'],
-                    'description': job['progress']['description'],
-                }
-            case 'FAILED':
-                return {'status': 'INSTALL_ERROR', 'error': job['error']}
-
-        if await self.middleware.call('nvidia.installed'):
-            return {'status': 'INSTALLED'}
-
-        return {'status': 'NOT_INSTALLED'}
-
-
-async def update_nvidia_status(middleware, event_type, args):
-    if event_type == 'CHANGED' and args['fields']['method'] == 'nvidia.install':
-        middleware.send_event(
-            'docker.nvidia_status',
-            'CHANGED',
-            fields=await middleware.call('docker.nvidia_status_for_job', args['fields']),
-        )
+        if config['nvidia']:
+            cp = subprocess.run(['modprobe', 'nvidia'], capture_output=True, text=True)
+            if cp.returncode != 0:
+                self.logger.error('Error loading nvidia driver: %s', cp.stderr)
 
 
 async def setup(middleware):
-    middleware.event_register(
-        'docker.nvidia_status',
-        'Sent on Nvidia hardware and drivers installation status change.',
-        roles=['DOCKER_READ'],
-    )
-    middleware.event_subscribe('core.get_jobs', update_nvidia_status)
+    try:
+        await middleware.call('docker.configure_nvidia')
+    except Exception:
+        middleware.logger.error('Unhandled exception configuring nvidia', exc_info=True)

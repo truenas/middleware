@@ -9,7 +9,7 @@ class PoolService(Service):
         cli_namespace = 'storage.pool'
 
     @api_method(DDTPruneArgs, DDTPruneResult)
-    @job(lock=lambda args: f'ddt_prune_{args[0]["pool_name"]}')
+    @job(lock=lambda args: f'ddt_prune_{args[0].get("pool_name")}')
     async def ddt_prune(self, job, options):
         """
         Prune DDT entries in pool `pool_name` based on the specified options.

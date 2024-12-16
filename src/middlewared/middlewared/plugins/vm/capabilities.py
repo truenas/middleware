@@ -1,7 +1,8 @@
 from collections import defaultdict
 from xml.etree import ElementTree as etree
 
-from middlewared.schema import accepts, Dict, returns
+from middlewared.api import api_method
+from middlewared.api.current import VMGuestArchitectureMachineChoicesArgs, VMGuestArchitectureMachineChoicesResult
 from middlewared.service import private, Service
 
 from .connection import LibvirtConnectionMixin
@@ -27,14 +28,7 @@ class VMService(Service, LibvirtConnectionMixin):
 
         self.CAPABILITIES = supported_archs
 
-    @accepts(roles=['VM_READ'])
-    @returns(Dict(
-        additional_attrs=True,
-        example={
-            'x86_64': ['pc-i440fx-5.2', 'pc-q35-5.2', 'pc-i440fx-2.7'],
-            'i686': ['pc-i440fx-3.0', 'xenfv'],
-        }
-    ))
+    @api_method(VMGuestArchitectureMachineChoicesArgs, VMGuestArchitectureMachineChoicesResult, roles=['VM_READ'])
     async def guest_architecture_and_machine_choices(self):
         """
         Retrieve choices for supported guest architecture types and machine choices.

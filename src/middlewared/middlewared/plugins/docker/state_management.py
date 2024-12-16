@@ -111,13 +111,6 @@ async def _event_system_ready(middleware, event_type, args):
     if await middleware.call('failover.licensed'):
         return
 
-    if (
-        (await middleware.call('docker.config'))['nvidia'] and
-        await middleware.call('nvidia.present') and
-        not await middleware.call('nvidia.installed')
-    ):
-        await middleware.call('nvidia.install', False)
-
     if (await middleware.call('docker.config'))['pool']:
         middleware.create_task(middleware.call('docker.state.start_service', True))
     else:

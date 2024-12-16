@@ -1,4 +1,4 @@
-from typing_extensions import Annotated, Self
+from typing import Annotated, Self
 
 from middlewared.api.base import BaseModel
 from middlewared.utils import filters
@@ -45,3 +45,11 @@ class QueryArgs(BaseModel):
 
 class GenericQueryResult(BaseModel):
     result: list[dict] | dict | int
+
+
+class CronModel(BaseModel):
+    minute: str = "*"
+    hour: str = "*"
+    dom: str = "*"
+    month: str = "*"
+    dow: str = "*"

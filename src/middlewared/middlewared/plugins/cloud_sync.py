@@ -75,9 +75,11 @@ class RcloneConfig:
             config["pass"] = rclone_encrypt_password(config["pass"])
 
         remote_path = None
-        extra_args = await self.provider.get_task_extra_args(self.cloud_sync)
+        extra_args = []
 
         if "attributes" in self.cloud_sync:
+            extra_args = await self.provider.get_task_extra_args(self.cloud_sync)
+
             config.update(dict(self.cloud_sync["attributes"], **await self.provider.get_task_extra(self.cloud_sync)))
             for k, v in list(config.items()):
                 if v is undefined:
@@ -233,18 +235,6 @@ async def rclone(middleware, job, cloud_sync, dry_run):
         if snapshot:
             await middleware.call("zfs.snapshot.delete", snapshot)
 
-        if cancelled_error is not None:
-            raise cancelled_error
-        if proc.returncode != 0:
-            message = "".join(job.internal_data.get("messages", []))
-            if message and proc.returncode != 1:
-                if not message.endswith("\n"):
-                    message += "\n"
-                message += f"rclone failed with exit code {proc.returncode}"
-            raise CallError(message)
-
-        await run_script(job, "Post-script", cloud_sync["post_script"], env)
-
         refresh_credentials = REMOTES[cloud_sync["credentials"]["provider"]["type"]].refresh_credentials
         if refresh_credentials:
             credentials_attributes = cloud_sync["credentials"]["provider"].copy()
@@ -264,6 +254,18 @@ async def rclone(middleware, job, cloud_sync, dry_run):
                 await middleware.call("cloudsync.credentials.update", cloud_sync["credentials"]["id"], {
                     "provider": credentials_attributes
                 })
+
+        if cancelled_error is not None:
+            raise cancelled_error
+        if proc.returncode != 0:
+            message = "".join(job.internal_data.get("messages", []))
+            if message and proc.returncode != 1:
+                if not message.endswith("\n"):
+                    message += "\n"
+                message += f"rclone failed with exit code {proc.returncode}"
+            raise CallError(message)
+
+        await run_script(job, "Post-script", cloud_sync["post_script"], env)
 
 
 # Prevents clogging job logs with progress reports every second

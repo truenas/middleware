@@ -57,184 +57,20 @@ NETDATA_ALL_METRICS = {
             }
         }
     },
-    'cpu.cpu0': {
-        'name': 'cpu.cpu0',
-        'family': 'utilization',
-        'context': 'cpu.cpu',
-        'units': 'percentage',
-        'last_updated': 1691150349,
+    'truenas_meminfo.total': {
+        'name': 'truenas_meminfo.total',
+        'family': 'total',
+        'context': 'Total memory',
+        'units': 'Bytes',
+        'last_updated': 1732714553,
         'dimensions': {
-            'guest_nice': {
-                'name': 'guest_nice',
-                'value': 0.2575124
-            },
-            'guest': {
-                'name': 'guest',
-                'value': 0.2575124
-            },
-            'steal': {
-                'name': 'steal',
-                'value': 0.2575124
-            },
-            'softirq': {
-                'name': 'softirq',
-                'value': 0.2375124
-            },
-            'irq': {
-                'name': 'irq',
-                'value': 0.2075124
-            },
-            'user': {
-                'name': 'user',
-                'value': 0.3275124
-            },
-            'system': {
-                'name': 'system',
-                'value': 0.3275124
-            },
-            'nice': {
-                'name': 'nice',
-                'value': 26.75124
-            },
-            'iowait': {
-                'name': 'iowait',
-                'value': 2.75124
-            },
-            'idle': {
-                'name': 'idle',
-                'value': 49.0049751
+            'total': {
+                'name': 'total',
+                'value': 6119460864
             }
         }
     },
-    'cpu.cpu1': {
-        'name': 'cpu.cpu1',
-        'family': 'utilization',
-        'context': 'cpu.cpu',
-        'units': 'percentage',
-        'last_updated': 1691150349,
-        'dimensions': {
-            'guest_nice': {
-                'name': 'guest_nice',
-                'value': 0.2575124
-            },
-            'guest': {
-                'name': 'guest',
-                'value': 0.2575124
-            },
-            'steal': {
-                'name': 'steal',
-                'value': 0.2575124
-            },
-            'softirq': {
-                'name': 'softirq',
-                'value': 0.2375124
-            },
-            'irq': {
-                'name': 'irq',
-                'value': 0.2075124
-            },
-            'user': {
-                'name': 'user',
-                'value': 0.3275124
-            },
-            'system': {
-                'name': 'system',
-                'value': 0.3275124
-            },
-            'nice': {
-                'name': 'nice',
-                'value': 26.75124
-            },
-            'iowait': {
-                'name': 'iowait',
-                'value': 2.75124
-            },
-            'idle': {
-                'name': 'idle',
-                'value': 49.0049751
-            }
-        }
-    },
-    'system.ram': {
-        'name': 'system.ram',
-        'family': 'ram',
-        'context': 'system.ram',
-        'units': 'MiB',
-        'last_updated': 1691150349,
-        'dimensions': {
-            'free': {
-                'name': 'free',
-                'value': 301.0585938
-            },
-            'used': {
-                'name': 'used',
-                'value': 1414.1318359
-            },
-            'cached': {
-                'name': 'cached',
-                'value': 250.1103516
-            },
-            'buffers': {
-                'name': 'buffers',
-                'value': 2.0820312
-            }
-        }
-    },
-    'mem.available': {
-        'name': 'mem.available',
-        'family': 'system',
-        'context': 'mem.available',
-        'units': 'MiB',
-        'last_updated': 1691150349,
-        'dimensions': {
-            'MemAvailable': {
-                'name': 'avail',
-                'value': 428.5869141
-            }
-        }
-    },
-    'mem.committed': {
-        'name': 'mem.committed',
-        'family': 'system',
-        'context': 'mem.committed',
-        'units': 'MiB',
-        'last_updated': 1691150349,
-        'dimensions': {
-            'Committed_AS': {
-                'name': 'Committed_AS',
-                'value': 1887.0546875
-            }
-        }
-    },
-    'mem.kernel': {
-        'name': 'mem.kernel',
-        'family': 'kernel',
-        'context': 'mem.kernel',
-        'units': 'MiB',
-        'last_updated': 1691150349,
-        'dimensions': {
-            'Slab': {
-                'name': 'Slab',
-                'value': 150.78125
-            },
-            'KernelStack': {
-                'name': 'KernelStack',
-                'value': 5.25
-            },
-            'PageTables': {
-                'name': 'PageTables',
-                'value': 6.53125
-            },
-            'VmallocUsed': {
-                'name': 'VmallocUsed',
-                'value': 99.6875
-            },
-            'Percpu': {
-                'name': 'Percpu',
-                'value': 0.8984375
-            }
-        }
-    },
+
     'net.enp1s0': {
         'name': 'net.enp1s0',
         'family': 'enp1s0',
@@ -818,24 +654,11 @@ NETDATA_ALL_METRICS = {
     },
 
 }
-MEM_INFO = '''Active:            67772 kB
-Inactive:        1379892 kB
-Mapped:            54768 kB
-'''
 
 
 def test_arc_stats():
     arc_stats = get_arc_stats(NETDATA_ALL_METRICS)
 
-    assert arc_stats['arc_free_memory'] == normalize_value(
-        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.free', 'free', 0)
-    )
-    assert arc_stats['arc_available_memory'] == normalize_value(
-        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.avail', 'avail', 0)
-    )
-    assert arc_stats['arc_size'] == normalize_value(
-        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.size', 'size', 0)
-    )
     assert arc_stats['demand_accesses_per_second'] == normalize_value(
         safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.dread', 'dread', 0)
     )
@@ -905,21 +728,14 @@ def test_arc_stats():
 
 
 def test_cpu_stats():
-    cpu_stats = get_cpu_stats(NETDATA_ALL_METRICS, 2)
-    cpu_stat = {'system.cpu': cpu_stats['average'], 'cpu.cpu0': cpu_stats['0'], 'cpu.cpu1': cpu_stats['1']}
-    for chart_name, metrics in cpu_stat.items():
-        total_sum = sum(metrics.values()) - metrics['usage']
-        assert metrics['user'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'user', 0)
-        assert metrics['nice'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'nice', 0)
-        assert metrics['system'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'system', 0)
-        assert metrics['idle'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'idle', 0)
-        assert metrics['iowait'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'iowait', 0)
-        assert metrics['irq'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'irq', 0)
-        assert metrics['softirq'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'softirq', 0)
-        assert metrics['steal'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'steal', 0)
-        assert metrics['guest'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'guest', 0)
-        assert metrics['guest_nice'] == safely_retrieve_dimension(NETDATA_ALL_METRICS, chart_name, 'guest_nice', 0)
-        assert metrics['usage'] == ((total_sum - metrics['idle'] - metrics['iowait']) / total_sum) * 100
+    cpu_stat = get_cpu_stats(NETDATA_ALL_METRICS)
+    total_sum = 0
+    for metric, value in cpu_stat.items():
+        if metric == 'usage':
+            assert value == ((total_sum - cpu_stat['idle'] - cpu_stat['iowait']) / total_sum) * 100
+        else:
+            assert value == safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.cpu', metric, 0)
+            total_sum += value
 
 
 def test_disk_stats():
@@ -978,36 +794,16 @@ def test_network_stats():
 
 
 def test_memory_stats():
-    with patch('builtins.open', mock_open(read_data=MEM_INFO)):
-        memory_stats = get_memory_info(NETDATA_ALL_METRICS)
-        assert memory_stats['classes']['page_tables'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'mem.kernel', 'PageTables', 0), multiplier=1024 * 1024
-        )
-        assert memory_stats['classes']['slab_cache'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'mem.kernel', 'Slab', 0), multiplier=1024 * 1024
-        )
-        assert memory_stats['classes']['cache'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.ram', 'cached', 0), multiplier=1024 * 1024
-        )
-        assert memory_stats['classes']['buffers'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.ram', 'buffers', 0), multiplier=1024 * 1024
-        )
-        assert memory_stats['classes']['unused'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.ram', 'free', 0), multiplier=1024 * 1024
-        )
-        assert memory_stats['classes']['arc'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.size', 'size', 0)
-        )
-        assert memory_stats['classes']['apps'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.ram', 'used', 0), multiplier=1024 * 1024
-        )
-        assert memory_stats['extra']['inactive'] == 1413009408 * 1024
-        assert memory_stats['extra']['committed'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'mem.committed', 'Committed_AS', 0), multiplier=1024 * 1024,
-        )
-        assert memory_stats['extra']['active'] == 69398528 * 1024
-        assert memory_stats['extra']['vmalloc_used'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, 'mem.kernel', 'VmallocUsed', 0), multiplier=1024 * 1024
-        )
-        assert memory_stats['extra']['mapped'] == 56082432 * 1024
-        
+    memory_stats = get_memory_info(NETDATA_ALL_METRICS)
+    assert memory_stats['arc_size'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.size', 'size', 0)
+    )
+    assert memory_stats['arc_free_memory'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.free', 'free', 0)
+    )
+    assert memory_stats['arc_available_memory'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_arcstats.avail', 'avail', 0)
+    )
+    assert memory_stats['physical_memory_total'] == normalize_value(
+        safely_retrieve_dimension(NETDATA_ALL_METRICS, 'truenas_meminfo.total', 'total', 0),
+    )

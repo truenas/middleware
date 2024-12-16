@@ -1,8 +1,7 @@
-# -*- coding=utf-8 -*-
 import errno
+import hashlib
 import itertools
 import os
-import subprocess
 import time
 
 import requests
@@ -22,16 +21,18 @@ class UpdateService(Service):
         train_check = self.middleware.call_sync("update.check_train", train)
         if train_check["status"] == "AVAILABLE":
             dst = os.path.join(location, DOWNLOAD_UPDATE_FILE)
-            if os.path.exists(dst):
-                job.set_progress(0, "Verifying existing update")
-                checksum = subprocess.run(
-                    ["sha256sum", dst], stdout=subprocess.PIPE, encoding="utf-8"
-                ).stdout.split()[0]
+            try:
+                with open(dst, "rb") as f:
+                    job.set_progress(0, "Verifying existing update")
+                    checksum = hashlib.file_digest(f, "sha256").hexdigest()
+            except FileNotFoundError:
+                pass
+            else:
                 if checksum == train_check["checksum"]:
                     return True
-
-                self.middleware.logger.warning("Invalid update file checksum %r, re-downloading", checksum)
-                os.unlink(dst)
+                else:
+                    self.logger.warning("Invalid update file checksum %r, re-downloading", checksum)
+                    os.unlink(dst)
 
             st = os.statvfs(location)
             avail = st.f_bavail * st.f_frsize

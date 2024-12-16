@@ -21,6 +21,7 @@ from middlewared.plugins.docker.state_utils import Status as DockerStatus
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 from middlewared.plugins.virt.utils import Status as VirtStatus
+from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 
 logger = logging.getLogger('failover')
 FAILOVER_LOCK_NAME = 'vrrp_event'
@@ -389,7 +390,7 @@ class FailoverEventsService(Service):
         try:
             # Request fenced_reload just in case the job does not complete in time
             jbof_job = self.run_call('jbof.configure_job', True)
-            jbof_job.wait_sync(timeout=10)
+            jbof_job.wait_sync(timeout=60)
             if jbof_job.error:
                 logger.error(f'Error attaching JBOFs: {jbof_job.error}')
             elif jbof_job.result['failed']:
@@ -397,7 +398,13 @@ class FailoverEventsService(Service):
             else:
                 logger.info(jbof_job.result['message'])
         except TimeoutError:
-            logger.error('Timed out attaching JBOFs - will continue in background')
+            logger.error('Timed out attaching JBOFs.  Retrying')
+            try:
+                jbof_job.wait_sync(timeout=60)
+            except TimeoutError:
+                logger.error('Timed out attaching JBOFs.')
+            else:
+                logger.info('Done bring up of NVMe/RoCE')
         except Exception:
             logger.error('Unexpected error', exc_info=True)
         else:
@@ -886,6 +893,18 @@ class FailoverEventsService(Service):
         # Pools are now exported and so we can make disks available to other controller
         logger.warning('Stopping fenced')
         self.run_call('failover.fenced.stop')
+
+        # In the rare case where the pwenc_secret file doesn't match, we'll
+        # copy over the secret seed file from the active and reinitialize
+        try:
+            self.run_call(
+                'failover.call_remote',
+                'failover.send_small_file',
+                [PWENC_FILE_SECRET],
+                {'raise_connect_error': False}
+            )
+        except Exception:
+            self.logger.error('Failed to reinitialize pwenc', exc_info=True)
 
         # Now that fenced is stopped, attach NVMe/RoCE.
         logger.info('Start bring up of NVMe/RoCE')

@@ -1,5 +1,4 @@
 import asyncio
-import syslog
 
 import middlewared.sqlalchemy as sa
 
@@ -181,17 +180,11 @@ class SystemGeneralService(ConfigService):
                 'Please specify a valid certificate which exists in the system'
             )
         else:
-            cert = cert[0]
             verrors.extend(
                 await self.middleware.call(
                     'certificate.cert_services_validation', certificate_id, f'{schema}.ui_certificate', False
                 )
             )
-
-            if cert['fingerprint']:
-                syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
-                syslog.syslog(syslog.LOG_ERR, 'Fingerprint of the certificate used in UI : ' + cert['fingerprint'])
-                syslog.closelog()
 
         return verrors
 
@@ -276,9 +269,6 @@ class SystemGeneralService(ConfigService):
             await self.middleware.call('zettarepl.update_config', {'timezone': new_config['timezone']})
             await self.middleware.call('service.reload', 'timeservices')
             await self.middleware.call('service.restart', 'cron')
-
-        if config['language'] != new_config['language']:
-            await self.middleware.call('system.general.set_language')
 
         if config['ds_auth'] != new_config['ds_auth']:
             await self.middleware.call('etc.generate', 'pam_middleware')

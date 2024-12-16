@@ -30,6 +30,7 @@ class GatherTypes:
         'sharing': ['shares'],
         'vms': ['vms'],
         'nspawn_containers': ['nspawn_containers'],
+        'vendor_info': ['is_vendored', 'vendor_name']
         # Add new gather type here
     }
 

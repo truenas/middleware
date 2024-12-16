@@ -872,12 +872,25 @@ class LDAPService(ConfigService):
         ))
 
     @private
-    async def ipa_kinit(self, ipa_conf, bindpw):
+    async def ipa_kinit(self, ipa_conf, ldap_conf):
+        if not ldap_conf['bindpw'] and ldap_conf['kerberos_principal']:
+            # If we already have a kerberos principal then we shouldn't perform
+            # an IPA join because it will potentially muck up our account in IPA.
+            # In this case we'll trigger the "Legacy IPA Configuration" alert and
+            # generate a warning message in logs.
+            errmsg = (
+                'LDAP kerberos principal is already populated, but was not generated '
+                'through the IPA join process. Domain functionality may be reduced and '
+                'is undefined from the perspective of the TrueNAS backend.'
+            )
+            self.logger.warning(errmsg)
+            raise CallError(errmsg, errno.EEXIST)
+
         princ = f'{ipa_conf["username"]}@{ipa_conf["realm"]}'
         await self.middleware.call('kerberos.do_kinit', {
             'krb5_cred': {
                 'username': princ,
-                'password': bindpw
+                'password': ldap_conf['bindpw']
             },
             'kinit-options': {
                 'kdc_override': {
@@ -909,7 +922,7 @@ class LDAPService(ConfigService):
         if ds_type is DSType.IPA and not await self.has_ipa_host_keytab():
             ipa_config = await self.ipa_config(ldap)
             try:
-                await self.ipa_kinit(ipa_config, ldap['bindpw'])
+                await self.ipa_kinit(ipa_config, ldap)
                 dom_join_resp = await job.wrap(await self.middleware.call(
                     'directoryservices.connection.join_domain', 'IPA', ipa_config['domain']
                 ))
@@ -930,7 +943,7 @@ class LDAPService(ConfigService):
                 # We may have a kerberos error encapsulated in CallError due to translation from job results
                 # In this case we also want to fall back to using legacy LDAP client compatibility.
                 # We will expand this whitelist as we determine there are more somewhat-recoverable KRB5 errors.
-                if not err.err_msg.startswith('[KRB5_REALM_UNKNOWN]'):
+                if not err.errmsg.startswith('[KRB5_REALM_UNKNOWN]') and err.errno != errno.EEXIST:
                     raise err
 
                 await self.middleware.call(
@@ -956,7 +969,11 @@ class LDAPService(ConfigService):
                 )
             case DomainJoinResponse.ALREADY_JOINED.value:
                 cache_job_id = await self.middleware.call('directoryservices.connection.activate')
-                await job.wrap(await self.middleware.call('core.job_wait', cache_job_id))
+                try:
+                    await job.wrap(await self.middleware.call('core.job_wait', cache_job_id))
+                except Exception:
+                    self.logger.warning('Failed to build user/group cache', exc_info=True)
+
                 # Change state to HEALTHY before performing final health check
                 await self.middleware.call('directoryservices.health.set_state', ds_type.value, DSStatus.HEALTHY.name)
                 # Force health check so that user gets immediate feedback if something

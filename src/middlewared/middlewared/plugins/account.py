@@ -201,6 +201,7 @@ class UserService(CRUDService):
             user_api_keys[key['username']].append(key['id'])
 
         return {
+            'stig_enabled': (await self.middleware.call('system.security.config'))['enable_gpos_stig'],
             'server_sid': await self.middleware.call('smb.local_server_sid'),
             'user_2fa_mapping': ({
                 entry['user']['id']: bool(entry['secret']) for entry in await self.middleware.call(
@@ -253,6 +254,14 @@ class UserService(CRUDService):
             'roles': list(user_roles),
             'api_keys': ctx['user_api_keys'][user['username']]
         })
+        if ctx['stig_enabled']:
+            # NTLM authentication relies on non-FIPS crypto
+            user.update({
+                'smb': False,
+                'sid': None,
+                'smbhash': '*'
+            })
+
         return user
 
     @private
@@ -617,7 +626,7 @@ class UserService(CRUDService):
             try:
                 self.update_sshpubkey(data['home'], data, group['group'])
             except PermissionError as e:
-                self.logger.warn('Failed to update authorized keys', exc_info=True)
+                self.logger.warning('Failed to update authorized keys', exc_info=True)
                 raise CallError(f'Failed to update authorized keys: {e}')
 
         return pk
@@ -718,7 +727,7 @@ class UserService(CRUDService):
         if not user['smb'] and data.get('smb') and not data.get('password'):
             # Changing from non-smb user to smb user requires re-entering password.
             verrors.add('user_update.smb',
-                        'Password must be changed in order to enable SMB authentication')
+                        'Password must be reset in order to enable SMB authentication')
 
         verrors.check()
 
@@ -779,7 +788,7 @@ class UserService(CRUDService):
             ]
             self.update_sshpubkey(*update_sshpubkey_args)
         except PermissionError as e:
-            self.logger.warn('Failed to update authorized keys', exc_info=True)
+            self.logger.warning('Failed to update authorized keys', exc_info=True)
             raise CallError(f'Failed to update authorized keys: {e}')
         else:
             if user['uid'] == 0:
@@ -846,7 +855,8 @@ class UserService(CRUDService):
                 }).wait_sync(raise_error=True)
 
     @api_method(UserDeleteArgs, UserDeleteResult, audit='Delete user', audit_callback=True)
-    def do_delete(self, audit_callback, pk, options):
+    @pass_app(rest=True)
+    def do_delete(self, app, audit_callback, pk, options):
         """
         Delete user `id`.
 
@@ -873,6 +883,13 @@ class UserService(CRUDService):
         user = self.middleware.call_sync('user.get_instance', pk)
         audit_callback(user['username'])
 
+        if (
+            app and
+            app.authenticated_credentials.is_user_session and
+            user['username'] == app.authenticated_credentials.user['username']
+        ):
+            raise CallError('Cannot delete the currently active user', errno.EINVAL)
+
         if user['builtin']:
             raise CallError('Cannot delete a built-in user', errno.EINVAL)
 
@@ -894,7 +911,7 @@ class UserService(CRUDService):
                 try:
                     self.middleware.call_sync('group.delete', user['group']['id'])
                 except Exception:
-                    self.logger.warn(f'Failed to delete primary group of {user["username"]}', exc_info=True)
+                    self.logger.warning(f'Failed to delete primary group of {user["username"]}', exc_info=True)
 
         if user['home'] and user['home'] not in DEFAULT_HOME_PATHS:
             try:
@@ -1274,6 +1291,13 @@ class UserService(CRUDService):
                 f'{schema}.password_disabled', 'Password authentication may not be disabled for SMB users.'
             )
 
+        if combined['smb'] and (await self.middleware.call('system.security.config'))['enable_gpos_stig']:
+            verrors.add(
+                f'{schema}.smb',
+                'SMB authentication for local user accounts is not permitted when General Purpose OS '
+                'STIG compatibility is enabled.'
+            )
+
         password = data.get('password')
         if not old and not password and not data.get('password_disabled'):
             verrors.add(f'{schema}.password', 'Password is required')
@@ -1576,10 +1600,6 @@ class GroupService(CRUDService):
         group['users'] = list({u['id'] for u in group['users']} | ctx['primary_memberships'][group['id']])
 
         privilege_mappings = privileges_group_mapping(ctx['privileges'], [group['gid']], 'local_groups')
-        if privilege_mappings['allowlist']:
-            privilege_mappings['roles'].append('HAS_ALLOW_LIST')
-            if {'method': '*', 'resource': '*'} in privilege_mappings['allowlist']:
-                privilege_mappings['roles'].append('FULL_ADMIN')
 
         match group['group']:
             case 'builtin_administrators':

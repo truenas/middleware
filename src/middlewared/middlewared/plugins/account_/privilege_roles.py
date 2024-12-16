@@ -1,6 +1,7 @@
+from middlewared.api.current import PrivilegeRoleEntry
+
 from middlewared.role import ROLES
-from middlewared.service import Service, filterable, filterable_returns, filter_list, no_authz_required
-from middlewared.schema import Bool, Dict, List, Str
+from middlewared.service import Service, filterable_api_method, filter_list
 
 
 class PrivilegeService(Service):
@@ -9,15 +10,7 @@ class PrivilegeService(Service):
         namespace = "privilege"
         cli_namespace = "auth.privilege"
 
-    @no_authz_required
-    @filterable
-    @filterable_returns(Dict(
-        "role",
-        Str("name"),
-        Str("title"),
-        List("includes", items=[Str("name")]),
-        Bool("builtin")
-    ))
+    @filterable_api_method(item=PrivilegeRoleEntry, authorization_required=False)
     async def roles(self, filters, options):
         """
         Get all available roles.
@@ -39,6 +32,7 @@ class PrivilegeService(Service):
                 "title": name,
                 "includes": role.includes,
                 "builtin": role.builtin,
+                "stig": role.stig,
             }
             for name, role in ROLES.items()
         ]

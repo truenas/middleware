@@ -3,8 +3,6 @@ import datetime
 import time
 import json
 
-import async_timeout
-
 from middlewared.api import api_method
 from middlewared.api.current import DiskTemperatureAlertsArgs, DiskTemperatureAlertsResult
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
@@ -113,7 +111,7 @@ class DiskService(Service):
 
         async def temperature(name):
             try:
-                async with async_timeout.timeout(15):
+                async with asyncio.timeout(15):
                     return await self.middleware.call('disk.temperature', name, options)
             except asyncio.TimeoutError:
                 return None

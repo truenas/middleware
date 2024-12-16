@@ -1,8 +1,7 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic.types import StringConstraints
 from pydantic import EmailStr, Field, Secret
-from typing_extensions import Annotated, Union
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, single_argument_args
@@ -14,7 +13,7 @@ __all__ = ["SnmpEntry",
 
 class SnmpEntry(BaseModel):
     location: str
-    contact: Union[EmailStr, Annotated[str, StringConstraints(pattern=r'^[-_a-zA-Z0-9\s]*$')]]
+    contact: EmailStr | Annotated[str, StringConstraints(pattern=r'^[-_a-zA-Z0-9\s]*$')]
     traps: bool
     v3: bool
     community: str = Field(pattern=r'^[-_a-zA-Z0-9\s]*$', default='public')

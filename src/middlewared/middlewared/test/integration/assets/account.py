@@ -43,7 +43,7 @@ def group(data):
 
 
 @contextlib.contextmanager
-def unprivileged_user(*, username, group_name, privilege_name, allowlist, web_shell, roles=None):
+def unprivileged_user(*, username, group_name, privilege_name, web_shell, roles=None):
     with group({
         "name": group_name,
     }) as g:
@@ -51,7 +51,6 @@ def unprivileged_user(*, username, group_name, privilege_name, allowlist, web_sh
             "name": privilege_name,
             "local_groups": [g["gid"]],
             "ds_groups": [],
-            "allowlist": allowlist,
             "roles": roles or [],
             "web_shell": web_shell,
         }):
@@ -73,13 +72,12 @@ def unprivileged_user(*, username, group_name, privilege_name, allowlist, web_sh
 
 
 @contextlib.contextmanager
-def unprivileged_user_client(roles=None, allowlist=None):
+def unprivileged_user_client(roles=None):
     suffix = "".join([random.choice(string.ascii_lowercase + string.digits) for _ in range(8)])
     with unprivileged_user(
         username=f"unprivileged_{suffix}",
         group_name=f"unprivileged_users_{suffix}",
         privilege_name=f"Unprivileged users ({suffix})",
-        allowlist=allowlist or [],
         roles=roles or [],
         web_shell=False,
     ) as t:

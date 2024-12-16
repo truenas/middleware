@@ -1,7 +1,8 @@
 import subprocess
 
+from middlewared.api.current import VMPCIDevice
 from middlewared.service import CallError
-from middlewared.schema import Dict, Str
+from middlewared.schema import Dict
 from middlewared.utils import filter_list
 
 from .device import Device
@@ -32,9 +33,8 @@ class PCI(PCIBase):
 
     schema = Dict(
         'attributes',
-        Str('pptdev', required=True, empty=False),
-        Str('dtype', enum=['PCI'], required=True),
     )
+    schema_model = VMPCIDevice
 
     def vm_device_filters(self):
         return [['attributes.pptdev', '=', self.passthru_device()], ['attributes.dtype', '=', 'PCI']]

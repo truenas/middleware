@@ -1,6 +1,5 @@
-from middlewared.i18n import set_language
 from middlewared.schema import accepts, Dict, returns
-from middlewared.service import private, Service
+from middlewared.service import Service
 
 
 LANGUAGES = dict([
@@ -109,8 +108,3 @@ class SystemGeneralService(Service):
         Returns language choices.
         """
         return LANGUAGES
-
-    @private
-    def set_language(self):
-        language = self.middleware.call_sync('system.general.config')['language']
-        set_language(language)

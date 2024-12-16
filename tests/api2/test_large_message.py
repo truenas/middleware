@@ -13,7 +13,7 @@ def test_large_message_default():
 
     with pytest.raises(ClientException) as ce:
         with client() as c:
-            c.call('filesystem.mkdir', LARGE_PAYLOAD_1)
+            c.call('filesystem.mkdir', {'path': LARGE_PAYLOAD_1})
 
     assert MSG_TOO_BIG_ERR in ce.value.error
 

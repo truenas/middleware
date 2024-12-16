@@ -1,7 +1,6 @@
 import typing
 
 from pydantic import Field
-from typing_extensions import Annotated
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
@@ -30,7 +29,7 @@ class ReportingUpdateResult(BaseModel):
     result: ReportingEntry
 
 
-timestamp: typing.TypeAlias = Annotated[int, Field(gt=0)]
+timestamp: typing.TypeAlias = typing.Annotated[int, Field(gt=0)]
 
 
 class ReportingQuery(BaseModel):

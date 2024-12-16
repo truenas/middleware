@@ -122,8 +122,8 @@ def vm_device():
                 "attributes": {
                     "dtype": "DISPLAY",
                     "bind": "127.0.0.1",
-                    "port": 1,
-                    "web_port": 1,
+                    "port": 5900,
+                    "web_port": 5901,
                     "password": "pass",
                 }
             }
@@ -168,7 +168,7 @@ def vmware():
     ("acme.dns.authenticator", dns_authenticator, {}, ["attributes"]),
     ("certificate", 1, {}, ["privatekey", "issuer"]),
     ("certificateauthority", certificateauthority, {}, ["privatekey", "issuer"]),
-    ("cloud_backup", cloudbackup, {}, ["credentials.provider", "password"]),
+    ("cloud_backup", cloudbackup, {}, ["credentials.provider.pass", "password"]),
     ("cloudsync.credentials", cloudsync_credential, {}, ["provider.pass"]),
     ("cloudsync", cloudsync, {}, ["credentials.provider", "encryption_password"]),
     ("disk", disk, {"extra": {"passwords": True}}, ["passwd"]),

@@ -6,7 +6,7 @@
 	hostname = network_config['hostname_local']
 	domain_name = network_config['domain']
 	if ad_config['ad_enable']:
-		hostname = middleware.call_sync('smb.config')['netbiosname_local'].lower()
+		hostname = middleware.call_sync('smb.config')['netbiosname'].lower()
 		domain_name = ad_config['ad_domainname'].lower()
 %>
 127.0.0.1	${hostname}.${domain_name} ${hostname}

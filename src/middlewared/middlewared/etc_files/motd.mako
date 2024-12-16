@@ -12,6 +12,11 @@
 	For more information, documentation, help or support, go here:
 	http://truenas.com
 
+Warning: the supported mechanisms for making configuration changes
+are the TrueNAS WebUI, CLI, and API exclusively. ALL OTHERS ARE
+NOT SUPPORTED AND WILL RESULT IN UNDEFINED BEHAVIOR AND MAY
+RESULT IN SYSTEM FAILURE.
+
 % if motd:
 ${motd}
 % endif

@@ -1,6 +1,5 @@
 import json
 import os
-import re
 import time
 import types
 
@@ -77,7 +76,7 @@ def cloud_backup_task(s3_credential, request):
             },
             "password": "test",
             "keep_last": 100,
-            **getattr(request, "param", {})
+            **getattr(request, "param", {}),
         }) as t:
             yield types.SimpleNamespace(
                 local_dataset=local_dataset,
@@ -85,6 +84,10 @@ def cloud_backup_task(s3_credential, request):
             )
 
 
+@pytest.mark.parametrize("cloud_backup_task", [
+    {"absolute_paths": False},
+    {"absolute_paths": True},
+], indirect=["cloud_backup_task"])
 def test_cloud_backup(cloud_backup_task):
     task_ = cloud_backup_task.task
     task_id_ = task_["id"]
@@ -98,8 +101,8 @@ def test_cloud_backup(cloud_backup_task):
     validate_log(task_id_, files_new=1, files_changed=0, files_unmodified=0)
 
     snapshots = call("cloud_backup.list_snapshots", task_id_)
-    first_snapshot = snapshots[0]
     assert len(snapshots) == 1
+    first_snapshot = snapshots[0]
     assert (first_snapshot["time"] - call("system.info")["datetime"]).total_seconds() < 300
     assert first_snapshot["paths"] == [f"/mnt/{local_dataset_}"]
 
@@ -113,16 +116,21 @@ def test_cloud_backup(cloud_backup_task):
     snapshots = call("cloud_backup.list_snapshots", task_id_)
     assert len(snapshots) == 2
 
+    if task_["absolute_paths"]:
+        list_directory_path = f"/mnt/{local_dataset_}"
+        expected_names = [os.path.basename(local_dataset_), "blob1", "dir1"]
+    else:
+        list_directory_path = "/"
+        expected_names = ["blob1", "dir1"]
+
     contents = call(
         "cloud_backup.list_snapshot_directory",
         task_id_,
         snapshots[-1]["id"],
-        f"/mnt/{local_dataset_}",
+        list_directory_path,
     )
-    assert len(contents) == 3
-    assert contents[0]["name"] == "cloud_backup"
-    assert contents[1]["name"] == "blob1"
-    assert contents[2]["name"] == "dir1"
+    assert len(contents) == len(expected_names)
+    assert [c["name"] for c in contents] == expected_names
 
     call("cloud_backup.update", task_id_, {"keep_last": 2})
 
@@ -139,7 +147,7 @@ def test_cloud_backup(cloud_backup_task):
 
 
 @pytest.fixture(scope="module")
-def completed_cloud_backup_task(s3_credential):
+def completed_cloud_backup_task(s3_credential, request):
     clean()
 
     with dataset("completed_cloud_backup") as local_dataset:
@@ -159,6 +167,7 @@ def completed_cloud_backup_task(s3_credential):
             },
             "password": "test",
             "keep_last": 100,
+            **getattr(request, "param", {}),
         }) as t:
             run_task(t)
 
@@ -171,6 +180,10 @@ def completed_cloud_backup_task(s3_credential):
             )
 
 
+@pytest.mark.parametrize("completed_cloud_backup_task", [
+    {"absolute_paths": False},
+    {"absolute_paths": True},
+], indirect=["completed_cloud_backup_task"])
 @pytest.mark.parametrize("options,result", [
     ({}, ["dir1/file1", "dir2/file2", "dir3/file3"]),
     ({"include": ["dir1", "dir2"]}, ["dir1/file1", "dir2/file2"]),
@@ -178,11 +191,16 @@ def completed_cloud_backup_task(s3_credential):
 ])
 def test_cloud_backup_restore(completed_cloud_backup_task, options, result):
     with dataset("restore") as restore:
+        if completed_cloud_backup_task.task["absolute_paths"]:
+            subfolder = f"/mnt/{completed_cloud_backup_task.local_dataset}"
+        else:
+            subfolder = "/"
+
         call(
             "cloud_backup.restore",
             completed_cloud_backup_task.task["id"],
             completed_cloud_backup_task.snapshot["id"],
-            f"/mnt/{completed_cloud_backup_task.local_dataset}",
+            subfolder,
             f"/mnt/{restore}",
             options,
             job=True,
@@ -290,6 +308,7 @@ def test_update_with_incorrect_password(cloud_backup_task):
 def test_sync_initializes_repo(cloud_backup_task):
     clean()
 
+    ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/blob")
     call("cloud_backup.sync", cloud_backup_task.task["id"], job=True)
 
 
@@ -308,15 +327,18 @@ def test_transfer_setting_choices():
     )
 ], indirect=["cloud_backup_task"])
 def test_other_transfer_settings(cloud_backup_task, options):
+    ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/blob")
     run_task(cloud_backup_task.task)
     result = ssh(f'grep "{options}" /var/log/middlewared.log')
     assert options in result
 
 
 def test_snapshot(s3_credential):
+    clean()
+
     with dataset("cloud_backup_snapshot") as ds:
         ssh(f"mkdir -p /mnt/{ds}/dir1/dir2")
-        ssh(f"dd if=/dev/urandom of=/mnt/{ds}/dir1/dir2/blob bs=1M count=1024")
+        ssh(f"dd if=/dev/urandom of=/mnt/{ds}/dir1/dir2/blob bs=1M count=1")
 
         with task({
             "path": f"/mnt/{ds}/dir1/dir2",
@@ -328,20 +350,51 @@ def test_snapshot(s3_credential):
             "password": "test",
             "snapshot": True
         }) as t:
-            pattern = rf"restic .+ /mnt/{ds}/.zfs/snapshot/cloud_backup-[0-9]+-[0-9]+/dir1/dir2"
+            run_task(t)
 
-            job_id = call("cloud_backup.sync", t["id"], {"dry_run": True})
+            snapshots = call("cloud_backup.list_snapshots", t["id"])
+            assert len(snapshots) == 1
+            assert snapshots[-1]["paths"][0].startswith(f"/mnt/{ds}/.zfs/snapshot/")
 
-            end = time.time() + 5
-            while time.time() <= end:
-                ps_ax = ssh("ps ax | grep restic")
-                if re.search(pattern, ps_ax):
-                    break
-                time.sleep(0.1)
-            else:
-                pytest.fail(f"Couldn't validate snapshot backup.\n{ps_ax}")
+            contents = call(
+                "cloud_backup.list_snapshot_directory",
+                t["id"],
+                snapshots[-1]["id"],
+                "/",
+            )
+            assert len(contents) == 1
+            assert contents[0]["name"] == "blob"
 
-            call("core.job_wait", job_id, job=True)
+            ssh(f"dd if=/dev/urandom of=/mnt/{ds}/dir1/dir2/blob2 bs=1M count=1")
+            run_task(t)
+
+            snapshots = call("cloud_backup.list_snapshots", t["id"])
+            assert len(snapshots) == 2
+
+            contents = call(
+                "cloud_backup.list_snapshot_directory",
+                t["id"],
+                snapshots[-1]["id"],
+                "/",
+            )
+            assert len(contents) == 2
+            assert contents[0]["name"] == "blob"
+            assert contents[1]["name"] == "blob2"
+
+            with dataset("restore") as restore:
+                call(
+                    "cloud_backup.restore",
+                    t["id"],
+                    snapshots[-1]["id"],
+                    "/",
+                    f"/mnt/{restore}",
+                    job=True,
+                )
+
+                assert sorted([
+                    os.path.relpath(path, f"/mnt/{restore}")
+                    for path in ssh(f"find /mnt/{restore} -type f").splitlines()
+                ]) == ["blob", "blob2"]
 
         time.sleep(1)
         assert call("zfs.snapshot.query", [["dataset", "=", ds]]) == []
@@ -352,6 +405,7 @@ def test_snapshot(s3_credential):
     "[Post-script] TestTest"
 )], indirect=["cloud_backup_task"])
 def test_script_shebang(cloud_backup_task, expected):
+    ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/blob")
     run_task(cloud_backup_task.task)
     job = call("core.get_jobs", [["method", "=", "cloud_backup.sync"]], {"order_by": ["-id"], "get": True})
     assert job["logs_excerpt"].strip().split("\n")[-2] == expected
@@ -363,6 +417,7 @@ def test_script_shebang(cloud_backup_task, expected):
 ], indirect=True)
 def test_scripts_ok(cloud_backup_task):
     ssh("rm /tmp/cloud_backup_test", check=False)
+    ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/blob")
     run_task(cloud_backup_task.task)
     ssh("cat /tmp/cloud_backup_test")
 

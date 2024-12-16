@@ -5,8 +5,13 @@ from middlewared.service import Service, ValidationErrors
 
 class KeychainCredentialService(Service):
 
-    @api_method(KeychainCredentialSetupSSHConnectionArgs, KeychainCredentialSetupSSHConnectionResult,
-                roles=['KEYCHAIN_CREDENTIAL_WRITE'])
+    @api_method(
+        KeychainCredentialSetupSSHConnectionArgs,
+        KeychainCredentialSetupSSHConnectionResult,
+        roles=['KEYCHAIN_CREDENTIAL_WRITE'],
+        audit="Setup SSH Connection:",
+        audit_extended=lambda options: options["connection_name"]
+    )
     async def setup_ssh_connection(self, options):
         """
         Creates a SSH Connection performing the following steps:

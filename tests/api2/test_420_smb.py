@@ -265,10 +265,10 @@ def test__recyclebin_functional_test_subdir(smb_info, smb_config):
 def test__netbios_name_change_check_sid():
     """ changing netbiosname should not alter our local sid value """
     orig = call('smb.config')
-    new_sid = call('smb.update', {'netbiosname': 'nb_new'})['cifs_SID']
+    new_sid = call('smb.update', {'netbiosname': 'nb_new'})['server_sid']
 
     try:
-        assert new_sid == orig['cifs_SID']
+        assert new_sid == orig['server_sid']
         localsid = call('smb.groupmap_list')['localsid']
         assert new_sid == localsid
     finally:

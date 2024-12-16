@@ -21,7 +21,9 @@ def render(service, middleware):
         'data-root': data_root,
         'exec-opts': ['native.cgroupdriver=cgroupfs'],
         'iptables': True,
+        'ipv6': True,
         'storage-driver': 'overlay2',
+        'fixed-cidr-v6': config['cidr_v6'],
         'default-address-pools': config['address_pools'],
     }
     isolated = middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']

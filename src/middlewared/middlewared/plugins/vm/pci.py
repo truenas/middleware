@@ -4,7 +4,13 @@ import re
 
 from pyudev import Context
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    VMDeviceIOMMUEnabledArgs, VMDeviceIOMMUEnabledResult, VMDevicePassthroughDeviceArgs,
+    VMDevicePassthroughDeviceResult, VMDevicePassthroughDeviceChoicesArgs, VMDevicePassthroughDeviceChoicesResult,
+    VMDevicePPTDevChoicesArgs, VMDevicePPTDevChoicesResult, VMDeviceGetPCIIdsForIsolationArgs,
+    VMDeviceGetPCIIdsForIsolationResult,
+)
 from middlewared.service import private, Service, ValidationErrors
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils.iommu import get_iommu_groups_info
@@ -21,8 +27,7 @@ class VMDeviceService(Service):
     class Config:
         namespace = 'vm.device'
 
-    @accepts(roles=['VM_DEVICE_READ'])
-    @returns(Bool())
+    @api_method(VMDeviceIOMMUEnabledArgs, VMDeviceIOMMUEnabledResult, roles=['VM_DEVICE_READ'])
     def iommu_enabled(self):
         """Returns "true" if iommu is enabled, "false" otherwise"""
         return os.path.exists('/sys/kernel/iommu_groups')
@@ -41,7 +46,7 @@ class VMDeviceService(Service):
             },
             'controller_type': None,
             'critical': False,
-            'iommu_group': {},
+            'iommu_group': None,
             'available': False,
             'drivers': [],
             'error': None,
@@ -111,41 +116,7 @@ class VMDeviceService(Service):
             result[key] = self.get_pci_device_details(i, iommu_info)
         return result
 
-    @accepts(Str('device'), roles=['VM_DEVICE_READ'])
-    @returns(Dict(
-        'passthrough_device',
-        Dict(
-            'capability',
-            Str('class', null=True, required=True),
-            Str('domain', null=True, required=True),
-            Str('bus', null=True, required=True),
-            Str('slot', null=True, required=True),
-            Str('function', null=True, required=True),
-            Str('product', null=True, required=True),
-            Str('vendor', null=True, required=True),
-            required=True,
-        ),
-        Str('controller_type', null=True, required=True),
-        Dict(
-            'iommu_group',
-            Int('number', required=True),
-            List('addresses', items=[Dict(
-                'address',
-                Str('domain', required=True),
-                Str('bus', required=True),
-                Str('slot', required=True),
-                Str('function', required=True),
-            )]),
-            required=True,
-        ),
-        Bool('available', required=True),
-        List('drivers', items=[Str('driver', required=False)], required=True),
-        Str('error', null=True, required=True),
-        Str('device_path', null=True, required=True),
-        Bool('reset_mechanism_defined', required=True),
-        Str('description', empty=True, required=True),
-        register=True,
-    ))
+    @api_method(VMDevicePassthroughDeviceArgs, VMDevicePassthroughDeviceResult, roles=['VM_DEVICE_READ'])
     def passthrough_device(self, device):
         """Retrieve details about `device` PCI device"""
         self.middleware.call_sync('vm.check_setup_libvirt')
@@ -157,20 +128,17 @@ class VMDeviceService(Service):
                 'error': 'Device not found',
             }
 
-    @accepts(roles=['VM_DEVICE_READ'])
-    @returns(List(items=[Ref('passthrough_device')], register=True))
+    @api_method(VMDevicePassthroughDeviceChoicesArgs, VMDevicePassthroughDeviceChoicesResult, roles=['VM_DEVICE_READ'])
     def passthrough_device_choices(self):
         """Available choices for PCI passthru devices"""
         return self.get_all_pci_devices_details()
 
-    @accepts()
-    @returns(Ref('passthrough_device_choices'))
+    @api_method(VMDevicePPTDevChoicesArgs, VMDevicePPTDevChoicesResult, roles=['VM_DEVICE_READ'])
     def pptdev_choices(self):
         """Available choices for PCI passthru device"""
         return self.get_all_pci_devices_details()
 
-    @accepts(Str('gpu_pci_id', empty=False))
-    @returns(List(items=[Str('pci_ids')]))
+    @api_method(VMDeviceGetPCIIdsForIsolationArgs, VMDeviceGetPCIIdsForIsolationResult, roles=['VM_DEVICE_READ'])
     def get_pci_ids_for_gpu_isolation(self, gpu_pci_id):
         """
         Get PCI IDs of devices which are required to be isolated for `gpu_pci_id` GPU isolation.

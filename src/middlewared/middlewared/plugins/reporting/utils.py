@@ -60,9 +60,7 @@ def get_metrics_approximation(
     data = {
         1: {
             'system.cpu': 10,
-            'cpu.cpu': 10 * core_count,
             'cpu.cpu0_cpuidle': 4 * core_count,
-            'cpu.cpufreq': core_count,
             'system.intr': 1,
             'system.ctxt': 1,
             'system.forks': 1,
@@ -86,6 +84,7 @@ def get_metrics_approximation(
             'mem.kernel': 5,
             'mem.slab': 2,
             'mem.transparent_hugepages': 2,
+            'truenas_meminfo': 1,
 
             # net
             'system.net': 2,

@@ -11,7 +11,8 @@ from catalog_reader.recommended_apps import retrieve_recommended_apps
 from datetime import datetime
 from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 
-from middlewared.schema import accepts, Bool, Dict, List, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import CatalogAppsArgs, CatalogAppsResult
 from middlewared.service import private, Service
 
 from .apps_util import get_app_version_details
@@ -45,47 +46,7 @@ class CatalogService(Service):
     def cached(self, label):
         return self.middleware.call_sync('cache.has_key', get_cache_key(label))
 
-    @accepts(
-        Dict(
-            'options',
-            Bool('cache', default=True),
-            Bool('cache_only', default=False),
-            Bool('retrieve_all_trains', default=True),
-            List('trains', items=[Str('train_name')]),
-        ),
-        roles=['CATALOG_READ']
-    )
-    @returns(Dict(
-        'trains',
-        additional_attrs=True,
-        example={
-            'stable': {
-                'plex': {
-                    'app_readme': '<h1>Plex</h1>',
-                    'categories': ['media'],
-                    'description': 'Plex is a media server that allows you to stream your media to any Plex client.',
-                    'healthy': True,
-                    'healthy_error': None,
-                    'home': 'https://plex.tv',
-                    'location': '/mnt/.ix-apps/truenas_catalog/stable/plex',
-                    'latest_version': '1.0.0',
-                    'latest_app_version': '1.40.2.8395',
-                    'latest_human_version': '1.40.2.8395_1.0.0',
-                    'last_update': '2024-07-30 13:40:47+00:00',
-                    'name': 'plex',
-                    'recommended': False,
-                    'title': 'Plex',
-                    'maintainers': [
-                        {'email': 'dev@ixsystems.com', 'name': 'truenas', 'url': 'https://www.truenas.com/'},
-                    ],
-                    'tags': ['plex', 'media', 'entertainment', 'movies', 'series', 'tv', 'streaming'],
-                    'screenshots': ['https://media.sys.truenas.net/apps/plex/screenshots/screenshot2.png'],
-                    'sources': ['https://plex.tv', 'https://hub.docker.com/r/plexinc/pms-docker'],
-                    'icon_url': 'https://media.sys.truenas.net/apps/plex/icons/icon.png'
-                },
-            },
-        }
-    ))
+    @api_method(CatalogAppsArgs, CatalogAppsResult, roles=['CATALOG_READ'])
     def apps(self, options):
         """
         Retrieve apps details for `label` catalog.

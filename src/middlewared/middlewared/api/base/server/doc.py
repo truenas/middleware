@@ -30,6 +30,12 @@ class APIDumper:
     def _dump_methods(self):
         result = []
         for method in self.api.methods:
+            if method.serviceobj._config.private:
+                continue
+
+            if getattr(method.methodobj, "_private", False):
+                continue
+
             if not hasattr(method.methodobj, "new_style_accepts"):
                 continue
 

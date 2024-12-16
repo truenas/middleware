@@ -29,7 +29,7 @@ class ActiveDirectoryService(Service):
         if not ad['allow_dns_updates']:
             return
 
-        netbiosname = (await self.middleware.call('smb.config'))['netbiosname_local']
+        netbiosname = (await self.middleware.call('smb.config'))['netbiosname']
         domain = ad['domainname']
 
         hostname = f'{netbiosname}.{domain}'
@@ -136,7 +136,7 @@ class ActiveDirectoryService(Service):
         else:
             bindip = smb['bindip']
 
-        hostname = f'{smb["netbiosname_local"]}.{ad["domainname"]}.'
+        hostname = f'{smb["netbiosname"]}.{ad["domainname"]}.'
         return await self.ipaddresses_to_register({
             'bindip': bindip,
             'hostname': hostname,
@@ -161,7 +161,7 @@ class ActiveDirectoryService(Service):
 
         payload = []
 
-        hostname = f'{smb["netbiosname_local"]}.{ad["domainname"]}.'
+        hostname = f'{smb["netbiosname"]}.{ad["domainname"]}.'
         for ip in to_register:
             addr = ipaddress.ip_address(ip)
             payload.append({

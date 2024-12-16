@@ -70,8 +70,7 @@ class ActiveDirectoryService(ConfigService):
         Str('nss_info', null=True, enum=['TEMPLATE', 'SFU', 'SFU20', 'RFC2307']),
         Str('createcomputer'),
         NetbiosName('netbiosname'),
-        NetbiosName('netbiosname_b'),
-        List('netbiosalias', items=[NetbiosName('alias')]),
+        List('netbiosalias', items=[NetbiosName('alias')], default=None),
         Bool('enable'),
         register=True
     )
@@ -81,7 +80,7 @@ class ActiveDirectoryService(ConfigService):
         smb = await self.middleware.call('smb.config')
 
         ad.update({
-            'netbiosname': smb['netbiosname_local'],
+            'netbiosname': smb['netbiosname'],
             'netbiosalias': smb['netbiosalias']
         })
 
@@ -102,7 +101,7 @@ class ActiveDirectoryService(ConfigService):
         foreign entries.
         kinit will fail if domain name is lower-case.
         """
-        for key in ['netbiosname', 'netbiosname_b', 'netbiosalias', 'bindpw']:
+        for key in ['netbiosname', 'netbiosalias', 'bindpw']:
             if key in ad:
                 ad.pop(key)
 
@@ -122,13 +121,32 @@ class ActiveDirectoryService(ConfigService):
     @private
     async def update_netbios_data(self, old, new):
         must_update = False
+
+        # None here as opposed to empty list indicates to preserve current value
+        if new['netbiosalias'] is None:
+            new['netbiosalias'] = old['netbiosalias']
+
         for key in ['netbiosname', 'netbiosalias']:
+            # netbios names are case-insensitive
             if key in new and old[key] != new[key]:
                 if old['enable']:
-                    raise ValidationError(
-                        f'activedirectory.{key}',
-                        'NetBIOS names may not be changed while service is enabled.'
-                    )
+                    if key == 'netbiosname' and new[key].casefold() != old[key].casefold():
+                        raise ValidationError(
+                            f'activedirectory.{key}',
+                            f'{old[key]} -> {new[key]}: NetBIOS name may not be changed while service is enabled.'
+                        )
+                    elif len(old[key]) != len(new[key]):
+                        raise ValidationError(
+                            f'activedirectory.{key}',
+                            f'{old[key]} -> {new[key]}: NetBIOS aliases may not be changed while service is enabled.'
+                        )
+                    else:
+                        for idx, alias in enumerate(old[key]):
+                            if old[key][idx].casefold() != new[key][idx].casefold():
+                                raise ValidationError(
+                                    f'activedirectory.{key}.{idx}',
+                                    f'{old[key][idx]} -> {new[key][idx]}: NetBIOS alias may not be changed while service is enabled.'
+                                )
 
                 must_update = True
                 break

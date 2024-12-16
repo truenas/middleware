@@ -47,7 +47,7 @@ class VirtInstanceDeviceService(Service):
         return devices
 
     @private
-    def unsupported():
+    def unsupported(self):
         self.logger.trace('Proxy device not supported by API, skipping.')
         return None
 
@@ -64,11 +64,17 @@ class VirtInstanceDeviceService(Service):
                 device['dev_type'] = 'DISK'
                 device['source'] = incus.get('source')
                 device['destination'] = incus.get('path')
-                device['description'] = f'Disk: {device["source"]} -> {device["destination"]}'
+                device['description'] = f'{device["source"]} -> {device["destination"]}'
             case 'nic':
                 device['dev_type'] = 'NIC'
                 device['network'] = incus.get('network')
-                device['description'] = f'NIC: {device["network"]}'
+                if device['network']:
+                    device['parent'] = None
+                    device['nic_type'] = None
+                elif incus.get('nictype'):
+                    device['nic_type'] = incus.get('nictype').upper()
+                    device['parent'] = incus.get('parent')
+                device['description'] = device['network']
             case 'proxy':
                 device['dev_type'] = 'PROXY'
                 # For now follow docker lead for simplification
@@ -90,7 +96,7 @@ class VirtInstanceDeviceService(Service):
                 device['dest_proto'] = proto.upper()
                 device['dest_port'] = int(ports)
 
-                device['description'] = f'Proxy: {device["source_proto"]}/{device["source_port"]} -> {device["dest_proto"]}/{device["dest_port"]}'
+                device['description'] = f'{device["source_proto"]}/{device["source_port"]} -> {device["dest_proto"]}/{device["dest_port"]}'
             case 'tpm':
                 device['dev_type'] = 'TPM'
                 device['path'] = incus.get('path')
@@ -119,10 +125,10 @@ class VirtInstanceDeviceService(Service):
                         continue
                     if device.get('vendor_id') and choice['vendor_id'] != device['product_id']:
                         continue
-                    device['description'] = f'USB: {choice["product"]}'
+                    device['description'] = f'{choice["product"]} ({choice["vendor_id"]}:{choice["product_id"]})'
                     break
                 else:
-                    device['description'] = 'USB: Unknown'
+                    device['description'] = 'Unknown'
             case 'gpu':
                 device['dev_type'] = 'USB'
                 device['gpu_type'] = incus['gputype'].upper()
@@ -135,10 +141,10 @@ class VirtInstanceDeviceService(Service):
                             )
                         for key, choice in context['gpu_choices'].items():
                             if key == incus['pci']:
-                                device['description'] = f'GPU: {choice["description"]}'
+                                device['description'] = choice['description']
                                 break
                         else:
-                            device['description'] = 'GPU: Unknown'
+                            device['description'] = 'Unknown'
                     case 'mdev' | 'mig' | 'srviov':
                         return self.unsupported()
             case _:
@@ -168,6 +174,8 @@ class VirtInstanceDeviceService(Service):
             case 'NIC':
                 new['type'] = 'nic'
                 new['network'] = device['network']
+                new['nictype'] = device['nic_type'].lower()
+                new['parent'] = device['parent']
             case 'PROXY':
                 new['type'] = 'proxy'
                 # For now follow docker lead for simplification
@@ -223,6 +231,8 @@ class VirtInstanceDeviceService(Service):
     @private
     async def generate_device_name(self, device_names: list[str], device_type: str) -> str:
         name = device_type.lower()
+        if name == 'nic':
+            name = 'eth'
         i = 0
         while True:
             new_name = f'{name}{i}'
@@ -232,7 +242,27 @@ class VirtInstanceDeviceService(Service):
             i += 1
         return name
 
-    async def __validate_device(self, device, schema, verrors: ValidationErrors, old: dict = None, instance: str = None):
+    @private
+    async def validate_devices(self, devices, schema, verrors: ValidationErrors):
+        unique_src_proxies = []
+        unique_dst_proxies = []
+
+        for device in devices:
+            match device['dev_type']:
+                case 'PROXY':
+                    source = (device['source_proto'], device['source_port'])
+                    if source in unique_src_proxies:
+                        verrors.add(f'{schema}.source_port', 'Source proto/port already in use.')
+                    else:
+                        unique_src_proxies.append(source)
+                    dst = (device['dest_proto'], device['dest_port'])
+                    if dst in unique_dst_proxies:
+                        verrors.add(f'{schema}.dest_port', 'Destination proto/port already in use.')
+                    else:
+                        unique_dst_proxies.append(dst)
+
+    @private
+    async def validate_device(self, device, schema, verrors: ValidationErrors, old: dict = None, instance: str = None):
         match device['dev_type']:
             case 'PROXY':
                 # Skip validation if we are updating and port has not changed
@@ -252,6 +282,15 @@ class VirtInstanceDeviceService(Service):
                 if device['source'] and device['source'].startswith('/dev/zvol/'):
                     if device['source'] not in await self.middleware.call('virt.device.disk_choices'):
                         verrors.add(schema, 'Invalid ZVOL choice.')
+            case 'NIC':
+                if await self.middleware.call('interface.has_pending_changes'):
+                    raise CallError('There are pending network changes, please resolve before proceeding.')
+                if device['nic_type'] == 'BRIDGED':
+                    if await self.middleware.call('failover.licensed'):
+                        verrors.add(schema, 'Bridge interface not allowed for HA')
+                    choices = await self.middleware.call('virt.device.nic_choices', device['nic_type'])
+                    if device['parent'] not in choices:
+                        verrors.add(schema, 'Invalid parent interface')
 
     @api_method(VirtInstanceDeviceAddArgs, VirtInstanceDeviceAddResult, roles=['VIRT_INSTANCE_WRITE'])
     async def device_add(self, id, device):
@@ -264,7 +303,7 @@ class VirtInstanceDeviceService(Service):
             device['name'] = await self.generate_device_name(data['devices'].keys(), device['dev_type'])
 
         verrors = ValidationErrors()
-        await self.__validate_device(device, 'virt_device_add', verrors)
+        await self.validate_device(device, 'virt_device_add', verrors)
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)
@@ -286,7 +325,7 @@ class VirtInstanceDeviceService(Service):
             raise CallError('Device does not exist.', errno.ENOENT)
 
         verrors = ValidationErrors()
-        await self.__validate_device(device, 'virt_device_update', verrors, old, instance['name'])
+        await self.validate_device(device, 'virt_device_update', verrors, old, instance['name'])
         verrors.check()
 
         data['devices'][device['name']] = await self.device_to_incus(instance['type'], device)

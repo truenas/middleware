@@ -251,7 +251,7 @@ class ADJoinMixin:
             self.middleware.call_sync('privilege.create', {
                 'name': dom.dns_name.upper(),
                 'ds_groups': [f'{dom.sid}-512'],
-                'allowlist': [{'method': '*', 'resource': '*'}],
+                'roles': ['FULL_ADMIN'],
                 'web_shell': True
             })
         except Exception:

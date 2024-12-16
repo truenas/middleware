@@ -12,22 +12,22 @@ import iscsi
 import pyscsi
 import pytest
 import requests
-from assets.websocket.iscsi import (alua_enabled, initiator, initiator_portal,
-                                    portal, read_capacity16, target,
-                                    target_extent_associate, verify_capacity,
-                                    verify_luns, verify_ha_inquiry, verify_ha_device_identification, TUR)
+from assets.websocket.iscsi import (TUR, alua_enabled, initiator, initiator_portal, portal, read_capacity16, target,
+                                    target_extent_associate, verify_capacity, verify_ha_device_identification,
+                                    verify_ha_inquiry, verify_luns)
+from assets.websocket.pool import zvol as zvol_dataset
+from assets.websocket.service import ensure_service_enabled, ensure_service_started
+from auto_config import ha, hostname, isns_ip, password, pool_name, user
+from functions import SSH_TEST
+from protocols import ISCSIDiscover, initiator_name_supported, iscsi_scsi_connection, isns_connection
+from pyscsi.pyscsi.scsi_sense import sense_ascq_dict, sense_key_dict
+from pytest_dependency import depends
+
 from middlewared.service_exception import InstanceNotFound, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.iscsi import target_login_test
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
-from pyscsi.pyscsi.scsi_sense import sense_ascq_dict
-from pytest_dependency import depends
-
-from auto_config import ha, hostname, isns_ip, password, pool_name, user
-from functions import SSH_TEST
-from protocols import (initiator_name_supported, iscsi_scsi_connection,
-                       isns_connection)
 
 # Setup some flags that will enable/disable tests based upon the capabilities of the
 # python-scsi package in use
@@ -81,6 +81,15 @@ PR_KEY1 = 0xABCDEFAABBCCDDEE
 PR_KEY2 = 0x00000000DEADBEEF
 CONTROLLER_A_TARGET_PORT_GROUP_ID = 101
 CONTROLLER_B_TARGET_PORT_GROUP_ID = 102
+SERVICE_NAME = 'iscsitarget'
+
+CHAPUSER1 = 'chapuser1'
+CHAPPASS1 = 'chappassword1'
+
+CHAPUSER2 = 'chapuser2'
+CHAPPASS2 = 'userpassword2'
+CHAPPEERUSER2 = 'chappeer2'
+CHAPPEERPASS2 = 'peerpassword2'
 
 # Some variables
 digit = ''.join(random.choices(string.digits, k=2))
@@ -141,11 +150,11 @@ def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None, discovery_auth
 
 
 @contextlib.contextmanager
-def file_extent(pool_name, dataset_name, file_name, filesize=MB_512, extent_name='extent', serial=None):
+def file_extent(pool_name, dataset_name, file_name, filesize_mb=512, extent_name='extent', serial=None):
     payload = {
         'type': 'FILE',
         'name': extent_name,
-        'filesize': filesize,
+        'filesize': filesize_mb * MB,
         'path': f'/mnt/{pool_name}/{dataset_name}/{file_name}'
     }
     # We want to allow any non-None serial to be specified (even '')
@@ -159,32 +168,13 @@ def file_extent(pool_name, dataset_name, file_name, filesize=MB_512, extent_name
         call('iscsi.extent.delete', extent_config['id'], True, True)
 
 
-@contextlib.contextmanager
-def zvol_dataset(zvol, volsize=MB_512, recursive=False, force=False):
-    payload = {
-        'name': zvol,
-        'type': 'VOLUME',
-        'volsize': volsize,
-        'volblocksize': '16K'
-    }
-    dataset_config = call('pool.dataset.create', payload)
-
-    try:
-        yield dataset_config
-    finally:
-        try:
-            call('pool.dataset.delete', dataset_config['id'], {'recursive': recursive, 'force': force})
-        except InstanceNotFound:
-            pass
-
-
 def modify_extent(ident, payload):
     call('iscsi.extent.update', ident, payload)
 
 
-def file_extent_resize(ident, filesize):
+def file_extent_resize(ident, filesize_mb):
     payload = {
-        'filesize': filesize,
+        'filesize': filesize_mb * MB,
     }
     modify_extent(ident, payload)
 
@@ -197,9 +187,9 @@ def extent_enable(ident):
     modify_extent(ident, {'enabled': True})
 
 
-def zvol_resize(zvol, volsize):
+def zvol_resize(zvol, volsize_mb):
     payload = {
-        'volsize': volsize,
+        'volsize': volsize_mb * MB,
     }
     call('pool.dataset.update', zvol, payload)
 
@@ -228,8 +218,16 @@ def get_client_count():
     return call('iscsi.global.client_count')
 
 
+def get_zvol_property(zvolid, property_name):
+    return call('zfs.dataset.query', [['id', '=', zvolid]], {'get': True})['properties'][property_name]['value']
+
+
 def get_volthreading(zvolid):
-    return call('zfs.dataset.query', [['id', '=', zvolid]], {'get': True})['properties']['volthreading']['value']
+    return get_zvol_property(zvolid, 'volthreading')
+
+
+def get_readonly(zvolid):
+    return get_zvol_property(zvolid, 'readonly')
 
 
 def verify_client_count(count, retries=10):
@@ -264,12 +262,12 @@ def zvol_extent(zvol, extent_name='zvol_extent'):
 
 
 @contextlib.contextmanager
-def configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name, alias=None, filesize=MB_512, extent_name='extent'):
+def configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name, alias=None, filesize_mb=512, extent_name='extent'):
     portal_id = config['portal']['id']
     with target(target_name, [{'portal': portal_id}], alias) as target_config:
         target_id = target_config['id']
         with dataset(dataset_name) as dataset_config:
-            with file_extent(pool_name, dataset_name, file_name, filesize=filesize, extent_name=extent_name) as extent_config:
+            with file_extent(pool_name, dataset_name, file_name, filesize_mb=filesize_mb, extent_name=extent_name) as extent_config:
                 extent_id = extent_config['id']
                 with target_extent_associate(target_id, extent_id):
                     newconfig = config.copy()
@@ -282,14 +280,14 @@ def configured_target_to_file_extent(config, target_name, pool_name, dataset_nam
 
 
 @contextlib.contextmanager
-def add_file_extent_target_lun(config, lun, filesize=MB_512, extent_name=None):
+def add_file_extent_target_lun(config, lun, filesize_mb=512, extent_name=None):
     name = config['target']['name']
     target_id = config['target']['id']
     dataset_name = f"iscsids{name}"
     lun_file_name = f'{name}_lun{lun}'
     if not extent_name:
         extent_name = lun_file_name
-    with file_extent(pool_name, dataset_name, lun_file_name, filesize=filesize, extent_name=extent_name) as extent_config:
+    with file_extent(pool_name, dataset_name, lun_file_name, filesize_mb=filesize_mb, extent_name=extent_name) as extent_config:
         extent_id = extent_config['id']
         with target_extent_associate(target_id, extent_id, lun):
             newconfig = config.copy()
@@ -300,11 +298,11 @@ def add_file_extent_target_lun(config, lun, filesize=MB_512, extent_name=None):
 
 
 @contextlib.contextmanager
-def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, extent_name='zvol_extent', volsize=MB_512):
+def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, extent_name='zvol_extent', volsize_mb=512):
     portal_id = config['portal']['id']
     with target(target_name, [{'portal': portal_id}], alias) as target_config:
         target_id = target_config['id']
-        with zvol_dataset(zvol, volsize) as dataset_config:
+        with zvol_dataset(zvol, volsize_mb) as dataset_config:
             with zvol_extent(zvol, extent_name=extent_name) as extent_config:
                 extent_id = extent_config['id']
                 with target_extent_associate(target_id, extent_id) as associate_config:
@@ -319,7 +317,7 @@ def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, exte
 
 
 @contextlib.contextmanager
-def add_zvol_extent_target_lun(config, lun, volsize=MB_512, extent_name=None):
+def add_zvol_extent_target_lun(config, lun, volsize_mb=512, extent_name=None):
     name = config['target']['name']
     zvol_name = f"ds{name}"
     zvol = f'{pool_name}/{zvol_name}_lun{lun}'
@@ -327,7 +325,7 @@ def add_zvol_extent_target_lun(config, lun, volsize=MB_512, extent_name=None):
     lun_file_name = f'{name}_lun{lun}'
     if not extent_name:
         extent_name = lun_file_name
-        with zvol_dataset(zvol, volsize) as dataset_config:
+        with zvol_dataset(zvol, volsize_mb) as dataset_config:
             with zvol_extent(zvol, extent_name=extent_name) as extent_config:
                 extent_id = extent_config['id']
                 with target_extent_associate(target_id, extent_id, lun) as associate_config:
@@ -341,16 +339,16 @@ def add_zvol_extent_target_lun(config, lun, volsize=MB_512, extent_name=None):
 
 
 @contextlib.contextmanager
-def configured_target(config, name, extent_type, alias=None, extent_size=MB_512):
+def configured_target(config, name, extent_type, alias=None, extent_size_mb=512):
     assert extent_type in ["FILE", "VOLUME"]
     if extent_type == "FILE":
         ds_name = f"iscsids{name}"
-        with configured_target_to_file_extent(config, name, pool_name, ds_name, file_name, alias, extent_size, name) as newconfig:
+        with configured_target_to_file_extent(config, name, pool_name, ds_name, file_name, alias, extent_size_mb, name) as newconfig:
             yield newconfig
     elif extent_type == "VOLUME":
         zvol_name = f"ds{name}"
         zvol = f'{pool_name}/{zvol_name}'
-        with configured_target_to_zvol_extent(config, name, zvol, alias, name, extent_size) as newconfig:
+        with configured_target_to_zvol_extent(config, name, zvol, alias, name, extent_size_mb) as newconfig:
             yield newconfig
 
 
@@ -396,6 +394,14 @@ def expect_check_condition(s, text=None, check_type=CheckType.CHECK_CONDITION):
             s.testunitready()
         except TypeError:
             s.testunitready()
+
+
+@contextlib.contextmanager
+def raises_check_condition(sense_key, ascq):
+    with pytest.raises(Exception) as excinfo:
+        yield
+    e = excinfo.value
+    assert f"Check Condition: {sense_key_dict[sense_key]}(0x{sense_key:02X}) ASC+Q:{sense_ascq_dict[ascq]}(0x{ascq:04X})" == str(e)
 
 
 def _verify_inquiry(s):
@@ -448,25 +454,18 @@ def _get_service(service_name='iscsitarget'):
     return call('service.query', [['service', '=', service_name]], {'get': True})
 
 
-@pytest.mark.dependency(name="iscsi_cmd_00")
-def test_00_setup(request):
-    # Enable iSCSI service
-    payload = {"enable": True}
-    call('service.update', 'iscsitarget', payload)
-    # Start iSCSI service
-    call('service.start', 'iscsitarget')
-    sleep(1)
-    # Verify running
-    service = _get_service()
-    assert service['state'] == "RUNNING", service
+@pytest.fixture(scope='module')
+def iscsi_running():
+    with ensure_service_enabled(SERVICE_NAME):
+        with ensure_service_started(SERVICE_NAME, 3):
+            yield
 
 
-def test_01_inquiry(request):
+def test__inquiry(iscsi_running):
     """
     This tests the Vendor and Product information in an INQUIRY response
     are 'TrueNAS' and 'iSCSI Disk' respectively.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     with initiator():
         with portal() as portal_config:
             portal_id = portal_config['id']
@@ -481,13 +480,12 @@ def test_01_inquiry(request):
                                 _verify_inquiry(s)
 
 
-def test_02_read_capacity16(request):
+def test__read_capacity16(iscsi_running):
     """
     This tests that the target created returns the correct size to READ CAPACITY (16).
 
     It performs this test with a couple of sizes for both file & zvol based targets.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     with initiator():
         with portal() as portal_config:
             portal_id = portal_config['id']
@@ -495,21 +493,21 @@ def test_02_read_capacity16(request):
                 target_id = target_config['id']
                 with dataset(dataset_name):
                     # 100 MB file extent
-                    with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
+                    with file_extent(pool_name, dataset_name, file_name, 100) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
                             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 verify_capacity(s, MB_100)
                     # 512 MB file extent
-                    with file_extent(pool_name, dataset_name, file_name, MB_512) as extent_config:
+                    with file_extent(pool_name, dataset_name, file_name, 512) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
                             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 verify_capacity(s, MB_512)
                 # 100 MB zvol extent
-                with zvol_dataset(zvol, MB_100):
+                with zvol_dataset(zvol, 100):
                     with zvol_extent(zvol) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
@@ -517,7 +515,7 @@ def test_02_read_capacity16(request):
                             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 verify_capacity(s, MB_100)
                 # 512 MB zvol extent
-                with zvol_dataset(zvol):
+                with zvol_dataset(zvol, 512):
                     with zvol_extent(zvol) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
@@ -594,24 +592,22 @@ def target_test_readwrite16(ip, iqn):
         assert r.datain == deadbeef * 2, r.datain
 
 
-def test_03_readwrite16_file_extent(request):
+def test__readwrite16_file_extent(iscsi_running):
     """
     This tests WRITE SAME (16), READ (16) and WRITE (16) operations with
     a file extent based iSCSI target.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     with initiator_portal() as config:
         with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name):
             iqn = f'{basename}:{target_name}'
             target_test_readwrite16(truenas_server.ip, iqn)
 
 
-def test_04_readwrite16_zvol_extent(request):
+def test__readwrite16_zvol_extent(iscsi_running):
     """
     This tests WRITE SAME (16), READ (16) and WRITE (16) operations with
     a zvol extent based iSCSI target.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol):
             iqn = f'{basename}:{target_name}'
@@ -619,11 +615,10 @@ def test_04_readwrite16_zvol_extent(request):
 
 
 @skip_invalid_initiatorname
-def test_05_chap(request):
+def test__chap(iscsi_running):
     """
     This tests that CHAP auth operates as expected.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     user = "user1"
     secret = 'sec1' + ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
     with initiator():
@@ -659,11 +654,10 @@ def test_05_chap(request):
 
 
 @skip_invalid_initiatorname
-def test_06_mutual_chap(request):
+def test__mutual_chap(iscsi_running):
     """
     This tests that Mutual CHAP auth operates as expected.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     user = "user1"
     secret = 'sec1' + ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
     peer_user = "user2"
@@ -722,7 +716,7 @@ def _assert_auth(auth, tag, user, secret, peeruser, peersecret, discovery_auth):
     assert auth['discovery_auth'] == discovery_auth
 
 
-def test_06_discovery_auth():
+def test__discovery_auth():
     """
     Test Discovery Auth
     """
@@ -795,11 +789,150 @@ def test_06_discovery_auth():
     assert [] == call('iscsi.auth.query')
 
 
-def test_07_report_luns(request):
+@contextlib.contextmanager
+def _discovery(ip):
+    with ISCSIDiscover(ip) as nocred:
+        with ISCSIDiscover(ip, CHAPUSER1, CHAPPASS1) as user1:
+            with ISCSIDiscover(ip,
+                               CHAPUSER2, CHAPPASS2,
+                               CHAPPEERUSER2, CHAPPEERPASS2) as user2:
+                yield {
+                    'nocred': nocred,
+                    'user1': user1,
+                    'user2': user2,
+                }
+
+
+def _discovery_validate_one(disc: ISCSIDiscover, iqns: set):
+    result = disc.discover()
+    assert set(result.keys()) == iqns
+
+
+def _discovery_validate_all(discs: dict, iqns: set):
+    for disc in discs.values():
+        _discovery_validate_one(disc, iqns)
+
+
+def test__discover_from_initiator(iscsi_running):
+    """
+    Verify that discovery auth operates as expected, by performing iSCSI
+    discovery operations from the initiator in various configs.
+    """
+    name1 = f"{target_name}x1"
+    name2 = f"{target_name}x2"
+    iqn1 = f'{basename}:{name1}'
+    iqn2 = f'{basename}:{name2}'
+
+    EMPTY_SET = set()
+    ONE_IQN_SET = set([iqn1])
+    TWO_IQNS_SET = set([iqn1, iqn2])
+    DISCOVER_DELAY = 10
+
+    def _discovery_validate_two_targets(ip: str, discs: dict, delay: int | None = None):
+        if delay:
+            sleep(delay)
+        _discovery_validate_one(discs['nocred'], TWO_IQNS_SET)
+        _discovery_validate_one(discs['user1'], TWO_IQNS_SET)
+        _discovery_validate_one(discs['user2'], EMPTY_SET)
+        # Create an auth without discovery_auth and ensure it has
+        # no impact.
+        with iscsi_auth(1, CHAPUSER1, CHAPPASS1):
+            if delay:
+                sleep(delay)
+            _discovery_validate_one(discs['nocred'], TWO_IQNS_SET)
+            _discovery_validate_one(discs['user1'], TWO_IQNS_SET)
+            _discovery_validate_one(discs['user2'], EMPTY_SET)
+        # Create an auth with CHAP discovery_auth and ensure it means only
+        # a discovery with the correct cred works.
+        with iscsi_auth(1, CHAPUSER1, CHAPPASS1, discovery_auth='CHAP'):
+            if delay:
+                sleep(delay)
+            _discovery_validate_one(discs['nocred'], EMPTY_SET)
+            _discovery_validate_one(discs['user1'], TWO_IQNS_SET)
+            _discovery_validate_one(discs['user2'], EMPTY_SET)
+            with ISCSIDiscover(ip,
+                               CHAPUSER1, "WrongChapPass") as baddisc:
+                _discovery_validate_one(baddisc, EMPTY_SET)
+            with ISCSIDiscover(ip,
+                               "WrongChapUser", CHAPPASS1) as baddisc:
+                _discovery_validate_one(baddisc, EMPTY_SET)
+            # Create a 2nd auth and ensure they both work
+            with iscsi_auth(2, CHAPUSER2, CHAPPASS2, discovery_auth='CHAP'):
+                if delay:
+                    sleep(delay)
+                _discovery_validate_one(discs['nocred'], EMPTY_SET)
+                _discovery_validate_one(discs['user1'], TWO_IQNS_SET)
+                _discovery_validate_one(discs['user2'], EMPTY_SET)
+                with ISCSIDiscover(ip,
+                                   CHAPUSER2, CHAPPASS2) as gooddisc:
+                    _discovery_validate_one(gooddisc, TWO_IQNS_SET)
+        # Create an auth with CHAP_MUTUAL discovery_auth and ensure it means only
+        # a discovery with the correct cred works.
+        with iscsi_auth(2, CHAPUSER2, CHAPPASS2,
+                        CHAPPEERUSER2, CHAPPEERPASS2,
+                        discovery_auth='CHAP_MUTUAL'):
+            if delay:
+                sleep(delay)
+            _discovery_validate_one(discs['nocred'], EMPTY_SET)
+            _discovery_validate_one(discs['user1'], EMPTY_SET)
+            _discovery_validate_one(discs['user2'], TWO_IQNS_SET)
+            with ISCSIDiscover(ip,
+                               "WrongChapUser", CHAPPASS2,
+                               CHAPPEERUSER2, CHAPPEERPASS2) as baddisc:
+                _discovery_validate_one(baddisc, EMPTY_SET)
+            with ISCSIDiscover(ip,
+                               CHAPUSER2, "WrongChapPass",
+                               CHAPPEERUSER2, CHAPPEERPASS2) as baddisc:
+                _discovery_validate_one(baddisc, EMPTY_SET)
+            with ISCSIDiscover(ip,
+                               CHAPUSER2, CHAPPASS2,
+                               "WrongChapPeer", CHAPPEERPASS2) as baddisc:
+                _discovery_validate_one(baddisc, EMPTY_SET)
+            with ISCSIDiscover(ip,
+                               CHAPUSER2, CHAPPASS2,
+                               CHAPPEERUSER2, "WrongPeerPass") as baddisc:
+                _discovery_validate_one(baddisc, EMPTY_SET)
+
+    with initiator_portal() as config:
+        with _discovery(truenas_server.ip) as discs:
+            # No targets published yet, ensure we see none via discovery
+            _discovery_validate_all(discs, EMPTY_SET)
+            with configured_target(config, name1, "VOLUME"):
+                # One target published, ensure we see it via discovery
+                _discovery_validate_one(discs['nocred'], ONE_IQN_SET)
+                _discovery_validate_one(discs['user1'], ONE_IQN_SET)
+                _discovery_validate_one(discs['user2'], EMPTY_SET)
+                with configured_target(config, name2, "VOLUME"):
+                    # Two target published, ensure we see them via discovery
+                    _discovery_validate_two_targets(truenas_server.ip, discs)
+        if ha:
+            # If we are a HA system then enable ALUA and perform a bunch of
+            # similar tests
+            with alua_enabled():
+                _ensure_alua_state(True)
+                _wait_for_alua_settle()
+                with _discovery(truenas_server.nodea_ip) as nodea_discs:
+                    with _discovery(truenas_server.nodeb_ip) as nodeb_discs:
+                        # No targets published yet, ensure we see none via discovery
+                        _discovery_validate_all(nodea_discs, EMPTY_SET)
+                        _discovery_validate_all(nodeb_discs, EMPTY_SET)
+                        with configured_target(config, name1, "VOLUME"):
+                            with configured_target(config, name2, "VOLUME"):
+                                # We will delay after changes when querying the STANDBY node
+                                node = call('failover.node')
+                                nodeb_delay = DISCOVER_DELAY if node == 'A' else None
+                                nodea_delay = DISCOVER_DELAY if node == 'B' else None
+                                _discovery_validate_two_targets(truenas_server.nodea_ip, nodea_discs, nodea_delay)
+                                _discovery_validate_two_targets(truenas_server.nodeb_ip, nodeb_discs, nodeb_delay)
+
+            # Turned off ALUA again
+            _wait_for_alua_settle()
+
+
+def test__report_luns(iscsi_running):
     """
     This tests REPORT LUNS and accessing multiple LUNs on a target.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
     with initiator():
         with portal() as portal_config:
@@ -808,14 +941,14 @@ def test_07_report_luns(request):
                 target_id = target_config['id']
                 with dataset(dataset_name):
                     # LUN 0 (100 MB file extent)
-                    with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
+                    with file_extent(pool_name, dataset_name, file_name, 100) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                                 verify_luns(s, [0])
                                 verify_capacity(s, MB_100)
                             # Now create a 512 MB zvol and associate with LUN 1
-                            with zvol_dataset(zvol):
+                            with zvol_dataset(zvol, 512):
                                 with zvol_extent(zvol) as extent_config:
                                     extent_id = extent_config['id']
                                     with target_extent_associate(target_id, extent_id, 1):
@@ -984,11 +1117,10 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
                 assert r.datain == zeros, r.datain
 
 
-def test_08_snapshot_zvol_extent(request):
+def test__snapshot_zvol_extent(iscsi_running):
     """
     This tests snapshots with a zvol extent based iSCSI target.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
@@ -997,11 +1129,10 @@ def test_08_snapshot_zvol_extent(request):
             target_test_snapshot_multiple_login(truenas_server.ip, iqn, iscsi_config['dataset'])
 
 
-def test_09_snapshot_file_extent(request):
+def test__snapshot_file_extent(iscsi_running):
     """
     This tests snapshots with a file extent based iSCSI target.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
     with initiator_portal() as config:
         with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name) as iscsi_config:
@@ -1010,15 +1141,13 @@ def test_09_snapshot_file_extent(request):
             target_test_snapshot_multiple_login(truenas_server.ip, iqn, iscsi_config['dataset'])
 
 
-def test_10_target_alias(request):
+def test__target_alias(iscsi_running):
     """
     This tests iSCSI target alias.
 
     At the moment SCST does not use the alias usefully (e.g. TargetAlias in
     LOGIN response).  When this is rectified this test should be extended.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     data = {}
     for t in ["A", "B"]:
         data[t] = {}
@@ -1057,11 +1186,10 @@ def test_10_target_alias(request):
                         assert targets[B['name']]['alias'] is None, targets[B['name']]['alias']
 
 
-def test_11_modify_portal(request):
+def test__modify_portal(iscsi_running):
     """
     Test that we can modify a target portal.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     with portal() as portal_config:
         assert portal_config['comment'] == 'Default portal', portal_config
         # First just change the comment
@@ -1076,12 +1204,11 @@ def test_11_modify_portal(request):
         assert new_config['comment'] == 'test1', new_config
 
 
-def test_12_pblocksize_setting(request):
+def test__pblocksize_setting(iscsi_running):
     """
     This tests whether toggling pblocksize has the desired result on READ CAPACITY 16, i.e.
     whether setting it results in LOGICAL BLOCKS PER PHYSICAL BLOCK EXPONENT being zero.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
     with initiator_portal() as config:
         with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name) as iscsi_config:
@@ -1148,12 +1275,10 @@ def generate_name(length, base="target"):
 
 
 @pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
-def test_13_test_target_name(request, extent_type):
+def test__test_target_name(iscsi_running, extent_type):
     """
     Test the user-supplied target name.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     with initiator_portal() as config:
         name63 = generate_name(63)
         name64 = generate_name(64)
@@ -1178,13 +1303,11 @@ def test_13_test_target_name(request, extent_type):
 
 
 @pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
-def test_14_target_lun_extent_modify(request, extent_type):
+def test__target_lun_extent_modify(iscsi_running, extent_type):
     """
     Perform some tests of the iscsi.targetextent.update API, including
     trying tp provide invalid
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     name1 = f'{target_name}1'
     name2 = f'{target_name}2'
     name3 = f'{target_name}3'
@@ -1328,13 +1451,12 @@ def _isns_wait_for_iqn(isns_client, iqn, timeout=10):
     return iqns
 
 
-def test_15_test_isns(request):
+def test__test_isns(iscsi_running):
     """
     Test ability to register targets with iSNS.
     """
     # Will use a more unique target name than usual, just in case several test
     # runs are hitting the same iSNS server at the same time.
-    depends(request, ["iscsi_cmd_00"], scope="session")
     _host = socket.gethostname()
     _rand = ''.join(random.choices(string.digits + string.ascii_lowercase, k=12))
     _name_base = f'isnstest:{_host}:{_rand}'
@@ -1391,7 +1513,7 @@ def test_15_test_isns(request):
 
 
 class TestFixtureInitiatorName:
-    """Fixture for test_16_invalid_initiator_name"""
+    """Fixture for test__invalid_initiator_name"""
 
     iqn = f'{basename}:{target_name}'
 
@@ -1415,12 +1537,10 @@ class TestFixtureInitiatorName:
     ]
 
     @pytest.mark.parametrize("initiator_name, expected", params)
-    def test_16_invalid_initiator_name(self, request, create_target, initiator_name, expected):
+    def test__invalid_initiator_name(self, iscsi_running, create_target, initiator_name, expected):
         """
         Deliberately send SCST some invalid initiator names and ensure it behaves OK.
         """
-        depends(request, ["iscsi_cmd_00"], scope="session")
-
         if expected:
             with iscsi_scsi_connection(truenas_server.ip, TestFixtureInitiatorName.iqn, initiator_name=initiator_name) as s:
                 _verify_inquiry(s)
@@ -1512,8 +1632,7 @@ def _pr_reservation(s, pr_type, scope=LU_SCOPE, other_connections=[], **kwargs):
 
 @skip_persistent_reservations
 @pytest.mark.dependency(name="iscsi_basic_persistent_reservation")
-def test_17_basic_persistent_reservation(request):
-    depends(request, ["iscsi_cmd_00"], scope="session")
+def test__basic_persistent_reservation(iscsi_running):
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol):
             iqn = f'{basename}:{target_name}'
@@ -1700,8 +1819,7 @@ def _check_persistent_reservations(s1, s2):
 
 @skip_persistent_reservations
 @skip_multi_initiator
-def test_18_persistent_reservation_two_initiators(request):
-    depends(request, ["iscsi_cmd_00"], scope="session")
+def test__persistent_reservation_two_initiators(iscsi_running):
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol):
             iqn = f'{basename}:{target_name}'
@@ -1887,7 +2005,7 @@ def _ensure_alua_state(state):
 
 @pytest.mark.dependency(name="iscsi_alua_config")
 @pytest.mark.timeout(900)
-def test_19_alua_config(request):
+def test__alua_config(iscsi_running):
     """
     Test various aspects of ALUA configuration.
 
@@ -2056,7 +2174,7 @@ def test_19_alua_config(request):
 @skip_persistent_reservations
 @skip_multi_initiator
 @skip_ha_tests
-def test_20_alua_basic_persistent_reservation(request):
+def test__alua_basic_persistent_reservation(request, iscsi_running):
     # Don't need to specify "iscsi_cmd_00" here
     depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
     # Turn on ALUA
@@ -2102,7 +2220,7 @@ def test_20_alua_basic_persistent_reservation(request):
 @skip_persistent_reservations
 @skip_multi_initiator
 @skip_ha_tests
-def test_21_alua_persistent_reservation_two_initiators(request):
+def test__alua_persistent_reservation_two_initiators(request, iscsi_running):
     depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
     with alua_enabled():
         with initiator_portal() as config:
@@ -2200,9 +2318,8 @@ def _xcopy_test(s1, s2, adds1=None, adds2=None):
 
 @pytest.mark.parametrize('extent2', ["FILE", "VOLUME"])
 @pytest.mark.parametrize('extent1', ["FILE", "VOLUME"])
-def test_22_extended_copy(request, extent1, extent2):
+def test__extended_copy(iscsi_running, extent1, extent2):
     # print(f"Extended copy {extent1} -> {extent2}")
-    depends(request, ["iscsi_cmd_00"], scope="session")
 
     name1 = f"{target_name}x1"
     name2 = f"{target_name}x2"
@@ -2222,7 +2339,7 @@ def test_22_extended_copy(request, extent1, extent2):
 @skip_ha_tests
 @pytest.mark.parametrize('extent2', ["FILE", "VOLUME"])
 @pytest.mark.parametrize('extent1', ["FILE", "VOLUME"])
-def test_23_ha_extended_copy(request, extent1, extent2):
+def test__ha_extended_copy(request, extent1, extent2):
     depends(request, ["iscsi_alua_config"], scope="session")
 
     name1 = f"{target_name}x1"
@@ -2247,11 +2364,10 @@ def test_23_ha_extended_copy(request, extent1, extent2):
                                     _xcopy_test(sb1, sb2, sa1, sa2)
 
 
-def test_24_iscsi_target_disk_login(request):
+def test__iscsi_target_disk_login(iscsi_running):
     """
     Tests whether a logged in iSCSI target shows up in disks.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
 
     def fetch_disk_data(fetch_remote=False):
@@ -2321,71 +2437,65 @@ def test_24_iscsi_target_disk_login(request):
                     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
-def test_25_resize_target_zvol(request):
+def test__resize_target_zvol(iscsi_running):
     """
     Verify that an iSCSI client is notified when the size of a ZVOL underlying
     an iSCSI extent is modified.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     with initiator_portal() as config:
-        with configured_target_to_zvol_extent(config, target_name, zvol, volsize=MB_100) as config:
+        with configured_target_to_zvol_extent(config, target_name, zvol, volsize_mb=100) as config:
             iqn = f'{basename}:{target_name}'
             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 TUR(s)
                 assert MB_100 == read_capacity16(s)
                 # Have checked using tcpdump/wireshark that a SCSI Asynchronous Event Notification
                 # gets sent 0x2A09: "CAPACITY DATA HAS CHANGED"
-                zvol_resize(zvol, MB_256)
+                zvol_resize(zvol, 256)
                 assert MB_256 == read_capacity16(s)
                 # But we can do better (in terms of test) ... turn AEN off,
                 # which means we will get a CHECK CONDITION on the next resize
                 SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password)
-                zvol_resize(zvol, MB_512)
+                zvol_resize(zvol, 512)
                 expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
                 assert MB_512 == read_capacity16(s)
                 # Try to shrink the ZVOL again.  Expect an error
                 with pytest.raises(ValidationErrors):
-                    zvol_resize(zvol, MB_256)
+                    zvol_resize(zvol, 256)
                 assert MB_512 == read_capacity16(s)
 
 
-def test_26_resize_target_file(request):
+def test__resize_target_file(iscsi_running):
     """
     Verify that an iSCSI client is notified when the size of a file-based
     iSCSI extent is modified.
     """
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     with initiator_portal() as config:
         with configured_target_to_file_extent(config,
                                               target_name,
                                               pool_name,
                                               dataset_name,
                                               file_name,
-                                              filesize=MB_100) as config:
+                                              filesize_mb=100) as config:
             iqn = f'{basename}:{target_name}'
             with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                 extent_id = config['extent']['id']
                 TUR(s)
                 assert MB_100 == read_capacity16(s)
-                file_extent_resize(extent_id, MB_256)
+                file_extent_resize(extent_id, 256)
                 assert MB_256 == read_capacity16(s)
                 # Turn AEN off so that we will get a CHECK CONDITION on the next resize
                 SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password)
-                file_extent_resize(extent_id, MB_512)
+                file_extent_resize(extent_id, 512)
                 expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
                 assert MB_512 == read_capacity16(s)
                 # Try to shrink the file again.  Expect an error
                 with pytest.raises(ValidationErrors):
-                    file_extent_resize(extent_id, MB_256)
+                    file_extent_resize(extent_id, 256)
                 assert MB_512 == read_capacity16(s)
 
 
 @skip_multi_initiator
-def test_27_initiator_group(request):
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
+def test__initiator_group(iscsi_running):
     initiator_base = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}"
     initiator_iqn1 = f"{initiator_base}:one"
     initiator_iqn2 = f"{initiator_base}:two"
@@ -2430,7 +2540,7 @@ def test_27_initiator_group(request):
                     TUR(s)
 
 
-def test_28_portal_access(request):
+def test__portal_access(iscsi_running):
     """
     Verify that an iSCSI client can access a target on the specified
     portal.
@@ -2441,7 +2551,7 @@ def test_28_portal_access(request):
     with initiator() as initiator_config:
         with portal(listen=[{'ip': get_ip_addr(truenas_server.ip)}]) as portal_config:
             config1 = {'initiator': initiator_config, 'portal': portal_config}
-            with configured_target_to_zvol_extent(config1, target_name, zvol, volsize=MB_100):
+            with configured_target_to_zvol_extent(config1, target_name, zvol, volsize_mb=100):
                 with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
                     TUR(s)
                     assert MB_100 == read_capacity16(s)
@@ -2465,7 +2575,7 @@ def test_28_portal_access(request):
                             assert MB_100 == read_capacity16(s)
 
 
-def test_29_multiple_extents():
+def test__multiple_extents():
     """
     Verify that an iSCSI client can access multiple target LUNs
     when multiple extents are configured.
@@ -2480,8 +2590,8 @@ def test_29_multiple_extents():
         with target(target_name, [{'portal': portal_id}]) as target_config:
             target_id = target_config['id']
             with dataset(dataset_name):
-                with file_extent(pool_name, dataset_name, "target.extent1", filesize=MB_100, extent_name="extent1") as extent1_config:
-                    with file_extent(pool_name, dataset_name, "target.extent2", filesize=MB_256, extent_name="extent2") as extent2_config:
+                with file_extent(pool_name, dataset_name, "target.extent1", filesize_mb=100, extent_name="extent1") as extent1_config:
+                    with file_extent(pool_name, dataset_name, "target.extent2", filesize_mb=256, extent_name="extent2") as extent2_config:
                         with target_extent_associate(target_id, extent1_config['id'], 0):
                             with target_extent_associate(target_id, extent2_config['id'], 1):
                                 with iscsi_scsi_connection(truenas_server.ip, iqn, 0) as s:
@@ -2494,14 +2604,14 @@ def test_29_multiple_extents():
                                 # Now try to create another extent using the same serial number
                                 # We expect this to fail.
                                 with pytest.raises(ValidationErrors) as ve:
-                                    with file_extent(pool_name, dataset_name, "target.extent3", filesize=MB_512,
+                                    with file_extent(pool_name, dataset_name, "target.extent3", filesize_mb=512,
                                                      extent_name="extent3", serial=extent1_config['serial']):
                                         pass
                                 assert ve.value.errors == [
                                     ValidationError('iscsi_extent_create.serial', 'Serial number must be unique', errno.EINVAL)
                                 ]
 
-                                with file_extent(pool_name, dataset_name, "target.extent3", filesize=MB_512,
+                                with file_extent(pool_name, dataset_name, "target.extent3", filesize_mb=512,
                                                  extent_name="extent3", serial='') as extent3_config:
                                     # We expect this to complete, but generate a serial number
                                     assert len(extent3_config['serial']) == 15, extent3_config['serial']
@@ -2520,11 +2630,9 @@ def check_inq_enabled_state(iqn, expected):
     assert actual == expected, f'IQN {iqn} has an unexpected enabled state - was {actual}, expected {expected}'
 
 
-def test_30_target_without_active_extent(request):
+def test__target_without_active_extent(iscsi_running):
     """Validate that a target will not be enabled if it does not have
     and enabled associated extents"""
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     name1 = f"{target_name}x1"
     name2 = f"{target_name}x2"
     iqn1 = f'{basename}:{name1}'
@@ -2586,10 +2694,8 @@ def test_30_target_without_active_extent(request):
                 assert 'Unable to connect to' in str(ve), ve
 
 
-def test_31_iscsi_sessions(request):
+def test__iscsi_sessions(iscsi_running):
     """Validate that we can get a list of currently running iSCSI sessions."""
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     name1 = f"{target_name}x1"
     name2 = f"{target_name}x2"
     name3 = f"{target_name}x3"
@@ -2667,10 +2773,8 @@ def test_31_iscsi_sessions(request):
                     get_iscsi_sessions(check_length=0)
 
 
-def test_32_multi_lun_targets(request):
+def test__multi_lun_targets(iscsi_running):
     """Validate that we can create and access multi-LUN targets."""
-    depends(request, ["iscsi_cmd_00"], scope="session")
-
     name1 = f"{target_name}x1"
     name2 = f"{target_name}x2"
     iqn1 = f'{basename}:{name1}'
@@ -2687,10 +2791,10 @@ def test_32_multi_lun_targets(request):
             verify_capacity(s, MB_512)
 
     with initiator_portal() as config:
-        with configured_target(config, name1, 'FILE', extent_size=MB_100) as config1:
-            with add_file_extent_target_lun(config1, 1, MB_200):
-                with configured_target(config, name2, 'VOLUME', extent_size=MB_256) as config1:
-                    with add_zvol_extent_target_lun(config1, 1, volsize=MB_512):
+        with configured_target(config, name1, 'FILE', extent_size_mb=100) as config1:
+            with add_file_extent_target_lun(config1, 1, 200):
+                with configured_target(config, name2, 'VOLUME', extent_size_mb=256) as config1:
+                    with add_zvol_extent_target_lun(config1, 1, volsize_mb=512):
                         # Check that we can connect to each LUN and that it has the expected capacity
                         test_target_sizes(truenas_server.ip)
                         if ha:
@@ -2700,7 +2804,7 @@ def test_32_multi_lun_targets(request):
                                 test_target_sizes(truenas_server.nodeb_ip)
 
 
-def test_33_no_lun_zero():
+def test__no_lun_zero():
     """
     Verify that an iSCSI client can login to a target that is missing LUN 0 (and LUN 1)
     and that report LUNs works as expected.
@@ -2711,8 +2815,8 @@ def test_33_no_lun_zero():
         with target(target_name, [{'portal': portal_id}]) as target_config:
             target_id = target_config['id']
             with dataset(dataset_name):
-                with file_extent(pool_name, dataset_name, "target.extent1", filesize=MB_100, extent_name="extent1") as extent1_config:
-                    with file_extent(pool_name, dataset_name, "target.extent2", filesize=MB_256, extent_name="extent2") as extent2_config:
+                with file_extent(pool_name, dataset_name, "target.extent1", filesize_mb=100, extent_name="extent1") as extent1_config:
+                    with file_extent(pool_name, dataset_name, "target.extent2", filesize_mb=256, extent_name="extent2") as extent2_config:
                         with target_extent_associate(target_id, extent1_config['id'], 100):
                             with target_extent_associate(target_id, extent2_config['id'], 101):
                                 # libiscsi sends a TUR to the lun on connect, so cannot properly test using it.
@@ -2724,14 +2828,14 @@ def test_33_no_lun_zero():
                                     verify_luns(s, [100, 101])
 
 
-def test_34_zvol_extent_volthreading():
+def test__zvol_extent_volthreading():
     """
     Ensure that volthreading is on for regular zvols and off when they are being
     used an iSCSI extent.
     """
     zvol_name = f"zvol_volthreading_test{digit}"
     zvol = f'{pool_name}/{zvol_name}'
-    with zvol_dataset(zvol, MB_100, True, True):
+    with zvol_dataset(zvol_name, 100, pool_name, True, True):
         assert get_volthreading(zvol) == 'on'
         with zvol_extent(zvol, extent_name='zvolextent1'):
             assert get_volthreading(zvol) == 'off'
@@ -2739,7 +2843,7 @@ def test_34_zvol_extent_volthreading():
 
 
 @pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
-def test_35_delete_extent_no_dataset(extent_type):
+def test__delete_extent_no_dataset(extent_type):
     """
     Verify that even if a dataset that contains an extent has been deleted from
     the command line, can still use the webui/API to delete the extent.
@@ -2753,19 +2857,96 @@ def test_35_delete_extent_no_dataset(extent_type):
                     ssh(DESTROY_CMD)
             case 'VOLUME':
                 zvol = f'{dspath}/zvol{digit}'
-                with zvol_dataset(zvol, MB_100, True, True):
+                with zvol_dataset(zvol, 100, None, True, True):
                     with zvol_extent(zvol, extent_name='zvolextent1'):
                         ssh(DESTROY_CMD)
 
 
-def test_99_teardown(request):
-    # Disable iSCSI service
-    depends(request, ["iscsi_cmd_00"])
-    payload = {'enable': False}
-    call('service.update', 'iscsitarget', payload)
-    # Stop iSCSI service.
-    call('service.stop', 'iscsitarget')
-    sleep(1)
-    # Verify stopped
-    service = _get_service()
-    assert service['state'] == "STOPPED", service
+def test__target_readonly_extent(iscsi_running):
+    """Validate a target that is made RO - either by modifying the extent
+    setting, or the underlying ZVOL - behaves correctly."""
+    name1 = f"{target_name}x1"
+    iqn = f'{basename}:{name1}'
+
+    zeros = bytearray(512)
+    deadbeef = bytearray.fromhex('deadbeef') * 128
+
+    def lba_data(flipped):
+        if flipped:
+            return deadbeef, zeros
+        else:
+            return zeros, deadbeef
+
+    def write_lbas(s, flipped=False):
+        lba0, lba1 = lba_data(flipped)
+        s.write16(0, 1, lba0)
+        s.write16(1, 1, lba1)
+
+    def read_lbas(s, flipped=False):
+        lba0, lba1 = lba_data(flipped)
+        r = s.read16(0, 1)
+        assert r.datain == lba0, r.datain
+        r = s.read16(1, 1)
+        assert r.datain == lba1, r.datain
+
+    def check_readonly_state(zvolid, extentid, readonly):
+        if readonly:
+            assert get_readonly(zvolid) == 'on'
+            assert call('iscsi.extent.get_instance', extentid)['ro'] is True
+        else:
+            assert get_readonly(zvolid) == 'off'
+            assert call('iscsi.extent.get_instance', extentid)['ro'] is False
+
+    with initiator_portal() as config:
+        with configured_target(config, name1, 'VOLUME') as target_config:
+            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
+                zvolid = target_config['dataset']
+                extentid = target_config['extent']['id']
+
+                # Ensure that we can read and write
+                write_lbas(s)
+                read_lbas(s)
+                check_readonly_state(zvolid, extentid, False)
+
+                # Set RO by updating the extent
+                call('iscsi.extent.update', extentid, {'ro': True})
+                expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                check_readonly_state(zvolid, extentid, True)
+
+                # Ensure that we can only READ
+                read_lbas(s)
+                # Write => Check Condition Sense key = 7 for Data Protect, ASCQ == 0
+                with raises_check_condition(7, 0):
+                    write_lbas(s, True)
+                read_lbas(s)
+
+                # Set RW by updating the extent
+                call('iscsi.extent.update', extentid, {'ro': False})
+                expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                check_readonly_state(zvolid, extentid, False)
+
+                # Ensure that we can read and write
+                read_lbas(s)
+                write_lbas(s, True)
+                read_lbas(s, True)
+
+                # Set RO by updating the ZVOL
+                call('pool.dataset.update', zvolid, {'readonly': 'ON'})
+                expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                check_readonly_state(zvolid, extentid, True)
+
+                # Ensure that we can only READ
+                read_lbas(s, True)
+                with raises_check_condition(7, 0):
+                    write_lbas(s)
+                read_lbas(s, True)
+
+                # Set RW by updating the ZVOL
+                call('pool.dataset.update', zvolid, {'readonly': 'OFF'})
+                expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                check_readonly_state(zvolid, extentid, False)
+
+                # Ensure that we can read and write
+                read_lbas(s, True)
+                write_lbas(s)
+                read_lbas(s)

@@ -164,7 +164,6 @@ def test_restricted_user_2fa_secret_renewal(clear_ratelimit):
         username=TEST_USERNAME,
         group_name='TEST_2FA_GROUP',
         privilege_name='TEST_2FA_PRIVILEGE',
-        allowlist=[],
         web_shell=False,
         roles=['READONLY_ADMIN']
     ) as acct:

@@ -3,8 +3,8 @@ import subprocess
 
 from urllib.parse import urlencode, quote_plus
 
-from middlewared.schema import Bool, Dict, Int, Password, Str, ValidationErrors
-from middlewared.validators import Range
+from middlewared.api.current import VMDisplayDevice
+from middlewared.schema import Dict, ValidationErrors
 
 from .device import Device
 from .utils import create_element, NGINX_PREFIX
@@ -20,16 +20,8 @@ class DISPLAY(Device):
 
     schema = Dict(
         'attributes',
-        Str('dtype', enum=['DISPLAY'], required=True),
-        Str('resolution', enum=RESOLUTION_ENUM, default='1024x768'),
-        Int('port', default=None, null=True, validators=[Range(min_=5900, max_=65535)]),
-        Int('web_port', default=None, null=True, validators=[Range(min_=5900, max_=65535)]),
-        Str('bind', default='127.0.0.1'),
-        Bool('wait', default=False),
-        Password('password', required=True, null=False, empty=False),
-        Bool('web', default=True),
-        Str('type', default='SPICE', enum=['SPICE']),
     )
+    schema_model = VMDisplayDevice
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

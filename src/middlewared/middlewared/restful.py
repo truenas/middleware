@@ -856,6 +856,7 @@ class Resource(object):
             if authorized:
                 result = await self.middleware.call_with_audit(methodname, serviceobj, methodobj, method_args,
                                                                **method_kwargs)
+                result = self.middleware.dump_result(serviceobj, methodobj, app, result)
             else:
                 await self.middleware.log_audit_message_for_method(methodname, methodobj, method_args, app,
                                                                    True, False, False)

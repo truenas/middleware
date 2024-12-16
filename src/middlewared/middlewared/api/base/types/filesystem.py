@@ -1,7 +1,8 @@
-from pydantic.functional_validators import AfterValidator
-from typing_extensions import Annotated
+from typing import Annotated
 
-__all__ = ["UnixPerm", ]
+from pydantic.functional_validators import AfterValidator
+
+__all__ = ["UnixPerm"]
 
 
 def validate_unix_perm(value: str) -> str:

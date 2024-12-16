@@ -1,5 +1,9 @@
-from middlewared.schema import accepts, Bool, Datetime, Dict, List, Ref, returns, Str
-from middlewared.service import filterable, filterable_returns, Service
+from middlewared.api import api_method
+from middlewared.api.current import (
+    AppCategoriesArgs, AppCategoriesResult, AppAvailableResponse,
+)
+from middlewared.api.v25_04_0 import AppSimilarArgs, AppSimilarResult
+from middlewared.service import filterable_api_method, Service
 from middlewared.utils import filter_list
 
 
@@ -8,8 +12,7 @@ class AppService(Service):
     class Config:
         cli_namespace = 'app'
 
-    @filterable(roles=['CATALOG_READ'])
-    @filterable_returns(Ref('available_apps'))
+    @filterable_api_method(item=AppAvailableResponse, roles=['CATALOG_READ'])
     async def latest(self, filters, options):
         """
         Retrieve latest updated apps.
@@ -22,38 +25,7 @@ class AppService(Service):
             ), filters, options
         )
 
-    @filterable(roles=['CATALOG_READ'])
-    @filterable_returns(Dict(
-        'available_apps',
-        Bool('healthy', required=True),
-        Bool('installed', required=True),
-        Bool('recommended', required=True),
-        Datetime('last_update', required=True),
-        List('capabilities', required=True),
-        List('run_as_context', required=True),
-        List('categories', required=True),
-        List('maintainers', required=True),
-        List('tags', required=True),
-        List('screenshots', required=True, items=[Str('screenshot')]),
-        List('sources', required=True, items=[Str('source')]),
-        Str('name', required=True),
-        Str('title', required=True),
-        Str('description', required=True),
-        Str('app_readme', required=True),
-        Str('location', required=True),
-        Str('healthy_error', required=True, null=True),
-        Str('home', required=True),
-        Str('latest_version', required=True),
-        Str('latest_app_version', required=True),
-        Str('latest_human_version', required=True),
-        Str('icon_url', null=True, required=True),
-        Str('train', required=True),
-        Str('catalog', required=True),
-        register=True,
-        # We do this because if we change anything in catalog.json, even older releases will
-        # get this new field and different roles will start breaking due to this
-        additional_attrs=True,
-    ))
+    @filterable_api_method(item=AppAvailableResponse, roles=['CATALOG_READ'])
     def available(self, filters, options):
         """
         Retrieve all available applications from all configured catalogs.
@@ -68,7 +40,7 @@ class AppService(Service):
         ]
 
         catalog = self.middleware.call_sync('catalog.config')
-        for train, train_data in self.middleware.call_sync('catalog.apps').items():
+        for train, train_data in self.middleware.call_sync('catalog.apps', {}).items():
             if train not in catalog['preferred_trains']:
                 continue
 
@@ -82,16 +54,14 @@ class AppService(Service):
 
         return filter_list(results, filters, options)
 
-    @accepts(roles=['CATALOG_READ'])
-    @returns(List(items=[Str('category')]))
+    @api_method(AppCategoriesArgs, AppCategoriesResult, roles=['CATALOG_READ'])
     async def categories(self):
         """
         Retrieve list of valid categories which have associated applications.
         """
         return sorted(list(await self.middleware.call('catalog.retrieve_mapped_categories')))
 
-    @accepts(Str('app_name'), Str('train'), roles=['CATALOG_READ'])
-    @returns(List(items=[Ref('available_apps')]))
+    @api_method(AppSimilarArgs, AppSimilarResult, roles=['CATALOG_READ'])
     def similar(self, app_name, train):
         """
         Retrieve applications which are similar to `app_name`.

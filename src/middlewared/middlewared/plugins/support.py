@@ -6,9 +6,9 @@ import tempfile
 import time
 
 import aiohttp
-import async_timeout
 import requests
 
+from licenselib.utils import proactive_support_allowed
 from middlewared.pipe import Pipes
 from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
 from middlewared.schema import accepts, Bool, Dict, Int, List, Password, returns, Str
@@ -23,7 +23,7 @@ ADDRESS = 'support-proxy.ixsystems.com'
 
 async def post(url, data, timeout=INTERNET_TIMEOUT):
     try:
-        async with async_timeout.timeout(timeout):
+        async with asyncio.timeout(timeout):
             async with aiohttp.ClientSession(
                 raise_for_status=True, trust_env=True,
             ) as session:
@@ -118,7 +118,7 @@ class SupportService(ConfigService):
         if license_ is None:
             return False
 
-        return license_['contract_type'] in ['SILVER', 'GOLD']
+        return proactive_support_allowed(license_['contract_type'])
 
     @accepts(roles=['SUPPORT_READ'])
     @returns(Bool('proactive_support_is_available_and_enabled'))

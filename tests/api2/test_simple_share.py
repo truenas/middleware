@@ -28,7 +28,7 @@ def test__smb_simple_share_validation():
         "smb": True,
     }):
         # First check that basic call of this endpoint succeeds
-        call('sharing.smb.share_precheck')
+        call('sharing.smb.share_precheck', {})
 
         # Verify works with basic share name
         call('sharing.smb.share_precheck', {'name': 'test_share'})

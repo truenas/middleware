@@ -1,13 +1,18 @@
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CloudBackupEntry, CloudBackupTransferSettingChoicesArgs, CloudBackupTransferSettingChoicesResult,
+    CloudBackupCreateArgs, CloudBackupCreateResult, CloudBackupUpdateArgs, CloudBackupUpdateResult,
+    CloudBackupDeleteArgs, CloudBackupDeleteResult
+)
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
-from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_schema
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, Password, Patch, Str
+from middlewared.plugins.cloud.model import CloudTaskModelMixin
+from middlewared.schema import Cron
 from middlewared.service import pass_app, private, TaskPathService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
 from middlewared.utils.service.task_state import TaskStateMixin
-from middlewared.validators import Range
 from .init import IncorrectPassword
 
 
@@ -16,7 +21,8 @@ class CloudBackupModel(CloudTaskModelMixin, sa.Model):
 
     password = sa.Column(sa.EncryptedText())
     keep_last = sa.Column(sa.Integer())
-    transfer_setting = sa.Column(sa.String(16), default="DEFAULT")
+    transfer_setting = sa.Column(sa.String(16))
+    absolute_paths = sa.Column(sa.Boolean())
 
 
 class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
@@ -33,15 +39,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         cli_namespace = "task.cloud_backup"
         namespace = "cloud_backup"
         role_prefix = "CLOUD_BACKUP"
-
-    ENTRY = Patch(
-        'cloud_backup_create',
-        'cloud_backup_entry',
-        ('add', Int('id')),
-        ("replace", Dict("credentials", additional_attrs=True, private_keys=["provider"])),
-        ("add", Dict("job", additional_attrs=True, null=True)),
-        ("add", Bool("locked")),
-    )
+        entry = CloudBackupEntry
 
     @private
     def transfer_setting_args(self):
@@ -81,19 +79,12 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
         return cloud_backup
 
-    @accepts()
+    @api_method(CloudBackupTransferSettingChoicesArgs, CloudBackupTransferSettingChoicesResult)
     def transfer_setting_choices(self):
         args = self.transfer_setting_args()
         return list(args.keys())
 
-    @accepts(Dict(
-        "cloud_backup_create",
-        *cloud_task_schema,
-        Password("password", required=True, empty=False),
-        Int("keep_last", required=True, validators=[Range(min_=1)]),
-        Str("transfer_setting", enum=["DEFAULT", "PERFORMANCE", "FAST_STORAGE"], default="DEFAULT"),
-        register=True,
-    ))
+    @api_method(CloudBackupCreateArgs, CloudBackupCreateResult)
     @pass_app(rest=True)
     async def do_create(self, app, cloud_backup):
         """
@@ -109,7 +100,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
         return await self.get_instance(cloud_backup["id"])
 
-    @accepts(Int("id"), Patch("cloud_backup_create", "cloud_backup_update", ("attr", {"update": True})))
+    @api_method(CloudBackupUpdateArgs, CloudBackupUpdateResult)
     @pass_app(rest=True)
     async def do_update(self, app, id_, data):
         """
@@ -136,7 +127,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
         return await self.get_instance(id_)
 
-    @accepts(Int("id"))
+    @api_method(CloudBackupDeleteArgs, CloudBackupDeleteResult)
     async def do_delete(self, id_):
         """
         Deletes cloud backup entry `id`.
@@ -150,6 +141,9 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     @private
     async def _validate(self, app, verrors, name, data):
         await super()._validate(app, verrors, name, data)
+
+        if data["snapshot"] and data["absolute_paths"]:
+            verrors.add(f"{name}.snapshot", "This option can't be used when absolute paths are enabled")
 
         if not verrors:
             try:

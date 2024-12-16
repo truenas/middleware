@@ -4,9 +4,15 @@ import re
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    VMDeviceEntry, VMDeviceCreateArgs, VMDeviceCreateResult, VMDeviceUpdateArgs, VMDeviceUpdateResult,
+    VMDeviceDeleteArgs, VMDeviceDeleteResult, VMDeviceDiskChoicesArgs, VMDeviceDiskChoicesResult,
+    VMDeviceIOTypeArgs, VMDeviceIOTypeResult, VMDeviceNICAttachChoicesArgs, VMDeviceNICAttachChoicesResult,
+    VMDeviceBindChoicesArgs, VMDeviceBindChoicesResult,
+)
 from middlewared.plugins.vm.devices.storage_devices import IOTYPE_CHOICES
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
-from middlewared.schema import accepts, Bool, Dict, Int, OROperator, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, private
 from middlewared.utils import run
 from middlewared.async_validators import check_path_resides_within_volume
@@ -29,22 +35,15 @@ class VMDeviceModel(sa.Model):
 
 class VMDeviceService(CRUDService):
 
-    ENTRY = Patch(
-        'vmdevice_create', 'vm_device_entry',
-        ('add', Int('id')),
-        ('rm', {'name': 'attributes'}),
-        ('add', OROperator(*[device.schema for device in DEVICES.values()], name='attributes')),
-    )
-
     class Config:
         namespace = 'vm.device'
         datastore = 'vm.device'
         datastore_extend = 'vm.device.extend_device'
         cli_namespace = 'service.vm.device'
         role_prefix = 'VM_DEVICE'
+        entry = VMDeviceEntry
 
-    @accepts()
-    @returns(Dict(additional_attrs=True, example={'vms/test 1': '/dev/zvol/vms/test+1'}))
+    @api_method(VMDeviceDiskChoicesArgs, VMDeviceDiskChoicesResult, roles=['VM_DEVICE_READ'])
     async def disk_choices(self):
         """
         Returns disk choices for device type "DISK".
@@ -63,10 +62,7 @@ class VMDeviceService(CRUDService):
 
         return out
 
-    @accepts()
-    @returns(Dict(
-        *[Str(k, enum=[k]) for k in IOTYPE_CHOICES]
-    ))
+    @api_method(VMDeviceIOTypeArgs, VMDeviceIOTypeResult, roles=['VM_DEVICE_READ'])
     async def iotype_choices(self):
         """
         IO-type choices for storage devices.
@@ -86,16 +82,14 @@ class VMDeviceService(CRUDService):
                 device['order'] = 1002
         return device
 
-    @accepts(roles=['VM_DEVICE_READ'])
-    @returns(Dict(additional_attrs=True))
+    @api_method(VMDeviceNICAttachChoicesArgs, VMDeviceNICAttachChoicesResult, roles=['VM_DEVICE_READ'])
     def nic_attach_choices(self):
         """
         Available choices for NIC Attach attribute.
         """
         return self.middleware.call_sync('interface.choices', {'exclude': ['epair', 'tap', 'vnet']})
 
-    @accepts(roles=['VM_DEVICE_READ'])
-    @returns(Dict(additional_attrs=True))
+    @api_method(VMDeviceBindChoicesArgs, VMDeviceBindChoicesResult, roles=['VM_DEVICE_READ'])
     async def bind_choices(self):
         """
         Available choices for Bind attribute.
@@ -139,19 +133,7 @@ class VMDeviceService(CRUDService):
 
         return data
 
-    @accepts(
-        Dict(
-            'vmdevice_create',
-            Int('vm', required=True),
-            Dict(
-                'attributes',
-                Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'PCI', 'DISPLAY', 'RAW', 'USB'], required=True),
-                additional_attrs=True,
-            ),
-            Int('order', default=None, null=True),
-            register=True,
-        ),
-    )
+    @api_method(VMDeviceCreateArgs, VMDeviceCreateResult)
     async def do_create(self, data):
         """
         Create a new device for the VM of id `vm`.
@@ -173,6 +155,7 @@ class VMDeviceService(CRUDService):
 
         return await self.get_instance(id_)
 
+    @api_method(VMDeviceUpdateArgs, VMDeviceUpdateResult)
     async def do_update(self, id_, data):
         """
         Update a VM device of `id`.
@@ -215,15 +198,7 @@ class VMDeviceService(CRUDService):
             except OSError:
                 raise CallError(f'Failed to destroy {device["attributes"]["path"]}')
 
-    @accepts(
-        Int('id'),
-        Dict(
-            'vm_device_delete',
-            Bool('zvol', default=False),
-            Bool('raw_file', default=False),
-            Bool('force', default=False),
-        )
-    )
+    @api_method(VMDeviceDeleteArgs, VMDeviceDeleteResult)
     async def do_delete(self, id_, options):
         """
         Delete a VM device of `id`.

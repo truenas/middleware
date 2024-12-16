@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 
-from middlewared.schema import accepts, Bool, Dict
 from middlewared.service import CallError, private, Service
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -71,13 +70,6 @@ class VMService(Service, VMSupervisorMixin):
                 self.middleware.logger.error(f'Failed to start VM {vm["name"]}: {e}')
 
     @private
-    @accepts(
-        Dict(
-            'deinitialize_vms_options',
-            Bool('reload_ui', default=True),
-            Bool('stop_libvirt', default=True),
-        )
-    )
     async def deinitialize_vms(self, options):
         await self.middleware.call('vm.close_libvirt_connection')
         if options['reload_ui']:

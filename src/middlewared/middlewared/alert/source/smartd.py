@@ -12,7 +12,7 @@ class SmartdAlertSource(ThreadedAlertSource):
     def check_sync(self):
         if self.middleware.call_sync("datastore.query", "services.services", [("srv_service", "=", "smartd"),
                                                                               ("srv_enable", "=", True)]):
-            if self.middleware.call_sync("system.vm"):
+            if self.middleware.call_sync("hardware.virtualization.is_virtualized"):
                 return
 
             if self.middleware.call_sync("system.is_enterprise"):

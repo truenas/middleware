@@ -119,3 +119,38 @@ def test_disk_wipe_abort():
         time.sleep(0.1)
     else:
         assert False, result
+
+def test_disk_format():
+    """Explicitly test the `disk.format` method since
+    this is the endpoint that is eventually called when
+    a disk is added to a zpool using our public API."""
+    disk = call("disk.get_unused")[0]["name"]
+    # create a GPT label and a 100MiB EXT4 partition
+    ssh(f"parted -s /dev/{disk} mklabel gpt mkpart ext4 16384s 100MiB; mkfs.ext4 /dev/{disk}1")
+    for i in range(20):
+        # Depending on the load of the CI infrastructure
+        # this can take a bit of time for the partition
+        # to surface.
+        info = call("disk.list_partitions", disk)
+        if len(info) == 0:
+            time.sleep(0.5)
+        else:
+            break
+
+    assert len(info) == 1, info
+    assert info[0]["partition_type"] == "0fc63daf-8483-4772-8e79-3d69d8477de4"
+    assert info[0]["start_sector"] == 16384
+
+    # format the disk with a zfs data partition
+    # NOTE: this calls `disk.wipe` and so it should
+    # wipe the ext4 information
+    call("disk.format", disk)
+    info = call("disk.list_partitions", disk)
+    assert len(info) == 1, info
+    assert info[0]["partition_type"] == "6a898cc3-1dd2-11b2-99a6-080020736631"
+
+    # let's make sure wipefs (aka libblkid) doesn't report
+    # stale ext4 information
+    lines = ssh(f"wipefs /dev/{disk}1").splitlines()
+    for line in lines:
+        assert "ext4" not in line, line

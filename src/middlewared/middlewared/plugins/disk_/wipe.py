@@ -4,13 +4,11 @@ import pathlib
 import threading
 import time
 
-from middlewared.schema import accepts, Bool, Ref, Str, returns
+from middlewared.schema import accepts, Bool, Str, returns
 from middlewared.service import job, Service, private
 
 
 CHUNK = 1048576  # 1MB binary
-# Maximum number of attempts to request partition table update
-MAX_NUM_PARTITION_UPDATE_RETRIES = 4
 
 
 class DiskService(Service):
@@ -84,12 +82,6 @@ class DiskService(Service):
             os.lseek(f.fileno(), 0, os.SEEK_SET)
 
             if mode == 'QUICK':
-                # Get partition info before it gets destroyed
-                try:
-                    disk_parts = self.get_partitions_quick(dev)
-                except Exception:
-                    disk_parts = {}
-
                 _32 = 32
                 for i in range(_32):
                     # wipe first 32MB
@@ -111,25 +103,6 @@ class DiskService(Service):
                     if event.is_set():
                         return
                     job.set_progress(round(((i / _64) * 100), 2))
-
-                # The middle partitions often contain old cruft.  Clean those.
-                if len(disk_parts) > 1:
-                    _30MiB = 30 * CHUNK
-                    _30MiB_from_end = size - _30MiB
-                    for sector_start in disk_parts.values():
-                        # Skip any that start under 30 MiB or 30MiB from the end
-                        if (sector_start < _30MiB) or (_30MiB_from_end < sector_start):
-                            continue
-
-                        # Start 2 MiB back from the start and 'clean' 2 MiB past, 4 MiB total
-                        os.lseek(f.fileno(), sector_start - (2 * CHUNK), os.SEEK_SET)
-                        for i in range(4):
-                            os.write(f.fileno(), to_write)
-                            os.fsync(f.fileno())
-                            if event.is_set():
-                                return
-                    # This is quick. We can reasonably skip the progress update
-
             else:
                 iterations = (size // CHUNK)
                 for i in range(iterations):
@@ -145,23 +118,6 @@ class DiskService(Service):
                     if event.is_set():
                         return
                     job.set_progress(round(((i / iterations) * 100), 2))
-
-        # The call to update_partition_table_quick can require retries
-        error = {}
-        retries = MAX_NUM_PARTITION_UPDATE_RETRIES
-        # Unfortunately, without a small initial sleep, the following
-        # retry loop will almost certainly require two iterations.
-        time.sleep(0.1)
-        while retries > 0:
-            # Use BLKRRPATH ioctl to update the kernel partition table
-            error = self.middleware.call_sync('disk.update_partition_table_quick', disk_path)
-            if not error[disk_path]:
-                break
-            time.sleep(0.1)
-            retries -= 1
-
-        if error[disk_path]:
-            self.logger.error('Error partition table update "%s": %s', disk_path, error[disk_path])
 
     @accepts(
         Str('dev'),

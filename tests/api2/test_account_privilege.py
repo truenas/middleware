@@ -23,13 +23,6 @@ def test_change_local_administrator_groups_to_invalid():
     assert ve.value.errors[0].attribute == "privilege_update.local_groups"
 
 
-def test_change_local_administrator_allowlist():
-    with pytest.raises(ValidationErrors) as ve:
-        call("privilege.update", 1, {"allowlist": [{"method": "CALL", "resource": "system.info"}]})
-
-    assert ve.value.errors[0].attribute == "privilege_update.allowlist"
-
-
 def test_change_local_administrator_roles():
     with pytest.raises(ValidationErrors) as ve:
         call("privilege.update", 1, {"roles": ['READONLY_ADMIN']})
@@ -50,7 +43,7 @@ def test_invalid_local_group():
             "name": "Test",
             "local_groups": [1024],  # invalid local group ID
             "ds_groups": [],
-            "allowlist": [{"method": "CALL", "resource": "system.info"}],
+            "roles": ["READONLY_ADMIN"],
             "web_shell": False,
         })
 
@@ -83,7 +76,7 @@ def privilege_with_orphan_local_group():
             "name": "Test orphan",
             "local_groups": [gid],
             "ds_groups": [],
-            "allowlist": [{"method": "CALL", "resource": "system.info"}],
+            "roles": ["READONLY_ADMIN"],
             "web_shell": False,
         })
         call("datastore.delete", "account.bsdgroups", g["id"])

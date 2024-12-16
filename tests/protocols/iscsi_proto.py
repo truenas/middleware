@@ -1,6 +1,9 @@
 import contextlib
 import inspect
+import socket
 
+import iscsi
+from functions import SRVTarget, get_host_ip
 from pyscsi.pyscsi.scsi import SCSI
 from pyscsi.utils import init_device
 
@@ -75,3 +78,70 @@ def iscsi_scsi_connection(host, iqn, lun=0, user=None, secret=None, target_user=
         yield s
     finally:
         s.device.close()
+
+
+class ISCSIDiscover:
+    def __init__(self,
+                 hostname=None,
+                 initiator_username=None,
+                 initiator_password=None,
+                 target_username=None,
+                 target_password=None,
+                 initiator_name=None,
+                 ):
+        self._hostname = hostname or get_host_ip(SRVTarget.DEFAULT)
+        self._initiator_username = None
+        self._initiator_password = None
+        self._target_username = None
+        self._target_password = None
+        self._initiator_name = None
+
+        try:
+            self._ip = socket.gethostbyname(self._hostname)
+        except socket.error:
+            raise ValueError(f'Cannot resolve: {self._hostname}')
+
+        if initiator_username is not None or initiator_password is not None:
+            if initiator_username is None or initiator_password is None:
+                raise ValueError("If supply one then must supply both: initiator_username, initiator_password")
+            self._initiator_username = initiator_username
+            self._initiator_password = initiator_password
+
+        if target_username is not None or target_password is not None:
+            if target_username is None or target_password is None:
+                raise ValueError("If supply one then must supply both: target_username, target_password")
+            self._target_username = target_username
+            self._target_password = target_password
+
+        if initiator_name:
+            self._initiator_name = initiator_name
+        else:
+            self._initiator_name = f'iqn.2018-01.org.pyscsi:{socket.gethostname()}'
+
+    def __enter__(self):
+        return self
+
+    def discover(self):
+        connected = False
+        try:
+            ctx = iscsi.Context(self._initiator_name)
+            ctx.set_session_type(iscsi.ISCSI_SESSION_DISCOVERY)
+            ctx.set_header_digest(iscsi.ISCSI_HEADER_DIGEST_NONE)
+            if self._initiator_username and self._initiator_password:
+                ctx.set_initiator_username_pwd(self._initiator_username, self._initiator_password)
+            if self._target_username and self._target_password:
+                ctx.set_target_username_pwd(self._target_username, self._target_password)
+            ctx.connect(self._ip, -1)
+            connected = True
+            return ctx.discover()
+        except Exception:
+            return {}
+        finally:
+            if connected:
+                ctx.disconnect()
+
+    def ip(self):
+        return self._ip
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass

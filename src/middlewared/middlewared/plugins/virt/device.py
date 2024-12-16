@@ -7,6 +7,7 @@ from middlewared.api.current import (
     VirtDeviceUSBChoicesArgs, VirtDeviceUSBChoicesResult,
     VirtDeviceGPUChoicesArgs, VirtDeviceGPUChoicesResult,
     VirtDeviceDiskChoicesArgs, VirtDeviceDiskChoicesResult,
+    VirtDeviceNICChoicesArgs, VirtDeviceNICChoicesResult,
 )
 
 
@@ -55,6 +56,7 @@ class VirtDeviceService(Service):
                 'slot': i['addr']['slot'],
                 'description': i['description'],
                 'vendor': i['vendor'],
+                'pci': i['addr']['pci_slot'],
             }
         return choices
 
@@ -76,3 +78,20 @@ class VirtDeviceService(Service):
             out[zvol['path']] = zvol['name']
 
         return out
+
+    @api_method(VirtDeviceNICChoicesArgs, VirtDeviceNICChoicesResult, roles=['VIRT_INSTANCE_READ'])
+    async def nic_choices(self, nic_type):
+        """
+        Returns choices for NIC device.
+        """
+        choices = {}
+        match nic_type:
+            case 'BRIDGED':
+                choices = {i['id']: i['name'] for i in await self.middleware.call(
+                    'interface.query', [['type', '=', 'BRIDGE']]
+                )}
+            case 'MACVLAN':
+                choices = {i['id']: i['name'] for i in await self.middleware.call(
+                    'interface.query',
+                )}
+        return choices

@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import contextlib
+from dataclasses import dataclass
 from functools import cached_property
 import json
 import os
@@ -37,6 +37,7 @@ class ReadonlyRootfsManager:
 
         self.initialized = False
         self.datasets: dict[str, Dataset] = {}
+        self.use_functioning_dpkg_sysext = False
 
     def __enter__(self):
         return self
@@ -49,6 +50,7 @@ class ReadonlyRootfsManager:
             for name, dataset in self.datasets.items()
             if dataset.readonly.current
         })
+        self._set_dpkg_sysext_state(True)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if not self.initialized:
@@ -59,6 +61,7 @@ class ReadonlyRootfsManager:
             for name, dataset in self.datasets.items()
             if dataset.readonly.current != dataset.readonly.initial
         })
+        self._set_dpkg_sysext_state(False)
 
     def _initialize(self):
         if self.initialized:
@@ -72,7 +75,13 @@ class ReadonlyRootfsManager:
             ("", usr_ds.rsplit("/", 1)[0]),
             ("usr", usr_ds),
         ]:
-            mountpoint = "/".join(filter(None, (self.root, dataset)))
+            mountpoint = os.path.realpath("/".join(filter(None, (self.root, dataset))))
+
+            if mountpoint == "/usr":
+                # We make `/usr` writeable only to be able to temporary enable `dpkg` (`update-initramfs` needs it).
+                # If we are on live system, it's better to use `systemd-sysext`
+                self.use_functioning_dpkg_sysext = True
+                continue
 
             st_mnt_id = stat_x.statx(mountpoint).stx_mnt_id
             readonly = "RO" in getmntinfo(mnt_id=st_mnt_id)[st_mnt_id]["super_opts"]
@@ -109,10 +118,6 @@ class ReadonlyRootfsManager:
 
     def _handle_usr(self, readonly):
         binaries = (
-            # Used in `nvidia.install`
-            "apt",
-            "apt-config",
-            "apt-key",
             # Some initramfs scripts use `dpkg --print-architecture` or similar calls
             "dpkg",
         )
@@ -128,3 +133,16 @@ class ReadonlyRootfsManager:
                 with contextlib.suppress(FileNotFoundError):
                     os.rename(os.path.join(self.root, f"usr/local/bin/{binary}"),
                               os.path.join(self.root, f"usr/local/bin/{binary}.bak"))
+
+    def _set_dpkg_sysext_state(self, enabled):
+        if self.use_functioning_dpkg_sysext:
+            os.makedirs("/run/extensions", exist_ok=True)
+            sysext_dst = "/run/extensions/functioning-dpkg.raw"
+            if enabled:
+                with contextlib.suppress(FileExistsError):
+                    os.symlink("/usr/share/truenas/sysext-extensions/functioning-dpkg.raw", sysext_dst)
+            else:
+                with contextlib.suppress(FileNotFoundError):
+                    os.unlink(sysext_dst)
+
+            subprocess.run(["systemd-sysext", "refresh"], capture_output=True, check=True, text=True)

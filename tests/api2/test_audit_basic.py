@@ -123,11 +123,16 @@ def standby_audit_event():
     event = "user.delete"
     username = "backup"
     user = call('user.query', [["username", "=", username]], {"select": ["id"], "get": True})
+
     # Generate an audit entry on the remote node
     with pytest.raises(CallError):
         call('failover.call_remote', event, [user['id']])
 
-    yield {"event": event, "username": username}
+    yield {
+        "event": event,
+        "username": username,
+        "user_id": user["id"]
+    }
 
 
 # =====================================================================
@@ -324,17 +329,20 @@ class TestAuditOpsHA:
         '''
         event = standby_audit_event['event']
         username = standby_audit_event['username']
-        payload = {
-            "query-filters": [["event_data.method", "=", event], ["success", "=", False]],
+        user_id = standby_audit_event['user_id']
+
+        audit_payload = {
+            "query-filters": [["event_data.method", "=", event], ["event_data.params", "=", [user_id]]],
             "query-options": {"select": ["event_data", "success"]},
             "remote_controller": True
         }
+
         if not remote_available:
             job_id = call('failover.reboot.other_node')
             # Let the reboot get churning
             sleep(2)
             with pytest.raises(ValidationError) as e:
-                call('audit.query', payload)
+                call('audit.query', audit_payload)
             assert "failed to communicate" in str(e.value)
 
             # Wait for the remote to return
@@ -342,18 +350,16 @@ class TestAuditOpsHA:
         else:
             # Handle delays in the audit database
             remote_audit_entry = []
-            tries = 3
+            tries = 5
             while tries > 0 and remote_audit_entry == []:
                 sleep(1)
-                remote_audit_entry = call('audit.query', payload)
-                if remote_audit_entry != []:
-                    break
+                remote_audit_entry = call('audit.query', audit_payload)
                 tries -= 1
 
-            assert tries > 0, "Failed to get expected audit entry"
-            assert remote_audit_entry != []
+            assert tries > 0, f"Failed to get expected audit entry. tries={tries}"
             description = remote_audit_entry[0]['event_data']['description']
-            assert username in description, remote_audit_entry[0]['event_data']
+            evt0 = remote_audit_entry[0]['event_data']
+            assert username in description, f"tries={tries}\nENTRY:\n{evt0}"
 
     def test_audit_ha_export(self, standby_audit_event):
         """

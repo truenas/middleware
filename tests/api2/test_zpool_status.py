@@ -104,117 +104,119 @@ def get_pool_status(unused_disks, real_paths=False, replaced=False):
                 ]
             }
         },
-        POOL_NAME: {
-            'spares': {
-                f'{disk_uuid_mapping[unused_disks[4]] if not real_paths else unused_disks[4]}': {
-                    'pool_name': POOL_NAME,
-                    'disk_status': 'AVAIL' if not replaced else 'INUSE',
-                    'disk_read_errors': 0,
-                    'disk_write_errors': 0,
-                    'disk_checksum_errors': 0,
-                    'vdev_name': 'stripe',
-                    'vdev_type': 'spares',
-                    'vdev_disks': [
-                        f'{disk_uuid_mapping[unused_disks[4]] if not real_paths else unused_disks[4]}'
-                    ]
-                }
-            },
-            'logs': {
-                f'{disk_uuid_mapping[unused_disks[3]] if not real_paths else unused_disks[3]}': {
-                    'pool_name': POOL_NAME,
-                    'disk_status': 'ONLINE',
-                    'disk_read_errors': 0,
-                    'disk_write_errors': 0,
-                    'disk_checksum_errors': 0,
-                    'vdev_name': 'stripe',
-                    'vdev_type': 'logs',
-                    'vdev_disks': [
-                        f'{disk_uuid_mapping[unused_disks[3]] if not real_paths else unused_disks[3]}'
-                    ]
-                }
-            },
-            'dedup': {
-                f'{disk_uuid_mapping[unused_disks[2]] if not real_paths else unused_disks[2]}': {
-                    'pool_name': POOL_NAME,
-                    'disk_status': 'ONLINE',
-                    'disk_read_errors': 0,
-                    'disk_write_errors': 0,
-                    'disk_checksum_errors': 0,
-                    'vdev_name': 'stripe',
-                    'vdev_type': 'dedup',
-                    'vdev_disks': [
-                        f'{disk_uuid_mapping[unused_disks[2]] if not real_paths else unused_disks[2]}'
-                    ]
-                }
-            },
-            'special': {
-                f'{disk_uuid_mapping[unused_disks[5]] if not real_paths else unused_disks[5]}': {
-                    'pool_name': POOL_NAME,
-                    'disk_status': 'ONLINE',
-                    'disk_read_errors': 0,
-                    'disk_write_errors': 0,
-                    'disk_checksum_errors': 0,
-                    'vdev_name': 'stripe',
-                    'vdev_type': 'special',
-                    'vdev_disks': [
-                        f'{disk_uuid_mapping[unused_disks[5]] if not real_paths else unused_disks[5]}'
-                    ]
-                }
-            },
-            'l2cache': {
-                f'{disk_uuid_mapping[unused_disks[0]] if not real_paths else unused_disks[0]}': {
-                    'pool_name': POOL_NAME,
-                    'disk_status': 'ONLINE',
-                    'disk_read_errors': 0,
-                    'disk_write_errors': 0,
-                    'disk_checksum_errors': 0,
-                    'vdev_name': 'stripe',
-                    'vdev_type': 'l2cache',
-                    'vdev_disks': [
-                        f'{disk_uuid_mapping[unused_disks[0]] if not real_paths else unused_disks[0]}'
-                    ]
-                }
-            },
-            'data': {
-                f'{disk_uuid_mapping[unused_disks[1]] if not real_paths else unused_disks[1]}': {
-                    'pool_name': POOL_NAME,
-                    'disk_status': 'ONLINE',
-                    'disk_read_errors': 0,
-                    'disk_write_errors': 0,
-                    'disk_checksum_errors': 0,
-                    'vdev_name': 'stripe',
-                    'vdev_type': 'data',
-                    'vdev_disks': [
-                        f'{disk_uuid_mapping[unused_disks[1]] if not real_paths else unused_disks[1]}'
-                    ]
-                }
-            } if not replaced else {
-                f'{disk_uuid_mapping[unused_disks[1]] if not real_paths else unused_disks[1]}': {
-                    'pool_name': POOL_NAME,
-                    'disk_status': 'ONLINE',
-                    'disk_read_errors': 0,
-                    'disk_write_errors': 0,
-                    'disk_checksum_errors': 0,
-                    'vdev_name': 'spare-0',
-                    'vdev_type': 'data',
-                    'vdev_disks': [
-                        f'{disk_uuid_mapping[unused_disks[1]] if not real_paths else unused_disks[1]}',
-                        f'{disk_uuid_mapping[unused_disks[4]] if not real_paths else unused_disks[4]}'
-                    ]
+        'pools': {
+            POOL_NAME: {
+                'spares': {
+                    f'{disk_uuid_mapping[unused_disks[4]] if not real_paths else unused_disks[4]}': {
+                        'pool_name': POOL_NAME,
+                        'disk_status': 'AVAIL' if not replaced else 'INUSE',
+                        'disk_read_errors': 0,
+                        'disk_write_errors': 0,
+                        'disk_checksum_errors': 0,
+                        'vdev_name': 'stripe',
+                        'vdev_type': 'spares',
+                        'vdev_disks': [
+                            f'{disk_uuid_mapping[unused_disks[4]] if not real_paths else unused_disks[4]}'
+                        ]
+                    }
                 },
-                f'{disk_uuid_mapping[unused_disks[4]] if not real_paths else unused_disks[4]}': {
-                    'pool_name': POOL_NAME,
-                    'disk_status': 'ONLINE',
-                    'disk_read_errors': 0,
-                    'disk_write_errors': 0,
-                    'disk_checksum_errors': 0,
-                    'vdev_name': 'spare-0',
-                    'vdev_type': 'data',
-                    'vdev_disks':  [
-                        f'{disk_uuid_mapping[unused_disks[1]] if not real_paths else unused_disks[1]}',
-                        f'{disk_uuid_mapping[unused_disks[4]] if not real_paths else unused_disks[4]}'
-                    ]
+                'logs': {
+                    f'{disk_uuid_mapping[unused_disks[3]] if not real_paths else unused_disks[3]}': {
+                        'pool_name': POOL_NAME,
+                        'disk_status': 'ONLINE',
+                        'disk_read_errors': 0,
+                        'disk_write_errors': 0,
+                        'disk_checksum_errors': 0,
+                        'vdev_name': 'stripe',
+                        'vdev_type': 'logs',
+                        'vdev_disks': [
+                            f'{disk_uuid_mapping[unused_disks[3]] if not real_paths else unused_disks[3]}'
+                        ]
+                    }
                 },
+                'dedup': {
+                    f'{disk_uuid_mapping[unused_disks[2]] if not real_paths else unused_disks[2]}': {
+                        'pool_name': POOL_NAME,
+                        'disk_status': 'ONLINE',
+                        'disk_read_errors': 0,
+                        'disk_write_errors': 0,
+                        'disk_checksum_errors': 0,
+                        'vdev_name': 'stripe',
+                        'vdev_type': 'dedup',
+                        'vdev_disks': [
+                            f'{disk_uuid_mapping[unused_disks[2]] if not real_paths else unused_disks[2]}'
+                        ]
+                    }
+                },
+                'special': {
+                    f'{disk_uuid_mapping[unused_disks[5]] if not real_paths else unused_disks[5]}': {
+                        'pool_name': POOL_NAME,
+                        'disk_status': 'ONLINE',
+                        'disk_read_errors': 0,
+                        'disk_write_errors': 0,
+                        'disk_checksum_errors': 0,
+                        'vdev_name': 'stripe',
+                        'vdev_type': 'special',
+                        'vdev_disks': [
+                            f'{disk_uuid_mapping[unused_disks[5]] if not real_paths else unused_disks[5]}'
+                        ]
+                    }
+                },
+                'l2cache': {
+                    f'{disk_uuid_mapping[unused_disks[0]] if not real_paths else unused_disks[0]}': {
+                        'pool_name': POOL_NAME,
+                        'disk_status': 'ONLINE',
+                        'disk_read_errors': 0,
+                        'disk_write_errors': 0,
+                        'disk_checksum_errors': 0,
+                        'vdev_name': 'stripe',
+                        'vdev_type': 'l2cache',
+                        'vdev_disks': [
+                            f'{disk_uuid_mapping[unused_disks[0]] if not real_paths else unused_disks[0]}'
+                        ]
+                    }
+                },
+                'data': {
+                    f'{disk_uuid_mapping[unused_disks[1]] if not real_paths else unused_disks[1]}': {
+                        'pool_name': POOL_NAME,
+                        'disk_status': 'ONLINE',
+                        'disk_read_errors': 0,
+                        'disk_write_errors': 0,
+                        'disk_checksum_errors': 0,
+                        'vdev_name': 'stripe',
+                        'vdev_type': 'data',
+                        'vdev_disks': [
+                            f'{disk_uuid_mapping[unused_disks[1]] if not real_paths else unused_disks[1]}'
+                        ]
+                    }
+                } if not replaced else {
+                    f'{disk_uuid_mapping[unused_disks[1]] if not real_paths else unused_disks[1]}': {
+                        'pool_name': POOL_NAME,
+                        'disk_status': 'ONLINE',
+                        'disk_read_errors': 0,
+                        'disk_write_errors': 0,
+                        'disk_checksum_errors': 0,
+                        'vdev_name': 'spare-0',
+                        'vdev_type': 'data',
+                        'vdev_disks': [
+                            f'{disk_uuid_mapping[unused_disks[1]] if not real_paths else unused_disks[1]}',
+                            f'{disk_uuid_mapping[unused_disks[4]] if not real_paths else unused_disks[4]}'
+                        ]
+                    },
+                    f'{disk_uuid_mapping[unused_disks[4]] if not real_paths else unused_disks[4]}': {
+                        'pool_name': POOL_NAME,
+                        'disk_status': 'ONLINE',
+                        'disk_read_errors': 0,
+                        'disk_write_errors': 0,
+                        'disk_checksum_errors': 0,
+                        'vdev_name': 'spare-0',
+                        'vdev_type': 'data',
+                        'vdev_disks':  [
+                            f'{disk_uuid_mapping[unused_disks[1]] if not real_paths else unused_disks[1]}',
+                            f'{disk_uuid_mapping[unused_disks[4]] if not real_paths else unused_disks[4]}'
+                        ]
+                    },
+                }
             }
         }
     }

@@ -1,11 +1,11 @@
 import errno
 import os
 
+from middlewared.api.current import VMDiskDevice, VMRAWDevice
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
-from middlewared.schema import Bool, Dict, Int, Str
+from middlewared.schema import Dict
 from middlewared.utils.crypto import generate_string
-from middlewared.validators import Match
 
 from .device import Device
 from .utils import create_element, disk_from_number
@@ -83,19 +83,8 @@ class RAW(StorageDevice):
 
     schema = Dict(
         'attributes',
-        Str('path', required=True, validators=[Match(
-            r'^[^{}]*$', explanation='Path should not contain "{", "}" characters'
-        )], empty=False),
-        Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
-        Bool('exists'),
-        Bool('boot', default=False),
-        Int('size', default=None, null=True),
-        Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
-        Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
-        Str('iotype', enum=IOTYPE_CHOICES, default='THREADS'),
-        Str('serial'),
-        Str('dtype', enum=['RAW'], required=True),
     )
+    schema_model = VMRAWDevice
 
     def create_source_element(self):
         return create_element('source', file=self.data['attributes']['path'])
@@ -128,17 +117,8 @@ class DISK(StorageDevice):
 
     schema = Dict(
         'attributes',
-        Str('path'),
-        Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
-        Bool('create_zvol'),
-        Str('zvol_name'),
-        Int('zvol_volsize'),
-        Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
-        Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
-        Str('iotype', enum=IOTYPE_CHOICES, default='THREADS'),
-        Str('serial'),
-        Str('dtype', enum=['DISK'], required=True),
     )
+    schema_model = VMDiskDevice
 
     def create_source_element(self):
         return create_element('source', dev=self.data['attributes']['path'])

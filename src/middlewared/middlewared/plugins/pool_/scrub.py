@@ -3,12 +3,16 @@ import asyncio
 import re
 import shlex
 
-import middlewared.sqlalchemy as sa
-
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    PoolScrubEntry, PoolScrubCreateArgs, PoolScrubCreateResult, PoolScrubUpdateArgs, PoolScrubUpdateResult,
+    PoolScrubDeleteArgs, PoolScrubDeleteResult, PoolScrubScrubArgs, PoolScrubScrubResult, PoolScrubRunArgs,
+    PoolScrubRunResult
+)
+from middlewared.schema import Cron
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+import middlewared.sqlalchemy as sa
 from middlewared.utils import run
-from middlewared.validators import Range
 
 
 RE_HISTORY_ZPOOL_SCRUB_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+(py-libzfs: )?zpool (scrub|create)', re.MULTILINE)
@@ -42,26 +46,7 @@ class PoolScrubService(CRUDService):
         namespace = 'pool.scrub'
         cli_namespace = 'storage.scrub'
         role_prefix = 'POOL_SCRUB'
-
-    ENTRY = Dict(
-        'pool_scrub_entry',
-        Int('pool', validators=[Range(min_=1)], required=True),
-        Int('threshold', validators=[Range(min_=0)], required=True),
-        Str('description', required=True),
-        Cron(
-            'schedule',
-            defaults={
-                'minute': '00',
-                'hour': '00',
-                'dow': '7'
-            },
-            required=True,
-        ),
-        Bool('enabled', default=True, required=True),
-        Int('id', required=True),
-        Str('pool_name', required=True),
-        register=True
-    )
+        entry = PoolScrubEntry
 
     @private
     async def pool_scrub_extend(self, data):
@@ -96,7 +81,7 @@ class PoolScrubService(CRUDService):
                     pool_pk != data['original_pool_id']
                 )
             ):
-                scrub_obj = await self.query(filters=[('pool', '=', pool_pk)])
+                scrub_obj = await self.query([('pool', '=', pool_pk)])
                 if len(scrub_obj) != 0:
                     verrors.add(
                         f'{schema}.pool',
@@ -105,16 +90,7 @@ class PoolScrubService(CRUDService):
 
         return verrors, data
 
-    @accepts(
-        Patch(
-            'pool_scrub_entry', 'pool_scrub_entry',
-            ('rm', {'name': 'id'}),
-            ('rm', {'name': 'pool_name'}),
-            ('edit', {'name': 'threshold', 'method': lambda x: setattr(x, 'required', False)}),
-            ('edit', {'name': 'schedule', 'method': lambda x: setattr(x, 'required', False)}),
-            ('edit', {'name': 'description', 'method': lambda x: setattr(x, 'required', False)}),
-        )
-    )
+    @api_method(PoolScrubCreateArgs, PoolScrubCreateResult)
     async def do_create(self, data):
         """
         Create a scrub task for a pool.
@@ -159,6 +135,7 @@ class PoolScrubService(CRUDService):
 
         return await self.get_instance(data['id'])
 
+    @api_method(PoolScrubUpdateArgs, PoolScrubUpdateResult)
     async def do_update(self, id_, data):
         """
         Update scrub task of `id`.
@@ -191,7 +168,7 @@ class PoolScrubService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'))
+    @api_method(PoolScrubDeleteArgs, PoolScrubDeleteResult)
     async def do_delete(self, id_):
         """
         Delete scrub task of `id`.
@@ -205,17 +182,13 @@ class PoolScrubService(CRUDService):
         await self.middleware.call('service.restart', 'cron')
         return response
 
-    @accepts(
-        Str('name', required=True),
-        Str('action', enum=['START', 'STOP', 'PAUSE'], default='START')
-    )
-    @returns()
+    @api_method(PoolScrubScrubArgs, PoolScrubScrubResult)
     @job(
         description=lambda name, action="START": (
             f"Scrub of pool {name!r}" if action == "START"
             else f"{action.title()} scrubbing pool {name!r}"
         ),
-        lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}',
+        lock=lambda i: f'{i[0]}-{i[1] if len(i) >= 2 else "START"}' if i else '',
     )
     async def scrub(self, job, name, action):
         """
@@ -246,8 +219,7 @@ class PoolScrubService(CRUDService):
 
                 await asyncio.sleep(1)
 
-    @accepts(Str('name'), Int('threshold', default=35))
-    @returns()
+    @api_method(PoolScrubRunArgs, PoolScrubRunResult)
     async def run(self, name, threshold):
         """
         Initiate a scrub of a pool `name` if last scrub was performed more than `threshold` days before.

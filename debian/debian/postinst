@@ -45,7 +45,6 @@ systemctl disable nfs-server
 systemctl disable proftpd.socket
 
 # Update alternatives
-update-alternatives --install "/usr/sbin/sendmail" sendmail "/etc/find_alias_for_smtplib.sh" "10"
 update-alternatives --install "/usr/bin/vim" vim.tiny "/usr/bin/vim.tiny" "10"
 
 # Add nut to dialout group - NAS-110578
@@ -83,6 +82,9 @@ systemctl mask mdadm.service mdmonitor.service
 # We don't use LVM and this service can add significant boot delays
 # on large disk systems
 systemctl mask lvm2-monitor.service
+
+# ipa-epn.service is in conflict with our implementation of support for IPA
+systemctl mask ipa-epn.service
 
 systemctl set-default truenas.target
 

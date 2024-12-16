@@ -17,7 +17,6 @@ def readonly_admin():
         username='failover_guy',
         group_name='failover_admins',
         privilege_name='FAILOVER_PRIV',
-        allowlist=[],
         web_shell=False,
         roles=['READONLY_ADMIN']
     ) as acct:

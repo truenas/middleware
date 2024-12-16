@@ -31,10 +31,11 @@ def get_restic_config(cloud_backup):
     return ResticConfig(cmd, env)
 
 
-async def run_restic(job, cmd, env, stdin=None, track_progress=False):
-    job.middleware.logger.debug("Running %r", cmd)
+async def run_restic(job, cmd, env, *, cwd=None, stdin=None, track_progress=False):
+    job.middleware.logger.trace("Running %r", cmd)
     proc = await Popen(
         cmd,
+        cwd=cwd,
         env=env,
         stdin=stdin,
         stdout=subprocess.PIPE,
@@ -87,7 +88,14 @@ async def restic_check_progress(job, proc, track_progress=False):
         if read == "":
             break
 
-        read = json.loads(read)
+        try:
+            read = json.loads(read)
+        except json.JSONDecodeError:
+            # Can happen with some error messages
+            job.internal_data["messages"] = job.internal_data["messages"][-4:] + [read]
+            await job.logs_fd_write((read + "\n").encode("utf-8", "ignore"))
+            continue
+
         msg_type = read["message_type"]
         match msg_type:
             case "status":

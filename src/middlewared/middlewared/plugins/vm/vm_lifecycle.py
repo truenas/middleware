@@ -1,4 +1,8 @@
-from middlewared.schema import accepts, Bool, Dict, Int, returns
+from middlewared.api import api_method
+from middlewared.api.current import (
+    VMStartArgs, VMStartResult, VMStopArgs, VMStopResult, VMRestartArgs, VMRestartResult, VMPoweroffArgs,
+    VMPoweroffResult, VMSuspendArgs, VMSuspendResult, VMResumeArgs, VMResumeResult,
+)
 from middlewared.service import CallError, item_method, job, private, Service
 
 from .vm_supervisor import VMSupervisorMixin
@@ -12,12 +16,7 @@ class VMService(Service, VMSupervisorMixin):
             raise CallError('Requested action cannot be performed as system is not licensed to use VMs')
 
     @item_method
-    @accepts(
-        Int('id'),
-        Dict('options', Bool('overcommit', default=False)),
-        roles=['VM_WRITE']
-    )
-    @returns()
+    @api_method(VMStartArgs, VMStartResult, roles=['VM_WRITE'])
     async def start(self, id_, options):
         """
         Start a VM.
@@ -64,16 +63,7 @@ class VMService(Service, VMSupervisorMixin):
         await self.middleware.call('service.reload', 'http')
 
     @item_method
-    @accepts(
-        Int('id'),
-        Dict(
-            'options',
-            Bool('force', default=False),
-            Bool('force_after_timeout', default=False),
-        ),
-        roles=['VM_WRITE']
-    )
-    @returns()
+    @api_method(VMStopArgs, VMStopResult, roles=['VM_WRITE'])
     @job(lock=lambda args: f'stop_vm_{args[0]}')
     def stop(self, job, id_, options):
         """
@@ -98,8 +88,7 @@ class VMService(Service, VMSupervisorMixin):
             self._poweroff(vm_data['name'])
 
     @item_method
-    @accepts(Int('id'), roles=['VM_WRITE'])
-    @returns()
+    @api_method(VMPoweroffArgs, VMPoweroffResult, roles=['VM_WRITE'])
     def poweroff(self, id_):
         """
         Poweroff a VM.
@@ -110,8 +99,7 @@ class VMService(Service, VMSupervisorMixin):
         self._poweroff(vm_data['name'])
 
     @item_method
-    @accepts(Int('id'), roles=['VM_WRITE'])
-    @returns()
+    @api_method(VMRestartArgs, VMRestartResult, roles=['VM_WRITE'])
     @job(lock=lambda args: f'restart_vm_{args[0]}')
     def restart(self, job, id_):
         """
@@ -127,8 +115,7 @@ class VMService(Service, VMSupervisorMixin):
         self.middleware.call_sync('vm.start', id_, {'overcommit': True})
 
     @item_method
-    @accepts(Int('id'), roles=['VM_WRITE'])
-    @returns()
+    @api_method(VMSuspendArgs, VMSuspendResult, roles=['VM_WRITE'])
     def suspend(self, id_):
         """
         Suspend `id` VM.
@@ -139,8 +126,7 @@ class VMService(Service, VMSupervisorMixin):
         self._suspend(vm['name'])
 
     @item_method
-    @accepts(Int('id'), roles=['VM_WRITE'])
-    @returns()
+    @api_method(VMResumeArgs, VMResumeResult, roles=['VM_WRITE'])
     def resume(self, id_):
         """
         Resume suspended `id` VM.

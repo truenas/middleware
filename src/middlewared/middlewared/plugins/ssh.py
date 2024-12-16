@@ -1,8 +1,6 @@
 import base64
-import hashlib
 import os
 import subprocess
-import syslog
 
 import middlewared.sqlalchemy as sa
 
@@ -162,18 +160,6 @@ class SSHService(SystemServiceService):
         verrors.check()
 
         await self._update_service(old, new)
-
-        keyfile = "/usr/local/etc/ssh/ssh_host_ecdsa_key.pub"
-        if os.path.exists(keyfile):
-            with open(keyfile, "rb") as f:
-                pubkey = f.read().strip().split(None, 3)[1]
-            decoded_key = base64.b64decode(pubkey)
-            key_digest = hashlib.sha256(decoded_key).digest()
-            ssh_fingerprint = (b"SHA256:" + base64.b64encode(key_digest).replace(b"=", b"")).decode("utf-8")
-
-            syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_USER)
-            syslog.syslog(syslog.LOG_ERR, 'ECDSA Fingerprint of the SSH KEY: ' + ssh_fingerprint)
-            syslog.closelog()
 
         return await self.config()
 

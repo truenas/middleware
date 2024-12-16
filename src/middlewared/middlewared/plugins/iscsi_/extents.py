@@ -90,8 +90,8 @@ class iSCSITargetExtentService(SharingService):
 
         `ro` when set to true prevents the initiator from writing to this LUN.
         """
+        await self.validate(data)
         verrors = ValidationErrors()
-        await self.middleware.call('iscsi.extent.validate', data)
         await self.clean(data, 'iscsi_extent_create', verrors)
         verrors.check()
 
@@ -100,7 +100,16 @@ class iSCSITargetExtentService(SharingService):
         # This change is being made in conjunction with threads_num being specified in scst.conf
         if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
             zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
-            await self.middleware.call('zfs.dataset.update', zvolname, {'properties': {'volthreading': {'value': 'off'}}})
+            await self.middleware.call(
+                'zfs.dataset.update',
+                zvolname,
+                {
+                    'properties': {
+                        'volthreading': {'value': 'off'},
+                        'readonly': {'value': 'on' if data['ro'] else 'off'}
+                    }
+                }
+            )
 
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, {**data, 'vendor': 'TrueNAS'},
@@ -127,14 +136,25 @@ class iSCSITargetExtentService(SharingService):
         new.update(data)
 
         await self.middleware.call('iscsi.extent.validate', new)
-        await self.clean(
-            new, 'iscsi_extent_update', verrors, old=old
-        )
+        await self.clean(new, 'iscsi_extent_update', verrors, old=old)
         verrors.check()
 
         await self.middleware.call('iscsi.extent.save', new, 'iscsi_extent_create', verrors, old)
         verrors.check()
         new.pop(self.locked_field)
+
+        zvolpath = new.get('path')
+        if zvolpath is not None and zvolpath.startswith('zvol/'):
+            zvolname = zvol_path_to_name(os.path.join('/dev', zvolpath))
+            await self.middleware.call(
+                'zfs.dataset.update',
+                zvolname,
+                {
+                    'properties': {
+                        'readonly': {'value': 'on' if new['ro'] else 'off'}
+                    }
+                }
+            )
 
         await self.middleware.call(
             'datastore.update',
@@ -144,6 +164,9 @@ class iSCSITargetExtentService(SharingService):
             {'prefix': self._config.datastore_prefix}
         )
 
+        await self._service_change('iscsitarget', 'reload')
+
+        # scstadmin can have issues when modifying an existing extent, re-run
         await self._service_change('iscsitarget', 'reload')
 
         return await self.get_instance(id_)
@@ -200,8 +223,8 @@ class iSCSITargetExtentService(SharingService):
                 await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
     @private
-    def validate(self, data):
-        data['serial'] = self.extent_serial(data['serial'])
+    async def validate(self, data):
+        data['serial'] = await self.extent_serial(data['serial'])
         data['naa'] = self.extent_naa(data.get('naa'))
 
     @private
@@ -367,10 +390,10 @@ class iSCSITargetExtentService(SharingService):
         return data
 
     @private
-    def extent_serial(self, serial):
+    async def extent_serial(self, serial):
         if serial in [None, '']:
             used_serials = [i['serial'] for i in (
-                self.middleware.call_sync('iscsi.extent.query', [], {'select': ['serial']})
+                await self.middleware.call('iscsi.extent.query', [], {'select': ['serial']})
             )]
             tries = 5
             for i in range(tries):

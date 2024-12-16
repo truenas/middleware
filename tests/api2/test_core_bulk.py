@@ -33,7 +33,7 @@ def test_core_bulk_reports_job_id():
 
 
 def test_authorized():
-    with unprivileged_user_client(allowlist=[{"method": "CALL", "resource": "test.test1"}]) as c:
+    with unprivileged_user_client(roles=["MOCK"]) as c:
         with mock("test.test1", """
             from middlewared.service import pass_app
 
@@ -45,7 +45,7 @@ def test_authorized():
 
 
 def test_authorized_audit():
-    with unprivileged_user_client(allowlist=[{"method": "CALL", "resource": "test.test1"}]) as c:
+    with unprivileged_user_client(roles=["MOCK"]) as c:
         with mock("test.test1", """
             from middlewared.schema import Int
             from middlewared.service import accepts
@@ -71,7 +71,7 @@ def test_authorized_audit():
 
 
 def test_not_authorized():
-    with unprivileged_user_client(allowlist=[]) as c:
+    with unprivileged_user_client(roles=[]) as c:
         with pytest.raises(ClientException) as ve:
             c.call("core.bulk", "test.test1", [[]], job=True)
 

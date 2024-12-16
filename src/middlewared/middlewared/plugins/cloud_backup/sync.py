@@ -1,12 +1,15 @@
 import asyncio
 import itertools
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CloudBackupSyncArgs, CloudBackupSyncResult, CloudBackupAbortArgs, CloudBackupAbortResult
+)
 from middlewared.plugins.cloud.path import check_local_path
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
 from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
-from middlewared.schema import accepts, Bool, Dict, Int
 from middlewared.service import CallError, Service, item_method, job, private
 from middlewared.utils.time_utils import utc_now
 
@@ -52,6 +55,7 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
                 else:
                     break
 
+            cwd = None
             cmd = ["--stdin", "--stdin-filename", "volume"]
         else:
             await check_local_path(middleware, local_path)
@@ -59,7 +63,12 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
                 snapshot_name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}"
                 snapshot, local_path = await create_snapshot(middleware, local_path, snapshot_name)
 
-            cmd = [local_path]
+            if cloud_backup["absolute_paths"]:
+                cwd = None
+                cmd = [local_path]
+            else:
+                cwd = local_path
+                cmd = ["."]
 
         args = await middleware.call("cloud_backup.transfer_setting_args")
         cmd.extend(args[cloud_backup["transfer_setting"]])
@@ -82,7 +91,7 @@ async def restic_backup(middleware, job, cloud_backup, dry_run):
         })
         await run_script(job, "Pre-script", cloud_backup["pre_script"], env)
 
-        await run_restic(job, cmd, restic_config.env, stdin, track_progress=True)
+        await run_restic(job, cmd, restic_config.env, cwd=cwd, stdin=stdin, track_progress=True)
 
         await run_script(job, "Post-script", cloud_backup["post_script"], env)
     finally:
@@ -112,14 +121,7 @@ class CloudBackupService(Service):
         namespace = "cloud_backup"
 
     @item_method
-    @accepts(
-        Int("id"),
-        Dict(
-            "cloud_backup_sync_options",
-            Bool("dry_run", default=False),
-            register=True,
-        )
-    )
+    @api_method(CloudBackupSyncArgs, CloudBackupSyncResult)
     @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True)
     async def sync(self, job, id_, options):
         """
@@ -161,7 +163,7 @@ class CloudBackupService(Service):
             raise
 
     @item_method
-    @accepts(Int("id"))
+    @api_method(CloudBackupAbortArgs, CloudBackupAbortResult)
     async def abort(self, id_):
         """
         Aborts cloud backup task.

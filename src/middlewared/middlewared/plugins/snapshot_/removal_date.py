@@ -1,5 +1,3 @@
-import hashlib
-
 from middlewared.service import Service, job, private
 
 

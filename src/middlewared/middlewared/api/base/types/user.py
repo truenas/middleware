@@ -1,9 +1,9 @@
 import string
+from typing import Annotated
 
 from annotated_types import Ge, Le
 from pydantic import Field
 from pydantic.functional_validators import AfterValidator
-from typing_extensions import Annotated
 
 from middlewared.utils.sid import sid_is_valid
 

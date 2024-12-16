@@ -1,5 +1,6 @@
-from middlewared.schema import accepts
-from middlewared.service import job, private, returns, Service
+from middlewared.api import api_method
+from middlewared.api.current import CatalogSyncArgs, CatalogSyncResult
+from middlewared.service import job, private, Service
 
 from .git_utils import pull_clone_repository
 from .utils import OFFICIAL_LABEL, OFFICIAL_CATALOG_REPO, OFFICIAL_CATALOG_BRANCH
@@ -13,8 +14,7 @@ class CatalogService(Service):
     async def synced(self):
         return self.SYNCED
 
-    @accepts(roles=['CATALOG_WRITE'])
-    @returns()
+    @api_method(CatalogSyncArgs, CatalogSyncResult, roles=['CATALOG_WRITE'])
     @job(lock='official_catalog_sync')
     async def sync(self, job):
         """

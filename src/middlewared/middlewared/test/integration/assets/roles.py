@@ -21,7 +21,6 @@ def unprivileged_user_fixture(request):
         username=f'unprivileged_fixture_{suffix}',
         group_name=group_name,
         privilege_name=f'Unprivileged users fixture ({suffix})',
-        allowlist=[],
         roles=[],
         web_shell=False,
     ) as t:

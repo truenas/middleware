@@ -16,7 +16,7 @@ class AppPortDelegate(PortDelegate):
             app_ports = []
             for port_entry in app['active_workloads']['used_ports']:
                 for host_port in port_entry['host_ports']:
-                    app_ports.append(('0.0.0.0', host_port['host_port']))
+                    app_ports.append((host_port['host_ip'], host_port['host_port']))
 
             ports.append({
                 'description': f'{app["id"]!r} application',

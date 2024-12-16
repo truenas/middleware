@@ -2,10 +2,13 @@ from datetime import datetime
 import json
 import subprocess
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CloudBackupListSnapshotsArgs, CloudBackupListSnapshotsResult, CloudBackupListSnapshotDirectoryArgs,
+    CloudBackupListSnapshotDirectoryResult, CloudBackupDeleteSnapshotArgs, CloudBackupDeleteSnapshotResult
+)
 from middlewared.plugins.cloud_backup.restic import get_restic_config
-from middlewared.schema import accepts, Datetime, Dict, Int, List, returns, Str
 from middlewared.service import CallError, job, Service
-from middlewared.validators import NotMatch
 
 
 class CloudBackupService(Service):
@@ -14,19 +17,7 @@ class CloudBackupService(Service):
         cli_namespace = "task.cloud_backup"
         namespace = "cloud_backup"
 
-    @accepts(Int("id"))
-    @returns(
-        List("cloud_backup_snapshots", items=[
-            Dict(
-                "cloud_backup_snapshot",
-                Str("id"),
-                Str("hostname"),
-                Datetime("time"),
-                List("paths", items=[Str("path")]),
-                additional_attrs=True,
-            ),
-        ]),
-    )
+    @api_method(CloudBackupListSnapshotsArgs, CloudBackupListSnapshotsResult)
     def list_snapshots(self, id_):
         """
         List existing snapshots for the cloud backup job `id`.
@@ -53,20 +44,7 @@ class CloudBackupService(Service):
 
         return snapshots
 
-    @accepts(Int("id"), Str("snapshot_id", validators=[NotMatch(r"^-")]), Str("path", validators=[NotMatch(r"^-")]))
-    @returns(
-        List("cloud_backup_snapshot_items", items=[
-            Dict(
-                "cloud_backup_snapshot_item",
-                Str("name"),
-                Str("path"),
-                Str("type", enum=["dir", "file"]),
-                Int("size"),
-                Datetime("mtime"),
-                additional_attrs=True,
-            ),
-        ]),
-    )
+    @api_method(CloudBackupListSnapshotDirectoryArgs, CloudBackupListSnapshotDirectoryResult)
     def list_snapshot_directory(self, id_, snapshot_id, path):
         """
         List files in the directory `path` of the `snapshot_id` created by the cloud backup job `id`.
@@ -93,6 +71,8 @@ class CloudBackupService(Service):
             if item["struct_type"] != "node":
                 continue
 
+            item.setdefault("size", None)
+
             for k in ["atime", "ctime", "mtime"]:
                 item[k] = datetime.fromisoformat(item[k])
 
@@ -100,8 +80,7 @@ class CloudBackupService(Service):
 
         return contents
 
-    @accepts(Int("id"), Str("snapshot_id", validators=[NotMatch(r"^-")]))
-    @returns()
+    @api_method(CloudBackupDeleteSnapshotArgs, CloudBackupDeleteSnapshotResult)
     @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1)
     def delete_snapshot(self, job, id_, snapshot_id):
         """

@@ -137,7 +137,6 @@ def test_unauthorized_call():
         username="unprivileged",
         group_name="unprivileged_users",
         privilege_name="Unprivileged users",
-        allowlist=[],
         roles=[],
         web_shell=False,
     ) as u:

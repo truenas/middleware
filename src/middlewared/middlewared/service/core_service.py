@@ -19,7 +19,13 @@ import middlewared.main
 from middlewared.api import api_method
 from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.api.current import (
-    CoreSetOptionsArgs, CoreSetOptionsResult, CoreSubscribeArgs, CoreSubscribeResult, CoreUnsubscribeArgs,
+    CorePingArgs,
+    CorePingResult,
+    CoreSetOptionsArgs,
+    CoreSetOptionsResult,
+    CoreSubscribeArgs,
+    CoreSubscribeResult,
+    CoreUnsubscribeArgs,
     CoreUnsubscribeResult,
 )
 from middlewared.common.environ import environ_update
@@ -344,7 +350,7 @@ class CoreService(Service):
                 # Skip private methods
                 if hasattr(method, '_private') and method._private is True:
                     continue
-                if target == 'CLI' and hasattr(method, '_cli_private'):
+                if target == 'CLI' and getattr(method, '_cli_private', False):
                     continue
 
                 # terminate is a private method used to clean up a service on shutdown
@@ -522,8 +528,7 @@ class CoreService(Service):
         kwargs = kwargs or {}
         self.middleware.send_event(name, event_type, **kwargs)
 
-    @no_authz_required
-    @accepts()
+    @api_method(CorePingArgs, CorePingResult, authorization_required=False)
     def ping(self):
         """
         Utility method which just returns "pong".
@@ -799,11 +804,11 @@ class CoreService(Service):
                 # entries for external callers to methods. app is only None
                 # on internal calls to core.bulk.
                 if app:
-                    msg = await self.middleware.call_with_audit(method, serviceobj, methodobj, p, app=app)
+                    msg = await self.middleware.call_with_audit(method, serviceobj, methodobj, p, app)
                 else:
                     msg = await self.middleware.call(method, *p)
 
-                status = {"result": msg, "error": None}
+                status = {"error": None}
 
                 if isinstance(msg, Job):
                     b_job = msg
@@ -812,6 +817,8 @@ class CoreService(Service):
 
                     if b_job.error:
                         status["error"] = b_job.error
+                else:
+                    status["result"] = self.middleware.dump_result(serviceobj, methodobj, app, msg)
 
                 statuses.append(status)
             except Exception as e:

@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, single_argument_args
+from middlewared.api.base import BaseModel, LongString, single_argument_args
 
 
 __all__ = [
@@ -13,6 +13,13 @@ class JWKCreate(BaseModel):
     public_exponent: int = 65537
 
 
+class ACMERegistrationBody(BaseModel):
+    id: int
+    contact: str
+    status: str
+    key: LongString
+
+
 class ACMERegistrationEntry(BaseModel):
     id: int
     uri: str
@@ -22,6 +29,7 @@ class ACMERegistrationEntry(BaseModel):
     new_nonce_uri: str
     new_order_uri: str
     revoke_cert_uri: str
+    body: ACMERegistrationBody
 
 
 @single_argument_args('acme_registration_create')

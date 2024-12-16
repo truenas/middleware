@@ -16,7 +16,7 @@ class SMBService(Service):
     @cache
     @private
     def local_server_sid(self):
-        if (db_sid := self.middleware.call_sync('smb.config')['cifs_SID']):
+        if (db_sid := self.middleware.call_sync('smb.config')['server_sid']):
             return db_sid
 
         new_sid = random_sid()

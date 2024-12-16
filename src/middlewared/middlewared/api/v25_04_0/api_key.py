@@ -1,6 +1,5 @@
 from datetime import datetime
-from typing import Literal, TypeAlias
-from typing_extensions import Annotated
+from typing import Annotated, Literal, TypeAlias
 
 from pydantic import Secret, StringConstraints
 

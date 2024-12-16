@@ -5,7 +5,7 @@ from middlewared.schema import Dict, Str
 from middlewared.plugins.reporting.realtime_reporting.cgroup import get_cgroup_stats
 
 
-class VirtInstacesMetricsEventSource(EventSource):
+class VirtInstancesMetricsEventSource(EventSource):
 
     ACCEPTS = Dict(
         Str('id'),
@@ -49,5 +49,5 @@ class VirtInstacesMetricsEventSource(EventSource):
 
 async def setup(middleware):
     middleware.register_event_source(
-        'virt.instance.metrics', VirtInstacesMetricsEventSource, roles=['VIRT_INSTANCE_READ']
+        'virt.instance.metrics', VirtInstancesMetricsEventSource, roles=['VIRT_INSTANCE_READ']
     )

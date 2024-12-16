@@ -38,12 +38,12 @@ def test_001_net_share_enum(setup_smb_user, setup_smb_share):
 
     with MS_RPC(username=SMB_USER, password=SMB_PWD) as hdl:
         shares = hdl.shares()
-        # IPC$ share should always be present
         assert len(shares) == 2, str(shares)
-        assert shares[0]['netname'] == 'IPC$'
-        assert shares[0]['path'] == 'C:\\tmp'
-        assert shares[1]['netname'] == share_name
-        assert shares[1]['path'].replace('\\', '/')[2:] == path
+        assert shares[0]['netname'] == share_name
+        assert shares[0]['path'].replace('\\', '/')[2:] == path
+        # IPC$ share should always be present
+        assert shares[1]['netname'] == 'IPC$'
+        assert shares[1]['path'] == 'C:\\tmp'
 
 
 def test_002_enum_users(setup_smb_user, setup_smb_share):

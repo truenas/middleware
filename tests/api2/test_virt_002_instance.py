@@ -44,12 +44,16 @@ def test_virt_instance_create():
         call('virt.instance.create', {'name': INS2_NAME, 'image': INS2_IMAGE}, job=True)
         ssh(f'incus exec {INS2_NAME} cat /etc/os-release | grep "{INS2_OS}"')
 
+        nics = list(call('virt.device.nic_choices', 'MACVLAN').keys())
+        assert len(nics) > 0
+
         call('virt.instance.create', {
             'name': INS3_NAME,
             'image': INS3_IMAGE,
             'devices': [
                 {'dev_type': 'TPM', 'path': '/dev/tpm0', 'pathrm': '/dev/tmprm0'},
                 {'dev_type': 'PROXY', 'source_proto': 'TCP', 'source_port': 60123, 'dest_proto': 'TCP', 'dest_port': 2000},
+                {'dev_type': 'NIC', 'name': 'eth1', 'nic_type': 'MACVLAN', 'parent': nics[0]},
             ],
         }, job=True)
         ssh(f'incus exec {INS3_NAME} cat /etc/os-release | grep "{INS3_OS}"')
@@ -57,6 +61,7 @@ def test_virt_instance_create():
         devices = call('virt.instance.device_list', INS3_NAME)
         assert any(i for i in devices if i['name'] == 'tpm0'), devices
         assert any(i for i in devices if i['name'] == 'proxy0'), devices
+        assert any(i for i in devices if i['name'] == 'eth1'), devices
 
         assert wait_agent.wait(timeout=60)
         ssh(f'incus exec {INS1_NAME} cat /etc/os-release | grep "{INS1_OS}"')
@@ -78,14 +83,26 @@ def test_virt_instance_update():
 
 
 def test_virt_instance_stop():
-    # Stop only one of them so the others are stopped during delete
-    assert ssh(f'incus list {INS2_NAME} -f json| jq ".[].status"').strip() == '"Running"'
-    instance = call('virt.instance.query', [['id', '=', INS2_NAME]], {'get': True})
-    assert instance['status'] == 'RUNNING'
-    call('virt.instance.stop', INS2_NAME, {'force': True}, job=True)
-    instance = call('virt.instance.query', [['id', '=', INS2_NAME]], {'get': True})
-    assert instance['status'] == 'STOPPED'
-    assert ssh(f'incus list {INS2_NAME} -f json| jq ".[].status"').strip() == '"Stopped"'
+    wait_status_event = Event()
+
+    def wait_status(event_type, **kwargs):
+        if kwargs['collection'] == 'virt.instance.query' and kwargs['id'] == INS2_NAME:
+            fields = kwargs.get('fields')
+            if fields and fields.get('status') == 'STOPPED':
+                wait_status_event.set()
+
+    with client() as c:
+        c.subscribe('virt.instance.query', wait_status, sync=True)
+
+        # Stop only one of them so the others are stopped during delete
+        assert ssh(f'incus list {INS2_NAME} -f json| jq ".[].status"').strip() == '"Running"'
+        instance = c.call('virt.instance.query', [['id', '=', INS2_NAME]], {'get': True})
+        assert instance['status'] == 'RUNNING'
+        call('virt.instance.stop', INS2_NAME, {'force': True}, job=True)
+        instance = c.call('virt.instance.query', [['id', '=', INS2_NAME]], {'get': True})
+        assert instance['status'] == 'STOPPED'
+        assert wait_status_event.wait(timeout=1)
+        assert ssh(f'incus list {INS2_NAME} -f json| jq ".[].status"').strip() == '"Stopped"'
 
 
 def test_virt_instance_restart():
@@ -188,6 +205,10 @@ def test_virt_instance_proxy():
     rv = ssh(f'incus exec {INS3_NAME} -- cat /tmp/nc')
 
     assert rv.strip() == 'foo'
+
+
+def test_virt_instance_shell():
+    assert call('virt.instance.get_shell', INS3_NAME) == '/bin/bash'
 
 
 def test_virt_instance_device_delete():

@@ -1,7 +1,25 @@
+from typing import Literal
+
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, single_argument_result
 
-__all__ = ["CoreSetOptionsArgs", "CoreSetOptionsResult", "CoreSubscribeArgs", "CoreSubscribeResult",
-           "CoreUnsubscribeArgs", "CoreUnsubscribeResult"]
+__all__ = [
+    "CorePingArgs",
+    "CorePingResult",
+    "CoreSetOptionsArgs",
+    "CoreSetOptionsResult",
+    "CoreSubscribeArgs",
+    "CoreSubscribeResult",
+    "CoreUnsubscribeArgs",
+    "CoreUnsubscribeResult",
+]
+
+
+class CorePingArgs(BaseModel):
+    pass
+
+
+class CorePingResult(BaseModel):
+    result: Literal["pong"]
 
 
 class CoreSetOptionsOptions(BaseModel, metaclass=ForUpdateMetaclass):

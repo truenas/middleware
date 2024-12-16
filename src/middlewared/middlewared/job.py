@@ -369,7 +369,12 @@ class Job:
     def get_lock_name(self):
         lock_name = self.options.get('lock')
         if callable(lock_name):
-            lock_name = lock_name(self.args)
+            try:
+                lock_name = lock_name(self.args)
+            except Exception:
+                self.middleware.logger.error("Error handling job lock", exc_info=True)
+                raise CallError("Error handling job lock. This is most likely caused by invalid call arguments.",
+                                errno.EINVAL)
         return lock_name
 
     def set_id(self, id_):
@@ -636,7 +641,7 @@ class Job:
                 result = self.result
             else:
                 try:
-                    result = self.middleware.dump_result(self.method, self.result, False)
+                    result = self.middleware.dump_result(self.serviceobj, self.method, self.result, False)
                 except Exception as e:
                     result = None
                     result_encoding_error = repr(e)

@@ -139,10 +139,14 @@ class KeychainCredentialSSHPairResult(BaseModel):
     host_key: LongString
 
 
-class KeychainCredentialSetupSSHConnectionPrivateKey(BaseModel):
-    generate_key: bool = True
-    existing_key_id: int | None = None
+class KeychainCredentialSetupSSHConnectionKeyNew(BaseModel):
+    generate_key: Literal[True] = True
     name: NonEmptyString
+
+
+class KeychainCredentialSetupSSHConnectionKeyExisting(BaseModel):
+    generate_key: Literal[False] = False
+    existing_key_id: int
 
 
 class KeychainCredentialSetupSSHConnectionSemiAutomaticSetup(
@@ -154,7 +158,7 @@ class KeychainCredentialSetupSSHConnectionSemiAutomaticSetup(
 
 @single_argument_args("setup_ssh_connection")
 class KeychainCredentialSetupSSHConnectionArgs(BaseModel):
-    private_key: KeychainCredentialSetupSSHConnectionPrivateKey | None = None
+    private_key: KeychainCredentialSetupSSHConnectionKeyNew | KeychainCredentialSetupSSHConnectionKeyExisting
     connection_name: NonEmptyString
     setup_type: Literal["SEMI-AUTOMATIC", "MANUAL"] = "MANUAL"
     semi_automatic_setup: KeychainCredentialSetupSSHConnectionSemiAutomaticSetup | None = None

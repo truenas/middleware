@@ -9,11 +9,16 @@ import uuid
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    VMEntry, VMCreateArgs, VMCreateResult, VMUpdateArgs, VMUpdateResult, VMDeleteArgs, VMDeleteResult,
+    VMBootloaderOVMFChoicesArgs, VMBootloaderOVMFChoicesResult, VMBootloaderOptionsArgs, VMBootloaderOptionsResult,
+    VMStatusArgs, VMStatusResult, VMLogFilePathArgs, VMLogFilePathResult, VMLogFileDownloadArgs,
+    VMLogFileDownloadResult,
+)
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str, ValidationErrors
-from middlewared.service import CallError, CRUDService, item_method, job, private
-from middlewared.validators import Range, UUID
-from middlewared.plugins.vm.numeric_set import parse_numeric_set, NumericSet
+from middlewared.service import CallError, CRUDService, item_method, job, private, ValidationErrors
+from middlewared.plugins.vm.numeric_set import parse_numeric_set
 
 from .utils import ACTIVE_STATES, get_default_status, get_vm_nvram_file_name, SYSTEM_NVRAM_FOLDER_PATH
 from .vm_supervisor import VMSupervisorMixin
@@ -74,23 +79,9 @@ class VMService(CRUDService, VMSupervisorMixin):
         datastore_extend_context = 'vm.extend_context'
         cli_namespace = 'service.vm'
         role_prefix = 'VM'
+        entry = VMEntry
 
-    ENTRY = Patch(
-        'vm_create',
-        'vm_entry',
-        ('add', List('devices')),
-        ('add', Dict(
-            'status',
-            Str('state', required=True),
-            Int('pid', null=True, required=True),
-            Str('domain_state', required=True),
-        )),
-        ('add', Bool('display_available')),
-        ('add', Int('id')),
-    )
-
-    @accepts(roles=['VM_READ'])
-    @returns(Dict(additional_attrs=True))
+    @api_method(VMBootloaderOVMFChoicesArgs, VMBootloaderOVMFChoicesResult, roles=['VM_READ'])
     def bootloader_ovmf_choices(self):
         """
         Retrieve bootloader ovmf choices
@@ -113,10 +104,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             'status': status,
         }
 
-    @accepts(roles=['VM_READ'])
-    @returns(Dict(
-        *[Str(k, enum=[v]) for k, v in BOOT_LOADER_OPTIONS.items()],
-    ))
+    @api_method(VMBootloaderOptionsArgs, VMBootloaderOptionsResult, roles=['VM_READ'])
     async def bootloader_options(self):
         """
         Supported motherboard firmware options.
@@ -134,39 +122,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         vm['status'] = context['status'][vm['id']]
         return vm
 
-    @accepts(Dict(
-        'vm_create',
-        Str('command_line_args', default=''),
-        Str('cpu_mode', default='CUSTOM', enum=[
-            'CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH']),
-        Str('cpu_model', default=None, null=True),
-        Str('name', required=True),
-        Str('description'),
-        Int('vcpus', default=1),
-        Int('cores', default=1),
-        Int('threads', default=1),
-        Str('cpuset', default=None, null=True, validators=[NumericSet()]),
-        Str('nodeset', default=None, null=True, validators=[NumericSet()]),
-        Bool('enable_cpu_topology_extension', default=False),
-        Bool('pin_vcpus', default=False),
-        Bool('suspend_on_snapshot', default=False),
-        Bool('trusted_platform_module', default=False),
-        Int('memory', required=True, validators=[Range(min_=20)]),
-        Int('min_memory', null=True, validators=[Range(min_=20)], default=None),
-        Bool('hyperv_enlightenments', default=False),
-        Str('bootloader', enum=list(BOOT_LOADER_OPTIONS.keys()), default='UEFI'),
-        Str('bootloader_ovmf', default='OVMF_CODE.fd'),
-        Bool('autostart', default=True),
-        Bool('hide_from_msr', default=False),
-        Bool('ensure_display_device', default=True),
-        Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
-        Int('shutdown_timeout', default=90,
-            validators=[Range(min_=5, max_=300)]),
-        Str('arch_type', null=True, default=None),
-        Str('machine_type', null=True, default=None),
-        Str('uuid', null=True, default=None, validators=[UUID()]),
-        register=True,
-    ))
+    @api_method(VMCreateArgs, VMCreateResult)
     async def do_create(self, data):
         """
         Create a Virtual Machine (VM).
@@ -327,17 +283,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         # with reports of users having thousands of disks
         # Let's validate that the VM has the correct no of slots available to accommodate currently configured devices
 
-    @accepts(
-        Int('id', required=True),
-        Patch(
-            'vm_entry',
-            'vm_update',
-            ('rm', {'name': 'devices'}),
-            ('rm', {'name': 'display_available'}),
-            ('rm', {'name': 'status'}),
-            ('attr', {'update': True}),
-        )
-    )
+    @api_method(VMUpdateArgs, VMUpdateResult)
     async def do_update(self, id_, data):
         """
         Update all information of a specific VM.
@@ -398,14 +344,7 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         return await self.get_instance(id_)
 
-    @accepts(
-        Int('id'),
-        Dict(
-            'vm_delete',
-            Bool('zvols', default=False),
-            Bool('force', default=False),
-        ),
-    )
+    @api_method(VMDeleteArgs, VMDeleteResult)
     async def do_delete(self, id_, data):
         """
         Delete a VM.
@@ -461,20 +400,14 @@ class VMService(CRUDService, VMSupervisorMixin):
                 await self.middleware.call('vm.device.delete', device['id'], {'force': data['force']})
             result = await self.middleware.call('datastore.delete', 'vm.vm', id_)
             if not await self.middleware.call('vm.query'):
-                await self.middleware.call('vm.deinitialize_vms')
+                await self.middleware.call('vm.deinitialize_vms', {'reload_ui': False})
                 self._clear()
             else:
                 await self.middleware.call('etc.generate', 'libvirt_guests')
             return result
 
     @item_method
-    @accepts(Int('id'), roles=['VM_READ'])
-    @returns(Dict(
-        'vm_status',
-        Str('state', required=True),
-        Int('pid', null=True, required=True),
-        Str('domain_state', required=True),
-    ))
+    @api_method(VMStatusArgs, VMStatusResult, roles=['VM_READ'])
     def status(self, id_):
         """
         Get the status of `id` VM.
@@ -498,8 +431,7 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         return get_default_status()
 
-    @accepts(Int('id'), roles=['VM_READ'])
-    @returns(Str(null=True))
+    @api_method(VMLogFilePathArgs, VMLogFilePathResult, roles=['VM_READ'])
     def log_file_path(self, vm_id):
         """
         Retrieve log file path of `id` VM.
@@ -510,8 +442,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         path = f'/var/log/libvirt/qemu/{vm["id"]}_{vm["name"]}.log'
         return path if os.path.exists(path) else None
 
-    @accepts(Int('id'), roles=['VM_READ'])
-    @returns()
+    @api_method(VMLogFileDownloadArgs, VMLogFileDownloadResult, roles=['VM_READ'])
     @job(pipes=['output'])
     def log_file_download(self, job, vm_id):
         """

@@ -75,9 +75,9 @@ def test_immutable_flag():
             # 2) "is_immutable_set" returns sane response
             if flag_set:
                 with pytest.raises(PermissionError):
-                    call("filesystem.mkdir", f"{t_child_path}_{flag_set}")
+                    call('filesystem.mkdir', {'path': f"{t_child_path}_{flag_set}"})
             else:
-                call("filesystem.mkdir", f"{t_child_path}_{flag_set}")
+                call('filesystem.mkdir', {'path': f"{t_child_path}_{flag_set}"})
 
             is_immutable = 'IMMUTABLE' in call('filesystem.stat', t_path)['attributes']
             err = "Immutable flag is still not set"
