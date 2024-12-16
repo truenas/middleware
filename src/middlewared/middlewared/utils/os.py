@@ -12,6 +12,7 @@ ALIVE_SIGNAL = 0
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class PidEntry:
+    name: bytes
     cmdline: bytes
     pid: int
 
@@ -62,6 +63,12 @@ def terminate_pid(pid: int, timeout: int = 10) -> bool:
 
 
 def get_pids(pid: int | None = None) -> Generator[PidEntry] | PidEntry | None:
+    """Get the currently running processes on the OS.
+
+    pid: int if provided, will short-circuit and return a
+        `PidEntry` with the same pid. If not provided, the
+        will yield a `PidEntry`.
+    """
     spid = str(pid) if pid is not None else None
     with scandir("/proc/") as sdir:
         for i in filter(lambda x: x.name.isdigit(), sdir):
@@ -73,6 +80,6 @@ def get_pids(pid: int | None = None) -> Generator[PidEntry] | PidEntry | None:
                 pass
             else:
                 if spid == i.name:
-                    return PidEntry(cmdline=cmdline, pid=pid)
+                    return PidEntry(name=cmdline, cmdline=cmdline, pid=pid)
                 else:
-                    yield PidEntry(cmdline=cmdline, pid=int(i.name))
+                    yield PidEntry(name=cmdline, cmdline=cmdline, pid=int(i.name))
