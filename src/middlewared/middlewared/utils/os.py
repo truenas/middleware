@@ -66,8 +66,8 @@ def get_pids(pid: int | None = None) -> Generator[PidEntry] | PidEntry | None:
     """Get the currently running processes on the OS.
 
     pid: int if provided, will short-circuit and return a
-        `PidEntry` with the same pid. If not provided, the
-        will yield a `PidEntry`.
+        `PidEntry` with the same pid. If not provided, will
+        yield a `PidEntry`.
     """
     spid = str(pid) if pid is not None else None
     with scandir("/proc/") as sdir:
