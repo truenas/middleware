@@ -129,7 +129,7 @@ def get_fd_count() -> int:
     return len(os.listdir('/proc/self/fd'))
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def fd_count() -> int:
     return get_fd_count()
 
