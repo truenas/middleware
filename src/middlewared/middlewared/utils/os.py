@@ -19,6 +19,9 @@ class PidEntry:
     def send_signal(self, sig: int):
         kill(self.pid, sig)
 
+    def terminate_process(self, timeout: int = 10) -> bool:
+        return terminate_pid(self.pid, timeout=timeout)
+
 
 def close_fds(low_fd, max_fd=None):
     if max_fd is None:
