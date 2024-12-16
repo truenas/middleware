@@ -6,12 +6,27 @@
 # the central access policy for use on the system.  The default is to
 # only deny service to users whose accounts are expired in /etc/shadow.
 #
-<%namespace name="pam" file="pam.inc.mako" />\
 <%
-        dsp = pam.getDirectoryServicePam(middleware=middleware, render_ctx=render_ctx).pam_account()
+    from middlewared.utils.directoryservices.constants import DSType
+    from middlewared.utils.pam import STANDALONE_ACCOUNT, AD_ACCOUNT, SSS_ACCOUNT
+
+    match (dstype := render_ctx['directoryservices.status']['type']):
+        # dstype of None means standalone server
+        case None:
+            conf = STANDALONE_ACCOUNT
+        case DSType.AD.value:
+            conf = AD_ACCOUNT
+        case DSType.LDAP.value | DSType.IPA.value:
+            conf = SSS_ACCOUNT
+        case _:
+            raise TypeError(f'{dstype}: unknown DSType')
 %>\
 
-${'\n'.join(dsp['primary'])}
+% if conf.primary:
+${'\n'.join(line.as_conf() for line in conf.primary)}
+% endif
 account	requisite			pam_deny.so
 account	required			pam_permit.so
-${'\n'.join(dsp['additional'])}
+% if conf.secondary:
+${'\n'.join(line.as_conf() for line in conf.secondary)}
+% endif

@@ -167,8 +167,7 @@ class EtcService(Service):
         },
         'pam': {
             'ctx': [
-                {'method': 'activedirectory.config'},
-                {'method': 'ldap.config'},
+                {'method': 'directoryservices.status'},
             ],
             'entries': [
                 {'type': 'mako', 'path': 'pam.d/common-account'},
