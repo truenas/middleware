@@ -1,6 +1,7 @@
+from typing import Annotated
+
 from annotated_types import Gt
 import pytest
-from typing_extensions import Annotated
 
 from middlewared.api.base import BaseModel
 from middlewared.api.base.handler.accept import accept_params

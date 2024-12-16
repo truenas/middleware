@@ -1,8 +1,7 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from annotated_types import Ge, Le
 from pydantic import Field, StringConstraints
-from typing_extensions import Annotated
 
 from middlewared.api.base import (BaseModel, Excluded, ForUpdateMetaclass, IscsiExtentBlockSize, IscsiExtentRPM,
                                   IscsiExtentType, NonEmptyString, excluded_field)

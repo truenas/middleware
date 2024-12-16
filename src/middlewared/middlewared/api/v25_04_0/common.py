@@ -1,4 +1,4 @@
-from typing_extensions import Annotated, Self
+from typing import Annotated, Self
 
 from middlewared.api.base import BaseModel
 from middlewared.utils import filters

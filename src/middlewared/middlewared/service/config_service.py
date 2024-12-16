@@ -1,8 +1,8 @@
 import asyncio
 import copy
+from typing import Annotated
 
 from pydantic import create_model, Field
-from typing_extensions import Annotated
 
 from middlewared.api import api_method
 from middlewared.api.base.model import BaseModel

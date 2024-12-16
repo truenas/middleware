@@ -1,11 +1,21 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from annotated_types import Ge, Le
 from pydantic import EmailStr, Field, Secret
-from typing_extensions import Annotated
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LocalUsername, RemoteUsername,
-                                  LocalUID, LongString, NonEmptyString, single_argument_args, single_argument_result)
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    excluded_field,
+    ForUpdateMetaclass,
+    LocalUsername,
+    RemoteUsername,
+    LocalUID,
+    LongString,
+    NonEmptyString,
+    single_argument_args,
+    single_argument_result
+)
 
 __all__ = ["UserEntry",
            "UserCreateArgs", "UserCreateResult",

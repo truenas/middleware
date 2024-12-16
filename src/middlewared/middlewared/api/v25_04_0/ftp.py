@@ -1,7 +1,6 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, field_validator, ValidationInfo
-from typing_extensions import Annotated
 
 from middlewared.api.base import (
     BaseModel,
