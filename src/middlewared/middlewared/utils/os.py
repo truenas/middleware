@@ -1,11 +1,23 @@
-from os import closerange, kill
+from collections.abc import Generator
+from dataclasses import dataclass
+from os import closerange, kill, scandir
 from resource import getrlimit, RLIMIT_NOFILE, RLIM_INFINITY
 from signal import SIGKILL, SIGTERM
 from time import sleep, time
 
-__all__ = ['close_fds', 'terminate_pid']
+__all__ = ['close_fds', 'get_pids', 'terminate_pid']
 
 ALIVE_SIGNAL = 0
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class PidEntry:
+    name: bytes
+    cmdline: bytes
+    pid: int
+
+    def send_signal(self, sig: int):
+        kill(self.pid, sig)
 
 
 def close_fds(low_fd, max_fd=None):
@@ -51,3 +63,16 @@ def terminate_pid(pid: int, timeout: int = 10) -> bool:
     except ProcessLookupError:
         # Process may have terminated between checks
         return True
+
+
+def get_pids() -> Generator[PidEntry] | None:
+    """Get the currently running processes on the OS"""
+    with scandir("/proc/") as sdir:
+        for i in filter(lambda x: x.name.isdigit(), sdir):
+            try:
+                with open(f'{i.path}/cmdline', 'rb') as f:
+                    cmdline = f.read().replace(b'\x00', b' ')
+                yield PidEntry(name=cmdline, cmdline=cmdline, pid=int(i.name))
+            except FileNotFoundError:
+                # process could have gone away
+                pass

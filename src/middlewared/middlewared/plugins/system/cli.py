@@ -1,16 +1,15 @@
 import contextlib
 import signal
 
-import psutil
-
 from middlewared.service import Service, private
+from middlewared.utils.os import get_pids
 
 
 class SystemService(Service):
     @private
     def reload_cli(self):
-        for process in psutil.process_iter(['pid', 'cmdline']):
-            cmdline = process.cmdline()
-            if len(cmdline) >= 2 and cmdline[1] == '/usr/bin/cli':
+        for process in filter(lambda x: x and b'/usr/bin/cli' in x.cmdline, get_pids()):
+            args = process.cmdline.split(b' ')
+            if len(args) >= 2 and args[1] == b'/usr/bin/cli':
                 with contextlib.suppress(Exception):
                     process.send_signal(signal.SIGUSR1)
