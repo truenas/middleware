@@ -1,7 +1,7 @@
-import aiohttp
-import async_timeout
 import asyncio
 import json
+
+import aiohttp
 
 
 class TruecommandAPIMixin:
@@ -16,7 +16,7 @@ class TruecommandAPIMixin:
         timeout = options.get('timeout', 15)
         response = {'error': None, 'response': {}}
         try:
-            async with async_timeout.timeout(timeout):
+            async with asyncio.timeout(timeout):
                 async with aiohttp.ClientSession(
                     raise_for_status=True, trust_env=True,
                 ) as session:

@@ -1,8 +1,7 @@
-import aiohttp
-import aiohttp.client_exceptions
-import async_timeout
 import asyncio
 import urllib.parse
+
+import aiohttp
 
 from middlewared.service import CallError
 
@@ -22,7 +21,7 @@ class ContainerRegistryClientMixin:
         assert mode in ('get', 'head')
         response = {'error': None, 'response': {}, 'response_obj': None}
         try:
-            async with async_timeout.timeout(timeout):
+            async with asyncio.timeout(timeout):
                 async with aiohttp.ClientSession(
                     raise_for_status=True, trust_env=True,
                 ) as session:
@@ -40,7 +39,7 @@ class ContainerRegistryClientMixin:
             else:
                 try:
                     response['response'] = await req.json()
-                except aiohttp.client_exceptions.ContentTypeError as e:
+                except aiohttp.ContentTypeError as e:
                     # quay.io registry returns malformed content type header which aiohttp fails to parse
                     # even though the content returned by registry is valid json
                     response['error'] = f'Unable to parse response: {e}'
