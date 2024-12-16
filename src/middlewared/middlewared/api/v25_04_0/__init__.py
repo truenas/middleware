@@ -16,6 +16,7 @@ from .core import *  # noqa
 from .disk import *  # noqa
 from .docker import *  # noqa
 from .docker_network import *  # noqa
+from .enclosure_label import *  # noqa
 from .failover_reboot import *  # noqa
 from .fc_host import *  # noqa
 from .fcport import *  # noqa
