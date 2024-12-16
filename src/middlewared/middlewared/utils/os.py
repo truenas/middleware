@@ -65,24 +65,14 @@ def terminate_pid(pid: int, timeout: int = 10) -> bool:
         return True
 
 
-def get_pids(pid: int | None = None) -> Generator[PidEntry] | PidEntry | None:
-    """Get the currently running processes on the OS.
-
-    pid: int if provided, will short-circuit and return a
-        `PidEntry` with the same pid. If not provided, will
-        yield a `PidEntry`.
-    """
-    spid = str(pid) if pid is not None else None
+def get_pids() -> Generator[PidEntry] | None:
+    """Get the currently running processes on the OS"""
     with scandir("/proc/") as sdir:
         for i in filter(lambda x: x.name.isdigit(), sdir):
             try:
                 with open(f'{i.path}/cmdline', 'rb') as f:
                     cmdline = f.read().replace(b'\x00', b' ')
+                yield PidEntry(name=cmdline, cmdline=cmdline, pid=int(i.name))
             except FileNotFoundError:
                 # process could have gone away
                 pass
-            else:
-                if spid == i.name:
-                    return PidEntry(name=cmdline, cmdline=cmdline, pid=pid)
-                else:
-                    yield PidEntry(name=cmdline, cmdline=cmdline, pid=int(i.name))
