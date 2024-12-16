@@ -6,7 +6,6 @@ import tempfile
 import time
 
 import aiohttp
-import async_timeout
 import requests
 
 from licenselib.utils import proactive_support_allowed
@@ -24,7 +23,7 @@ ADDRESS = 'support-proxy.ixsystems.com'
 
 async def post(url, data, timeout=INTERNET_TIMEOUT):
     try:
-        async with async_timeout.timeout(timeout):
+        async with asyncio.timeout(timeout):
             async with aiohttp.ClientSession(
                 raise_for_status=True, trust_env=True,
             ) as session:
