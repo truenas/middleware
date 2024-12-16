@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import cached_property
 from socket import AF_INET, AF_INET6, AF_UNIX, SO_PEERCRED, SOL_SOCKET
 from struct import calcsize, unpack
 
@@ -96,6 +97,21 @@ class ConnectionOrigin:
             self.rem_port and self.rem_port <= 1024 and
             self.rem_addr and self.rem_addr in HA_HEARTBEAT_IPS
         )
+
+    def loginuid(self) -> int | None:
+        if self.pid is None:
+            return None
+
+        try:
+            with open(f"/proc/{self.pid}/loginuid") as f:
+                loginuid = int(f.read())
+        except (FileNotFoundError, ValueError):
+            return None
+
+        if loginuid == 4294967295:
+            return None
+
+        return loginuid
 
 
 def get_tcp_ip_info(sock, request) -> tuple:
