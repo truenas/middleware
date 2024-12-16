@@ -5,7 +5,7 @@ from resource import getrlimit, RLIMIT_NOFILE, RLIM_INFINITY
 from signal import SIGKILL, SIGTERM
 from time import sleep, time
 
-__all__ = ['close_fds', 'get_pids', 'PidEntry', 'terminate_pid']
+__all__ = ['close_fds', 'get_pids', 'terminate_pid']
 
 ALIVE_SIGNAL = 0
 
@@ -15,6 +15,9 @@ class PidEntry:
     name: bytes
     cmdline: bytes
     pid: int
+
+    def send_signal(self, sig: int):
+        kill(self.pid, sig)
 
 
 def close_fds(low_fd, max_fd=None):

@@ -1,5 +1,4 @@
 import contextlib
-import os
 import signal
 
 from middlewared.service import Service, private
@@ -13,4 +12,4 @@ class SystemService(Service):
             args = process.cmdline.split(b' ')
             if len(args) >= 2 and args[1] == b'/usr/bin/cli':
                 with contextlib.suppress(Exception):
-                    os.kill(process.pid, signal.SIGUSR1)
+                    process.send_signal(signal.SIGUSR1)
