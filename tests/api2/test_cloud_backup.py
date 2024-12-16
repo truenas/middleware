@@ -148,7 +148,7 @@ def test_cloud_backup(cloud_backup_task):
 
 def test_cloud_backup_abort(cloud_backup_task):
     task_id = cloud_backup_task.task["id"]
-    call("cloud_backup.sync", task_id, {"dry_run": True})
+    call("cloud_backup.sync", task_id)
     assert call("cloud_backup.abort", task_id)
 
     # Ensure backup works after an abort
