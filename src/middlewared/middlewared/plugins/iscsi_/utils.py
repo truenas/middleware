@@ -10,9 +10,9 @@ class IscsiAuthType(StrEnum):
 
 
 AUTHMETHOD_LEGACY_MAP = bidict.bidict({
-    'None': IscsiAuthType.NONE,
-    'CHAP': IscsiAuthType.CHAP,
-    'CHAP Mutual': IscsiAuthType.CHAP_MUTUAL,
+    'None': IscsiAuthType.NONE.value,
+    'CHAP': IscsiAuthType.CHAP.value,
+    'CHAP Mutual': IscsiAuthType.CHAP_MUTUAL.value,
 })
 
 # Currently SCST has this limit (scst_vdisk_dev->name)
