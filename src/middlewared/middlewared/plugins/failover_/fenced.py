@@ -4,7 +4,6 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import subprocess
-import psutil
 import contextlib
 import os
 import signal
@@ -13,6 +12,7 @@ from middlewared.plugins.system.product import ProductType
 from middlewared.service import Service, CallError
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.cgroups import move_to_root_cgroups
+from middlewared.utils.os import get_pids
 from fenced.fence import ExitCode as FencedExitCodes
 
 
@@ -96,9 +96,11 @@ class FencedService(Service):
 
         if check_running_procs:
             # either 1. no pid in file or 2. pid in file is wrong/stale
-            for proc in filter(lambda x: x.info['name'] == 'fenced', psutil.process_iter(['pid', 'name'])):
-                res['pid'] = proc.info['pid']
-                res['running'] = True
+            for proc in filter(lambda x: x and b'fenced' in x.name, get_pids()):
+                args = proc.cmdline.split(b' ')
+                if len(args) >= 2 and args[1] == b'/usr/bin/fenced':
+                    res['pid'] = proc.pid
+                    res['running'] = True
 
         return res
 
