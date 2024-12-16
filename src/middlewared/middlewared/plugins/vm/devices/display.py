@@ -1,10 +1,10 @@
-import psutil
 import subprocess
 
 from urllib.parse import urlencode, quote_plus
 
 from middlewared.api.current import VMDisplayDevice
 from middlewared.schema import Dict, ValidationErrors
+from middlewared.utils.os import get_pids
 
 from .device import Device
 from .utils import create_element, NGINX_PREFIX
@@ -89,8 +89,9 @@ class DISPLAY(Device):
         )
 
     def post_stop_vm(self, *args, **kwargs):
-        if self.web_process and psutil.pid_exists(self.web_process.pid):
-            self.middleware.call_sync('service.terminate_process', self.web_process.pid)
+        if self.web_process:
+            for proc in filter(lambda x: x and x.pid == self.web_process.pid, get_pids()):
+                proc.terminate_process()
         self.web_process = None
 
     def get_webui_info(self):
