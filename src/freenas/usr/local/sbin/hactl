@@ -26,7 +26,7 @@ class StatusEnum(enum.Enum):
 
 def get_client():
     try:
-        return Client()
+        return Client(private_methods=True)
     except Exception as e:
         print_msg_and_exit(f'Unexpected failure enumerating websocket client: {e}')
 
