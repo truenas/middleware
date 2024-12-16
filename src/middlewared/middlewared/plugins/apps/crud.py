@@ -177,7 +177,7 @@ class AppService(CRUDService):
             Str('version', default='latest'),
         )
     )
-    @job(lock=lambda args: f'app_create_{args[0]["app_name"]}')
+    @job(lock=lambda args: f'app_create_{args[0].get("app_name")}')
     def do_create(self, job, data):
         """
         Create an app with `app_name` using `catalog_app` with `train` and `version`.
