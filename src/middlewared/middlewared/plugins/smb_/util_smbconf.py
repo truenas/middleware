@@ -266,7 +266,8 @@ def generate_smb_conf_dict(
     smb_shares: list,
     smb_bind_choices: dict,
     idmap_settings: list,
-    is_enterprise: bool = False
+    is_enterprise: bool,
+    security_config: dict[str, bool]
 ):
     guest_enabled = any(filter_list(smb_shares, [['guestok', '=', True]]))
     fsrvp_enabled = any(filter_list(smb_shares, [['fsrvp', '=', True]]))
@@ -556,6 +557,14 @@ def generate_smb_conf_dict(
 
         param, value = entry.split('=', 1)
         smbconf[param.strip()] = value.strip()
+
+    # Ordering here is relevant. Do not permit smb_options to override required
+    # settings for the STIG.
+    if security_config['enable_gpos_stig']:
+        smbconf.update({
+            'client use kerberos': 'required',
+            'ntlm auth': 'disabled'
+        })
 
     # The following parameters must come after processing includes in order to
     # prevent auxiliary parameters from overriding them

@@ -162,9 +162,17 @@ class SMBService(ConfigService):
         smb_shares = self.middleware.call_sync('sharing.smb.query')
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
         is_enterprise = self.middleware.call_sync('system.is_enterprise')
+        security_config = self.middleware.call_sync('system.security.config')
 
         return generate_smb_conf_dict(
-            ds_type, ds_config, smb_config, smb_shares, bind_ip_choices, idmap_config, is_enterprise
+            ds_type,
+            ds_config,
+            smb_config,
+            smb_shares,
+            bind_ip_choices,
+            idmap_config,
+            is_enterprise,
+            security_config,
         )
 
     @api_method(SmbServiceBindIPChoicesArgs, SmbServiceBindIPChoicesResult)
