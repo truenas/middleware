@@ -1,8 +1,7 @@
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import AfterValidator, BeforeValidator, Field, GetCoreSchemaHandler, HttpUrl as _HttpUrl, PlainSerializer
 from pydantic_core import CoreSchema, core_schema, PydanticKnownError
-from typing_extensions import Annotated
 
 from middlewared.api.base.validators import time_validator
 from middlewared.utils.netbios import validate_netbios_name, validate_netbios_domain

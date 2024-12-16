@@ -1,5 +1,6 @@
+from typing import Annotated
+
 from pydantic import StringConstraints
-from typing_extensions import Annotated
 
 __all__ = ["FibreChannelHostAlias", "FibreChannelPortAlias", "WWPN"]
 

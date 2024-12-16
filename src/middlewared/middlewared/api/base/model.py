@@ -7,7 +7,6 @@ import typing
 from pydantic import BaseModel as PydanticBaseModel, ConfigDict, create_model, Field, model_serializer, Secret
 from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.main import IncEx
-from typing_extensions import Annotated
 
 from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
 from middlewared.utils.lang import undefined
@@ -165,7 +164,7 @@ def single_argument_args(name: str):
             klass.__name__,
             __base__=(BaseModel,),
             __module__=klass.__module__,
-            **{name: Annotated[klass, Field()]},
+            **{name: typing.Annotated[klass, Field()]},
         )
         model.from_previous = klass.from_previous
         model.to_previous = klass.to_previous
@@ -200,7 +199,7 @@ def single_argument_result(klass, klass_name=None):
         klass_name,
         __base__=(BaseModel,),
         __module__=inspect.getmodule(inspect.stack()[1][0]),
-        result=Annotated[klass, Field()],
+        result=typing.Annotated[klass, Field()],
     )
     if issubclass(klass, BaseModel):
         model.from_previous = klass.from_previous
@@ -214,7 +213,7 @@ def query_result(item):
         item.__name__.removesuffix("Entry") + "QueryResult",
         __base__=(BaseModel,),
         __module__=item.__module__,
-        result=Annotated[list[result_item] | result_item | int, Field()],
+        result=typing.Annotated[list[result_item] | result_item | int, Field()],
     )
 
 
