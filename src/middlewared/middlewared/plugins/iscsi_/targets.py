@@ -334,7 +334,7 @@ class iSCSITargetService(CRUDService):
         audit='Delete iSCSI target',
         audit_callback=True
     )
-    async def do_delete(self, audit_callback, id_, force):
+    async def do_delete(self, audit_callback, id_, force, delete_extents):
         """
         Delete iSCSI Target of `id`.
 
@@ -350,6 +350,8 @@ class iSCSITargetService(CRUDService):
                 raise CallError(f'Target {target["name"]} is in use.')
         for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['target', '=', id_]]):
             await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'], force)
+            if delete_extents:
+                await self.middleware.call('iscsi.extent.delete', target_to_extent['extent'], False, force)
 
         await self.middleware.call(
             'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target', '=', id_]]

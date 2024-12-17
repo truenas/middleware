@@ -86,6 +86,7 @@ class IscsiTargetUpdateResult(BaseModel):
 class IscsiTargetDeleteArgs(BaseModel):
     id: int
     force: bool = False
+    delete_extents: bool = False
 
 
 class IscsiTargetDeleteResult(BaseModel):
