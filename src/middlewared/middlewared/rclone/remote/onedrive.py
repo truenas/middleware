@@ -5,4 +5,9 @@ class OneDriveRcloneRemote(BaseRcloneRemote):
     name = "ONEDRIVE"
     title = "Microsoft OneDrive"
 
-    rclone_type = ""
+    fast_list = True
+
+    rclone_type = "onedrive"
+
+    credentials_oauth = True
+    refresh_credentials = ["token"]
