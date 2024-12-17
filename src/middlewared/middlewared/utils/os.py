@@ -75,7 +75,12 @@ def get_pids() -> Generator[PidEntry] | None:
             try:
                 with open(f'{i.path}/cmdline', 'rb') as f:
                     cmdline = f.read().replace(b'\x00', b' ')
-                yield PidEntry(name=cmdline, cmdline=cmdline, pid=int(i.name))
+                with open(f'{i.path}/status', 'rb') as f:
+                    # first line in this file is name of process
+                    # and this is in procfs, which is considered
+                    # part of linux's ABI and is stable
+                    name = f.readline().split(b'Name:')[-1].strip()
+                yield PidEntry(name=name, cmdline=cmdline, pid=int(i.name))
             except FileNotFoundError:
                 # process could have gone away
                 pass
