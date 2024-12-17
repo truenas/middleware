@@ -42,9 +42,21 @@ def close_fds(low_fd, max_fd=None):
     closerange(low_fd, max_fd)
 
 
-def terminate_pid(pid: int, timeout: int = 10, get_pgid: bool = False) -> bool:
+def terminate_pid(pid: int, timeout: int = 10, use_pgid: bool = False) -> bool:
+    """
+    Send SIGTERM to `pid` and wait `timeout` seconds for the process to terminate.
+    If the process is still alive after `timeout`, proceed to send SIGKILL to the
+    process.
+
+    `pid`: integer represents the PID to terminate.
+    `timeout`: integer represents the total time (in seconds) to wait
+        before sending SIGKILL to `pid` if the process doesn't honor
+        SIGTERM or takes longer than `timeout` seconds to terminate.
+    `use_pgid`: boolean, if true will lookup the process group id of
+        `pid` and apply the same logic.
+    """
     pid_or_pgid, method = pid, kill
-    if get_pgid:
+    if use_pgid:
         method = killpg
         pid_or_pgid = getpgid(pid)
 

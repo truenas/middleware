@@ -196,7 +196,7 @@ class ShellWorkerThread(threading.Thread):
         asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
 
         with contextlib.suppress(ProcessLookupError):
-            terminate_pid(self.shell_pid, timeout=5, get_pgid=True)
+            terminate_pid(self.shell_pid, timeout=5, use_pgid=True)
 
         self.die()
 
