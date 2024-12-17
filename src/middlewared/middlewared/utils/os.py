@@ -1,5 +1,6 @@
 from collections.abc import Generator
 from dataclasses import dataclass
+from functools import cached_property
 from os import closerange, kill, scandir
 from resource import getrlimit, RLIMIT_NOFILE, RLIM_INFINITY
 from signal import SIGKILL, SIGTERM
@@ -10,11 +11,19 @@ __all__ = ['close_fds', 'get_pids', 'terminate_pid']
 ALIVE_SIGNAL = 0
 
 
-@dataclass(slots=True, frozen=True, kw_only=True)
+@dataclass(frozen=True, kw_only=True)
 class PidEntry:
-    name: bytes
     cmdline: bytes
     pid: int
+
+    @cached_property
+    def name(self) -> bytes:
+        """The name of process as described in man 2 PR_SET_NAME"""
+        with open(f'/proc/{self.pid}/status', 'rb') as f:
+            # first line in this file is name of process
+            # and this is in procfs, which is considered
+            # part of linux's ABI and is stable
+            return f.readline().split(b'\t', 1)[-1].strip()
 
     def send_signal(self, sig: int):
         kill(self.pid, sig)
@@ -75,7 +84,7 @@ def get_pids() -> Generator[PidEntry] | None:
             try:
                 with open(f'{i.path}/cmdline', 'rb') as f:
                     cmdline = f.read().replace(b'\x00', b' ')
-                yield PidEntry(name=cmdline, cmdline=cmdline, pid=int(i.name))
+                yield PidEntry(cmdline=cmdline, pid=int(i.name))
             except FileNotFoundError:
                 # process could have gone away
                 pass
