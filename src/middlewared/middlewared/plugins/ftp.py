@@ -156,7 +156,6 @@ class FTPService(SystemServiceService):
             if new["anonpath"] is not None:
                 new["anonpath"] = None
 
-        self.middleware.logger.debug(f"\nMCG DEBUG: new[onlyanonymous]={new['onlyanonymous']}, new[anonpath]=\"{new['anonpath']}\"")
         if new["anonpath"] is not None:
             await check_path_resides_within_volume(
                 verrors, self.middleware, "ftp_update.anonpath", new["anonpath"], must_be_dir=True

@@ -8,14 +8,19 @@ from middlewared.test.integration.utils import call, ssh
 
 @contextlib.contextmanager
 def ftp_server(config=None):
+    restore_config = None
     if config is not None:
+        restore_config = call('ftp.config')
         call("ftp.update", config)
+
     call("service.start", "ftp")
 
     try:
         yield
     finally:
         call("service.stop", "ftp")
+        if restore_config is not None:
+            call('ftp.update', restore_config)
 
 
 @contextlib.contextmanager
