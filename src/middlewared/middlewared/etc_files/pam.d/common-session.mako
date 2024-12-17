@@ -26,7 +26,7 @@
     if render_ctx['system.security.config']['enable_gpos_stig']:
         tty_audit_line = TTY_AUDIT_LINE
 %>\
-% if conf.tty_audit_line:
+% if tty_audit_line:
 ${TTY_AUDIT_LINE.as_conf()}
 % endif
 % if conf.primary:
