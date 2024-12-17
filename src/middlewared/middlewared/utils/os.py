@@ -19,7 +19,7 @@ class PidEntry:
     def send_signal(self, sig: int):
         kill(self.pid, sig)
 
-    def terminate_process(self, timeout: int = 10) -> bool:
+    def terminate(self, timeout: int = 10) -> bool:
         return terminate_pid(self.pid, timeout=timeout)
 
 

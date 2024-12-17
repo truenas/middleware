@@ -91,7 +91,7 @@ class DISPLAY(Device):
     def post_stop_vm(self, *args, **kwargs):
         if self.web_process:
             for proc in filter(lambda x: x and x.pid == self.web_process.pid, get_pids()):
-                proc.terminate_process()
+                proc.terminate()
         self.web_process = None
 
     def get_webui_info(self):
