@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from ipaddress import ip_address
+import re
 from socket import AF_INET, AF_INET6, AF_UNIX, SO_PEERCRED, SOL_SOCKET
 from struct import calcsize, unpack
 
@@ -147,6 +148,30 @@ class ConnectionOrigin:
 
         # By default assume that transport is insecure
         return False
+
+    def ppids(self) -> set[int]:
+        if self.pid is None:
+            return set()
+
+        pid = self.pid
+        ppids = set()
+        while True:
+            try:
+                with open(f"/proc/{pid}/status") as f:
+                    status = f.read()
+            except FileNotFoundError:
+                break
+
+            if m := re.search(r"PPid:\t([0-9]+)", status):
+                pid = int(m.group(1))
+                if pid <= 1:
+                    break
+
+                ppids.add(pid)
+            else:
+                break
+
+        return ppids
 
 
 def get_tcp_ip_info(sock, request) -> tuple:

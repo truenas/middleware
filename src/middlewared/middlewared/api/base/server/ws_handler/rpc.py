@@ -318,6 +318,16 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             # System-initiated calls to `midclt`
             return True
 
+        if ppids := app.origin.ppids():
+            try:
+                with open("/run/crond.pid") as f:
+                    cron_pid = int(f.read())
+            except (FileNotFoundError, ValueError):
+                return False
+
+            if cron_pid in ppids:
+                return True
+
         return False
 
     async def process_method_call(self, app: RpcWebSocketApp, id_: Any, method: Method, params: list):
