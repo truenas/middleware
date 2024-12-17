@@ -5,15 +5,11 @@ import fcntl
 import json
 import os
 import queue
-import signal
 import struct
 import termios
 import threading
 import time
 import uuid
-
-
-import psutil
 
 from middlewared.api.base.server.ws_handler.base import BaseWebSocketHandler
 from middlewared.service_exception import (
@@ -22,7 +18,7 @@ from middlewared.service_exception import (
     InstanceNotFound,
     MatchNotFound,
 )
-from middlewared.utils.os import close_fds
+from middlewared.utils.os import close_fds, terminate_pid
 
 __all__ = ("ShellApplication",)
 
@@ -200,7 +196,7 @@ class ShellWorkerThread(threading.Thread):
         asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
 
         with contextlib.suppress(ProcessLookupError):
-            os.kill(self.shell_pid, signal.SIGTERM)
+            terminate_pid(self.shell_pid, timeout=5, use_pgid=True)
 
         self.die()
 
@@ -363,22 +359,4 @@ class ShellApplication:
         return ws
 
     async def worker_kill(self, t_worker):
-        def worker_kill_impl():
-            # If connection has been closed lets make sure shell is killed
-            if t_worker.shell_pid:
-                with contextlib.suppress(psutil.NoSuchProcess):
-                    shell = psutil.Process(t_worker.shell_pid)
-                    to_terminate = [shell] + shell.children(recursive=True)
-
-                    for p in to_terminate:
-                        with contextlib.suppress(psutil.NoSuchProcess):
-                            p.terminate()
-                    gone, alive = psutil.wait_procs(to_terminate, timeout=2)
-
-                    for p in alive:
-                        with contextlib.suppress(psutil.NoSuchProcess):
-                            p.kill()
-
-            t_worker.join()
-
-        await self.middleware.run_in_thread(worker_kill_impl)
+        await self.middleware.run_in_thread(t_worker.abort)

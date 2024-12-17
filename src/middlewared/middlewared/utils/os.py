@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from dataclasses import dataclass
 from functools import cached_property
-from os import closerange, kill, scandir
+from os import closerange, getpgid, kill, killpg, scandir
 from resource import getrlimit, RLIMIT_NOFILE, RLIM_INFINITY
 from signal import SIGKILL, SIGTERM
 from time import sleep, time
@@ -42,12 +42,29 @@ def close_fds(low_fd, max_fd=None):
     closerange(low_fd, max_fd)
 
 
-def terminate_pid(pid: int, timeout: int = 10) -> bool:
-    # Send SIGTERM to request the process to terminate
-    kill(pid, SIGTERM)
+def terminate_pid(pid: int, timeout: int = 10, use_pgid: bool = False) -> bool:
+    """
+    Send SIGTERM to `pid` and wait `timeout` seconds for the process to terminate.
+    If the process is still alive after `timeout`, proceed to send SIGKILL to the
+    process.
+
+    `pid`: integer represents the PID to terminate.
+    `timeout`: integer represents the total time (in seconds) to wait
+        before sending SIGKILL to `pid` if the process doesn't honor
+        SIGTERM or takes longer than `timeout` seconds to terminate.
+    `use_pgid`: boolean, if true will lookup the process group id of
+        `pid` and apply the same logic.
+    """
+    pid_or_pgid, method = pid, kill
+    if use_pgid:
+        method = killpg
+        pid_or_pgid = getpgid(pid)
+
+    # Send SIGTERM to request the process (group) to terminate
+    method(pid_or_pgid, SIGTERM)
 
     try:
-        kill(pid, ALIVE_SIGNAL)
+        method(pid_or_pgid, ALIVE_SIGNAL)
     except ProcessLookupError:
         # SIGTERM was honored
         return True
@@ -56,7 +73,7 @@ def terminate_pid(pid: int, timeout: int = 10) -> bool:
     start_time = time()
     while True:
         try:
-            kill(pid, ALIVE_SIGNAL)
+            method(pid_or_pgid, ALIVE_SIGNAL)
         except ProcessLookupError:
             # SIGTERM was honored (eventually)
             return True
@@ -70,7 +87,7 @@ def terminate_pid(pid: int, timeout: int = 10) -> bool:
 
     try:
         # Send SIGKILL to forcefully terminate the process
-        kill(pid, SIGKILL)
+        method(pid_or_pgid, SIGKILL)
         return False
     except ProcessLookupError:
         # Process may have terminated between checks
