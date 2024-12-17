@@ -7,6 +7,7 @@ def test_ftp_config_audit():
     Test the auditing of FTP configuration changes
     '''
     initial_ftp_config = call('ftp.config')
+    print(f"\nMCG DEBUG: ftp.config\n{initial_ftp_config}")
     try:
         # UPDATE
         payload = {
@@ -18,6 +19,7 @@ def test_ftp_config_audit():
             'params': [payload],
             'description': 'Update FTP configuration',
         }]):
+            print(f"MCG DEBUG:\n payload = {payload}")
             call('ftp.update', payload)
     finally:
         # Restore initial state

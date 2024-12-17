@@ -1402,3 +1402,5 @@ def test_100_ftp_service_stop():
     rv = query_ftp_service()
     assert rv['state'] == 'STOPPED'
     assert rv['enable'] is False
+    exit_config = call('ftp.config')
+    print(f"\nMCG DEBUG:\n exit_config = {exit_config}")
