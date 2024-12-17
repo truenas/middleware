@@ -1,15 +1,11 @@
-from middlewared.api.base import BaseModel, ForUpdateMetaclass
+from middlewared.api.base import BaseModel
 
-__all__ = ["EnclosureLabelUpdateData", "EnclosureLabelUpdateArgs", "EnclosureLabelUpdateResult"]
-
-
-class EnclosureLabelUpdateData(BaseModel, metaclass=ForUpdateMetaclass):
-    label: str
+__all__ = ["EnclosureLabelSetArgs", "EnclosureLabelUpdateResult"]
 
 
-class EnclosureLabelUpdateArgs(BaseModel):
+class EnclosureLabelSetArgs(BaseModel):
     id: str
-    enclosure_update: EnclosureLabelUpdateData
+    label: str
 
 
 class EnclosureLabelUpdateResult(BaseModel):

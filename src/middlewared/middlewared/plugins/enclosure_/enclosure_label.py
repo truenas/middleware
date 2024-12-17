@@ -1,7 +1,7 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
-from middlewared.api.current import EnclosureLabelUpdateArgs, EnclosureLabelUpdateResult
+from middlewared.api.current import EnclosureLabelSetArgs, EnclosureLabelUpdateResult
 from middlewared.service import private, Service
 
 
@@ -15,24 +15,23 @@ class EnclosureLabelModel(sa.Model):
 
 class EnclosureService(Service):
     class Config:
-        namespace = "enclosure"
-        cli_namespace = "storage.enclosure"
-
-    @api_method(EnclosureLabelUpdateArgs, EnclosureLabelUpdateResult)
-    async def update(self, id_, data):
-        if "label" in data:
-            await self.middleware.call(
-                "datastore.delete", "enclosure.label", [["encid", "=", id_]]
-            )
-            await self.middleware.call(
-                "datastore.insert",
-                "enclosure.label",
-                {"encid": id_, "label": data["label"]},
-            )
+        namespace = "enclosure.label"
+        cli_namespace = "storage.enclosure.label"
 
     @private
-    async def get_labels(self):
+    async def get_all(self):
         return {
             label["encid"]: label["label"]
             for label in await self.middleware.call("datastore.query", "enclosure.label")
         }
+
+    @api_method(EnclosureLabelSetArgs, EnclosureLabelUpdateResult)
+    async def set(self, id_, label):
+        await self.middleware.call(
+            "datastore.delete", "enclosure.label", [["encid", "=", id_]]
+        )
+        await self.middleware.call(
+            "datastore.insert",
+            "enclosure.label",
+            {"encid": id_, "label": label},
+        )

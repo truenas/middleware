@@ -73,7 +73,7 @@ def test_enclosure2_query(enc2_data):
     e.middleware._resolve_methods([Enclosure2Service], [])
     e.middleware['truenas.get_chassis_hardware'] = Mock(return_value=enc2_mocked.chassis)
     e.middleware['truenas.is_ix_hardware'] = Mock(return_value=True)
-    e.middleware['enclosure.get_labels'] = Mock(return_value=enc2_mocked.labels)
+    e.middleware['enclosure.label.get_all'] = Mock(return_value=enc2_mocked.labels)
     e.middleware['system.dmidecode_info'] = Mock(return_value=enc2_mocked.dmi)
     e.middleware['jbof.query'] = Mock(return_value=[])
     e.middleware['enclosure2.map_jbof'] = Mock(return_value=[])
