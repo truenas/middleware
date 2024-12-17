@@ -79,7 +79,7 @@ def get_pids() -> Generator[PidEntry] | None:
                     # first line in this file is name of process
                     # and this is in procfs, which is considered
                     # part of linux's ABI and is stable
-                    name = f.readline().split(b'Name:')[-1].strip()
+                    name = f.readline().split(b'\t', 1)[-1].strip()
                 yield PidEntry(name=name, cmdline=cmdline, pid=int(i.name))
             except FileNotFoundError:
                 # process could have gone away
