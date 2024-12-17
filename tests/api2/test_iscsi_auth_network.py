@@ -159,7 +159,7 @@ def test_iscsi_auth_networks_netmask_24(my_ip4, valid):
         call(
             'iscsi.target.update',
             config['target']['id'],
-            {'auth_networks': ["8.8.8.8/24", f"{good_ip}/24"] if valid else ["8.8.8.8/24", f"{bad_ip}/24"]}
+            {'auth_networks': ["8.8.8.0/24", f"{good_ip}/24"] if valid else ["8.8.8.0/24", f"{bad_ip}/24"]}
         )
         portal_listen_details = config['portal']['listen'][0]
         assert target_login_test(
@@ -170,9 +170,8 @@ def test_iscsi_auth_networks_netmask_24(my_ip4, valid):
 
 @pytest.mark.parametrize('valid', [True, False])
 def test_iscsi_auth_networks_netmask_16(my_ip4, valid):
-    # good_ip will be our IP with the second last byte changed and last byte cleared
-    n = (int(my_ip4.split('.')[2]) + 1) % 256
-    good_ip = '.'.join(my_ip4.split('.')[:2] + [str(n), '0'])
+    # good_ip will be our IP with the last 2 bytes cleared
+    good_ip = '.'.join(my_ip4.split('.')[:2] + ['0', '0'])
     # bad_ip will be the good_ip with the second byte changed
     ip_list = good_ip.split('.')
     n = (int(ip_list[1]) + 1) % 256
@@ -181,7 +180,7 @@ def test_iscsi_auth_networks_netmask_16(my_ip4, valid):
         call(
             'iscsi.target.update',
             config['target']['id'],
-            {'auth_networks': ["8.8.8.8/16", f"{good_ip}/16"] if valid else ["8.8.8.8/16", f"{bad_ip}/16"]}
+            {'auth_networks': ["8.8.0.0/16", f"{good_ip}/16"] if valid else ["8.8.0.0/16", f"{bad_ip}/16"]}
         )
         portal_listen_details = config['portal']['listen'][0]
         assert target_login_test(

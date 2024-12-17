@@ -6,8 +6,14 @@ import re
 import subprocess
 from collections import defaultdict
 
+from pydantic import IPvAnyNetwork
+
 import middlewared.sqlalchemy as sa
-from middlewared.schema import Bool, Dict, Int, IPAddr, List, Patch, Str, accepts
+from middlewared.api import api_method
+from middlewared.api.current import (IscsiTargetCreateArgs, IscsiTargetCreateResult, IscsiTargetDeleteArgs,
+                                     IscsiTargetDeleteResult, IscsiTargetEntry, IscsiTargetRemoveArgs,
+                                     IscsiTargetRemoveResult, IscsiTargetUpdateArgs, IscsiTargetUpdateResult,
+                                     IscsiTargetValidateNameArgs, IscsiTargetValidateNameResult)
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from middlewared.utils import UnexpectedFailure, run
 from .utils import AUTHMETHOD_LEGACY_MAP
@@ -56,6 +62,7 @@ class iSCSITargetService(CRUDService):
         datastore_extend = 'iscsi.target.extend'
         cli_namespace = 'sharing.iscsi.target'
         role_prefix = 'SHARING_ISCSI_TARGET'
+        entry = IscsiTargetEntry
 
     @private
     async def extend(self, data):
@@ -80,23 +87,12 @@ class iSCSITargetService(CRUDService):
             )
         return data
 
-    @accepts(Dict(
-        'iscsi_target_create',
-        Str('name', required=True),
-        Str('alias', null=True),
-        Str('mode', enum=['ISCSI', 'FC', 'BOTH'], default='ISCSI'),
-        List('groups', items=[
-            Dict(
-                'group',
-                Int('portal', required=True),
-                Int('initiator', default=None, null=True),
-                Str('authmethod', enum=['NONE', 'CHAP', 'CHAP_MUTUAL'], default='NONE'),
-                Int('auth', default=None, null=True),
-            ),
-        ]),
-        List('auth_networks', items=[IPAddr('ip', network=True)]),
-        register=True
-    ), audit='Create iSCSI target', audit_extended=lambda data: data["name"])
+    @api_method(
+        IscsiTargetCreateArgs,
+        IscsiTargetCreateResult,
+        audit='Create iSCSI target',
+        audit_extended=lambda data: data['name']
+    )
     async def do_create(self, data):
         """
         Create an iSCSI Target.
@@ -258,9 +254,20 @@ class iSCSITargetService(CRUDService):
                             f'Authentication group {group["auth"]} does not support CHAP Mutual'
                         )
 
-    @accepts(Str('name'),
-             Int('existing_id', null=True, default=None),
-             roles=['SHARING_ISCSI_TARGET_WRITE'])
+        for i, network in enumerate(data['auth_networks']):
+            try:
+                IPvAnyNetwork(network)
+            except Exception:
+                verrors.add(
+                    f'{schema_name}.auth_networks.{i}',
+                    f'Auth network "{network}" is not a valid IPv4 or IPv6 network'
+                )
+
+    @api_method(
+        IscsiTargetValidateNameArgs,
+        IscsiTargetValidateNameResult,
+        roles=['SHARING_ISCSI_TARGET_WRITE']
+    )
     async def validate_name(self, name, existing_id):
         """
         Returns validation error for iSCSI target name
@@ -279,15 +286,11 @@ class iSCSITargetService(CRUDService):
             if names:
                 return 'Target with this name already exists'
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'iscsi_target_create',
-            'iscsi_target_update',
-            ('attr', {'update': True})
-        ),
+    @api_method(
+        IscsiTargetUpdateArgs,
+        IscsiTargetUpdateResult,
         audit='Update iSCSI target',
-        audit_callback=True,
+        audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
         """
@@ -325,11 +328,12 @@ class iSCSITargetService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'),
-             Bool('force', default=False),
-             audit='Delete iSCSI target',
-             audit_callback=True,
-             )
+    @api_method(
+        IscsiTargetDeleteArgs,
+        IscsiTargetDeleteResult,
+        audit='Delete iSCSI target',
+        audit_callback=True
+    )
     async def do_delete(self, audit_callback, id_, force):
         """
         Delete iSCSI Target of `id`.
@@ -374,8 +378,11 @@ class iSCSITargetService(CRUDService):
             self.logger.error('Failed to clean up target initiators for %r', target['name'], exc_info=True)
         return rv
 
-    @private
-    @accepts(Str('name'))
+    @api_method(
+        IscsiTargetRemoveArgs,
+        IscsiTargetRemoveResult,
+        private=True
+    )
     async def remove_target(self, name):
         # We explicitly need to do this unfortunately as scst does not accept these changes with a reload
         # So this is the best way to do this without going through a restart of the service
