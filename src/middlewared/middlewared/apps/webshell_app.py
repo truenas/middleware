@@ -5,7 +5,6 @@ import fcntl
 import json
 import os
 import queue
-import signal
 import struct
 import termios
 import threading
@@ -19,7 +18,7 @@ from middlewared.service_exception import (
     InstanceNotFound,
     MatchNotFound,
 )
-from middlewared.utils.os import close_fds
+from middlewared.utils.os import close_fds, terminate_pid
 
 __all__ = ("ShellApplication",)
 
@@ -197,7 +196,7 @@ class ShellWorkerThread(threading.Thread):
         asyncio.run_coroutine_threadsafe(self.ws.close(), self.loop)
 
         with contextlib.suppress(ProcessLookupError):
-            os.killpg(os.getpgid(self.shell_pid), signal.SIGTERM)
+            terminate_pid(self.shell_pid, timeout=5, get_pgid=True)
 
         self.die()
 
