@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from middlewared.api.base import BaseModel, LocalGID, LocalUID, NonEmptyString
 
@@ -23,8 +23,28 @@ class Device(BaseModel):
 
 class Disk(Device):
     dev_type: Literal['DISK']
-    source: str | None = None
+    source: NonEmptyString | None = None
+    '''
+    For CONTAINER instances, this would be a valid pool path. For VM instances, it
+    can be a valid zvol path or an incus storage volume name
+    '''
     destination: str | None = None
+    boot_priority: int | None = Field(default=None, ge=0)
+
+    @field_validator('source')
+    @classmethod
+    def validate_source(cls, source):
+        if source is None or '/' not in source:
+            return source
+
+        # Source must be an absolute path now
+        if not source.startswith(('/dev/zvol/', '/mnt/')):
+            raise ValueError('Only pool paths are allowed')
+
+        if source.startswith('/mnt/.ix-apps'):
+            raise ValueError('Invalid source')
+
+        return source
 
 
 NicType: TypeAlias = Literal['BRIDGED', 'MACVLAN']
@@ -94,8 +114,8 @@ class USBChoice(BaseModel):
     product_id: str
     bus: int
     dev: int
-    product: str
-    manufacturer: str
+    product: str | None
+    manufacturer: str | None
 
 
 class VirtDeviceUSBChoicesResult(BaseModel):
@@ -103,7 +123,6 @@ class VirtDeviceUSBChoicesResult(BaseModel):
 
 
 class VirtDeviceGPUChoicesArgs(BaseModel):
-    instance_type: InstanceType
     gpu_type: GPUType
 
 

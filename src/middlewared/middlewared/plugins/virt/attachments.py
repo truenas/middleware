@@ -1,4 +1,6 @@
+from itertools import product
 from typing import TYPE_CHECKING
+
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.common.ports import PortDelegate
 
@@ -58,24 +60,18 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
 
 class VirtPortDelegate(PortDelegate):
 
-    name = 'virt devices'
-    namespace = 'virt.device'
+    name = 'virt instances'
+    namespace = 'virt'
     title = 'Virtualization Device'
 
     async def get_ports(self):
         ports = []
-        for instance in await self.middleware.call('virt.instance.query'):
-            instance_ports = []
-            for device in await self.middleware.call('virt.instance.device_list', instance['id']):
-                if device['dev_type'] != 'PROXY':
-                    continue
-                instance_ports.append(('0.0.0.0', device['source_port']))
-                instance_ports.append(('::', device['source_port']))
-            if instance_ports:
+        for instance_id, instance_ports in (await self.middleware.call('virt.instance.get_ports_mapping')).items():
+            if instance_ports := list(product(['0.0.0.0', '::'], instance_ports)):
                 ports.append({
-                    'description': f'{instance["id"]!r} instance',
+                    'description': f'{instance_id!r} instance',
                     'ports': instance_ports,
-                    'instance': instance['id'],
+                    'instance': instance_id,
                 })
         return ports
 
