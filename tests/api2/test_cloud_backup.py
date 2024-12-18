@@ -157,7 +157,7 @@ def test_cloud_backup_abort(cloud_backup_task):
 
     # Wait for 50% backup completion
     while call("core.get_jobs", [["id", "=", job_id]], {"get": True})["progress"]["percent"] < 50:
-        time.sleep(0.5)
+        time.sleep(0.1)
 
     assert call("cloud_backup.abort", task_id)
 
