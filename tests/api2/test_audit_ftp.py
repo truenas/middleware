@@ -11,7 +11,8 @@ def test_ftp_config_audit():
         # UPDATE
         payload = {
             'clients': 1000,
-            'banner': "Hello, from New York"
+            'banner': "Hello, from New York",
+            'onlyanonymous': False
         }
         with expect_audit_method_calls([{
             'method': 'ftp.update',
@@ -24,5 +25,6 @@ def test_ftp_config_audit():
         restore_payload = {
             'clients': initial_ftp_config['clients'],
             'banner': initial_ftp_config['banner']
+            # onlyanonymous should remain False
         }
         call('ftp.update', restore_payload)
