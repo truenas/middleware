@@ -155,3 +155,6 @@ async def setup(middleware):
     if tnc_config['status'] is Status.CERT_GENERATION_IN_PROGRESS.name:
         logger.debug('Middleware started and cert generation is in progress, initiating process')
         middleware.create_task(middleware.call('tn_connect.acme.initiate_cert_generation'))
+    elif tnc_config['status'] is Status.CERT_GENERATION_SUCCESS.name:
+        logger.debug('Middleware started and cert generation is already successful, updating UI')
+        middleware.create_task(middleware.call('tn_connect.acme.update_ui'))
