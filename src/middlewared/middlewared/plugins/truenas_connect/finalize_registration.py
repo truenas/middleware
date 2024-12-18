@@ -25,7 +25,7 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
     async def status_update(self, status, log_message=None):
         await self.middleware.call('tn_connect.set_status', status.name)
         if log_message:
-            self.logger.error(log_message)
+            logger.error(log_message)
 
     @job(lock='tnc_finalize_registration')
     async def registration(self, job):
@@ -102,3 +102,11 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
             headers={'Content-Type': 'application/json'},
             payload={'system_id': system_id, 'claim_token': claim_token},
         )
+
+
+async def setup(middleware):
+    tn_config = await middleware.call('tn_connect.config')
+    if tn_config['status'] == Status.REGISTRATION_FINALIZATION_WAITING.name:
+        # This means middleware got restarted or the system was rebooted while we were waiting for
+        # registration to finalize, so in this case we set the state to registration failed
+        await middleware.call('tn_connect.finalize.status_update', Status.REGISTRATION_FINALIZATION_FAILED)
