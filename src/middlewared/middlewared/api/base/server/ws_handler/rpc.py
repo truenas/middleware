@@ -265,7 +265,11 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
         try:
             jsonschema.validate(message, REQUEST_SCHEMA)
         except jsonschema.ValidationError as e:
-            app.send_error(None, JSONRPCError.INVALID_REQUEST.value, str(e))
+            id_ = None
+            if isinstance(message, dict) and isinstance(message.get("id"), (int, str)):
+                id_ = message["id"]
+
+            app.send_error(id_, JSONRPCError.INVALID_REQUEST.value, str(e))
             return
 
         id_ = message.get("id")
