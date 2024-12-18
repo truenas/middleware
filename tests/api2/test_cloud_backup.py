@@ -146,6 +146,7 @@ def test_cloud_backup(cloud_backup_task):
     assert all(snapshot["id"] != snapshot_to_delete_id for snapshot in snapshots)
 
 
+@pytest.mark.timeout(180)
 def test_cloud_backup_abort(cloud_backup_task):
     task_id = cloud_backup_task.task["id"]
     testfile = f"/mnt/{cloud_backup_task.local_dataset}/testfile"
