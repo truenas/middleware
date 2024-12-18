@@ -1,7 +1,5 @@
 from enum import StrEnum
 
-import bidict
-
 
 class IscsiAuthType(StrEnum):
     NONE = 'NONE'
@@ -9,7 +7,17 @@ class IscsiAuthType(StrEnum):
     CHAP_MUTUAL = 'CHAP_MUTUAL'
 
 
-AUTHMETHOD_LEGACY_MAP = bidict.bidict({
+class InverseMap(dict):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    @property
+    def inv(self):
+        return {v: k for k, v in self.items()}
+
+
+AUTHMETHOD_LEGACY_MAP = InverseMap(**{
     'None': IscsiAuthType.NONE.value,
     'CHAP': IscsiAuthType.CHAP.value,
     'CHAP Mutual': IscsiAuthType.CHAP_MUTUAL.value,
