@@ -341,23 +341,6 @@ class NFSService(SystemServiceService):
 
                     INPUT: Enable/Disable
                     Default: Disable
-
-        .. examples(websocket)::
-
-          Update NFS Service Configuration to listen on 192.168.0.10 and use NFSv4
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.resilver.update",
-                "params": [{
-                    "bindip": [
-                        "192.168.0.10"
-                    ],
-                    "protocols": ["NFSV3", "NFSV4"]
-                }]
-            }
         """
         if 'protocols' in data:
             if not data['protocols']:
