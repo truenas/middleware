@@ -148,11 +148,20 @@ def test_cloud_backup(cloud_backup_task):
 
 def test_cloud_backup_abort(cloud_backup_task):
     task_id = cloud_backup_task.task["id"]
-    call("cloud_backup.sync", task_id)
+    testfile = f"/mnt/{cloud_backup_task.local_dataset}/testfile"
+
+    # Start to backup a 1G file
+    ssh(f"dd if=/dev/urandom of={testfile} bs=32M count=32")
+    job_id = call("cloud_backup.sync", task_id)
+
+    # Wait for 50% backup completion
+    while call("core.get_jobs", [["id", "=", job_id]], {"get": True})["progress"]["percent"] < 50:
+        time.sleep(0.5)
+
     assert call("cloud_backup.abort", task_id)
 
     # Ensure backup works after an abort
-    ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/testfile")
+    ssh(f"echo '' > {testfile}")
     run_task(cloud_backup_task.task)
     validate_log(task_id, files_new=1)
 
