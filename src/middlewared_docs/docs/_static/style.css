@@ -8,3 +8,16 @@ ul.search li { background: none; }
 #json-schema h4 { display: none; }
 #json-schema .breadcrumbs { display: none; }
 #json-schema .no-additional { display: none; }
+#json-schema .json-default-value {
+    font-size: 75%;
+    padding: .25em .4em;
+    border: 2px solid #28a745;
+    border-radius: .25rem;
+    font-weight: 700;
+}
+#json-schema .json-default-value .value {
+    font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+    font-weight: 400;
+    margin-top: .25em;
+    white-space: pre;
+}
