@@ -6,14 +6,36 @@
 # at the start and end of sessions of *any* kind (both interactive and
 # non-interactive).
 
-<%namespace name="pam" file="pam.inc.mako" />\
 <%
-        dsp = pam.getDirectoryServicePam(middleware=middleware, render_ctx=render_ctx).pam_session()
-%>\
+    from middlewared.utils.directoryservices.constants import DSType
+    from middlewared.utils.pam import TTY_AUDIT_LINE, STANDALONE_SESSION, AD_SESSION, SSS_SESSION
 
-${'\n'.join(dsp['primary'])}
+    tty_audit_line = None
+
+    match (dstype := render_ctx['directoryservices.status']['type']):
+        # dstype of None means standalone server
+        case None:
+            conf = STANDALONE_SESSION
+        case DSType.AD.value:
+            conf = AD_SESSION
+        case DSType.LDAP.value | DSType.IPA.value:
+            conf = SSS_SESSION
+        case _:
+            raise TypeError(f'{dstype}: unknown DSType')
+
+    if render_ctx['system.security.config']['enable_gpos_stig']:
+        tty_audit_line = TTY_AUDIT_LINE
+%>\
+% if tty_audit_line:
+${TTY_AUDIT_LINE.as_conf()}
+% endif
+% if conf.primary:
+${'\n'.join(line.as_conf() for line in conf.primary)}
+% endif
 session	[default=1]			pam_permit.so
 session	requisite			pam_deny.so
 session	required			pam_permit.so
 session	optional			pam_systemd.so
-${'\n'.join(dsp['additional'])}
+% if conf.secondary:
+${'\n'.join(line.as_conf() for line in conf.secondary)}
+% endif

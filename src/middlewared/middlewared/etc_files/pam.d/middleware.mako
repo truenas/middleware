@@ -1,4 +1,6 @@
 <%
+    from middlewared.utils.pam import STANDALONE_AUTH
+
     ds_auth = render_ctx['datastore.config']['stg_ds_auth']
 %>\
 # PAM configuration for the middleware (Web UI / API login)
@@ -6,11 +8,7 @@
 %if ds_auth:
 @include common-auth
 %else:
-<%namespace name="pam" file="pam.inc.mako" />\
-<%
-        dsp = pam.getNoDirectoryServicePam().pam_auth()
-%>\
-${'\n'.join(dsp['primary'])}
+${'\n'.join(line.as_conf() for line in STANDALONE_AUTH.primary)}
 @include common-auth-unix
 %endif
 @include common-account
