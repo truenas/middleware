@@ -1,5 +1,3 @@
-import bidict
-
 from middlewared.service import private, Service
 from middlewared.service_exception import MatchNotFound
 
@@ -70,11 +68,12 @@ class DiskService(Service):
         if topology is None:
             return
 
-        disk_to_guid = bidict.bidict()
+        disk_to_guid, guid_to_disk = dict(), dict()
         for vdev in await self.middleware.call("pool.flatten_topology", topology):
             if vdev["type"] == "DISK":
                 if vdev["disk"] is not None:
                     disk_to_guid[vdev["disk"]] = vdev["guid"]
+                    guid_to_disk[vdev["guid"]] = vdev["disk"]
                 else:
                     self.logger.debug("Pool %r vdev %r disk is None", pool["name"], vdev["guid"])
 
@@ -93,7 +92,7 @@ class DiskService(Service):
                         {"zfs_guid": guid}, {"prefix": "disk_", "send_events": False},
                     )
             elif disk["zfs_guid"]:
-                devname = disk_to_guid.inv.get(disk["zfs_guid"])
+                devname = guid_to_disk.get(disk["zfs_guid"])
                 if devname is not None and devname != disk["devname"]:
                     self.logger.debug(
                         "Removing disk %r (%r) zfs_guid %r as %r has it",
