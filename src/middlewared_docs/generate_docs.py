@@ -106,9 +106,12 @@ class DocumentationGenerator:
 
             soup = BeautifulSoup(html)
 
+            # Elements like `Each item of this array must be:`
             for h4 in soup.find_all("h4"):
                 if h4.text.endswith(":"):
-                    h4["style"] = "display: block;"
+                    h5 = soup.new_tag("h5")
+                    h5.string = h4.text
+                    h4.replace_with(h5)
 
             for h5 in soup.find("div", {"id": "Call_parameters"}).find().find_all("h5", recursive=False):
                 if m := re.match("Item at ([0-9]+) must be:", h5.text):
@@ -120,6 +123,22 @@ class DocumentationGenerator:
 
                     name = next_sibling.find("h4").text
                     h5.string = f"Parameter {number}: {name}"
+
+            # Multi-line default values (usually, non-trivial JSON arrays/objects)
+            for default_value in soup.find_all("span", class_="default-value"):
+                value = default_value.text.split(": ", 1)[1]
+                if len(value) > 40 and value.startswith(("[", "{")):
+                    try:
+                        value_decoded = json.loads(value)
+                    except ValueError:
+                        continue
+
+                    new_default_value_value = soup.new_tag("div", **{"class": "value"})
+                    new_default_value_value.string = json.dumps(value_decoded, indent=2)
+                    new_default_value = soup.new_tag("div", **{"class": "json-default-value"})
+                    new_default_value.string = "Default:"
+                    new_default_value.insert(1, new_default_value_value)
+                    default_value.replace_with(new_default_value)
 
             return soup.find("body").decode_contents()
         finally:
