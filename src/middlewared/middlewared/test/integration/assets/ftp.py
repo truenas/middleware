@@ -10,7 +10,6 @@ from middlewared.test.integration.utils import call, ssh
 def ftp_server(config=None):
     if config is not None:
         call("ftp.update", config)
-
     call("service.start", "ftp")
 
     try:
