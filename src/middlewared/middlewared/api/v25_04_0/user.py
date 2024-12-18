@@ -50,7 +50,7 @@ class UserEntry(BaseModel):
     builtin: bool
     smb: bool = True
     group: dict
-    groups: list[int] = []
+    groups: list[int] = Field(default_factory=list)
     """Specifies whether the user should be allowed access to SMB shares. User will also automatically be added to
     the `builtin_users` group."""
     password_disabled: bool = False
@@ -58,8 +58,8 @@ class UserEntry(BaseModel):
     "Required if `password_disabled` is false."
     sshpubkey: LongString | None = None
     locked: bool = False
-    sudo_commands: list[NonEmptyString] = []
-    sudo_commands_nopasswd: list[NonEmptyString] = []
+    sudo_commands: list[NonEmptyString] = Field(default_factory=list)
+    sudo_commands_nopasswd: list[NonEmptyString] = Field(default_factory=list)
     email: EmailStr | None = None
     id_type_both: bool
     local: bool
