@@ -1,4 +1,7 @@
-from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    AppRollbackArgs, AppRollbackResult, AppRollbackVersionsArgs, AppRollbackVersionsResult,
+)
 from middlewared.service import job, Service, ValidationErrors
 
 from .compose_utils import compose_action
@@ -14,16 +17,7 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @accepts(
-        Str('app_name'),
-        Dict(
-            'options',
-            Str('app_version', empty=False, required=True),
-            Bool('rollback_snapshot', default=True),
-        ),
-        roles=['APPS_WRITE'],
-    )
-    @returns(Ref('app_entry'))
+    @api_method(AppRollbackArgs, AppRollbackResult, roles=['APPS_WRITE'])
     @job(lock=lambda args: f'app_rollback_{args[0]}')
     def rollback(self, job, app_name, options):
         """
@@ -90,8 +84,7 @@ class AppService(Service):
 
         return self.middleware.call_sync('app.get_instance', app_name)
 
-    @accepts(Str('app_name'), roles=['APPS_READ'])
-    @returns(List('rollback_versions', items=[Str('version')]))
+    @api_method(AppRollbackVersionsArgs, AppRollbackVersionsResult, roles=['APPS_READ'])
     def rollback_versions(self, app_name):
         """
         Retrieve versions available for rollback for `app_name` app.
