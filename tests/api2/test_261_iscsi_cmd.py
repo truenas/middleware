@@ -23,7 +23,7 @@ from protocols import ISCSIDiscover, initiator_name_supported, iscsi_scsi_connec
 from pyscsi.pyscsi.scsi_sense import sense_ascq_dict, sense_key_dict
 from pytest_dependency import depends
 
-from middlewared.service_exception import InstanceNotFound, ValidationError, ValidationErrors
+from middlewared.service_exception import CallError, InstanceNotFound, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.iscsi import target_login_test
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call, ssh
@@ -2950,3 +2950,47 @@ def test__target_readonly_extent(iscsi_running):
                 read_lbas(s, True)
                 write_lbas(s)
                 read_lbas(s)
+
+
+def test__target_delete_extents(iscsi_running):
+    """Validate that we can delete a target and its extents."""
+    name1 = f"{target_name}x1"
+    name2 = f"{target_name}x2"
+    name3 = f"{target_name}x3"
+    iqn1 = f'{basename}:{name1}'
+    iqn2 = f'{basename}:{name2}'
+
+    with initiator_portal() as config:
+        with configured_target(config, name1, 'VOLUME') as target1_config:
+            with iscsi_scsi_connection(truenas_server.ip, iqn1):
+                # Without force we cannot delete a target that is logged into
+                with pytest.raises(CallError) as ve:
+                    call('iscsi.target.delete', target1_config['target']['id'])
+                assert f'Target {name1} is in use' in ve.value.errmsg
+
+                # Force the target delete, but do NOT remove the associated
+                # extents
+                call('iscsi.target.delete', target1_config['target']['id'], True)
+
+                # Ensure the extent still exists
+                extents = call('iscsi.extent.query', [['id', '=', target1_config['extent']['id']]])
+                assert len(extents) == 1, extents
+
+        with configured_target(config, name2, 'VOLUME') as target2_config:
+            with iscsi_scsi_connection(truenas_server.ip, iqn2):
+                # Force the target delete, and DO remove the associated
+                # extents
+                call('iscsi.target.delete', target2_config['target']['id'], True, True)
+
+                # Ensure the extent does not exist
+                extents = call('iscsi.extent.query', [['id', '=', target2_config['extent']['id']]])
+                assert len(extents) == 0, extents
+
+        with configured_target(config, name3, 'VOLUME') as target3_config:
+            # Force the target delete, and DO remove the associated
+            # extents. but no force necessary
+            call('iscsi.target.delete', target3_config['target']['id'], False, True)
+
+            # Ensure the extent does not exist
+            extents = call('iscsi.extent.query', [['id', '=', target3_config['extent']['id']]])
+            assert len(extents) == 0, extents

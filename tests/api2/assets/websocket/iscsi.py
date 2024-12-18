@@ -72,7 +72,8 @@ def target(target_name, groups, alias=None):
     try:
         yield target_config
     finally:
-        call('iscsi.target.delete', target_config['id'], True)
+        if call('iscsi.target.query', [['id', '=', target_config['id']]]):
+            call('iscsi.target.delete', target_config['id'], True)
 
 
 @contextlib.contextmanager
@@ -86,7 +87,8 @@ def zvol_extent(zvol, extent_name):
     try:
         yield config
     finally:
-        call('iscsi.extent.delete', config['id'], True, True)
+        if call('iscsi.extent.query', [['id', '=', config['id']]]):
+            call('iscsi.extent.delete', config['id'], True, True)
 
 
 @contextlib.contextmanager
@@ -105,7 +107,9 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
     try:
         yield associate_config
     finally:
-        call('iscsi.targetextent.delete', associate_config['id'], True)
+        # We may have deleted the association
+        if call('iscsi.targetextent.query', [['id', '=', associate_config['id']]]):
+            call('iscsi.targetextent.delete', associate_config['id'], True)
     if alua_enabled:
         sleep(2)
 
