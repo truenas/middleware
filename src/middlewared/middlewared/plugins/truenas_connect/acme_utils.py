@@ -57,7 +57,7 @@ def normalize_acme_config(config: dict) -> dict:
         'new_order_uri': f'{parsed_url.scheme}://{parsed_url.netloc}/acme/new-order',
         'revoke_cert_uri': f'{parsed_url.scheme}://{parsed_url.netloc}/acme/revoke-cert',
         'body': {
-            'contact': 'dev@ixsystems.com',
+            'contact': 'cert-bot@ixsystems.com',
             'status': acme_details['account']['status'],
             'key': jwk_rsa.json_dumps(),
         }

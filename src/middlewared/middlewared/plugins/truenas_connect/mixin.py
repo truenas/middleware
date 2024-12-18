@@ -2,7 +2,6 @@ import asyncio
 import json
 
 import aiohttp
-import async_timeout
 
 from middlewared.service import private
 
@@ -29,7 +28,7 @@ class TNCAPIMixin:
             headers = headers or {}
             headers['Content-Type'] = 'application/json'
         try:
-            async with async_timeout.timeout(timeout):
+            async with aiohttp.timeout(timeout):
                 async with aiohttp.ClientSession(raise_for_status=True, trust_env=True) as session:
                     req = await getattr(session, mode)(
                         endpoint,
