@@ -139,10 +139,7 @@ class Enclosure2Service(Service):
             # this feature is only available on hardware that ix sells
             return enclosures
 
-        labels = {
-            label['encid']: label['label']
-            for label in self.middleware.call_sync('datastore.query', 'truenas.enclosurelabel')
-        }
+        labels = self.middleware.call_sync('enclosure.label.get_all')
         for i in self.get_ses_enclosures() + self.map_nvme() + self.middleware.call_sync('enclosure2.map_jbof'):
             if i.pop('should_ignore'):
                 continue
