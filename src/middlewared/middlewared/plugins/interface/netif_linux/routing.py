@@ -1,12 +1,10 @@
 # -*- coding=utf-8 -*-
-import collections
 import enum
 import ipaddress
 import logging
 import os
 import socket
 
-import bidict
 from pyroute2 import IPRoute
 from pyroute2.netlink.exceptions import NetlinkDumpInterrupted
 
@@ -209,7 +207,7 @@ class RoutingTable:
         self._op("delete", route)
 
     def _interfaces(self):
-        return bidict.bidict({i["index"]: dict(i["attrs"]).get("IFLA_IFNAME") for i in self._ip_links()})
+        return {i["index"]: dict(i["attrs"]).get("IFLA_IFNAME") for i in self._ip_links()}
 
     def _ip_links(self):
         retries = 5
@@ -229,19 +227,20 @@ class RoutingTable:
         else:
             raise RuntimeError()
 
-        kwargs = dict(dst=f"{route.network}/{prefixlen}", gateway=str(route.gateway) if route.gateway else None)
-        for key, value in map(
-            lambda v: [v[0], v[1]() if isinstance(v[1], collections.abc.Callable) else v[1]],
-            filter(
-                lambda v: v[2] if len(v) == 3 else v[1], (
-                    ("oif", lambda: self._interfaces().inv[route.interface], route.interface is not None),
-                    ("table", route.table_id),
-                    ("scope", route.scope),
-                    ("prefsrc", route.preferred_source),
-                )
-            )
-        ):
-            kwargs[key] = value
+        kwargs = {
+            "dst": f"{route.network}/{prefixlen}",
+            "gateway": str(route.gateway) if route.gateway else None,
+            "oif": None,
+            "table": route.table_id,
+            "scope": route.scope,
+            "prefsrc": route.preferred_source,
+        }
+        if route.interface is not None:
+            for i in self._ip_links():
+                ifname = dict(i["attrs"]).get("IFLA_IFNAME")
+                if ifname is not None and ifname == route.interface:
+                    kwargs["oif"] = i["index"]
+                    break
 
         ip.route(op, **kwargs)
 
