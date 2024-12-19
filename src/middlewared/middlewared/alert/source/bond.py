@@ -44,7 +44,7 @@ class BondStatus(AlertSource):
             active, inactive, missing = list(), list(), list()
             for member in info["lag_ports"]:
                 try:
-                    if ifaces[member]["link_state"] == "LINK_STATE_DOWN":
+                    if ifaces[member]["state"]["link_state"] == "LINK_STATE_DOWN":
                         inactive.append(member)
                     else:
                         active.append(member)
@@ -55,19 +55,19 @@ class BondStatus(AlertSource):
                 alerts.append(
                     Alert(
                         BONDMissingPortsAlertClass,
-                        {"name": iface["id"], "missing": ", ".join(missing)},
+                        {"name": iface, "missing": ", ".join(missing)},
                     )
                 )
             elif not active:
-                alerts.append(Alert(BONDNoActivePortsAlertClass, {"name": iface["id"]}))
-            elif inactive and (iface["lag_protocol"] != "FAILOVER" or len(active) == 1):
+                alerts.append(Alert(BONDNoActivePortsAlertClass, {"name": iface}))
+            elif inactive and (info["lag_protocol"] != "FAILOVER" or len(active) == 1):
                 # 1. if this isn't FAILOVER type and any inactive
                 # 2. OR if it's FAILOVER and we only have 1 active
                 # we need to raise an alert
                 alerts.append(
                     Alert(
                         BONDInactivePortsAlertClass,
-                        {"name": iface["id"], "ports": ", ".join(inactive)},
+                        {"name": iface, "ports": ", ".join(inactive)},
                     )
                 )
 
