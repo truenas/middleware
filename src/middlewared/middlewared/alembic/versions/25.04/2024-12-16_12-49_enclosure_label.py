@@ -1,7 +1,7 @@
 """Rename `enclosure_label` table
 
 Revision ID: 19cdc9f2d2df
-Revises: b44c092bfa30
+Revises: aea6bced4328
 Create Date: 2024-12-16 12:49:19.950812+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '19cdc9f2d2df'
-down_revision = 'b44c092bfa30'
+down_revision = 'aea6bced4328'
 branch_labels = None
 depends_on = None
 
