@@ -1,64 +1,69 @@
-from collections import defaultdict
+from middlewared.alert.base import (
+    Alert,
+    AlertClass,
+    AlertCategory,
+    AlertLevel,
+    AlertSource,
+)
 
-try:
-    import netif
-except ImportError:
-    netif = None
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
-
-
-class LAGGInactivePortsAlertClass(AlertClass):
+class BONDInactivePortsAlertClass(AlertClass):
     category = AlertCategory.NETWORK
     level = AlertLevel.CRITICAL
-    title = "Ports are Not ACTIVE on LAGG Interface"
-    text = "These ports are not ACTIVE on LAGG interface %(name)s: %(ports)s. Please check cabling and switch."
+    title = "Ports are Not ACTIVE on BOND Interface"
+    text = "These ports are not ACTIVE on BOND interface %(name)s: %(ports)s. Please check cabling and switch."
 
 
-class LAGGNoActivePortsAlertClass(AlertClass):
+class BONDNoActivePortsAlertClass(AlertClass):
     category = AlertCategory.NETWORK
     level = AlertLevel.CRITICAL
-    title = "There are No ACTIVE Ports on LAGG Interface"
-    text = "There are no ACTIVE ports on LAGG interface %(name)s. Please check cabling and switch."
+    title = "There are No ACTIVE Ports on BOND Interface"
+    text = "There are no ACTIVE ports on BOND interface %(name)s. Please check cabling and switch."
 
 
-class LAGGStatus(ThreadedAlertSource):
-    count = defaultdict(int)
+class BONDMissingPortsAlertClass(AlertClass):
+    category = AlertCategory.NETWORK
+    level = AlertLevel.CRITICAL
+    title = "BOND Interface references missing ports"
+    text = "BOND Interface %(name)s references missing ports %(missing)s."
 
-    def check_sync(self):
-        if not netif:
-            return []
+
+class BondStatus(AlertSource):
+    async def check(self):
         alerts = []
-        for iface in netif.list_interfaces().values():
-            if not isinstance(iface, netif.LaggInterface):
+        ifaces = {i["id"]: i for i in await self.middleware.call("interface.query")}
+        for iface, info in ifaces.items():
+            if info["type"] != "LINK_AGGREGATION":
                 continue
-            active = []
-            inactive = []
-            for name, flags in iface.ports:
-                if netif.LaggPortFlags.ACTIVE not in flags:
-                    inactive.append(name)
-                else:
-                    active.append(name)
 
-            # ports that are not ACTIVE and LACP
-            if inactive and iface.protocol == netif.AggregationProtocol.LACP:
-                # Only alert if this has happened more than twice, see #24160
-                self.count[iface.name] += 1
-                if self.count[iface.name] > 2:
-                    alerts.append(Alert(
-                        LAGGInactivePortsAlertClass,
-                        {"name": iface.name, "ports": ", ".join(inactive)},
-                    ))
-            # For FAILOVER protocol we should have one ACTIVE port
-            elif len(active) != 1 and iface.protocol == netif.AggregationProtocol.FAILOVER:
-                # Only alert if this has happened more than twice, see #24160
-                self.count[iface.name] += 1
-                if self.count[iface.name] > 2:
-                    alerts.append(Alert(
-                        LAGGNoActivePortsAlertClass,
-                        {"name": iface.name},
-                    ))
-            else:
-                self.count[iface.name] = 0
+            active, inactive, missing = list(), list(), list()
+            for member in info["lag_ports"]:
+                try:
+                    if ifaces[member]["link_state"] == "LINK_STATE_DOWN":
+                        inactive.append(member)
+                    else:
+                        active.append(member)
+                except KeyError:
+                    missing.append(member)
+
+            if missing:
+                alerts.append(
+                    Alert(
+                        BONDMissingPortsAlertClass,
+                        {"name": iface["id"], "missing": ", ".join(missing)},
+                    )
+                )
+            elif not active:
+                alerts.append(Alert(BONDNoActivePortsAlertClass, {"name": iface["id"]}))
+            elif inactive and (iface["lag_protocol"] != "FAILOVER" or len(active) == 1):
+                # 1. if this isn't FAILOVER type and any inactive
+                # 2. OR if it's FAILOVER and we only have 1 active
+                # we need to raise an alert
+                alerts.append(
+                    Alert(
+                        BONDInactivePortsAlertClass,
+                        {"name": iface["id"], "ports": ", ".join(inactive)},
+                    )
+                )
 
         return alerts
