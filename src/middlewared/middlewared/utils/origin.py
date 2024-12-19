@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import re
 from socket import AF_INET, AF_INET6, AF_UNIX, SO_PEERCRED, SOL_SOCKET
 from struct import calcsize, unpack
 
@@ -96,6 +97,45 @@ class ConnectionOrigin:
             self.rem_port and self.rem_port <= 1024 and
             self.rem_addr and self.rem_addr in HA_HEARTBEAT_IPS
         )
+
+    def loginuid(self) -> int | None:
+        if self.pid is None:
+            return None
+
+        try:
+            with open(f"/proc/{self.pid}/loginuid") as f:
+                loginuid = int(f.read())
+        except (FileNotFoundError, ValueError):
+            return None
+
+        if loginuid == 4294967295:
+            return None
+
+        return loginuid
+
+    def ppids(self) -> set[int]:
+        if self.pid is None:
+            return set()
+
+        pid = self.pid
+        ppids = set()
+        while True:
+            try:
+                with open(f"/proc/{pid}/status") as f:
+                    status = f.read()
+            except FileNotFoundError:
+                break
+
+            if m := re.search(r"PPid:\t([0-9]+)", status):
+                pid = int(m.group(1))
+                if pid <= 1:
+                    break
+
+                ppids.add(pid)
+            else:
+                break
+
+        return ppids
 
 
 def get_tcp_ip_info(sock, request) -> tuple:

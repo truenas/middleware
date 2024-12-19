@@ -22,6 +22,10 @@ class Method:
         self.name = name
         self.serviceobj, self.methodobj = self.middleware.get_method(self.name)
 
+    @property
+    def private(self):
+        return getattr(self.methodobj, "_private", False)
+
     async def call(self, app: "RpcWebSocketApp", params: list):
         """
         Calls the method in the context of a given `app`.
