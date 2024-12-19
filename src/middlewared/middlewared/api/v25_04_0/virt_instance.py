@@ -37,6 +37,17 @@ class Image(BaseModel):
     variant: str | None
 
 
+class IdmapUserNsEntry(BaseModel):
+    hostid: int
+    maprange: int
+    nsid: int
+
+
+class UserNsIdmap(BaseModel):
+    uid: IdmapUserNsEntry
+    gid: IdmapUserNsEntry
+
+
 class VirtInstanceEntry(BaseModel):
     id: str
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
@@ -48,6 +59,7 @@ class VirtInstanceEntry(BaseModel):
     environment: dict[str, str]
     aliases: list[VirtInstanceAlias]
     image: Image
+    userns_idmap: UserNsIdmap | None
     raw: dict | None
     vnc_enabled: bool
     vnc_port: int | None
