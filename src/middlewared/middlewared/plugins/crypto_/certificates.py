@@ -419,6 +419,9 @@ class CertificateService(CRUDService):
         if cert_info['cert_extensions']['AuthorityKeyIdentifier']['enabled']:
             verrors.add('cert_extensions.AuthorityKeyIdentifier.enabled', 'This extension is not valid for CSR')
 
+        if data.get('add_to_trusted_store'):
+            verrors.add('add_to_trusted_store', 'Cannot add CSR to trusted store')
+
         verrors.check()
 
         data['type'] = CERT_TYPE_CSR
@@ -623,7 +626,12 @@ class CertificateService(CRUDService):
                     'certificate_update.revoked',
                     'A CSR cannot be marked as revoked.'
                 )
-            elif new['revoked'] and not old['revoked'] and not new['can_be_revoked']:
+            if new['add_to_trusted_store'] and new['cert_type_CSR']:
+                verrors.add(
+                    'certificate_update.add_to_trusted_store',
+                    'A CSR cannot be added to the system\'s trusted store'
+                )
+            if new['revoked'] and not old['revoked'] and not new['can_be_revoked']:
                 verrors.add(
                     'certificate_update.revoked',
                     'Only certificate(s) can be revoked which have a CA present on the system'
