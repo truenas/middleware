@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
-from middlewared.service import private, Service
+from middlewared.service import CallError, private, Service
 
 from middlewared.utils.gpu import get_nvidia_gpus
 
@@ -142,3 +142,20 @@ class AppService(Service):
             await self.middleware.call('device.get_gpus'),
             await self.middleware.run_in_thread(get_nvidia_gpus),
         )
+
+    @private
+    async def get_hostpaths_datasets(self, app_name):
+        app_info = self.middleware.call_sync('app.get_instance', app_name)
+        host_paths = [
+            volume['source_path'] for volume in app_info['active_workloads']['volumes']
+            if volume['source'].startswith(f'{IX_APPS_MOUNT_PATH}/') is False
+        ]
+
+        mapping = {}
+        for host_path in host_paths:
+            try:
+                mapping[host_path] = await self.middleware.call('zfs.dataset.path_to_dataset', host_path)
+            except CallError:
+                mapping[host_path] = None
+
+        return mapping
