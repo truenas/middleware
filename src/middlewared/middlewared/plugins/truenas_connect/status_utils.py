@@ -12,4 +12,7 @@ class Status(enum.Enum):
     CERT_GENERATION_FAILED = 'Certificate generation failed'
     CERT_GENERATION_SUCCESS = 'Certificate generation was successful'
     CERT_CONFIGURATION_FAILURE = 'Failed to configure certificate in system UI'
+    CERT_RENEWAL_IN_PROGRESS = 'Certificate renewal is in progress'
+    CERT_RENEWAL_FAILURE = 'Failed to renew certificate'
+    CERT_RENEWAL_SUCCESS = 'Certificate renewal was successful'
     CONFIGURED = 'TrueNAS Connect is configured'
