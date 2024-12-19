@@ -1,6 +1,3 @@
-import contextlib
-import shutil
-
 from catalog_reader.custom_app import get_version_details
 
 from middlewared.service import CallError, Service
@@ -9,7 +6,6 @@ from .compose_utils import compose_action
 from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import get_rendered_template_config_of_app, update_app_config
 from .ix_apps.metadata import update_app_metadata
-from .ix_apps.path import get_installed_app_path
 from .ix_apps.setup import setup_install_app_dir
 
 

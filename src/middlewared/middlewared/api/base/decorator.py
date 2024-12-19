@@ -22,6 +22,9 @@ def api_method(
     cli_private: bool = False,
     authentication_required: bool = True,
     authorization_required: bool = True,
+    pass_app: bool = False,
+    pass_app_require: bool = False,
+    pass_app_rest: bool = False,
 ):
     """
     Mark a `Service` class method as an API method.
@@ -58,6 +61,13 @@ def api_method(
         raise TypeError("`returns` model must only have one field called `result`")
 
     def wrapper(func):
+        if pass_app:
+            # Pass the application instance as parameter to the method
+            func._pass_app = {
+                'require': pass_app_require,
+                'rest': pass_app_rest,
+            }
+
         args_index = calculate_args_index(func, audit_callback)
 
         if asyncio.iscoroutinefunction(func):
