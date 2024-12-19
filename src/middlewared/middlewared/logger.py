@@ -57,6 +57,7 @@ DOCKER_IMAGE_LOGFILE = '/var/log/docker_image.log'
 FAILOVER_LOGFILE = '/var/log/failover.log'
 LOGFILE = '/var/log/middlewared.log'
 NETDATA_API_LOGFILE = '/var/log/netdata_api.log'
+TRUENAS_CONNECT_LOGFILE = '/var/log/truenas_connect.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
 
 
@@ -101,6 +102,7 @@ class Logger:
                 ('docker_image', DOCKER_IMAGE_LOGFILE, self.log_format),
                 ('failover', FAILOVER_LOGFILE, self.log_format),
                 ('netdata_api', NETDATA_API_LOGFILE, self.log_format),
+                ('truenas_connect', TRUENAS_CONNECT_LOGFILE, self.log_format),
                 ('zettarepl', ZETTAREPL_LOGFILE,
                  '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s'),
             ]:

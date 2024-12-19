@@ -27,7 +27,13 @@ class DNSAuthenticatorService(Service):
 
     @private
     def get_authenticator(self, authenticator):
-        auth_details = self.middleware.call_sync('acme.dns.authenticator.get_instance', authenticator)
+        if authenticator is None:
+            auth_details = {
+                'attributes': {'authenticator': 'tn_connect', **self.middleware.call_sync('tn_connect.config_internal')}
+            }
+        else:
+            auth_details = self.middleware.call_sync('acme.dns.authenticator.get_instance', authenticator)
+
         return self.get_authenticator_internal(
             auth_details['attributes']['authenticator']
         )(self.middleware, auth_details['attributes'])
