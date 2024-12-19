@@ -329,6 +329,7 @@ class TestFixtureConfiguredALUA:
         def zero_lun(s, target_num, lun, lun_config):
             # Write zeros using WRITE SAME (16)
             s.writesame16(0, self.BLOCKS, self.ZEROS)
+            s.synchronizecache10(0, self.BLOCKS)
         self.visit_luns(ip, config, zero_lun)
 
     def check_zero_luns(self, ip, config):
@@ -365,6 +366,7 @@ class TestFixtureConfiguredALUA:
     def write_patterns(self, ip, config):
         def write_pattern(s, target_num, lun, lun_config):
             s.writesame16(1, 2, self.page_pattern(target_num, lun))
+            s.synchronizecache10(1, 2)
         self.visit_luns(ip, config, write_pattern)
 
     def check_patterns(self, ip, config):
