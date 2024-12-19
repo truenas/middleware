@@ -32,12 +32,13 @@ class Dataset:
 
 
 class ReadonlyRootfsManager:
-    def __init__(self, root="/"):
+    def __init__(self, root="/", force_rw=False):
         self.root = root
 
         self.initialized = False
         self.datasets: dict[str, Dataset] = {}
         self.use_functioning_dpkg_sysext = False
+        self.force_rw = force_rw
 
     def __enter__(self):
         return self
@@ -76,8 +77,7 @@ class ReadonlyRootfsManager:
             ("usr", usr_ds),
         ]:
             mountpoint = os.path.realpath("/".join(filter(None, (self.root, dataset))))
-
-            if mountpoint == "/usr":
+            if mountpoint == "/usr" and not self.force_rw:
                 # We make `/usr` writeable only to be able to temporary enable `dpkg` (`update-initramfs` needs it).
                 # If we are on live system, it's better to use `systemd-sysext`
                 self.use_functioning_dpkg_sysext = True
