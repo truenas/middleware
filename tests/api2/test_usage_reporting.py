@@ -1,4 +1,5 @@
 import pytest
+import time
 from itertools import chain
 from middlewared.test.integration.assets.nfs import nfs_server
 from middlewared.test.integration.assets.ftp import ftp_server
@@ -52,20 +53,26 @@ def test_gather_types(get_usage_sample):
 
 
 def test_nfs_reporting(get_usage_sample):
-    """ Confirm we are correctly reporting the number of connections """
-    # Initial state should have NFSv[3,4] and no connections
+    """ Confirm we are correctly reporting the number of NFS connections """
+    # NOTE: NFSv3 can be wildly inaccurate.  Connections are recorded by mount requests.
+    #       Connections get cleared by umount requests.  Stale entries can easily accumulate.
+    #       NFSv4 clients can be slow-ish to showup.
+    # Initial state should have NFSv[3,4] and possibly some stale NFSv3 connections from previous tests
     assert set(get_usage_sample['NFS']['enabled_protocols']) == set(["NFSV3", "NFSV4"])
-    assert get_usage_sample['NFS']['num_clients'] == 0
 
-    # Establish two connections
     nfs_path = f'/mnt/{pool_name}/test_nfs'
     with nfs_dataset("test_nfs"):
         with nfs_share(nfs_path):
             with nfs_server():
+                # Wait a couple secs for clients to report in
+                time.sleep(2)
+                baseline_sample = call('usage.gather')['NFS']['num_clients']
+
+                # Establish a new connection.
                 with SSH_NFS(truenas_server.ip, nfs_path,
                              user=user, password=password, ip=truenas_server.ip):
                     usage_sample = call('usage.gather')
-                    assert usage_sample['NFS']['num_clients'] == 1
+                    assert usage_sample['NFS']['num_clients'] == baseline_sample + 1
 
 
 def test_ftp_reporting(get_usage_sample):
