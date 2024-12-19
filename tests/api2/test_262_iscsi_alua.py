@@ -467,12 +467,14 @@ class TestFixtureConfiguredALUA:
         if self.VERBOSE:
             print('Powering off VM', domain)
         poweroff_vm(domain)
+        sleep(3)
 
         # Wait for the new MASTER to come up
         newnode = self.wait_for_new_master(node)
 
         # Wait for the failover event to complete
         self.wait_for_failover_in_progress()
+        sleep(5)
 
         if newnode == 'A':
             new_ip = truenas_server.nodea_ip
@@ -485,9 +487,6 @@ class TestFixtureConfiguredALUA:
         if self.VERBOSE:
             print(f'Validate data pattern seen by Node {newnode}...')
         self.check_patterns(new_ip, fix_write_patterns)
-
-        if self.VERBOSE:
-            print(f'Validate data pattern seen by Node {newnode}...')
 
     @pytest.mark.timeout(900)
     def test_boot_complex_alua_config(self, fix_write_patterns, fix_get_domain, fix_orig_active_node):
