@@ -13,7 +13,6 @@ def generate_csr(hostnames: list[str]) -> (str, str):
         'key_type': 'RSA',
         'key_length': 4096,
         'san': hostnames,
-        'common': hostnames[0],
         'country': 'US',
         'state': 'TN',
         'city': 'Maryville',
@@ -22,4 +21,5 @@ def generate_csr(hostnames: list[str]) -> (str, str):
         'email': 'cert-bot@ixsystems.com',
         'digest_algorithm': 'SHA256',
         'cert_extensions': copy.deepcopy(CSR_PROFILES['HTTPS RSA Certificate']['cert_extensions']),
+        # We do not specify a common as domain hostname is bigger then 64 chars and cryptography starts complaining
     })

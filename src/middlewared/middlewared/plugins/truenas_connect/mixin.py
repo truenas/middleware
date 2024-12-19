@@ -28,7 +28,7 @@ class TNCAPIMixin:
             headers = headers or {}
             headers['Content-Type'] = 'application/json'
         try:
-            async with aiohttp.timeout(timeout):
+            async with asyncio.timeout(timeout):
                 async with aiohttp.ClientSession(raise_for_status=True, trust_env=True) as session:
                     req = await getattr(session, mode)(
                         endpoint,
