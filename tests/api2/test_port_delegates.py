@@ -11,6 +11,11 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call
 
 
+def remove_FTP_anonymous():
+    """ remove spurious onlyanonymous as it requires a path """
+    call('ftp.update', {"onlyanonymous": False})
+
+
 PAYLOAD = (
     ('ftp.config', 'ftp.update', ['port'], {}),
 )
@@ -36,6 +41,9 @@ def test_port_delegate_validation_with_invalid_ports(config_method, method, keys
 
 @pytest.mark.parametrize('config_method,method,keys,payload', PAYLOAD)
 def test_port_delegate_validation_with_valid_ports(config_method, method, keys, payload):
+    # Clean up previous config settings
+    remove_FTP_anonymous()
+
     in_use_ports = []
     for entry in call('port.get_in_use'):
         in_use_ports.extend(entry['ports'])
