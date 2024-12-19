@@ -12,7 +12,7 @@ from middlewared.test.integration.utils import call
 
 
 def remove_FTP_anonymous():
-    """ remove spurrious onlyanonymous as it requires a path """
+    """ remove spurious onlyanonymous as it requires a path """
     call('ftp.update', {"onlyanonymous": False})
 
 
