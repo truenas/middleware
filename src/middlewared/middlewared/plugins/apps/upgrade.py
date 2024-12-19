@@ -52,7 +52,7 @@ class AppService(Service):
                 continue
 
             self.middleware.call_sync('zfs.snapshot.create', {'dataset': dataset, 'name': app_info['version']})
-
+            logger.debug('Created snapshot %r for %r app', snap_name, app_info['name'])
 
     @accepts(
         Str('app_name'),
