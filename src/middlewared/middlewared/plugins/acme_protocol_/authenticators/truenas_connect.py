@@ -40,7 +40,7 @@ class TrueNASConnectAuthenticator(Authenticator):
         response = requests.post(LECA_DNS_URL, data=json.dumps({
             'token': validation_content,
             'hostnames': [domain],  # We should be using validation name here
-        }), headers=auth_headers(self.attributes))
+        }), headers=auth_headers(self.attributes), timeout=30)
         if response.status_code != 201:
             raise CallError(
                 f'Failed to perform {self.NAME} challenge for {domain!r} domain with '
