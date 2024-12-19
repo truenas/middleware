@@ -19,7 +19,7 @@ def generate_csr(hostnames: list[str]) -> (str, str):
         'city': 'Maryville',
         'organization': 'iX',
         'organizational_unit': 'TNC',
-        'email': 'dev@ixsystems.com',
+        'email': 'cert-bot@ixsystems.com',
         'digest_algorithm': 'SHA256',
         'cert_extensions': copy.deepcopy(CSR_PROFILES['HTTPS RSA Certificate']['cert_extensions']),
     })

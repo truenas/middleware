@@ -83,12 +83,38 @@ class TNCACMEService(Service, TNCAPIMixin):
                     'certificate': cert_details['cert'],
                     'privatekey': cert_details['private_key'],
                     'renew_days': CERT_RENEW_DAYS,
+                    'CSR': cert_details['csr'],
                 }, {'prefix': 'cert_'}
             )
+            await self.middleware.call('etc.generate', 'ssl')
             logger.debug('TNC certificate generated successfully')
             await self.middleware.call(
                 'tn_connect.set_status', Status.CERT_GENERATION_SUCCESS.name, {'certificate': cert_id}
             )
+            await self.update_ui()
+
+    async def renew_cert(self):
+        logger.debug('Initiating renewal of TNC certificate')
+        await self.middleware.call('tn_connect.set_status', Status.CERT_RENEWAL_IN_PROGRESS.name)
+        try:
+            config = await self.middleware.call('tn_connect.config')
+            renewal_job = await self.middleware.call('tn_connect.acme.create_cert', config['certificate'])
+            await renewal_job.wait(raise_error=True)
+        except Exception:
+            logger.error('Failed to renew certificate for TNC', exc_info=True)
+            await self.middleware.call('tn_connect.set_status', Status.CERT_RENEWAL_FAILURE.name)
+        else:
+            logger.debug('TNC certificate renewed successfully, updating database')
+            cert_details = renewal_job.result
+            await self.middleware.call(
+                'datastore.update',
+                'system.certificate',
+                config['certificate'],
+                {'certificate': cert_details['cert']},
+                {'prefix': 'cert_'},
+            )
+            await self.middleware.call('etc.generate', 'ssl')
+            await self.middleware.call('tn_connect.set_status', Status.CERT_RENEWAL_SUCCESS.name)
             await self.update_ui()
 
     async def initiate_cert_generation_impl(self):
@@ -101,7 +127,7 @@ class TNCACMEService(Service, TNCAPIMixin):
         return cert_job.result
 
     @job(lock='tn_connect_cert_generation')
-    async def create_cert(self, job):
+    async def create_cert(self, job, cert_id=None):
         hostname_config = await self.middleware.call('tn_connect.hostname.config')
         if hostname_config['error']:
             raise CallError(f'Failed to fetch TNC hostname configuration: {hostname_config["error"]}')
@@ -110,9 +136,14 @@ class TNCACMEService(Service, TNCAPIMixin):
         if acme_config['error']:
             raise CallError(f'Failed to fetch TNC ACME configuration: {acme_config["error"]}')
 
-        logger.debug('Generating CSR for TNC certificate')
         hostnames = get_hostnames_from_hostname_config(hostname_config)
-        csr, private_key = generate_csr(hostnames)
+        if cert := (await self.middleware.call('certificate.query', [['id', '=', cert_id]])):
+            logger.debug('Retrieved CSR of existing TNC certificate')
+            csr, private_key = cert[0]['CSR'], cert[0]['privatekey']
+        else:
+            logger.debug('Generating CSR for TNC certificate')
+            csr, private_key = generate_csr(hostnames)
+
         dns_mapping = {f'DNS:{hostname}': None for hostname in hostnames}
 
         logger.debug('Performing ACME challenge for TNC certificate')
@@ -124,6 +155,7 @@ class TNCACMEService(Service, TNCAPIMixin):
             'cert': final_order.fullchain_pem,
             'acme_uri': final_order.uri,
             'private_key': private_key,
+            'csr': csr,
         }
 
     async def revoke_cert(self):
@@ -155,6 +187,11 @@ async def setup(middleware):
     if tnc_config['status'] is Status.CERT_GENERATION_IN_PROGRESS.name:
         logger.debug('Middleware started and cert generation is in progress, initiating process')
         middleware.create_task(middleware.call('tn_connect.acme.initiate_cert_generation'))
-    elif tnc_config['status'] is Status.CERT_GENERATION_SUCCESS.name:
+    elif tnc_config['status'] in (
+        Status.CERT_GENERATION_SUCCESS.name, Status.CERT_RENEWAL_SUCCESS.name,
+    ):
         logger.debug('Middleware started and cert generation is already successful, updating UI')
         middleware.create_task(middleware.call('tn_connect.acme.update_ui'))
+    elif tnc_config['status'] is Status.CERT_RENEWAL_IN_PROGRESS.name:
+        logger.debug('Middleware started and cert renewal is in progress, initiating process')
+        middleware.create_task(middleware.call('tn_connect.acme.renew_cert'))
