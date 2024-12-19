@@ -1,5 +1,5 @@
 #
-# NSLCD.CONF(5)		The configuration file for LDAP nameservice daemon
+# SSSD.CONF(5)		The configuration file for SSSD
 #
 <%
     from middlewared.plugins.etc import FileShouldNotExist
@@ -84,17 +84,23 @@ enumerate = ${not ldap['disable_freenas_cache']}
 % if kerberos_realm:
 ldap_sasl_mech = GSSAPI
 ldap_sasl_realm = ${kerberos_realm}
-  % if ldap['kerberos_principal']:
+% if ldap['kerberos_principal']:
 ldap_sasl_authid = ${ldap['kerberos_principal']}
-  % endif
+% endif
 % endif
 timeout = ${ldap['timeout']}
 ldap_schema = ${ldap['schema'].lower()}
 min_id = ${min_uid}
-${'\n    '.join(search_params)}
-${'\n    '.join(map_params)}
+% if search_params:
+# Search Parameters
+${'\n'.join(search_params)}
+% endif
+% if search_params:
+# Map Parameters
+${'\n'.join(map_params)}
+% endif
 % if aux:
-${'\n    '.join(aux)}
+${'\n'.join(aux)}
 % endif
 % elif ds_type == DSType.IPA.value:
 [sssd]
