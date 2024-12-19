@@ -304,6 +304,7 @@ class AppGpuChoicesResult(BaseModel):
 class AppRollbackOptions(BaseModel):
     app_version: NonEmptyString
     rollback_snapshot: bool = True
+    rollback_hostpath_snapshots: bool = False
 
 
 class AppRollbackArgs(BaseModel):

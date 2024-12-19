@@ -1,7 +1,10 @@
+import logging
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppRollbackArgs, AppRollbackResult, AppRollbackVersionsArgs, AppRollbackVersionsResult,
 )
+
 from middlewared.service import job, Service, ValidationErrors
 
 from .compose_utils import compose_action
@@ -9,6 +12,9 @@ from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, up
 from .ix_apps.metadata import update_app_metadata
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.rollback import clean_newer_versions, get_rollback_versions
+
+
+logger = logging.getLogger('app_lifecycle')
 
 
 class AppService(Service):
@@ -34,6 +40,9 @@ class AppService(Service):
             verrors.add('options.app_version', 'Cannot rollback to same version')
         elif options['app_version'] not in get_rollback_versions(app_name, app['version']):
             verrors.add('options.app_version', 'Specified version is not available for rollback')
+
+        if app['state'] == 'STOPPED':
+            verrors.add('app_name', 'App must not be in stopped state to rollback')
 
         verrors.check()
 
@@ -63,6 +72,8 @@ class AppService(Service):
         self.middleware.send_event(
             'app.query', 'CHANGED', id=app_name, fields=self.middleware.call_sync('app.get_instance', app_name)
         )
+        host_path_mapping = self.middleware.call_sync('app.get_hostpaths_datasets', app_name)
+        self.middleware.call_sync('app.stop', app_name).wait_sync()
         try:
             if options['rollback_snapshot'] and (
                 app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name)
@@ -79,6 +90,29 @@ class AppService(Service):
                             'recursive_rollback': True,
                         }
                     )
+
+            if options['rollback_hostpath_snapshots']:
+                if host_path_mapping:
+                    logger.debug('Rolling back hostpath snapshots for %r app', app_name)
+
+                for host_path, dataset in host_path_mapping.items():
+                    if not dataset:
+                        logger.debug('No dataset found for %r hostpath', host_path)
+                        continue
+
+                    snap_name = f'{dataset}@{options["app_version"]}'
+                    if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
+                        self.middleware.call_sync(
+                            'zfs.snapshot.rollback', snap_name, {
+                                'force': True,
+                                'recursive': False,
+                                'recursive_clones': False,
+                                'recursive_rollback': False,
+                            }
+                        )
+                        logger.debug('Rolled back %r snapshot for %r hostpath', snap_name, host_path)
+                    else:
+                        logger.debug('Snapshot %r not found for %r app', snap_name, app_name)
 
             compose_action(app_name, options['app_version'], 'up', force_recreate=True, remove_orphans=True)
         finally:

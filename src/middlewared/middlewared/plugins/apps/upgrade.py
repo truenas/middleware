@@ -26,7 +26,7 @@ class AppService(Service):
     @private
     def take_snapshot_of_hostpath(self, app, snapshot_hostpath):
         app_info = self.middleware.call_sync('app.get_instance', app) if isinstance(app, str) else app
-        host_path_mapping = self.middleware.call_sync('app.get_host_path_mapping', app_info['name'])
+        host_path_mapping = self.middleware.call_sync('app.get_hostpaths_datasets', app_info['name'])
         # Stop the app itself before we attempt to take snapshots
         self.middleware.call_sync('app.stop', app_info['name']).wait_sync()
         if not snapshot_hostpath:
@@ -55,6 +55,7 @@ class AppService(Service):
                 continue
 
             self.middleware.call_sync('zfs.snapshot.create', {'dataset': dataset, 'name': app_info['version']})
+            logger.debug('Created snapshot %r for %r app', snap_name, app_info['name'])
 
     @api_method(
         AppUpgradeArgs, AppUpgradeResult,
