@@ -1,22 +1,14 @@
-#!/usr/bin/env python3
-
-# Author: Eric Turgeon
-# License: BSD
-# Location for tests into REST API of FreeNAS
+import base64
+import json
+import time
 
 import pytest
-import sys
-import os
-import json
-apifolder = os.getcwd()
-sys.path.append(apifolder)
+
 from auto_config import hostname
-from base64 import b64decode
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.directory_service import active_directory
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.system import reset_systemd_svcs
-from time import sleep
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, AD_COMPUTER_OU
@@ -148,7 +140,7 @@ def test_backend_options(do_ad_connection, backend_data, backend):
     # We unfortunately need to sleep here on each iteration to allow time for
     # winbind to settle down before applying more idmap changes otherwise
     # subsequent idmap.update call will time out.
-    sleep(5)
+    time.sleep(5)
 
     if backend == "AUTORID":
         IDMAP_CFG = "idmap config * "
@@ -269,7 +261,7 @@ def test_backend_options(do_ad_connection, backend_data, backend):
 
         # Check that our secret is written and stored in secrets backup correctly
         assert idmap_secret == db_secrets[f"SECRETS/GENERIC/IDMAP_LDAP_{WORKGROUP}/{LDAPBINDDN}"]
-        decoded_sec = b64decode(idmap_secret).rstrip(b'\x00').decode()
+        decoded_sec = base64.b64decode(idmap_secret).rstrip(b'\x00').decode()
         assert secret == decoded_sec, idmap_secret
 
         # Use net command via samba to rewrite secret and make sure it is same
