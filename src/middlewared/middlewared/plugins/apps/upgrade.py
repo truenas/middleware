@@ -1,7 +1,6 @@
 import logging
 from pkg_resources import parse_version
 
-from middlewared.plugins.docker.state_utils import IX_APPS_MOUNT_PATH
 from middlewared.schema import accepts, Bool, Dict, List, Str, Ref, returns
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 
@@ -24,31 +23,27 @@ class AppService(Service):
     @private
     def take_snapshot_of_hostpath(self, app, snapshot_hostpath):
         app_info = self.middleware.call_sync('app.get_instance', app) if isinstance(app, str) else app
-        host_paths = [
-            volume['source_path'] for volume in app_info['active_workloads']['volumes']
-            if volume['source'].startswith(f'{IX_APPS_MOUNT_PATH}/') is False
-        ]
+        host_path_mapping = self.middleware.call_sync('app.get_host_path_mapping', app_info['name'])
         # Stop the app itself before we attempt to take snapshots
         self.middleware.call_sync('app.stop', app_info['name']).wait_sync()
         if not snapshot_hostpath:
             return
 
-        if host_paths:
+        if host_path_mapping:
             logger.debug('Taking snapshots of host paths for %r app', app_info['name'])
 
-        for host_path in host_paths:
-            if host_path.startswith('/mnt/') is False:
-                logger.debug(
-                    'Skipping %r host path for %r app\'s snapshot as it is not under /mnt', host_path, app_info['name']
-                )
-                continue
+        for host_path, dataset in host_path_mapping.items():
+            if not dataset:
+                if host_path.startswith('/mnt/') is False:
+                    logger.debug(
+                        'Skipping %r host path for %r app\'s snapshot as it is not under /mnt', host_path, app_info['name']
+                    )
+                else:
+                    logger.debug(
+                        'Skipping %r host path for %r app\'s snapshot as it is not a dataset', host_path,
+                        app_info['name']
+                    )
 
-            try:
-                dataset = self.middleware.call_sync('zfs.dataset.path_to_dataset', host_path)
-            except CallError:
-                logger.debug(
-                    'Skipping %r host path for %r app\'s snapshot as it is not a dataset', host_path, app_info['name']
-                )
                 continue
 
             snap_name = f'{dataset}@{app_info["version"]}'
