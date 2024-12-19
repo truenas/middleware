@@ -1,22 +1,24 @@
-#!/usr/bin/env python3
-# License: BSD
-
+import contextlib
 import os
+import time
+
+from pysnmp.hlapi import (
+    CommunityData,
+    ContextData,
+    ObjectIdentity,
+    ObjectType,
+    SnmpEngine,
+    UdpTransportTarget,
+    getCmd
+)
 import pytest
 
-from time import sleep
-
-from contextlib import ExitStack
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.assets.filesystem import directory, mkfile
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.system import reset_systemd_svcs
-from pysnmp.hlapi import (CommunityData, ContextData, ObjectIdentity,
-                          ObjectType, SnmpEngine, UdpTransportTarget, getCmd)
-
-
 from auto_config import ha, interface, password, user, pool_name
 from functions import async_SSH_done, async_SSH_start
 
@@ -118,7 +120,7 @@ def create_nested_structure():
     file_list = []
     # Test '-' and ' ' in the name (we skip index 0)
     zvol_name = ["bogus", "zvol", "zvol-L", "zvol L"]
-    with ExitStack() as es:
+    with contextlib.ExitStack() as es:
 
         for i in range(1, 4):
             preamble = f"{ds_path + '/' if i > 1 else ''}"
@@ -198,7 +200,7 @@ def validate_snmp_get_sysname_uses_same_ip(hostip):
     print(f"Testing {hostip} ", end='')
     p = async_SSH_start(f"tcpdump -t -i {interface} -n udp port 161 -c2", user, password, hostip)
     # Give some time so that the tcpdump has started before we proceed
-    sleep(5)
+    time.sleep(5)
 
     get_sysname(hostip, COMMUNITY)
 
