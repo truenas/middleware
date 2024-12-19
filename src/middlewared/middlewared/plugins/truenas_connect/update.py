@@ -52,9 +52,14 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             verrors.add('tn_connect_update.ips', 'This field is required when TrueNAS Connect is enabled')
 
         ip_choices = await self.ip_choices()
+        ips = []
         for index, ip in enumerate(data['ips']):
+            ip = str(ip)
             if ip not in ip_choices:
                 verrors.add(f'tn_connect_update.ips.{index}', 'Provided IP is not valid')
+            ips.append(ip)
+
+        data['ips'] = ips
 
         ips_changed = set(old_config['ips']) != set(data['ips'])
         if ips_changed and (
