@@ -9,6 +9,7 @@ from middlewared.utils.gpu import get_nvidia_gpus
 
 def render(service, middleware):
     config = middleware.call_sync('docker.config')
+    http_proxy = middleware.call_sync('network.configuration.config')['httpproxy']
     if not config['pool']:
         raise FileShouldNotExist()
 
@@ -25,6 +26,14 @@ def render(service, middleware):
         'storage-driver': 'overlay2',
         'fixed-cidr-v6': config['cidr_v6'],
         'default-address-pools': config['address_pools'],
+        **(
+            {
+                'proxies': {
+                    'http-proxy': http_proxy,
+                    'https-proxy': http_proxy,
+                }
+            } if http_proxy else {}
+        )
     }
     isolated = middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
     for gpu in filter(lambda x: x not in isolated, get_nvidia_gpus()):

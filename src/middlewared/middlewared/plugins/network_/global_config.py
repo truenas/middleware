@@ -369,6 +369,9 @@ class NetworkConfigurationService(ConfigService):
                 {'data': {'httpproxy': new_config['httpproxy']}}
             )
 
+            if (await self.middleware.call('docker.config'))['pool']:
+                # Docker needs to be restarted to reflect http proxy changes
+                service_actions.add(('docker', 'restart'))
         # allowing outbound network activity has been changed
         if new_config['activity'] != config['activity']:
             await self.middleware.call('zettarepl.update_tasks')
