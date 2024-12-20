@@ -1,7 +1,16 @@
 import asyncio
 
 import middlewared.sqlalchemy as sa
-from middlewared.schema import Bool, Dict, Int, Patch, accepts
+from middlewared.api import api_method
+from middlewared.api.current import (
+    IscsiTargetToExtentEntry,
+    IscsiTargetToExtentCreateArgs,
+    IscsiTargetToExtentCreateResult,
+    IscsiTargetToExtentUpdateArgs,
+    IscsiTargetToExtentUpdateResult,
+    IscsiTargetToExtentDeleteArgs,
+    IscsiTargetToExtentDeleteResult)
+
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
 
 
@@ -29,14 +38,14 @@ class iSCSITargetToExtentService(CRUDService):
         datastore_extend = 'iscsi.targetextent.extend'
         cli_namespace = 'sharing.iscsi.target.extent'
         role_prefix = 'SHARING_ISCSI_TARGETEXTENT'
+        entry = IscsiTargetToExtentEntry
 
-    @accepts(Dict(
-        'iscsi_targetextent_create',
-        Int('target', required=True),
-        Int('lunid', null=True),
-        Int('extent', required=True),
-        register=True
-    ), audit='Create iSCSI target/LUN/extent mapping', audit_callback=True)
+    @api_method(
+        IscsiTargetToExtentCreateArgs,
+        IscsiTargetToExtentCreateResult,
+        audit='Create iSCSI target/LUN/extent mapping',
+        audit_callback=True
+    )
     async def do_create(self, audit_callback, data):
         """
         Create an Associated Target.
@@ -85,16 +94,11 @@ class iSCSITargetToExtentService(CRUDService):
 
         return f'{target}/{data.get("lunid")}/{extent}'
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'iscsi_targetextent_create',
-            'iscsi_targetextent_update',
-            ('edit', _set_null_false('lunid')),
-            ('attr', {'update': True})
-        ),
+    @api_method(
+        IscsiTargetToExtentUpdateArgs,
+        IscsiTargetToExtentUpdateResult,
         audit='Update iSCSI target/LUN/extent mapping',
-        audit_callback=True,
+        audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
         """
@@ -119,10 +123,12 @@ class iSCSITargetToExtentService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'),
-             Bool('force', default=False),
-             audit='Delete iSCSI target/LUN/extent mapping',
-             audit_callback=True,)
+    @api_method(
+        IscsiTargetToExtentDeleteArgs,
+        IscsiTargetToExtentDeleteResult,
+        audit='Delete iSCSI target/LUN/extent mapping',
+        audit_callback=True
+    )
     async def do_delete(self, audit_callback, id_, force):
         """
         Delete Associated Target of `id`.
