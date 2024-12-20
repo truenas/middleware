@@ -18,7 +18,7 @@ class DisabledReasonsEnum(StrEnum):
     NO_LICENSE = "Other node has no license."
     NO_FAILOVER = "Administratively Disabled."
     NO_PONG = "Unable to contact remote node via the heartbeat interface."
-    NO_VOLUME = "No zpools have been configured."
+    NO_VOLUME = "No zpools have been configured or the existing zpool couldn't be imported."
     NO_VIP = "No interfaces have been configured with a Virtual IP."
     NO_SYSTEM_READY = "Other node has not finished booting."
     NO_FENCED = "Fenced is not running."
