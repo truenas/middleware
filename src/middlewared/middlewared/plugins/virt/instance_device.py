@@ -288,13 +288,16 @@ class VirtInstanceDeviceService(Service):
                 if source == '':
                     verrors.add(schema, 'Source is required.')
                 elif source.startswith('/'):
+                    if source.startswith('/dev/zvol/') and source not in await self.middleware.call(
+                        'virt.device.disk_choices'
+                    ):
+                        verrors.add(schema, 'Invalid ZVOL choice.')
+
                     if instance_type == 'CONTAINER':
                         if device['boot_priority'] is not None:
                             verrors.add(schema, 'Boot priority is not valid for filesystem paths.')
 
-                        if not source.startswith('/mnt/'):
-                            verrors.add(schema, 'Source must be a path starting with /mnt/ for container.')
-                        elif await self.middleware.run_in_thread(os.path.exists, source) is False:
+                        if await self.middleware.run_in_thread(os.path.exists, source) is False:
                             verrors.add(schema, 'Source path does not exist.')
                         if not device.get('destination'):
                             verrors.add(schema, 'Destination is required for filesystem paths.')
@@ -306,8 +309,6 @@ class VirtInstanceDeviceService(Service):
                             verrors.add(
                                 schema, 'Source must be a path starting with /dev/zvol/ for VM or a virt volume name.'
                             )
-                        elif source not in await self.middleware.call('virt.device.disk_choices'):
-                            verrors.add(schema, 'Invalid ZVOL choice.')
                 else:
                     if instance_type == 'CONTAINER':
                         verrors.add(schema, 'Source must be a filesystem path for CONTAINER')
