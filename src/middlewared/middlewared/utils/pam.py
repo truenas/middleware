@@ -152,7 +152,7 @@ SSS_ACCOUNT = PAMConfLines(
         PAMLine(
             pam_service=PAMService.ACCOUNT,
             pam_control=(
-                PAMControl(PAMResponse.SUCCESS, 2),
+                PAMControl(PAMResponse.SUCCESS, 1),
                 PAMControl(PAMResponse.NEW_AUTHTOK_REQD, PAMAction.DONE),
                 PAMControl(PAMResponse.DEFAULT, PAMAction.IGNORE)
             ),
