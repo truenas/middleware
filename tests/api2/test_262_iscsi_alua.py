@@ -329,6 +329,7 @@ class TestFixtureConfiguredALUA:
         def zero_lun(s, target_num, lun, lun_config):
             # Write zeros using WRITE SAME (16)
             s.writesame16(0, self.BLOCKS, self.ZEROS)
+            s.synchronizecache10(0, self.BLOCKS)
         self.visit_luns(ip, config, zero_lun)
 
     def check_zero_luns(self, ip, config):
@@ -365,6 +366,7 @@ class TestFixtureConfiguredALUA:
     def write_patterns(self, ip, config):
         def write_pattern(s, target_num, lun, lun_config):
             s.writesame16(1, 2, self.page_pattern(target_num, lun))
+            s.synchronizecache10(1, 2)
         self.visit_luns(ip, config, write_pattern)
 
     def check_patterns(self, ip, config):
@@ -465,12 +467,14 @@ class TestFixtureConfiguredALUA:
         if self.VERBOSE:
             print('Powering off VM', domain)
         poweroff_vm(domain)
+        sleep(3)
 
         # Wait for the new MASTER to come up
         newnode = self.wait_for_new_master(node)
 
         # Wait for the failover event to complete
         self.wait_for_failover_in_progress()
+        sleep(5)
 
         if newnode == 'A':
             new_ip = truenas_server.nodea_ip
@@ -483,9 +487,6 @@ class TestFixtureConfiguredALUA:
         if self.VERBOSE:
             print(f'Validate data pattern seen by Node {newnode}...')
         self.check_patterns(new_ip, fix_write_patterns)
-
-        if self.VERBOSE:
-            print(f'Validate data pattern seen by Node {newnode}...')
 
     @pytest.mark.timeout(900)
     def test_boot_complex_alua_config(self, fix_write_patterns, fix_get_domain, fix_orig_active_node):

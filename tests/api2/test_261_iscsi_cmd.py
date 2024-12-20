@@ -2994,3 +2994,44 @@ def test__target_delete_extents(iscsi_running):
             # Ensure the extent does not exist
             extents = call('iscsi.extent.query', [['id', '=', target3_config['extent']['id']]])
             assert len(extents) == 0, extents
+
+
+@pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
+def test__synchronize_cache(iscsi_running, extent_type):
+    """
+    Test that a SCSI SYNCHRONIZE CACHE command actually ensures data is
+    written to stable storage.
+    """
+    def test_empty(path, extent_size_mb=5):
+        # Use dd to ensure we don't end up with stuff from page cache, plus we want
+        # to check what's actually ON DISK.
+        output = ssh(f'dd if={path} iflag=nocache oflag=nocache | od -a -', False)
+        return output.split() == ['0000000',
+                                  'nul', 'nul', 'nul', 'nul', 'nul', 'nul', 'nul', 'nul',
+                                  'nul', 'nul', 'nul', 'nul', 'nul', 'nul', 'nul', 'nul',
+                                  '*', oct(extent_size_mb * MB)[2:]]
+
+    name = f'{target_name}{extent_type.lower()}'
+    deadbeef = bytearray.fromhex('deadbeef') * 128
+    zeros = bytearray(512)
+    with initiator_portal() as config:
+        with configured_target(config, name, extent_type, extent_size_mb=5) as config:
+            if extent_type == 'FILE':
+                test_path = config['extent']['path']
+            else:
+                test_path = os.path.join('/dev', config['extent']['disk'])
+            iqn = f'{basename}:{name}'
+
+            # Ensure that to start the volume has NULL data
+            assert test_empty(test_path), 'Initial data is not empty'
+
+            with iscsi_scsi_connection(truenas_server.ip, iqn) as s:
+                # Write data SYNCHRONIZE and check the volume has non-NULL data
+                s.write16(0, 1, deadbeef)
+                s.synchronizecache10(0, 1)
+                assert test_empty(test_path) is False, 'Expected deadbeef data'
+
+                # Zero data SYNCHRONIZE and check the volume has NULL data again
+                s.write16(0, 1, zeros)
+                s.synchronizecache16(0, 1)
+                assert test_empty(test_path) is True, 'Expected zero data'
