@@ -81,6 +81,9 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
     @api_method(CloudBackupTransferSettingChoicesArgs, CloudBackupTransferSettingChoicesResult)
     def transfer_setting_choices(self):
+        """
+        Return all possible choices for `cloud_backup.create.transfer_setting`.
+        """
         args = self.transfer_setting_args()
         return list(args.keys())
 
@@ -88,6 +91,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     @pass_app(rest=True)
     async def do_create(self, app, cloud_backup):
         """
+        Create a new cloud backup task
         """
         verrors = ValidationErrors()
         await self._validate(app, verrors, "cloud_backup_create", cloud_backup)
@@ -104,7 +108,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     @pass_app(rest=True)
     async def do_update(self, app, id_, data):
         """
-        Updates the cloud backup entry `id` with `data`.
+        Update the cloud backup entry `id` with `data`.
         """
         cloud_backup = await self.get_instance(id_)
 
@@ -130,7 +134,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     @api_method(CloudBackupDeleteArgs, CloudBackupDeleteResult)
     async def do_delete(self, id_):
         """
-        Deletes cloud backup entry `id`.
+        Delete cloud backup entry `id`.
         """
         await self.middleware.call("cloud_backup.abort", id_)
         await self.middleware.call("alert.oneshot_delete", "CloudBackupTaskFailed", id_)
