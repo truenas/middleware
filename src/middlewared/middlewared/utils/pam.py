@@ -224,7 +224,7 @@ SSS_AUTH = PAMConfLines(
         PAMLine(
             pam_service=PAMService.AUTH,
             pam_control=(
-                PAMControl(PAMResponse.SUCCESS, 2),
+                PAMControl(PAMResponse.SUCCESS, 1),
                 PAMControl(PAMResponse.DEFAULT, PAMAction.IGNORE)
             ),
             pam_module=PAMModule.SSS,
