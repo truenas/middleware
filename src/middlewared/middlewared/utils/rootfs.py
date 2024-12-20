@@ -32,20 +32,18 @@ class Dataset:
 
 
 class ReadonlyRootfsManager:
-    def __init__(self, root="/", force_rw=False):
+    def __init__(self, root="/", force_usr_rw=False):
         self.root = root
-
         self.initialized = False
         self.datasets: dict[str, Dataset] = {}
         self.use_functioning_dpkg_sysext = False
-        self.force_rw = force_rw
+        self.force_usr_rw = force_usr_rw
 
     def __enter__(self):
         return self
 
     def make_writeable(self):
         self._initialize()
-
         self._set_state({
             name: False
             for name, dataset in self.datasets.items()
@@ -77,9 +75,16 @@ class ReadonlyRootfsManager:
             ("usr", usr_ds),
         ]:
             mountpoint = os.path.realpath("/".join(filter(None, (self.root, dataset))))
-            if mountpoint == "/usr" and not self.force_rw:
-                # We make `/usr` writeable only to be able to temporary enable `dpkg` (`update-initramfs` needs it).
-                # If we are on live system, it's better to use `systemd-sysext`
+            if mountpoint == "/usr" and not self.force_usr_rw:
+                # 1. We make `/usr` writeable only to be able to
+                #   temporary enable `dpkg` (`update-initramfs` needs it).
+                # 2. OR someone is using this context manager with `force_usr_rw`
+                #   set to True. This is needed, for example, when support team
+                #   flashes a Chelsio NIC to a different mode. Chelsio's provided
+                #   script needs write access to firmware files located in /lib.
+                #
+                # Otherwise, if we are on live system, it's better
+                # to use `systemd-sysext`
                 self.use_functioning_dpkg_sysext = True
                 continue
 
