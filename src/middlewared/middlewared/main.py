@@ -63,7 +63,6 @@ import time
 import traceback
 import typing
 import uuid
-import tracemalloc
 
 from anyio import create_connected_unix_datagram_socket
 from systemd.daemon import notify as systemd_notify
@@ -94,7 +93,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def __init__(
         self, loop_debug=False, loop_monitor=True, debug_level=None,
-        log_handler=None, trace_malloc=False,
+        log_handler=None,
         log_format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s',
         print_version=True,
     ):
@@ -104,7 +103,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self.logger.info('Starting %s middleware', sw_version())
         self.loop_debug = loop_debug
         self.loop_monitor = loop_monitor
-        self.trace_malloc = trace_malloc
         self.debug_level = debug_level
         self.log_handler = log_handler
         self.log_format = log_format
@@ -1077,63 +1075,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         for thread_id, stack in get_threads_stacks().items():
             self.logger.debug('Thread %d stack:\n%s', thread_id, ''.join(stack))
 
-    def _tracemalloc_start(self, limit, interval):
-        """
-        Run an endless loop grabbing snapshots of allocated memory using
-        the python's builtin "tracemalloc" module.
-
-        `limit` integer representing number of lines to print showing
-                highest memory consumer
-        `interval` integer representing the time in seconds to wait
-                before taking another memory snapshot
-        """
-        # set the thread name
-        set_thread_name('tracemalloc_monitor')
-
-        # initalize tracemalloc
-        tracemalloc.start()
-
-        # if given bogus numbers, default both of them respectively
-        if limit <= 0:
-            limit = 5
-        if interval <= 0:
-            interval = 5
-
-        # filters for the snapshots so we can
-        # ignore modules that we don't care about
-        filters = (
-            tracemalloc.Filter(False, '<frozen importlib._bootstrap>'),
-            tracemalloc.Filter(False, '<frozen importlib._bootstrap_external>'),
-            tracemalloc.Filter(False, '<unknown>'),
-            tracemalloc.Filter(False, '*tracemalloc.py'),
-        )
-
-        # start the loop
-        prev = None
-        while True:
-            if prev is None:
-                prev = tracemalloc.take_snapshot()
-                prev = prev.filter_traces(filters)
-            else:
-                curr = tracemalloc.take_snapshot()
-                curr = curr.filter_traces(filters)
-                diff = curr.compare_to(prev, 'lineno')
-
-                prev = curr
-                curr = None
-                stats = f'\nTop {limit} consumers:'
-                for idx, stat in enumerate(diff[:limit], 1):
-                    stats += f'#{idx}: {stat}\n'
-
-                # print the memory used by the tracemalloc module itself
-                tm_mem = tracemalloc.get_tracemalloc_memory()
-                # add a newline at end of output to make logs more readable
-                stats += f'Memory used by tracemalloc module: {tm_mem:.1f} KiB\n'
-
-                self.logger.debug(stats)
-
-            time.sleep(interval)
-
     def set_mock(self, name, args, mock):
         for _args, _mock in self.mocks[name]:
             if args == _args:
@@ -1423,13 +1364,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         await web.UnixSite(self.runner, unix_socket_path).start()
         os.chmod(unix_socket_path, 0o666)
 
-        if self.trace_malloc:
-            limit = self.trace_malloc[0]
-            interval = self.trace_malloc[1]
-            _thr = threading.Thread(target=self._tracemalloc_start, args=(limit, interval,))
-            _thr.setDaemon(True)
-            _thr.start()
-
         self.logger.debug('Accepting connections')
         self._console_write('loading completed\n')
 
@@ -1483,7 +1417,6 @@ def main():
     parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--loop-debug', action='store_true')
-    parser.add_argument('--trace-malloc', '-tm', action='store', nargs=2, type=int, default=False)
     parser.add_argument('--debug-level', choices=[
         'TRACE',
         'DEBUG',
@@ -1505,7 +1438,6 @@ def main():
     middleware = Middleware(
         loop_debug=args.loop_debug,
         loop_monitor=not args.disable_loop_monitor,
-        trace_malloc=args.trace_malloc,
         debug_level=args.debug_level,
         log_handler=args.log_handler,
         # Otherwise will crash since `/data/manifest.json` does not exist at that build stage
