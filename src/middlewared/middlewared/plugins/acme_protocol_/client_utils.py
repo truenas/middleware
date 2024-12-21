@@ -13,7 +13,7 @@ class BodyDict(typing.TypedDict):
 
 class ACMEClientAndKeyData(typing.TypedDict):
     uri: str
-    tos: bool
+    tos: bool | str
     new_account_uri: str
     new_nonce_uri: str
     new_order_uri: str
@@ -25,7 +25,7 @@ def get_acme_client_and_key(data: ACMEClientAndKeyData) -> tuple[client.ClientV2
     """
     Expected data dict should contain the following
     - uri: str
-    - tos: bool
+    - tos: bool | str
     - new_account_uri: str
     - new_nonce_uri: str
     - new_order_uri: str
