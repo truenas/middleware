@@ -53,7 +53,7 @@ class VMService(Service):
         available at the current moment and if a VM should be allowed to be launched.
         """
         # Use 90% of available memory to play safe
-        free = get_memory_info()['available'] * 0.9
+        free = int(get_memory_info()['available'] * 0.9)
 
         # Difference between current ARC total size and the minimum allowed
         arc_total = await self.middleware.call('sysctl.get_arcstats_size')
