@@ -53,7 +53,7 @@ def normalize_acme_config(config: dict) -> dict:
     config['acme_details'] = {
         'uri': acme_details['account']['uri'],
         'directory': acme_details['endpoint'],
-        'tos': 'https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf',
+        'tos': True,
         'new_account_uri': f'{parsed_url.scheme}://{parsed_url.netloc}/acme/new-acct',
         'new_nonce_uri': f'{parsed_url.scheme}://{parsed_url.netloc}/acme/new-nonce',
         'new_order_uri': f'{parsed_url.scheme}://{parsed_url.netloc}/acme/new-order',
