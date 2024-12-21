@@ -4,7 +4,7 @@ import requests
 
 from middlewared.api.current import TrueNASConnectSchemaArgs
 from middlewared.plugins.truenas_connect.mixin import auth_headers
-from middlewared.plugins.truenas_connect.urls import LECA_DNS_URL
+from middlewared.plugins.truenas_connect.urls import LECA_DNS_URL, LECA_CLEANUP_URL
 from middlewared.service import CallError
 
 from .base import Authenticator
@@ -50,5 +50,13 @@ class TrueNASConnectAuthenticator(Authenticator):
         logger.debug('Successfully performed %r challenge for %r domain', self.NAME, domain)
 
     def _cleanup(self, domain, validation_name, validation_content):
-        # We don't have any API in place to clean existing TXT records for TNC yet
-        pass
+        logger.debug('Cleaning up %r challenge for %r domain', self.NAME, domain)
+        try:
+            requests.delete(
+                LECA_CLEANUP_URL, headers=auth_headers(self.attributes), timeout=30, data=json.dumps({
+                    'hostnames': [validation_name],  # We use validation name here instead of domain as Zack advised
+                })
+            )
+        except Exception:
+            # We do not make this fatal as it does not matter if we fail to clean-up
+            logger.debug('Failed to cleanup %r challenge for %r domain', self.NAME, domain, exc_info=True)
