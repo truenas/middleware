@@ -2575,7 +2575,7 @@ def test__portal_access(iscsi_running):
                             assert MB_100 == read_capacity16(s)
 
 
-def test__multiple_extents():
+def test__multiple_extents(iscsi_running):
     """
     Verify that an iSCSI client can access multiple target LUNs
     when multiple extents are configured.
@@ -2593,7 +2593,8 @@ def test__multiple_extents():
                 with file_extent(pool_name, dataset_name, "target.extent1", filesize_mb=100, extent_name="extent1") as extent1_config:
                     with file_extent(pool_name, dataset_name, "target.extent2", filesize_mb=256, extent_name="extent2") as extent2_config:
                         with target_extent_associate(target_id, extent1_config['id'], 0):
-                            with target_extent_associate(target_id, extent2_config['id'], 1):
+                            # Now call iscsi.targetextent.create without a lunid parameter
+                            with target_extent_associate(target_id, extent2_config['id'], None):
                                 with iscsi_scsi_connection(truenas_server.ip, iqn, 0) as s:
                                     TUR(s)
                                     assert MB_100 == read_capacity16(s)

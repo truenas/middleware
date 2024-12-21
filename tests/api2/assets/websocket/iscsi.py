@@ -96,9 +96,10 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
     alua_enabled = call('iscsi.global.alua_enabled')
     payload = {
         'target': target_id,
-        'lunid': lun_id,
         'extent': extent_id
     }
+    if lun_id is not None:
+        payload['lunid'] = lun_id
     associate_config = call('iscsi.targetextent.create', payload)
     if alua_enabled:
         # Give a little time for the STANDBY target to surface
