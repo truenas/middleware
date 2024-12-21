@@ -16,7 +16,7 @@ logger = logging.getLogger('truenas_connect')
 
 class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
 
-    POLLING_GAP_MINUTES = 3
+    POLLING_GAP_MINUTES = 1
 
     class Config:
         namespace = 'tn_connect.finalize'
@@ -99,7 +99,6 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
     async def poll_once(self, claim_token, system_id):
         return await self._call(
             REGISTRATION_FINALIZATION_URI, 'post',
-            headers={'Content-Type': 'application/json'},
             payload={'system_id': system_id, 'claim_token': claim_token},
         )
 

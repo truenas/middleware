@@ -1,5 +1,6 @@
-import uuid
+import asyncio
 import logging
+import uuid
 from urllib.parse import urlencode
 
 from middlewared.api import api_method
@@ -44,8 +45,17 @@ class TrueNASConnectService(Service):
         # Claim token is going to be valid for 45 minutes
         await self.middleware.call('cache.put', CLAIM_TOKEN_CACHE_KEY, claim_token, 45 * 60)
         await self.middleware.call('tn_connect.set_status', Status.REGISTRATION_FINALIZATION_WAITING.name)
-        logger.debug('Claim token for TNC generation has been generated, kicking off registration process')
+        logger.debug(
+            'Claim token for TNC generation has been generated, kicking off registration '
+            'process to finalize registration after 1 minute'
+        )
         # Triggering the job now to finalize registration
+        asyncio.get_event_loop().call_later(
+            1 * 60,
+            lambda: self.middleware.create_task(
+                self.middleware.call('tn_connect.finalize.registration')
+            ),
+        )
         await self.middleware.call('tn_connect.finalize.registration')
         return claim_token
 
