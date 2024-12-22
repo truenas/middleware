@@ -83,6 +83,7 @@ def docker_datasets(docker_ds: str) -> typing.List[str]:
             'app_configs',
             'app_mounts',
             'docker',
+            'backups',
         )
     ]
 

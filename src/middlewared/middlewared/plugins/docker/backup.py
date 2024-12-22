@@ -9,7 +9,8 @@ class DockerService(Service):
         cli_namespace = 'app.docker'
 
     @api_method(DockerUpdateArgs, DockerBackupResult, roles=['DOCKER_WRITE'])
-    async def backup(self, backup_name):
+    def backup(self, backup_name):
         """
         Create a backup of existing apps.
         """
+        self.middleware.call_sync('docker.state.validate')
