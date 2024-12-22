@@ -1,4 +1,5 @@
 import errno
+import logging
 import os
 import shutil
 import yaml
@@ -14,7 +15,10 @@ from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.service import CallError, job, Service
 
 from .state_utils import backup_apps_state_file_path, backup_ds_path, datasets_to_skip_for_snapshot_on_backup
-from .utils import BACKUP_NAME_PREFIX
+from .utils import BACKUP_NAME_PREFIX, UPDATE_BACKUP_PREFIX
+
+
+logger = logging.getLogger('app_lifecycle')
 
 
 class DockerService(Service):
@@ -123,3 +127,38 @@ class DockerService(Service):
 
         self.middleware.call_sync('zfs.snapshot.delete', backup['snapshot_name'], {'recursive': True})
         shutil.rmtree(backup['backup_path'], True)
+
+
+async def post_system_update_hook(middleware):
+    if not (await middleware.call('docker.config'))['dataset']:
+        # If docker is not configured, there is nothing to backup
+        logger.debug('Docker is not configured, skipping app\'s backup on system update')
+        return
+
+    backups = [
+        v for k, v in (await middleware.call('docker.list_backups')).items()
+        if k.startswith(UPDATE_BACKUP_PREFIX)
+    ]
+    if len(backups) >= 3:
+        backups.sort(key=lambda d: d['created_on'])
+        while len(backups) >= 3:
+            backup = backups.pop(0)
+            try:
+                logger.debug('Deleting %r app\'s old auto-generated backup', backup['name'])
+                await middleware.call('docker.delete_backup', backup['name'])
+            except Exception as e:
+                logger.error(
+                    'Failed to delete %r app backup: %s', backup['name'], e, exc_info=True
+                )
+                break
+
+    backup_job = await middleware.call(
+        'docker.backup', f'{UPDATE_BACKUP_PREFIX}-{datetime.now().strftime("%F_%T")}'
+    )
+    await backup_job.wait()
+    if backup_job.error:
+        logger.error('Failed to backup apps: %s', backup_job.error)
+
+
+async def setup(middleware):
+    middleware.register_hook('update.post_update', post_system_update_hook, sync=True)
