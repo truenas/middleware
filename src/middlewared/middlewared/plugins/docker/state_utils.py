@@ -86,7 +86,7 @@ def backup_ds_path() -> str:
 
 def datasets_to_skip_for_snapshot_on_backup(docker_ds: str) -> list[str]:
     return [
-        os.path.join(docker_ds, d) for d in (CATALOG_DATASET_NAME,)
+        os.path.join(docker_ds, d) for d in (CATALOG_DATASET_NAME, 'docker')
     ]
 
 
