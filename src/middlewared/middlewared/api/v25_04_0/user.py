@@ -1,5 +1,5 @@
 from annotated_types import Ge, Le
-from pydantic import EmailStr
+from pydantic import EmailStr, Field
 from typing_extensions import Annotated
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LocalUsername, RemoteUsername,
