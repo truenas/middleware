@@ -39,9 +39,8 @@ class DockerService(Service):
         if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', f'{docker_config["dataset"]}@{snap_name}']]):
             raise CallError(f'{snap_name!r} snapshot already exists', errno=errno.EEXIST)
 
-        # TODO: Add listing backups functionality
-        # if name in self.list_backups():
-        #    raise CallError(f'Backup with {name!r} already exists', errno=errno.EEXIST)
+        if name in self.list_backups():
+            raise CallError(f'Backup with {name!r} already exists', errno=errno.EEXIST)
 
         backup_base_dir = backup_ds_path()
         os.makedirs(backup_base_dir, exist_ok=True)
