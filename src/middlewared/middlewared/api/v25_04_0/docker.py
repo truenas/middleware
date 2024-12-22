@@ -10,7 +10,7 @@ from middlewared.api.base import (
 __all__ = [
     'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult',
     'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
-    'DockerListBackupArgs', 'DockerListBackupResult',
+    'DockerListBackupArgs', 'DockerListBackupResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
 ]
 
 
@@ -112,3 +112,11 @@ class DockerBackupInfo(RootModel[dict[str, BackupInfo]]):
 
 class DockerListBackupResult(BaseModel):
     result: DockerBackupInfo
+
+
+class DockerRestoreBackupArgs(BaseModel):
+    backup_name: NonEmptyString
+
+
+class DockerRestoreBackupResult(BaseModel):
+    result: None
