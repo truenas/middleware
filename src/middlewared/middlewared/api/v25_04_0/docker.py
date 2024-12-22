@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import IPvAnyInterface, Field, field_validator, model_validator
+from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
@@ -98,5 +98,17 @@ class DockerListBackupArgs(BaseModel):
     pass
 
 
+class BackupInfo(BaseModel):
+    name: NonEmptyString
+    apps: list[NonEmptyString]
+    snapshot_name: NonEmptyString
+    created_on: NonEmptyString
+    backup_path: NonEmptyString
+
+
+class DockerBackupInfo(RootModel[dict[str, BackupInfo]]):
+    pass
+
+
 class DockerListBackupResult(BaseModel):
-    result: dict[str, dict]
+    result: DockerBackupInfo
