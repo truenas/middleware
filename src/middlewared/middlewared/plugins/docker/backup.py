@@ -6,7 +6,8 @@ from datetime import datetime
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DockerBackupResult, DockerUpdateArgs, DockerListBackupArgs, DockerListBackupResult,
+    DockerBackupResult, DockerUpdateArgs, DockerListBackupArgs, DockerListBackupResult, DockerDeleteBackupArgs,
+    DockerDeleteBackupResult,
 )
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
@@ -108,3 +109,17 @@ class DockerService(Service):
             }
 
         return backups
+
+    @api_method(DockerDeleteBackupArgs, DockerDeleteBackupResult, roles=['DOCKER_WRITE'])
+    def delete_backup(self, backup_name):
+        """
+        Delete `backup_name` app backup.
+        """
+        self.middleware.call_sync('docker.state.validate')
+
+        backup = self.middleware.call_sync('docker.list_backups').get(backup_name)
+        if not backup:
+            raise CallError(f'Backup {backup_name!r} does not exist', errno=errno.ENOENT)
+
+        self.middleware.call_sync('zfs.snapshot.delete', backup['snapshot_name'], {'recursive': True})
+        shutil.rmtree(backup['backup_path'], True)

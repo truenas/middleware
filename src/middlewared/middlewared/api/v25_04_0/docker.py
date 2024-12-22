@@ -11,6 +11,7 @@ __all__ = [
     'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult',
     'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
     'DockerListBackupArgs', 'DockerListBackupResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
+    'DockerDeleteBackupArgs', 'DockerDeleteBackupResult',
 ]
 
 
@@ -119,4 +120,12 @@ class DockerRestoreBackupArgs(BaseModel):
 
 
 class DockerRestoreBackupResult(BaseModel):
+    result: None
+
+
+class DockerDeleteBackupArgs(BaseModel):
+    backup_name: NonEmptyString
+
+
+class DockerDeleteBackupResult(BaseModel):
     result: None
