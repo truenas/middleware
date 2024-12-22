@@ -7,6 +7,12 @@ from middlewared.api.base import (
 )
 
 
+__all__ = [
+    'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult',
+    'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
+]
+
+
 class AddressPool(BaseModel):
     base: IPvAnyInterface
     size: Annotated[int, Field(ge=1)]
@@ -77,3 +83,11 @@ class DockerNvidiaPresentArgs(BaseModel):
 
 class DockerNvidiaPresentResult(BaseModel):
     result: bool
+
+
+class DockerBackupArgs(BaseModel):
+    backup_name: NonEmptyString | None = Field(default=None)
+
+
+class DockerBackupResult(BaseModel):
+    result: NonEmptyString
