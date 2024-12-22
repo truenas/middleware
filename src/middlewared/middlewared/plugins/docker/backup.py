@@ -10,7 +10,7 @@ from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, ge
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.service import CallError, job, private, Service
 
-from .state_utils import backup_ds_path
+from .state_utils import backup_ds_path, datasets_to_skip_for_snapshot_on_backup
 from .utils import BACKUP_NAME_PREFIX
 
 
@@ -56,3 +56,14 @@ class DockerService(Service):
 
         with open(os.path.join(backup_dir, 'docker_config.yaml'), 'w') as f:
             f.write(yaml.safe_dump(docker_config))
+
+        job.set_progress(95, 'Taking snapshot of ix-applications')
+
+        self.middleware.call_sync(
+            'zettarepl.create_recursive_snapshot_with_exclude', docker_config['dataset'],
+            snap_name, datasets_to_skip_for_snapshot_on_backup(docker_config['dataset'])
+        )
+
+        job.set_progress(100, f'Backup {name!r} complete')
+
+        return name
