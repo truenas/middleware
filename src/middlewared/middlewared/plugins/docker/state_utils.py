@@ -76,6 +76,10 @@ def catalog_ds_path() -> str:
     return os.path.join(IX_APPS_MOUNT_PATH, CATALOG_DATASET_NAME)
 
 
+def backup_ds_path() -> str:
+    return os.path.join(IX_APPS_MOUNT_PATH, 'backups')
+
+
 def docker_datasets(docker_ds: str) -> typing.List[str]:
     return [docker_ds] + [
         os.path.join(docker_ds, d) for d in (
@@ -83,7 +87,6 @@ def docker_datasets(docker_ds: str) -> typing.List[str]:
             'app_configs',
             'app_mounts',
             'docker',
-            'backups',
         )
     ]
 
