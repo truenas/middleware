@@ -1,9 +1,12 @@
 import errno
 import os
+import shutil
+import yaml
 from datetime import datetime
 
 from middlewared.api import api_method
 from middlewared.api.current import DockerUpdateArgs, DockerBackupResult
+from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.service import CallError, job, private, Service
 
@@ -45,3 +48,11 @@ class DockerService(Service):
 
         job.set_progress(10, 'Basic validation complete')
 
+        shutil.copy(get_collective_metadata_path(), os.path.join(backup_dir, 'collective_metadata.yaml'))
+        shutil.copy(get_collective_config_path(), os.path.join(backup_dir, 'collective_config.yaml'))
+
+        with open(os.path.join(backup_dir, 'apps_state.yaml'), 'w') as f:
+            f.write(yaml.safe_dump({app['name']: app for app in self.middleware.call_sync('app.query')}))
+
+        with open(os.path.join(backup_dir, 'docker_config.yaml'), 'w') as f:
+            f.write(yaml.safe_dump(docker_config))
