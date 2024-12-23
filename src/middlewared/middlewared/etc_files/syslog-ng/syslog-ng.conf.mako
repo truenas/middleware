@@ -1,5 +1,12 @@
 <%
+from middlewared.logger import DEFAULT_SYSLOG_PATH, ALL_LOG_FILES
+
 logger = middleware.logger
+
+# The messages coming in via middleware are already formatted by logger
+# and so we don't want to do additional formatting.
+syslog_template = 'template("${MESSAGE}\n")'
+
 
 def generate_syslog_remote_destination(advanced_config):
     result = ""
@@ -63,7 +70,7 @@ def generate_syslog_remote_destination(advanced_config):
 
 
     result += ' };\n'
-    result += 'log { source(tn_remote_src_files); filter(f_tnremote); destination(loghost); };\n'
+    result += 'log { source(tn_middleware_src); filter(f_tnremote); destination(loghost); };\n'
     result += 'log { source(s_src); filter(f_tnremote); destination(loghost); };\n'
 
     return result
@@ -92,11 +99,8 @@ options {
 ##################
 source s_src { system(); internal(); };
 
-source tn_remote_src_files {
-  file("/var/log/middlewared.log");
-  file("/var/log/failover.log");
-  file("/var/log/fenced.log");
-  file("/var/log/zettarepl.log");
+source tn_middleware_src {
+  unix-stream("${DEFAULT_SYSLOG_PATH}" create-dirs(yes) perm(0600));
 };
 
 ##################
@@ -123,6 +127,17 @@ log {
   destination { file("/var/log/scst.log"); };
   flags(final);
 };
+
+
+#######################
+# Middlewared-related log files
+########################
+% for tnlog in ALL_LOG_FILES:
+log {
+  source(tn_middleware_src); filter(f_${tnlog.name or "middleware"});
+  destination { file(${tnlog.logfile} ${syslog_template}); };
+};
+% endfor
 
 log { source(s_src); filter(f_auth); destination(d_auth); };
 log { source(s_src); filter(f_cron); destination(d_cron); };

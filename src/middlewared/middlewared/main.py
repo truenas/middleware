@@ -64,12 +64,11 @@ import traceback
 import typing
 import uuid
 
-from anyio import create_connected_unix_datagram_socket
 from systemd.daemon import notify as systemd_notify
 
 from truenas_api_client import json
 
-from .logger import Logger, setup_logging
+from .logger import Logger, setup_audit_logging, setup_logging
 
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
@@ -128,6 +127,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.tasks = set()
         self.api_versions = None
         self.api_versions_adapter = None
+        self.__audit_logger = setup_audit_logging()
 
     def create_task(self, coro, *, name=None):
         task = self.loop.create_task(coro, name=name)
@@ -924,8 +924,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             }
         })
 
-        async with await create_connected_unix_datagram_socket("/dev/log") as s:
-            await s.send(syslog_message(message))
+        self.__audit_logger.debug(message)
 
     async def call(self, name, *params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
                    profile=False):

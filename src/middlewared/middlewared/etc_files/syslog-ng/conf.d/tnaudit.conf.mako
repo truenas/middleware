@@ -78,7 +78,11 @@ ${textwrap.indent(get_db(svc), '  ')}
 
 % if not audit_custom_section(svc, 'log'):
 log {
+% if svc == 'MIDDLEWARE':
+  source(tn_middleware_src);
+% else:
   source(s_src);
+% endif
   filter(f_tnaudit_${svc.lower()});
   parser(p_tnaudit);
   rewrite(r_rewrite_success);
