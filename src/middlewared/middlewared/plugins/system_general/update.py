@@ -169,6 +169,7 @@ class SystemGeneralService(ConfigService):
                     f'When "{wildcard}" has been selected, selection of other addresses is not allowed'
                 )
 
+        tnc_config = await self.middleware.call('tn_connect.config')
         certificate_id = data.get('ui_certificate')
         cert = await self.middleware.call(
             'certificate.query',
@@ -178,6 +179,11 @@ class SystemGeneralService(ConfigService):
             verrors.add(
                 f'{schema}.ui_certificate',
                 'Please specify a valid certificate which exists in the system'
+            )
+        elif tnc_config['certificate'] and tnc_config['certificate'] != certificate_id:
+            verrors.add(
+                f'{schema}.ui_certificate',
+                'Certificate cannot be changed when TrueNAS Connect has been configured'
             )
         else:
             verrors.extend(

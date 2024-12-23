@@ -15,6 +15,7 @@ __all__ = [
     'ACMEDNSAuthenticatorDeleteResult', 'ACMEDNSAuthenticatorSchemasArgs', 'ACMEDNSAuthenticatorSchemasResult',
     'ACMEDNSAuthenticatorPerformChallengeArgs', 'ACMEDNSAuthenticatorPerformChallengeResult', 'Route53SchemaArgs',
     'ACMECustomDNSAuthenticatorReturns', 'CloudFlareSchemaArgs', 'OVHSchemaArgs', 'ShellSchemaArgs',
+    'TrueNASConnectSchemaArgs',
 ]
 
 
@@ -30,6 +31,15 @@ FilePathStr = Annotated[
 
 class ACMECustomDNSAuthenticatorReturns(BaseModel):
     result: dict
+
+
+class TrueNASConnectSchema(BaseModel):
+    pass
+
+
+@single_argument_args('attributes')
+class TrueNASConnectSchemaArgs(TrueNASConnectSchema):
+    pass
 
 
 class CloudFlareSchema(BaseModel):
@@ -133,7 +143,7 @@ class ACMEDNSAuthenticatorDeleteResult(BaseModel):
 
 @single_argument_args('acme_dns_authenticator_performance_challenge')
 class ACMEDNSAuthenticatorPerformChallengeArgs(BaseModel):
-    authenticator: int
+    authenticator: int | None
     key: LongString
     domain: str
     challenge: LongString
