@@ -54,13 +54,13 @@ class DockerService(Service):
         self.middleware.call_sync('docker.fs_manage.mount')
 
         apps_to_start = []
-        for app_name, app_state in backup['apps']:
-            if os.path.exists(get_installed_app_path(app_name)) is False:
-                logger.debug('App %r path not found, skipping restoring', app_name)
+        for app_info in backup['apps']:
+            if os.path.exists(get_installed_app_path(app_info['id'])) is False:
+                logger.debug('App %r path not found, skipping restoring', app_info['id'])
                 continue
 
-            if app_state['state'] is AppState.RUNNING.name:
-                apps_to_start.append(app_name)
+            if app_info['state'] == AppState.RUNNING.name:
+                apps_to_start.append(app_info['id'])
 
         metadata_job = self.middleware.call_sync('app.metadata.generate')
         metadata_job.wait_sync()
@@ -69,7 +69,7 @@ class DockerService(Service):
 
         job.set_progress(50, 'Generated metadata for apps')
 
-        self.middleware.call_sync('service.start', 'docker')
+        self.middleware.call_sync('docker.state.start_service', True)
         job.set_progress(70, 'Started Docker service')
 
         logger.debug('Starting %r apps', ', '.join(apps_to_start))

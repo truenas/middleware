@@ -7,8 +7,8 @@ from datetime import datetime
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    DockerBackupResult, DockerUpdateArgs, DockerListBackupArgs, DockerListBackupResult, DockerDeleteBackupArgs,
-    DockerDeleteBackupResult,
+    DockerBackupArgs, DockerBackupResult, DockerListBackupArgs, DockerListBackupResult,
+    DockerDeleteBackupArgs, DockerDeleteBackupResult,
 )
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
@@ -26,7 +26,7 @@ class DockerService(Service):
     class Config:
         cli_namespace = 'app.docker'
 
-    @api_method(DockerUpdateArgs, DockerBackupResult, roles=['DOCKER_WRITE'])
+    @api_method(DockerBackupArgs, DockerBackupResult, roles=['DOCKER_WRITE'])
     @job(lock='docker_backup')
     def backup(self, job, backup_name):
         """
@@ -57,7 +57,7 @@ class DockerService(Service):
         shutil.copy(get_collective_metadata_path(), os.path.join(backup_dir, 'collective_metadata.yaml'))
         shutil.copy(get_collective_config_path(), os.path.join(backup_dir, 'collective_config.yaml'))
 
-        with open(backup_apps_state_file_path(), 'w') as f:
+        with open(backup_apps_state_file_path(name), 'w') as f:
             f.write(yaml.safe_dump({app['name']: app for app in self.middleware.call_sync('app.query')}))
 
         with open(os.path.join(backup_dir, 'docker_config.yaml'), 'w') as f:
@@ -97,18 +97,18 @@ class DockerService(Service):
                 continue
 
             try:
-                with open(backup_apps_state_file_path(), 'r') as f:
+                with open(backup_apps_state_file_path(backup_name), 'r') as f:
                     apps = yaml.safe_load(f.read())
             except (FileNotFoundError, yaml.YAMLError):
                 continue
 
             backups[backup_name] = {
                 'name': backup_name,
-                'apps': list(apps),
+                'apps': [{k: app[k] for k in ('id', 'name', 'state')} for app in apps.values()],
                 'snapshot_name': snapshot['name'],
-                'created_on': self.middleware.call_sync(
+                'created_on': str(self.middleware.call_sync(
                     'zfs.snapshot.get_instance', snapshot['name']
-                )['properties']['creation']['parsed'],
+                )['properties']['creation']['parsed']),
                 'backup_path': backup_path,
             }
 

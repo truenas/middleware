@@ -76,8 +76,8 @@ def catalog_ds_path() -> str:
     return os.path.join(IX_APPS_MOUNT_PATH, CATALOG_DATASET_NAME)
 
 
-def backup_apps_state_file_path() -> str:
-    return os.path.join(backup_ds_path(), 'apps_state.json')
+def backup_apps_state_file_path(backup_name: str) -> str:
+    return os.path.join(backup_ds_path(), backup_name, 'apps_state.json')
 
 
 def backup_ds_path() -> str:
