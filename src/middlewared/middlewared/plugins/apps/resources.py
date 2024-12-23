@@ -123,11 +123,4 @@ class AppService(Service):
             if volume['source'].startswith(f'{IX_APPS_MOUNT_PATH}/') is False
         ]
 
-        mapping = {}
-        for host_path in host_paths:
-            try:
-                mapping[host_path] = await self.middleware.call('zfs.dataset.path_to_dataset', host_path)
-            except CallError:
-                mapping[host_path] = None
-
-        return mapping
+        return await self.middleware.call('zfs.dataset.paths_to_datasets', host_paths)
