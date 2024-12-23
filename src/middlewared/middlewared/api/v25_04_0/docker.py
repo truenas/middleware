@@ -99,9 +99,15 @@ class DockerListBackupArgs(BaseModel):
     pass
 
 
+class AppInfo(BaseModel):
+    id: NonEmptyString
+    name: NonEmptyString
+    state: NonEmptyString
+
+
 class BackupInfo(BaseModel):
     name: NonEmptyString
-    apps: list[NonEmptyString]
+    apps: list[AppInfo]
     snapshot_name: NonEmptyString
     created_on: NonEmptyString
     backup_path: NonEmptyString
