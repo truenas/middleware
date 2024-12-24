@@ -52,7 +52,8 @@ def filterable_returns(schema):
 
 
 def filterable_api_method(
-    fn=None, /, *, roles=None, item=None, private=False, cli_private=False, authorization_required=True
+    fn=None, /, *, roles=None, item=None, private=False, cli_private=False, authorization_required=True,
+    pass_app=False, pass_app_require=False, pass_app_rest=False,
 ):
     def filterable_internal(fn):
         fn._filterable = True
@@ -69,7 +70,8 @@ def filterable_api_method(
 
         return api_method(
             QueryArgs, returns, private=private, roles=roles, cli_private=cli_private,
-            authorization_required=authorization_required
+            authorization_required=authorization_required, pass_app=pass_app, pass_app_require=pass_app_require,
+            pass_app_rest=pass_app_rest,
         )(fn)
 
     # See if we're being called as @filterable or @filterable().

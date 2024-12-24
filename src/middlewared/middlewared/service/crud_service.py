@@ -68,9 +68,11 @@ class CRUDServiceMetabase(ServiceBase):
             klass.ENTRY = None
             # FIXME: Remove `wraps` handling when we get rid of `@filterable` in `CRUDService.query` definition
             query_result_model = query_result(klass._config.entry)
-            klass.query = api_method(QueryArgs, query_result_model)(
-                klass.query.wraps if hasattr(klass.query, "wraps") else klass.query
-            )
+            if not hasattr(klass.query, '_filterable') or klass.query._filterable is False:
+                # No need to inject api method if filterable has been explicitly specified
+                klass.query = api_method(QueryArgs, query_result_model)(
+                    klass.query.wraps if hasattr(klass.query, "wraps") else klass.query
+                )
             # FIXME: Remove `wraps` handling when we get rid of `@accepts` in `CRUDService.get_instance` definition
             get_instance_args_model = get_instance_args(klass._config.entry)
             get_instance_result_model = get_instance_result(klass._config.entry)
