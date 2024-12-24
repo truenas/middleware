@@ -67,6 +67,7 @@ ZETTAREPL_LOGFORMAT = '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s]
 DEFAULT_IDENT = 'MIDDLEWARE: '
 MIDDLEWARE_AUDIT_IDENT = 'TNAUDIT_MIDDLEWARE: '
 DEFAULT_SYSLOG_PATH = '/var/run/syslog-ng/middleware.sock'
+DEFAULT_PENDING_QUEUE_LEN = 4096
 
 
 def trace(self, message, *args, **kws):
@@ -83,6 +84,7 @@ class TNLog:
     name: str | None
     logfile: str
     logformat: str = DEFAULT_LOGFORMAT
+    pending_maxlen: int | None = DEFAULT_PENDING_QUEUE_LEN
 
     def get_ident(self):
         if self.name is None:
@@ -114,7 +116,7 @@ ALL_LOG_FILES = (
 
 # Audit entries are inserted into audit databases in /audit rather than
 # written to files in /var/log and so they are not members of ALL_LOG_FILES
-MIDDLEWARE_TNAUDIT = TNLog('TNAUDIT_MIDDLEWARE', '', '')
+MIDDLEWARE_TNAUDIT = TNLog('TNAUDIT_MIDDLEWARE', '', '', None)
 
 
 class TNSyslogHandler(logging.handlers.SysLogHandler):
@@ -238,7 +240,7 @@ def setup_syslog_handler(tnlog: TNLog, fallback: logging.Handler | None) -> logg
 
     # Set up syslog handler with deque to store failed messages until
     # they can be flushed. This can happen if syslog-ng isn't ready yet.
-    syslog_handler = TNSyslogHandler(pending_queue=deque())
+    syslog_handler = TNSyslogHandler(pending_queue=deque(maxlen=tnlog.pending_maxlen))
     syslog_handler.setLevel(logging.DEBUG)
 
     if tnlog.logformat:
