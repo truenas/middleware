@@ -6,7 +6,7 @@ from sqlalchemy.orm import declarative_base
 from .schema.common import AuditEventParam
 
 AUDIT_DATASET_PATH = '/audit'
-AUDITED_SERVICES = [('MIDDLEWARE', 0.1), ('SMB', 0.1), ('SUDO', 0.1)]
+AUDITED_SERVICES = [('MIDDLEWARE', 0.1), ('SMB', 0.1), ('SUDO', 0.1), ('SYSTEM', 0.1)]
 AUDIT_TABLE_PREFIX = 'audit_'
 AUDIT_LIFETIME = 7
 AUDIT_DEFAULT_RESERVATION = 0

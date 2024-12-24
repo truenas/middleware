@@ -80,6 +80,8 @@ ${textwrap.indent(get_db(svc), '  ')}
 log {
 % if svc == 'MIDDLEWARE':
   source(tn_middleware_src);
+% elif svc == 'SYSTEM':
+  source(tn_auditd_src);
 % else:
   source(s_src);
 % endif

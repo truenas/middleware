@@ -71,6 +71,7 @@ def generate_syslog_remote_destination(advanced_config):
 
     result += ' };\n'
     result += 'log { source(tn_middleware_src); filter(f_tnremote); destination(loghost); };\n'
+    result += 'log { source(tn_auditd_src); filter(f_tnremote); destination(loghost); };\n'
     result += 'log { source(s_src); filter(f_tnremote); destination(loghost); };\n'
 
     return result
@@ -101,6 +102,10 @@ source s_src { system(); internal(); };
 
 source tn_middleware_src {
   unix-stream("${DEFAULT_SYSLOG_PATH}" create-dirs(yes) perm(0600));
+};
+
+source tn_auditd_src {
+  unix-stream("/var/run/syslog-ng/auditd.sock" create-dirs(yes) perm(0600));
 };
 
 ##################
