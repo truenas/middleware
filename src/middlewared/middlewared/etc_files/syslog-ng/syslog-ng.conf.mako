@@ -5,7 +5,7 @@ logger = middleware.logger
 
 # The messages coming in via middleware are already formatted by logger
 # and so we don't want to do additional formatting.
-syslog_template = 'template("${MESSAGE}\n")'
+syslog_template = 'template("${MESSAGE}\\n")'
 
 
 def generate_syslog_remote_destination(advanced_config):
