@@ -104,6 +104,8 @@ TNLOG_FAILOVER = TNLog('failover', FAILOVER_LOGFILE)
 TNLOG_NETDATA_API = TNLog('netdata_api', NETDATA_API_LOGFILE)
 TNLOG_ZETTAREPL = TNLog('zettarepl', ZETTAREPL_LOGFILE, ZETTAREPL_LOGFORMAT)
 
+# NOTE: this is also consumed by tests/unit/test_logger.py, which validates
+# the auto-generated syslog-ng rules place messages in the correct log files.
 ALL_LOG_FILES = (
     TNLOG_MIDDLEWARE,
     TNLOG_APP_LIFECYCLE,
