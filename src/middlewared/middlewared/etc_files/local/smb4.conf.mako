@@ -2,7 +2,7 @@
 # SMB.CONF(5)		The configuration file for the Samba suite 
 #
 <%
-   shares = render_ctx['smb.generate_smb_configuration'].pop('SHARES')
+   shares = render_ctx['smb.generate_smb_configuration'].pop('SHARES', [])
 %>
 
 [global]

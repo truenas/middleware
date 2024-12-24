@@ -127,7 +127,7 @@ class SMBService(ConfigService):
     @private
     def generate_smb_configuration(self):
         if self.middleware.call_sync('failover.status') not in ('SINGLE', 'MASTER'):
-            return {'netbiosname': 'TN_STANDBY'}
+            return {'netbiosname': 'TN_STANDBY', 'SHARES': []}
 
         if (ds_type := self.middleware.call_sync('directoryservices.status')['type']) is not None:
             ds_type = DSType(ds_type)
