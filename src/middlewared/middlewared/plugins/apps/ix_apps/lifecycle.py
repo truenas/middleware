@@ -5,6 +5,7 @@ import typing
 import yaml
 
 from middlewared.service_exception import CallError
+from middlewared.utils import sw_version
 from middlewared.utils.io import write_if_changed
 
 from .path import (
@@ -98,6 +99,7 @@ def add_context_to_values(
             'operation': operation,
             'app_metadata': app_metadata,
             f'is_{operation.lower()}': True,
+            'scale_version': sw_version(),
             **({'upgrade_metadata': upgrade_metadata} if operation == 'UPGRADE' else {})
         })
 
