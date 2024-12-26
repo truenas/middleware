@@ -325,6 +325,9 @@ def paths_to_datasets_impl(
     possible.
     """
     rv = dict()
+    if mntinfo is None:
+        mntinfo = getmntinfo()
+
     for path in paths:
         rv[path] = path_to_dataset_impl(path, mntinfo)
     return rv
