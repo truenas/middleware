@@ -76,6 +76,20 @@ def catalog_ds_path() -> str:
     return os.path.join(IX_APPS_MOUNT_PATH, CATALOG_DATASET_NAME)
 
 
+def backup_apps_state_file_path(backup_name: str) -> str:
+    return os.path.join(backup_ds_path(), backup_name, 'apps_state.json')
+
+
+def backup_ds_path() -> str:
+    return os.path.join(IX_APPS_MOUNT_PATH, 'backups')
+
+
+def datasets_to_skip_for_snapshot_on_backup(docker_ds: str) -> list[str]:
+    return [
+        os.path.join(docker_ds, d) for d in (CATALOG_DATASET_NAME, 'docker')
+    ]
+
+
 def docker_datasets(docker_ds: str) -> typing.List[str]:
     return [docker_ds] + [
         os.path.join(docker_ds, d) for d in (
