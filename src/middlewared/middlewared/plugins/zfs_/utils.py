@@ -313,7 +313,7 @@ def get_snapshot_count_cached(middleware, lz, datasets, update_datasets=False, r
 def paths_to_datasets_impl(
     paths: list[str],
     mntinfo: dict | None = None
-) -> dict | dict[str, str]:
+) -> dict | dict[str, str | None]:
     """
     Convert `paths` to a dictionary of ZFS dataset names. This
     performs lookup through mountinfo.
