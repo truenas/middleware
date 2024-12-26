@@ -322,14 +322,19 @@ def paths_to_datasets_impl(
     on ZFS or if the boot pool underlies the path. In
     addition to this, all the normal exceptions that
     can be raised by a failed call to os.stat() are
-    possible.
+    possible. If any exception occurs, the dataset name
+    will be set to None in the dictionary.
     """
     rv = dict()
     if mntinfo is None:
         mntinfo = getmntinfo()
 
     for path in paths:
-        rv[path] = path_to_dataset_impl(path, mntinfo)
+        try:
+            rv[path] = path_to_dataset_impl(path, mntinfo)
+        except Exception:
+            rv[path] = None
+
     return rv
 
 
