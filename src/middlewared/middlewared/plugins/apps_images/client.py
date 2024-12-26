@@ -9,7 +9,7 @@ from middlewared.service import CallError
 from .utils import (
     DEFAULT_DOCKER_REGISTRY, DOCKER_AUTH_SERVICE, DOCKER_AUTH_HEADER, DOCKER_AUTH_URL, DOCKER_CONTENT_DIGEST_HEADER,
     DOCKER_MANIFEST_LIST_SCHEMA_V2, DOCKER_MANIFEST_SCHEMA_V1, DOCKER_MANIFEST_SCHEMA_V2, DOCKER_RATELIMIT_URL,
-    parse_auth_header, parse_digest_from_schema,
+    DOCKER_MANIFEST_OCI_V1, parse_auth_header, parse_digest_from_schema,
 )
 
 
@@ -30,7 +30,10 @@ class ContainerRegistryClientMixin:
         except asyncio.TimeoutError:
             response['error'] = f'Unable to connect with {url} in {timeout} seconds.'
         except aiohttp.ClientResponseError as e:
-            response['error'] = str(e)
+            response.update({
+                'error': str(e),
+                'error_obj': e,
+            })
         else:
             response['response_obj'] = req
             if req.status != 200:
@@ -63,7 +66,7 @@ class ContainerRegistryClientMixin:
         manifest_url = f'https://{registry}/v2/{image}/manifests/{tag}'
         # 1) try getting manifest
         response = await self._api_call(manifest_url, headers=headers, mode=mode)
-        if (error := response['error']) and isinstance(error, aiohttp.ClientResponseError):
+        if (error := response.get('error_obj')) and isinstance(error, aiohttp.ClientResponseError):
             if error.status == 401:
                 # 2) try to get token from manifest api call's response headers
                 auth_data = parse_auth_header(error.headers[DOCKER_AUTH_HEADER])
@@ -89,7 +92,8 @@ class ContainerRegistryClientMixin:
             registry, image, tag, await self.get_manifest_call_headers(registry, image, {
                 'Accept': (f'{DOCKER_MANIFEST_SCHEMA_V2}, '
                            f'{DOCKER_MANIFEST_LIST_SCHEMA_V2}, '
-                           f'{DOCKER_MANIFEST_SCHEMA_V1}')
+                           f'{DOCKER_MANIFEST_SCHEMA_V1}, '
+                           f'{DOCKER_MANIFEST_OCI_V1}')
             }), 'get', True
         )
         digests = parse_digest_from_schema(response)
