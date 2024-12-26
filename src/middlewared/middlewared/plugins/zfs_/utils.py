@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "get_snapshot_count_cached",
     "path_to_dataset_impl",
+    "paths_to_datasets_impl",
     "zvol_name_to_path",
     "zvol_path_to_name",
 ]
@@ -307,6 +308,26 @@ def get_snapshot_count_cached(middleware, lz, datasets, update_datasets=False, r
             logger.warning('Failed to update cached snapshot counts', exc_info=True)
 
     return out
+
+
+def paths_to_datasets_impl(
+    paths: list[str],
+    mntinfo: dict | None = None
+) -> dict | dict[str, str]:
+    """
+    Convert `paths` to a dictionary of ZFS dataset names. This
+    performs lookup through mountinfo.
+
+    Anticipated error conditions are that paths are not
+    on ZFS or if the boot pool underlies the path. In
+    addition to this, all the normal exceptions that
+    can be raised by a failed call to os.stat() are
+    possible.
+    """
+    rv = dict()
+    for path in paths:
+        rv[path] = path_to_dataset_impl(path, mntinfo)
+    return rv
 
 
 def path_to_dataset_impl(path: str, mntinfo: dict | None = None) -> str:
