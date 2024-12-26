@@ -4,11 +4,14 @@ import logging
 import os
 import re
 
-from middlewared.service_exception import MatchNotFound
+from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.filesystem.constants import ZFSCTL
+from middlewared.utils.mount import getmntinfo
+from middlewared.utils.path import is_child
 from middlewared.plugins.audit.utils import (
     AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_DEFAULT_FILL_WARNING
 )
+from middlewared.plugins.boot import BOOT_POOL_NAME
 from middlewared.utils.tdb import (
     get_tdb_handle,
     TDBBatchAction,
@@ -20,7 +23,13 @@ from middlewared.utils.tdb import (
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["zvol_name_to_path", "zvol_path_to_name", "get_snapshot_count_cached"]
+__all__ = [
+    "get_snapshot_count_cached",
+    "path_to_dataset_impl",
+    "paths_to_datasets_impl",
+    "zvol_name_to_path",
+    "zvol_path_to_name",
+]
 
 LEGACY_USERPROP_PREFIX = 'org.freenas'
 USERPROP_PREFIX = 'org.truenas'
@@ -299,3 +308,58 @@ def get_snapshot_count_cached(middleware, lz, datasets, update_datasets=False, r
             logger.warning('Failed to update cached snapshot counts', exc_info=True)
 
     return out
+
+
+def paths_to_datasets_impl(
+    paths: list[str],
+    mntinfo: dict | None = None
+) -> dict | dict[str, str | None]:
+    """
+    Convert `paths` to a dictionary of ZFS dataset names. This
+    performs lookup through mountinfo.
+
+    Anticipated error conditions are that paths are not
+    on ZFS or if the boot pool underlies the path. In
+    addition to this, all the normal exceptions that
+    can be raised by a failed call to os.stat() are
+    possible. If any exception occurs, the dataset name
+    will be set to None in the dictionary.
+    """
+    rv = dict()
+    if mntinfo is None:
+        mntinfo = getmntinfo()
+
+    for path in paths:
+        try:
+            rv[path] = path_to_dataset_impl(path, mntinfo)
+        except Exception:
+            rv[path] = None
+
+    return rv
+
+
+def path_to_dataset_impl(path: str, mntinfo: dict | None = None) -> str:
+    """
+    Convert `path` to a ZFS dataset name. This
+    performs lookup through mountinfo.
+
+    Anticipated error conditions are that path is not
+    on ZFS or if the boot pool underlies the path. In
+    addition to this, all the normal exceptions that
+    can be raised by a failed call to os.stat() are
+    possible.
+    """
+    st = os.stat(path)
+    if mntinfo is None:
+        mntinfo = getmntinfo(st.st_dev)[st.st_dev]
+    else:
+        mntinfo = mntinfo[st.st_dev]
+
+    ds_name = mntinfo['mount_source']
+    if mntinfo['fs_type'] != 'zfs':
+        raise CallError(f'{path}: path is not a ZFS filesystem')
+
+    if is_child(ds_name, BOOT_POOL_NAME):
+        raise CallError(f'{path}: path is on boot pool')
+
+    return ds_name
