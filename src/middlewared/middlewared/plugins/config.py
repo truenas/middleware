@@ -8,7 +8,10 @@ import subprocess
 import tarfile
 import tempfile
 
-from middlewared.schema import accepts, Bool, Dict, returns
+from middlewared.api import api_method
+from middlewared.api.current import (
+    ConfigSaveArgs, ConfigSaveResult, ConfigUploadArgs, ConfigUploadResult, ConfigResetArgs, ConfigResetResult
+)
 from middlewared.service import CallError, Service, job, pass_app, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.db import FREENAS_DATABASE
@@ -66,13 +69,7 @@ class ConfigService(Service):
             with open(ntf.name, 'rb') as f:
                 shutil.copyfileobj(f, job.pipes.output.w)
 
-    @accepts(Dict(
-        'configsave',
-        Bool('secretseed', default=False),
-        Bool('pool_keys', default=False),
-        Bool('root_authorized_keys', default=False),
-    ))
-    @returns()
+    @api_method(ConfigSaveArgs, ConfigSaveResult)
     @job(pipes=["output"])
     async def save(self, job, options):
         """
@@ -90,8 +87,7 @@ class ConfigService(Service):
         method = self.save_db_only if not any(options.values()) else self.save_tar_file
         await self.middleware.run_in_thread(method, options, job)
 
-    @accepts()
-    @returns()
+    @api_method(ConfigUploadArgs, ConfigUploadResult)
     @job(pipes=["input"])
     @pass_app(rest=True)
     def upload(self, app, job):
@@ -222,8 +218,7 @@ class ConfigService(Service):
                     CallError.EREMOTENODEERROR,
                 )
 
-    @accepts(Dict('options', Bool('reboot', default=True)))
-    @returns()
+    @api_method(ConfigResetArgs, ConfigResetResult)
     @job(lock='config_reset', logs=True)
     @pass_app(rest=True)
     def reset(self, app, job, options):
