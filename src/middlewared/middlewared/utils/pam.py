@@ -15,7 +15,7 @@ class PAMModule(enum.StrEnum):
     UNIX = 'pam_unix.so'
     SSS = 'pam_sss.so'
     TDB = 'pam_tdb.so'
-    TTY_AUDIT = 'pam_tty.so'
+    TTY_AUDIT = 'pam_tty_audit.so'
     WINBIND = 'pam_winbind.so'
 
 
