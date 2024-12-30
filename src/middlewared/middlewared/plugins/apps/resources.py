@@ -5,7 +5,8 @@ from middlewared.api.current import (
     AppUsedPortsArgs, AppUsedPortsResult, AppIPChoicesArgs, AppIPChoicesResult, AppAvailableSpaceArgs,
     AppAvailableSpaceResult, AppGpuChoicesArgs, AppGpuChoicesResult,
 )
-from middlewared.service import CallError, private, Service
+from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
+from middlewared.service import private, Service
 from middlewared.utils.gpu import get_nvidia_gpus
 
 from .ix_apps.utils import ContainerState
@@ -123,4 +124,4 @@ class AppService(Service):
             if volume['source'].startswith(f'{IX_APPS_MOUNT_PATH}/') is False
         ]
 
-        return await self.middleware.call('zfs.dataset.paths_to_datasets', host_paths)
+        return await self.middleware.run_in_thread(paths_to_datasets_impl, host_paths)
