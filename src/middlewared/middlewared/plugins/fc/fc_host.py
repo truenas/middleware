@@ -76,10 +76,11 @@ class FCHostService(CRUDService):
         """
         old = await self.get_instance(id_)
         audit_callback(old['alias'])
+
+        await self._validate("fc_host_update", data, id_, old)
+
         new = old.copy()
         new.update(data)
-
-        await self._validate("fc_host_update", new, id_, old)
 
         await self.middleware.call(
             "datastore.update",
@@ -125,34 +126,49 @@ class FCHostService(CRUDService):
 
         if await self.middleware.call('failover.licensed'):
             # If failover is licensed then we allow both wwpn and wwpn_b to be set,
-            # but restricted to the available wwpns on each node
+            # but restricted to the available wwpns on each node.  However, we can
+            # only check this if both nodes are currently up ... so we'll only
+            # perform the check if the value is actually being changed.
+            node = None
             for key in ['alias', 'wwpn', 'wwpn_b']:
-                if data[key] is not None:
+                if data.get(key) is not None:
                     await self._ensure_unique(verrors, schema_name, key, data[key], id_)
-            if wwpn is not None or wwpn_b is not None:
-                node = await self.middleware.call('failover.node')
-                match node:
-                    case 'A':
-                        node_a_choices = await self.middleware.call('fc.fc_host_nport_wwpn_choices')
-                        node_b_choices = await self._get_remote_fc_host_nport_wwpn_choices()
-                    case 'B':
-                        node_a_choices = await self._get_remote_fc_host_nport_wwpn_choices()
-                        node_b_choices = await self.middleware.call('fc.fc_host_nport_wwpn_choices')
-                    case _:
-                        raise CallError('Cannot configure FC until HA is configured')
-                if wwpn and wwpn not in node_a_choices:
-                    verrors.add(
-                        f'{schema_name}.wwpn',
-                        f'Invalid wwpn ({wwpn}) supplied, should be one of: {",".join(node_a_choices)}'
-                    )
-                if wwpn_b and wwpn_b not in node_b_choices:
-                    verrors.add(
-                        f'{schema_name}.wwpn_b',
-                        f'Invalid wwpn ({wwpn_b}) supplied, should be one of: {",".join(node_b_choices)}'
-                    )
+
+            if wwpn is not None:
+                if old is None or old.get('wwpn') != wwpn:
+                    node = await self.middleware.call('failover.node')
+                    match node:
+                        case 'A':
+                            node_a_choices = await self.middleware.call('fc.fc_host_nport_wwpn_choices')
+                        case 'B':
+                            node_a_choices = await self._get_remote_fc_host_nport_wwpn_choices()
+                        case _:
+                            raise CallError('Cannot configure FC until HA is configured')
+                    if wwpn not in node_a_choices:
+                        verrors.add(
+                            f'{schema_name}.wwpn',
+                            f'Invalid wwpn ({wwpn}) supplied, should be one of: {",".join(node_a_choices)}'
+                        )
+
+            if wwpn_b is not None:
+                if old is None or old.get('wwpn_b') != wwpn_b:
+                    if not node:
+                        node = await self.middleware.call('failover.node')
+                    match node:
+                        case 'A':
+                            node_b_choices = await self._get_remote_fc_host_nport_wwpn_choices()
+                        case 'B':
+                            node_b_choices = await self.middleware.call('fc.fc_host_nport_wwpn_choices')
+                        case _:
+                            raise CallError('Cannot configure FC until HA is configured')
+                    if wwpn_b not in node_b_choices:
+                        verrors.add(
+                            f'{schema_name}.wwpn_b',
+                            f'Invalid wwpn ({wwpn_b}) supplied, should be one of: {",".join(node_b_choices)}'
+                        )
         else:
             for key in ['alias', 'wwpn']:
-                if data[key] is not None:
+                if data.get(key) is not None:
                     await self._ensure_unique(verrors, schema_name, key, data[key], id_)
             if wwpn_b is not None:
                 verrors.add(
@@ -193,6 +209,13 @@ class FCHostService(CRUDService):
                     # use filter_by_wwpns_hex_string for easier mocking.
                     physical_port_filter = [["physical", "=", True]]
                     fc_hosts = await self.middleware.call('fc.fc_hosts', physical_port_filter)
+                    # However, the wwpn and wwpn_b may or may not be present in data, so fall
+                    # back to getting them from old.  We can update the variables as they won't
+                    # be used again in this method after the filter_list.
+                    if not wwpn and old:
+                        wwpn = old.get('wwpn')
+                    if not wwpn_b and old:
+                        wwpn_b = old.get('wwpn_b')
                     fc_hosts = filter_list(fc_hosts, filter_by_wwpns_hex_string(wwpn, wwpn_b))
                     if len(fc_hosts) != 1:
                         verrors.add(
@@ -207,15 +230,21 @@ class FCHostService(CRUDService):
                                 f'Invalid npiv ({npiv}) supplied, max value {max_npiv_vports}'
                             )
                 if usage_check:
-                    vpfilter = [['port', '~', f'^{data["alias"]}/[1-9][0-9]*$']]
-                    vports = [int(p['port'].split('/')[-1]) for p in await self.middleware.call('fcport.query', vpfilter, {'select': ['port']})]
-                    for chan in vports:
-                        if chan > npiv:
-                            verrors.add(
-                                f'{schema_name}.npiv',
-                                f'Invalid npiv ({npiv}) supplied, {data["alias"]}/{chan} is currently mapped to a target'
-                            )
-                            break
+                    alias = data.get('alias')
+                    if not alias and old:
+                        alias = old.get('alias')
+                    if alias:
+                        vpfilter = [['port', '~', f'^{alias}/[1-9][0-9]*$']]
+                        vports = [int(p['port'].split('/')[-1]) for p in await self.middleware.call('fcport.query', vpfilter, {'select': ['port']})]
+                        for chan in vports:
+                            if chan > npiv:
+                                verrors.add(
+                                    f'{schema_name}.npiv',
+                                    f'Invalid npiv ({npiv}) supplied, {alias}/{chan} is currently mapped to a target'
+                                )
+                                break
+                    else:
+                        self.logger.warning('Cannot check NPIV usage: %r', id_)
 
         verrors.check()
 
