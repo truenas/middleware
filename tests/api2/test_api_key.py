@@ -242,7 +242,7 @@ def test_api_key_crud_restricted_admin_own_keys(sharing_admin_user):
             })
             assert 'key' not in updated
             updated = c.call('api_key.update', key_info['id'], {'reset': True})
-            assert updated['key'] is not '********'
+            assert updated['key'] != '********'
         finally:
             c.call('api_key.delete', key_info['id'])
 
