@@ -18,15 +18,6 @@ class ZFSDatasetService(Service):
         private = True
         process_pool = True
 
-    def paths_to_datasets(self, paths):
-        mapping = {}
-        for path in paths:
-            try:
-                mapping[path] = self.path_to_dataset(path)
-            except Exception:
-                mapping[path] = None
-        return mapping
-
     def path_to_dataset(self, path, mntinfo=None):
         """
         Convert `path` to a ZFS dataset name. This
