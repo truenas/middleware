@@ -188,13 +188,18 @@ def translate_resources_to_desired_workflow(app_resources: dict) -> dict:
             if not host_config:
                 # This will happen for ports which are not exposed on the host side
                 continue
+            host_ports = []
+            for host_port in host_config:
+                try:
+                    # We have seen that docker can report host port as an empty string or null
+                    host_ports.append({'host_port': int(host_port['HostPort']), 'host_ip': host_port['HostIp']})
+                except (TypeError, ValueError):
+                    continue
+
             port_config = {
                 'container_port': int(container_port.split('/')[0]),
                 'protocol': container_port.split('/')[1],
-                'host_ports': [
-                    {'host_port': int(host_port['HostPort']), 'host_ip': host_port['HostIp']}
-                    for host_port in host_config
-                ]
+                'host_ports': host_ports,
             }
             container_ports_config.append(port_config)
 
