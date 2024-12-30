@@ -1,11 +1,14 @@
 import pytest
 
+from middlewared.test.integration.assets.apps import app
 from middlewared.test.integration.assets.docker import docker
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.docker import dataset_props, IX_APPS_MOUNT_PATH
 
 
+APP_NAME = 'actual-budget'
+BACKUP_NAME = 'test_backup'
 ENC_POOL_PASSWORD = 'test1234'
 
 
@@ -78,6 +81,22 @@ def test_apps_dataset_after_cidr_v6_update(docker_pool):
     assert docker_config['cidr_v6'] == 'fc98:dead:beef::/64'
     assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] == docker_config['dataset']
     assert call('docker.status')['status'] == 'RUNNING'
+
+
+def test_create_backup(docker_pool):
+    with app(APP_NAME, {
+        'train': 'community',
+        'catalog_app': 'actual-budget',
+    }) as app_info:
+        assert app_info['name'] == APP_NAME, app_info
+        call('docker.backup', BACKUP_NAME, job=True)
+        assert [BACKUP_NAME] == list(call('docker.list_backups').keys())
+
+
+def test_backup_restore(docker_pool):
+    assert call('app.query') == []
+    call('docker.restore_backup', BACKUP_NAME, job=True)
+    assert call('app.get_instance', APP_NAME)['name'] == APP_NAME
 
 
 def test_correct_docker_dataset_is_mounted_on_enc_pool(docker_encrypted_pool):
