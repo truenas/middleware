@@ -9,6 +9,9 @@ from truenas_api_client import Client
 from pathlib import Path
 from subprocess import run
 
+from middlewared.utils.mount import getmntinfo
+from middlewared.utils.filesystem.stat_x import statx
+
 
 ZFS_CMD = '/usr/sbin/zfs'
 TO_CHMOD = ['apt', 'dpkg']
@@ -30,6 +33,31 @@ def set_readwrite(entry):
 
     print(f'Setting readonly=off on dataset {entry["ds"]}')
     run([ZFS_CMD, 'set', 'readonly=off', entry['ds']])
+
+
+def usr_fs_check():
+    mntid = statx('/usr').stx_mnt_id
+    mntinfo = getmntinfo(mnt_id=mntid)[mntid]
+    match mntinfo['fs_type']:
+        case 'zfs':
+            return
+
+        case 'overlay':
+            if mntinfo['mount_source'] == 'sysext':
+                print((
+                    '/usr is currently provided by a readonly systemd system extension. '
+                    'This may occur if nvidia module support is enabled. System extensions '
+                    'must be disabled prior to disabling rootfs protection.'
+                ))
+            else:
+                print(f'/usr is currently provided by an unexpected overlayfs filesystem: {mntinfo}.')
+        case _:
+            print((
+                f'{mntinfo["fs_type"]}: /usr is currently provided by an unexpected filesystem type. '
+                'Unable to disable rootfs protection.'
+            ))
+
+    sys.exit(1)
 
 
 def chmod_files():
@@ -82,6 +110,8 @@ if __name__ == '__main__':
             'or with sudo.'
         ))
         sys.exit(1)
+
+    usr_fs_check()
 
     rv = run([ZFS_CMD, 'get', '-o', 'value', '-H', 'truenas:developer', '/'], capture_output=True)
 
