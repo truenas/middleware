@@ -144,6 +144,7 @@ class UserShellChoicesResult(BaseModel):
             '/usr/bin/sh': 'sh',
             '/usr/bin/zsh': 'zsh',
             '/usr/bin/tmux': 'tmux',
+            '/usr/bin/git-shell': 'git-shell',
             '/usr/sbin/nologin': 'nologin'
         },
     ])

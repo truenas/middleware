@@ -979,6 +979,11 @@ class UserService(CRUDService):
                 # The /usr/bin/ path is the "newer" place to put binaries so we'll use those entries.
                 shell = shell.strip()
                 shells[shell] = os.path.basename(shell)
+        # For git user, for git@truenas.host remotes
+        GITSHELL = 'git-shell'
+        GITSHELL_PATH = f'/usr/bin/{GITSHELL}'
+	if os.path.isfile(GITSHELL_PATH):
+            shells[GITSHELL_PATH] = 'GITSHELL'
 
         return shells
 
