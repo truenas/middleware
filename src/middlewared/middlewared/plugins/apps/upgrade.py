@@ -24,7 +24,7 @@ class AppService(Service):
         cli_namespace = 'app'
 
     @private
-    def take_snapshot_of_hostpath(self, app, snapshot_hostpath):
+    def take_snapshot_of_hostpath_and_stop_app(self, app, snapshot_hostpath):
         app_info = self.middleware.call_sync('app.get_instance', app) if isinstance(app, str) else app
         host_path_mapping = self.middleware.call_sync('app.get_hostpaths_datasets', app_info['name'])
         # Stop the app itself before we attempt to take snapshots
@@ -98,7 +98,7 @@ class AppService(Service):
         job.set_progress(
             20, f'Validating {app_name!r} app upgrade to {upgrade_version["version"]!r} version'
         )
-        self.take_snapshot_of_hostpath(app, options['snapshot_hostpaths'])
+        self.take_snapshot_of_hostpath_and_stop_app(app, options['snapshot_hostpaths'])
         # In order for upgrade to complete, following must happen
         # 1) New version should be copied over to app config's dir
         # 2) Metadata should be updated to reflect new version
