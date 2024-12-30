@@ -19,7 +19,7 @@ auth		[success=1 default=die]		pam_tdb.so ${truenas_admin_string}
 %if ds_auth:
 @include common-account
 %else:
-${'\n'.join(line.as_conf() for line in STANDALONE_AUTH.primary)}
+${'\n'.join(line.as_conf() for line in STANDALONE_ACCOUNT.primary)}
 @include common-account-unix
 %endif
 password	required			pam_deny.so
