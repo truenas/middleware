@@ -30,7 +30,7 @@ class ApiKeyEntry(BaseModel):
 
 
 class ApiKeyEntryWithKey(ApiKeyEntry):
-    key: Secret[str]
+    key: str
 
 
 class ApiKeyCreate(ApiKeyEntry):
