@@ -190,7 +190,7 @@ class NFSService(SystemServiceService):
 
         # Clear rmtab on boot.
         # We call this here because /var/db/system/nfs is not yet available
-        # in a middleware 'setup' hook.
+        # in a middleware 'setup' hook.  See NAS-131762
         if not self.middleware.call_sync('system.ready'):
             self.middleware.call_sync('nfs.clear_nfs3_rmtab')
 
