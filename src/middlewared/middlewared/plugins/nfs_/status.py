@@ -1,12 +1,13 @@
+import os
+import tempfile
+import yaml
+
+from contextlib import suppress
 from middlewared.plugins.nfs import NFSServicePathInfo
 from middlewared.schema import accepts, Int, returns, Str, Dict
 from middlewared.service import Service, private, filterable, filterable_returns
-from middlewared.utils import filter_list
 from middlewared.service_exception import CallError
-from contextlib import suppress
-
-import yaml
-import os
+from middlewared.utils import filter_list
 
 
 class NFSService(Service):
@@ -30,6 +31,39 @@ class NFSService(Service):
                     })
 
         return entries
+
+    @private
+    def clear_nfs3_rmtab(self, ip_to_clear=["all"]):
+        """
+        Clear some or all NFSv3 client entries in rmtab.
+        rmtab can become clogged with stale entries, this provides a
+        method to clear all or selected entries.
+        Optional input: list of ip to remove, e.g. ip_to_clear=["a.b.c.d"]
+        DEFAULT: Clear all entries
+        """
+        rmtab = os.path.join(NFSServicePathInfo.STATEDIR.path(), "rmtab")
+        with suppress(FileNotFoundError):
+            # Handle default:  clear all
+            if "all" in ip_to_clear:
+                with open(rmtab, "w"):
+                    # Use 'w' open to truncate
+                    pass
+            else:
+                # Replace rmtab excluding ip_to_clear
+                with tempfile.NamedTemporaryFile(
+                    mode='wt',
+                    dir=NFSServicePathInfo.STATEDIR.path(),
+                    delete=False
+                ) as outf:
+                    with open(rmtab, "r") as inf:
+                        for entry in inf:
+                            if entry.split(':')[0] in ip_to_clear:
+                                continue
+                            else:
+                                outf.write(entry)
+                    outf.flush()
+                    os.fsync(outf.fileno())
+                    os.rename(outf.name, rmtab)
 
     # NFS_WRITE because this exposes hostnames and IP addresses
     # READONLY is considered administrative-level permission
