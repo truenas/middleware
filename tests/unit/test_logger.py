@@ -207,4 +207,5 @@ def test__syslog_exception_parameterization(working_syslog, test_message):
     exc = log_line.split('@cee:')[1]
     data = json.loads(exc)
     assert data['TNLOG']['type'] == 'PYTHON_EXCEPTION'
+    assert 'time' in data['TNLOG']
     assert 'FileNotFoundError' in data['TNLOG']['exception']
