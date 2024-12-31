@@ -13,9 +13,8 @@ import errno
 from collections import defaultdict
 
 from middlewared.utils import filter_list
-from middlewared.service import Service, job, accepts
+from middlewared.service import Service, job
 from middlewared.service_exception import CallError
-from middlewared.schema import Dict, Bool, Int
 from middlewared.plugins.docker.state_utils import Status as DockerStatus
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
@@ -87,21 +86,19 @@ class FailoverEventsService(Service):
             timeout=timeout,
         )
 
-    @accepts(Dict(
-        'restart_services',
-        Bool('critical', default=False),
-        Int('timeout', default=15),
-    ))
     async def restart_services(self, data):
         """
         Concurrently restart services during a failover
         master event.
 
-        `critical` Boolean when True will only restart the
-        critical services.
-        `timeout` Integer representing the maximum amount
-        of time to wait for a given service to (re)start.
+        `data` is a dictionary accepting 2 keys
+            `critical` Boolean when True will only restart the
+            critical services.
+            `timeout` Integer representing the maximum amount
+            of time to wait for a given service to (re)start.
         """
+        data.setdefault('critical', False)
+        data.setdefault('timeout', 15)
         to_restart = await self.middleware.call('datastore.query', 'services_services')
         to_restart = [i['srv_service'] for i in to_restart if i['srv_enable']]
         if data['critical']:
