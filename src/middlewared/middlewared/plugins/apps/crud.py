@@ -1,17 +1,18 @@
 import contextlib
 import errno
-import os
 import shutil
-import textwrap
 
 from catalog_reader.custom_app import get_version_details
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    AppEntry, AppCreateArgs, AppCreateResult, AppUpdateArgs, AppUpdateResult, AppDeleteArgs, AppDeleteResult,
+    AppConfigArgs, AppConfigResult, AppConvertToCustomArgs, AppConvertToCustomResult,
+)
 from middlewared.service import (
-    CallError, CRUDService, filterable, InstanceNotFound, job, pass_app, private, ValidationErrors
+    CallError, CRUDService, filterable_api_method, InstanceNotFound, job, private, ValidationErrors
 )
 from middlewared.utils import filter_list
-from middlewared.validators import Match, Range
 
 from .compose_utils import compose_action
 from .custom_app_utils import validate_payload
@@ -20,7 +21,6 @@ from .ix_apps.metadata import update_app_metadata, update_app_metadata_for_porta
 from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path, get_installed_app_version_path
 from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
-from .ix_apps.utils import AppState
 from .version_utils import get_latest_version_from_app_versions
 
 
@@ -31,55 +31,9 @@ class AppService(CRUDService):
         event_send = False
         cli_namespace = 'app'
         role_prefix = 'APPS'
+        entry = AppEntry
 
-    ENTRY = Dict(
-        'app_entry',
-        Str('name'),
-        Str('id'),
-        Str('state', enum=[state.value for state in AppState]),
-        Bool('upgrade_available'),
-        Str('human_version'),
-        Str('version'),
-        Dict('metadata', additional_attrs=True),
-        Dict(
-            'active_workloads',
-            Int('containers'),
-            List('used_ports', items=[Dict(
-                'used_port',
-                Str('container_port'),
-                Str('protocol'),
-                List('host_ports', items=[Dict(
-                    'host_port',
-                    Str('host_port'),
-                    Str('host_ip'),
-                )]),
-                additional_attrs=True,
-            )]),
-            List('container_details', items=[Dict(
-                'container_detail',
-                Str('id'),
-                Str('service_name'),
-                Str('image'),
-                List('port_config'),
-                Str('state', enum=['running', 'starting', 'exited']),
-                List('volume_mounts'),
-                additional_attrs=True,
-            )]),
-            List('volumes', items=[Dict(
-                'volume',
-                Str('source'),
-                Str('destination'),
-                Str('mode'),
-                Str('type'),
-                additional_attrs=True,
-            )]),
-            additional_attrs=True,
-        ),
-        additional_attrs=True,
-    )
-
-    @filterable
-    @pass_app(rest=True)
+    @filterable_api_method(item=AppEntry, pass_app=True, pass_app_rest=True)
     def query(self, app, filters, options):
         """
         Query all apps with `query-filters` and `query-options`.
@@ -133,8 +87,7 @@ class AppService(CRUDService):
 
         return filter_list(apps, filters, options)
 
-    @accepts(Str('app_name'), roles=['APPS_READ'])
-    @returns(Dict('app_config', additional_attrs=True))
+    @api_method(AppConfigArgs, AppConfigResult, roles=['APPS_READ'])
     def config(self, app_name):
         """
         Retrieve user specified configuration of `app_name`.
@@ -142,8 +95,7 @@ class AppService(CRUDService):
         app = self.get_instance__sync(app_name)
         return get_current_app_config(app_name, app['version'])
 
-    @accepts(Str('app_name'), roles=['APPS_WRITE'])
-    @returns(Ref('app_entry'))
+    @api_method(AppConvertToCustomArgs, AppConvertToCustomResult, roles=['APPS_WRITE'])
     @job(lock=lambda args: f'app_start_{args[0]}')
     async def convert_to_custom(self, job, app_name):
         """
@@ -151,32 +103,7 @@ class AppService(CRUDService):
         """
         return await self.middleware.call('app.custom.convert', job, app_name)
 
-    @accepts(
-        Dict(
-            'app_create',
-            Bool('custom_app', default=False),
-            Dict('values', additional_attrs=True, private=True),
-            Dict('custom_compose_config', additional_attrs=True, private=True),
-            Str('custom_compose_config_string', private=True, max_length=2**31),
-            Str('catalog_app', required=False),
-            Str(
-                'app_name', required=True, validators=[Match(
-                    r'^[a-z]([-a-z0-9]*[a-z0-9])?$',
-                    explanation=textwrap.dedent(
-                        '''
-                        Application name must have the following:
-                        1) Lowercase alphanumeric characters can be specified
-                        2) Name must start with an alphabetic character and can end with alphanumeric character
-                        3) Hyphen '-' is allowed but not as the first or last character
-                        e.g abc123, abc, abcd-1232
-                        '''
-                    )
-                ), Range(min_=1, max_=40)]
-            ),
-            Str('train', default='stable'),
-            Str('version', default='latest'),
-        )
-    )
+    @api_method(AppCreateArgs, AppCreateResult, roles=['APPS_WRITE'])
     @job(lock=lambda args: f'app_create_{args[0].get("app_name")}')
     def do_create(self, job, data):
         """
@@ -277,15 +204,7 @@ class AppService(CRUDService):
         self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
         self.middleware.send_event('app.query', 'REMOVED', id=app_name)
 
-    @accepts(
-        Str('app_name'),
-        Dict(
-            'app_update',
-            Dict('values', additional_attrs=True, private=True),
-            Dict('custom_compose_config', additional_attrs=True, private=True),
-            Str('custom_compose_config_string', private=True, max_length=2**31),
-        )
-    )
+    @api_method(AppUpdateArgs, AppUpdateResult, roles=['APPS_WRITE'])
     @job(lock=lambda args: f'app_update_{args[0]}')
     def do_update(self, job, app_name, data):
         """
@@ -335,16 +254,7 @@ class AppService(CRUDService):
         job.set_progress(100, f'{progress_keyword} completed for {app_name!r}')
         return self.get_instance__sync(app_name)
 
-    @accepts(
-        Str('app_name'),
-        Dict(
-            'options',
-            Bool('remove_images', default=True),
-            Bool('remove_ix_volumes', default=False),
-            Bool('force_remove_ix_volumes', default=False),
-            Bool('force_remove_custom_app', default=False),
-        )
-    )
+    @api_method(AppDeleteArgs, AppDeleteResult, roles=['APPS_WRITE'])
     @job(lock=lambda args: f'app_delete_{args[0]}')
     def do_delete(self, job, app_name, options):
         """
