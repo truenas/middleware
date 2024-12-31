@@ -8,6 +8,7 @@ from .logging.console_formatter import ConsoleLogFormatter
 from collections import deque
 from json import dumps
 from dataclasses import dataclass
+from .utils.time_utils import utc_now
 
 # markdown debug is also considered useless
 logging.getLogger('MARKDOWN').setLevel(logging.INFO)
@@ -151,6 +152,7 @@ class TNLogFormatter(logging.Formatter):
 
         if structured_data:
             structured_data['type'] = 'PYTHON_EXCEPTION'
+            structured_data['time'] = utc_now().strftime('%Y-%m-%d %H:%M:%S.%f')
             json_data = dumps({'TNLOG': structured_data})
             msg += f' @cee:{json_data}'
 
