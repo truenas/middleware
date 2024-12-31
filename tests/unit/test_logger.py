@@ -1,3 +1,4 @@
+import json
 import logging
 import logging.handlers
 import os
@@ -12,6 +13,7 @@ from middlewared.logger import (
     DEFAULT_LOGFORMAT,
     DEFAULT_SYSLOG_PATH,
     LOGFILE,
+    QFORMATTER,
     setup_syslog_handler,
     TNSyslogHandler,
 )
@@ -90,6 +92,7 @@ def working_syslog(current_test_name):
     can successfully write to the middleware log file. """
 
     handler = TNSyslogHandler(address=DEFAULT_SYSLOG_PATH, pending_queue=deque())
+    handler.setFormatter(QFORMATTER)
     handler.ident = DEFAULT_IDENT
     logger = logging.getLogger(current_test_name)
     logger.addHandler(handler)
@@ -177,3 +180,31 @@ def test__middleware_logger_paths(tnlog, test_message):
     with open(tnlog.logfile, 'r') as f:
         contents = f.read()
         assert test_message in contents
+
+
+def test__syslog_exception_parameterization(working_syslog, test_message):
+    logger, handler = working_syslog
+    assert handler.pending_queue is not None
+    assert handler.fallback_handler is None
+
+    log_line = None
+
+    try:
+        os.stat('/var/empty/nonexistent')
+    except Exception:
+        logger.critical(test_message, exc_info=True)
+
+    sleep(SYSLOG_WRITE_WAIT)
+    with open(LOGFILE, 'r') as f:
+        for line in f:
+            if line.startswith(test_message):
+                log_line = line
+                break
+
+    assert log_line is not None
+    assert '@cee' in log_line
+
+    exc = log_line.split('@cee:')[1]
+    data = json.loads(exc)
+    assert data['TNLOG']['type'] == 'PYTHON_EXCEPTION'
+    assert 'FileNotFoundError' in data['TNLOG']['exception']

@@ -6,6 +6,7 @@ import typing
 import warnings
 from .logging.console_formatter import ConsoleLogFormatter
 from collections import deque
+from json import dumps
 from dataclasses import dataclass
 
 # markdown debug is also considered useless
@@ -119,6 +120,47 @@ ALL_LOG_FILES = (
 # Audit entries are inserted into audit databases in /audit rather than
 # written to files in /var/log and so they are not members of ALL_LOG_FILES
 MIDDLEWARE_TNAUDIT = TNLog('TNAUDIT_MIDDLEWARE', '', '', None)
+
+BASIC_SYSLOG_TRANSLATION = str.maketrans({'\n': '\\n'})
+
+
+class TNLogFormatter(logging.Formatter):
+    """ logging formatter to convert python exception into structured data """
+
+    def _escape_rfc_generic(self, msg: str) -> str:
+        return msg.translate(BASIC_SYSLOG_TRANSLATION)
+
+    def format(self, record: logging.LogRecord) -> str:
+        exc_info = record.exc_info
+        exc_text = record.exc_text
+        stack_info = record.stack_info
+        structured_data = {}
+
+        record.exc_info = None
+        record.exc_text = None
+        record.stack_info = None
+
+        # Generate message following formatter rules
+        # Then collapse to single line for sending to syslog.
+        msg = self._escape_rfc_generic(super().format(record))
+        if exc_info:
+            structured_data['exception'] = self.formatException(exc_info)
+
+        if stack_info:
+            structured_data['stack'] = self.formatStack(stack_info)
+
+        if structured_data:
+            structured_data['type'] = 'PYTHON_EXCEPTION'
+            json_data = dumps({'TNLOG': structured_data})
+            msg += f' @cee:{json_data}'
+
+        record.exc_info = exc_info
+        record.exc_text = exc_text
+        record.stack_info = stack_info
+        return msg
+
+
+QFORMATTER = TNLogFormatter()
 
 
 class TNSyslogHandler(logging.handlers.SysLogHandler):
@@ -239,6 +281,10 @@ def setup_syslog_handler(tnlog: TNLog, fallback: logging.Handler | None) -> logg
     # Use `QueueHandler` to avoid blocking IO in asyncio main loop
     log_queue = queue.Queue()
     queue_handler = logging.handlers.QueueHandler(log_queue)
+
+    # We need to handle python exceptions (format into structured data)
+    # rather than allowing the QueueHandler to perform exception formatting,
+    queue_handler.setFormatter(QFORMATTER)
 
     # Set up syslog handler with deque to store failed messages until
     # they can be flushed. This can happen if syslog-ng isn't ready yet.
