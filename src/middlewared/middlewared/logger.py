@@ -6,6 +6,7 @@ import typing
 import warnings
 from .logging.console_formatter import ConsoleLogFormatter
 from collections import deque
+from cryptography.utils import CryptographyDeprecationWarning
 from json import dumps
 from dataclasses import dataclass
 from .utils.time_utils import utc_now
@@ -52,6 +53,9 @@ logging.getLogger('httpx._client').setLevel(logging.ERROR)
 # `middlewared.api.base.ForUpdateMetaclass` to work so this warning is false positive.
 # Excluding this default from the generated JSON schema is the correct behavior, so there is no real issue here.
 warnings.filterwarnings("ignore", module="pydantic.json_schema")
+
+# asyncssh imports various weak crypto algorithms generating log spam on every middleware start
+warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
 
 logging.TRACE = 6
 
