@@ -80,6 +80,29 @@ class VirtInstanceService(CRUDService):
                 'raw': None,  # Default required by pydantic
             }
 
+            idmap = None
+            if idmap_current := i['config'].get('volatile.idmap.current'):
+                idmap_current = json.loads(idmap_current)
+                uid = list(filter(lambda x: x.get('Isuid'), idmap_current)) or None
+                if uid:
+                    uid = {
+                        'hostid': uid[0]['Hostid'],
+                        'maprange': uid[0]['Maprange'],
+                        'nsid': uid[0]['Nsid'],
+                    }
+                gid = list(filter(lambda x: x.get('Isgid'), idmap_current)) or None
+                if gid:
+                    gid = {
+                        'hostid': gid[0]['Hostid'],
+                        'maprange': gid[0]['Maprange'],
+                        'nsid': gid[0]['Nsid'],
+                    }
+                idmap = {
+                    'uid': uid,
+                    'gid': gid,
+                }
+            entry['userns_idmap'] = idmap
+
             if options['extra'].get('raw'):
                 entry['raw'] = i
 
