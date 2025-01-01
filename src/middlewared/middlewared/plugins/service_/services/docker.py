@@ -13,9 +13,11 @@ class DockerService(SimpleService):
     async def before_start(self):
         await self.middleware.call('docker.state.set_status', Status.INITIALIZING.value)
         await self.middleware.call('docker.state.before_start_check')
+        physical_ifaces = await self.middleware.call('interface.query', [['type', '=', 'PHYSICAL']])
         for key, value in (
             ('vm.panic_on_oom', 0),
             ('vm.overcommit_memory', 1),
+            *[(f'net.ipv6.conf.{i["name"]}.accept_ra', 2) for i in physical_ifaces],
         ):
             await self.middleware.call('sysctl.set_value', key, value)
 
