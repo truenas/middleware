@@ -886,8 +886,8 @@ class KerberosKeytabService(CRUDService):
             f.flush()
 
             try:
-                if not (entries := ktutil_list_impl(f.name)):
-                    verrors.add(f"{schema}.file", f"File does not contain any keytab entries")
+                if not ktutil_list_impl(f.name):
+                    verrors.add(f"{schema}.file", "File does not contain any keytab entries")
             except Exception as e:
                 verrors.add(f"{schema}.file", f"Failed to validate keytab: [{e}]")
 
