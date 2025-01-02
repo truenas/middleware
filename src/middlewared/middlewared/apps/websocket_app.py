@@ -1,7 +1,6 @@
 from asyncio import AbstractEventLoop, run_coroutine_threadsafe, shield
 from binascii import b2a_base64
 from errno import EACCES, EAGAIN, EINVAL, ETOOMANYREFS
-from json import dumps as jdumps
 from pickle import dumps as pdumps
 from sys import exc_info
 from traceback import format_exception
@@ -28,6 +27,7 @@ from middlewared.service_exception import (
 from middlewared.utils.debug import get_frame_details
 from middlewared.utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from middlewared.utils.origin import ConnectionOrigin
+from truenas_api_client import json
 
 __all__ = ("WebSocketApplication",)
 
@@ -58,7 +58,7 @@ class WebSocketApplication(RpcWebSocketApp):
         self.__subscribed = {}
 
     def _send(self, data: dict[str, Any]):
-        run_coroutine_threadsafe(self.response.send_str(jdumps(data)), loop=self.loop)
+        run_coroutine_threadsafe(self.response.send_str(json.dumps(data)), loop=self.loop)
 
     def _tb_error(self, exc_info: ExcInfoType) -> dict[str, str | list[dict]]:
         klass, exc, trace = exc_info
