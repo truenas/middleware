@@ -136,6 +136,12 @@ class VirtInstanceService(CRUDService):
     async def validate(self, new, schema_name, verrors, old=None):
         # Do not validate image_choices because its an expansive operation, just fail on creation
 
+        instance_type = new.get('instance_type') or (old or {}).get('type')
+        if instance_type and not await self.middleware.call('virt.global.license_active', instance_type):
+            verrors.add(
+                f'{schema_name}.instance_type', f'System is not licensed to manage {instance_type!r} instances'
+            )
+
         if not old and await self.query([('name', '=', new['name'])]):
             verrors.add(f'{schema_name}.name', f'Name {new["name"]!r} already exists')
 
@@ -164,9 +170,7 @@ class VirtInstanceService(CRUDService):
                     'vnc_port': old['vnc_port'],
                 })
 
-        if (
-            new.get('instance_type') == 'VM' or (old and old['type'] == 'VM')
-        ) and new.get('enable_vnc'):
+        if instance_type == 'VM' and new.get('enable_vnc'):
             if not new.get('vnc_port'):
                 verrors.add(f'{schema_name}.vnc_port', 'VNC port is required when VNC is enabled')
             else:
