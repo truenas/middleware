@@ -147,7 +147,7 @@ class CronJobService(CRUDService):
         """
         Update cronjob of `id`.
         """
-        task_data = await self.query(filters=[('id', '=', id_)], options={'get': True})
+        task_data = await self.middleware.call('cronjob.query', [('id', '=', id_)], {'get': True})
         original_data = task_data.copy()
         task_data.update(data)
         verrors, task_data = await self.validate_data(task_data, 'cron_job_update')
