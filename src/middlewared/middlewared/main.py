@@ -729,7 +729,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         serviceobj,
         methodobj: Method | LegacyAPIMethod,
         app: object | None,
-        result: dict|str|int|list|None|Job,
+        result: dict | str | int | list | None | Job,
         *,
         new_style_returns_model: object|None = None,
         must_redact_secrets:bool = False
