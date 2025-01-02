@@ -147,6 +147,7 @@ class CronJobService(CRUDService):
         """
         Update cronjob of `id`.
         """
+        # FIXME: Use `await self.query` once query endpoints are fully converted.
         task_data = await self.middleware.call('cronjob.query', [('id', '=', id_)], {'get': True})
         original_data = task_data.copy()
         task_data.update(data)
