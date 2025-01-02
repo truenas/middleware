@@ -39,7 +39,7 @@ class VirtFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def delete(self, attachments):
         if attachments:
-            job = await self.middleware.call('virt.global.update', {'pool': ''})
+            job = await self.middleware.call('virt.global.update', {'pool': None})
             await job.wait(raise_error=True)
 
     async def toggle(self, attachments, enabled):
