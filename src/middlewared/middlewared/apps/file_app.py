@@ -1,5 +1,4 @@
 from asyncio import run_coroutine_threadsafe
-from json import dumps, loads
 from urllib.parse import parse_qs
 
 from aiohttp import web
@@ -12,6 +11,7 @@ from middlewared.restful import (
     copy_multipart_to_pipe,
 )
 from middlewared.service_exception import CallError
+from truenas_api_client import json
 
 __all__ = ("FileApplication",)
 
@@ -128,7 +128,7 @@ class FileApplication:
             return resp
 
         try:
-            data = loads(await part.read())
+            data = json.loads(await part.read())
         except Exception as e:
             return web.Response(status=400, body=str(e))
 
@@ -222,6 +222,6 @@ class FileApplication:
             headers={
                 "Content-Type": "application/json",
             },
-            body=dumps({"job_id": job.id}).encode(),
+            body=json.dumps({"job_id": job.id}).encode(),
         )
         return resp

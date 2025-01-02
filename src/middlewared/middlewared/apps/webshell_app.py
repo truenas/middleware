@@ -2,7 +2,6 @@ import asyncio
 import collections
 import contextlib
 import fcntl
-import json
 import os
 import queue
 import struct
@@ -19,6 +18,7 @@ from middlewared.service_exception import (
     MatchNotFound,
 )
 from middlewared.utils.os import close_fds, terminate_pid
+from truenas_api_client import json
 
 __all__ = ("ShellApplication",)
 
