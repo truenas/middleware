@@ -119,37 +119,41 @@ class ActiveDirectoryService(ConfigService):
         return await self.middleware.call('directoryservices.nss_info_choices', 'ACTIVEDIRECTORY')
 
     @private
-    async def update_netbios_data(self, old, new):
-        must_update = False
+    async def netbios_name_check(self, schema, old, new):
+        changed = False
 
-        # None here as opposed to empty list indicates to preserve current value
         if new['netbiosalias'] is None:
             new['netbiosalias'] = old['netbiosalias']
 
         for key in ['netbiosname', 'netbiosalias']:
             # netbios names are case-insensitive
             if key in new and old[key] != new[key]:
-                if old['enable']:
+                if old.get('enable', True):
                     if key == 'netbiosname' and new[key].casefold() != old[key].casefold():
                         raise ValidationError(
-                            f'activedirectory.{key}',
-                            f'{old[key]} -> {new[key]}: NetBIOS name may not be changed while service is enabled.'
+                            f'{schema}.{key}',
+                            f'{old[key]} -> {new[key]}: NetBIOS name may not be changed while AD service is enabled.'
                         )
                     elif len(old[key]) != len(new[key]):
                         raise ValidationError(
-                            f'activedirectory.{key}',
-                            f'{old[key]} -> {new[key]}: NetBIOS aliases may not be changed while service is enabled.'
+                            f'{schema}.{key}',
+                            f'{old[key]} -> {new[key]}: NetBIOS aliases may not be changed while AD service is enabled.'
                         )
                     else:
                         for idx, alias in enumerate(old[key]):
                             if old[key][idx].casefold() != new[key][idx].casefold():
                                 raise ValidationError(
-                                    f'activedirectory.{key}.{idx}',
-                                    f'{old[key][idx]} -> {new[key][idx]}: NetBIOS alias may not be changed while service is enabled.'
+                                    f'{schema}.{key}.{idx}',
+                                    f'{old[key][idx]} -> {new[key][idx]}: NetBIOS alias may not be changed while AD service is enabled.'
                                 )
 
-                must_update = True
-                break
+                    changed = True
+
+        return changed
+
+    @private
+    async def update_netbios_data(self, old, new):
+        must_update = await self.netbios_name_check('activedirectory', old, new)
 
         if not must_update:
             return
