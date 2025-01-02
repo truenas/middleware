@@ -762,7 +762,7 @@ class KerberosKeytabService(CRUDService):
         """
         verrors = ValidationErrors()
 
-        verrors.add_child('kerberos_principal_create', await self._validate(data))
+        await self.validate('kerberos_keytab_create', data, verrors)
 
         verrors.check()
 
@@ -794,7 +794,7 @@ class KerberosKeytabService(CRUDService):
 
         verrors = ValidationErrors()
 
-        verrors.add_child('kerberos_principal_update', await self._validate(new))
+        await self.validate('kerberos_keytab_update', new, verrors, new['id'])
 
         verrors.check()
 
@@ -849,37 +849,39 @@ class KerberosKeytabService(CRUDService):
             await self.middleware.call('ldap.update', {'kerberos_principal': ''})
 
     @private
-    def _validate_impl(self, data):
+    def _validate_impl(self, schema, data, verrors):
         """
         - synchronous validation -
         For now validation is limited to checking if we can resolve the hostnames
         configured for the kdc, admin_server, and kpasswd_server can be resolved
         by DNS, and if the realm can be resolved by DNS.
         """
-        verrors = ValidationErrors()
         try:
             decoded = base64.b64decode(data['file'])
         except Exception as e:
-            verrors.add("kerberos.keytab_create", f"Keytab is a not a properly base64-encoded string: [{e}]")
-            return verrors
+            verrors.add(f"{schema}.file", f"Keytab is a not a properly base64-encoded string: [{e}]")
+            return
 
         with tempfile.NamedTemporaryFile() as f:
             f.write(decoded)
             f.flush()
 
             try:
-                ktutil_list_impl(f.name)
+                if not (entries := ktutil_list_impl(f.name)):
+                    verrors.add(f"{schema}.file", f"File does not contain any keytab entries")
             except Exception as e:
-                verrors.add("kerberos.keytab_create", f"Failed to validate keytab: [{e}]")
-
-        return verrors
+                verrors.add(f"{schema}.file", f"Failed to validate keytab: [{e}]")
 
     @private
-    async def _validate(self, data):
+    async def validate(self, schema, data, verrors, id_=None):
         """
         async wrapper for validate
         """
-        return await self.middleware.run_in_thread(self._validate_impl, data)
+        await self._ensure_unique(verrors, schema, 'name', data['name'], id_)
+        if not data['file']:
+            verrors.add(f'{schema}.file', 'base64-encoded keytab file is required')
+
+        return await self.middleware.run_in_thread(self._validate_impl, schema, data, verrors)
 
     @private
     async def ktutil_list(self, keytab_file=KRB_Keytab['SYSTEM'].value):
