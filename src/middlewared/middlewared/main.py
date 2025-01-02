@@ -731,7 +731,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         app: object | None,
         result: dict | str | int | list | None | Job,
         *,
-        new_style_returns_model: object|None = None,
+        new_style_returns_model: object | None = None,
         must_redact_secrets:bool = False
     ):
         """
