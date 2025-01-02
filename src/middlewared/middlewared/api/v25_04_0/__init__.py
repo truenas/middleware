@@ -15,6 +15,7 @@ from .cloud_sync import *  # noqa
 from .common import *  # noqa
 from .config import *  # noqa
 from .core import *  # noqa
+from .cronjob import *  # noqa
 from .disk import *  # noqa
 from .docker import *  # noqa
 from .docker_network import *  # noqa
