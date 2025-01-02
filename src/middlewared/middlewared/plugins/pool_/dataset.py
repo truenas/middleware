@@ -117,7 +117,7 @@ class PoolDatasetService(CRUDService):
     def _internal_user_props(self):
         return TNUserProp.values()
 
-    def __transform(self, datasets, retrieve_children, children_filters):
+    def __transform(self, datasets, retrieve_children, children_filters, retrieve_user_props):
         """
         We need to transform the data zfs gives us to make it consistent/user-friendly,
         making it match whatever pool.dataset.{create,update} uses as input.
@@ -138,9 +138,10 @@ class PoolDatasetService(CRUDService):
             if dataset['type'] == 'VOLUME':
                 dataset['mountpoint'] = None
 
-            dataset['user_properties'] = {
-                k: v for k, v in dataset['properties'].items() if ':' in k and k not in self._internal_user_props()
-            }
+            if retrieve_user_props:
+                dataset['user_properties'] = {
+                    k: v for k, v in dataset['properties'].items() if ':' in k and k not in self._internal_user_props()
+                }
             del dataset['properties']
 
             if all(k in dataset for k in ('encrypted', 'key_loaded')):
@@ -194,7 +195,9 @@ class PoolDatasetService(CRUDService):
         In case only some properties are desired to be retrieved for datasets, consumer should specify
         `query-options.extra.properties` which when `null` ( which is the default ) will retrieve all properties
         and otherwise a list can be specified like `["type", "used", "available"]` to retrieve selective properties.
-        If no properties are desired, in that case an empty list should be sent.
+        If no properties are desired, in that case an empty list should be sent. It should be noted that specifying
+        empty list will still retrieve user properties. If user properties are not desired, in that case
+        `query-options.extra.retrieve_user_props` should be set to `false`.
 
         `query-options.extra.snapshots` can be set to retrieve snapshot(s) of dataset in question.
 
@@ -220,6 +223,7 @@ class PoolDatasetService(CRUDService):
         snapshots = extra.get('snapshots')
         snapshots_recursive = extra.get('snapshots_recursive')
         snapshots_count = extra.get('snapshots_count')
+        retrieve_user_props = extra.get('retrieve_user_props', True)
         return filter_list(
             self.__transform(self.middleware.call_sync(
                 'zfs.dataset.query', zfsfilters, {
@@ -230,10 +234,11 @@ class PoolDatasetService(CRUDService):
                         'snapshots': snapshots,
                         'snapshots_recursive': snapshots_recursive,
                         'snapshots_count': snapshots_count,
-                        'snapshots_properties': extra.get('snapshots_properties', [])
+                        'snapshots_properties': extra.get('snapshots_properties', []),
+                        'user_properties': retrieve_user_props,
                     }
                 }
-            ), retrieve_children, internal_datasets_filters,
+            ), retrieve_children, internal_datasets_filters, retrieve_user_props,
             ), filters, options
         )
 
