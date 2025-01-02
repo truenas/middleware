@@ -727,7 +727,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def dump_result(
         self,
         serviceobj,
-        methodobj:Method|LegacyAPIMethod,
+        methodobj: Method | LegacyAPIMethod,
         app: object | None,
         result: dict|str|int|list|None|Job,
         *,
