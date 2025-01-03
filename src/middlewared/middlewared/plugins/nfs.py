@@ -5,10 +5,15 @@ import itertools
 import os
 import shutil
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    NfsEntry, NfsUpdateArgs, NfsUpdateResult
+)
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
-from middlewared.validators import Match, NotMatch, Port, Range, IpAddress
+# from middlewared.validators import Match, NotMatch, Port, Range, IpAddress
+from middlewared.validators import Match, NotMatch, IpAddress
 from middlewared.service import private, SharingService, SystemServiceService
 from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -84,26 +89,7 @@ class NFSService(SystemServiceService):
         cli_namespace = "service.nfs"
         role_prefix = "SHARING_NFS"
 
-    ENTRY = Dict(
-        'nfs_entry',
-        Int('id', required=True),
-        Int('servers', null=True, validators=[Range(min_=1, max_=256)], required=True),
-        Bool('allow_nonroot', required=True),
-        List('protocols', items=[Str('protocol', enum=NFSProtocol.choices())], required=True),
-        Bool('v4_krb', required=True),
-        Str('v4_domain', required=True),
-        List('bindip', items=[IPAddr('ip')], required=True),
-        Int('mountd_port', null=True, validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])], required=True),
-        Int('rpcstatd_port', null=True, validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])], required=True),
-        Int('rpclockd_port', null=True, validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])], required=True),
-        Bool('mountd_log', required=True),
-        Bool('statd_lockd_log', required=True),
-        Bool('v4_krb_enabled', required=True),
-        Bool('userd_manage_gids', required=True),
-        Bool('keytab_has_nfs_spn', required=True),
-        Bool('managed_nfsd', default=True),
-        Bool('rdma', default=False),
-    )
+        entry = NfsEntry
 
     @private
     def name_to_id_conversion(self, name, name_type='user'):
@@ -261,17 +247,7 @@ class NFSService(SystemServiceService):
 
             return []
 
-    @accepts(
-        Patch(
-            'nfs_entry', 'nfs_update',
-            ('rm', {'name': 'id'}),
-            ('rm', {'name': 'v4_krb_enabled'}),
-            ('rm', {'name': 'keytab_has_nfs_spn'}),
-            ('rm', {'name': 'managed_nfsd'}),
-            ('attr', {'update': True}),
-        ),
-        audit='Update NFS configuration',
-    )
+    @api_method(NfsUpdateArgs, NfsUpdateResult, audit='Update NFS configuration')
     async def do_update(self, data):
         """
         Update NFS Service Configuration.
