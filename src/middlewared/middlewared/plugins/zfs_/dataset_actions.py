@@ -16,7 +16,7 @@ class ZFSDatasetService(Service):
     class Config:
         namespace = 'zfs.dataset'
         private = True
-        process_pool = True
+        process_pool = False
 
     def path_to_dataset(self, path, mntinfo=None):
         """
