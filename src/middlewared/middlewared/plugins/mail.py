@@ -110,6 +110,10 @@ class MailService(ConfigService):
     async def mail_extend(self, cfg):
         if cfg['security']:
             cfg['security'] = cfg['security'].upper()
+
+        if cfg['oauth'] and 'provider' not in cfg['oauth']:
+            cfg['oauth']['provider'] = ''
+
         return cfg
 
     @accepts(
