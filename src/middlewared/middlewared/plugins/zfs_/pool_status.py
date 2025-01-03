@@ -12,7 +12,6 @@ class ZPoolService(Service):
         namespace = 'zpool'
         private = True
         cli_private = True
-        process_pool = True
 
     def resolve_block_path(self, path, should_resolve):
         if not should_resolve:
