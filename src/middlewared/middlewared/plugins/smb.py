@@ -562,6 +562,8 @@ class SMBService(ConfigService):
             DSStatus.HEALTHY.name, DSStatus.FAULTED.name
         ):
             await self.middleware.call('activedirectory.netbios_name_check', 'smb_update', old, new)
+            if old['workgroup'].casefold() != new['workgroup'].casefold():
+                verrors.add('smb_update.workgroup', 'Workgroup may not be changed while AD is enabled')
 
         if app and not credential_has_full_admin(app.authenticated_credentials):
             if old['smb_options'] != new['smb_options']:
