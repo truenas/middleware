@@ -670,12 +670,7 @@ class SMBService(ConfigService):
         if ds['type'] == DSType.AD.value and ds['status'] in (
             DSStatus.HEALTHY.name, DSStatus.FAULTED.name
         ):
-            for i in ('workgroup', 'netbiosname', 'netbiosalias'):
-                if old[i] != new[i]:
-                    verrors.add(f'smb_update.{i}',
-                                'This parameter may not be changed after joining Active Directory (AD). '
-                                'If it must be changed, the proper procedure is to leave the AD domain '
-                                'and then alter the parameter before re-joining the domain.')
+            await self.middleware.call('activedirectory.netbios_name_check', 'smb_update', old, new)
 
         if app and not credential_has_full_admin(app.authenticated_credentials):
             if old['smb_options'] != new['smb_options']:
