@@ -28,6 +28,7 @@ from .ftp import *  # noqa
 from .group import *  # noqa
 from .iscsi_auth import *  # noqa
 from .iscsi_extent import *  # noqa
+from .iscsi_initiator import *  # noqa
 from .iscsi_target import *  # noqa
 from .iscsi_target_to_extent import *  # noqa
 from .keychain import *  # noqa
