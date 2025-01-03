@@ -156,6 +156,9 @@ def test_enable_leave_activedirectory():
         assert secrets_has_domain is True
 
         # Check that our database has backup of this info written to it.
+        secrets = call('directoryservices.secrets.get_db_secrets')
+        assert f'{hostname.upper()}$' in secrets, str(secrets.keys())
+
         db_secrets = call('directoryservices.secrets.get_db_secrets')[f'{hostname.upper()}$']
         assert f'SECRETS/MACHINE_PASSWORD/{short_name}' in db_secrets
 
