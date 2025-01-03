@@ -9,7 +9,7 @@ class ZFSSnapshot(Service):
 
     class Config:
         namespace = 'zfs.snapshot'
-        process_pool = True
+        process_pool = False
 
     @accepts(Dict(
         'snapshot_clone',
