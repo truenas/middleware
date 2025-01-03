@@ -2532,6 +2532,19 @@ def test__initiator_group(iscsi_running):
                     with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn3) as s:
                         TUR(s)
                 assert 'Unable to connect to' in str(ve), ve
+
+                # Now UPDATE the initiator group
+                call('iscsi.initiator.update', twoinit_config['id'], {'initiators': [initiator_iqn2, initiator_iqn3]})
+                # Last two initiators can connect to the target
+                for initiator_iqn in [initiator_iqn2, initiator_iqn3]:
+                    with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn) as s:
+                        TUR(s)
+                # First initiator cannot connect to the target
+                with pytest.raises(RuntimeError) as ve:
+                    with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn1) as s:
+                        TUR(s)
+                assert 'Unable to connect to' in str(ve), ve
+
                 # Clear it again
                 set_target_initiator_id(config['target']['id'], None)
 

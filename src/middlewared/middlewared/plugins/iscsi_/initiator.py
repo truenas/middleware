@@ -1,6 +1,8 @@
 import middlewared.sqlalchemy as sa
-
-from middlewared.schema import accepts, Dict, Int, List, Patch, Str
+from middlewared.api import api_method
+from middlewared.api.current import (IscsiInitiatorCreateArgs, IscsiInitiatorCreateResult, IscsiInitiatorDeleteArgs,
+                                     IscsiInitiatorDeleteResult, IscsiInitiatorEntry, IscsiInitiatorUpdateArgs,
+                                     IscsiInitiatorUpdateResult)
 from middlewared.service import CRUDService, private
 
 
@@ -35,13 +37,14 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         datastore_extend = 'iscsi.initiator.extend'
         cli_namespace = 'sharing.iscsi.target.authorized_initiator'
         role_prefix = 'SHARING_ISCSI_INITIATOR'
+        entry = IscsiInitiatorEntry
 
-    @accepts(Dict(
-        'iscsi_initiator_create',
-        List('initiators'),
-        Str('comment'),
-        register=True
-    ), audit='Create iSCSI initiator', audit_extended=lambda data: initiator_summary(data))
+    @api_method(
+        IscsiInitiatorCreateArgs,
+        IscsiInitiatorCreateResult,
+        audit='Create iSCSI initiator',
+        audit_extended=lambda data: initiator_summary(data)
+    )
     async def do_create(self, data):
         """
         Create an iSCSI Initiator.
@@ -59,13 +62,9 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'iscsi_initiator_create',
-            'iscsi_initiator_update',
-            ('attr', {'update': True})
-        ),
+    @api_method(
+        IscsiInitiatorUpdateArgs,
+        IscsiInitiatorUpdateResult,
         audit='Update iSCSI initiator',
         audit_callback=True,
     )
@@ -88,10 +87,12 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
 
         return await self.get_instance(id_)
 
-    @accepts(Int('id'),
-             audit='Delete iSCSI initiator',
-             audit_callback=True,
-             )
+    @api_method(
+        IscsiInitiatorDeleteArgs,
+        IscsiInitiatorDeleteResult,
+        audit='Delete iSCSI initiator',
+        audit_callback=True,
+    )
     async def do_delete(self, audit_callback, id_):
         """
         Delete iSCSI initiator of `id`.
