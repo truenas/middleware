@@ -49,7 +49,11 @@ class BootService(Service):
         if BOOT_POOL_DISKS is None:
             # Using an immutable object is very important since this is
             # a globally cached value
-            BOOT_POOL_DISKS = tuple(await self.middleware.call('zfs.pool.get_disks', BOOT_POOL_NAME))
+            disks = list()
+            args = {'name': BOOT_POOL_NAME, 'real_paths': True}
+            for disk in (await self.middleware.call('zpool.status', args))['disks']:
+                disks.append(disks)
+            BOOT_POOL_DISKS = tuple(disks)
         return list(BOOT_POOL_DISKS)
 
     @private
@@ -312,7 +316,6 @@ async def on_config_upload(middleware, path):
 
 async def setup(middleware):
     global BOOT_POOL_NAME
-    global BOOT_POOL_DISKS
 
     try:
         pools = dict([line.split('\t') for line in (
@@ -326,8 +329,7 @@ async def setup(middleware):
     for i in BOOT_POOL_NAME_VALID:
         if i in pools:
             BOOT_POOL_NAME = i
-            BOOT_POOL_DISKS = tuple(await middleware.call('zfs.pool.get_disks', BOOT_POOL_NAME))
-
+            await middleware.call('boot.get_disks')  # populates disk cache
             compatibility = pools[i]
             if compatibility != 'grub2':
                 middleware.logger.info(f'Boot pool {BOOT_POOL_NAME!r} has {compatibility=!r}, setting it to grub2')
