@@ -147,7 +147,7 @@ class ActiveDirectoryService(ConfigService):
                                     f'{old[key][idx]} -> {new[key][idx]}: NetBIOS alias may not be changed while AD service is enabled.'
                                 )
 
-                    changed = True
+                changed = True
 
         return changed
 
