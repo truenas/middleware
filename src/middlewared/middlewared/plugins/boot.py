@@ -52,7 +52,7 @@ class BootService(Service):
             disks = list()
             args = {'name': BOOT_POOL_NAME, 'real_paths': True}
             for disk in (await self.middleware.call('zpool.status', args))['disks']:
-                disks.append(disks)
+                disks.append(disk)
             BOOT_POOL_DISKS = tuple(disks)
         return list(BOOT_POOL_DISKS)
 
