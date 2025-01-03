@@ -67,6 +67,7 @@ LOGFILE = '/var/log/middlewared.log'
 DEFAULT_LOGFORMAT = '[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s'
 FALLBACK_LOGFILE = '/var/log/fallback-middlewared.log'
 NETDATA_API_LOGFILE = '/var/log/netdata_api.log'
+TRUENAS_CONNECT_LOGFILE = '/var/log/truenas_connect.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
 ZETTAREPL_LOGFORMAT = '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s'
 
@@ -108,6 +109,7 @@ TNLOG_APP_MIGRATION = TNLog('app_migration', APP_MIGRATION_LOGFILE)
 TNLOG_DOCKER_IMAGE = TNLog('docker_image', DOCKER_IMAGE_LOGFILE)
 TNLOG_FAILOVER = TNLog('failover', FAILOVER_LOGFILE)
 TNLOG_NETDATA_API = TNLog('netdata_api', NETDATA_API_LOGFILE)
+TNLOG_TNC = TNLog('truenas_connect', TRUENAS_CONNECT_LOGFILE)
 TNLOG_ZETTAREPL = TNLog('zettarepl', ZETTAREPL_LOGFILE, ZETTAREPL_LOGFORMAT)
 
 # NOTE: this is also consumed by tests/unit/test_logger.py, which validates
@@ -119,6 +121,7 @@ ALL_LOG_FILES = (
     TNLOG_DOCKER_IMAGE,
     TNLOG_FAILOVER,
     TNLOG_NETDATA_API,
+    TNLOG_TNC,
     TNLOG_ZETTAREPL,
 )
 
