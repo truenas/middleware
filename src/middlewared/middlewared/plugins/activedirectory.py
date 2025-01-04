@@ -155,6 +155,8 @@ class ActiveDirectoryService(ConfigService):
     async def update_netbios_data(self, old, new):
         must_update = await self.netbios_name_check('activedirectory', old, new)
 
+        self.logger.debug("XXX: must_update: %r", must_update)
+
         if not must_update:
             return
 
