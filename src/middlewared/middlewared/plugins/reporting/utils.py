@@ -118,6 +118,9 @@ def get_metrics_approximation(
             'truenas_arcstats.l2bytes': 1,
             'truenas_arcstats.l2wbytes': 1,
 
+            # cpu usage, it is core count + 1 with +1 saving aggregated stats
+            'cpu.usage': core_count + 1,
+
             # cputemp
             'cputemp.temperatures': core_count,
 
