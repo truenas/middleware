@@ -153,3 +153,18 @@ def normalize_docker_limits_header(headers: dict) -> dict:
         'remaining_time_limit_in_secs': int(remaining_time_limit),
         'error': None,
     }
+
+
+def get_normalized_auth_config(registry_info: dict[str, dict], image_tag: str) -> dict:
+    if not registry_info:
+        return {}
+
+    user_wants_registry = normalize_reference(image_tag)['registry']
+    if user_wants_registry not in registry_info:
+        return {}
+
+    return {
+        'registry_uri': user_wants_registry,
+        'username': registry_info[user_wants_registry]['username'],
+        'password': registry_info[user_wants_registry]['password'],
+    }

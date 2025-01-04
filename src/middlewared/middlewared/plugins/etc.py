@@ -75,6 +75,9 @@ class EtcService(Service):
             ]
 
         },
+        'app_registry': [
+            {'type': 'py', 'path': 'docker/config.json'},
+        ],
         'docker': [
             {'type': 'py', 'path': 'docker/daemon.json'},
         ],

@@ -18,7 +18,8 @@ def list_images() -> list[dict]:
 
 
 def pull_image(
-    image_tag: str, callback: typing.Callable = None, username: str | None = None, password: str | None = None
+    image_tag: str, callback: typing.Callable = None, username: str | None = None, password: str | None = None,
+    registry_uri: str | None = None,
 ):
     if username and not password:
         raise CallError('Password is required when username is provided')
@@ -29,6 +30,7 @@ def pull_image(
     auth_config = {
         'username': username,
         'password': password,
+        'registry': registry_uri,
     } if username else None
 
     with get_docker_client() as client:
