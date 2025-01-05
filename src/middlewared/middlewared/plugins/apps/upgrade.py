@@ -12,6 +12,7 @@ from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, up
 from .ix_apps.path import get_installed_app_path
 from .ix_apps.upgrade import upgrade_config
 from .version_utils import get_latest_version_from_app_versions
+from .utils import get_upgrade_snap_name
 
 
 logger = logging.getLogger('app_lifecycle')
@@ -49,7 +50,7 @@ class AppService(Service):
 
                 continue
 
-            snap_name = f'{dataset}@{app_info["version"]}'
+            snap_name = f'{dataset}@{get_upgrade_snap_name(app_info["name"], app_info["version"])}'
             if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
                 logger.debug('Snapshot %r already exists for %r app', snap_name, app_info['name'])
                 continue

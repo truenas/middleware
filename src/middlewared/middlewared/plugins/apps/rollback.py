@@ -4,7 +4,6 @@ from middlewared.api import api_method
 from middlewared.api.current import (
     AppRollbackArgs, AppRollbackResult, AppRollbackVersionsArgs, AppRollbackVersionsResult,
 )
-
 from middlewared.service import job, Service, ValidationErrors
 
 from .compose_utils import compose_action
