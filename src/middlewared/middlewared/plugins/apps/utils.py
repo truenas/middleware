@@ -5,6 +5,11 @@ from middlewared.plugins.docker.state_utils import DatasetDefaults, IX_APPS_MOUN
 
 
 PROJECT_PREFIX = 'ix-'
+UPGRADE_SNAP_PREFIX = 'ix-app-upgrade-'
+
+
+def get_upgrade_snap_name(app_name: str, app_version: str) -> str:
+    return f'{UPGRADE_SNAP_PREFIX}{app_name}-{app_version}'
 
 
 def get_app_stop_cache_key(app_name: str) -> str:
