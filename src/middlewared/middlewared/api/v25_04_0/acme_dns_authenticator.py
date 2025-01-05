@@ -14,7 +14,7 @@ __all__ = [
     'ACMEDNSAuthenticatorUpdateArgs', 'ACMEDNSAuthenticatorUpdateResult', 'ACMEDNSAuthenticatorDeleteArgs',
     'ACMEDNSAuthenticatorDeleteResult', 'ACMEDNSAuthenticatorSchemasArgs', 'ACMEDNSAuthenticatorSchemasResult',
     'ACMEDNSAuthenticatorPerformChallengeArgs', 'ACMEDNSAuthenticatorPerformChallengeResult', 'Route53SchemaArgs',
-    'ACMECustomDNSAuthenticatorReturns', 'CloudFlareSchemaArgs', 'OVHSchemaArgs', 'ShellSchemaArgs',
+    'ACMECustomDNSAuthenticatorReturns', 'CloudFlareSchemaArgs', 'DigitalOceanSchemaArgs', 'OVHSchemaArgs', 'ShellSchemaArgs',
     'TrueNASConnectSchemaArgs',
 ]
 
@@ -51,6 +51,16 @@ class CloudFlareSchema(BaseModel):
 
 @single_argument_args('attributes')
 class CloudFlareSchemaArgs(CloudFlareSchema):
+    pass
+
+
+class DigitalOceanSchema(BaseModel):
+    authenticator: Literal['digitalocean']
+    digitalocean_token: Secret[NonEmptyString] = Field(description='DigitalOcean Token')
+
+
+@single_argument_args('attributes')
+class DigitalOceanSchemaArgs(DigitalOceanSchema):
     pass
 
 
@@ -92,7 +102,7 @@ class ShellSchemaArgs(ShellSchema):
 
 
 AuthType: TypeAlias = Annotated[
-    CloudFlareSchema | OVHSchema | Route53Schema | ShellSchema,
+    CloudFlareSchema | DigitalOceanSchema | OVHSchema | Route53Schema | ShellSchema,
     Field(discriminator='authenticator')
 ]
 
