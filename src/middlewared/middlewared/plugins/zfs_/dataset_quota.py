@@ -8,7 +8,7 @@ class ZFSDatasetService(Service):
     class Config:
         namespace = 'zfs.dataset'
         private = True
-        process_pool = True
+        process_pool = False
 
     def query_for_quota_alert(self):
         options = {
