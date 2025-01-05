@@ -109,8 +109,6 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             if response['error']:
                 raise CallError(f'Failed to update IPs with TrueNAS Connect: {response["error"]}')
 
-        # TODO: Handle the case where user imports same db in a different system
-
         return new_config
 
     @private

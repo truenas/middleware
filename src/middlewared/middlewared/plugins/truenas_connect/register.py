@@ -82,7 +82,7 @@ class TrueNASConnectService(Service):
         query_params = {
             'version': await self.middleware.call('system.version_short'),
             'model': (await self.middleware.call('truenas.get_chassis_hardware')).removeprefix('TRUENAS-'),
-            'system_id': await self.middleware.call('system.host_id'),
+            'system_id': await self.middleware.call('system.global.id'),
             'token': claim_token,
         }
 
