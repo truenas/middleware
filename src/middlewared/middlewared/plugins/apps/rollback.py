@@ -72,7 +72,6 @@ class AppService(Service):
         self.middleware.send_event(
             'app.query', 'CHANGED', id=app_name, fields=self.middleware.call_sync('app.get_instance', app_name)
         )
-        host_path_mapping = self.middleware.call_sync('app.get_hostpaths_datasets', app_name)
         self.middleware.call_sync('app.stop', app_name).wait_sync()
         try:
             if options['rollback_snapshot'] and (
@@ -90,29 +89,6 @@ class AppService(Service):
                             'recursive_rollback': True,
                         }
                     )
-
-            if options['rollback_hostpath_snapshots']:
-                if host_path_mapping:
-                    logger.debug('Rolling back hostpath snapshots for %r app', app_name)
-
-                for host_path, dataset in host_path_mapping.items():
-                    if not dataset:
-                        logger.debug('No dataset found for %r hostpath', host_path)
-                        continue
-
-                    snap_name = f'{dataset}@{options["app_version"]}'
-                    if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
-                        self.middleware.call_sync(
-                            'zfs.snapshot.rollback', snap_name, {
-                                'force': True,
-                                'recursive': False,
-                                'recursive_clones': False,
-                                'recursive_rollback': False,
-                            }
-                        )
-                        logger.debug('Rolled back %r snapshot for %r hostpath', snap_name, host_path)
-                    else:
-                        logger.debug('Snapshot %r not found for %r app', snap_name, app_name)
 
             compose_action(app_name, options['app_version'], 'up', force_recreate=True, remove_orphans=True)
         finally:
