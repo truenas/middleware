@@ -69,7 +69,6 @@ class NFSModel(sa.Model):
     nfs_srv_mountd_log = sa.Column(sa.Boolean(), default=True)
     nfs_srv_statd_lockd_log = sa.Column(sa.Boolean(), default=False)
     nfs_srv_v4_domain = sa.Column(sa.String(120))
-    nfs_srv_v4_owner_major = sa.Column(sa.String(1023), default='')
     nfs_srv_rdma = sa.Column(sa.Boolean(), default=False)
 
 
@@ -199,7 +198,6 @@ class NFSService(SystemServiceService):
         keytab_has_nfs = await self.middleware.call("kerberos.keytab.has_nfs_principal")
         nfs["v4_krb_enabled"] = (nfs["v4_krb"] or keytab_has_nfs)
         nfs["userd_manage_gids"] = nfs.pop("16")
-        nfs["v4_owner_major"] = nfs.pop("v4_owner_major")
         nfs["keytab_has_nfs_spn"] = keytab_has_nfs
 
         # 'None' indicates we are to dynamically manage the number of nfsd

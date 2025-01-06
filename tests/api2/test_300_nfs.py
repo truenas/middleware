@@ -401,7 +401,7 @@ def nfs_config():
     ''' Use this to restore NFS settings '''
     try:
         nfs_db_conf = call("nfs.config")
-        excl = ['id', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd']
+        excl = ['id', 'v4_krb_enabled', 'keytab_has_nfs_spn', 'managed_nfsd']
         [nfs_db_conf.pop(key) for key in excl]
         yield copy(nfs_db_conf)
     finally:
@@ -440,7 +440,7 @@ def init_nfs():
         set_nfs_service_state(state_cmd[NFS_CONFIG.default_service_state['state']])
 
         # Restore to -default- config
-        exclude = ['servers', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd']
+        exclude = ['servers', 'v4_krb_enabled', 'keytab_has_nfs_spn', 'managed_nfsd']
         default_config_payload = {k: v for k, v in NFS_CONFIG.default_config.items() if k not in exclude}
         if NFS_CONFIG.default_config['managed_nfsd']:
             default_config_payload['servers'] = None
