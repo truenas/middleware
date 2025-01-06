@@ -16,9 +16,9 @@ __all__ = [
 class InitShutdownScriptCreate(BaseModel):
     type: Literal["COMMAND", "SCRIPT"]
     command: str | None = ""
-    """Must be set if `type="COMMAND"`."""
+    """Must be given if `type="COMMAND"`."""
     script: str | None = ""
-    """Must be set if `type="SCRIPT"`."""
+    """Must be given if `type="SCRIPT"`."""
     when: Literal["PREINIT", "POSTINIT", "SHUTDOWN"]
     """
     "PREINIT": Early in the boot process before all services have started.
@@ -67,7 +67,7 @@ class InitShutdownScriptDeleteArgs(BaseModel):
 
 class InitShutdownScriptDeleteResult(BaseModel):
     result: Literal[True]
-    """Always return `True`."""  # FIXME: Should return False if no record was deleted.
+    """Always return `True`."""  # FIXME: Should return False or raise exception if no record was deleted.
 
 
 class InitShutdownScriptExecuteInitTasksArgs(BaseModel):
