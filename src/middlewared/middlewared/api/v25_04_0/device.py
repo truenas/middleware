@@ -42,7 +42,7 @@ class GPUInfo(BaseModel):
 
 
 class DeviceGetInfoDisk(BaseModel):
-    type: Literal["DISK"] = "DISK"
+    type: Literal["DISK"]
     """Get disk info."""
     get_partitions: bool = False
     """
