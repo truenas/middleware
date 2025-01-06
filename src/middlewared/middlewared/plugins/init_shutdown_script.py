@@ -3,12 +3,17 @@ import os
 import stat
 import subprocess
 
-from middlewared.schema import Bool, Dict, Int, Patch, Str, ValidationErrors, accepts
+from middlewared.api import api_method
+from middlewared.api.current import (
+    InitShutdownScriptEntry, InitShutdownScriptCreateArgs, InitShutdownScriptCreateResult,
+    InitShutdownScriptUpdateArgs, InitShutdownScriptUpdateResult, InitShutdownScriptDeleteArgs,
+    InitShutdownScriptDeleteResult, InitShutdownScriptExecuteInitTasksArgs, InitShutdownScriptExecuteInitTasksResult
+)
+from middlewared.schema import ValidationErrors
 from middlewared.service import CRUDService, job, private
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
-from middlewared.validators import Range
 
 
 class InitShutdownScriptModel(sa.Model):
@@ -31,23 +36,9 @@ class InitShutdownScriptService(CRUDService):
         datastore_prefix = 'ini_'
         datastore_extend = 'initshutdownscript.init_shutdown_script_extend'
         cli_namespace = 'system.init_shutdown_script'
+        entry = InitShutdownScriptEntry
 
-    ENTRY = Patch(
-        'init_shutdown_script_create', 'init_shutdown_script_entry',
-        ('add', Int('id', required=True)),
-    )
-
-    @accepts(Dict(
-        'init_shutdown_script_create',
-        Str('type', enum=['COMMAND', 'SCRIPT'], required=True),
-        Str('command', null=True, default=''),
-        Str('script', null=True, default=''),
-        Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN'], required=True),
-        Bool('enabled', default=True),
-        Int('timeout', default=10),
-        Str('comment', default='', validators=[Range(max_=255)]),
-        register=True,
-    ))
+    @api_method(InitShutdownScriptCreateArgs, InitShutdownScriptCreateResult)
     async def do_create(self, data):
         """
         Create an initshutdown script task.
@@ -76,6 +67,7 @@ class InitShutdownScriptService(CRUDService):
         )
         return await self.get_instance(data['id'])
 
+    @api_method(InitShutdownScriptUpdateArgs, InitShutdownScriptUpdateResult)
     async def do_update(self, id_, data):
         """
         Update initshutdown script task of `id`.
@@ -94,6 +86,7 @@ class InitShutdownScriptService(CRUDService):
         )
         return await self.get_instance(new['id'])
 
+    @api_method(InitShutdownScriptDeleteArgs, InitShutdownScriptDeleteResult)
     async def do_delete(self, id_):
         """
         Delete init/shutdown task of `id`.
@@ -155,8 +148,7 @@ class InitShutdownScriptService(CRUDService):
         except Exception:
             self.logger.debug('Unexpected failure executing %r', cmd, exc_info=True)
 
-    @private
-    @accepts(Str('when'))
+    @api_method(InitShutdownScriptExecuteInitTasksArgs, InitShutdownScriptExecuteInitTasksResult, private=True)
     @job()
     async def execute_init_tasks(self, job, when):
         tasks = await self.middleware.call('initshutdownscript.query', [
