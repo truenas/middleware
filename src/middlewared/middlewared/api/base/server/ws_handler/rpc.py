@@ -263,10 +263,6 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
                 )
         except KeyError:
             raise ValueError("Missing 'jsonrpc' member")
-        except TypeError:
-            # if the message doesn't adhere to minimum
-            # format (i.e. a dict) then we'll short-circuit
-            raise ValueError("Invalid message format")
 
         try:
             if not isinstance(message["id"], None | int | str):
@@ -289,6 +285,10 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
     async def process_message(self, app: RpcWebSocketApp, message: Any):
         try:
             await self.validate_message(message)
+        except TypeError:
+            # TypeError here means message doesn't adhere to minimum
+            # format of the message (i.e. needs to be a dict)
+            app.send_error(None, JSONRPCError.INVALID_REQUEST.value, "Invalid Message Format")
         except ValueError as e:
             app.send_error(message["id"], JSONRPCError.INVALID_REQUEST.value, str(e))
             return
