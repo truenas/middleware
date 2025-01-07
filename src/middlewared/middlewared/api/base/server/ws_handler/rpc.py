@@ -290,7 +290,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             # format of the message (i.e. needs to be a dict)
             app.send_error(None, JSONRPCError.INVALID_REQUEST.value, "Invalid Message Format")
         except ValueError as e:
-            app.send_error(message["id"], JSONRPCError.INVALID_REQUEST.value, str(e))
+            app.send_error(message.get("id"), JSONRPCError.INVALID_REQUEST.value, str(e))
             return
 
         try:
