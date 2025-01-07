@@ -33,6 +33,7 @@ from .iscsi_target import *  # noqa
 from .iscsi_target_to_extent import *  # noqa
 from .keychain import *  # noqa
 from .k8s_to_docker import *  # noqa
+from .mail import *  # noqa
 from .netdata import *  # noqa
 from .pool import *  # noqa
 from .pool_resilver import *  # noqa

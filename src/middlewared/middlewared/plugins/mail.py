@@ -1,9 +1,11 @@
-from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, Ref, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    MailEntry, MailUpdateArgs, MailUpdateResult, MailSendArgs, MailSendResult, MailSendRawArgs, MailSendRawResult
+)
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import ProductName, BRAND
 from middlewared.utils.mako import get_template
-from middlewared.validators import Email
 
 from collections import deque
 from datetime import datetime, timedelta
@@ -78,29 +80,7 @@ class MailService(ConfigService):
         datastore_prefix = 'em_'
         datastore_extend = 'mail.mail_extend'
         cli_namespace = 'system.mail'
-
-    ENTRY = Dict(
-        'mail_entry',
-        Str('fromemail', validators=[Email(empty=True)], required=True),
-        Str('fromname', required=True),
-        Str('outgoingserver', required=True),
-        Int('port', required=True),
-        Str('security', enum=['PLAIN', 'SSL', 'TLS'], required=True),
-        Bool('smtp', required=True),
-        Str('user', null=True, required=True),
-        Password('pass', null=True, required=True),
-        Dict(
-            'oauth',
-            Str('provider'),
-            Str('client_id'),
-            Str('client_secret'),
-            Password('refresh_token'),
-            null=True,
-            private=True,
-            required=True,
-        ),
-        Int('id', required=True),
-    )
+        entry = MailEntry
 
     @private
     async def mail_extend(self, cfg):
@@ -112,25 +92,7 @@ class MailService(ConfigService):
 
         return cfg
 
-    @accepts(
-        Patch(
-            'mail_entry', 'mail_update',
-            ('rm', {'name': 'id'}),
-            (
-                'replace', Dict(
-                    'oauth',
-                    Str('provider'),
-                    Str('client_id', required=True),
-                    Str('client_secret', required=True),
-                    Password('refresh_token', required=True),
-                    null=True,
-                    private=True,
-                )
-            ),
-            ('attr', {'update': True}),
-            register=True
-        )
-    )
+    @api_method(MailUpdateArgs, MailUpdateResult)
     async def do_update(self, data):
         """
         Update Mail Service Configuration.
@@ -194,22 +156,7 @@ class MailService(ConfigService):
             )
         return verrors
 
-    @accepts(Dict(
-        'mail_message',
-        Str('subject', required=True),
-        Str('text', max_length=None),
-        Str('html', null=True, max_length=None),
-        List('to', items=[Str('email')]),
-        List('cc', items=[Str('email')]),
-        Int('interval', null=True),
-        Str('channel', null=True),
-        Int('timeout', default=300),
-        Bool('attachments', default=False),
-        Bool('queue', default=True),
-        Dict('extra_headers', additional_attrs=True),
-        register=True,
-    ), Ref('mail_update'))
-    @returns(Bool('successfully_sent'))
+    @api_method(MailSendArgs, MailSendResult)
     @job(pipes=['input'], check_pipes=False)
     def send(self, job, message, config):
         """
@@ -267,9 +214,8 @@ class MailService(ConfigService):
 
         return self.send_raw(job, message, config)
 
-    @accepts(Ref('mail_message'), Ref('mail_update'))
+    @api_method(MailSendRawArgs, MailSendRawResult, private=True)
     @job(pipes=['input'], check_pipes=False)
-    @private
     def send_raw(self, job, message, config):
         config = dict(self.middleware.call_sync('mail.config'), **config)
 
