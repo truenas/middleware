@@ -31,7 +31,7 @@ class MailEntry(BaseModel):
     """Whether SMTP authentication is enabled and `user`/`pass` are required attributes."""
     user: str | None
     pass_: SecretStr | None = Field(alias="pass")
-    oauth: Secret[MailOAuth] | None
+    oauth: Secret[MailOAuth | None]
     id: int
 
 
