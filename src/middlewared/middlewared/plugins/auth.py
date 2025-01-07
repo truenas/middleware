@@ -846,6 +846,8 @@ class AuthService(Service):
                 else:
                     response['user_info'] = None
 
+                response['authenticator'] = await self.get_authenticator_assurance_level()
+
             case pam.PAM_AUTH_ERR | pam.PAM_USER_UNKNOWN:
                 # We have to squash AUTH_ERR and USER_UNKNOWN into a generic response
                 # to prevent unauthenticated remote clients from guessing valid usernames.

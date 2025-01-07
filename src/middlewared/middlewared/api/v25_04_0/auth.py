@@ -76,6 +76,7 @@ class AuthOTPToken(BaseModel):
 class AuthRespSuccess(BaseModel):
     response_type: Literal[AuthResp.SUCCESS]
     user_info: AuthUserInfo | None
+    authenticator: Literal['LEVEL_1', 'LEVEL_2']
 
 
 class AuthRespAuthErr(BaseModel):
