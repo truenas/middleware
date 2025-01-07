@@ -19,19 +19,19 @@ class MailOAuth(BaseModel):
 
 
 class MailEntry(BaseModel):
-    fromemail: EmailString
+    fromemail: EmailString = ""
     """A sending address which the mail server will use for sending emails."""
-    fromname: str
-    outgoingserver: str
+    fromname: str = ""
+    outgoingserver: str = ""
     """The hostname or IP address of SMTP server used for sending an email."""
     port: int
-    security: Literal["PLAIN", "SSL", "TLS"]
+    security: Literal["PLAIN", "SSL", "TLS"] = "PLAIN"
     """Type of encryption desired."""
-    smtp: bool
+    smtp: bool = False
     """Whether SMTP authentication is enabled and `user`/`pass` are required attributes."""
-    user: str | None
-    pass_: SecretStr | None = Field(alias="pass")
-    oauth: Secret[MailOAuth | None]
+    user: str | None = None
+    pass_: SecretStr | None = Field(alias="pass", default=None)
+    oauth: Secret[MailOAuth | None] = None
     id: int
 
 
