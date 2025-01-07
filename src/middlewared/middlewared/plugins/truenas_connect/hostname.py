@@ -44,14 +44,15 @@ class TNCHostnameService(Service, TNCAPIMixin):
             'hostname_configured': bool(resp['hostname_details']),
         }
 
-    async def register_update_ips(self):
+    async def register_update_ips(self, ips=None):
         tnc_config = await self.middleware.call('tn_connect.config_internal')
-        logger.debug('Updating TNC hostname configuration with %r ips', ','.join(tnc_config['ips']))
+        ips = ips or tnc_config['ips']
+        logger.debug('Updating TNC hostname configuration with %r ips', ','.join(ips))
         config = await self.config()
         if config['error']:
             raise CallError(f'Failed to fetch TNC hostname configuration: {config["error"]}')
 
         creds = get_account_id_and_system_id(tnc_config)
         return await self.call(
-            HOSTNAME_URL.format(**creds), 'put', payload={'ips': tnc_config['ips']},
+            HOSTNAME_URL.format(**creds), 'put', payload={'ips': ips},
         )

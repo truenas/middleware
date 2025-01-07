@@ -98,11 +98,11 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             })
 
         if (
-            config['status'] is Status.CONFIGURED.name and db_payload.get(
+            config['status'] == Status.CONFIGURED.name and db_payload.get(
                 'status', Status.CONFIGURED.name
-            ) is Status.CONFIGURED.name
+            ) == Status.CONFIGURED.name
         ) and config['ips'] != db_payload['ips']:
-            response = await self.middleware.call('tn_connect.hostname.register_update_ips')
+            response = await self.middleware.call('tn_connect.hostname.register_update_ips', db_payload['ips'])
             if response['error']:
                 raise CallError(f'Failed to update IPs with TrueNAS Connect: {response["error"]}')
 
