@@ -237,13 +237,13 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         return self.serialize_results(result, conn.table, options.get('select'))
 
     @private
-    @periodic(interval=86400)
+    @periodic(interval=86400, run_on_start=False)
     def __lifecycle_cleanup(self):
         """
         This is a private method that should only be called as a periodic task.
         It deletes database entries that are older than the specified lifetime.
         """
-        retention_period = self.middleware.call_sync('audit.config')['retention']
+        retention_period = self.middleware.call_sync('datastore.config', 'system.audit')['retention']
         for svc, conn in self.connections.items():
             try:
                 conn.enforce_retention(retention_period)
