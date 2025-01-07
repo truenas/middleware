@@ -24,24 +24,18 @@ def get_cpu_usage() -> dict[str, float]:
 
     Returns:
         dict[str, float]: Dictionary containing CPU usage percentages for
-                          the aggregate ('cpu') and each individual core ('cpu0', 'cpu1', ...).
+            the aggregate ('cpu') and each individual core ('cpu0', 'cpu1', ...).
     """
     cpu_usage_data = {}
-    aggregate_times = []  # Holds time data for all CPUs combined
-
     with open('/proc/stat') as f:
         # Process only CPU-related lines
         for line in filter(lambda x: x.startswith('cpu'), f):
-            fields = line.split()
-            cpu_times = [int(value) for value in fields[1:]]  # Convert times to integers
-
-            if fields[0] == 'cpu':  # Aggregate CPU line
-                aggregate_times = cpu_times
-            else:  # Individual CPU core lines (e.g., 'cpu0', 'cpu1', ...)
-                # Calculate usage for each core
-                cpu_usage_data[fields[0]] = calculate_cpu_usage(cpu_times)
-
-    # Calculate aggregate CPU usage
-    cpu_usage_data['cpu'] = calculate_cpu_usage(aggregate_times)
-
+            # core == 'cpu' | 'cpu0', 'cpu1' etc, with the
+            # former representing the aggregate numbers of
+            # all cpu cores and the later representing the
+            # cpu core specific values
+            core, values = line.split(' ', 1)
+            cpu_usage_data[core] = calculate_cpu_usage(
+                list(map(int, values.strip().split()))
+            )
     return cpu_usage_data
