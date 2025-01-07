@@ -217,6 +217,7 @@ def map_r30_or_fseries(model, ctx):
     # the keys in this dictionary are the physical pcie slot ids
     # and the values are the slots that the webUI uses to map them
     # to their physical locations in a human manageable way
+    internal_slots = rear_slots = 0
     if model == ControllerModels.R30.value:
         webui_map = {
             '27': 1, '26': 7, '25': 2, '24': 8,
@@ -224,7 +225,10 @@ def map_r30_or_fseries(model, ctx):
             '45': 5, '47': 11, '40': 6, '41': 12,
             '38': 14, '39': 16, '43': 13, '44': 15,
         }
-        num_of_nvme_slots = len(webui_map)
+        # r30 has 12 front nvme bays, and 4 internal bays
+        num_of_nvme_slots = 16
+        front_slots = 12
+        internal_slots = 4
     else:
         # f-series vendor is nice to us and nvme phys slots start at 1
         # and increment in a human readable way already
@@ -234,7 +238,7 @@ def map_r30_or_fseries(model, ctx):
             '13': 13, '14': 14, '15': 15, '16': 16, '17': 17, '18': 18,
             '19': 19, '20': 20, '21': 21, '22': 22, '23': 23, '24': 24,
         }
-        num_of_nvme_slots = len(webui_map)
+        num_of_nvme_slots = front_slots = len(webui_map)
 
     mapped = {}
     for i in pathlib.Path('/sys/bus/pci/slots').iterdir():
@@ -245,9 +249,9 @@ def map_r30_or_fseries(model, ctx):
     ui_info = {
         'rackmount': True,
         'top_loaded': False,
-        'front_slots': num_of_nvme_slots,
-        'rear_slots': 0,
-        'internal_slots': 0
+        'front_slots': front_slots,
+        'rear_slots': rear_slots,
+        'internal_slots': internal_slots
     }
     return fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info)
 
