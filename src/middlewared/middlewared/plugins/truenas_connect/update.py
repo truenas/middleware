@@ -97,17 +97,19 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
                 'certificate': None,
             })
 
+        if (
+            config['status'] is Status.CONFIGURED.name and db_payload.get(
+                'status', Status.CONFIGURED.name
+            ) is Status.CONFIGURED.name
+        ) and config['ips'] != db_payload['ips']:
+            response = await self.middleware.call('tn_connect.hostname.register_update_ips')
+            if response['error']:
+                raise CallError(f'Failed to update IPs with TrueNAS Connect: {response["error"]}')
+
         await self.middleware.call('datastore.update', self._config.datastore, config['id'], db_payload)
 
         new_config = await self.config()
         self.middleware.send_event('tn_connect.config', 'CHANGED', fields=new_config)
-
-        if new_config['status'] is Status.CONFIGURED.name and config['ips'] != new_config['ips']:
-            # TODO: Please discuss what should be done if this errors out and how an automatic retrial
-            #  should be set in place
-            response = await self.middleware.call('tn_connect.hostname.register_update_ips')
-            if response['error']:
-                raise CallError(f'Failed to update IPs with TrueNAS Connect: {response["error"]}')
 
         return new_config
 
