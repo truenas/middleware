@@ -1,4 +1,4 @@
-CERT_RENEW_DAYS = 15
+CERT_RENEW_DAYS = 5
 CLAIM_TOKEN_CACHE_KEY = 'truenas_connect_claim_token'
 
 
