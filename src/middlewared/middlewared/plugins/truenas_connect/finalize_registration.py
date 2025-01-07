@@ -31,7 +31,7 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
     async def registration(self, job):
         logger.debug('Starting TNC registration finalization')
         config = await self.middleware.call('tn_connect.config')
-        system_id = await self.middleware.call('system.host_id')
+        system_id = await self.middleware.call('system.global.id')
         try_num = 1
         while config['status'] == Status.REGISTRATION_FINALIZATION_WAITING.name:
             try:
@@ -92,6 +92,8 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
                     # Remove claim token from cache
                     await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
                     return
+            else:
+                logger.debug('TNC registration has not been finalized yet: %r', status['error'])
 
             await asyncio.sleep(self.POLLING_GAP_MINUTES * 60)
             config = await self.middleware.call('tn_connect.config')
