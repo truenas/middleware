@@ -16,7 +16,7 @@ class PoolService(Service):
     @accepts(Int('id'), Dict(
         'options',
         Str('label', required=True),
-    ), audit='Disk Detach', audit_callback=True)
+    ), audit='Disk Detach', audit_callback=True, roles=['POOL_WRITE'])
     @returns(Bool('detached'))
     async def detach(self, audit_callback, oid, options):
         """
@@ -64,7 +64,7 @@ class PoolService(Service):
     @accepts(Int('id'), Dict(
         'options',
         Str('label', required=True),
-    ), audit='Disk Offline', audit_callback=True)
+    ), audit='Disk Offline', audit_callback=True, roles=['POOL_WRITE'])
     @returns(Bool('offline_successful'))
     async def offline(self, audit_callback, oid, options):
         """
@@ -108,7 +108,7 @@ class PoolService(Service):
     @accepts(Int('id'), Dict(
         'options',
         Str('label', required=True),
-    ))
+    ), roles=['POOL_WRITE'])
     @returns(Bool('online_successful'))
     async def online(self, oid, options):
         """
@@ -147,7 +147,7 @@ class PoolService(Service):
     @accepts(Int('id'), Dict(
         'options',
         Str('label', required=True),
-    ))
+    ), roles=['POOL_WRITE'])
     @returns()
     @job(lock=lambda args: f'{args[0]}_remove')
     async def remove(self, job, oid, options):

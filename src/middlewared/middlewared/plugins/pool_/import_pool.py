@@ -16,7 +16,7 @@ class PoolService(Service):
         cli_namespace = 'storage.pool'
         event_send = False
 
-    @accepts()
+    @accepts(roles=['POOL_READ'])
     @returns(List(
         'pools_available_for_import',
         title='Pools Available For Import',
@@ -67,7 +67,7 @@ class PoolService(Service):
         Str('guid', required=True),
         Str('name'),
         Bool('enable_attachments'),
-    ))
+    ), roles=['POOL_WRITE'])
     @returns(Bool('successful_import'))
     @job(lock='import_pool')
     async def import_pool(self, job, data):

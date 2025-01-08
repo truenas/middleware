@@ -179,6 +179,8 @@ ROLES = {
 
     'POOL_SCRUB_READ': Role(),
     'POOL_SCRUB_WRITE': Role(includes=['POOL_SCRUB_READ']),
+    'POOL_READ': Role(includes=['POOL_SCRUB_READ']),
+    'POOL_WRITE': Role(includes=['POOL_READ', 'POOL_SCRUB_WRITE']),
     'DATASET_READ': Role(),
     'DATASET_WRITE': Role(includes=['DATASET_READ']),
     'DATASET_DELETE': Role(),

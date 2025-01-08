@@ -21,7 +21,7 @@ class PoolService(Service):
         Bool('force', default=False),
         Bool('preserve_settings', default=True),
         Bool('preserve_description', default=True),
-    ))
+    ), roles=['POOL_WRITE'])
     @returns(Bool('replaced_successfully'))
     @job(lock='pool_replace')
     async def replace(self, job, oid, options):

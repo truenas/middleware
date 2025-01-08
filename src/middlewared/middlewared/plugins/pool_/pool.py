@@ -118,8 +118,9 @@ class PoolService(CRUDService):
         datastore_prefix = 'vol_'
         event_send = False
         cli_namespace = 'storage.pool'
+        role_prefix = 'POOL'
 
-    @accepts(Str('name'))
+    @accepts(Str('name'), roles=['POOL_READ'])
     @returns(Ref('pool_entry'))
     async def get_instance_by_name(self, name):
         """
@@ -795,7 +796,7 @@ class PoolService(CRUDService):
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 
-    @accepts(Str('pool_name'), roles=['READONLY_ADMIN'])
+    @accepts(Str('pool_name'), roles=['POOL_READ'])
     @returns()
     def validate_name(self, pool_name):
         """

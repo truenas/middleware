@@ -13,7 +13,8 @@ class PoolService(Service):
             Str('target_vdev', required=True),
             Str('new_disk', required=True),
             Bool('allow_duplicate_serials', default=False),
-        )
+        ),
+        roles=['POOL_WRITE']
     )
     @returns()
     @job(lock=lambda args: f'pool_attach_{args[0]}')
