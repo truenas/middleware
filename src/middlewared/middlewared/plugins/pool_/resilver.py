@@ -24,6 +24,7 @@ class PoolResilverService(ConfigService):
         datastore_extend = 'pool.resilver.resilver_extend'
         cli_namespace = 'storage.resilver'
         entry = PoolResilverEntry
+        role_prefix = 'POOL'
 
     @private
     async def resilver_extend(self, data):
@@ -47,7 +48,7 @@ class PoolResilverService(ConfigService):
 
         return verrors, data
 
-    @api_method(PoolResilverUpdateArgs, PoolResilverUpdateResult)
+    @api_method(PoolResilverUpdateArgs, PoolResilverUpdateResult, roles=['POOL_WRITE'])
     async def do_update(self, data):
         """
         Configure Pool Resilver Priority.

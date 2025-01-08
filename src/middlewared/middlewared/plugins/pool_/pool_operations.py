@@ -62,7 +62,8 @@ class PoolService(Service):
     @item_method
     @accepts(
         Int('id', required=True),
-        Str('action', enum=['START', 'STOP', 'PAUSE'], required=True)
+        Str('action', enum=['START', 'STOP', 'PAUSE'], required=True),
+        roles=['POOL_WRITE']
     )
     @job(transient=True)
     async def scrub(self, job, oid, action):
@@ -86,7 +87,7 @@ class PoolService(Service):
         pool = await self.middleware.call('pool.get_instance', oid)
         return await job.wrap(await self.middleware.call('pool.scrub.scrub', pool['name'], action))
 
-    @accepts(Int('id'))
+    @accepts(Int('id'), roles=['POOL_WRITE'])
     @returns(Bool('upgraded'))
     @item_method
     async def upgrade(self, oid):
