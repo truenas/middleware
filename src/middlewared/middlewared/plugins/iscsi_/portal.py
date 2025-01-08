@@ -1,8 +1,9 @@
 import middlewared.sqlalchemy as sa
-
-from middlewared.schema import accepts, Dict, Int, IPAddr, List, Patch, Str
+from middlewared.api import api_method
+from middlewared.api.current import (IscsiPortalCreateArgs, IscsiPortalCreateResult, IscsiPortalDeleteArgs,
+                                     IscsiPortalDeleteResult, IscsiPortalEntry, IscsiPortalListenIPChoicesArgs,
+                                     IscsiPortalListenIPChoicesResult, IscsiPortalUpdateArgs, IscsiPortalUpdateResult)
 from middlewared.service import CRUDService, private, ValidationErrors
-from .utils import IscsiAuthType
 
 
 def portal_summary(data):
@@ -45,6 +46,7 @@ class ISCSIPortalService(CRUDService):
         namespace = 'iscsi.portal'
         cli_namespace = 'sharing.iscsi.portal'
         role_prefix = 'SHARING_ISCSI_PORTAL'
+        entry = IscsiPortalEntry
 
     @private
     async def config_extend_context(self, rows, extra):
@@ -65,13 +67,9 @@ class ISCSIPortalService(CRUDService):
                 'ip': portalip['ip'],
                 'port': context['global_config']['listen_port'],
             })
-        # Temporary until new API being used: START
-        data['discovery_authmethod'] = IscsiAuthType.NONE
-        data['discovery_authgroup'] = None
-        # Temporary until new API being used: END
         return data
 
-    @accepts()
+    @api_method(IscsiPortalListenIPChoicesArgs, IscsiPortalListenIPChoicesResult)
     async def listen_ip_choices(self):
         """
         Returns possible choices for `listen.ip` attribute of portal create and update.
@@ -122,19 +120,12 @@ class ISCSIPortalService(CRUDService):
                 ):
                     verrors.add(f'{schema}.listen', f'IP {i["ip"]} not configured on this system.')
 
-    @accepts(Dict(
-        'iscsiportal_create',
-        Str('comment'),
-        Str('discovery_authmethod', default='NONE', enum=['NONE', 'CHAP', 'CHAP_MUTUAL']),
-        Int('discovery_authgroup', default=None, null=True),
-        List('listen', required=True, items=[
-            Dict(
-                'listen',
-                IPAddr('ip', required=True),
-            ),
-        ]),
-        register=True,
-    ), audit='Create iSCSI portal', audit_extended=lambda data: portal_summary(data))
+    @api_method(
+        IscsiPortalCreateArgs,
+        IscsiPortalCreateResult,
+        audit='Create iSCSI portal',
+        audit_extended=lambda data: portal_summary(data)
+    )
     async def do_create(self, data):
         """
         Create a new iSCSI Portal.
@@ -149,10 +140,6 @@ class ISCSIPortalService(CRUDService):
         )) + 1
 
         listen = data.pop('listen')
-        # Temporary until new API being used: START
-        data.pop('discovery_authgroup')
-        data.pop('discovery_authmethod')
-        # Temporary until new API being used: END
 
         pk = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
@@ -198,13 +185,9 @@ class ISCSIPortalService(CRUDService):
                     'datastore.delete', 'services.iscsitargetportalip', portalip[0]['id']
                 )
 
-    @accepts(
-        Int('id'),
-        Patch(
-            'iscsiportal_create',
-            'iscsiportal_update',
-            ('attr', {'update': True})
-        ),
+    @api_method(
+        IscsiPortalUpdateArgs,
+        IscsiPortalUpdateResult,
         audit='Update iSCSI portal',
         audit_callback=True,
     )
@@ -224,10 +207,6 @@ class ISCSIPortalService(CRUDService):
         verrors.check()
 
         listen = new.pop('listen')
-        # Temporary until new API being used: START
-        new.pop('discovery_authgroup')
-        new.pop('discovery_authmethod')
-        # Temporary until new API being used: END
 
         await self.__save_listen(pk, listen, old['listen'])
 
@@ -240,9 +219,12 @@ class ISCSIPortalService(CRUDService):
 
         return await self.get_instance(pk)
 
-    @accepts(Int('id'),
-             audit='Delete iSCSI portal',
-             audit_callback=True,)
+    @api_method(
+        IscsiPortalDeleteArgs,
+        IscsiPortalDeleteResult,
+        audit='Delete iSCSI portal',
+        audit_callback=True,
+    )
     async def do_delete(self, audit_callback, id_):
         """
         Delete iSCSI Portal `id`.

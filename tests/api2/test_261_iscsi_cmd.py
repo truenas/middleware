@@ -1198,7 +1198,7 @@ def test__modify_portal(iscsi_running):
         new_config = call('iscsi.portal.get_instance', portal_config['id'])
         assert new_config['comment'] == 'New comment', new_config
         # Then try to reapply everything
-        payload = {'comment': 'test1', 'discovery_authmethod': 'NONE', 'discovery_authgroup': None, 'listen': [{'ip': '0.0.0.0'}]}
+        payload = {'comment': 'test1', 'listen': [{'ip': '0.0.0.0'}]}
         call('iscsi.portal.update', portal_config['id'], payload)
         new_config = call('iscsi.portal.get_instance', portal_config['id'])
         assert new_config['comment'] == 'test1', new_config

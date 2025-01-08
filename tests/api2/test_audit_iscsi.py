@@ -268,7 +268,6 @@ def test_iscsi_portal_audit():
                 {
                     'listen': [{'ip': '0.0.0.0'}],
                     'comment': comment,
-                    'discovery_authmethod': 'NONE',
                 }
             ],
             'description': f'Create iSCSI portal {comment}',
@@ -276,7 +275,6 @@ def test_iscsi_portal_audit():
             payload = {
                 'listen': [{'ip': '0.0.0.0'}],
                 'comment': comment,
-                'discovery_authmethod': 'NONE',
             }
             portal_config = call('iscsi.portal.create', payload)
         # UPDATE

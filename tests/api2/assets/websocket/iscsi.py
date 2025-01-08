@@ -19,11 +19,10 @@ def initiator(comment='Default initiator', initiators=[]):
 
 
 @contextlib.contextmanager
-def portal(listen=[{'ip': '0.0.0.0'}], comment='Default portal', discovery_authmethod='NONE'):
+def portal(listen=[{'ip': '0.0.0.0'}], comment='Default portal'):
     payload = {
         'listen': listen,
         'comment': comment,
-        'discovery_authmethod': discovery_authmethod
     }
     portal_config = call('iscsi.portal.create', payload)
 
