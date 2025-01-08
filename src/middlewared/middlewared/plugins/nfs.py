@@ -5,18 +5,25 @@ import itertools
 import os
 import shutil
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    NfsEntry,
+    NfsUpdateArgs, NfsUpdateResult,
+    NfsBindipChoicesArgs, NfsBindipChoicesResult,
+    NfsShareEntry,
+    NfsShareCreateArgs, NfsShareCreateResult,
+    NfsShareUpdateArgs, NfsShareUpdateResult,
+    NfsShareDeleteArgs, NfsShareDeleteResult
+)
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
-from middlewared.validators import Match, NotMatch, Port, Range, IpAddress
+from middlewared.validators import IpAddress
 from middlewared.service import private, SharingService, SystemServiceService
 from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
-
-NFS_RDMA_DEFAULT_PORT = 20049
 
 # Support the nfsv4recoverydir procfs entry.  This may deprecate.
 NFSV4_RECOVERY_DIR_PROCFS_PATH = '/proc/fs/nfsd/nfsv4recoverydir'
@@ -83,26 +90,7 @@ class NFSService(SystemServiceService):
         cli_namespace = "service.nfs"
         role_prefix = "SHARING_NFS"
 
-    ENTRY = Dict(
-        'nfs_entry',
-        Int('id', required=True),
-        Int('servers', null=True, validators=[Range(min_=1, max_=256)], required=True),
-        Bool('allow_nonroot', required=True),
-        List('protocols', items=[Str('protocol', enum=NFSProtocol.choices())], required=True),
-        Bool('v4_krb', required=True),
-        Str('v4_domain', required=True),
-        List('bindip', items=[IPAddr('ip')], required=True),
-        Int('mountd_port', null=True, validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])], required=True),
-        Int('rpcstatd_port', null=True, validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])], required=True),
-        Int('rpclockd_port', null=True, validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])], required=True),
-        Bool('mountd_log', required=True),
-        Bool('statd_lockd_log', required=True),
-        Bool('v4_krb_enabled', required=True),
-        Bool('userd_manage_gids', required=True),
-        Bool('keytab_has_nfs_spn', required=True),
-        Bool('managed_nfsd', default=True),
-        Bool('rdma', default=False),
-    )
+        entry = NfsEntry
 
     @private
     def name_to_id_conversion(self, name, name_type='user'):
@@ -222,8 +210,7 @@ class NFSService(SystemServiceService):
 
         return nfs
 
-    @accepts()
-    @returns(Dict(additional_attrs=True))
+    @api_method(NfsBindipChoicesArgs, NfsBindipChoicesResult)
     async def bindip_choices(self):
         """
         Returns ip choices for NFS service to use
@@ -259,17 +246,7 @@ class NFSService(SystemServiceService):
 
             return []
 
-    @accepts(
-        Patch(
-            'nfs_entry', 'nfs_update',
-            ('rm', {'name': 'id'}),
-            ('rm', {'name': 'v4_krb_enabled'}),
-            ('rm', {'name': 'keytab_has_nfs_spn'}),
-            ('rm', {'name': 'managed_nfsd'}),
-            ('attr', {'update': True}),
-        ),
-        audit='Update NFS configuration',
-    )
+    @api_method(NfsUpdateArgs, NfsUpdateResult, audit='Update NFS configuration')
     async def do_update(self, data):
         """
         Update NFS Service Configuration.
@@ -383,7 +360,10 @@ class NFSService(SystemServiceService):
         bindip_choices = await self.bindip_choices()
         for i, bindip in enumerate(new['bindip']):
             if bindip not in bindip_choices:
-                verrors.add(f'nfs_update.bindip.{i}', 'Please provide a valid ip address')
+                verrors.add(
+                    f"nfs_update.bindip.{i}",
+                    f"Cannot use {bindip}. Please provide a valid ip address."
+                )
 
         if NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled:
             """
@@ -453,39 +433,10 @@ class SharingNFSService(SharingService):
         cli_namespace = "sharing.nfs"
         role_prefix = "SHARING_NFS"
 
-    ENTRY = Patch(
-        'sharingnfs_create', 'sharing_nfs_entry',
-        ('add', Int('id')),
-        ('add', Bool('locked')),
-        register=True,
-    )
+        entry = NfsShareEntry
 
-    @accepts(
-        Dict(
-            "sharingnfs_create",
-            Dir("path", required=True),
-            List("aliases", items=[Str("path", validators=[Match(r"^/.*")])]),
-            Str("comment", default=""),
-            List("networks", items=[IPAddr("network", network=True)], unique=True),
-            List(
-                "hosts", items=[Str("host", validators=[NotMatch(
-                    r'.*[\s"]', explanation='Name cannot contain spaces or quotes')]
-                )],
-                unique=True
-            ),
-            Bool("ro", default=False),
-            Str("maproot_user", required=False, default=None, null=True),
-            Str("maproot_group", required=False, default=None, null=True),
-            Str("mapall_user", required=False, default=None, null=True),
-            Str("mapall_group", required=False, default=None, null=True),
-            List(
-                "security",
-                items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])],
-            ),
-            Bool("enabled", default=True),
-            register=True,
-            strict=True,
-        ),
+    @api_method(
+        NfsShareCreateArgs, NfsShareCreateResult,
         audit='NFS share create', audit_extended=lambda data: data["path"]
     )
     async def do_create(self, data):
@@ -522,15 +473,9 @@ class SharingNFSService(SharingService):
 
         return await self.get_instance(data["id"])
 
-    @accepts(
-        Int("id"),
-        Patch(
-            "sharingnfs_create",
-            "sharingnfs_update",
-            ("attr", {"update": True})
-        ),
-        audit='NFS share update',
-        audit_callback=True,
+    @api_method(
+        NfsShareUpdateArgs, NfsShareUpdateResult,
+        audit='NFS share update', audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
         """
@@ -559,20 +504,19 @@ class SharingNFSService(SharingService):
 
         return await self.get_instance(id_)
 
-    @accepts(
-        Int("id"),
-        audit='NFS share delete',
-        audit_callback=True,
+    @api_method(
+        NfsShareDeleteArgs, NfsShareDeleteResult,
+        audit='NFS share delete', audit_callback=True
     )
-    @returns()
     async def do_delete(self, audit_callback, id_):
         """
         Delete NFS Share of `id`.
         """
         nfs_share = await self.get_instance(id_)
         audit_callback(nfs_share['path'])
-        await self.middleware.call("datastore.delete", self._config.datastore, id_)
+        res = await self.middleware.call("datastore.delete", self._config.datastore, id_)
         await self._service_change("nfs", "reload")
+        return res
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
