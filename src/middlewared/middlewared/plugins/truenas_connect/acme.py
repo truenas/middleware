@@ -182,16 +182,26 @@ class TNCACMEService(Service, TNCAPIMixin):
             )
 
 
-async def setup(middleware):
+async def check_status(middleware):
     tnc_config = await middleware.call('tn_connect.config')
-    if tnc_config['status'] is Status.CERT_GENERATION_IN_PROGRESS.name:
+    if tnc_config['status'] == Status.CERT_GENERATION_IN_PROGRESS.name:
         logger.debug('Middleware started and cert generation is in progress, initiating process')
         middleware.create_task(middleware.call('tn_connect.acme.initiate_cert_generation'))
     elif tnc_config['status'] in (
-        Status.CERT_GENERATION_SUCCESS.name, Status.CERT_RENEWAL_SUCCESS.name,
+            Status.CERT_GENERATION_SUCCESS.name, Status.CERT_RENEWAL_SUCCESS.name,
     ):
         logger.debug('Middleware started and cert generation is already successful, updating UI')
         middleware.create_task(middleware.call('tn_connect.acme.update_ui'))
-    elif tnc_config['status'] is Status.CERT_RENEWAL_IN_PROGRESS.name:
+    elif tnc_config['status'] == Status.CERT_RENEWAL_IN_PROGRESS.name:
         logger.debug('Middleware started and cert renewal is in progress, initiating process')
         middleware.create_task(middleware.call('tn_connect.acme.renew_cert'))
+
+
+async def _event_system_ready(middleware, event_type, args):
+    await check_status(middleware)
+
+
+async def setup(middleware):
+    middleware.event_subscribe('system.ready', _event_system_ready)
+    if await middleware.call('system.ready'):
+        await check_status(middleware)
