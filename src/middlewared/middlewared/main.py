@@ -854,7 +854,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             raise CallError('Not authorized', errno.EACCES)
 
     def can_subscribe(self, app, name):
-        if event := self.events.get_event(name):
+        short_name = name.split(':')[0]
+        if event := self.events.get_event(short_name):
             if event['no_auth_required']:
                 return True
 
@@ -865,7 +866,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if event['no_authz_required']:
                 return True
 
-        return app.authenticated_credentials.authorize('SUBSCRIBE', name)
+        return app.authenticated_credentials.authorize('SUBSCRIBE', short_name)
 
     async def call_with_audit(self, method, serviceobj, methodobj, params, app, **kwargs):
         audit_callback_messages = []
