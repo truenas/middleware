@@ -94,3 +94,9 @@ def test_level2_password_with_otp(sharing_admin_user):
 
                 assert resp['response_type'] == 'SUCCESS'
                 assert resp['authenticator'] == 'LEVEL_2'
+
+                # Generating a token should fail
+                with pytest.raises(CallError) as ce:
+                    c.call('auth.generate_token')
+
+                assert ce.value.errno == errno.EOPNOTSUPP

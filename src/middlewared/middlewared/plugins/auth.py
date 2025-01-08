@@ -314,7 +314,16 @@ class AuthService(Service):
         `attrs` is a general purpose object/dictionary to hold information about the token.
 
         `match_origin` will only allow using this token from the same IP address or with the same user UID.
+
+        NOTE: this endpoint is not supported when server security requires replay-resistant
+        authentication as part of GPOS STIG requirements.
         """
+        if CURRENT_AAL.level != AA_LEVEL1:
+            raise CallError(
+                'Authentication tokens are not supported at current authenticator level.',
+                errno.EOPNOTSUPP
+            )
+
         if ttl is None:
             ttl = 600
 
