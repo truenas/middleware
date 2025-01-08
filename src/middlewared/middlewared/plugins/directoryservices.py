@@ -186,7 +186,7 @@ class DirectoryServices(Service):
         except Exception:
             self.logger.warning('Cache flush failed', exc_info=True)
 
-        await self.middleware.call('directoryservices.health.check')
+        await self.middleware.call('directoryservices.health.recover')
 
     @private
     def restart_dependent_services(self):
