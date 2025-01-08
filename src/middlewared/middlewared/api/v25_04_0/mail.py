@@ -12,26 +12,26 @@ __all__ = [
 
 
 class MailOAuth(BaseModel):
-    provider: str
-    client_id: str
-    client_secret: str
-    refresh_token: SecretStr
+    provider: str = ""
+    client_id: str = ""
+    client_secret: str = ""
+    refresh_token: SecretStr = ""
 
 
 class MailEntry(BaseModel):
     fromemail: EmailString = ""
     """The sending address for the mail server to use for sending emails."""
     fromname: str = ""
-    outgoingserver: str = ""
+    outgoingserver: str
     """The hostname or IP address of the SMTP server to use for sending emails."""
-    port: int
+    port: int = 25
     security: Literal["PLAIN", "SSL", "TLS"] = "PLAIN"
     """Type of encryption desired."""
-    smtp: bool = False
+    smtp: bool
     """Whether SMTP authentication is enabled and `user`/`pass` are required attributes."""
-    user: str | None = None
-    pass_: SecretStr | None = Field(alias="pass", default=None)
-    oauth: Secret[MailOAuth | None] = None
+    user: str | None
+    pass_: SecretStr | None = Field(alias="pass")
+    oauth: Secret[MailOAuth | None]
     id: int
 
 
