@@ -94,18 +94,7 @@ class MailService(ConfigService):
 
     @api_method(MailUpdateArgs, MailUpdateResult)
     async def do_update(self, data):
-        """
-        Update Mail Service Configuration.
-
-        `fromemail` is used as a sending address which the mail server will use for sending emails.
-
-        `outgoingserver` is the hostname or IP address of SMTP server used for sending an email.
-
-        `security` is type of encryption desired.
-
-        `smtp` is a boolean value which when set indicates that SMTP authentication has been enabled and `user`/`pass`
-        are required attributes now.
-        """
+        """Update Mail Service Configuration."""
         config = await self.config()
 
         new = config.copy()
@@ -159,39 +148,7 @@ class MailService(ConfigService):
     @api_method(MailSendArgs, MailSendResult)
     @job(pipes=['input'], check_pipes=False)
     def send(self, job, message, config):
-        """
-        Sends mail using configured mail settings.
-
-        `text` will be formatted to HTML using Markdown and rendered using default E-Mail template.
-        You can put your own HTML using `html`. If `html` is null, no HTML MIME part will be added to E-Mail.
-
-        If `attachments` is true, a list compromised of the following dict is required
-        via HTTP upload:
-          - headers(list)
-            - name(str)
-            - value(str)
-            - params(dict)
-          - content (str)
-
-        [
-         {
-          "headers": [
-           {
-            "name": "Content-Transfer-Encoding",
-            "value": "base64"
-           },
-           {
-            "name": "Content-Type",
-            "value": "application/octet-stream",
-            "params": {
-             "name": "test.txt"
-            }
-           }
-          ],
-          "content": "dGVzdAo="
-         }
-        ]
-        """
+        """Sends mail using configured mail settings."""
         gc = self.middleware.call_sync('datastore.config', 'network.globalconfiguration')
         hostname = f'{gc["gc_hostname"]}.{gc["gc_domain"]}'
         message['subject'] = f'{ProductName.PRODUCT_NAME} {hostname}: {message["subject"]}'
