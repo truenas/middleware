@@ -29,6 +29,7 @@ ADMIN_KEYS_UPLOADED = '/data/admin_authorized_keys_uploaded'
 TRUENAS_ADMIN_KEYS_UPLOADED = '/data/truenas_admin_authorized_keys_uploaded'
 ROOT_KEYS_UPLOADED = '/data/root_authorized_keys_uploaded'
 DATABASE_NAME = os.path.basename(FREENAS_DATABASE)
+PWENC_SECRET_NAME = os.path.basename(PWENC_FILE_SECRET)
 CONFIGURATION_UPLOAD_REBOOT_REASON = 'Configuration upload'
 CONFIGURATION_RESET_REBOOT_REASON = 'Configuration reset'
 
@@ -143,7 +144,11 @@ class ConfigService(Service):
             if found_db_file is None:
                 raise CallError('Neither a valid tar or TrueNAS database file was provided.')
 
-            p = subprocess.run(['migrate', str(found_db_file.absolute())], capture_output=True, text=True)
+            p = subprocess.run([
+                'migrate',
+                str(found_db_file.absolute()),
+                f'{temp_dir}/{PWENC_SECRET_NAME}',
+            ], capture_output=True, text=True)
             if p.returncode != 0:
                 raise CallError(
                     f'Uploaded TrueNAS database file is not valid:\n{p.stderr}'
