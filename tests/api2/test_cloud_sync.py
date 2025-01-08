@@ -2,13 +2,13 @@ import re
 import time
 
 import pytest
+
 from middlewared.test.integration.assets.cloud_sync import (
     credential, task, local_ftp_credential, local_ftp_task, run_task,
 )
 from middlewared.test.integration.assets.ftp import anonymous_ftp_server, ftp_server_with_user_account
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, pool, ssh
-from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils import call, pool, ssh, truenas_server
 
 import sys
 import os

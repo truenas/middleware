@@ -22,7 +22,7 @@ class AuthLegacyUsernamePassword(BaseModel):
     password: Secret[str]
 
 
-class AuthLegacyPasswordLoginArgs(AuthLegacyUsernamePassword):
+class AuthLoginArgs(AuthLegacyUsernamePassword):
     otp_token: Secret[str | None] = None
 
 
@@ -34,7 +34,7 @@ class AuthLegacyTokenLoginArgs(BaseModel):
     token: Secret[str]
 
 
-class AuthLegacyResult(BaseModel):
+class AuthLoginResult(BaseModel):
     result: bool
 
 
@@ -92,6 +92,11 @@ class AuthRespOTPRequired(BaseModel):
     username: str
 
 
+class AuthRespAuthRedirect(BaseModel):
+    response_type: Literal[AuthResp.REDIRECT]
+    urls: list[str]
+
+
 class AuthLoginExArgs(BaseModel):
     login_data: AuthApiKeyPlain | AuthPasswordPlain | AuthTokenPlain | AuthOTPToken
 
@@ -101,7 +106,7 @@ class AuthLoginExContinueArgs(BaseModel):
 
 
 class AuthLoginExResult(BaseModel):
-    result: AuthRespSuccess | AuthRespAuthErr | AuthRespExpired | AuthRespOTPRequired
+    result: AuthRespSuccess | AuthRespAuthErr | AuthRespExpired | AuthRespOTPRequired | AuthRespAuthRedirect
 
 
 class AuthMechChoicesArgs(BaseModel):

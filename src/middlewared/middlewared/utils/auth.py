@@ -17,6 +17,7 @@ class AuthResp(enum.StrEnum):
     AUTH_ERR = 'AUTH_ERR'
     EXPIRED = 'EXPIRED'
     OTP_REQUIRED = 'OTP_REQUIRED'
+    REDIRECT = 'REDIRECT'
 
 
 # NIST SP 800-63B provides documentation Authenticator Assurance Levels (AAL)
