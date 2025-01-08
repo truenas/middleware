@@ -208,7 +208,8 @@ class ConfigService(Service):
                 for _file in send_to_remote:
                     self.middleware.call_sync('failover.send_small_file', _file)
                 self.middleware.call_sync(
-                    'failover.call_remote', 'core.call_hook', ['config.on_upload', [UPLOADED_DB_PATH]]
+                    'failover.call_remote', 'core.call_hook', ['config.on_upload', [UPLOADED_DB_PATH]],
+                    {'timeout': 300},
                 )
                 self.middleware.run_coroutine(
                     self.middleware.call('failover.call_remote', 'system.reboot'),
@@ -251,6 +252,7 @@ class ConfigService(Service):
 
                 self.middleware.call_sync(
                     'failover.call_remote', 'core.call_hook', ['config.on_upload', [FREENAS_DATABASE]],
+                    {'timeout': 300},
                 )
 
                 if options['reboot']:
