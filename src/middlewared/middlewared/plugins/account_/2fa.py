@@ -21,7 +21,7 @@ class UserService(Service):
             'iXsystems'
         )
 
-    @api_method(UserProvisioningUriArgs, UserProvisioningUriResult)
+    @api_method(UserProvisioningUriArgs, UserProvisioningUriResult, roles=['ACCOUNT_WRITE'])
     async def provisioning_uri(self, username):
         """
         Returns the provisioning URI for the OTP for `username`. This can then be encoded in a QR code and used
@@ -36,7 +36,7 @@ class UserService(Service):
 
         return await self.provisioning_uri_internal(username, user_twofactor_config)
 
-    @api_method(UserTwofactorConfigArgs, UserTwofactorConfigResult)
+    @api_method(UserTwofactorConfigArgs, UserTwofactorConfigResult, roles=['ACCOUNT_READ'])
     async def twofactor_config(self, username):
         """
         Returns two-factor authentication configuration settings for specified `username`.
@@ -57,7 +57,7 @@ class UserService(Service):
             'otp_digits': user_twofactor_config['otp_digits'],
         }
 
-    @api_method(UserVerifyTwofactorTokenArgs, UserVerifyTwofactorTokenResult)
+    @api_method(UserVerifyTwofactorTokenArgs, UserVerifyTwofactorTokenResult, roles=['FULL_ADMIN'])
     def verify_twofactor_token(self, username, token):
         """
         Returns boolean true if provided `token` is successfully authenticated for `username`.
@@ -92,7 +92,9 @@ class UserService(Service):
         return await self.middleware.call('user.query', [['username', '=', user['pw_name']]], {'get': True})
 
     @api_method(UserUnset2faSecretArgs, UserUnset2faSecretResult,
-                audit='Unset two-factor authentication secret:', audit_extended=lambda username: username)
+                audit='Unset two-factor authentication secret:',
+                audit_extended=lambda username: username,
+                roles=['ACCOUNT_WRITE'])
     async def unset_2fa_secret(self, username):
         """
         Unset two-factor authentication secret for `username`.
@@ -120,12 +122,12 @@ class UserService(Service):
             }
         )
 
-    @no_authz_required
     @api_method(
         UserRenew2faSecretArgs,
         UserRenew2faSecretResult,
         audit='Renew two-factor authentication secret:',
-        audit_extended=lambda username, options: username
+        audit_extended=lambda username, options: username,
+        authorization_required=False
     )
     @pass_app()
     async def renew_2fa_secret(self, app, username, twofactor_options):

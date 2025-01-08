@@ -9,6 +9,13 @@ from middlewared.schema.processor import calculate_args_index
 __all__ = ["api_method"]
 
 
+CONFIG_CRUD_METHODS = frozenset([
+    'do_create', 'do_update', 'do_delete',
+    'create', 'update', 'delete',
+    'query', 'get_instance', 'config'
+])
+
+
 def api_method(
     accepts: type[BaseModel],
     returns: type[BaseModel],
@@ -97,6 +104,13 @@ def api_method(
             wrapped._no_auth_required = True
         elif not authorization_required:
             wrapped._no_authz_required = True
+        elif not private:
+            # All public methods should have a roles definition. This is a rough check to help developers not write
+            # methods that are only accesssible to full_admin. We don't bother checking CONFIG and CRUD methods
+            # and choices because they may have implicit roles through the role_prefix configuration.
+
+            if func.__name__ not in CONFIG_CRUD_METHODS and not func.__name__.endswith('choices'):
+                raise ValueError(f'{func.__name__}: Role definition is required for public API endpoints')
 
         wrapped.audit = audit
         wrapped.audit_callback = audit_callback

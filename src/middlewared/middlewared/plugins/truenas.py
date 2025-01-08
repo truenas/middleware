@@ -27,8 +27,7 @@ class TrueNASService(Service):
     class Config:
         cli_namespace = 'system.truenas'
 
-    @no_auth_required
-    @api_method(TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult)
+    @api_method(TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult, authentication_required=False)
     async def managed_by_truecommand(self):
         """
         Returns whether TrueNAS is being managed by TrueCommand or not.
@@ -40,7 +39,7 @@ class TrueNASService(Service):
             (await self.middleware.call('truecommand.config'))['status']
         ) == TrueCommandStatus.CONNECTED
 
-    @api_method(TrueNASGetChassisHardwareArgs, TrueNASGetChassisHardwareResult)
+    @api_method(TrueNASGetChassisHardwareArgs, TrueNASGetChassisHardwareResult, roles=['READONLY_ADMIN'])
     @cli_private
     @cache
     async def get_chassis_hardware(self):
@@ -77,7 +76,7 @@ class TrueNASService(Service):
         """
         return not os.path.exists(EULA_PENDING_PATH)
 
-    @api_method(TrueNASAcceptEULAArgs, TrueNASAcceptEULAResult)
+    @api_method(TrueNASAcceptEULAArgs, TrueNASAcceptEULAResult, roles=['FULL_ADMIN'])
     def accept_eula(self):
         """
         Accept TrueNAS EULA.
@@ -100,7 +99,7 @@ class TrueNASService(Service):
         """
         return await self.middleware.call('keyvalue.get', 'truenas:production', False)
 
-    @api_method(TrueNASSetProductionArgs, TrueNASSetProductionResult)
+    @api_method(TrueNASSetProductionArgs, TrueNASSetProductionResult, roles=['FULL_ADMIN'])
     @job()
     async def set_production(self, job, production, attach_debug):
         """

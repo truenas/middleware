@@ -35,7 +35,7 @@ class MethodResult(BaseModel):
         return value
 
 
-@api_method(MethodArgs, MethodResult)
+@api_method(MethodArgs, MethodResult, roles=['FULL_ADMIN'])
 def method(number, text, multiplier):
     return {
         "number": number * multiplier,

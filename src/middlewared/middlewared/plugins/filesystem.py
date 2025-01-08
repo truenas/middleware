@@ -421,7 +421,7 @@ class FilesystemService(Service):
 
         return True
 
-    @api_method(FilesystemGetFileArgs, FilesystemGetFileResult, audit='Filesystem get')
+    @api_method(FilesystemGetFileArgs, FilesystemGetFileResult, audit='Filesystem get', roles=['FULL_ADMIN'])
     @job(pipes=["output"])
     def get(self, job, path):
         """
@@ -434,7 +434,7 @@ class FilesystemService(Service):
         with open(path, 'rb') as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
-    @api_method(FilesystemPutFileArgs, FilesystemPutFileResult, audit='Filesystem put')
+    @api_method(FilesystemPutFileArgs, FilesystemPutFileResult, audit='Filesystem put', roles=['FULL_ADMIN'])
     @job(pipes=["input"])
     def put(self, job, path, options):
         """

@@ -63,7 +63,7 @@ class ConfigService(Service):
             with open(ntf.name, 'rb') as f:
                 shutil.copyfileobj(f, job.pipes.output.w)
 
-    @api_method(ConfigSaveArgs, ConfigSaveResult)
+    @api_method(ConfigSaveArgs, ConfigSaveResult, roles=['FULL_ADMIN'])
     @job(pipes=["output"])
     async def save(self, job, options):
         """
@@ -83,7 +83,7 @@ class ConfigService(Service):
         method = self.save_db_only if not any(options.values()) else self.save_tar_file
         await self.middleware.run_in_thread(method, options, job)
 
-    @api_method(ConfigUploadArgs, ConfigUploadResult)
+    @api_method(ConfigUploadArgs, ConfigUploadResult, roles=['FULL_ADMIN'])
     @job(pipes=["input"])
     @pass_app(rest=True)
     def upload(self, app, job):
@@ -190,7 +190,7 @@ class ConfigService(Service):
         self._handle_failover(job, 'uploaded', send_to_remote, UPLOADED_DB_PATH, True,
                               CONFIGURATION_UPLOAD_REBOOT_REASON)
 
-    @api_method(ConfigResetArgs, ConfigResetResult)
+    @api_method(ConfigResetArgs, ConfigResetResult, roles=['FULL_ADMIN'])
     @job(lock='config_reset', logs=True)
     @pass_app(rest=True)
     def reset(self, app, job, options):

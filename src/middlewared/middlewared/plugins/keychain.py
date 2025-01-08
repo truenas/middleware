@@ -428,7 +428,7 @@ class KeychainCredentialService(CRUDService):
             id_,
         )
 
-    @api_method(KeychainCredentialUsedByArgs, KeychainCredentialUsedByResult)
+    @api_method(KeychainCredentialUsedByArgs, KeychainCredentialUsedByResult, roles=['KEYCHAIN_CREDENTIAL_READ'])
     async def used_by(self, id_):
         """
         Returns list of objects that use this credential.

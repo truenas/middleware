@@ -136,7 +136,7 @@ class DockerService(ConfigService):
         """
         return await self.middleware.call('docker.state.get_status_dict')
 
-    @api_method(DockerNvidiaPresentArgs, DockerNvidiaPresentResult)
+    @api_method(DockerNvidiaPresentArgs, DockerNvidiaPresentResult, roles=['DOCKER_READ'])
     def nvidia_present(self):
         adv_config = self.middleware.call_sync("system.advanced.config")
 

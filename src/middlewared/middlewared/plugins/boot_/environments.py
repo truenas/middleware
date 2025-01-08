@@ -92,7 +92,7 @@ class BootEnvironmentService(Service):
                     except Exception:
                         self.logger.exception("Unexpected error promoting %r", ds)
 
-    @filterable_api_method(item=BootEnvironmentEntry)
+    @filterable_api_method(item=BootEnvironmentEntry, roles=['BOOT_ENV_READ'])
     def query(self, filters, options):
         results = list()
         try:
@@ -129,7 +129,7 @@ class BootEnvironmentService(Service):
 
         return filter_list(results, filters, options)
 
-    @api_method(BootEnvironmentActivateArgs, BootEnvironmentActivateResult)
+    @api_method(BootEnvironmentActivateArgs, BootEnvironmentActivateResult, roles=["BOOT_ENV_WRITE"])
     def activate(self, data):
         info = self.validate_be("boot.environment.activate", data["id"])
         if info["activated"]:
@@ -144,14 +144,14 @@ class BootEnvironmentService(Service):
             run_zectl_cmd(["activate", data["id"]])
             return self.query([["id", "=", data["id"]]], {"get": True})
 
-    @api_method(BootEnvironmentCloneArgs, BootEnvironmentCloneResult)
+    @api_method(BootEnvironmentCloneArgs, BootEnvironmentCloneResult, roles=['BOOT_ENV_WRITE'])
     def clone(self, data):
         be = self.validate_be("boot.environment.clone", data["id"])
         self.validate_be("boot.environment.clone", data["target"], should_exist=False)
         run_zectl_cmd(["create", "-r", "-e", be["dataset"], data["target"]])
         return self.query([["id", "=", data["target"]]], {"get": True})
 
-    @api_method(BootEnvironmentDestroyArgs, BootEnvironmentDestroyResult)
+    @api_method(BootEnvironmentDestroyArgs, BootEnvironmentDestroyResult, roles=['BOOT_ENV_WRITE'])
     def destroy(self, data):
         if self.validate_be("boot.environment.destroy", data["id"])["active"]:
             raise ValidationError(
@@ -160,7 +160,7 @@ class BootEnvironmentService(Service):
             )
         run_zectl_cmd(["destroy", data["id"]])
 
-    @api_method(BootEnvironmentKeepArgs, BootEnvironmentKeepResult)
+    @api_method(BootEnvironmentKeepArgs, BootEnvironmentKeepResult, roles=['BOOT_ENV_WRITE'])
     def keep(self, data):
         self.middleware.call_sync(
             "zfs.dataset.update",
