@@ -8,8 +8,8 @@ import time
 from middlewared.api import api_method
 from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketAppEvent
 from middlewared.api.current import (
-    AuthLegacyPasswordLoginArgs, AuthLegacyApiKeyLoginArgs, AuthLegacyTokenLoginArgs,
-    AuthLegacyResult,
+    AuthLoginArgs, AuthLegacyApiKeyLoginArgs, AuthLegacyTokenLoginArgs,
+    AuthLoginResult,
     AuthLoginExArgs, AuthLoginExContinueArgs, AuthLoginExResult,
     AuthMeArgs, AuthMeResult,
     AuthMechChoicesArgs, AuthMechChoicesResult,
@@ -370,7 +370,7 @@ class AuthService(Service):
         }
 
     @cli_private
-    @api_method(AuthLegacyPasswordLoginArgs, AuthLegacyResult, authentication_required=False)
+    @api_method(AuthLoginArgs, AuthLoginResult, authentication_required=False)
     @pass_app()
     async def login(self, app, username, password, otp_token):
         """
@@ -523,9 +523,7 @@ class AuthService(Service):
         """
         return await self.login_ex(app, data)
 
-    @cli_private
-    @api_method(AuthLoginExArgs, AuthLoginExResult, authentication_required=False)
-    @pass_app()
+    @api_method(AuthLoginExArgs, AuthLoginExResult, cli_private=True, authentication_required=False, pass_app=True)
     async def login_ex(self, app, data):
         """
         Authenticate using one of a variety of mechanisms
@@ -609,7 +607,17 @@ class AuthService(Service):
 
         EXPIRED
         The specified credential is expired and not suitable for authentication.
+
+        REDIRECT
+        Authentication must be performed on different server.
         """
+        if await self.middleware.call('failover.licensed'):
+            if await self.middleware.call('failover.status') == 'BACKUP':
+                return {
+                    'response_type': AuthResp.REDIRECT,
+                    'urls': await self.middleware.call('failover.call_remote', 'failover.get_ips'),
+                }
+
         mechanism = AuthMech[data['mechanism']]
         auth_ctx = app.authentication_context
         login_fn = self.session_manager.login
@@ -887,7 +895,7 @@ class AuthService(Service):
         return resp | {'otp_required': otp_required}
 
     @cli_private
-    @api_method(AuthLegacyApiKeyLoginArgs, AuthLegacyResult, authentication_required=False)
+    @api_method(AuthLegacyApiKeyLoginArgs, AuthLoginResult, authentication_required=False)
     @pass_app()
     async def login_with_api_key(self, app, api_key):
         """
@@ -923,7 +931,7 @@ class AuthService(Service):
         return resp['response_type'] == AuthResp.SUCCESS
 
     @cli_private
-    @api_method(AuthLegacyTokenLoginArgs, AuthLegacyResult, authentication_required=False)
+    @api_method(AuthLegacyTokenLoginArgs, AuthLoginResult, authentication_required=False)
     @pass_app()
     async def login_with_token(self, app, token_str):
         """
