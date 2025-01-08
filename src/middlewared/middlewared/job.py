@@ -656,7 +656,7 @@ class Job:
                         self.method,
                         self.app,
                         self.result,
-                        must_redact_secrets=True
+                        expose_secrets=False,
                     )
                 except Exception as e:
                     result = None

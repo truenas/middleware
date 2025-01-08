@@ -732,7 +732,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         result: dict | str | int | list | None | Job,
         *,
         new_style_returns_model: object | None = None,
-        must_redact_secrets:bool = False
+        expose_secrets: bool = True,
     ):
         """
         Serialize and redact `result` based on authenticated credential and schema.  This method is used when
@@ -747,7 +747,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             result: result data to be normalized / redacted
         Keyword-only params:
             new_style_returns_model:
-            must_redact_secrets: when set to True, Secret/Private fields will _always_
+            expose secrets: when set to False, Secret/Private fields will _always_
             be redacted. This is used when generating the results info for core.get_jobs output when
             the raw_result option is set to False (which is how we call it when generating debugs).
 
@@ -755,8 +755,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             pydantic.ValidationError: The result contains values that are not permitted according
             to the pydantic model. This means the return value or the model is wrong.
         """
-        expose_secrets = True
-
         if app and app.authenticated_credentials:
             # Authenticated session is _always_ presented unredacted results in the following cases:
             # 1. credential is a full_admin
@@ -779,10 +777,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     if hasattr(do_method, "new_style_returns"):
                         # FIXME: Get rid of `create`/`do_create` duality
                         methodobj = do_method
-
-        if must_redact_secrets:
-            # Caller has explicitly requested that the results be redacted.
-            expose_secrets = False
 
         if hasattr(methodobj, "new_style_returns"):
             # FIXME: When all models become new style, this should be passed explicitly
