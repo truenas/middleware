@@ -75,6 +75,8 @@ class ConfigService(Service):
 
         If none of these options are set, the tar file is not generated and the database file is returned.
         """
+        self._check_access(job, 'save')
+
         options.pop('pool_keys')  # ignored, doesn't apply on SCALE
 
         method = self.save_db_only if not any(options.values()) else self.save_tar_file
@@ -87,6 +89,9 @@ class ConfigService(Service):
         """
         Accepts a configuration file via job pipe.
         """
+        self._check_access(job, "upload")
+
+        job.set_progress(0, 'Reading database file')
         chunk = 1024
         max_size = 10485760  # 10MB
         with tempfile.NamedTemporaryFile() as stf:
@@ -102,7 +107,7 @@ class ConfigService(Service):
                         raise CallError(f'Uploaded config is greater than maximum allowed size ({max_size} Bytes)')
 
             is_tar = tarfile.is_tarfile(stf.name)
-            self.upload_impl(stf.name, is_tar_file=is_tar)
+            self.upload_impl(job, stf.name, is_tar_file=is_tar)
 
         self.middleware.run_coroutine(
             self.middleware.call('system.reboot', CONFIGURATION_UPLOAD_REBOOT_REASON, {'delay': 10}, app=app),
@@ -110,7 +115,8 @@ class ConfigService(Service):
         )
 
     @private
-    def upload_impl(self, file_or_tar, is_tar_file=False):
+    def upload_impl(self, job, file_or_tar, is_tar_file=False):
+        job.set_progress(15, 'Replacing database file')
         with tempfile.TemporaryDirectory() as temp_dir:
             if is_tar_file:
                 with tarfile.open(file_or_tar, 'r') as tar:
@@ -173,24 +179,11 @@ class ConfigService(Service):
                     shutil.move(abspath, ROOT_KEYS_UPLOADED)
                     send_to_remote.append(ROOT_KEYS_UPLOADED)
 
+        job.set_progress(25, 'Running database upload hooks')
         self.middleware.call_hook_sync('config.on_upload', UPLOADED_DB_PATH)
-        if self.middleware.call_sync('failover.licensed'):
-            try:
-                for _file in send_to_remote:
-                    self.middleware.call_sync('failover.send_small_file', _file)
-                self.middleware.call_sync(
-                    'failover.call_remote', 'core.call_hook', ['config.on_upload', [UPLOADED_DB_PATH]]
-                )
-                self.middleware.run_coroutine(
-                    self.middleware.call('failover.call_remote', 'system.reboot', [CONFIGURATION_UPLOAD_REBOOT_REASON]),
-                    wait=False,
-                )
-            except Exception as e:
-                raise CallError(
-                    f'Config uploaded successfully, but remote node responded with error: {e}. '
-                    f'Please use Sync to Peer on the System/Failover page to perform a manual sync after reboot.',
-                    CallError.EREMOTENODEERROR,
-                )
+
+        self._handle_failover(job, 'uploaded', send_to_remote, UPLOADED_DB_PATH, True,
+                              CONFIGURATION_UPLOAD_REBOOT_REASON)
 
     @api_method(ConfigResetArgs, ConfigResetResult)
     @job(lock='config_reset', logs=True)
@@ -202,12 +195,7 @@ class ConfigService(Service):
         If `reboot` is true this job will reboot the system after its completed with a delay of 10
         seconds.
         """
-        job.set_progress(0, 'Performing credential check')
-        if job.credentials is None:
-            raise CallError('Unable to check credentials')
-
-        if job.credentials.is_user_session and 'SYS_ADMIN' not in job.credentials.user['account_attributes']:
-            raise CallError('Configuration reset is limited to local SYS_ADMIN account ("root" or "truenas_admin")')
+        self._check_access(job, 'reset')
 
         job.set_progress(15, 'Replacing database file')
         shutil.copy('/data/factory-v1.db', FREENAS_DATABASE)
@@ -215,37 +203,48 @@ class ConfigService(Service):
         job.set_progress(25, 'Running database upload hooks')
         self.middleware.call_hook_sync('config.on_upload', FREENAS_DATABASE)
 
-        if self.middleware.call_sync('failover.licensed'):
-            job.set_progress(35, 'Sending database to the other node')
-            try:
-                self.middleware.call_sync('failover.send_small_file', FREENAS_DATABASE)
-
-                self.middleware.call_sync(
-                    'failover.call_remote', 'core.call_hook', ['config.on_upload', [FREENAS_DATABASE]],
-                )
-
-                if options['reboot']:
-                    self.middleware.run_coroutine(
-                        self.middleware.call(
-                            'failover.call_remote', 'system.reboot', [CONFIGURATION_UPLOAD_REBOOT_REASON],
-                        ),
-                        wait=False,
-                    )
-            except Exception as e:
-                raise CallError(
-                    f'Config reset successfully, but remote node responded with error: {e}. '
-                    f'Please use Sync to Peer on the System/Failover page to perform a manual sync after reboot.',
-                    CallError.EREMOTENODEERROR,
-                )
-
-        job.set_progress(50, 'Updating initramfs')
-        self.middleware.call_sync('boot.update_initramfs')
+        self._handle_failover(job, 'reset', [FREENAS_DATABASE], FREENAS_DATABASE, options['reboot'],
+                              CONFIGURATION_RESET_REBOOT_REASON)
 
         if options['reboot']:
             job.set_progress(95, 'Will reboot in 10 seconds')
             self.middleware.run_coroutine(
                 self.middleware.call('system.reboot', CONFIGURATION_RESET_REBOOT_REASON, {'delay': 10}, app=app),
                 wait=False,
+            )
+
+    def _check_access(self, job, verb):
+        if job.credentials is None:
+            raise CallError('Unable to check credentials')
+
+        if job.credentials.is_user_session and 'SYS_ADMIN' not in job.credentials.user['account_attributes']:
+            raise CallError(f'Configuration {verb} is limited to local SYS_ADMIN account ("root" or "truenas_admin")')
+
+    def _handle_failover(self, job, verb, files, db_path, reboot, reboot_reason):
+        if not self.middleware.call_sync('failover.licensed'):
+            return
+
+        try:
+            job.set_progress(50, 'Sending database to the other node')
+            for _file in files:
+                self.middleware.call_sync('failover.send_small_file', _file)
+
+            job.set_progress(75, 'Running database upload hooks on the other node')
+            self.middleware.call_sync(
+                'failover.call_remote', 'core.call_hook', ['config.on_upload', [db_path]],
+                {'timeout': 300},  # Give more time for potential initrd update
+            )
+
+            if reboot:
+                self.middleware.run_coroutine(
+                    self.middleware.call('failover.call_remote', 'system.reboot', [reboot_reason]),
+                    wait=False,
+                )
+        except Exception as e:
+            raise CallError(
+                f'Config {verb} successfully, but remote node responded with error: {e}. '
+                f'Please use Sync to Peer on the System/Failover page to perform a manual sync after reboot.',
+                CallError.EREMOTENODEERROR,
             )
 
     @private
