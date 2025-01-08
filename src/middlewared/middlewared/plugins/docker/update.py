@@ -168,7 +168,11 @@ class DockerService(ConfigService):
             subprocess.run(['ldconfig'], capture_output=True, check=True, text=True)
 
         if config['nvidia']:
-            cp = subprocess.run(['modprobe', 'nvidia'], capture_output=True, text=True)
+            cp = subprocess.run(
+                ['modprobe', '-a', 'nvidia', 'nvidia_drm', 'nvidia_modeset'],
+                capture_output=True,
+                text=True
+            )
             if cp.returncode != 0:
                 self.logger.error('Error loading nvidia driver: %s', cp.stderr)
 
