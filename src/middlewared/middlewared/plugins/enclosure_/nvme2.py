@@ -249,6 +249,7 @@ def map_r30_or_fseries(model, ctx):
     ui_info = {
         'rackmount': True,
         'top_loaded': False,
+        'front_loaded': True,
         'front_slots': front_slots,
         'rear_slots': rear_slots,
         'internal_slots': internal_slots
