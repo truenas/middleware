@@ -158,12 +158,7 @@ class MailService(ConfigService):
                 'This field is required when SMTP authentication is enabled',
             )
 
-        if new['oauth']:
-            if new['fromemail']:
-                verrors.add('mail_update.fromemail', 'This field cannot be used with GMail')
-            if new['fromname']:
-                verrors.add('mail_update.fromname', 'This field cannot be used with GMail')
-        else:
+        if not new['oauth']:
             if not new['fromemail']:
                 verrors.add('mail_update.fromemail', 'This field is required')
 
