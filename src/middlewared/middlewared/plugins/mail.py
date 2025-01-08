@@ -107,9 +107,6 @@ class MailService(ConfigService):
         if cfg['security']:
             cfg['security'] = cfg['security'].upper()
 
-        if cfg['oauth'] and 'provider' not in cfg['oauth']:
-            cfg['oauth']['provider'] = ''
-
         return cfg
 
     @accepts(
