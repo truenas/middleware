@@ -225,7 +225,7 @@ class ConfigService(Service):
             return
 
         try:
-            job.set_progress(50, 'Sending database to the other node')
+            job.set_progress(50, 'Sending configuration files to the other node')
             for _file in files:
                 self.middleware.call_sync('failover.send_small_file', _file)
 
