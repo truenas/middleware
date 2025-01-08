@@ -325,7 +325,5 @@ class SystemAdvancedService(ConfigService):
     def login_banner(self):
         """Returns user set login banner"""
         # NOTE: This endpoint doesn't require authentication because
-        # # it is used by UI on the login page
-        return self.middleware.call_sync(
-            'datastore.config', 'system.advanced'
-        )['adv_login_banner']
+        # it is used by UI on the login page
+        return self.middleware.call_sync('datastore.config', 'system.advanced')['adv_login_banner']
