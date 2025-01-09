@@ -3,7 +3,16 @@ Description=Import ZFS pools
 DefaultDependencies=no
 Before=network-pre.target
 Before=local-fs.target
-After=middlewared.service
+# it's imperative that this service
+# Requires AND starts AFTER ix-syncdisks.service
+# because disk.sed_unlock_all uses
+# our database and the syncdisks.service
+# is responsible for updating the database
+# with any changes that could have occurred
+# between last boot and next boot
+# (i.e. /dev/sda could now be /dev/sdg)
+Requires=ix-syncdisks.service
+After=middlewared.service ix-syncdisks.service
 
 [Service]
 Type=oneshot
