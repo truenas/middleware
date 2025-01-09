@@ -887,7 +887,7 @@ class CoreService(Service):
         if "py_exceptions" in options:
             app.py_exceptions = options["py_exceptions"]
 
-    @api_method(CoreSubscribeArgs, CoreSubscribeResult)
+    @api_method(CoreSubscribeArgs, CoreSubscribeResult, authorization_required=False)
     @pass_app()
     async def subscribe(self, app, event):
         if not self.middleware.can_subscribe(app, event):
@@ -897,7 +897,7 @@ class CoreService(Service):
         await app.subscribe(ident, event)
         return ident
 
-    @api_method(CoreUnsubscribeArgs, CoreUnsubscribeResult)
+    @api_method(CoreUnsubscribeArgs, CoreUnsubscribeResult, authorization_required=False)
     @pass_app()
     async def unsubscribe(self, app, ident):
         await app.unsubscribe(ident)
