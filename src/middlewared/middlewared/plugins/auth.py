@@ -118,6 +118,10 @@ class SessionManager:
         if app.authenticated:
             self.sessions[app.session_id].credentials = credentials
             app.authenticated_credentials = credentials
+            await self.middleware.log_audit_message(app, "AUTHENTICATION", {
+                "credentials": dump_credentials(credentials),
+                "error": None,
+            }, True)
             return
 
         session = Session(self, credentials, app)
