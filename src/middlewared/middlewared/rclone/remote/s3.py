@@ -101,7 +101,10 @@ class S3RcloneRemote(BaseRcloneRemote):
     def get_restic_config(self, task):
         url = task["credentials"]["attributes"].get("endpoint", "").rstrip("/")
         if not url:
-            url = "s3.amazonaws.com"
+            if region := task["attributes"].get("region") or task["credentials"]["provider"].get("region"):
+                url = f"s3.{region}.amazonaws.com"
+            else:
+                url = "s3.amazonaws.com"
 
         env = {
             "AWS_ACCESS_KEY_ID": task["credentials"]["attributes"]["access_key_id"],
