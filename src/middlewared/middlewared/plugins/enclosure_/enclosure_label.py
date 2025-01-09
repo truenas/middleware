@@ -25,7 +25,7 @@ class EnclosureService(Service):
             for label in await self.middleware.call("datastore.query", "enclosure.label")
         }
 
-    @api_method(EnclosureLabelSetArgs, EnclosureLabelUpdateResult)
+    @api_method(EnclosureLabelSetArgs, EnclosureLabelUpdateResult, roles=["ENCLOSURE_WRITE"])
     async def set(self, id_, label):
         await self.middleware.call(
             "datastore.delete", "enclosure.label", [["encid", "=", id_]]

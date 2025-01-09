@@ -26,6 +26,9 @@ ROLES = {
     'API_KEY_READ': Role(),
     'API_KEY_WRITE': Role(includes=['API_KEY_READ']),
 
+    'BOOT_ENV_READ': Role(),
+    'BOOT_ENV_WRITE': Role(includes=['BOOT_ENV_READ']),
+
     'FAILOVER_READ': Role(),
     'FAILOVER_WRITE': Role(includes=['FAILOVER_READ']),
 
@@ -63,8 +66,13 @@ ROLES = {
 
     'FULL_ADMIN': Role(full_admin=True, builtin=False),
 
-    # Alert roles
+    # Limited ability to read / clear individual alerts
     'ALERT_LIST_READ': Role(),
+    'ALERT_LIST_WRITE': Role(includes=['ALERT_LIST_READ']),
+
+    # Global alert privileges to configure alert plugin
+    'ALERT_READ': Role(includes=['ALERT_LIST_READ']),
+    'ALERT_WRITE': Role(includes=['ALERT_LIST_WRITE', 'ALERT_READ']),
 
     'CLOUD_BACKUP_READ': Role(),
     'CLOUD_BACKUP_WRITE': Role(includes=['CLOUD_BACKUP_READ']),

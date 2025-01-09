@@ -17,7 +17,7 @@ class CloudBackupService(Service):
         cli_namespace = "task.cloud_backup"
         namespace = "cloud_backup"
 
-    @api_method(CloudBackupListSnapshotsArgs, CloudBackupListSnapshotsResult)
+    @api_method(CloudBackupListSnapshotsArgs, CloudBackupListSnapshotsResult, roles=['CLOUD_BACKUP_READ'])
     def list_snapshots(self, id_):
         """
         List existing snapshots for the cloud backup job `id`.
@@ -44,7 +44,8 @@ class CloudBackupService(Service):
 
         return snapshots
 
-    @api_method(CloudBackupListSnapshotDirectoryArgs, CloudBackupListSnapshotDirectoryResult)
+    @api_method(CloudBackupListSnapshotDirectoryArgs, CloudBackupListSnapshotDirectoryResult,
+                roles=['CLOUD_BACKUP_READ'])
     def list_snapshot_directory(self, id_, snapshot_id, path):
         """
         List files in the directory `path` of the `snapshot_id` created by the cloud backup job `id`.
@@ -80,7 +81,8 @@ class CloudBackupService(Service):
 
         return contents
 
-    @api_method(CloudBackupDeleteSnapshotArgs, CloudBackupDeleteSnapshotResult)
+    @api_method(CloudBackupDeleteSnapshotArgs, CloudBackupDeleteSnapshotResult,
+                roles=['CLOUD_BACKUP_WRITE'])
     @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1)
     def delete_snapshot(self, job, id_, snapshot_id):
         """

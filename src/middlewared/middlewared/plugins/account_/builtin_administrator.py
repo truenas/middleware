@@ -6,7 +6,7 @@ from middlewared.service import filter_list, Service, private
 
 class GroupService(Service):
 
-    @api_method(GroupHasPasswordEnabledUserArgs, GroupHasPasswordEnabledUserResult)
+    @api_method(GroupHasPasswordEnabledUserArgs, GroupHasPasswordEnabledUserResult, roles=['ACCOUNT_READ'])
     async def has_password_enabled_user(self, gids, exclude_user_ids):
         """
         Checks whether at least one local user with a password is a member of any of the `group_ids`.

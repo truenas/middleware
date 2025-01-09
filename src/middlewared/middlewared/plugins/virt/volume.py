@@ -16,6 +16,7 @@ class VirtVolumeService(CRUDService):
         namespace = 'virt.volume'
         cli_namespace = 'virt.volume'
         entry = VirtVolumeEntry
+        role_prefix = 'VIRT_IMAGE'
 
     async def query(self, filters, options):
         config = await self.middleware.call('virt.global.config')
@@ -89,7 +90,7 @@ class VirtVolumeService(CRUDService):
 
         return True
 
-    @api_method(VirtVolumeImportISOArgs, VirtVolumeImportISOResult)
+    @api_method(VirtVolumeImportISOArgs, VirtVolumeImportISOResult, roles=['VIRT_IMAGE_WRITE'])
     @job(lock=lambda args: f'virt_volume_import_iso_{args[0]}', pipes=['input'], check_pipes=False)
     async def import_iso(self, job, data):
         await self.middleware.call('virt.global.check_initialized')

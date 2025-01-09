@@ -11,7 +11,7 @@ class CloudBackupService(Service):
         cli_namespace = "task.cloud_backup"
         namespace = "cloud_backup"
 
-    @api_method(CloudBackupRestoreArgs, CloudBackupRestoreResult)
+    @api_method(CloudBackupRestoreArgs, CloudBackupRestoreResult, roles=["FILESYSTEM_DATA_WRITE"])
     @job(logs=True)
     async def restore(self, job, id_, snapshot_id, subfolder, destination_path, options):
         """
