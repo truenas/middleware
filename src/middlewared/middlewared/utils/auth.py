@@ -1,6 +1,7 @@
 import enum
 import threading
 from dataclasses import dataclass
+from time import monotonic
 from .crypto import generate_string, sha512_crypt, check_unixhash
 
 LEGACY_API_KEY_USERNAME = 'LEGACY_API_KEY'
@@ -125,11 +126,11 @@ class OnetimePasswordManager:
     for a system administrator to provision a temporary password for a user
     that may be used to set two-factor authentication and user password.
     """
-    otpassword = {}
+    otpasswd = {}
     lock = threading.Lock()
     cnt = 0
 
-    def generate_for_uid(uid: int) -> str:
+    def generate_for_uid(self, uid: int) -> str:
         """
         Generate a passkey for the given UID.
 
@@ -137,23 +138,23 @@ class OnetimePasswordManager:
         We store a sha512 hash of the plaintext for authentication purposes
         """
         with self.lock:
-            plaintext = generate_string(string_length=24)
+            plaintext = generate_string(string_size=24)
             keyhash = sha512_crypt(plaintext)
             expires = monotonic() + 86400
 
             entry = UserOnetimePassword(uid=uid, expires=expires, keyhash=keyhash)
             self.cnt += 1
-            otpasswd[self.cnt] = entry
+            self.otpasswd[str(self.cnt)] = entry
             return f'{self.cnt}_{plaintext}'
 
-    def authenticate(uid: int, plaintext: str) -> OTPWResponse:
+    def authenticate(self, uid: int, plaintext: str) -> OTPWResponse:
         """ Check passkey matches plaintext string.  """
         try:
             idx, passwd = plaintext.split('_')
         except Exception:
             return OTPWResponse.NO_KEY
 
-        if not entry := self.otpasswd.get(idx)
+        if (entry := self.otpasswd.get(idx)) is None:
             return OTPWResponse.NO_KEY
 
         with self.lock:
@@ -163,7 +164,7 @@ class OnetimePasswordManager:
             if entry.used:
                 return OTPWResponse.ALREADY_USED
 
-            if entry.expires > now():
+            if monotonic() > entry.expires:
                 return OTPWResponse.EXPIRED
 
             if not check_unixhash(passwd, entry.keyhash):

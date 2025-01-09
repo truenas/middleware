@@ -19,6 +19,7 @@ from middlewared.api.current import (
     AuthSetAttributeArgs, AuthSetAttributeResult,
     AuthTerminateSessionArgs, AuthTerminateSessionResult,
     AuthTerminateOtherSessionsArgs, AuthTerminateOtherSessionsResult,
+    AuthGenerateOnetimePasswordArgs, AuthGenerateOnetimePasswordResult,
 )
 from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionManagerCredentials,
                               ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
@@ -30,7 +31,7 @@ from middlewared.service import (
     Service, filterable_api_method, filter_list,
     pass_app, private, cli_private, CallError,
 )
-from middlewared.service_exception import MatchNotFound
+from middlewared.service_exception import MatchNotFound, ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.auth import (
     aal_auth_mechanism_check, AuthMech, AuthResp, AuthenticatorAssuranceLevel, AA_LEVEL1,
@@ -301,6 +302,18 @@ class AuthService(Service):
             raise CallError("\n".join(["Unable to terminate all sessions:"] + errors))
 
         return True
+
+    @api_method(
+        AuthGenerateOnetimePasswordArgs, AuthGenerateOnetimePasswordResult,
+        roles=['ACCOUNT_WRITE'],
+        audit='Generate onetime password for user'
+    )
+    def generate_onetime_password(self, username):
+        user_data = self.middleware.call_sync('user.query', [['username', '=', username]])
+        if not user_data:
+            raise ValidationError('auth.generate_onetime_password.username', f'{username}: user does not exist.')
+
+        return OTPW_MANAGER.generate_for_uid(user_data[0]['uid'])
 
     @api_method(AuthGenerateTokenArgs, AuthGenerateTokenResult, authorization_required=False)
     @pass_app(rest=True)
@@ -852,11 +865,11 @@ class AuthService(Service):
 
             case AuthMech.ONETIME_PASSWORD:
                 pw = data['password']
-                if not user_info := (await self.middleware.call(
+                if not (user_info := (await self.middleware.call(
                    'user.query',
                     [('username', '=', data['username'])],
-                    {'select': ['id', 'unixhash', 'uid']},
-                )):
+                    {'select': ['id', 'unixhash', 'uid', 'local']},
+                ))):
                     await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                         'credentials': {
                             'credentials': 'ONETIME_PASSWORD',
@@ -868,9 +881,7 @@ class AuthService(Service):
                     return response
 
                 otpw_resp = await self.middleware.run_in_thread(
-                    OTPW_MANAGER.authenticate,
-                    user_info[0]['uid']
-                    data['password']
+                    OTPW_MANAGER.authenticate, user_info[0]['uid'], data['password']
                 )
 
                 match otpw_resp:
@@ -879,10 +890,9 @@ class AuthService(Service):
                             'auth.authenticate_user',
                             {'username': data['username']},
                             user_info[0],
-                            is_api_key=False,
-                            is_otpw=True
+                            False,
+                            True
                         )
-
                         cred = LoginOnetimePasswordSessionManagerCredentials(user_data, CURRENT_AAL.level)
                         await login_fn(app, cred)
                         resp = {

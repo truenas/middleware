@@ -218,3 +218,11 @@ class AuthSetAttributeArgs(BaseModel):
 
 class AuthSetAttributeResult(BaseModel):
     result: Literal[None]
+
+
+class AuthGenerateOnetimePasswordArgs(BaseModel):
+    username: str
+
+
+class AuthGenerateOnetimePasswordResult(BaseModel):
+    result: str

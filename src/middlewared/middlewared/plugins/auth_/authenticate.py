@@ -123,6 +123,7 @@ class AuthService(Service):
                 'sid_info': not user_info['local'],
             })
         except KeyError:
+            self.logger.debug("XXX: keyerror", exc_info=True)
             return None
 
         if user_info['uid'] is not None and user_info['uid'] != user['pw_uid']:
