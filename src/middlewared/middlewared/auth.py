@@ -11,6 +11,7 @@ from time import monotonic
 
 class SessionManagerCredentials:
     is_user_session = False
+    may_create_auth_token = True
     allowlist = None
 
     @classmethod
@@ -71,6 +72,7 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
         self.last_used_at = now
 
         if assurance:
+            self.may_create_auth_token = AuthMech.TOKEN_PLAIN in assurance.mechanisms
             self.expiry = now + self.assurance.max_session_age
             self.inactivity_timeout = self.assurance.max_inactivity
 
@@ -146,6 +148,15 @@ class LoginTwofactorSessionManagerCredentials(LoginPasswordSessionManagerCredent
     OTP token.
     """
     pass
+
+
+class LoginOnetimePasswordSessionManagerCredentials(UserSessionManagerCredentials):
+    """ Credentials for a specific user account  on TrueNAS
+    Authenticated by username + onetime password ccombination
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.may_create_auth_token = False
 
 
 class TokenSessionManagerCredentials(SessionManagerCredentials):

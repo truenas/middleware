@@ -100,3 +100,33 @@ def test_level2_password_with_otp(sharing_admin_user):
                     c.call('auth.generate_token')
 
                 assert ce.value.errno == errno.EOPNOTSUPP
+
+
+def test_level2_onetime_password(sharing_admin_user):
+    onetime_password = call('auth.generate_onetime_password', {'username': sharing_admin_user.username})
+
+    with authenticator_assurance_level('LEVEL_2'):
+        with client(auth=None) as c:
+            resp = c.call('auth.login_ex', {
+                'mechanism': 'PASSWORD_PLAIN',
+                'username': sharing_admin_user.username,
+                'password': onetime_password
+            })
+            assert resp['response_type'] == 'SUCCESS'
+            assert resp['authenticator'] == 'LEVEL_2'
+
+            me = c.call('auth.me')
+            assert me['pw_name'] == sharing_admin_user.username
+            assert 'SHARING_ADMIN' in me['privilege']['roles']
+            assert 'OTPW' in me['account_attributes']
+
+            # attempt to reuse the onetime password should fail with EOPNOTSUPP
+            # because we don't want to leak info about onetime password status.
+            with pytest.raises(CallError) as ce:
+                c.call('auth.login_ex', {
+                    'mechanism': 'PASSWORD_PLAIN',
+                    'username': sharing_admin_user.username,
+                    'password': onetime_password
+                })
+
+            assert ce.value.errno == errno.EOPNOTSUPP

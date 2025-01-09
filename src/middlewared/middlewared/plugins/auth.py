@@ -19,22 +19,23 @@ from middlewared.api.current import (
     AuthSetAttributeArgs, AuthSetAttributeResult,
     AuthTerminateSessionArgs, AuthTerminateSessionResult,
     AuthTerminateOtherSessionsArgs, AuthTerminateOtherSessionsResult,
+    AuthGenerateOnetimePasswordArgs, AuthGenerateOnetimePasswordResult,
 )
 from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionManagerCredentials,
                               ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
                               LoginTwofactorSessionManagerCredentials, AuthenticationContext,
                               TruenasNodeSessionManagerCredentials, TokenSessionManagerCredentials,
-                              dump_credentials)
+                              LoginOnetimePasswordSessionManagerCredentials, dump_credentials)
 from middlewared.plugins.account_.constants import MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE
 from middlewared.service import (
     Service, filterable_api_method, filter_list,
     pass_app, private, cli_private, CallError,
 )
-from middlewared.service_exception import MatchNotFound
+from middlewared.service_exception import MatchNotFound, ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.auth import (
     aal_auth_mechanism_check, AuthMech, AuthResp, AuthenticatorAssuranceLevel, AA_LEVEL1,
-    AA_LEVEL2, AA_LEVEL3, CURRENT_AAL, MAX_OTP_ATTEMPTS,
+    AA_LEVEL2, AA_LEVEL3, CURRENT_AAL, MAX_OTP_ATTEMPTS, OTPW_MANAGER,
 )
 from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
@@ -302,6 +303,25 @@ class AuthService(Service):
 
         return True
 
+    @api_method(
+        AuthGenerateOnetimePasswordArgs, AuthGenerateOnetimePasswordResult,
+        roles=['ACCOUNT_WRITE'],
+        audit='Generate onetime password for user'
+    )
+    def generate_onetime_password(self, data):
+        """
+        Generate a password for the specified username that may be used only a single time to authenticate
+        to TrueNAS. This may be used by server administrators to allow users authenticate and then set
+        a proper password and two-factor authentication token.
+        """
+        username = data['username']
+        user_data = self.middleware.call_sync('user.query', [['username', '=', username]])
+        if not user_data:
+            raise ValidationError('auth.generate_onetime_password.username', f'{username}: user does not exist.')
+
+        passwd = OTPW_MANAGER.generate_for_uid(user_data[0]['uid'])
+        return passwd
+
     @api_method(AuthGenerateTokenArgs, AuthGenerateTokenResult, authorization_required=False)
     @pass_app(rest=True)
     def generate_token(self, app, ttl, attrs, match_origin):
@@ -321,6 +341,13 @@ class AuthService(Service):
         if CURRENT_AAL.level != AA_LEVEL1:
             raise CallError(
                 'Authentication tokens are not supported at current authenticator level.',
+                errno.EOPNOTSUPP
+            )
+
+        if app and not app.authenticated_credentials.may_create_auth_token:
+            raise CallError(
+                f'{app.authenticated_credentials.class_name()}: the current session type does '
+                'not support creation of authentication tokens.',
                 errno.EOPNOTSUPP
             )
 
@@ -638,12 +665,14 @@ class AuthService(Service):
             case AuthMech.PASSWORD_PLAIN:
                 # Both of these mechanisms are de-factor username + password
                 # combinations and pass through libpam.
+                cred_type = 'LOGIN_PASSWORD'
                 resp = await self.get_login_user(
                     app,
                     data['username'],
                     data['password'],
                     mechanism
                 )
+
                 if resp['otp_required']:
                     # A one-time password is required for this user account and so
                     # we should request it from API client.
@@ -653,6 +682,8 @@ class AuthService(Service):
                         'response_type': AuthResp.OTP_REQUIRED,
                         'username': resp['user_data']['username']
                     }
+                elif resp['otpw_used']:
+                    cred_type = 'ONETIME_PASSWORD'
                 elif CURRENT_AAL.level.otp_mandatory:
                     if resp['pam_response'] == 'SUCCESS':
                         # Insert a failure delay so that we don't leak information about
@@ -665,12 +696,16 @@ class AuthService(Service):
 
                 match resp['pam_response']['code']:
                     case pam.PAM_SUCCESS:
-                        cred = LoginPasswordSessionManagerCredentials(resp['user_data'], CURRENT_AAL.level)
+                        if cred_type == 'ONETIME_PASSWORD':
+                            cred = LoginOnetimePasswordSessionManagerCredentials(resp['user_data'], CURRENT_AAL.level)
+                        else:
+                            cred = LoginPasswordSessionManagerCredentials(resp['user_data'], CURRENT_AAL.level)
+
                         await login_fn(app, cred)
                     case pam.PAM_AUTH_ERR:
                         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                             'credentials': {
-                                'credentials': 'LOGIN_PASSWORD',
+                                'credentials': cred_type,
                                 'credentials_data': {'username': data['username']},
                             },
                             'error': 'Bad username or password'
@@ -678,10 +713,10 @@ class AuthService(Service):
                     case _:
                         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
                             'credentials': {
-                                'credentials': 'LOGIN_PASSWORD',
+                                'credentials': cred_type,
                                 'credentials_data': {'username': data['username']},
                             },
-                            'error': resp['pam_response']['reason']
+                            'error': resp['pam_response']['reason'] or resp['pam_response']['otpw_response']
                         }, False)
 
             case AuthMech.API_KEY_PLAIN:
@@ -890,6 +925,8 @@ class AuthService(Service):
         combination and returns user information and whether additional OTP is required.
         """
         otp_required = False
+        otpw_used = False
+
         resp = await self.middleware.call(
             'auth.authenticate_plain',
             username, password,
@@ -897,11 +934,14 @@ class AuthService(Service):
             app=app
         )
         if mechanism == AuthMech.PASSWORD_PLAIN and resp['pam_response']['code'] == pam.PAM_SUCCESS:
-            twofactor_auth = await self.middleware.call('auth.twofactor.config')
-            if twofactor_auth['enabled'] and '2FA' in resp['user_data']['account_attributes']:
-                otp_required = True
+            if 'OTPW' in resp['user_data']['account_attributes']:
+                otpw_used = True
+            else:
+                twofactor_auth = await self.middleware.call('auth.twofactor.config')
+                if twofactor_auth['enabled'] and '2FA' in resp['user_data']['account_attributes']:
+                    otp_required = True
 
-        return resp | {'otp_required': otp_required}
+        return resp | {'otp_required': otp_required, 'otpw_used': otpw_used}
 
     @cli_private
     @api_method(AuthLegacyApiKeyLoginArgs, AuthLoginResult, authentication_required=False)
@@ -1055,7 +1095,7 @@ async def check_permission(middleware, app):
                 query = {'uid': origin.uid}
                 user_info = {'id': None, 'uid': None, 'local': False}
 
-            user = await middleware.call('auth.authenticate_user', query, user_info, False)
+            user = await middleware.call('auth.authenticate_user', query, user_info, None)
             if user is None:
                 return
 

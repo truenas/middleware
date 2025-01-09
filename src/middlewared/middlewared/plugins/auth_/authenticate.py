@@ -8,6 +8,7 @@ from middlewared.plugins.account_.constants import (
 )
 from middlewared.service import Service, pass_app, private
 from middlewared.service_exception import CallError
+from middlewared.utils.auth import OTPW_MANAGER, OTPWResponse
 from middlewared.utils.crypto import check_unixhash
 
 PAM_SERVICES = {MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE}
@@ -46,7 +47,11 @@ class AuthService(Service):
         #
         # In all failure cases libpam_authenticate is called so that timing
         # is consistent with pam_fail_delay
-        if not is_api_key and username == 'root' and await self.middleware.call('privilege.always_has_root_password_enabled'):
+        if (
+            not is_api_key and
+            username == 'root' and
+            await self.middleware.call('privilege.always_has_root_password_enabled')
+        ):
             if not unixhash_is_valid(unixhash):
                 await self.middleware.call('auth.libpam_authenticate', username, password)
             elif await self.middleware.run_in_thread(check_unixhash, password, unixhash):
@@ -57,14 +62,56 @@ class AuthService(Service):
         else:
             pam_resp = await self.middleware.call('auth.libpam_authenticate', username, password, pam_svc, app=app)
 
+        # TODO: this needs better integration with PAM. We may have a onetime password (not TOTP token)
+        # We perform after failed PAM authentication so that we properly evaluate whether account is disabled
+        # This unfortunately means that authentication via onetime password always has pam error delay.
+        if pam_resp['code'] == pam.PAM_AUTH_ERR and not is_api_key:
+            # Check for non-local user
+            if (uid := user_info['uid']) is None:
+                # query directly by name bypasses middleware cache and performs NSS lookup
+                ds_user = await self.middleware.call('user.query', [['username', '=', username]])
+                if ds_user:
+                    uid = ds_user[0]['uid']
+
+            if uid is not None:
+                # we can try to authenticate via onetime password preserving orginal
+                # pam response if password isn't a known OTP
+                if (resp := await self.middleware.call('auth.onetime_password_authenticate', uid, password)) is not None:
+                    pam_resp = resp
+
         if pam_resp['code'] == pam.PAM_SUCCESS:
-            user_token = await self.authenticate_user({'username': username}, user_info, is_api_key)
+            if is_api_key:
+                cred_tag = 'API_KEY'
+            elif 'otpw_response' in pam_resp:
+                cred_tag = 'OTPW'
+            else:
+                cred_tag = None
+
+            user_token = await self.authenticate_user({'username': username}, user_info, cred_tag)
             if user_token is None:
                 # Some error occurred when trying to generate our user token
                 pam_resp['code'] = pam.PAM_AUTH_ERR
                 pam_resp['reason'] = 'Failed to generate user token'
 
         return {'pam_response': pam_resp, 'user_data': user_token}
+
+    @private
+    def onetime_password_authenticate(self, uid, password):
+        resp = {'code': pam.PAM_AUTH_ERR, 'reason': 'Authentication failure', 'otpw_response': None}
+        otpw_resp = OTPW_MANAGER.authenticate(uid, password)
+        match otpw_resp:
+            case OTPWResponse.SUCCESS:
+                resp = {'code': pam.PAM_SUCCESS, 'reason': '', 'otpw_response': otpw_resp}
+            case OTPWResponse.EXPIRED:
+                resp = {'code': pam.PAM_CRED_EXPIRED, 'otpw_response': 'Onetime password is expired'}
+            case OTPWResponse.NO_KEY:
+                # This onetime password doesn't exist. Returning None
+                # will fallback to original pam response
+                resp = None
+            case _:
+                resp['otpw_response'] = f'Onetime password authentication failed: {otpw_resp}'
+
+        return resp
 
     @private
     @pass_app()
@@ -116,7 +163,7 @@ class AuthService(Service):
         return pam_resp
 
     @private
-    async def authenticate_user(self, query, user_info, is_api_key):
+    async def authenticate_user(self, query, user_info, cred_tag=None):
         try:
             user = await self.middleware.call('user.get_user_obj', {
                 **query, 'get_groups': True,
@@ -181,8 +228,8 @@ class AuthService(Service):
         if twofactor_enabled:
             account_flags.append('2FA')
 
-        if is_api_key:
-            account_flags.append('API_KEY')
+        if cred_tag:
+            account_flags.append(cred_tag)
 
         if user['pw_uid'] in (0, ADMIN_UID):
             if not user['local']:
