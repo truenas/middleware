@@ -38,3 +38,9 @@ def log_test_name_to_middlewared_log(request):
     # and the next test start is caused by session/package/module/class
     # fixtures setup code.
     truenas_server.client.call("test.notify_test_end", test_name)
+
+
+@pytest.fixture(autouse=True)
+def mock_role():
+    truenas_server.client.call("test.add_mock_role")
+    yield
