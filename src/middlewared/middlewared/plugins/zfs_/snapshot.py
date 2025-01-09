@@ -17,7 +17,7 @@ class ZFSSnapshot(CRUDService):
     class Config:
         datastore_primary_key_type = 'string'
         namespace = 'zfs.snapshot'
-        process_pool = False
+        process_pool = True
         cli_namespace = 'storage.snapshot'
         role_prefix = 'SNAPSHOT'
         role_separate_delete = True

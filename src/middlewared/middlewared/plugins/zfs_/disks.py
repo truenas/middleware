@@ -8,7 +8,7 @@ class ZFSPoolService(Service):
     class Config:
         namespace = 'zfs.pool'
         private = True
-        process_pool = False
+        process_pool = True
 
     def get_disks(self, name):
         sys_devices = {}
