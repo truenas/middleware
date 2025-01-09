@@ -29,7 +29,8 @@ class CloudBackupService(Service):
         subprocess.run(
             restic_config.cmd + ["unlock"],
             env=restic_config.env,
-            text=True
+            capture_output=True,
+            text=True,
         )
 
         if self.is_initialized(restic_config):
