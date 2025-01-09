@@ -22,6 +22,7 @@ from .docker import *  # noqa
 from .docker_network import *  # noqa
 from .enclosure_label import *  # noqa
 from .failover_reboot import *  # noqa
+from .fc import *  # noqa
 from .fc_host import *  # noqa
 from .fcport import *  # noqa
 from .filesystem import *  # noqa
