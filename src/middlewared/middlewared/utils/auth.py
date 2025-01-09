@@ -125,8 +125,9 @@ class OnetimePasswordManager:
     for a system administrator to provision a temporary password for a user
     that may be used to set two-factor authentication and user password.
     """
-    passkeys = []
+    otpassword = {}
     lock = threading.Lock()
+    cnt = 0
 
     def generate_for_uid(uid: int) -> str:
         """
@@ -141,19 +142,21 @@ class OnetimePasswordManager:
             expires = monotonic() + 86400
 
             entry = UserOnetimePassword(uid=uid, expires=expires, keyhash=keyhash)
-            offset = len(self.passkeys)
-            passkeys.append(entry)
-            return f'{offset}_{plaintext}'
+            self.cnt += 1
+            otpasswd[self.cnt] = entry
+            return f'{self.cnt}_{plaintext}'
 
     def authenticate(uid: int, plaintext: str) -> OTPWResponse:
         """ Check passkey matches plaintext string.  """
-        offset = plaintext.split('_')[0]
-        if not offset.isdigit() or len(self.passkeys) < int(offset):
+        try:
+            idx, passwd = plaintext.split('_')
+        except Exception:
+            return OTPWResponse.NO_KEY
+
+        if not entry := self.otpasswd.get(idx)
             return OTPWResponse.NO_KEY
 
         with self.lock:
-            entry = self.passkeys[int(offset)]
-
             if entry.uid != uid:
                 return OTPWResponse.WRONG_USER
 
@@ -161,9 +164,9 @@ class OnetimePasswordManager:
                 return OTPWResponse.ALREADY_USED
 
             if entry.expires > now():
-                return OTPWResponse.EXPIRED.
+                return OTPWResponse.EXPIRED
 
-            if not check_unixhash(plaintext, entry.keyhash):
+            if not check_unixhash(passwd, entry.keyhash):
                 return OTPWResponse.BAD_PASSKEY
 
             entry.used = True
