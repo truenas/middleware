@@ -31,6 +31,10 @@ class IscsiGroup(BaseModel):
     auth: int | None = None
 
 
+class IscsiTargetParameters(BaseModel):
+    QueuedCommands: Literal[32, 128] | None = None
+
+
 class IscsiTargetEntry(BaseModel):
     id: int
     name: Annotated[NonEmptyString,
@@ -46,6 +50,7 @@ class IscsiTargetEntry(BaseModel):
     groups: list[IscsiGroup] = []
     auth_networks: list[str] = []  # IPvAnyNetwork: "Object of type IPv4Network is not JSON serializable", etc
     rel_tgt_id: int
+    iscsi_parameters: IscsiTargetParameters | None = None
 
 
 class IscsiTargetValidateNameArgs(BaseModel):

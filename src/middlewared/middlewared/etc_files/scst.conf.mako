@@ -8,6 +8,7 @@
 
     from middlewared.service import CallError
     from middlewared.plugins.fc.utils import is_fc_addr, str_to_naa, wwn_as_colon_hex
+    from middlewared.plugins.iscsi_.utils import ISCSI_TARGET_PARAMETERS, ISCSI_HA_TARGET_PARAMETERS
 
     REL_TGT_ID_NODEB_OFFSET = 32000
     REL_TGT_ID_FC_OFFSET = 5000
@@ -295,6 +296,11 @@
             if set(devices).issubset(clustered_extents):
                 return True
         return False
+
+    def option_value(v):
+        if type(v) is bool:
+            return "Yes" if v else "No"
+        return v
 %>\
 ##
 ## If we are on a HA system then write out a cluster name, we'll hard-code
@@ -523,6 +529,14 @@ TARGET_DRIVER iscsi {
 %   if mutual_chap:
         OutgoingUser "${mutual_chap}"
 %   endif
+##
+## Add target parameters (if not None value)
+##
+% for k,v in target.get('iscsi_parameters', {}).items():
+%   if k in ISCSI_TARGET_PARAMETERS and v is not None:
+        ${k} ${option_value(v)}
+%   endif
+% endfor
 
         GROUP security_group {
 %   for access_control in iscsi_initiator_portal_access:
@@ -568,6 +582,14 @@ ${retrieve_luns(target['id'], ' ' * 4)}\
         forward_dst 1
         aen_disabled 1
         forwarding 1
+##
+## Add target parameters (if not None value)
+##
+% for k,v in target.get('iscsi_parameters', {}).items():
+%   if k in ISCSI_HA_TARGET_PARAMETERS and v is not None:
+        ${k} ${option_value(v)}
+%   endif
+% endfor
 ${retrieve_luns(target['id'],'')}\
     }
 %     endfor
