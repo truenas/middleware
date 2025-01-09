@@ -271,7 +271,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             raise ValueError("Missing 'id' member")
 
         try:
-            if not isinstance(message["method"], str):
+            if not isinstance(message["method"], str) or not message["method"]:
                 raise ValueError("'method' member must be of type string")
         except KeyError:
             raise ValueError("Missing 'method' member")
