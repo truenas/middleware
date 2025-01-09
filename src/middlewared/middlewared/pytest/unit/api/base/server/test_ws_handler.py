@@ -4,12 +4,12 @@ from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketHandler
 
 
 @pytest.mark.parametrize(
-    "ws_msg, should_raise_value_error",
+    "ws_msg, error_type",
     [
         # test "id" member
         (
             {"id": 1, "method": "test.method", "jsonrpc": "2.0", "params": ["a", "b"]},
-            False,
+            None,
         ),
         (
             {
@@ -18,7 +18,7 @@ from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketHandler
                 "jsonrpc": "2.0",
                 "params": ["a", "b"],
             },
-            False,
+            None,
         ),
         (
             {
@@ -27,7 +27,7 @@ from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketHandler
                 "jsonrpc": "2.0",
                 "params": ["a", "b"],
             },
-            False,
+            None,
         ),
         (
             {
@@ -36,22 +36,22 @@ from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketHandler
                 "jsonrpc": "2.0",
                 "params": ["a", "b"],
             },
-            True,
+            ValueError,
         ),
-        ({"method": "test.method", "jsonrpc": "2.0", "params": ["a", "b"]}, True),
+        ({"method": "test.method", "jsonrpc": "2.0", "params": ["a", "b"]}, ValueError),
         # test "method" member
-        ({"id": 1, "method": [], "jsonrpc": "2.0", "params": ["a", "b"]}, True),
-        ({"id": 1, "method": "", "jsonrpc": "2.0", "params": ["a", "b"]}, True),
-        ({"id": 1, "method": None, "jsonrpc": "2.0", "params": ["a", "b"]}, True),
-        ({"id": 1, "jsonrpc": "2.0", "params": ["a", "b"]}, True),
+        ({"id": 1, "method": [], "jsonrpc": "2.0", "params": ["a", "b"]}, ValueError),
+        ({"id": 1, "method": "", "jsonrpc": "2.0", "params": ["a", "b"]}, ValueError),
+        ({"id": 1, "method": None, "jsonrpc": "2.0", "params": ["a", "b"]}, ValueError),
+        ({"id": 1, "jsonrpc": "2.0", "params": ["a", "b"]}, ValueError),
         # test "jsonrpc" member
         (
             {"id": 1, "method": "test.method", "jsonrpc": "1.0", "params": ["a", "b"]},
-            True,
+            ValueError,
         ),
         (
             {"id": 1, "method": "test.method", "jsonrpc": None, "params": ["a", "b"]},
-            True,
+            ValueError,
         ),
         (
             {
@@ -60,37 +60,46 @@ from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketHandler
                 "jsonrpc": ["bad"],
                 "params": ["a", "b"],
             },
-            True,
+            ValueError,
         ),
         (
             {"id": 1, "method": "test.method", "jsonrpc": [""], "params": ["a", "b"]},
-            True,
+            ValueError,
         ),
-        ({"id": 1, "method": "test.method", "jsonrpc": [], "params": ["a", "b"]}, True),
-        ({"id": 1, "method": "test.method", "params": ["a", "b"]}, True),
+        (
+            {"id": 1, "method": "test.method", "jsonrpc": [], "params": ["a", "b"]},
+            ValueError,
+        ),
+        ({"id": 1, "method": "test.method", "params": ["a", "b"]}, ValueError),
         # test "params" member
         (
             {"id": 1, "method": "test.method", "jsonrpc": "2.0", "params": ["a", "b"]},
-            False,
+            None,
         ),
-        ({"id": 1, "method": "test.method", "jsonrpc": "2.0", "params": []}, False),
-        ({"id": 1, "method": "test.method", "jsonrpc": "2.0"}, False),
-        ({"id": 1, "method": "test.method", "jsonrpc": "2.0", "params": 1}, True),
-        ({"id": 1, "method": "test.method", "jsonrpc": "2.0", "params": "bad"}, True),
-        ({"id": 1, "method": "test.method", "jsonrpc": "2.0", "params": None}, True),
+        ({"id": 1, "method": "test.method", "jsonrpc": "2.0", "params": []}, None),
+        ({"id": 1, "method": "test.method", "jsonrpc": "2.0"}, None),
+        ({"id": 1, "method": "test.method", "jsonrpc": "2.0", "params": 1}, ValueError),
+        (
+            {"id": 1, "method": "test.method", "jsonrpc": "2.0", "params": "bad"},
+            ValueError,
+        ),
+        (
+            {"id": 1, "method": "test.method", "jsonrpc": "2.0", "params": None},
+            ValueError,
+        ),
         # fuzzy
-        ("", True),
-        ({}, True),
-        (None, True),
-        ([], True),
-        (["bad"], True),
-        (b"bad", True),
+        ("", TypeError),
+        ({}, ValueError),
+        (None, TypeError),
+        ([], TypeError),
+        (["bad"], TypeError),
+        (b"bad", TypeError),
     ],
 )
 @pytest.mark.asyncio
-async def test_validate_message(ws_msg, should_raise_value_error):
-    if should_raise_value_error:
-        with pytest.raises(ValueError):
-            RpcWebSocketHandler.validate_message(ws_msg)
+async def test_validate_message(ws_msg, error_type):
+    if error_type is not None:
+        with pytest.raises(error_type):
+            await RpcWebSocketHandler.validate_message(ws_msg)
     else:
-        RpcWebSocketHandler.validate_message(ws_msg)
+        await RpcWebSocketHandler.validate_message(ws_msg)
