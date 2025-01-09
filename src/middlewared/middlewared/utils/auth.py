@@ -1,5 +1,7 @@
 import enum
+import threading
 from dataclasses import dataclass
+from .crypto import generate_string, sha512_crypt, check_unixhash
 
 LEGACY_API_KEY_USERNAME = 'LEGACY_API_KEY'
 MAX_OTP_ATTEMPTS = 3
@@ -10,6 +12,7 @@ class AuthMech(enum.StrEnum):
     PASSWORD_PLAIN = 'PASSWORD_PLAIN'
     TOKEN_PLAIN = 'TOKEN_PLAIN'
     OTP_TOKEN = 'OTP_TOKEN'
+    ONETIME_PASSWORD = 'ONETIME_PASSWORD'
 
 
 class AuthResp(enum.StrEnum):
@@ -58,7 +61,12 @@ def aal_auth_mechanism_check(mechanism_str: str, aal: AuthenticatorAssuranceLeve
 AA_LEVEL1 = AuthenticatorAssuranceLevel(
     max_session_age=86400 * 30,
     max_inactivity=None,
-    mechanisms=(AuthMech.API_KEY_PLAIN, AuthMech.TOKEN_PLAIN, AuthMech.PASSWORD_PLAIN),
+    mechanisms=(
+        AuthMech.API_KEY_PLAIN,
+        AuthMech.TOKEN_PLAIN,
+        AuthMech.PASSWORD_PLAIN,
+        AuthMech.ONETIME_PASSWORD
+    ),
     otp_mandatory=False
 )
 
@@ -76,7 +84,7 @@ AA_LEVEL1 = AuthenticatorAssuranceLevel(
 AA_LEVEL2 = AuthenticatorAssuranceLevel(
     max_session_age=12 * 60 * 60,
     max_inactivity=30 * 60,
-    mechanisms=(AuthMech.PASSWORD_PLAIN,),
+    mechanisms=(AuthMech.PASSWORD_PLAIN, AuthMech.ONETIME_PASSWORD),
     otp_mandatory=True
 )
 
@@ -91,3 +99,76 @@ AA_LEVEL3 = AuthenticatorAssuranceLevel(
 )
 
 CURRENT_AAL = ServerAAL(AA_LEVEL1)
+
+
+class OTPWResponse(enum.StrEnum):
+    SUCCESS = 'SUCCESS'
+    EXPIRED = 'EXPIRED'
+    NO_KEY = 'NO_KEY'
+    ALREADY_USED = 'ALREADY_USED'
+    WRONG_USER = 'WRONG_USER'
+    BAD_PASSKEY = 'BAD_PASSKEY'
+
+
+@dataclass(slots=True)
+class UserOnetimePassword:
+    uid: int   # UID of related user
+    expires: int  # expiration time (monotonic)
+    keyhash: str  # passkey hash
+    used: bool = False # whether passkey has been used for authentication
+
+
+class OnetimePasswordManager:
+    """
+    This class stores passkeys that may be used precisely once to authenticate
+    to the TrueNAS server as a particular user. This is to provide a mechanism
+    for a system administrator to provision a temporary password for a user
+    that may be used to set two-factor authentication and user password.
+    """
+    passkeys = []
+    lock = threading.Lock()
+
+    def generate_for_uid(uid: int) -> str:
+        """
+        Generate a passkey for the given UID.
+
+        Format is "<index in passkey list>_<plain text of passkey>"
+        We store a sha512 hash of the plaintext for authentication purposes
+        """
+        with self.lock:
+            plaintext = generate_string(string_length=24)
+            keyhash = sha512_crypt(plaintext)
+            expires = monotonic() + 86400
+
+            entry = UserOnetimePassword(uid=uid, expires=expires, keyhash=keyhash)
+            offset = len(self.passkeys)
+            passkeys.append(entry)
+            return f'{offset}_{plaintext}'
+
+    def authenticate(uid: int, plaintext: str) -> OTPWResponse:
+        """ Check passkey matches plaintext string.  """
+        offset = plaintext.split('_')[0]
+        if not offset.isdigit() or len(self.passkeys) < int(offset):
+            return OTPWResponse.NO_KEY
+
+        with self.lock:
+            entry = self.passkeys[int(offset)]
+
+            if entry.uid != uid:
+                return OTPWResponse.WRONG_USER
+
+            if entry.used:
+                return OTPWResponse.ALREADY_USED
+
+            if entry.expires > now():
+                return OTPWResponse.EXPIRED.
+
+            if not check_unixhash(plaintext, entry.keyhash):
+                return OTPWResponse.BAD_PASSKEY
+
+            entry.used = True
+
+            return OTPWResponse.SUCCESS
+
+
+OTPW_MANAGER = OnetimePasswordManager()

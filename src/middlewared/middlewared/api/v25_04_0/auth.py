@@ -73,6 +73,13 @@ class AuthOTPToken(BaseModel):
     login_options: AuthCommonOptions = Field(default=AuthCommonOptions())
 
 
+class AuthOTPW(BaseModel):
+    mechanism: Literal[AuthMech.ONETIME_PASSWORD]
+    username: str
+    password: Secret[str]
+    login_options: AuthCommonOptions = Field(default=AuthCommonOptions())
+
+
 class AuthRespSuccess(BaseModel):
     response_type: Literal[AuthResp.SUCCESS]
     user_info: AuthUserInfo | None
@@ -98,7 +105,7 @@ class AuthRespAuthRedirect(BaseModel):
 
 
 class AuthLoginExArgs(BaseModel):
-    login_data: AuthApiKeyPlain | AuthPasswordPlain | AuthTokenPlain | AuthOTPToken
+    login_data: AuthApiKeyPlain | AuthPasswordPlain | AuthTokenPlain | AuthOTPToken | AuthOTPW
 
 
 class AuthLoginExContinueArgs(BaseModel):

@@ -148,6 +148,13 @@ class LoginTwofactorSessionManagerCredentials(LoginPasswordSessionManagerCredent
     pass
 
 
+class LoginOnetimePasswordSessionManagerCredentials(UserSessionManagerCredentials):
+    """ Credentials for a specific user account  on TrueNAS
+    Authenticated by username + onetime password ccombination
+    """
+    pass
+
+
 class TokenSessionManagerCredentials(SessionManagerCredentials):
     def __init__(self, token_manager, token):
         self.root_credentials = token.root_credentials()

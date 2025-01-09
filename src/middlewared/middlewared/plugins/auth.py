@@ -24,7 +24,7 @@ from middlewared.auth import (UserSessionManagerCredentials, UnixSocketSessionMa
                               ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
                               LoginTwofactorSessionManagerCredentials, AuthenticationContext,
                               TruenasNodeSessionManagerCredentials, TokenSessionManagerCredentials,
-                              dump_credentials)
+                              LoginOnetimePasswordSessionManagerCredentials, dump_credentials)
 from middlewared.plugins.account_.constants import MIDDLEWARE_PAM_SERVICE, MIDDLEWARE_PAM_API_KEY_SERVICE
 from middlewared.service import (
     Service, filterable_api_method, filter_list,
@@ -34,7 +34,7 @@ from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils.auth import (
     aal_auth_mechanism_check, AuthMech, AuthResp, AuthenticatorAssuranceLevel, AA_LEVEL1,
-    AA_LEVEL2, AA_LEVEL3, CURRENT_AAL, MAX_OTP_ATTEMPTS,
+    AA_LEVEL2, AA_LEVEL3, CURRENT_AAL, MAX_OTP_ATTEMPTS, OTPWResponse, OTPW_MANAGER,
 )
 from middlewared.utils.crypto import generate_token
 from middlewared.utils.time_utils import utc_now
@@ -849,6 +849,75 @@ class AuthService(Service):
                         'reason': None
                     }
                 }
+
+            case AuthMech.ONETIME_PASSWORD:
+                pw = data['password']
+                if not user_info := (await self.middleware.call(
+                   'user.query',
+                    [('username', '=', data['username'])],
+                    {'select': ['id', 'unixhash', 'uid']},
+                )):
+                    await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                        'credentials': {
+                            'credentials': 'ONETIME_PASSWORD',
+                            'credentials_data': {'username': data['username']}
+                        },
+                        'error': 'Bad username.',
+                    }, False)
+                    await asyncio.sleep(random.uniform(1, 2))
+                    return response
+
+                otpw_resp = await self.middleware.run_in_thread(
+                    OTPW_MANAGER.authenticate,
+                    user_info[0]['uid']
+                    data['password']
+                )
+
+                match otpw_resp:
+                    case OTPWResponse.SUCCESS:
+                        user_data = await self.middleware.call(
+                            'auth.authenticate_user',
+                            {'username': data['username']},
+                            user_info[0],
+                            is_api_key=False,
+                            is_otpw=True
+                        )
+
+                        cred = LoginOnetimePasswordSessionManagerCredentials(user_data, CURRENT_AAL.level)
+                        await login_fn(app, cred)
+                        resp = {
+                            'pam_response': {
+                                'code': pam.PAM_SUCCESS,
+                                'reason': None
+                            }
+                        }
+
+                    case OTPWResponse.EXPIRED:
+                        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                            'credentials': {
+                                'credentials': 'ONETIME_PASSWORD',
+                                'credentials_data': {'username': data['username']}
+                            },
+                            'error': 'Password expired.',
+                        }, False)
+                        await asyncio.sleep(random.uniform(1, 2))
+                        resp = {
+                            'pam_response': {
+                                'code': pam.PAM_CRED_EXPIRED,
+                                'reason': None
+                            }
+                        }
+
+                    case _:
+                        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                            'credentials': {
+                                'credentials': 'ONETIME_PASSWORD',
+                                'credentials_data': {'username': data['username']}
+                            },
+                            'error': f'Onetime password authentication failed with error: {otpw_resp}',
+                        }, False)
+                        await asyncio.sleep(random.uniform(1, 2))
+                        return response
 
             case _:
                 # This shouldn't happen so we'll log it and raise a call error

@@ -116,7 +116,7 @@ class AuthService(Service):
         return pam_resp
 
     @private
-    async def authenticate_user(self, query, user_info, is_api_key):
+    async def authenticate_user(self, query, user_info, is_api_key=False, is_otpw=False):
         try:
             user = await self.middleware.call('user.get_user_obj', {
                 **query, 'get_groups': True,
@@ -183,6 +183,9 @@ class AuthService(Service):
 
         if is_api_key:
             account_flags.append('API_KEY')
+
+        if is_otpw:
+            account_flags.append('OTPW')
 
         if user['pw_uid'] in (0, ADMIN_UID):
             if not user['local']:
