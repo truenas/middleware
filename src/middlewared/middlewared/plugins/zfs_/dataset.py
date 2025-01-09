@@ -15,7 +15,7 @@ class ZFSDatasetService(CRUDService):
     class Config:
         namespace = 'zfs.dataset'
         private = True
-        process_pool = False
+        process_pool = True
 
     @filterable
     def query(self, filters, options):

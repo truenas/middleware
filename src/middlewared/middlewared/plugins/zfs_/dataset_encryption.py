@@ -13,7 +13,7 @@ class ZFSDatasetService(Service):
     class Config:
         namespace = 'zfs.dataset'
         private = True
-        process_pool = False
+        process_pool = True
 
     @accepts(
         Ref('query-filters'),
