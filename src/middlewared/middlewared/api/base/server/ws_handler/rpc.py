@@ -18,6 +18,7 @@ from middlewared.schema import Error
 from middlewared.service_exception import (CallException, CallError, ValidationError, ValidationErrors, adapt_exception,
                                            get_errname)
 from middlewared.utils.debug import get_frame_details
+from middlewared.utils.lang import undefined
 from middlewared.utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from middlewared.utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from middlewared.utils.origin import ConnectionOrigin
@@ -268,7 +269,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             if not isinstance(message["id"], None | int | str):
                 raise ValueError("'id' member must be of type null, string or number")
         except KeyError:
-            raise ValueError("Missing 'id' member")
+            pass
 
         try:
             if not isinstance(message["method"], str) or not message["method"]:
@@ -290,21 +291,21 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             # format of the message (i.e. needs to be a dict)
             app.send_error(None, JSONRPCError.INVALID_REQUEST.value, "Invalid Message Format")
         except ValueError as e:
-            app.send_error(message.get("id"), JSONRPCError.INVALID_REQUEST.value, str(e))
+            if (id_ := message.get("id", undefined)) != undefined:
+                app.send_error(id_, JSONRPCError.INVALID_REQUEST.value, str(e))
             return
+
+        id_ = message.get("id", undefined)
 
         try:
             method = self.methods[message["method"]]
         except KeyError:
-            app.send_error(
-                message["id"],
-                JSONRPCError.METHOD_NOT_FOUND.value,
-                "Method does not exist",
-            )
+            if id_ != undefined:
+                app.send_error(id_, JSONRPCError.METHOD_NOT_FOUND.value, "Method does not exist")
             return
 
         asyncio.ensure_future(
-            self.process_method_call(app, message["id"], method, message["params"])
+            self.process_method_call(app, id_, method, message["params"])
         )
 
     async def process_method_call(self, app: RpcWebSocketApp, id_: Any, method: Method, params: list):
@@ -312,18 +313,22 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             async with app.softhardsemaphore:
                 result = await method.call(app, params)
         except SoftHardSemaphoreLimit as e:
-            app.send_error(id_, JSONRPCError.TRUENAS_TOO_MANY_CONCURRENT_CALLS.value,
-                           f"Maximum number of concurrent calls ({e.args[0]}) has exceeded")
+            if id_ != undefined:
+                app.send_error(id_, JSONRPCError.TRUENAS_TOO_MANY_CONCURRENT_CALLS.value,
+                               f"Maximum number of concurrent calls ({e.args[0]}) has exceeded")
         except ValidationError as e:
-            app.send_truenas_validation_error(id_, sys.exc_info(), [
-                (e.attribute, e.errmsg, e.errno),
-            ])
+            if id_ != undefined:
+                app.send_truenas_validation_error(id_, sys.exc_info(), [
+                    (e.attribute, e.errmsg, e.errno),
+                ])
         except ValidationErrors as e:
-            app.send_truenas_validation_error(id_, sys.exc_info(), list(e))
+            if id_ != undefined:
+                app.send_truenas_validation_error(id_, sys.exc_info(), list(e))
         except (CallException, Error) as e:
             # CallException and subclasses are the way to gracefully send errors to the client
-            app.send_truenas_error(id_, JSONRPCError.TRUENAS_CALL_ERROR.value, "Method call error", e.errno, str(e),
-                                    sys.exc_info(), e.extra)
+            if id_ != undefined:
+                app.send_truenas_error(id_, JSONRPCError.TRUENAS_CALL_ERROR.value, "Method call error", e.errno, str(e),
+                                       sys.exc_info(), e.extra)
         except Exception as e:
             adapted = adapt_exception(e)
             if adapted:
@@ -335,15 +340,17 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
                 error = e
                 extra = None
 
-            app.send_truenas_error(id_, JSONRPCError.TRUENAS_CALL_ERROR.value, "Method call error", errno_,
-                                    str(error) or repr(error), sys.exc_info(), extra)
+            if id_ != undefined:
+                app.send_truenas_error(id_, JSONRPCError.TRUENAS_CALL_ERROR.value, "Method call error", errno_,
+                                       str(error) or repr(error), sys.exc_info(), extra)
 
             if not adapted and not app.py_exceptions:
                 self.middleware.logger.warning(f"Exception while calling {method.name}(*{method.dump_args(params)!r})",
                                                exc_info=True)
         else:
-            app.send({
-                "jsonrpc": "2.0",
-                "result": result,
-                "id": id_,
-            })
+            if id_ != undefined:
+                app.send({
+                    "jsonrpc": "2.0",
+                    "result": result,
+                    "id": id_,
+                })
