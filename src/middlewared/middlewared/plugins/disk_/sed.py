@@ -3,7 +3,7 @@ import re
 import subprocess
 
 from middlewared.utils.asyncio_ import asyncio_map
-from middlewared.service import Service, private
+from middlewared.service import CallError, Service, private
 from middlewared.utils import run
 
 
