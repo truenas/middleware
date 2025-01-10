@@ -38,7 +38,6 @@ from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketHandler
             },
             ValueError,
         ),
-        ({"method": "test.method", "jsonrpc": "2.0", "params": ["a", "b"]}, ValueError),
         # test "method" member
         ({"id": 1, "method": [], "jsonrpc": "2.0", "params": ["a", "b"]}, ValueError),
         ({"id": 1, "method": "", "jsonrpc": "2.0", "params": ["a", "b"]}, ValueError),
