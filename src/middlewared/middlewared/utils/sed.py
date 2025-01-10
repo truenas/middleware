@@ -45,6 +45,7 @@ async def unlock_tcg_opal_pyrite(disk_path: str, password: str) -> UnlockRespons
     elif b"Locked = N" in query_cp.stdout:
         return UnlockResponses(disk_path=disk_path, locked=False, query_cp=query_cp)
 
+    use_fbsd_compat = False
     cmd = ["--setLockingRange", "0", "RW", password, disk_path]
     unlock_cp = await run_sedutil_cmd(cmd)
     if unlock_cp.returncode == ReturnCodeMappings.AUTH_FAILED:
@@ -57,6 +58,7 @@ async def unlock_tcg_opal_pyrite(disk_path: str, password: str) -> UnlockRespons
         # the `-freebsdCompat` flag.
         cmd.insert(0, "-freebsdCompat")
         unlock_cp = await run_sedutil_cmd(cmd)
+        use_fbsd_compat = unlock_cp.returncode == ReturnCodeMappings.SUCCESS
 
     if unlock_cp.returncode != ReturnCodeMappings.SUCCESS:
         return UnlockResponses(disk_path=disk_path, locked=True, unlock_cp=unlock_cp)
@@ -66,7 +68,11 @@ async def unlock_tcg_opal_pyrite(disk_path: str, password: str) -> UnlockRespons
     # “Pre-Boot Authentication (PBA) Environment” to
     # unlock the range in which the OS is stored so that
     # the OS can boot.
-    mbr_cp = await run_sedutil_cmd(["--setMBREnable", "off", password, disk_path])
+    mbr_cmd = ["--setMBREnable", "off", password, disk_path]
+    if use_fbsd_compat:
+        mbr_cmd.insert(0, "-freebsdCompat")
+
+    mbr_cp = await run_sedutil_cmd(mbr_cmd)
     return UnlockResponses(
         disk_path=disk_path, locked=False, unlock_cp=unlock_cp, mbr_cp=mbr_cp
     )
