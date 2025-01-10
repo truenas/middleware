@@ -38,6 +38,7 @@ class CronJobService(CRUDService):
         namespace = 'cronjob'
         cli_namespace = 'task.cron_job'
         entry = CronJobEntry
+        role_prefix = 'SYSTEM_CRON'
 
     @private
     def cron_extend(self, data):

@@ -45,6 +45,7 @@ class SNMPService(SystemServiceService):
         datastore_prefix = 'snmp_'
         cli_namespace = 'service.snmp'
         entry = SnmpEntry
+        role_prefix = 'SYSTEM_GENERAL'
 
     @private
     def get_snmp_users(self):

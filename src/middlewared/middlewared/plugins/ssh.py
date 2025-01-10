@@ -50,6 +50,7 @@ class SSHService(SystemServiceService):
         service = "ssh"
         datastore_prefix = "ssh_"
         cli_namespace = 'service.ssh'
+        role_prefix = 'SSH'
 
     ENTRY = Dict(
         'ssh_entry',

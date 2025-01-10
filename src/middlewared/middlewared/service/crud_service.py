@@ -62,6 +62,9 @@ class CRUDServiceMetabase(ServiceBase):
         ):
             return klass
 
+        if not klass._config.private and not klass._config.role_prefix:
+            raise ValueError(f'{klass._config.namespace}: public CRUDService must have role_prefix defined')
+
         if klass._config.entry is not None:
             # FIXME: This is to prevent `Method cloudsync.credentials.ENTRY is public but has no @accepts()`, remove
             # eventually.

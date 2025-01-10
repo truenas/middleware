@@ -31,6 +31,7 @@ class StaticRouteService(CRUDService):
         datastore_prefix = 'sr_'
         cli_namespace = 'network.static_route'
         entry = StaticRouteEntry
+        role_prefix = 'NETWORK_INTERFACE'
 
     @api_method(StaticRouteCreateArgs, StaticRouteCreateResult)
     async def do_create(self, data):

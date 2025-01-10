@@ -34,6 +34,7 @@ class VMWareService(CRUDService):
     class Config:
         datastore = 'storage.vmwareplugin'
         cli_namespace = 'storage.vmware'
+        role_prefix = 'POOL'
 
     ENTRY = Patch(
         "vmware_create",

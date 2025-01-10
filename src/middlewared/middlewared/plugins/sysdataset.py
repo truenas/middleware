@@ -39,6 +39,7 @@ class SystemDatasetService(ConfigService):
         datastore_extend = 'systemdataset.config_extend'
         datastore_prefix = 'sys_'
         cli_namespace = 'system.system_dataset'
+        role_prefix = 'DATASET'
 
     ENTRY = Dict(
         'systemdataset_entry',
