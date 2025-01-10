@@ -122,7 +122,7 @@ def get_metrics_approximation(
             'cpu.usage': core_count + 1,
 
             # cputemp
-            'cputemp.temperatures': core_count,
+            'cputemp.temp': 1,
 
             # ups
             'nut_ups.charge': 1,

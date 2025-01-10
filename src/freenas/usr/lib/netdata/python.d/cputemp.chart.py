@@ -1,23 +1,24 @@
-from bases.FrameworkServices.SimpleService import SimpleService
 from collections import defaultdict
 from copy import deepcopy
+
+from bases.FrameworkServices.SimpleService import SimpleService
 from third_party import lm_sensors as sensors
 
-from middlewared.utils.cpu import amd_cpu_temperatures, generic_cpu_temperatures, cpu_info
+from middlewared.utils.cpu import amd_cpu_temperatures, generic_cpu_temperatures
 
 
 CPU_TEMPERATURE_FEAT_TYPE = 2
 
 
 ORDER = [
-    'temperatures',
+    'temp',
 ]
 
 # This is a prototype of chart definition which is used to dynamically create self.definitions
 CHARTS = {
-    'temperatures': {
+    'temp': {
         'options': [None, 'Temperature', 'Celsius', 'temperature', 'sensors.temperature', 'line'],
-        'lines': []
+        'lines': [['cpu_temp', 'cpu_temp', 'absolute']]
     }
 }
 
@@ -75,11 +76,11 @@ class Service(SimpleService):
             self.error(error)
             cpu_temps = {}
 
-        data = {}
-        for core, temp in cpu_temps.items():
-            data[str(core)] = temp
+        core_temp = []
+        for temp in cpu_temps.values():
+            core_temp.append(temp)
 
-        return data or {str(i): 0 for i in range(cpu_info()['core_count'])}
+        return {'cpu_temp': sum(core_temp) / len(core_temp)} if len(core_temp) else {'cpu_temp': 0}
 
     def check(self):
         try:
@@ -88,8 +89,4 @@ class Service(SimpleService):
             self.error(error)
             return False
 
-        data = self.get_data()
-        for i in data:
-            self.definitions['temperatures']['lines'].append([str(i)])
-
-        return bool(data)
+        return True
