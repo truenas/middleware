@@ -4,6 +4,8 @@ import subprocess
 from functools import cache
 from pathlib import Path
 
+from middlewared.api import api_method
+from middlewared.api.current import FCCapableArgs, FCCapableResult
 from middlewared.service import Service, filterable
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
@@ -19,7 +21,13 @@ class FCService(Service):
 
     class Config:
         private = True
+        role_prefix = 'SHARING_ISCSI_TARGET'
 
+    @api_method(
+        FCCapableArgs,
+        FCCapableResult,
+        roles=['SHARING_ISCSI_TARGET_READ']
+    )
     async def capable(self):
         """
         Returns True if the system is licensed for FIBRECHANNEL and contains
