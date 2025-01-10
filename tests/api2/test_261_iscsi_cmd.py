@@ -1,4 +1,5 @@
 import contextlib
+import copy
 import enum
 import errno
 import ipaddress
@@ -3049,3 +3050,39 @@ def test__synchronize_cache(iscsi_running, extent_type):
                 s.write16(0, 1, zeros)
                 s.synchronizecache16(0, 1)
                 assert test_empty(test_path) is True, 'Expected zero data'
+
+
+def read_target_value(iqn, name):
+    return ssh(f'head -1 /sys/kernel/scst_tgt/targets/iscsi/{iqn}/{name}').strip()
+
+
+def test__target_iscsi_parameters(iscsi_running):
+    """Test iSCSI target parameters"""
+    def new_params_val(params, key, val):
+        new = copy.copy(params)
+        new[key] = val
+        return {'iscsi_parameters': new}
+
+    DEFAULT_QUEUED_COMMANDS = 32
+    iqn = f'{basename}:{target_name}'
+    with initiator_portal() as config:
+        with configured_target(config, target_name, 'VOLUME') as target_config:
+            target_id = target_config['target']['id']
+            params = target_config['target']['iscsi_parameters']
+            # QueuedCommands
+            # Check the default
+            assert params['QueuedCommands'] is None, params
+            assert int(read_target_value(iqn, 'QueuedCommands')) == DEFAULT_QUEUED_COMMANDS
+            # Set to 128
+            call('iscsi.target.update', target_id, new_params_val(params, 'QueuedCommands', 128))
+            assert int(read_target_value(iqn, 'QueuedCommands')) == 128
+            # Set to None and ensure it has the default
+            call('iscsi.target.update', target_id, new_params_val(params, 'QueuedCommands', None))
+            assert int(read_target_value(iqn, 'QueuedCommands')) == DEFAULT_QUEUED_COMMANDS
+            # Now we'll test removing it from the dict
+            call('iscsi.target.update', target_id, new_params_val(params, 'QueuedCommands', 128))
+            assert int(read_target_value(iqn, 'QueuedCommands')) == 128
+            new_params = copy.copy(params)
+            del new_params['QueuedCommands']
+            call('iscsi.target.update', target_id, {'iscsi_parameters': new_params})
+            assert int(read_target_value(iqn, 'QueuedCommands')) == DEFAULT_QUEUED_COMMANDS
