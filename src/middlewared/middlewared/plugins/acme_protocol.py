@@ -206,6 +206,7 @@ class DNSAuthenticatorService(CRUDService):
         datastore = 'system.acmednsauthenticator'
         cli_namespace = 'system.acme.dns_auth'
         entry = ACMEDNSAuthenticatorEntry
+        role_prefix = 'NETWORK_INTERFACE'
 
     @private
     async def common_validation(self, data, schema_name, old=None):

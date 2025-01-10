@@ -100,6 +100,8 @@ class NTPServerService(CRUDService):
         datastore_prefix = 'ntp_'
         cli_namespace = 'system.ntp_server'
         entry = NTPServerEntry
+        prefix = 'SYSTEM_ADVANCED'
+        role_prefix = 'NETWORK_INTERFACE'
 
     @api_method(NTPServerCreateArgs, NTPServerCreateResult)
     async def do_create(self, data):

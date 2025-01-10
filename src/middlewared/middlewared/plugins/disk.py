@@ -57,6 +57,7 @@ class DiskService(CRUDService):
         event_register = False
         event_send = False
         cli_namespace = 'storage.disk'
+        role_prefix = 'DISK'
 
     ENTRY = Dict(
         'disk_entry',

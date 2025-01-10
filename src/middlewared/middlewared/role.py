@@ -38,6 +38,9 @@ ROLES = {
     'DIRECTORY_SERVICE_READ': Role(),
     'DIRECTORY_SERVICE_WRITE': Role(includes=['DIRECTORY_SERVICE_READ']),
 
+    'DISK_READ': Role(),
+    'DISK_WRITE': Role(includes=['DISK_READ']),
+
     'KMIP_READ': Role(),
     'KMIP_WRITE': Role(includes=['KMIP_READ']),
 
@@ -219,6 +222,12 @@ ROLES = {
 
     'SYSTEM_SECURITY_READ': Role(),
     'SYSTEM_SECURITY_WRITE': Role(includes=['SYSTEM_SECURITY_READ']),
+
+    'SYSTEM_TUNABLE_READ': Role(),
+    'SYSTEM_TUNABLE_WRITE': Role(includes=['SYSTEM_TUNABLE_READ']),
+
+    'SYSTEM_CRON_READ': Role(),
+    'SYSTEM_CRON_WRITE': Role(includes=['SYSTEM_CRON_READ']),
 
     # Virtualization
     'VIRT_GLOBAL_READ': Role(),

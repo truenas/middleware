@@ -37,6 +37,7 @@ class InitShutdownScriptService(CRUDService):
         datastore_extend = 'initshutdownscript.init_shutdown_script_extend'
         cli_namespace = 'system.init_shutdown_script'
         entry = InitShutdownScriptEntry
+        role_prefix = 'SYSTEM_CRON'
 
     @api_method(InitShutdownScriptCreateArgs, InitShutdownScriptCreateResult, roles=['FULL_ADMIN'])
     async def do_create(self, data):

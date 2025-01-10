@@ -87,6 +87,7 @@ class IPMILanService(CRUDService):
     class Config:
         namespace = 'ipmi.lan'
         cli_namespace = 'network.ipmi'
+        role_prefix = 'IPMI'
 
     @accepts(roles=['IPMI_READ'])
     @returns(List('lan_channels', items=[Int('lan_channel')]))
