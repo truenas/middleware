@@ -1,4 +1,4 @@
-Simulating real-world conditions
+Simulating Real-World Conditions
 ================================
 
 .. toctree::
