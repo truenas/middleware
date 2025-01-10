@@ -6,4 +6,5 @@ Middleware Plugins
     :caption: Contents:
 
     alert.rst
+    cloudsync.rst
     migration.rst
