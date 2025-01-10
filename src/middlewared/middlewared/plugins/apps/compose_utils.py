@@ -55,7 +55,7 @@ def compose_action(
     if cp.returncode != 0:
         logger.error('Failed %r action for %r app: %s', action, app_name, cp.stderr)
         err_msg = f'Failed {action!r} action for {app_name!r} app.'
-        if 'toomanyrequests: You have reached your pull rate limit.' in cp.stderr:
+        if 'toomanyrequests:' in cp.stderr:
             err_msg += ' It appears you have reached your pull rate limit. Please try again later.'
         err_msg += ' Please check /var/log/app_lifecycle.log for more details'
         raise CallError(err_msg)
