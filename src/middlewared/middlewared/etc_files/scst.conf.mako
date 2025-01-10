@@ -298,7 +298,7 @@
         return False
 
     def option_value(v):
-        if type(v) is bool:
+        if isinstance(v, bool):
             return "Yes" if v else "No"
         return v
 %>\
