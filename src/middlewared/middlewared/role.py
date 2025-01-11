@@ -38,6 +38,9 @@ ROLES = {
     'DIRECTORY_SERVICE_READ': Role(),
     'DIRECTORY_SERVICE_WRITE': Role(includes=['DIRECTORY_SERVICE_READ']),
 
+    'DISK_READ': Role(),
+    'DISK_WRITE': Role(includes=['DISK_READ']),
+
     'KMIP_READ': Role(),
     'KMIP_WRITE': Role(includes=['KMIP_READ']),
 
@@ -60,6 +63,9 @@ ROLES = {
 
     'SUPPORT_READ': Role(),
     'SUPPORT_WRITE': Role(includes=['SUPPORT_READ']),
+
+    'SSH_READ': Role(),
+    'SSH_WRITE': Role(includes=['SSH_READ']),
 
     'SYSTEM_AUDIT_READ': Role(),
     'SYSTEM_AUDIT_WRITE': Role(),
@@ -89,6 +95,8 @@ ROLES = {
 
     # Network roles
     'NETWORK_GENERAL_READ': Role(),
+    'NETWORK_GENERAL_WRITE': Role(includes=['NETWORK_GENERAL_READ']),
+
     'NETWORK_INTERFACE_READ': Role(),
     'NETWORK_INTERFACE_WRITE': Role(includes=['NETWORK_INTERFACE_READ']),
 
@@ -219,6 +227,12 @@ ROLES = {
 
     'SYSTEM_SECURITY_READ': Role(),
     'SYSTEM_SECURITY_WRITE': Role(includes=['SYSTEM_SECURITY_READ']),
+
+    'SYSTEM_TUNABLE_READ': Role(),
+    'SYSTEM_TUNABLE_WRITE': Role(includes=['SYSTEM_TUNABLE_READ']),
+
+    'SYSTEM_CRON_READ': Role(),
+    'SYSTEM_CRON_WRITE': Role(includes=['SYSTEM_CRON_READ']),
 
     # Virtualization
     'VIRT_GLOBAL_READ': Role(),

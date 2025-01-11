@@ -83,6 +83,7 @@ class UPSService(SystemServiceService):
         service = 'ups'
         service_verb = 'restart'
         cli_namespace = 'service.ups'
+        role_prefix = 'SYSTEM_GENERAL'
 
     @private
     async def ups_config_extend(self, data):

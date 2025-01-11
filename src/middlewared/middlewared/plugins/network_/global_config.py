@@ -36,6 +36,7 @@ class NetworkConfigurationService(ConfigService):
         datastore_prefix = 'gc_'
         datastore_extend = 'network.configuration.network_config_extend'
         cli_namespace = 'network.configuration'
+        role_prefix = 'NETWORK_GENERAL'
 
     ENTRY = Dict(
         'network_configuration_entry',

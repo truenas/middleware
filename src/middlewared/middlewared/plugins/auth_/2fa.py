@@ -37,6 +37,7 @@ class TwoFactorAuthService(ConfigService):
         datastore_extend = 'auth.twofactor.two_factor_extend'
         namespace = 'auth.twofactor'
         cli_namespace = 'auth.two_factor'
+        role_prefix = 'SYSTEM_SECURITY'
 
     ENTRY = Dict(
         'auth_twofactor_entry',

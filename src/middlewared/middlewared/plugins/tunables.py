@@ -38,6 +38,7 @@ class TunableService(CRUDService):
         datastore = 'system.tunable'
         datastore_prefix = 'tun_'
         cli_namespace = 'system.tunable'
+        role_prefix = 'SYSTEM_TUNABLE'
 
     SYSCTLS = set()
 

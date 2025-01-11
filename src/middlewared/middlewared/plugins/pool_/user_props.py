@@ -10,6 +10,7 @@ class PoolDatasetUserPropService(CRUDService):
         datastore_primary_key_type = 'string'
         namespace = 'pool.dataset.userprop'
         cli_namespace = 'storage.dataset.user_prop'
+        role_prefix = 'DATASET'
 
     ENTRY = Dict(
         'pool_dataset_userprop_entry',

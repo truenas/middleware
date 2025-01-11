@@ -78,6 +78,7 @@ class MailService(ConfigService):
         datastore_prefix = 'em_'
         datastore_extend = 'mail.mail_extend'
         cli_namespace = 'system.mail'
+        role_prefix = 'ALERT'
 
     ENTRY = Dict(
         'mail_entry',

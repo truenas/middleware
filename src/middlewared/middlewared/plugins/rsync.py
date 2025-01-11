@@ -128,6 +128,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         datastore_extend = 'rsynctask.rsync_task_extend'
         datastore_extend_context = 'rsynctask.rsync_task_extend_context'
         cli_namespace = 'task.rsync'
+        role_prefix = 'SNAPSHOT_TASK'
 
     ENTRY = Patch(
         'rsync_task_create', 'rsync_task_entry',
