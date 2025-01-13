@@ -168,6 +168,34 @@ def test_vm_creation_with_iso_volume(vm, iso_volume):
         call('virt.instance.delete', virt_instance_name, job=True)
 
 
+def test_vm_creation_with_zvol(virt_pool, vm, iso_volume):
+    virt_instance_name = 'test-zvol-vm'
+    zvol_name = f'{virt_pool["pool"]}/test_zvol'
+    call('zfs.dataset.create', {
+        'name': zvol_name,
+        'type': 'VOLUME',
+        'properties': {'volsize': '514MiB'}
+    })
+    call('virt.instance.create', {
+        'name': virt_instance_name,
+        'instance_type': 'VM',
+        'source_type': 'ZVOL',
+        'zvol_path': f'/dev/zvol/{zvol_name}',
+    }, job=True)
+
+    try:
+        vm_devices = call('virt.instance.device_list', virt_instance_name)
+        assert any(
+            device['name'] == 'ix_virt_zvol_root'
+            and device['boot_priority'] == 1
+            for device in vm_devices
+        ), vm_devices
+
+    finally:
+        call('virt.instance.delete', virt_instance_name, job=True)
+        call('zfs.dataset.delete', zvol_name)
+
+
 @pytest.mark.parametrize('iso_volume,error_msg', [
     (None, 'Value error, ISO volume must be set when source type is "ISO"'),
     ('test_iso123', 'Invalid ISO volume selected. Please select a valid ISO volume.'),
