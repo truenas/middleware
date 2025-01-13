@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import Secret
+from pydantic import RootModel, Secret
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, LongString,
                                   NonEmptyString, single_argument_args, single_argument_result)
@@ -18,14 +18,36 @@ __all__ = ["KeychainCredentialEntry",
            "KeychainCredentialSetupSSHConnectionArgs", "KeychainCredentialSetupSSHConnectionResult"]
 
 
-class KeychainCredentialEntry(BaseModel):
+class SSHKeyPair(BaseModel):
+    private_key: LongString | None = None
+    public_key: LongString | None = None
+
+
+class SSHCredentials(BaseModel):
+    host: str
+    port: int = 22
+    username: str = "root"
+    private_key: int
+    remote_host_key: str
+    connect_timeout: int = 10
+
+
+class SSHKeyPairEntry(BaseModel):
     id: int
     name: NonEmptyString
-    type: str
-    attributes: Secret[dict]
+    type: Literal["SSH_KEY_PAIR"]
+    attributes: Secret[SSHKeyPair]
 
 
-class KeychainCredentialCreate(KeychainCredentialEntry):
+class SSHCredentialsEntry(SSHKeyPairEntry):
+    type: Literal["SSH_CREDENTIALS"]
+    attributes: Secret[SSHCredentials]
+
+
+KeychainCredentialEntry = RootModel[SSHKeyPairEntry | SSHCredentialsEntry]
+
+
+class KeychainCredentialCreate(KeychainCredentialEntry): #fixme
     id: Excluded = excluded_field()
 
 

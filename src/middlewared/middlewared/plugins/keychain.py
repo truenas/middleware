@@ -452,14 +452,10 @@ class KeychainCredentialService(CRUDService):
 
         await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
 
-        if data["type"] not in TYPES:
-            verrors.add(f"{schema_name}.type", "Invalid type")
-            raise verrors
-        else:
-            type_ = TYPES[data["type"]]
+        type_ = TYPES[data["type"]]
 
-            attributes_verrors = validate_schema(type_.credentials_schema, data["attributes"])
-            verrors.add_child(f"{schema_name}.attributes", attributes_verrors)
+        attributes_verrors = validate_schema(type_.credentials_schema, data["attributes"])
+        verrors.add_child(f"{schema_name}.attributes", attributes_verrors)
 
         verrors.check()
 
