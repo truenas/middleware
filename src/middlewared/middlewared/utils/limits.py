@@ -74,6 +74,9 @@ def parse_message(authenticated: bool, msg_data: str) -> dict:
     try:
         method = message.get('method')
     except Exception:
+        if isinstance(message, list):
+            raise ValueError('Batch messages are not supported yet')
+
         raise ValueError('Invalid Message Format')
 
     if method in MSG_SIZE_EXTENDED_METHODS:
