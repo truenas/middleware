@@ -299,10 +299,35 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             if id_ != undefined:
                 app.send_error(id_, JSONRPCError.METHOD_NOT_FOUND.value, "Method does not exist")
             return
+        if not app.private_methods and method.private and not self._can_call_private_methods(app):
+            # FIXME: Eventually, prohibit this
+            self.middleware.logger.warning("Private method %r called on a connection without private_methods "
+                                           "enabled", method.name)
 
         asyncio.ensure_future(
             self.process_method_call(app, id_, method, message["params"])
         )
+
+    def _can_call_private_methods(self, app: RpcWebSocketApp):
+        if app.origin.uid == 33:
+            # Proxied HexOS calls
+            return False
+
+        if app.origin.loginuid() is None:
+            # System-initiated calls to `midclt`
+            return True
+
+        if ppids := app.origin.ppids():
+            try:
+                with open("/run/crond.pid") as f:
+                    cron_pid = int(f.read())
+            except (FileNotFoundError, ValueError):
+                return False
+
+            if cron_pid in ppids:
+                return True
+
+        return False
 
     async def process_method_call(self, app: RpcWebSocketApp, id_: Any, method: Method, params: list):
         try:
