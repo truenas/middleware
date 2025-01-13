@@ -50,6 +50,7 @@ class AppImageDockerhubRateLimitResult(BaseModel):
 class AppImageAuthConfig(BaseModel):
     username: str
     password: str
+    registry_uri: str | None = None
 
 
 @single_argument_args('image_pull')
