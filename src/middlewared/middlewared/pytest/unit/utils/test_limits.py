@@ -1,7 +1,8 @@
-import pytest
 import json
 
 from aiohttp.http_websocket import WSCloseCode
+import pytest
+
 from middlewared.utils import limits
 
 
@@ -49,3 +50,11 @@ def test__limit_authenticated_parse():
     data = {'msg': 'method', 'method': 'canary', 'params': ['x' * 1000]}
     parsed = limits.parse_message(True, json.dumps(data))
     assert parsed == data
+
+
+@pytest.mark.parametrize("value", [False, 0, "0", []])
+def test__invalid_type(value):
+    with pytest.raises(ValueError) as ve:
+        limits.parse_message(True, json.dumps(value))
+
+    assert ve.value.args[0] == "Invalid Message Format"
