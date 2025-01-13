@@ -25,3 +25,7 @@ AUTHMETHOD_LEGACY_MAP = InverseMap(**{
 
 # Currently SCST has this limit (scst_vdisk_dev->name)
 MAX_EXTENT_NAME_LEN = 64
+
+# We deliberately only support a subset of target parameters
+ISCSI_TARGET_PARAMETERS = ['QueuedCommands']
+ISCSI_HA_TARGET_PARAMETERS = ['QueuedCommands']

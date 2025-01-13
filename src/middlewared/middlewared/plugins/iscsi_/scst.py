@@ -2,6 +2,7 @@ import asyncio
 import pathlib
 
 from middlewared.service import Service
+from .utils import ISCSI_TARGET_PARAMETERS
 
 SCST_BASE = '/sys/kernel/scst_tgt'
 SCST_TARGETS_ISCSI_ENABLED_PATH = '/sys/kernel/scst_tgt/targets/iscsi/enabled'
@@ -144,3 +145,17 @@ class iSCSITargetService(Service):
         else:
             pathlib.Path(SCST_CONTROLLER_A_TARGET_GROUPS_STATE).write_text("nonoptimized\n")
             pathlib.Path(SCST_CONTROLLER_B_TARGET_GROUPS_STATE).write_text("active\n")
+
+    def reset_target_parameters(self, iqn, parameter_names):
+        """Reset the specified parameters to their default values."""
+        # Do some sanity checking
+        for param in parameter_names:
+            if param not in ISCSI_TARGET_PARAMETERS:
+                raise ValueError('Invalid parameter name supplied', param)
+        iqndir = pathlib.Path(f'{SCST_BASE}/targets/iscsi/{iqn}')
+        for param in parameter_names:
+            try:
+                (iqndir / pathlib.Path(param)).write_text(':default:\n')
+            except (FileNotFoundError, PermissionError):
+                # If we're not running, that's OK
+                pass

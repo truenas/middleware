@@ -30,6 +30,7 @@ class iSCSITargetModel(sa.Model):
     iscsi_target_mode = sa.Column(sa.String(20), default='iscsi')
     iscsi_target_auth_networks = sa.Column(sa.JSON(list))
     iscsi_target_rel_tgt_id = sa.Column(sa.Integer(), unique=True)
+    iscsi_target_iscsi_parameters = sa.Column(sa.JSON(), nullable=True)
 
 
 class iSCSITargetGroupModel(sa.Model):
@@ -323,8 +324,30 @@ class iSCSITargetService(CRUDService):
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
         # Then process the BACKUP config if we are HA and ALUA is enabled.
-        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+        alua_enabled = await self.middleware.call("iscsi.global.alua_enabled")
+        run_on_peer = alua_enabled and await self.middleware.call('failover.remote_connected')
+        if run_on_peer:
             await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
+
+        # NOTE: Any parameters whose keys are omitted will be removed from the config i.e. we
+        # will deliberately revert removed items to the SCST default value
+        old_params = set(old.get('iscsi_parameters', {}).keys())
+        if old_params:
+            new_params = set(new.get('iscsi_parameters', {}).keys())
+            reset_params = old_params - new_params
+            # Has the value just been set to None
+            for param in old_params & new_params:
+                if new['iscsi_parameters'][param] is None and old['iscsi_parameters'][param] is not None:
+                    reset_params.add(param)
+            if reset_params:
+                global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+                iqn = f'{global_basename}:{new["name"]}'
+                await self.middleware.call('iscsi.scst.reset_target_parameters', iqn, list(reset_params))
+                if alua_enabled:
+                    ha_iqn = f'{global_basename}:HA:{new["name"]}'
+                    await self.middleware.call('iscsi.scst.reset_target_parameters', ha_iqn, list(reset_params))
+                if run_on_peer:
+                    await self.middleware.call('failover.call_remote', 'iscsi.scst.reset_target_parameters', [iqn, list(reset_params)])
 
         return await self.get_instance(id_)
 
