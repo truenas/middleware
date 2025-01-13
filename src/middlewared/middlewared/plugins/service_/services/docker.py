@@ -24,9 +24,10 @@ class DockerService(SimpleService):
     async def start(self):
         try:
             await super().start()
-            timeout = 120  # We have this at 120 because HDDs are notorious and docker can take more time there
-            # First time when docker is started, it takes a bit more time to initialise itself properly
-            # and we need to have sleep here so that after start is called post_start is not dismissed
+            # We have a timeout for docker to start within 15 minutes of the above call, if that doesn't happen
+            # then we get into a failed start that docker failed to start. This has been necessary because
+            # HDDs have been notorious and can take quite some time for docker to start on boot.
+            timeout = 8 * 60  # We do 8 because we sleep for 2 secs - so in total it is 16 minutes
             while timeout > 0:
                 if not await self.middleware.call('service.started', 'docker'):
                     await asyncio.sleep(2)
