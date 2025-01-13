@@ -64,4 +64,4 @@ def test__invalid_type__list():
     with pytest.raises(ValueError) as ve:
         limits.parse_message(True, json.dumps([]))
 
-    assert ve.value.args[0] == "Batch messages are not supported yet"
+    assert ve.value.args[0] == "Batch messages are not supported at this time"
