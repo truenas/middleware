@@ -266,8 +266,21 @@ class VirtInstanceService(CRUDService):
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_create', verrors)
 
+        zvol_path = data.pop('zvol_path', None)
+        data_devices = data['devices'] or []
+        if data['source_type'] == 'ZVOL':
+            data['source_type'] = None
+            data_devices.append({
+                'name': 'ix_virt_zvol_root',
+                'dev_type': 'DISK',
+                'source': zvol_path,
+                'destination': None,
+                'readonly': False,
+                'boot_priority': 1,
+            })
+
         devices = {}
-        for i in (data['devices'] or []):
+        for i in data_devices:
             await self.middleware.call(
                 'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['instance_type'],
             )
