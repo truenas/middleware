@@ -151,7 +151,11 @@ class DocumentationGenerator:
             result += f"{method.doc}\n\n"
 
         result += f".. raw:: html\n\n"
-        result += textwrap.indent(f"<div id=\"json-schema\">" + method_schemas_html + "</div>", " " * 4) + "\n\n"
+        result += textwrap.indent(
+            f"<div id=\"json-schema\">" + method_schemas_html + "</div><br><br>", " " * 4
+        ) + "\n\n"
+
+        result += "*Required roles:* " + " | ".join(method.roles) + "\n\n"
 
         return result
 
