@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import Field, Secret
+from pydantic import Secret
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, LongString,
                                   NonEmptyString, single_argument_args, single_argument_result)
@@ -56,7 +56,7 @@ class KeychainCredentialDeleteOptions(BaseModel):
 
 class KeychainCredentialDeleteArgs(BaseModel):
     id: int
-    options: KeychainCredentialDeleteOptions = Field(default=KeychainCredentialDeleteOptions())
+    options: KeychainCredentialDeleteOptions = KeychainCredentialDeleteOptions()
 
 
 class KeychainCredentialDeleteResult(BaseModel):
@@ -81,9 +81,8 @@ class KeychainCredentialGetOfTypeArgs(BaseModel):
     type: str
 
 
-@single_argument_result
-class KeychainCredentialGetOfTypeResult(KeychainCredentialEntry):
-    pass
+class KeychainCredentialGetOfTypeResult(BaseModel):
+    result: KeychainCredentialEntry
 
 
 class KeychainCredentialGenerateSSHKeyPairArgs(BaseModel):
@@ -107,8 +106,7 @@ class KeychainCredentialRemoteSSHHostKeyScanResult(BaseModel):
     result: str
 
 
-@single_argument_args("keychain_remote_ssh_semiautomatic_setup")
-class KeychainCredentialRemoteSSHSemiautomaticSetupArgs(BaseModel):
+class KeychainCredentialRemoteSSHSemiautomaticSetup(BaseModel):
     name: NonEmptyString
     url: HttpUrl
     verify_ssl: bool = True
@@ -120,6 +118,10 @@ class KeychainCredentialRemoteSSHSemiautomaticSetupArgs(BaseModel):
     private_key: Secret[int]
     connect_timeout: int = 10
     sudo: bool = False
+
+
+class KeychainCredentialRemoteSSHSemiautomaticSetupArgs(BaseModel):
+    data: KeychainCredentialRemoteSSHSemiautomaticSetup
 
 
 class KeychainCredentialRemoteSSHSemiautomaticSetupResult(BaseModel):
@@ -149,9 +151,7 @@ class KeychainCredentialSetupSSHConnectionKeyExisting(BaseModel):
     existing_key_id: int
 
 
-class KeychainCredentialSetupSSHConnectionSemiAutomaticSetup(
-    KeychainCredentialRemoteSSHSemiautomaticSetupArgs.model_fields["keychain_remote_ssh_semiautomatic_setup"].annotation
-):
+class KeychainCredentialSetupSSHConnectionSemiAutomaticSetup(KeychainCredentialRemoteSSHSemiautomaticSetup):
     name: Excluded = excluded_field()
     private_key: Excluded = excluded_field()
 
@@ -165,6 +165,5 @@ class KeychainCredentialSetupSSHConnectionArgs(BaseModel):
     manual_setup: dict | None = None
 
 
-@single_argument_result
-class KeychainCredentialSetupSSHConnectionResult(KeychainCredentialEntry):
-    pass
+class KeychainCredentialSetupSSHConnectionResult(BaseModel):
+    result: KeychainCredentialEntry
