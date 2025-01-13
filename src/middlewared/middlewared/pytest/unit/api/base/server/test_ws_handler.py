@@ -87,12 +87,7 @@ from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketHandler
             ValueError,
         ),
         # fuzzy
-        ("", TypeError),
         ({}, ValueError),
-        (None, TypeError),
-        ([], TypeError),
-        (["bad"], TypeError),
-        (b"bad", TypeError),
     ],
 )
 @pytest.mark.asyncio

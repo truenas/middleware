@@ -8,9 +8,9 @@ from truenas_api_client import json as ejson
 
 
 # WARNING: below methods must _not_ be audited. c.f. comment in parse_message() below
-MSG_SIZE_EXTENDED_METHODS = set((
+MSG_SIZE_EXTENDED_METHODS = frozenset(
     'filesystem.file_receive',
-))
+)
 
 
 class MsgSizeLimit(enum.IntEnum):
@@ -39,7 +39,7 @@ class MsgSizeError(Exception):
 
 def parse_message(authenticated: bool, msg_data: str) -> dict:
     """
-    Check given message to determine whether it exceeds size limits
+    Parses the JSON message and ensures that it is a dict, and it does not exceed size limits.
 
     WARNING: RFC5424 (syslog) specifies that SDATA of message should never
     exceed 64 KiB. The default syslog-ng configuration will not parse messages
@@ -71,7 +71,15 @@ def parse_message(authenticated: bool, msg_data: str) -> dict:
 
     message = ejson.loads(msg_data)
 
-    if (method := message.get('method')) in MSG_SIZE_EXTENDED_METHODS:
+    try:
+        method = message.get('method')
+    except Exception:
+        if isinstance(message, list):
+            raise ValueError('Batch messages are not supported at this time')
+
+        raise ValueError('Invalid Message Format')
+
+    if method in MSG_SIZE_EXTENDED_METHODS:
         return message
 
     if datalen > MsgSizeLimit.AUTHENTICATED:
