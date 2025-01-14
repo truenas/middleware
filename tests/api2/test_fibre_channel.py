@@ -427,8 +427,14 @@ class TestFixtureFibreChannel:
 
             # Now we should be able to successfully map the target
             with fcport_create(fc_hosts[0]['alias'], target_id, True):
+                # Make sure we have a mapping
+                assert len(call('fcport.query', [['target.id', '=', target_id]])) == 1
+
                 # Delete the target
                 call('iscsi.target.delete', target_id, True, True)
+
+                # Make sure we DON'T have a mapping
+                assert len(call('fcport.query', [['target.id', '=', target_id]])) == 0
 
     def test_npiv_setting(self, fc_hosts):
         # Try to set NPIV to -1
