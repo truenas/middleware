@@ -1,6 +1,7 @@
+import abc
 from typing import Literal
 
-from pydantic import RootModel, Secret
+from pydantic import Secret
 
 from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, HttpUrl, LongString,
                                   NonEmptyString, single_argument_args, single_argument_result)
@@ -36,12 +37,22 @@ class SSHCredentials(BaseModel):
     connect_timeout: int = 10
 
 
-class SSHKeyPairEntry(BaseModel):
+class KeychainCredentialEntry(BaseModel, abc.ABC):
     id: int
     name: NonEmptyString
     """Distinguishes this Keychain Credential from others."""
+    type: Literal["SSH_KEY_PAIR", "SSH_CREDENTIALS"]
+    attributes: Secret[SSHKeyPair | SSHCredentials]
+
+
+class SSHKeyPairEntry(KeychainCredentialEntry):
     type: Literal["SSH_KEY_PAIR"]
     attributes: Secret[SSHKeyPair]
+
+
+class SSHCredentialsEntry(KeychainCredentialEntry):
+    type: Literal["SSH_CREDENTIALS"]
+    attributes: Secret[SSHCredentials]
 
 
 class KeychainCredentialCreateSSHKeyPairEntry(SSHKeyPairEntry):
@@ -50,11 +61,6 @@ class KeychainCredentialCreateSSHKeyPairEntry(SSHKeyPairEntry):
 
 class KeychainCredentialUpdateSSHKeyPairEntry(KeychainCredentialCreateSSHKeyPairEntry, metaclass=ForUpdateMetaclass):
     type: Excluded = excluded_field()
-
-
-class SSHCredentialsEntry(SSHKeyPairEntry):
-    type: Literal["SSH_CREDENTIALS"]
-    attributes: Secret[SSHCredentials]
 
 
 class KeychainCredentialCreateSSHCredentialsEntry(SSHCredentialsEntry):
@@ -68,7 +74,6 @@ class KeychainCredentialUpdateSSHCredentialsEntry(
     type: Excluded = excluded_field()
 
 
-KeychainCredentialEntry = RootModel[SSHKeyPairEntry | SSHCredentialsEntry]
 KeychainCredentialCreate = KeychainCredentialCreateSSHKeyPairEntry | KeychainCredentialCreateSSHCredentialsEntry
 KeychainCredentialUpdate = KeychainCredentialUpdateSSHKeyPairEntry | KeychainCredentialUpdateSSHCredentialsEntry
 
@@ -78,7 +83,7 @@ class KeychainCredentialCreateArgs(BaseModel):
 
 
 class KeychainCredentialCreateResult(BaseModel):
-    result: KeychainCredentialEntry
+    result: SSHKeyPairEntry | SSHCredentialsEntry
 
 
 class KeychainCredentialUpdateArgs(BaseModel):
@@ -87,7 +92,7 @@ class KeychainCredentialUpdateArgs(BaseModel):
 
 
 class KeychainCredentialUpdateResult(BaseModel):
-    result: KeychainCredentialEntry
+    result: SSHKeyPairEntry | SSHCredentialsEntry
 
 
 class KeychainCredentialDeleteOptions(BaseModel):
@@ -122,7 +127,7 @@ class KeychainCredentialGetOfTypeArgs(BaseModel):
 
 
 class KeychainCredentialGetOfTypeResult(BaseModel):
-    result: KeychainCredentialEntry
+    result: SSHKeyPairEntry | SSHCredentialsEntry
 
 
 class KeychainCredentialGenerateSSHKeyPairArgs(BaseModel):
