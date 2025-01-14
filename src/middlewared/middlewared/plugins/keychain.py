@@ -162,8 +162,8 @@ class SSHKeyPair(KeychainCredentialType):
             else:
                 attributes["public_key"] = public_key
 
-        if not attributes["public_key"]:
-            verrors.add(f"{schema_name}.public_key", "You must specify at least public key")
+        elif not attributes["public_key"]:
+            verrors.add(f"{schema_name}.public_key", "You must specify a key")
             return
 
         with tempfile.NamedTemporaryFile("w+") as f:
