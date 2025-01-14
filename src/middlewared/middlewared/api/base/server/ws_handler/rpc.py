@@ -283,13 +283,9 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
         except KeyError:
             message["params"] = []
 
-    async def process_message(self, app: RpcWebSocketApp, message: Any):
+    async def process_message(self, app: RpcWebSocketApp, message: dict):
         try:
             await self.validate_message(message)
-        except TypeError:
-            # TypeError here means message doesn't adhere to minimum
-            # format of the message (i.e. needs to be a dict)
-            app.send_error(None, JSONRPCError.INVALID_REQUEST.value, "Invalid Message Format")
         except ValueError as e:
             if (id_ := message.get("id", undefined)) != undefined:
                 app.send_error(id_, JSONRPCError.INVALID_REQUEST.value, str(e))

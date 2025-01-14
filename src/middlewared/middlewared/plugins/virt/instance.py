@@ -156,19 +156,19 @@ class VirtInstanceService(CRUDService):
                 verrors.add(f'{schema_name}.cpu', 'Cannot reserve more than system cores')
 
         if old:
-            if new.get('vnc_port'):
-                # If in update case, user specifies a vnc port, we automatically assume he wants to enable vnc
-                # this makes it easier to change existing vnc port and set it as well
-                new['enable_vnc'] = True
-            elif 'vnc_port' in new and new['vnc_port'] is None:
-                # This is the case to handle when we want to disable VNC
-                new['enable_vnc'] = False
-            elif 'vnc_port' not in new and old['vnc_enabled'] and old['vnc_port']:
-                # We want to handle the case where nothing has been changed on vnc attrs
-                new.update({
-                    'enable_vnc': True,
-                    'vnc_port': old['vnc_port'],
-                })
+            enable_vnc = new.get('enable_vnc')
+            if enable_vnc is False:
+                # User explicitly disabled VNC support, let's remove vnc port
+                new['vnc_port'] = None
+            elif enable_vnc is None:
+                if new.get('vnc_port'):
+                    verrors.add(f'{schema_name}.enable_vnc', 'Should be set when vnc_port is specified')
+                elif old['vnc_enabled'] and old['vnc_port']:
+                    # We want to handle the case where nothing has been changed on vnc attrs
+                    new.update({
+                        'enable_vnc': True,
+                        'vnc_port': old['vnc_port'],
+                    })
 
         if instance_type == 'VM' and new.get('enable_vnc'):
             if not new.get('vnc_port'):
@@ -213,7 +213,7 @@ class VirtInstanceService(CRUDService):
                 config['user.ix_old_raw_qemu_config'] = raw.get('raw.qemu', '') if raw else ''
                 config['raw.qemu'] = f'-vnc :{data["vnc_port"] - VNC_BASE_PORT}'
             if data.get('enable_vnc') is False:
-                config['user.ix_old_raw_qemu_config'] = raw['raw.qemu'] if raw else ''
+                config['user.ix_old_raw_qemu_config'] = raw.get('raw.qemu', '') if raw else ''
                 config['raw.qemu'] = ''
 
         return config

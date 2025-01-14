@@ -961,6 +961,7 @@ class AuthService(Service):
         Deauthenticates an app and if a token exists, removes that from the
         session.
         """
+        await self.middleware.event_source_manager.unsubscribe_app(app)
         await self.session_manager.logout(app)
         return True
 

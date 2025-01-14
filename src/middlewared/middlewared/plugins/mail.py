@@ -156,7 +156,7 @@ class MailService(ConfigService):
                 'This field is required when SMTP authentication is enabled',
             )
 
-        if not new['oauth']:
+        if not new['oauth'] or new['oauth']['provider'] == 'outlook':
             if not new['fromemail']:
                 verrors.add('mail_update.fromemail', 'This field is required')
 

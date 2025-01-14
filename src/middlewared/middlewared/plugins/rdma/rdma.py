@@ -132,5 +132,5 @@ class RDMAService(Service):
         is_ent = await self.middleware.call('system.is_enterprise')
         if is_ent and 'MINI' not in await self.middleware.call('truenas.get_chassis_hardware'):
             if await self.middleware.call('rdma.get_link_choices', True):
-                result.append(RDMAprotocols.NFS.value)
+                result.extend([RDMAprotocols.NFS.value, RDMAprotocols.ISER.value])
         return result

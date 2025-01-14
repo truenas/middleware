@@ -114,6 +114,7 @@ class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     cpu: str | None = None
     memory: MemoryType | None = None
     vnc_port: int | None = Field(ge=5900, le=65535)
+    enable_vnc: bool
 
 
 class VirtInstanceUpdateArgs(BaseModel):

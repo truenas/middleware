@@ -7,7 +7,7 @@ from .base import SimpleService
 
 class DockerService(SimpleService):
     name = 'docker'
-    etc = ['docker']
+    etc = ['app_registry', 'docker']
     systemd_unit = 'docker'
 
     async def before_start(self):
