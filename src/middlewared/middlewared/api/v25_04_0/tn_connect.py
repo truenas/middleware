@@ -26,6 +26,7 @@ class TNCEntry(BaseModel):
 class TNCUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
     ips: list[IPvAnyAddress]
+    # TODO: Ensure endpoints start with https:// and normalize them with a trailing slash if they don't have it
 
 
 class TNCUpdateResult(BaseModel):
