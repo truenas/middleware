@@ -1,4 +1,4 @@
-from pydantic import IPvAnyAddress
+from pydantic import IPvAnyAddress, model_validator
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args
 
@@ -26,7 +26,19 @@ class TNCEntry(BaseModel):
 class TNCUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
     ips: list[IPvAnyAddress]
-    # TODO: Ensure endpoints start with https:// and normalize them with a trailing slash if they don't have it
+    account_service_base_url: NonEmptyString
+    leca_service_base_url: NonEmptyString
+    tnc_base_url: NonEmptyString
+
+    @model_validator(mode='after')
+    def validate_attrs(self):
+        for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url'):
+            value = getattr(self, k)
+            if not value.startswith('https://'):
+                raise ValueError(f'{k} must start with https://')
+            if not value.endswith('/'):
+                setattr(self, k, value + '/')
+        return self
 
 
 class TNCUpdateResult(BaseModel):

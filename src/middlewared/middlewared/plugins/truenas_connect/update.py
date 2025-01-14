@@ -79,6 +79,13 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
                 'IPs cannot be changed when TrueNAS Connect is in a state other than disabled or completely configured'
             )
 
+        if data['enabled'] and old_config['enabled']:
+            for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url'):
+                if data[k] != old_config[k]:
+                    verrors.add(
+                        f'tn_connect_update.{k}', 'This field cannot be changed when TrueNAS Connect is enabled'
+                    )
+
         verrors.check()
 
     @api_method(TNCUpdateArgs, TNCUpdateResult)
@@ -88,6 +95,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         """
         config = await self.config()
         data = config | data
+
         await self.validate_data(config, data)
 
         db_payload = {'enabled': data['enabled'], 'ips': data['ips']}
