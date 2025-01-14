@@ -1,4 +1,4 @@
-from middlewared.api.base import BaseModel, single_argument_result
+from middlewared.api.base import BaseModel, single_argument_args, single_argument_result
 from middlewared.utils.auth import AuthMech, AuthResp
 from datetime import datetime
 from pydantic import Field, Secret
@@ -211,3 +211,12 @@ class AuthSetAttributeArgs(BaseModel):
 
 class AuthSetAttributeResult(BaseModel):
     result: Literal[None]
+
+
+@single_argument_args('generate_single_use_password')
+class AuthGenerateOnetimePasswordArgs(BaseModel):
+    username: str
+
+
+class AuthGenerateOnetimePasswordResult(BaseModel):
+    result: str
