@@ -121,14 +121,14 @@ def test_vm_props(vm):
     assert instance['vnc_port'] == VNC_PORT, instance
 
     # Going to unset VNC
-    call('virt.instance.update', VM_NAME, {'vnc_port': None}, job=True)
+    call('virt.instance.update', VM_NAME, {'enable_vnc': False}, job=True)
     instance = call('virt.instance.get_instance', VM_NAME, {'extra': {'raw': True}})
     assert instance['raw']['config']['user.ix_old_raw_qemu_config'] == f'-vnc :{VNC_PORT - 5900}'
     assert instance['vnc_enabled'] is False, instance
     assert instance['vnc_port'] is None, instance
 
     # Going to update port
-    call('virt.instance.update', VM_NAME, {'vnc_port': 6901}, job=True)
+    call('virt.instance.update', VM_NAME, {'vnc_port': 6901, 'enable_vnc': True}, job=True)
     instance = call('virt.instance.get_instance', VM_NAME, {'extra': {'raw': True}})
     assert instance['raw']['config'].get('user.ix_old_raw_qemu_config') is None
     assert instance['raw']['config']['raw.qemu'] == f'-vnc :{1001}'
@@ -162,7 +162,7 @@ def test_vnc_validation_on_vm_create(virt_pool, enable_vnc, vnc_port, error_msg)
              'source_type': None,
              'vnc_port': vnc_port,
              'enable_vnc': enable_vnc,
-         }, job=True)
+        }, job=True)
 
     assert ve.value.errors[0].errmsg == error_msg
 
