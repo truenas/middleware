@@ -264,6 +264,10 @@ class iSCSITargetService(CRUDService):
                     f'Auth network "{network}" is not a valid IPv4 or IPv6 network'
                 )
 
+    async def __remove_target_fcport(self, id_):
+        for fcport in await self.middleware.call('fcport.query', [['target.id', '=', id_]]):
+            await self.middleware.call('fcport.delete', fcport['id'])
+
     @api_method(
         IscsiTargetValidateNameArgs,
         IscsiTargetValidateNameResult,
@@ -375,6 +379,11 @@ class iSCSITargetService(CRUDService):
             await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'], force)
             if delete_extents:
                 await self.middleware.call('iscsi.extent.delete', target_to_extent['extent'], False, force)
+
+        # If the target was being used for FC then we may also need to clear the
+        # Fibre Channel port mapping
+        if target['mode'] in ['FC', 'BOTH']:
+            await self.__remove_target_fcport(id_)
 
         await self.middleware.call(
             'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target', '=', id_]]
