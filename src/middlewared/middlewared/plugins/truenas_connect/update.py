@@ -98,7 +98,10 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         await self.validate_data(config, data)
 
-        db_payload = {'enabled': data['enabled'], 'ips': data['ips']}
+        db_payload = {
+            'enabled': data['enabled'],
+            'ips': data['ips'],
+        } | {k: data[k] for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url') if data.get(k)}
         if config['enabled'] is False and data['enabled'] is True:
             # Finalization registration is triggered when claim token is generated
             # We make sure there is no pending claim token
