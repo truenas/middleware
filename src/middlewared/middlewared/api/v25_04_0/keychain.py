@@ -19,8 +19,10 @@ __all__ = ["KeychainCredentialEntry",
 
 
 class SSHKeyPair(BaseModel):
+    """At least one of the two keys must be provided on creation."""
     private_key: LongString | None = None
     public_key: LongString | None = None
+    """Can be omitted and automatically derived from the private key."""
 
 
 class SSHCredentials(BaseModel):
@@ -28,15 +30,26 @@ class SSHCredentials(BaseModel):
     port: int = 22
     username: str = "root"
     private_key: int
+    """Keychain Credential ID."""
     remote_host_key: str
+    """Can be discovered with keychaincredential.remote_ssh_host_key_scan."""
     connect_timeout: int = 10
 
 
 class SSHKeyPairEntry(BaseModel):
     id: int
     name: NonEmptyString
+    """Distinguishes this Keychain Credential from others."""
     type: Literal["SSH_KEY_PAIR"]
     attributes: Secret[SSHKeyPair]
+
+
+class KeychainCredentialCreateSSHKeyPairEntry(SSHKeyPairEntry):
+    id: Excluded = excluded_field()
+
+
+class KeychainCredentialUpdateSSHKeyPairEntry(KeychainCredentialCreateSSHKeyPairEntry, metaclass=ForUpdateMetaclass):
+    type: Excluded = excluded_field()
 
 
 class SSHCredentialsEntry(SSHKeyPairEntry):
@@ -44,15 +57,20 @@ class SSHCredentialsEntry(SSHKeyPairEntry):
     attributes: Secret[SSHCredentials]
 
 
-KeychainCredentialEntry = RootModel[SSHKeyPairEntry | SSHCredentialsEntry]
-
-
-class KeychainCredentialCreate(KeychainCredentialEntry): #fixme
+class KeychainCredentialCreateSSHCredentialsEntry(SSHCredentialsEntry):
     id: Excluded = excluded_field()
 
 
-class KeychainCredentialUpdate(KeychainCredentialCreate, metaclass=ForUpdateMetaclass):
+class KeychainCredentialUpdateSSHCredentialsEntry(
+    KeychainCredentialCreateSSHCredentialsEntry,
+    metaclass=ForUpdateMetaclass
+):
     type: Excluded = excluded_field()
+
+
+KeychainCredentialEntry = RootModel[SSHKeyPairEntry | SSHCredentialsEntry]
+KeychainCredentialCreate = KeychainCredentialCreateSSHKeyPairEntry | KeychainCredentialCreateSSHCredentialsEntry
+KeychainCredentialUpdate = KeychainCredentialUpdateSSHKeyPairEntry | KeychainCredentialUpdateSSHCredentialsEntry
 
 
 class KeychainCredentialCreateArgs(BaseModel):
@@ -100,7 +118,7 @@ class KeychainCredentialUsedByResult(BaseModel):
 
 class KeychainCredentialGetOfTypeArgs(BaseModel):
     id: int
-    type: str
+    type: Literal["SSH_KEY_PAIR", "SSH_CREDENTIALS"]
 
 
 class KeychainCredentialGetOfTypeResult(BaseModel):
@@ -147,7 +165,7 @@ class KeychainCredentialRemoteSSHSemiautomaticSetupArgs(BaseModel):
 
 
 class KeychainCredentialRemoteSSHSemiautomaticSetupResult(BaseModel):
-    result: KeychainCredentialEntry
+    result: SSHCredentialsEntry
 
 
 @single_argument_args("keychain_ssh_pair")
@@ -178,14 +196,26 @@ class KeychainCredentialSetupSSHConnectionSemiAutomaticSetup(KeychainCredentialR
     private_key: Excluded = excluded_field()
 
 
-@single_argument_args("setup_ssh_connection")
-class KeychainCredentialSetupSSHConnectionArgs(BaseModel):
+class SetupSSHConnectionManualSetup(SSHCredentials):
+    private_key: Excluded = excluded_field()
+
+
+class SetupSSHConnectionManual(BaseModel):
     private_key: KeychainCredentialSetupSSHConnectionKeyNew | KeychainCredentialSetupSSHConnectionKeyExisting
     connection_name: NonEmptyString
-    setup_type: Literal["SEMI-AUTOMATIC", "MANUAL"] = "MANUAL"
-    semi_automatic_setup: KeychainCredentialSetupSSHConnectionSemiAutomaticSetup | None = None
-    manual_setup: dict | None = None
+    setup_type: Literal["MANUAL"] = "MANUAL"
+    manual_setup: SSHCredentials
+
+
+class SetupSSHConnectionSemiautomatic(SetupSSHConnectionManual):
+    setup_type: Literal["SEMI-AUTOMATIC"] = "SEMI-AUTOMATIC"
+    semi_automatic_setup: KeychainCredentialSetupSSHConnectionSemiAutomaticSetup
+    manual_setup: Excluded = excluded_field()
+
+
+class KeychainCredentialSetupSSHConnectionArgs(BaseModel):
+    options: SetupSSHConnectionManual | SetupSSHConnectionSemiautomatic
 
 
 class KeychainCredentialSetupSSHConnectionResult(BaseModel):
-    result: KeychainCredentialEntry
+    result: SSHCredentialsEntry
