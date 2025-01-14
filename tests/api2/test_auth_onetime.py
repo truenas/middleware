@@ -42,7 +42,7 @@ def test_onetime_password_auth_reuse_fail(onetime_password):
         resp = c.call('auth.login_ex', {
             'mechanism': 'PASSWORD_PLAIN',
             'username': user.username,
-            'password', otpw
+            'password': otpw
         })
         assert resp['response_type'] == 'AUTH_ERR'
 
@@ -53,7 +53,7 @@ def test_onetime_password_generate_token_fail(onetime_password):
         resp = c.call('auth.login_ex', {
             'mechanism': 'PASSWORD_PLAIN',
             'username': user.username,
-            'password', otpw
+            'password': otpw
         })
         assert resp['response_type'] == 'SUCCESS'
 
