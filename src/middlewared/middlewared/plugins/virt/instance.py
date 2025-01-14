@@ -135,7 +135,6 @@ class VirtInstanceService(CRUDService):
     @private
     async def validate(self, new, schema_name, verrors, old=None):
         # Do not validate image_choices because its an expansive operation, just fail on creation
-
         instance_type = new.get('instance_type') or (old or {}).get('type')
         if instance_type and not await self.middleware.call('virt.global.license_active', instance_type):
             verrors.add(
@@ -169,6 +168,15 @@ class VirtInstanceService(CRUDService):
                         'enable_vnc': True,
                         'vnc_port': old['vnc_port'],
                     })
+        else:
+            # Creation case
+            if new['source_type'] == 'ISO' and not await self.middleware.call(
+                'virt.volume.query', [['content_type', '=', 'ISO'], ['id', '=', new['iso_volume']]]
+            ):
+                verrors.add(
+                    f'{schema_name}.iso_volume',
+                    'Invalid ISO volume selected. Please select a valid ISO volume.'
+                )
 
         if instance_type == 'VM' and new.get('enable_vnc'):
             if not new.get('vnc_port'):
@@ -267,7 +275,21 @@ class VirtInstanceService(CRUDService):
         await self.validate(data, 'virt_instance_create', verrors)
 
         devices = {}
-        for i in (data['devices'] or []):
+        data_devices = data['devices'] or []
+        iso_volume = data.pop('iso_volume', None)
+        if data['source_type'] == 'ISO':
+            data['source_type'] = None
+            data_devices.append({
+                'name': iso_volume,
+                'dev_type': 'DISK',
+                'pool': 'default',
+                'source': iso_volume,
+                'destination': None,
+                'readonly': False,
+                'boot_priority': 1,
+            })
+
+        for i in data_devices:
             await self.middleware.call(
                 'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['instance_type'],
             )
