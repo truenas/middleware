@@ -75,7 +75,8 @@ MemoryType: TypeAlias = Annotated[int, Field(strict=True, ge=33554432)]
 @single_argument_args('virt_instance_create')
 class VirtInstanceCreateArgs(BaseModel):
     name: Annotated[NonEmptyString, StringConstraints(max_length=200)]
-    source_type: Literal[None, 'IMAGE'] = 'IMAGE'
+    source_type: Literal[None, 'IMAGE', 'ISO'] = 'IMAGE'
+    iso_volume: NonEmptyString | None = None
     image: Annotated[NonEmptyString, StringConstraints(max_length=200)] | None = None
     remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
     instance_type: InstanceType = 'CONTAINER'
@@ -97,6 +98,9 @@ class VirtInstanceCreateArgs(BaseModel):
         else:
             if self.enable_vnc and self.vnc_port is None:
                 raise ValueError('VNC port must be set when VNC is enabled')
+
+            if self.source_type == 'ISO' and self.iso_volume is None:
+                raise ValueError('ISO volume must be set when source type is "ISO"')
 
         if self.source_type == 'IMAGE' and self.image is None:
             raise ValueError('Image must be set when source type is "IMAGE"')
