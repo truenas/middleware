@@ -120,10 +120,11 @@ def test_level2_onetime_password(sharing_admin_user):
             assert 'SHARING_ADMIN' in me['privilege']['roles']
             assert 'OTPW' in me['account_attributes']
 
-            # attempt to reuse ONETIME_PASSWORD should fail with AUTH_ERROR
-            resp = c.call('auth.login_ex', {
-                'mechanism': 'PASSWORD_PLAIN',
-                'username': sharing_admin_user.username,
-                'password': onetime_password
-            })
-            assert resp['response_type'] == 'AUTH_ERR'
+            # attempt to reuse the onetime password should fail with EOPNOTSUPP
+            # because we don't want to leak info about onetime password status.
+            with pytest.raises(CallError) as ce:
+                c.call('auth.login_ex', {
+                    'mechanism': 'PASSWORD_PLAIN',
+                    'username': sharing_admin_user.username,
+                    'password': onetime_password
+                })
