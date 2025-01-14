@@ -149,6 +149,41 @@ def test_vm_iso_volume(vm, iso_volume):
         assert iso_vol['used_by'] == [VM_NAME], iso_vol
 
 
+def test_vm_creation_with_iso_volume(vm, iso_volume):
+    virt_instance_name = 'test-iso-vm'
+    call('virt.instance.create', {
+        'name': virt_instance_name,
+        'instance_type': 'VM',
+        'source_type': 'ISO',
+        'iso_volume': ISO_VOLUME_NAME,
+    }, job=True)
+
+    try:
+        vm_devices = call('virt.instance.device_list', virt_instance_name)
+        assert any(device['name'] == ISO_VOLUME_NAME for device in vm_devices), vm_devices
+
+        iso_vol = call('virt.volume.get_instance', ISO_VOLUME_NAME)
+        assert iso_vol['used_by'] == [virt_instance_name], iso_vol
+    finally:
+        call('virt.instance.delete', virt_instance_name, job=True)
+
+
+@pytest.mark.parametrize('iso_volume,error_msg', [
+    (None, 'Value error, ISO volume must be set when source type is "ISO"'),
+    ('test_iso123', 'Invalid ISO volume selected. Please select a valid ISO volume.'),
+])
+def test_iso_param_validation_on_vm_create(virt_pool, iso_volume, error_msg):
+    with pytest.raises(ValidationErrors) as ve:
+        call('virt.instance.create', {
+             'name': 'test-iso-vm2',
+             'instance_type': 'VM',
+             'source_type': 'ISO',
+             'iso_volume': iso_volume
+        }, job=True)
+
+    assert ve.value.errors[0].errmsg == error_msg
+
+
 @pytest.mark.parametrize('enable_vnc,vnc_port,error_msg', [
     (True, None, 'Value error, VNC port must be set when VNC is enabled'),
     (True, 6901, 'VNC port is already in use by another virt instance'),
