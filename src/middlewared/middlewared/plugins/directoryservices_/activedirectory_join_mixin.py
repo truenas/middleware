@@ -201,7 +201,6 @@ class ADJoinMixin:
             SMBCmd.NET.value,
             '--use-kerberos', 'required',
             '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            '--realm', domain,
             '-d', '5',
             'ads', 'testjoin'
         ], check=False, capture_output=True)
