@@ -25,18 +25,15 @@ from middlewared.api.current import (
     KeychainCredentialSSHPairArgs, KeychainCredentialSSHPairResult,
 )
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
-from middlewared.schema import Int, Str, ValidationErrors
+from middlewared.schema import ValidationErrors
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
-from middlewared.validators import validate_schema
 
 
 class KeychainCredentialType:
     name = NotImplemented
     title = NotImplemented
-
-    credentials_schema = NotImplemented
 
     used_by_delegates = []
 
@@ -126,11 +123,6 @@ class SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate(KeychainCredentialUsedByD
 class SSHKeyPair(KeychainCredentialType):
     name = "SSH_KEY_PAIR"
     title = "SSH Key Pair"
-
-    credentials_schema = [
-        Str("private_key", null=True, default=None, max_length=None),
-        Str("public_key", null=True, default=None, max_length=None),
-    ]
 
     used_by_delegates = [
         SSHCredentialsSSHKeyPairUsedByDelegate,
@@ -230,15 +222,6 @@ class RsyncTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate):
 class SSHCredentials(KeychainCredentialType):
     name = "SSH_CREDENTIALS"
     title = "SSH credentials"
-
-    credentials_schema = [
-        Str("host", required=True),
-        Int("port", default=22),
-        Str("username", default="root"),
-        Int("private_key", required=True),
-        Str("remote_host_key", required=True),
-        Int("connect_timeout", default=10),
-    ]
 
     used_by_delegates = [
         ReplicationTaskSSHCredentialsUsedByDelegate,
@@ -387,7 +370,6 @@ class KeychainCredentialService(CRUDService):
                 ]
             }
         """
-
         instance = await self.get_instance(id_)
         audit_callback(instance["name"])
 
@@ -470,7 +452,6 @@ class KeychainCredentialService(CRUDService):
                 "params": []
             }
         """
-
         with tempfile.TemporaryDirectory() as tmpdirname:
             key = os.path.join(tmpdirname, "key")
             subprocess.check_call(["ssh-keygen", "-t", "rsa", "-f", key, "-N", "", "-q"])
