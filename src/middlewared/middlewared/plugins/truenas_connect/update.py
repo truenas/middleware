@@ -8,7 +8,7 @@ from middlewared.service import CallError, ConfigService, private, ValidationErr
 
 from .mixin import TNCAPIMixin
 from .status_utils import Status
-from .urls import ACCOUNT_SERVICE_URL
+from .urls import get_account_service_url
 from .utils import CLAIM_TOKEN_CACHE_KEY, get_account_id_and_system_id
 
 
@@ -139,7 +139,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         # We need to revoke the user account now
         response = await self._call(
-            ACCOUNT_SERVICE_URL.format(**creds), 'delete', headers=await self.auth_headers(config),
+            get_account_service_url(config).format(**creds), 'delete', headers=await self.auth_headers(config),
         )
         if response['error']:
             raise CallError(f'Failed to revoke account: {response["error"]}')
