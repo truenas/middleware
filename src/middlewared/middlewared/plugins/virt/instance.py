@@ -158,15 +158,35 @@ class VirtInstanceService(CRUDService):
             enable_vnc = new.get('enable_vnc')
             if enable_vnc is False:
                 # User explicitly disabled VNC support, let's remove vnc port
-                new['vnc_port'] = None
+                new.update({
+                    'vnc_port': None,
+                    'vnc_password': None,
+                })
+            elif enable_vnc is True:
+                if not old['vnc_port'] and not new.get('vnc_port'):
+                    verrors.add(f'{schema_name}.vnc_port', 'VNC port is required when VNC is enabled')
+                elif not new.get('vnc_port'):
+                    new['vnc_port'] = old['vnc_port']
+
+                if 'vnc_password' not in new:
+                    new['vnc_password'] = old['vnc_password']
             elif enable_vnc is None:
-                if new.get('vnc_port'):
-                    verrors.add(f'{schema_name}.enable_vnc', 'Should be set when vnc_port is specified')
-                elif old['vnc_enabled'] and old['vnc_port']:
+                for k in ('vnc_port', 'vnc_password'):
+                    if new.get(k):
+                        verrors.add(f'{schema_name}.enable_vnc', f'Should be set when {k!r} is specified')
+
+                if old['vnc_enabled'] and old['vnc_port']:
                     # We want to handle the case where nothing has been changed on vnc attrs
                     new.update({
                         'enable_vnc': True,
                         'vnc_port': old['vnc_port'],
+                        'vnc_password': old['vnc_password'],
+                    })
+                else:
+                    new.update({
+                        'enable_vnc': False,
+                        'vnc_port': None,
+                        'vnc_password': None,
                     })
         else:
             # Creation case
@@ -217,11 +237,20 @@ class VirtInstanceService(CRUDService):
             config['boot.autostart'] = str(data['autostart']).lower()
 
         if instance_type == 'VM':
+            config['user.ix_old_raw_qemu_config'] = raw.get('raw.qemu', '') if raw else ''
+            config['user.ix_vnc_config'] = json.dumps({
+                'vnc_enabled': data['enable_vnc'],
+                'vnc_port': data['vnc_port'],
+                'vnc_password': data['vnc_password'],
+            })
+
             if data.get('enable_vnc') and data.get('vnc_port'):
-                config['user.ix_old_raw_qemu_config'] = raw.get('raw.qemu', '') if raw else ''
-                config['raw.qemu'] = f'-vnc :{data["vnc_port"] - VNC_BASE_PORT}'
+                vnc_config = f'-vnc :{data["vnc_port"] - VNC_BASE_PORT}'
+                if data.get('vnc_password'):
+                    vnc_config = f'-object secret,id=vnc0,data={data["vnc_password"]} {vnc_config},password-secret=vnc0'
+
+                config['raw.qemu'] = vnc_config
             if data.get('enable_vnc') is False:
-                config['user.ix_old_raw_qemu_config'] = raw.get('raw.qemu', '') if raw else ''
                 config['raw.qemu'] = ''
 
         return config

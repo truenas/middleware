@@ -2,7 +2,7 @@ import asyncio
 import aiohttp
 import enum
 import httpx
-import re
+import json
 from collections.abc import Callable
 
 from .websocket import IncusWS
@@ -12,7 +12,6 @@ from middlewared.service import CallError
 
 SOCKET = '/var/lib/incus/unix.socket'
 HTTP_URI = 'http://unix.socket'
-RE_VNC_PORT = re.compile(r'vnc.*?:(\d+)\s*')
 VNC_BASE_PORT = 5900
 
 
@@ -98,15 +97,9 @@ def get_vnc_info_from_config(config: dict):
     vnc_config = {
         'vnc_enabled': False,
         'vnc_port': None,
+        'vnc_password': None,
     }
-    if not (raw_qemu_config := config.get('raw.qemu')) or 'vnc' not in raw_qemu_config:
+    if not (vnc_raw_config := config.get('user.ix_vnc_config')):
         return vnc_config
 
-    for flag in raw_qemu_config.split('-'):
-        if port := RE_VNC_PORT.findall(flag):
-            return {
-                'vnc_enabled': True,
-                'vnc_port': int(port[0]) + VNC_BASE_PORT,
-            }
-
-    return vnc_config
+    return json.loads(vnc_raw_config)
