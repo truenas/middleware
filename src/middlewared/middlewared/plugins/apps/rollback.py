@@ -1,7 +1,10 @@
+import logging
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppRollbackArgs, AppRollbackResult, AppRollbackVersionsArgs, AppRollbackVersionsResult,
 )
+
 from middlewared.service import job, Service, ValidationErrors
 
 from .compose_utils import compose_action
@@ -9,6 +12,9 @@ from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, up
 from .ix_apps.metadata import update_app_metadata
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.rollback import clean_newer_versions, get_rollback_versions
+
+
+logger = logging.getLogger('app_lifecycle')
 
 
 class AppService(Service):
@@ -29,6 +35,9 @@ class AppService(Service):
             verrors.add('options.app_version', 'Cannot rollback to same version')
         elif options['app_version'] not in get_rollback_versions(app_name, app['version']):
             verrors.add('options.app_version', 'Specified version is not available for rollback')
+
+        if app['state'] == 'STOPPED':
+            verrors.add('app_name', 'App must not be in stopped state to rollback')
 
         verrors.check()
 
@@ -58,6 +67,7 @@ class AppService(Service):
         self.middleware.send_event(
             'app.query', 'CHANGED', id=app_name, fields=self.middleware.call_sync('app.get_instance', app_name)
         )
+        self.middleware.call_sync('app.stop', app_name).wait_sync()
         try:
             if options['rollback_snapshot'] and (
                 app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name)

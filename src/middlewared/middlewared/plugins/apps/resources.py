@@ -5,6 +5,7 @@ from middlewared.api.current import (
     AppUsedPortsArgs, AppUsedPortsResult, AppIPChoicesArgs, AppIPChoicesResult, AppAvailableSpaceArgs,
     AppAvailableSpaceResult, AppGpuChoicesArgs, AppGpuChoicesResult,
 )
+from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
 from middlewared.service import private, Service
 from middlewared.utils.gpu import get_nvidia_gpus
 
@@ -114,3 +115,13 @@ class AppService(Service):
             await self.middleware.call('device.get_gpus'),
             await self.middleware.run_in_thread(get_nvidia_gpus),
         )
+
+    @private
+    async def get_hostpaths_datasets(self, app_name):
+        app_info = await self.middleware.call('app.get_instance', app_name)
+        host_paths = [
+            volume['source'] for volume in app_info['active_workloads']['volumes']
+            if volume['source'].startswith(f'{IX_APPS_MOUNT_PATH}/') is False
+        ]
+
+        return await self.middleware.run_in_thread(paths_to_datasets_impl, host_paths)
