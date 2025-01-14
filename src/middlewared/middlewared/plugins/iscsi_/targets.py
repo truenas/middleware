@@ -19,6 +19,7 @@ from middlewared.utils import UnexpectedFailure, run
 from .utils import AUTHMETHOD_LEGACY_MAP
 
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
+MODE_FC_CAPABLE = ['FC', 'BOTH']
 
 
 class iSCSITargetModel(sa.Model):
@@ -306,6 +307,12 @@ class iSCSITargetService(CRUDService):
         new = old.copy()
         new.update(data)
 
+        # Before we compress the data, work out whether we have
+        # just removed FC target mode
+        remove_fcport = all([old['mode'] != new['mode'],
+                             old['mode'] in MODE_FC_CAPABLE,
+                             new['mode'] not in MODE_FC_CAPABLE])
+
         verrors = ValidationErrors()
         await self.__validate(verrors, new, 'iscsi_target_create', old=old)
         verrors.check()
@@ -323,6 +330,9 @@ class iSCSITargetService(CRUDService):
         )
 
         await self.__save_groups(id_, groups, oldgroups)
+
+        if remove_fcport:
+            await self.__remove_target_fcport(id_)
 
         # First process the local (MASTER) config
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
@@ -382,7 +392,7 @@ class iSCSITargetService(CRUDService):
 
         # If the target was being used for FC then we may also need to clear the
         # Fibre Channel port mapping
-        if target['mode'] in ['FC', 'BOTH']:
+        if target['mode'] in MODE_FC_CAPABLE:
             await self.__remove_target_fcport(id_)
 
         await self.middleware.call(
