@@ -347,7 +347,8 @@ class AuthService(Service):
         if app and not app.authenticated_credentials.may_create_auth_token:
             raise CallError(
                 f'{app.authenticated_credentials.class_name()}: the current session type does '
-                'not support creation of authentication tokens.'
+                'not support creation of authentication tokens.',
+                errno.EOPNOTSUPP
             )
 
         if ttl is None:
