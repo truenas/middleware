@@ -17,6 +17,9 @@ class TNCEntry(BaseModel):
     status: NonEmptyString
     status_reason: NonEmptyString
     certificate: int | None
+    account_service_base_url: NonEmptyString
+    leca_service_base_url: NonEmptyString
+    tnc_base_url: NonEmptyString
 
 
 @single_argument_args('tn_connect_update')

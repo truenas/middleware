@@ -25,6 +25,15 @@ class TrueNASConnectModel(sa.Model):
     ips = sa.Column(sa.JSON(list), nullable=False)
     status = sa.Column(sa.String(255), default=Status.DISABLED.name, nullable=False)
     certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    account_service_base_url = sa.Column(
+        sa.String(255), nullable=False, default='https://account-service.dev.ixsystems.net/'
+    )
+    leca_service_base_url = sa.Column(
+        sa.String(255), nullable=False, default='https://leca-server.dev.ixsystems.net/'
+    )
+    tnc_base_url = sa.Column(
+        sa.String(255), nullable=False, default='https://truenas.connect.dev.ixsystems.net/'
+    )
 
 
 class TrueNASConnectService(ConfigService, TNCAPIMixin):
