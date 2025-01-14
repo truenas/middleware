@@ -128,3 +128,5 @@ def test_level2_onetime_password(sharing_admin_user):
                     'username': sharing_admin_user.username,
                     'password': onetime_password
                 })
+
+            assert ce.value.errno == errno.EOPNOTSUPP
