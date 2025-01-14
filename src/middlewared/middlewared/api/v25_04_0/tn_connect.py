@@ -1,6 +1,7 @@
 from pydantic import IPvAnyAddress, model_validator
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args
+from middlewared.utils.lang import undefined
 
 
 __all__ = [
@@ -34,9 +35,9 @@ class TNCUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     def validate_attrs(self):
         for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url'):
             value = getattr(self, k)
-            if not value.startswith('https://'):
+            if value != undefined and not value.startswith('https://'):
                 raise ValueError(f'{k} must start with https://')
-            if not value.endswith('/'):
+            if value != undefined and not value.endswith('/'):
                 setattr(self, k, value + '/')
         return self
 
