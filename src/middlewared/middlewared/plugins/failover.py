@@ -1254,8 +1254,8 @@ def remote_status_event(middleware, *args, **kwargs):
 
 
 async def setup(middleware):
-    middleware.event_register('failover.setup', 'Sent when failover is being setup.')
-    middleware.event_register('failover.status', 'Sent when failover status changes.')
+    middleware.event_register('failover.setup', 'Sent when failover is being setup.', roles=['FAILOVER_READ'])
+    middleware.event_register('failover.status', 'Sent when failover status changes.', roles=['FAILOVER_READ'])
     middleware.event_subscribe('system.ready', _event_system_ready)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
