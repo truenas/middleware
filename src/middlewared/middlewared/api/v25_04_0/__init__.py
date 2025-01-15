@@ -66,3 +66,4 @@ from .virt_instance import *  # noqa
 from .virt_volume import *  # noqa
 from .vm import *  # noqa
 from .vm_device import *  # noqa
+from .webui_enclosure import *  # noqa
