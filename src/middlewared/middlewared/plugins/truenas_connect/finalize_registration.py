@@ -7,7 +7,7 @@ from middlewared.service import job, Service
 
 from .mixin import TNCAPIMixin
 from .status_utils import Status
-from .urls import REGISTRATION_FINALIZATION_URI
+from .urls import get_registration_finalization_uri
 from .utils import CLAIM_TOKEN_CACHE_KEY
 
 
@@ -45,7 +45,7 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
 
             try:
                 logger.debug('Attempt %r: Polling for TNC registration finalization', try_num)
-                status = await self.poll_once(claim_token, system_id)
+                status = await self.poll_once(claim_token, system_id, config)
             except asyncio.CancelledError:
                 await self.status_update(
                     Status.REGISTRATION_FINALIZATION_TIMEOUT, 'TNC registration finalization polling has been cancelled'
@@ -98,9 +98,9 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
             await asyncio.sleep(self.POLLING_GAP_MINUTES * 60)
             config = await self.middleware.call('tn_connect.config')
 
-    async def poll_once(self, claim_token, system_id):
+    async def poll_once(self, claim_token, system_id, tnc_config):
         return await self._call(
-            REGISTRATION_FINALIZATION_URI, 'post',
+            get_registration_finalization_uri(tnc_config), 'post',
             payload={'system_id': system_id, 'claim_token': claim_token},
         )
 

@@ -8,7 +8,7 @@ from middlewared.service import CallError, ConfigService, private, ValidationErr
 
 from .mixin import TNCAPIMixin
 from .status_utils import Status
-from .urls import ACCOUNT_SERVICE_URL
+from .urls import get_account_service_url
 from .utils import CLAIM_TOKEN_CACHE_KEY, get_account_id_and_system_id
 
 
@@ -25,6 +25,15 @@ class TrueNASConnectModel(sa.Model):
     ips = sa.Column(sa.JSON(list), nullable=False)
     status = sa.Column(sa.String(255), default=Status.DISABLED.name, nullable=False)
     certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
+    account_service_base_url = sa.Column(
+        sa.String(255), nullable=False, default='https://account-service.dev.ixsystems.net/'
+    )
+    leca_service_base_url = sa.Column(
+        sa.String(255), nullable=False, default='https://leca-server.dev.ixsystems.net/'
+    )
+    tnc_base_url = sa.Column(
+        sa.String(255), nullable=False, default='https://truenas.connect.dev.ixsystems.net/'
+    )
 
 
 class TrueNASConnectService(ConfigService, TNCAPIMixin):
@@ -70,6 +79,13 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
                 'IPs cannot be changed when TrueNAS Connect is in a state other than disabled or completely configured'
             )
 
+        if data['enabled'] and old_config['enabled']:
+            for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url'):
+                if data[k] != old_config[k]:
+                    verrors.add(
+                        f'tn_connect_update.{k}', 'This field cannot be changed when TrueNAS Connect is enabled'
+                    )
+
         verrors.check()
 
     @api_method(TNCUpdateArgs, TNCUpdateResult)
@@ -79,9 +95,13 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         """
         config = await self.config()
         data = config | data
+
         await self.validate_data(config, data)
 
-        db_payload = {'enabled': data['enabled'], 'ips': data['ips']}
+        db_payload = {
+            'enabled': data['enabled'],
+            'ips': data['ips'],
+        } | {k: data[k] for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url')}
         if config['enabled'] is False and data['enabled'] is True:
             # Finalization registration is triggered when claim token is generated
             # We make sure there is no pending claim token
@@ -130,7 +150,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
         # We need to revoke the user account now
         response = await self._call(
-            ACCOUNT_SERVICE_URL.format(**creds), 'delete', headers=await self.auth_headers(config),
+            get_account_service_url(config).format(**creds), 'delete', headers=await self.auth_headers(config),
         )
         if response['error']:
             raise CallError(f'Failed to revoke account: {response["error"]}')

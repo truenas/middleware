@@ -4,7 +4,7 @@ import requests
 
 from middlewared.api.current import TrueNASConnectSchemaArgs
 from middlewared.plugins.truenas_connect.mixin import auth_headers
-from middlewared.plugins.truenas_connect.urls import LECA_DNS_URL, LECA_CLEANUP_URL
+from middlewared.plugins.truenas_connect.urls import get_leca_cleanup_url, get_leca_dns_url
 from middlewared.service import CallError
 
 from .base import Authenticator
@@ -37,8 +37,9 @@ class TrueNASConnectAuthenticator(Authenticator):
             'Performing %r challenge for %r domain with %r validation name and %r validation content',
             self.NAME, domain, validation_name, validation_content,
         )
+        tnc_config = self.middleware.call_sync('tn_connect.config_internal')
         try:
-            response = requests.post(LECA_DNS_URL, data=json.dumps({
+            response = requests.post(get_leca_dns_url(tnc_config), data=json.dumps({
                 'token': validation_content,
                 'hostnames': [domain],  # We should be using validation name here
             }), headers=auth_headers(self.attributes), timeout=30)
@@ -55,9 +56,10 @@ class TrueNASConnectAuthenticator(Authenticator):
 
     def _cleanup(self, domain, validation_name, validation_content):
         logger.debug('Cleaning up %r challenge for %r domain', self.NAME, domain)
+        tnc_config = self.middleware.call_sync('tn_connect.config_internal')
         try:
             requests.delete(
-                LECA_CLEANUP_URL, headers=auth_headers(self.attributes), timeout=30, data=json.dumps({
+                get_leca_cleanup_url(tnc_config), headers=auth_headers(self.attributes), timeout=30, data=json.dumps({
                     'hostnames': [validation_name],  # We use validation name here instead of domain as Zack advised
                 })
             )
