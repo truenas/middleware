@@ -186,10 +186,10 @@ def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=False):
     assert do_what in ['start', 'stop'], f"Requested invalid service state: {do_what}"
     test_res = {'start': True, 'stop': False}
 
+    retval = None
     if expect_to_pass:
-        res = call(f'service.{do_what}', 'nfs', {'silent': False})
+        call(f'service.{do_what}', 'nfs', {'silent': False})
         sleep(1)
-        return res
     else:
         with pytest.raises(CallError) as e:
             call(f'service.{do_what}', 'nfs', {'silent': False})
@@ -198,9 +198,10 @@ def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=False):
 
     # Confirm requested state
     if expect_to_pass:
-        res = call('service.started', 'nfs')
-        assert res == test_res[do_what], f"Expected {test_res[do_what]} for NFS started result, but found {res}"
-        return res
+        retval = call('service.started', 'nfs')
+        assert retval == test_res[do_what], f"Expected {test_res[do_what]} for NFS started result, but found {retval}"
+
+    return retval
 
 
 def get_client_nfs_port():
@@ -631,11 +632,9 @@ class TestNFSops:
                         # Test making change to non-'server' setting does not change managed_nfsd
                         assert call("nfs.config")['managed_nfsd'] == expected['managed']
                 else:
-                    with pytest.raises(ValidationErrors) as ve:
+                    with pytest.raises(ValidationErrors, match="Input should be"):
                         assert call("nfs.config")['managed_nfsd'] == expected['managed']
                         call("nfs.update", {"servers": nfsd})
-
-                    assert ve.value.errors == [ValidationError('nfs_update.servers', 'Should be between 1 and 256', 22)]
 
     def test_share_update(self, start_nfs, nfs_dataset_and_share):
         """
@@ -670,8 +669,8 @@ class TestNFSops:
             pp(["192.168.0.0/24", "192.168.1.0/24"], True, "", id="IPv4 - non-overlap"),
             pp(["192.168.0.0/16", "192.168.1.0/24"], False, "Overlapped", id="IPv4 - overlap wide"),
             pp(["192.168.0.0/24", "192.168.0.211/32"], False, "Overlapped", id="IPv4 - overlap narrow"),
-            pp(["192.168.0.0/64"], False, "does not appear to be an IPv4 or IPv6 network", id="IPv4 - invalid range"),
-            pp(["bogus_network"], False, "does not appear to be an IPv4 or IPv6 network", id="IPv4 - invalid format"),
+            pp(["192.168.0.0/64"], False, "do not appear to be valid IPv4 or IPv6", id="IPv4 - invalid range"),
+            pp(["bogus_network"], False, "do not appear to be valid IPv4 or IPv6", id="IPv4 - invalid format"),
             pp(["192.168.27.211"], True, "", id="IPv4 - auto-convert to CIDR"),
             # IPv6
             pp(["2001:0db8:85a3:0000:0000:8a2e::/96", "2001:0db8:85a3:0000:0000:8a2f::/96"],
@@ -681,7 +680,7 @@ class TestNFSops:
             pp(["2001:0db8:85a3:0000:0000:8a2e::/96", "2001:0db8:85a3:0000:0000:8a2e:0370:7334/128"],
                False, "Overlapped", id="IPv6 - overlap narrow"),
             pp(["2001:0db8:85a3:0000:0000:8a2e:0370:7334/256"],
-               False, "does not appear to be an IPv4 or IPv6 network", id="IPv6 - invalid range"),
+               False, "do not appear to be valid IPv4 or IPv6", id="IPv6 - invalid range"),
             pp(["2001:0db8:85a3:0000:0000:8a2e:0370:7334"],
                True, "", id="IPv6 - auto-convert to CIDR"),
         ],
@@ -704,9 +703,12 @@ class TestNFSops:
             if ExpectedToPass:
                 call('sharing.nfs.update', nfsid, {'networks': networklist})
             else:
-                with pytest.raises(ValidationErrors) as re:
+                with pytest.raises((ValueError, ValidationErrors)) as ve:
                     call('sharing.nfs.update', nfsid, {'networks': networklist})
-                assert FailureMsg in str(re.value.errors[0])
+                if ve.typename == "ValueError":
+                    assert FailureMsg in str(ve.value)
+                else:
+                    assert FailureMsg in str(ve.value.errors[0])
 
             parsed = parse_exports()
             assert len(parsed) == 1, str(parsed)
@@ -739,12 +741,12 @@ class TestNFSops:
             pp(["192.168.1.0/24"], False, "Unable to resolve", id="Invalid - name (network format)"),
             pp(["asdfdm[0-9].example.com", "-asdffail", "devteam-*.ixsystems.com", "*.asdffail.com"],
                False, "Unable to resolve", id="Mix - valid and invalid names"),
-            pp(["192.168.1.0", "192.168.1.0"], False, "not unique", id="Invalid - duplicate address"),
-            pp(["ixsystems.com", "ixsystems.com"], False, "not unique", id="Invalid - duplicate address"),
+            pp(["192.168.1.0", "192.168.1.0"], False, "Entries must be unique", id="Invalid - duplicate address"),
+            pp(["ixsystems.com", "ixsystems.com"], False, "Entries must be unique", id="Invalid - duplicate address"),
             pp(["ixsystems.com", "*"], True, "", id="Valid - mix name and everybody"),
             pp(["*", "*.ixsystems.com"], True, "", id="Valid - mix everybody and wildcard name"),
             pp(["192.168.1.o"], False, "Unable to resolve", id="Invalid - character in address"),
-            pp(["bad host"], False, "cannot contain spaces", id="Invalid - name with spaces"),
+            pp(["bad host"], False, "Cannot contain spaces", id="Invalid - name with spaces"),
             pp(["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], True, "", id="Valid - IPv6 address")
         ],
     )
@@ -776,9 +778,12 @@ class TestNFSops:
             if ExpectedToPass:
                 call('sharing.nfs.update', nfsid, {'hosts': hostlist})
             else:
-                with pytest.raises(ValidationErrors) as re:
+                with pytest.raises((ValueError, ValidationErrors)) as ve:
                     call('sharing.nfs.update', nfsid, {'hosts': hostlist})
-                assert FailureMsg in str(re.value.errors[0])
+                if ve.typename == "ValueError":
+                    assert FailureMsg in str(ve.value)
+                else:
+                    assert FailureMsg in str(ve.value.errors[0])
 
             parsed = parse_exports()
             assert len(parsed) == 1, str(parsed)
@@ -1305,9 +1310,24 @@ class TestNFSops:
         assert s.get('nfsd', {}).get('udp') is None, s
 
     @pytest.mark.parametrize('test_port', [
-        pp([["mountd", 618, None], ["rpcstatd", 871, None], ["rpclockd", 32803, None]], id="valid ports"),
-        pp([["rpcstatd", -21, 0], ["rpclockd", 328031, 0]], id="invalid ports"),
-        pp([["mountd", 20049, 1]], id="excluded ports"),
+        pp(
+            [
+                ["mountd", 618, None],
+                ["rpcstatd", 871, None],
+                ["rpclockd", 32803, None]
+            ], id="valid ports"
+        ),
+        pp(
+            [
+                ["rpcstatd", -21, "Input should be greater than"],
+                ["rpclockd", 328031, "Input should be less than"]
+            ], id="invalid ports"
+        ),
+        pp(
+            [
+                ["mountd", 20049, "reserved for internal use"]
+            ], id="excluded ports"
+        ),
     ])
     def test_service_ports(self, start_nfs, test_port):
         """
@@ -1324,9 +1344,6 @@ class TestNFSops:
         value = 1
         err = 2
 
-        # Error message snippets
-        errmsg = ["Should be between", "reserved for internal use"]
-
         # Test ports
         for port in test_port:
             port_name = port[name] + "_port"
@@ -1334,10 +1351,8 @@ class TestNFSops:
                 nfs_conf = call("nfs.update", {port_name: port[value]})
                 assert nfs_conf[port_name] == port[value]
             else:
-                with pytest.raises(ValidationErrors) as ve:
+                with pytest.raises(ValidationErrors, match=port[err]):
                     nfs_conf = call("nfs.update", {port_name: port[value]})
-                errStr = str(ve.value.errors[0])
-                assert errmsg[port[err]] in errStr
 
         # Compare DB with setting in /etc/nfs.conf.d/local.conf
         with nfs_config() as config_db:
@@ -1383,44 +1398,105 @@ class TestNFSops:
             res = call('nfs.get_debug')
             assert res == disabled
 
-    def test_bind_ip(self, start_nfs):
+    @pytest.mark.parametrize("param,errmsg", [
+        pp([""], None, id="basic settings"),
+        pp(["1.2.3.4"], "Cannot use", id="Not in choices"),
+        pp(["a.b.c.d"], "not appear to be", id="Not a valid IP"),
+        pp(["", "8.8.8.8"], "Cannot use", id="2nd entry not in choices"),
+        pp(["", "ixsystems.com"], "not appear to be", id="2nd entry not valid IP"),
+        pp(["", None], "Input should be", id="2nd entry is None"),
+        pp(["", "a.b.c.d", "ixsystems.com"], "not appear to be", id="Two invalid entries")
+    ])
+    def test_config_bindip(self, start_nfs, param, errmsg):
         '''
+        Test the bindip setting in nfs config
         This test requires a static IP address
-        * Test the private nfs.bindip call
-        * Test the actual bindip config setting
-        - Confirm setting in conf files
-        - Confirm service on IP address
+        * Success testing:
+            - Test the actual bindip config setting
+                o Confirm setting in conf files
+                o Confirm service on IP address
+        * Failure testing:
+            - Valid IP, but does not match choices
+            - Invalid IP
+            - Two entries, one valid the other not
         '''
         assert start_nfs is True
 
-        # Multiple restarts cause systemd failures.  Reset the systemd counters.
-        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
+        if errmsg is None:
+            # Multiple restarts cause systemd failures.  Reset the systemd counters.
+            reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
 
-        choices = call("nfs.bindip_choices")
-        assert truenas_server.ip in choices
+            choices = call("nfs.bindip_choices")
+            assert truenas_server.ip in choices
 
-        call("nfs.bindip", {"bindip": [truenas_server.ip]})
-        call("nfs.bindip", {"bindip": []})
+            # TODO: check with 'nmap -sT <IP>' from the runner.
+            with nfs_config() as db_conf:
 
-        # Test config with bindip.  Use choices from above
-        # TODO: check with 'nmap -sT <IP>' from the runner.
-        with nfs_config() as db_conf:
+                # Should have no bindip setting
+                nfs_conf = parse_server_config()
+                rpc_conf = parse_rpcbind_config()
+                assert db_conf['bindip'] == []
+                assert nfs_conf['nfsd'].get('host') is None
+                assert rpc_conf.get('-h') is None
 
-            # Should have no bindip setting
-            nfs_conf = parse_server_config()
-            rpc_conf = parse_rpcbind_config()
-            assert db_conf['bindip'] == []
-            assert nfs_conf['nfsd'].get('host') is None
-            assert rpc_conf.get('-h') is None
+                # Set bindip
+                call("nfs.update", {"bindip": [truenas_server.ip]})
 
-            # Set bindip
-            call("nfs.update", {"bindip": [truenas_server.ip]})
+                # Confirm we see it in the nfs and rpc conf files
+                nfs_conf = parse_server_config()
+                rpc_conf = parse_rpcbind_config()
+                assert truenas_server.ip in nfs_conf['nfsd'].get('host'), f"nfs_conf = {nfs_conf}"
+                assert truenas_server.ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
+        else:
+            # None of these should make it to the config
+            if param[0] == "":
+                param[0] = truenas_server.ip
 
-            # Confirm we see it in the nfs and rpc conf files
-            nfs_conf = parse_server_config()
-            rpc_conf = parse_rpcbind_config()
-            assert truenas_server.ip in nfs_conf['nfsd'].get('host'), f"nfs_conf = {nfs_conf}"
-            assert truenas_server.ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
+            # Test the config and the standalone private
+            with pytest.raises((ValueError, ValidationErrors)) as ve:
+                call("nfs.update", {"bindip": param})
+            if ve.typename == "ValueError":
+                assert errmsg in str(ve.value)
+            else:
+                assert errmsg in str(ve.value.errors[0])
+
+    @pytest.mark.parametrize("param,errmsg", [
+        pp([""], None, id="basic settings"),
+        pp(["a.b.c.d"], "not appear to be", id="Not a valid IP"),
+        pp(["", "ixsystems.com"], "not appear to be", id="2nd entry not valid IP"),
+        pp(["", None], "expected str instance", id="2nd entry is None"),
+        pp(["", "a.b.c.d", "ixsystems.com"], "not appear to be", id="Two invalid entries")
+    ])
+    def test_nfs_bindip(self, start_nfs, param, errmsg):
+        '''
+        This test requires a static IP address
+        - Test the private nfs.bindip call
+        * Failure testing:
+            - Valid IP, but does not match choices
+            - Invalid IP
+            - Two entries, one valid the other not
+        '''
+        assert start_nfs is True
+
+        if errmsg is None:
+            # Multiple restarts cause systemd failures.  Reset the systemd counters.
+            reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
+
+            call("nfs.bindip", {"bindip": [truenas_server.ip]})
+            call("nfs.bindip", {"bindip": []})
+
+        else:
+            # None of these should make it to the config
+            if param[0] == "":
+                param[0] = truenas_server.ip
+
+            # Test the config and the standalone private
+            with pytest.raises((ValueError, ValidationErrors, TypeError)) as ve:
+                call("nfs.bindip", {"bindip": param})
+            if ve.typename in ["ValueError", "TypeError"]:
+                assert errmsg in str(ve.value)
+            else:
+                assert errmsg in str(ve.value.errors[0])
 
     def test_v4_domain(self, start_nfs):
         '''
