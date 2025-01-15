@@ -56,15 +56,14 @@ class WebUIMainDashboardService(Service):
         dashboard after a user logs in.
         """
         info = self.sys_info_impl()
-        try:
-            info['remote_info'] = self.middleware.call_sync(
-                'failover.call_remote', 'webui.main.dashboard.sys_info_impl'
-            )
-        except Exception:
-            # could be ENOMETHOD (fresh upgrade) or we could
-            # be on a non-HA system. Either way, doesn't matter
-            # we just need to try and get the information and
-            # set the key to None if we fail
-            info['remote_info'] = None
-
+        info['remote'] = None
+        if self.middleware.call_sync('failover.licensed'):
+            try:
+                info['remote_info'] = self.middleware.call_sync(
+                    'failover.call_remote', 'webui.main.dashboard.sys_info_impl'
+                )
+            except Exception:
+                # could be ENOMETHOD (fresh upgrade) or we could
+                # be on a non-HA system. Either way, doesn't matter
+                pass
         return info
