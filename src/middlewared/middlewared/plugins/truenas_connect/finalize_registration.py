@@ -106,6 +106,9 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
 
 
 async def check_status(middleware):
+    if not await middleware.call('failover.is_single_master_node'):
+        return
+
     tn_config = await middleware.call('tn_connect.config')
     if tn_config['status'] == Status.REGISTRATION_FINALIZATION_WAITING.name:
         logger.debug(
