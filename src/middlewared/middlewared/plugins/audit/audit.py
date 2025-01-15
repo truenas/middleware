@@ -39,7 +39,7 @@ from middlewared.validators import Range
 
 
 ALL_AUDITED = [svc[0] for svc in AUDITED_SERVICES]
-BULK_AUDIT = ['SMB']
+BULK_AUDIT = ['SMB', 'SYSTEM']
 NON_BULK_AUDIT = [svc for svc in ALL_AUDITED if svc not in BULK_AUDIT]
 
 # We set the refquota limit
