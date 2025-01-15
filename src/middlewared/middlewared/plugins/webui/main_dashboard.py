@@ -1,7 +1,11 @@
 from datetime import datetime, timezone
 from time import clock_gettime, CLOCK_MONOTONIC_RAW, time
 
-from middlewared.schema import accepts
+from middlewared.api import api_method
+from middlewared.api.current import (
+    WebUIMainDashboardSysInfoArgs,
+    WebUIMainDashboardSysInfoResult
+)
 from middlewared.service import Service
 from middlewared.utils import sw_version, sw_codename
 
@@ -40,7 +44,11 @@ class WebUIMainDashboardService(Service):
             'datetime': datetime.fromtimestamp(time(), timezone.utc),
         }
 
-    @accepts(roles=['READONLY_ADMIN'])
+    @api_method(
+        WebUIMainDashboardSysInfoArgs,
+        WebUIMainDashboardSysInfoResult,
+        roles=['READONLY_ADMIN']
+    )
     def sys_info(self):
         """This endpoint was designed to be exclusively
         consumed by the webUI team. This is what makes
