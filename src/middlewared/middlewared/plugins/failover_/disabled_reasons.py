@@ -17,7 +17,7 @@ class FailoverDisabledReasonsService(Service):
     LAST_DISABLED_REASONS = None
     SYSTEM_DATASET_SETUP_IN_PROGRESS = False
 
-    @accepts()
+    @accepts(roles=['FAILOVER_READ'])
     @returns(List("reasons", items=[Str("reason")]))
     @pass_app()
     def reasons(self, app):
@@ -211,5 +211,6 @@ async def setup(middleware):
     middleware.event_register(
         "failover.disabled.reasons",
         "Sent when failover status reasons change.",
+        roles=['FAILOVER_READ']
     )
     middleware.register_hook("sysdataset.setup", systemdataset_setup_hook)
