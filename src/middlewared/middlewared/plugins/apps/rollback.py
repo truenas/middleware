@@ -17,7 +17,12 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @api_method(AppRollbackArgs, AppRollbackResult, roles=['APPS_WRITE'])
+    @api_method(
+        AppRollbackArgs, AppRollbackResult,
+        audit='App: Rollback',
+        audit_extended=lambda app_name, options: app_name,
+        roles=['APPS_WRITE']
+    )
     @job(lock=lambda args: f'app_rollback_{args[0]}')
     def rollback(self, job, app_name, options):
         """

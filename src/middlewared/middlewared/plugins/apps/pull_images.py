@@ -28,7 +28,12 @@ class AppService(Service):
 
         return images
 
-    @api_method(AppPullImagesArgs, AppPullImagesResult, roles=['APPS_WRITE'])
+    @api_method(
+        AppPullImagesArgs, AppPullImagesResult,
+        audit='App: Pulling Images for',
+        audit_extended=lambda app_name, options=None: app_name,
+        roles=['APPS_WRITE']
+    )
     @job(lock=lambda args: f'pull_images_{args[0]}')
     def pull_images(self, job, app_name, options):
         """

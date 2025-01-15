@@ -17,7 +17,12 @@ class DockerService(Service):
     class Config:
         cli_namespace = 'app.docker'
 
-    @api_method(DockerRestoreBackupArgs, DockerRestoreBackupResult, roles=['DOCKER_WRITE'])
+    @api_method(
+        DockerRestoreBackupArgs, DockerRestoreBackupResult,
+        audit='Docker: Restoring Backup',
+        audit_extended=lambda backup_name: backup_name,
+        roles=['DOCKER_WRITE']
+    )
     @job(lock='docker_restore_backup')
     def restore_backup(self, job, backup_name):
         """
