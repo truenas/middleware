@@ -139,6 +139,9 @@ class TNCACMEService(Service):
 
 
 async def check_status(middleware):
+    if not await middleware.call('failover.is_single_master_node'):
+        return
+
     tnc_config = await middleware.call('tn_connect.config')
     if tnc_config['status'] == Status.CERT_GENERATION_IN_PROGRESS.name:
         logger.debug('Middleware started and cert generation is in progress, initiating process')
