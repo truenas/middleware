@@ -144,10 +144,16 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         if creds is None:
             return
 
-        # If we have a cert set, we will try to revoke it
+        # If we have a cert set, we will try to revoke it and also update system to use system cert
         if config['certificate']:
+            logger.debug('Setting up self generated cert for UI')
+            await self.middleware.call('certificate.setup_self_signed_cert_for_ui')
+            logger.debug('Restarting nginx to consume self generated cert')
+            await self.middleware.call('system.general.ui_restart', 2)
+            logger.debug('Revoking existing TNC cert')
             await self.middleware.call('tn_connect.acme.revoke_cert')
 
+        logger.debug('Revoking TNC user account')
         # We need to revoke the user account now
         response = await self._call(
             get_account_service_url(config).format(**creds), 'delete', headers=await self.auth_headers(config),
