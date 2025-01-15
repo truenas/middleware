@@ -13,6 +13,7 @@ import os
 import subprocess
 import time
 
+from contextlib import contextmanager
 from .krb5_constants import krb_tkt_flag, krb5ccache, KRB_ETYPE, KRB_Keytab
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
@@ -106,6 +107,15 @@ def __tmp_krb5_keytab() -> str:
         tmpfile.close()
 
         return tmpfile.name
+
+
+@contextmanager
+def temporary_keytab():
+    kt = __tmp_krb5_keytab()
+    try:
+        yield kt
+    finally:
+        os.remove(kt)
 
 
 def parse_klist_output(klistbuf: str) -> list:
@@ -436,3 +446,38 @@ def extract_from_keytab(
 
     os.remove(tmp_keytab)
     return kt_bytes
+
+
+def concatenate_keytab_data(keytab_data: list[bytes]) -> bytes:
+    """
+    Concatenate a list of keytab bytes into a single kerbros keytab.
+    We base64 encode keytabs stored in the our config file, which means
+    the should be decoded prior to generating the list passed to this
+    function as an argument.
+    """
+
+    # First create temporary keytab that will hold the unified keytab data
+    with temporary_keytab() as unified:
+        for data in keytab_data:
+            # then write each keytab in the list to temporary files
+            with temporary_keytab() as kt:
+                with open(kt, 'wb') as f:
+                    f.write(data)
+                    f.flush()
+
+                # then copy from the keytab data to the destination by having
+                # ktutil read the data, then write it. This validates that
+                # the data is actually a keberos keytab.
+                kt_copy = subprocess.run(
+                    ['ktutil'],
+                    input=f'rkt {kt}\nwkt {unified}'.encode(),
+                    capture_output=True
+                )
+                if kt_copy.stderr:
+                    raise RuntimeError('Failed to concatenate keytabs: %s',
+                                       kt_copy.stderr.decode())
+
+        # get bytes of the unified keytab before allowing contextmanager
+        # to delete it
+        with open(unified, 'rb') as f:
+            return f.read()
