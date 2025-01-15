@@ -31,9 +31,9 @@ def read_system_boot_id(middleware):
 
 async def setup(middleware):
     lifecycle_conf.SYSTEM_BOOT_ID = await middleware.run_in_thread(read_system_boot_id, middleware)
-    middleware.event_register('system.ready', 'Finished boot process')
-    middleware.event_register('system.reboot', 'Started reboot process')
-    middleware.event_register('system.shutdown', 'Started shutdown process')
+    middleware.event_register('system.ready', 'Finished boot process', roles=['SYSTEM_GENERAL_READ'])
+    middleware.event_register('system.reboot', 'Started reboot process', roles=['SYSTEM_GENERAL_READ'])
+    middleware.event_register('system.shutdown', 'Started shutdown process', roles=['SYSTEM_GENERAL_READ'])
 
     await middleware.run_in_thread(firstboot, middleware)
 

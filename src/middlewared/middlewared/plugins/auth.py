@@ -1063,5 +1063,5 @@ async def check_permission(middleware, app):
 
 
 def setup(middleware):
-    middleware.event_register('auth.sessions', 'Notification of new and removed sessions.')
+    middleware.event_register('auth.sessions', 'Notification of new and removed sessions.', roles=['FULL_ADMIN'])
     middleware.register_hook('core.on_connect', check_permission)

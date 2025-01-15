@@ -453,5 +453,6 @@ class PrivilegeService(CRUDService):
 async def setup(middleware):
     middleware.event_register(
         'user.web_ui_login_disabled',
-        'Sent when root user login to the Web UI is disabled.'
+        'Sent when root user login to the Web UI is disabled.',
+        roles=['FULL_ADMIN']
     )
