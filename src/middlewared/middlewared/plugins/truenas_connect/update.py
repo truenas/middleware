@@ -161,4 +161,6 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
 
 
 async def setup(middleware):
-    middleware.event_register('tn_connect.config', 'Sent on TrueNAS Connect configuration changes')
+    middleware.event_register(
+        'tn_connect.config', 'Sent on TrueNAS Connect configuration changes', roles=['TRUENAS_CONNECT_READ']
+    )
