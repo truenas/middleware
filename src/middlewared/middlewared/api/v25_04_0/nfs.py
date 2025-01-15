@@ -1,9 +1,7 @@
-import re
-from ipaddress import ip_address, ip_network
 from typing import Annotated, Literal, TypeAlias
 
 from pydantic import (
-    Field, AfterValidator, field_validator
+    Field, AfterValidator
 )
 
 from middlewared.api.base import (
@@ -38,7 +36,7 @@ class NfsEntry(BaseModel):
     """ Force Kerberos authentication on NFS shares. """
     v4_domain: str
     """ Specify a DNS domain (NFSv4 only). """
-    bindip: list[NonEmptyString] = []  # Using IPvAnyAddress creates JSON serialization errors
+    bindip: list[NonEmptyString] = []
     """ Limit the server IP addresses available for NFS. """
     mountd_port: NfsTcpPort
     """ Specify the mountd port binding. """
@@ -62,19 +60,19 @@ class NfsEntry(BaseModel):
     rdma: bool
     """ Enable or disable NFS over RDMA.  Requires RDMA capable NIC. """
 
-    @field_validator('bindip')
-    @classmethod
-    def check_bind_ip(cls, field_value: list):
-        """ Custom validator for IP addresses to avoid JSON serialization errors """
-        not_valid = []
-        for v in field_value:
-            try:
-                ip_address(v)
-            except ValueError:
-                not_valid.append(v)
-        if not_valid:
-            raise ValueError(f"The following do not appear to be valid IPv4 or IPv6 addresses: {not_valid}")
-        return field_value
+    # @field_validator('bindip')
+    # @classmethod
+    # def check_bind_ip(cls, field_value: list):
+    #     """ Custom validator for IP addresses to avoid JSON serialization errors """
+    #     not_valid = []
+    #     for v in field_value:
+    #         try:
+    #             ip_address(v)
+    #         except ValueError:
+    #             not_valid.append(v)
+    #     if not_valid:
+    #         raise ValueError(f"The following do not appear to be valid IPv4 or IPv6 addresses: {not_valid}")
+    #     return field_value
 
 
 @single_argument_args('nfs_update')
@@ -129,49 +127,49 @@ class NfsShareEntry(BaseModel):
     locked: bool | None
     """ Lock state of the dataset (if encrypted). """
 
-    @field_validator('networks', 'hosts')
-    @classmethod
-    def check_unique(cls, field_value: list):
-        """ Custom validator to confirm unique entries """
-        s = set()
-        not_unique = []
-        for v in field_value:
-            if v in s:
-                not_unique.append(v)
-            s.add(v)
-        if not_unique:
-            raise ValueError(f"Entries must be unique, the following are not: {not_unique}")
-        return field_value
+    # @field_validator('networks', 'hosts')
+    # @classmethod
+    # def check_unique(cls, field_value: list):
+    #     """ Custom validator to confirm unique entries """
+    #     s = set()
+    #     not_unique = []
+    #     for v in field_value:
+    #         if v in s:
+    #             not_unique.append(v)
+    #         s.add(v)
+    #     if not_unique:
+    #         raise ValueError(f"Entries must be unique, the following are not: {not_unique}")
+    #     return field_value
 
-    @field_validator('networks')
-    @classmethod
-    def check_valid_network(cls, field_value: list):
-        """ Custom validator for IP networks """
-        not_valid = []
-        for v in field_value:
-            try:
-                ip_network(v, strict=False)
-            except ValueError:
-                not_valid.append(v)
-        if not_valid:
-            raise ValueError(f"The following do not appear to be valid IPv4 or IPv6 networks: {not_valid}")
+    # @field_validator('networks')
+    # @classmethod
+    # def check_valid_network(cls, field_value: list):
+    #     """ Custom validator for IP networks """
+    #     not_valid = []
+    #     for v in field_value:
+    #         try:
+    #             ip_network(v, strict=False)
+    #         except ValueError:
+    #             not_valid.append(v)
+    #     if not_valid:
+    #         raise ValueError(f"The following do not appear to be valid IPv4 or IPv6 networks: {not_valid}")
 
-        # Perform the courtesy conversion to a valid network format
-        field_value = [str(ip_network(fv, strict=False)) for fv in field_value]
-        return field_value
+    #     # Perform the courtesy conversion to a valid network format
+    #     field_value = [str(ip_network(fv, strict=False)) for fv in field_value]
+    #     return field_value
 
-    @field_validator('hosts')
-    @classmethod
-    def no_spaces_or_quotes(cls, field_value: list):
-        """ Custom validator for host field:  No spaces or quotes """
-        regex = re.compile(r'.*[\s"]')
-        not_valid = []
-        for v in field_value:
-            if v is not None and regex.match(v):
-                not_valid.append(v)
-        if not_valid:
-            raise ValueError(f"Cannot contain spaces or quotes: {not_valid}")
-        return field_value
+    # @field_validator('hosts')
+    # @classmethod
+    # def no_spaces_or_quotes(cls, field_value: list):
+    #     """ Custom validator for host field:  No spaces or quotes """
+    #     regex = re.compile(r'.*[\s"]')
+    #     not_valid = []
+    #     for v in field_value:
+    #         if v is not None and regex.match(v):
+    #             not_valid.append(v)
+    #     if not_valid:
+    #         raise ValueError(f"Cannot contain spaces or quotes: {not_valid}")
+    #     return field_value
 
 
 class NfsShareCreate(NfsShareEntry):

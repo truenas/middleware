@@ -23,6 +23,9 @@ from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
+from middlewared.plugins.nfs_.validators import (
+    confirm_unique, sanitize_networks, sanitize_hosts, validate_bind_ip
+)
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 
 # Support the nfsv4recoverydir procfs entry.  This may deprecate.
@@ -223,7 +226,9 @@ class NFSService(SystemServiceService):
 
     @private
     async def bindip(self, config):
+        validate_bind_ip(config['bindip'])
         bindip = [addr for addr in config['bindip'] if addr not in ['0.0.0.0', '::']]
+
         if bindip:
             found = False
             for iface in await self.middleware.call('interface.query'):
@@ -552,6 +557,11 @@ class SharingNFSService(SharingService):
                 )
             """
 
+        # Data validation and sanitization
+        self.sanitize_share_networks_and_hosts(data, schema_name, verrors)
+        # User must clean these up before proceeding
+        verrors.check()
+
         # need to make sure that the nfs share is within the zpool mountpoint
         await check_path_resides_within_volume(
             verrors, self.middleware, f'{schema_name}.path', data['path'],
@@ -614,6 +624,27 @@ class SharingNFSService(SharingService):
                     f"{schema_name}.security",
                     f"The following security flavor(s) require NFSv4 to be enabled: {','.join(v4_sec)}."
                 )
+
+    @private
+    def sanitize_share_networks_and_hosts(self, data, schema_name, verrors):
+        """
+        Perform input sanitation
+            - Network and host must contain unique items.
+            - Network must contain network types.
+            - Host must not include quotes or spaces.
+        """
+
+        # Flag non-unique items in hosts and networks
+        confirm_unique(schema_name, 'networks', data, verrors)
+        confirm_unique(schema_name, 'hosts', data, verrors)
+
+        # Validate networks and sanitize: Convert IP addresses CIDR format
+        data['networks'] = sanitize_networks(
+            schema_name, data['networks'], verrors, strict_test=False, convert=True
+        )
+
+        # Validate hosts: no spaces or quotes
+        sanitize_hosts(schema_name, data['hosts'], verrors)
 
     @private
     def validate_share_networks(self, networks, dns_cache, schema_name, verrors):
