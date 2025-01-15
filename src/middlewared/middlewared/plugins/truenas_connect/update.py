@@ -95,13 +95,16 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         """
         config = await self.config()
         data = config | data
+        # We have to normalize url fields as they are url objects atm
+        url_fields = {k: str(data[k]) for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url')}
+        data = data | url_fields
 
         await self.validate_data(config, data)
 
         db_payload = {
             'enabled': data['enabled'],
             'ips': data['ips'],
-        } | {k: data[k] for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url') if data.get(k)}
+        } | url_fields
         if config['enabled'] is False and data['enabled'] is True:
             # Finalization registration is triggered when claim token is generated
             # We make sure there is no pending claim token

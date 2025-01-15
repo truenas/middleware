@@ -1,6 +1,9 @@
-from pydantic import IPvAnyAddress, model_validator
+from typing import Annotated
+
+from pydantic import HttpUrl, IPvAnyAddress, AfterValidator
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args
+from middlewared.api.base.validators import https_only_check
 from middlewared.utils.lang import undefined
 
 
@@ -8,6 +11,9 @@ __all__ = [
     'TNCEntry', 'TNCGetRegistrationURIArgs', 'TNCGetRegistrationURIResult', 'TNCUpdateArgs', 'TNCUpdateResult',
     'TNCGenerateClaimTokenArgs', 'TNCGenerateClaimTokenResult', 'TNCIPChoicesArgs', 'TNCIPChoicesResult',
 ]
+
+
+HttpsURL = Annotated[HttpUrl, AfterValidator(https_only_check)]
 
 
 class TNCEntry(BaseModel):
@@ -27,19 +33,9 @@ class TNCEntry(BaseModel):
 class TNCUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool
     ips: list[IPvAnyAddress]
-    account_service_base_url: NonEmptyString
-    leca_service_base_url: NonEmptyString
-    tnc_base_url: NonEmptyString
-
-    @model_validator(mode='after')
-    def validate_attrs(self):
-        for k in ('account_service_base_url', 'leca_service_base_url', 'tnc_base_url'):
-            value = getattr(self, k)
-            if value != undefined and not value.startswith('https://'):
-                raise ValueError(f'{k} must start with https://')
-            if value != undefined and not value.endswith('/'):
-                setattr(self, k, value + '/')
-        return self
+    account_service_base_url: HttpsURL
+    leca_service_base_url: HttpsURL
+    tnc_base_url: HttpsURL
 
 
 class TNCUpdateResult(BaseModel):
