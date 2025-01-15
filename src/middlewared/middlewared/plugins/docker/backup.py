@@ -26,7 +26,12 @@ class DockerService(Service):
     class Config:
         cli_namespace = 'app.docker'
 
-    @api_method(DockerBackupArgs, DockerBackupResult, roles=['DOCKER_WRITE'])
+    @api_method(
+        DockerBackupArgs, DockerBackupResult,
+        audit='Docker: Backup',
+        audit_extended=lambda backup_name: backup_name,
+        roles=['DOCKER_WRITE']
+    )
     @job(lock='docker_backup')
     def backup(self, job, backup_name):
         """
@@ -114,7 +119,12 @@ class DockerService(Service):
 
         return backups
 
-    @api_method(DockerDeleteBackupArgs, DockerDeleteBackupResult, roles=['DOCKER_WRITE'])
+    @api_method(
+        DockerDeleteBackupArgs, DockerDeleteBackupResult,
+        audit='Docker: Deleting Backup',
+        audit_extended=lambda backup_name: backup_name,
+        roles=['DOCKER_WRITE']
+    )
     def delete_backup(self, backup_name):
         """
         Delete `backup_name` app backup.

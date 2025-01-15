@@ -95,7 +95,12 @@ class AppService(CRUDService):
         app = self.get_instance__sync(app_name)
         return get_current_app_config(app_name, app['version'])
 
-    @api_method(AppConvertToCustomArgs, AppConvertToCustomResult, roles=['APPS_WRITE'])
+    @api_method(
+        AppConvertToCustomArgs, AppConvertToCustomResult,
+        audit='App: Converting',
+        audit_extended=lambda app_name: f'{app_name} to custom app',
+        roles=['APPS_WRITE']
+    )
     @job(lock=lambda args: f'app_start_{args[0]}')
     async def convert_to_custom(self, job, app_name):
         """
@@ -103,7 +108,12 @@ class AppService(CRUDService):
         """
         return await self.middleware.call('app.custom.convert', job, app_name)
 
-    @api_method(AppCreateArgs, AppCreateResult, roles=['APPS_WRITE'])
+    @api_method(
+        AppCreateArgs, AppCreateResult,
+        audit='App: Creating',
+        audit_extended=lambda data: data['app_name'],
+        roles=['APPS_WRITE']
+    )
     @job(lock=lambda args: f'app_create_{args[0].get("app_name")}')
     def do_create(self, job, data):
         """
@@ -204,7 +214,12 @@ class AppService(CRUDService):
         self.middleware.call_sync('app.metadata.generate').wait_sync(raise_error=True)
         self.middleware.send_event('app.query', 'REMOVED', id=app_name)
 
-    @api_method(AppUpdateArgs, AppUpdateResult, roles=['APPS_WRITE'])
+    @api_method(
+        AppUpdateArgs, AppUpdateResult,
+        audit='App: Updating',
+        audit_extended=lambda app_name, data: app_name,
+        roles=['APPS_WRITE']
+    )
     @job(lock=lambda args: f'app_update_{args[0]}')
     def do_update(self, job, app_name, data):
         """
@@ -254,7 +269,12 @@ class AppService(CRUDService):
         job.set_progress(100, f'{progress_keyword} completed for {app_name!r}')
         return self.get_instance__sync(app_name)
 
-    @api_method(AppDeleteArgs, AppDeleteResult, roles=['APPS_WRITE'])
+    @api_method(
+        AppDeleteArgs, AppDeleteResult,
+        audit='App: Deleting',
+        audit_extended=lambda app_name, options=None: app_name,
+        roles=['APPS_WRITE']
+    )
     @job(lock=lambda args: f'app_delete_{args[0]}')
     def do_delete(self, job, app_name, options):
         """

@@ -47,7 +47,7 @@ class DockerService(ConfigService):
         data['dataset'] = applications_ds_name(data['pool']) if data.get('pool') else None
         return data
 
-    @api_method(DockerUpdateArgs, DockerUpdateResult)
+    @api_method(DockerUpdateArgs, DockerUpdateResult, audit='Docker: Updating Configurations')
     @job(lock='docker_update')
     async def do_update(self, job, data):
         """

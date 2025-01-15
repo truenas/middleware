@@ -19,7 +19,12 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @api_method(AppUpgradeArgs, AppUpgradeResult, roles=['APPS_WRITE'])
+    @api_method(
+        AppUpgradeArgs, AppUpgradeResult,
+        audit='App: Upgrading',
+        audit_extended=lambda app_name, options=None: app_name,
+        roles=['APPS_WRITE']
+    )
     @job(lock=lambda args: f'app_upgrade_{args[0]}')
     def upgrade(self, job, app_name, options):
         """
