@@ -10,7 +10,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, Service
 
 from .status_utils import Status
-from .urls import REGISTRATION_URI
+from .urls import get_registration_uri
 from .utils import CLAIM_TOKEN_CACHE_KEY
 
 
@@ -86,4 +86,4 @@ class TrueNASConnectService(Service):
             'token': claim_token,
         }
 
-        return f'{REGISTRATION_URI}?{urlencode(query_params)}'
+        return f'{get_registration_uri(config)}?{urlencode(query_params)}'

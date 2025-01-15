@@ -3,7 +3,7 @@ import logging
 from middlewared.service import CallError, Service
 
 from .mixin import TNCAPIMixin
-from .urls import HOSTNAME_URL
+from .urls import get_hostname_url
 from .utils import get_account_id_and_system_id
 
 
@@ -32,7 +32,7 @@ class TNCHostnameService(Service, TNCAPIMixin):
                 'hostname_configured': False,
             }
 
-        resp = (await self.call(HOSTNAME_URL.format(**creds), 'get')) | {'base_domain': None}
+        resp = (await self.call(get_hostname_url(config).format(**creds), 'get')) | {'base_domain': None}
         resp['hostname_details'] = resp.pop('response')
         for domain in resp['hostname_details']:
             if len(domain.rsplit('.', maxsplit=4)) == 5 and domain.startswith('*.'):
@@ -54,5 +54,5 @@ class TNCHostnameService(Service, TNCAPIMixin):
 
         creds = get_account_id_and_system_id(tnc_config)
         return await self.call(
-            HOSTNAME_URL.format(**creds), 'put', payload={'ips': ips},
+            get_hostname_url(tnc_config).format(**creds), 'put', payload={'ips': ips},
         )
