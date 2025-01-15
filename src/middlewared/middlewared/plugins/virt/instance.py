@@ -274,12 +274,22 @@ class VirtInstanceService(CRUDService):
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_create', verrors)
 
-        devices = {}
         data_devices = data['devices'] or []
         iso_volume = data.pop('iso_volume', None)
-        if data['source_type'] == 'ISO':
+        root_device_to_add = None
+        zvol_path = data.pop('zvol_path', None)
+        if data['source_type'] == 'ZVOL':
             data['source_type'] = None
-            data_devices.append({
+            root_device_to_add = {
+                'name': 'ix_virt_zvol_root',
+                'dev_type': 'DISK',
+                'source': zvol_path,
+                'destination': None,
+                'readonly': False,
+                'boot_priority': 1,
+            }
+        elif data['source_type'] == 'ISO':
+            root_device_to_add = {
                 'name': iso_volume,
                 'dev_type': 'DISK',
                 'pool': 'default',
@@ -287,8 +297,13 @@ class VirtInstanceService(CRUDService):
                 'destination': None,
                 'readonly': False,
                 'boot_priority': 1,
-            })
+            }
 
+        if root_device_to_add:
+            data['source_type'] = None
+            data_devices.append(root_device_to_add)
+
+        devices = {}
         for i in data_devices:
             await self.middleware.call(
                 'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['instance_type'],
