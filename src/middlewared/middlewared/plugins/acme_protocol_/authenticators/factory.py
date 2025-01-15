@@ -3,6 +3,7 @@ import errno
 from middlewared.service_exception import CallError
 
 from .cloudflare import CloudFlareAuthenticator
+from .digitalocean import DigitalOceanAuthenticator
 from .ovh import OVHAuthenticator
 from .route53 import Route53Authenticator
 from .shell import ShellAuthenticator
@@ -29,6 +30,7 @@ class AuthenticatorFactory:
 auth_factory = AuthenticatorFactory()
 for authenticator in [
     CloudFlareAuthenticator,
+    DigitalOceanAuthenticator,
     Route53Authenticator,
     OVHAuthenticator,
     ShellAuthenticator,
