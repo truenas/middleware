@@ -1,5 +1,5 @@
 from middlewared.api import api_method
-from middleware.api.current import (
+from middlewared.api.current import (
     WebUIEnclosureDashboardArgs,
     WebUIEnclosureDashboardResult
 )
