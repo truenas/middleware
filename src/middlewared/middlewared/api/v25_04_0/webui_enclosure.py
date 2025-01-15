@@ -6,4 +6,4 @@ class WebUIEnclosureDashboardArgs(BaseModel):
 
 
 class WebUIEnclosureDashboardResult(BaseModel):
-    result: list[dict] | list
+    result: list[dict]
