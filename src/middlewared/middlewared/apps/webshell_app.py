@@ -73,10 +73,11 @@ class ShellWorkerThread(threading.Thread):
         elif options.get("virt_instance_id"):
             command = [
                 "/usr/bin/incus",
-                "exec",
-                options["virt_instance_id"],
-                options["command"],
+                "console" if options.get("use_console") else "exec",
+                options["virt_instance_id"]
             ]
+            if options.get("command"):
+                command.append(options["command"])
             if not as_root:
                 command = ["/usr/bin/sudo", "-H", "-u", username] + command
             return command, not as_root
@@ -277,17 +278,23 @@ class ShellApplication:
                     )
                 if options.get("virt_instance_id"):
                     try:
-                        await self.middleware.call(
+                        virt_instance = await self.middleware.call(
                             "virt.instance.get_instance", options["virt_instance_id"]
                         )
-                        if not options.get("command"):
-                            options["command"] = (
-                                await self.middleware.call(
-                                    "virt.instance.get_shell",
-                                    options["virt_instance_id"],
-                                )
-                                or "/bin/sh"
-                            )
+                        options["instance_type"] = virt_instance["type"]
+                        if virt_instance["type"] == "VM":
+                            if virt_instance["status"] != "RUNNING":
+                                raise CallError("Virt instance must be running.")
+                            options.setdefault("use_console", True)
+                            if options["use_console"]:
+                                options["command"] = None
+                            else:
+                                options["command"] = options.get("command") or "/bin/sh"
+                        elif not options.get("command"):
+                            command = await self.middleware.call("virt.instance.get_shell", options["virt_instance_id"])
+                            if not command:
+                                command = "/bin/sh"
+                            options["command"] = command
                     except InstanceNotFound:
                         raise CallError("Provided instance id is not valid")
                 if options.get("app_name"):
