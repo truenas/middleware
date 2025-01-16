@@ -17,6 +17,7 @@ from .common import *  # noqa
 from .config import *  # noqa
 from .core import *  # noqa
 from .cronjob import *  # noqa
+from .crypto_cert_profiles import *  # noqa
 from .device import *  # noqa
 from .disk import *  # noqa
 from .docker import *  # noqa
