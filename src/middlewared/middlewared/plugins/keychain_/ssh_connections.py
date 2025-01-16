@@ -1,9 +1,37 @@
 from middlewared.api import api_method
-from middlewared.api.current import KeychainCredentialSetupSSHConnectionArgs, KeychainCredentialSetupSSHConnectionResult
+from middlewared.api.current import (
+    KeychainCredentialSetupSSHConnectionArgs, KeychainCredentialSetupSSHConnectionResult
+)
 from middlewared.service import Service, ValidationErrors
 
 
 class KeychainCredentialService(Service):
+
+    async def _validate_options(self, options):
+        """
+        If `generate_key` is set, ensure that no key with the given name already exists.
+        Otherwise, ensure that a key with the given `existing_key_id` does exist.
+
+        Also ensure that a key with the name `connection_name` does not exist yet.
+        """
+        pkey_config_ = options['private_key']
+        schema_name = 'setup_ssh_connection'
+        verrors = ValidationErrors()
+
+        if pkey_config_['generate_key']:
+            if await self.middleware.call('keychaincredential.query', [['name', '=', pkey_config_['name']]]):
+                verrors.add(f'{schema_name}.private_key.name', 'Is already in use by another SSH Key pair')
+
+        elif not await self.middleware.call(
+            'keychaincredential.query',
+            [['id', '=', pkey_config_['existing_key_id']]]
+        ):
+            verrors.add(f'{schema_name}.private_key.existing_key_id', 'SSH Key Pair not found')
+
+        if await self.middleware.call('keychaincredential.query', [['name', '=', options['connection_name']]]):
+            verrors.add(f'{schema_name}.connection_name', 'Is already in use by another Keychain Credential')
+
+        verrors.check()
 
     @api_method(
         KeychainCredentialSetupSSHConnectionArgs,
@@ -14,63 +42,32 @@ class KeychainCredentialService(Service):
     )
     async def setup_ssh_connection(self, options):
         """
-        Creates a SSH Connection performing the following steps:
+        Creates an SSH Connection performing the following steps:
 
-        1) Generating SSH Key Pair if required
-        2) Setting up SSH Credentials based on `setup_type`
+        1) Generate SSH Key Pair if required
+        2) Set up SSH Credentials based on `setup_type`
 
-        In case (2) fails, it will be ensured that SSH Key Pair generated ( if applicable ) in the process is
+        In case (2) fails, it will be ensured that SSH Key Pair generated (if applicable) in the process is
         removed.
         """
-        verrors = ValidationErrors()
-        pkey_config = options['private_key']
-        schema_name = 'setup_ssh_connection'
-        if pkey_config['generate_key']:
-            if pkey_config.get('existing_key_id'):
-                verrors.add(
-                    f'{schema_name}.private_key.existing_key_id', 'Should not be specified when "generate_key" is set'
-                )
-            if not pkey_config.get('name'):
-                verrors.add(f'{schema_name}.private_key.name', 'Must be set when SSH Key pair is to be generated')
-            elif await self.middleware.call('keychaincredential.query', [['name', '=', pkey_config['name']]]):
-                verrors.add(f'{schema_name}.private_key.name', 'Is already in use by another SSH Key pair')
-        else:
-            if not pkey_config.get('existing_key_id'):
-                verrors.add(
-                    f'{schema_name}.private_key.existing_key_id',
-                    'Must be specified when SSH Key pair is not to be generated'
-                )
-            elif not await self.middleware.call(
-                'keychaincredential.query', [['id', '=', pkey_config['existing_key_id']]]
-            ):
-                verrors.add(f'{schema_name}.private_key.existing_key_id', 'SSH Key Pair not found')
+        await self._validate_options(options)
 
-        mapping = {'SEMI-AUTOMATIC': 'semi_automatic_setup', 'MANUAL': 'manual_setup'}
-        for setup_type, opposite_type in filter(
-            lambda x: x[0] == options['setup_type'], [['SEMI-AUTOMATIC', 'MANUAL'], ['MANUAL', 'SEMI-AUTOMATIC']]
-        ):
-            if not options[mapping[setup_type]]:
-                verrors.add(f'{schema_name}.{mapping[setup_type]}', f'Must be specified for {setup_type!r} setup')
-            if options[mapping[opposite_type]]:
-                verrors.add(
-                    f'{schema_name}.{mapping[opposite_type]}', f'Must not be specified for {setup_type!r} setup'
-                )
-
-        if await self.middleware.call('keychaincredential.query', [['name', '=', options['connection_name']]]):
-            verrors.add(f'{schema_name}.connection_name', 'Is already in use by another Keychain Credential')
-
-        verrors.check()
+        pkey_config_ = options['private_key']
+        gen_key_ = pkey_config_['generate_key']
 
         # We are going to generate a SSH Key pair now if required
-        if pkey_config['generate_key']:
+        if gen_key_:
             key_config = await self.middleware.call('keychaincredential.generate_ssh_key_pair')
             ssh_key_pair = await self.middleware.call('keychaincredential.create', {
-                'name': pkey_config['name'],
+                'name': pkey_config_['name'],
                 'type': 'SSH_KEY_PAIR',
                 'attributes': key_config,
             })
         else:
-            ssh_key_pair = await self.middleware.call('keychaincredential.get_instance', pkey_config['existing_key_id'])
+            ssh_key_pair = await self.middleware.call(
+                'keychaincredential.get_instance',
+                pkey_config_['existing_key_id']
+            )
 
         try:
             if options['setup_type'] == 'SEMI-AUTOMATIC':
@@ -93,7 +90,7 @@ class KeychainCredentialService(Service):
                     }
                 )
         except Exception:
-            if pkey_config['generate_key']:
+            if gen_key_:
                 await self.middleware.call('keychaincredential.delete', ssh_key_pair['id'])
             raise
         else:

@@ -25,18 +25,15 @@ from middlewared.api.current import (
     KeychainCredentialSSHPairArgs, KeychainCredentialSSHPairResult,
 )
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
-from middlewared.schema import Int, Str, ValidationErrors
+from middlewared.schema import ValidationErrors
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
-from middlewared.validators import validate_schema
 
 
 class KeychainCredentialType:
     name = NotImplemented
     title = NotImplemented
-
-    credentials_schema = NotImplemented
 
     used_by_delegates = []
 
@@ -127,11 +124,6 @@ class SSHKeyPair(KeychainCredentialType):
     name = "SSH_KEY_PAIR"
     title = "SSH Key Pair"
 
-    credentials_schema = [
-        Str("private_key", null=True, default=None, max_length=None),
-        Str("public_key", null=True, default=None, max_length=None),
-    ]
-
     used_by_delegates = [
         SSHCredentialsSSHKeyPairUsedByDelegate,
         SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate,
@@ -170,8 +162,8 @@ class SSHKeyPair(KeychainCredentialType):
             else:
                 attributes["public_key"] = public_key
 
-        if not attributes["public_key"]:
-            verrors.add(f"{schema_name}.public_key", "You must specify at least public key")
+        elif not attributes["public_key"]:
+            verrors.add(f"{schema_name}.public_key", "You must specify a key")
             return
 
         with tempfile.NamedTemporaryFile("w+") as f:
@@ -231,15 +223,6 @@ class SSHCredentials(KeychainCredentialType):
     name = "SSH_CREDENTIALS"
     title = "SSH credentials"
 
-    credentials_schema = [
-        Str("host", required=True),
-        Int("port", default=22),
-        Str("username", default="root"),
-        Int("private_key", required=True),
-        Str("remote_host_key", required=True),
-        Int("connect_timeout", default=10),
-    ]
-
     used_by_delegates = [
         ReplicationTaskSSHCredentialsUsedByDelegate,
         RsyncTaskSSHCredentialsUsedByDelegate,
@@ -281,25 +264,11 @@ class KeychainCredentialService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create a Keychain Credential
+        Create a Keychain Credential.
 
-        Create a Keychain Credential of any type.
-        Every Keychain Credential has a `name` which is used to distinguish it from others.
         The following `type`s are supported:
          * `SSH_KEY_PAIR`
-           Which `attributes` are:
-           * `private_key`
-           * `public_key` (which can be omitted and thus automatically derived from private key)
-           At least one attribute is required.
-
          * `SSH_CREDENTIALS`
-           Which `attributes` are:
-           * `host`
-           * `port` (default 22)
-           * `username` (default root)
-           * `private_key` (Keychain Credential ID)
-           * `remote_host_key` (you can use `keychaincredential.remote_ssh_host_key_scan` do discover it)
-           * `connect_timeout` (default 10)
 
         .. examples(websocket)::
 
@@ -319,7 +288,6 @@ class KeychainCredentialService(CRUDService):
                 }]
             }
         """
-
         await self._validate("keychain_credential_create", data)
 
         data["id"] = await self.middleware.call(
@@ -337,13 +305,9 @@ class KeychainCredentialService(CRUDService):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update a Keychain Credential with specific `id`
+        Update a Keychain Credential with specific `id`.
 
-        Please note that you can't change `type`
-
-        Also you must specify full `attributes` value
-
-        See the documentation for `create` method for information on payload contents
+        Please note that you can't change `type`. You must specify full `attributes` value.
 
         .. examples(websocket)::
 
@@ -365,7 +329,6 @@ class KeychainCredentialService(CRUDService):
                 ]
             }
         """
-
         old = await self.get_instance(id_)
         audit_callback(old["name"])
 
@@ -381,8 +344,7 @@ class KeychainCredentialService(CRUDService):
             new,
         )
 
-        if new["type"] in ["SSH_KEY_PAIR", "SSH_CREDENTIALS"]:
-            await self.middleware.call("zettarepl.update_tasks")
+        await self.middleware.call("zettarepl.update_tasks")
 
         return new
 
@@ -394,7 +356,7 @@ class KeychainCredentialService(CRUDService):
     )
     async def do_delete(self, audit_callback, id_, options):
         """
-        Delete Keychain Credential with specific `id`
+        Delete Keychain Credential with specific `id`.
 
         .. examples(websocket)::
 
@@ -408,7 +370,6 @@ class KeychainCredentialService(CRUDService):
                 ]
             }
         """
-
         instance = await self.get_instance(id_)
         audit_callback(instance["name"])
 
@@ -451,20 +412,10 @@ class KeychainCredentialService(CRUDService):
         verrors = ValidationErrors()
 
         await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
-
-        if data["type"] not in TYPES:
-            verrors.add(f"{schema_name}.type", "Invalid type")
-            raise verrors
-        else:
-            type_ = TYPES[data["type"]]
-
-            attributes_verrors = validate_schema(type_.credentials_schema, data["attributes"])
-            verrors.add_child(f"{schema_name}.attributes", attributes_verrors)
-
         verrors.check()
 
+        type_ = TYPES[data["type"]]
         await type_.validate_and_pre_save(self.middleware, verrors, f"{schema_name}.attributes", data["attributes"])
-
         verrors.check()
 
     @api_method(KeychainCredentialGetOfTypeArgs, KeychainCredentialGetOfTypeResult, private=True)
@@ -489,8 +440,6 @@ class KeychainCredentialService(CRUDService):
     )
     def generate_ssh_key_pair(self):
         """
-        Generate a public/private key pair
-
         Generate a public/private key pair (useful for `SSH_KEY_PAIR` type)
 
         .. examples(websocket)::
@@ -503,7 +452,6 @@ class KeychainCredentialService(CRUDService):
                 "params": []
             }
         """
-
         with tempfile.TemporaryDirectory() as tmpdirname:
             key = os.path.join(tmpdirname, "key")
             subprocess.check_call(["ssh-keygen", "-t", "rsa", "-f", key, "-N", "", "-q"])
@@ -524,8 +472,6 @@ class KeychainCredentialService(CRUDService):
     )
     async def remote_ssh_host_key_scan(self, data):
         """
-        Discover a remote host key
-
         Discover a remote host key (useful for `SSH_CREDENTIALS`)
 
         .. examples(websocket)::
@@ -565,12 +511,12 @@ class KeychainCredentialService(CRUDService):
     )
     def remote_ssh_semiautomatic_setup(self, data):
         """
-        Perform semi-automatic SSH connection setup with other FreeNAS machine
+        Perform semi-automatic SSH connection setup with other TrueNAS machine.
 
-        Perform semi-automatic SSH connection setup with other FreeNAS machine. It creates a `SSH_CREDENTIALS`
-        credential with specified `name` that can be used to connect to FreeNAS machine with specified `url` and
-        temporary auth `token`. Other FreeNAS machine adds `private_key` to allowed `username`'s private keys. Other
-        `SSH_CREDENTIALS` attributes such as `connect_timeout` can be specified as well.
+        It creates an `SSH_CREDENTIALS` credential with specified `name` that can be used to connect to TrueNAS machine
+        with specified `url` and temporary auth `token`. Other TrueNAS machine adds `private_key` to allowed
+        `username`'s private keys. Other `SSH_CREDENTIALS` attributes such as `connect_timeout` can be specified as
+        well.
 
         .. examples(websocket)::
 
@@ -587,7 +533,6 @@ class KeychainCredentialService(CRUDService):
                 }]
             }
         """
-
         replication_key = self.middleware.call_sync("keychaincredential.get_ssh_key_pair_with_private_key",
                                                     data["private_key"])
 
@@ -600,12 +545,12 @@ class KeychainCredentialService(CRUDService):
             raise CallError(f"Unable to connect to remote system: {e}")
 
         with client as c:
-            if data.get("token"):
+            if data["token"]:
                 if not c.call("auth.login_with_token", data["token"]):
                     raise CallError("Invalid token")
-            elif data.get("password"):
+            elif data["password"]:
                 args = [data["admin_username"], data["password"]]
-                if data.get("otp_token"):
+                if data["otp_token"]:
                     args.append(data["otp_token"])
                 if not c.call("auth.login", *args):
                     raise CallError("Invalid username or password")
