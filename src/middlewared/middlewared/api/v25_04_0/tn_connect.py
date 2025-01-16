@@ -21,6 +21,7 @@ class TNCEntry(BaseModel):
     account_service_base_url: HttpsOnlyURL
     leca_service_base_url: HttpsOnlyURL
     tnc_base_url: HttpsOnlyURL
+    heartbeat_url: HttpsOnlyURL
 
 
 @single_argument_args('tn_connect_update')

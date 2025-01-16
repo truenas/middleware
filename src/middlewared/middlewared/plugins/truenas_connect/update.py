@@ -34,6 +34,10 @@ class TrueNASConnectModel(sa.Model):
     tnc_base_url = sa.Column(
         sa.String(255), nullable=False, default='https://truenas.connect.dev.ixsystems.net/'
     )
+    heartbeat_url = sa.Column(
+        sa.String(255), nullable=False, default='https://heartbeat-service.dev.ixsystems.net/'
+    )
+    last_heartbeat_failure_datetime = sa.Column(sa.String(255), nullable=True, default=None)
 
 
 class TrueNASConnectService(ConfigService, TNCAPIMixin):
@@ -50,6 +54,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
     async def config_extend(self, config):
         config['status_reason'] = Status[config['status']].value
         config.pop('jwt_token', None)
+        config.pop('last_heartbeat_failure_datetime', None)
         if config['certificate']:
             config['certificate'] = config['certificate']['id']
         return config
