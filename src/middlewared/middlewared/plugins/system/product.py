@@ -10,9 +10,10 @@ from licenselib.license import ContractType, Features, License
 
 from middlewared.plugins.truenas import EULA_PENDING_PATH
 from middlewared.schema import accepts, Bool, returns, Str
-from middlewared.service import no_authz_required, private, Service, ValidationError
+from middlewared.service import CallError, no_authz_required, private, Service, ValidationError
 from middlewared.utils import ProductType, sw_info
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
+from middlewared.utils.version import parse_version_string
 
 
 LICENSE_FILE = '/data/license'
@@ -77,16 +78,17 @@ class SystemService(Service):
         If `version` is not provided, then the release notes URL will return
             a link for the currently installed version of SCALE.
         """
-        to_format = self.version_short() if version_str is None else version_str
-        to_format = to_format.split('-')[0].split('.')  # looks like ['23', '10', '0', '1']
-        len_to_format = len(to_format)
-        if len_to_format >= 2:
-            maj_vers = '.'.join(to_format[0:2])
-            base_url = f'https://www.truenas.com/docs/scale/{maj_vers}/gettingstarted/scalereleasenotes'
-            if len_to_format == 2:
-                return base_url
-            else:
-                return f'{base_url}/#{"".join(to_format)}'
+        parsed_version = parse_version_string(version_str)
+        if parsed_version is None:
+            raise CallError(f'Invalid version string specified: {version_str}')
+
+        version_split = parsed_version.split('.')
+        major_version = '.'.join(version_split[0:2])
+        base_url = f'https://www.truenas.com/docs/scale/{major_version}/gettingstarted/scalereleasenotes'
+        if len(version_split) == 2:
+            return base_url
+        else:
+            return f'{base_url}/#{"".join(version_split)}'
 
     @no_authz_required
     @accepts()
