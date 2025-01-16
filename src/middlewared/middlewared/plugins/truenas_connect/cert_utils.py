@@ -1,6 +1,4 @@
-import copy
-
-from middlewared.plugins.crypto_.cert_profiles import CSR_PROFILES
+from middlewared.api.current import CSRPROFILES
 from middlewared.plugins.crypto_.csr import generate_certificate_signing_request
 
 
@@ -23,6 +21,6 @@ def generate_csr(hostnames: list[str]) -> (str, str):
         'organizational_unit': 'TNC',
         'email': CERT_BOT_EMAIL,
         'digest_algorithm': 'SHA256',
-        'cert_extensions': copy.deepcopy(CSR_PROFILES['HTTPS RSA Certificate']['cert_extensions']),
+        'cert_extensions': CSRPROFILES['HTTPS RSA Certificate']['cert_extensions'],
         # We do not specify a common as domain hostname is bigger then 64 chars and cryptography starts complaining
     })
