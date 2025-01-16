@@ -27,3 +27,7 @@ def get_registration_uri(tnc_config: dict) -> str:
 
 def get_registration_finalization_uri(tnc_config: dict) -> str:
     return urllib.parse.urljoin(tnc_config['account_service_base_url'], 'v1/systems/finalize')
+
+
+def get_heartbeat_url(tnc_config: dict) -> str:
+    return urllib.parse.urljoin(tnc_config['heartbeat_url'], 'v1/system/{system_id}/stats/{version}')
