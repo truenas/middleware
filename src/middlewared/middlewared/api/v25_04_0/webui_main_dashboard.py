@@ -13,7 +13,7 @@ class SysInfoEntry(BaseModel):
     platform: NonEmptyString
     version: NonEmptyString
     codename: NonEmptyString
-    license: dict
+    license: dict | None
     system_serial: str
     hostname: NonEmptyString
     uptime_seconds: float
