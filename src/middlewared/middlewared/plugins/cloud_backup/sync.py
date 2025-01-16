@@ -146,7 +146,7 @@ class CloudBackupService(Service):
             restic_config = get_restic_config(cloud_backup)
             await run_restic(
                 job,
-                restic_config.cmd + ["forget", "--keep-last", str(cloud_backup["keep_last"])],
+                restic_config.cmd + ["forget", "--keep-last", str(cloud_backup["keep_last"]), "--prune"],
                 restic_config.env,
             )
 
