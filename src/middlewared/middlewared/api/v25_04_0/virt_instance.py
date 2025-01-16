@@ -1,7 +1,7 @@
 import os
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Field, model_validator, StringConstraints
+from pydantic import Field, model_validator, Secret, StringConstraints
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, NonEmptyString, single_argument_args
 
@@ -64,6 +64,7 @@ class VirtInstanceEntry(BaseModel):
     raw: dict | None
     vnc_enabled: bool
     vnc_port: int | None
+    vnc_password: Secret[NonEmptyString | None]
 
 
 # Lets require at least 32MiB of reserved memory
@@ -94,6 +95,7 @@ class VirtInstanceCreateArgs(BaseModel):
     to be ported over to virt plugin. Virt will consume this zvol and add it as a DISK device to the instance
     with boot priority set to 1 so the VM can be booted from it.
     '''
+    vnc_password: Secret[NonEmptyString | None] = None
 
     @model_validator(mode='after')
     def validate_attrs(self):
@@ -107,6 +109,9 @@ class VirtInstanceCreateArgs(BaseModel):
         else:
             if self.enable_vnc and self.vnc_port is None:
                 raise ValueError('VNC port must be set when VNC is enabled')
+
+            if self.vnc_password is not None and not self.enable_vnc:
+                raise ValueError('VNC password can only be set when VNC is enabled')
 
             if self.source_type == 'ISO' and self.iso_volume is None:
                 raise ValueError('ISO volume must be set when source type is "ISO"')
@@ -138,6 +143,8 @@ class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     memory: MemoryType | None = None
     vnc_port: int | None = Field(ge=5900, le=65535)
     enable_vnc: bool
+    vnc_password: Secret[NonEmptyString | None]
+    '''Setting vnc_password to null will unset VNC password'''
 
 
 class VirtInstanceUpdateArgs(BaseModel):
