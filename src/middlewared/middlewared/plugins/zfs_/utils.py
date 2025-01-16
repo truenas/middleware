@@ -11,7 +11,6 @@ from middlewared.utils.path import is_child
 from middlewared.plugins.audit.utils import (
     AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_DEFAULT_FILL_WARNING
 )
-from middlewared.plugins.boot import BOOT_POOL_NAME
 from middlewared.utils.tdb import (
     get_tdb_handle,
     TDBBatchAction,
@@ -349,6 +348,7 @@ def path_to_dataset_impl(path: str, mntinfo: dict | None = None) -> str:
     can be raised by a failed call to os.stat() are
     possible.
     """
+    from middlewared.plugins.boot import BOOT_POOL_NAME
     st = os.stat(path)
     if mntinfo is None:
         mntinfo = getmntinfo(st.st_dev)[st.st_dev]

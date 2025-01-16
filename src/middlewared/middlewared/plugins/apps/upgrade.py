@@ -55,7 +55,10 @@ class AppService(Service):
                 logger.debug('Snapshot %r already exists for %r app', snap_name, app_info['name'])
                 continue
 
-            self.middleware.call_sync('zfs.snapshot.create', {'dataset': dataset, 'name': app_info['version']})
+            self.middleware.call_sync('zfs.snapshot.create', {
+                'dataset': dataset,
+                'name': get_upgrade_snap_name(app_info["name"], app_info["version"])
+            })
             logger.debug('Created snapshot %r for %r app', snap_name, app_info['name'])
 
     @api_method(

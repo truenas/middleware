@@ -1,5 +1,3 @@
-import logging
-
 from middlewared.api import api_method
 from middlewared.api.current import (
     AppRollbackArgs, AppRollbackResult, AppRollbackVersionsArgs, AppRollbackVersionsResult,
@@ -11,9 +9,6 @@ from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, up
 from .ix_apps.metadata import update_app_metadata
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.rollback import clean_newer_versions, get_rollback_versions
-
-
-logger = logging.getLogger('app_lifecycle')
 
 
 class AppService(Service):
