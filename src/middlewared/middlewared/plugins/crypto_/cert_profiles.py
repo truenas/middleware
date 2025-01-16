@@ -1,9 +1,11 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
+    CERTPROFILES,
     CertProfilesArgs,
     CertProfilesResult,
     CSRProfilesArgs,
     CSRProfilesResult,
+    CSRPROFILES,
 )
 from middlewared.service import Service
 
@@ -15,7 +17,7 @@ class CertificateService(Service):
         Returns a dictionary of predefined configuration
         options for creating certificates.
         """
-        return CertProfilesResult.model_dump()
+        return CERTPROFILES
 
     @api_method(CSRProfilesArgs, CSRProfilesResult, roles=["CERTIFICATE_READ"])
     async def certificate_signing_requests_profiles(self):
@@ -23,4 +25,4 @@ class CertificateService(Service):
         Returns a dictionary of predefined configuration
         options for creating certificate signing requests.
         """
-        return CSRProfilesResult.model_dump()
+        return CSRPROFILES

@@ -9,6 +9,8 @@ __all__ = (
     "CertProfilesResult",
     "CSRProfilesArgs",
     "CSRProfilesResult",
+    "CERTPROFILES",
+    "CSRPROFILES",
 )
 
 
@@ -162,3 +164,7 @@ class CSRProfilesResult(BaseModel):
     https_ecc_certificate: ECCCSRExtensions = Field(
         default_factory=ECCCSRExtensions, alias="HTTPS ECC Certificate"
     )
+
+
+CERTPROFILES = CertProfilesResult().model_dump(by_alias=True)
+CSRPROFILES = CSRProfilesResult().model_dump(by_alias=True)
