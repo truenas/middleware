@@ -61,7 +61,9 @@ class DiskService(Service):
         password = await self.middleware.call('system.advanced.sed_global_password')
 
         if disk is None:
-            disk = await self.query([('name', '=', disk_name)], {'extra': {'passwords': True}})
+            disk = await self.middleware.call(
+                'disk.query', [('name', '=', disk_name)], {'extra': {'passwords': True}}
+            )
             if disk and disk[0]['passwd']:
                 password = disk[0]['passwd']
         elif disk.get('passwd'):
