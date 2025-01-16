@@ -8,9 +8,9 @@ from truenas_api_client import json as ejson
 
 
 # WARNING: below methods must _not_ be audited. c.f. comment in parse_message() below
-MSG_SIZE_EXTENDED_METHODS = frozenset(
+MSG_SIZE_EXTENDED_METHODS = frozenset({
     'filesystem.file_receive',
-)
+})
 
 
 class MsgSizeLimit(enum.IntEnum):
