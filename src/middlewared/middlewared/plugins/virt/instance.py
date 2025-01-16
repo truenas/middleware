@@ -350,7 +350,7 @@ class VirtInstanceService(CRUDService):
             'source': source,
             'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
             'start': data['autostart'],
-        }}, running_cb)
+        }}, running_cb, timeout=15 * 60)  # We will give 15 minutes to incus to download relevant image and then timeout
 
         return await self.middleware.call('virt.instance.get_instance', data['name'])
 
