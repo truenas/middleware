@@ -106,18 +106,23 @@ class ECCCertExtensions(BaseModel):
     digest_algorithm: str = SHA256
 
 
-class CertProfilesArgs(BaseModel):
-    pass
-
-
 @final
-class CertProfilesResult(BaseModel):
+class CertProfilesModel(BaseModel):
     https_rsa_certificate: RSACertExtensions = Field(
         default_factory=RSACertExtensions, alias="HTTPS RSA Certificate"
     )
     https_ecc_certificate: ECCCertExtensions = Field(
         default_factory=ECCCertExtensions, alias="HTTPS ECC Certificate"
     )
+
+
+class CertProfilesArgs(BaseModel):
+    pass
+
+
+@final
+class CertProfilesResult(BaseModel):
+    result: CertProfilesModel = CertProfilesModel()
 
 
 @final
@@ -152,12 +157,8 @@ class ECCCSRExtensions(BaseModel):
     digest_algorithm: str = SHA256
 
 
-class CSRProfilesArgs(BaseModel):
-    pass
-
-
 @final
-class CSRProfilesResult(BaseModel):
+class CSRProfilesModel(BaseModel):
     https_rsa_certificate: RSACSRExtensions = Field(
         default_factory=RSACSRExtensions, alias="HTTPS RSA Certificate"
     )
@@ -166,5 +167,14 @@ class CSRProfilesResult(BaseModel):
     )
 
 
-CERTPROFILES = CertProfilesResult().model_dump(by_alias=True)
-CSRPROFILES = CSRProfilesResult().model_dump(by_alias=True)
+class CSRProfilesArgs(BaseModel):
+    pass
+
+
+@final
+class CSRProfilesResult(BaseModel):
+    result: CSRProfilesModel = CSRProfilesModel()
+
+
+CERTPROFILES = CertProfilesModel().model_dump(by_alias=True)
+CSRPROFILES = CSRProfilesModel().model_dump(by_alias=True)
