@@ -31,6 +31,7 @@ class TNCUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     account_service_base_url: HttpsOnlyURL
     leca_service_base_url: HttpsOnlyURL
     tnc_base_url: HttpsOnlyURL
+    heartbeat_url: HttpsOnlyURL
 
 
 class TNCUpdateResult(BaseModel):
