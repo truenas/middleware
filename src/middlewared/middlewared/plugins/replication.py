@@ -653,6 +653,12 @@ class ReplicationService(CRUDService):
             if not data["properties"]:
                 verrors.add("properties", "This option is required for full filesystem replication")
 
+            if data["retention_policy"] != "SOURCE":
+                verrors.add(
+                    "retention_policy",
+                    "Only `Same as Source` retention policy can be used for full filesystem replication",
+                )
+
             for i, source_dataset in enumerate(data["source_datasets"]):
                 for j, another_source_dataset in enumerate(data["source_datasets"]):
                     if j != i:
