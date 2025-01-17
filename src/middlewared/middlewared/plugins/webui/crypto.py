@@ -24,7 +24,7 @@ class WebUICryptoService(Service):
     @api_method(
         CertProfilesArgs,
         CertProfilesResult,
-        roles=['READONLY_ADMIN']
+        roles=['CERTIFICATE_READ']
     )
     async def certificate_profiles(self):
         return CertProfilesModel().model_dump(by_alias=True)
@@ -32,7 +32,7 @@ class WebUICryptoService(Service):
     @api_method(
         CAProfilesArgs,
         CAProfilesResult,
-        roles=['READONLY_ADMIN']
+        roles=['CERTIFICATE_AUTHORITY_READ']
     )
     async def certificateauthority_profiles(self):
         return CAProfilesModel().model_dump(by_alias=True)
@@ -44,7 +44,7 @@ class WebUICryptoService(Service):
     @api_method(
         CSRProfilesArgs,
         CSRProfilesResult,
-        roles=['READONLY_ADMIN']
+        roles=['CERTIFICATE_READ']
     )
     async def csr_profiles(self):
         return CSRProfilesModel().model_dump(by_alias=True)
