@@ -246,6 +246,12 @@ ROLES = {
 }
 ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
 
+READ_RESOURCE_BLACKLIST = (
+    '.create', '.do_create',
+    '.update', '.do_update',
+    '.delete', '.do_delete',
+)
+
 
 class ResourceManager:
     def __init__(self, resource_title: str, resource_method: str, roles: typing.Dict[str, Role]):
@@ -271,6 +277,9 @@ class ResourceManager:
         for role in roles:
             if role not in self.roles:
                 raise ValueError(f"Invalid role {role!r}")
+
+            if role.endswith("_READ") and resource_name.endswith(READ_RESOURCE_BLACKLIST):
+                raise ValueError(f'{resource_name}: resource may not be granted to {role}')
 
         self.resources[resource_name] += roles
 
