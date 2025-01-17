@@ -23,7 +23,7 @@ FULL_ADMIN_STIG = ALL_METHODS - FAKE_METHODS_NOSTIG
 @pytest.fixture(scope='module')
 def nostig_roles():
     # Generate list of expected roles that should be unavailble for STIG mode
-    PREFIXES = ('VM', 'TRUECOMMAND', 'CATALOG', 'DOCKER', 'APPS', 'VIRT')
+    PREFIXES = ('VM', 'TRUECOMMAND', 'CATALOG', 'DOCKER', 'APPS', 'VIRT', 'TRUENAS_CONNECT')
     yield set([
         role_name for
         role_name in list(ROLES.keys()) if role_name.startswith(PREFIXES) and not role_name.endswith('READ')
@@ -38,6 +38,11 @@ def role_manager():
         rm.register_method(method_name=method, roles=roles)
 
     yield rm
+
+
+@pytest.fixture(scope='function')
+def tmp_role_manager():
+    yield RoleManager(roles=ROLES)
 
 
 @pytest.mark.parametrize('role_name', list(ROLES.keys()))
@@ -71,3 +76,20 @@ def test__roles_have_correct_allowlist(role_manager, role, method, enabled_stig_
         allowlist_resources.add(entry['resource'])
 
     assert allowlist_resources == resources
+
+
+def test__role_manager_reject_read_role_on_write_method(tmp_role_manager):
+    with pytest.raises(ValueError, match='resource may not be granted to'):
+        tmp_role_manager.register_method(method_name='canary.update', roles=['DOCKER_READ'])
+
+
+def test__role_manager_reject_unknown_role(tmp_role_manager):
+    with pytest.raises(ValueError, match='Invalid role'):
+        tmp_role_manager.register_method(method_name='canary.update', roles=['DOESNOTEXIST_WRITE'])
+
+
+def test__role_manager_reject_already_registered(tmp_role_manager):
+    tmp_role_manager.register_method(method_name='canary.update', roles=['DOCKER_WRITE'])
+
+    with pytest.raises(ValueError, match='is already registered in this role manager'):
+        tmp_role_manager.register_method(method_name='canary.update', roles=['VM_WRITE'])
