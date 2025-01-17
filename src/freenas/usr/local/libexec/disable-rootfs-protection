@@ -122,7 +122,7 @@ if __name__ == '__main__':
     # environment.
     if rv.stdout.decode().strip() != 'on' and not args.force:
         with Client() as c:
-            if c.call('system.product_type') == ProductType.SCALE_ENTERPRISE:
+            if c.call('system.product_type') == ProductType.ENTERPRISE:
                 print((
                     'Root filesystem protections may not be administratively disabled '
                     'on Enterprise-licensed TrueNAS products. Circumventing this '

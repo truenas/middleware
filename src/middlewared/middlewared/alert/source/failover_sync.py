@@ -18,7 +18,7 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         "the standby storage controller but failed. Use Sync to Peer on the "
         "System/Failover page to try and perform a manual sync."
     )
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
     async def create(self, args):
         return Alert(FailoverSyncFailedAlertClass, {'mins': args['mins']})
@@ -37,7 +37,7 @@ class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         "The automatic synchronization of encryption passphrases with the standby "
         "controller has failed. Please go to System > Failover and manually sync to peer."
     )
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
@@ -50,7 +50,7 @@ class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
         "The automatic synchronization of KMIP keys with the standby "
         "controller has failed due to %(error)s. Please go to System > Failover and manually sync to peer."
     )
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
     async def create(self, args):
         return Alert(FailoverKMIPKeysSyncFailedAlertClass, args)

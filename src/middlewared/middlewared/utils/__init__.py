@@ -20,8 +20,8 @@ from .threading import io_thread_pool_executor
 # Define Product Strings
 @dataclass(slots=True, frozen=True)
 class ProductTypes:
-    SCALE: str = 'SCALE'
-    SCALE_ENTERPRISE: str = 'SCALE_ENTERPRISE'
+    COMMUNITY_EDITION: str = 'COMMUNITY_EDITION'
+    ENTERPRISE: str = 'ENTERPRISE'
 
 
 @dataclass(slots=True, frozen=True)
@@ -37,7 +37,7 @@ MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
 MANIFEST_FILE = '/data/manifest.json'
 BRAND = ProductName.PRODUCT_NAME
-PRODUCT = ProductType.SCALE
+PRODUCT = ProductType.COMMUNITY_EDITION
 BRAND_PRODUCT = f'{BRAND}-{PRODUCT}'
 NULLS_FIRST = 'nulls_first:'
 NULLS_LAST = 'nulls_last:'

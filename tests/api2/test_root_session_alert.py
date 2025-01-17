@@ -8,7 +8,7 @@ from time import sleep
 
 @pytest.fixture(scope="function")
 def set_product_type(request):
-    # force SCALE_ENTERPRISE product type
+    # force ENTERPRISE product type
     with product_type():
         yield
 

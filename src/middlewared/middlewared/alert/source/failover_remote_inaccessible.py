@@ -15,13 +15,13 @@ class FailoverRemoteSystemInaccessibleAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Other Controller is Inaccessible'
     text = 'Other TrueNAS controller is inaccessible. Contact support. Incident ID: %s.'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
     proactive_support = True
     proactive_support_notify_gone = True
 
 
 class FailoverRemoteSystemInaccessibleAlertSource(AlertSource):
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
     failover_related = True
     run_on_backup_node = False
 

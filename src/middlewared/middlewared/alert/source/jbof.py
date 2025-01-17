@@ -26,7 +26,7 @@ class JBOFRedfishCommAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failed to Communicate with JBOF'
     text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) Failed to communicate with redfish interface.'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class JBOFInvalidDataAlertClass(AlertClass):
@@ -34,7 +34,7 @@ class JBOFInvalidDataAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'JBOF has invalid data'
     text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) does not provide valid data for: %(keys)s'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class JBOFElementWarningAlertClass(AlertClass):
@@ -42,7 +42,7 @@ class JBOFElementWarningAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = 'JBOF element non-critical'
     text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is noncritical: %(value)s'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class JBOFElementCriticalAlertClass(AlertClass):
@@ -50,11 +50,11 @@ class JBOFElementCriticalAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'JBOF element critical'
     text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is critical: %(value)s'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class JBOFAlertSource(AlertSource):
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
     run_on_backup_node = False
     schedule = IntervalSchedule(datetime.timedelta(minutes=5))
 

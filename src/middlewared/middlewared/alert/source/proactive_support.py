@@ -12,11 +12,11 @@ class ProactiveSupportAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "Proactive Support Is Not Configured"
     text = "%s"
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class ProactiveSupportAlertSource(AlertSource):
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
     run_on_backup_node = False
 
     async def check(self):

@@ -14,7 +14,7 @@ class MemoryErrorsAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = 'Uncorrected Memory Errors Detected'
     text = '%(count)d total uncorrected errors detected for %(loc)s.'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
     proactive_support = True
 
 
@@ -23,7 +23,7 @@ class MemorySizeMismatchAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = 'Memory Size Mismatch Detected'
     text = 'Memory size on this controller %(r1)s doesn\'t match other controller %(r2)s'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
     proactive_support = True
 
 
