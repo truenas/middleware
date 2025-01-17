@@ -1,5 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
+from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN
 from middlewared.utils.security import STIGType
 import typing
 
@@ -351,7 +352,7 @@ class RoleManager:
                 ], [])
 
             # Only non-stig FULL_ADMIN privilege can access REST endpoints
-            return [{"method": "*", "resource": "*"}]
+            return [ALLOW_LIST_FULL_ADMIN.copy()]
 
         return sum([
             self.methods.allowlists_for_roles[role] + self.events.allowlists_for_roles[role]
