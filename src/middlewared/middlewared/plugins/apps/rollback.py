@@ -35,6 +35,9 @@ class AppService(Service):
         elif options['app_version'] not in get_rollback_versions(app_name, app['version']):
             verrors.add('options.app_version', 'Specified version is not available for rollback')
 
+        if app['state'] == 'STOPPED':
+            verrors.add('app_name', 'App must not be in stopped state to rollback')
+
         verrors.check()
 
         rollback_version = self.middleware.call_sync(
@@ -63,6 +66,7 @@ class AppService(Service):
         self.middleware.send_event(
             'app.query', 'CHANGED', id=app_name, fields=self.middleware.call_sync('app.get_instance', app_name)
         )
+        self.middleware.call_sync('app.stop', app_name).wait_sync()
         try:
             if options['rollback_snapshot'] and (
                 app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name)
