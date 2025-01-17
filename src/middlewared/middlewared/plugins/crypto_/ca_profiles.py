@@ -1,7 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CAPROFILES,
     CAProfilesArgs,
+    CAProfilesModel,
     CAProfilesResults,
 )
 from middlewared.service import Service
@@ -17,4 +17,4 @@ class CertificateAuthorityService(Service):
         Returns a dictionary of predefined options for
         creating certificate authority requests.
         """
-        return CAPROFILES
+        return CAProfilesModel().model_dump(by_alias=True)

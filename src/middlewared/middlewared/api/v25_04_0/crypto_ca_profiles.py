@@ -2,7 +2,7 @@ from typing import final
 
 from middlewared.api.base import BaseModel
 
-__all__ = ("CAProfilesArgs", "CAProfilesResults", "CAPROFILES")
+__all__ = ("CAProfilesArgs",  "CAProfilesModel", "CAProfilesResults")
 
 # Defines the default lifetime of a certificate
 # (https://support.apple.com/en-us/HT211025)
@@ -39,7 +39,7 @@ class CertExtensionsModel(BaseModel):
 
 
 @final
-class CAModel(BaseModel):
+class CAProfilesModel(BaseModel):
     key_length: int = 2048
     key_type: str = "RSA"
     lifetime: int = DEFAULT_LIFETIME_DAYS
@@ -52,7 +52,4 @@ class CAProfilesArgs(BaseModel):
 
 
 class CAProfilesResults(BaseModel):
-    result: CAModel = CAModel()
-
-
-CAPROFILES = CAModel().model_dump(by_alias=True)
+    result: CAProfilesModel = CAProfilesModel()

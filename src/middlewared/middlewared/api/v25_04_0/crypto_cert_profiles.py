@@ -6,11 +6,11 @@ from pydantic import Field
 
 __all__ = (
     "CertProfilesArgs",
+    "CertProfilesModel",
     "CertProfilesResult",
     "CSRProfilesArgs",
+    "CSRProfilesModel",
     "CSRProfilesResult",
-    "CERTPROFILES",
-    "CSRPROFILES",
 )
 
 
@@ -174,7 +174,3 @@ class CSRProfilesArgs(BaseModel):
 @final
 class CSRProfilesResult(BaseModel):
     result: CSRProfilesModel = CSRProfilesModel()
-
-
-CERTPROFILES = CertProfilesModel().model_dump(by_alias=True)
-CSRPROFILES = CSRProfilesModel().model_dump(by_alias=True)

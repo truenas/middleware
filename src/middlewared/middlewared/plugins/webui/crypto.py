@@ -1,14 +1,14 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CAPROFILES,
     CAProfilesArgs,
+    CAProfilesModel,
     CAProfilesResult,
-    CERTPROFILES,
     CertProfilesArgs,
+    CertProfilesModel,
     CertProfilesResult,
     CSRProfilesArgs,
+    CSRProfilesModel,
     CSRProfilesResult,
-    CSRPROFILES,
 )
 from middlewared.schema import accepts, Int
 from middlewared.service import Service
@@ -27,7 +27,7 @@ class WebUICryptoService(Service):
         roles=['READONLY_ADMIN']
     )
     async def certificate_profiles(self):
-        return CERTPROFILES
+        return CertProfilesModel().model_dump(by_alias=True)
 
     @api_method(
         CAProfilesArgs,
@@ -35,7 +35,7 @@ class WebUICryptoService(Service):
         roles=['READONLY_ADMIN']
     )
     async def certificateauthority_profiles(self):
-        return CAPROFILES
+        return CAProfilesModel().model_dump(by_alias=True)
 
     @accepts(Int('cert_id'), roles=['READONLY_ADMIN'])
     async def get_certificate_domain_names(self, cert_id):
@@ -47,4 +47,4 @@ class WebUICryptoService(Service):
         roles=['READONLY_ADMIN']
     )
     async def csr_profiles(self):
-        return CSRPROFILES
+        return CSRProfilesModel().model_dump(by_alias=True)
