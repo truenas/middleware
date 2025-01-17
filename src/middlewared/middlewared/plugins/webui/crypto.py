@@ -1,6 +1,6 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CAModel,
+    CAPROFILES,
     CAProfilesArgs,
     CAProfilesResult,
     CERTPROFILES,
@@ -35,7 +35,7 @@ class WebUICryptoService(Service):
         roles=['READONLY_ADMIN']
     )
     async def certificateauthority_profiles(self):
-        return CAModel().model_dump(by_alias=True)
+        return CAPROFILES
 
     @accepts(Int('cert_id'), roles=['READONLY_ADMIN'])
     async def get_certificate_domain_names(self, cert_id):
