@@ -39,7 +39,7 @@ class InitShutdownScriptService(CRUDService):
         entry = InitShutdownScriptEntry
         role_prefix = 'SYSTEM_CRON'
 
-    @api_method(InitShutdownScriptCreateArgs, InitShutdownScriptCreateResult, roles=['FULL_ADMIN'])
+    @api_method(InitShutdownScriptCreateArgs, InitShutdownScriptCreateResult)
     async def do_create(self, data):
         """
         Create an initshutdown script task.
@@ -68,7 +68,7 @@ class InitShutdownScriptService(CRUDService):
         )
         return await self.get_instance(data['id'])
 
-    @api_method(InitShutdownScriptUpdateArgs, InitShutdownScriptUpdateResult, roles=['FULL_ADMIN'])
+    @api_method(InitShutdownScriptUpdateArgs, InitShutdownScriptUpdateResult)
     async def do_update(self, id_, data):
         """
         Update initshutdown script task of `id`.

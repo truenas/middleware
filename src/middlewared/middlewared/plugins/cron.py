@@ -188,7 +188,7 @@ class CronJobService(CRUDService):
 
         return response
 
-    @api_method(CronJobRunArgs, CronJobRunResult, roles=['FULL_ADMIN'])
+    @api_method(CronJobRunArgs, CronJobRunResult, roles=['SYSTEM_CRON_WRITE'])
     @job(lock=lambda args: f'cron_job_run_{args[0]}', logs=True, lock_queue_size=1)
     def run(self, job, id_, skip_disabled):
         """
