@@ -17,4 +17,4 @@ class CertificateAuthorityService(Service):
         Returns a dictionary of predefined options for
         creating certificate authority requests.
         """
-        return CAModel().model_dump()
+        return CAModel().model_dump(by_alias=True)

@@ -1,5 +1,8 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
+    CAModel,
+    CAProfilesArgs,
+    CAProfilesResult,
     CERTPROFILES,
     CertProfilesArgs,
     CertProfilesResult,
@@ -26,9 +29,13 @@ class WebUICryptoService(Service):
     async def certificate_profiles(self):
         return CERTPROFILES
 
-    @accepts(roles=['READONLY_ADMIN'])
+    @api_method(
+        CAProfilesArgs,
+        CAProfilesResult,
+        roles=['READONLY_ADMIN']
+    )
     async def certificateauthority_profiles(self):
-        return await self.middleware.call('certificateauthority.profiles')
+        return CAModel().model_dump(by_alias=True)
 
     @accepts(Int('cert_id'), roles=['READONLY_ADMIN'])
     async def get_certificate_domain_names(self, cert_id):
