@@ -1,5 +1,6 @@
 import enum
 from middlewared.utils import MIDDLEWARE_RUN_DIR
+from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 
 
 NETIF_COMPLETE_SENTINEL = f"{MIDDLEWARE_RUN_DIR}/ix-netif-complete"
@@ -75,6 +76,7 @@ class SMBPath(enum.Enum):
     SHARECONF = ('/etc/smb4_share.conf', 0o755, False)
     STATEDIR = ('/var/db/system/samba4', 0o755, True)
     PRIVATEDIR = ('/var/db/system/samba4/private', 0o700, True)
+    KEYTABDIR = (SAMBA_KEYTAB_DIR, 0o700, True)
     LEGACYSTATE = ('/root/samba', 0o755, True)
     LEGACYPRIVATE = ('/root/samba/private', 0o700, True)
     CACHE_DIR = ('/var/run/samba-cache', 0o755, True)

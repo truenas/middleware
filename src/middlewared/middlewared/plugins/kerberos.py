@@ -20,8 +20,10 @@ from middlewared.utils.directoryservices.krb5_constants import (
     KRB_ETYPE,
     KRB_TKT_CHECK_INTERVAL,
     PERSISTENT_KEYRING_PREFIX,
+    SAMBA_KEYTAB_DIR,
 )
 from middlewared.utils.directoryservices.krb5 import (
+    concatenate_keytab_data,
     gss_get_current_cred,
     gss_acquire_cred_principal,
     gss_acquire_cred_user,
@@ -33,6 +35,7 @@ from middlewared.utils.directoryservices.krb5 import (
 )
 from middlewared.utils.directoryservices.krb5_conf import KRB5Conf
 from middlewared.utils.directoryservices.krb5_error import KRB5Error
+from middlewared.utils.io import write_if_changed
 
 
 class KerberosModel(sa.Model):
@@ -928,25 +931,28 @@ class KerberosKeytabService(CRUDService):
         libads automatically generates a system keytab during domain join process. This
         method parses the system keytab and inserts as the AD_MACHINE_ACCOUNT keytab.
         """
-        if not os.path.exists(KRB_Keytab.SYSTEM.value):
-            self.logger.warning('System keytab is missing. Unable to extract AD machine account keytab.')
+        samba_keytabs = []
+        for file in os.listdir(SAMBA_KEYTAB_DIR):
+            samba_keytabs.append(extract_from_keytab(os.path.join(SAMBA_KEYTAB_DIR, file), []))
+
+        if not samba_keytabs:
             return
 
         ad = self.middleware.call_sync('activedirectory.config')
-        ad_kt_bytes = extract_from_keytab(KRB_Keytab.SYSTEM.value, [['principal', 'Crin', ad['netbiosname']]])
-        keytab_file = base64.b64encode(ad_kt_bytes).decode()
+        keytab_file = concatenate_keytab_data(samba_keytabs)
+        keytab_file_encoded = base64.b64encode(keytab_file).decode()
 
         entry = self.middleware.call_sync('kerberos.keytab.query', [('name', '=', 'AD_MACHINE_ACCOUNT')])
         if not entry:
             self.middleware.call_sync(
                 'datastore.insert', self._config.datastore,
-                {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file},
+                {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file_encoded},
                 {'prefix': self._config.datastore_prefix}
             )
         else:
             self.middleware.call_sync(
                 'datastore.update', self._config.datastore, entry[0]['id'],
-                {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file},
+                {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file_encoded},
                 {'prefix': self._config.datastore_prefix}
             )
 
@@ -954,6 +960,8 @@ class KerberosKeytabService(CRUDService):
             self.middleware.call_sync('datastore.update', 'directoryservice.activedirectory', 1, {
                 'ad_kerberos_principal': f'{ad["netbiosname"]}$@{ad["domainname"]}'
             })
+
+        write_if_changed(KRB_Keytab.SYSTEM.value, keytab_file, perms=0o600)
 
     @periodic(3600)
     @private

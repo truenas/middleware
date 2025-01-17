@@ -4,6 +4,7 @@ from middlewared.utils import MIDDLEWARE_RUN_DIR
 
 KRB_TKT_CHECK_INTERVAL = 1800
 PERSISTENT_KEYRING_PREFIX = 'KEYRING:persistent:'
+SAMBA_KEYTAB_DIR = '/etc/samba/kerberos'
 
 
 class KRB_Keytab(enum.Enum):

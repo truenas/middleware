@@ -4,6 +4,7 @@ import enum
 from logging import getLogger
 from middlewared.utils import filter_list
 from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils.directoryservices.krb5_constants import SAMBA_KEYTAB_DIR
 from middlewared.utils.filesystem.acl import FS_ACL_Type, path_get_acltype
 from middlewared.utils.io import get_io_uring_enabled
 from middlewared.utils.path import FSLocation, path_location
@@ -26,6 +27,12 @@ FRUIT_CATIA_MAPS = (
     "0x1d:0xf01d,0x1e:0xf01e,0x1f:0xf01f",
     "0x22:0xf020,0x2a:0xf021,0x3a:0xf022,0x3c:0xf023",
     "0x3e:0xf024,0x3f:0xf025,0x5c:0xf026,0x7c:0xf027"
+)
+
+AD_KEYTAB_PARAMS = (
+    f"{SAMBA_KEYTAB_DIR}/krb5.keytab0:account_name:sync_kvno:machine_password",
+    f"{SAMBA_KEYTAB_DIR}/krb5.keytab1:sync_spns:sync_kvno:machine_password",
+    f"{SAMBA_KEYTAB_DIR}/krb5.keytab2:spn_prefixes=nfs:sync_kvno:machine_password"
 )
 
 
@@ -457,7 +464,8 @@ def generate_smb_conf_dict(
         ac = ds_config
         smbconf.update({
             'server role': 'member server',
-            'kerberos method': 'secrets and keytab',
+            'kerberos method': 'secrets only',
+            'sync machine password to keytab': ' '.join(AD_KEYTAB_PARAMS),
             'security': 'ADS',
             'local master': False,
             'domain master': False,
