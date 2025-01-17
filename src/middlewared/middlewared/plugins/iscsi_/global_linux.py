@@ -1,8 +1,9 @@
 import glob
 import os
 
-from middlewared.schema import Bool, Dict, Int, Str
-from middlewared.service import filterable, filterable_returns, private, Service
+from middlewared.api import api_method
+from middlewared.api.current import IscsiGlobalSessionsArgs, IscsiGlobalSessionsResult
+from middlewared.service import private, Service
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import filter_list, run
 
@@ -12,24 +13,11 @@ class ISCSIGlobalService(Service):
     class Config:
         namespace = 'iscsi.global'
 
-    @filterable(roles=['SHARING_ISCSI_GLOBAL_READ'])
-    @filterable_returns(Dict(
-        'session',
-        Str('initiator'),
-        Str('initiator_addr'),
-        Str('initiator_alias', null=True),
-        Str('target'),
-        Str('target_alias'),
-        Str('header_digest', null=True),
-        Str('data_digest', null=True),
-        Int('max_data_segment_length', null=True),
-        Int('max_receive_data_segment_length', null=True),
-        Int('max_burst_length', null=True),
-        Int('first_burst_length', null=True),
-        Bool('immediate_data'),
-        Bool('iser'),
-        Bool('offload'),
-    ))
+    @api_method(
+        IscsiGlobalSessionsArgs,
+        IscsiGlobalSessionsResult,
+        roles=['SHARING_ISCSI_GLOBAL_READ']
+    )
     def sessions(self, filters, options):
         """
         Get a list of currently running iSCSI sessions. This includes initiator and target names
