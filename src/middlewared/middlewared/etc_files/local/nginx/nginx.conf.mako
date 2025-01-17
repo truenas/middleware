@@ -78,8 +78,6 @@
         disabled_ciphers = ''
     display_device_path = middleware.call_sync('vm.get_vm_display_nginx_route')
     display_devices = middleware.call_sync('vm.device.query', [['dtype', '=', 'DISPLAY']])
-
-    netdata_basic_file = middleware.call_sync('reporting.netdataweb_basic_file')
 %>
 #
 #    TrueNAS nginx configuration file
@@ -126,11 +124,6 @@ http {
     gzip  on;
     access_log off;
     error_log syslog:server=unix:/dev/log,nohostname;
-
-    upstream netdata {
-        server 127.0.0.1:6999;
-        keepalive 64;
-    }
 
     map $http_upgrade $connection_upgrade {
         default upgrade;
@@ -329,26 +322,6 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
-        }
-
-        location ~ /netdata/(?<ndpath>.*) {
-            auth_basic "Netdata Closed";
-            auth_basic_user_file ${netdata_basic_file};
-            proxy_redirect off;
-            proxy_set_header Host $host;
-
-            proxy_set_header X-Forwarded-Host $host;
-            proxy_set_header X-Forwarded-Server $host;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_http_version 1.1;
-            proxy_pass_request_headers on;
-            proxy_set_header Connection "keep-alive";
-            proxy_store off;
-            proxy_pass http://netdata/$ndpath$is_args$args;
-
-            gzip on;
-            gzip_proxied any;
-            gzip_types *;
         }
 
         location /_plugins {
