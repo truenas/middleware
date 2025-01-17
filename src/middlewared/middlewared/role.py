@@ -116,7 +116,7 @@ ROLES = {
 
     # Truenas connect roles
     'TRUENAS_CONNECT_READ': Role(),
-    'TRUENAS_CONNECT_WRITE': Role(includes=['TRUENAS_CONNECT_READ']),
+    'TRUENAS_CONNECT_WRITE': Role(includes=['TRUENAS_CONNECT_READ'], stig=None),
 
     # Crypto roles
     'CERTIFICATE_READ': Role(),
