@@ -2,6 +2,7 @@ import pytest
 
 from middlewared.role import RoleManager, ROLES
 from middlewared.utils import security
+from truenas_api_client import Client
 
 
 FAKE_METHODS = [
@@ -18,6 +19,19 @@ ALL_METHODS = frozenset([method for method, roles in FAKE_METHODS])
 WRITE_METHODS = frozenset(['fakemethod3', 'fakemethod6'])
 READONLY_ADMIN_METHODS = ALL_METHODS - WRITE_METHODS
 FULL_ADMIN_STIG = ALL_METHODS - FAKE_METHODS_NOSTIG
+EXPECTED_FA_RESOURCES = frozenset({
+    'user.verify_twofactor_token',
+    'failover.reboot.other_node',
+    'truenas.accept_eula',
+    'filesystem.put',
+    'truenas.set_production',
+    'system.shutdown',
+    'config.reset',
+    'system.reboot',
+    'config.upload',
+    'filesystem.get',
+    'config.save',
+})
 
 
 @pytest.fixture(scope='module')
@@ -93,3 +107,15 @@ def test__role_manager_reject_already_registered(tmp_role_manager):
 
     with pytest.raises(ValueError, match='is already registered in this role manager'):
         tmp_role_manager.register_method(method_name='canary.update', roles=['VM_WRITE'])
+
+
+def test__check_readonly_role():
+    """
+    We _really_ shouldn't be directly assigning resources to FULL_ADMIN. The reason for this
+    is that it provides no granularity for restricting what FA can do when STIG is enabled.
+    Mostly we don't want methods like "virt.global.update" being populated here.
+    """
+    with Client() as c:
+        method_allowlists = c.call('privilege.dump_role_manager')['method_allowlists']
+        fa_resources = set([entry['resource'] for entry in method_allowlists['FULL_ADMIN']])
+        assert fa_resources == EXPECTED_FA_RESOURCES
