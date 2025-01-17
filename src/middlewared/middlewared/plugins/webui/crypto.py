@@ -1,3 +1,12 @@
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CERTPROFILES,
+    CertProfilesArgs,
+    CertProfilesResult,
+    CSRProfilesArgs,
+    CSRProfilesResult,
+    CSRPROFILES,
+)
 from middlewared.schema import accepts, Int
 from middlewared.service import Service
 
@@ -9,9 +18,13 @@ class WebUICryptoService(Service):
         private = True
         cli_private = True
 
-    @accepts(roles=['READONLY_ADMIN'])
+    @api_method(
+        CertProfilesArgs,
+        CertProfilesResult,
+        roles=['READONLY_ADMIN']
+    )
     async def certificate_profiles(self):
-        return await self.middleware.call('certificate.profiles')
+        return CERTPROFILES
 
     @accepts(roles=['READONLY_ADMIN'])
     async def certificateauthority_profiles(self):
@@ -21,6 +34,10 @@ class WebUICryptoService(Service):
     async def get_certificate_domain_names(self, cert_id):
         return await self.middleware.call('certificate.get_domain_names', cert_id)
 
-    @accepts(roles=['READONLY_ADMIN'])
+    @api_method(
+        CSRProfilesArgs,
+        CSRProfilesResult,
+        roles=['READONLY_ADMIN']
+    )
     async def csr_profiles(self):
-        return await self.middleware.call('certificate.certificate_signing_requests_profiles')
+        return CSRPROFILES
