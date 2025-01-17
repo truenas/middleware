@@ -33,6 +33,7 @@
 #	auto-propagate		<service> <yes|no>
 #
 # Currently supported cache names (services): passwd, group, hosts, services
+# TrueNAS modification: enable for 'hosts' only
 #
 <%
     import os
