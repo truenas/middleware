@@ -116,7 +116,7 @@ def api_method(
         wrapped.audit_callback = audit_callback
         wrapped.audit_extended = audit_extended
         wrapped.rate_limit = rate_limit
-        wrapped.roles = roles or ['FULL_ADMIN']
+        wrapped.roles = roles or []
         wrapped._private = private
         wrapped._cli_private = cli_private
 
