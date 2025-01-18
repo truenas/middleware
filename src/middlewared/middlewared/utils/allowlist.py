@@ -2,8 +2,7 @@ import fnmatch
 import re
 
 from middlewared.api.current import HttpVerb
-
-ALLOW_LIST_FULL_ADMIN = {'method': '*', 'resource': '*'}
+from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN
 
 
 class Allowlist:

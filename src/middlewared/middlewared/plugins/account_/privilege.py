@@ -7,8 +7,8 @@ from middlewared.api.current import *
 from middlewared.plugins.account import unixhash_is_valid
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
+from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN, LocalAdminGroups
 from middlewared.utils.privilege import (
-    LocalAdminGroups,
     privilege_has_webui_access,
     privileges_group_mapping
 )
@@ -382,7 +382,7 @@ class PrivilegeService(CRUDService):
     async def full_privilege(self):
         return {
             'roles': {'FULL_ADMIN'},
-            'allowlist': [{'method': '*', 'resource': '*'}],
+            'allowlist': [ALLOW_LIST_FULL_ADMIN.copy()],
             'web_shell': True,
             'webui_access': True,
         }

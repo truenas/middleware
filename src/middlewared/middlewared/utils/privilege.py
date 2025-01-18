@@ -1,10 +1,5 @@
-import enum
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.role import ROLES
-
-
-class LocalAdminGroups(enum.IntEnum):
-    BUILTIN_ADMINISTRATORS = 544
 
 
 def privilege_has_webui_access(privilege: dict) -> bool:
