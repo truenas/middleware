@@ -4,6 +4,8 @@ from struct import calcsize, unpack
 
 from pyroute2 import DiagSocket
 
+from .auth import get_login_uid, AUID_UNSET
+
 __all__ = ('ConnectionOrigin',)
 
 HA_HEARTBEAT_IPS = ('169.254.10.1', '169.254.10.2')
@@ -35,6 +37,11 @@ class ConnectionOrigin:
     gid: int | None = None
     """If `family` is of type AF_UNIX, this represents
     the group id associated to the unix datagram connection"""
+    loginuid: int | None = None
+    """If `family` is of type AF_UNIX, this represents
+    the login uid associated to the unix datagram connection.
+    The login uid can be used to determine whether the connection was
+    created by an interactive shell session"""
 
     @classmethod
     def create(cls, request):
@@ -42,10 +49,12 @@ class ConnectionOrigin:
             sock = request.transport.get_extra_info("socket")
             if sock.family == AF_UNIX:
                 pid, uid, gid = unpack("3i", sock.getsockopt(SOL_SOCKET, SO_PEERCRED, calcsize("3i")))
+                login_uid = get_login_uid(pid)
                 return cls(
                     family=sock.family,
                     pid=pid,
                     uid=uid,
+                    loginuid=login_uid,
                     gid=gid
                 )
             elif sock.family in (AF_INET, AF_INET6):
@@ -80,6 +89,24 @@ class ConnectionOrigin:
     @property
     def repr(self) -> str:
         return f"pid:{self.pid}" if self.is_unix_family else self.rem_addr
+
+    @property
+    def session_is_interactive(self) -> bool:
+        """ This is used to indicate whether session is internal
+        for purposes of STIG checks. This property is only set for
+        AF_UNIX connections and indicates whether its an interactive """
+        if self.loginuid is None:
+            # Not AF_UNIX connection. Always apply restrictions
+            # for interactive sessions.
+            return True
+
+        # self.loginuid may be set to AUID_FAULTED if for some reason
+        # we encountered a major issue in retrieving the loginuid.
+        # Since this value is used to determine whether to allow
+        # enhanced privileges in STIG mode we treat AUID_FAULTED
+        # as being an interactive session with less privileges afforded
+        # it.
+        return self.loginuid != AUID_UNSET
 
     @property
     def is_tcp_ip_family(self) -> bool:
