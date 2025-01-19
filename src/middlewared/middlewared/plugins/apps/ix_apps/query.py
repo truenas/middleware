@@ -47,6 +47,16 @@ def normalize_portal_uri(portal_uri: str, host_ip: str | None) -> str:
     if not host_ip or '0.0.0.0' not in portal_uri:
         return portal_uri
 
+    # 'portal_uri' contains '0.0.0.0:<port>'.
+    # We want to replace the '0.0.0.0' part with the IP address of the host.
+    # However, if the host IP address is an IPv6 address,
+    # we need to wrap it in brackets '[]' in order to produce a valid URI.
+    # We already assume that host_ip doesn't contain a port number,
+    # so checking if it contains a ':' should be sufficient to determine
+    # whether or not it's an IPv6 address.
+    if ':' in host_ip:
+        host_ip = f'[{host_ip}]'
+
     return portal_uri.replace('0.0.0.0', host_ip)
 
 
