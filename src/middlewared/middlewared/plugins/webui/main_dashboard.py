@@ -56,7 +56,7 @@ class WebUIMainDashboardService(Service):
         dashboard after a user logs in.
         """
         info = self.sys_info_impl()
-        info['remote'] = None
+        info['remote_info'] = None
         if self.middleware.call_sync('failover.licensed'):
             try:
                 info['remote_info'] = self.middleware.call_sync(
