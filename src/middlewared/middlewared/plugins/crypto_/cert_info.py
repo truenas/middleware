@@ -1,7 +1,7 @@
 from middlewared.api import api_method
 from middlewared.api.current import (
-    CertifiateCountryChoicesArgs,
-    CertifiateCountryChoicesResult,
+    CertificateCountryChoicesArgs,
+    CertificateCountryChoicesResult,
     CertificateAcmeServerChoicesArgs,
     CertificateAcmeServerChoicesResult,
     CertificateECCurveChoicesArgs,
@@ -28,8 +28,8 @@ class CertificateService(Service):
         return names
 
     @api_method(
-        CertifiateCountryChoicesArgs,
-        CertifiateCountryChoicesResult,
+        CertificateCountryChoicesArgs,
+        CertificateCountryChoicesResult,
         roles=['CERTIFICATE_READ']
     )
     def country_choices(self):

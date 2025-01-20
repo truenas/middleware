@@ -1,6 +1,11 @@
-from middlewared.schema import accepts, Dict, returns
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CertificateCountryChoicesArgs,
+    CertificateCountryChoicesResult,
+)
 from middlewared.service import Service
 from middlewared.utils.country_codes import get_country_codes
+
 
 class SystemGeneralService(Service):
 
@@ -8,8 +13,11 @@ class SystemGeneralService(Service):
         namespace = 'system.general'
         cli_namespace = 'system.general'
 
-    @accepts()
-    @returns(Dict('country_choices', additional_attrs=True, register=True))
+    @api_method(
+        CertificateCountryChoicesArgs,
+        CertificateCountryChoicesResult,
+        roles=['SYSTEM_GENERAL_READ']
+    )
     def country_choices(self):
         """Return a dictionary whose keys represent the
         ISO 3166-1 alpha 2 country code and values represent

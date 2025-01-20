@@ -1,8 +1,8 @@
 from middlewared.api.base import BaseModel
 
 __all__ = (
-    'CertifiateCountryChoicesArgs',
-    'CertifiateCountryChoicesResult',
+    'CertificateCountryChoicesArgs',
+    'CertificateCountryChoicesResult',
     'CertificateAcmeServerChoicesArgs',
     'CertificateAcmeServerChoicesResult',
     'CertificateECCurveChoicesArgs',
@@ -12,11 +12,11 @@ __all__ = (
 )
 
 
-class CertifiateCountryChoicesArgs(BaseModel):
+class CertificateCountryChoicesArgs(BaseModel):
     pass
 
 
-class CertifiateCountryChoicesResult(BaseModel):
+class CertificateCountryChoicesResult(BaseModel):
     result: dict[str, str]
 
 
