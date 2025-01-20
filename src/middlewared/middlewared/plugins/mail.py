@@ -78,6 +78,7 @@ class MailService(ConfigService):
         datastore_prefix = 'em_'
         datastore_extend = 'mail.mail_extend'
         cli_namespace = 'system.mail'
+        role_prefix = 'ALERT'
 
     ENTRY = Dict(
         'mail_entry',
@@ -106,6 +107,7 @@ class MailService(ConfigService):
     async def mail_extend(self, cfg):
         if cfg['security']:
             cfg['security'] = cfg['security'].upper()
+
         return cfg
 
     @accepts(
@@ -154,12 +156,7 @@ class MailService(ConfigService):
                 'This field is required when SMTP authentication is enabled',
             )
 
-        if new['oauth']:
-            if new['fromemail']:
-                verrors.add('mail_update.fromemail', 'This field cannot be used with GMail')
-            if new['fromname']:
-                verrors.add('mail_update.fromname', 'This field cannot be used with GMail')
-        else:
+        if not new['oauth'] or new['oauth']['provider'] == 'outlook':
             if not new['fromemail']:
                 verrors.add('mail_update.fromemail', 'This field is required')
 

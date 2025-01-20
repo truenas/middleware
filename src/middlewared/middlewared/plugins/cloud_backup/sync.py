@@ -121,7 +121,7 @@ class CloudBackupService(Service):
         namespace = "cloud_backup"
 
     @item_method
-    @api_method(CloudBackupSyncArgs, CloudBackupSyncResult)
+    @api_method(CloudBackupSyncArgs, CloudBackupSyncResult, roles=['CLOUD_BACKUP_WRITE'])
     @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True)
     async def sync(self, job, id_, options):
         """
@@ -145,7 +145,7 @@ class CloudBackupService(Service):
             restic_config = get_restic_config(cloud_backup)
             await run_restic(
                 job,
-                restic_config.cmd + ["forget", "--keep-last", str(cloud_backup["keep_last"])],
+                restic_config.cmd + ["forget", "--keep-last", str(cloud_backup["keep_last"]), "--prune"],
                 restic_config.env,
             )
 
@@ -162,7 +162,7 @@ class CloudBackupService(Service):
             raise
 
     @item_method
-    @api_method(CloudBackupAbortArgs, CloudBackupAbortResult)
+    @api_method(CloudBackupAbortArgs, CloudBackupAbortResult, roles=['CLOUD_BACKUP_WRITE'])
     async def abort(self, id_):
         """
         Abort a running cloud backup task.

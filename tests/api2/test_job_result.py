@@ -20,7 +20,7 @@ def test_job_result():
 
         # Querying by default should redact
         job = call("core.get_jobs", [["id", "=", job_id]], {"get": True})
-        assert job["result"] != "canary"
+        assert job["result"] == "********"
 
         # but we should also be able to get unredacted result if needed
         job = call("core.get_jobs", [["id", "=", job_id]], {"get": True, "extra": {"raw_result": True}})

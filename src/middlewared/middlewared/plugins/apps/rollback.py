@@ -1,4 +1,7 @@
-from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    AppRollbackArgs, AppRollbackResult, AppRollbackVersionsArgs, AppRollbackVersionsResult,
+)
 from middlewared.service import job, Service, ValidationErrors
 
 from .compose_utils import compose_action
@@ -14,16 +17,12 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @accepts(
-        Str('app_name'),
-        Dict(
-            'options',
-            Str('app_version', empty=False, required=True),
-            Bool('rollback_snapshot', default=True),
-        ),
-        roles=['APPS_WRITE'],
+    @api_method(
+        AppRollbackArgs, AppRollbackResult,
+        audit='App: Rollback',
+        audit_extended=lambda app_name, options: app_name,
+        roles=['APPS_WRITE']
     )
-    @returns(Ref('app_entry'))
     @job(lock=lambda args: f'app_rollback_{args[0]}')
     def rollback(self, job, app_name, options):
         """
@@ -35,6 +34,9 @@ class AppService(Service):
             verrors.add('options.app_version', 'Cannot rollback to same version')
         elif options['app_version'] not in get_rollback_versions(app_name, app['version']):
             verrors.add('options.app_version', 'Specified version is not available for rollback')
+
+        if app['state'] == 'STOPPED':
+            verrors.add('app_name', 'App must not be in stopped state to rollback')
 
         verrors.check()
 
@@ -64,6 +66,7 @@ class AppService(Service):
         self.middleware.send_event(
             'app.query', 'CHANGED', id=app_name, fields=self.middleware.call_sync('app.get_instance', app_name)
         )
+        self.middleware.call_sync('app.stop', app_name).wait_sync()
         try:
             if options['rollback_snapshot'] and (
                 app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name)
@@ -90,8 +93,7 @@ class AppService(Service):
 
         return self.middleware.call_sync('app.get_instance', app_name)
 
-    @accepts(Str('app_name'), roles=['APPS_READ'])
-    @returns(List('rollback_versions', items=[Str('version')]))
+    @api_method(AppRollbackVersionsArgs, AppRollbackVersionsResult, roles=['APPS_READ'])
     def rollback_versions(self, app_name):
         """
         Retrieve versions available for rollback for `app_name` app.

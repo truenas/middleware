@@ -98,22 +98,17 @@ class EnclosureDetectionService(Service):
                 HARDWARE = 'PUMA'
                 esce = enc.elements.get('Enclosure Services Controller Electronics', {})
                 for i in esce.values():
-                    if i['descriptor'].find('ESCE A_') != -1:
-                        node = 'A'
-                    elif i['descriptor'].find('ESCE B_') != -1:
-                        node = 'B'
-                    else:
-                        break
-
-                    # We then cast the SES address (deduced from SES VPD pages)
-                    # to an integer and subtract 1. Then cast it back to hexadecimal.
-                    # We then compare if the SAS expander's SAS address is the same
-                    # as the SAS expanders SES address.
-                    ses_addr = hex(int(i['descriptor'][7:].strip(), 16) - 1)
-                    sas_addr = pathlib.Path(
-                        f'/sys/class/enclosure/{enc.pci}/device/sas_address'
-                    ).read_text().strip()
-                    if ses_addr == sas_addr:
-                        return HARDWARE, node
+                    if i['descriptor'].startswith(('ESCE A_', 'ESCE B_')):
+                        node = i['descriptor'][5]
+                        # We then cast the SES address (deduced from SES VPD pages)
+                        # to an integer and subtract 1. Then cast it back to hexadecimal.
+                        # We then compare if the SAS expander's SAS address is the same
+                        # as the SAS expanders SES address.
+                        ses_addr = hex(int(i['descriptor'][7:].strip(), 16) - 1)
+                        sas_addr = pathlib.Path(
+                            f'/sys/class/enclosure/{enc.pci}/device/sas_address'
+                        ).read_text().strip()
+                        if ses_addr == sas_addr:
+                            return HARDWARE, node
 
         return HARDWARE, NODE

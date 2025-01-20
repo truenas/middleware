@@ -96,11 +96,18 @@ async def restic_check_progress(job, proc, track_progress=False):
             await job.logs_fd_write((read + "\n").encode("utf-8", "ignore"))
             continue
 
+        msg = None
         msg_type = read["message_type"]
         match msg_type:
             case "status":
                 if (remaining := read.get("seconds_remaining")) is not None:
-                    time_delta = str(timedelta(seconds=remaining))
+                    try:
+                        time_delta = str(timedelta(seconds=remaining))
+                    except OverflowError:
+                        # Invalid `restic` output yields to
+                        # OverflowError: Python int too large to convert to C int
+                        # OverflowError: days=1785711940; must have magnitude <= 999999999
+                        pass
 
                 progress_buffer.set_progress(
                     read["percent_done"] * 100,
@@ -127,5 +134,7 @@ async def restic_check_progress(job, proc, track_progress=False):
                 ])
                 await job.logs_fd_write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
 
-        job.internal_data["messages"] = job.internal_data["messages"][-4:] + [msg]
+        if msg:
+            job.internal_data["messages"] = job.internal_data["messages"][-4:] + [msg]
+
         progress_buffer.set_progress(description=(f"{time_delta} remaining\n" if time_delta else "") + action)

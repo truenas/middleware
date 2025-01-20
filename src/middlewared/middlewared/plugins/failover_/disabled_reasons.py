@@ -3,7 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 from middlewared.schema import accepts, returns, List, Str
-from middlewared.service import Service, pass_app, no_auth_required, private
+from middlewared.service import Service, pass_app, private
 from middlewared.plugins.interface.netif import netif
 from middlewared.utils.zfs import query_imported_fast_impl
 from .enums import DisabledReasonsEnum
@@ -17,8 +17,7 @@ class FailoverDisabledReasonsService(Service):
     LAST_DISABLED_REASONS = None
     SYSTEM_DATASET_SETUP_IN_PROGRESS = False
 
-    @no_auth_required
-    @accepts()
+    @accepts(roles=['FAILOVER_READ'])
     @returns(List("reasons", items=[Str("reason")]))
     @pass_app()
     def reasons(self, app):
@@ -212,6 +211,6 @@ async def setup(middleware):
     middleware.event_register(
         "failover.disabled.reasons",
         "Sent when failover status reasons change.",
-        no_auth_required=True,
+        roles=['FAILOVER_READ']
     )
     middleware.register_hook("sysdataset.setup", systemdataset_setup_hook)

@@ -3,11 +3,13 @@ import re
 import socket
 
 import middlewared.sqlalchemy as sa
+from middlewared.api import api_method
+from middlewared.api.current import (IscsiGlobalAluaEnabledArgs, IscsiGlobalAluaEnabledResult, IscsiGlobalEntry,
+                                     IscsiGlobalUpdateArgs, IscsiGlobalUpdateResult)
 from middlewared.async_validators import validate_port
-from middlewared.schema import Bool, Dict, Int, List, Str, accepts
 from middlewared.service import SystemServiceService, ValidationErrors, private
 from middlewared.utils import run
-from middlewared.validators import IpAddress, Port, Range
+from middlewared.validators import IpAddress, Port
 
 RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
 
@@ -33,6 +35,7 @@ class ISCSIGlobalService(SystemServiceService):
         namespace = 'iscsi.global'
         cli_namespace = 'sharing.iscsi.global'
         role_prefix = 'SHARING_ISCSI_GLOBAL'
+        entry = IscsiGlobalEntry
 
     @private
     def port_is_listening(self, host, port, timeout=5):
@@ -98,15 +101,11 @@ class ISCSIGlobalService(SystemServiceService):
         data['isns_servers'] = data['isns_servers'].split()
         return data
 
-    @accepts(Dict(
-        'iscsiglobal_update',
-        Str('basename'),
-        List('isns_servers', items=[Str('server')]),
-        Int('listen_port', validators=[Range(min_=1025, max_=65535)], default=3260),
-        Int('pool_avail_threshold', validators=[Range(min_=1, max_=99)], null=True),
-        Bool('alua'),
-        update=True
-    ), audit='Update iSCSI')
+    @api_method(
+        IscsiGlobalUpdateArgs,
+        IscsiGlobalUpdateResult,
+        audit='Update iSCSI'
+    )
     async def do_update(self, data):
         """
         `alua` is a no-op for FreeNAS.
@@ -183,7 +182,11 @@ class ISCSIGlobalService(SystemServiceService):
         if cp.returncode:
             self.logger.warning('Failed to stop active iSNS: %s', cp.stderr.decode())
 
-    @accepts(roles=['SHARING_ISCSI_GLOBAL_READ'])
+    @api_method(
+        IscsiGlobalAluaEnabledArgs,
+        IscsiGlobalAluaEnabledResult,
+        roles=['SHARING_ISCSI_GLOBAL_READ']
+    )
     async def alua_enabled(self):
         """
         Returns whether iSCSI ALUA is enabled or not.

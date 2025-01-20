@@ -55,7 +55,7 @@ class SystemService(Service):
             return 'READY'
         return 'BOOTING'
 
-    @api_method(SystemRebootArgs, SystemRebootResult)
+    @api_method(SystemRebootArgs, SystemRebootResult, roles=['FULL_ADMIN'])
     @job()
     @pass_app(rest=True)
     async def reboot(self, app, job, reason, options):
@@ -73,7 +73,7 @@ class SystemService(Service):
 
         await run(['/sbin/shutdown', '-r', 'now'])
 
-    @api_method(SystemShutdownArgs, SystemShutdownResult)
+    @api_method(SystemShutdownArgs, SystemShutdownResult, roles=['FULL_ADMIN'])
     @job()
     @pass_app(rest=True)
     async def shutdown(self, app, job, reason, options):

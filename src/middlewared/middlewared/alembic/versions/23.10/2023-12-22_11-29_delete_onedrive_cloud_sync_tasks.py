@@ -17,10 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    conn = op.get_bind()
-    conn.execute("DELETE FROM tasks_cloudsync WHERE credential_id in (SELECT id FROM system_cloudcredentials WHERE "
-                 "provider = 'ONEDRIVE')")
-    conn.execute("DELETE FROM system_cloudcredentials WHERE provider = 'ONEDRIVE'")
+    pass
 
 
 def downgrade():

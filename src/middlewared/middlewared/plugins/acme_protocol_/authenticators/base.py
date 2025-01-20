@@ -8,6 +8,7 @@ class Authenticator:
     NAME = NotImplementedError
     PROPAGATION_DELAY = NotImplementedError
     SCHEMA_MODEL = NotImplementedError
+    INTERNAL = False
 
     def __init__(self, middleware, attributes):
         self.middleware = middleware

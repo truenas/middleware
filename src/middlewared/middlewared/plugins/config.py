@@ -8,11 +8,13 @@ import subprocess
 import tarfile
 import tempfile
 
-from middlewared.schema import accepts, Bool, Dict, returns
+from middlewared.api import api_method
+from middlewared.api.current import (
+    ConfigSaveArgs, ConfigSaveResult, ConfigUploadArgs, ConfigUploadResult, ConfigResetArgs, ConfigResetResult
+)
 from middlewared.service import CallError, Service, job, pass_app, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.db import FREENAS_DATABASE
-from samba import safe_tarfile
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
@@ -27,14 +29,9 @@ ADMIN_KEYS_UPLOADED = '/data/admin_authorized_keys_uploaded'
 TRUENAS_ADMIN_KEYS_UPLOADED = '/data/truenas_admin_authorized_keys_uploaded'
 ROOT_KEYS_UPLOADED = '/data/root_authorized_keys_uploaded'
 DATABASE_NAME = os.path.basename(FREENAS_DATABASE)
+PWENC_SECRET_NAME = os.path.basename(PWENC_FILE_SECRET)
 CONFIGURATION_UPLOAD_REBOOT_REASON = 'Configuration upload'
 CONFIGURATION_RESET_REBOOT_REASON = 'Configuration reset'
-
-try:
-    tarfile.tar_filter
-    TARFILE_HAS_FILTER = True
-except AttributeError:
-    TARFILE_HAS_FILTER = False
 
 
 class ConfigService(Service):
@@ -66,13 +63,7 @@ class ConfigService(Service):
             with open(ntf.name, 'rb') as f:
                 shutil.copyfileobj(f, job.pipes.output.w)
 
-    @accepts(Dict(
-        'configsave',
-        Bool('secretseed', default=False),
-        Bool('pool_keys', default=False),
-        Bool('root_authorized_keys', default=False),
-    ))
-    @returns()
+    @api_method(ConfigSaveArgs, ConfigSaveResult, roles=['FULL_ADMIN'])
     @job(pipes=["output"])
     async def save(self, job, options):
         """
@@ -85,19 +76,23 @@ class ConfigService(Service):
 
         If none of these options are set, the tar file is not generated and the database file is returned.
         """
+        self._check_access(job, 'save')
+
         options.pop('pool_keys')  # ignored, doesn't apply on SCALE
 
         method = self.save_db_only if not any(options.values()) else self.save_tar_file
         await self.middleware.run_in_thread(method, options, job)
 
-    @accepts()
-    @returns()
+    @api_method(ConfigUploadArgs, ConfigUploadResult, roles=['FULL_ADMIN'])
     @job(pipes=["input"])
     @pass_app(rest=True)
     def upload(self, app, job):
         """
         Accepts a configuration file via job pipe.
         """
+        self._check_access(job, "upload")
+
+        job.set_progress(0, 'Reading database file')
         chunk = 1024
         max_size = 10485760  # 10MB
         with tempfile.NamedTemporaryFile() as stf:
@@ -113,7 +108,7 @@ class ConfigService(Service):
                         raise CallError(f'Uploaded config is greater than maximum allowed size ({max_size} Bytes)')
 
             is_tar = tarfile.is_tarfile(stf.name)
-            self.upload_impl(stf.name, is_tar_file=is_tar)
+            self.upload_impl(job, stf.name, is_tar_file=is_tar)
 
         self.middleware.run_coroutine(
             self.middleware.call('system.reboot', CONFIGURATION_UPLOAD_REBOOT_REASON, {'delay': 10}, app=app),
@@ -121,30 +116,12 @@ class ConfigService(Service):
         )
 
     @private
-    def upload_impl(self, file_or_tar, is_tar_file=False):
+    def upload_impl(self, job, file_or_tar, is_tar_file=False):
+        job.set_progress(15, 'Replacing database file')
         with tempfile.TemporaryDirectory() as temp_dir:
             if is_tar_file:
-                # FIXME: following uses Samba's safe_tarfile to try to ameliorate CVE-2007-4559.
-                #
-                # When we have debian python version with tarfile extraction fix, replace samba safe_tarfile
-                # with appropriate parameters to avoid dir traversal issues.
-                #
-                # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.extraction_filter
-                # https://peps.python.org/pep-0706/
-                #
-                # e.g.
-                # with tarfile.open(file_or_tar, 'r') as tar:
-                #    tar.extractall(temp_dir, filter='tar')
-                if TARFILE_HAS_FILTER:
-                    self.logger.error(
-                        'tarfile version now properly supports filter kwarg. Mitigation '
-                        'may be removed.'
-                    )
-                    with tarfile.open(file_or_tar, 'r') as tar:
-                        tar.extractall(temp_dir, filter='tar')
-                else:
-                    with safe_tarfile.open(file_or_tar, 'r') as tar:
-                        tar.extractall(temp_dir)
+                with tarfile.open(file_or_tar, 'r') as tar:
+                    tar.extractall(temp_dir, filter='tar')
             else:
                 # if it's just the db then copy it to the same
                 # temp directory to keep the logic simple(ish).
@@ -173,7 +150,11 @@ class ConfigService(Service):
             if found_db_file is None:
                 raise CallError('Neither a valid tar or TrueNAS database file was provided.')
 
-            p = subprocess.run(['migrate', str(found_db_file.absolute())], capture_output=True, text=True)
+            p = subprocess.run([
+                'migrate',
+                str(found_db_file.absolute()),
+                f'{temp_dir}/{PWENC_SECRET_NAME}',
+            ], capture_output=True, text=True)
             if p.returncode != 0:
                 raise CallError(
                     f'Uploaded TrueNAS database file is not valid:\n{p.stderr}'
@@ -203,27 +184,13 @@ class ConfigService(Service):
                     shutil.move(abspath, ROOT_KEYS_UPLOADED)
                     send_to_remote.append(ROOT_KEYS_UPLOADED)
 
+        job.set_progress(25, 'Running database upload hooks')
         self.middleware.call_hook_sync('config.on_upload', UPLOADED_DB_PATH)
-        if self.middleware.call_sync('failover.licensed'):
-            try:
-                for _file in send_to_remote:
-                    self.middleware.call_sync('failover.send_small_file', _file)
-                self.middleware.call_sync(
-                    'failover.call_remote', 'core.call_hook', ['config.on_upload', [UPLOADED_DB_PATH]]
-                )
-                self.middleware.run_coroutine(
-                    self.middleware.call('failover.call_remote', 'system.reboot', [CONFIGURATION_UPLOAD_REBOOT_REASON]),
-                    wait=False,
-                )
-            except Exception as e:
-                raise CallError(
-                    f'Config uploaded successfully, but remote node responded with error: {e}. '
-                    f'Please use Sync to Peer on the System/Failover page to perform a manual sync after reboot.',
-                    CallError.EREMOTENODEERROR,
-                )
 
-    @accepts(Dict('options', Bool('reboot', default=True)))
-    @returns()
+        self._handle_failover(job, 'uploaded', send_to_remote, UPLOADED_DB_PATH, True,
+                              CONFIGURATION_UPLOAD_REBOOT_REASON)
+
+    @api_method(ConfigResetArgs, ConfigResetResult, roles=['FULL_ADMIN'])
     @job(lock='config_reset', logs=True)
     @pass_app(rest=True)
     def reset(self, app, job, options):
@@ -233,12 +200,7 @@ class ConfigService(Service):
         If `reboot` is true this job will reboot the system after its completed with a delay of 10
         seconds.
         """
-        job.set_progress(0, 'Performing credential check')
-        if job.credentials is None:
-            raise CallError('Unable to check credentials')
-
-        if job.credentials.is_user_session and 'SYS_ADMIN' not in job.credentials.user['account_attributes']:
-            raise CallError('Configuration reset is limited to local SYS_ADMIN account ("root" or "truenas_admin")')
+        self._check_access(job, 'reset')
 
         job.set_progress(15, 'Replacing database file')
         shutil.copy('/data/factory-v1.db', FREENAS_DATABASE)
@@ -246,37 +208,48 @@ class ConfigService(Service):
         job.set_progress(25, 'Running database upload hooks')
         self.middleware.call_hook_sync('config.on_upload', FREENAS_DATABASE)
 
-        if self.middleware.call_sync('failover.licensed'):
-            job.set_progress(35, 'Sending database to the other node')
-            try:
-                self.middleware.call_sync('failover.send_small_file', FREENAS_DATABASE)
-
-                self.middleware.call_sync(
-                    'failover.call_remote', 'core.call_hook', ['config.on_upload', [FREENAS_DATABASE]],
-                )
-
-                if options['reboot']:
-                    self.middleware.run_coroutine(
-                        self.middleware.call(
-                            'failover.call_remote', 'system.reboot', [CONFIGURATION_UPLOAD_REBOOT_REASON],
-                        ),
-                        wait=False,
-                    )
-            except Exception as e:
-                raise CallError(
-                    f'Config reset successfully, but remote node responded with error: {e}. '
-                    f'Please use Sync to Peer on the System/Failover page to perform a manual sync after reboot.',
-                    CallError.EREMOTENODEERROR,
-                )
-
-        job.set_progress(50, 'Updating initramfs')
-        self.middleware.call_sync('boot.update_initramfs')
+        self._handle_failover(job, 'reset', [FREENAS_DATABASE], FREENAS_DATABASE, options['reboot'],
+                              CONFIGURATION_RESET_REBOOT_REASON)
 
         if options['reboot']:
             job.set_progress(95, 'Will reboot in 10 seconds')
             self.middleware.run_coroutine(
                 self.middleware.call('system.reboot', CONFIGURATION_RESET_REBOOT_REASON, {'delay': 10}, app=app),
                 wait=False,
+            )
+
+    def _check_access(self, job, verb):
+        if job.credentials is None:
+            raise CallError('Unable to check credentials')
+
+        if job.credentials.is_user_session and 'SYS_ADMIN' not in job.credentials.user['account_attributes']:
+            raise CallError(f'Configuration {verb} is limited to local SYS_ADMIN account ("root" or "truenas_admin")')
+
+    def _handle_failover(self, job, verb, files, db_path, reboot, reboot_reason):
+        if not self.middleware.call_sync('failover.licensed'):
+            return
+
+        try:
+            job.set_progress(50, 'Sending configuration files to the other node')
+            for _file in files:
+                self.middleware.call_sync('failover.send_small_file', _file)
+
+            job.set_progress(75, 'Running database upload hooks on the other node')
+            self.middleware.call_sync(
+                'failover.call_remote', 'core.call_hook', ['config.on_upload', [db_path]],
+                {'timeout': 300},  # Give more time for potential initrd update
+            )
+
+            if reboot:
+                self.middleware.run_coroutine(
+                    self.middleware.call('failover.call_remote', 'system.reboot', [reboot_reason]),
+                    wait=False,
+                )
+        except Exception as e:
+            raise CallError(
+                f'Config {verb} successfully, but remote node responded with error: {e}. '
+                f'Please use Sync to Peer on the System/Failover page to perform a manual sync after reboot.',
+                CallError.EREMOTENODEERROR,
             )
 
     @private

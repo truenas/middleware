@@ -14,6 +14,7 @@ class PoolService(Service):
     @item_method
     @accepts(
         Int('id'),
+        roles=['POOL_WRITE']
     )
     @returns()
     @job(lock='pool_expand')

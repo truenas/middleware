@@ -1,6 +1,7 @@
 <%
     from middlewared.utils import filter_list
     from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
+    from middlewared.utils.pam import STANDALONE_ACCOUNT
 
     ds_auth = render_ctx['datastore.config']['stg_ds_auth']
     truenas_admin_string = ''
@@ -18,11 +19,7 @@ auth		[success=1 default=die]		pam_tdb.so ${truenas_admin_string}
 %if ds_auth:
 @include common-account
 %else:
-<%namespace name="pam" file="pam.inc.mako" />\
-<%
-        dsp = pam.getNoDirectoryServicePam().pam_account()
-%>\
-${'\n'.join(dsp['primary'])}
+${'\n'.join(line.as_conf() for line in STANDALONE_ACCOUNT.primary)}
 @include common-account-unix
 %endif
 password	required			pam_deny.so

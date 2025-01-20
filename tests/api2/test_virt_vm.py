@@ -35,6 +35,7 @@ def vm(virt_pool):
         'vnc_port': VNC_PORT,
         'enable_vnc': True,
         'instance_type': 'VM',
+        'vnc_password': 'test123'
     }, job=True)
     call('virt.instance.stop', VM_NAME, {'force': True, 'timeout': 1}, job=True)
     try:
@@ -119,24 +120,35 @@ def test_vm_props(vm):
     # Testing VNC specific bits
     assert instance['vnc_enabled'] is True, instance
     assert instance['vnc_port'] == VNC_PORT, instance
+    assert instance['vnc_password'] == 'test123', instance
 
     # Going to unset VNC
-    call('virt.instance.update', VM_NAME, {'vnc_port': None}, job=True)
+    call('virt.instance.update', VM_NAME, {'enable_vnc': False}, job=True)
     instance = call('virt.instance.get_instance', VM_NAME, {'extra': {'raw': True}})
-    assert instance['raw']['config']['user.ix_old_raw_qemu_config'] == f'-vnc :{VNC_PORT - 5900}'
+    assert instance['raw']['config']['user.ix_old_raw_qemu_config'] == f'-object secret,id=vnc0,data=test123 ' \
+                                                                       f'-vnc :{VNC_PORT - 5900},password-secret=vnc0'
     assert instance['vnc_enabled'] is False, instance
     assert instance['vnc_port'] is None, instance
 
     # Going to update port
-    call('virt.instance.update', VM_NAME, {'vnc_port': 6901}, job=True)
+    call('virt.instance.update', VM_NAME, {'vnc_port': 6901, 'enable_vnc': True}, job=True)
     instance = call('virt.instance.get_instance', VM_NAME, {'extra': {'raw': True}})
     assert instance['raw']['config'].get('user.ix_old_raw_qemu_config') is None
     assert instance['raw']['config']['raw.qemu'] == f'-vnc :{1001}'
     assert instance['vnc_port'] == 6901, instance
 
+    # Going to update password
+    call('virt.instance.update', VM_NAME, {'vnc_password': 'update_test123', 'enable_vnc': True}, job=True)
+    instance = call('virt.instance.get_instance', VM_NAME, {'extra': {'raw': True}})
+    assert instance['raw']['config'].get('user.ix_old_raw_qemu_config') == f'-vnc :{1001}'
+    assert instance['raw']['config']['raw.qemu'] == f'-object secret,id=vnc0,data=update_test123' \
+                                                    f' -vnc :{1001},password-secret=vnc0'
+    assert instance['vnc_port'] == 6901, instance
+
     # Changing nothing
     instance = call('virt.instance.update', VM_NAME, {}, job=True)
     assert instance['vnc_port'] == 6901, instance
+    assert instance['vnc_password'] == 'update_test123', instance
 
 
 def test_vm_iso_volume(vm, iso_volume):
@@ -149,20 +161,85 @@ def test_vm_iso_volume(vm, iso_volume):
         assert iso_vol['used_by'] == [VM_NAME], iso_vol
 
 
-@pytest.mark.parametrize('enable_vnc,vnc_port,error_msg', [
-    (True, None, 'Value error, VNC port must be set when VNC is enabled'),
-    (True, 6901, 'VNC port is already in use by another virt instance'),
-    (True, 23, 'Input should be greater than or equal to 5900'),
+def test_vm_creation_with_iso_volume(vm, iso_volume):
+    virt_instance_name = 'test-iso-vm'
+    call('virt.instance.create', {
+        'name': virt_instance_name,
+        'instance_type': 'VM',
+        'source_type': 'ISO',
+        'iso_volume': ISO_VOLUME_NAME,
+    }, job=True)
+
+    try:
+        vm_devices = call('virt.instance.device_list', virt_instance_name)
+        assert any(device['name'] == ISO_VOLUME_NAME for device in vm_devices), vm_devices
+
+        iso_vol = call('virt.volume.get_instance', ISO_VOLUME_NAME)
+        assert iso_vol['used_by'] == [virt_instance_name], iso_vol
+    finally:
+        call('virt.instance.delete', virt_instance_name, job=True)
+
+
+def test_vm_creation_with_zvol(virt_pool, vm, iso_volume):
+    virt_instance_name = 'test-zvol-vm'
+    zvol_name = f'{virt_pool["pool"]}/test_zvol'
+    call('zfs.dataset.create', {
+        'name': zvol_name,
+        'type': 'VOLUME',
+        'properties': {'volsize': '514MiB'}
+    })
+    call('virt.instance.create', {
+        'name': virt_instance_name,
+        'instance_type': 'VM',
+        'source_type': 'ZVOL',
+        'zvol_path': f'/dev/zvol/{zvol_name}',
+    }, job=True)
+
+    try:
+        vm_devices = call('virt.instance.device_list', virt_instance_name)
+        assert any(
+            device['name'] == 'ix_virt_zvol_root'
+            and device['boot_priority'] == 1
+            for device in vm_devices
+        ), vm_devices
+
+    finally:
+        call('virt.instance.delete', virt_instance_name, job=True)
+        call('zfs.dataset.delete', zvol_name)
+
+
+@pytest.mark.parametrize('iso_volume,error_msg', [
+    (None, 'Value error, ISO volume must be set when source type is "ISO"'),
+    ('test_iso123', 'Invalid ISO volume selected. Please select a valid ISO volume.'),
 ])
-def test_vnc_validation_on_vm_create(virt_pool, enable_vnc, vnc_port, error_msg):
+def test_iso_param_validation_on_vm_create(virt_pool, iso_volume, error_msg):
+    with pytest.raises(ValidationErrors) as ve:
+        call('virt.instance.create', {
+             'name': 'test-iso-vm2',
+             'instance_type': 'VM',
+             'source_type': 'ISO',
+             'iso_volume': iso_volume
+        }, job=True)
+
+    assert ve.value.errors[0].errmsg == error_msg
+
+
+@pytest.mark.parametrize('enable_vnc,vnc_password,vnc_port,error_msg', [
+    (True, None, None, 'Value error, VNC port must be set when VNC is enabled'),
+    (True, None, 6901, 'VNC port is already in use by another virt instance'),
+    (True, None, 23, 'Input should be greater than or equal to 5900'),
+    (False, 'test_123', None, 'Value error, VNC password can only be set when VNC is enabled'),
+])
+def test_vnc_validation_on_vm_create(virt_pool, enable_vnc, vnc_password, vnc_port, error_msg):
     with pytest.raises(ValidationErrors) as ve:
         call('virt.instance.create', {
              'name': 'test-vnc-vm',
              'instance_type': 'VM',
              'source_type': None,
              'vnc_port': vnc_port,
+             'vnc_password': vnc_password,
              'enable_vnc': enable_vnc,
-         }, job=True)
+        }, job=True)
 
     assert ve.value.errors[0].errmsg == error_msg
 

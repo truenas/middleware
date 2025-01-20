@@ -1,4 +1,8 @@
-from middlewared.schema import accepts
+from middlewared.api import api_method
+from middlewared.api.current import (
+    WebUIEnclosureDashboardArgs,
+    WebUIEnclosureDashboardResult
+)
 from middlewared.service import Service
 
 
@@ -63,7 +67,11 @@ class WebUIEnclosureService(Service):
 
         return enclosures
 
-    @accepts(roles=['ENCLOSURE_READ'])
+    @api_method(
+        WebUIEnclosureDashboardArgs,
+        WebUIEnclosureDashboardResult,
+        roles=['ENCLOSURE_READ']
+    )
     def dashboard(self):
         """This endpoint is used exclusively by the webUI team for
         the enclosure dashboard page for iX sold hardware.

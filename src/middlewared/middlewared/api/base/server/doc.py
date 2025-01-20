@@ -15,6 +15,7 @@ class APIDump(BaseModel):
 
 class APIDumpMethod(BaseModel):
     name: str
+    roles: list[str]
     doc: str | None
     schemas: dict
 
@@ -64,6 +65,7 @@ class APIDumper:
 
         return APIDumpMethod(
             name=name,
+            roles=method.methodobj.roles,
             doc=doc,
             schemas=self._dump_method_schemas(method),
         )

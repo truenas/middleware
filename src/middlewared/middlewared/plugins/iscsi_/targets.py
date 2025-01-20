@@ -19,6 +19,7 @@ from middlewared.utils import UnexpectedFailure, run
 from .utils import AUTHMETHOD_LEGACY_MAP
 
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
+MODE_FC_CAPABLE = ['FC', 'BOTH']
 
 
 class iSCSITargetModel(sa.Model):
@@ -30,6 +31,7 @@ class iSCSITargetModel(sa.Model):
     iscsi_target_mode = sa.Column(sa.String(20), default='iscsi')
     iscsi_target_auth_networks = sa.Column(sa.JSON(list))
     iscsi_target_rel_tgt_id = sa.Column(sa.Integer(), unique=True)
+    iscsi_target_iscsi_parameters = sa.Column(sa.JSON(), nullable=True)
 
 
 class iSCSITargetGroupModel(sa.Model):
@@ -263,6 +265,10 @@ class iSCSITargetService(CRUDService):
                     f'Auth network "{network}" is not a valid IPv4 or IPv6 network'
                 )
 
+    async def __remove_target_fcport(self, id_):
+        for fcport in await self.middleware.call('fcport.query', [['target.id', '=', id_]]):
+            await self.middleware.call('fcport.delete', fcport['id'])
+
     @api_method(
         IscsiTargetValidateNameArgs,
         IscsiTargetValidateNameResult,
@@ -301,6 +307,12 @@ class iSCSITargetService(CRUDService):
         new = old.copy()
         new.update(data)
 
+        # Before we compress the data, work out whether we have
+        # just removed FC target mode
+        remove_fcport = all([old['mode'] != new['mode'],
+                             old['mode'] in MODE_FC_CAPABLE,
+                             new['mode'] not in MODE_FC_CAPABLE])
+
         verrors = ValidationErrors()
         await self.__validate(verrors, new, 'iscsi_target_create', old=old)
         verrors.check()
@@ -319,12 +331,37 @@ class iSCSITargetService(CRUDService):
 
         await self.__save_groups(id_, groups, oldgroups)
 
+        if remove_fcport:
+            await self.__remove_target_fcport(id_)
+
         # First process the local (MASTER) config
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
         # Then process the BACKUP config if we are HA and ALUA is enabled.
-        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+        alua_enabled = await self.middleware.call("iscsi.global.alua_enabled")
+        run_on_peer = alua_enabled and await self.middleware.call('failover.remote_connected')
+        if run_on_peer:
             await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
+
+        # NOTE: Any parameters whose keys are omitted will be removed from the config i.e. we
+        # will deliberately revert removed items to the SCST default value
+        old_params = set(old.get('iscsi_parameters', {}).keys())
+        if old_params:
+            new_params = set(new.get('iscsi_parameters', {}).keys())
+            reset_params = old_params - new_params
+            # Has the value just been set to None
+            for param in old_params & new_params:
+                if new['iscsi_parameters'][param] is None and old['iscsi_parameters'][param] is not None:
+                    reset_params.add(param)
+            if reset_params:
+                global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+                iqn = f'{global_basename}:{new["name"]}'
+                await self.middleware.call('iscsi.scst.reset_target_parameters', iqn, list(reset_params))
+                if alua_enabled:
+                    ha_iqn = f'{global_basename}:HA:{new["name"]}'
+                    await self.middleware.call('iscsi.scst.reset_target_parameters', ha_iqn, list(reset_params))
+                if run_on_peer:
+                    await self.middleware.call('failover.call_remote', 'iscsi.scst.reset_target_parameters', [iqn, list(reset_params)])
 
         return await self.get_instance(id_)
 
@@ -352,6 +389,11 @@ class iSCSITargetService(CRUDService):
             await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'], force)
             if delete_extents:
                 await self.middleware.call('iscsi.extent.delete', target_to_extent['extent'], False, force)
+
+        # If the target was being used for FC then we may also need to clear the
+        # Fibre Channel port mapping
+        if target['mode'] in MODE_FC_CAPABLE:
+            await self.__remove_target_fcport(id_)
 
         await self.middleware.call(
             'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target', '=', id_]]

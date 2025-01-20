@@ -80,6 +80,29 @@ class VirtInstanceService(CRUDService):
                 'raw': None,  # Default required by pydantic
             }
 
+            idmap = None
+            if idmap_current := i['config'].get('volatile.idmap.current'):
+                idmap_current = json.loads(idmap_current)
+                uid = list(filter(lambda x: x.get('Isuid'), idmap_current)) or None
+                if uid:
+                    uid = {
+                        'hostid': uid[0]['Hostid'],
+                        'maprange': uid[0]['Maprange'],
+                        'nsid': uid[0]['Nsid'],
+                    }
+                gid = list(filter(lambda x: x.get('Isgid'), idmap_current)) or None
+                if gid:
+                    gid = {
+                        'hostid': gid[0]['Hostid'],
+                        'maprange': gid[0]['Maprange'],
+                        'nsid': gid[0]['Nsid'],
+                    }
+                idmap = {
+                    'uid': uid,
+                    'gid': gid,
+                }
+            entry['userns_idmap'] = idmap
+
             if options['extra'].get('raw'):
                 entry['raw'] = i
 
@@ -112,6 +135,11 @@ class VirtInstanceService(CRUDService):
     @private
     async def validate(self, new, schema_name, verrors, old=None):
         # Do not validate image_choices because its an expansive operation, just fail on creation
+        instance_type = new.get('instance_type') or (old or {}).get('type')
+        if instance_type and not await self.middleware.call('virt.global.license_active', instance_type):
+            verrors.add(
+                f'{schema_name}.instance_type', f'System is not licensed to manage {instance_type!r} instances'
+            )
 
         if not old and await self.query([('name', '=', new['name'])]):
             verrors.add(f'{schema_name}.name', f'Name {new["name"]!r} already exists')
@@ -127,23 +155,50 @@ class VirtInstanceService(CRUDService):
                 verrors.add(f'{schema_name}.cpu', 'Cannot reserve more than system cores')
 
         if old:
-            if new.get('vnc_port'):
-                # If in update case, user specifies a vnc port, we automatically assume he wants to enable vnc
-                # this makes it easier to change existing vnc port and set it as well
-                new['enable_vnc'] = True
-            elif 'vnc_port' in new and new['vnc_port'] is None:
-                # This is the case to handle when we want to disable VNC
-                new['enable_vnc'] = False
-            elif 'vnc_port' not in new and old['vnc_enabled'] and old['vnc_port']:
-                # We want to handle the case where nothing has been changed on vnc attrs
+            enable_vnc = new.get('enable_vnc')
+            if enable_vnc is False:
+                # User explicitly disabled VNC support, let's remove vnc port
                 new.update({
-                    'enable_vnc': True,
-                    'vnc_port': old['vnc_port'],
+                    'vnc_port': None,
+                    'vnc_password': None,
                 })
+            elif enable_vnc is True:
+                if not old['vnc_port'] and not new.get('vnc_port'):
+                    verrors.add(f'{schema_name}.vnc_port', 'VNC port is required when VNC is enabled')
+                elif not new.get('vnc_port'):
+                    new['vnc_port'] = old['vnc_port']
 
-        if (
-            new.get('instance_type') == 'VM' or (old and old['type'] == 'VM')
-        ) and new.get('enable_vnc'):
+                if 'vnc_password' not in new:
+                    new['vnc_password'] = old['vnc_password']
+            elif enable_vnc is None:
+                for k in ('vnc_port', 'vnc_password'):
+                    if new.get(k):
+                        verrors.add(f'{schema_name}.enable_vnc', f'Should be set when {k!r} is specified')
+
+                if old['vnc_enabled'] and old['vnc_port']:
+                    # We want to handle the case where nothing has been changed on vnc attrs
+                    new.update({
+                        'enable_vnc': True,
+                        'vnc_port': old['vnc_port'],
+                        'vnc_password': old['vnc_password'],
+                    })
+                else:
+                    new.update({
+                        'enable_vnc': False,
+                        'vnc_port': None,
+                        'vnc_password': None,
+                    })
+        else:
+            # Creation case
+            if new['source_type'] == 'ISO' and not await self.middleware.call(
+                'virt.volume.query', [['content_type', '=', 'ISO'], ['id', '=', new['iso_volume']]]
+            ):
+                verrors.add(
+                    f'{schema_name}.iso_volume',
+                    'Invalid ISO volume selected. Please select a valid ISO volume.'
+                )
+
+        if instance_type == 'VM' and new.get('enable_vnc'):
             if not new.get('vnc_port'):
                 verrors.add(f'{schema_name}.vnc_port', 'VNC port is required when VNC is enabled')
             else:
@@ -182,11 +237,20 @@ class VirtInstanceService(CRUDService):
             config['boot.autostart'] = str(data['autostart']).lower()
 
         if instance_type == 'VM':
+            config['user.ix_old_raw_qemu_config'] = raw.get('raw.qemu', '') if raw else ''
+            config['user.ix_vnc_config'] = json.dumps({
+                'vnc_enabled': data['enable_vnc'],
+                'vnc_port': data['vnc_port'],
+                'vnc_password': data['vnc_password'],
+            })
+
             if data.get('enable_vnc') and data.get('vnc_port'):
-                config['user.ix_old_raw_qemu_config'] = raw.get('raw.qemu', '') if raw else ''
-                config['raw.qemu'] = f'-vnc :{data["vnc_port"] - VNC_BASE_PORT}'
+                vnc_config = f'-vnc :{data["vnc_port"] - VNC_BASE_PORT}'
+                if data.get('vnc_password'):
+                    vnc_config = f'-object secret,id=vnc0,data={data["vnc_password"]} {vnc_config},password-secret=vnc0'
+
+                config['raw.qemu'] = vnc_config
             if data.get('enable_vnc') is False:
-                config['user.ix_old_raw_qemu_config'] = raw['raw.qemu'] if raw else ''
                 config['raw.qemu'] = ''
 
         return config
@@ -239,8 +303,37 @@ class VirtInstanceService(CRUDService):
         verrors = ValidationErrors()
         await self.validate(data, 'virt_instance_create', verrors)
 
+        data_devices = data['devices'] or []
+        iso_volume = data.pop('iso_volume', None)
+        root_device_to_add = None
+        zvol_path = data.pop('zvol_path', None)
+        if data['source_type'] == 'ZVOL':
+            data['source_type'] = None
+            root_device_to_add = {
+                'name': 'ix_virt_zvol_root',
+                'dev_type': 'DISK',
+                'source': zvol_path,
+                'destination': None,
+                'readonly': False,
+                'boot_priority': 1,
+            }
+        elif data['source_type'] == 'ISO':
+            root_device_to_add = {
+                'name': iso_volume,
+                'dev_type': 'DISK',
+                'pool': 'default',
+                'source': iso_volume,
+                'destination': None,
+                'readonly': False,
+                'boot_priority': 1,
+            }
+
+        if root_device_to_add:
+            data['source_type'] = None
+            data_devices.append(root_device_to_add)
+
         devices = {}
-        for i in (data['devices'] or []):
+        for i in data_devices:
             await self.middleware.call(
                 'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['instance_type'],
             )
@@ -286,7 +379,7 @@ class VirtInstanceService(CRUDService):
             'source': source,
             'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
             'start': data['autostart'],
-        }}, running_cb)
+        }}, running_cb, timeout=15 * 60)  # We will give 15 minutes to incus to download relevant image and then timeout
 
         return await self.middleware.call('virt.instance.get_instance', data['name'])
 

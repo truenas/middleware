@@ -266,6 +266,7 @@ class SMARTTestService(CRUDService):
         datastore_prefix = 'smarttest_'
         namespace = 'smart.test'
         cli_namespace = 'task.smart_test'
+        role_prefix = 'DISK'
 
     ENTRY = Patch(
         'smart_task_create', 'smart_task_entry',
@@ -773,6 +774,7 @@ class SmartService(SystemServiceService):
         datastore_extend = "smart.smart_extend"
         datastore_prefix = "smart_"
         cli_namespace = "service.smart"
+        role_prefix = 'DISK'
 
     ENTRY = Dict(
         'smart_entry',

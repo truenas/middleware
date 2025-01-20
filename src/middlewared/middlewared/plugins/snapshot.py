@@ -46,6 +46,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         namespace = 'pool.snapshottask'
         cli_namespace = 'task.snapshot'
         entry = PoolSnapshotTaskEntry
+        role_prefix='SNAPSHOT_TASK'
 
     @private
     async def extend_context(self, rows, extra):
@@ -296,7 +297,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         return response
 
-    @api_method(PoolSnapshotTaskMaxCountArgs, PoolSnapshotTaskMaxCountResult)
+    @api_method(PoolSnapshotTaskMaxCountArgs, PoolSnapshotTaskMaxCountResult, roles=['SNAPSHOT_TASK_READ'])
     def max_count(self):
         """
         Returns a maximum amount of snapshots (per-dataset) the system can sustain.
@@ -306,7 +307,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         # with too many, then File Explorer will show no snapshots available.
         return 512
 
-    @api_method(PoolSnapshotTaskMaxTotalCountArgs, PoolSnapshotTaskMaxTotalCountResult)
+    @api_method(PoolSnapshotTaskMaxTotalCountArgs, PoolSnapshotTaskMaxTotalCountResult, roles=['SNAPSHOT_TASK_READ'])
     def max_total_count(self):
         """
         Returns a maximum amount of snapshots (total) the system can sustain.
@@ -317,7 +318,7 @@ class PeriodicSnapshotTaskService(CRUDService):
         return 10000
 
     @item_method
-    @api_method(PoolSnapshotTaskRunArgs, PoolSnapshotTaskRunResult)
+    @api_method(PoolSnapshotTaskRunArgs, PoolSnapshotTaskRunResult, roles=['SNAPSHOT_TASK_WRITE'])
     async def run(self, id_):
         """
         Execute a Periodic Snapshot Task of `id`.

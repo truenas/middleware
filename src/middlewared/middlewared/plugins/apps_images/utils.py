@@ -18,6 +18,7 @@ DIGEST_RE = r'[a-z0-9]+(?:[.+_-])*:[a-zA-Z0-9=_-]+'
 DOCKER_AUTH_HEADER = 'WWW-Authenticate'
 DOCKER_AUTH_URL = 'https://auth.docker.io/token'
 DOCKER_AUTH_SERVICE = 'registry.docker.io'
+DOCKER_MANIFEST_OCI_V1 = 'application/vnd.oci.image.index.v1+json'
 DOCKER_MANIFEST_SCHEMA_V1 = 'application/vnd.docker.distribution.manifest.v1+json'
 DOCKER_MANIFEST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.v2+json'
 DOCKER_MANIFEST_LIST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.list.v2+json'
@@ -151,4 +152,19 @@ def normalize_docker_limits_header(headers: dict) -> dict:
         'remaining_pull_limit': int(remaining_pull_limit),
         'remaining_time_limit_in_secs': int(remaining_time_limit),
         'error': None,
+    }
+
+
+def get_normalized_auth_config(registry_info: dict[str, dict], image_tag: str) -> dict:
+    if not registry_info:
+        return {}
+
+    user_wants_registry = normalize_reference(image_tag)['registry']
+    if user_wants_registry not in registry_info:
+        return {}
+
+    return {
+        'registry_uri': user_wants_registry,
+        'username': registry_info[user_wants_registry]['username'],
+        'password': registry_info[user_wants_registry]['password'],
     }

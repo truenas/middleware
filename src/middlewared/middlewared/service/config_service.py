@@ -36,6 +36,9 @@ class ConfigServiceMetabase(ServiceBase):
         config_entry_key = f'{namespace}_entry'
         config_model_name = f'{namespace.capitalize()}Config'
 
+        if not klass._config.private and not klass._config.role_prefix:
+            raise ValueError(f'{klass._config.namespace}: public ConfigService must have role_prefix defined')
+
         if klass._config.entry is not None and not hasattr(klass.config, 'new_style_accepts'):
             klass.ENTRY = None
             result_model = create_model(

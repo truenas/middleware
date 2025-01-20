@@ -15,7 +15,38 @@ from sqlalchemy.orm import relationship
 
 from dataclasses import asdict
 from middlewared.api import api_method
-from middlewared.api.current import *
+from middlewared.api.current import (
+    GroupEntry,
+    GroupCreateArgs,
+    GroupCreateResult,
+    GroupDeleteArgs,
+    GroupDeleteResult,
+    GroupGetGroupObjArgs,
+    GroupGetGroupObjResult,
+    GroupGetNextGidArgs,
+    GroupGetNextGidResult,
+    GroupUpdateArgs,
+    GroupUpdateResult,
+    UserEntry,
+    UserCreateArgs,
+    UserCreateResult,
+    UserDeleteArgs,
+    UserDeleteResult,
+    UserGetNextUidArgs,
+    UserGetNextUidResult,
+    UserGetUserObjArgs,
+    UserGetUserObjResult,
+    UserHasLocalAdministratorSetUpArgs,
+    UserHasLocalAdministratorSetUpResult,
+    UserSetupLocalAdministratorArgs,
+    UserSetupLocalAdministratorResult,
+    UserSetPasswordArgs,
+    UserSetPasswordResult,
+    UserShellChoicesArgs,
+    UserShellChoicesResult,
+    UserUpdateArgs,
+    UserUpdateResult,
+)
 from middlewared.service import CallError, CRUDService, ValidationErrors, pass_app, private, job
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa

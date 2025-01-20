@@ -233,7 +233,10 @@ async def rclone(middleware, job, cloud_sync, dry_run):
             await asyncio.wait_for(check_cloud_sync, None)
 
         if snapshot:
-            await middleware.call("zfs.snapshot.delete", snapshot)
+            try:
+                await middleware.call("zfs.snapshot.delete", snapshot)
+            except CallError as e:
+                middleware.logger.warning(f"Error deleting ZFS snapshot on cloud sync finish: {e!r}")
 
         refresh_credentials = REMOTES[cloud_sync["credentials"]["provider"]["type"]].refresh_credentials
         if refresh_credentials:

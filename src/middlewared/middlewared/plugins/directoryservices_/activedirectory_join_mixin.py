@@ -18,7 +18,7 @@ from middlewared.utils.directoryservices.krb5 import (
     gss_get_current_cred,
     kerberos_ticket,
 )
-from middlewared.utils.directoryservices.krb5_constants import krb5ccache
+from middlewared.utils.directoryservices.krb5_constants import krb5ccache, SAMBA_KEYTAB_DIR
 from middlewared.utils.directoryservices.krb5_error import (
     KRB5Error,
     KRB5ErrCode,
@@ -54,7 +54,7 @@ class ADJoinMixin:
         # that a call to kerberos.start would fail due to lack of replication.
         if perform_kinit and not self.__ad_has_tkt_principal():
             self.logger.debug('No ticket detected for domain. Starting kerberos service.')
-            self.middleware.call_sync('kerberos.start')
+            self._ad_wait_kerberos_start()
 
     def _ad_wait_wbclient(self) -> None:
         waited = 0
@@ -157,13 +157,17 @@ class ADJoinMixin:
 
     def _ad_leave(self, job: Job, ds_type: DSType, domain: str):
         """ Delete our computer object from active directory """
+
+        # remove all samba keytabs
+        for file in os.listdir(SAMBA_KEYTAB_DIR):
+            os.unlink(os.path.join(SAMBA_KEYTAB_DIR, file))
+
         username = str(gss_get_current_cred(krb5ccache.SYSTEM.value).name)
 
         netads = subprocess.run([
             SMBCmd.NET.value,
             '--use-kerberos', 'required',
             '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            '-U', username,
             'ads', 'leave',
         ], check=False, capture_output=True)
 
@@ -174,22 +178,22 @@ class ADJoinMixin:
             )
 
     @kerberos_ticket
-    def _ad_set_spn(self):
-        cmd = [
-            SMBCmd.NET.value,
-            '--use-kerberos', 'required',
-            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            'ads', 'keytab',
-            'add_update_ads', 'nfs'
-        ]
+    def _ad_set_spn(self, netbiosname, domainname):
+        def setspn(spn):
+            cmd = [
+                SMBCmd.NET.value,
+                '--use-kerberos', 'required',
+                '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+                'ads', 'setspn', 'add', spn
+            ]
 
-        netads = subprocess.run(cmd, check=False, capture_output=True)
-        if netads.returncode != 0:
-            raise CallError(
-                'Failed to set spn entry: '
-                f'{netads.stdout.decode().strip()}'
-            )
+            netads = subprocess.run(cmd, check=False, capture_output=True)
+            if netads.returncode != 0:
+                self.logger.error("%s: failed to set spn entry: %s", spn,
+                                  netads.stdout.decode().strip())
 
+        setspn(f'nfs/{netbiosname.upper()}')
+        setspn(f'nfs/{netbiosname.upper()}.{domainname.lower()}')
         self.middleware.call_sync('kerberos.keytab.store_ad_keytab')
 
     @kerberos_ticket
@@ -200,7 +204,6 @@ class ADJoinMixin:
         netads = subprocess.run([
             SMBCmd.NET.value,
             '--use-kerberos', 'required',
-            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
             '--realm', domain,
             '-d', '5',
             'ads', 'testjoin'
@@ -262,8 +265,8 @@ class ADJoinMixin:
                 'TrueNAS API.', exc_info=True
             )
 
-    def _ad_post_join_actions(self, job: Job):
-        self._ad_set_spn()
+    def _ad_post_join_actions(self, job: Job, conf: dict):
+        self._ad_set_spn(conf['netbiosname'], conf['domainname'])
         # The password in secrets.tdb has been replaced so make
         # sure we have it backed up in our config.
         self.middleware.call_sync('directoryservices.secrets.backup')
@@ -282,7 +285,6 @@ class ADJoinMixin:
             SMBCmd.NET.value,
             '--use-kerberos', 'required',
             '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            '-U', conf['bindname'],
             '-d', '5',
             'ads', 'join',
         ]
@@ -303,7 +305,7 @@ class ADJoinMixin:
         # operations
         try:
             job.set_progress(60, 'Performing post-join actions')
-            return self._ad_post_join_actions(job)
+            return self._ad_post_join_actions(job, conf)
         except KRB5Error:
             # if there's an actual unrecoverable kerberos error
             # in our post-join actions then leaving AD will also fail

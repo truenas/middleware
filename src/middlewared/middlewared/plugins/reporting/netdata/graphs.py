@@ -29,7 +29,17 @@ class CPUTempPlugin(GraphBase):
     skip_zero_values_in_aggregation = True
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return 'cputemp.temperatures'
+        return 'cputemp.temp'
+
+
+class MemoryPlugin(GraphBase):
+
+    title = 'Physical memory available'
+    uses_identifiers = False
+    vertical_label = 'Bytes'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_meminfo.available'
 
 
 class DISKPlugin(GraphBase):
@@ -111,26 +121,6 @@ class LoadPlugin(GraphBase):
         metrics = super().normalize_metrics(metrics)
         metrics['legend'] = [self.LOAD_MAPPING.get(legend, legend) for legend in metrics['legend']]
         return metrics
-
-
-class ProcessesPlugin(GraphBase):
-
-    title = 'System Active Processes'
-    uses_identifiers = False
-    vertical_label = 'Processes'
-
-    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return 'system.active_processes'
-
-
-class MemoryPlugin(GraphBase):
-
-    title = 'Physical memory utilization'
-    uses_identifiers = False
-    vertical_label = 'Mebibytes'
-
-    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return 'system.ram'
 
 
 class UptimePlugin(GraphBase):

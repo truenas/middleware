@@ -12,13 +12,16 @@ class CertificateService(Service):
     @job(lock='acme_cert_renewal')
     def renew_certs(self, job):
         system_cert = self.middleware.call_sync('system.general.config')['ui_certificate']
-        if system_cert and all(
-            system_cert[k] == v for k, v in (
-                ('organization', 'iXsystems'),
-                ('san', ['DNS:localhost']),
-                ('signedby', None),
-                ('cert_type_existing', True),
-            )
+        tnc_config = self.middleware.call_sync('tn_connect.config')
+        if system_cert and (
+            all(
+                system_cert[k] == v for k, v in (
+                    ('organization', 'iXsystems'),
+                    ('san', ['DNS:localhost']),
+                    ('signedby', None),
+                    ('cert_type_existing', True),
+                )
+            ) or tnc_config['certificate'] == system_cert['id']
         ):
             filters = [(
                 'OR', (('acme', '!=', None), ('id', '=', system_cert['id']))
@@ -39,7 +42,10 @@ class CertificateService(Service):
 
             # renew cert
             self.logger.debug(f'Renewing certificate {cert["name"]}')
-            if not cert.get('acme'):
+            if cert['id'] == tnc_config['certificate']:
+                self.middleware.create_task(self.middleware.call('tn_connect.acme.renew_cert'))
+                continue
+            elif not cert.get('acme'):
                 cert_str, key = generate_self_signed_certificate()
                 cert_payload = {
                     'certificate': cert_str,

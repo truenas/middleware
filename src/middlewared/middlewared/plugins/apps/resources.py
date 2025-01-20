@@ -1,6 +1,12 @@
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    AppContainerIDArgs, AppContainerIDResult, AppContainerConsoleChoiceArgs, AppContainerConsoleChoiceResult,
+    AppCertificateChoicesArgs, AppCertificateChoicesResult, AppCertificateAuthorityArgs, AppCertificateAuthorityResult,
+    AppUsedPortsArgs, AppUsedPortsResult, AppIPChoicesArgs, AppIPChoicesResult, AppAvailableSpaceArgs,
+    AppAvailableSpaceResult, AppGpuChoicesArgs, AppGpuChoicesResult,
+)
+from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
 from middlewared.service import private, Service
-
 from middlewared.utils.gpu import get_nvidia_gpus
 
 from .ix_apps.utils import ContainerState
@@ -14,25 +20,7 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @accepts(
-        Str('app_name'),
-        Dict(
-            'options',
-            Bool('alive_only', default=True),
-        ),
-        roles=['APPS_READ']
-    )
-    @returns(Dict(
-        additional_attrs=True,
-        example={
-            'afb901dc53a29016c385a9de43f089117e399622c042674f82c10c911848baba': {
-                'service_name': 'jellyfin',
-                'image': 'jellyfin/jellyfin:10.9.7',
-                'state': 'running',
-                'id': 'afb901dc53a29016c385a9de43f089117e399622c042674f82c10c911848baba',
-            }
-        }
-    ))
+    @api_method(AppContainerIDArgs, AppContainerIDResult, roles=['APPS_READ'])
     async def container_ids(self, app_name, options):
         """
         Returns container IDs for `app_name`.
@@ -50,26 +38,14 @@ class AppService(Service):
             )
         }
 
-    @accepts(Str('app_name'), roles=['APPS_READ'])
-    @returns(Dict(
-        additional_attrs=True,
-        example={
-            'afb901dc53a29016c385a9de43f089117e399622c042674f82c10c911848baba': {
-                'service_name': 'jellyfin',
-                'image': 'jellyfin/jellyfin:10.9.7',
-                'state': 'running',
-                'id': 'afb901dc53a29016c385a9de43f089117e399622c042674f82c10c911848baba',
-            }
-        }
-    ))
+    @api_method(AppContainerConsoleChoiceArgs, AppContainerConsoleChoiceResult, roles=['APPS_READ'])
     async def container_console_choices(self, app_name):
         """
         Returns container console choices for `app_name`.
         """
         return await self.container_ids(app_name, {'alive_only': True})
 
-    @accepts(roles=['APPS_READ'])
-    @returns(List(items=[Ref('certificate_entry')]))
+    @api_method(AppCertificateChoicesArgs, AppCertificateChoicesResult, roles=['APPS_READ'])
     async def certificate_choices(self):
         """
         Returns certificates which can be used by applications.
@@ -79,8 +55,7 @@ class AppService(Service):
             {'select': ['name', 'id']}
         )
 
-    @accepts(roles=['APPS_READ'])
-    @returns(List(items=[Ref('certificateauthority_entry')]))
+    @api_method(AppCertificateAuthorityArgs, AppCertificateAuthorityResult, roles=['APPS_READ'])
     async def certificate_authority_choices(self):
         """
         Returns certificate authorities which can be used by applications.
@@ -89,8 +64,7 @@ class AppService(Service):
             'certificateauthority.query', [['revoked', '=', False], ['parsed', '=', True]], {'select': ['name', 'id']}
         )
 
-    @accepts(roles=['APPS_READ'])
-    @returns(List(items=[Int('used_port')]))
+    @api_method(AppUsedPortsArgs, AppUsedPortsResult, roles=['APPS_READ'])
     async def used_ports(self):
         """
         Returns ports in use by applications.
@@ -102,8 +76,7 @@ class AppService(Service):
             for host_port in port_entry['host_ports']
         })))
 
-    @accepts(roles=['APPS_READ'])
-    @returns(Dict(Str('ip_choice')))
+    @api_method(AppIPChoicesArgs, AppIPChoicesResult, roles=['APPS_READ'])
     async def ip_choices(self):
         """
         Returns IP choices which can be used by applications.
@@ -113,8 +86,7 @@ class AppService(Service):
             for ip in await self.middleware.call('interface.ip_in_use', {'static': True, 'any': True})
         }
 
-    @accepts(roles=['CATALOG_READ'])
-    @returns(Int())
+    @api_method(AppAvailableSpaceArgs, AppAvailableSpaceResult, roles=['CATALOG_READ'])
     async def available_space(self):
         """
         Returns space available in bytes in the configured apps pool which apps can consume
@@ -122,15 +94,16 @@ class AppService(Service):
         await self.middleware.call('docker.state.validate')
         return (await self.middleware.call('filesystem.statfs', IX_APPS_MOUNT_PATH))['avail_bytes']
 
-    @accepts(roles=['APPS_READ'])
-    @returns(Dict('gpu_choices', additional_attrs=True))
+    @api_method(AppGpuChoicesArgs, AppGpuChoicesResult, roles=['APPS_READ'])
     async def gpu_choices(self):
         """
         Returns GPU choices which can be used by applications.
         """
         return {
             gpu['pci_slot']: {
-                k: gpu[k] for k in ('vendor', 'description', 'vendor_specific_config', 'pci_slot')
+                k: gpu[k] for k in (
+                    'vendor', 'description', 'vendor_specific_config', 'pci_slot', 'error', 'gpu_details',
+                )
             }
             for gpu in await self.gpu_choices_internal()
             if not gpu['error']
@@ -142,3 +115,13 @@ class AppService(Service):
             await self.middleware.call('device.get_gpus'),
             await self.middleware.run_in_thread(get_nvidia_gpus),
         )
+
+    @private
+    async def get_hostpaths_datasets(self, app_name):
+        app_info = await self.middleware.call('app.get_instance', app_name)
+        host_paths = [
+            volume['source'] for volume in app_info['active_workloads']['volumes']
+            if volume['source'].startswith(f'{IX_APPS_MOUNT_PATH}/') is False
+        ]
+
+        return await self.middleware.run_in_thread(paths_to_datasets_impl, host_paths)

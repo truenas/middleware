@@ -5,7 +5,7 @@
 
 from subprocess import run, PIPE, STDOUT
 
-from middlewared.service import Service, accepts, job, CallError
+from middlewared.service import Service, job, CallError
 
 
 FW_RULES_FILE = '/tmp/fw-rules.nft'
@@ -71,7 +71,6 @@ class NftablesService(Service):
         ip6_flush = not bool(run(['nft', 'flush', 'chain', 'ip6', 'filter', 'INPUT']).returncode)
         return ip4_flush and ip6_flush
 
-    @accepts()
     @job(lock=JOB_LOCK)
     def drop_all(self, job):
         """
@@ -99,7 +98,6 @@ class NftablesService(Service):
 
         return self.generate_rules({'drop': True, 'vips': vips})
 
-    @accepts()
     @job(lock=JOB_LOCK)
     def accept_all(self, job):
         """Accepts all v4/v6 inbound traffic"""

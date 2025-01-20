@@ -6,12 +6,13 @@
 # enp135* and the B controller's NIC name will be enp141*.
 # This breaks effectively everything related to our HA
 # logic. To mitigate this issue, this link file will
-# match on pci path name
+# match on kernel INTERFACE name for the Chelsio NIC.
 [Match]
 Firmware=smbios-field(product_name $= "TRUENAS-F*")
-Path=pci-0000:87:00.0 pci-0000:8d:00.0
-Driver=mlx5_core
+Path=pci-0000:8d:00.4
+Property=INTERFACE=enp141s0f4d1
+Driver=cxgb4
 Type=ether
 
 [Link]
-Name=enp200s0f0np0
+Name=enp200s0f4d1

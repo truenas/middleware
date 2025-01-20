@@ -1,5 +1,6 @@
 <%
     from middlewared.plugins.audit.utils import audit_program, AUDITED_SERVICES
+    from middlewared.logger import ALL_LOG_FILES
 
     adv_conf = render_ctx['system.advanced.config']
 
@@ -52,6 +53,11 @@ filter f_scst {
   program("kernel") and match("dev_disk:" value("MESSAGE")); or
   program("kernel") and match("dlm:" value("MESSAGE"));
 };
+
+# TrueNAS middleware filters
+% for tnlog in ALL_LOG_FILES:
+filter f_${tnlog.name or "middleware"} { program("${tnlog.get_ident()[:-2]}"); };
+% endfor
 
 # Temporary SNMP filter: NAS-129124
 filter f_snmp {

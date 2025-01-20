@@ -1,4 +1,7 @@
-from middlewared.schema import accepts, Str, returns
+from middlewared.api import api_method
+from middlewared.api.current import (
+    AppStartArgs, AppStartResult, AppStopArgs, AppStopResult, AppRedeployArgs, AppRedeployResult,
+)
 from middlewared.service import job, Service
 
 from .compose_utils import compose_action
@@ -12,8 +15,12 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @accepts(Str('app_name'), roles=['APPS_WRITE'])
-    @returns()
+    @api_method(
+        AppStopArgs, AppStopResult,
+        audit='App: Stopping',
+        audit_extended=lambda app_name: app_name,
+        roles=['APPS_WRITE']
+    )
     @job(lock=lambda args: f'app_stop_{args[0]}')
     def stop(self, job, app_name):
         """
@@ -39,8 +46,12 @@ class AppService(Service):
             )
             self.middleware.call_sync('cache.pop', cache_key)
 
-    @accepts(Str('app_name'), roles=['APPS_WRITE'])
-    @returns()
+    @api_method(
+        AppStartArgs, AppStartResult,
+        audit='App: Starting',
+        audit_extended=lambda app_name: app_name,
+        roles=['APPS_WRITE']
+    )
     @job(lock=lambda args: f'app_start_{args[0]}')
     def start(self, job, app_name):
         """
@@ -51,8 +62,12 @@ class AppService(Service):
         compose_action(app_name, app_config['version'], 'up', force_recreate=True, remove_orphans=True)
         job.set_progress(100, f'Started {app_name!r} app')
 
-    @accepts(Str('app_name'), roles=['APPS_WRITE'])
-    @returns()
+    @api_method(
+        AppRedeployArgs, AppRedeployResult,
+        audit='App: Redeploying',
+        audit_extended=lambda app_name: app_name,
+        roles=['APPS_WRITE']
+    )
     @job(lock=lambda args: f'app_redeploy_{args[0]}')
     async def redeploy(self, job, app_name):
         """

@@ -118,8 +118,9 @@ class PoolService(CRUDService):
         datastore_prefix = 'vol_'
         event_send = False
         cli_namespace = 'storage.pool'
+        role_prefix = 'POOL'
 
-    @accepts(Str('name'))
+    @accepts(Str('name'), roles=['POOL_READ'])
     @returns(Ref('pool_entry'))
     async def get_instance_by_name(self, name):
         """
@@ -567,15 +568,15 @@ class PoolService(CRUDService):
 
         is_ha = await self.middleware.call('failover.licensed')
         if is_ha and (rc := await self.middleware.call('failover.fenced.start')):
-            if rc == FencedExitCodes.ALREADY_RUNNING.value:
+            if rc == FencedExitCodes.ALREADY_RUNNING.value[0]:
                 try:
                     await self.middleware.call('failover.fenced.signal', {'reload': True})
                 except Exception:
                     self.logger.error('Unhandled exception reloading fenced', exc_info=True)
             else:
                 err = 'Unexpected error starting fenced'
-                for i in filter(lambda x: x.value == rc, FencedExitCodes):
-                    err = i.name
+                for i in filter(lambda x: x.value[0] == rc, FencedExitCodes):
+                    err = i.value[1]
                 raise CallError(err)
 
         disks, vdevs = await self._process_topology('pool_create', data)
@@ -795,7 +796,7 @@ class PoolService(CRUDService):
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 
-    @accepts(Str('pool_name'), roles=['READONLY_ADMIN'])
+    @accepts(Str('pool_name'), roles=['POOL_READ'])
     @returns()
     def validate_name(self, pool_name):
         """

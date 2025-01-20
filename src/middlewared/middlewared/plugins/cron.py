@@ -1,7 +1,12 @@
 import contextlib
 import errno
 
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CronJobEntry, CronJobCreateArgs, CronJobCreateResult, CronJobUpdateArgs, CronJobUpdateResult, CronJobDeleteArgs,
+    CronJobDeleteResult, CronJobRunArgs, CronJobRunResult
+)
+from middlewared.schema import Cron
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.user_context import run_command_with_user_context
@@ -32,11 +37,8 @@ class CronJobService(CRUDService):
         datastore_extend = 'cronjob.cron_extend'
         namespace = 'cronjob'
         cli_namespace = 'task.cron_job'
-
-    ENTRY = Patch(
-        'cron_job_create', 'cron_job_entry',
-        ('add', Int('id')),
-    )
+        entry = CronJobEntry
+        role_prefix = 'SYSTEM_CRON'
 
     @private
     def cron_extend(self, data):
@@ -91,22 +93,7 @@ class CronJobService(CRUDService):
 
         return verrors, data
 
-    @accepts(
-        Dict(
-            'cron_job_create',
-            Bool('enabled'),
-            Bool('stderr', default=False),
-            Bool('stdout', default=True),
-            Cron(
-                'schedule',
-                defaults={'minute': '00'}
-            ),
-            Str('command', required=True),
-            Str('description'),
-            Str('user', required=True),
-            register=True
-        )
-    )
+    @api_method(CronJobCreateArgs, CronJobCreateResult)
     async def do_create(self, data):
         """
         Create a new cron job.
@@ -156,11 +143,13 @@ class CronJobService(CRUDService):
 
         return await self.get_instance(data['id'])
 
+    @api_method(CronJobUpdateArgs, CronJobUpdateResult)
     async def do_update(self, id_, data):
         """
         Update cronjob of `id`.
         """
-        task_data = await self.query(filters=[('id', '=', id_)], options={'get': True})
+        # FIXME: Use `await self.query` once query endpoints are fully converted.
+        task_data = await self.middleware.call('cronjob.query', [('id', '=', id_)], {'get': True})
         original_data = task_data.copy()
         task_data.update(data)
         verrors, task_data = await self.validate_data(task_data, 'cron_job_update')
@@ -184,6 +173,7 @@ class CronJobService(CRUDService):
 
         return await self.get_instance(id_)
 
+    @api_method(CronJobDeleteArgs, CronJobDeleteResult)
     async def do_delete(self, id_):
         """
         Delete cronjob of `id`.
@@ -198,11 +188,7 @@ class CronJobService(CRUDService):
 
         return response
 
-    @accepts(
-        Int('id'),
-        Bool('skip_disabled', default=False),
-    )
-    @returns()
+    @api_method(CronJobRunArgs, CronJobRunResult, roles=['SYSTEM_CRON_WRITE'])
     @job(lock=lambda args: f'cron_job_run_{args[0]}', logs=True, lock_queue_size=1)
     def run(self, job, id_, skip_disabled):
         """

@@ -1,6 +1,10 @@
 from datetime import time
 import re
 
+from pydantic import HttpUrl
+
+__all__ = ["match_validator", "time_validator"]
+
 
 def match_validator(pattern: re.Pattern, explanation: str | None = None):
     def validator(value: str):
@@ -21,3 +25,9 @@ def time_validator(value: str):
         except TypeError:
             raise ValueError('Time should be in 24 hour format like "18:00"')
     return value
+
+
+def https_only_check(url: HttpUrl) -> str:
+    if url.scheme != 'https':
+        raise ValueError('URL scheme must be https')
+    return str(url)

@@ -12,7 +12,7 @@ from truenas_api_client.utils import undefined
 
 from .pytest import fail
 
-__all__ = ["client", "host", "host_websocket_uri", "password", "session", "url", "websocket_url"]
+__all__ = ["truenas_server", "client", "host", "host_websocket_uri", "password", "session", "url", "websocket_url"]
 
 logger = logging.getLogger(__name__)
 

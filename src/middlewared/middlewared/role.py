@@ -1,5 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
+from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN
 from middlewared.utils.security import STIGType
 import typing
 
@@ -26,6 +27,9 @@ ROLES = {
     'API_KEY_READ': Role(),
     'API_KEY_WRITE': Role(includes=['API_KEY_READ']),
 
+    'BOOT_ENV_READ': Role(),
+    'BOOT_ENV_WRITE': Role(includes=['BOOT_ENV_READ']),
+
     'FAILOVER_READ': Role(),
     'FAILOVER_WRITE': Role(includes=['FAILOVER_READ']),
 
@@ -34,6 +38,9 @@ ROLES = {
 
     'DIRECTORY_SERVICE_READ': Role(),
     'DIRECTORY_SERVICE_WRITE': Role(includes=['DIRECTORY_SERVICE_READ']),
+
+    'DISK_READ': Role(),
+    'DISK_WRITE': Role(includes=['DISK_READ']),
 
     'KMIP_READ': Role(),
     'KMIP_WRITE': Role(includes=['KMIP_READ']),
@@ -58,13 +65,21 @@ ROLES = {
     'SUPPORT_READ': Role(),
     'SUPPORT_WRITE': Role(includes=['SUPPORT_READ']),
 
+    'SSH_READ': Role(),
+    'SSH_WRITE': Role(includes=['SSH_READ']),
+
     'SYSTEM_AUDIT_READ': Role(),
     'SYSTEM_AUDIT_WRITE': Role(),
 
     'FULL_ADMIN': Role(full_admin=True, builtin=False),
 
-    # Alert roles
+    # Limited ability to read / clear individual alerts
     'ALERT_LIST_READ': Role(),
+    'ALERT_LIST_WRITE': Role(includes=['ALERT_LIST_READ']),
+
+    # Global alert privileges to configure alert plugin
+    'ALERT_READ': Role(includes=['ALERT_LIST_READ']),
+    'ALERT_WRITE': Role(includes=['ALERT_LIST_WRITE', 'ALERT_READ']),
 
     'CLOUD_BACKUP_READ': Role(),
     'CLOUD_BACKUP_WRITE': Role(includes=['CLOUD_BACKUP_READ']),
@@ -81,6 +96,8 @@ ROLES = {
 
     # Network roles
     'NETWORK_GENERAL_READ': Role(),
+    'NETWORK_GENERAL_WRITE': Role(includes=['NETWORK_GENERAL_READ']),
+
     'NETWORK_INTERFACE_READ': Role(),
     'NETWORK_INTERFACE_WRITE': Role(includes=['NETWORK_INTERFACE_READ']),
 
@@ -97,6 +114,10 @@ ROLES = {
     # Truecommand roles
     'TRUECOMMAND_READ': Role(),
     'TRUECOMMAND_WRITE': Role(includes=['TRUECOMMAND_READ'], stig=None),
+
+    # Truenas connect roles
+    'TRUENAS_CONNECT_READ': Role(),
+    'TRUENAS_CONNECT_WRITE': Role(includes=['TRUENAS_CONNECT_READ'], stig=None),
 
     # Crypto roles
     'CERTIFICATE_READ': Role(),
@@ -175,6 +196,8 @@ ROLES = {
 
     'POOL_SCRUB_READ': Role(),
     'POOL_SCRUB_WRITE': Role(includes=['POOL_SCRUB_READ']),
+    'POOL_READ': Role(includes=['POOL_SCRUB_READ']),
+    'POOL_WRITE': Role(includes=['POOL_READ', 'POOL_SCRUB_WRITE']),
     'DATASET_READ': Role(),
     'DATASET_WRITE': Role(includes=['DATASET_READ']),
     'DATASET_DELETE': Role(),
@@ -206,6 +229,12 @@ ROLES = {
     'SYSTEM_SECURITY_READ': Role(),
     'SYSTEM_SECURITY_WRITE': Role(includes=['SYSTEM_SECURITY_READ']),
 
+    'SYSTEM_TUNABLE_READ': Role(),
+    'SYSTEM_TUNABLE_WRITE': Role(includes=['SYSTEM_TUNABLE_READ']),
+
+    'SYSTEM_CRON_READ': Role(),
+    'SYSTEM_CRON_WRITE': Role(includes=['SYSTEM_CRON_READ']),
+
     # Virtualization
     'VIRT_GLOBAL_READ': Role(),
     'VIRT_GLOBAL_WRITE': Role(includes=['VIRT_GLOBAL_READ'], stig=None),
@@ -217,6 +246,12 @@ ROLES = {
 
 }
 ROLES['READONLY_ADMIN'] = Role(includes=[role for role in ROLES if role.endswith('_READ')], builtin=False)
+
+READ_RESOURCE_BLACKLIST = (
+    '.create', '.do_create',
+    '.update', '.do_update',
+    '.delete', '.do_delete',
+)
 
 
 class ResourceManager:
@@ -243,6 +278,9 @@ class ResourceManager:
         for role in roles:
             if role not in self.roles:
                 raise ValueError(f"Invalid role {role!r}")
+
+            if role.endswith("_READ") and resource_name.endswith(READ_RESOURCE_BLACKLIST):
+                raise ValueError(f'{resource_name}: resource may not be granted to {role}')
 
         self.resources[resource_name] += roles
 
@@ -314,7 +352,7 @@ class RoleManager:
                 ], [])
 
             # Only non-stig FULL_ADMIN privilege can access REST endpoints
-            return [{"method": "*", "resource": "*"}]
+            return [ALLOW_LIST_FULL_ADMIN.copy()]
 
         return sum([
             self.methods.allowlists_for_roles[role] + self.events.allowlists_for_roles[role]

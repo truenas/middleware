@@ -23,6 +23,7 @@ def render(service, middleware):
         'exec-opts': ['native.cgroupdriver=cgroupfs'],
         'iptables': True,
         'ipv6': True,
+        'default-network-opts': {'bridge': {'com.docker.network.enable_ipv6': 'true'}},
         'storage-driver': 'overlay2',
         'fixed-cidr-v6': config['cidr_v6'],
         'default-address-pools': config['address_pools'],

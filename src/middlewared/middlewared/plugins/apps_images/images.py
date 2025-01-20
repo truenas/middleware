@@ -6,7 +6,7 @@ from middlewared.plugins.apps.ix_apps.docker.images import delete_image, list_im
 from middlewared.service import CRUDService, filterable, job
 from middlewared.utils import filter_list
 
-from .utils import parse_tags
+from .utils import get_normalized_auth_config, parse_tags
 
 
 class AppImageService(CRUDService):
@@ -77,9 +77,20 @@ class AppImageService(CRUDService):
             job.set_progress((progress['current']/progress['total']) * 90, 'Pulling image')
 
         self.middleware.call_sync('docker.state.validate')
-        auth_config = data['auth_config'] or {}
         image_tag = data['image']
-        pull_image(image_tag, callback, auth_config.get('username'), auth_config.get('password'))
+        auth_config = data['auth_config'] or {}
+        if not auth_config:
+            # If user has not provided any auth creds, we will try to see if the registry to which the image
+            # belongs to, we already have it's creds and if yes we will try to use that when pulling the image
+            app_registries = {
+                registry['uri']: registry for registry in self.middleware.call_sync('app.registry.query')
+            }
+            auth_config = get_normalized_auth_config(app_registries, image_tag)
+
+        pull_image(
+            image_tag, callback, auth_config.get('username'), auth_config.get('password'),
+            auth_config.get('registry_uri'),
+        )
         job.set_progress(100, f'{image_tag!r} image pulled successfully')
 
     @api_method(AppImageDeleteArgs, AppImageDeleteResult)

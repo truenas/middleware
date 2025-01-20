@@ -36,15 +36,16 @@ class TestService(Service):
         else:
             raise CallError("Invalid mock declaration")
 
-        await self.set_mock_role()
         self.middleware.set_mock(name, args, method)
+
+        await self.middleware.call("alert.oneshot_create", "SystemTesting", None)
 
     async def remove_mock(self, name, args):
         self.middleware.remove_mock(name, args)
 
-    async def set_mock_role(self):
+    async def add_mock_role(self):
         """
-        adds a MOCK role to role_manager and grants access to test.test1 and test.test2
+        Adds a MOCK role to role_manager and grants access to test.test1 and test.test2
 
         This allows testing RBAC against mocked endpoint
         """
@@ -57,7 +58,7 @@ class TestService(Service):
         self.middleware.role_manager.register_method(method_name='test.test1', roles=['MOCK'])
         self.middleware.role_manager.register_method(method_name='test.test2', roles=['MOCK'])
 
-        await self.middleware.call('alert.oneshot_create', 'SystemTesting')
+        await self.middleware.call('alert.oneshot_create', 'SystemTesting', None)
 
     # Dummy methods to mock for internal infrastructure testing (i.e. jobs manager)
     # When these are mocked over they will be available to users with the "MOCK" role.

@@ -182,7 +182,7 @@ class PoolScrubService(CRUDService):
         await self.middleware.call('service.restart', 'cron')
         return response
 
-    @api_method(PoolScrubScrubArgs, PoolScrubScrubResult)
+    @api_method(PoolScrubScrubArgs, PoolScrubScrubResult, roles=['POOL_WRITE'])
     @job(
         description=lambda name, action="START": (
             f"Scrub of pool {name!r}" if action == "START"
@@ -219,7 +219,7 @@ class PoolScrubService(CRUDService):
 
                 await asyncio.sleep(1)
 
-    @api_method(PoolScrubRunArgs, PoolScrubRunResult)
+    @api_method(PoolScrubRunArgs, PoolScrubRunResult, roles=['POOL_WRITE'])
     async def run(self, name, threshold):
         """
         Initiate a scrub of a pool `name` if last scrub was performed more than `threshold` days before.

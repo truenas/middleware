@@ -62,15 +62,23 @@ class CRUDServiceMetabase(ServiceBase):
         ):
             return klass
 
+        if not klass._config.private and not klass._config.role_prefix:
+            raise ValueError(f'{klass._config.namespace}: public CRUDService must have role_prefix defined')
+
         if klass._config.entry is not None:
             # FIXME: This is to prevent `Method cloudsync.credentials.ENTRY is public but has no @accepts()`, remove
             # eventually.
             klass.ENTRY = None
             # FIXME: Remove `wraps` handling when we get rid of `@filterable` in `CRUDService.query` definition
             query_result_model = query_result(klass._config.entry)
-            klass.query = api_method(QueryArgs, query_result_model)(
-                klass.query.wraps if hasattr(klass.query, "wraps") else klass.query
-            )
+            if (
+                any(klass.query == getattr(parent, 'query', None) for parent in klass.__mro__[1:]) or
+                not hasattr(klass.query, '_filterable') or klass.query._filterable is False
+            ):
+                # No need to inject api method if filterable has been explicitly specified
+                klass.query = api_method(QueryArgs, query_result_model)(
+                    klass.query.wraps if hasattr(klass.query, "wraps") else klass.query
+                )
             # FIXME: Remove `wraps` handling when we get rid of `@accepts` in `CRUDService.get_instance` definition
             get_instance_args_model = get_instance_args(klass._config.entry)
             get_instance_result_model = get_instance_result(klass._config.entry)

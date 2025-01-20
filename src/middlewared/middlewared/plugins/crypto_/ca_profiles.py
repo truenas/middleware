@@ -1,49 +1,20 @@
-from middlewared.schema import accepts, Dict, returns
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CAProfilesArgs,
+    CAProfilesModel,
+    CAProfilesResult,
+)
 from middlewared.service import Service
-
-from .utils import DEFAULT_LIFETIME_DAYS
 
 
 class CertificateAuthorityService(Service):
-
     class Config:
-        cli_namespace = 'system.certificate.authority'
+        cli_namespace = "system.certificate.authority"
 
-    PROFILES = {
-        'CA': {
-            'key_length': 2048,
-            'key_type': 'RSA',
-            'lifetime': DEFAULT_LIFETIME_DAYS,
-            'digest_algorithm': 'SHA256',
-            'cert_extensions': {
-                'KeyUsage': {
-                    'enabled': True,
-                    'key_cert_sign': True,
-                    'crl_sign': True,
-                    'extension_critical': True
-                },
-                'BasicConstraints': {
-                    'enabled': True,
-                    'ca': True,
-                    'extension_critical': True
-                },
-                'ExtendedKeyUsage': {
-                    'enabled': True,
-                    'extension_critical': False,
-                    'usages': ['SERVER_AUTH']
-                }
-            }
-        }
-    }
-
-    @accepts(roles=['CERTIFICATE_AUTHORITY_READ'])
-    @returns(Dict(
-        'certificate_authority_profiles',
-        *[Dict(profile, additional_attrs=True) for profile in PROFILES]
-    ))
+    @api_method(CAProfilesArgs, CAProfilesResult, roles=["CERTIFICATE_AUTHORITY_READ"])
     async def profiles(self):
         """
-        Returns a dictionary of predefined options for specific use cases i.e OpenVPN certificate authority
-        configurations which can be used for creating certificate authorities.
+        Returns a dictionary of predefined options for
+        creating certificate authority requests.
         """
-        return self.PROFILES
+        return CAProfilesModel().model_dump(by_alias=True)

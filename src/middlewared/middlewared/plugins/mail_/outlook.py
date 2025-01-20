@@ -6,6 +6,7 @@ import time
 import requests
 
 from middlewared.service import CallError, private, Service
+from middlewared.utils.microsoft import get_microsoft_access_token
 
 
 @dataclass
@@ -29,18 +30,12 @@ class MailService(Service):
             self.logger.warning("Outlook XOAUTH2 failed: %r %r. Refreshing access token", code, response)
 
         self.logger.debug("Requesting Outlook access token")
-        r = requests.post(
-            "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-            data={
-                "grant_type": "refresh_token",
-                "client_id": config["oauth"]["client_id"],
-                "client_secret": config["oauth"]["client_secret"],
-                "refresh_token": config["oauth"]["refresh_token"],
-                "scope": "https://outlook.office.com/SMTP.Send openid offline_access",
-            }
+        response = get_microsoft_access_token(
+            config["oauth"]["client_id"],
+            config["oauth"]["client_secret"],
+            config["oauth"]["refresh_token"],
+            "https://outlook.office.com/SMTP.Send openid offline_access",
         )
-        r.raise_for_status()
-        response = r.json()
 
         token = response["access_token"]
         self._set_outlook_token(config["fromemail"], config["oauth"]["refresh_token"], token, response["expires_in"])

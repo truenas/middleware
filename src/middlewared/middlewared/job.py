@@ -636,12 +636,28 @@ class Job:
             }
 
         result_encoding_error = None
+
+        # Depending on the situation we either need to encode the raw result or a
+        # redacted result:
+        #
+        # raw - return value to caller of method
+        # redacted - core.get_jobs output when the extra output option "raw_result" is False
+        #
+        # Changes to how we generate results must be validated against both of these
+        # situations. Redaction is critically important because we include core.get_jobs
+        # output in our debug files.
         if self.state == State.SUCCESS:
             if raw_result:
                 result = self.result
             else:
                 try:
-                    result = self.middleware.dump_result(self.serviceobj, self.method, self.result, False)
+                    result = self.middleware.dump_result(
+                        self.serviceobj,
+                        self.method,
+                        self.app,
+                        self.result,
+                        expose_secrets=False,
+                    )
                 except Exception as e:
                     result = None
                     result_encoding_error = repr(e)

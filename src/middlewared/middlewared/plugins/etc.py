@@ -75,6 +75,9 @@ class EtcService(Service):
             ]
 
         },
+        'app_registry': [
+            {'type': 'py', 'path': 'docker/config.json'},
+        ],
         'docker': [
             {'type': 'py', 'path': 'docker/daemon.json'},
         ],
@@ -174,8 +177,8 @@ class EtcService(Service):
         },
         'pam': {
             'ctx': [
-                {'method': 'activedirectory.config'},
-                {'method': 'ldap.config'},
+                {'method': 'directoryservices.status'},
+                {'method': 'system.security.config'},
             ],
             'entries': [
                 {'type': 'mako', 'path': 'pam.d/common-account'},

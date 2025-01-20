@@ -1,12 +1,17 @@
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
-                                  single_argument_result)
+from typing import Literal
+
+from pydantic import Secret
+
+from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongNonEmptyString,
+                                  NonEmptyString, single_argument_args, single_argument_result)
 from .cloud_sync_providers import CloudCredentialProvider
 
 __all__ = ["CloudCredentialEntry",
            "CloudCredentialCreateArgs", "CloudCredentialCreateResult",
            "CloudCredentialUpdateArgs", "CloudCredentialUpdateResult",
            "CloudCredentialDeleteArgs", "CloudCredentialDeleteResult",
-           "CloudCredentialVerifyArgs", "CloudCredentialVerifyResult"]
+           "CloudCredentialVerifyArgs", "CloudCredentialVerifyResult",
+           "CloudSyncOneDriveListDrivesArgs", "CloudSyncOneDriveListDrivesResult"]
 
 
 class CloudCredentialEntry(BaseModel):
@@ -83,3 +88,19 @@ class CloudCredentialVerifyResult(BaseModel):
     valid: bool
     error: str | None = None
     excerpt: str | None = None
+
+
+@single_argument_args("onedrive_list_drives")
+class CloudSyncOneDriveListDrivesArgs(BaseModel):
+    client_id: Secret[str] = ""
+    client_secret: Secret[str] = ""
+    token: Secret[LongNonEmptyString]
+
+
+class CloudSyncOneDriveListDrivesResult(BaseModel):
+    result: list["CloudSyncOneDriveListDrivesDrive"]
+
+
+class CloudSyncOneDriveListDrivesDrive(BaseModel):
+    drive_id: str
+    drive_type: Literal["PERSONAL", "BUSINESS", "DOCUMENT_LIBRARY"]

@@ -36,6 +36,7 @@ class NetworkConfigurationService(ConfigService):
         datastore_prefix = 'gc_'
         datastore_extend = 'network.configuration.network_config_extend'
         cli_namespace = 'network.configuration'
+        role_prefix = 'NETWORK_GENERAL'
 
     ENTRY = Dict(
         'network_configuration_entry',
@@ -147,8 +148,6 @@ class NetworkConfigurationService(ConfigService):
 
     @private
     async def validate_nameservers(self, verrors, data, schema):
-        verrors = ValidationErrors()
-
         ns_ints = []
         for ns, ns_value in filter(lambda x: x[0].startswith('nameserver') and x[1], data.items()):
             schema = f'{schema}.{ns}'

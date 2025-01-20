@@ -63,14 +63,12 @@ import time
 import traceback
 import typing
 import uuid
-import tracemalloc
 
-from anyio import create_connected_unix_datagram_socket
 from systemd.daemon import notify as systemd_notify
 
 from truenas_api_client import json
 
-from .logger import Logger, setup_logging
+from .logger import Logger, setup_audit_logging, setup_logging
 
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
@@ -94,7 +92,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def __init__(
         self, loop_debug=False, loop_monitor=True, debug_level=None,
-        log_handler=None, trace_malloc=False,
+        log_handler=None,
         log_format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s',
         print_version=True,
     ):
@@ -104,7 +102,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self.logger.info('Starting %s middleware', sw_version())
         self.loop_debug = loop_debug
         self.loop_monitor = loop_monitor
-        self.trace_malloc = trace_malloc
         self.debug_level = debug_level
         self.log_handler = log_handler
         self.log_format = log_format
@@ -130,6 +127,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.tasks = set()
         self.api_versions = None
         self.api_versions_adapter = None
+        self.__audit_logger = setup_audit_logging()
 
     def create_task(self, coro, *, name=None):
         task = self.loop.create_task(coro, name=name)
@@ -726,9 +724,41 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         return [method.accepts[i].dump(arg) if i < len(method.accepts) else arg
                 for i, arg in enumerate(args)]
 
-    def dump_result(self, serviceobj, methodobj, app, result, *, new_style_returns_model=None):
-        expose_secrets = True
+    def dump_result(
+        self,
+        serviceobj,
+        methodobj: Method | LegacyAPIMethod,
+        app: object | None,
+        result: dict | str | int | list | None | Job,
+        *,
+        new_style_returns_model: object | None = None,
+        expose_secrets: bool = True,
+    ):
+        """
+        Serialize and redact `result` based on authenticated credential and schema.  This method is used when
+        preparing middleware call results for external consumption (either as a call return, or as a value
+        that is logged somewhere). The goal is to ensure that secret / private fields are redacted, i.e.
+        replaced with "********" when appropriate.
+
+        Params:
+            serviceobj: middleware service object
+            methodobj: middleware method object
+            app: websocket app. None if this is an internal method call (full admin privileges)
+            result: result data to be normalized / redacted
+        Keyword-only params:
+            new_style_returns_model:
+            expose secrets: when set to False, Secret/Private fields will _always_
+            be redacted. This is used when generating the results info for core.get_jobs output when
+            the raw_result option is set to False (which is how we call it when generating debugs).
+
+        Raises:
+            pydantic.ValidationError: The result contains values that are not permitted according
+            to the pydantic model. This means the return value or the model is wrong.
+        """
         if app and app.authenticated_credentials:
+            # Authenticated session is _always_ presented unredacted results in the following cases:
+            # 1. credential is a full_admin
+            # 2. credential has the WRITE role corresponding with the plugin's governing privilege.
             if app.authenticated_credentials.is_user_session and not (
                 credential_has_full_admin(app.authenticated_credentials) or
                 (
@@ -818,7 +848,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             raise CallError('Not authorized', errno.EACCES)
 
     def can_subscribe(self, app, name):
-        if event := self.events.get_event(name):
+        short_name = name.split(':')[0]
+        if event := self.events.get_event(short_name):
             if event['no_auth_required']:
                 return True
 
@@ -829,7 +860,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if event['no_authz_required']:
                 return True
 
-        return app.authenticated_credentials.authorize('SUBSCRIBE', name)
+        return app.authenticated_credentials.authorize('SUBSCRIBE', short_name)
 
     async def call_with_audit(self, method, serviceobj, methodobj, params, app, **kwargs):
         audit_callback_messages = []
@@ -926,8 +957,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             }
         })
 
-        async with await create_connected_unix_datagram_socket("/dev/log") as s:
-            await s.send(syslog_message(message))
+        self.__audit_logger.debug(message)
 
     async def call(self, name, *params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
                    profile=False):
@@ -1076,63 +1106,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def log_threads_stacks(self):
         for thread_id, stack in get_threads_stacks().items():
             self.logger.debug('Thread %d stack:\n%s', thread_id, ''.join(stack))
-
-    def _tracemalloc_start(self, limit, interval):
-        """
-        Run an endless loop grabbing snapshots of allocated memory using
-        the python's builtin "tracemalloc" module.
-
-        `limit` integer representing number of lines to print showing
-                highest memory consumer
-        `interval` integer representing the time in seconds to wait
-                before taking another memory snapshot
-        """
-        # set the thread name
-        set_thread_name('tracemalloc_monitor')
-
-        # initalize tracemalloc
-        tracemalloc.start()
-
-        # if given bogus numbers, default both of them respectively
-        if limit <= 0:
-            limit = 5
-        if interval <= 0:
-            interval = 5
-
-        # filters for the snapshots so we can
-        # ignore modules that we don't care about
-        filters = (
-            tracemalloc.Filter(False, '<frozen importlib._bootstrap>'),
-            tracemalloc.Filter(False, '<frozen importlib._bootstrap_external>'),
-            tracemalloc.Filter(False, '<unknown>'),
-            tracemalloc.Filter(False, '*tracemalloc.py'),
-        )
-
-        # start the loop
-        prev = None
-        while True:
-            if prev is None:
-                prev = tracemalloc.take_snapshot()
-                prev = prev.filter_traces(filters)
-            else:
-                curr = tracemalloc.take_snapshot()
-                curr = curr.filter_traces(filters)
-                diff = curr.compare_to(prev, 'lineno')
-
-                prev = curr
-                curr = None
-                stats = f'\nTop {limit} consumers:'
-                for idx, stat in enumerate(diff[:limit], 1):
-                    stats += f'#{idx}: {stat}\n'
-
-                # print the memory used by the tracemalloc module itself
-                tm_mem = tracemalloc.get_tracemalloc_memory()
-                # add a newline at end of output to make logs more readable
-                stats += f'Memory used by tracemalloc module: {tm_mem:.1f} KiB\n'
-
-                self.logger.debug(stats)
-
-            time.sleep(interval)
 
     def set_mock(self, name, args, mock):
         for _args, _mock in self.mocks[name]:
@@ -1423,13 +1396,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         await web.UnixSite(self.runner, unix_socket_path).start()
         os.chmod(unix_socket_path, 0o666)
 
-        if self.trace_malloc:
-            limit = self.trace_malloc[0]
-            interval = self.trace_malloc[1]
-            _thr = threading.Thread(target=self._tracemalloc_start, args=(limit, interval,))
-            _thr.setDaemon(True)
-            _thr.start()
-
         self.logger.debug('Accepting connections')
         self._console_write('loading completed\n')
 
@@ -1483,7 +1449,6 @@ def main():
     parser.add_argument('--pidfile', '-P', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--loop-debug', action='store_true')
-    parser.add_argument('--trace-malloc', '-tm', action='store', nargs=2, type=int, default=False)
     parser.add_argument('--debug-level', choices=[
         'TRACE',
         'DEBUG',
@@ -1505,7 +1470,6 @@ def main():
     middleware = Middleware(
         loop_debug=args.loop_debug,
         loop_monitor=not args.disable_loop_monitor,
-        trace_malloc=args.trace_malloc,
         debug_level=args.debug_level,
         log_handler=args.log_handler,
         # Otherwise will crash since `/data/manifest.json` does not exist at that build stage

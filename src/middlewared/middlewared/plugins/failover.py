@@ -13,7 +13,7 @@ from functools import partial
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
 from middlewared.service import (
-    job, no_auth_required, no_authz_required, pass_app, private, CallError, ConfigService,
+    job, no_authz_required, pass_app, private, CallError, ConfigService,
     ValidationError, ValidationErrors
 )
 import middlewared.sqlalchemy as sa
@@ -200,7 +200,6 @@ class FailoverService(ConfigService):
         """
         return await self.middleware.call('failover.internal_interface.detect')
 
-    @no_auth_required
     @accepts()
     @returns(Str())
     @pass_app(rest=True)
@@ -279,7 +278,6 @@ class FailoverService(ConfigService):
         )
         return bool(event)
 
-    @no_auth_required
     @accepts()
     @returns(List('ips', items=[Str('ip')]))
     @pass_app(rest=True)
@@ -1256,8 +1254,8 @@ def remote_status_event(middleware, *args, **kwargs):
 
 
 async def setup(middleware):
-    middleware.event_register('failover.setup', 'Sent when failover is being setup.')
-    middleware.event_register('failover.status', 'Sent when failover status changes.', no_auth_required=True)
+    middleware.event_register('failover.setup', 'Sent when failover is being setup.', roles=['FAILOVER_READ'])
+    middleware.event_register('failover.status', 'Sent when failover status changes.', roles=['FAILOVER_READ'])
     middleware.event_subscribe('system.ready', _event_system_ready)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)

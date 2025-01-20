@@ -7,11 +7,26 @@
 # (e.g., /etc/shadow, LDAP, Kerberos, etc.).  The default is to use the
 # traditional Unix authentication mechanisms.
 
-<%namespace name="pam" file="pam.inc.mako" />\
 <%
-        dsp = pam.getDirectoryServicePam(middleware=middleware, render_ctx=render_ctx).pam_auth()
+    from middlewared.utils.directoryservices.constants import DSType
+    from middlewared.utils.pam import STANDALONE_AUTH, AD_AUTH, SSS_AUTH
+
+    match (dstype := render_ctx['directoryservices.status']['type']):
+        # dstype of None means standalone server
+        case None:
+            conf = STANDALONE_AUTH
+        case DSType.AD.value:
+            conf = AD_AUTH
+        case DSType.LDAP.value | DSType.IPA.value:
+            conf = SSS_AUTH
+        case _:
+            raise TypeError(f'{dstype}: unknown DSType')
 %>\
 
-${'\n'.join(dsp['primary'])}
+% if conf.primary:
+${'\n'.join(line.as_conf() for line in conf.primary)}
+% endif
 @include common-auth-unix
-${'\n'.join(dsp['additional'])}
+% if conf.secondary:
+${'\n'.join(line.as_conf() for line in conf.secondary)}
+% endif

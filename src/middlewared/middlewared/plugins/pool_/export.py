@@ -49,6 +49,7 @@ class PoolService(Service):
             Bool('destroy', default=False),
         ),
         audit="Pool Export", audit_callback=True,
+        roles=['POOL_WRITE']
     )
     @returns()
     @job(lock='pool_export')

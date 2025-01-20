@@ -108,6 +108,16 @@ def set_product_type(request):
 
 
 @pytest.fixture(scope="function")
+def enable_ds_auth(set_product_type):
+    call("system.general.update", {"ds_auth": True})
+
+    try:
+        yield
+    finally:
+        call("system.general.update", {"ds_auth": False})
+
+
+@pytest.fixture(scope="function")
 def set_ad_nameserver(request):
     with override_nameservers() as ns:
         yield (request, ns)
@@ -329,54 +339,72 @@ def test_activedirectory_smb_ops():
             assert acl['trivial'] is False, str(acl)
 
 
-def test_account_privilege_authentication(set_product_type):
+def test_account_privilege_authentication(enable_ds_auth):
     reset_systemd_svcs('winbind smbd')
 
     with active_directory(dns_timeout=15):
-        call("system.general.update", {"ds_auth": True})
         nusers = call("user.query", [["local", "=", False]], {"count": True})
         assert nusers > 0
         ngroups = call("group.query", [["local", "=", False]], {"count": True})
         assert ngroups > 0
-        try:
-            # RID 513 is constant for "Domain Users"
-            domain_sid = call("idmap.domain_info", AD_DOMAIN.split(".")[0])['sid']
-            with privilege({
-                "name": "AD privilege",
-                "local_groups": [],
-                "ds_groups": [f"{domain_sid}-513"],
-                "roles": ["READONLY_ADMIN"],
-                "web_shell": False,
-            }):
-                with client(auth=(f"limiteduser@{AD_DOMAIN}", ADPASSWORD)) as c:
-                    methods = c.call("core.get_methods")
-                    me = c.call("auth.me")
 
-                    assert 'DIRECTORY_SERVICE' in me['account_attributes']
-                    assert 'ACTIVE_DIRECTORY' in me['account_attributes']
+        # RID 513 is constant for "Domain Users"
+        domain_sid = call("idmap.domain_info", AD_DOMAIN.split(".")[0])['sid']
+        with privilege({
+            "name": "AD privilege",
+            "local_groups": [],
+            "ds_groups": [f"{domain_sid}-513"],
+            "roles": ["READONLY_ADMIN"],
+            "web_shell": False,
+        }):
+            with client(auth=(f'limiteduser@{AD_DOMAIN}', ADPASSWORD)) as c:
+                methods = c.call("core.get_methods")
+                me = c.call("auth.me")
 
-                    assert len(c.call("user.query", [["local", "=", False]])) == nusers
-                    assert len(c.call("group.query", [["local", "=", False]])) == ngroups
+                assert 'DIRECTORY_SERVICE' in me['account_attributes']
+                assert 'ACTIVE_DIRECTORY' in me['account_attributes']
 
-                assert "system.info" in methods
-                assert "pool.create" not in methods
+                assert len(c.call("user.query", [["local", "=", False]])) == nusers
+                assert len(c.call("group.query", [["local", "=", False]])) == ngroups
 
-                # ADUSERNAME is member of domain admins and will have
-                # all privileges
-                with client(auth=(f"{ADUSERNAME}@{AD_DOMAIN}", ADPASSWORD)) as c:
-                    methods = c.call("core.get_methods")
+            assert "system.info" in methods
+            assert "pool.create" not in methods
 
-                assert "pool.create" in methods
+            # Verify that onetime password for AD users works
+            # and that second call fails
+            username = r'AD02\limiteduser'
+            otpw = call('auth.generate_onetime_password', {'username': username})
+            with client(auth=None) as c:
+                resp = c.call('auth.login_ex', {
+                    'mechanism': 'PASSWORD_PLAIN',
+                    'username': username,
+                    'password': otpw
+                })
 
-                # Alternative formatting for user name <DOMAIN>\<username>.
-                # this should also work for auth
-                with client(auth=(AD_USER, ADPASSWORD)) as c:
-                    methods = c.call("core.get_methods")
+                assert resp['response_type'] == 'SUCCESS'
+                assert resp['user_info']['pw_name'] == username
 
-                assert "pool.create" in methods
+                resp = c.call('auth.login_ex', {
+                    'mechanism': 'PASSWORD_PLAIN',
+                    'username': username,
+                    'password': otpw
+                })
 
-        finally:
-            call("system.general.update", {"ds_auth": False})
+                assert resp['response_type'] == 'AUTH_ERR'
+
+            # ADUSERNAME is member of domain admins and will have
+            # all privileges
+            with client(auth=(f"{ADUSERNAME}@{AD_DOMAIN}", ADPASSWORD)) as c:
+                methods = c.call("core.get_methods")
+
+            assert "pool.create" in methods
+
+            # Alternative formatting for user name <DOMAIN>\<username>.
+            # this should also work for auth
+            with client(auth=(AD_USER, ADPASSWORD)) as c:
+                methods = c.call("core.get_methods")
+
+            assert "pool.create" in methods
 
 
 def test_secrets_restore():

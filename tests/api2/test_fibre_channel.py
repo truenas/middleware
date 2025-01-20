@@ -7,7 +7,7 @@ from assets.websocket.iscsi import target, target_extent_associate, zvol_extent
 from assets.websocket.pool import zvol
 from auto_config import ha, pool_name
 
-from middlewared.service_exception import ValidationError, ValidationErrors
+from middlewared.service_exception import InstanceNotFound, ValidationError, ValidationErrors
 from middlewared.test.integration.utils import call, mock, ssh
 
 NODE_A_0_WWPN = '0x210000aaaaaaaa01'
@@ -182,12 +182,18 @@ def node_b_hardware(remote=False):
 
 
 @contextlib.contextmanager
-def fcport_create(alias, target_id):
+def fcport_create(alias, target_id, allow_deleted=False):
     config = call('fcport.create', {'port': alias, 'target_id': target_id})
     try:
         yield config
     finally:
-        call('fcport.delete', config['id'])
+        if allow_deleted:
+            try:
+                call('fcport.delete', config['id'])
+            except InstanceNotFound:
+                pass
+        else:
+            call('fcport.delete', config['id'])
 
 
 class TestFixtureFibreChannel:
@@ -410,6 +416,73 @@ class TestFixtureFibreChannel:
                     assert call('fcport.update', map0['id'], {'port': fc_hosts[1]['alias']})['port'] == fc_hosts[1]['alias']
                     # Then put is back
                     assert call('fcport.update', map0['id'], {'port': fc_hosts[0]['alias']})['port'] == fc_hosts[0]['alias']
+
+    def test_target_delete(self, fc_hosts):
+        """Ensure that we can delete a mapped FC target."""
+        with target_lun_zero('fctarget0', 'fcextent0', 100) as config:
+            target_id = config['target']['id']
+
+            # Change the mode of the target
+            call('iscsi.target.update', target_id, {'mode': 'FC'})
+
+            # Now we should be able to successfully map the target
+            with fcport_create(fc_hosts[0]['alias'], target_id, True):
+                # Make sure we have a mapping
+                assert len(call('fcport.query', [['target.id', '=', target_id]])) == 1
+
+                # Delete the target
+                call('iscsi.target.delete', target_id, True, True)
+
+                # Make sure we DON'T have a mapping
+                assert len(call('fcport.query', [['target.id', '=', target_id]])) == 0
+
+    def test_target_mode_change(self, fc_hosts):
+        """
+        Ensure that when we change the mode of a mapped FC target, the
+        mapping gets removed.
+        """
+        with target_lun_zero('fctarget0', 'fcextent0', 100) as config:
+            target_id = config['target']['id']
+
+            # Change the mode of the target
+            call('iscsi.target.update', target_id, {'mode': 'FC'})
+
+            # Now we should be able to successfully map the target
+            with fcport_create(fc_hosts[0]['alias'], target_id, True):
+                # Make sure we have a mapping
+                assert len(call('fcport.query', [['target.id', '=', target_id]])) == 1
+
+                # Change the mode of the target to BOTH
+                call('iscsi.target.update', target_id, {'mode': 'BOTH'})
+
+                # Make sure we STILL have a mapping
+                assert len(call('fcport.query', [['target.id', '=', target_id]])) == 1
+
+                # Change the mode of the target to ISCSI
+                call('iscsi.target.update', target_id, {'mode': 'ISCSI'})
+
+                # Make sure we DON'T have a mapping
+                assert len(call('fcport.query', [['target.id', '=', target_id]])) == 0
+
+            # Change the mode of the target to BOTH
+            call('iscsi.target.update', target_id, {'mode': 'BOTH'})
+
+            # Map the target again
+            with fcport_create(fc_hosts[0]['alias'], target_id, True):
+                # Make sure we have a mapping
+                assert len(call('fcport.query', [['target.id', '=', target_id]])) == 1
+
+                # Change the mode of the target to BOTH
+                call('iscsi.target.update', target_id, {'mode': 'FC'})
+
+                # Make sure we STILL have a mapping
+                assert len(call('fcport.query', [['target.id', '=', target_id]])) == 1
+
+                # Change the mode of the target to ISCSI
+                call('iscsi.target.update', target_id, {'mode': 'ISCSI'})
+
+                # Make sure we DON'T have a mapping
+                assert len(call('fcport.query', [['target.id', '=', target_id]])) == 0
 
     def test_npiv_setting(self, fc_hosts):
         # Try to set NPIV to -1

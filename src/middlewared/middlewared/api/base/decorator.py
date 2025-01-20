@@ -9,6 +9,13 @@ from middlewared.schema.processor import calculate_args_index
 __all__ = ["api_method"]
 
 
+CONFIG_CRUD_METHODS = frozenset([
+    'do_create', 'do_update', 'do_delete',
+    'create', 'update', 'delete',
+    'query', 'get_instance', 'config'
+])
+
+
 def api_method(
     accepts: type[BaseModel],
     returns: type[BaseModel],
@@ -22,6 +29,9 @@ def api_method(
     cli_private: bool = False,
     authentication_required: bool = True,
     authorization_required: bool = True,
+    pass_app: bool = False,
+    pass_app_require: bool = False,
+    pass_app_rest: bool = False,
 ):
     """
     Mark a `Service` class method as an API method.
@@ -58,6 +68,13 @@ def api_method(
         raise TypeError("`returns` model must only have one field called `result`")
 
     def wrapper(func):
+        if pass_app:
+            # Pass the application instance as parameter to the method
+            func._pass_app = {
+                'require': pass_app_require,
+                'rest': pass_app_rest,
+            }
+
         args_index = calculate_args_index(func, audit_callback)
 
         if asyncio.iscoroutinefunction(func):
@@ -87,12 +104,19 @@ def api_method(
             wrapped._no_auth_required = True
         elif not authorization_required:
             wrapped._no_authz_required = True
+        elif not private:
+            # All public methods should have a roles definition. This is a rough check to help developers not write
+            # methods that are only accesssible to full_admin. We don't bother checking CONFIG and CRUD methods
+            # and choices because they may have implicit roles through the role_prefix configuration.
+
+            if func.__name__ not in CONFIG_CRUD_METHODS and not func.__name__.endswith('choices'):
+                raise ValueError(f'{func.__name__}: Role definition is required for public API endpoints')
 
         wrapped.audit = audit
         wrapped.audit_callback = audit_callback
         wrapped.audit_extended = audit_extended
         wrapped.rate_limit = rate_limit
-        wrapped.roles = roles or ['FULL_ADMIN']
+        wrapped.roles = roles or []
         wrapped._private = private
         wrapped._cli_private = cli_private
 

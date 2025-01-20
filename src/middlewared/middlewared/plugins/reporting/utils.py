@@ -54,18 +54,12 @@ def get_netdata_state_path() -> str:
 
 
 def get_metrics_approximation(
-    disk_count: int, core_count: int, interface_count: int, pool_count: int, vms_count: int,
+    disk_count: int, core_count: int, interface_count: int, vms_count: int,
     systemd_service_count: int, containers_count: typing.Optional[int] = 10,
 ) -> dict:
     data = {
         1: {
             'system.cpu': 10,
-            'cpu.cpu0_cpuidle': 4 * core_count,
-            'system.intr': 1,
-            'system.ctxt': 1,
-            'system.forks': 1,
-            'system.processes': 2,
-            'zfs_state_pool': pool_count * 6,
             'system.clock_sync_state': 1,
             'system.clock_status': 2,
             'system.clock_sync_offset': 1,
@@ -75,16 +69,6 @@ def get_metrics_approximation(
             'truenas_disk_stats.ops': 2 * disk_count,
             'truenas_disk_stats.io': 2 * disk_count,
             'truenas_disk_stats.busy': 1 * disk_count,
-
-            # meminfo
-            'system.ram': 4,
-            'mem.available': 1,
-            'mem.committed': 1,
-            'mem.writeback': 5,
-            'mem.kernel': 5,
-            'mem.slab': 2,
-            'mem.transparent_hugepages': 2,
-            'truenas_meminfo': 1,
 
             # net
             'system.net': 2,
@@ -96,6 +80,9 @@ def get_metrics_approximation(
             'net_packets': 3 * interface_count,
             'net_drops': 2 * interface_count,
             'net_carrier': 2 * interface_count,
+
+            # meminfo
+            'truenas_meminfo': 2,
 
             # uptime
             'system.uptime': 1,
@@ -131,8 +118,11 @@ def get_metrics_approximation(
             'truenas_arcstats.l2bytes': 1,
             'truenas_arcstats.l2wbytes': 1,
 
+            # cpu usage, it is core count + 1 with +1 saving aggregated stats
+            'cpu.usage': core_count + 1,
+
             # cputemp
-            'cputemp.temperatures': core_count,
+            'cputemp.temp': 1,
 
             # ups
             'nut_ups.charge': 1,

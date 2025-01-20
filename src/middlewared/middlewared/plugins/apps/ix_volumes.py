@@ -1,7 +1,8 @@
 import collections
 
-from middlewared.schema import accepts, Bool, Dict, returns, Str
-from middlewared.service import filterable, filterable_returns, Service
+from middlewared.api import api_method
+from middlewared.api.current import AppIXVolumeEntry, AppIXVolumeExistsArgs, AppIXVolumeExistsResult
+from middlewared.service import filterable_api_method, Service
 from middlewared.utils import filter_list
 
 from .ix_apps.path import get_app_mounts_ds
@@ -13,14 +14,9 @@ class AppsIxVolumeService(Service):
         namespace = 'app.ix_volume'
         event_send = False
         cli_namespace = 'app.ix_volume'
+        entry = AppIXVolumeEntry
 
-    @filterable(roles=['APPS_READ'])
-    @filterable_returns(Dict(
-        'ix-volumes_query',
-        Str('app_name'),
-        Str('name'),
-        additional_attrs=True,
-    ))
+    @filterable_api_method(item=AppIXVolumeEntry, roles=['APPS_READ'])
     async def query(self, filters, options):
         """
         Query ix-volumes with `filters` and `options`.
@@ -49,8 +45,7 @@ class AppsIxVolumeService(Service):
 
         return filter_list(volumes, filters, options)
 
-    @accepts(Str('app_name'))
-    @returns(Bool('ix_volumes_exist'))
+    @api_method(AppIXVolumeExistsArgs, AppIXVolumeExistsResult, roles=['APPS_READ'])
     async def exists(self, app_name):
         """
         Check if ix-volumes exist for `app_name`.

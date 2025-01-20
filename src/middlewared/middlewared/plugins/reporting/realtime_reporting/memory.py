@@ -16,4 +16,7 @@ def get_memory_info(netdata_metrics: dict) -> dict:
         'physical_memory_total': normalize_value(
             safely_retrieve_dimension(netdata_metrics, 'truenas_meminfo.total', 'total', 0),
         ),
+        'physical_memory_available': normalize_value(
+            safely_retrieve_dimension(netdata_metrics, 'truenas_meminfo.available', 'available', 0),
+        ),
     }

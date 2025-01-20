@@ -4,9 +4,9 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 from pathlib import Path
+from typing import Literal
 
 from middlewared.service import Service
-from middlewared.schema import Str, accepts
 from middlewared.plugins.pool_.utils import ZPOOL_CACHE_FILE
 
 ZPOOL_CACHE_FILE_SAVED = f'{ZPOOL_CACHE_FILE}.saved'
@@ -18,8 +18,10 @@ class FailoverZpoolCacheFileService(Service):
         private = True
         namespace = 'failover.zpool.cachefile'
 
-    @accepts(Str('event', enum=['MASTER', 'BACKUP', 'SYNC'], default='MASTER'))
-    def setup(self, event):
+    def setup(
+        self,
+        event: Literal["MASTER", "BACKUP", "SYNC"] = "MASTER"
+    ):
         saved = Path(ZPOOL_CACHE_FILE_SAVED)
         default = Path(ZPOOL_CACHE_FILE)
         overwrite = Path(ZPOOL_CACHE_FILE_OVERWRITE)

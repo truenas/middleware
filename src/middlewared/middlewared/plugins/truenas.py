@@ -4,7 +4,7 @@ import os
 from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware
 
 from middlewared.plugins.truecommand.enums import Status as TrueCommandStatus
-from middlewared.service import cli_private, job, no_auth_required, private, Service
+from middlewared.service import cli_private, job, private, Service
 from middlewared.utils.functools_ import cache
 from middlewared.api.current import (
     TrueNASSetProductionArgs, TrueNASSetProductionResult,
@@ -27,20 +27,22 @@ class TrueNASService(Service):
     class Config:
         cli_namespace = 'system.truenas'
 
-    @no_auth_required
-    @api_method(TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult)
+    @api_method(
+        TrueNASManagedByTruecommandArgs,
+        TrueNASManagedByTruecommandResult,
+        authentication_required=False,
+    )
     async def managed_by_truecommand(self):
         """
-        Returns whether TrueNAS is being managed by TrueCommand or not.
-
-        This endpoint has no authentication required as it is used by UI when the user has not logged in to see
-        if the system is being managed by TrueCommand or not.
+        Returns whether TrueNAS is being managed by TrueCommand
         """
+        # NOTE: This endpoint doesn't require authentication because
+        # it is used by UI on the login page
         return TrueCommandStatus(
             (await self.middleware.call('truecommand.config'))['status']
         ) == TrueCommandStatus.CONNECTED
 
-    @api_method(TrueNASGetChassisHardwareArgs, TrueNASGetChassisHardwareResult)
+    @api_method(TrueNASGetChassisHardwareArgs, TrueNASGetChassisHardwareResult, roles=['READONLY_ADMIN'])
     @cli_private
     @cache
     async def get_chassis_hardware(self):
@@ -77,7 +79,7 @@ class TrueNASService(Service):
         """
         return not os.path.exists(EULA_PENDING_PATH)
 
-    @api_method(TrueNASAcceptEULAArgs, TrueNASAcceptEULAResult)
+    @api_method(TrueNASAcceptEULAArgs, TrueNASAcceptEULAResult, roles=['FULL_ADMIN'])
     def accept_eula(self):
         """
         Accept TrueNAS EULA.
@@ -100,7 +102,7 @@ class TrueNASService(Service):
         """
         return await self.middleware.call('keyvalue.get', 'truenas:production', False)
 
-    @api_method(TrueNASSetProductionArgs, TrueNASSetProductionResult)
+    @api_method(TrueNASSetProductionArgs, TrueNASSetProductionResult, roles=['FULL_ADMIN'])
     @job()
     async def set_production(self, job, production, attach_debug):
         """

@@ -1,6 +1,10 @@
+import logging
 from pkg_resources import parse_version
 
-from middlewared.schema import accepts, Dict, List, Str, Ref, returns
+from middlewared.api import api_method
+from middlewared.api.current import (
+    AppUpgradeArgs, AppUpgradeResult, AppUpgradeSummaryArgs, AppUpgradeSummaryResult,
+)
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 
 from .compose_utils import compose_action
@@ -8,6 +12,10 @@ from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, up
 from .ix_apps.path import get_installed_app_path
 from .ix_apps.upgrade import upgrade_config
 from .version_utils import get_latest_version_from_app_versions
+from .utils import get_upgrade_snap_name
+
+
+logger = logging.getLogger('app_lifecycle')
 
 
 class AppService(Service):
@@ -16,16 +24,49 @@ class AppService(Service):
         namespace = 'app'
         cli_namespace = 'app'
 
-    @accepts(
-        Str('app_name'),
-        Dict(
-            'options',
-            Dict('values', additional_attrs=True, private=True),
-            Str('app_version', empty=False, default='latest'),
-        ),
-        roles=['APPS_WRITE'],
+    @private
+    def take_snapshot_of_hostpath_and_stop_app(self, app, snapshot_hostpath):
+        app_info = self.middleware.call_sync('app.get_instance', app) if isinstance(app, str) else app
+        host_path_mapping = self.middleware.call_sync('app.get_hostpaths_datasets', app_info['name'])
+        # Stop the app itself before we attempt to take snapshots
+        self.middleware.call_sync('app.stop', app_info['name']).wait_sync()
+        if not snapshot_hostpath:
+            return
+
+        if host_path_mapping:
+            logger.debug('Taking snapshots of host paths for %r app', app_info['name'])
+
+        for host_path, dataset in host_path_mapping.items():
+            if not dataset:
+                if host_path.startswith('/mnt/') is False:
+                    logger.debug(
+                        'Skipping %r host path for %r app\'s snapshot as it is not under /mnt', host_path, app_info['name']
+                    )
+                else:
+                    logger.debug(
+                        'Skipping %r host path for %r app\'s snapshot as it is not a dataset', host_path,
+                        app_info['name']
+                    )
+
+                continue
+
+            snap_name = f'{dataset}@{get_upgrade_snap_name(app_info["name"], app_info["version"])}'
+            if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
+                logger.debug('Snapshot %r already exists for %r app', snap_name, app_info['name'])
+                continue
+
+            self.middleware.call_sync('zfs.snapshot.create', {
+                'dataset': dataset,
+                'name': get_upgrade_snap_name(app_info["name"], app_info["version"])
+            })
+            logger.debug('Created snapshot %r for %r app', snap_name, app_info['name'])
+
+    @api_method(
+        AppUpgradeArgs, AppUpgradeResult,
+        audit='App: Upgrading',
+        audit_extended=lambda app_name, options=None: app_name,
+        roles=['APPS_WRITE']
     )
-    @returns(Ref('app_entry'))
     @job(lock=lambda args: f'app_upgrade_{args[0]}')
     def upgrade(self, job, app_name, options):
         """
@@ -61,6 +102,7 @@ class AppService(Service):
         job.set_progress(
             20, f'Validating {app_name!r} app upgrade to {upgrade_version["version"]!r} version'
         )
+        self.take_snapshot_of_hostpath_and_stop_app(app, options['snapshot_hostpaths'])
         # In order for upgrade to complete, following must happen
         # 1) New version should be copied over to app config's dir
         # 2) Metadata should be updated to reflect new version
@@ -86,6 +128,19 @@ class AppService(Service):
 
             job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
 
+            if app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name):
+                snap_name = f'{app_volume_ds}@{app["version"]}'
+                if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
+                    self.middleware.call_sync('zfs.snapshot.delete', snap_name, {'recursive': True})
+
+                self.middleware.call_sync(
+                    'zfs.snapshot.create', {
+                        'dataset': app_volume_ds, 'name': app['version'], 'recursive': True
+                    }
+                )
+
+                job.set_progress(50, 'Created snapshot for upgrade')
+
         try:
             compose_action(
                 app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True, pull_images=True,
@@ -95,18 +150,6 @@ class AppService(Service):
             new_app_instance = self.middleware.call_sync('app.get_instance', app_name)
             self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=new_app_instance)
 
-        job.set_progress(50, 'Created snapshot for upgrade')
-        if app_volume_ds := self.middleware.call_sync('app.get_app_volume_ds', app_name):
-            snap_name = f'{app_volume_ds}@{app["version"]}'
-            if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
-                self.middleware.call_sync('zfs.snapshot.delete', snap_name, {'recursive': True})
-
-            self.middleware.call_sync(
-                'zfs.snapshot.create', {
-                    'dataset': app_volume_ds, 'name': app['version'], 'recursive': True
-                }
-            )
-
         job.set_progress(100, 'Upgraded app successfully')
         if new_app_instance['upgrade_available'] is False:
             # We have this conditional for the case if user chose not to upgrade to latest version
@@ -115,28 +158,7 @@ class AppService(Service):
 
         return new_app_instance
 
-    @accepts(
-        Str('app_name'),
-        Dict(
-            'options',
-            Str('app_version', empty=False, default='latest'),
-        ),
-        roles=['APPS_READ'],
-    )
-    @returns(Dict(
-        Str('latest_version', description='Latest version available for the app'),
-        Str('latest_human_version', description='Latest human readable version available for the app'),
-        Str('upgrade_version', description='Version user has requested to be upgraded at'),
-        Str('upgrade_human_version', description='Human readable version user has requested to be upgraded at'),
-        Str('changelog', max_length=None, null=True, description='Changelog for the upgrade version'),
-        List('available_versions_for_upgrade', items=[
-            Dict(
-                'version_info',
-                Str('version', description='Version of the app'),
-                Str('human_version', description='Human readable version of the app'),
-            )
-        ], description='List of available versions for upgrade'),
-    ))
+    @api_method(AppUpgradeSummaryArgs, AppUpgradeSummaryResult, roles=['APPS_READ'])
     async def upgrade_summary(self, app_name, options):
         """
         Retrieve upgrade summary for `app_name`.

@@ -400,7 +400,7 @@ class AlertService(Service):
         except IndexError:
             return None
 
-    @api_method(AlertDismissArgs, AlertDismissResult)
+    @api_method(AlertDismissArgs, AlertDismissResult, roles=['ALERT_LIST_WRITE'])
     async def dismiss(self, uuid):
         """
         Dismiss `id` alert.
@@ -436,7 +436,7 @@ class AlertService(Service):
         if removed:
             self._send_alert_deleted_event(alert)
 
-    @api_method(AlertRestoreArgs, AlertRestoreResult)
+    @api_method(AlertRestoreArgs, AlertRestoreResult, roles=['ALERT_LIST_WRITE'])
     async def restore(self, uuid):
         """
         Restore `id` alert which had been dismissed.
@@ -999,6 +999,7 @@ class AlertServiceService(CRUDService):
         datastore_order_by = ["name"]
         cli_namespace = "system.alert.service"
         entry = AlertServiceEntry
+        role_prefix = 'ALERT'
 
     @private
     async def _extend(self, service):
@@ -1098,7 +1099,7 @@ class AlertServiceService(CRUDService):
         """
         return await self.middleware.call("datastore.delete", self._config.datastore, id_)
 
-    @api_method(AlertServiceTestArgs, AlertServiceTestResult)
+    @api_method(AlertServiceTestArgs, AlertServiceTestResult, roles=['ALERT_WRITE'])
     async def test(self, data):
         """
         Send a test alert using `type` of Alert Service.
@@ -1170,6 +1171,7 @@ class AlertClassesService(ConfigService):
         datastore = "system.alertclasses"
         cli_namespace = "system.alert.class"
         entry = AlertClassesEntry
+        role_prefix = 'ALERT'
 
     @api_method(AlertClassesUpdateArgs, AlertClassesUpdateResult)
     async def do_update(self, data):

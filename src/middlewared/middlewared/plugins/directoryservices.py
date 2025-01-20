@@ -186,7 +186,7 @@ class DirectoryServices(Service):
         except Exception:
             self.logger.warning('Cache flush failed', exc_info=True)
 
-        await self.middleware.call('directoryservices.health.check')
+        await self.middleware.call('directoryservices.health.recover')
 
     @private
     def restart_dependent_services(self):
@@ -241,4 +241,8 @@ async def __init_directory_services(middleware, event_type, args):
 
 async def setup(middleware):
     middleware.event_subscribe('system.ready', __init_directory_services)
-    middleware.event_register('directoryservices.status', 'Sent on directory service state changes.')
+    middleware.event_register(
+        'directoryservices.status',
+        'Sent on directory service state changes.',
+        roles=['DIRECTORY_SERVICE_READ']
+    )

@@ -1,4 +1,5 @@
 import contextlib
+import copy
 import enum
 import errno
 import ipaddress
@@ -1198,7 +1199,7 @@ def test__modify_portal(iscsi_running):
         new_config = call('iscsi.portal.get_instance', portal_config['id'])
         assert new_config['comment'] == 'New comment', new_config
         # Then try to reapply everything
-        payload = {'comment': 'test1', 'discovery_authmethod': 'NONE', 'discovery_authgroup': None, 'listen': [{'ip': '0.0.0.0'}]}
+        payload = {'comment': 'test1', 'listen': [{'ip': '0.0.0.0'}]}
         call('iscsi.portal.update', portal_config['id'], payload)
         new_config = call('iscsi.portal.get_instance', portal_config['id'])
         assert new_config['comment'] == 'test1', new_config
@@ -2532,6 +2533,19 @@ def test__initiator_group(iscsi_running):
                     with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn3) as s:
                         TUR(s)
                 assert 'Unable to connect to' in str(ve), ve
+
+                # Now UPDATE the initiator group
+                call('iscsi.initiator.update', twoinit_config['id'], {'initiators': [initiator_iqn2, initiator_iqn3]})
+                # Last two initiators can connect to the target
+                for initiator_iqn in [initiator_iqn2, initiator_iqn3]:
+                    with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn) as s:
+                        TUR(s)
+                # First initiator cannot connect to the target
+                with pytest.raises(RuntimeError) as ve:
+                    with iscsi_scsi_connection(truenas_server.ip, iqn, initiator_name=initiator_iqn1) as s:
+                        TUR(s)
+                assert 'Unable to connect to' in str(ve), ve
+
                 # Clear it again
                 set_target_initiator_id(config['target']['id'], None)
 
@@ -2575,7 +2589,7 @@ def test__portal_access(iscsi_running):
                             assert MB_100 == read_capacity16(s)
 
 
-def test__multiple_extents():
+def test__multiple_extents(iscsi_running):
     """
     Verify that an iSCSI client can access multiple target LUNs
     when multiple extents are configured.
@@ -2593,7 +2607,8 @@ def test__multiple_extents():
                 with file_extent(pool_name, dataset_name, "target.extent1", filesize_mb=100, extent_name="extent1") as extent1_config:
                     with file_extent(pool_name, dataset_name, "target.extent2", filesize_mb=256, extent_name="extent2") as extent2_config:
                         with target_extent_associate(target_id, extent1_config['id'], 0):
-                            with target_extent_associate(target_id, extent2_config['id'], 1):
+                            # Now call iscsi.targetextent.create without a lunid parameter
+                            with target_extent_associate(target_id, extent2_config['id'], None):
                                 with iscsi_scsi_connection(truenas_server.ip, iqn, 0) as s:
                                     TUR(s)
                                     assert MB_100 == read_capacity16(s)
@@ -3035,3 +3050,39 @@ def test__synchronize_cache(iscsi_running, extent_type):
                 s.write16(0, 1, zeros)
                 s.synchronizecache16(0, 1)
                 assert test_empty(test_path) is True, 'Expected zero data'
+
+
+def read_target_value(iqn, name):
+    return ssh(f'head -1 /sys/kernel/scst_tgt/targets/iscsi/{iqn}/{name}').strip()
+
+
+def test__target_iscsi_parameters(iscsi_running):
+    """Test iSCSI target parameters"""
+    def new_params_val(params, key, val):
+        new = copy.copy(params)
+        new[key] = val
+        return {'iscsi_parameters': new}
+
+    DEFAULT_QUEUED_COMMANDS = 32
+    iqn = f'{basename}:{target_name}'
+    with initiator_portal() as config:
+        with configured_target(config, target_name, 'VOLUME') as target_config:
+            target_id = target_config['target']['id']
+            params = target_config['target']['iscsi_parameters']
+            # QueuedCommands
+            # Check the default
+            assert params['QueuedCommands'] is None, params
+            assert int(read_target_value(iqn, 'QueuedCommands')) == DEFAULT_QUEUED_COMMANDS
+            # Set to 128
+            call('iscsi.target.update', target_id, new_params_val(params, 'QueuedCommands', 128))
+            assert int(read_target_value(iqn, 'QueuedCommands')) == 128
+            # Set to None and ensure it has the default
+            call('iscsi.target.update', target_id, new_params_val(params, 'QueuedCommands', None))
+            assert int(read_target_value(iqn, 'QueuedCommands')) == DEFAULT_QUEUED_COMMANDS
+            # Now we'll test removing it from the dict
+            call('iscsi.target.update', target_id, new_params_val(params, 'QueuedCommands', 128))
+            assert int(read_target_value(iqn, 'QueuedCommands')) == 128
+            new_params = copy.copy(params)
+            del new_params['QueuedCommands']
+            call('iscsi.target.update', target_id, {'iscsi_parameters': new_params})
+            assert int(read_target_value(iqn, 'QueuedCommands')) == DEFAULT_QUEUED_COMMANDS

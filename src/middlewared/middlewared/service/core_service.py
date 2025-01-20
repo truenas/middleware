@@ -881,15 +881,13 @@ class CoreService(Service):
             for k, v in descriptions.items()
         }
 
-    @no_auth_required
-    @api_method(CoreSetOptionsArgs, CoreSetOptionsResult, rate_limit=False)
+    @api_method(CoreSetOptionsArgs, CoreSetOptionsResult, authentication_required=False, rate_limit=False)
     @pass_app()
     async def set_options(self, app, options):
         if "py_exceptions" in options:
             app.py_exceptions = options["py_exceptions"]
 
-    @no_auth_required
-    @api_method(CoreSubscribeArgs, CoreSubscribeResult)
+    @api_method(CoreSubscribeArgs, CoreSubscribeResult, authorization_required=False)
     @pass_app()
     async def subscribe(self, app, event):
         if not self.middleware.can_subscribe(app, event):
@@ -899,8 +897,7 @@ class CoreService(Service):
         await app.subscribe(ident, event)
         return ident
 
-    @no_auth_required
-    @api_method(CoreUnsubscribeArgs, CoreUnsubscribeResult)
+    @api_method(CoreUnsubscribeArgs, CoreUnsubscribeResult, authorization_required=False)
     @pass_app()
     async def unsubscribe(self, app, ident):
         await app.unsubscribe(ident)

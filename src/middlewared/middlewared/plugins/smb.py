@@ -127,7 +127,7 @@ class SMBService(ConfigService):
     @private
     def generate_smb_configuration(self):
         if self.middleware.call_sync('failover.status') not in ('SINGLE', 'MASTER'):
-            return {'netbiosname': 'TN_STANDBY'}
+            return {'netbiosname': 'TN_STANDBY', 'SHARES': {}}
 
         if (ds_type := self.middleware.call_sync('directoryservices.status')['type']) is not None:
             ds_type = DSType(ds_type)
@@ -561,12 +561,9 @@ class SMBService(ConfigService):
         if ds['type'] == DSType.AD.value and ds['status'] in (
             DSStatus.HEALTHY.name, DSStatus.FAULTED.name
         ):
-            for i in ('workgroup', 'netbiosname', 'netbiosalias'):
-                if old[i] != new[i]:
-                    verrors.add(f'smb_update.{i}',
-                                'This parameter may not be changed after joining Active Directory (AD). '
-                                'If it must be changed, the proper procedure is to leave the AD domain '
-                                'and then alter the parameter before re-joining the domain.')
+            await self.middleware.call('activedirectory.netbios_name_check', 'smb_update', old, new)
+            if old['workgroup'].casefold() != new['workgroup'].casefold():
+                verrors.add('smb_update.workgroup', 'Workgroup may not be changed while AD is enabled')
 
         if app and not credential_has_full_admin(app.authenticated_credentials):
             if old['smb_options'] != new['smb_options']:

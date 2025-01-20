@@ -36,7 +36,7 @@ def my_ip4():
 
 @contextlib.contextmanager
 def portal():
-    portal_config = call('iscsi.portal.create', {'listen': [{'ip': truenas_server.ip}], 'discovery_authmethod': 'NONE'})
+    portal_config = call('iscsi.portal.create', {'listen': [{'ip': truenas_server.ip}]})
     try:
         yield portal_config
     finally:

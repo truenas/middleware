@@ -1,10 +1,18 @@
 from typing import Annotated, Literal
 
-from pydantic import IPvAnyInterface, Field, field_validator, model_validator
+from pydantic import IPvAnyInterface, Field, field_validator, model_validator, RootModel
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
 )
+
+
+__all__ = [
+    'DockerEntry', 'DockerUpdateArgs', 'DockerUpdateResult', 'DockerStatusArgs', 'DockerStatusResult',
+    'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
+    'DockerListBackupArgs', 'DockerListBackupResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
+    'DockerDeleteBackupArgs', 'DockerDeleteBackupResult',
+]
 
 
 class AddressPool(BaseModel):
@@ -77,3 +85,53 @@ class DockerNvidiaPresentArgs(BaseModel):
 
 class DockerNvidiaPresentResult(BaseModel):
     result: bool
+
+
+class DockerBackupArgs(BaseModel):
+    backup_name: NonEmptyString | None = Field(default=None)
+
+
+class DockerBackupResult(BaseModel):
+    result: NonEmptyString
+
+
+class DockerListBackupArgs(BaseModel):
+    pass
+
+
+class AppInfo(BaseModel):
+    id: NonEmptyString
+    name: NonEmptyString
+    state: NonEmptyString
+
+
+class BackupInfo(BaseModel):
+    name: NonEmptyString
+    apps: list[AppInfo]
+    snapshot_name: NonEmptyString
+    created_on: NonEmptyString
+    backup_path: NonEmptyString
+
+
+class DockerBackupInfo(RootModel[dict[str, BackupInfo]]):
+    pass
+
+
+class DockerListBackupResult(BaseModel):
+    result: DockerBackupInfo
+
+
+class DockerRestoreBackupArgs(BaseModel):
+    backup_name: NonEmptyString
+
+
+class DockerRestoreBackupResult(BaseModel):
+    result: None
+
+
+class DockerDeleteBackupArgs(BaseModel):
+    backup_name: NonEmptyString
+
+
+class DockerDeleteBackupResult(BaseModel):
+    result: None

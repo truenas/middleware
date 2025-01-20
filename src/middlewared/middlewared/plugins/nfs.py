@@ -5,18 +5,28 @@ import itertools
 import os
 import shutil
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    NfsEntry,
+    NfsUpdateArgs, NfsUpdateResult,
+    NfsBindipChoicesArgs, NfsBindipChoicesResult,
+    NfsShareEntry,
+    NfsShareCreateArgs, NfsShareCreateResult,
+    NfsShareUpdateArgs, NfsShareUpdateResult,
+    NfsShareDeleteArgs, NfsShareDeleteResult
+)
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
-from middlewared.validators import Match, NotMatch, Port, Range, IpAddress
+from middlewared.validators import IpAddress
 from middlewared.service import private, SharingService, SystemServiceService
 from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
+from middlewared.plugins.nfs_.validators import (
+    confirm_unique, sanitize_networks, sanitize_hosts, validate_bind_ip
+)
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
-
-NFS_RDMA_DEFAULT_PORT = 20049
 
 # Support the nfsv4recoverydir procfs entry.  This may deprecate.
 NFSV4_RECOVERY_DIR_PROCFS_PATH = '/proc/fs/nfsd/nfsv4recoverydir'
@@ -69,7 +79,6 @@ class NFSModel(sa.Model):
     nfs_srv_mountd_log = sa.Column(sa.Boolean(), default=True)
     nfs_srv_statd_lockd_log = sa.Column(sa.Boolean(), default=False)
     nfs_srv_v4_domain = sa.Column(sa.String(120))
-    nfs_srv_v4_owner_major = sa.Column(sa.String(1023), default='')
     nfs_srv_rdma = sa.Column(sa.Boolean(), default=False)
 
 
@@ -84,26 +93,7 @@ class NFSService(SystemServiceService):
         cli_namespace = "service.nfs"
         role_prefix = "SHARING_NFS"
 
-    ENTRY = Dict(
-        'nfs_entry',
-        Int('id', required=True),
-        Int('servers', null=True, validators=[Range(min_=1, max_=256)], required=True),
-        Bool('allow_nonroot', required=True),
-        List('protocols', items=[Str('protocol', enum=NFSProtocol.choices())], required=True),
-        Bool('v4_krb', required=True),
-        Str('v4_domain', required=True),
-        List('bindip', items=[IPAddr('ip')], required=True),
-        Int('mountd_port', null=True, validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])], required=True),
-        Int('rpcstatd_port', null=True, validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])], required=True),
-        Int('rpclockd_port', null=True, validators=[Port(exclude=[NFS_RDMA_DEFAULT_PORT])], required=True),
-        Bool('mountd_log', required=True),
-        Bool('statd_lockd_log', required=True),
-        Bool('v4_krb_enabled', required=True),
-        Bool('userd_manage_gids', required=True),
-        Bool('keytab_has_nfs_spn', required=True),
-        Bool('managed_nfsd', default=True),
-        Bool('rdma', default=False),
-    )
+        entry = NfsEntry
 
     @private
     def name_to_id_conversion(self, name, name_type='user'):
@@ -188,12 +178,17 @@ class NFSService(SystemServiceService):
             except Exception:
                 self.logger.error('Unexpected failure initializing %r', path, exc_info=True)
 
+        # Clear rmtab on boot.
+        # We call this here because /var/db/system/nfs is not yet available
+        # in a middleware 'setup' hook.  See NAS-131762
+        if not self.middleware.call_sync('system.ready'):
+            self.middleware.call_sync('nfs.clear_nfs3_rmtab')
+
     @private
     async def nfs_extend(self, nfs):
         keytab_has_nfs = await self.middleware.call("kerberos.keytab.has_nfs_principal")
         nfs["v4_krb_enabled"] = (nfs["v4_krb"] or keytab_has_nfs)
         nfs["userd_manage_gids"] = nfs.pop("16")
-        nfs["v4_owner_major"] = nfs.pop("v4_owner_major")
         nfs["keytab_has_nfs_spn"] = keytab_has_nfs
 
         # 'None' indicates we are to dynamically manage the number of nfsd
@@ -218,8 +213,7 @@ class NFSService(SystemServiceService):
 
         return nfs
 
-    @accepts()
-    @returns(Dict(additional_attrs=True))
+    @api_method(NfsBindipChoicesArgs, NfsBindipChoicesResult)
     async def bindip_choices(self):
         """
         Returns ip choices for NFS service to use
@@ -232,7 +226,9 @@ class NFSService(SystemServiceService):
 
     @private
     async def bindip(self, config):
+        validate_bind_ip(config['bindip'])
         bindip = [addr for addr in config['bindip'] if addr not in ['0.0.0.0', '::']]
+
         if bindip:
             found = False
             for iface in await self.middleware.call('interface.query'):
@@ -255,17 +251,7 @@ class NFSService(SystemServiceService):
 
             return []
 
-    @accepts(
-        Patch(
-            'nfs_entry', 'nfs_update',
-            ('rm', {'name': 'id'}),
-            ('rm', {'name': 'v4_krb_enabled'}),
-            ('rm', {'name': 'keytab_has_nfs_spn'}),
-            ('rm', {'name': 'managed_nfsd'}),
-            ('attr', {'update': True}),
-        ),
-        audit='Update NFS configuration',
-    )
+    @api_method(NfsUpdateArgs, NfsUpdateResult, audit='Update NFS configuration')
     async def do_update(self, data):
         """
         Update NFS Service Configuration.
@@ -379,7 +365,10 @@ class NFSService(SystemServiceService):
         bindip_choices = await self.bindip_choices()
         for i, bindip in enumerate(new['bindip']):
             if bindip not in bindip_choices:
-                verrors.add(f'nfs_update.bindip.{i}', 'Please provide a valid ip address')
+                verrors.add(
+                    f"nfs_update.bindip.{i}",
+                    f"Cannot use {bindip}. Please provide a valid ip address."
+                )
 
         if NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled:
             """
@@ -449,39 +438,10 @@ class SharingNFSService(SharingService):
         cli_namespace = "sharing.nfs"
         role_prefix = "SHARING_NFS"
 
-    ENTRY = Patch(
-        'sharingnfs_create', 'sharing_nfs_entry',
-        ('add', Int('id')),
-        ('add', Bool('locked')),
-        register=True,
-    )
+        entry = NfsShareEntry
 
-    @accepts(
-        Dict(
-            "sharingnfs_create",
-            Dir("path", required=True),
-            List("aliases", items=[Str("path", validators=[Match(r"^/.*")])]),
-            Str("comment", default=""),
-            List("networks", items=[IPAddr("network", network=True)], unique=True),
-            List(
-                "hosts", items=[Str("host", validators=[NotMatch(
-                    r'.*[\s"]', explanation='Name cannot contain spaces or quotes')]
-                )],
-                unique=True
-            ),
-            Bool("ro", default=False),
-            Str("maproot_user", required=False, default=None, null=True),
-            Str("maproot_group", required=False, default=None, null=True),
-            Str("mapall_user", required=False, default=None, null=True),
-            Str("mapall_group", required=False, default=None, null=True),
-            List(
-                "security",
-                items=[Str("provider", enum=["SYS", "KRB5", "KRB5I", "KRB5P"])],
-            ),
-            Bool("enabled", default=True),
-            register=True,
-            strict=True,
-        ),
+    @api_method(
+        NfsShareCreateArgs, NfsShareCreateResult,
         audit='NFS share create', audit_extended=lambda data: data["path"]
     )
     async def do_create(self, data):
@@ -518,15 +478,9 @@ class SharingNFSService(SharingService):
 
         return await self.get_instance(data["id"])
 
-    @accepts(
-        Int("id"),
-        Patch(
-            "sharingnfs_create",
-            "sharingnfs_update",
-            ("attr", {"update": True})
-        ),
-        audit='NFS share update',
-        audit_callback=True,
+    @api_method(
+        NfsShareUpdateArgs, NfsShareUpdateResult,
+        audit='NFS share update', audit_callback=True
     )
     async def do_update(self, audit_callback, id_, data):
         """
@@ -555,20 +509,19 @@ class SharingNFSService(SharingService):
 
         return await self.get_instance(id_)
 
-    @accepts(
-        Int("id"),
-        audit='NFS share delete',
-        audit_callback=True,
+    @api_method(
+        NfsShareDeleteArgs, NfsShareDeleteResult,
+        audit='NFS share delete', audit_callback=True
     )
-    @returns()
     async def do_delete(self, audit_callback, id_):
         """
         Delete NFS Share of `id`.
         """
         nfs_share = await self.get_instance(id_)
         audit_callback(nfs_share['path'])
-        await self.middleware.call("datastore.delete", self._config.datastore, id_)
+        res = await self.middleware.call("datastore.delete", self._config.datastore, id_)
         await self._service_change("nfs", "reload")
+        return res
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
@@ -603,6 +556,11 @@ class SharingNFSService(SharingService):
                     "This field should be either empty of have the same number of elements as paths",
                 )
             """
+
+        # Data validation and sanitization
+        self.sanitize_share_networks_and_hosts(data, schema_name, verrors)
+        # User must clean these up before proceeding
+        verrors.check()
 
         # need to make sure that the nfs share is within the zpool mountpoint
         await check_path_resides_within_volume(
@@ -666,6 +624,27 @@ class SharingNFSService(SharingService):
                     f"{schema_name}.security",
                     f"The following security flavor(s) require NFSv4 to be enabled: {','.join(v4_sec)}."
                 )
+
+    @private
+    def sanitize_share_networks_and_hosts(self, data, schema_name, verrors):
+        """
+        Perform input sanitation
+            - Network and host must contain unique items.
+            - Network must contain network types.
+            - Host must not include quotes or spaces.
+        """
+
+        # Flag non-unique items in hosts and networks
+        confirm_unique(schema_name, 'networks', data, verrors)
+        confirm_unique(schema_name, 'hosts', data, verrors)
+
+        # Validate networks and sanitize: Convert IP addresses CIDR format
+        data['networks'] = sanitize_networks(
+            schema_name, data['networks'], verrors, strict_test=False, convert=True
+        )
+
+        # Validate hosts: no spaces or quotes
+        sanitize_hosts(schema_name, data['hosts'], verrors)
 
     @private
     def validate_share_networks(self, networks, dns_cache, schema_name, verrors):

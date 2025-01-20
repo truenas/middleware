@@ -107,10 +107,13 @@ class SystemSecurityService(ConfigService):
             )
 
         if current_cred and current_cred.is_user_session and '2FA' not in current_cred.user['account_attributes']:
+            # We need to do everything we can to make sure that 2FA is _actually_ working for
+            # an account to which admin has access.
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
                 'Credential used to enable General Purpose OS STIG compatibility '
-                'must have two factor authentication enabled.'
+                'must have two factor authentication enabled, and have used two factor '
+                'authentication for the currently-authenticated session.'
             )
 
     @private

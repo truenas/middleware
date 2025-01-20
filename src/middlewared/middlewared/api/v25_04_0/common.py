@@ -2,6 +2,7 @@ from typing import Annotated, Self
 
 from middlewared.api.base import BaseModel
 from middlewared.utils import filters
+from middlewared.utils.cron import croniter_for_schedule
 
 from pydantic import AfterValidator, model_validator
 
@@ -62,3 +63,12 @@ class CronModel(BaseModel):
     """\"1\" (January) - \"12\" (December)"""
     dow: str = "*"
     """\"1\" (Monday) - \"7\" (Sunday)"""
+
+    @model_validator(mode="after")
+    def validate_attrs(self):
+        try:
+            croniter_for_schedule(self.model_dump())
+        except Exception as e:
+            raise ValueError(f"Please ensure fields match cron syntax - {e}")
+
+        return self

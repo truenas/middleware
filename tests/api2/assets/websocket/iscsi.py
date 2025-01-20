@@ -19,11 +19,10 @@ def initiator(comment='Default initiator', initiators=[]):
 
 
 @contextlib.contextmanager
-def portal(listen=[{'ip': '0.0.0.0'}], comment='Default portal', discovery_authmethod='NONE'):
+def portal(listen=[{'ip': '0.0.0.0'}], comment='Default portal'):
     payload = {
         'listen': listen,
         'comment': comment,
-        'discovery_authmethod': discovery_authmethod
     }
     portal_config = call('iscsi.portal.create', payload)
 
@@ -96,9 +95,10 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
     alua_enabled = call('iscsi.global.alua_enabled')
     payload = {
         'target': target_id,
-        'lunid': lun_id,
         'extent': extent_id
     }
+    if lun_id is not None:
+        payload['lunid'] = lun_id
     associate_config = call('iscsi.targetextent.create', payload)
     if alua_enabled:
         # Give a little time for the STANDBY target to surface
