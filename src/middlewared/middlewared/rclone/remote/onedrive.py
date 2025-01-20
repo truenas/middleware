@@ -71,6 +71,8 @@ class OneDriveRcloneRemote(BaseRcloneRemote):
             return {
                 "drive_type": DRIVES_TYPES_INV.get(drive["driveType"], ""),
                 "drive_id": drive["id"],
+                "name": drive.get("name") or "",
+                "description": drive.get("description") or "",
             }
 
         result = []

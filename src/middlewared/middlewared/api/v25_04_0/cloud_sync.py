@@ -104,3 +104,5 @@ class CloudSyncOneDriveListDrivesResult(BaseModel):
 class CloudSyncOneDriveListDrivesDrive(BaseModel):
     drive_id: str
     drive_type: Literal["PERSONAL", "BUSINESS", "DOCUMENT_LIBRARY"]
+    name: str
+    description: str
