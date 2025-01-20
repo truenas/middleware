@@ -127,7 +127,6 @@ class CloudBackupService(Service):
         """
         Run the cloud backup job `id`.
         """
-
         cloud_backup = await self.middleware.call("cloud_backup.get_instance", id_)
         if cloud_backup["locked"]:
             await self.middleware.call("cloud_backup.generate_locked_alert", id_)
@@ -166,7 +165,7 @@ class CloudBackupService(Service):
     @api_method(CloudBackupAbortArgs, CloudBackupAbortResult, roles=['CLOUD_BACKUP_WRITE'])
     async def abort(self, id_):
         """
-        Aborts cloud backup task.
+        Abort a running cloud backup task.
         """
         cloud_backup = await self.middleware.call("cloud_backup.get_instance", id_)
 
