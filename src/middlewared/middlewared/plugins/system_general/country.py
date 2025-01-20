@@ -1,6 +1,6 @@
 from middlewared.schema import accepts, Dict, returns
 from middlewared.service import Service
-from middlewared.utils.country_codes import get_iso_3166_2_country_codes
+from middlewared.utils.country_codes import get_country_codes
 
 class SystemGeneralService(Service):
 
@@ -11,5 +11,7 @@ class SystemGeneralService(Service):
     @accepts()
     @returns(Dict('country_choices', additional_attrs=True, register=True))
     def country_choices(self):
-        """Return the ISO 3166-2 representation of countries."""
-        return get_iso_3166_2_country_codes()
+        """Return a dictionary whose keys represent the
+        ISO 3166-1 alpha 2 country code and values represent
+        the English short name (used in ISO 3166/MA)"""
+        return get_country_codes()

@@ -1,6 +1,6 @@
 from middlewared.schema import accepts, Dict, Ref, returns, Str
 from middlewared.service import private, Service
-from middlewared.utils.country_codes import get_iso_3166_2_country_codes
+from middlewared.utils.country_codes import get_country_codes
 
 from .utils import EC_CURVES, EKU_OIDS
 
@@ -21,7 +21,7 @@ class CertificateService(Service):
     @returns(Ref('country_choices'))
     def country_choices(self):
         """Returns country choices for creating a certificate/csr."""
-        return get_iso_3166_2_country_codes()
+        return get_country_codes()
 
     @accepts()
     @returns(Dict('acme_server_choices', additional_attrs=True))
