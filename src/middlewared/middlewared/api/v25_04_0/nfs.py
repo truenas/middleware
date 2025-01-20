@@ -18,6 +18,8 @@ __all__ = ["NfsEntry",
            "NfsShareUpdateArgs", "NfsShareUpdateResult",
            "NfsShareDeleteArgs", "NfsShareDeleteResult"]
 
+MAX_NUM_NFS_NETWORKS = 42
+MAX_NUM_NFS_HOSTS = 42
 NFS_protocols = Literal["NFSV3", "NFSV4"]
 NFS_RDMA_DEFAULT_PORT = 20049
 EXCLUDED_PORTS = [NFS_RDMA_DEFAULT_PORT]
@@ -90,12 +92,14 @@ class NfsShareEntry(BaseModel):
     """ IGNORED for now. """
     comment: str = ""
     """ User comment associated with share. """
-    networks: list[NonEmptyString] = []
+    networks: Annotated[list[NonEmptyString], Field(max_length=MAX_NUM_NFS_NETWORKS)] = []
     """ List of authorized networks that are allowed to access the share having format
-        "network/mask" CIDR notation. Each entry must be unique. If empty, all networks are allowed. """
-    hosts: list[NonEmptyString] = []
+        "network/mask" CIDR notation. Each entry must be unique. If empty, all networks are allowed.
+        Maximum number of entries: 42 """
+    hosts: Annotated[list[NonEmptyString], Field(max_length=MAX_NUM_NFS_HOSTS)] = []
     """ list of IP's/hostnames which are allowed to access the share.  No quotes or spaces are allowed.
-        Each entry must be unique. If empty, all IP's/hostnames are allowed. """
+        Each entry must be unique. If empty, all IP's/hostnames are allowed.
+        Maximum number of entries: 42 """
     ro: bool = False
     """ Export the share as read only. """
     maproot_user: str | None = None
