@@ -1,4 +1,9 @@
 import logging
+import os
+import subprocess
+import tempfile
+import yaml
+
 from pkg_resources import parse_version
 
 from middlewared.api import api_method
@@ -11,6 +16,7 @@ from .compose_utils import compose_action
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
 from .ix_apps.path import get_installed_app_path
 from .ix_apps.upgrade import upgrade_config
+from .migration_utils import get_migration_scripts
 from .version_utils import get_latest_version_from_app_versions
 from .utils import get_upgrade_snap_name
 
@@ -112,7 +118,7 @@ class AppService(Service):
         # 6) Update collective metadata config to reflect new version
         # 7) Finally create ix-volumes snapshot for rollback
         with upgrade_config(app_name, upgrade_version):
-            config = get_current_app_config(app_name, app['version'])
+            config = self.upgrade_values(app, upgrade_version)
             config.update(options['values'])
             new_values = self.middleware.call_sync(
                 'app.schema.normalize_and_validate_values', upgrade_version, config, False,
@@ -229,3 +235,53 @@ class AppService(Service):
                 await self.middleware.call('alert.oneshot_create', 'AppUpdate', {'name': app['id']})
             else:
                 await self.middleware.call('alert.oneshot_delete', 'AppUpdate', app['id'])
+
+    @private
+    def get_data_for_upgrade_values(self, app, upgrade_version):
+        current_version = app['version']
+        target_version = upgrade_version['version']
+        migration_files_path = get_migration_scripts(app['name'], current_version, target_version)
+        config = get_current_app_config(app['name'], current_version)
+        file_paths = []
+
+        if migration_files_path['error']:
+            raise CallError(f'Failed to apply migrations: {migration_files_path["error"]}')
+        else:
+            errors = []
+            for migration_file in migration_files_path['migration_files']:
+                if migration_file['error']:
+                    errors.append(migration_file['error'])
+                else:
+                    file_paths.append(migration_file['migration_file'])
+
+            if errors:
+                errors_str = '\n'.join(errors)
+                raise CallError(f'Failed to upgrade because of following migration file(s) error(s):\n{errors_str}')
+
+        return file_paths, config
+
+    @private
+    def upgrade_values(self, app, upgrade_version):
+        migration_file_paths, config = self.get_data_for_upgrade_values(app, upgrade_version)
+        for migration_file_path in migration_file_paths:
+            with tempfile.NamedTemporaryFile(mode='w+') as f:
+                try:
+                    yaml.safe_dump(config, f, default_flow_style=False)
+                except yaml.YAMLError as e:
+                    raise CallError(f'Failed to dump config for {app["name"]}: {e}')
+
+                f.flush()
+                cp = subprocess.Popen([migration_file_path, f.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout, stderr = cp.communicate()
+
+            migration_file_basename = os.path.basename(migration_file_path)
+            if cp.returncode:
+                raise CallError(f'Failed to execute {migration_file_basename!r} migration: {stderr.decode()}')
+
+            if stdout:
+                try:
+                    config = yaml.safe_load(stdout.decode())
+                except yaml.YAMLError as e:
+                    raise CallError(f'{migration_file_basename!r} migration file returned invalid YAML: {e}')
+
+        return config
