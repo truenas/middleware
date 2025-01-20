@@ -1,10 +1,12 @@
 import os
 import pathlib
 
+from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
 from middlewared.service import Service, private
 from middlewared.schema import accepts, List, returns
 from middlewared.utils.mount import getmntinfo
+from middlewared.utils.zfs import query_imported_fast_impl
 
 
 class PoolDatasetService(Service):
@@ -203,7 +205,12 @@ class PoolDatasetService(Service):
                 'snapshots_count': True,
             }
         }
-        datasets = self.middleware.call_sync('pool.dataset.query', [], options)
+        valid_pools = list()
+        for i in query_imported_fast_impl().values():
+            if i['name'] not in BOOT_POOL_NAME_VALID:
+                valid_pools.append(i['name'])
+
+        datasets = self.middleware.call_sync('pool.dataset.query', [['name', 'in', valid_pools]], options)
         mnt_info = getmntinfo()
         info = self.build_details(mnt_info)
         for dataset in datasets:
