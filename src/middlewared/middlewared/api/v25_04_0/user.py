@@ -31,7 +31,8 @@ __all__ = ["UserEntry",
            "UserTwofactorConfigArgs", "UserTwofactorConfigResult",
            "UserVerifyTwofactorTokenArgs", "UserVerifyTwofactorTokenResult",
            "UserUnset2faSecretArgs", "UserUnset2faSecretResult",
-           "UserRenew2faSecretArgs", "UserRenew2faSecretResult"]
+           "UserRenew2faSecretArgs", "UserRenew2faSecretResult",
+           "UserMigrateRootArgs", "UserMigrateRootResult",]
 
 
 DEFAULT_HOME_PATH = "/var/empty"
@@ -281,3 +282,17 @@ class UserRenew2faSecretArgs(BaseModel):
 
 
 UserRenew2faSecretResult = single_argument_result(UserEntry, "UserRenew2faSecretResult")
+
+
+@single_argument_args("migrate_root")
+class UserMigrateRootArgs(BaseModel):
+    username: LocalUsername
+    """Username of new local user account to which to migration the root account.
+    NOTE: user account nust not exist."""
+    password: Secret[str | None] = None
+    """Password to set for new account. If password is unspecified then the password
+    for the root account will be used."""
+
+
+class UserMigrateRootResult(BaseModel):
+    result: None

@@ -4,13 +4,13 @@ import sys
 
 import sqlite3
 
-from middlewared.plugins.account import ADMIN_UID, ADMIN_GID, crypted_password
+from middlewared.plugins.account import ADMIN_UID, ADMIN_GID
 from middlewared.utils.db import FREENAS_DATABASE
 
 if __name__ == "__main__":
     authentication_method = json.loads(sys.stdin.read())
     username = authentication_method["username"]
-    password = crypted_password(authentication_method["password"])
+    password = authentication_method["password"]
 
     conn = sqlite3.connect(FREENAS_DATABASE)
     conn.row_factory = sqlite3.Row
