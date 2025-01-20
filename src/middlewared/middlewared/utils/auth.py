@@ -6,6 +6,8 @@ from .crypto import generate_string, sha512_crypt, check_unixhash
 
 LEGACY_API_KEY_USERNAME = 'LEGACY_API_KEY'
 MAX_OTP_ATTEMPTS = 3
+AUID_UNSET = 2 ** 32 -1
+AUID_FAULTED = 2 ** 32 -2
 
 
 class AuthMech(enum.StrEnum):
@@ -174,3 +176,21 @@ class OnetimePasswordManager:
 
 
 OTPW_MANAGER = OnetimePasswordManager()
+
+
+def get_login_uid(pid: int, raise_error=False) -> int:
+    """
+    Get the login uid of the specified PID. By design it is set by pam_loginuid
+    on session login. If value is unitialized then the value will be UINT32_MAX -1
+    Which is set as constant AUID_UNSET here and in auditd rules. If an error
+    occurs during read then either the exception will be raised or the special
+    value AUID_FAULTED (UINT32_MAX -2) will be returned (which is the default).
+    """
+    try:
+        with open(f'/proc/{pid}/loginuid', 'r') as f:
+            return int(f.read().strip())
+    except Exception:
+        if not raise_error:
+            return AUID_FAULTED
+
+        raise

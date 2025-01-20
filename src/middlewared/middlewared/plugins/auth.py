@@ -1084,7 +1084,7 @@ async def check_permission(middleware, app):
         return
 
     if origin.is_unix_family:
-        if origin.uid == 0:
+        if origin.uid == 0 and not origin.session_is_interactive:
             user = await middleware.call('auth.authenticate_root')
         else:
             try:
