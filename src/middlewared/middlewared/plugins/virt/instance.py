@@ -275,7 +275,7 @@ class VirtInstanceService(CRUDService):
                     if alias not in choices:
                         instance_types = set()
                         for i in v['versions'].values():
-                            if 'incus.tar.xz' in i['items']:
+                            if 'root.tar.xz' in i['items'] and 'desktop' not in v['aliases']:
                                 instance_types.add('CONTAINER')
                             if 'disk.qcow2' in i['items']:
                                 instance_types.add('VM')
