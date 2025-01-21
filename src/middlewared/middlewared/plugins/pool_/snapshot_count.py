@@ -1,16 +1,21 @@
-from middlewared.schema import accepts, returns, Int, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    PoolDatasetSnapshotCountArgs,
+    PoolDatasetSnapshotCountResults,
+)
+
 from middlewared.service import Service
 
 
 class PoolDatasetService(Service):
-
     class Config:
         namespace = "pool.dataset"
 
-    @accepts(Str("dataset"), roles=['DATASET_READ'])
-    @returns(Int())
+    @api_method(
+        PoolDatasetSnapshotCountArgs,
+        PoolDatasetSnapshotCountResults,
+        roles=["DATASET_READ"],
+    )
     def snapshot_count(self, dataset):
-        """
-        Returns snapshot count for specified `dataset`.
-        """
+        """Returns snapshot count for specified `dataset`."""
         return self.middleware.call_sync("zfs.snapshot.count", [dataset])[dataset]
