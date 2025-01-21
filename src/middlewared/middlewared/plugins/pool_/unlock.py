@@ -1,6 +1,5 @@
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from middlewared.schema import Dict, returns, Str
-from middlewared.service import accepts, private, Service
+from middlewared.service import private, Service
 
 from .utils import dataset_mountpoint
 
@@ -9,36 +8,6 @@ class PoolDatasetService(Service):
 
     class Config:
         namespace = 'pool.dataset'
-
-    @accepts(Str('dataset'), roles=['DATASET_READ'])
-    @returns(Dict('services_to_restart', additional_attrs=True))
-    async def unlock_services_restart_choices(self, dataset):
-        """
-        Get a mapping of services identifiers and labels that can be restart on dataset unlock.
-        """
-        dataset_instance = await self.middleware.call('pool.dataset.get_instance_quick', dataset)
-        services = {
-            'cifs': 'SMB',
-            'ftp': 'FTP',
-            'iscsitarget': 'iSCSI',
-            'nfs': 'NFS',
-        }
-
-        result = {}
-        for k, v in services.items():
-            if await self.middleware.call('service.started_or_enabled', k):
-                result[k] = v
-
-        result.update({
-            k: services[k] for k in map(
-                lambda a: a['service'], await self.middleware.call('pool.dataset.attachments', dataset)
-            ) if k in services
-        })
-
-        if await self.middleware.call('pool.dataset.unlock_restarted_vms', dataset_instance):
-            result['vms'] = 'Virtual Machines'
-
-        return result
 
     @private
     async def unlock_restarted_vms(self, dataset):
