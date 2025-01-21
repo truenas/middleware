@@ -109,7 +109,7 @@ class CoreService(Service):
     @filterable
     @filterable_returns(Dict(
         'job',
-        Int('id'),
+        Str('id'),
         Str('method'),
         List('arguments'),
         Bool('transient'),
@@ -178,7 +178,7 @@ class CoreService(Service):
         return jobs
 
     @no_authz_required
-    @accepts(Int('id'), Str('filename'), Bool('buffered', default=False))
+    @accepts(Str('id'), Str('filename'), Bool('buffered', default=False))
     @pass_app(rest=True)
     async def job_download_logs(self, app, id_, filename, buffered):
         """
@@ -195,7 +195,7 @@ class CoreService(Service):
         return (await self._download(app, 'filesystem.get', [job.logs_path], filename, buffered))[1]
 
     @no_authz_required
-    @accepts(Int('id'))
+    @accepts(Str('id'))
     @job()
     async def job_wait(self, job, id_):
         target_job = self.__job_by_credential_and_id(job.credentials, id_, JobAccess.READ)
@@ -203,7 +203,7 @@ class CoreService(Service):
         return await job.wrap(target_job)
 
     @private
-    @accepts(Int('id'), Dict(
+    @accepts(Str('id'), Dict(
         'job-update',
         Dict('progress', additional_attrs=True),
     ))
