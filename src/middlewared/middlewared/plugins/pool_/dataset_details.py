@@ -64,7 +64,7 @@ class PoolDatasetService(Service):
     @api_method(
         PoolDatasetDetailsArgs,
         PoolDatasetDetailsResults,
-        roles=['DATASET_READ', 'READONLY_ADMIN']
+        roles=['DATASET_READ']
     )
     def details(self):
         """
