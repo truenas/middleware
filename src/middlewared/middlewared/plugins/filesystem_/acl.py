@@ -84,6 +84,13 @@ class FilesystemService(Service):
                 f'{schema}.path',
                 'Path component for is currently encrypted and locked'
             )
+        else:
+            statfs_flags = self.middleware.call_sync('filesystem.statfs', path)['flags']
+            if 'RO' in statfs_flags:
+                verrors.add(
+                    f'{schema}.path',
+                    f'{path}: dataset underlying path has the readonly property enabled.'
+                )
 
         return loc
 
