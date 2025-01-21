@@ -29,7 +29,7 @@ class CPUTempPlugin(GraphBase):
     skip_zero_values_in_aggregation = True
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return 'cputemp.temp'
+        return 'cputemp.temperatures'
 
 
 class MemoryPlugin(GraphBase):
