@@ -6,7 +6,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, returns, Str
-from middlewared.service import private, Service
+from middlewared.service import no_authz_required, private, Service
 from middlewared.utils import sw_buildtime
 from middlewared.utils.cpu import cpu_info
 
@@ -51,6 +51,7 @@ class SystemService(Service):
         }
 
     @private
+    @no_authz_required
     @accepts()
     @returns(Str('hostname'))
     async def hostname(self):
