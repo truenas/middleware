@@ -15,7 +15,7 @@ class NetworkCardsMismatchOnStandbyNodeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = TITLE + 'Standby Storage Controller'
     text = TEXT + 'active storage controller but missing on standby storage controller.'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class NetworkCardsMismatchOnActiveNodeAlertClass(AlertClass):
@@ -23,11 +23,11 @@ class NetworkCardsMismatchOnActiveNodeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = TITLE + 'Active Storage Controller'
     text = TEXT + 'standby storage controller but missing on active storage controller.'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class FailoverNetworkCardsAlertSource(AlertSource):
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
     failover_related = True
     run_on_backup_node = False
 

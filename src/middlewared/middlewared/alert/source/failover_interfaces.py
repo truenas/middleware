@@ -12,11 +12,11 @@ class NoCriticalFailoverInterfaceFoundAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'At Least 1 Network Interface Is Required To Be Marked Critical For Failover'
     text = 'At least 1 network interface is required to be marked critical for failover.'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class FailoverCriticalAlertSource(AlertSource):
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
     failover_related = True
     run_on_backup_node = False
 

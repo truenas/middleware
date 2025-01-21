@@ -15,7 +15,7 @@ class FailoverInterfaceNotFoundAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failover Internal Interface Not Found'
     text = 'Failover internal interface not found. Contact support.'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class TrueNASVersionsMismatchAlertClass(AlertClass):
@@ -23,7 +23,7 @@ class TrueNASVersionsMismatchAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'TrueNAS Software Versions Must Match Between Storage Controllers'
     text = 'TrueNAS software versions must match between storage controllers.'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class FailoverStatusCheckFailedAlertClass(AlertClass):
@@ -31,7 +31,7 @@ class FailoverStatusCheckFailedAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failed to Check Failover Status with the Other Controller'
     text = 'Failed to check failover status with the other controller: %s.'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class FailoverFailedAlertClass(AlertClass):
@@ -39,7 +39,7 @@ class FailoverFailedAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failover Failed'
     text = 'Failover failed. Check /var/log/failover.log on both controllers.'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class VRRPStatesDoNotAgreeAlertClass(AlertClass):
@@ -47,11 +47,11 @@ class VRRPStatesDoNotAgreeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Controllers VRRP States Do Not Agree'
     text = 'Controllers VRRP states do not agree: %(error)s.'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class FailoverAlertSource(AlertSource):
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
     failover_related = True
     run_on_backup_node = False
 

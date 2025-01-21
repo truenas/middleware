@@ -13,14 +13,14 @@ from truenas_api_client import ValidationErrors
 
 @pytest.fixture(scope='function')
 def enterprise_product():
-    with product_type('SCALE_ENTERPRISE'):
+    with product_type('ENTERPRISE'):
         with set_fips_available(True):
             yield
 
 
 @pytest.fixture(scope='function')
 def community_product():
-    with product_type('SCALE'):
+    with product_type('COMMUNITY_EDITION'):
         with set_fips_available(False):
             yield
 
@@ -89,7 +89,7 @@ def setup_stig(two_factor_full_admin):
     #
     # Tests validating what can be performed under STIG restrictions should create
     # a new websocket session
-    with product_type('SCALE_ENTERPRISE'):
+    with product_type('ENTERPRISE'):
         with set_fips_available(True):
             with client(auth=None) as c:
                 # Do two-factor authentication before enabling STIG support

@@ -14,7 +14,7 @@ class SATADOMWearWarningAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "SATA DOM Lifetime: Less Than 20% Left"
     text = "%(lifetime)d%% of lifetime left on SATA DOM %(disk)s."
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class SATADOMWearCriticalAlertClass(AlertClass):
@@ -22,12 +22,12 @@ class SATADOMWearCriticalAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "SATA DOM Lifetime: Less Than 10% Left"
     text = "%(lifetime)d%% of lifetime left on SATA DOM %(disk)s."
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class SATADOMWearAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
     async def check(self):
         dmi = await self.middleware.call("system.dmidecode_info")

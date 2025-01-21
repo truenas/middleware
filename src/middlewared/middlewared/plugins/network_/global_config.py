@@ -107,7 +107,7 @@ class NetworkConfigurationService(ConfigService):
     @private
     def network_config_extend(self, data):
         # hostname_local will be used when the hostname of the current machine
-        # needs to be used so it works with either TrueNAS SCALE or SCALE_ENTERPRISE
+        # needs to be used so it works with either TrueNAS COMMUNITY_EDITION or ENTERPRISE
         data['hostname_local'] = data['hostname']
 
         if not self.middleware.call_sync('system.is_enterprise'):

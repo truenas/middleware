@@ -327,7 +327,7 @@ class DiskService(CRUDService):
         This runs on boot to properly configure all power management options
         (Advanced Power Management and IDLE) for all disks.
         """
-        if await self.middleware.call('system.product_type') != ProductType.SCALE_ENTERPRISE:
+        if await self.middleware.call('system.product_type') != ProductType.ENTERPRISE:
             for disk in await self.middleware.call('disk.query'):
                 await self.middleware.call('disk.power_management', disk['name'], disk)
 

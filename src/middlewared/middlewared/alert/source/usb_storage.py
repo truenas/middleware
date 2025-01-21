@@ -15,12 +15,12 @@ class USBStorageAlertClass(AlertClass):
     title = 'A USB Storage Device Has Been Connected to This System'
     text = ('A USB storage device %r has been connected to this system. Please remove that USB device to '
             'prevent problems with system boot or HA failover.')
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
     proactive_support = True
 
 
 class USBStorageAlertSource(ThreadedAlertSource):
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
     def check_sync(self):
         alerts = []

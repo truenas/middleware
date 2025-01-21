@@ -10,7 +10,7 @@ def set_fips_available(value=True):
 
 
 @contextlib.contextmanager
-def product_type(product_type='SCALE_ENTERPRISE'):
+def product_type(product_type='ENTERPRISE'):
     with mock('system.product_type', return_value=product_type):
         yield
 

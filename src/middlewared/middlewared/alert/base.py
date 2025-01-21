@@ -71,7 +71,7 @@ class AlertClass(metaclass=AlertClassMeta):
     text = None
 
     exclude_from_list = False
-    products = ("CORE", "ENTERPRISE", ProductType.SCALE, ProductType.SCALE_ENTERPRISE)
+    products = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
     proactive_support = False
     proactive_support_notify_gone = False
 
@@ -310,7 +310,7 @@ class AlertSource:
 
     schedule = IntervalSchedule(timedelta())
 
-    products = ("CORE", "ENTERPRISE", ProductType.SCALE, ProductType.SCALE_ENTERPRISE)
+    products = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
     failover_related = False
     run_on_backup_node = True
 

@@ -12,7 +12,7 @@ class SensorAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Sensor Value Is Outside of Working Range"
     text = "Sensor %(name)s is %(relative)s %(level)s value: %(value)s %(event)s"
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class PowerSupplyAlertClass(AlertClass):
@@ -20,7 +20,7 @@ class PowerSupplyAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Power Supply Error"
     text = "%(psu)s is %(state)s showing: %(errors)s"
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class SensorsAlertSource(AlertSource):

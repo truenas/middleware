@@ -30,25 +30,25 @@ class SystemService(Service):
         """
         Returns the type of the product.
 
-        SCALE - TrueNAS SCALE, community version
-        SCALE_ENTERPRISE - TrueNAS SCALE Enterprise, appliance version
+        COMMUNITY_EDITION - TrueNAS SCALE, community version
+        ENTERPRISE - TrueNAS SCALE Enterprise, appliance version
         """
         if SystemService.PRODUCT_TYPE is None:
             if await self.is_ha_capable():
                 # HA capable hardware
-                SystemService.PRODUCT_TYPE = ProductType.SCALE_ENTERPRISE
+                SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
             else:
                 if license_ := await self.middleware.call('system.license'):
                     if license_['model'].lower().startswith('freenas'):
                         # legacy freenas certified
-                        SystemService.PRODUCT_TYPE = ProductType.SCALE
+                        SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
                     else:
                         # the license has been issued for a "certified" line
                         # of hardware which is considered enterprise
-                        SystemService.PRODUCT_TYPE = ProductType.SCALE_ENTERPRISE
+                        SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
                 else:
                     # no license
-                    SystemService.PRODUCT_TYPE = ProductType.SCALE
+                    SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
 
         return SystemService.PRODUCT_TYPE
 
@@ -58,7 +58,7 @@ class SystemService(Service):
 
     @private
     async def is_enterprise(self):
-        return await self.middleware.call('system.product_type') == ProductType.SCALE_ENTERPRISE
+        return await self.middleware.call('system.product_type') == ProductType.ENTERPRISE
 
     @no_authz_required
     @accepts()

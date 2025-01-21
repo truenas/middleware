@@ -31,7 +31,7 @@ class EnclosureUnhealthyAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Enclosure Status Is Not Healthy"
     text = 'Enclosure (%s): Element "%s" is reporting a status of "%s" with a value of "%s". (raw value "%s")'
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class EnclosureHealthyAlertClass(AlertClass):
@@ -39,11 +39,11 @@ class EnclosureHealthyAlertClass(AlertClass):
     level = AlertLevel.INFO
     title = "Enclosure Status Is Healthy"
     text = "Enclosure (%s) is healthy."
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class EnclosureStatusAlertSource(AlertSource):
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
     failover_related = True
     run_on_backup_node = False
     bad = ("critical", "noncritical", "unknown", "unrecoverable")

@@ -1,4 +1,5 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
+from middlewared.utils import ProductType
 
 
 class CoreFilesArePresentAlertClass(AlertClass):
@@ -12,11 +13,11 @@ class CoreFilesArePresentAlertClass(AlertClass):
         "and attach the core files and debug. After creating the ticket, the core files can be removed "
         "from the system by opening shell and entering 'rm /var/db/system/cores/*'."
     )
-    products = ("SCALE",)
+    products = (ProductType.COMMUNITY_EDITION,)
 
 
 class CoreFilesArePresentAlertSource(AlertSource):
-    products = ("SCALE",)
+    products = (ProductType.COMMUNITY_EDITION,)
 
     async def should_alert(self, core):
         if core["corefile"] != "present" or not core["unit"]:

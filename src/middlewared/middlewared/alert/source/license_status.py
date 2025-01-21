@@ -18,7 +18,7 @@ class LicenseAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "TrueNAS License Issue"
     text = "%s"
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class LicenseIsExpiringAlertClass(AlertClass):
@@ -26,7 +26,7 @@ class LicenseIsExpiringAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "TrueNAS License Is Expiring"
     text = "%s"
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class LicenseHasExpiredAlertClass(AlertClass):
@@ -34,11 +34,11 @@ class LicenseHasExpiredAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "TrueNAS License Has Expired"
     text = "%s"
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
 
 class LicenseStatusAlertSource(ThreadedAlertSource):
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
     run_on_backup_node = False
     schedule = IntervalSchedule(timedelta(hours=24))
 

@@ -81,7 +81,7 @@ class CatalogService(ConfigService):
                 'At least 1 preferred train must be specified.'
             )
         if (
-            await self.middleware.call('system.product_type') == ProductType.SCALE_ENTERPRISE and
+            await self.middleware.call('system.product_type') == ProductType.ENTERPRISE and
             OFFICIAL_ENTERPRISE_TRAIN not in data['preferred_trains']
         ):
             verrors.add(
@@ -105,7 +105,7 @@ class CatalogService(ConfigService):
     @private
     async def update_train_for_enterprise(self):
         catalog = await self.middleware.call('catalog.config')
-        if await self.middleware.call('system.product_type') == ProductType.SCALE_ENTERPRISE:
+        if await self.middleware.call('system.product_type') == ProductType.ENTERPRISE:
             preferred_trains = []
             # Logic coming from here
             # https://github.com/truenas/middleware/blob/e7f2b29b6ff8fadcc9fdd8d7f104cbbf5172fc5a/src/middlewared

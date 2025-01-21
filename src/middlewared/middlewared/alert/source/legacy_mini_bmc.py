@@ -13,11 +13,11 @@ class TrueNASMiniBMCAlertClass(AlertClass):
         f"<a href=\"{URL}\" target=\"_blank\">"
         "ASRock Rack C2750D4I BMC Watchdog Issue</a> for details."
     )
-    products = (ProductType.SCALE,)
+    products = (ProductType.COMMUNITY_EDITION,)
 
 
 class TrueNASMiniBMCAlertSource(AlertSource):
-    products = (ProductType.SCALE,)
+    products = (ProductType.COMMUNITY_EDITION,)
 
     async def check(self):
         dmi = await self.middleware.call("system.dmidecode_info")

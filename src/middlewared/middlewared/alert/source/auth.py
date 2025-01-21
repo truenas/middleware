@@ -39,7 +39,7 @@ def audit_entry_to_msg(entry):
 class AdminSessionAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)  # every 24 hours
     run_on_backup_node = True
-    products = (ProductType.SCALE_ENTERPRISE,)
+    products = (ProductType.ENTERPRISE,)
 
     async def check(self):
         now = int(time())
