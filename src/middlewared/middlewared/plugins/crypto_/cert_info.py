@@ -1,4 +1,14 @@
-from middlewared.schema import accepts, Dict, Ref, returns, Str
+from middlewared.api import api_method
+from middlewared.api.current import (
+    CertificateCountryChoicesArgs,
+    CertificateCountryChoicesResult,
+    CertificateAcmeServerChoicesArgs,
+    CertificateAcmeServerChoicesResult,
+    CertificateECCurveChoicesArgs,
+    CertificateECCurveChoicesResult,
+    CertificateExtendedKeyUsageChoicesArgs,
+    CertificateExtendedKeyUsageChoicesResult,
+)
 from middlewared.service import private, Service
 from middlewared.utils.country_codes import get_country_codes
 
@@ -17,42 +27,47 @@ class CertificateService(Service):
         names.extend(data['san'])
         return names
 
-    @accepts()
-    @returns(Ref('country_choices'))
+    @api_method(
+        CertificateCountryChoicesArgs,
+        CertificateCountryChoicesResult,
+        roles=['CERTIFICATE_READ']
+    )
     def country_choices(self):
         """Returns country choices for creating a certificate/csr."""
         return get_country_codes()
 
-    @accepts()
-    @returns(Dict('acme_server_choices', additional_attrs=True))
+    @api_method(
+        CertificateAcmeServerChoicesArgs,
+        CertificateAcmeServerChoicesResult,
+        roles=['CERTIFICATE_READ']
+    )
     async def acme_server_choices(self):
         """
-        Dictionary of popular ACME Servers with their directory URI endpoints which we display automatically
-        in UI
+        Dictionary of popular ACME Servers with their directory URI
+        endpoints which we display automatically in the UI
         """
         return {
             'https://acme-staging-v02.api.letsencrypt.org/directory': 'Let\'s Encrypt Staging Directory',
             'https://acme-v02.api.letsencrypt.org/directory': 'Let\'s Encrypt Production Directory'
         }
 
-    @accepts()
-    @returns(Dict(
-        'ec_curve_choices',
-        *[Str(k, enum=[k]) for k in EC_CURVES]
-    ))
+    @api_method(
+        CertificateECCurveChoicesArgs,
+        CertificateECCurveChoicesResult,
+        roles=['CERTIFICATE_READ']
+    )
     async def ec_curve_choices(self):
-        """
-        Dictionary of supported EC curves.
-        """
+        """Dictionary of supported EC curves."""
         return {k: k for k in EC_CURVES}
 
-    @accepts()
-    @returns(Dict(
-        'extended_key_usage_choices',
-        *[Str(k, enum=[k]) for k in EKU_OIDS]
-    ))
+    @api_method(
+        CertificateExtendedKeyUsageChoicesArgs,
+        CertificateExtendedKeyUsageChoicesResult,
+        roles=['CERTIFICATE_READ']
+    )
     async def extended_key_usage_choices(self):
         """
-        Dictionary of choices for `ExtendedKeyUsage` extension which can be passed over to `usages` attribute.
+        Dictionary of names that can be used in the
+        ExtendedKeyUsage attribute of a certificate request.
         """
         return {k: k for k in EKU_OIDS}
