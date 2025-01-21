@@ -1,10 +1,14 @@
 import os
 import pathlib
 
+from middlewared.api import api_method
+from middlewared.api.current import (
+    PoolDatasetDetailsArgs,
+    PoolDatasetDetailsResults,
+)
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
 from middlewared.service import Service, private
-from middlewared.schema import accepts, List, returns
 from middlewared.utils.mount import getmntinfo
 from middlewared.utils.zfs import query_imported_fast_impl
 
@@ -14,167 +18,11 @@ class PoolDatasetService(Service):
     class Config:
         namespace = 'pool.dataset'
 
-    @accepts(roles=['DATASET_READ', 'READONLY_ADMIN'])
-    @returns(List(
-        'dataset_details',
-        example=[{
-            'id': 'tank',
-            'type': 'FILESYSTEM',
-            'name': 'tank',
-            'pool': 'tank',
-            'encrypted': False,
-            'encryption_root': None,
-            'key_loaded': False,
-            'children': [
-                {
-                    'id': 'tank/soemthing',
-                    'type': 'VOLUME',
-                    'name': 'tank/soemthing',
-                    'pool': 'tank',
-                    'encrypted': False,
-                    'encryption_root': None,
-                    'key_loaded': False,
-                    'children': [],
-                    'managed_by': {
-                        'value': '10.231.1.155',
-                        'rawvalue': '10.231.1.155',
-                        'source': 'LOCAL',
-                        'parsed': '10.231.1.155'
-                    },
-                    'quota_warning': {'value': '80', 'rawvalue': '80', 'source': 'LOCAL', 'parsed': '80'},
-                    'quota_critical': {'value': '95', 'rawvalue': '95', 'source': 'LOCAL', 'parsed': '95'},
-                    'refquota_warning': {'value': '80', 'rawvalue': '80', 'source': 'LOCAL', 'parsed': '80'},
-                    'refquota_critical': {'value': '95', 'rawvalue': '95', 'source': 'LOCAL', 'parsed': '95'},
-                    'reservation': {
-                        'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None
-                    },
-                    'refreservation': {
-                        'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None
-                    },
-                    'key_format': {
-                        'parsed': 'none', 'rawvalue': 'none', 'value': None, 'source': 'DEFAULT', 'source_info': None
-                    },
-                    'volsize': {
-                        'parsed': 57344, 'rawvalue': '57344', 'value': '56K', 'source': 'LOCAL', 'source_info': None
-                    },
-                    'encryption_algorithm': {
-                        'parsed': 'off', 'rawvalue': 'off', 'value': None, 'source': 'DEFAULT', 'source_info': None
-                    },
-                    'used': {
-                        'parsed': 57344, 'rawvalue': '57344', 'value': '56K', 'source': 'NONE', 'source_info': None
-                    },
-                    'usedbychildren': {
-                        'parsed': 0, 'rawvalue': '0', 'value': '0B', 'source': 'NONE', 'source_info': None
-                    },
-                    'usedbydataset': {
-                        'parsed': 57344, 'rawvalue': '57344', 'value': '56K', 'source': 'NONE', 'source_info': None
-                    },
-                    'usedbysnapshots': {
-                        'parsed': 0, 'rawvalue': '0', 'value': '0B', 'source': 'NONE', 'source_info': None
-                    },
-                    'available': {
-                        'parsed': 14328811520, 'rawvalue': '14328811520',
-                        'value': '13.3G', 'source': 'NONE', 'source_info': None
-                    },
-                    'mountpoint': '/mnt/tank/something',
-                    'sync': {
-                        'parsed': 'standard', 'rawvalue': 'standard',
-                        'value': 'STANDARD', 'source': 'DEFAULT', 'source_info': None
-                    },
-                    'compression': {
-                        'parsed': 'lz4', 'rawvalue': 'lz4',
-                        'value': 'LZ4', 'source': 'INHERITED', 'source_info': 'tank',
-                    },
-                    'deduplication': {
-                        'parsed': 'on', 'rawvalue': 'on',
-                        'value': 'ON', 'source': 'LOCAL', 'source_info': None,
-                    },
-                    'user_properties': {},
-                    'snapshot_count': 0,
-                    'locked': False,
-                    'thick_provisioned': True,
-                    'nfs_shares': [{
-                        'enabled': True,
-                        'path': '/mnt/tank/something'
-                    }],
-                    'smb_shares': [{
-                        'enabled': False,
-                        'path': '/mnt/tank/something/smbshare01',
-                        'share_name': 'Home Pictures',
-                    }],
-                    'iscsi_shares': [{
-                        'enabled': False,
-                        'type': 'DISK',
-                        'path': '/mnt/tank/something',
-                    }],
-                    'vms': [{
-                        'name': 'deb01',
-                        'path': '/dev/zvol/tank/something',
-                    }],
-                    'apps': [{
-                        'name': 'diskoverdata',
-                        'path': '/mnt/tank/something'
-                    }],
-                    'replication_tasks_count': 0,
-                    'snapshot_tasks_count': 0,
-                    'cloudsync_tasks_count': 0,
-                    'rsync_tasks_count': 0
-                }
-            ],
-            'mountpoint': '/mnt/tank',
-            'quota': {'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None},
-            'refquota': {'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None},
-            'reservation': {'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None},
-            'refreservation': {
-                'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None
-            },
-            'encryption_algorithm': {
-                'parsed': 'off', 'rawvalue': 'off', 'value': None, 'source': 'DEFAULT', 'source_info': None
-            },
-            'origin': {
-                'parsed': '', 'rawvalue': '', 'value': '', 'source': 'NONE', 'source_info': None
-            },
-            'used': {
-                'parsed': 3874467840, 'rawvalue': '3874467840', 'value': '3.61G', 'source': 'NONE', 'source_info': None
-            },
-            'usedbychildren': {
-                'parsed': 3874369536, 'rawvalue': '3874369536', 'value': '3.61G', 'source': 'NONE', 'source_info': None
-            },
-            'usedbydataset': {
-                'parsed': 98304, 'rawvalue': '98304', 'value': '96K', 'source': 'NONE', 'source_info': None
-            },
-            'usedbysnapshots': {'parsed': 0, 'rawvalue': '0', 'value': '0B', 'source': 'NONE', 'source_info': None},
-            'available': {
-                'parsed': 14328811520, 'rawvalue': '14328811520',
-                'value': '13.3G', 'source': 'NONE', 'source_info': None
-            },
-            'user_properties': {},
-            'snapshot_count': 0,
-            'locked': False,
-            'atime': False,
-            'casesensitive': True,
-            'readonly': False,
-            'nfs_shares': [],
-            'smb_shares': [],
-            'iscsi_shares': [],
-            'vms': [],
-            'virt_instances': [],
-            'apps': [{
-                'name': 'plex',
-                'path': '/mnt/evo/data',
-            }],
-            'replication_tasks_count': 0,
-            'snapshot_tasks_count': 0,
-            'cloudsync_tasks_count': 0,
-            'rsync_tasks_count': 0,
-        }]
-    ))
-    def details(self):
-        """
-        Retrieve all dataset(s) details outlining any services/tasks which might be consuming the dataset(s).
-        """
+    @private
+    def build_filters_and_options(self):
         options = {
             'extra': {
+                'retrieve_user_props': False,
                 'flat': True,
                 'order_by': 'name',
                 'properties': [
@@ -210,7 +58,21 @@ class PoolDatasetService(Service):
             if i['name'] not in BOOT_POOL_NAME_VALID:
                 valid_pools.append(i['name'])
 
-        datasets = self.middleware.call_sync('pool.dataset.query', [['name', 'in', valid_pools]], options)
+        return [['name', 'in', valid_pools]], options
+
+
+    @api_method(
+        PoolDatasetDetailsArgs,
+        PoolDatasetDetailsResults,
+        roles=['DATASET_READ']
+    )
+    def details(self):
+        """
+        Retrieve all dataset(s) details outlining any
+        services/tasks which might be consuming them.
+        """
+        filters, options = self.build_filters_and_options()
+        datasets = self.middleware.call_sync('pool.dataset.query', filters, options)
         mnt_info = getmntinfo()
         info = self.build_details(mnt_info)
         for dataset in datasets:
