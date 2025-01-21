@@ -6,11 +6,9 @@ from middlewared.api.current import (
     PoolDatasetDetailsArgs,
     PoolDatasetDetailsResults,
 )
-from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
 from middlewared.service import Service, private
 from middlewared.utils.mount import getmntinfo
-from middlewared.utils.zfs import query_imported_fast_impl
 
 
 class PoolDatasetService(Service):
@@ -53,13 +51,19 @@ class PoolDatasetService(Service):
                 'snapshots_count': True,
             }
         }
-        valid_pools = list()
-        for i in query_imported_fast_impl().values():
-            if i['name'] not in BOOT_POOL_NAME_VALID:
-                valid_pools.append(i['name'])
-
-        return [['name', 'in', valid_pools]], options
-
+        # FIXME: this is querying boot-pool datasets
+        # because of how bad our pool.dataset.query API
+        # is designed. If boot pool has a few old BE's,
+        # then this endpoint slows down exponentially
+        # which makes sense, because we have like 10/11
+        # datasets on the boot drive. So multiply that
+        # value by number of BEs and you're asking ZFS
+        # for a bunch of unnecessary data.
+        # valid_pools = list()
+        # for i in query_imported_fast_impl().values():
+        #    if i['name'] not in BOOT_POOL_NAME_VALID:
+        #        valid_pools.append(i['name'])
+        return [], options
 
     @api_method(
         PoolDatasetDetailsArgs,
