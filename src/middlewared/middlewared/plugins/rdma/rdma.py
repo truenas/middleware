@@ -133,4 +133,5 @@ class RDMAService(Service):
         if is_ent and 'MINI' not in await self.middleware.call('truenas.get_chassis_hardware'):
             if await self.middleware.call('rdma.get_link_choices', True):
                 result.extend([RDMAprotocols.NFS.value, RDMAprotocols.ISER.value])
+
         return result

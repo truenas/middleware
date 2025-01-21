@@ -428,7 +428,7 @@ def test_snapshot(s3_credential):
 def test_script_shebang(cloud_backup_task, expected):
     ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/blob")
     run_task(cloud_backup_task.task)
-    job = call("core.get_jobs", [["method", "=", "cloud_backup.sync"]], {"order_by": ["-id"], "get": True})
+    job = call("core.get_jobs", [["method", "=", "cloud_backup.sync"]], {"order_by": ["-time_started"], "get": True})
     assert job["logs_excerpt"].strip().split("\n")[-2] == expected
 
 
@@ -454,5 +454,5 @@ def test_pre_script_failure(cloud_backup_task, error, expected):
 
     assert ve.value.error == error
 
-    job = call("core.get_jobs", [["method", "=", "cloud_backup.sync"]], {"order_by": ["-id"], "get": True})
+    job = call("core.get_jobs", [["method", "=", "cloud_backup.sync"]], {"order_by": ["-time_started"], "get": True})
     assert job["logs_excerpt"].strip() == expected

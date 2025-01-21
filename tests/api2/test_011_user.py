@@ -472,7 +472,7 @@ def test_037_move_homedir_to_new_directory(request):
         )
 
         filters = [['method', '=', 'user.do_home_copy']]
-        opts = {'get': True, 'order_by': ['-id']}
+        opts = {'get': True, 'order_by': ['-time_started']}
         move_job_timeout = 300  # 5 mins
         move_job1 = call('core.get_jobs', filters, opts)
         assert move_job1
@@ -518,7 +518,7 @@ def test_038_change_homedir_to_existing_path(request):
         {'home': new_home}
     )
     filters = [['method', '=', 'user.do_home_copy']]
-    opts = {'get': True, 'order_by': ['-id']}
+    opts = {'get': True, 'order_by': ['-time_started']}
     move_job_timeout = 300  # 5 mins
     home_move_job = call('core.get_jobs', filters, opts)
     rv = wait_on_job(home_move_job['id'], move_job_timeout)

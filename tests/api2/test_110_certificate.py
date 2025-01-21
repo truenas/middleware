@@ -41,8 +41,7 @@ def test_certificate():
     certificate_id = results["certificate"]["id"]
 
     # successful delete
-    results = call("certificate.delete", certificate_id, True)
-    job_id = int(results)
+    job_id = call("certificate.delete", certificate_id, True)
 
     # failed delete
     while True:
