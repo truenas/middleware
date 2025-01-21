@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from ipaddress import ip_address
 from socket import AF_INET, AF_INET6, AF_UNIX, SO_PEERCRED, SOL_SOCKET
 from struct import calcsize, unpack
 
@@ -42,6 +43,11 @@ class ConnectionOrigin:
     the login uid associated to the unix datagram connection.
     The login uid can be used to determine whether the connection was
     created by an interactive shell session"""
+    secure_transport: bool = False
+    """Indicates whether we should treat the connection as having
+    secure transport for purposes of invalidation of API keys.
+    Secure in this case means AF_UNIX, loopback connection, or
+    transport is encrypted."""
 
     @classmethod
     def create(cls, request):
@@ -55,16 +61,23 @@ class ConnectionOrigin:
                     pid=pid,
                     uid=uid,
                     loginuid=login_uid,
-                    gid=gid
+                    gid=gid,
+                    secure_transport=True
                 )
             elif sock.family in (AF_INET, AF_INET6):
-                la, lp, ra, rp = get_tcp_ip_info(sock, request)
+                la, lp, ra, rp, ssl = get_tcp_ip_info(sock, request)
+                try:
+                    secure = ssl or ip_address(ra).is_loopback
+                except Exception:
+                    secure = False
+
                 return cls(
                     family=sock.family,
                     loc_addr=la,
                     loc_port=lp,
                     rem_addr=ra,
                     rem_port=rp,
+                    secure_transport=secure
                 )
         except AttributeError:
             # request.transport can be None by the time this is
@@ -143,9 +156,12 @@ def get_tcp_ip_info(sock, request) -> tuple:
         # 0 (root) or 33 (www-data (nginx forks workers))
         ra = request.headers["X-Real-Remote-Addr"]
         rp = int(request.headers["X-Real-Remote-Port"])
+        ssl = request.headers.get("Origin", "").startswith("https:")
+
         check_uids = True
     except (KeyError, ValueError):
         ra, rp = sock.getpeername()
+        ssl = False
         check_uids = False
 
     with DiagSocket() as ds:
@@ -154,7 +170,7 @@ def get_tcp_ip_info(sock, request) -> tuple:
             if i['idiag_dst'] == ra and i['idiag_dport'] == rp:
                 if check_uids:
                     if i['idiag_uid'] in UIDS_TO_CHECK:
-                        return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport']
+                        return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
                 else:
-                    return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport']
-    return (None, None, None, None)
+                    return i['idiag_src'], i['idiag_sport'], i['idiag_dst'], i['idiag_dport'], ssl
+    return (None, None, None, None, None)

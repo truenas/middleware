@@ -651,6 +651,7 @@ class AuthService(Service):
         REDIRECT
         Authentication must be performed on different server.
         """
+        self.logger.debug("XXX: origin: %s, secure: %s", app.origin, app.origin.secure_transport)
         if await self.middleware.call('failover.licensed'):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 return {
