@@ -1,6 +1,7 @@
 import os
 
-from middlewared.schema import accepts, returns, Bool
+from middlewared.api import api_method
+from middlewared.api.current import IPMIIsLoadedArgs, IPMIIsLoadedResult
 from middlewared.service import Service
 
 
@@ -9,8 +10,11 @@ class IPMIService(Service):
     class Config:
         cli_namespace = 'system.ipmi'
 
-    @accepts(roles=['READONLY_ADMIN'])
-    @returns(Bool('ipmi_loaded'))
+    @api_method(
+        IPMIIsLoadedArgs,
+        IPMIIsLoadedResult,
+        roles=['READONLY_ADMIN']
+    )
     def is_loaded(self):
         """Returns a boolean value indicating if /dev/ipmi0 is loaded."""
         return os.path.exists('/dev/ipmi0')
