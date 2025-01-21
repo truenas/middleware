@@ -167,6 +167,7 @@ class AuthSessionEntry(BaseModel):
     ]
     credentials_data: BaseCredentialData | UserCredentialData | APIKeyCredentialData | TokenCredentialData
     created_at: datetime
+    secure_transport: bool
 
 
 class AuthTerminateSessionArgs(BaseModel):

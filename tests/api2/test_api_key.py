@@ -256,3 +256,18 @@ def test_api_key_restrict_admin_other_keys_fail(sharing_admin_user):
             })
 
         assert ce.value.errno == errno.EACCES
+
+
+def test_api_key_revoke_insecure_transport(sharing_admin_user):
+    with api_key(sharing_admin_user.username) as key:
+        with client(auth=None, ssl=False) as c:
+            resp = c.call('auth.login_ex', {
+                'mechanism': 'API_KEY_PLAIN',
+                'username': sharing_admin_user.username,
+                'api_key': key
+            })
+            assert resp['response_type'] == 'EXPIRED'
+
+        # When the key is revoked due to use over insecure transport, it should
+        # automatically generate an alert that the key has been revoked.
+        assert check_revoked_alert()
