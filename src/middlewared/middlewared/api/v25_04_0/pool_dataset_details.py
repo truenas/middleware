@@ -1,6 +1,6 @@
 from middlewared.api.base import BaseModel
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 
 class ZFSValues(BaseModel):
@@ -11,39 +11,40 @@ class ZFSValues(BaseModel):
     source_info: str | None
 
 
-class NFSEntry(BaseModel):
+class PDD_NFSEntry(BaseModel):
     enabled: bool
     path: str
 
 
-class SMBEntry(BaseModel):
+class PDD_SMBEntry(BaseModel):
     enabled: bool
     path: str
     share_name: str
 
 
-class ISCSIEntry(BaseModel):
+class PDD_ISCSIEntry(BaseModel):
     enabled: bool
     path: str
     type_: str = Field(alias="type")
 
 
-class VMEntry(BaseModel):
+class PDD_VMEntry(BaseModel):
     name: str
     path: str
 
 
-class VirtEntry(BaseModel):
+class PDD_VirtEntry(BaseModel):
     name: str
     path: str
 
 
-class AppEntry(BaseModel):
+class PDD_AppEntry(BaseModel):
     name: str
     path: str
 
 
 class PoolDatasetDetailsModel(BaseModel):
+    model_config = ConfigDict(extra="allow")
     id: str
     type_: str = Field(alias="type")
     name: str
@@ -58,12 +59,12 @@ class PoolDatasetDetailsModel(BaseModel):
     casesensitive: bool
     readonly: bool
     thick_provisioned: bool
-    nfs_shares: list[NFSEntry]
-    smb_shares: list[SMBEntry]
-    iscsi_shares: list[ISCSIEntry]
-    vms: list[VMEntry]
-    apps: list[AppEntry]
-    virt_instances: list[VirtEntry]
+    nfs_shares: list[PDD_NFSEntry]
+    smb_shares: list[PDD_SMBEntry]
+    iscsi_shares: list[PDD_ISCSIEntry]
+    vms: list[PDD_VMEntry]
+    apps: list[PDD_AppEntry]
+    virt_instances: list[PDD_VirtEntry]
     replication_tasks_count: int
     snapshot_tasks_count: int
     cloudsync_tasks_count: int
@@ -86,6 +87,7 @@ class PoolDatasetDetailsModel(BaseModel):
 
 
 class PoolDatasetDetailsEntry(PoolDatasetDetailsModel):
+    model_config = ConfigDict(extra="allow")
     children: list[PoolDatasetDetailsModel]
 
 
@@ -94,4 +96,4 @@ class PoolDatasetDetailsArgs(BaseModel):
 
 
 class PoolDatasetDetailsResults(BaseModel):
-    result: PoolDatasetDetailsEntry
+    result: list[PoolDatasetDetailsEntry]
