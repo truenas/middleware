@@ -22,6 +22,7 @@ class PoolDatasetService(Service):
     def build_filters_and_options(self):
         options = {
             'extra': {
+                'retrieve_user_props': False,
                 'flat': True,
                 'order_by': 'name',
                 'properties': [
