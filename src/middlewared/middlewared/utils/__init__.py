@@ -34,6 +34,7 @@ ProductName = ProductNames()
 
 MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
+MIDDLEWARE_STARTED_SENTINEL_PATH = f'{MIDDLEWARE_RUN_DIR}/middlewared-started'
 BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
 MANIFEST_FILE = '/data/manifest.json'
 BRAND = ProductName.PRODUCT_NAME

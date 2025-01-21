@@ -2,7 +2,7 @@ import textwrap
 
 import pytest
 
-from middlewared.service import CoreService
+from middlewared.service.core_service import CoreService
 
 
 @pytest.mark.parametrize("doc,names,descriptions", [

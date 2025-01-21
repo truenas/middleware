@@ -1,15 +1,12 @@
 from datetime import datetime
-from typing import Annotated, Literal, TypeAlias
+from typing import Annotated, Literal
 
 from pydantic import Secret, StringConstraints
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
-    LocalUsername, RemoteUsername
+    LocalUsername, RemoteUsername, HttpVerb,
 )
-
-
-HttpVerb: TypeAlias = Literal["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE", "*"]
 
 
 class AllowListItem(BaseModel):

@@ -5,6 +5,7 @@ import setproctitle
 
 from truenas_api_client import Client
 
+import middlewared.api
 from . import logger
 from .common.environ import environ_update
 from .utils import MIDDLEWARE_RUN_DIR
@@ -49,29 +50,32 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
         """
         Calls a method using middleware client
         """
-        serviceobj, methodobj = self.get_method(method)
+        try:
+            serviceobj, methodobj = self.get_method(method)
+        except Exception:
+            pass
+        else:
+            if serviceobj._config.process_pool and not hasattr(method, '_job'):
+                if asyncio.iscoroutinefunction(methodobj):
+                    try:
+                        # Search for a synchronous implementation of the asynchronous method (i.e. `get_instance`).
+                        # Why is this needed? Imagine we have a `ZFSSnapshot` service that uses a process pool. Let's say
+                        # its `create` method calls `zfs.snapshot.get_instance` to return the result. That call will have
+                        # to be forwarded to the main middleware process, which will call `zfs.snapshot.query` in the
+                        # process pool. If the process pool is already exhausted, it will lead to a deadlock.
+                        # By executing a synchronous implementation of the same method in the same process pool we
+                        # eliminate `Hold and wait` condition and prevent deadlock situation from arising.
+                        _, sync_methodobj = self.get_method(f'{method}__sync')
+                    except MethodNotFoundError:
+                        # FIXME: Make this an exception in 22.MM
+                        self.logger.warning('Service uses a process pool but has an asynchronous method: %r', method)
+                        sync_methodobj = None
+                else:
+                    sync_methodobj = methodobj
 
-        if serviceobj._config.process_pool and not hasattr(method, '_job'):
-            if asyncio.iscoroutinefunction(methodobj):
-                try:
-                    # Search for a synchronous implementation of the asynchronous method (i.e. `get_instance`).
-                    # Why is this needed? Imagine we have a `ZFSSnapshot` service that uses a process pool. Let's say
-                    # its `create` method calls `zfs.snapshot.get_instance` to return the result. That call will have
-                    # to be forwarded to the main middleware process, which will call `zfs.snapshot.query` in the
-                    # process pool. If the process pool is already exhausted, it will lead to a deadlock.
-                    # By executing a synchronous implementation of the same method in the same process pool we
-                    # eliminate `Hold and wait` condition and prevent deadlock situation from arising.
-                    _, sync_methodobj = self.get_method(f'{method}__sync')
-                except MethodNotFoundError:
-                    # FIXME: Make this an exception in 22.MM
-                    self.logger.warning('Service uses a process pool but has an asynchronous method: %r', method)
-                    sync_methodobj = None
-            else:
-                sync_methodobj = methodobj
-
-            if sync_methodobj is not None:
-                self.logger.trace('Calling %r in current process', method)
-                return sync_methodobj(*params)
+                if sync_methodobj is not None:
+                    self.logger.trace('Calling %r in current process', method)
+                    return sync_methodobj(*params)
 
         return self.client.call(method, *params, timeout=timeout, **kwargs)
 
@@ -128,9 +132,13 @@ def receive_events():
 
 def worker_init(debug_level, log_handler):
     global MIDDLEWARE
+    middlewared.api.API_LOADING_FORBIDDEN = True
     MIDDLEWARE = FakeMiddleware()
     os.environ['MIDDLEWARED_LOADING'] = 'True'
-    MIDDLEWARE._load_plugins()
+    MIDDLEWARE._load_plugins(whitelist=[
+        'middlewared.plugins.datastore',
+        'middlewared.plugins.zfs_',
+    ])
     os.environ['MIDDLEWARED_LOADING'] = 'False'
     setproctitle.setproctitle('middlewared (worker)')
     die_with_parent()
