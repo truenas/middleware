@@ -64,9 +64,7 @@
 	/proc/meminfo = no
 	/proc/net/dev = yes
 	/proc/pagetypeinfo = no
-	# /proc/stat = yes - we keep this uncommented as by default that enables it, for some reason
-	# if we explicitly set it to yes it still does not has the desired affect and we are not able
-	# to retrieve system.cpu stats
+	/proc/stat = no
 	/proc/uptime = yes
 	/proc/loadavg = yes
 	/proc/sys/kernel/random/entropy_avail = no
@@ -120,11 +118,3 @@
 
 [plugin:cgroups]
         enable by default cgroups names matching = !*udev* *
-
-[plugin:proc:/proc/stat]
-    per cpu core utilization = no
-    context switches = no
-    cpu interrupts = no
-    processes started = no
-    processes running = no
-    cpu idle states = no

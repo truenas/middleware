@@ -19,9 +19,10 @@ softirq 2838415 16 370867 30 94244 72784 0 1436 520092 7828 1771118
 
 def test_memory_stats():
     with patch('builtins.open', mock_open(read_data=STAT)):
-        assert get_cpu_usage() == {
-            'cpu': calculate_cpu_usage([269140, 3068, 35283, 1952826, 2648, 0, 1978, 1126, 12492, 0]),
-            'cpu0': calculate_cpu_usage([89904, 989, 11999, 512042, 887, 0, 997, 361, 4042, 0]),
-            'cpu1': calculate_cpu_usage([93084, 950, 12594, 716357, 845, 0, 604, 369, 4842, 0]),
-            'cpu2': calculate_cpu_usage([86151, 1129, 10690, 724426, 914, 0, 376, 396, 3608, 0]),
+
+        assert get_cpu_usage({cpu: [0] * 9 for cpu in ('cpu_usage', 'cpu0_usage', 'cpu1_usage', 'cpu2_usage')})[0] == {
+            'cpu': calculate_cpu_usage([269140, 3068, 35283, 1952826, 2648, 0, 1978, 1126, 12492, 0], [0] * 9),
+            'cpu0': calculate_cpu_usage([89904, 989, 11999, 512042, 887, 0, 997, 361, 4042, 0], [0] * 9),
+            'cpu1': calculate_cpu_usage([93084, 950, 12594, 716357, 845, 0, 604, 369, 4842, 0], [0] * 9),
+            'cpu2': calculate_cpu_usage([86151, 1129, 10690, 724426, 914, 0, 376, 396, 3608, 0], [0] * 9),
         }

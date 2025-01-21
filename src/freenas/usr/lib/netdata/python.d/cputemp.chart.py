@@ -76,10 +76,14 @@ class Service(SimpleService):
             cpu_temps = {}
 
         data = {}
+        total_temp = 0
         for core, temp in cpu_temps.items():
-            data[str(core)] = temp
+            data[f'cpu{core}'] = temp
+            total_temp += temp
 
-        return data or {str(i): 0 for i in range(cpu_info()['core_count'])}
+        if total_temp:
+            data['cpu'] = total_temp / len(data.keys())
+        return data or ({f'cpu{i}': 0 for i in range(cpu_info()['core_count'])} | {'cpu': 0})
 
     def check(self):
         try:
