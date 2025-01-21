@@ -7,9 +7,8 @@ from fenced.fence import ExitCode as FencedExitCodes
 
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
-from middlewared.schema import Bool, Dict, Int, List, Patch, Ref, Str
+from middlewared.schema import Bool, Dict, Int, List, Patch, Str
 from middlewared.service import accepts, CallError, CRUDService, job, private, returns, ValidationErrors
-from middlewared.service_exception import InstanceNotFound
 from middlewared.utils.size import format_size
 from middlewared.validators import Range
 
@@ -119,18 +118,6 @@ class PoolService(CRUDService):
         event_send = False
         cli_namespace = 'storage.pool'
         role_prefix = 'POOL'
-
-    @accepts(Str('name'), roles=['POOL_READ'])
-    @returns(Ref('pool_entry'))
-    async def get_instance_by_name(self, name):
-        """
-        Returns pool with name `name`. If `name` is not found, Validation error is raised.
-        """
-        pool = await self.query([['name', '=', name]])
-        if not pool:
-            raise InstanceNotFound(f'Pool {name} does not exist')
-
-        return pool[0]
 
     @private
     @accepts(Str('pool_name'))
