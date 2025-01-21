@@ -3,7 +3,6 @@ from middlewared.api.current import (
     PoolDatasetSnapshotCountArgs,
     PoolDatasetSnapshotCountResults,
 )
-
 from middlewared.service import Service
 
 
