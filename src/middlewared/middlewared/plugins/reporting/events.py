@@ -6,7 +6,6 @@ from middlewared.utils.disks import get_disk_names, get_disks_with_identifiers
 from middlewared.validators import Range
 
 from .realtime_reporting import get_arc_stats, get_cpu_stats, get_disk_stats, get_interface_stats, get_memory_info
-from .realtime_reporting.utils import safely_retrieve_dimension
 
 
 class RealtimeEventSource(EventSource):
@@ -106,9 +105,7 @@ class RealtimeEventSource(EventSource):
                 }
 
                 # CPU temperature
-                data['cpu']['temperature_celsius'] = safely_retrieve_dimension(
-                    netdata_metrics, 'cputemp.temp', 'cpu_temp',
-                ) or None
+                data['cpu']['temperature_celsius'] = self.middleware.call_sync('reporting.cpu_temperatures') or None
 
             self.send_event('ADDED', fields=data)
             time.sleep(interval)
