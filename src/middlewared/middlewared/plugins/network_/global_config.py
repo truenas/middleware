@@ -4,6 +4,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, private
 from middlewared.schema import accepts, Patch, List, Dict, Int, Str, Bool, IPAddr, Ref, URI, ValidationErrors
 from middlewared.utils.directoryservices.constants import DSType
+from middlewared.utils import are_indices_in_consecutive_order
 from middlewared.validators import Match, Hostname
 
 HOSTS_FILE_EARMARKER = '# STATIC ENTRIES'
@@ -149,33 +150,29 @@ class NetworkConfigurationService(ConfigService):
     async def validate_nameservers(self, verrors, data, schema):
         ns_ints = []
         for ns, ns_value in filter(lambda x: x[0].startswith('nameserver') and x[1], data.items()):
-            schema = f'{schema}.{ns}'
+            _schema = f'{schema}.{ns}'
             ns_ints.append(int(ns[-1]))
             try:
                 nameserver_ip = ipaddress.ip_address(ns_value)
             except ValueError as e:
-                verrors.add(schema, str(e))
+                verrors.add(_schema, str(e))
             else:
                 if nameserver_ip.is_loopback:
-                    verrors.add(schema, 'Loopback is not a valid nameserver')
+                    verrors.add(_schema, 'Loopback is not a valid nameserver')
                 elif nameserver_ip.is_unspecified:
-                    verrors.add(schema, 'Unspecified addresses are not valid as nameservers')
+                    verrors.add(_schema, 'Unspecified addresses are not valid as nameservers')
                 elif nameserver_ip.version == 4:
                     if ns_value == '255.255.255.255':
-                        verrors.add(schema, 'This is not a valid nameserver address')
+                        verrors.add(_schema, 'This is not a valid nameserver address')
                     elif ns_value.startswith('169.254'):
-                        verrors.add(schema, '169.254/16 subnet is not valid for nameserver')
+                        verrors.add(_schema, '169.254/16 subnet is not valid for nameserver')
 
-        len_ns_ints = len(ns_ints)
-        if len_ns_ints >= 2:
-            ns_ints = sorted(ns_ints)
-            for i in range(len_ns_ints - 1):
-                if ns_ints[i - 1] - ns_ints[i] != 1:
-                    verrors.add(
-                        f'{schema}.nameserver{i}',
-                        'When providing nameservers, they must be provided in consecutive order '
-                        '(i.e. nameserver1, nameserver2, nameserver3)'
-                    )
+        if not are_indices_in_consecutive_order(ns_ints):
+            verrors.add(
+                f'{schema}.nameserver',
+                'When providing nameservers, they must be provided in consecutive order '
+                '(i.e. nameserver1, nameserver2, nameserver3)'
+            )
 
     @private
     async def validate_general_settings(self, data, schema):
