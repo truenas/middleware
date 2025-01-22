@@ -289,7 +289,7 @@ class Job:
         self.app = app
         self.audit_callback = audit_callback
 
-        self.id = str(uuid4().int())
+        self.id = str(uuid4().int)
         self.lock = None
         self.result = None
         self.error = None
