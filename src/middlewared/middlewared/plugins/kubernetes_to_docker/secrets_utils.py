@@ -27,7 +27,10 @@ def list_secrets(secrets_dir: str) -> dict[str, dict[str, dict]]:
                 continue
 
             if entry.name.startswith(HELM_SECRET_PREFIX):
-                if secrets['helm_secret']['secret_name'] is None or entry.name > secrets['helm_secret']['secret_name']:
+                if (
+                    secrets['helm_secret']['secret_name'] is None or
+                    get_helm_secret_version(entry.name) > get_helm_secret_version(secrets['helm_secret']['secret_name'])
+                ):
                     secret_contents = get_secret_contents(entry.path, True).get('release', {})
                     secrets['helm_secret'].update({
                         'secret_name': entry.name,
@@ -64,3 +67,10 @@ def get_secret_contents(secret_path: str, helm_secret: bool = False) -> dict:
             contents[k] = v
 
     return contents
+
+
+def get_helm_secret_version(secret: str) -> int:
+    try:
+        return int(secret.split('.')[-1].replace('v', ''))
+    except ValueError:
+        return -1
