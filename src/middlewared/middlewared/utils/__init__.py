@@ -677,6 +677,53 @@ def is_empty(val):
     return val in [None, ''] or val.isspace()
 
 
+def are_indices_in_consecutive_order(arr: list[int]) -> bool:
+    """
+    Determine if the integers in an array form a consecutive sequence 
+    with respect to their indices.
+
+    This function checks whether each integer at a given index position is 
+    exactly one greater than the integer at the previous index. In other 
+    words, it verifies that the sequence of numbers increases by exactly one 
+    as you move from left to right through the array.
+
+    Parameters:
+    arr (list[int]): A list of integers whose index-based order needs to be 
+                     validated.
+
+    Returns:
+    bool: 
+        - True if the numbers are consecutive.
+        - False if any number does not follow the previous number by exactly one.
+
+    Examples:
+    >>> are_indices_in_consecutive_order([1, 2])
+    True
+
+    >>> are_indices_in_consecutive_order([1, 3])
+    False
+
+    >>> are_indices_in_consecutive_order([5, 6, 7])
+    True
+
+    >>> are_indices_in_consecutive_order([4, 6, 7])
+    False
+
+    Edge Cases:
+    - An empty array will return True as there are no elements to violate 
+      the order.
+    - A single-element array will also return True for the same reason.
+
+    Notes:
+    - The function does not modify the input array and operates in O(n) time
+      complexity, where n is the number of elements in the list.
+    """
+    for i in range(1, len(arr)):
+        if arr[i] != arr[i - 1] + 1:
+            return False
+    return True
+
+
 class Nid(object):
 
     def __init__(self, _id):
