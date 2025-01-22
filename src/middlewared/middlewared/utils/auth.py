@@ -138,14 +138,15 @@ class OnetimePasswordManager:
         We store a sha512 hash of the plaintext for authentication purposes
         """
         with self.lock:
-            plaintext = generate_string(string_size=24)
-            keyhash = sha512_crypt(plaintext)
+            p = generate_string(string_size=24)
+            human_friendly = '-'.join([p[0:6], p[6:12], p[12:18], p[18:24]])
+            keyhash = sha512_crypt(human_friendly)
             expires = monotonic() + 86400
 
             entry = UserOnetimePassword(uid=uid, expires=expires, keyhash=keyhash)
             self.cnt += 1
             self.otpasswd[str(self.cnt)] = entry
-            return f'{self.cnt}_{plaintext}'
+            return f'{self.cnt}_{human_friendly}'
 
     def authenticate(self, uid: int, plaintext: str) -> OTPWResponse:
         """ Check passkey matches plaintext string.  """
