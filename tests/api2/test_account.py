@@ -33,7 +33,7 @@ def test_create_account_audit():
                 "home": "/nonexistent",
                 "password": "password",
             }
-            user_id = call("user.create", payload)
+            user_id = call("user.create", payload)['id']
     finally:
         if user_id is not None:
             call("user.delete", user_id)

@@ -126,7 +126,7 @@ def test_authenticated_call():
                 "password": "password",
             })
             assert r.status_code == 200
-            user_id = r.json()
+            user_id = r.json()['id']
     finally:
         if user_id is not None:
             call("user.delete", user_id)

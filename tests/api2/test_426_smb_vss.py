@@ -121,7 +121,7 @@ def test_002_creating_shareuser_to_test_acls(request):
         "group_create": True,
         "password": SMB_PWD,
         "uid": next_uid,
-    })
+    })['id']
 
 
 def test_003_changing_dataset_owner(request):
