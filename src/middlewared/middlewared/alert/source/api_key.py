@@ -10,7 +10,7 @@ class ApiKeyRevokedAlertClass(AlertClass, SimpleOneShotAlertClass):
     text = (
         "%(key_name)s: API key has been revoked and must either be renewed or deleted. "
         "Once the maintenance is complete, API client configuration must be updated to "
-        "use the renwed API key."
+        "use the renewed API key."
     )
 
     async def create(self, args):
