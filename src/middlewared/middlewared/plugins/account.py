@@ -51,7 +51,7 @@ from middlewared.service import CallError, CRUDService, ValidationErrors, pass_a
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
-from middlewared.utils.crypto import generate_nt_hash, sha512_crypt
+from middlewared.utils.crypto import generate_nt_hash, sha512_crypt, generate_string
 from middlewared.utils.directoryservices.constants import DSType, DSStatus
 from middlewared.utils.filesystem.copy import copytree, CopyTreeConfig
 from middlewared.utils.nss import pwd, grp
@@ -305,6 +305,7 @@ class UserService(CRUDService):
             'immutable',
             'home_create',
             'roles',
+            'random_password',
             'twofactor_auth_configured',
         ]
 
@@ -610,6 +611,7 @@ class UserService(CRUDService):
                 raise
 
         pk = None  # Make sure pk exists to rollback in case of an error
+        password = data['password']
         data = self.user_compress(data)
         try:
             self.__set_password(data)
@@ -660,7 +662,7 @@ class UserService(CRUDService):
                 self.logger.warning('Failed to update authorized keys', exc_info=True)
                 raise CallError(f'Failed to update authorized keys: {e}')
 
-        return pk
+        return self.middleware.call_sync('user.query', [['id', '=', pk]], {'get': True}) | {'password': password}
 
     @api_method(UserUpdateArgs, UserUpdateResult, audit='Update user', audit_callback=True)
     @pass_app()
@@ -851,6 +853,8 @@ class UserService(CRUDService):
             perm_job.wait_sync()
 
         user.pop('sshpubkey', None)
+        password = user.get('password')
+
         self.__set_password(user)
 
         user = self.user_compress(user)
@@ -861,7 +865,7 @@ class UserService(CRUDService):
         if user['smb'] and must_change_pdb_entry:
             self.middleware.call_sync('smb.update_passdb_user', user)
 
-        return pk
+        return self.middleware.call_sync('user.query', [['id', '=', pk]], {'get': True}) | {'password': password}
 
     @private
     def recreate_homedir_if_not_exists(self, user, group, mode):
@@ -1268,6 +1272,15 @@ class UserService(CRUDService):
             exclude_filter,
             {'prefix': 'bsdusr_'}
         )
+
+        if data.get('random_password') and data.get('password'):
+            verrors.add(
+                f'{schema}.random_password',
+                'Requesting a randomized password while simultaneously supplying '
+                'an explicit password is not permitted.'
+            )
+        elif data.get('random_password'):
+            data['password'] = generate_string(string_size=20)
 
         if data.get('uid') is not None:
             try:

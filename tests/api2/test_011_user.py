@@ -132,8 +132,9 @@ def create_user_with_dataset(ds_info, user_info):
 
         user_id = None
         try:
-            user_id = call('user.create', user_info['payload'])
-            yield call('user.query', [['id', '=', user_id]], {'get': True})
+            user = call('user.create', user_info['payload'])
+            user_id = user['id']
+            yield user
         finally:
             if user_id is not None:
                 call('user.delete', user_id, {"delete_group": True})
