@@ -181,6 +181,7 @@ class Session:
             "origin": str(self.app.origin),
             **dump_credentials(self.credentials),
             "created_at": utc_now() - timedelta(seconds=time.monotonic() - self.created_at),
+            "secure_transport": self.app.origin.secure_transport,
         }
 
 
@@ -771,6 +772,21 @@ class AuthService(Service):
                     resp['pam_response']['reason'] = 'Api key is expired.'
 
                 if resp['pam_response']['code'] == pam.PAM_SUCCESS:
+                    if not app.origin.secure_transport:
+                        # Per NEP if plain API key auth occurs over insecure transport
+                        # the key should be automatically revoked.
+                        await self.middleware.call('api_key.revoke', key_id)
+                        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                            'credentials': {
+                                'credentials': 'API_KEY',
+                                'credentials_data': {'username': data['username']},
+                            },
+                            'error': 'API key revoked due to insecure transport.'
+                        }, False)
+
+                        response['response_type'] = AuthResp.EXPIRED.name
+                        return response
+
                     if thehash.startswith('$pbkdf2-sha256'):
                         # Legacy API key with insufficient iterations. Since we
                         # know that the plain-text we have here is correct, we can

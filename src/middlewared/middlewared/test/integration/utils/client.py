@@ -116,7 +116,7 @@ class TrueNAS_Server:
             raise RuntimeError('IP is not set')
 
         uri = host_websocket_uri(addr)
-        cl = Client(uri, py_exceptions=True, log_py_exceptions=True)
+        cl = Client(uri, py_exceptions=True, log_py_exceptions=True, verify_ssl=False)
         try:
             resp = cl.call('auth.login_ex', {
                 'mechanism': 'PASSWORD_PLAIN',
@@ -160,13 +160,13 @@ truenas_server = TrueNAS_Server()
 
 
 @contextlib.contextmanager
-def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None):
+def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None, ssl=True):
     if auth is undefined:
         auth = ("root", password())
 
-    uri = host_websocket_uri(host_ip)
+    uri = host_websocket_uri(host_ip, ssl)
     try:
-        with Client(uri, py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions) as c:
+        with Client(uri, py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions, verify_ssl=False) as c:
             if auth is not None:
                 auth_req = {
                     "mechanism": "PASSWORD_PLAIN",
@@ -215,8 +215,9 @@ def host():
     return truenas_server
 
 
-def host_websocket_uri(host_ip=None):
-    return f"ws://{host_ip or host().ip}/api/current"
+def host_websocket_uri(host_ip=None, ssl=True):
+    prefix = 'wss://' if ssl else 'ws://'
+    return f"{prefix}{host_ip or host().ip}/api/current"
 
 
 def password():

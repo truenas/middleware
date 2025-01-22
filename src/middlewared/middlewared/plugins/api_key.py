@@ -359,6 +359,15 @@ class ApiKeyService(CRUDService):
             'name': entry['name'],
         })
 
+    @private
+    async def revoke(self, key_id):
+        """ Revoke the specified API key in the DB, deactivate in the pam_tdb file, and
+        generate a middleware alert that it has been revoked. This is a private method
+        that is called when API key passed as plain-text over insecure transport."""
+        await self.middleware.call('datastore.update', self._config.datastore, key_id, {'expiry': -1})
+        await self.middleware.call('etc.generate', 'pam_middleware')
+        await self.check_status()
+
     @api_method(ApiKeyMyKeysArgs, ApiKeyMyKeysResult, roles=['READONLY_ADMIN', 'API_KEY_READ'])
     @pass_app(require=True)
     async def my_keys(self, app) -> list:
