@@ -112,7 +112,10 @@ if __name__ == '__main__':
         ))
         sys.exit(1)
 
-    usr_fs_check()
+    # We currently use this script inside some jenkins pipelines that are not
+    # normal truenas install and so we need to skip the fs check on force.
+    if not args.force:
+        usr_fs_check()
 
     rv = run([ZFS_CMD, 'get', '-o', 'value', '-H', 'truenas:developer', '/'], capture_output=True)
 
