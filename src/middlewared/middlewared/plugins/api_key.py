@@ -359,6 +359,15 @@ class ApiKeyService(CRUDService):
             'name': entry['name'],
         })
 
+    @private
+    async def revoke_api_key(self, key_id):
+        await sef.middleware.call(
+            'datastore.update', self._config.datastore, key_id,
+            {'expiry': -1}
+        )
+        await self.middleware.call('etc.generate', 'pam_middleware')
+        await self.check_status()
+
     @api_method(ApiKeyMyKeysArgs, ApiKeyMyKeysResult, roles=['READONLY_ADMIN', 'API_KEY_READ'])
     @pass_app(require=True)
     async def my_keys(self, app) -> list:
