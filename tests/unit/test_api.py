@@ -1,22 +1,32 @@
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, NotRequired
-from middlewared.api.base.handler.result import serialize_result
+from middlewared.api.base import BaseModel, NotRequired, ForUpdateMetaclass
+
+
+def check_serialization(test_model, test_cases):
+    for args, dump in test_cases:
+        result = test_model(**args).model_dump(context={"expose_secrets": True}, warnings=False, by_alias=True)
+        assert result == dump, (args, dump, result)
 
 
 def test_dump_by_alias():
     class AliasModel(BaseModel):
-        field1_: int = Field(..., alias='field1')
+        field1_: int = Field(alias='field1')
         field2: str
         field3_: bool = Field(alias='field3', default=False)
 
     class AliasModelResult(BaseModel):
         result: AliasModel
 
-    result = {'field1': 1, 'field2': 'two'}
-    dump = serialize_result(AliasModelResult, result, False)
-
-    assert dump == {'field1': 1, 'field2': 'two', 'field3': False}
+    test_cases = (
+        (
+            {"result": {'field1': 1, 'field2': 'two'}},
+            # args passed to AliasModelResult
+            {"result": {'field1': 1, 'field2': 'two', 'field3': False}}
+            # expected result for model_dump
+        ),
+    )
+    check_serialization(AliasModelResult, test_cases)
 
 
 def test_not_required():
@@ -38,9 +48,7 @@ def test_not_required():
     test_cases = (
         (
             {"b": 2, "e": {}},
-            # args passed to NotRequiredModel
             {"b": 2, "c": 3, "e": {}, "f": {}}
-            # expected result for model_dump
         ),
         (
             {"b": 2, "e": {"a": 1}},
@@ -95,6 +103,26 @@ def test_not_required():
             {"b": 2, "c": 3, "e": {}, "f": {}, "j": 4}
         ),
     )
-    for args, dump in test_cases:
-        result = NotRequiredModel(**args).model_dump(context={"expose_secrets": True}, warnings=False, by_alias=True)
-        assert result == dump, (args, dump, result)
+    check_serialization(NotRequiredModel, test_cases)
+
+
+def test_update_metaclass():
+    class NestedModel(BaseModel):
+        a: int
+
+    class UpdateModel(BaseModel, metaclass=ForUpdateMetaclass):
+        b: int
+        c: NestedModel
+
+    test_cases = (
+        (
+            {}, {}
+        ),
+        (
+            {"b": 2}, {"b": 2}
+        ),
+        (
+            {"c": {"a": 1}}, {"c": {"a": 1}}
+        ),
+    )
+    check_serialization(UpdateModel, test_cases)
