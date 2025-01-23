@@ -6,6 +6,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
 from middlewared.service import CallError, ConfigService, periodic, private
+from middlewared.service_exception import ValidationErrors
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
 from middlewared.validators import Range
 
@@ -72,11 +73,28 @@ class TwoFactorAuthService(ConfigService):
 
         Update Two-Factor Authentication Service Configuration.
         """
+        verrors = ValidationErrors()
+        security = await self.middleware.call('system.security')
+
         old_config = await self.config()
         config = old_config.copy()
 
         config.update(data)
 
+        if security['enable_gpos_stig']:
+            if not config['enable']:
+                verrors.add(
+                    'auth_twofactor_update.enable',
+                    'Two factor authentication may not be disabled in General Purpose OS STIG mode.'
+                )
+
+            if not config['services']['ssh']:
+                verrors.add(
+                    'auth_twofactor_update.services.ssh',
+                    'Two factor authentication for ssh service is required in General Purpose OS STIG mode.'
+                )
+
+        verrors.check()
         if config == old_config:
             return config
 
