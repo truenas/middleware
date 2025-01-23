@@ -346,7 +346,10 @@ def wait_on_job(job_id, max_timeout):
     timeout = 0
     while True:
         job_results = GET(f'/core/get_jobs/?id={job_id}')
-        job_state = job_results.json()[0]['state']
+        assert job_results.status_code == 200, f'{results.text}: {job_id}'
+        job = job_results.json()
+        assert job, str(job_id)
+        job_state = job[0]['state']
         if job_state in ('RUNNING', 'WAITING'):
             sleep(5)
         elif job_state in ('SUCCESS', 'FAILED'):
