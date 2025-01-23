@@ -228,7 +228,7 @@ def test_run_onetime__exclude_mountpoint_property(exclude_mountpoint_property):
                     "target_dataset": f"{pool}/dst",
                     "recursive": True,
                     "also_include_naming_schema": ["%Y-%m-%d-%H-%M-%S"],
-                    "retention_policy": "NONE",
+                    "retention_policy": "SOURCE",
                     "replicate": True,
                     "readonly": "IGNORE",
                     "exclude_mountpoint_property": exclude_mountpoint_property

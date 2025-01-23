@@ -39,12 +39,17 @@ class CertExtensionsModel(BaseModel):
 
 
 @final
-class CAProfilesModel(BaseModel):
+class CAExtensions(BaseModel):
     key_length: int = 2048
     key_type: str = "RSA"
     lifetime: int = DEFAULT_LIFETIME_DAYS
     digest_algorithm: str = "SHA256"
     cert_extensions: CertExtensionsModel = CertExtensionsModel()
+
+
+@final
+class CAProfilesModel(BaseModel):
+    CA: CAExtensions = CAExtensions()
 
 
 class CAProfilesArgs(BaseModel):
