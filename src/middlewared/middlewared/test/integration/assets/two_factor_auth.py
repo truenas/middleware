@@ -11,7 +11,7 @@ from middlewared.test.integration.utils import call
 @contextlib.contextmanager
 def enabled_twofactor_auth(ssh=False):
     try:
-        yield call('auth.twofactor.update', {'enabled': True, 'window': 3, 'services': {'ssh': ssh}}})
+        yield call('auth.twofactor.update', {'enabled': True, 'window': 3, 'services': {'ssh': ssh}})
     finally:
         call('auth.twofactor.update', {'enabled': False, 'window': 0, 'services': {'ssh': False}})
 
