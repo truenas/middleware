@@ -63,6 +63,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                         self.middleware.send_event(
                             'tn_connect.config', 'CHANGED', fields=await self.middleware.call('tn_connect.config')
                         )
+                        await self.middleware.call('alert.oneshot_create', 'TNCDisabledAutoUnconfigured', None)
                         return
                     case 500:
                         logger.debug('TNC Heartbeat: Received 500')
@@ -88,7 +89,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                         'TNC Heartbeat: Unable to calculate sleep time, raising alert as it has likely been 48 hours '
                         'since the last successful heartbeat (last failure: %s)', last_failure,
                     )
-                    # TODO: Raise alert
+                    await self.middleware.call('alert.oneshot_create', 'TNCHeartbeatConnectionFailure', None)
                     break
                 else:
                     logger.debug(
@@ -102,6 +103,8 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                     })
                     logger.debug('TNC Heartbeat: Resetting last heartbeat failure datetime')
 
+
+                await self.middleware.call('alert.oneshot_delete', 'TNCHeartbeatConnectionFailure')
                 await asyncio.sleep(self.HEARTBEAT_INTERVAL)
 
             tnc_config = await self.middleware.call('tn_connect.config_internal')
