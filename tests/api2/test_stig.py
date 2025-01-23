@@ -189,10 +189,10 @@ def test_stig_roles_decrease(setup_stig, clear_ratelimit):
 def test_stig_prevent_disable_2fa(setup_stig, clear_ratelimit):
     with client(auth=None) as c:
         do_stig_auth(c, setup_stig['user_obj'], setup_stig['secret'])
-        with pytest.raises(ValidationErrors, match='Two factor authentication may not be disabled'): 
+        with pytest.raises(Verr, match='Two factor authentication may not be disabled'): 
             c.call('auth.twofactor.update', {'enabled': False})
 
-        with pytest.raises(ValidationErrors, match='for ssh service is required'):
+        with pytest.raises(Verr, match='for ssh service is required'):
             c.call('auth.twofactor.update', {'services': {'ssh': False}})
 
 
