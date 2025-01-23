@@ -8,7 +8,7 @@ from middlewared.utils.version import parse_version_string
 
 from .mixin import TNCAPIMixin
 from .status_utils import Status
-from .utils import calculate_sleep, get_account_id_and_system_id
+from .utils import calculate_sleep, get_account_id_and_system_id, get_unset_payload
 from .urls import get_heartbeat_url
 
 
@@ -56,8 +56,17 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                         logger.debug('TNC Heartbeat: Received 200')
                     case 400:
                         logger.debug('TNC Heartbeat: Received 400')
+                        sleep_error = True
                     case 401:
-                        logger.debug('TNC Heartbeat: Received 401')
+                        logger.debug('TNC Heartbeat: Received 401, unsetting TNC')
+                        await self.middleware.call('tn_connect.unset_registration_details')
+                        await self.middleware.call('datastore.update', 'truenas_connect', tnc_config['id'], {
+                            'enabled': False,
+                        } | get_unset_payload())
+                        self.middleware.send_event(
+                            'tn_connect.config', 'CHANGED', fields=await self.middleware.call('tn_connect.config')
+                        )
+                        return
                     case 500:
                         logger.debug('TNC Heartbeat: Received 500')
                         sleep_error = True
