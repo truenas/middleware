@@ -113,6 +113,9 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             with contextlib.suppress(KeyError):
                 await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
             db_payload['status'] = Status.CLAIM_TOKEN_MISSING.name
+            logger.debug('Removing any stale TNC unconfigured alert or heartbeat alert')
+            await self.middleware.call('alert.oneshot_delete', 'TNCDisabledAutoUnconfigured')
+            await self.middleware.call('alert.oneshot_delete', 'TNCHeartbeatConnectionFailure')
         elif config['enabled'] is True and data['enabled'] is False:
             await self.unset_registration_details()
             db_payload.update(get_unset_payload())
@@ -138,6 +141,9 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         logger.debug('Unsetting registration details')
         with contextlib.suppress(KeyError):
             await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
+
+        logger.debug('TNC is being disabled, removing any stale TNC heartbeat failure alert')
+        await self.middleware.call('alert.oneshot_delete', 'TNCHeartbeatConnectionFailure')
 
         config = await self.config_internal()
         creds = get_account_id_and_system_id(config)
