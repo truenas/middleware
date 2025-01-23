@@ -82,7 +82,7 @@ class TwoFactorAuthService(ConfigService):
         config.update(data)
 
         if security['enable_gpos_stig']:
-            if not config['enable']:
+            if not config['enabled']:
                 verrors.add(
                     'auth_twofactor_update.enable',
                     'Two factor authentication may not be disabled in General Purpose OS STIG mode.'
