@@ -9,11 +9,11 @@ from middlewared.test.integration.utils import call
 
 
 @contextlib.contextmanager
-def enabled_twofactor_auth():
+def enabled_twofactor_auth(ssh=False):
     try:
-        yield call('auth.twofactor.update', {'enabled': True, 'window': 3})
+        yield call('auth.twofactor.update', {'enabled': True, 'window': 3, 'services': {'ssh': ssh}})
     finally:
-        call('auth.twofactor.update', {'enabled': False, 'window': 0})
+        call('auth.twofactor.update', {'enabled': False, 'window': 0, 'services': {'ssh': False}})
 
 
 def get_user_secret(user_id: int, get: typing.Optional[bool] = True) -> typing.Union[dict, list]:
