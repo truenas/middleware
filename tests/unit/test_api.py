@@ -29,13 +29,17 @@ def test_not_required():
         d: int = NotRequired
         e: NestedModel
         f: NestedModel = Field(default_factory=NestedModel)
+        # default_factory must be used here
         g: NestedModel = NotRequired
         h: list[NestedModel] = NotRequired
+        i_: int = Field(alias="i", default=NotRequired)
 
     test_cases = (
         (
             {"b": 2, "e": {}},
+            # args passed to NotRequiredModel
             {"b": 2, "c": 3, "e": {}, "f": {}}
+            # expected result for model_dump
         ),
         (
             {"b": 2, "e": {"a": 1}},
@@ -81,7 +85,11 @@ def test_not_required():
             {"b": 2, "e": {}, "h": [{"a": 1}, {}]},
             {"b": 2, "c": 3, "e": {}, "f": {}, "h": [{"a": 1}, {}]}
         ),
+        (
+            {"b": 2, "e": {}, "i": 4},
+            {"b": 2, "c": 3, "e": {}, "f": {}, "i": 4}
+        ),
     )
     for args, dump in test_cases:
-        result = NotRequiredModel(**args).model_dump(warnings=False)
+        result = NotRequiredModel(**args).model_dump(warnings=False, by_alias=True)
         assert result == dump, (args, dump, result)
