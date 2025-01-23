@@ -28,7 +28,7 @@ class TNCAPIMixin:
             'response': {},
             'status_code': None,
         }
-        if payload and (headers is None or 'Content-Type' not in headers):
+        if payload is not None and (headers is None or 'Content-Type' not in headers):
             headers = headers or {}
             headers['Content-Type'] = 'application/json'
         try:
@@ -36,7 +36,7 @@ class TNCAPIMixin:
                 async with aiohttp.ClientSession(raise_for_status=True, trust_env=True) as session:
                     req = await getattr(session, mode)(
                         endpoint,
-                        data=json.dumps(payload) if payload else payload,
+                        data=json.dumps(payload) if payload is not None else payload,
                         headers=headers,
                     )
                     response['status_code'] = req.status
