@@ -27,7 +27,7 @@ def community_product():
 
 @pytest.fixture(scope='module')
 def two_factor_enabled():
-    with enabled_twofactor_auth() as two_factor_config:
+    with enabled_twofactor_auth(ssh=True) as two_factor_config:
         yield two_factor_config
 
 
@@ -179,6 +179,16 @@ def test_stig_roles_decrease(setup_stig):
 
         assert me['privilege']['web_shell'] is False
         assert me['privilege']['webui_access'] is True
+
+
+def test_stig_prevent_disable_2fa(setup_stig):
+    with client(auth=None) as c:
+        do_stig_auth(c, setup_stig['user_obj'], setup_stig['secret'])
+        with pytest.raises(ValidationErrors, match='Two factor authentication may not be disabled'): 
+            c.call('auth.twofactor.update', {'enable': False})
+
+        with pytest.raises(ValidationErrors, match='for ssh service is required'):
+            c.call('auth.twofactor.update', {'services': {'ssh': False}})
 
 
 def test_stig_smb_auth_disabled(setup_stig):
