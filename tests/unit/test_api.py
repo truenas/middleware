@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, NotRequired
 from middlewared.api.base.handler.result import serialize_result
@@ -33,6 +33,7 @@ def test_not_required():
         g: NestedModel = NotRequired
         h: list[NestedModel] = NotRequired
         i_: int = Field(alias="i", default=NotRequired)
+        j: Secret[int] = NotRequired
 
     test_cases = (
         (
@@ -89,7 +90,11 @@ def test_not_required():
             {"b": 2, "e": {}, "i": 4},
             {"b": 2, "c": 3, "e": {}, "f": {}, "i": 4}
         ),
+        (
+            {"b": 2, "e": {}, "j": 4},
+            {"b": 2, "c": 3, "e": {}, "f": {}, "j": 4}
+        ),
     )
     for args, dump in test_cases:
-        result = NotRequiredModel(**args).model_dump(warnings=False, by_alias=True)
+        result = NotRequiredModel(**args).model_dump(context={"expose_secrets": True}, warnings=False, by_alias=True)
         assert result == dump, (args, dump, result)
