@@ -74,7 +74,7 @@ class TwoFactorAuthService(ConfigService):
         Update Two-Factor Authentication Service Configuration.
         """
         verrors = ValidationErrors()
-        security = await self.middleware.call('system.security')
+        security = await self.middleware.call('system.security.config')
 
         old_config = await self.config()
         config = old_config.copy()
