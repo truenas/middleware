@@ -200,6 +200,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $connection_upgrade;
@@ -218,6 +219,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
         }
@@ -258,6 +260,7 @@ http {
             }
             # `allow`/`deny` are not allowed in `if` blocks so we'll have to make that check in the middleware itself.
             proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Https $https;
 
             add_header Cache-Control "must-revalidate";
             add_header Etag "${system_version}";
@@ -274,6 +277,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
         }
@@ -285,6 +289,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_send_timeout 7d;
@@ -299,6 +304,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header X-Server-Port $server_port;
@@ -310,6 +316,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_read_timeout 10m;
         }
 
@@ -322,6 +329,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
         }
 
         location /_plugins {
@@ -329,6 +337,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-For $remote_addr;
         }
