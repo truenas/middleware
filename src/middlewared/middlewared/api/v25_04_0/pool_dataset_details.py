@@ -1,8 +1,15 @@
 from middlewared.api.base import BaseModel
 
-from pydantic import ConfigDict, Field
+# from pydantic import ConfigDict, Field
 
+__all__ = ("PoolDatasetDetailsArgs", "PoolDatasetDetailsResults")
 
+"""
+FIXME: We need to fix the return validation
+for this model but it is involved and tricky
+and requires a ton of testing. (i.e. you need
+to have a system with smb/nfs/iscsi/apps/vm/virt
+shares created AND zpools with zfs dataset and zvols.)
 class ZFSValues(BaseModel):
     value: str | None
     rawvalue: str
@@ -97,3 +104,12 @@ class PoolDatasetDetailsArgs(BaseModel):
 
 class PoolDatasetDetailsResults(BaseModel):
     result: list[PoolDatasetDetailsEntry]
+"""
+
+
+class PoolDatasetDetailsArgs(BaseModel):
+    pass
+
+
+class PoolDatasetDetailsResults(BaseModel):
+    result: list[dict]
