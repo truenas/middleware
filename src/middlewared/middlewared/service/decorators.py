@@ -4,9 +4,10 @@ import threading
 from collections import defaultdict, namedtuple
 from functools import wraps
 
-from middlewared.api import api_method
+from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base import query_result
-from middlewared.api.current import QueryArgs, GenericQueryResult
+if not API_LOADING_FORBIDDEN:
+    from middlewared.api.current import QueryArgs, GenericQueryResult
 from middlewared.schema import accepts, Int, List, OROperator, Ref, returns
 
 

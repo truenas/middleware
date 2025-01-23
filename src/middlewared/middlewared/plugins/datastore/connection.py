@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 
 from middlewared.service import private, Service
 
-from middlewared.plugins.config import FREENAS_DATABASE
+from middlewared.utils.db import FREENAS_DATABASE
 
 thread_pool = ThreadPoolExecutor(1)
 

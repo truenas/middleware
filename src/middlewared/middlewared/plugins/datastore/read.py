@@ -3,9 +3,7 @@ import re
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.sql import Alias
-from sqlalchemy.sql.elements import UnaryExpression
 from sqlalchemy.sql.expression import nullsfirst, nullslast
-from sqlalchemy.sql.operators import desc_op, nullsfirst_op, nullslast_op
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import Service

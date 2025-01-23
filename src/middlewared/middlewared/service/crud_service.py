@@ -5,9 +5,10 @@ from typing import Annotated
 
 from pydantic import create_model, Field
 
-from middlewared.api import api_method
+from middlewared.api import API_LOADING_FORBIDDEN, api_method
 from middlewared.api.base.model import BaseModel, query_result, query_result_item
-from middlewared.api.current import QueryArgs, QueryOptions
+if not API_LOADING_FORBIDDEN:
+    from middlewared.api.current import QueryArgs, QueryOptions
 from middlewared.service_exception import CallError, InstanceNotFound
 from middlewared.schema import accepts, Any, Bool, convert_schema, Dict, Int, List, OROperator, Patch, Ref, returns
 from middlewared.utils import filter_list

@@ -33,7 +33,7 @@ from middlewared.job import Job, JobAccess
 from middlewared.pipe import Pipes
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Str
 from middlewared.service_exception import CallError, ValidationErrors
-from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_RUN_DIR
+from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_STARTED_SENTINEL_PATH
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.validators import IpAddress, Range
 
@@ -42,9 +42,6 @@ from .config_service import ConfigService
 from .crud_service import CRUDService
 from .decorators import filterable, filterable_returns, job, no_auth_required, no_authz_required, pass_app, private
 from .service import Service
-
-
-MIDDLEWARE_STARTED_SENTINEL_PATH = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared-started')
 
 
 def is_service_class(service, klass):

@@ -17,7 +17,7 @@ from .role import ROLES, RoleManager
 from .schema import OROperator
 import middlewared.service
 from .service_exception import CallError, ErrnoMixin
-from .utils import MIDDLEWARE_RUN_DIR, sw_version
+from .utils import MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH, sw_version
 from .utils.audit import audit_username_from_session
 from .utils.debug import get_threads_stacks
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
@@ -27,7 +27,6 @@ from .utils.profile import profile_wrap
 from .utils.rate_limit.cache import RateLimitCache
 from .utils.service.call import ServiceCallMixin
 from .utils.service.crud import real_crud_method
-from .utils.syslog import syslog_message
 from .utils.threading import set_thread_name, IoThreadPoolExecutor, io_thread_pool_executor
 from .utils.time_utils import utc_now
 from .utils.type import copy_function_metadata
@@ -200,7 +199,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.app.router.add_route('GET', f'/api/{version}', RpcWebSocketHandler(self, api.methods))
 
     def __init_services(self):
-        from middlewared.service import CoreService
+        from middlewared.service.core_service import CoreService
         self.add_service(CoreService(self))
         self.event_register('core.environ', 'Send on middleware process environment changes.', private=True)
 
@@ -448,7 +447,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         systemd_notify(f'EXTEND_TIMEOUT_USEC={SYSTEMD_EXTEND_USECS}')
 
     def __notify_startup_complete(self):
-        with open(middlewared.service.MIDDLEWARE_STARTED_SENTINEL_PATH, 'w'):
+        with open(MIDDLEWARE_STARTED_SENTINEL_PATH, 'w'):
             pass
 
         systemd_notify('READY=1')
