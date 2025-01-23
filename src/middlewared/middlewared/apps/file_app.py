@@ -51,7 +51,7 @@ class FileApplication:
             resp.set_status(404)
             return resp
 
-        job_id = int(path[-1])
+        job_id = path[-1]
 
         qs = parse_qs(request.query_string)
         denied = False
