@@ -8,7 +8,7 @@ from middlewared.utils.version import parse_version_string
 
 from .mixin import TNCAPIMixin
 from .status_utils import Status
-from .utils import calculate_sleep, get_account_id_and_system_id, get_unset_payload
+from .utils import calculate_sleep, CONFIGURED_TNC_STATES, get_account_id_and_system_id, get_unset_payload
 from .urls import get_heartbeat_url
 
 
@@ -28,6 +28,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
         return await self._call(url, mode, payload=payload, headers=await self.auth_headers(config), **(kwargs or {}))
 
     async def start(self):
+        logger.debug('TNC Heartbeat: Starting heartbeat service')
         tnc_config = await self.middleware.call('tn_connect.config_internal')
         creds = get_account_id_and_system_id(tnc_config)
         if tnc_config['status'] != Status.CONFIGURED.name or creds is None:
@@ -38,11 +39,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
             version=parse_version_string(await self.middleware.call('system.version_short')),
         )
         disk_mapping = await self.middleware.run_in_thread(get_disks_with_identifiers)
-        while tnc_config['status'] in (
-            Status.CONFIGURED.name,
-            Status.CERT_RENEWAL_IN_PROGRESS.name,
-            Status.CERT_RENEWAL_SUCCESS.name,
-        ):
+        while tnc_config['status'] in CONFIGURED_TNC_STATES:
             sleep_error = False
             resp = await self.call(heartbeat_url, 'post', await self.payload(disk_mapping), get_response=False)
             if resp['error'] is not None:
@@ -113,3 +110,19 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
     async def payload(self, disk_mapping=None):
         return {}
         return await self.middleware.call('reporting.realtime.stats', disk_mapping)
+
+
+async def check_status(middleware):
+    tnc_config = await middleware.call('tn_connect.config')
+    if tnc_config['status'] in CONFIGURED_TNC_STATES:
+        middleware.create_task(middleware.call('tn_connect.heartbeat.start'))
+
+
+async def _event_system_ready(middleware, event_type, args):
+    await check_status(middleware)
+
+
+async def setup(middleware):
+    middleware.event_subscribe('system.ready', _event_system_ready)
+    if await middleware.call('system.ready'):
+        await check_status(middleware)
