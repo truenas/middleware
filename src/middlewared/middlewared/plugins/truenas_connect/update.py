@@ -9,7 +9,7 @@ from middlewared.service import CallError, ConfigService, private, ValidationErr
 from .mixin import TNCAPIMixin
 from .status_utils import Status
 from .urls import get_account_service_url
-from .utils import CLAIM_TOKEN_CACHE_KEY, get_account_id_and_system_id
+from .utils import CLAIM_TOKEN_CACHE_KEY, get_account_id_and_system_id, get_unset_payload
 
 
 logger = logging.getLogger('truenas_connect')
@@ -115,13 +115,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             db_payload['status'] = Status.CLAIM_TOKEN_MISSING.name
         elif config['enabled'] is True and data['enabled'] is False:
             await self.unset_registration_details()
-            db_payload.update({
-                'registration_details': {},
-                'jwt_token': None,
-                'status': Status.DISABLED.name,
-                'certificate': None,
-                'last_heartbeat_failure_datetime': None,
-            })
+            db_payload.update(get_unset_payload())
 
         if (
             config['status'] == Status.CONFIGURED.name and db_payload.get(

@@ -1,6 +1,8 @@
 import datetime
 import math
 
+from .status_utils import Status
+
 
 CERT_RENEW_DAYS = 5
 CLAIM_TOKEN_CACHE_KEY = 'truenas_connect_claim_token'
@@ -14,6 +16,16 @@ def get_account_id_and_system_id(config: dict) -> dict | None:
     return {
         'account_id': jwt_details['account_id'],
         'system_id': jwt_details['system_id'],
+    }
+
+
+def get_unset_payload() -> dict:
+    return {
+        'registration_details': {},
+        'jwt_token': None,
+        'status': Status.DISABLED.name,
+        'certificate': None,
+        'last_heartbeat_failure_datetime': None,
     }
 
 
