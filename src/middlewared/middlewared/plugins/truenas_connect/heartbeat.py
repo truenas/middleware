@@ -90,6 +90,12 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                     )
                     await asyncio.sleep(sleep_secs)
             else:
+                if tnc_config['last_heartbeat_failure_datetime'] is not None:
+                    await self.middleware.call('datastore.update', 'truenas_connect', tnc_config['id'], {
+                        'last_heartbeat_failure_datetime': None,
+                    })
+                    logger.debug('TNC Heartbeat: Resetting last heartbeat failure datetime')
+
                 await asyncio.sleep(self.HEARTBEAT_INTERVAL)
 
             tnc_config = await self.middleware.call('tn_connect.config_internal')
