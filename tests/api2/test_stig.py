@@ -12,6 +12,11 @@ from truenas_api_client import ValidationErrors
 
 
 @pytest.fixture(scope='function')
+def clear_ratelimit():
+    call('rate.limit.cache_clear')
+
+
+@pytest.fixture(scope='function')
 def enterprise_product():
     with product_type('ENTERPRISE'):
         with set_fips_available(True):
@@ -145,7 +150,7 @@ def test_no_current_cred_no_2fa(enterprise_product, two_factor_full_admin):
 # At this point STIG should be enabled on TrueNAS until end of file
 
 
-def test_stig_enabled_authenticator_assurance_level(setup_stig):
+def test_stig_enabled_authenticator_assurance_level(setup_stig, clear_ratelimit):
     # Validate that admin user can authenticate and perform operations
     setup_stig['connection'].call('system.info')
 
@@ -163,7 +168,7 @@ def test_stig_enabled_authenticator_assurance_level(setup_stig):
         c.call('system.info')
 
 
-def test_stig_roles_decrease(setup_stig):
+def test_stig_roles_decrease(setup_stig, clear_ratelimit):
 
     # We need new websocket connection to verify that privileges
     # are appropriately decreased
@@ -181,7 +186,7 @@ def test_stig_roles_decrease(setup_stig):
         assert me['privilege']['webui_access'] is True
 
 
-def test_stig_prevent_disable_2fa(setup_stig):
+def test_stig_prevent_disable_2fa(setup_stig, clear_ratelimit):
     with client(auth=None) as c:
         do_stig_auth(c, setup_stig['user_obj'], setup_stig['secret'])
         with pytest.raises(ValidationErrors, match='Two factor authentication may not be disabled'): 
@@ -191,7 +196,7 @@ def test_stig_prevent_disable_2fa(setup_stig):
             c.call('auth.twofactor.update', {'services': {'ssh': False}})
 
 
-def test_stig_smb_auth_disabled(setup_stig):
+def test_stig_smb_auth_disabled(setup_stig, clear_ratelimit):
     # We need new websocket connection to verify that privileges
     # are appropriately decreased
 
