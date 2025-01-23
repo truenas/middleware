@@ -1092,7 +1092,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             try:
                 await handler(self, event_type, kwargs)
             except Exception:
-                self.logger.error('Unhandled exception in event handler', exc_info=True)
+                self.logger.error('%s: Unhandled exception in event handler', name, exc_info=True)
 
         # Send event also for internally subscribed plugins
         for handler in self.__event_subs.get(name, []):
