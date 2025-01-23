@@ -18,12 +18,16 @@ class TNCAPIMixin:
 
     async def _call(
         self, endpoint: str, mode: str, *, options: dict | None = None, payload: dict | None = None,
-        headers: dict | None = None, json_response: bool = True,
+        headers: dict | None = None, json_response: bool = True, get_response: bool = True,
     ):
         # FIXME: Add network activity check for TNC
         options = options or {}
         timeout = options.get('timeout', 15)
-        response = {'error': None, 'response': {}}
+        response = {
+            'error': None,
+            'response': {},
+            'status_code': None,
+        }
         if payload and (headers is None or 'Content-Type' not in headers):
             headers = headers or {}
             headers['Content-Type'] = 'application/json'
@@ -35,6 +39,7 @@ class TNCAPIMixin:
                         data=json.dumps(payload) if payload else payload,
                         headers=headers,
                     )
+                    response['status_code'] = req.status
         except asyncio.TimeoutError:
             response['error'] = f'Unable to connect with TNC in {timeout} seconds.'
         except aiohttp.ClientResponseError as e:
@@ -42,5 +47,6 @@ class TNCAPIMixin:
         except aiohttp.ClientConnectorError as e:
             response['error'] = f'Failed to connect to TNC: {e}'
         else:
-            response['response'] = await req.json() if json_response else await req.text()
+            if get_response:
+                response['response'] = await req.json() if json_response else await req.text()
         return response
