@@ -120,6 +120,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
                 'jwt_token': None,
                 'status': Status.DISABLED.name,
                 'certificate': None,
+                'last_heartbeat_failure_datetime': None,
             })
 
         if (
