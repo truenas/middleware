@@ -166,3 +166,41 @@ def test_create_local_user_ds_group():
             pass
 
     assert DS_GRP_VERR_STR in str(ve)
+
+
+def test_create_user_random_password_with_specified_password_fail():
+    with pytest.raises(ValidationErrors, match='Specifying a randomized password') as ve:
+        with user({
+            "username": "bobshouldnotexist",
+            "full_name": "bob",
+            "group_create": True,
+            "password": "test1234",
+            "random_password": True
+        }):
+            pass
+
+
+def test_create_user_with_random_password():
+    with user({
+        "username": "bobrandom",
+        "full_name": "bob",
+        "group_create": True,
+        "random_password": True
+    }, get_instance=True) as u:
+        assert u['password']
+
+
+def test_update_user_with_random_password():
+    with user({
+        "username": "bobrandom",
+        "full_name": "bob",
+        "group_create": True,
+        "password": "canary"
+    }, get_instance=True) as u:
+        assert u['password'] == 'canary'
+
+        new = call('user.update', u['id'], {'random_password': True})
+        assert new['password'] != 'canary'
+
+        new = call('user.update', u['id'], {'full_name': 'bob2'})
+        assert not new['password']
