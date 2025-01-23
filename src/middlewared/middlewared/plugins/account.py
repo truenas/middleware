@@ -1537,16 +1537,19 @@ class UserService(CRUDService):
         password changes will be rejected if the payload does not match the
         currently-authenticated user.
 
-        API keys granting access to this endpoint will be able to reset
-        the password of any user.
+        NOTE: users authenticated with a one-time password will be able
+        to change the password without submitting a second time.
         """
 
         verrors = ValidationErrors()
         is_full_admin = credential_has_full_admin(app.authenticated_credentials)
+        is_otp_login = False
         authenticated_user = None
 
         if app.authenticated_credentials.is_user_session:
             authenticated_user = app.authenticated_credentials.user['username']
+            if 'OTPW' in app.authenticated_credentials.user['account_attributes']:
+                is_otp_login = True
 
         username = data['username']
         password = data['new_password']
@@ -1580,7 +1583,9 @@ class UserService(CRUDService):
                     f'{username}: user is not local to the TrueNAS server.'
                 )
 
-        if not is_full_admin:
+        # Require submitting password twice if this is not a full admin session
+        # and does not have a one-time password.
+        if not is_full_admin and not is_otp_login:
             if data['old_password'] is None:
                 verrors.add(
                     'user.set_password.old_password',
