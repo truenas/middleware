@@ -6,6 +6,11 @@ from .status_utils import Status
 
 CERT_RENEW_DAYS = 5
 CLAIM_TOKEN_CACHE_KEY = 'truenas_connect_claim_token'
+CONFIGURED_TNC_STATES = (
+    Status.CONFIGURED.name,
+    Status.CERT_RENEWAL_IN_PROGRESS.name,
+    Status.CERT_RENEWAL_SUCCESS.name,
+)
 
 
 def get_account_id_and_system_id(config: dict) -> dict | None:
