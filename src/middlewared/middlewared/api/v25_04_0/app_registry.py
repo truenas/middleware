@@ -20,7 +20,7 @@ class AppRegistryEntry(BaseModel):
 
 class AppRegistryCreate(AppRegistryEntry):
     id: Excluded = excluded_field()
-    uri: str = 'https://registry-1.docker.io/'
+    uri: str = 'https://index.docker.io/v1/'
 
 
 class AppRegistryCreateArgs(BaseModel):
