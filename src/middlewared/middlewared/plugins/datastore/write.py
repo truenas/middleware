@@ -72,7 +72,17 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         else:
             pk = insert[pk_column.name]
 
-        await self._handle_relationships(pk, relationships)
+        try:
+            await self._handle_relationships(pk, relationships)
+        except Exception:
+            await self.middleware.call(
+                'datastore.execute_write',
+                table.delete().where(pk_column == pk),
+                {
+                    'ha_sync': options['ha_sync'],
+                },
+            )
+            raise
 
         if options['send_events']:
             await self.middleware.call('datastore.send_insert_events', name, insert)

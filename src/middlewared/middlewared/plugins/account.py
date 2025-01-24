@@ -1370,7 +1370,15 @@ class UserService(CRUDService):
                     'A user cannot belong to more than 64 auxiliary groups.'
                 )
 
+            existing_groups = {g['id'] for g in await self.middleware.call('datastore.query', 'account_bsdgroups')}
+
             for idx, dbid in enumerate(data.get('groups') or []):
+                if dbid not in existing_groups:
+                    verrors.add(
+                        f'{schema}.groups.{idx}',
+                        'This group does not exist.'
+                    )
+
                 if dbid >= BASE_SYNTHETIC_DATASTORE_ID:
                     verrors.add(
                         f'{schema}.groups.{idx}',
