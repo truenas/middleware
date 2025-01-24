@@ -12,6 +12,7 @@ from middlewared.restful import (
 )
 from middlewared.service_exception import CallError
 from truenas_api_client import json
+from uuid import UUID
 
 __all__ = ("FileApplication",)
 
@@ -46,7 +47,10 @@ class FileApplication:
 
     async def download(self, request):
         path = request.path.split("/")
-        if not request.path[-1].isdigit():
+        try:
+            UUID(request.path[-1])
+        except ValueError:
+            # The job id should be a valid UUID
             resp = web.Response()
             resp.set_status(404)
             return resp
