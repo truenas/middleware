@@ -166,3 +166,17 @@ def test_create_local_user_ds_group():
             pass
 
     assert DS_GRP_VERR_STR in str(ve)
+
+
+def test_create_account_invalid_gid():
+    with pytest.raises(ValidationErrors) as ve:
+        with user({
+            "username": "invalid_user",
+            "groups": [BASE_SYNTHETIC_DATASTORE_ID - 1],
+            "full_name": "invalid_user",
+            "group_create": True,
+            "password": "test1234",
+        }):
+            pass
+
+    assert "This group does not exist." in str(ve)
