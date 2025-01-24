@@ -42,7 +42,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
         while tnc_config['status'] in CONFIGURED_TNC_STATES:
             sleep_error = False
             resp = await self.call(heartbeat_url, 'post', await self.payload(disk_mapping), get_response=False)
-            if resp['error'] is not None:
+            if resp['error'] is not None and resp['status_code'] is None:
                 logger.debug('TNC Heartbeat: Failed to connect to heart beat service (%s)', resp['error'])
                 sleep_error = True
             else:
