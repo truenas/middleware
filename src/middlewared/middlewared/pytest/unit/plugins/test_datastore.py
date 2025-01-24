@@ -614,6 +614,15 @@ class SMARTTestDiskModel(Model):
 
 
 @pytest.mark.asyncio
+async def test__bad_fk_insert_rollback():
+    async with datastore_test() as ds:
+        with pytest.raises(IntegrityError):
+            assert await ds.insert("tasks.smarttest", {"smarttest_disks": [1]})
+
+        assert await ds.query("tasks.smarttest") == []
+
+
+@pytest.mark.asyncio
 async def test__mtm_loader():
     async with datastore_test() as ds:
         ds.execute("INSERT INTO storage_disk VALUES (10)")
