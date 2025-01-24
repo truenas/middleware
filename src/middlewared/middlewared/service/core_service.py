@@ -493,28 +493,6 @@ class CoreService(Service):
 
         return schema
 
-    @accepts()
-    def get_events(self):
-        """
-        Returns metadata for every possible event emitted from websocket server.
-        """
-        events = {}
-        for name, attrs in self.middleware.get_events():
-            if attrs['private']:
-                continue
-
-            events[name] = {
-                'description': attrs['description'],
-                'wildcard_subscription': attrs['wildcard_subscription'],
-                'accepts': self.get_json_schema(list(filter(bool, attrs['accepts'])), attrs['description']),
-                'returns': (
-                    get_json_schema(attrs['new_style_returns']) if attrs['new_style_returns']
-                    else self.get_json_schema(list(filter(bool, attrs['returns'])), attrs['description'])
-                ),
-            }
-
-        return events
-
     @private
     async def call_hook(self, name, args, kwargs=None):
         kwargs = kwargs or {}
