@@ -1,22 +1,21 @@
+from dataclasses import dataclass
+
 from .model import BaseModel
 
 
+@dataclass(slots=True, frozen=True)
 class Event:
     """
     Represents a middleware API event
     """
 
-    def __init__(self, name: str, description: str, roles: list[str], models: dict[str, type[BaseModel]],
-                 private: bool = False):
-        """
-        :param name: event name
-        :param description: event description
-        :param roles: list of roles than can subscribe to event
-        :param models: data models for different event types (ADDED, CHANGED, REMOVED)
-        :param private: whether this event is private
-        """
-        self.name = name
-        self.description = description
-        self.roles = roles
-        self.models = models
-        self.private = private
+    # event name
+    name: str
+    # event description
+    description: str
+    # list of roles than can subscribe to event
+    roles: list[str]
+    # data models for different event types (ADDED, CHANGED, REMOVED)
+    models: dict[str, type[BaseModel]]
+    # whether this event is private
+    private: bool = False
