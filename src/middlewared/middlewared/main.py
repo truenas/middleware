@@ -1051,7 +1051,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                         'wildcard_subscription': False,
                         'accepts': n[1].ACCEPTS,
                         'returns': n[1].RETURNS,
-                        'new_style_returns': None,
                     }
                 ),
                 self.event_source_manager.event_sources.items()
