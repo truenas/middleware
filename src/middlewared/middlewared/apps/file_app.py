@@ -50,6 +50,7 @@ class FileApplication:
         try:
             UUID(request.path[-1])
         except ValueError:
+            self.middleware.logger.error('XXX: failed to parse %s', request.path, exc_info=True)
             # The job id should be a valid UUID
             resp = web.Response()
             resp.set_status(404)
