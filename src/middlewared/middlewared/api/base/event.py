@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from .model import BaseModel
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Event:
     """
     Represents a middleware API event

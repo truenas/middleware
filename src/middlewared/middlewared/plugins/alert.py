@@ -215,10 +215,10 @@ class AlertService(Service):
         cli_namespace = "system.alert"
         events = [
             Event(
-                "alert.list",
-                "Sent on alert changes.",
-                ["ALERT_LIST_READ"],
-                {
+                name="alert.list",
+                description="Sent on alert changes.",
+                roles=["ALERT_LIST_READ"],
+                models={
                     "ADDED": AlertListAddedEvent,
                     "CHANGED": AlertListChangedEvent,
                     "REMOVED": AlertListRemovedEvent,
