@@ -344,7 +344,14 @@ class VirtInstanceService(CRUDService):
             data['source_type'] = None
             data_devices.append(root_device_to_add)
 
-        devices = {}
+        devices = {
+            'root': {
+                'path': '/',
+                'pool': 'default',
+                'type': 'disk',
+                'size': f'{data["root_disk_size"] * (1024**3)}',
+            }
+        } if data['instance_type'] == 'VM' else {}
         for i in data_devices:
             await self.middleware.call(
                 'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['instance_type'],
