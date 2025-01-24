@@ -13,11 +13,7 @@ from middlewared.utils.lang import undefined
 
 
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item",
-           "single_argument_args", "single_argument_result", "NotRequired"]
-
-
-NotRequired = undefined
-"""Use as the default value for fields that may be excluded from the model."""
+           "single_argument_args", "single_argument_result", "NotRequired", "NotRequiredModel"]
 
 
 class BaseModel(PydanticBaseModel):
@@ -41,19 +37,6 @@ class BaseModel(PydanticBaseModel):
                             f"Model {cls.__name__} has field {k} defined as {dump(v.annotation)}. {dump(option)} "
                             "cannot be a member of an Optional or a Union, please make the whole field Private."
                         )
-
-    @model_serializer(mode="wrap")
-    def serialize_basemodel(self, serializer):
-        def remove_undefined(d):
-            if isinstance(d, dict):
-                return {
-                    k: remove_undefined(v)
-                    for k, v in d.items()
-                    if v is not undefined
-                }
-            return d
-
-        return remove_undefined(serializer(self))
 
     def model_dump(
         self,
@@ -159,6 +142,20 @@ class _ForUpdateSerializerMixin(PydanticBaseModel):
                 else v != undefined
             )
         }
+
+
+class NotRequiredModel(BaseModel):
+    @model_serializer(mode="wrap")
+    def serialize_model(self, serializer):
+        return {
+            k: v
+            for k, v in serializer(self).items()
+            if v is not undefined
+        }
+
+
+NotRequired = undefined
+"""Use as the default value for fields that may be excluded from the model."""
 
 
 def _field_for_update(field):

@@ -1,6 +1,6 @@
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, NotRequired, ForUpdateMetaclass
+from middlewared.api.base import BaseModel, NotRequired, ForUpdateMetaclass, NotRequiredModel
 
 
 def check_serialization(test_model, test_cases):
@@ -30,10 +30,10 @@ def test_dump_by_alias():
 
 
 def test_not_required():
-    class NestedModel(BaseModel):
+    class NestedModel(NotRequiredModel):
         a: int = NotRequired
 
-    class NotRequiredModel(BaseModel):
+    class NotRequiredTestModel(NotRequiredModel):
         b: int
         c: int = 3
         d: int = NotRequired
@@ -103,7 +103,7 @@ def test_not_required():
             {"b": 2, "c": 3, "e": {}, "f": {}, "j": 4}
         ),
     )
-    check_serialization(NotRequiredModel, test_cases)
+    check_serialization(NotRequiredTestModel, test_cases)
 
 
 def test_update_metaclass():
