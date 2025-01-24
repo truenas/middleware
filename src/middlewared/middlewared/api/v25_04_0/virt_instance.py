@@ -81,6 +81,11 @@ class VirtInstanceCreateArgs(BaseModel):
     iso_volume: NonEmptyString | None = None
     source_type: Literal[None, 'IMAGE', 'ZVOL', 'ISO'] = 'IMAGE'
     image: Annotated[NonEmptyString, StringConstraints(max_length=200)] | None = None
+    root_disk_size: int = Field(ge=5, default=10)  # In GBs
+    '''
+    This can be specified when creating VMs so the root device's size can be configured. Root device for VMs
+    is a sparse zvol and the field specifies space in GBs and defaults to 10 GBs.
+    '''
     remote: REMOTE_CHOICES = 'LINUX_CONTAINERS'
     instance_type: InstanceType = 'CONTAINER'
     environment: dict[str, str] | None = None
