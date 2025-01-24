@@ -162,3 +162,40 @@ def test_arc_max_set():
 
     mount_info = call("filesystem.mount_info", [["mountpoint", "=", "/"]], {"get": True})
     assert "RO" in mount_info["super_opts"]
+
+
+def test_create_error():
+    assert call("tunable.query") == []
+
+    with pytest.raises(Exception) as ve:
+        call("tunable.create", {
+            "type": "SYSCTL",
+            "var": "kernel.watchdog",
+            "value": "6",
+        }, job=True)
+
+    assert "Invalid argument" in str(ve.value)
+
+    assert call("tunable.query") == []
+
+
+def test_update_error():
+    assert call("tunable.query") == []
+
+    tunable = call("tunable.create", {
+        "type": "SYSCTL",
+        "var": "kernel.watchdog",
+        "value": "0",
+    }, job=True)
+
+    try:
+        with pytest.raises(Exception) as ve:
+            call("tunable.update", tunable["id"], {
+                "value": "6",
+            }, job=True)
+
+        assert "Invalid argument" in str(ve.value)
+
+        assert call("tunable.get_instance", tunable["id"])["value"] == "0"
+    finally:
+        call("tunable.delete", tunable["id"], job=True)
