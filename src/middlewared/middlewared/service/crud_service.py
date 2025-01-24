@@ -6,7 +6,9 @@ from typing import Annotated
 from pydantic import create_model, Field
 
 from middlewared.api import API_LOADING_FORBIDDEN, api_method
-from middlewared.api.base.model import BaseModel, query_result, query_result_item
+from middlewared.api.base.model import (
+    BaseModel, query_result, query_result_item, added_event_model, changed_event_model, removed_event_model,
+)
 if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, QueryOptions
 from middlewared.service_exception import CallError, InstanceNotFound
@@ -186,7 +188,11 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
                 roles = ['READONLY_ADMIN']
 
             if self._config.entry is not None:
-                kwargs = dict(new_style_returns=self._config.entry)
+                kwargs = dict(models={
+                    'ADDED': added_event_model(self._config.entry),
+                    'CHANGED': changed_event_model(self._config.entry),
+                    'REMOVED': removed_event_model(self._config.entry),
+                })
             else:
                 kwargs = dict(returns=Ref(self.ENTRY.name))
 

@@ -7,12 +7,13 @@ import shutil
 import subprocess
 import sys
 import textwrap
+import typing
 
 from bs4 import BeautifulSoup
 from json_schema_for_humans.generate import generate_from_filename
 from json_schema_for_humans.generation_configuration import GenerationConfiguration
 
-from middlewared.api.base.server.doc import APIDump, APIDumpMethod
+from middlewared.api.base.server.doc import APIDump, APIDumpMethod, APIDumpEvent
 
 logger = logging.getLogger(__name__)
 
@@ -34,34 +35,53 @@ class DocumentationGenerator:
             f.write(conf)
 
         self._write_api_methods()
+        self._write_api_events()
 
     def _write_api_methods(self):
-        plugins = sorted({method.name.rsplit(".", 1)[0] for method in self.api.methods})
+        return self._write_api_index(
+            "api_methods",
+            "API Methods",
+            self.api.methods,
+            self._api_method_html_process,
+        )
 
-        index = textwrap.dedent("""\
-            API Methods
-            -----------
+    def _write_api_events(self):
+        return self._write_api_index(
+            "api_events",
+            "API Events",
+            self.api.events,
+            self._api_event_html_process,
+        )
+
+    def _write_api_index(self, filename: str, title: str, items: list[APIDumpMethod | APIDumpEvent],
+                         html_process: typing.Callable[[BeautifulSoup], None]):
+        plugins = sorted({method.name.rsplit(".", 1)[0] for method in items})
+
+        index = textwrap.dedent(f"""\
+            {title}
+            {'-' * len(title)}
 
             .. toctree::
 
         """)
         for plugin in plugins:
-            methods = [
-                method
-                for method in self.api.methods
-                if method.name.rsplit(".", 1)[0] == plugin
+            plugin_items = [
+                item
+                for item in items
+                if item.name.rsplit(".", 1)[0] == plugin
             ]
-            if not methods:
+            if not plugin_items:
                 continue
 
-            index += f"   {plugin}\n"
+            index += f"   {filename}_{plugin}\n"
 
-            self._write_plugin(plugin, methods)
+            self._write_plugin(filename, plugin, plugin_items, html_process)
 
-        with open(f"{self.output_dir}/api_methods.rst", "w") as f:
+        with open(f"{self.output_dir}/{filename}.rst", "w") as f:
             f.write(index)
 
-    def _write_plugin(self, plugin: str, methods: list[APIDumpMethod]):
+    def _write_plugin(self, prefix: str, plugin: str, items: list[APIDumpMethod | APIDumpEvent],
+                      html_process: typing.Callable[[BeautifulSoup], None]):
         index = textwrap.dedent(f"""\
             {plugin}
             {'-' * len(plugin)}
@@ -70,24 +90,23 @@ class DocumentationGenerator:
 
         """)
 
-        for method in methods:
-            method_schemas_html = self._generate_method_schemas_html(method)
+        for item in items:
+            with open(f"{self.output_dir}/{prefix}_{item.name}.rst", "w") as f:
+                f.write(self._generate_item_rst(item, self._generate_item_schemas_html(prefix, item, html_process)))
 
-            with open(f"{self.output_dir}/{method.name}.rst", "w") as f:
-                f.write(self._generate_method_rst(method, method_schemas_html))
+            index += f"   {prefix}_{item.name}\n"
 
-            index += f"   {method.name}\n"
-
-        with open(f"{self.output_dir}/{plugin}.rst", "w") as f:
+        with open(f"{self.output_dir}/{prefix}_{plugin}.rst", "w") as f:
             f.write(index)
 
-    def _generate_method_schemas_html(self, method: APIDumpMethod):
-        json_path = f"{self.output_dir}/{method.name}.json"
+    def _generate_item_schemas_html(self, prefix: str, item: APIDumpMethod | APIDumpEvent,
+                                    process: typing.Callable[[BeautifulSoup], None]) -> str:
+        json_path = f"{self.output_dir}/{prefix}_{item.name}.json"
         try:
             with open(json_path, "w") as f:
-                json.dump(method.schemas, f)
+                json.dump(item.schemas, f)
 
-            html_path = f"{self.output_dir}/{method.name}.html"
+            html_path = f"{self.output_dir}/{prefix}_{item.name}.html"
             try:
                 config = GenerationConfiguration(
                     show_breadcrumbs=False,
@@ -113,16 +132,7 @@ class DocumentationGenerator:
                     h5.string = h4.text
                     h4.replace_with(h5)
 
-            for h5 in soup.find("div", {"id": "Call_parameters"}).find().find_all("h5", recursive=False):
-                if m := re.match("Item at ([0-9]+) must be:", h5.text):
-                    number = int(m.group(1))
-
-                    next_sibling = h5.next_sibling
-                    while next_sibling and next_sibling.name is None:
-                        next_sibling = next_sibling.next_sibling
-
-                    name = next_sibling.find("h4").text
-                    h5.string = f"Parameter {number}: {name}"
+            process(soup)
 
             # Multi-line default values (usually, non-trivial JSON arrays/objects)
             for default_value in soup.find_all("span", class_="default-value"):
@@ -144,20 +154,35 @@ class DocumentationGenerator:
         finally:
             os.unlink(json_path)
 
-    def _generate_method_rst(self, method: APIDumpMethod, method_schemas_html: str):
-        result = f"{method.name}\n" + "=" * len(method.name) + "\n\n"
+    def _generate_item_rst(self, item: APIDumpMethod | APIDumpEvent, schemas_html: str) -> str:
+        result = f"{item.name}\n" + "=" * len(item.name) + "\n\n"
 
-        if method.doc:
-            result += f"{method.doc}\n\n"
+        if item.doc:
+            result += f"{item.doc}\n\n"
 
         result += f".. raw:: html\n\n"
         result += textwrap.indent(
-            f"<div id=\"json-schema\">" + method_schemas_html + "</div><br><br>", " " * 4
+            f"<div id=\"json-schema\">" + schemas_html + "</div><br><br>", " " * 4
         ) + "\n\n"
 
-        result += "*Required roles:* " + " | ".join(method.roles) + "\n\n"
+        result += "*Required roles:* " + " | ".join(item.roles) + "\n\n"
 
         return result
+
+    def _api_method_html_process(self, soup: BeautifulSoup):
+        for h5 in soup.find("div", {"id": "Call_parameters"}).find().find_all("h5", recursive=False):
+            if m := re.match("Item at ([0-9]+) must be:", h5.text):
+                number = int(m.group(1))
+
+                next_sibling = h5.next_sibling
+                while next_sibling and next_sibling.name is None:
+                    next_sibling = next_sibling.next_sibling
+
+                name = next_sibling.find("h4").text
+                h5.string = f"Parameter {number}: {name}"
+
+    def _api_event_html_process(self, soup: BeautifulSoup):
+        pass
 
 
 def main(output_dir):

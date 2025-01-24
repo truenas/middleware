@@ -14,6 +14,7 @@ def service_config(klass, config):
         'entry': None,
         'event_register': True,
         'event_send': True,
+        'events': [],
         'service': None,
         'service_verb': 'reload',
         'service_verb_sync': True,

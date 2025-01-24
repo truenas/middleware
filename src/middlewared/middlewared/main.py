@@ -3,6 +3,7 @@ from .api.base.handler.result import serialize_result
 from .api.base.handler.version import APIVersion, APIVersionsAdapter
 from .api.base.server.api import API
 from .api.base.server.doc import APIDumper
+from .api.base.server.event import Event
 from .api.base.server.legacy_api_method import LegacyAPIMethod
 from .api.base.server.method import Method
 from .api.base.server.ws_handler.base import BaseWebSocketHandler
@@ -193,7 +194,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
                 methods.append(method_factory(self, method_name))
 
-        return API(version, methods)
+        events = []
+        for name, event in self.events:
+            events.append(Event(self, name))
+
+        return API(version, methods, events)
 
     def _add_api_route(self, version: str, api: API):
         self.app.router.add_route('GET', f'/api/{version}', RpcWebSocketHandler(self, api.methods))
@@ -1059,15 +1064,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         """
         self.__event_subs[name].append(handler)
 
-    def event_register(self, name, description, *, private=False, returns=None, new_style_returns=None,
-                       no_auth_required=False, no_authz_required=False, roles=None):
+    def event_register(self, name, description, *, private=False, returns=None, models=None, no_auth_required=False,
+                       no_authz_required=False, roles=None):
         """
         All events middleware can send should be registered, so they are properly documented
         and can be browsed in documentation page without source code inspection.
         """
         roles = roles or []
-        self.events.register(name, description, private, returns, new_style_returns, no_auth_required,
-                             no_authz_required, roles)
+        self.events.register(name, description, private, returns, models, no_auth_required, no_authz_required, roles)
 
     def send_event(self, name, event_type: str, **kwargs):
         should_send_event = kwargs.pop('should_send_event', None)

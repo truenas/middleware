@@ -12,8 +12,8 @@ from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
 from middlewared.utils.lang import undefined
 
 
-__all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item",
-           "single_argument_args", "single_argument_result"]
+__all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item", "added_event_model",
+           "changed_event_model", "removed_event_model", "single_argument_args", "single_argument_result"]
 
 
 class BaseModel(PydanticBaseModel):
@@ -224,4 +224,33 @@ def query_result_item(item):
         __base__=(item,),
         __module__=item.__module__,
         __cls_kwargs__={"metaclass": ForUpdateMetaclass},
+    )
+
+
+def added_event_model(item):
+    return create_model(
+        item.__name__.removesuffix("Entry") + "AddedEvent",
+        __base__=(BaseModel,),
+        __module__=item.__module__,
+        id=typing.Annotated[item.model_fields["id"].annotation, Field()],
+        fields=typing.Annotated[item, Field()],
+    )
+
+
+def changed_event_model(item):
+    return create_model(
+        item.__name__.removesuffix("Entry") + "ChangedEvent",
+        __base__=(BaseModel,),
+        __module__=item.__module__,
+        id=typing.Annotated[item.model_fields["id"].annotation, Field()],
+        fields=typing.Annotated[item, Field()],
+    )
+
+
+def removed_event_model(item):
+    return create_model(
+        item.__name__.removesuffix("Entry") + "RemovedEvent",
+        __base__=(BaseModel,),
+        __module__=item.__module__,
+        id=typing.Annotated[item.model_fields["id"].annotation, Field()],
     )
