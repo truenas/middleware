@@ -80,7 +80,6 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 table.delete().where(pk_column == pk),
                 {
                     'ha_sync': options['ha_sync'],
-                    'return_last_insert_rowid': return_last_insert_rowid,
                 },
             )
             raise
