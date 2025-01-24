@@ -31,7 +31,7 @@ def apply_config(channel, data):
     rc = 0
     options = {'stdout': DEVNULL, 'stderr': DEVNULL}
     if data.get('dhcp'):
-        rc |= run(base_cmd + ['dhcp'], **options).returncode
+        rc |= run(base_cmd + ['ipsrc', 'dhcp'], **options).returncode
     else:
         rc |= run(base_cmd + ['ipsrc', 'static'], **options).returncode
         rc |= run(base_cmd + ['ipaddr', data['ipaddress']], **options).returncode
