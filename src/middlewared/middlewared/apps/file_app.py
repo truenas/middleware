@@ -48,7 +48,7 @@ class FileApplication:
     async def download(self, request):
         path = request.path.split("/")
         try:
-            UUID(request.path[-1])
+            UUID(path[-1])
         except ValueError:
             self.middleware.logger.error('XXX: failed to parse %s', request.path, exc_info=True)
             # The job id should be a valid UUID
