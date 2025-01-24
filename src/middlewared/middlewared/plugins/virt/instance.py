@@ -284,6 +284,12 @@ class VirtInstanceService(CRUDService):
             async with session.get(url) as resp:
                 for v in (await resp.json())['products'].values():
                     alias = v['aliases'].split(',', 1)[0]
+                    if v['requirements'].get('cdrom_agent'):
+                        # We are adding this check to ignore such images because these are cloud images
+                        # and require agent to be installed/configured which is obviously not going to
+                        # happen
+                        continue
+
                     if alias not in choices:
                         instance_types = set()
                         for i in v['versions'].values():
