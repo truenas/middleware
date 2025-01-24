@@ -65,6 +65,7 @@ class VirtInstanceEntry(BaseModel):
     vnc_enabled: bool
     vnc_port: int | None
     vnc_password: Secret[NonEmptyString | None]
+    secure_boot: bool | None
 
 
 # Lets require at least 32MiB of reserved memory
@@ -87,6 +88,7 @@ class VirtInstanceCreateArgs(BaseModel):
     cpu: str | None = None
     devices: list[DeviceType] | None = None
     memory: MemoryType | None = None
+    secure_boot: bool = False
     enable_vnc: bool = False
     vnc_port: int | None = Field(ge=5900, le=65535, default=None)
     zvol_path: NonEmptyString | None = None
@@ -145,6 +147,7 @@ class VirtInstanceUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     enable_vnc: bool
     vnc_password: Secret[NonEmptyString | None]
     '''Setting vnc_password to null will unset VNC password'''
+    secure_boot: bool = False
 
 
 class VirtInstanceUpdateArgs(BaseModel):
