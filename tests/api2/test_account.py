@@ -3,6 +3,7 @@ import sys
 
 import pytest
 
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
@@ -10,6 +11,8 @@ from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
 sys.path.append(os.getcwd())
 from functions import DELETE, POST, PUT
+
+BASE_SYNTHETIC_DATASTORE_ID = 100000000
 
 
 @pytest.mark.parametrize("api", ["ws", "rest"])
@@ -175,3 +178,17 @@ def test_update_account_using_token():
         assert c.call("auth.login_with_token", token)
 
         c.call("user.update", 1, {})
+
+
+def test_create_account_invalid_gid():
+    with pytest.raises(ValidationErrors) as ve:
+        with user({
+            "username": "invalid_user",
+            "groups": [BASE_SYNTHETIC_DATASTORE_ID - 1],
+            "full_name": "invalid_user",
+            "group_create": True,
+            "password": "test1234",
+        }):
+            pass
+
+    assert "This group does not exist." in str(ve)
