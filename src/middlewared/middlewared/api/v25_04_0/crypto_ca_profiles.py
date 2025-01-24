@@ -35,7 +35,7 @@ class ExtendedKeyUsageModel(BaseModel):
 class CertExtensionsModel(BaseModel):
     KeyUsage: KeyUsageModel = KeyUsageModel()
     BasicConstraints: BasicConstraintsModel = BasicConstraintsModel()
-    ExtentedKeyUsage: ExtendedKeyUsageModel = ExtendedKeyUsageModel()
+    ExtendedKeyUsage: ExtendedKeyUsageModel = ExtendedKeyUsageModel()
 
 
 @final
