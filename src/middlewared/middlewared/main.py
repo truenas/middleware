@@ -1067,8 +1067,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def event_register(self, name, description, *, private=False, returns=None, models=None, no_auth_required=False,
                        no_authz_required=False, roles=None):
         """
-        All events middleware can send should be registered, so they are properly documented
-        and can be browsed in documentation page without source code inspection.
+        All middleware events should be registered, so they are properly documented
+        and can be browsed in the API documentation without having to inspect source code.
         """
         roles = roles or []
         self.events.register(name, description, private, returns, models, no_auth_required, no_authz_required, roles)
