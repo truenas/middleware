@@ -2,7 +2,7 @@ from subprocess import run, DEVNULL
 from functools import cache
 
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Password, Ref, returns, Str
-from middlewared.service import private, CallError, filterable_returns, CRUDService, ValidationError, ValidationErrors
+from middlewared.service import private, CallError, CRUDService, ValidationError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import Netmask, PasswordComplexity, Range
 
@@ -38,7 +38,10 @@ def apply_config(channel, data):
         rc |= run(base_cmd + ['netmask', data['netmask']], **options).returncode
         rc |= run(base_cmd + ['defgw', 'ipaddr', data['gateway']], **options).returncode
 
-    rc |= run(base_cmd + ['vlan', 'id', f'{data.get("vlan", "off")}'], **options).returncode
+    vlan = data.get("vlan")
+    if vlan is None:
+        vlan = "off"
+    rc |= run(base_cmd + ['vlan', 'id', str(vlan)], **options).returncode
 
     rc |= run(base_cmd + ['access', 'on'], **options).returncode
     rc |= run(base_cmd + ['auth', 'USER', 'MD2,MD5'], **options).returncode
