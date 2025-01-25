@@ -64,7 +64,7 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
 
     @model_validator(mode='after')
     def validate_attrs(self):
-        if self.migrate_applications and not self.pool:
+        if self.migrate_applications is True and not self.pool:
             raise ValueError('Pool is required when migrating applications.')
         return self
 

@@ -111,19 +111,19 @@ class DockerService(ConfigService):
                         f'{ix_apps_ds[0]["id"]!r} can only be migrated to a destination pool '
                         'which is "KEY" encrypted.'
                     )
-                elif destination_root_ds['locked']:
+                if destination_root_ds['locked']:
                     verrors.add(
                         f'{schema}.migrate_applications',
                         f'Migration not possible as {config["pool"]!r} is locked'
                     )
-                elif not await self.middleware.call(
-                    'datastore.query', 'storage.encrypteddataset', [['name', '=', config['pool']]]
-                ):
-                    verrors.add(
-                        f'{schema}.migrate_applications',
-                        f'Migration not possible as system does not has encryption key for {config["pool"]!r} '
-                        'stored'
-                    )
+                    if not await self.middleware.call(
+                        'datastore.query', 'storage.encrypteddataset', [['name', '=', config['pool']]]
+                    ):
+                        verrors.add(
+                            f'{schema}.migrate_applications',
+                            f'Migration not possible as system does not has encryption key for {config["pool"]!r} '
+                            'stored'
+                        )
 
         verrors.check()
 
@@ -141,6 +141,10 @@ class DockerService(ConfigService):
         migrate_apps = config.get('migrate_applications', False)
 
         await self.validate_data(old_config, config)
+
+        if migrate_apps:
+            await self.middleware.call('docker.migrate_ix_apps_dataset', job, config, old_config, {})
+            return
 
         if old_config != config:
             address_pools_changed = any(config[k] != old_config[k] for k in ('address_pools', 'cidr_v6'))
