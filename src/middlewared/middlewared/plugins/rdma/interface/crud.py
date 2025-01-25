@@ -46,6 +46,7 @@ class RDMAInterfaceService(CRUDService):
         cli_private = True
         datastore = 'rdma.interface'
         datastore_prefix = "rdmaif_"
+        role_prefix = 'NETWORK_INTERFACE'
 
     async def compress(self, data):
         if 'check' in data:
