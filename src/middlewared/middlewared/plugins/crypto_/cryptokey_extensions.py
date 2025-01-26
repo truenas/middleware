@@ -12,7 +12,7 @@ class CryptoKeyService(Service):
     class Config:
         private = True
 
-    @api_method(CryptoKeyValidateExtensionArgs, CryptoKeyValidateExtensionResult)
+    @api_method(CryptoKeyValidateExtensionArgs, CryptoKeyValidateExtensionResult, private=True)
     def validate_extensions(self, extensions_data, schema):
         # We do not need to validate some extensions like `AuthorityKeyIdentifier`.
         # They are generated from the cert/ca's public key contents. So we skip these.

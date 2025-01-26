@@ -14,26 +14,26 @@ __all__ = [
 ]
 
 
-class BasicConstraints(BaseModel):
+class BasicConstraintsExtension(BaseModel):
     ca: bool = False
     enabled: bool = False
     path_length: int | None = None
     extension_critical: bool = False
 
 
-class AuthorityKeyIdentifier(BaseModel):
+class AuthorityKeyIdentifierExtension(BaseModel):
     authority_cert_issuer: bool = False
     enabled: bool = False
     extension_critical: bool = False
 
 
-class ExtendedKeyUsage(BaseModel):
+class ExtendedKeyUsageExtension(BaseModel):
     usages: list[EkuOID] = Field(default_factory=list)
     enabled: bool = False
     extension_critical: bool = False
 
 
-class KeyUsage(BaseModel):
+class KeyUsageExtension(BaseModel):
     enabled: bool = False
     digital_signature: bool = False
     content_commitment: bool = False
@@ -48,10 +48,10 @@ class KeyUsage(BaseModel):
 
 
 class CertExtensions(BaseModel):
-    BasicConstraints: BasicConstraints = Field(default_factory=BasicConstraints)
-    AuthorityKeyIdentifier: AuthorityKeyIdentifier = Field(default_factory=AuthorityKeyIdentifier)
-    ExtendedKeyUsage: ExtendedKeyUsage = Field(default_factory=ExtendedKeyUsage)
-    KeyUsage: KeyUsage = Field(default_factory=KeyUsage)
+    BasicConstraints: BasicConstraintsExtension = Field(default_factory=BasicConstraintsExtension)
+    AuthorityKeyIdentifier: AuthorityKeyIdentifierExtension = Field(default_factory=AuthorityKeyIdentifierExtension)
+    ExtendedKeyUsage: ExtendedKeyUsageExtension = Field(default_factory=ExtendedKeyUsageExtension)
+    KeyUsage: KeyUsageExtension = Field(default_factory=KeyUsageExtension)
 
 
 class CertificateCertInfo(BaseModel):

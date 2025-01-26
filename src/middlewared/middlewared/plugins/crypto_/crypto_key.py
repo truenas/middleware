@@ -23,18 +23,18 @@ class CryptoKeyService(Service):
     def generate_self_signed_certificate(self):
         return generate_self_signed_certificate()
 
-    @api_method(CryptoKeyGenerateCertificateArgs, CryptoKeyGenerateCertificateResult)
+    @api_method(CryptoKeyGenerateCertificateArgs, CryptoKeyGenerateCertificateResult, private=True)
     def generate_certificate(self, data):
         return generate_certificate(data)
 
-    @api_method(CryptoKeyGenerateSelfSignedCAArgs, CryptoKeyGenerateSelfSignedCAResult)
+    @api_method(CryptoKeyGenerateSelfSignedCAArgs, CryptoKeyGenerateSelfSignedCAResult, private=True)
     def generate_self_signed_ca(self, data):
         return self.generate_certificate_authority(data)
 
-    @api_method(CryptoKeyGenerateCAArgs, CryptoKeyGenerateCAResult)
+    @api_method(CryptoKeyGenerateCAArgs, CryptoKeyGenerateCAResult, private=True)
     def generate_certificate_authority(self, data):
         return generate_certificate_authority(data)
 
-    @api_method(CryptoKeySignCSRWithCAArgs, CryptoKeySignCSRWithCAResult)
+    @api_method(CryptoKeySignCSRWithCAArgs, CryptoKeySignCSRWithCAResult, private=True)
     def sign_csr_with_ca(self, data):
         return sign_csr_with_ca(data)
