@@ -71,7 +71,7 @@ class DockerService(Service):
                     'target_dataset': new_ds,
                     'recursive': True,
                     'also_include_naming_schema': [MIGRATION_NAMING_SCHEMA],
-                    'retention_policy': 'NONE',
+                    'retention_policy': 'SOURCE',
                     'replicate': True,
                     'readonly': 'IGNORE',
                     'exclude_mountpoint_property': False,

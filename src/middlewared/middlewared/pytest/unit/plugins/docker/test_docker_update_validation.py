@@ -158,7 +158,7 @@ SYSTEM_STATE = {
             'pool': 'tank',
             'address_pools': [],
         },
-        ['\'tank/ix-apps\' can only be migrated to a destination pool which is \'KEY\' encrypted.']
+        ['\'tank/ix-apps\' can only be migrated to a destination pool which is "KEY" encrypted.']
     ),
     (
         {
