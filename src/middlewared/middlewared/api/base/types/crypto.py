@@ -4,7 +4,7 @@ from enum import Enum
 EC_CURVE_DEFAULT = 'SECP384R1'
 
 
-class DigestAlgorithm(str, Enum):
+class DigestAlgorithm(Enum):
     SHA1 = 'SHA1'
     SHA224 = 'SHA224'
     SHA256 = 'SHA256'
@@ -12,7 +12,7 @@ class DigestAlgorithm(str, Enum):
     SHA512 = 'SHA512'
 
 
-class EC_CURVES(str, Enum):
+class EC_CURVES(Enum):
     SECP256R1 = 'SECP256R1'
     SECP384R1 = 'SECP384R1'
     SECP521R1 = 'SECP521R1'
@@ -21,7 +21,7 @@ class EC_CURVES(str, Enum):
 
 # We would want to hard code EKU OIDs here because if cryptography version is bumped, that will mean there could
 # be dynamic update to API which we don't want
-class EkuOID(str, Enum):
+class EkuOID(Enum):
     ANY_EXTENDED_KEY_USAGE = 'ANY_EXTENDED_KEY_USAGE'
     CERTIFICATE_TRANSPARENCY = 'CERTIFICATE_TRANSPARENCY'
     CLIENT_AUTH = 'CLIENT_AUTH'

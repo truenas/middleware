@@ -17,6 +17,7 @@ __all__ = [
     'CertificateCSRCreateResult', 'CertificateImportedCSRCreateArgs', 'CertificateImportedCSRCreateResult',
     'CertificateImportedCertificateCreateArgs', 'CertificateImportedCertificateCreateResult',
     'CertificateUpdateArgs', 'CertificateUpdateResult', 'CertificateDeleteArgs', 'CertificateDeleteResult',
+    'CertificateCreate',
 ]
 
 
@@ -61,7 +62,6 @@ class CertificateEntry(BaseModel):
     lifetime: int | None
     serial: int | None
     key_length: int | None
-    add_to_trusted_store: bool = False  # FIXME: this should probably not be here
     chain: bool | None
     CA_type_existing: bool
     CA_type_internal: bool
@@ -74,7 +74,6 @@ class CertificateEntry(BaseModel):
     extensions: dict
     revoked_certs: list = Field(default_factory=list)
     crl_path: NonEmptyString | None = None
-    signed_certificates: int | None = None  # FIXME: This should only be set for CAs
 
 
 class CertificateCreate(BaseModel):

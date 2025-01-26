@@ -10,7 +10,8 @@ __all__ = [
     'CryptoKeyGenerateCertificateArgs', 'CryptoKeyGenerateCertificateResult', 'CryptoKeyGenerateSelfSignedCAArgs',
     'CryptoKeyGenerateSelfSignedCAResult', 'CryptoKeyGenerateCAArgs', 'CryptoKeyGenerateCAResult',
     'CryptoKeySignCSRWithCAArgs', 'CryptoKeySignCSRWithCAResult', 'CryptoKeyValidateExtensionArgs',
-    'CryptoKeyValidateExtensionResult', 'CertExtensions',
+    'CryptoKeyValidateExtensionResult', 'CertExtensions', 'BasicConstraintsExtension', 'KeyUsageExtension',
+    'ExtendedKeyUsageExtension',
 ]
 
 
