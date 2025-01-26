@@ -11,6 +11,8 @@ from .app_registry import *  # noqa
 from .auth import *  # noqa
 from .boot_environments import *  # noqa
 from .catalog import *  # noqa
+from .certificate import *  # noqa
+from .certificateauthority import *  # noqa
 from .cloud_backup import *  # noqa
 from .cloud_sync import *  # noqa
 from .common import *  # noqa
