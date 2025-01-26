@@ -3,7 +3,7 @@ from typing import Any, Literal
 from pydantic import EmailStr, Field, Secret
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, LongNonEmptyString, NonEmptyString, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, LongNonEmptyString, NonEmptyString, single_argument_args,
 )
 from middlewared.api.base.types import DigestAlgorithm, EC_CURVES, EC_CURVE_DEFAULT
 
@@ -16,6 +16,7 @@ __all__ = [
     'CertificateInternalCreateArgs', 'CertificateInternalCreateResult', 'CertificateCSRCreateArgs',
     'CertificateCSRCreateResult', 'CertificateImportedCSRCreateArgs', 'CertificateImportedCSRCreateResult',
     'CertificateImportedCertificateCreateArgs', 'CertificateImportedCertificateCreateResult',
+    'CertificateUpdateArgs', 'CertificateUpdateResult', 'CertificateDeleteArgs', 'CertificateDeleteResult',
 ]
 
 
@@ -185,3 +186,28 @@ class CertificateImportedCertificateCreateArgs(BaseModel):
 
 class CertificateImportedCertificateCreateResult(BaseModel):
     result: Any
+
+
+class CertificateUpdate(BaseModel, metaclass=ForUpdateMetaclass):
+    revoked: bool
+    renew_days: int = Field(ge=1, le=30)
+    add_to_trusted_store: bool
+    name: NonEmptyString
+
+
+class CertificateUpdateArgs(BaseModel):
+    id: int
+    certificate_update: CertificateUpdate = Field(default_factory=CertificateUpdate)
+
+
+class CertificateUpdateResult(BaseModel):
+    result: CertificateEntry
+
+
+class CertificateDeleteArgs(BaseModel):
+    id: int
+    force: bool = False
+
+
+class CertificateDeleteResult(BaseModel):
+    result: Literal[True]
