@@ -1,15 +1,21 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import EmailStr, Field, Secret
 
-from middlewared.api.base import BaseModel, LongNonEmptyString, NonEmptyString
+from middlewared.api.base import (
+    BaseModel, Excluded, excluded_field, LongNonEmptyString, NonEmptyString, single_argument_args,
+)
 from middlewared.api.base.types import DigestAlgorithm, EC_CURVES, EC_CURVE_DEFAULT
 
 from .cryptokey import CertExtensions
 
 
 __all__ = [
-    'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult',
+    'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult', 'CertificateAcmeCreateArgs',
+    'CertificateAcmeCreateResult', 'CertificateAcmeCreateArgs', 'CertificateAcmeCreateResult',
+    'CertificateInternalCreateArgs', 'CertificateInternalCreateResult', 'CertificateCSRCreateArgs',
+    'CertificateCSRCreateResult', 'CertificateImportedCSRCreateArgs', 'CertificateImportedCSRCreateResult',
+    'CertificateImportedCertificateCreateArgs', 'CertificateImportedCertificateCreateResult',
 ]
 
 
@@ -110,3 +116,72 @@ class CertificateCreateArgs(BaseModel):
 
 class CertificateCreateResult(BaseModel):
     result: CertificateEntry
+
+
+@single_argument_args('certificate_create_acme')
+class CertificateAcmeCreateArgs(BaseModel):
+    tos: bool = False
+    csr_id: int
+    renew_days: int = Field(ge=1, le=30, default=10)
+    acme_directory_uri: NonEmptyString
+    name: NonEmptyString
+    dns_mapping: dict
+
+
+class CertificateAcmeCreateResult(BaseModel):
+    result: Any
+
+
+class CertificateInternalCreate(CertificateCreate):
+    lifetime: int
+    country: NonEmptyString
+    state: NonEmptyString
+    city: NonEmptyString
+    organization: NonEmptyString
+    email: EmailStr
+    san: list[NonEmptyString]
+    signedby: int
+    create_type: Excluded = excluded_field()
+
+
+class CertificateInternalCreateArgs(BaseModel):
+    certificate_create_internal: CertificateInternalCreate
+
+
+class CertificateInternalCreateResult(BaseModel):
+    result: Any
+
+
+@single_argument_args('certificate_create_CSR')
+class CertificateCSRCreateArgs(CertificateInternalCreate):
+    signedby: Excluded = excluded_field()
+    lifetime: Excluded = excluded_field()
+
+
+class CertificateCSRCreateResult(BaseModel):
+    result: Any
+
+
+@single_argument_args('create_imported_csr')
+class CertificateImportedCSRCreateArgs(BaseModel):
+    CSR: LongNonEmptyString
+    name: NonEmptyString
+    privatekey: Secret[LongNonEmptyString]
+    passphrase: Secret[NonEmptyString | None] = None
+
+
+class CertificateImportedCSRCreateResult(BaseModel):
+    result: Any
+
+
+@single_argument_args('create_imported_certificate')
+class CertificateImportedCertificateCreateArgs(BaseModel):
+    csr_id: int
+    certificate: Secret[LongNonEmptyString]
+    name: NonEmptyString
+    passphrase: Secret[NonEmptyString | None] = None
+    privatekey: Secret[LongNonEmptyString]
+
+
+class CertificateImportedCertificateCreateResult(BaseModel):
+    result: Any
