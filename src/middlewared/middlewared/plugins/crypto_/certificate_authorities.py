@@ -388,9 +388,6 @@ class CertificateAuthorityService(CRUDService):
             'ca_update',
             Bool('revoked'),
             Bool('add_to_trusted_store'),
-            Int('ca_id'),
-            Int('csr_cert_id'),
-            Str('create_type', enum=['CA_SIGN_CSR']),
             Str('name'),
         ),
     )
@@ -420,16 +417,6 @@ class CertificateAuthorityService(CRUDService):
                 ]
             }
         """
-        if data.pop('create_type', '') == 'CA_SIGN_CSR':
-            # BEING USED BY OLD LEGACY FOR SIGNING CSR'S. THIS CAN BE REMOVED WHEN LEGACY UI IS REMOVED
-            data['ca_id'] = id_
-            return await self.middleware.call(
-                'certificateauthority.ca_sign_csr_impl', data, 'certificate_authority_update'
-            )
-        else:
-            for key in ['ca_id', 'csr_cert_id']:
-                data.pop(key, None)
-
         old = await self.get_instance(id_)
         # signedby is changed back to integer from a dict
         old['signedby'] = old['signedby']['id'] if old.get('signedby') else None
