@@ -1,4 +1,6 @@
-from pydantic import Any, EmailStr, Field, field_validator
+from typing import Any
+
+from pydantic import EmailStr, Field, field_validator
 
 from middlewared.api.base import BaseModel, LongNonEmptyString, NonEmptyString, single_argument_args
 from middlewared.api.base.types import DigestAlgorithm, EkuOID
@@ -7,7 +9,8 @@ from middlewared.api.base.types import DigestAlgorithm, EkuOID
 __all__ = [
     'CryptoKeyGenerateCertificateArgs', 'CryptoKeyGenerateCertificateResult', 'CryptoKeyGenerateSelfSignedCAArgs',
     'CryptoKeyGenerateSelfSignedCAResult', 'CryptoKeyGenerateCAArgs', 'CryptoKeyGenerateCAResult',
-    'CryptoKeySignCSRWithCAArgs', 'CryptoKeySignCSRWithCAResult',
+    'CryptoKeySignCSRWithCAArgs', 'CryptoKeySignCSRWithCAResult', 'CryptoKeyValidateExtensionArgs',
+    'CryptoKeyValidateExtensionResult',
 ]
 
 
@@ -114,4 +117,14 @@ class CryptoKeySignCSRWithCAArgs(BaseModel):
 
 
 class CryptoKeySignCSRWithCAResult(BaseModel):
+    result: Any
+
+
+@single_argument_args('cryptokey_validate_extension')
+class CryptoKeyValidateExtensionArgs(BaseModel):
+    cert_extensions: CertExtensions = Field(default_factory=CertExtensions)
+    schema: NonEmptyString
+
+
+class CryptoKeyValidateExtensionResult(BaseModel):
     result: Any
