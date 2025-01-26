@@ -15,3 +15,11 @@ class EkuOID(str, Enum):
     SERVER_AUTH = 'SERVER_AUTH'
     SMARTCARD_LOGON = 'SMARTCARD_LOGON'
     TIME_STAMPING = 'TIME_STAMPING'
+
+
+class DigestAlgorithm(str, Enum):
+    SHA1 = 'SHA1'
+    SHA224 = 'SHA224'
+    SHA256 = 'SHA256'
+    SHA384 = 'SHA384'
+    SHA512 = 'SHA512'
