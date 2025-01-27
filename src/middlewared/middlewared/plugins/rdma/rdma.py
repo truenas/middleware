@@ -45,7 +45,7 @@ class RDMAService(Service):
                 result['part'] = sline[len(PART_NUMBER_PREFIX):]
         return result
 
-    @api_method(RdmaLinkConfigArgs, RdmaLinkConfigResult, private=True)
+    @api_method(RdmaLinkConfigArgs, RdmaLinkConfigResult, private=True, roles=['NETWORK_INTERFACE_READ'])
     async def get_link_choices(self, all):
         """Return a list containing dictionaries with keys 'rdma' and 'netdev'.
 
@@ -81,7 +81,7 @@ class RDMAService(Service):
                 result.append({'rdma': link['ifname'], 'netdev': link['netdev']})
         return result
 
-    @api_method(RdmaCardConfigArgs, RdmaCardConfigResult)
+    @api_method(RdmaCardConfigArgs, RdmaCardConfigResult, roles=['NETWORK_INTERFACE_READ'])
     @cache
     def get_card_choices(self):
         """Return a list containing details about each RDMA card.  Dual cards
@@ -126,7 +126,7 @@ class RDMAService(Service):
             v['name'] = ':'.join(sorted(names))
         return list(grouper.values())
 
-    @api_method(RdmaCapableProtocolsArgs, RdmaCapableProtocolsResult, roles=['SHARING_ADMIN'])
+    @api_method(RdmaCapableProtocolsArgs, RdmaCapableProtocolsResult, roles=['NETWORK_INTERFACE_READ'])
     async def capable_protocols(self):
         result = []
         is_ent = await self.middleware.call('system.is_enterprise')
