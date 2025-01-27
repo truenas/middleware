@@ -69,7 +69,10 @@
             if user and secret:
                 discovery_outgoing.append(f'{user} {secret}')
 
-    def ha_node_wwpn_for_fcport(fcport):
+    # Populate this below
+    fc_host_by_port_name = {}
+
+    def ha_node_wwpn_for_fcport_or_fchost(fcport):
         if render_ctx['failover.node'] == 'A':
             return wwn_as_colon_hex(fcport['wwpn'])
         elif render_ctx['failover.node'] == 'B':
@@ -99,7 +102,9 @@
         if '/' in fcport['port']:
             parent_port_name = fcport['port'].split('/')[0]
             if parent_fcport := fcports_by_port_name.get(parent_port_name):
-                return ha_node_wwpn_for_fcport(parent_fcport)
+                return ha_node_wwpn_for_fcport_or_fchost(parent_fcport)
+            if parent_fchost := fc_host_by_port_name.get(parent_port_name):
+                return ha_node_wwpn_for_fcport_or_fchost(parent_fchost)
 
     def fc_initiator_access_for_target(target):
         initiator_access = set()
@@ -111,6 +116,7 @@
         return initiator_access
 
     if render_ctx['fc.capable']:
+        fc_host_by_port_name = {x['alias']: x for x in middleware.call_sync('fc.fc_host.query')}
         # Physical devices are added to the config automatically.  We want to
         # identify any that are not being used and select a rel_tgt_id in the
         # 10K range for them.
@@ -624,7 +630,7 @@ TARGET_DRIVER qla2x00t {
 % if alua_enabled:
 ##    ALUA enabled - write out the target for this node
 <%
-    wwpn = ha_node_wwpn_for_fcport(fcport)
+    wwpn = ha_node_wwpn_for_fcport_or_fchost(fcport)
     target = fcport_to_target(fcport)
     fc_initiator_access = fc_initiator_access_for_target(target)
     parent_host = fcport_to_parent_host(fcport)
@@ -684,7 +690,7 @@ TARGET_DRIVER qla2x00t {
 ##    ALUA not enabled - only write out the target for this node if MASTER
 % if failover_status == "MASTER":
 <%
-    wwpn = ha_node_wwpn_for_fcport(fcport)
+    wwpn = ha_node_wwpn_for_fcport_or_fchost(fcport)
     target = fcport_to_target(fcport)
     fc_initiator_access = fc_initiator_access_for_target(target)
     parent_host = fcport_to_parent_host(fcport)
