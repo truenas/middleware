@@ -377,6 +377,7 @@ class FailoverService(ConfigService):
 
         self.middleware.call_sync(
             'failover.call_remote', 'core.call_hook', ['config.on_upload', [FREENAS_DATABASE]],
+            {'timeout': 300},  # Give more time for potential initrd update
         )
 
         # need to make sure the license information is updated on the standby node since
