@@ -1,5 +1,6 @@
 import typing
 
+from middlewared.utils.cpu import cpu_info
 from middlewared.utils.disk_temperatures import get_disks_for_temperature_reading
 
 from .graph_base import GraphBase
@@ -13,12 +14,12 @@ class CPUPlugin(GraphBase):
     vertical_label = '%CPU'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return 'system.cpu'
+        return 'truenas_cpu_usage.cpu'
 
-    def query_parameters(self) -> dict:
-        return super().query_parameters() | {
-            'dimensions': 'system|user|idle|softirq|nice|iowait',
-        }
+    async def get_identifiers(self) -> typing.Optional[list]:
+        cpu_usage = [f'cpu{i}' for i in cpu_info()['core']]
+        cpu_usage.append('cpu')
+        return cpu_usage
 
 
 class CPUTempPlugin(GraphBase):

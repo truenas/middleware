@@ -59,7 +59,6 @@ def get_metrics_approximation(
 ) -> dict:
     data = {
         1: {
-            'system.cpu': 10,
             'system.clock_sync_state': 1,
             'system.clock_status': 2,
             'system.clock_sync_offset': 1,
@@ -122,7 +121,7 @@ def get_metrics_approximation(
             'cpu.usage': core_count + 1,
 
             # cputemp
-            'cputemp.temperatures': core_count,
+            'cputemp.temperatures': core_count + 1,
 
             # ups
             'nut_ups.charge': 1,
