@@ -29,7 +29,7 @@ def test_excluded_field():
     with pytest.raises(ValidationErrors) as ve:
         accept_params(CreateArgs, [{"id": 1, "name": "Ivan"}])
 
-    assert ve.value.errors[0].attribute == "id"
+    assert ve.value.errors[0].attribute == "data.id"
     assert ve.value.errors[0].errmsg == "Extra inputs are not permitted"
 
 
