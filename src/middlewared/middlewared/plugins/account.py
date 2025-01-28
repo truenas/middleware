@@ -1548,7 +1548,7 @@ class UserService(CRUDService):
 
         if app.authenticated_credentials.is_user_session:
             authenticated_user = app.authenticated_credentials.user['username']
-            if 'OTPW' in app.authenticate_credentials.user['account_attributes']:
+            if 'OTPW' in app.authenticated_credentials.user['account_attributes']:
                 is_otp_login = True
 
         username = data['username']
