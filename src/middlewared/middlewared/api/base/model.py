@@ -147,16 +147,15 @@ class _ForUpdateSerializerMixin(PydanticBaseModel):
 class NotRequiredModel(BaseModel):
     @model_serializer(mode="wrap")
     def serialize_basemodel(self, serializer):
-        def remove_undefined(d):
-            if isinstance(d, dict):
-                return {
-                    k: remove_undefined(v)
-                    for k, v in d.items()
-                    if v is not undefined
-                }
-            return d
+        obj = serializer(self)
+        if isinstance(obj, dict):
+            return {
+                k: v
+                for k, v in obj.items()
+                if v is not undefined
+            }
+        return obj
 
-        return remove_undefined(serializer(self))
 
 NotRequired = undefined
 """Use as the default value for fields that may be excluded from the model."""
