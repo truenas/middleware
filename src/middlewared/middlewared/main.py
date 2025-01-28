@@ -3,6 +3,7 @@ from .api.base.handler.result import serialize_result
 from .api.base.handler.version import APIVersion, APIVersionsAdapter
 from .api.base.server.api import API
 from .api.base.server.doc import APIDumper
+from .api.base.server.event import Event
 from .api.base.server.legacy_api_method import LegacyAPIMethod
 from .api.base.server.method import Method
 from .api.base.server.ws_handler.base import BaseWebSocketHandler
@@ -17,7 +18,7 @@ from .role import ROLES, RoleManager
 from .schema import OROperator
 import middlewared.service
 from .service_exception import CallError, ErrnoMixin
-from .utils import MIDDLEWARE_RUN_DIR, sw_version
+from .utils import MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH, sw_version
 from .utils.audit import audit_username_from_session
 from .utils.debug import get_threads_stacks
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
@@ -27,11 +28,9 @@ from .utils.profile import profile_wrap
 from .utils.rate_limit.cache import RateLimitCache
 from .utils.service.call import ServiceCallMixin
 from .utils.service.crud import real_crud_method
-from .utils.syslog import syslog_message
 from .utils.threading import set_thread_name, IoThreadPoolExecutor, io_thread_pool_executor
 from .utils.time_utils import utc_now
 from .utils.type import copy_function_metadata
-from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
 from aiohttp.http_websocket import WSCloseCode
@@ -194,13 +193,17 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
                 methods.append(method_factory(self, method_name))
 
-        return API(version, methods)
+        events = []
+        for name, event in self.events:
+            events.append(Event(self, name))
+
+        return API(version, methods, events)
 
     def _add_api_route(self, version: str, api: API):
         self.app.router.add_route('GET', f'/api/{version}', RpcWebSocketHandler(self, api.methods))
 
     def __init_services(self):
-        from middlewared.service import CoreService
+        from middlewared.service.core_service import CoreService
         self.add_service(CoreService(self))
         self.event_register('core.environ', 'Send on middleware process environment changes.', private=True)
 
@@ -448,7 +451,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         systemd_notify(f'EXTEND_TIMEOUT_USEC={SYSTEMD_EXTEND_USECS}')
 
     def __notify_startup_complete(self):
-        with open(middlewared.service.MIDDLEWARE_STARTED_SENTINEL_PATH, 'w'):
+        with open(MIDDLEWARE_STARTED_SENTINEL_PATH, 'w'):
             pass
 
         systemd_notify('READY=1')
@@ -1047,7 +1050,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                         'wildcard_subscription': False,
                         'accepts': n[1].ACCEPTS,
                         'returns': n[1].RETURNS,
-                        'new_style_returns': None,
                     }
                 ),
                 self.event_source_manager.event_sources.items()
@@ -1060,15 +1062,14 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         """
         self.__event_subs[name].append(handler)
 
-    def event_register(self, name, description, *, private=False, returns=None, new_style_returns=None,
-                       no_auth_required=False, no_authz_required=False, roles=None):
+    def event_register(self, name, description, *, private=False, returns=None, models=None, no_auth_required=False,
+                       no_authz_required=False, roles=None):
         """
-        All events middleware can send should be registered, so they are properly documented
-        and can be browsed in documentation page without source code inspection.
+        All middleware events should be registered, so they are properly documented
+        and can be browsed in the API documentation without having to inspect source code.
         """
         roles = roles or []
-        self.events.register(name, description, private, returns, new_style_returns, no_auth_required,
-                             no_authz_required, roles)
+        self.events.register(name, description, private, returns, models, no_auth_required, no_authz_required, roles)
 
     def send_event(self, name, event_type: str, **kwargs):
         should_send_event = kwargs.pop('should_send_event', None)
@@ -1093,7 +1094,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             try:
                 await handler(self, event_type, kwargs)
             except Exception:
-                self.logger.error('Unhandled exception in event handler', exc_info=True)
+                self.logger.error('%s: Unhandled exception in event handler', name, exc_info=True)
 
         # Send event also for internally subscribed plugins
         for handler in self.__event_subs.get(name, []):
@@ -1365,8 +1366,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self._add_api_route(version, api)
 
         app.router.add_route('GET', '/websocket', self.ws_handler)
-
-        app.router.add_route('*', '/ui{path_info:.*}', WebUIAuth(self))
 
         self.fileapp = FileApplication(self, self.loop)
         app.router.add_route('*', '/_download{path_info:.*}', self.fileapp.download)

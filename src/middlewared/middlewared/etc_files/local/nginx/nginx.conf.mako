@@ -52,12 +52,17 @@
     ip6_list = [f'[{ip}]' for ip in ip6_list]
 
     wg_config = middleware.call_sync('datastore.config', 'system.truecommand')
-    if middleware.call_sync('failover.is_single_master_node') and wg_config['api_key_state'] == 'CONNECTED' and wg_config['wg_address']:
+    if (
+        middleware.call_sync('failover.is_single_master_node') and wg_config['api_key_state'] == 'CONNECTED'
+        and wg_config['wg_address'] and middleware.call_sync('service.started', 'truecommand')
+    ):
         # We use api key state to determine connected because sometimes when nginx config is reloaded
         # it is not necessary that health of wireguard connection has been established at that point
         # and another reload of nginx config is required then at that point then which is redundant
         # An example is that when failover takes place, system knows it is master now but wireguard health hasn't
         # been established at this point and we miss out on adding wireguard address to listen directive
+        # We also want to make sure wireguard interface is actually up before we add this because it will definitely otherwise result in
+        # nginx to not start on boot as wireguard won't be up at that time
         ip4_list.append(ipaddress.ip_network(wg_config['wg_address'], False).network_address)
 
     ip_list = ip4_list + ip6_list
@@ -200,6 +205,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $connection_upgrade;
@@ -218,6 +224,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
         }
@@ -258,6 +265,7 @@ http {
             }
             # `allow`/`deny` are not allowed in `if` blocks so we'll have to make that check in the middleware itself.
             proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Https $https;
 
             add_header Cache-Control "must-revalidate";
             add_header Etag "${system_version}";
@@ -274,6 +282,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
         }
@@ -285,6 +294,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_send_timeout 7d;
@@ -299,6 +309,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header X-Server-Port $server_port;
@@ -310,6 +321,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_read_timeout 10m;
         }
 
@@ -322,6 +334,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
         }
 
         location /_plugins {
@@ -329,6 +342,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Https $https;
             proxy_set_header Host $host;
             proxy_set_header X-Forwarded-For $remote_addr;
         }

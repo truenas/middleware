@@ -78,7 +78,10 @@ class VirtInstanceService(CRUDService):
                 },
                 **get_vnc_info_from_config(i['config']),
                 'raw': None,  # Default required by pydantic
+                'secure_boot': None,
             }
+            if entry['type'] == 'VM':
+                entry['secure_boot'] = True if i['config'].get('security.secureboot') == 'true' else False
 
             idmap = None
             if idmap_current := i['config'].get('volatile.idmap.current'):
@@ -144,6 +147,9 @@ class VirtInstanceService(CRUDService):
         if not old and await self.query([('name', '=', new['name'])]):
             verrors.add(f'{schema_name}.name', f'Name {new["name"]!r} already exists')
 
+        if instance_type != 'VM' and new.get('secure_boot'):
+            verrors.add(f'{schema_name}.secure_boot', 'Secure boot is only supported for VMs')
+
         if new.get('memory'):
             meminfo = await self.middleware.call('system.mem_info')
             if new['memory'] > meminfo['physmem_size']:
@@ -155,6 +161,9 @@ class VirtInstanceService(CRUDService):
                 verrors.add(f'{schema_name}.cpu', 'Cannot reserve more than system cores')
 
         if old:
+            if 'secure_boot' not in new:
+                new['secure_boot'] = old['secure_boot']
+
             enable_vnc = new.get('enable_vnc')
             if enable_vnc is False:
                 # User explicitly disabled VNC support, let's remove vnc port
@@ -237,11 +246,14 @@ class VirtInstanceService(CRUDService):
             config['boot.autostart'] = str(data['autostart']).lower()
 
         if instance_type == 'VM':
-            config['user.ix_old_raw_qemu_config'] = raw.get('raw.qemu', '') if raw else ''
-            config['user.ix_vnc_config'] = json.dumps({
-                'vnc_enabled': data['enable_vnc'],
-                'vnc_port': data['vnc_port'],
-                'vnc_password': data['vnc_password'],
+            config.update({
+                'security.secureboot': 'true' if data['secure_boot'] else 'false',
+                'user.ix_old_raw_qemu_config': raw.get('raw.qemu', '') if raw else '',
+                'user.ix_vnc_config': json.dumps({
+                    'vnc_enabled': data['enable_vnc'],
+                    'vnc_port': data['vnc_port'],
+                    'vnc_password': data['vnc_password'],
+                }),
             })
 
             if data.get('enable_vnc') and data.get('vnc_port'):
@@ -272,6 +284,12 @@ class VirtInstanceService(CRUDService):
             async with session.get(url) as resp:
                 for v in (await resp.json())['products'].values():
                     alias = v['aliases'].split(',', 1)[0]
+                    if v['requirements'].get('cdrom_agent'):
+                        # We are adding this check to ignore such images because these are cloud images
+                        # and require agent to be installed/configured which is obviously not going to
+                        # happen
+                        continue
+
                     if alias not in choices:
                         instance_types = set()
                         for i in v['versions'].values():
@@ -332,7 +350,14 @@ class VirtInstanceService(CRUDService):
             data['source_type'] = None
             data_devices.append(root_device_to_add)
 
-        devices = {}
+        devices = {
+            'root': {
+                'path': '/',
+                'pool': 'default',
+                'type': 'disk',
+                'size': f'{data["root_disk_size"] * (1024**3)}',
+            }
+        } if data['instance_type'] == 'VM' else {}
         for i in data_devices:
             await self.middleware.call(
                 'virt.instance.validate_device', i, 'virt_instance_create', verrors, data['instance_type'],

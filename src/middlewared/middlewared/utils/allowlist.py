@@ -1,7 +1,7 @@
 import fnmatch
 import re
 
-from middlewared.api.current import HttpVerb
+from middlewared.api.base.types import HttpVerb
 from middlewared.utils.privilege_constants import ALLOW_LIST_FULL_ADMIN
 
 

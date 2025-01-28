@@ -14,17 +14,18 @@ def user(data, *, get_instance=True):
     data.setdefault('home_create', True)  # create user homedir by default
 
     user = call("user.create", data)
+    pk = user['id']
 
     try:
         value = None
 
         if get_instance:
-            value = call("user.get_instance", user)
+            value = user
 
         yield value
     finally:
         try:
-            call("user.delete", user)
+            call("user.delete", pk)
         except InstanceNotFound:
             pass
 

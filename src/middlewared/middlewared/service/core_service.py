@@ -33,7 +33,7 @@ from middlewared.job import Job, JobAccess
 from middlewared.pipe import Pipes
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Str
 from middlewared.service_exception import CallError, ValidationErrors
-from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_RUN_DIR
+from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_STARTED_SENTINEL_PATH
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.validators import IpAddress, Range
 
@@ -42,9 +42,6 @@ from .config_service import ConfigService
 from .crud_service import CRUDService
 from .decorators import filterable, filterable_returns, job, no_auth_required, no_authz_required, pass_app, private
 from .service import Service
-
-
-MIDDLEWARE_STARTED_SENTINEL_PATH = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared-started')
 
 
 def is_service_class(service, klass):
@@ -272,7 +269,7 @@ class CoreService(Service):
                 _typ = 'service'
 
             config = {k: v for k, v in list(v._config.__dict__.items())
-                      if not (k in ['entry', 'process_pool', 'thread_pool'] or k.startswith('_'))}
+                      if not (k in ['entry', 'events', 'process_pool', 'thread_pool'] or k.startswith('_'))}
             if config['cli_description'] is None:
                 if v.__doc__:
                     config['cli_description'] = inspect.getdoc(v).split("\n")[0].strip()
@@ -496,28 +493,6 @@ class CoreService(Service):
 
         return schema
 
-    @accepts()
-    def get_events(self):
-        """
-        Returns metadata for every possible event emitted from websocket server.
-        """
-        events = {}
-        for name, attrs in self.middleware.get_events():
-            if attrs['private']:
-                continue
-
-            events[name] = {
-                'description': attrs['description'],
-                'wildcard_subscription': attrs['wildcard_subscription'],
-                'accepts': self.get_json_schema(list(filter(bool, attrs['accepts'])), attrs['description']),
-                'returns': (
-                    get_json_schema(attrs['new_style_returns']) if attrs['new_style_returns']
-                    else self.get_json_schema(list(filter(bool, attrs['returns'])), attrs['description'])
-                ),
-            }
-
-        return events
-
     @private
     async def call_hook(self, name, args, kwargs=None):
         kwargs = kwargs or {}
@@ -670,7 +645,9 @@ class CoreService(Service):
             method, serviceobj, methodobj, args, app=app,
             pipes=Pipes(output=self.middleware.pipe(buffered))
         )
-        token = await self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id}, app=app)
+        token = await self.middleware.call(
+            'auth.generate_token', 300, {'filename': filename, 'job': job.id}, True, True, app=app
+        )
         self.middleware.fileapp.register_job(job.id, buffered)
         return job.id, f'/_download/{job.id}?auth_token={token}'
 

@@ -1,10 +1,12 @@
+import errno
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     VirtVolumeEntry, VirtVolumeCreateArgs, VirtVolumeCreateResult, VirtVolumeUpdateArgs,
     VirtVolumeUpdateResult, VirtVolumeDeleteArgs, VirtVolumeDeleteResult, VirtVolumeImportISOArgs,
     VirtVolumeImportISOResult,
 )
-from middlewared.service import CallError, CRUDService, job
+from middlewared.service import CallError, CRUDService, job, ValidationErrors
 from middlewared.utils import filter_list
 
 from .utils import incus_call, incus_call_sync, Status, incus_wait
@@ -45,6 +47,11 @@ class VirtVolumeService(CRUDService):
     @api_method(VirtVolumeCreateArgs, VirtVolumeCreateResult)
     async def do_create(self, data):
         await self.middleware.call('virt.global.check_initialized')
+
+        verrors = ValidationErrors()
+        if await self.middleware.call('virt.volume.query', [['id', '=', data['name']]]):
+            verrors.add('virt_volume_create.name', 'Volume with this name already exists')
+        verrors.check()
 
         result = await incus_call('1.0/storage-pools/default/volumes/custom', 'post', {
             'json': {
@@ -99,6 +106,9 @@ class VirtVolumeService(CRUDService):
             job.check_pipe('input')
         elif data['iso_location'] is None:
             raise CallError('Either upload iso or provide iso_location')
+
+        if await self.middleware.call('virt.volume.query', [['id', '=', data['name']]]):
+            raise CallError('Volume with this name already exists', errno=errno.EEXIST)
 
         request_kwargs = {
             'headers': {

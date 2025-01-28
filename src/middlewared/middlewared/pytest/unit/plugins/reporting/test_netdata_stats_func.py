@@ -8,52 +8,53 @@ from middlewared.plugins.reporting.realtime_reporting.utils import normalize_val
 
 
 NETDATA_ALL_METRICS = {
-    'system.cpu': {
-        'name': 'system.cpu',
-        'family': 'cpu',
-        'context': 'system.cpu',
-        'units': 'percentage',
-        'last_updated': 1691150349,
+    'cputemp.temperatures': {
+        'name': 'cputemp.temperatures',
+        'family': 'temperature',
+        'context': 'sensors.temperature',
+        'units': 'Celsius',
+        'last_updated': 1737452189,
         'dimensions': {
-            'guest_nice': {
-                'name': 'guest_nice',
-                'value': 0.5375124
+            'cpu0': {
+                'name': 'cpu0',
+                'value': 22
             },
-            'guest': {
-                'name': 'guest',
-                'value': 0.5375124
+            'cpu1': {
+                'name': 'cpu1',
+                'value': 21
             },
-            'steal': {
-                'name': 'steal',
-                'value': 0.5275124
+            'cpu2': {
+                'name': 'cpu2',
+                'value': 10
             },
-            'softirq': {
-                'name': 'softirq',
-                'value': 0.5175124
+            'cpu': {
+                'name': 'cpu',
+                'value': 40
+            }
+        }
+    },
+    'truenas_cpu_usage.cpu': {
+        'name': 'truenas_cpu_usage.cpu',
+        'family': 'cpu.usage',
+        'context': 'Cpu usage',
+        'units': 'CPU USAGE%',
+        'last_updated': 1737452189,
+        'dimensions': {
+            'cpu': {
+                'name': 'cpu',
+                'value': 4
             },
-            'irq': {
-                'name': 'irq',
-                'value': 0.4975124
+            'cpu0': {
+                'name': 'cpu0',
+                'value': 2
             },
-            'user': {
-                'name': 'user',
-                'value': 0.4975124
+            'cpu1': {
+                'name': 'cpu1',
+                'value': 3
             },
-            'system': {
-                'name': 'system',
-                'value': 0.4975124
-            },
-            'nice': {
-                'name': 'nice',
-                'value': 49.75124
-            },
-            'iowait': {
-                'name': 'iowait',
-                'value': 4.75124
-            },
-            'idle': {
-                'name': 'idle',
-                'value': 99.0049751
+            'cpu2': {
+                'name': 'cpu2',
+                'value': 4
             }
         }
     },
@@ -729,13 +730,17 @@ def test_arc_stats():
 
 def test_cpu_stats():
     cpu_stat = get_cpu_stats(NETDATA_ALL_METRICS)
-    total_sum = 0
     for metric, value in cpu_stat.items():
-        if metric == 'usage':
-            assert value == ((total_sum - cpu_stat['idle'] - cpu_stat['iowait']) / total_sum) * 100
-        else:
-            assert value == safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.cpu', metric, 0)
-            total_sum += value
+        assert value == {
+            'usage': safely_retrieve_dimension(
+                NETDATA_ALL_METRICS,
+                f'truenas_cpu_usage.cpu',
+                f'{metric}', 0
+            ),
+            'temp': safely_retrieve_dimension(
+                NETDATA_ALL_METRICS, 'cputemp.temperatures', metric,
+            ) or None
+        }
 
 
 def test_disk_stats():

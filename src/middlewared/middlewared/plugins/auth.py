@@ -47,14 +47,14 @@ class TokenManager:
     def __init__(self):
         self.tokens = {}
 
-    def create(self, ttl, attributes, match_origin, parent_credentials, session_id):
+    def create(self, ttl, attributes, match_origin, parent_credentials, session_id, single_use):
         credentials = parent_credentials
         if isinstance(credentials, TokenSessionManagerCredentials):
             if root_credentials := credentials.token.root_credentials():
                 credentials = root_credentials
 
         token = generate_token(48, url_safe=True)
-        self.tokens[token] = Token(self, token, ttl, attributes, match_origin, credentials, session_id)
+        self.tokens[token] = Token(self, token, ttl, attributes, match_origin, credentials, session_id, single_use)
         return self.tokens[token]
 
     def get(self, token, origin):
@@ -82,7 +82,7 @@ class TokenManager:
 
 
 class Token:
-    def __init__(self, manager, token, ttl, attributes, match_origin, parent_credentials, session_id):
+    def __init__(self, manager, token, ttl, attributes, match_origin, parent_credentials, session_id, single_use):
         self.manager = manager
         self.token = token
         self.ttl = ttl
@@ -90,6 +90,7 @@ class Token:
         self.match_origin = match_origin
         self.parent_credentials = parent_credentials
         self.session_ids = {session_id}
+        self.single_use = single_use
 
         self.last_used_at = time.monotonic()
 
@@ -329,7 +330,7 @@ class AuthService(Service):
 
     @api_method(AuthGenerateTokenArgs, AuthGenerateTokenResult, authorization_required=False)
     @pass_app(rest=True)
-    def generate_token(self, app, ttl, attrs, match_origin):
+    def generate_token(self, app, ttl, attrs, match_origin, single_use):
         """
         Generate a token to be used for authentication.
 
@@ -343,9 +344,9 @@ class AuthService(Service):
         NOTE: this endpoint is not supported when server security requires replay-resistant
         authentication as part of GPOS STIG requirements.
         """
-        if CURRENT_AAL.level != AA_LEVEL1:
+        if not single_use and CURRENT_AAL.level != AA_LEVEL1:
             raise CallError(
-                'Authentication tokens are not supported at current authenticator level.',
+                'Multi-use authentication tokens are not supported at current authenticator level.',
                 errno.EOPNOTSUPP
             )
 
@@ -365,18 +366,22 @@ class AuthService(Service):
             app.origin if match_origin else None,
             app.authenticated_credentials,
             app.session_id,
+            single_use
         )
 
         return token.token
 
     @private
-    def get_token(self, token_id):
-        try:
-            return {
-                'attributes': self.token_manager.tokens[token_id].attributes,
-            }
-        except KeyError:
+    def get_token(self, token_id, origin):
+        if (token := self.token_manager.get(token_id, origin)) is None:
             return None
+
+        if token.single_use:
+            self.token_manager.destroy(token)
+
+        return {
+            'attributes': token.attributes,
+        }
 
     @private
     def get_token_for_action(self, token_id, origin, method, resource):
@@ -388,6 +393,9 @@ class AuthService(Service):
 
         if not token.parent_credentials.authorize(method, resource):
             return None
+
+        if token.single_use:
+            self.token_manager.destroy(token)
 
         return TokenSessionManagerCredentials(self.token_manager, token)
 
@@ -405,6 +413,9 @@ class AuthService(Service):
 
         if not root_credentials.user['privilege']['web_shell']:
             return None
+
+        if token.single_use:
+            self.token_manager.destroy(token)
 
         return {
             'username': root_credentials.user['username'],
@@ -898,6 +909,9 @@ class AuthService(Service):
 
                 cred = TokenSessionManagerCredentials(self.token_manager, token)
                 await login_fn(app, cred)
+                if token.single_use:
+                    self.token_manager.destroy(token)
+
                 resp = {
                     'pam_response': {
                         'code': pam.PAM_SUCCESS,

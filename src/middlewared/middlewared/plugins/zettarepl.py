@@ -44,7 +44,8 @@ from zettarepl.utils.logging import (
 from zettarepl.zettarepl import create_zettarepl
 
 from middlewared.logger import setup_logging
-from middlewared.service import CallError, Service
+from middlewared.service.service import Service
+from middlewared.service_exception import CallError
 from middlewared.utils.cgroups import move_to_root_cgroups
 from middlewared.utils.prctl import die_with_parent
 from middlewared.utils.size import format_size

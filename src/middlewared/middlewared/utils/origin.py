@@ -167,7 +167,7 @@ def get_tcp_ip_info(sock, request) -> tuple:
         # 0 (root) or 33 (www-data (nginx forks workers))
         ra = request.headers["X-Real-Remote-Addr"]
         rp = int(request.headers["X-Real-Remote-Port"])
-        ssl = request.headers.get("Origin", "").startswith("https:")
+        ssl = request.headers.get("X-Https", "") == "on"
         check_uids = True
     except (KeyError, ValueError):
         ra, rp = sock.getpeername()

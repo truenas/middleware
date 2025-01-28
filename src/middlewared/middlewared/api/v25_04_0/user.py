@@ -70,6 +70,12 @@ class UserEntry(BaseModel):
     api_keys: list[int]
 
 
+class UserCreateUpdateResult(UserEntry):
+    password: NonEmptyString | None
+    """Password if it was specified in create or update payload. If random_password
+    was specified then this will be a 20 character random string."""
+
+
 class UserCreate(UserEntry):
     id: Excluded = excluded_field()
     unixhash: Excluded = excluded_field()
@@ -93,6 +99,8 @@ class UserCreate(UserEntry):
     home_create: bool = False
     home_mode: str = "700"
     password: Secret[str | None] = None
+    random_password: bool = False
+    "Generate a random 20 character password for the user"
 
 
 class UserUpdate(UserCreate, metaclass=ForUpdateMetaclass):
@@ -105,7 +113,7 @@ class UserCreateArgs(BaseModel):
 
 
 class UserCreateResult(BaseModel):
-    result: int
+    result: UserCreateUpdateResult
 
 
 class UserUpdateArgs(BaseModel):
@@ -114,7 +122,7 @@ class UserUpdateArgs(BaseModel):
 
 
 class UserUpdateResult(BaseModel):
-    result: int
+    result: UserCreateUpdateResult
 
 
 class UserDeleteOptions(BaseModel):

@@ -162,17 +162,21 @@ class TunableService(CRUDService):
             'datastore.insert', self._config.datastore, data, {'prefix': self._config.datastore_prefix}
         )
 
-        if data['type'] == 'SYSCTL':
-            if data['enabled']:
-                await self.middleware.call('etc.generate', 'sysctl')
-                await self.middleware.call('tunable.set_sysctl', data['var'], data['value'])
-        elif data['type'] == 'ZFS':
-            if data['enabled']:
-                await self.middleware.call('tunable.set_zfs_parameter', data['var'], data['value'])
-                if update_initramfs:
-                    await self.middleware.call('boot.update_initramfs')
-        else:
-            await self.handle_tunable_change(data)
+        try:
+            if data['type'] == 'SYSCTL':
+                if data['enabled']:
+                    await self.middleware.call('etc.generate', 'sysctl')
+                    await self.middleware.call('tunable.set_sysctl', data['var'], data['value'])
+            elif data['type'] == 'ZFS':
+                if data['enabled']:
+                    await self.middleware.call('tunable.set_zfs_parameter', data['var'], data['value'])
+                    if update_initramfs:
+                        await self.middleware.call('boot.update_initramfs')
+            else:
+                await self.handle_tunable_change(data)
+        except Exception:
+            await self.middleware.call('datastore.delete', self._config.datastore, id_)
+            raise
 
         return await self.get_instance(id_)
 
@@ -206,23 +210,29 @@ class TunableService(CRUDService):
             'datastore.update', self._config.datastore, id_, new, {'prefix': self._config.datastore_prefix}
         )
 
-        if new['type'] == 'SYSCTL':
-            await self.middleware.call('etc.generate', 'sysctl')
+        try:
+            if new['type'] == 'SYSCTL':
+                await self.middleware.call('etc.generate', 'sysctl')
 
-            if new['enabled']:
-                await self.middleware.call('tunable.set_sysctl', new['var'], new['value'])
-            else:
-                await self.middleware.call('tunable.reset_sysctl', new)
-        elif new['type'] == 'ZFS':
-            if new['enabled']:
-                await self.middleware.call('tunable.set_zfs_parameter', new['var'], new['value'])
-            else:
-                await self.middleware.call('tunable.reset_zfs_parameter', new)
+                if new['enabled']:
+                    await self.middleware.call('tunable.set_sysctl', new['var'], new['value'])
+                else:
+                    await self.middleware.call('tunable.reset_sysctl', new)
+            elif new['type'] == 'ZFS':
+                if new['enabled']:
+                    await self.middleware.call('tunable.set_zfs_parameter', new['var'], new['value'])
+                else:
+                    await self.middleware.call('tunable.reset_zfs_parameter', new)
 
-            if update_initramfs:
-                await self.middleware.call('boot.update_initramfs')
-        else:
-            await self.handle_tunable_change(new)
+                if update_initramfs:
+                    await self.middleware.call('boot.update_initramfs')
+            else:
+                await self.handle_tunable_change(new)
+        except Exception:
+            await self.middleware.call(
+                'datastore.update', self._config.datastore, id_, old, {'prefix': self._config.datastore_prefix}
+            )
+            raise
 
         return await self.get_instance(id_)
 

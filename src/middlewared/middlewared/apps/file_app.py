@@ -9,6 +9,7 @@ from middlewared.restful import (
     authenticate,
     create_application,
     copy_multipart_to_pipe,
+    ConnectionOrigin
 )
 from middlewared.service_exception import CallError
 from truenas_api_client import json
@@ -59,8 +60,9 @@ class FileApplication:
         if "auth_token" not in qs:
             denied = True
         else:
+            origin = await self.middleware.run_in_thread(ConnectionOrigin.create, request)
             auth_token = qs.get("auth_token")[0]
-            token = await self.middleware.call("auth.get_token", auth_token)
+            token = await self.middleware.call("auth.get_token", auth_token, origin)
             if not token:
                 denied = True
             else:

@@ -11,7 +11,7 @@ from middlewared.schema import Schemas
 logger = logging.getLogger(__name__)
 
 
-def load_modules(directory, base=None, depth=0):
+def load_modules(directory, base=None, depth=0, whitelist=None):
     directory = os.path.normpath(directory)
     if base is None:
         middlewared_root = os.path.dirname(os.path.dirname(__file__))
@@ -32,13 +32,15 @@ def load_modules(directory, base=None, depth=0):
             base = '.'.join(os.path.relpath(directory, new_module_path).split('/'))
 
     _, dirs, files = next(os.walk(directory))
-    for f in filter(lambda x: x[-3:] == '.py' and x.find('_freebsd') == -1, files):
-        yield importlib.import_module(base if f == '__init__.py' else f'{base}.{f[:-3]}')
+    for f in filter(lambda x: x[-3:] == '.py', files):
+        module_name = base if f == '__init__.py' else f'{base}.{f[:-3]}'
+        if whitelist is None or any(module_name.startswith(w) for w in whitelist):
+            yield importlib.import_module(module_name)
 
-    for f in filter(lambda x: x.find('_freebsd') == -1, dirs):
+    for f in dirs:
         if depth > 0:
             path = os.path.join(directory, f)
-            yield from load_modules(path, f'{base}.{f}', depth - 1)
+            yield from load_modules(path, f'{base}.{f}', depth - 1, whitelist)
 
 
 def load_classes(module, base, blacklist):
@@ -92,7 +94,7 @@ class LoadPluginsMixin(SchemasMixin):
         self._services_aliases = {}
         super().__init__()
 
-    def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None):
+    def _load_plugins(self, on_module_begin=None, on_module_end=None, on_modules_loaded=None, whitelist=None):
         from middlewared.service import Service, CompoundService, ABSTRACT_SERVICES
 
         services = []
@@ -100,7 +102,7 @@ class LoadPluginsMixin(SchemasMixin):
         if not os.path.exists(plugins_dir):
             raise ValueError(f'plugins dir not found: {plugins_dir}')
 
-        for mod in load_modules(plugins_dir, depth=1):
+        for mod in load_modules(plugins_dir, depth=1, whitelist=whitelist):
             if on_module_begin:
                 on_module_begin(mod)
 
