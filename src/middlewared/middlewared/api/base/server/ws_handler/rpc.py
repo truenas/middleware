@@ -302,8 +302,10 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             return
         if not app.private_methods and method.private and not self._can_call_private_methods(app):
             # FIXME: Eventually, prohibit this
-            self.middleware.logger.warning("Private method %r called on a connection without private_methods "
-                                           "enabled", method.name)
+            self.middleware.logger.warning(
+                "Private method %r called on a connection without private_methods enabled",
+                method.name
+            )
 
         asyncio.ensure_future(
             self.process_method_call(app, id_, method, message["params"])
