@@ -5,14 +5,25 @@ import pytest
 import requests
 
 from middlewared.test.integration.assets.account import unprivileged_user as unprivileged_user_template
+from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.shell import assert_shell_works
+from middlewared.service_exception import CallError
 
 
 @pytest.fixture(scope="module")
-def download_token():
-    return call("auth.generate_token", 300, {"filename": "debug.txz", "job": 1020}, True)
+def job_with_pipe():
+    job_id, url = call("core.download", "config.save" , [], "debug.txz")
+    try:
+        yield job_id
+    finally:
+        call("core.job_abort", job_id)
+
+
+@pytest.fixture(scope="module")
+def download_token(job_with_pipe):
+    return call("auth.generate_token", 300, {"filename": "debug.txz", "job": job_with_pipe}, True)
 
 
 def test_download_auth_token_cannot_be_used_for_upload(download_token):
@@ -111,3 +122,12 @@ def test_single_use_token():
     with client(auth=None) as c:
         assert c.call("auth.login_with_token", token)
         assert not c.call("auth.login_with_token", token)
+
+
+def test_token_job_validation(job_with_pipe):
+    with pytest.raises(CallError, match='job does not exist'):
+        call("auth.generate_token", 300, {'job': -1})
+
+    with unprivileged_user_client(roles=['READONLY_ADMIN']) as c:
+        with pytest.raises(CallError, match='Job is not owned by current session'):
+            c.call("auth.generate_token", 300, {'job': job_with_pipe})

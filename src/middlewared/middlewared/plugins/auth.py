@@ -328,7 +328,11 @@ class AuthService(Service):
         passwd = OTPW_MANAGER.generate_for_uid(user_data[0]['uid'])
         return passwd
 
-    @api_method(AuthGenerateTokenArgs, AuthGenerateTokenResult, authorization_required=False)
+    @api_method(
+        AuthGenerateTokenArgs, AuthGenerateTokenResult,
+        audit='Generate authentication token for session',
+        authorization_required=False
+    )
     @pass_app(rest=True)
     def generate_token(self, app, ttl, attrs, match_origin, single_use):
         """
@@ -359,6 +363,18 @@ class AuthService(Service):
 
         if ttl is None:
             ttl = 600
+
+        # FIXME: we need to properly define attrs in the schema
+        if (job_id := attrs.get('job')) is not None:
+            job = self.middleware.jobs.get(job_id)
+            if not job:
+                raise CallError(f'{job_id}: job does not exist.')
+
+            if error := job.credential_access_error(app.authenticated_credentials, None):
+                raise CallError(f'{job_id}: {error}')
+
+            if job.pipes.output is None:
+                raise CallError(f'{job_id}: job is not suitable for download token')
 
         token = self.token_manager.create(
             ttl,
