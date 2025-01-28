@@ -28,16 +28,17 @@ from middlewared.alert.base import (
     ProThreadedAlertService,
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
-from middlewared.api import api_method
+from middlewared.api import api_method, Event
 from middlewared.api.current import (
     AlertDismissArgs, AlertDismissResult, AlertListArgs, AlertListResult, AlertListCategoriesArgs,
     AlertListCategoriesResult, AlertListPoliciesArgs, AlertListPoliciesResult, AlertRestoreArgs, AlertRestoreResult,
     AlertOneshotCreateArgs, AlertOneshotCreateResult, AlertOneshotDeleteArgs, AlertOneshotDeleteResult,
     AlertClassesEntry, AlertClassesUpdateArgs, AlertClassesUpdateResult, AlertServiceCreateArgs,
     AlertServiceCreateResult, AlertServiceUpdateArgs, AlertServiceUpdateResult, AlertServiceDeleteArgs,
-    AlertServiceDeleteResult, AlertServiceTestArgs, AlertServiceTestResult, AlertServiceEntry,
+    AlertServiceDeleteResult, AlertServiceTestArgs, AlertServiceTestResult, AlertServiceEntry, AlertListAddedEvent,
+    AlertListChangedEvent, AlertListRemovedEvent,
 )
-from middlewared.schema import Bool, Dict, Int, Str
+from middlewared.schema import Bool, Str
 from middlewared.service import (
     ConfigService, CRUDService, Service, ValidationErrors,
     job, periodic, private,
@@ -212,6 +213,18 @@ class AlertService(Service):
 
     class Config:
         cli_namespace = "system.alert"
+        events = [
+            Event(
+                name="alert.list",
+                description="Sent on alert changes.",
+                roles=["ALERT_LIST_READ"],
+                models={
+                    "ADDED": AlertListAddedEvent,
+                    "CHANGED": AlertListChangedEvent,
+                    "REMOVED": AlertListRemovedEvent,
+                },
+            ),
+        ]
 
     def __init__(self, middleware):
         super().__init__(middleware)
@@ -1230,8 +1243,6 @@ async def _event_system(middleware, event_type, args):
 
 
 async def setup(middleware):
-    middleware.event_register("alert.list", "Sent on alert changes.", roles=["ALERT_LIST_READ"])
-
     await middleware.call("alert.load")
     await middleware.call("alert.initialize")
 

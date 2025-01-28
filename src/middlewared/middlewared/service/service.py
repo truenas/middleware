@@ -12,3 +12,12 @@ class Service(object, metaclass=ServiceBase):
     def __init__(self, middleware):
         self.logger = Logger(type(self).__name__).getLogger()
         self.middleware = middleware
+
+        for event in self._config.events:
+            self.middleware.event_register(
+                event.name,
+                event.description,
+                private=event.private,
+                models=event.models,
+                roles=event.roles,
+            )

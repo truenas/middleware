@@ -5,15 +5,24 @@ from pydantic import BaseModel
 
 from ..jsonschema import replace_refs
 from .api import API
+from .event import Event
 from .method import Method
 
 
 class APIDump(BaseModel):
     version: str
     methods: list["APIDumpMethod"]
+    events: list["APIDumpEvent"]
 
 
 class APIDumpMethod(BaseModel):
+    name: str
+    roles: list[str]
+    doc: str | None
+    schemas: dict
+
+
+class APIDumpEvent(BaseModel):
     name: str
     roles: list[str]
     doc: str | None
@@ -26,7 +35,7 @@ class APIDumper:
         self.api = api
 
     def dump(self):
-        return APIDump(version=self.version, methods=self._dump_methods())
+        return APIDump(version=self.version, methods=self._dump_methods(), events=self._dump_events())
 
     def _dump_methods(self):
         result = []
@@ -95,4 +104,37 @@ class APIDumper:
                     **returns_json_schema["properties"]["result"],
                 },
             },
+        }
+
+    def _dump_events(self):
+        result = []
+        for event in self.api.events:
+            if event.event["private"]:
+                continue
+
+            if not event.event["models"]:
+                continue
+
+            result.append(self._dump_event(event))
+
+        return sorted(result, key=lambda event: event.name)
+
+    def _dump_event(self, event: Event):
+        return APIDumpEvent(
+            name=event.name,
+            roles=event.event["roles"],
+            doc=event.event["description"],
+            schemas=self._dump_event_schemas(event),
+        )
+
+    def _dump_event_schemas(self, event: Event):
+        properties = {}
+        for name, model in event.event["models"].items():
+            schema = model.model_json_schema()
+            schema = replace_refs(schema, schema.get("$defs", {}))
+            properties[name] = schema
+
+        return {
+            "type": "object",
+            "properties": properties,
         }

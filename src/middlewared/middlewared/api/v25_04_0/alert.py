@@ -11,6 +11,7 @@ __all__ = [
     'AlertListCategoriesResult', 'AlertListPoliciesArgs', 'AlertListPoliciesResult', 'AlertRestoreArgs',
     'AlertRestoreResult', 'AlertOneshotCreateArgs', 'AlertOneshotCreateResult', 'AlertOneshotDeleteArgs',
     'AlertOneshotDeleteResult', 'AlertClassesEntry', 'AlertClassesUpdateArgs', 'AlertClassesUpdateResult', 'Alert',
+    'AlertListAddedEvent', 'AlertListChangedEvent', 'AlertListRemovedEvent',
 ]
 
 
@@ -119,3 +120,17 @@ class AlertClassesUpdateArgs(BaseModel):
 
 class AlertClassesUpdateResult(BaseModel):
     result: AlertClassesEntry
+
+
+class AlertListAddedEvent(BaseModel):
+    id: int
+    fields: Alert
+
+
+class AlertListChangedEvent(BaseModel):
+    id: int
+    fields: Alert
+
+
+class AlertListRemovedEvent(BaseModel):
+    id: int
