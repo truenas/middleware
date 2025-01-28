@@ -1,3 +1,4 @@
+from .event import *  # noqa
 from .excluded import *  # noqa
 from .model import *  # noqa
 from .types import *  # noqa

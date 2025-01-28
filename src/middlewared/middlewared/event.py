@@ -14,7 +14,7 @@ class Events:
         self._events: typing.Dict[str, dict[str, typing.Any]] = {}
         self.__events_private: typing.Set[str] = set()
 
-    def register(self, name: str, description: str, private: bool, returns, new_style_returns, no_auth_required,
+    def register(self, name: str, description: str, private: bool, returns, models, no_auth_required,
                  no_authz_required, roles: typing.Iterable[str]):
         if name in self._events:
             raise ValueError(f'Event {name!r} already registered.')
@@ -23,7 +23,7 @@ class Events:
             'description': description,
             'accepts': [],
             'returns': [returns] if returns else [Any(name, null=True)],
-            'new_style_returns': new_style_returns,
+            'models': models,
             'no_auth_required': no_auth_required,
             'no_authz_required': no_authz_required,
             'roles': self.role_manager.roles_for_event(name),
@@ -32,18 +32,18 @@ class Events:
             self.__events_private.add(name)
 
     def get_event(self, name: str) -> typing.Optional[dict[str, typing.Any]]:
-        return self._events.get(name)
+        return {
+            'private': name in self.__events_private,
+            'wildcard_subscription': True,
+            **self._events.get(name),
+        }
 
     def __contains__(self, name):
         return name in self._events
 
     def __iter__(self):
-        for k, v in self._events.items():
-            yield k, {
-                'private': k in self.__events_private,
-                'wildcard_subscription': True,
-                **v,
-            }
+        for k in self._events:
+            yield k, self.get_event(k)
 
 
 class EventSourceMetabase(type):

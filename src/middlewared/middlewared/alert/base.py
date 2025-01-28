@@ -13,7 +13,7 @@ from middlewared.utils.lang import undefined
 __all__ = [
     "UnavailableException", "AlertClass", "OneShotAlertClass", "SimpleOneShotAlertClass", "DismissableAlertClass",
     "AlertCategory", "AlertLevel", "Alert", "AlertSource", "ThreadedAlertSource", "AlertService",
-    "ThreadedAlertService", "ProThreadedAlertService", "format_alerts", "ellipsis"
+    "ThreadedAlertService", "ProThreadedAlertService", "format_alerts", "ellipsis", "alert_category_names",
 ]
 
 logger = logging.getLogger(__name__)
