@@ -6,8 +6,8 @@ from .crypto import generate_string, sha512_crypt, check_unixhash
 
 LEGACY_API_KEY_USERNAME = 'LEGACY_API_KEY'
 MAX_OTP_ATTEMPTS = 3
-AUID_UNSET = 2 ** 32 -1
-AUID_FAULTED = 2 ** 32 -2
+AUID_UNSET = 2 ** 32 - 1
+AUID_FAULTED = 2 ** 32 - 2
 
 
 class AuthMech(enum.StrEnum):

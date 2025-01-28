@@ -148,6 +148,37 @@ class ConnectionOrigin:
         # By default assume that transport is insecure
         return False
 
+    def ppids(self) -> set[int]:
+        if self.pid is None:
+            return set()
+
+        pid = self.pid
+        ppids = set()
+        while True:
+            try:
+                with open(f"/proc/{pid}/status") as f:
+                    pid = None
+                    for line in f:
+                        if line.startswith("PPid:"):
+                            try:
+                                pid = int(line.split(":")[1].strip())
+                            except ValueError:
+                                pass
+
+                            break
+            except FileNotFoundError:
+                break
+
+            if pid is not None:
+                if pid <= 1:
+                    break
+
+                ppids.add(pid)
+            else:
+                break
+
+        return ppids
+
 
 def get_tcp_ip_info(sock, request) -> tuple:
     # All API connections are terminated by nginx reverse

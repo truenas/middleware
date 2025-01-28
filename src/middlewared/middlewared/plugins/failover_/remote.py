@@ -65,7 +65,7 @@ class RemoteClient:
             url = f'ws://{self.remote_ip}:6000/websocket'
 
         try:
-            with Client(url, reserved_ports=True) as c:
+            with Client(url, reserved_ports=True, private_methods=True) as c:
                 self.client = c
                 with self._subscribe_lock:
                     self.connected.set()

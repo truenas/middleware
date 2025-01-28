@@ -861,6 +861,8 @@ class CoreService(Service):
     @api_method(CoreSetOptionsArgs, CoreSetOptionsResult, authentication_required=False, rate_limit=False)
     @pass_app()
     async def set_options(self, app, options):
+        if "private_methods" in options:
+            app.private_methods = options["private_methods"]
         if "py_exceptions" in options:
             app.py_exceptions = options["py_exceptions"]
 

@@ -32,7 +32,8 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
 
     def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, job=None):
         try:
-            with Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True) as c:
+            with Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', private_methods=True,
+                        py_exceptions=True) as c:
                 self.client = c
                 job_options = getattr(methodobj, '_job', None)
                 if job and job_options:
@@ -86,7 +87,7 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
         return []
 
     def send_event(self, name, event_type, **kwargs):
-        with Client(py_exceptions=True) as c:
+        with Client(private_methods=True, py_exceptions=True) as c:
             return c.call('core.event_send', name, event_type, kwargs)
 
 
@@ -125,7 +126,7 @@ def main_worker(*call_args):
 
 
 def receive_events():
-    c = Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True)
+    c = Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', private_methods=True, py_exceptions=True)
     c.subscribe('core.environ', lambda *args, **kwargs: environ_update(kwargs['fields']))
     environ_update(c.call('core.environ'))
 
