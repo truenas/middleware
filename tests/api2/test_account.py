@@ -33,7 +33,7 @@ def test_create_account_audit():
                 "home": "/nonexistent",
                 "password": "password",
             }
-            user_id = call("user.create", payload)
+            user_id = call("user.create", payload)['id']
     finally:
         if user_id is not None:
             call("user.delete", user_id)
@@ -180,3 +180,41 @@ def test_create_account_invalid_gid():
             pass
 
     assert "This group does not exist." in str(ve)
+
+
+def test_create_user_random_password_with_specified_password_fail():
+    with pytest.raises(ValidationErrors, match='Requesting a randomized password while') as ve:
+        with user({
+            "username": "bobshouldnotexist",
+            "full_name": "bob",
+            "group_create": True,
+            "password": "test1234",
+            "random_password": True
+        }):
+            pass
+
+
+def test_create_user_with_random_password():
+    with user({
+        "username": "bobrandom",
+        "full_name": "bob",
+        "group_create": True,
+        "random_password": True
+    }, get_instance=True) as u:
+        assert u['password']
+
+
+def test_update_user_with_random_password():
+    with user({
+        "username": "bobrandom",
+        "full_name": "bob",
+        "group_create": True,
+        "password": "canary"
+    }, get_instance=True) as u:
+        assert u['password'] == 'canary'
+
+        new = call('user.update', u['id'], {'random_password': True})
+        assert new['password'] != 'canary'
+
+        new = call('user.update', u['id'], {'full_name': 'bob2'})
+        assert not new['password']
