@@ -198,6 +198,7 @@ class AuthGenerateTokenArgs(BaseModel):
     ttl: int | None = 600
     attrs: dict = {}  # XXX should we have some actual validation here?
     match_origin: bool = True  # NOTE: this is change in default from before 25.04
+    single_use: bool = False
 
 
 class AuthGenerateTokenResult(BaseModel):
