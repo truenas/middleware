@@ -276,7 +276,9 @@ class UsageService(Service):
             'platform': f'TrueNAS-{await self.middleware.call("system.product_type")}',
             'version': await self.middleware.call('system.version'),
             'is_vendored': await self.middleware.call('system.vendor.is_vendored'),
-            'vendor_name': await self.middleware.call('system.vendor.name')
+            'vendor_name': await self.middleware.call('system.vendor.name'),
+            'is_virtualized': await self.middleware.call('hardware.virtualization.is_virtualized'),
+            'hypervisor': await self.middleware.call('hardware.virtualization.variant'),
         }
 
     async def gather_system(self, context):
