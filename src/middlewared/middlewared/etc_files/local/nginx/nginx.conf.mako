@@ -260,9 +260,6 @@ http {
         location /ui {
             allow all;
 
-            if ( $request_method ~ ^POST$ ) {
-                proxy_pass http://127.0.0.1:6000;
-            }
             # `allow`/`deny` are not allowed in `if` blocks so we'll have to make that check in the middleware itself.
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Https $https;
