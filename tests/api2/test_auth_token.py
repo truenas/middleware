@@ -103,3 +103,11 @@ def test_kill_all_tokens_on_session_termination():
 
         with client(auth=None) as c:
             assert not c.call("auth.login_with_token", token)
+
+
+def test_single_use_token():
+    token = call("auth.generate_token", 300, {}, True, True)
+
+    with client(auth=None) as c:
+        assert c.call("auth.login_with_token", token)
+        assert not c.call("auth.login_with_token", token)

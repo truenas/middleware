@@ -31,7 +31,6 @@ from .utils.service.crud import real_crud_method
 from .utils.threading import set_thread_name, IoThreadPoolExecutor, io_thread_pool_executor
 from .utils.time_utils import utc_now
 from .utils.type import copy_function_metadata
-from .webui_auth import WebUIAuth
 from .worker import main_worker, worker_init
 from aiohttp import web
 from aiohttp.http_websocket import WSCloseCode
@@ -1367,8 +1366,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self._add_api_route(version, api)
 
         app.router.add_route('GET', '/websocket', self.ws_handler)
-
-        app.router.add_route('*', '/ui{path_info:.*}', WebUIAuth(self))
 
         self.fileapp = FileApplication(self, self.loop)
         app.router.add_route('*', '/_download{path_info:.*}', self.fileapp.download)
