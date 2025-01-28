@@ -138,3 +138,23 @@ def test_restricted_user_set_password():
                     'old_password': TEST_PASSWORD2,
                     'new_password': TEST_PASSWORD2_2
                 })
+
+
+def test_password_reset_via_onetime_password():
+    with unprivileged_user(
+        username=TEST_USERNAME,
+        group_name=TEST_GROUPNAME,
+        privilege_name='TEST_PASSWD_RESET_PRIVILEGE',
+        web_shell=False,
+        roles=['READONLY_ADMIN']
+    ) as acct:
+        otp = call('auth.generate_onetime_password', {'username': acct.username})
+        with client(auth=(acct.username, otp)) as c:
+            c.call('user.set_password', {
+                'username': TEST_USERNAME,
+                'new_password': TEST_PASSWORD2_2
+            })
+
+        # Verify that password change worked
+        with client(auth=(acct.username, TEST_PASSWORD2_2)):
+            pass
