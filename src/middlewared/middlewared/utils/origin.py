@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from ipaddress import ip_address
-import re
 from socket import AF_INET, AF_INET6, AF_UNIX, SO_PEERCRED, SOL_SOCKET
 from struct import calcsize, unpack
 
@@ -158,12 +157,19 @@ class ConnectionOrigin:
         while True:
             try:
                 with open(f"/proc/{pid}/status") as f:
-                    status = f.read()
+                    pid = None
+                    for line in f:
+                        if line.startswith("PPid:"):
+                            try:
+                                pid = int(line.split(":")[1].strip())
+                            except ValueError:
+                                pass
+
+                            break
             except FileNotFoundError:
                 break
 
-            if m := re.search(r"PPid:\t([0-9]+)", status):
-                pid = int(m.group(1))
+            if pid is not None:
                 if pid <= 1:
                     break
 

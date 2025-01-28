@@ -316,7 +316,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             # Calls made via WebSocket API
             return False
 
-        if app.origin.loginuid in [AUID_UNSET, AUID_FAULTED]:
+        if app.origin.loginuid in (AUID_UNSET, AUID_FAULTED):
             # System-initiated calls to `midclt`
             return True
 
@@ -327,8 +327,7 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
             except (FileNotFoundError, ValueError):
                 return False
 
-            if cron_pid in ppids:
-                return True
+            return cron_pid in ppids
 
         return False
 
