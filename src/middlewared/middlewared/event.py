@@ -32,10 +32,14 @@ class Events:
             self.__events_private.add(name)
 
     def get_event(self, name: str) -> typing.Optional[dict[str, typing.Any]]:
+        event = self._events.get(name)
+        if event is None:
+            return None
+
         return {
             'private': name in self.__events_private,
             'wildcard_subscription': True,
-            **self._events.get(name),
+            **event,
         }
 
     def __contains__(self, name):
