@@ -82,7 +82,7 @@ class IPMILanService(CRUDService):
         Str('default_gateway_mac_address'),
         Str('backup_gateway_ip_address'),
         Str('backup_gateway_mac_address'),
-        Int('vlan_id'),
+        Int('vlan_id', null=True),
         Bool('vlan_id_enable'),
         Int('vlan_priority'),
     )
@@ -123,9 +123,9 @@ class IPMILanService(CRUDService):
                 continue
 
             data = {'channel': channel, 'id': channel}
-            for i in filter(lambda x: x.startswith('\t') and not x.startswith('\t#'), stdout):
+            for line in filter(lambda x: x.startswith('\t') and not x.startswith('\t#'), stdout):
                 try:
-                    name, value = i.strip().split()
+                    name, value = line.strip().split()
                     name, value = name.lower(), value.lower()
                     if value in ('no', 'yes'):
                         value = True if value == 'yes' else False
@@ -135,6 +135,9 @@ class IPMILanService(CRUDService):
                     data[name] = value
                 except ValueError:
                     break
+
+            if data['vlan_id_enable'] is False:
+                data['vlan_id'] = None
 
             result.append(data)
 
@@ -198,7 +201,7 @@ class IPMILanService(CRUDService):
         `gateway` is an IPv4 address used by `ipaddress` to reach outside the local subnet.
         `password` is a password to be assigned to channel number `id`
         `dhcp` is a boolean. If False, `ipaddress`, `netmask` and `gateway` must be set.
-        `vlan` is an integer representing the vlan tag number.
+        `vlan` is an integer representing the vlan tag number. Passing null will disable vlan tagging.
         `apply_remote` is a boolean. If True and this is an HA licensed system, will apply
             the configuration to the remote controller.
         """
