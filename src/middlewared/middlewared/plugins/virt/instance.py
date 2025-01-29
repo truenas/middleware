@@ -79,9 +79,12 @@ class VirtInstanceService(CRUDService):
                 **get_vnc_info_from_config(i['config']),
                 'raw': None,  # Default required by pydantic
                 'secure_boot': None,
+                'root_disk_size': None,
             }
             if entry['type'] == 'VM':
                 entry['secure_boot'] = True if i['config'].get('security.secureboot') == 'true' else False
+                size = i['devices'].get('root', {}).get('size')
+                entry['root_disk_size'] = int(size) if size else None
 
             idmap = None
             if idmap_current := i['config'].get('volatile.idmap.current'):
