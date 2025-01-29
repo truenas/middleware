@@ -182,7 +182,7 @@ class BootService(Service):
         await self.middleware.call('boot.install_loader', dev)
         await self.update_initramfs()
 
-    @api_method(BootScrubArgs, BootScrubResult, roles=['BOOT_ENV_WRITE'])
+    @api_method(BootScrubArgs, BootScrubResult, roles=['FULL_ADMIN'])
     @job(lock='boot_scrub')
     async def scrub(self, job):
         """

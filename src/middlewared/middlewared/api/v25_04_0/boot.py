@@ -8,7 +8,7 @@ from middlewared.api.base import BaseModel, NotRequired, NotRequiredModel
 __all__ = [
     "BootGetDisksArgs", "BootGetDisksResult", "BootAttachArgs", "BootAttachResult", "BootDetachArgs",
     "BootDetachResult", "BootReplaceArgs", "BootReplaceResult", "BootScrubArgs", "BootScrubResult",
-    "BootSetScrubIntervalArgs", "BootSetScrubIntervalResult", "BootUpdateInitramfsArgs", "BootUpdateInitramfsResult"
+    "BootSetScrubIntervalArgs", "BootSetScrubIntervalResult", "BootUpdateInitramfsArgs", "BootUpdateInitramfsResult",
     "BootFormatArgs", "BootFormatResult"
 ]
 
