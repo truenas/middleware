@@ -49,8 +49,8 @@ def min_max_scale_version_check_update_impl(version_details: dict, check_support
     # we do not want to validate minimum scale version in that case. However, when we want to report to
     # the user as to why exactly the app version is not supported, we need to be able to make that distinction
     system_scale_version = sw_info()['version']
-    min_scale_version = version_details.get('chart_metadata', {}).get('annotations', {}).get('min_scale_version')
-    max_scale_version = version_details.get('chart_metadata', {}).get('annotations', {}).get('max_scale_version')
+    min_scale_version = version_details.get('app_metadata', {}).get('annotations', {}).get('min_scale_version')
+    max_scale_version = version_details.get('app_metadata', {}).get('annotations', {}).get('max_scale_version')
     if (
         version_details.get('healthy', True) and (not check_supported_key or version_details['supported'])
         and (min_scale_version or max_scale_version)
