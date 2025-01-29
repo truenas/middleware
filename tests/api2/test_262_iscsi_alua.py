@@ -467,7 +467,7 @@ class TestFixtureConfiguredALUA:
         if self.VERBOSE:
             print('Powering off VM', domain)
         poweroff_vm(domain)
-        sleep(3)
+        sleep(10)
 
         # Wait for the new MASTER to come up
         newnode = self.wait_for_new_master(node)
