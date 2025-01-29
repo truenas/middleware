@@ -79,9 +79,12 @@ class VirtInstanceService(CRUDService):
                 **get_vnc_info_from_config(i['config']),
                 'raw': None,  # Default required by pydantic
                 'secure_boot': None,
+                'root_disk_size': None,
             }
             if entry['type'] == 'VM':
                 entry['secure_boot'] = True if i['config'].get('security.secureboot') == 'true' else False
+                size = i['devices'].get('root', {}).get('size')
+                entry['root_disk_size'] = int(size) if size else None
 
             idmap = None
             if idmap_current := i['config'].get('volatile.idmap.current'):
@@ -395,16 +398,21 @@ class VirtInstanceService(CRUDService):
                 'mode': 'pull',
                 'alias': data['image'],
             })
-
-        await incus_call_and_wait('1.0/instances', 'post', {'json': {
-            'name': data['name'],
-            'ephemeral': False,
-            'config': self.__data_to_config(data, instance_type=data['instance_type']),
-            'devices': devices,
-            'source': source,
-            'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
-            'start': data['autostart'],
-        }}, running_cb, timeout=15 * 60)  # We will give 15 minutes to incus to download relevant image and then timeout
+        try:
+            await incus_call_and_wait('1.0/instances', 'post', {'json': {
+                'name': data['name'],
+                'ephemeral': False,
+                'config': self.__data_to_config(data, instance_type=data['instance_type']),
+                'devices': devices,
+                'source': source,
+                'type': 'container' if data['instance_type'] == 'CONTAINER' else 'virtual-machine',
+                'start': data['autostart'],
+            }}, running_cb, timeout=15 * 60)
+            # We will give 15 minutes to incus to download relevant image and then timeout
+        except CallError as e:
+            if await self.middleware.call('virt.instance.query', [['name', '=', data['name']]]):
+                await (await self.middleware.call('virt.instance.delete', data['name'])).wait()
+            raise e
 
         return await self.middleware.call('virt.instance.get_instance', data['name'])
 

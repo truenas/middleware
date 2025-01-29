@@ -455,7 +455,8 @@ class AsyncRedfishClient(AbstractRedfishClient):
             if jbof_query is not None:
                 jbofs = jbof_query
             else:
-                with Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True) as c:
+                with Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', private_methods=True,
+                            py_exceptions=True) as c:
                     jbofs = c.call('jbof.query', filters)
 
             for jbof in filter_list(jbofs, filters, options):

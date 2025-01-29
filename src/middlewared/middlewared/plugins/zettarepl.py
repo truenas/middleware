@@ -199,9 +199,8 @@ class ZettareplProcess:
                 task_id = int(message.task_id.split("_")[-1])
 
                 if isinstance(message, PeriodicSnapshotTaskStart):
-                    with Client() as c:
+                    with Client(private_methods=True) as c:
                         context = None
-                        vm_context = None
                         if begin_context := c.call("vmware.periodic_snapshot_task_begin", task_id):
                             context = c.call("vmware.periodic_snapshot_task_proceed", begin_context, job=True)
                         if vm_context := c.call("vm.periodic_snapshot_task_begin", task_id):
@@ -220,7 +219,7 @@ class ZettareplProcess:
                     context = self.vmware_contexts.pop(task_id, None)
                     vm_context = self.vm_contexts.pop(task_id, None)
                     if context or vm_context:
-                        with Client() as c:
+                        with Client(private_methods=True) as c:
                             if context:
                                 c.call("vmware.periodic_snapshot_task_end", context, job=True)
                             if vm_context:

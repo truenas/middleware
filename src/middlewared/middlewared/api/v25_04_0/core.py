@@ -23,6 +23,7 @@ class CorePingResult(BaseModel):
 
 
 class CoreSetOptionsOptions(BaseModel, metaclass=ForUpdateMetaclass):
+    private_methods: bool
     py_exceptions: bool
 
 
