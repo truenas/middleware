@@ -66,6 +66,7 @@ class VirtInstanceEntry(BaseModel):
     vnc_port: int | None
     vnc_password: Secret[NonEmptyString | None]
     secure_boot: bool | None
+    root_disk_size: int | None
 
 
 # Lets require at least 32MiB of reserved memory
