@@ -156,6 +156,8 @@ class FCPortService(CRUDService):
         result = {}
         for p in ports:
             naa = p[key]
+            if naa is None:
+                continue
             sessions_path = qla_target_path / wwn_as_colon_hex(naa) / 'sessions'
             sessions = []
             try:
