@@ -47,6 +47,11 @@ def normalize_portal_uri(portal_uri: str, host_ip: str | None) -> str:
     if not host_ip or '0.0.0.0' not in portal_uri:
         return portal_uri
 
+    if ':' in host_ip and '[' not in host_ip:
+        # We already have ipv6 normalized but users who are using older apps before we had ipv6 support,
+        # will have this not normalized and can run into this so we should fix this here to be safe
+        host_ip = f'[{host_ip}]'
+
     return portal_uri.replace('0.0.0.0', host_ip)
 
 
