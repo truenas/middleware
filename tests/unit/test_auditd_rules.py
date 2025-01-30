@@ -4,9 +4,9 @@ import subprocess
 
 from middlewared.utils import auditd
 from middlewared.utils import ProductType
-from middlewared.plugins.system import product_type
+from truenas_api_client import Client
 
-CURRENT_PRODUCT_TYPE = product_type()
+CURRENT_PRODUCT_TYPE = Client().call('system.product_type')
 WITH_GPOS_STIG = True
 print(f"MCG DEBUG: CURRENT_PRODUCT_TYPE = {CURRENT_PRODUCT_TYPE}")
 
