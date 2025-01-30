@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field, PositiveInt
 
-from middlewared.api.base import BaseModel, NotRequired, NotRequiredModel
+from middlewared.api.base import BaseModel, NotRequired
 
 
 __all__ = [
@@ -17,7 +17,7 @@ class BootAttachOptions(BaseModel):
     expand: bool = False
 
 
-class BootFormatOptions(NotRequiredModel):
+class BootFormatOptions(BaseModel):
     size: int = NotRequired
     legacy_schema: Literal["BIOS_ONLY", "EFI_ONLY", None] = None
 
