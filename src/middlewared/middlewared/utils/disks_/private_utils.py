@@ -50,7 +50,7 @@ def __get_disks_impl() -> Generator[tuple[str, str]]:
             yield i.name, i.path
 
 
-def __get_serial_lunid(ctx: Context, devname: str) -> tuple[str, str]:
+def __get_serial_lunid(ctx: Context, devname: str) -> tuple[str | None, str | None]:
     serial = lunid = None
     try:
         dev = Devices.from_name(ctx, "block", devname)
