@@ -258,8 +258,9 @@ class UserTwofactorConfigEntry(BaseModel):
     otp_digits: int
 
 
-class UserTwofactorConfigResult(BaseModel):
-    result = UserTwofactorConfigEntry
+@single_argument_result
+class UserTwofactorConfigResult(UserTwofactorConfigEntry):
+    pass
 
 
 class UserVerifyTwofactorTokenArgs(BaseModel):
@@ -291,5 +292,6 @@ class UserRenew2faSecretArgs(BaseModel):
     twofactor_options: TwofactorOptions
 
 
+@single_argument_result
 class UserRenew2faSecretResult(UserEntry):
-    twofactor_config = UserTwofactorConfigEntry
+    twofactor_config: UserTwofactorConfigEntry
