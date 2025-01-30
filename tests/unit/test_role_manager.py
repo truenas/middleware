@@ -20,7 +20,6 @@ WRITE_METHODS = frozenset(['fakemethod3', 'fakemethod6'])
 READONLY_ADMIN_METHODS = ALL_METHODS - WRITE_METHODS
 FULL_ADMIN_STIG = ALL_METHODS - FAKE_METHODS_NOSTIG
 EXPECTED_FA_RESOURCES = frozenset({
-    'user.verify_twofactor_token',
     'failover.reboot.other_node',
     'truenas.accept_eula',
     'filesystem.put',
