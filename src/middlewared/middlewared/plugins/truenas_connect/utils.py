@@ -11,6 +11,7 @@ CONFIGURED_TNC_STATES = (
     Status.CERT_RENEWAL_IN_PROGRESS.name,
     Status.CERT_RENEWAL_SUCCESS.name,
 )
+HEARTBEAT_INTERVAL = 120
 
 
 def get_account_id_and_system_id(config: dict) -> dict | None:
@@ -52,7 +53,7 @@ def calculate_sleep(failure_dt_str: str | None) -> int | None:
         If the calculated sleep time is 0 or negative (i.e. we’re past the scheduled time),
         returns None (meaning no sleep is needed; try immediately).
     """
-    base_sleep = 5
+    base_sleep = HEARTBEAT_INTERVAL
 
     # If no failure datetime is provided, return base_sleep.
     if not failure_dt_str:

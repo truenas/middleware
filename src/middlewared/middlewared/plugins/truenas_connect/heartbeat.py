@@ -8,7 +8,9 @@ from middlewared.utils.version import parse_version_string
 
 from .mixin import TNCAPIMixin
 from .status_utils import Status
-from .utils import calculate_sleep, CONFIGURED_TNC_STATES, get_account_id_and_system_id, get_unset_payload
+from .utils import (
+    calculate_sleep, CONFIGURED_TNC_STATES, get_account_id_and_system_id, get_unset_payload, HEARTBEAT_INTERVAL,
+)
 from .urls import get_heartbeat_url
 
 
@@ -16,8 +18,6 @@ logger = logging.getLogger('truenas_connect')
 
 
 class TNCHeartbeatService(Service, TNCAPIMixin):
-
-    HEARTBEAT_INTERVAL = 5
 
     class Config:
         namespace = 'tn_connect.heartbeat'
@@ -105,7 +105,7 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
 
 
                 await self.middleware.call('alert.oneshot_delete', 'TNCHeartbeatConnectionFailure')
-                await asyncio.sleep(self.HEARTBEAT_INTERVAL)
+                await asyncio.sleep(HEARTBEAT_INTERVAL)
 
             tnc_config = await self.middleware.call('tn_connect.config_internal')
 
