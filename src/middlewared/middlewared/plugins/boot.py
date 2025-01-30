@@ -204,7 +204,7 @@ class BootService(Service):
         )
         return interval
 
-    @api_method(BootUpdateInitramfsArgs, BootUpdateInitramfsResult, roles=['BOOT_ENV_WRITE'], private=True)
+    @api_method(BootUpdateInitramfsArgs, BootUpdateInitramfsResult, private=True)
     async def update_initramfs(self, options):
         """
         Returns true if initramfs was updated and false otherwise.
