@@ -37,6 +37,8 @@ NotRequired = undefined
 class _BaseModelMetaclass(ModelMetaclass):
     """Any BaseModel subclass that uses the NotRequired default value on any of its fields receives the appropriate
     model serializer."""
+    # FIXME: In the future we want to set defaults on all fields that are not required. Remove this metaclass,
+    # `_NotRequiredMixin`, and `NotRequired` at that time.
 
     def __new__(mcls, name, bases, namespaces, **kwargs):
         skip_patching = kwargs.pop("__BaseModelMetaclass_skip_patching", False)
