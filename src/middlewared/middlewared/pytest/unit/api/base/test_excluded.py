@@ -1,7 +1,7 @@
 from pydantic import Field, Secret
 import pytest
 
-from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NotRequired, NotRequiredModel
+from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NotRequired
 from middlewared.api.base.handler.accept import accept_params, validate_model
 from middlewared.service_exception import ValidationErrors
 
@@ -34,10 +34,10 @@ def test_excluded_field():
 
 
 def test_not_required():
-    class NestedModel(NotRequiredModel):
+    class NestedModel(BaseModel):
         a: int = NotRequired
 
-    class NotRequiredTestModel(NotRequiredModel):
+    class NotRequiredTestModel(BaseModel):
         b: int
         c: int = 3
         d: int = NotRequired

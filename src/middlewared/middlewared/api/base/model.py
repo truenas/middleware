@@ -14,10 +14,57 @@ from middlewared.utils.lang import undefined
 
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item", "added_event_model",
            "changed_event_model", "removed_event_model", "single_argument_args", "single_argument_result",
-           "NotRequired", "NotRequiredModel"]
+           "NotRequired"]
 
 
-class BaseModel(PydanticBaseModel):
+class _NotRequiredMixin(PydanticBaseModel):
+    @model_serializer(mode="wrap")
+    def serialize_basemodel(self, serializer):
+        obj = serializer(self)
+        if isinstance(obj, dict):
+            return {
+                k: v
+                for k, v in obj.items()
+                if v is not undefined
+            }
+        return obj
+
+
+NotRequired = undefined
+"""Use as the default value for fields that may be excluded from the model."""
+
+
+class _BaseModelMetaclass(ModelMetaclass):
+    """Any BaseModel subclass that uses the NotRequired default value on any of its fields receives the appropriate
+    model serializer."""
+    # FIXME: In the future we want to set defaults on all fields that are not required. Remove this metaclass,
+    # `_NotRequiredMixin`, and `NotRequired` at that time.
+
+    def __new__(mcls, name, bases, namespaces, **kwargs):
+        skip_patching = kwargs.pop("__BaseModelMetaclass_skip_patching", False)
+
+        cls = super().__new__(mcls, name, bases, namespaces, **kwargs)
+
+        if skip_patching or name == "BaseModel":
+            return cls
+
+        for field in cls.model_fields.values():
+            if getattr(field, "default", None) is undefined:
+                return create_model(
+                    cls.__name__,
+                    __base__=(cls, _NotRequiredMixin),
+                    __module__=cls.__module__,
+                    __cls_kwargs__={"__BaseModelMetaclass_skip_patching": True},
+                    **{
+                        k: (v.annotation, v)
+                        for k, v in cls.model_fields.items()
+                    }
+                )
+        else:
+            return cls
+
+
+class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
     model_config = ConfigDict(
         extra="forbid",
         strict=True,
@@ -103,7 +150,7 @@ class BaseModel(PydanticBaseModel):
         return value
 
 
-class ForUpdateMetaclass(ModelMetaclass):
+class ForUpdateMetaclass(_BaseModelMetaclass):
     """
     Using this metaclass on a model will change all of its fields default values to `undefined`.
     Such a model might be instantiated with any subset of its fields, which can be useful to validate request bodies
@@ -113,7 +160,7 @@ class ForUpdateMetaclass(ModelMetaclass):
     def __new__(mcls, name, bases, namespaces, **kwargs):
         skip_patching = kwargs.pop("__ForUpdateMetaclass_skip_patching", False)
 
-        cls = super().__new__(mcls, name, bases, namespaces, **kwargs)
+        cls = ModelMetaclass.__new__(mcls, name, bases, namespaces, **kwargs)
 
         if skip_patching:
             return cls
@@ -143,23 +190,6 @@ class _ForUpdateSerializerMixin(PydanticBaseModel):
                 else v != undefined
             )
         }
-
-
-class NotRequiredModel(BaseModel):
-    @model_serializer(mode="wrap")
-    def serialize_basemodel(self, serializer):
-        obj = serializer(self)
-        if isinstance(obj, dict):
-            return {
-                k: v
-                for k, v in obj.items()
-                if v is not undefined
-            }
-        return obj
-
-
-NotRequired = undefined
-"""Use as the default value for fields that may be excluded from the model."""
 
 
 def _field_for_update(field):
