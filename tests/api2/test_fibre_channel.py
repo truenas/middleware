@@ -615,6 +615,8 @@ class TestFixtureFibreChannel:
                 assert scst_qla_targets[key2] == {
                     'LUN': {'0': 'fcextent1'},
                     'enabled': '1',
+                    'node_name': key0,
+                    'parent_host': key0,
                     'rel_tgt_id': str(5001 + rel_tgt_id_node_offset)
                 }
 
