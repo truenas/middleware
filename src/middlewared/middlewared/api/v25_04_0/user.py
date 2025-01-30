@@ -251,12 +251,15 @@ class UserTwofactorConfigArgs(BaseModel):
     username: str
 
 
-@single_argument_result
-class UserTwofactorConfigResult(BaseModel):
+class UserTwofactorConfigEntry(BaseModel):
     provisioning_uri: str | None
     secret_configured: bool
     interval: int
     otp_digits: int
+
+
+class UserTwofactorConfigResult(BaseModel):
+    result = UserTwofactorConfigEntry
 
 
 class UserVerifyTwofactorTokenArgs(BaseModel):
@@ -288,4 +291,5 @@ class UserRenew2faSecretArgs(BaseModel):
     twofactor_options: TwofactorOptions
 
 
-UserRenew2faSecretResult = single_argument_result(UserEntry, "UserRenew2faSecretResult")
+class UserRenew2faSecretResult(UserEntry):
+    twofactor_config = UserTwofactorConfigEntry
