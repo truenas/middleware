@@ -3,6 +3,7 @@ import os
 import stat
 import subprocess
 
+from middlewared.utils import ProductType
 
 AUDIT_DIR = '/etc/audit'
 AUDIT_RULES_DIR = os.path.join(AUDIT_DIR, 'rules.d')
@@ -16,14 +17,21 @@ class AUDITRules(enum.StrEnum):
     PRIVILEGED = '31-privileged.rules'
     MODULE = '43-module-load.rules'
     FINALIZE = '99-finalize.rules'
+    COMMUNITY = 'truenas-community-edition.rules'
 
 
 STIG_AUDIT_RULES = frozenset([rules for rules in AUDITRules])
 NOSTIG_AUDIT_RULES = frozenset([AUDITRules.BASE])
 
 
-def set_audit_rules(gpos_stig_enabled: bool) -> None:
+def set_audit_rules(gpos_stig_enabled: bool, truenas_product_type: str) -> None:
     rules_set = STIG_AUDIT_RULES if gpos_stig_enabled else NOSTIG_AUDIT_RULES
+    optional_rules_set = set()
+    is_community_edition = bool(truenas_product_type == ProductType.COMMUNITY_EDITION)
+
+    # Cannot use Community Edition rules with STIG
+    if is_community_edition and not gpos_stig_enabled:
+        optional_rules_set = set([AUDITRules.COMMUNITY])
 
     # first remove all files that shouldn't be there
     for rules_file in os.listdir(AUDIT_RULES_DIR):
@@ -35,7 +43,7 @@ def set_audit_rules(gpos_stig_enabled: bool) -> None:
         elif os.readlink(full_path) != os.path.join(CONF_AUDIT_RULES_DIR, rules_file):
             os.unlink(full_path)
 
-    for rules_file in rules_set:
+    for rules_file in [*rules_set, *optional_rules_set]:
         conf_path = os.path.join(CONF_AUDIT_RULES_DIR, rules_file)
         audit_path = os.path.join(AUDIT_RULES_DIR, rules_file)
         if os.path.exists(audit_path):
