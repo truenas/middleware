@@ -85,7 +85,7 @@ class BootService(Service):
         # https://wiki.debian.org/UEFI
         return 'EFI' if os.path.exists('/sys/firmware/efi') else 'BIOS'
 
-    @api_method(BootAttachArgs, BootAttachResult, roles=['FULL_ADMIN'])
+    @api_method(BootAttachArgs, BootAttachResult, roles=['BOOT_ENV_WRITE'])
     @job(lock=BOOT_ATTACH_REPLACE_LOCK)
     async def attach(self, job, dev, options):
         """
@@ -135,7 +135,7 @@ class BootService(Service):
         await self.middleware.call('zfs.pool.online', BOOT_POOL_NAME, zfs_dev_part['name'], True)
         await self.update_initramfs()
 
-    @api_method(BootDetachArgs, BootDetachResult, roles=['FULL_ADMIN'])
+    @api_method(BootDetachArgs, BootDetachResult, roles=['BOOT_ENV_WRITE'])
     async def detach(self, dev):
         """
         Detach given `dev` from boot pool.
@@ -144,7 +144,7 @@ class BootService(Service):
         await self.middleware.call('zfs.pool.detach', BOOT_POOL_NAME, dev, {'clear_label': True})
         await self.update_initramfs()
 
-    @api_method(BootReplaceArgs, BootReplaceResult, roles=['FULL_ADMIN'])
+    @api_method(BootReplaceArgs, BootReplaceResult, roles=['BOOT_ENV_WRITE'])
     @job(lock=BOOT_ATTACH_REPLACE_LOCK)
     async def replace(self, job, label, dev):
         """
@@ -182,7 +182,7 @@ class BootService(Service):
         await self.middleware.call('boot.install_loader', dev)
         await self.update_initramfs()
 
-    @api_method(BootScrubArgs, BootScrubResult, roles=['FULL_ADMIN'])
+    @api_method(BootScrubArgs, BootScrubResult, roles=['BOOT_ENV_WRITE'])
     @job(lock='boot_scrub')
     async def scrub(self, job):
         """
@@ -191,7 +191,7 @@ class BootService(Service):
         subjob = await self.middleware.call('pool.scrub.scrub', BOOT_POOL_NAME)
         return await job.wrap(subjob)
 
-    @api_method(BootSetScrubIntervalArgs, BootSetScrubIntervalResult, roles=['FULL_ADMIN'])
+    @api_method(BootSetScrubIntervalArgs, BootSetScrubIntervalResult, roles=['BOOT_ENV_WRITE'])
     async def set_scrub_interval(self, interval):
         """
         Set Automatic Scrub Interval value in days.
@@ -204,7 +204,7 @@ class BootService(Service):
         )
         return interval
 
-    @api_method(BootUpdateInitramfsArgs, BootUpdateInitramfsResult, roles=['FULL_ADMIN'], private=True)
+    @api_method(BootUpdateInitramfsArgs, BootUpdateInitramfsResult, roles=['BOOT_ENV_WRITE'], private=True)
     async def update_initramfs(self, options):
         """
         Returns true if initramfs was updated and false otherwise.
