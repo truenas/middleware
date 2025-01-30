@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import datetime
 import logging
 
@@ -56,7 +57,10 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                         sleep_error = True
                     case 401:
                         logger.debug('TNC Heartbeat: Received 401, unsetting TNC')
-                        await self.middleware.call('tn_connect.unset_registration_details')
+                        with contextlib.suppress(Exception):
+                            # It is expected that cert revocation and account revocation will fail because
+                            # account has already been revoked, so we just call this to clear stale alerts etc
+                            await self.middleware.call('tn_connect.unset_registration_details')
                         await self.middleware.call('datastore.update', 'truenas_connect', tnc_config['id'], {
                             'enabled': False,
                         } | get_unset_payload())
