@@ -109,10 +109,11 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
 
             tnc_config = await self.middleware.call('tn_connect.config_internal')
 
-
     async def payload(self, disk_mapping=None):
-        return {}
-        return await self.middleware.call('reporting.realtime.stats', disk_mapping)
+        return {
+            'alerts': await self.middleware.call('alert.list'),
+            'stats': await self.middleware.call('reporting.realtime.stats', disk_mapping),
+        }
 
 
 async def check_status(middleware):
