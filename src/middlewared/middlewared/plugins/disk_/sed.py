@@ -25,15 +25,18 @@ class DiskService(Service):
                     return
 
         advconfig = await self.middleware.call('system.advanced.config')
-        disks = await self.middleware.call('disk.query', [], {'extra': {'passwords': True}})
+        disks = await self.middleware.call('disk.query', [], {'extra': {'passwords': True, 'real_names': True}})
+        global_password = await self.middleware.call('system.advanced.sed_global_password')
 
         # If no SED password was found we can stop here
-        if not await self.middleware.call('system.advanced.sed_global_password') and not any(
-            [d['passwd'] for d in disks]
-        ):
+        if not global_password and not any([d['passwd'] for d in disks]):
             return
 
-        result = await asyncio_map(lambda disk: self.sed_unlock(disk['name'], disk, advconfig, True), disks, 16)
+        result = await asyncio_map(
+            lambda disk: self.sed_unlock(disk['real_name'], disk['passwd'] or global_password, advconfig, True),
+            disks,
+            16,
+        )
         locked = list(filter(lambda x: x['locked'] is True, result))
         if locked:
             disk_names = ', '.join([i['name'] for i in locked])
@@ -42,7 +45,7 @@ class DiskService(Service):
         return True
 
     @private
-    async def sed_unlock(self, disk_name, disk=None, advconfig=None, force=False):
+    async def sed_unlock(self, disk_name, password=None, advconfig=None, force=False):
         # on an HA system, if both controllers manage to send
         # SED commands at the same time, then it can cause issues
         # where, ultimately, the disks don't get unlocked
@@ -58,14 +61,17 @@ class DiskService(Service):
         # We need two states to tell apart when disk was successfully unlocked
         locked = None
         unlocked = None
-        password = await self.middleware.call('system.advanced.sed_global_password')
+        if password is None:
+            disks = await self.middleware.call(
+                'disk.query',
+                [['real_name', '=', disk_name]],
+                {'extra': {'passwords': True, 'real_names': True}},
+            )
+            if disks:
+                password = disks[0]['passwd']
 
-        if disk is None:
-            disk = await self.query([('name', '=', disk_name)], {'extra': {'passwords': True}})
-            if disk and disk[0]['passwd']:
-                password = disk[0]['passwd']
-        elif disk.get('passwd'):
-            password = disk['passwd']
+            if password is None:
+                password = await self.middleware.call('system.advanced.sed_global_password')
 
         rv = {'name': disk_name, 'locked': None}
 

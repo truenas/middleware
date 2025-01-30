@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, Str
 from middlewared.service import filterable, private, CallError, CRUDService, ValidationError
 import middlewared.sqlalchemy as sa
+from middlewared.utils.disks_.get_disks import get_disks
 
 RE_SMART_AVAILABLE = re.compile(r'SMART support is:\s+Available')
 
@@ -145,6 +146,10 @@ class DiskService(CRUDService):
             disk['pool'] = context['boot_pool_name']
         else:
             disk['pool'] = context['zfs_guid_to_pool'].get(disk['zfs_guid'])
+
+        if context['real_names']:
+            disk['real_name'] = context['identifier_to_name'].get(disk['identifier'])
+
         return disk
 
     @private
@@ -153,6 +158,8 @@ class DiskService(CRUDService):
             'passwords': extra.get('passwords', False),
             'supports_smart': extra.get('supports_smart', False),
             'disks_keys': {},
+            'real_names': extra.get('real_names', False),
+            'identifier_to_name': {},
 
             'pools': extra.get('pools', False),
             'boot_pool_disks': [],
@@ -162,6 +169,12 @@ class DiskService(CRUDService):
 
         if context['passwords']:
             context['disks_keys'] = await self.middleware.call('kmip.retrieve_sed_disks_keys')
+
+        if context['real_names']:
+            context['identifier_to_name'] = {
+                disk.identifier: disk.name
+                for disk in await self.middleware.run_in_thread(lambda: list(get_disks()))
+            }
 
         if context['supports_smart']:
             if len(rows) > 1:
