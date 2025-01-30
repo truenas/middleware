@@ -1,7 +1,7 @@
 import asyncio
-import json
 
 import aiohttp
+from truenas_api_client import json
 
 from middlewared.service import private
 
