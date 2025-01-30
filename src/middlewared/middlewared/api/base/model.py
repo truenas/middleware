@@ -14,10 +14,49 @@ from middlewared.utils.lang import undefined
 
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item", "added_event_model",
            "changed_event_model", "removed_event_model", "single_argument_args", "single_argument_result",
-           "NotRequired", "NotRequiredModel"]
+           "NotRequired"]
 
 
-class BaseModel(PydanticBaseModel):
+class _NotRequiredMixin(PydanticBaseModel):
+    @model_serializer(mode="wrap")
+    def serialize_basemodel(self, serializer):
+        obj = serializer(self)
+        if isinstance(obj, dict):
+            return {
+                k: v
+                for k, v in obj.items()
+                if v is not undefined
+            }
+        return obj
+
+
+NotRequired = undefined
+"""Use as the default value for fields that may be excluded from the model."""
+
+
+class _BaseModelMetaclass(ModelMetaclass):
+    """Any BaseModel subclass that uses the NotRequired default value on any of its fields receives the appropriate
+    model serializer."""
+
+    def __new__(mcls, name, bases, namespaces, **kwargs):
+        cls = super().__new__(mcls, name, bases, namespaces, **kwargs)
+
+        if name == "BaseModel":
+            return cls
+
+        for field in cls.model_fields.values():
+            if getattr(field, "default", None) is undefined:
+                return create_model(
+                    cls.__name__,
+                    __base__=(cls, _NotRequiredMixin),
+                    __module__=cls.__module__,
+                    **cls.model_fields
+                )
+        else:
+            return cls
+
+
+class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
     model_config = ConfigDict(
         extra="forbid",
         strict=True,
@@ -143,23 +182,6 @@ class _ForUpdateSerializerMixin(PydanticBaseModel):
                 else v != undefined
             )
         }
-
-
-class NotRequiredModel(BaseModel):
-    @model_serializer(mode="wrap")
-    def serialize_basemodel(self, serializer):
-        obj = serializer(self)
-        if isinstance(obj, dict):
-            return {
-                k: v
-                for k, v in obj.items()
-                if v is not undefined
-            }
-        return obj
-
-
-NotRequired = undefined
-"""Use as the default value for fields that may be excluded from the model."""
 
 
 def _field_for_update(field):
