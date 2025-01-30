@@ -32,3 +32,20 @@ def test_(key, value, grep_file, sshd_config_cmd, validation_error):
         with pytest.raises(ValidationErrors) as ve:
             call('system.advanced.update', {key: value})
         assert ve.value.errors == [ValidationError(key, validation_error)]
+
+
+def test_debugkernel_initrd():
+    assert not call("system.advanced.config")["debugkernel"]
+
+    initrds = [initrd for initrd in ssh("ls -1 /boot").split() if "initrd" in initrd]
+    assert len(initrds) == 1
+    assert "debug" not in initrds[0]
+
+    try:
+        call("system.advanced.update", {"debugkernel": True})
+
+        initrds = [initrd for initrd in ssh("ls -1 /boot").split() if "initrd" in initrd]
+        assert len(initrds) == 2
+        assert any("debug" in initrd for initrd in initrds)
+    finally:
+        call("system.advanced.update", {"debugkernel": False})
