@@ -306,6 +306,9 @@ class VirtInstanceService(CRUDService):
                             'archs': [v['arch']],
                             'variant': v['variant'],
                             'instance_types': list(instance_types),
+                            'secureboot': (
+                                False if v['requirements'].get('secureboot') == 'false' else True
+                            ),
                         }
                     else:
                         choices[alias]['archs'].append(v['arch'])

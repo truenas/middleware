@@ -218,6 +218,7 @@ class ImageChoiceItem(BaseModel):
     archs: list[str]
     variant: str
     instance_types: list[InstanceType]
+    secureboot: bool | None
 
 
 class VirtInstanceImageChoicesResult(BaseModel):
