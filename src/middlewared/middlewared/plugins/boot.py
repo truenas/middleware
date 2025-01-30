@@ -67,7 +67,7 @@ class BootService(Service):
         global BOOT_POOL_DISKS
         BOOT_POOL_DISKS = None
 
-    @api_method(BootGetDisksArgs, BootGetDisksResult, roles=['READONLY_ADMIN'])
+    @api_method(BootGetDisksArgs, BootGetDisksResult, roles=['DISK_READ'])
     async def get_disks(self):
         """
         Returns disks of the boot pool.
@@ -85,7 +85,7 @@ class BootService(Service):
         # https://wiki.debian.org/UEFI
         return 'EFI' if os.path.exists('/sys/firmware/efi') else 'BIOS'
 
-    @api_method(BootAttachArgs, BootAttachResult, roles=['BOOT_ENV_WRITE'])
+    @api_method(BootAttachArgs, BootAttachResult, roles=['DISK_WRITE'])
     @job(lock=BOOT_ATTACH_REPLACE_LOCK)
     async def attach(self, job, dev, options):
         """
@@ -135,7 +135,7 @@ class BootService(Service):
         await self.middleware.call('zfs.pool.online', BOOT_POOL_NAME, zfs_dev_part['name'], True)
         await self.update_initramfs()
 
-    @api_method(BootDetachArgs, BootDetachResult, roles=['BOOT_ENV_WRITE'])
+    @api_method(BootDetachArgs, BootDetachResult, roles=['DISK_WRITE'])
     async def detach(self, dev):
         """
         Detach given `dev` from boot pool.
@@ -144,7 +144,7 @@ class BootService(Service):
         await self.middleware.call('zfs.pool.detach', BOOT_POOL_NAME, dev, {'clear_label': True})
         await self.update_initramfs()
 
-    @api_method(BootReplaceArgs, BootReplaceResult, roles=['BOOT_ENV_WRITE'])
+    @api_method(BootReplaceArgs, BootReplaceResult, roles=['DISK_WRITE'])
     @job(lock=BOOT_ATTACH_REPLACE_LOCK)
     async def replace(self, job, label, dev):
         """

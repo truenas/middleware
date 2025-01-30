@@ -6,7 +6,7 @@ from middlewared.utils import run
 
 class BootService(Service):
 
-    @api_method(BootFormatArgs, BootFormatResult, roles=['FULL_ADMIN'], private=True)
+    @api_method(BootFormatArgs, BootFormatResult, roles=['DISK_WRITE'], private=True)
     async def format(self, dev, options):
         """
         Format a given disk `dev` using the appropriate partition layout
