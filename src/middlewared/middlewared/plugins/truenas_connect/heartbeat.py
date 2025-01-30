@@ -48,10 +48,9 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                 sleep_error = True
             else:
                 match resp['status_code']:
-                    case 202:
-                        logger.debug('TNC Heartbeat: Received 202')
-                    case 200:
-                        logger.debug('TNC Heartbeat: Received 200')
+                    case 202 | 200:
+                        # Just keeping this here for valid codes, we don't need to do anything
+                        pass
                     case 400:
                         logger.debug('TNC Heartbeat: Received 400')
                         sleep_error = True
