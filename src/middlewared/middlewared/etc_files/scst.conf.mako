@@ -73,7 +73,7 @@
     fc_host_by_port_name = {}
 
     def ha_node_wwpn_for_fcport_or_fchost(fcport):
-        if render_ctx['failover.node'] == 'A':
+        if not is_ha or render_ctx['failover.node'] == 'A':
             return wwn_as_colon_hex(fcport['wwpn'])
         elif render_ctx['failover.node'] == 'B':
             return wwn_as_colon_hex(fcport['wwpn_b'])
@@ -81,7 +81,7 @@
     def ha_node_wwpn_for_target(target, node):
         if target['id'] in fcports_by_target_id:
             fcport = fcports_by_target_id[target['id']]
-            if node == 'A':
+            if not is_ha or node == 'A':
                 return wwn_as_colon_hex(fcport['wwpn'])
             elif node == 'B':
                 return wwn_as_colon_hex(fcport['wwpn_b'])
@@ -730,9 +730,14 @@ TARGET_DRIVER qla2x00t {
 <%
     wwpn = wwn_as_colon_hex(fcport['wwpn'])
     target = fcport_to_target(fcport)
+    parent_host = fcport_to_parent_host(fcport)
 %>
     % if wwpn and target:
     TARGET ${wwpn} {
+% if parent_host:
+        node_name ${parent_host}
+        parent_host ${parent_host}
+% endif  ## parent_host
         rel_tgt_id ${target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET}
         enabled 1
         % for associated_target in associated_targets[fcport['target']['id']]:
