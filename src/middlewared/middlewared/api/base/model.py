@@ -39,9 +39,11 @@ class _BaseModelMetaclass(ModelMetaclass):
     model serializer."""
 
     def __new__(mcls, name, bases, namespaces, **kwargs):
+        skip_patching = kwargs.pop("__BaseModelMetaclass_skip_patching", False)
+
         cls = super().__new__(mcls, name, bases, namespaces, **kwargs)
 
-        if name == "BaseModel":
+        if skip_patching or name == "BaseModel":
             return cls
 
         for field in cls.model_fields.values():
@@ -50,7 +52,11 @@ class _BaseModelMetaclass(ModelMetaclass):
                     cls.__name__,
                     __base__=(cls, _NotRequiredMixin),
                     __module__=cls.__module__,
-                    **cls.model_fields
+                    __cls_kwargs__={"__BaseModelMetaclass_skip_patching": True},
+                    **{
+                        k: (v.annotation, v)
+                        for k, v in cls.model_fields.items()
+                    }
                 )
         else:
             return cls
@@ -142,7 +148,7 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         return value
 
 
-class ForUpdateMetaclass(ModelMetaclass):
+class ForUpdateMetaclass(_BaseModelMetaclass):
     """
     Using this metaclass on a model will change all of its fields default values to `undefined`.
     Such a model might be instantiated with any subset of its fields, which can be useful to validate request bodies
@@ -152,7 +158,7 @@ class ForUpdateMetaclass(ModelMetaclass):
     def __new__(mcls, name, bases, namespaces, **kwargs):
         skip_patching = kwargs.pop("__ForUpdateMetaclass_skip_patching", False)
 
-        cls = super().__new__(mcls, name, bases, namespaces, **kwargs)
+        cls = ModelMetaclass.__new__(mcls, name, bases, namespaces, **kwargs)
 
         if skip_patching:
             return cls
