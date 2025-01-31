@@ -69,10 +69,7 @@ class EtcService(Service):
 
     GROUPS = {
         'audit': {
-            'ctx': [
-                {'method': 'system.security.config'},
-                {'method': 'system.product_type'}
-            ],
+            'ctx': [{'method': 'system.security.config'}],
             'entries': [
                 {'type': 'py', 'path': 'audit_setup'},
             ]

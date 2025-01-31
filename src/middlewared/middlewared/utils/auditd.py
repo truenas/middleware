@@ -3,8 +3,6 @@ import os
 import stat
 import subprocess
 
-from middlewared.utils import ProductType
-
 AUDIT_DIR = '/etc/audit'
 AUDIT_RULES_DIR = os.path.join(AUDIT_DIR, 'rules.d')
 AUDIT_PLUGINS_DIR = os.path.join(AUDIT_DIR, 'plugins.d')
@@ -20,37 +18,36 @@ class AUDITRules(enum.StrEnum):
     COMMUNITY = 'truenas-community-edition.rules'
 
 
-STIG_AUDIT_RULES = frozenset([rules for rules in AUDITRules if rules != AUDITRules.COMMUNITY])
-NOSTIG_AUDIT_RULES = frozenset([AUDITRules.BASE])
+# Set of rules applied for STIG mode
+STIG_AUDIT_RULES = frozenset([
+    AUDITRules.BASE, AUDITRules.STIG, AUDITRules.PRIVILEGED,
+    AUDITRules.MODULE, AUDITRules.FINALIZE
+])
+
+# Set of rules applied in Non-STIG mode (default)
+NOSTIG_AUDIT_RULES = frozenset([
+    AUDITRules.BASE, AUDITRules.COMMUNITY
+])
 
 
-def set_audit_rules(gpos_stig_enabled: bool, truenas_product_type: str) -> None:
+def set_audit_rules(gpos_stig_enabled: bool) -> None:
     """
-    The rules:
-        * STIG Rules CAN be applied to Community Edition Product
-        * Community Edition Rules CAN NOT be applied with STIG enabled
-
-    The rules will be enforced silently.
+    Apply STIG rule set or Non-STIG rule set
     """
     rules_set = STIG_AUDIT_RULES if gpos_stig_enabled else NOSTIG_AUDIT_RULES
-    optional_rules_set = set()
-    want_community_edition = bool(truenas_product_type == ProductType.COMMUNITY_EDITION)
-
-    if want_community_edition and not gpos_stig_enabled:
-        optional_rules_set = set([AUDITRules.COMMUNITY])
 
     # first remove all files that shouldn't be there
     for rules_file in os.listdir(AUDIT_RULES_DIR):
         full_path = os.path.join(AUDIT_RULES_DIR, rules_file)
 
-        if rules_file not in [*rules_set, *optional_rules_set]:
+        if rules_file not in rules_set:
             os.unlink(full_path)
         elif not stat.S_ISLNK(os.lstat(full_path).st_mode):
             os.unlink(full_path)
         elif os.readlink(full_path) != os.path.join(CONF_AUDIT_RULES_DIR, rules_file):
             os.unlink(full_path)
 
-    for rules_file in [*rules_set, *optional_rules_set]:
+    for rules_file in rules_set:
         conf_path = os.path.join(CONF_AUDIT_RULES_DIR, rules_file)
         audit_path = os.path.join(AUDIT_RULES_DIR, rules_file)
         if os.path.exists(audit_path):
