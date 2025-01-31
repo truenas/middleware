@@ -63,11 +63,8 @@ class VMService(Service, VMSupervisorMixin):
 
     @private
     async def start_on_boot(self):
-        for vm in await self.middleware.call('vm.query', [('autostart', '=', True)], {'force_sql_filters': True}):
-            try:
-                await self.middleware.call('vm.start', vm['id'])
-            except Exception as e:
-                self.middleware.logger.error(f'Failed to start VM {vm["name"]}: {e}')
+        # FIXME: Remove this endpoint
+        pass
 
     @private
     async def deinitialize_vms(self, options):
