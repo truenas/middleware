@@ -32,6 +32,7 @@ class GatherTypes:
         'vms': ['vms'],
         'nspawn_containers': ['nspawn_containers'],
         'vendor_info': ['is_vendored', 'vendor_name']
+        'hypervisor': ['hypervisor', 'is_virtualized']
         # Add new gather type here
     }
 
