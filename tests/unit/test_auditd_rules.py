@@ -5,7 +5,12 @@ import subprocess
 from middlewared.utils import auditd
 
 WITH_GPOS_STIG = True
+# STIG test items
+MODULE_STIG_RULE = "-a always,exit -F arch=b64 -S init_module,finit_module -F key=module-load"
 SAMPLE_STIG_RULE = "-a always,exit -F arch=b32 -F path=/etc/gshadow -F perm=wa -F key=identity"
+IMMUTABLE_STIG_RULE = "-e 2"
+STIG_ASSERT = [MODULE_STIG_RULE, SAMPLE_STIG_RULE, IMMUTABLE_STIG_RULE]
+# Non-STIG test items
 SAMPLE_CE_RULE = "-a always,exclude -F msgtype=USER_START"
 
 
@@ -39,7 +44,8 @@ def test__auditd_enable_gpos_stig(auditd_gpos_stig_enable):
     assert set(os.listdir(auditd.AUDIT_RULES_DIR)) == auditd.STIG_AUDIT_RULES
     stig_rule_set = current_rule_set().splitlines()
     assert stig_rule_set != 'No rules'
-    assert SAMPLE_STIG_RULE in stig_rule_set
+    for stig_item in STIG_ASSERT:
+        assert stig_item in stig_rule_set
     assert SAMPLE_CE_RULE not in stig_rule_set
 
 
@@ -48,5 +54,6 @@ def test__auditd_disable_gpos_stig(auditd_gpos_stig_disable):
     assert set(os.listdir(auditd.AUDIT_RULES_DIR)) == auditd.NOSTIG_AUDIT_RULES
     stig_rule_set = current_rule_set().splitlines()
     assert stig_rule_set != 'No rules'
-    assert SAMPLE_STIG_RULE not in stig_rule_set
+    for stig_item in [SAMPLE_STIG_RULE, IMMUTABLE_STIG_RULE]:
+        assert stig_item not in stig_rule_set
     assert SAMPLE_CE_RULE in stig_rule_set
