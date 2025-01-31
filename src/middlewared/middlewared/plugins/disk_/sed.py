@@ -113,7 +113,7 @@ class DiskService(Service):
         if not disk:
             return
 
-        info = await unlock_impl(disk[0]["path"], disk[0]["passwd"])
+        info = await unlock_impl(disk[0])
         failed = await self.parse_unlock_info(info)
 
         return failed is None or not info.locked
