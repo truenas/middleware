@@ -64,17 +64,18 @@ class SMBShareAclEntry(BaseModel):
     ae_type: Literal['ALLOWED', 'DENIED']
     """ The type of SMB share ACL entry. """
     ae_who_sid: SID | None = None
-    """ SID value of principle for whom ACL entry applies. """
+    """ SID value of the principal to whom ACL entry applies. """
     ae_who_id: SMBShareAclEntryWhoId | None = None
-    """ Unix ID of principle for whom ACL entry applies. """
+    """ Unix ID of the principal to whom ACL entry applies. """
     ae_who_str: NonEmptyString | None = None
+    """ User or group name of the principal to whom the ACL entry applies """
 
     @model_validator(mode='after')
     def check_ae_who(self) -> Self:
         if self.ae_who_sid is None and self.ae_who_id is None and self.ae_who_str is None:
             raise ValueError(
-                'Either ae_who_sid or ae_who_id or ae_who_str is required to identify user or group '
-                'to which the ACL entry applies.'
+                'One of the following fields is required to identify the user or group to whom the '
+                'ACL entry applies: "ae_who_sid", "ae_who_str", or "ae_who_id"'
             )
 
         return self
