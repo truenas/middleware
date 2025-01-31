@@ -3,12 +3,9 @@ import pytest
 import subprocess
 
 from middlewared.utils import auditd
-from middlewared.utils import ProductType
-from truenas_api_client import Client
 
-pp = pytest.param
-CURRENT_PRODUCT_TYPE = Client().call('system.product_type')
 WITH_GPOS_STIG = True
+SAMPLE_STIG_RULE = "-a always,exit -F arch=b32 -F path=/etc/gshadow -F perm=wa -F key=identity"
 SAMPLE_CE_RULE = "-a always,exclude -F msgtype=USER_START"
 
 
@@ -17,38 +14,19 @@ def current_rule_set():
     return rules.stdout.decode().strip()
 
 
-@pytest.fixture(
-    params=[ProductType.ENTERPRISE, ProductType.COMMUNITY_EDITION],
-    scope='function'
-)
-def auditd_gpos_stig_enable(request):
-    auditd.set_audit_rules(WITH_GPOS_STIG, request.param)
+@pytest.fixture(scope='function')
+def auditd_gpos_stig_enable():
+    auditd.set_audit_rules(WITH_GPOS_STIG)
     try:
         yield
     finally:
-        auditd.set_audit_rules(not WITH_GPOS_STIG, CURRENT_PRODUCT_TYPE)
+        auditd.set_audit_rules(not WITH_GPOS_STIG)
 
 
-@pytest.fixture(
-    params=[
-        pp({"pt": ProductType.ENTERPRISE, "res": "No rules"}, id=ProductType.ENTERPRISE),
-        pp({"pt": ProductType.COMMUNITY_EDITION, "res": SAMPLE_CE_RULE}, id=ProductType.COMMUNITY_EDITION)
-    ],
-    scope='function'
-)
-def auditd_gpos_stig_disable(request):
-    prod_type = request.param["pt"]
-    try:
-        auditd.set_audit_rules(not WITH_GPOS_STIG, prod_type)
-        yield request.param
-    finally:
-        # make extra-sure we're disabled
-        auditd.set_audit_rules(not WITH_GPOS_STIG, CURRENT_PRODUCT_TYPE)
-
-
-# Sanity check
-def test__auditd_current_prod_type():
-    assert CURRENT_PRODUCT_TYPE in dir(ProductType)
+@pytest.fixture(scope='function')
+def auditd_gpos_stig_disable():
+    # make extra-sure we're disabled
+    auditd.set_audit_rules(not WITH_GPOS_STIG)
 
 
 @pytest.mark.parametrize('ruleset', auditd.AUDITRules)
@@ -57,24 +35,18 @@ def test__auditd_conf_rules_exist(ruleset):
 
 
 def test__auditd_enable_gpos_stig(auditd_gpos_stig_enable):
-    # If STIG enabled then we should see no Community Edition Rules
+    # With STIG enabled we should see no Community Edition Rules
     assert set(os.listdir(auditd.AUDIT_RULES_DIR)) == auditd.STIG_AUDIT_RULES
-    assert current_rule_set() != 'No rules'
+    stig_rule_set = current_rule_set().splitlines()
+    assert stig_rule_set != 'No rules'
+    assert SAMPLE_STIG_RULE in stig_rule_set
+    assert SAMPLE_CE_RULE not in stig_rule_set
 
 
 def test__auditd_disable_gpos_stig(auditd_gpos_stig_disable):
-    product_type = auditd_gpos_stig_disable["pt"]
-    expected_result = auditd_gpos_stig_disable["res"]
-
-    # If STIG disabled then we should see NOSTIG_AUDIT_RULES
-    # and, if requested, Community Edition Rules.
-    match product_type:
-        case ProductType.ENTERPRISE:
-            assert set(os.listdir(auditd.AUDIT_RULES_DIR)) == auditd.NOSTIG_AUDIT_RULES
-            assert current_rule_set() == 'No rules'
-        case ProductType.COMMUNITY_EDITION:
-            expected_list = [rule_file for rule_file in auditd.NOSTIG_AUDIT_RULES]
-            expected_list += [rule_file for rule_file in set([auditd.AUDITRules.COMMUNITY])]
-            assert set(os.listdir(auditd.AUDIT_RULES_DIR)) == set(expected_list)
-
-    assert expected_result in current_rule_set().splitlines()
+    # With STIG disabled we should see NOSTIG_AUDIT_RULES
+    assert set(os.listdir(auditd.AUDIT_RULES_DIR)) == auditd.NOSTIG_AUDIT_RULES
+    stig_rule_set = current_rule_set().splitlines()
+    assert stig_rule_set != 'No rules'
+    assert SAMPLE_STIG_RULE not in stig_rule_set
+    assert SAMPLE_CE_RULE in stig_rule_set
