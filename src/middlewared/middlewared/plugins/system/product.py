@@ -78,7 +78,7 @@ class SystemService(Service):
         If `version` is not provided, then the release notes URL will return
             a link for the currently installed version of SCALE.
         """
-        parsed_version = parse_version_string(version_str)
+        parsed_version = parse_version_string(version_str or self.version_short())
         if parsed_version is None:
             raise CallError(f'Invalid version string specified: {version_str}')
 
