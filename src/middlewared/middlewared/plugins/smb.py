@@ -1417,9 +1417,6 @@ class SharingSMBService(SharingService):
     async def setacl(self, data):
         """
         Set an ACL on `share_name`. This only impacts access through the SMB protocol.
-        Either ae_who_sid, ae_who_id must, ae_who_str be specified for each ACL entry in the
-        share_acl. If multiple are specified, preference is in the following order: SID,
-        unix id, name.
 
         `share_name` the name of the share
 
