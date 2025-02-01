@@ -6,7 +6,7 @@ import libsgio
 from middlewared.plugins.disk_.disk_info import get_partition_size_info
 from middlewared.schema import Dict, returns
 from middlewared.service import Service, accepts, private
-from middlewared.utils.disks import DISKS_TO_IGNORE, get_disk_names, get_disk_serial_from_block_device, safe_retrieval
+from middlewared.utils.disks import DISKS_TO_IGNORE, get_disk_serial_from_block_device, safe_retrieval
 from middlewared.utils.functools_ import cache
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils.serial import serial_port_choices
@@ -40,19 +40,6 @@ class DeviceService(Service):
     @private
     def get_disk_serial(self, dev):
         return get_disk_serial_from_block_device(dev)
-
-    @private
-    def get_disk_names(self):
-        """
-        This endpoint serves almost exclusively to be called in our
-        reporting plugin. It just needs the block device names
-        (sda/nvme0n1/pmem0/etc) and so this will very quickly enumerate
-        that information.
-
-        NOTE: The return of this method should match the keys retrieved
-        when running `self.get_disks`.
-        """
-        return get_disk_names()
 
     @private
     def get_disks(self, get_partitions=False, serial_only=False):
