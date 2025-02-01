@@ -7,7 +7,6 @@ from middlewared.plugins.disk_.disk_info import get_partition_size_info
 from middlewared.service import Service, private
 from middlewared.utils.disks import DISKS_TO_IGNORE, get_disk_serial_from_block_device, safe_retrieval
 from middlewared.utils.gpu import get_gpus
-from middlewared.utils.serial import serial_port_choices
 
 
 RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')
@@ -25,10 +24,6 @@ def is_iscsi_device(dev):
 class DeviceService(Service):
 
     DISK_ROTATION_ERROR_LOG_CACHE = set()
-
-    @private
-    def get_serials(self):
-        return serial_port_choices()
 
     @private
     def get_disk_serial(self, dev):

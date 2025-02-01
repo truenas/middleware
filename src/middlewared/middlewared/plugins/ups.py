@@ -9,6 +9,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, S
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
+from middlewared.utils.serial import serial_port_choices
 from middlewared.validators import Range, Port
 
 
@@ -99,7 +100,7 @@ class UPSService(SystemServiceService):
         adv_config = await self.middleware.call('system.advanced.config')
         ports = [
             os.path.join('/dev', port['name'])
-            for port in await self.middleware.call('device.get_serials')
+            for port in await self.middleware.run_in_thread(serial_port_choices)
             if not adv_config['serialconsole'] or adv_config['serialport'] != port['name']
         ]
         ports.extend(glob.glob('/dev/uhid*'))
