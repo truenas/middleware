@@ -6,7 +6,6 @@ import libsgio
 from middlewared.plugins.disk_.disk_info import get_partition_size_info
 from middlewared.service import Service, private
 from middlewared.utils.disks import DISKS_TO_IGNORE, get_disk_serial_from_block_device, safe_retrieval
-from middlewared.utils.functools_ import cache
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils.serial import serial_port_choices
 
@@ -26,11 +25,6 @@ def is_iscsi_device(dev):
 class DeviceService(Service):
 
     DISK_ROTATION_ERROR_LOG_CACHE = set()
-
-    @private
-    @cache
-    def host_type(self):
-        return self.middleware.call_sync('system.dmidecode_info')['system-product-name']
 
     @private
     def get_serials(self):
@@ -201,28 +195,6 @@ class DeviceService(Service):
             return
         except Exception:
             self.logger.debug('Failed to retrieve disk details for %s', name, exc_info=True)
-
-    def _get_type_and_rotation_rate(self, disk_data, device_path):
-        if disk_data['rota']:
-            if self.HOST_TYPE == 'QEMU':
-                # qemu/kvm guests do not support necessary ioctl for
-                # retrieving rotational rate
-                type_ = 'HDD'
-                rotation_rate = None
-            else:
-                rotation_rate = self._get_rotation_rate(device_path)
-                if rotation_rate:
-                    type_ = 'HDD'
-                else:
-                    # Treat rotational devices without rotation rate as SSDs
-                    # (some USB bridges report SSDs as rotational devices, see
-                    # https://jira.ixsystems.com/browse/NAS-112230)
-                    type_ = 'SSD'
-        else:
-            type_ = 'SSD'
-            rotation_rate = None
-
-        return type_, rotation_rate
 
     def _get_rotation_rate(self, device_path):
         try:
