@@ -14,7 +14,7 @@ SAMPLE_CE_RULE = "-a always,exclude -F msgtype=USER_START"
 # Common test items
 INCUS_RULE = "-a always,exit -F arch=b64 -S all -F path=/bin/incus -F perm=x -F auid!=-1 -F key=escalation"
 
-STIG_ASSERT_IN = [MODULE_STIG_RULE, SAMPLE_STIG_RULE, IMMUTABLE_STIG_RULE]
+STIG_ASSERT_IN = [MODULE_STIG_RULE, SAMPLE_STIG_RULE]  # TODO:  IMMUTABLE_STIG_RULE when enabled
 STIG_ASSERT_NOT_IN = [SAMPLE_CE_RULE]
 
 NON_STIG_ASSERT_IN = [SAMPLE_CE_RULE, INCUS_RULE]
