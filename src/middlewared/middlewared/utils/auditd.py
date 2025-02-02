@@ -3,7 +3,6 @@ import os
 import stat
 import subprocess
 
-
 AUDIT_DIR = '/etc/audit'
 AUDIT_RULES_DIR = os.path.join(AUDIT_DIR, 'rules.d')
 AUDIT_PLUGINS_DIR = os.path.join(AUDIT_DIR, 'plugins.d')
@@ -16,18 +15,31 @@ class AUDITRules(enum.StrEnum):
     PRIVILEGED = '31-privileged.rules'
     MODULE = '43-module-load.rules'
     FINALIZE = '99-finalize.rules'
+    COMMUNITY = 'truenas-community-edition.rules'
 
 
-STIG_AUDIT_RULES = frozenset([rules for rules in AUDITRules])
-NOSTIG_AUDIT_RULES = frozenset([AUDITRules.BASE])
+# Set of rules applied for STIG mode
+STIG_AUDIT_RULES = frozenset([
+    AUDITRules.BASE, AUDITRules.STIG, AUDITRules.PRIVILEGED,
+    AUDITRules.MODULE, AUDITRules.FINALIZE
+])
+
+# Set of rules applied in Non-STIG mode (default)
+NOSTIG_AUDIT_RULES = frozenset([
+    AUDITRules.BASE, AUDITRules.COMMUNITY
+])
 
 
 def set_audit_rules(gpos_stig_enabled: bool) -> None:
+    """
+    Apply STIG rule set or Non-STIG rule set
+    """
     rules_set = STIG_AUDIT_RULES if gpos_stig_enabled else NOSTIG_AUDIT_RULES
 
     # first remove all files that shouldn't be there
     for rules_file in os.listdir(AUDIT_RULES_DIR):
         full_path = os.path.join(AUDIT_RULES_DIR, rules_file)
+
         if rules_file not in rules_set:
             os.unlink(full_path)
         elif not stat.S_ISLNK(os.lstat(full_path).st_mode):
