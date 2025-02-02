@@ -86,7 +86,7 @@ class SystemService(Service):
             if len_to_format == 2:
                 return base_url
             else:
-                return f'{base_url}/#{"".join(to_format)}'
+                return f'{base_url}/#{"".join(to_format)}-changelog'
 
     @no_authz_required
     @accepts()
