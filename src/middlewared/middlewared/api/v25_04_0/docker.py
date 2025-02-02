@@ -51,6 +51,7 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
     dataset: Excluded = excluded_field()
     address_pools: list[AddressPool]
     cidr_v6: IPvAnyInterface
+    migrate_applications: bool
 
     @field_validator('cidr_v6')
     @classmethod
@@ -60,6 +61,12 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
         if v.network.prefixlen == 128:
             raise ValueError('Prefix length of cidr_v6 network cannot be 128.')
         return v
+
+    @model_validator(mode='after')
+    def validate_attrs(self):
+        if self.migrate_applications is True and not self.pool:
+            raise ValueError('Pool is required when migrating applications.')
+        return self
 
 
 class DockerUpdateResult(BaseModel):

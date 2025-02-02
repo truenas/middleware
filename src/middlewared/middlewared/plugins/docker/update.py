@@ -47,6 +47,86 @@ class DockerService(ConfigService):
         data['dataset'] = applications_ds_name(data['pool']) if data.get('pool') else None
         return data
 
+    @private
+    async def validate_data(self, old_config, config, schema='docker_update'):
+        verrors = ValidationErrors()
+        if config['pool'] and not await self.middleware.run_in_thread(query_imported_fast_impl, [config['pool']]):
+            verrors.add(f'{schema}.pool', 'Pool not found.')
+
+        if config['address_pools'] != old_config['address_pools']:
+            validate_address_pools(
+                await self.middleware.call('interface.ip_in_use', {'static': True}), config['address_pools']
+            )
+
+        if config.pop('migrate_applications', False):
+            if config['pool'] == old_config['pool']:
+                verrors.add(
+                    f'{schema}.migrate_applications',
+                    'Migration of applications dataset only happens when a new pool is configured.'
+                )
+            elif not old_config['pool']:
+                verrors.add(
+                    f'{schema}.migrate_applications',
+                    'A pool must have been configured previously for ix-apps dataset migration.'
+                )
+            else:
+                if await self.middleware.call(
+                    'zfs.dataset.query', [['id', '=', applications_ds_name(config['pool'])]], {
+                        'extra': {'retrieve_children': False, 'retrieve_properties': False}
+                    }
+                ):
+                    verrors.add(
+                        f'{schema}.migrate_applications',
+                        f'Migration of {applications_ds_name(old_config["pool"])!r} to {config["pool"]!r} not '
+                        f'possible as {applications_ds_name(config["pool"])} already exists.'
+                    )
+
+                ix_apps_ds = await self.middleware.call(
+                    'zfs.dataset.query', [['id', '=', applications_ds_name(old_config['pool'])]], {
+                        'extra': {'retrieve_children': False, 'retrieve_properties': True}
+                    }
+                )
+                if not ix_apps_ds:
+                    # Edge case but handled just to be sure
+                    verrors.add(
+                        f'{schema}.migrate_applications',
+                        f'{applications_ds_name(old_config["pool"])!r} does not exist, migration not possible.'
+                    )
+                elif ix_apps_ds[0]['encrypted']:
+                    # This should never happen but better be safe with extra validation
+                    verrors.add(
+                        f'{schema}.migrate_applications',
+                        f'{ix_apps_ds[0]["id"]!r} is encrypted which is not a supported configuration'
+                    )
+
+                # Now let's add some validation for destination
+                destination_root_ds = await self.middleware.call(
+                    'pool.dataset.get_instance_quick', config['pool'], {
+                        'encryption': True,
+                    }
+                )
+                if destination_root_ds['key_format']['value'] == 'PASSPHRASE':
+                    verrors.add(
+                        f'{schema}.migrate_applications',
+                        f'{ix_apps_ds[0]["id"]!r} can only be migrated to a destination pool '
+                        'which is "KEY" encrypted.'
+                    )
+                if destination_root_ds['locked']:
+                    verrors.add(
+                        f'{schema}.migrate_applications',
+                        f'Migration not possible as {config["pool"]!r} is locked'
+                    )
+                    if not await self.middleware.call(
+                        'datastore.query', 'storage.encrypteddataset', [['name', '=', config['pool']]]
+                    ):
+                        verrors.add(
+                            f'{schema}.migrate_applications',
+                            f'Migration not possible as system does not has encryption key for {config["pool"]!r} '
+                            'stored'
+                        )
+
+        verrors.check()
+
     @api_method(DockerUpdateArgs, DockerUpdateResult, audit='Docker: Updating Configurations')
     @job(lock='docker_update')
     async def do_update(self, job, data):
@@ -58,17 +138,13 @@ class DockerService(ConfigService):
         config = old_config.copy()
         config.update(data)
         config['cidr_v6'] = str(config['cidr_v6'])
+        migrate_apps = config.get('migrate_applications', False)
 
-        verrors = ValidationErrors()
-        if config['pool'] and not await self.middleware.run_in_thread(query_imported_fast_impl, [config['pool']]):
-            verrors.add('docker_update.pool', 'Pool not found.')
+        await self.validate_data(old_config, config)
 
-        verrors.check()
-
-        if config['address_pools'] != old_config['address_pools']:
-            validate_address_pools(
-                await self.middleware.call('interface.ip_in_use', {'static': True}), config['address_pools']
-            )
+        if migrate_apps:
+            await self.middleware.call('docker.migrate_ix_apps_dataset', job, config, old_config, {})
+            return
 
         if old_config != config:
             address_pools_changed = any(config[k] != old_config[k] for k in ('address_pools', 'cidr_v6'))
