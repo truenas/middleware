@@ -120,7 +120,7 @@ class MailService(ConfigService):
                     Str('provider'),
                     Str('client_id', required=True),
                     Str('client_secret', required=True),
-                    Password('refresh_token', required=True),
+                    Password('refresh_token', required=True, max_length=None),
                     null=True,
                     private=True,
                 )
