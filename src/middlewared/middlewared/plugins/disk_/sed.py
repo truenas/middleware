@@ -30,11 +30,11 @@ class DiskService(Service):
     async def map_disks_to_passwd(self, disk_name=None):
         global_passwd = await self.middleware.call('system.advanced.sed_global_password')
         disks = []
-        filters = [] if disk_name is None else [('name', '=', disk_name)]
+        filters = [] if disk_name is None else [('real_name', '=', disk_name)]
         for disk in await self.middleware.call(
-            'disk.query', filters, {'extra': {'passwords': True}}
+            'disk.query', filters, {'extra': {'passwords': True, 'real_names': True}}
         ):
-            path = f'/dev/{disk["name"]}'
+            path = f'/dev/{disk["real_name"]}'
             # user can specify a per-disk password and/or a global password
             # we default to using the per-disk password with fallback to global
             passwd = disk['passwd'] if disk['passwd'] else global_passwd
