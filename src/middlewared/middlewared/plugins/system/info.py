@@ -118,7 +118,7 @@ class SystemService(Service):
         timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
 
         return {
-            'version': await self.middleware.call('system.version'),
+            'version': await self.middleware.call('system.version_short'),
             'buildtime': await self.build_time(),
             'hostname': await self.hostname(),
             'physmem': mem_info['physmem_size'],
