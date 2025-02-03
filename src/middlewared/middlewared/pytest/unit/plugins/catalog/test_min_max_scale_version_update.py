@@ -14,7 +14,7 @@ from middlewared.plugins.catalog.apps_util import minimum_scale_version_check_up
             'location': '/mnt/.ix-apps/truenas_catalog/trains/community/actual-budget/1.1.11',
             'last_update': '2024-10-09 20:30:25',
             'human_version': '24.10.1_1.1.11',
-            'chart_metadata': {
+            'app_metadata': {
                 'annotations': {
                     'min_scale_version': '21.01',
                     'max_scale_version': '24.04'
@@ -37,7 +37,7 @@ from middlewared.plugins.catalog.apps_util import minimum_scale_version_check_up
             'location': '/mnt/.ix-apps/truenas_catalog/trains/community/actual-budget/1.1.11',
             'last_update': '2024-10-09 20:30:25',
             'human_version': '24.10.1_1.1.11',
-            'chart_metadata': {
+            'app_metadata': {
                 'annotations': {
                     'min_scale_version': '21.01',
                     'max_scale_version': '24.04'
@@ -62,7 +62,7 @@ from middlewared.plugins.catalog.apps_util import minimum_scale_version_check_up
             'location': '/mnt/.ix-apps/truenas_catalog/trains/community/actual-budget/1.1.11',
             'last_update': '2024-10-09 20:30:25',
             'human_version': '24.10.1_1.1.11',
-            'chart_metadata': {
+            'app_metadata': {
                 'annotations': {
                     'min_scale_version': '21.01',
                     'max_scale_version': '27.04'
@@ -85,7 +85,7 @@ from middlewared.plugins.catalog.apps_util import minimum_scale_version_check_up
             'location': '/mnt/.ix-apps/truenas_catalog/trains/community/actual-budget/1.1.11',
             'last_update': '2024-10-09 20:30:25',
             'human_version': '24.10.1_1.1.11',
-            'chart_metadata': {
+            'app_metadata': {
                 'annotations': {
                     'min_scale_version': '21.01',
                     'max_scale_version': '27.04'
@@ -110,7 +110,7 @@ from middlewared.plugins.catalog.apps_util import minimum_scale_version_check_up
             'location': '/mnt/.ix-apps/truenas_catalog/trains/community/actual-budget/1.1.11',
             'last_update': '2024-10-09 20:30:25',
             'human_version': '24.10.1_1.1.11',
-            'chart_metadata': {
+            'app_metadata': {
                 'annotations': {
                     'min_scale_version': '26.04',
                     'max_scale_version': '24.04'
@@ -133,7 +133,7 @@ from middlewared.plugins.catalog.apps_util import minimum_scale_version_check_up
             'location': '/mnt/.ix-apps/truenas_catalog/trains/community/actual-budget/1.1.11',
             'last_update': '2024-10-09 20:30:25',
             'human_version': '24.10.1_1.1.11',
-            'chart_metadata': {
+            'app_metadata': {
                 'annotations': {
                     'min_scale_version': '26.04',
                     'max_scale_version': '24.04'
