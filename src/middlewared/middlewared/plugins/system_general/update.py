@@ -269,7 +269,7 @@ class SystemGeneralService(ConfigService):
         )
 
         if config['kbdmap'] != new_config['kbdmap']:
-            await self.set_kbdlayout(new_config['kbdmap'])
+            await self.set_kbdlayout()
 
         if config['timezone'] != new_config['timezone']:
             await self.middleware.call('zettarepl.update_config', {'timezone': new_config['timezone']})
@@ -299,7 +299,7 @@ class SystemGeneralService(ConfigService):
         return await self.config()
 
     @private
-    async def set_kbdlayout(self, kbdmap='us'):
+    async def set_kbdlayout(self):
         await self.middleware.call('etc.generate', 'keyboard')
         await run(['setupcon'], check=False)
         await self.middleware.call('boot.update_initramfs', {'force': True})
