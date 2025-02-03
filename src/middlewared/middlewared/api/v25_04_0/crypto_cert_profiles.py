@@ -141,7 +141,7 @@ class ECCCSRExtensionsModel(BaseModel):
 
 @final
 class RSACSRExtensions(BaseModel):
-    cert_extensions: RSACSRExtensionsModel = RSACertExtensionsModel()
+    cert_extensions: RSACSRExtensionsModel = RSACSRExtensionsModel()
     key_length: int = KEY_LENGTH
     key_type: str = RSA
     lifetime: int = DEFAULT_LIFETIME_DAYS
@@ -150,7 +150,7 @@ class RSACSRExtensions(BaseModel):
 
 @final
 class ECCCSRExtensions(BaseModel):
-    cert_extensions: ECCCSRExtensionsModel = ECCCertExtensionsModel()
+    cert_extensions: ECCCSRExtensionsModel = ECCCSRExtensionsModel()
     ec_curve: str = EC_CURVE
     key_type: str = EC
     lifetime: int = DEFAULT_LIFETIME_DAYS
