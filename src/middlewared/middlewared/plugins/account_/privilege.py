@@ -220,6 +220,7 @@ class PrivilegeService(CRUDService):
                     result.append({
                         "gid": gid,
                         "group": None,
+                        "sid": None,
                     })
 
         return result
@@ -242,10 +243,12 @@ class PrivilegeService(CRUDService):
             mapped_sids = {}
 
         for xid in ds_groups:
+            is_sid = False
             if isinstance(xid, int):
                 if (group := groups['by_gid'].get(xid)) is None:
                     gid = xid
             else:
+                is_sid = True
                 if (group := groups['by_sid'].get(xid)) is None:
                     unixid = mapped_sids.get(xid)
                     if unixid is None or unixid['id_type'] == 'USER':
@@ -263,8 +266,8 @@ class PrivilegeService(CRUDService):
                 except MatchNotFound:
                     if include_nonexistent:
                         result.append({
-                            "gid": gid,
-                            "sid": None,
+                            "gid": None if gid == -1 else gid,
+                            "sid": xid if is_sid else None,
                             "group": None,
                         })
 
