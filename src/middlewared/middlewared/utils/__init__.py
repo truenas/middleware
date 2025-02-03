@@ -38,8 +38,6 @@ MIDDLEWARE_STARTED_SENTINEL_PATH = f'{MIDDLEWARE_RUN_DIR}/middlewared-started'
 BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
 MANIFEST_FILE = '/data/manifest.json'
 BRAND = ProductName.PRODUCT_NAME
-PRODUCT = ProductType.COMMUNITY_EDITION
-BRAND_PRODUCT = f'{BRAND}-{PRODUCT}'
 NULLS_FIRST = 'nulls_first:'
 NULLS_LAST = 'nulls_last:'
 REVERSE_CHAR = '-'
@@ -649,7 +647,7 @@ def sw_info():
             'stable': 'MASTER' not in manifest['version'],
             'codename': manifest['codename'],
             'version': version,
-            'fullname': f'{BRAND_PRODUCT}-{version}',
+            'fullname': f'{BRAND}-{version}',
             'buildtime': manifest['buildtime'],
         }
 

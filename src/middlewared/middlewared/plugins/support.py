@@ -14,9 +14,9 @@ from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
 from middlewared.schema import accepts, Bool, Dict, Int, List, Password, returns, Str
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils import sw_version
 from middlewared.utils.network import INTERNET_TIMEOUT
 from middlewared.validators import Email
-from middlewared.utils import PRODUCT
 
 ADDRESS = 'support-proxy.ixsystems.com'
 
@@ -226,7 +226,7 @@ class SupportService(ConfigService):
             if i not in data:
                 raise CallError(f'{i} is required', errno.EINVAL)
 
-        data['version'] = f'{PRODUCT}-{await self.middleware.call("system.version_short")}'
+        data['version'] = sw_version()
         debug = data.pop('attach_debug')
 
         type_ = data.get('type')
