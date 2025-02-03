@@ -63,7 +63,7 @@ class DiskService(Service):
             if info.query_cp and info.query_cp.returncode:
                 errmsg += f' QUERY ERROR: {info.query_cp.stderr.decode(errors="ignore")!r}'
             if info.unlock_cp and info.unlock_cp.returncode:
-                errmsg += f' UNLOCK ERROR: {info.unlock_cp.stderr.decode(errrors="ignore")!r}'
+                errmsg += f' UNLOCK ERROR: {info.unlock_cp.stderr.decode(errors="ignore")!r}'
             self.logger.warning(errmsg)
 
         if info.mbr_cp and info.mbr_cp.returncode:
