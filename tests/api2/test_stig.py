@@ -7,7 +7,7 @@ from middlewared.test.integration.assets.product import product_type, set_fips_a
 from middlewared.test.integration.assets.two_factor_auth import (
     enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
 )
-from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils import call, client, password
 from truenas_api_client import ValidationErrors
 
 
@@ -155,11 +155,14 @@ def test_stig_enabled_authenticator_assurance_level(setup_stig, clear_ratelimit)
     setup_stig['connection'].call('system.info')
 
     # Auth for account without 2fa should fail
-    with pytest.raises(CallError) as ce:
-        with client():
-            pass
+    with client(auth=None) as c:
+        resp = c.call('auth.login_ex', {
+            'mechanism': 'PASSWORD_PLAIN',
+            'username': 'root',
+            'password': password()
+        })
 
-    assert ce.value.errno == errno.EOPNOTSUPP
+        assert resp['response_type'] == 'AUTH_ERR'
 
     # We should also be able to create a new websocket connection
     # The previous one was created before enabling STIG

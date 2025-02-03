@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.two_factor_auth import enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
 from middlewared.test.integration.assets.api_key import api_key
-from middlewared.test.integration.utils import client, call
+from middlewared.test.integration.utils import client, call, password
 
 
 @contextmanager
@@ -42,13 +42,13 @@ def test_mechanism_choices(level, expected):
 
 def test_level2_api_key_plain():
     """ API_KEY_PLAIN lacks replay resistance
-    and so authentication attempts must fail with EOPNOTSUPP
+    and so authentication attempts must fail with AUTH_ERR
     """
     with authenticator_assurance_level('LEVEL_2'):
         with api_key() as key:
             with client(auth=None) as c:
                 with pytest.raises(CallError) as ce:
-                    c.call('auth.login_ex', {
+                    call('auth.login_ex', {
                         'mechanism': 'API_KEY_PLAIN',
                         'username': 'root',
                         'api_key': key
@@ -59,14 +59,18 @@ def test_level2_api_key_plain():
 
 def test_level2_password_plain_no_twofactor():
     """ PASSWORD_PLAIN lacks replay resistance
-    and so authentication attempts must fail with EOPNOTSUPP
+    and so authentication attempts must fail with AUTH_ERR
     """
     with authenticator_assurance_level('LEVEL_2'):
-        with pytest.raises(CallError) as ce:
-            with client():
-                pass
+        with client(auth=None) as c:
+            resp = c.call('auth.login_ex', {
+                'mechanism': 'PASSWORD_PLAIN',
+                'username': 'root',
+                'password': password()
 
-        assert ce.value.errno == errno.EOPNOTSUPP
+            })
+
+            assert resp['response_type'] == 'AUTH_ERR'
 
 
 def test_level2_password_with_otp(sharing_admin_user):
@@ -120,13 +124,12 @@ def test_level2_onetime_password(sharing_admin_user):
             assert 'SHARING_ADMIN' in me['privilege']['roles']
             assert 'OTPW' in me['account_attributes']
 
-            # attempt to reuse the onetime password should fail with EOPNOTSUPP
+            # attempt to reuse the onetime password should fail with AUTH_ERR
             # because we don't want to leak info about onetime password status.
-            with pytest.raises(CallError) as ce:
-                c.call('auth.login_ex', {
-                    'mechanism': 'PASSWORD_PLAIN',
-                    'username': sharing_admin_user.username,
-                    'password': onetime_password
-                })
+            resp = c.call('auth.login_ex', {
+                'mechanism': 'PASSWORD_PLAIN',
+                'username': sharing_admin_user.username,
+                'password': onetime_password
+            })
 
-            assert ce.value.errno == errno.EOPNOTSUPP
+            assert resp['response_type'] == 'AUTH_ERR'
