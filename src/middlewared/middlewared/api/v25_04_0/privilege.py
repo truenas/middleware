@@ -8,12 +8,18 @@ __all__ = ["PrivilegeEntry", "PrivilegeRoleEntry",
            "PrivilegeDeleteArgs", "PrivilegeDeleteResult"]
 
 
+class UnmappedGroupEntry(BaseModel):
+    gid: int | None
+    sid: str | None
+    group: None
+
+
 class PrivilegeEntry(BaseModel):
     id: int
     builtin_name: str | None
     name: NonEmptyString
-    local_groups: list[GroupEntry]
-    ds_groups: list[GroupEntry]
+    local_groups: list[GroupEntry | UnmappedGroupEntry]
+    ds_groups: list[GroupEntry | UnmappedGroupEntry]
     roles: list[str] = []
     web_shell: bool
 
