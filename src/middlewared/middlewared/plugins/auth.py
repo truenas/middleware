@@ -717,14 +717,37 @@ class AuthService(Service):
                 elif resp['otpw_used']:
                     cred_type = 'ONETIME_PASSWORD'
                 elif CURRENT_AAL.level.otp_mandatory:
+                    # If we're here it means either:
+                    #
+                    # 1) correct username and password, but 2FA isn't enabled for user
+                    # or
+                    # 2) bad username or password
+                    #
+                    # We must not include information in response to indicate which case
+                    # the situation is because it would divulge privileged information about
+                    # the account to an unauthenticated user.
                     if resp['pam_response'] == 'SUCCESS':
                         # Insert a failure delay so that we don't leak information about
                         # the PAM response
                         await asyncio.sleep(random.uniform(1, 2))
-                    raise CallError(
-                        'Two-factor authentication is requried at the current authenticator level.',
-                        errno.EOPNOTSUPP
-                    )
+                        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                            'credentials': {
+                                'credentials': cred_type,
+                                'credentials_data': {'username': data['username']},
+                            },
+                        'error': 'User does not have two factor authentication enabled.'
+                        }, False)
+
+                    else:
+                        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                            'credentials': {
+                                'credentials': cred_type,
+                                'credentials_data': {'username': data['username']},
+                            },
+                        'error': 'Bad username or password'
+                        }, False)
+
+                    return response
 
                 match resp['pam_response']['code']:
                     case pam.PAM_SUCCESS:
