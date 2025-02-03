@@ -104,9 +104,6 @@ class RealtimeEventSource(EventSource):
                     'failed_to_connect': False,
                 }
 
-                # CPU temperature
-                data['cpu']['temperature_celsius'] = self.middleware.call_sync('reporting.cpu_temperatures') or None
-
             self.send_event('ADDED', fields=data)
             time.sleep(interval)
 
