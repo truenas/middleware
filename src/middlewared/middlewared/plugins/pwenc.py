@@ -37,6 +37,17 @@ class PWEncService(Service):
         ):
             self.middleware.call_sync('datastore.sql', f'UPDATE {table} SET {field} = \'\'')
 
+        self.middleware.call_sync('datastore.sql', 'DELETE FROM tasks_cloud_backup')
+        self.middleware.call_sync('datastore.sql', 'DELETE FROM tasks_cloudsync')
+        self.middleware.call_sync('datastore.sql', 'DELETE FROM system_cloudcredentials')
+        self.middleware.call_sync(
+            'datastore.sql',
+            'DELETE FROM storage_replication WHERE repl_ssh_credentials_id IS NOT NULL',
+        )
+        self.middleware.call_sync('datastore.sql', 'DELETE FROM tasks_rsync WHERE rsync_ssh_credentials_id IS NOT NULL')
+        self.middleware.call_sync('datastore.sql', 'DELETE FROM system_keychaincredential')
+        self.middleware.call_sync('datastore.sql', 'DELETE FROM vm_device')
+
     @staticmethod
     def _secret_opener(path, flags):
         with pathref_open(os.path.dirname(path), force=True, mode=0o755) as secret_path:
@@ -61,7 +72,7 @@ class PWEncService(Service):
         with open(self.secret_path, 'rb', opener=self._secret_opener) as f:
             self.secret = f.read()
 
-    def _write_secret(self, secret, reset_passwords):
+    def _write_secret(self, secret):
         with open(self.secret_path, 'wb', opener=self._secret_opener) as f:
             with self._lock_secrets(f.fileno()):
                 os.fchmod(f.fileno(), PWENC_FILE_SECRET_MODE)
@@ -71,12 +82,10 @@ class PWEncService(Service):
 
                 self.reset_secret_cache()
                 self._reset_pwenc_check_field()
+                self._reset_passwords()
 
-                if reset_passwords:
-                    self._reset_passwords()
-
-    def generate_secret(self, reset_passwords=True):
-        self._write_secret(os.urandom(PWENC_BLOCK_SIZE), reset_passwords)
+    def generate_secret(self):
+        self._write_secret(os.urandom(PWENC_BLOCK_SIZE))
 
     def check(self):
         try:
