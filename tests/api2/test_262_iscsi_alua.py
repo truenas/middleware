@@ -405,6 +405,8 @@ class TestFixtureConfiguredALUA:
 
         if self.VERBOSE:
             _debug('LUNs have pattern written / checked')
+        # Delay for a few seconds to give host a chance
+        sleep(5)
         return fix_zero_luns
 
     @pytest.fixture(scope='class')
