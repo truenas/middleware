@@ -50,7 +50,7 @@ class RpcWebSocketApp(App):
     def send(self, data):
         try:
             data_ = json.dumps(data)
-        except TypeError as e:
+        except Exception as e:
             self.send_truenas_error(
                 data.get("id"),
                 JSONRPCError.INTERNAL_ERROR.value,
