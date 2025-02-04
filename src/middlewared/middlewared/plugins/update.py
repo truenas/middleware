@@ -2,8 +2,6 @@ from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, CallError, Service, pass_app
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.update_.utils import UPLOAD_LOCATION
-from middlewared.utils import PRODUCT
-from middlewared.utils.time_utils import utc_now
 
 import enum
 import errno
