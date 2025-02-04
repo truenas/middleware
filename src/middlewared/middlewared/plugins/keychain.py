@@ -7,22 +7,23 @@ import re
 import ssl
 import subprocess
 import tempfile
+from typing import Literal
 import urllib.parse
 
 from truenas_api_client import Client, ClientException
 
 from middlewared.api import api_method
+from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
 from middlewared.api.current import (
     KeychainCredentialEntry,
+    SSHKeyPairEntry, SSHCredentialsEntry,
     KeychainCredentialCreateArgs, KeychainCredentialCreateResult,
     KeychainCredentialUpdateArgs, KeychainCredentialUpdateResult,
     KeychainCredentialDeleteArgs, KeychainCredentialDeleteResult,
     KeychainCredentialUsedByArgs, KeychainCredentialUsedByResult,
-    KeychainCredentialGetOfTypeArgs, KeychainCredentialGetOfTypeResult,
     KeychainCredentialGenerateSSHKeyPairArgs, KeychainCredentialGenerateSSHKeyPairResult,
     KeychainCredentialRemoteSSHHostKeyScanArgs, KeychainCredentialRemoteSSHHostKeyScanResult,
     KeychainCredentialRemoteSSHSemiautomaticSetupArgs, KeychainCredentialRemoteSSHSemiautomaticSetupResult,
-    KeychainCredentialSSHPairArgs, KeychainCredentialSSHPairResult,
 )
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
 from middlewared.schema import ValidationErrors
@@ -246,6 +247,28 @@ class KeychainCredentialModel(sa.Model):
     name = sa.Column(sa.String(255))
     type = sa.Column(sa.String(255))
     attributes = sa.Column(sa.JSON(encrypted=True))
+
+
+class KeychainCredentialGetOfTypeArgs(BaseModel):
+    id: int
+    type: Literal["SSH_KEY_PAIR", "SSH_CREDENTIALS"]
+
+
+class KeychainCredentialGetOfTypeResult(BaseModel):
+    result: SSHKeyPairEntry | SSHCredentialsEntry
+
+
+@single_argument_args("keychain_ssh_pair")
+class KeychainCredentialSSHPairArgs(BaseModel):
+    remote_hostname: NonEmptyString
+    username: str = "root"
+    public_key: NonEmptyString
+
+
+@single_argument_result
+class KeychainCredentialSSHPairResult(BaseModel):
+    port: int
+    host_key: LongString
 
 
 class KeychainCredentialService(CRUDService):

@@ -198,7 +198,7 @@ def single_argument_result(klass, klass_name=None):
     model = create_model(
         klass_name,
         __base__=(BaseModel,),
-        __module__=inspect.getmodule(inspect.stack()[1][0]),
+        __module__=inspect.getmodule(inspect.stack()[1][0]).__name__,
         result=typing.Annotated[klass, Field()],
     )
     if issubclass(klass, BaseModel):

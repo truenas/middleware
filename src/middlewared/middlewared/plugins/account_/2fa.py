@@ -1,11 +1,38 @@
 import errno
+
 import pyotp
 
 from middlewared.api import api_method
 from middlewared.api.current import *
-from middlewared.service import CallError, no_authz_required, pass_app, private, Service
+from middlewared.service import CallError, pass_app, private, Service
 from middlewared.utils import ProductName
 from middlewared.utils.privilege import app_credential_full_admin_or_user
+
+
+class UserProvisioningUriArgs(BaseModel):
+    username: str
+
+
+class UserProvisioningUriResult(BaseModel):
+    result: str
+
+
+class UserTwofactorConfigArgs(BaseModel):
+    username: str
+
+
+@single_argument_result
+class UserTwofactorConfigResult(UserTwofactorConfigEntry):
+    pass
+
+
+class UserVerifyTwofactorTokenArgs(BaseModel):
+    username: str
+    token: Secret[str | None] = None
+
+
+class UserVerifyTwofactorTokenResult(BaseModel):
+    result: bool
 
 
 class UserService(Service):
