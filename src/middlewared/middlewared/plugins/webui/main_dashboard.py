@@ -7,7 +7,7 @@ from middlewared.api.current import (
     WebUIMainDashboardSysInfoResult
 )
 from middlewared.service import Service
-from middlewared.utils import sw_version, sw_codename
+from middlewared.utils import sw_info
 
 
 class WebUIMainDashboardService(Service):
@@ -35,8 +35,8 @@ class WebUIMainDashboardService(Service):
 
         return {
             'platform': platform,
-            'version': sw_version(),
-            'codename': sw_codename(),
+            'version': sw_info()['version'],
+            'codename': sw_info()['codename'],
             'license': self.middleware.call_sync('system.license'),
             'system_serial': dmi['system-serial-number'],
             'hostname': hostname,
