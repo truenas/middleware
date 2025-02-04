@@ -7,6 +7,7 @@ from itertools import zip_longest
 import os
 import textwrap
 import time
+from typing import Any
 import uuid
 
 import html2text
@@ -29,10 +30,10 @@ from middlewared.alert.base import (
 )
 from middlewared.alert.base import UnavailableException, AlertService as _AlertService
 from middlewared.api import api_method, Event
+from middlewared.api.base import BaseModel
 from middlewared.api.current import (
     AlertDismissArgs, AlertDismissResult, AlertListArgs, AlertListResult, AlertListCategoriesArgs,
     AlertListCategoriesResult, AlertListPoliciesArgs, AlertListPoliciesResult, AlertRestoreArgs, AlertRestoreResult,
-    AlertOneshotCreateArgs, AlertOneshotCreateResult, AlertOneshotDeleteArgs, AlertOneshotDeleteResult,
     AlertClassesEntry, AlertClassesUpdateArgs, AlertClassesUpdateResult, AlertServiceCreateArgs,
     AlertServiceCreateResult, AlertServiceUpdateArgs, AlertServiceUpdateResult, AlertServiceDeleteArgs,
     AlertServiceDeleteResult, AlertServiceTestArgs, AlertServiceTestResult, AlertServiceEntry, AlertListAddedEvent,
@@ -206,6 +207,24 @@ class AlertSerializer:
             self.nodes = await self.middleware.call("alert.node_map")
 
             self.initialized = True
+
+
+class AlertOneshotCreateArgs(BaseModel):
+    klass: str
+    args: Any
+
+
+class AlertOneshotCreateResult(BaseModel):
+    result: None
+
+
+class AlertOneshotDeleteArgs(BaseModel):
+    klass: str | list[str]
+    query: Any = None
+
+
+class AlertOneshotDeleteResult(BaseModel):
+    result: None
 
 
 class AlertService(Service):

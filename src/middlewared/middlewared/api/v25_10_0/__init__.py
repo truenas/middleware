@@ -43,7 +43,6 @@ from .iscsi_target import *  # noqa
 from .iscsi_target_to_extent import *  # noqa
 from .keychain import *  # noqa
 from .k8s_to_docker import *  # noqa
-from .netdata import *  # noqa
 from .nfs import *  # noqa
 from .pool import *  # noqa
 from .pool_dataset_details import *  # noqa
@@ -67,7 +66,6 @@ from .system_security import *  # noqa
 from .tn_connect import *  # noqa
 from .truenas import *  # noqa
 from .user import *  # noqa
-from .vendor import *  # noqa
 from .virt_device import *  # noqa
 from .virt_global import *  # noqa
 from .virt_instance import *  # noqa

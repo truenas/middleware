@@ -19,8 +19,6 @@ __all__ = [
     "IscsiTargetUpdateResult",
     "IscsiTargetDeleteArgs",
     "IscsiTargetDeleteResult",
-    "IscsiTargetRemoveArgs",
-    "IscsiTargetRemoveResult"
 ]
 
 
@@ -96,11 +94,3 @@ class IscsiTargetDeleteArgs(BaseModel):
 
 class IscsiTargetDeleteResult(BaseModel):
     result: Literal[True]
-
-
-class IscsiTargetRemoveArgs(BaseModel):
-    name: str
-
-
-class IscsiTargetRemoveResult(BaseModel):
-    result: None

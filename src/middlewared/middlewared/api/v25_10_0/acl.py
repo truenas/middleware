@@ -30,10 +30,9 @@ __all__ = [
     'AclTemplateCreateArgs', 'AclTemplateCreateResult',
     'AclTemplateUpdateArgs', 'AclTemplateUpdateResult',
     'AclTemplateDeleteArgs', 'AclTemplateDeleteResult',
-    'FilesystemAddToAclArgs', 'FilesystemAddToAclResult',
     'FilesystemGetAclArgs', 'FilesystemGetAclResult',
     'FilesystemSetAclArgs', 'FilesystemSetAclResult',
-    'FilesystemGetInheritedAclArgs', 'FilesystemGetInheritedAclResult'
+    'NFS4ACE', 'POSIXACE',
 ]
 
 ACL_MAX_ID = 2 ** 32 // 2 - 1
@@ -331,42 +330,3 @@ class AclTemplateByPathArgs(BaseModel):
 
 class AclTemplateByPathResult(BaseModel):
     result: list[AclTemplateEntry]
-
-
-class SimplifiedAclEntry(BaseModel):
-    id_type: Literal[NFS4ACE_Tag.USER, NFS4ACE_Tag.GROUP]
-    id: int
-    access: Literal[
-        NFS4ACE_MaskSimple.READ,
-        NFS4ACE_MaskSimple.MODIFY,
-        NFS4ACE_MaskSimple.FULL_CONTROL
-    ]
-
-
-class FilesystemAddToAclOptions(BaseModel):
-    force: bool = False
-
-
-@single_argument_args('add_to_acl')
-class FilesystemAddToAclArgs(BaseModel):
-    path: NonEmptyString
-    entries: list[SimplifiedAclEntry]
-    options: FilesystemAddToAclOptions = Field(default=FilesystemAddToAclOptions())
-
-
-class FilesystemAddToAclResult(BaseModel):
-    result: bool
-
-
-class FSGetInheritedAclOptions(BaseModel):
-    directory: bool = True
-
-
-@single_argument_args('calculate_inherited_acl')
-class FilesystemGetInheritedAclArgs(BaseModel):
-    path: NonEmptyString
-    options: FSGetInheritedAclOptions = Field(default=FSGetInheritedAclOptions())
-
-
-class FilesystemGetInheritedAclResult(BaseModel):
-    result: list[NFS4ACE] | list[POSIXACE]
