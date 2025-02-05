@@ -22,25 +22,26 @@ class InternalInterfaceService(Service):
 
     @cache
     def detect(self):
+        found = list()
         hardware = self.middleware.call_sync('failover.hardware')
         if hardware == 'BHYVE':
-            return ['enp0s6f1']
+            found.append('enp0s6f1')
         elif hardware == 'IXKVM':
-            return ['enp1s0']
+            found.append('enp1s0')
         elif hardware == 'ECHOSTREAM':
             # z-series
             for i in Path('/sys/class/net/').iterdir():
                 try:
                     data = (i / 'device/uevent').read_text()
                     if 'PCI_ID=8086:10D3' in data and 'PCI_SUBSYS_ID=8086:A01F' in data:
-                        return [i.name]
+                        found.append(i.name)
+                        break
                 except FileNotFoundError:
                     continue
         elif hardware in ('PUMA', 'ECHOWARP', 'LAJOLLA2', 'SUBLIGHT'):
             # {x/m/f/h}-series
-            return ['ntb0']
-        else:
-            return []
+            found.append('ntb0')
+        return tuple(found)
 
     async def pre_sync(self):
         if not await self.middleware.call('system.is_enterprise'):
