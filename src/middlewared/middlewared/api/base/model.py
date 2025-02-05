@@ -20,14 +20,11 @@ __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item
 class _NotRequiredMixin(PydanticBaseModel):
     @model_serializer(mode="wrap")
     def serialize_basemodel(self, serializer):
-        obj = serializer(self)
-        if isinstance(obj, dict):
-            return {
-                k: v
-                for k, v in obj.items()
-                if v is not undefined
-            }
-        return obj
+        return {
+            k: v
+            for k, v in serializer(self).items()
+            if v is not undefined
+        }
 
 
 NotRequired = undefined
@@ -99,7 +96,7 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         exclude_none: bool = False,
         round_trip: bool = False,
         warnings: bool | typing.Literal['none', 'warn', 'error'] = True,
-        serialize_as_any: bool = True,  # so that nested models set to `NotRequired` do not serialize
+        serialize_as_any: bool = False
     ) -> dict[str, typing.Any]:
         return self.__pydantic_serializer__.to_python(
             self,
