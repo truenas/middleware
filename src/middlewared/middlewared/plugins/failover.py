@@ -45,7 +45,6 @@ class FailoverModel(sa.Model):
 
 class FailoverService(ConfigService):
 
-    HA_MODE = None
     LAST_STATUS = None
     LAST_DISABLEDREASONS = None
 
@@ -154,14 +153,8 @@ class FailoverService(ConfigService):
 
     @private
     async def ha_mode(self):
-        # update the class attribute so that all instances
-        # of this class see the correct value
-        if FailoverService.HA_MODE is None:
-            FailoverService.HA_MODE = await self.middleware.call(
-                'failover.enclosure.detect'
-            )
-
-        return FailoverService.HA_MODE
+        # NOTE: `failover.enclosure.detect` is cached
+        return await self.middleware.call('failover.enclosure.detect')
 
     @accepts(roles=['FAILOVER_READ'])
     @returns(Str())
@@ -177,7 +170,7 @@ class FailoverService(ConfigService):
           IXKVM (HA VMs (on KVM) for CI)
           MANUAL (everything else)
         """
-        return (await self.middleware.call('failover.ha_mode'))[0]
+        return (await self.ha_mode())[0]
 
     @accepts(roles=['FAILOVER_READ'])
     @returns(Str())
@@ -189,7 +182,7 @@ class FailoverService(ConfigService):
           B - Seconde Node
           MANUAL - slot position in chassis could not be determined
         """
-        return (await self.middleware.call('failover.ha_mode'))[1]
+        return (await self.ha_mode())[1]
 
     @private
     @accepts()
@@ -1049,7 +1042,6 @@ async def interface_pre_sync_hook(middleware):
 
 
 async def hook_license_update(middleware, *args, **kwargs):
-    FailoverService.HA_MODE = None
     await middleware.call('failover.status_refresh')
 
 
