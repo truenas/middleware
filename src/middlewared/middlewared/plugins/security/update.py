@@ -32,6 +32,7 @@ class SystemSecurityService(ConfigService):
         if not is_ha:
             return
 
+        await self.middleware.call('failover.sync_to_peer')
         await self.middleware.call('failover.call_remote', 'etc.generate', ['fips'])
 
         remote_reboot_reasons = await self.middleware.call('failover.call_remote', 'system.reboot.list_reasons')
@@ -154,6 +155,7 @@ class SystemSecurityService(ConfigService):
         is_ha = await self.middleware.call('failover.licensed')
         reasons = await self.middleware.call('failover.disabled.reasons')
         fips_toggled = False
+        reboot_reason = None
         await self.validate(is_ha, reasons)
 
         old = await self.config()
@@ -176,23 +178,25 @@ class SystemSecurityService(ConfigService):
         if new['enable_fips'] != old['enable_fips']:
             # TODO: We likely need to do some SSH magic as well
             #  let's investigate the exact configuration there
+            reboot_reason = RebootReason.FIPS
             await self.middleware.call('etc.generate', 'fips')
-            await self.middleware.call('system.reboot.toggle_reason', RebootReason.FIPS.name, RebootReason.FIPS.value)
             await self.configure_security_on_ha(is_ha, job, RebootReason.FIPS)
             fips_toggled = True
 
         if new['enable_gpos_stig'] != old['enable_gpos_stig']:
+            reboot_reason = RebootReason.STIG
             if not fips_toggled:
                 # Trigger reboot on standby to apply STIG-related configuration
                 # This should only happen if user already set FIPS and is subsequently changing
                 # STIG as a separate operation.
-                await self.middleware.call(
-                    'system.reboot.toggle_reason', RebootReason.GPOSSTIG.name, RebootReason.GPOSSTIG.value
-                )
                 await self.configure_security_on_ha(is_ha, job, RebootReason.GPOSSTIG)
 
             await self.configure_stig(new)
 
+        if reboot_reason:
+            await self.middleware.call(
+                'system.reboot.toggle_reason', reboot_reason.name, reboot_reason.value
+            )
         return await self.config()
 
 
