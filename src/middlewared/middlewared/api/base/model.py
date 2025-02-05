@@ -9,12 +9,17 @@ from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.main import IncEx
 
 from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
-from middlewared.utils.lang import undefined, Undefined
+from middlewared.utils.lang import undefined
 
 
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item", "added_event_model",
            "changed_event_model", "removed_event_model", "single_argument_args", "single_argument_result",
            "NotRequired"]
+
+
+class _NotRequired:...
+NotRequired = _NotRequired()
+"""Use as the default value for fields that may be excluded from the model."""
 
 
 class _NotRequiredMixin(PydanticBaseModel):
@@ -23,12 +28,8 @@ class _NotRequiredMixin(PydanticBaseModel):
         return {
             k: v
             for k, v in serializer(self).items()
-            if v is not undefined
+            if v is not NotRequired
         }
-
-
-NotRequired = undefined
-"""Use as the default value for fields that may be excluded from the model."""
 
 
 class _BaseModelMetaclass(ModelMetaclass):
@@ -46,14 +47,14 @@ class _BaseModelMetaclass(ModelMetaclass):
             return cls
 
         for field in cls.model_fields.values():
-            if getattr(field, "default", None) is undefined:
+            if getattr(field, "default", None) is NotRequired:
                 return create_model(
                     cls.__name__,
                     __base__=(cls, _NotRequiredMixin),
                     __module__=cls.__module__,
                     __cls_kwargs__={"__BaseModelMetaclass_skip_patching": True},
                     **{
-                        k: (Secret[typing.get_args(v.annotation)[0] | Undefined] if typing.get_origin(v.annotation) is Secret else (v.annotation | Undefined), v)
+                        k: (Secret[typing.get_args(v.annotation)[0] | _NotRequired] if typing.get_origin(v.annotation) is Secret else (v.annotation | _NotRequired), v)
                         for k, v in cls.model_fields.items()
                     }
                 )
