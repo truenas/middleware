@@ -288,7 +288,7 @@ class ResourceManager:
             self.allowlists_for_roles[role].append({"method": self.resource_method, "resource": resource_name})
 
     def roles_for_resource(self, resource_name: str) -> typing.List[str]:
-        roles = set(self.resources.get(resource_name, []))
+        roles = self.atomic_roles_for_resource(resource_name)
 
         changed = True
         while changed:
@@ -301,6 +301,9 @@ class ResourceManager:
                             changed = True
 
         return sorted(roles)
+
+    def atomic_roles_for_resource(self, resource_name: str) -> set[str]:
+        return set(self.resources.get(resource_name, []))
 
 
 class RoleManager:
@@ -362,5 +365,11 @@ class RoleManager:
     def roles_for_method(self, method_name: str) -> typing.List[str]:
         return self.methods.roles_for_resource(method_name)
 
+    def atomic_roles_for_method(self, method_name: str) -> set[str]:
+        return self.methods.atomic_roles_for_resource(method_name)
+
     def roles_for_event(self, event_name: str) -> typing.List[str]:
         return self.events.roles_for_resource(event_name)
+
+    def atomic_roles_for_event(self, method_name: str) -> set[str]:
+        return self.events.atomic_roles_for_resource(method_name)
