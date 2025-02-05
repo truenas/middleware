@@ -233,9 +233,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         )
 
         for namespace, service in self.get_services().items():
-            self.role_manager.register_method(f'{service._config.namespace}.config', ['READONLY_ADMIN'])
-            self.role_manager.register_method(f'{service._config.namespace}.get_instance', ['READONLY_ADMIN'])
-            self.role_manager.register_method(f'{service._config.namespace}.query', ['READONLY_ADMIN'])
+            self.role_manager.register_method(f'{service._config.namespace}.config', [])
+            self.role_manager.register_method(f'{service._config.namespace}.get_instance', [])
+            self.role_manager.register_method(f'{service._config.namespace}.query', [])
 
             if service._config.role_prefix:
                 self.role_manager.add_roles_to_method(
@@ -1294,7 +1294,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         result = {"versions": []}
         for version, api in apis.items():
-            result["versions"].append(APIDumper(version, api).dump().model_dump())
+            result["versions"].append(APIDumper(version, api, self.role_manager).dump().model_dump())
 
         json.dump(result, stream)
 
