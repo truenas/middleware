@@ -5,7 +5,6 @@ from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware
 
 from middlewared.plugins.truecommand.enums import Status as TrueCommandStatus
 from middlewared.service import cli_private, job, private, Service
-from middlewared.utils.functools_ import cache
 from middlewared.api.current import (
     TrueNASSetProductionArgs, TrueNASSetProductionResult,
     TrueNASIsProductionArgs, TrueNASIsProductionResult,
@@ -42,15 +41,17 @@ class TrueNASService(Service):
             (await self.middleware.call('truecommand.config'))['status']
         ) == TrueCommandStatus.CONNECTED
 
-    @api_method(TrueNASGetChassisHardwareArgs, TrueNASGetChassisHardwareResult, roles=['READONLY_ADMIN'])
-    @cli_private
-    @cache
+    @api_method(
+        TrueNASGetChassisHardwareArgs,
+        TrueNASGetChassisHardwareResult,
+        cli_private=True,
+        roles=['READONLY_ADMIN'],
+    )
     async def get_chassis_hardware(self):
         """
         Returns what type of hardware this is, detected from dmidecode.
         """
-        dmi = await self.middleware.call('system.dmidecode_info_internal')
-        return get_chassis_hardware(dmi)
+        return get_chassis_hardware()
 
     @api_method(TrueNASIsIXHardwareArgs, TrueNASIsIXHardwareResult, roles=['READONLY_ADMIN'])
     async def is_ix_hardware(self):
