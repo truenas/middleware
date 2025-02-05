@@ -36,6 +36,7 @@ class Image(BaseModel):
     serial: str | None
     type: str | None
     variant: str | None
+    secureboot: bool | None
 
 
 class IdmapUserNsEntry(BaseModel):
