@@ -198,7 +198,8 @@ class FailoverService(ConfigService):
         """
         This is a p2p ethernet connection on HA systems.
         """
-        return await self.middleware.call('failover.internal_interface.detect')
+        ints = await self.middleware.call('failover.internal_interface.detect')
+        return list(ints)
 
     @accepts()
     @returns(Str())
