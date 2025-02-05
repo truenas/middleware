@@ -186,8 +186,8 @@ class SystemSecurityService(ConfigService):
             fips_toggled = True
 
         if new['enable_gpos_stig'] != old['enable_gpos_stig']:
-            reboot_reason = RebootReason.STIG
             if not fips_toggled:
+                reboot_reason = RebootReason.STIG
                 # Trigger reboot on standby to apply STIG-related configuration
                 # This should only happen if user already set FIPS and is subsequently changing
                 # STIG as a separate operation.
