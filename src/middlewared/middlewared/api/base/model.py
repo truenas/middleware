@@ -9,7 +9,7 @@ from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.main import IncEx
 
 from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
-from middlewared.utils.lang import undefined
+from middlewared.utils.lang import undefined, Undefined
 
 
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item", "added_event_model",
@@ -53,7 +53,7 @@ class _BaseModelMetaclass(ModelMetaclass):
                     __module__=cls.__module__,
                     __cls_kwargs__={"__BaseModelMetaclass_skip_patching": True},
                     **{
-                        k: (v.annotation, v)
+                        k: (Secret[typing.get_args(v.annotation)[0] | Undefined] if typing.get_origin(v.annotation) is Secret else (v.annotation | Undefined), v)
                         for k, v in cls.model_fields.items()
                     }
                 )
@@ -67,6 +67,7 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         strict=True,
         str_max_length=1024,
         use_attribute_docstrings=True,
+        arbitrary_types_allowed=True,
     )
 
     @classmethod
