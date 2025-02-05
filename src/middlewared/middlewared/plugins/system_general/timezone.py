@@ -1,8 +1,19 @@
-from subprocess import run
+from functools import cache
 
 from middlewared.schema import accepts, Dict, returns
 from middlewared.service import Service
-from middlewared.utils.functools_ import cache
+
+
+@cache
+def tz_choices() -> tuple[tuple[str, str]]:
+    # Logic deduced from what timedatectl list-timezones does
+    tz = list()
+    with open('/usr/share/zoneinfo/tzdata.zi') as f:
+        for line in filter(lambda x: x[0] in ('Z', 'L'), f):
+            index = 1 if line[0] == 'Z' else 2
+            tz_choice = line.split()[index].strip()
+            tz.append((tz_choice, tz_choice))
+    return tuple(tz)
 
 
 class SystemGeneralService(Service):
@@ -13,11 +24,6 @@ class SystemGeneralService(Service):
 
     @accepts()
     @returns(Dict('system_timezone_choices', additional_attrs=True, title='System Timezone Choices'))
-    @cache
     def timezone_choices(self):
         """Returns available timezones"""
-        choices = dict()
-        for i in run(['timedatectl', 'list-timezones'], capture_output=True).stdout.decode().split('\n'):
-            if (choice := i.strip()):
-                choices[choice] = choice
-        return choices
+        return dict(tz_choices())
