@@ -49,12 +49,15 @@ def _virsh(command):
             return cp.stdout
 
 
-def poweroff_vm(vmname):
+def poweroff_vm(vmname, graceful=True):
     """
     Issue a virsh destroy <domain>.  This is similar to pulling the power
     cable.  The VM can be restarted later.
     """
-    return _virsh(['destroy', vmname])
+    command = ['destroy', vmname]
+    if graceful:
+        command.append('--graceful')
+    return _virsh(command)
 
 
 def reset_vm(vmname):
